@@ -31,6 +31,20 @@ class SessionSemanticLedgerTest {
     }
 
     @Test
+    fun `indice no inicio e no fim da sessao vem dos resultados de equivalencia`() {
+        val dir = temporary.newFolder("session_index")
+        val ledger = SessionSemanticLedger(dir, "session_index", 1L, 1_000L, "MP48 conectado")
+        assertTrue(ledger.snapshot(recording = true).isNull("indexStart"))
+        ledger.observe(1L, "equivalence_result", "autocal", JSONObject().put("index", JSONObject.NULL), 2_000L)
+        assertTrue(ledger.snapshot(recording = true).isNull("indexStart"))
+        ledger.observe(2L, "equivalence_result", "autocal", JSONObject().put("index", 0.41), 3_000L)
+        ledger.observe(3L, "equivalence_result", "autocal", JSONObject().put("index", 0.78), 4_000L)
+        val summary = ledger.snapshot(recording = true)
+        assertEquals(0.41, summary.getDouble("indexStart"), 1e-9)
+        assertEquals(0.78, summary.getDouble("indexEnd"), 1e-9)
+    }
+
+    @Test
     fun `snapshot nativo vira resumo util sem criar autoridade de calibracao`() {
         val dir = temporary.newFolder("session_case")
         val ledger = SessionSemanticLedger(

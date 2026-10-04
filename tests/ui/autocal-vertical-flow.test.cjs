@@ -11,7 +11,7 @@ assert.equal(cockpit.includes('autocal-secondary-rail'), false,
   'AutoCal must not expose a horizontal secondary rail');
 assert.equal(cockpit.includes('autocal-secondary-stack'), true,
   'secondary AutoCal content must use a vertical stack');
-assert.ok(cockpit.indexOf('autocalReferenceChart') < cockpit.indexOf('autocal-secondary-details'),
+assert.ok(cockpit.indexOf('autocalReferenceChart') < cockpit.indexOf('ar-secondary'),
   'graph must precede all secondary content in reading order');
 
 assert.match(css, /\.screen\.autocal-route-screen\s*\{[\s\S]*?overflow-y:\s*auto;/,
@@ -20,11 +20,11 @@ assert.match(css, /\.autocal-cockpit-view\s*\{[\s\S]*?overflow:\s*visible;/,
   'the cockpit host must not create a nested scroll viewport');
 assert.match(css, /\.autocal-cockpit\s*\{[\s\S]*?overflow:\s*visible;/,
   'cockpit must not trap scrolling in an inner viewport');
-assert.match(css, /\.autocal-secondary-details\s*\{[\s\S]*?position:\s*static;/,
+assert.match(css + fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-refino.css'), 'utf8'), /\.ar-secondary\s*\{[\s\S]*?position:\s*static;/,
   'secondary disclosure must participate in normal vertical flow');
-assert.match(css, /\.autocal-secondary-stack\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*1fr;/,
+assert.match(fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-refino.css'), 'utf8'), /\.ar-secondary\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*1fr;/,
   'secondary information must stack vertically');
-assert.match(css, /\.autocal-secondary-card\s*\{[\s\S]*?width:\s*100%;[\s\S]*?overflow:\s*visible;/,
+assert.match(fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-refino.css'), 'utf8'), /\.ar-card\s*\{[\s\S]*?width:\s*100%;[\s\S]*?overflow:\s*visible;/,
   'secondary cards must not create nested scroll containers');
 // Actual graph size and visible point context are verified by the rendered layout gate.
 

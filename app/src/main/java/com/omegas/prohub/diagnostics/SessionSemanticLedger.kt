@@ -106,6 +106,9 @@ class SessionSemanticLedger(
     private var calibrationEpochs = 0
     /** Apagões do motor (eventos `engine_stall` do StallWatch já gravados na sessão). */
     private var blackouts = 0
+    /** Índice de equivalência (fração 0..1) no primeiro e no último `equivalence_result` da sessão; nulo se nunca houve número. */
+    private var indexStart: Double? = null
+    private var indexEnd: Double? = null
     private var lastSnapshotAtMs = 0L
     private var lastSnapshotHash = ""
     private var autoCalEnabled: Int? = null
@@ -137,6 +140,7 @@ class SessionSemanticLedger(
             "autocal_native_action" -> actionReceipts += 1
             "autocal_native_calibration_epoch" -> calibrationEpochs += 1
             "engine_stall" -> blackouts += 1
+            "equivalence_result" -> observeEquivalence(data)
             "session_stopped" -> observedStopReason = data.optString("reason", observedStopReason)
         }
 
@@ -178,7 +182,17 @@ class SessionSemanticLedger(
             type.startsWith("autocal_") ||
             type == "k_batch_confirmed" ||
             type == "k_factor_batch_confirmed" ||
-            type == "engine_stall"
+            type == "engine_stall" ||
+            type == "equivalence_result"
+
+    private fun observeEquivalence(data: JSONObject) {
+        val payload = data.optJSONObject("data") ?: data
+        if (!payload.has("index") || payload.isNull("index")) return
+        val value = payload.optDouble("index", Double.NaN)
+        if (!value.isFinite()) return
+        if (indexStart == null) indexStart = value
+        indexEnd = value
+    }
 
     private fun observeTelemetry(data: JSONObject) {
         telemetrySamples += 1L
@@ -264,6 +278,8 @@ class SessionSemanticLedger(
             .put("petrolTicks", petrolTicks)
             .put("cngTicks", cngTicks)
             .put("blackouts", blackouts)
+            .put("indexStart", indexStart ?: JSONObject.NULL)
+            .put("indexEnd", indexEnd ?: JSONObject.NULL)
             .put("autocal", autocal)
             .put("recovered", recovered)
             .put("rebuildParseErrors", rebuildParseErrors)

@@ -26,21 +26,34 @@ object EquivalenceView {
         equivalence: JSONObject? = null,
     ): JSONObject {
         val legacy = ledger.index()
+        val autopilot = phases.json()
+        val refinement = journal.json()
+        // Engasgo repetido vira ajuste LOCAL (só depois da última gravação da Curva K) e a próxima ação do cérebro quando não há outra a aplicar.
+        val appliedAt = refinement.optJSONObject("latest")?.optLong("appliedAt", 0L) ?: 0L
+        val stallsView = StallLocalFix.enrich(stalls.json(), equivalence, appliedAt)
+        val brain = equivalence?.let { JSONObject(it.toString()) }
+        if (brain != null && brain.optBoolean("available", false)) {
+            val kind = brain.optJSONObject("nextAction")?.optString("kind")
+            if (kind == "COLLECT" || kind == "NOTHING") StallLocalFix.nextAction(stallsView)?.let { brain.put("nextAction", it) }
+        }
+        val between = ledger.betweenPointsJson()
         val view = JSONObject(legacy.toString())
             .put("legacyIndex", legacy)
             .put("denseBands", ledger.denseBandsJson())
-            .put("typicalBands", ledger.typicalBandsJson())
-            .put("refinement", journal.json())
+            .put("refinement", refinement)
             .put("restorePoints", journal.restorePoints())
-            .put("autopilot", phases.json())
-            .put("stalls", stalls.json())
-            .put("equivalence", equivalence ?: JSONObject.NULL)
+            .put("autopilot", autopilot)
+            .put("stalls", stallsView)
+            .put("betweenPoints", between)
+            .put("fluidity", Fluidity.fromDense(ledger.denseBandsJson()))
+            .put("refinoState", RefinoState.build(autopilot, brain, between, stallsView))
+            .put("equivalence", brain ?: JSONObject.NULL)
         for (key in FLAT_KEYS) view.remove(key) // nunca vaza índice antigo para a chave do cérebro
-        if (equivalence != null) {
+        if (brain != null) {
             // A Referência (congelada ou congelável) vale mesmo antes de haver índice; o resto, só com resultado.
-            equivalence.opt("reference")?.let { view.put("reference", it) }
-            if (equivalence.optBoolean("available", false)) {
-                for (key in FLAT_KEYS) if (equivalence.has(key)) view.put(key, equivalence.get(key))
+            brain.opt("reference")?.let { view.put("reference", it) }
+            if (brain.optBoolean("available", false)) {
+                for (key in FLAT_KEYS) if (brain.has(key)) view.put(key, brain.get(key))
             }
         }
         return view

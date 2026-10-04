@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.equivalence.JsonFiles
 import com.omegas.prohub.equivalence.EquivalencePoint
 import com.omegas.prohub.equivalence.EquivalenceTolerances
 import com.omegas.prohub.equivalence.PointState
@@ -25,11 +26,11 @@ import kotlin.math.ln
  * 2. A ECU confirmou contador no MAX_AUTOMATCH ou AutoCal desligado: é a nossa vez.
  *    Aquisição completa/silêncio não confirmam finalização; timeout encerra só a tentativa do host.
  *    - COLETANDO_NOSSOS: faltam leituras GNV/gasolina no mesmo RPM×MAP.
- *    - PROPOSTA_PRONTA: alguma faixa de condução está fora de ±[TOLERANCE_LOG]; o
+ *    - PROPOSTA_PRONTA: alguma faixa de condução está fora de ±[TOLERANCE_LOG] (4%, 5% na ECU); o
  *      refino (pontos da ECU + nossos pontos) tem o que corrigir. Gravação manual.
  *    - VERIFICANDO: curva nova gravada; medindo se chegou na gasolina.
  *    - RESTAURAR_TRECHO: uma faixa piorou; restaurar só aquele trecho.
- *    - ESTAVEL: todas as faixas medidas dentro de ±3%: pode desconectar.
+ *    - ESTAVEL: todas as faixas medidas dentro de ±4% (±5% onde a gasolina é a curva da ECU): pode desconectar.
  *
  * Prova por ponto (F4): cada ponto da Curva K ajustado entra em EM_PROVA e fecha em CONFIRMADO, CONTESTADO ou
  * INCONCLUSIVO conforme as leituras novas dele; o veredito fica até nova prova do ponto. Arquivo antigo sem
@@ -44,18 +45,18 @@ class EquivalencePhases(
 ) {
     companion object {
         const val FORMAT = "omegas-refinement-autopilot-v1"
-        /** Faixa cuja gasolina veio majoritariamente da curva da ECU é mais grossa: tolerância ±6%. */
-        val TOLERANCE_LOG_ECU_REF = ln(1.06)
+        /** Faixa cuja gasolina veio majoritariamente da curva da ECU é mais grossa: tolerância ±5% (o teto aceito). */
+        val TOLERANCE_LOG_ECU_REF = ln(1.0 + EquivalenceTolerances.MAX)
         /** Legado de diagnóstico; silêncio não é prova de conclusão nativa. */
         const val QUIET_MS = 10 * 60_000L
         /** Legado de diagnóstico; prazos operacionais vêm de PHASE_BUDGET_MS. */
         const val QUIET_PARTIAL_MS = 25 * 60_000L
         const val PARTIAL_MIN_ZONES = 3
-        /** ±3%: abaixo disso GNV e gasolina já pedem o mesmo (ruído de medição ~2%). */
-        val TOLERANCE_LOG = ln(1.03)
-        /** Histerese: a faixa entra em "fora" além de ±3% (±6% na referência da ECU) e só sai abaixo de ±2% (±4%). */
-        val TOLERANCE_LEAVE_LOG = ln(1.02)
-        val TOLERANCE_LEAVE_LOG_ECU_REF = ln(1.04)
+        /** ±4%: a margem do dono (GNV equivalente à gasolina); é o mesmo piso do cérebro ([EquivalenceTolerances.MIN]). */
+        val TOLERANCE_LOG = ln(1.0 + EquivalenceTolerances.MIN)
+        /** Histerese: a faixa entra em "fora" além de ±4% (±5% na referência da ECU) e só sai abaixo de ±3% (±4%). */
+        val TOLERANCE_LEAVE_LOG = ln(1.03)
+        val TOLERANCE_LEAVE_LOG_ECU_REF = ln(1.0 + EquivalenceTolerances.MIN)
         /** O aviso só rearma depois de tanto tempo fora das fases de aviso (flapping não repete notificação). */
         const val ALERT_REARM_MS = 5 * 60_000L
         /** Faixa só conta como medida com pares de pelo menos este número de episódios (quando o livro informa). */
@@ -65,6 +66,10 @@ class EquivalencePhases(
         private const val MAX_TICK_MS = 10_000L
         /** Leituras novas no ponto para julgar a prova (= faixa do diário). */
         const val PROOF_MIN_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
+        /** ...com pelo menos este n efetivo (amostras decorrelacionadas, não relógio): leituras sobrepostas valem menos. */
+        const val PROOF_MIN_EPISODES = 2
+        /** Prova fechada sem convergir volta a poder ser proposta depois de tanto tempo de condução (até [ProofOutcome.MAX_ATTEMPTS] tentativas). */
+        const val PROOF_RETRY_COOLDOWN_ONLINE_MS = 10 * 60_000L
         /** Condução online sem leitura suficiente: a prova fecha INCONCLUSIVO. */
         const val PROOF_TIMEBOX_ONLINE_MS = RefinementJournal.VERIFY_PARTIAL_ONLINE_MS
         /** Tetos da tentativa do host; nunca representam conclusão do AutoMatch na ECU. */
@@ -111,9 +116,17 @@ class EquivalencePhases(
         val roughBefore: Double?,
         val nearBefore: Double?,
         var mixtureNow: Double?,
+        /** Tentativa (gravar → provar) deste ponto; ao passar de [ProofOutcome.MAX_ATTEMPTS] não há nova proposta. */
+        val attempts: Int = 1,
+        /** Por que a prova fechou sem confirmar (INCONCLUSIVO): nada é apagado em silêncio. */
+        var reason: String? = null,
+        /** Condução online depois de fechar sem convergir; ao passar de [PROOF_RETRY_COOLDOWN_ONLINE_MS] o ponto volta a poder ser proposto. */
+        var closedOnlineMs: Long = 0L,
     )
 
     private val proofs = LinkedHashMap<Int, Proof>()
+    /** Tentativas por ponto (sobrevive à prova removida): limita a re-proposta em laço. Zera em CONFIRMADO ou mudança externa. */
+    private val attemptsByPoint = HashMap<Int, Int>()
     private var lastJudgeAt: Long? = null
 
     init { load() }
@@ -154,8 +167,10 @@ class EquivalencePhases(
             val gasKnown = activeCount(liveAcquisition, "GNV")
             val petrolValid = petrolKnown ?: 0
             val gasValid = gasKnown ?: 0
-            val petrolZones = acquiredZones(liveAcquisition, "GASOLINA")
-            val gasZones = acquiredZones(liveAcquisition, "GNV")
+            // A ECU é a verdade: zona coberta = flag da ECU OU bandas lidas maduras (EcuAcquisitionTruth). Sem leitura = "—".
+            val truth = EcuAcquisitionTruth.fromAcquisition(liveAcquisition, count, max, enabled)
+            val petrolZones = truth.optJSONObject("petrol")?.opt("zonesCovered") ?: JSONObject.NULL
+            val gasZones = truth.optJSONObject("gas")?.opt("zonesCovered") ?: JSONObject.NULL
             // A ECU já entregou o estado dela (contador ou vetores de aquisição)?
             val ecuRead = count != null || liveAcquisition != null
             val fresh = if (!ecuOnline) null else when {
@@ -175,6 +190,7 @@ class EquivalencePhases(
                 .put("gasValid", gasKnown ?: JSONObject.NULL)
                 .put("petrolZones", petrolZones)
                 .put("gasZones", gasZones)
+                .put("ecuTruth", truth)
                 .put("quietMinutes", quietMs / 60_000.0)
                 .put("ecuDone", ecuReason != null)
                 .put("ecuDoneReason", ecuReason ?: JSONObject.NULL)
@@ -188,6 +204,7 @@ class EquivalencePhases(
 
             val bands = index.optJSONArray("bands") ?: JSONArray()
             val measured = ArrayList<JSONObject>()
+            var measuredOnEcuRef = 0
             val off = JSONArray()
             val missing = JSONArray()
             for (i in 0 until bands.length()) {
@@ -198,9 +215,12 @@ class EquivalencePhases(
                     .put("samples", b.optInt("samples")).put("ratio", if (r.isFinite()) r else JSONObject.NULL)
                     .put("episodes", episodes ?: JSONObject.NULL)
                 val bandKey = b.optDouble("fromMs")
-                if (b.optInt("samples") >= MIN_BAND_SAMPLES && r.isFinite() && r > 0 && (episodes == null || episodes >= MIN_BAND_EPISODES)) {
+                if (b.optInt("samples") >= MIN_BAND_SAMPLES && r.isFinite() && r > 0 && (episodes == null || episodes >= MIN_BAND_EPISODES) &&
+                    b.optBoolean("interiorCovered", true)
+                ) {
                     measured += label
                     val ecuRef = b.optDouble("ecuShare", 0.0) >= 0.5
+                    if (ecuRef) measuredOnEcuRef++
                     val enter = if (ecuRef) TOLERANCE_LOG_ECU_REF else TOLERANCE_LOG
                     val leave = if (ecuRef) TOLERANCE_LEAVE_LOG_ECU_REF else TOLERANCE_LEAVE_LOG
                     val deviation = abs(ln(r))
@@ -210,6 +230,7 @@ class EquivalencePhases(
                 } else { offLatch.remove(bandKey); missing.put(label) }
             }
             out.put("bandsMeasured", measured.size).put("bandsOff", off).put("bandsMissing", missing)
+
 
             val latest = journal.optJSONObject("latest")
             val latestStatus = latest?.optString("status").orEmpty()
@@ -283,8 +304,8 @@ class EquivalencePhases(
                     .put("journalStatus", latestStatus))
             out.put("phase", phase)
                 .put("canDisconnect", phase == "ESTAVEL")
-                .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification, if (expiredEvidence != null) candidate else ""))
-                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else ""))
+                .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification, if (expiredEvidence != null) candidate else "", measuredOnEcuRef))
+                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else "", truth))
             if (latest != null) out.put("journalStatus", latestStatus)
             last = out
             out
@@ -329,17 +350,19 @@ class EquivalencePhases(
 
     fun json(): JSONObject = synchronized(lock) { JSONObject(last.toString()).put("proofs", proofsJson()) }
 
-    private fun proofsJson(): JSONArray {
+    /** [forFile]: inclui o que só o arquivo precisa (tentativas e relógio do recuo); a tela recebe só o que lê. */
+    private fun proofsJson(forFile: Boolean = false): JSONArray {
         val array = JSONArray()
         for (p in proofs.values) {
-            array.put(
-                JSONObject().put("index", p.index).put("state", (p.verdict ?: PointState.EM_PROVA).name)
-                    .put("onlineMs", p.onlineMs)
-                    .put("mixtureBefore", p.mixtureBefore ?: JSONObject.NULL)
-                    .put("mixtureNow", p.mixtureNow ?: JSONObject.NULL)
-                    .put("roughBefore", p.roughBefore ?: JSONObject.NULL)
-                    .put("nearBefore", p.nearBefore ?: JSONObject.NULL),
-            )
+            val o = JSONObject().put("index", p.index).put("state", (p.verdict ?: PointState.EM_PROVA).name)
+                .put("onlineMs", p.onlineMs)
+                .put("reason", p.reason ?: JSONObject.NULL)
+                .put("mixtureBefore", p.mixtureBefore ?: JSONObject.NULL)
+                .put("mixtureNow", p.mixtureNow ?: JSONObject.NULL)
+                .put("roughBefore", p.roughBefore ?: JSONObject.NULL)
+                .put("nearBefore", p.nearBefore ?: JSONObject.NULL)
+            if (forFile) o.put("attempts", p.attempts).put("closedOnlineMs", p.closedOnlineMs)
+            array.put(o)
         }
         return array
     }
@@ -354,7 +377,9 @@ class EquivalencePhases(
         synchronized(lock) {
             for (index in pointIndexes) {
                 val base = baseline.firstOrNull { it.index == index }
-                proofs[index] = Proof(index, null, 0L, base?.mixture, base?.roughnessRatio, base?.nearStallRatio, base?.mixture)
+                val attempt = (attemptsByPoint[index] ?: 0) + 1
+                attemptsByPoint[index] = attempt
+                proofs[index] = Proof(index, null, 0L, base?.mixture, base?.roughnessRatio, base?.nearStallRatio, base?.mixture, attempt)
             }
             dirty = true
             lastSaveAt = Long.MIN_VALUE / 2
@@ -374,13 +399,24 @@ class EquivalencePhases(
             lastJudgeAt = durationNow
             val dt = elapsed.coerceAtMost(MAX_TICK_MS)
             val states = HashMap<Int, PointState>()
+            val reasons = HashMap<Int, String>()
             var remaining: Int? = null
             val iterator = proofs.values.iterator()
             while (iterator.hasNext()) {
                 val proof = iterator.next()
                 val closed = proof.verdict
                 if (closed != null) {
+                    // Fechada sem convergir mas com tentativas sobrando: depois de um tempo de condução volta a poder ser proposta.
+                    if (closed == PointState.INCONCLUSIVO && proof.reason == ProofOutcome.REASON_NO_CONVERGENCE) {
+                        if (ecuOnline && dt > 0L) { proof.closedOnlineMs += dt; dirty = true }
+                        if (proof.closedOnlineMs >= PROOF_RETRY_COOLDOWN_ONLINE_MS) {
+                            iterator.remove()
+                            changed = true
+                            continue
+                        }
+                    }
                     states[proof.index] = closed
+                    proof.reason?.let { reasons[proof.index] = it }
                     continue
                 }
                 if (ecuOnline && dt > 0L) {
@@ -390,10 +426,15 @@ class EquivalencePhases(
                 val point = points.firstOrNull { it.index == proof.index }
                 val mixture = point?.mixture
                 if (mixture != null) proof.mixtureNow = mixture
-                if (point == null || mixture == null || point.samples < PROOF_MIN_SAMPLES) {
+                // Só se julga com evidência independente: o ponto precisa ter sido JULGADO pelo cérebro (leituras em ≥ 3
+                // visitas, dispersão conhecida), com leituras novas e episódios, não só quadros seguidos.
+                val judgedBase = point != null && (point.state == PointState.EQUIVALENTE || point.state == PointState.POBRE || point.state == PointState.RICO)
+                if (point == null || mixture == null || !judgedBase || point.samples < PROOF_MIN_SAMPLES || point.episodes < PROOF_MIN_EPISODES) {
                     if (proof.onlineMs >= PROOF_TIMEBOX_ONLINE_MS) {
                         proof.verdict = PointState.INCONCLUSIVO
+                        proof.reason = if (judgedBase) ProofOutcome.REASON_TIMEBOX else ProofOutcome.REASON_UNJUDGED
                         states[proof.index] = PointState.INCONCLUSIVO
+                        reasons[proof.index] = proof.reason!!
                         changed = true
                     } else {
                         states[proof.index] = PointState.EM_PROVA
@@ -410,6 +451,7 @@ class EquivalencePhases(
                     abs(mixture) <= point.tolerance && !worse -> {
                         proof.verdict = PointState.CONFIRMADO
                         states[proof.index] = PointState.CONFIRMADO
+                        attemptsByPoint.remove(proof.index)
                         changed = true
                     }
                     improved && worse -> {
@@ -418,8 +460,13 @@ class EquivalencePhases(
                         changed = true
                     }
                     else -> {
-                        // Fecha sem sobreposição: o ponto volta ao estado base e a próxima ação propõe de novo.
-                        iterator.remove()
+                        // Com evidência de sobra e sem confirmar nem contestar: NÃO se apaga em silêncio (antes o ponto voltava
+                        // ao estado base e a próxima ação propunha de novo, em laço). Fecha INCONCLUSIVO com o motivo; depois
+                        // de um tempo pode ser proposto outra vez, até [ProofOutcome.MAX_ATTEMPTS] tentativas.
+                        proof.verdict = PointState.INCONCLUSIVO
+                        proof.reason = if (proof.attempts >= ProofOutcome.MAX_ATTEMPTS) ProofOutcome.REASON_EXHAUSTED else ProofOutcome.REASON_NO_CONVERGENCE
+                        states[proof.index] = PointState.INCONCLUSIVO
+                        reasons[proof.index] = proof.reason!!
                         changed = true
                     }
                 }
@@ -428,7 +475,7 @@ class EquivalencePhases(
                 dirty = true
                 lastSaveAt = Long.MIN_VALUE / 2
             }
-            ProofOutcome(states, remaining)
+            ProofOutcome(states, remaining, reasons)
         }
         save()
         return outcome
@@ -456,6 +503,7 @@ class EquivalencePhases(
     fun interruptProofs(reason: String) {
         synchronized(lock) {
             proofs.values.removeAll { it.verdict == null }
+            attemptsByPoint.clear() // mudança externa: o regime mudou, as tentativas contadas eram de outro
             dirty = true
             lastSaveAt = Long.MIN_VALUE / 2
         }
@@ -475,19 +523,6 @@ class EquivalencePhases(
         return n
     }
 
-    /** Zonas (0..3) que a ECU marcou como adquiridas para o combustível. */
-    private fun acquiredZones(acquisition: JSONObject?, fuel: String): Int {
-        val points = acquisition?.optJSONArray("points") ?: return 0
-        val zones = HashSet<Int>()
-        for (i in 0 until points.length()) {
-            val p = points.optJSONObject(i) ?: continue
-            if (p.optString("fuel") != fuel) continue
-            if (p.optBoolean("zoneAcquired") || p.optString("state") == "VALIDO") zones += p.optInt("zone", -1)
-        }
-        zones.remove(-1)
-        return zones.size
-    }
-
     /** Quanto da verificação já passou e quais faixas ainda esperam leituras (para a tela explicar). */
     private fun verificationProgress(latest: JSONObject, journal: JSONObject): JSONObject {
         val budget = journal.optLong("verifyBudgetMs", RefinementJournal.VERIFY_PARTIAL_ONLINE_MS).coerceAtLeast(1L)
@@ -504,7 +539,31 @@ class EquivalencePhases(
         return JSONObject().put("onlineMinutes", online / 60_000.0).put("budgetMinutes", budget / 60_000.0).put("waitingBands", waiting)
     }
 
-    private fun headline(phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject, verification: JSONObject?, expiredFrom: String): String = when (phase) {
+    /** A ECU já entrega gasolina (zona coberta ou bandas lidas maduras)? Então não se pede gasolina ao dono. */
+    private fun ecuHasPetrol(truth: JSONObject): Boolean {
+        val petrol = truth.optJSONObject("petrol") ?: return false
+        return (petrol.optInt("zonesCovered", 0) > 0) || (petrol.optInt("bandsMature", 0) > 0)
+    }
+
+    /** Só pede o que a ECU realmente não tem; se ela já entregou, diz que ela decide o próximo AutoMatch. */
+    private fun ecuWorkingNext(truth: JSONObject): String {
+        val missing = truth.optJSONArray("missing")
+        val wait = "A gravação libera quando a ECU terminar o automático."
+        return when {
+            missing != null && missing.length() > 0 -> {
+                val list = (0 until missing.length()).joinToString("; ") { missing.getJSONObject(it).getString("text") }
+                "A ECU ainda não marcou: $list. Dirija normalmente; a ECU decide quando roda o próximo AutoMatch. $wait"
+            }
+            truth.optBoolean("allZonesCovered") -> "A ECU já tem as 4 zonas da gasolina e do GNV; ela decide quando roda o próximo AutoMatch. Nada falta adquirir. $wait"
+            truth.optBoolean("delivered") -> "A ECU já entregou o AutoMatch; ela decide sozinha o próximo. Dirija normalmente. $wait"
+            else -> "Dirija normalmente nos dois combustíveis. $wait"
+        }
+    }
+
+    private fun headline(
+        phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject, verification: JSONObject?, expiredFrom: String,
+        measuredOnEcuRef: Int = 0,
+    ): String = when (phase) {
         "SEM_ECU" -> "Conecte a ECU para acompanhar a calibração."
         "LENDO_ECU" -> "Lendo o estado da ECU: AutoMatch e curvas."
         "TENTATIVA_ENCERRADA" -> when {
@@ -515,29 +574,27 @@ class EquivalencePhases(
         }
         "ECU_TRABALHANDO" -> "A ECU está no automático" +
             (if (count != null) " ${count}" + (if (max != null) " de $max" else "") else "") +
-            ". O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
+            ". " + (if (out.optJSONObject("ecuTruth")?.optBoolean("allZonesCovered") == true) "A ECU já tem as 4 zonas da gasolina e do GNV. " else "") +
+            "O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
         "COLETANDO_NOSSOS" -> if (out.optString("petrolReference") == "ECU")
             "A ECU terminou e já tem a curva de gasolina. O OMEGAS só precisa medir o GNV rodando."
         else "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
         "PROPOSTA_PRONTA" -> "Curva refinada pronta: $off de $measured faixas fora da gasolina."
-        "VERIFICANDO" -> "Curva nova gravada. O OMEGAS mede faixa por faixa se o GNV chegou na gasolina" +
-            (verification?.let {
-                val budgetMin = Math.round(it.optDouble("budgetMinutes")).toInt()
-                // Nunca "20 de 15": passado o orçamento, mostra o teto (a verificação fecha com o que mediu).
-                " (%d de %d min de condução)".format(minOf(Math.floor(it.optDouble("onlineMinutes")).toInt(), budgetMin), budgetMin)
-            } ?: "") + "."
+        "VERIFICANDO" -> "Curva nova gravada. O OMEGAS confere se o GNV chegou na gasolina."
         "RESTAURAR_TRECHO" -> "Um trecho piorou com a curva nova. Restaure só esse trecho."
-        "ESTAVEL" -> "GNV igual à gasolina em $measured faixas (±${Units.percentWhole((exp(TOLERANCE_LOG) - 1) * 100)}). Pode desconectar."
+        "ESTAVEL" -> "GNV igual à gasolina em $measured faixas (±${Units.percentWhole((exp(TOLERANCE_LOG) - 1) * 100)}" +
+            (if (measuredOnEcuRef > 0) ", ±${Units.percentWhole((exp(TOLERANCE_LOG_ECU_REF) - 1) * 100)} onde a gasolina é a da ECU" else "") +
+            "). Pode desconectar."
         else -> ""
     }
 
-    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = ""): String = when (phase) {
+    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = "", truth: JSONObject = JSONObject()): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
         "TENTATIVA_ENCERRADA" -> if (expiredFrom == "PROPOSTA_PRONTA" || expiredFrom == "ECU_TRABALHANDO")
-            "Abra o Refino e toque em Revisar e gravar. Nada é gravado sem o seu toque. A próxima leitura nova retoma o acompanhamento."
+            "Abra o Refino e toque em Gravar. Nada é gravado sem o seu toque. A próxima leitura nova retoma o acompanhamento."
         else "A próxima leitura válida retoma o acompanhamento automaticamente."
         "LENDO_ECU" -> "Aguarde alguns segundos. A ECU guarda o AutoMatch e as curvas e entrega tudo ao conectar."
-        "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
+        "ECU_TRABALHANDO" -> ecuWorkingNext(truth)
         "VERIFICANDO" -> {
             val waiting = verification?.optJSONArray("waitingBands")
             val wanted = (0 until (waiting?.length() ?: 0)).mapNotNull { waiting?.optJSONObject(it) }
@@ -551,7 +608,7 @@ class EquivalencePhases(
             val reference = index.optString("petrolReference", "NENHUMA")
             when {
                 // Só pede gasolina quando nem o app nem a ECU têm referência de gasolina.
-                reference == "NENHUMA" && index.optInt("petrolObservations") < 40 ->
+                reference == "NENHUMA" && index.optInt("petrolObservations") < 40 && !ecuHasPetrol(truth) ->
                     "A ECU ainda não tem curva de gasolina madura. Rode alguns minutos na gasolina para criar a referência."
                 // Guia do livro: a faixa com mais evidência que ainda falta, com o MAP em que dirigir.
                 !index.isNull("coverageGuidance") && index.optString("coverageGuidance").isNotBlank() -> index.optString("coverageGuidance")
@@ -559,42 +616,56 @@ class EquivalencePhases(
                 else -> "Continue rodando no GNV."
             }
         }
-        "PROPOSTA_PRONTA" -> "Abra o Refino e toque em Revisar e gravar. Nada é gravado sem o seu toque."
+        "PROPOSTA_PRONTA" -> "Abra o Refino e toque em Gravar. Nada é gravado sem o seu toque."
         "RESTAURAR_TRECHO" -> "Abra o Refino e toque em Restaurar trecho. Nada é restaurado sem o seu toque."
         "ESTAVEL" -> "Nada a fazer. O OMEGAS continua medindo e avisa se algo mudar."
         else -> ""
     }
 
+    /** Um só escritor por vez; o payload é montado e gravado sob `saveLock` (o disco nunca volta atrás). */
+    private val saveLock = Any()
+    private var buildSeq = 0L
+    private var writtenSeq = 0L
+
+    /** Grava já (fim do serviço), ignorando o intervalo mínimo. */
+    fun flush() {
+        synchronized(lock) { dirty = true; lastSaveAt = Long.MIN_VALUE / 2 }
+        save()
+    }
+
     private fun save() {
         val target = file ?: return
-        val payload = synchronized(lock) {
-            val now = clock()
-            if (!dirty || now - lastSaveAt < 60_000L) return
-            dirty = false
-            lastSaveAt = now
-            JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
-                .put("quietMs", quietMs).put("phase", phase).put("alertedPhase", alertedPhase)
-                .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
-                .put("watchedPhase", watchedPhase).put("phaseElapsedMs", phaseElapsedMs)
-                .put("durationMonotonic", durationClock != null)
-                .put("durationAt", lastDurationAt ?: JSONObject.NULL)
-                .put("expiredEvidence", expiredEvidence ?: JSONObject.NULL).put("timeoutReason", timeoutReason)
-                .put("proofs", proofsJson())
-        }
-        try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
-        } catch (_: Exception) {
-            synchronized(lock) { dirty = true }
+        synchronized(saveLock) {
+            val payload = synchronized(lock) {
+                val now = clock()
+                if (!dirty || now - lastSaveAt < 60_000L) return
+                dirty = false
+                lastSaveAt = now
+                JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
+                    .put("quietMs", quietMs).put("phase", phase).put("alertedPhase", alertedPhase)
+                    .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
+                    .put("watchedPhase", watchedPhase).put("phaseElapsedMs", phaseElapsedMs)
+                    .put("durationMonotonic", durationClock != null)
+                    .put("durationAt", lastDurationAt ?: JSONObject.NULL)
+                    .put("expiredEvidence", expiredEvidence ?: JSONObject.NULL).put("timeoutReason", timeoutReason)
+                    .put("proofs", proofsJson(forFile = true))
+                    .put("attempts", JSONObject().also { o -> attemptsByPoint.forEach { (k, v) -> o.put(k.toString(), v) } })
+            }
+            val seq = ++buildSeq
+            if (seq <= writtenSeq) return
+            try {
+                JsonFiles.writeAtomic(target, payload.toString())
+                writtenSeq = seq
+            } catch (_: Exception) {
+                synchronized(lock) { dirty = true }
+            }
         }
     }
 
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
+        val source = file ?: return
         try {
-            val root = JSONObject(source.readText())
-            if (root.optString("format") != FORMAT) return
+            val root = JsonFiles.readJsonWithBak(source) { it.optString("format") == FORMAT } ?: return
             lastCount = if (root.isNull("lastCount")) null else root.optInt("lastCount")
             quietMs = root.optLong("quietMs", 0L)
             phase = root.optString("phase", "SEM_ECU")
@@ -613,6 +684,10 @@ class EquivalencePhases(
             lastCount = null
             quietMs = 0L
             loadProofs(root.optJSONArray("proofs"))
+            attemptsByPoint.clear()
+            root.optJSONObject("attempts")?.let { o ->
+                o.keys().forEach { k -> k.toIntOrNull()?.takeIf { it in 0 until 30 }?.let { i -> attemptsByPoint[i] = o.optInt(k, 0).coerceIn(0, 100) } }
+            }
         } catch (_: Exception) {
         }
     }
@@ -635,6 +710,9 @@ class EquivalencePhases(
                 proofs[index] = Proof(
                     index, verdict, o.optLong("onlineMs", 0L).coerceIn(0L, PROOF_TIMEBOX_ONLINE_MS),
                     number("mixtureBefore"), number("roughBefore"), number("nearBefore"), number("mixtureNow"),
+                    o.optInt("attempts", 1).coerceIn(1, 100),
+                    if (o.isNull("reason")) null else o.optString("reason").takeIf { it.isNotBlank() },
+                    o.optLong("closedOnlineMs", 0L).coerceIn(0L, PROOF_RETRY_COOLDOWN_ONLINE_MS),
                 )
             } catch (_: Exception) {
             }

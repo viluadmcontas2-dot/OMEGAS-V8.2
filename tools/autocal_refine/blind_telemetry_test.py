@@ -17,6 +17,9 @@ import refined_oracle as oracle
 
 REAL = Path(__file__).resolve().parents[2] / "fixtures/autocal/real"
 RPM_TOL = 150
+STABLE_MS_SPREAD = 0.10
+VISIT_GAP_MS = 3000    # = EvidencePairs.VISIT_GAP_MS (bloco de janelas sobrepostas)
+EPISODE_BAND_FACTOR = 100000
 MAP_TOL = 0.02
 
 
@@ -34,6 +37,10 @@ def stable_frames(telemetry, fuel, until_ms=None):
         if max(f["rpm"] for f in (prev, cur, nxt)) - min(f["rpm"] for f in (prev, cur, nxt)) > 150:
             continue
         if max(f["load_bar"] for f in (prev, cur, nxt)) - min(f["load_bar"] for f in (prev, cur, nxt)) > 0.03:
+            continue
+        # ms que pula (8↔9 ms) não é estado estável: a média de 3 esconderia o salto (EquivalenceLedger.STABLE_MS_SPREAD)
+        ms = [f["petrol_ms"] for f in (prev, cur, nxt)]
+        if max(ms) - min(ms) > STABLE_MS_SPREAD * (sum(ms) / 3):
             continue
         # média de 3 leituras: remove o zigue-zague que existe também na gasolina
         out.append({
@@ -63,7 +70,7 @@ def cap_cells(obs, cell_cap=CELL_CAP):
     return [o for _, o in sorted((item for q in cells.values() for item in q), key=lambda x: x[0])]
 
 
-EPISODE_GAP_MS = 3000
+EPISODE_GAP_MS = VISIT_GAP_MS   # trecho guardado na leitura (diagnóstico); o portão usa as visitas por faixa (visit_ids)
 
 
 def tag_episodes(obs, gap_ms=EPISODE_GAP_MS):
@@ -77,18 +84,36 @@ def tag_episodes(obs, gap_ms=EPISODE_GAP_MS):
     return obs
 
 
+def visit_ids(items):
+    """Id de episódio de cada par = (faixa+1)·100000 + visita: dentro da faixa do livro, lacuna >= 60 s entre pares abre outra
+    visita (espelho de EvidencePairs.withVisitIds). items = [(tp, at)] em ordem de chegada; devolve ids paralelos."""
+    bands = {}
+    for i, (tp, _at) in enumerate(items):
+        b = oracle.ledger_band(tp)
+        bands.setdefault(-1 if b is None else b, []).append(i)
+    ids = [0] * len(items)
+    for band, members in bands.items():
+        visit, last = -1, None
+        for i in sorted(members, key=lambda k: items[k][1]):
+            if last is None or items[i][1] - last >= VISIT_GAP_MS:
+                visit += 1
+            ids[i] = (band + 1) * EPISODE_BAND_FACTOR + visit
+            last = items[i][1]
+    return ids
+
+
 def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL, with_episodes=False, petrol_until=False):
     """Pares (t_gasolina mediano no mesmo RPM×MAP, t_no_GNV) de leituras estáveis.
     Com with_episodes devolve também o id de episódio de cada par (paralelo)."""
     petrol = cap_cells(stable_frames(telemetry, "GASOLINA", until_ms if petrol_until else None))
     gas = cap_cells(tag_episodes(stable_frames(telemetry, "GNV", until_ms)))
-    out, episodes = [], []
+    out, times = [], []
     for g in gas:
         matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol)
         if len(matches) >= 2:
             out.append((matches[len(matches) // 2], g["t"]))
-            episodes.append(g["episode"])
-    return (out, episodes) if with_episodes else out
+            times.append((matches[len(matches) // 2], g["at"]))
+    return (out, visit_ids(times)) if with_episodes else out
 
 
 def blind_targets(fixture, sequence):

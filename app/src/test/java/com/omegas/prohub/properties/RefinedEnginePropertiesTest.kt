@@ -160,7 +160,7 @@ class RefinedEnginePropertiesTest {
             null, null, AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG,
         )
         val result = EquivalenceEngine.evaluate(input)
-        return EquivalenceJson.result(result, reference, null, null).toString() to result
+        return EquivalenceJson.result(result, reference, null, null, nowMs = 1_000_000L).toString() to result
     }
 
     @Test

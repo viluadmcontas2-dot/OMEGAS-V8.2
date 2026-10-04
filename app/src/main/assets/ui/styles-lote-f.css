@@ -60,6 +60,12 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .refino-eq[hidden] { display: none; }
 .refino-eq b { color: var(--text); font-size: var(--text-critical); line-height: 1.15; white-space: nowrap; }
 .refino-eq span { color: var(--muted); font-size: var(--text-critical); line-height: 1.15; }
+.refino-eq-text { display: grid; gap: 2px; min-width: 0; }
+.refino-eq-text small { color: var(--dim); font-size: 18px; line-height: 1.2; }
+.refino-eq-text small[hidden] { display: none; }
+.refino-eq-actions { display: flex; gap: var(--space-3, 12px); align-items: center; }
+.refino-eq-actions button { min-height: var(--touch-min); }
+.refino-eq-actions button[hidden] { display: none; }
 
 /* ---------------------------------------------------------------- Refino: tudo em 1280×720 sem rolagem vertical */
 .refino-route-screen .refino-cockpit {
@@ -105,10 +111,12 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
   gap: 0;
   margin: 0;
   padding: 4px 10px;
-  border-color: var(--state-error);
+  border-color: var(--state-warn);
   background: var(--surface);
 }
-.refino-actions-row .refino-stalls b { color: var(--state-error); font-size: 16px; line-height: 1.2; }
+.refino-actions-row .refino-stalls[data-tone="now"] { border-color: var(--state-error); }
+.refino-actions-row .refino-stalls[data-tone="now"] b { color: var(--state-error); }
+.refino-actions-row .refino-stalls b { color: var(--state-warn); font-size: 16px; line-height: 1.2; }
 .refino-actions-row .refino-stalls span { color: var(--muted); font-size: 16px; line-height: 1.2; }
 .refino-actions-row details { position: relative; flex: 0 0 auto; margin: 0; }
 .refino-actions-row details > summary { min-height: var(--touch-min); display: flex; align-items: center; gap: 12px; padding: 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: var(--text-critical); list-style: none; }
@@ -139,7 +147,7 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 }
 .refino-chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 18px; padding: 6px 10px 4px; }
 .refino-cockpit .autocal-plot-title { position: static; font-size: 16px; font-weight: 800; letter-spacing: .02em; }
-.refino-cockpit .autocal-chart-legend { display: flex; flex-wrap: wrap; gap: 2px 16px; min-height: 0; margin: 0; padding: 0; border: 0; background: none; font-size: 16px; color: var(--muted); }
+.refino-cockpit .autocal-chart-legend { display: flex; flex-wrap: wrap; gap: 2px 16px; min-height: 0; margin: 0; padding: 0; border: 0; background: none; font-size: 20px; color: var(--muted); }
 .refino-cockpit .autocal-chart-workspace { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "chart inspector"; gap: 8px; padding: 0 8px; }
 .refino-cockpit .autocal-chart-host { grid-area: chart; height: 100% !important; min-height: 140px !important; }
 .refino-cockpit .autocal-chart-inspector { grid-area: inspector; max-height: none; overflow: auto; padding: 8px 10px; }
@@ -159,16 +167,13 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 .chart-whisker { stroke: var(--tone-ffb547); stroke-width: 1.5; stroke-opacity: .7; }
 .chart-proposal { fill: none; stroke: var(--accent); stroke-width: 2.5; }
 .curve-chart-shared, .curve-chart-shared svg { width: 100%; height: 100%; display: block; }
-.autocal-axis-tick-x, .autocal-axis-tick-y, .autocal-axis-title, .autocal-zone-label, .autocal-live-label { font-size: 16px; }
+.autocal-axis-tick-x, .autocal-axis-tick-y, .autocal-axis-title, .autocal-zone-label, .autocal-live-label { font-size: 22px; }
 .autocal-primary-action[data-kind="review"] { background: var(--accent); border-color: var(--accent); color: var(--text); }
 
 /* Revisão: o cartão cabe no conteúdo; a lista usa duas colunas e rola com dica visível. */
 .refino-cockpit .autocal-review-card { width: min(900px, 100%); }
-.refino-review-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; max-height: 300px; overflow-y: auto; }
-.refino-review-list > div { grid-template-columns: 90px minmax(0, 1fr); }
 .refino-cockpit .autocal-review-card p, .refino-cockpit .autocal-review-card dd, .refino-cockpit .autocal-review-card dt, .refino-cockpit .autocal-review-card span { font-size: 16px; }
 .refino-cockpit .autocal-review-card h3 { font-size: var(--text-critical); }
-.refino-warning { color: var(--state-warn); font-size: 16px; }
 
 /* Refino · ajustes de linha */
 .refino-cockpit .autocal-focus-toolbar { display: flex; align-items: center; gap: 12px; }
@@ -230,7 +235,8 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 .autocal-chart-card .autocal-chart-workspace { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "chart inspector" "compare history"; gap: 8px; padding: 0 8px; }
 .autocal-chart-card .autocal-chart-host { grid-area: chart; height: 100% !important; min-height: 140px !important; }
 .autocal-chart-card .autocal-chart-inspector { grid-area: inspector; max-height: none; overflow: auto; padding: 8px 10px; }
-.autocal-chart-card .autocal-chart-inspector b, .autocal-chart-card .autocal-chart-inspector span { font-size: 16px; line-height: 1.3; }
+.autocal-chart-card .autocal-chart-inspector b { font-size: var(--text-critical); line-height: 1.2; white-space: nowrap; }
+.autocal-chart-card .autocal-chart-inspector span { font-size: 18px; line-height: 1.3; }
 .autocal-chart-card .autocal-reset-comparison { grid-area: compare; }
 .autocal-chart-card .autocal-history-float { grid-area: history; position: static; width: 100%; }
 
@@ -301,12 +307,6 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 .curve-screen .curve-axis { padding: 0; font-size: 16px; flex: 0 0 auto; }
 .curve-screen .curve-point-label, .curve-screen .curve-tick-label { font-size: 16px; fill: var(--muted); }
 .curve-screen .curve-grid-line { stroke: var(--line-soft); stroke-width: 1; }
-.curve-screen .evidence-disclosure { flex: 0 0 auto; margin-top: 2px; }
-.curve-screen .evidence-disclosure summary { min-height: var(--touch-min); }
-.curve-screen .evidence-disclosure summary small, .curve-screen .evidence-disclosure summary em { font-size: 16px; }
-.curve-screen .evidence-disclosure summary b { font-size: var(--text-critical); }
-.curve-screen .evidence-disclosure .evidence-grid { position: absolute; left: 6px; right: 6px; bottom: calc(var(--touch-min) + 10px); z-index: 10; max-height: 220px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-s); font-size: 16px; }
-.curve-screen .evidence-disclosure:not([open]) .evidence-grid { display: none; }
 .curve-screen .evidence-grid > article, .curve-screen .evidence-grid > div, .curve-screen .evidence-grid p { font-size: 16px; }
 
 .curve-screen .curve-editor-panel { display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; overflow-y: auto; }
@@ -358,7 +358,7 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 
 /* ---------------------------------------------------------------- Pisos de texto (F3.9): corpo/microtexto >= 16 px; o que carrega valor ou ação >= 24 px */
 html body .curve-chart-shared text { font-size: 16px; }
-html body .curve-chart-shared text.autocal-zone-label { font-size: 16px; }
+html body .curve-chart-shared text.autocal-zone-label { font-size: 22px; }
 html body .sr-only { font-size: 16px; }
 
 html body .utility-screen :is(small, span, p, dd, dt, li, label, em, i) { font-size: 16px; }
@@ -411,3 +411,119 @@ html body .diagnostic-settings-grid .check-setting:has(input:checked)::after {
 
 .utility-screen .page-intro p:empty { display: none; }
 html body .utility-screen .background-health-grid { display: flex; flex-wrap: wrap; gap: 4px 32px; }
+
+/* Agora: a faixa de cabeçalho some (o cartão de saúde e a barra lateral já dizem "ECU online" uma vez só). */
+body[data-omegas-route="dashboard"] .workspace-head { display: block; height: 0; min-height: 0; margin: 0; padding: 0; border: 0; overflow: hidden; visibility: hidden; }
+
+/* Mapa K: o botão de gravar nunca fica cortado nem em duas linhas. */
+#mapReviewButton { min-height: 76px; white-space: nowrap; }
+/* AutoCal: estado ainda não lido = spinner, não botão morto. */
+.autocal-primary-action[data-loading="true"]::before {
+  content: ""; display: inline-block; width: 18px; height: 18px; margin-right: 10px; vertical-align: -3px;
+  border: 3px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: omegas-spin .9s linear infinite;
+}
+@keyframes omegas-spin { to { transform: rotate(360deg); } }
+
+/* "ECU online" aparece uma vez só (barra lateral): a faixa do cabeçalho não repete. */
+.workspace-head .vehicle-status-strip [data-vehicle-fact="ecu"] { display: none; }
+.workspace-head .vehicle-status-strip { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+
+/* ---------------------------------------------------------------- Fix UI · Refino */
+/* O botão principal reserva o lugar mesmo escondido: o cabeçalho não pula quando surge "Gravar N pontos". */
+html body .refino-cockpit .autocal-focus-actions [data-refino-primary][hidden] { display: inline-flex; visibility: hidden; }
+.refino-cockpit .autocal-focus-actions { min-width: 280px; }
+/* Motor apagado: âmbar = já aconteceu; vermelho = está apagado AGORA (rotação conhecida e fresca). */
+.refino-stalls[data-tone="history"] { border-color: var(--warn); background: var(--surface-2); }
+.refino-stalls[data-tone="now"] { border-color: var(--danger); background: var(--surface-3); }
+
+/* ---------------------------------------------------------------- Fix UI · aviso, trilho, faixa */
+/* Aviso: 24 px, no canto de baixo à ESQUERDA da área de trabalho (os botões principais ficam à direita/no alto), nunca sobre eles. */
+html body .alert-toast { position: fixed; left: calc(var(--rail-width) + 18px); right: auto; bottom: 12px; top: auto; z-index: 50; width: min(560px, calc(100vw - var(--rail-width) - 36px)); max-width: none; padding: 10px 12px 10px 18px; align-items: center; gap: 12px; border-width: 2px; }
+html body .alert-toast.show { display: flex; }
+html body .alert-toast b { flex: 1 1 auto; min-width: 0; font-size: var(--text-critical); line-height: 1.25; font-weight: 700; color: var(--text); }
+html body .alert-toast button { position: static; flex: 0 0 auto; min-width: var(--touch-min); background: transparent; color: var(--muted); }
+html body .alert-toast[data-level="warning"] { border-color: var(--warn); }
+html body .alert-toast[data-level="critical"], html body .alert-toast[data-level="error"] { border-color: var(--danger); }
+
+/* Trilho: ECU e combustível legíveis de longe (24 px), selo "—" sem caixa vazia quando não há leitura. */
+html body .rail-status { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 8px 7px 0; font-size: var(--text-critical); }
+html body .rail-status span { font-size: var(--text-critical); line-height: 1.15; font-weight: 700; color: var(--muted); }
+html body .rail-status span[data-online="true"] { color: var(--ok); }
+html body .rail-status span[data-link="nodata"], html body .rail-status span[data-link="connecting"], html body .rail-status span[data-link="attention"] { color: var(--warn); }
+html body .rail-status b { grid-column: 1; grid-row: auto; justify-self: start; min-width: 0; padding: 2px 10px; border-radius: var(--radius-s); font-size: var(--text-critical); line-height: 1.2; background: var(--surface); }
+html body .rail-status b[data-fuel="—"] { padding: 2px 0; background: transparent; color: var(--dim); }
+html body .rail-status b[data-late="true"] { opacity: .6; }
+html body .rail-status b[hidden], html body .rail-status span[hidden], html body .rail-status button[hidden] { display: none; }
+html body .rail-status .rail-allow { display: grid; text-align: left; padding: 4px 10px; border-color: var(--warn); line-height: 1.1; font-weight: 800; }
+html body .rail-status .rail-allow small { font-size: 18px; letter-spacing: 0; color: var(--muted); font-weight: 600; }
+
+/* Faixa do cabeçalho: legível (24 px), estados com semântica. */
+.vehicle-status-strip small { font-size: 16px; letter-spacing: .04em; }
+.vehicle-status-strip b { font-size: var(--text-critical); }
+.vehicle-status-strip [data-state="late"] b { color: var(--state-warn); }
+.vehicle-status-strip [data-state="unknown"] b { color: var(--dim); }
+
+/* Curva K: lista de pontos preparados legível; botão primário único. */
+.curve-screen .proposal-list { max-height: 190px; display: grid; gap: 6px; align-content: start; }
+.curve-screen .proposal-list p { margin: 0; color: var(--dim); font-size: 18px; }
+.curve-screen .proposal-list .proposal-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: baseline; padding: 6px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius-s); background: var(--surface-2); }
+.curve-screen .proposal-list .proposal-row span, .curve-screen .proposal-list .proposal-row small { font-size: 18px; color: var(--muted); letter-spacing: 0; }
+.curve-screen .proposal-list .proposal-row b { font-size: 20px; text-align: right; }
+.curve-screen .curve-prepare-row { display: flex; justify-content: flex-end; }
+.curve-screen .curve-prepare-row[hidden], .curve-screen #curveClearProposals[hidden], #curveBackupRestore[hidden] { display: none; }
+#curveReviewButton { white-space: normal; line-height: 1.15; }
+
+/* Mapa K: seletor segmentado (Somar · Definir · %) com unidade clara ao lado do número. */
+.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface-2); }
+.segmented > button { border: 0; border-radius: 0; background: transparent; color: var(--muted); font-weight: 800; }
+.segmented > button + button { border-left: 1px solid var(--line); }
+.segmented > button.active, .segmented > button[aria-checked="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 -4px 0 var(--accent); }
+.map-adjust-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.map-adjust-unit { color: var(--muted); font-size: var(--text-critical); font-weight: 700; white-space: nowrap; }
+.map-screen .map-live-condition b[data-state="none"] { color: var(--dim); }
+.map-screen .map-live-condition b[data-state="late"] { color: var(--state-warn); }
+
+/* ---------------------------------------------------------------- Fix UI · AutoCal */
+/* Inspetor do ponto tocado: título numa linha ("Ponto 1 · 0,50 ms" nunca em 4 linhas) e texto legível. */
+html body .autocal-chart-inspector { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 4px; }
+html body .autocal-chart-inspector b { font-size: var(--text-critical); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body .autocal-chart-inspector span { font-size: 18px; line-height: 1.3; }
+/* Contexto da leitura em 2 colunas: ~570 px de rolagem viram ~310 px (nada some, nada pede toque extra). */
+html body .autocal-secondary-stack { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: stretch; }
+html body .autocal-secondary-stack > * { margin: 0; min-width: 0; }
+html body .autocal-secondary-stack > .autocal-hero { order: 1; }
+html body .autocal-secondary-stack > .autocal-zone-card { order: 2; }
+html body .autocal-secondary-stack > .autocal-command-bar { order: 3; }
+html body .autocal-secondary-stack > .autocal-automatch-evidence { order: 4; }
+html body .autocal-secondary-stack > .autocal-session-strip { order: 5; grid-column: 1 / -1; }
+html body .autocal-secondary-stack > .autocal-session-drawer { order: 6; grid-column: 1 / -1; }
+html body .autocal-secondary-stack > .autocal-technical-details { order: 7; grid-column: 1 / -1; }
+html body .autocal-secondary-details > summary { min-height: var(--touch-min); }
+html body .autocal-zone-meter { flex-wrap: wrap; row-gap: 6px; }
+html body .autocal-zone-meter > div { gap: 8px; }
+html body .autocal-zone-cell small:empty { display: none; }
+html body .autocal-zone-cell small:empty + * { margin: 0; }
+html body .autocal-primary-action[data-action="REREAD_STATE"] { border-color: var(--warn); }
+
+/* ---------------------------------------------------------------- Fix UI · Sessões e Ferramentas */
+/* "Exportar ZIP" não domina o cartão: botão do tamanho do texto, à direita, no piso de toque. */
+html body .sessions-host .recorded-session-item > button[data-export-session] { justify-self: end; width: auto; min-width: 220px; padding: 0 var(--space-5); }
+html body .sessions-host [data-sessions-truncated] { margin: 0; color: var(--muted); font-size: 18px; }
+/* Ferramentas: o backup completo usa a largura útil (título à esquerda, explicação ao lado). */
+html body .utility-screen .tool-actions { grid-template-columns: minmax(0, 1fr); }
+html body .utility-screen .tool-actions > button { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: var(--touch-min); }
+html body .utility-screen .tool-actions > button span { margin: 0; text-align: right; }
+/* Selo de saúde alinhado ao título (nada de "OK" solto sobre os números). */
+html body .background-health-card > header, html body .diagnostic-recorder-card > header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+html body .background-health-card .health-badge, html body .diagnostic-recorder-card > header > span { flex: 0 0 auto; padding: 2px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 18px; font-weight: 800; color: var(--muted); }
+html body .background-health-card .health-badge[data-healthy="true"] { color: var(--ok); border-color: var(--ok); }
+html body .background-health-card .health-badge[data-healthy="false"] { color: var(--warn); border-color: var(--warn); }
+#mapAdjustmentValue { width: 100%; min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); padding: 0 var(--space-3); font-weight: 800; }
+
+/* Contexto da leitura: rótulos 18 px e frases/valores críticos 24 px (a um braço de distância). */
+html body .autocal-secondary-stack small { font-size: 18px; letter-spacing: .03em; }
+html body .autocal-secondary-stack .autocal-human-copy h3 { font-size: var(--text-critical); }
+html body .autocal-secondary-stack .autocal-human-copy strong { font-size: var(--text-critical); line-height: 1.2; }
+html body .autocal-secondary-stack .autocal-human-copy p, html body .autocal-secondary-stack .autocal-command-copy span, html body .autocal-secondary-stack .autocal-automatch-evidence span, html body .autocal-secondary-stack .autocal-session-copy span { font-size: 18px; line-height: 1.25; }
+html body .autocal-secondary-stack .autocal-automatch-evidence b, html body .autocal-secondary-stack .autocal-session-copy b { font-size: var(--text-critical); line-height: 1.2; }
+html body .autocal-secondary-stack .autocal-zone-cell small { font-size: var(--text-critical); letter-spacing: 0; }

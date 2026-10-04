@@ -58,6 +58,7 @@ fake.analysis = {};
 fake.referenceUsable = false;
 fake.store = { get: () => ({ telemetry: { valid: false } }) };
 fake.text = (id, value) => { labels[id] = value; };
+fake.readout = text => { labels.autocalChartInspector = text; };
 fake.renderLiveNarrative = () => {};
 
 proto.renderReferenceChart.call(fake, fake.snapshot);
@@ -70,8 +71,8 @@ assert.match(host.innerHTML, /autocal-reference-line petrol epoch-anchor/,
 assert.match(host.innerHTML, /autocal-previous-gas-point/,
   'GNV_PREV permanece só como contexto, sem contador de aquisição atual');
 assert.doesNotMatch(host.innerHTML, /autocal-epoch-acquisition-line gas/);
-assert.match(labels.autocalChartInspector, /Comparação gasolina\/GNV suspensa/);
-assert.match(labels.autocalChartInspector, /Curva K: 30 fatores nativos/);
+assert.match(labels.autocalChartInspector, /GNV|Aguardando|Coleta/, 'frase humana curta sobre a leitura recomeçada');
+assert.doesNotMatch(labels.autocalChartInspector, /Curva K|RV30|ACK/);
 
 for (const field of fake.snapshot.fields) {
   if (field.key.endsWith('_GAS')) field.status = 'VALID';
@@ -87,7 +88,7 @@ assert.equal(fake.chartScale, null, 'aquisição parcial não deve reutilizar es
 fake.state = { maxAutomatch: 3 };
 fake.projection.liveAcquisitionEpoch.nativeAutoMatchCount = 3;
 proto.renderReferenceChart.call(fake, fake.snapshot);
-assert.match(labels.autocalChartInspector, /Cota de AutoMatch atingida; a leitura NÃO terminou/,
+assert.match(labels.autocalChartInspector, /a leitura continua/,
   '3/3 não encerra a coleta viva de GNV');
 
 fake.projection.liveAcquisitionEpoch.petrolPending = true;

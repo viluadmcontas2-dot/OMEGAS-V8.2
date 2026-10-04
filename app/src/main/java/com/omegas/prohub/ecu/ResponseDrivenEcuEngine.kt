@@ -195,6 +195,11 @@ class ResponseDrivenEcuEngine(
                 // precisam terminar em ACK/readback ou falha real da sessão.
                 future.get()
             }
+        } catch (e: java.util.concurrent.TimeoutException) {
+            // Leitura que estourou a espera do chamador: a unidade ainda na fila não deve rodar depois (o slot
+            // do árbitro já acabou). Só marca; nada do que a unidade faz muda.
+            future.cancel(false)
+            throw e
         } catch (e: java.util.concurrent.ExecutionException) {
             val cause = e.cause
             if (cause is RuntimeException) throw cause
@@ -221,7 +226,7 @@ class ResponseDrivenEcuEngine(
                 expectedSessionId = expectedSessionId,
                 workClass = workClass,
                 telemetryAfter = telemetryAfter,
-                executeBlock = { unit -> future.complete(block(unit)) },
+                executeBlock = { unit -> if (!future.isDone) future.complete(block(unit)) },
                 failureBlock = future::completeExceptionally,
             ),
         )
@@ -319,7 +324,16 @@ class ResponseDrivenEcuEngine(
         val now = SystemClock.elapsedRealtime()
         val backoff = handshakeBackoffMs(handshakeFailures)
         val wait = backoff - (now - lastHandshakeAttemptMs)
-        if (wait > 0L) SystemClock.sleep(wait)
+        if (wait > 0L) {
+            // Espera fracionada: um pedido de parada durante o backoff encerra em ≤ 50 ms (antes dormia tudo).
+            val until = SystemClock.elapsedRealtime() + wait
+            while (!stopRequested.get() && running.get()) {
+                val left = until - SystemClock.elapsedRealtime()
+                if (left <= 0L) break
+                SystemClock.sleep(minOf(left, 50L))
+            }
+            if (stopRequested.get() || !running.get()) return false
+        }
         lastHandshakeAttemptMs = SystemClock.elapsedRealtime()
         val expectedSessionId = physicalSessionId
 

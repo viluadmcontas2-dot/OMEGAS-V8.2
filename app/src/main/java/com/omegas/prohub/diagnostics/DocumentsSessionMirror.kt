@@ -28,7 +28,7 @@ import java.io.OutputStream
  * `_parte_NNNN.zip`.
  * Arquivos soltos reescritos durante a direção eram multiplicados pelo Drive em
  * "events_0001.jsonl (31).json"; um ZIP só no fim perdia a sessão num corte de energia. A captura continua pertencendo ao SessionRecorder;
- * esta classe não cria polling, captura paralela, pruning ou autoridade científica.
+ * esta classe não cria polling, captura paralela nem autoridade científica. Só o teto de espaço (MirrorRetention: aviso a 3 GB, as sessões mais antigas saem acima de 6 GB) mexe em arquivos já publicados.
  */
 class DocumentsSessionMirror(private val context: Context) {
     companion object {
@@ -49,6 +49,10 @@ class DocumentsSessionMirror(private val context: Context) {
     @Volatile private var lastError = ""
     @Volatile private var lastSessionId = ""
     @Volatile private var lastFileCount = 0
+    @Volatile private var usageBytes = -1L
+    @Volatile private var usageWarning = ""
+    @Volatile private var prunedSessions = 0
+    private var lastRetentionAtMs = 0L
 
     /**
      * Publica UMA parte imutável da sessão em `Download/Omegas/<sessão>/<sessão>_parte_NNNN.zip`.
@@ -78,6 +82,7 @@ class DocumentsSessionMirror(private val context: Context) {
             lastError = ""
             lastSessionId = safeSession
             lastFileCount = count
+            enforceRetention(safeSession)
             statusObject().put("ok", true).put("path", "$PUBLIC_ROOT/$safeSession/$name").put("part", plan.part)
         } catch (error: Exception) {
             fail(sessionId, error.message ?: error.javaClass.simpleName)
@@ -175,6 +180,82 @@ class DocumentsSessionMirror(private val context: Context) {
         .put("relativeRoot", PUBLIC_ROOT)
         .put("survivesAppDataClear", true)
         .put("automatic", true)
+        .put("usageBytes", usageBytes)
+        .put("usageWarning", usageWarning)
+        .put("prunedSessions", prunedSessions)
+
+    /**
+     * Teto do espelho (MirrorRetention): mede o que o app guardou em Download/Omegas, avisa a partir de 3 GB e,
+     * só acima de 6 GB, tira as sessões mais antigas (nunca as 12 mais novas nem a que acabou de sair).
+     * No máximo a cada 10 min; qualquer falha é ignorada (publicar nunca depende disto).
+     */
+    private fun enforceRetention(justPublished: String) {
+        val now = System.currentTimeMillis()
+        if (lastRetentionAtMs != 0L && now - lastRetentionAtMs < 10 * 60_000L) return
+        lastRetentionAtMs = now
+        try {
+            val entries = mirrorEntries()
+            usageBytes = MirrorRetention.totalBytes(entries)
+            usageWarning = MirrorRetention.warning(entries).orEmpty()
+            val doomed = MirrorRetention.sessionsToDelete(entries, protect = setOf(justPublished))
+            for (session in doomed) {
+                if (deleteMirrorSession(session)) prunedSessions += 1
+            }
+            if (doomed.isNotEmpty()) {
+                val after = mirrorEntries()
+                usageBytes = MirrorRetention.totalBytes(after)
+                usageWarning = MirrorRetention.warning(after).orEmpty()
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun mirrorEntries(): List<MirrorRetention.Entry> {
+        val out = ArrayList<MirrorRetention.Entry>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            val projection = arrayOf(
+                MediaStore.MediaColumns.SIZE,
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                MediaStore.MediaColumns.DATE_ADDED,
+            )
+            context.contentResolver.query(
+                collection, projection, MediaStore.MediaColumns.RELATIVE_PATH + " LIKE ?", arrayOf("$PUBLIC_ROOT/%/"), null,
+            )?.use { cursor ->
+                val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
+                val pathColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH)
+                val addedColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_ADDED)
+                while (cursor.moveToNext()) {
+                    val session = cursor.getString(pathColumn).orEmpty()
+                        .removePrefix("$PUBLIC_ROOT/").trim('/').substringBefore('/')
+                    if (session.isBlank()) continue
+                    out += MirrorRetention.Entry(session, cursor.getLong(sizeColumn), cursor.getLong(addedColumn) * 1_000L)
+                }
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            val root = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Omegas")
+            root.listFiles { file -> file.isDirectory }?.forEach { dir ->
+                dir.walkTopDown().filter { it.isFile }.forEach { file ->
+                    out += MirrorRetention.Entry(dir.name, file.length(), file.lastModified())
+                }
+            }
+        }
+        return out
+    }
+
+    private fun deleteMirrorSession(session: String): Boolean {
+        if (session != safeName(session)) return false
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            context.contentResolver.delete(
+                collection, MediaStore.MediaColumns.RELATIVE_PATH + "=?", arrayOf("$PUBLIC_ROOT/$session/"),
+            ) > 0
+        } else {
+            @Suppress("DEPRECATION")
+            File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Omegas/$session").deleteRecursively()
+        }
+    }
 
     private fun fail(sessionId: String, message: String): JSONObject {
         lastSyncAtMs = System.currentTimeMillis()

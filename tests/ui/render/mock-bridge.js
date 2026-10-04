@@ -10,6 +10,14 @@
   const SC = { PETR_INJ_TBP: 512, MNFLD_PRESS_THD: 1024, PETR_INJ_TBUF: 512, PETR_INJ_TBUF_GAS: 512, PETR_INJ_TBUF_GAS_PREV: 512, MNFLD_PRESS_BUF: 1024, MNFLD_PRESS_BUF_GAS: 1024, MNFLD_PRESS_BUF_GAS_PREV: 1024, PETR_MNFLD_PRESS_RV: 1024, GAS_MNFLD_PRESS_RV: 1024, MUL_ACT: 16384 };
   snap.available = true;
   snap.fields.forEach(f => { f.physicalValues = SC[f.key] ? f.rawValues.map(v => v / SC[f.key]) : f.rawValues.slice(); });
+  // Cenários de preview (window.__SCN): zonesGas/zonesPetrol [0|1 x4], autoMatch, maxAutoMatch, noUndo, noBetween, noRefinoState, noStalls, paused.
+  const setScalar = (key, v) => { const f = snap.fields.find(x => x.key === key); if (f) { f.rawValues = [v]; f.physicalValues = [v]; f.status = 'VALID'; } else snap.fields.push({ key, status: 'VALID', rawValues: [v], physicalValues: [v], capturedAtMs: Date.now() }); };
+  setScalar('AUTO_CAL_ENABLE', S.paused ? 0 : 1);
+  setScalar('MAX_AUTOMATCH', S.maxAutoMatch != null ? S.maxAutoMatch : 3);
+  if (S.autoMatch != null) setScalar('NUM_AUTOMATCH_EXECUTED', S.autoMatch);
+  const setVec = (key, v) => { const f = snap.fields.find(x => x.key === key); if (f) { f.rawValues = v.slice(); f.physicalValues = v.slice(); } };
+  if (S.zonesGas) setVec('ACQUIRED_ZONES_GAS', S.zonesGas);
+  if (S.zonesPetrol) setVec('ACQUIRED_ZONES_PETROL', S.zonesPetrol);
   const field = k => snap.fields.find(f => f.key === k);
   const axis = field('PETR_INJ_TBP').rawValues.map(v => v / 512);
   const mul = field('MUL_ACT').rawValues;
@@ -97,12 +105,38 @@
     const lane = b => Object.entries(b).filter(([, v]) => v.length >= 5).map(([k, v]) => ({ mapBar: (+k + 0.5) * 0.025, tpetMs: med(v.map(x => x.petrol_ms)), samples: v.length, lastAtMs: Date.now() - 30000, rpmMedian: med(v.map(x => x.rpm)), idleShare: 0 }));
     return { petrol: lane(bins.GASOLINA), gas: lane(bins.GNV), binBar: 0.025, minSamples: 5 };
   }
+  // betweenPoints (SINTÉTICO a partir da telemetria REAL): um item por intervalo entre bandas adjacentes da ECU (17).
+  function betweenPoints() {
+    const thd = field('MNFLD_PRESS_THD').physicalValues, d = dense();
+    const rvMap = field('PETR_MNFLD_PRESS_RV').physicalValues;
+    const msAt = bar => { for (let i = 1; i < rvMap.length; i++) { if (rvMap[i - 1] <= bar && bar <= rvMap[i]) { const t = (bar - rvMap[i - 1]) / ((rvMap[i] - rvMap[i - 1]) || 1); return axis[i - 1] + t * (axis[i] - axis[i - 1]); } } return axis[Math.min(axis.length - 1, 10)]; };
+    const lane = (list, lo, hi) => { const m = list.filter(x => x.mapBar > lo && x.mapBar <= hi); const n = m.reduce((a, x) => a + x.samples, 0); return n >= 5 ? { ms: m.reduce((a, x) => a + x.tpetMs * x.samples, 0) / n, mapBar: m.reduce((a, x) => a + x.mapBar * x.samples, 0) / n, n } : null; };
+    return Array.from({ length: 17 }, (_, i) => { const lo = thd[i], hi = thd[i + 1], mid = (lo + hi) / 2; const gas = lane(d.gas, lo, hi), petrol = lane(d.petrol, lo, hi); return { index: i, centerMs: msAt(mid), centerMapBar: mid, gas, petrol, n: (gas ? gas.n : 0) + (petrol ? petrol.n : 0), visits: gas ? 3 : 0, state: gas ? 'coletado' : 'falta' }; });
+  }
+  const RS = {
+    COLETANDO_NOSSOS: { phase: 'Medindo o GNV', whatNow: 'Dirija normalmente: o app está medindo o GNV entre os pontos da ECU.', nextAction: '', reason: 'Ainda faltam medidas em alguns trechos.' },
+    PROPOSTA_PRONTA: { phase: 'Ajuste pronto', whatNow: 'Falta 1 ajuste para o GNV chegar perto da gasolina.', nextAction: 'Aplicar ajuste', reason: '' },
+    VERIFICANDO: { phase: 'Conferindo', whatNow: 'Ajuste aplicado. Dirija normalmente: o app confere se o GNV chegou perto da gasolina.', nextAction: '', reason: 'Nada a fazer agora.' },
+    ESTAVEL: { phase: 'Estável', whatNow: 'GNV perto da gasolina em toda a curva. Pode desconectar.', nextAction: '', reason: '' },
+    SEM_ECU: { phase: 'Sem ECU', whatNow: 'Conecte a ECU para o Refino medir o GNV.', nextAction: '', reason: 'O cabo USB não está conectado.' },
+  };
   const NEXT = { COLETANDO_NOSSOS: { kind: 'COLLECT', text: 'Dirija no GNV: faltam 6 faixas para medir (SINTÉTICO).', route: 'refino', subpage: '', pointIndexes: [12, 13, 14] }, PROPOSTA_PRONTA: { kind: 'REVIEW', text: 'A curva refinada está pronta. Revise e grave (SINTÉTICO).', route: 'refino', subpage: '', pointIndexes: [3, 6, 9] } };
-  const eq = () => ({ ok: true, index: { value: 0.74, coverage: 0.62, provisional: true }, nextAction: NEXT[S.phase] || NEXT.COLETANDO_NOSSOS, points: Array.from({ length: 30 }, (_, i) => ({ index: i, axisMs: axis[i], state: i < 18 ? 'OK' : 'FALTA', mixture: 1.0 + (i % 5) * 0.01 })), reference: { frozen: false, canFreeze: true }, ratio: 1.034, samples: 637, petrolObservations: 240, gasObservations: 397, gasEpochReason: '', gasEpochAt: 0, petrolReference: 'MISTA', ecuPetrolPoints: 14,
-    bands: [], denseBands: dense(), typicalBands: {}, restorePoints: [],
-    refinement: { ok: true, count: 1, automatic: false, latest: { status: 'VERIFICANDO', bands: [{ fromMs: 2, toMs: 3, ratioBefore: 1.06, ratioAfter: 1.02, verdict: 'CONFIRMADA' }, { fromMs: 3, toMs: 4, ratioBefore: 1.05, ratioAfter: 1.01, verdict: 'PASSOU' }, { fromMs: 4, toMs: 6, ratioBefore: 1.07, ratioAfter: null, verdict: 'COLETANDO' }], beforeRaw: mul, afterRaw: mul.map((v, i) => i % 3 ? v : v + 120) }, history: [{ id: 'x', appliedAt: Date.now() - 3600e3, status: 'VERIFICADO', ratioBefore: 1.06, ratioAfter: 1.02 }] },
+  const NOW = Date.now();
+  function stallsBlock() {
+    if (S.stalls === 'absent' || S.stalls === 'nodata') return undefined;
+    if (S.stalls === 'none') return { count: 0, nearCount: 0, restartedCount: 0, regions: [], events: [] };
+    return { count: 4, nearCount: 3, restartedCount: 1, events: [],
+      regions: [
+        { mapBar: 0.32, rpm: 1040, ms: 2.4, count: 3, firstAt: NOW - 25 * 60e3, lastAt: NOW - 4 * 60e3, curvePoints: [2, 3, 4], proposal: S.stalls === 'noproposal' ? undefined : { pointIndexes: [2, 3, 4], deltaPercent: 2.5 } },
+        { mapBar: 0.55, rpm: 1210, ms: 3.1, count: 2, firstAt: NOW - 18 * 60e3, lastAt: NOW - 9 * 60e3, curvePoints: [5, 6] },
+        { mapBar: 0.46, rpm: 1680, ms: 3.8, count: 1, firstAt: NOW - 40 * 60e3, lastAt: NOW - 40 * 60e3, curvePoints: [7] },
+      ] };
+  }
+  const eq = () => S.stalls === 'nodata' ? { ok: false } : ({ ok: true, ...(S.noBetween ? {} : { betweenPoints: betweenPoints() }), ...(S.noRefinoState ? {} : { refinoState: Object.assign({ technical: {} }, RS[S.phase] || RS.COLETANDO_NOSSOS, { counts: { intervalosColetados: 12, intervalosFaltando: 5, automatchLidosDaEcu: 1 } }) }), index: 0.74, coverage: 0.62, provisional: true, nextAction: NEXT[S.phase] || NEXT.COLETANDO_NOSSOS, points: Array.from({ length: 30 }, (_, i) => ({ index: i, axisMs: axis[i], state: i < 18 ? 'OK' : 'FALTA', mixture: 1.0 + (i % 5) * 0.01 })), reference: { frozen: false, canFreeze: true }, ratio: 1.034, samples: 637, petrolObservations: 240, gasObservations: 397, gasEpochReason: '', gasEpochAt: 0, petrolReference: 'MISTA', ecuPetrolPoints: 14,
+    bands: [], denseBands: dense(), restorePoints: [],
+    refinement: { ok: true, count: 1, automatic: false, latest: S.noUndo ? { status: 'SEM_BASE', bands: [] } : { status: 'VERIFICANDO', photoFile: 'curve_foto.json', bands: [{ fromMs: 2, toMs: 3, ratioBefore: 1.06, ratioAfter: 1.02, verdict: 'CONFIRMADA' }, { fromMs: 3, toMs: 4, ratioBefore: 1.05, ratioAfter: 1.01, verdict: 'PASSOU' }, { fromMs: 4, toMs: 6, ratioBefore: 1.07, ratioAfter: null, verdict: 'COLETANDO' }], beforeRaw: mul, afterRaw: mul.map((v, i) => i % 3 ? v : v + 120) }, history: [{ id: 'x', appliedAt: Date.now() - 3600e3, status: 'VERIFICADO', ratioBefore: 1.06, ratioAfter: 1.02 }] },
     autopilot: { phase: S.phase, headline: 'Coletando os nossos pontos no GNV', next: 'Dirija normalmente: o app compara GNV com gasolina por faixa.', petrolValid: 14, gasValid: 11, autoMatchCount: 1, maxAutomatch: 3, ecuDoneReason: null, canDisconnect: false },
-    stalls: { count: 1, nearCount: 2, restartedCount: 1, regions: [{ fromMs: 2.1, toMs: 2.8, mapBar: 0.32 }], events: [{ petrolMs: 2.4, mapBar: 0.31 }] } });
+    stalls: stallsBlock(), fluidity: S.stalls === 'absent' ? undefined : { gasolina: { index: 0.94, jerks: 0, samples: 212 }, gnv: S.stalls === 'none' ? { index: 0.92, jerks: 0, samples: 305 } : { index: 0.71, jerks: 5, samples: 305 } } });
   const refined = () => ({ ok: true, available: true, refinementMode: 'ECU_E_CONDUCAO', evidenceSource: 'ECU_E_CONDUCAO', matureCommonPoints: 9, minimumMatureCommonPoints: 6, telemetryTargets: 5, rejectedBands: [{ fuel: 'GNV', band: 1, timeMs: 1.2, mapBar: 0.3 }], guards: { lowGuardMs: 2.0, maximumStepPercent: 4 }, elasticityLimit: 1.5,
     points: mul.map((v, i) => ({ index: i, referenceTimeMs: axis[i], currentRaw: v, calculatedRaw: (S.phase === 'PROPOSTA_PRONTA' && i % 3 === 0) ? v + 120 : v, origin: i % 3 ? 'HELD' : 'MEASURED' })) });
 
@@ -114,17 +148,24 @@
     return { ok: true, grid: { rows: 12, columns: 12, petrolBins: PB, rpmBins: RB }, cells, petrol: cells.map(x => ({ ...x, fuel: 'PETROL' })), cng: cells.map(x => ({ ...x, fuel: 'CNG', epoch: 1 })), comparisons: cells.map((x, i) => ({ ...x, errorPercent: ((i % 9) - 4) * 0.9 })), assistedCalibration: { comparisonCount: cells.length, uniqueVisitCount: 18, petrolCurve: [], cngCurve: [], kFactorSuggestions: [], reconciliation: { pending_cng_visits: 0 } }, current: { fuel: 'GNV', rpm: 2100, petrolMs: 4.2, mapBar: 0.56, cell: { row: 4, column: 3 } } }; };
 
   const native = {
-    getReleaseIdentity: () => J({ product: 'OMEGAS', generation: 'V8', versionName: 'mock' }),
+    previewKFactorPoint: (i, t) => { const p = curPts()[i]; const raw = Math.round(Number(t) * 16384); return J({ ok: true, index: Number(i), petrolMs: p.petrolMs, currentFactor: p.factor, targetFactor: Number(t), currentRaw: p.factorRaw, targetRaw: raw, deltaPercent: (Number(t) / p.factor - 1) * 100, changed: raw !== p.factorRaw }); },
+    getReleaseIdentity: () => J({ product: 'OMEGAS', generation: 'Platina', versionName: '8.2.0 (build 214)', engine: 'Motor V8' }),
     getStatus: () => J(status()), getPresentSnapshot: () => J(present()),
     getPresentSnapshotIfChanged: last => { const p = present(); const seq = p.data && p.data.sequence != null ? p.data.sequence : p.revision; if (Number(last) === seq) { window.__ifc.same++; return J({ ok: true, changed: false, revision: p.revision, telemetryAgeMs: 60 }); } window.__ifc.changed++; return J(Object.assign({ changed: true }, p)); },
     getScienceSnapshotSince: r => J({ ok: true, changed: Number(r) === 0, revision: 1, refreshing: false, data: { learning: learning(), calibrationState: { ready: true, suggestionItems: [], predictor: { ok: true, cells: [] } }, predictor: { ok: true, cells: [] } } }),
     getLiveTelemetry: () => J(present().data), getFullEngineSnapshot: () => J(present().data), getLearningMaps: () => J(learning()),
     getLearningSyncStatus: () => J({ live: { state: 'OBSERVING' } }), getLearningToleranceSettings: () => J({ ok: true, policy: {}, controlModel: { ok: true, levels: ['Muito rigoroso', 'Rigoroso', 'Equilibrado', 'Flexível', 'Muito flexível'], controls: [] } }),
     getSessionRecorderStatus: () => J({ recording: MODE === 'connected', events: 4210, megabytes: 3.2, settings: { autoStartOnUsb: true, telemetryEveryMs: 250, captureRawUsb: false, maxSessionMb: 256, keepSessions: 20 } }),
-    listRecordedSessions: () => J([{ id: 'session_2026-10-01_13-01-22', reason: 'SINTÉTICO · uso na estrada', bytes: 3400000, durationMs: 1260000, active: false, cngTicks: 640, petrolTicks: 210, index: { start: 0.41, end: 0.78 }, blackouts: 1 }, { id: 'session_2026-09-30_09-31-05', reason: 'SINTÉTICO · manual', bytes: 2100000, durationMs: 900000, active: false, cngTicks: 120, petrolTicks: 300, indexStart: 0.2, indexEnd: 0.41 }, { id: 'session_2026-09-29_18-00-00', reason: 'SINTÉTICO · gravando', bytes: 800000, durationMs: 300000, active: true, cngTicks: 0, petrolTicks: 90 }]),
-    getLogs: () => J([]), startKMapRead: () => J({ ok: true, started: true, state: 'READING' }),
+    listRecordedSessions: () => J(S.sessions === 'none' ? [] : [
+      { id: 'session_2026-10-04_08-12-40', reason: 'Conexão da ECU', bytes: 1250000, durationMs: 640000, active: MODE === 'connected', cngTicks: 410, petrolTicks: 120, semanticSummary: { autoMatchExecuted: 1, blackouts: 0 } },
+      { id: 'session_2026-10-03_17-45-02', reason: 'Conexão da ECU', bytes: 6800000, durationMs: 3120000, active: false, cngTicks: 2400, petrolTicks: 380, semanticSummary: { autoMatchExecuted: 2, blackouts: 2 }, index: { start: 0.52, end: 0.81 } },
+      { id: 'session_2026-10-01_13-01-22', reason: 'Conexão da ECU', bytes: 3400000, durationMs: 1260000, active: false, cngTicks: 640, petrolTicks: 210, semanticSummary: { autoMatchExecuted: 0, blackouts: 1 }, index: { start: 0.41, end: 0.78 } },
+      { id: 'session_2026-09-30_09-31-05', reason: 'Conexão da ECU', bytes: 2100000, durationMs: 900000, active: false, cngTicks: 120, petrolTicks: 300, semanticSummary: { autoMatchExecuted: 1 }, indexStart: 0.2, indexEnd: 0.41 },
+      { id: 'session_2026-09-29_18-00-00', reason: 'Conexão da ECU', bytes: 800000, durationMs: 300000, active: false, cngTicks: 0, petrolTicks: 90, semanticSummary: { autoMatchExecuted: 0, blackouts: 0 } },
+    ]),
+    getLogs: () => J([{ time: '08:12:41', level: 'INFO', category: 'USB', message: 'ECU conectada' }, { time: '08:12:44', level: 'INFO', category: 'SESSÃO', message: 'Gravação iniciada' }, { time: '08:19:03', level: 'WARN', category: 'ECU', message: 'Leitura lenta; tentando de novo' }]), startKMapRead: () => J({ ok: true, started: true, state: 'READING' }),
     getKMapReadResult: () => J({ ok: true, state: 'COMPLETED', rows: mapRows, extraRow: Array(12).fill(0), axes: { petrolBins: PB, rpmBins: RB }, hash: 'synthetic', writableCells: 144, sessionConfirmed: true }),
-    previewKFactorPoint: () => J({ ok: false }), connectUsb: () => 'true', disconnectUsb: () => 'true', runEngineSelfTests: () => J({ ok: true }),
+    connectUsb: () => 'true', disconnectUsb: () => 'true', runEngineSelfTests: () => J({ ok: true }),
   };
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),

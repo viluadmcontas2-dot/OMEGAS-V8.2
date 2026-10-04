@@ -219,13 +219,9 @@ test('M5 restaurar backup da lista: prévia, botão só ativa depois, uma grava�
   const select = app.byId('curveBackupSelect');
   const manual = select.options.find(o => /curva-/.test(o.attrs.get('value') || ''));
   assert.ok(manual, 'backup manual listado');
-  assert.equal(app.byId('curveBackupRestore').hasAttribute('disabled'), true, 'restaurar bloqueado antes de escolher');
-  select.value = manual.attrs.get('value');
-  select.dispatchEvent(new app.win.Event('change', { bubbles: true }));
-  app.settle(3);
-  assert.equal(app.byId('curveBackupRestore').hasAttribute('disabled'), false, 'prévia pronta libera Restaurar');
-  assert.equal(app.world.callsOf('startCurveRestoreWrite').length, 0, 'prévia não grava');
-  app.byId('curveBackupRestore').click(); app.settle(4);
+  assert.equal(app.byId('curveBackupRestore').hasAttribute('hidden'), false, 'Desfazer aparece quando há foto guardada');
+  assert.equal(app.world.callsOf('startCurveRestoreWrite').length, 0, 'sem toque nada grava');
+  app.byId('curveBackupRestore').click(); app.settle(6); // um toque: foto mais recente por baixo, prévia e gravação
   assert.equal(app.world.callsOf('startCurveRestoreWrite').length, 1);
   assert.ok(same(raws(app), original));
 });
@@ -312,7 +308,15 @@ test('M5 fuzz das respostas da Curva K (leitura, prévia, operação, backups): 
     methods: ['getLastOperation', 'previewKFactorPoint', 'listCurveBackups'],
     maxPathsPerMethod: 40,
     // cada tick: nova leitura + novo nudge, para o app consultar as três respostas durante a mutação
-    perTick: app => { app.byId('curveReadButton').click(); const n = app.$('[data-curve-nudge="0.01"]'); if (n) n.click(); app.byId('curveBackupSave').click(); },
+    perTick: app => {
+      // O ajuste vem ANTES da releitura: durante a leitura os botões ± ficam desativados (sem curva lida não há o que ajustar).
+      app.advance(700); // deixa a leitura anterior terminar
+      // Operação que a tela já desistiu de acompanhar (resposta mutada) não pode travar o mundo falso: a ECU libera o canal.
+      if (!app.win.OmegasApp.screens.curve.reading && !app.win.OmegasApp.screens.curve.backupTask) app.world.op = { idle: true };
+      const n = app.$('[data-curve-nudge="0.01"]'); if (n) n.click();
+      const k = app.byId('curveTargetFactor'); if (k && !k.hasAttribute('disabled')) k.dispatchEvent(new app.win.Event('change', { bubbles: true }));
+      app.byId('curveReadButton').click(); app.byId('curveBackupSave').click();
+    },
   });
   assert.ok(cases > 100, `casos ${cases}`);
   assert.ok(effective > cases * 0.2, `fuzz inócuo ${effective}/${cases}`);

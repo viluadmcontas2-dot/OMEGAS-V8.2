@@ -41,14 +41,11 @@ class EquivalenceRealSessionTest {
         )
         assertTrue(r.provisional)
         assertEquals(NextActionKind.FREEZE_REFERENCE, r.nextAction.kind)
-        assertEquals("autocal", r.nextAction.route)
-        assertEquals("referencia", r.nextAction.subpage)
+        assertEquals("refino", r.nextAction.route)
+        assertEquals(null, r.nextAction.subpage)
         assertTrue(r.ownPetrol.cells.filter { it.petrolMs != null }.all { it.source == CellSource.REFERENCE })
-        r.points.forEach { p ->
-            val known = p.axisMs >= 3.0 && OwnCurveFitter.mapFor(r.ownPetrol, p.axisMs) != null
-            assertEquals("ponto ${p.index}", if (known) PointState.APRENDENDO else PointState.SEM_DADOS, p.state)
-        }
-        assertTrue(r.points.count { it.state == PointState.APRENDENDO } >= 13)
+        // Sem nenhuma leitura de GNV não há evidência em ponto nenhum: SEM_DADOS (a Referência sozinha não julga o GNV).
+        assertTrue(r.points.all { it.state == PointState.SEM_DADOS })
         assertNull(r.index)
         assertEquals(0, r.coverage)
     }
@@ -62,13 +59,15 @@ class EquivalenceRealSessionTest {
         val before = evaluate(REFERENCE, 95, 2183) { it.fuel != "GNV" || it.t < writeAt }
         val after = evaluate(REFERENCE, 95, 2550) { it.fuel != "GNV" || it.t >= writeAt }
         println("INDEX_REFERENCE before=${before.index} cov=${before.coverage} after=${after.index} cov=${after.coverage}")
-        assertNotNull(before.index)
-        assertTrue(before.coverage >= 2)
-        assertTrue(after.index == null || after.index!! < before.index!!)
+        // Achado da revisão adversarial: nesta sessão real os pontos julgados (≥ 3 visitas independentes, dispersão conhecida)
+        // cobrem bem menos da metade do uso, então o índice NÃO é um número ("—"). Antes saía 100% com coverage 1–5.
+        assertTrue("fração julgada ${before.judgedUsage}", before.judgedUsage < EquivalenceTolerances.MIN_JUDGED_USAGE)
+        assertNull(before.index)
+        assertTrue(after.index == null || after.index!! <= 1.0)
     }
 
     @Test
-    fun `na sessao AUTOMATCH a janela curta nao da cobertura para afirmar que o indice subiu`() {
+    fun `na sessao AUTOMATCH a janela curta nunca afirma um indice falso`() {
         // A escrita de 16:04:38 também foi um reset plano (K = 1,0). 5 minutos de GNV não cobrem 2 pontos com confiança.
         val writeAt = EquivalenceReplaySupport.writeAtMs(AUTOMATCH)
         val until = EquivalenceReplaySupport.snapshotAtMs(AUTOMATCH, 1401)
@@ -76,7 +75,9 @@ class EquivalenceRealSessionTest {
         val before = evaluate(AUTOMATCH, 634, 634) { it.fuel != "GNV" || it.t < writeAt }
         val after = evaluate(AUTOMATCH, 634, 699) { it.fuel != "GNV" || (it.t >= writeAt && it.t <= until) }
         println("INDEX_AUTOMATCH before=${before.index} cov=${before.coverage} after=${after.index} cov=${after.coverage}")
-        assertTrue(before.coverage < 2 && after.coverage < 2)
+        // Sem portão de tempo: a cobertura vem do intervalo; o índice só é número com ≥ 50% do uso julgado e nunca é 100% falso.
+        assertTrue(before.index == null || before.index!! < 0.95)
+        assertTrue(after.index == null || after.index!! < 0.95)
         listOf(before.index, after.index).forEach { assertTrue(it == null || it in 0.0..1.0) }
     }
 

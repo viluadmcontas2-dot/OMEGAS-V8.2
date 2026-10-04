@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.equivalence.JsonFiles
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -35,8 +36,12 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         /** A oferta de restaurar vale por um tempo; depois o refino segue sozinho (nunca trava). */
         const val RESTORE_OFFER_MS = 30 * 60_000L
 
+        /** Uma faixa só é julgada com leituras em ≥ este número de episódios (visitas separadas por ≥ 60 s), não só 8 quadros. */
+        const val MIN_BAND_EPISODES = EvidencePairs.MIN_VISITS
         const val MIN_SCALE = 0.4
         const val MAX_SCALE = 1.3
+        /** A cada experimento fechado o ganho aprendido volta esta fração do caminho até 1,0 (nunca multiplica para sempre). */
+        const val LEARN_DECAY = 0.8
         const val MAX_EXPERIMENTS = 40
         const val POINT_COUNT = 30
         /** Abaixo disso o motor tem estratégia própria (lenta): não conta como condução da verificação. */
@@ -55,6 +60,14 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         private const val SAVE_EVERY_MS = 60_000L
         /** Estados em que o experimento ainda espera dados. */
         const val STATUS_VERIFYING = "VERIFICANDO"
+
+        private val UNDO_REASON = Regex("^\\s*(restaurar|desfazer|reset|neutralizar)", RegexOption.IGNORE_CASE)
+
+        /**
+         * A gravação de Curva K era um Desfazer/Restaurar/Reset (o motivo que o escritor da ECU registra)? Voltar a uma
+         * foto, ou zerar para 1,0, não é uma passada de ganho. Motivo desconhecido = gravação normal.
+         */
+        fun isUndoReason(reason: String): Boolean = UNDO_REASON.containsMatchIn(reason)
     }
 
     private val lock = Any()
@@ -88,10 +101,15 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         source: String,
         /** Foto da curva tirada ANTES desta gravação: o Desfazer restaura exatamente ela. */
         photoFile: String = "",
+        /**
+         * Desfazer/Restaurar: voltar não é uma passada de ganho. Não conta passada (e devolve a que a gravação desfeita
+         * tinha contado) e a verificação dele não ensina o ganho das faixas.
+         */
+        restore: Boolean = false,
     ) {
         synchronized(lock) {
             for (i in 0 until min(POINT_COUNT, min(beforeRaw.size, afterRaw.size))) {
-                if (beforeRaw[i] != afterRaw[i]) pointPasses[i] += 1
+                if (beforeRaw[i] != afterRaw[i]) pointPasses[i] = if (restore) max(0, pointPasses[i] - 1) else pointPasses[i] + 1
             }
             experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }?.let {
                 it.put("status", "INTERROMPIDO").put("reasonCode", "SUPERSEDED_BY_CONFIRMED_WRITE")
@@ -108,6 +126,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 .put("afterRaw", JSONArray(afterRaw.toList()))
                 .put("indexBefore", indexBefore)
                 .put("photoFile", photoFile)
+                .put("restore", restore)
                 .put("onlineMs", 0L)
                 .put("status", "VERIFICANDO").put("reasonCode", "MANUAL_WRITE_CONFIRMED").put("failureDomain", "NONE")
             while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
@@ -146,6 +165,8 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     /** Algo mudou o motor por fora (Mapa K, AutoMatch nativo): a verificação perde validade. */
     fun interrupt(reason: String) {
         synchronized(lock) {
+            // O AutoMatch nativo reescreveu a Curva K inteira: ganho aprendido e passadas eram da curva antiga.
+            if (reason == "AUTOMATCH_NATIVO") { bandScale.fill(1.0); pointPasses.fill(0) }
             experiments.lastOrNull()?.takeIf { it.optString("status") == "VERIFICANDO" }?.let {
                 it.put("status", "INTERROMPIDO").put("reasonCode", "EXPERIMENT_INVALIDATED")
                     .put("failureDomain", "FUNCTIONAL").put("interruptReason", reason).put("closedAt", clock())
@@ -191,6 +212,11 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 val a = after.optJSONObject(i) ?: JSONObject()
                 val nb = b.optInt("samples", 0)
                 val na = a.optInt("samples", 0)
+                // Evidência independente: episódios (visitas ≥ 60 s) e leituras espalhadas por dentro da faixa. Desconhecido = legado.
+                val eb = if (b.has("episodes") && !b.isNull("episodes")) b.optInt("episodes") else null
+                val ea = if (a.has("episodes") && !a.isNull("episodes")) a.optInt("episodes") else null
+                val solidBefore = nb >= MIN_BAND_SAMPLES && (eb == null || eb >= MIN_BAND_EPISODES) && b.optBoolean("interiorCovered", true)
+                val solidAfter = na >= MIN_BAND_SAMPLES && (ea == null || ea >= MIN_BAND_EPISODES) && a.optBoolean("interiorCovered", true)
                 val rb = b.optDouble("ratio", Double.NaN)
                 val ra = a.optDouble("ratio", Double.NaN)
                 val verdict = JSONObject().put("fromMs", BANDS[i].first).put("toMs", BANDS[i].second)
@@ -201,8 +227,8 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 if (touched) touchedBands++
                 when {
                     !touched -> verdict.put("verdict", "NAO_ALTERADA")
-                    nb < MIN_BAND_SAMPLES || !rb.isFinite() -> { verdict.put("verdict", "SEM_ANTES"); withoutBase++ }
-                    na < MIN_BAND_SAMPLES || !ra.isFinite() -> {
+                    !solidBefore || !rb.isFinite() -> { verdict.put("verdict", "SEM_ANTES"); withoutBase++ }
+                    !solidAfter || !ra.isFinite() -> {
                         if (timeboxed) verdict.put("verdict", "SEM_DADOS") else { verdict.put("verdict", "COLETANDO"); pending++ }
                     }
                     else -> {
@@ -235,7 +261,8 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                     .put("worseMarginLog", WORSE_MARGIN_LOG).put("okAfterLog", OK_AFTER_LOG)
                     .put("relativeImprovementFactor", 0.35)
                     .put("samplesBefore", nb).put("samplesAfter", na)
-                    .put("minSamples", MIN_BAND_SAMPLES).put("onlineMs", onlineMs))
+                    .put("episodesBefore", eb ?: JSONObject.NULL).put("episodesAfter", ea ?: JSONObject.NULL)
+                    .put("minSamples", MIN_BAND_SAMPLES).put("minEpisodes", MIN_BAND_EPISODES).put("onlineMs", onlineMs))
                 verdicts.put(verdict)
             }
             // Tempo segue no diagnóstico, mas não é uma mudança da decisão visível.
@@ -265,7 +292,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                         else -> "VERIFICATION_COVERAGE_TIMEOUT"
                     })
                     .put("failureDomain", if (closedStatus in setOf("PIOROU_EM_PARTE", "INCONCLUSIVO")) "FUNCTIONAL" else "NONE")
-                if (judged > 0) learn(verdicts)
+                // Desfazer/Restaurar não ensina o ganho: voltar não é medir a correção.
+                // O ganho aprendido decai a cada experimento fechado (mesmo sem faixa julgada); só o veredito ensina.
+                if (!exp.optBoolean("restore", false)) learn(verdicts)
                 needsSave = true
             } else if (now - lastSaveAt >= SAVE_EVERY_MS) {
                 needsSave = true
@@ -293,13 +322,24 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         return false
     }
 
-    /** Ganho por faixa para a próxima proposta: passou → mais suave; curta → mais firme. */
+    /**
+     * Ganho por faixa para a próxima proposta: passou → mais suave; piorou → bem mais suave; curta E melhorou → um pouco
+     * mais firme (curta que NÃO melhorou não firma ganho). Antes de aplicar o veredito o ganho aprendido volta uma fração
+     * do caminho até 1,0 em TODAS as faixas ([LEARN_DECAY]): o aprendizado esquece, não se acumula para sempre.
+     */
     private fun learn(verdicts: JSONArray) {
         for (i in 0 until min(verdicts.length(), bandScale.size)) {
-            bandScale[i] = when (verdicts.optJSONObject(i)?.optString("verdict")) {
+            bandScale[i] = 1.0 + (bandScale[i] - 1.0) * LEARN_DECAY
+            val v = verdicts.optJSONObject(i)
+            val improved = v?.optJSONObject("decision")?.let { d ->
+                val e0 = d.optDouble("errorBeforeLog", Double.NaN)
+                val e1 = d.optDouble("errorAfterLog", Double.NaN)
+                e0.isFinite() && e1.isFinite() && abs(e1) < abs(e0)
+            } ?: false
+            bandScale[i] = when (v?.optString("verdict")) {
                 "PASSOU" -> max(MIN_SCALE, bandScale[i] * 0.7)
                 "PIOROU" -> max(MIN_SCALE, bandScale[i] * 0.5)
-                "CURTA" -> min(MAX_SCALE, bandScale[i] * 1.15)
+                "CURTA" -> if (improved) min(MAX_SCALE, bandScale[i] * 1.15) else bandScale[i]
                 "CONFIRMADA" -> bandScale[i] + (1.0 - bandScale[i]) * 0.2
                 else -> bandScale[i]
             }
@@ -357,29 +397,39 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             .put("automatic", false)
     }
 
+    /** Um só escritor por vez; o payload é montado e gravado sob `saveLock` (o disco nunca volta atrás). */
+    private val saveLock = Any()
+    private var buildSeq = 0L
+    private var writtenSeq = 0L
+
+    /** Grava já (fim do serviço): o Desfazer depende de `photoFile`. */
+    fun flush() = save()
+
     private fun save() {
         val target = file ?: return
-        val payload = synchronized(lock) {
-            lastSaveAt = clock()
-            JSONObject().put("format", FORMAT)
-                .put("bandScale", JSONArray(bandScale.toList()))
-                .put("pointPasses", JSONArray(pointPasses.toList()))
-                .put("experimentSequence", experimentSequence)
-                .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
-        }
-        try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
-        } catch (_: Exception) {
+        synchronized(saveLock) {
+            val payload = synchronized(lock) {
+                lastSaveAt = clock()
+                JSONObject().put("format", FORMAT)
+                    .put("bandScale", JSONArray(bandScale.toList()))
+                    .put("pointPasses", JSONArray(pointPasses.toList()))
+                    .put("experimentSequence", experimentSequence)
+                    .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
+            }
+            val seq = ++buildSeq
+            if (seq <= writtenSeq) return
+            try {
+                JsonFiles.writeAtomic(target, payload.toString())
+                writtenSeq = seq
+            } catch (_: Exception) {
+            }
         }
     }
 
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
+        val source = file ?: return
         try {
-            val root = JSONObject(source.readText())
-            if (root.optString("format") != FORMAT) return
+            val root = JsonFiles.readJsonWithBak(source) { it.optString("format") == FORMAT } ?: return
             root.optJSONArray("bandScale")?.let { a ->
                 for (i in 0 until min(a.length(), bandScale.size)) bandScale[i] = a.optDouble(i, 1.0).coerceIn(MIN_SCALE, MAX_SCALE)
             }

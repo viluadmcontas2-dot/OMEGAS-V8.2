@@ -6,7 +6,7 @@ drawers = (ROOT / "app/src/main/assets/ui/components/drawers.js").read_text(enco
 index = (ROOT / "app/src/main/assets/ui/index.html").read_text(encoding="utf-8")
 
 assert "exportData() { return this.demo ? false : invoke(this.native, 'exportData'" in api
-assert 'id="toolExportData"' in index
+assert 'id="toolExportData"' in drawers  # o backup agora é desenhado por Ferramentas (bloco Backup)
 assert "toolExportData" in drawers
 assert "this.api.exportData()" in drawers
 

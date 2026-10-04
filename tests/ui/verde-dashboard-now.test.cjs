@@ -42,7 +42,6 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
     'dashFuel',
     'dashLevelsRaw',
     'dashRefino',
-    'dashCell',
     'dashHealth',
   ]) {
     assert.match(dashboard, new RegExp(marker), `missing ${marker}`);
@@ -51,9 +50,9 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
   assert.equal(occurrences(dashboard, '>RPM<'), 1);
   assert.equal(occurrences(dashboard, '>MAP<'), 1);
   assert.equal(occurrences(dashboard, '>COMBUSTÍVEL<'), 1);
-  assert.equal(occurrences(dashboard, '>LEVELS RAW<'), 1);
+  assert.equal(occurrences(dashboard, '>NÍVEIS<'), 1);
   assert.equal(occurrences(dashboard, '>REFINO<'), 1);
-  assert.equal(occurrences(dashboard, '>CÉLULA<'), 1);
+  assert.equal(occurrences(dashboard, '>CÉLULA<'), 0, 'Agora = só ms, RPM, MAP e combustível: sem tile CÉLULA');
   assert.doesNotMatch(dashboard, /dashHeroRpm|dashLtft|GAS INJ\./);
 });
 
@@ -76,6 +75,6 @@ test('dashboard é consumidor Red ou Verde e não carrega Blue', () => {
 
 
 test('dashboard não converte ausência de telemetria em zero físico', () => {
-  assert.match(dashboard, /const finite = rules\.finite/);
   assert.doesNotMatch(dashboard, /function finite\(/);
+  assert.match(dashboard, /ns\.LiveStore\.read\(state\)/);
 });

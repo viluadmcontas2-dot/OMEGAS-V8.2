@@ -36,6 +36,17 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
         synchronized(lock) { lastKey = null }
     }
 
+    /**
+     * Alinha o livro à Curva K lida da ECU (impressão digital) e, se ela mudou por fora do app ou era desconhecida
+     * com GNV guardado, o GNV sai do livro E a experiência/provas do cérebro saem junto. Idempotente: a ponte (tela)
+     * e o tique do serviço chamam a mesma coisa; o alinhamento não depende de a tela estar aberta.
+     */
+    fun alignCurve(ledger: EquivalenceLedger, phases: EquivalencePhases, mulActRaw: IntArray): Boolean {
+        val reset = ledger.alignCurve(EquivalenceLedger.fingerprint(mulActRaw))
+        if (reset) onGasReset("CURVA_K_MUDOU_FORA_DO_APP", phases)
+        return reset
+    }
+
     /** O dono gravou a Curva K: cada ponto que mudou entra em prova, com o estado de antes como base. */
     fun onCurveWritten(beforeRaw: IntArray, afterRaw: IntArray, phases: EquivalencePhases) {
         val changed = (0 until minOf(beforeRaw.size, afterRaw.size)).filter { beforeRaw[it] != afterRaw[it] }
@@ -73,7 +84,9 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
     ): EquivalenceResult? {
         val curve = EquivalenceEngine.curveFromSnapshot(snapshot) ?: return null
         val (axisRaw, mulActRaw) = curve
-        // Só lê: o alinhamento do livro à curva da ECU continua com a ponte e com os avisos do monitor nativo.
+        // O alinhamento do livro à curva da ECU roda aqui, no tique do serviço, sem depender de a tela estar aberta
+        // (antes só a ponte alinhava: com a tela fechada o GNV de uma curva antiga seguia valendo). Sem cabo não há curva viva.
+        if (ecuOnline) alignCurve(ledger, phases, mulActRaw)
         val reference = references.current()
         val provisional = if (reference == null) references.provisional(acquisition) else null
         val scale = gainScale(axisRaw.map { it / com.omegas.prohub.autocal.AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS })
@@ -105,7 +118,7 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
     /** JSON do último resultado (a ponte só lê; o cálculo já aconteceu no tique do serviço). */
     fun json(acquisition: JSONObject?): JSONObject = EquivalenceJson.result(
         last, references.current(), references.ecuDrift(acquisition), references.previous(),
-        ReferenceStore.pointsFrom(acquisition).isNotEmpty(),
+        ReferenceStore.pointsFrom(acquisition).isNotEmpty(), clock(),
     )
 
     fun flush() {

@@ -46,6 +46,14 @@ object AutoCalRecoveryPolicy {
                 nextActionCode = "WAIT_AND_REPREPARE",
                 nextAction = "Finalize a outra calibração. Depois revise a ação novamente na sessão atual.",
             )
+            // Cabo/USB sem quadro válido (timeout, eco, checksum) NÃO é recusa da ECU: não cai em ECU_ACK_MISSING.
+            "timeout" in value || "tempo esgot" in value || "sem resposta" in value ||
+                "eco divergente" in value || "checksum" in value || "resposta incompleta" in value -> Recovery(
+                reasonCode = "TRANSPORT_FAILURE",
+                retryable = true,
+                nextActionCode = "CHECK_CABLE_AND_REFRESH",
+                nextAction = "A comunicação com a ECU falhou (cabo/USB). Confira o cabo, releia o estado; não repita a mutação às cegas.",
+            )
             "readback" in value || "não persistiu" in value || "nao persistiu" in value ||
                 "não voltou" in value || "nao voltou" in value -> Recovery(
                 reasonCode = "READBACK_MISMATCH",

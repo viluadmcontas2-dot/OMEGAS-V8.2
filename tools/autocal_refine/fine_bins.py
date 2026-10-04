@@ -28,7 +28,7 @@ FINE_EDGES[-1] = GRID_HI_MS
 #: Leituras recentes guardadas por bin (reservatório): memória limitada, estatística robusta.
 RESERVOIR = 32
 #: Episódios que uma faixa de 18 precisa ter (= AutoMatchRefinedEngine.MIN_BAND_EPISODES).
-MIN_BAND_EPISODES = 3
+MIN_BAND_EPISODES = 1
 #: Bin com menos pares que isto não é evidência (= AutoMatchRefinedEngine.BAND_MATURE_COUNT).
 BIN_MATURE_COUNT = 3
 CONF_EPISODES_FULL = 6.0
@@ -270,5 +270,7 @@ def ledger_pairs(telemetry, gas_from=None, until_ms=None, ecu_ref=None):
             if tp is None:
                 continue
         if g["rpm"] >= DRIVING_MIN_RPM and tp >= TELEMETRY_MIN_MS:
-            out.append((tp, g["t"], g["episode"], ecu, g["rpm"], g["map"]))
-    return out
+            out.append((tp, g["t"], g["at"], ecu, g["rpm"], g["map"]))
+    # episódio = visita à faixa (lacuna >= 60 s entre pares da mesma faixa), como EvidencePairs.withVisitIds
+    ids = blind.visit_ids([(o[0], o[2]) for o in out])
+    return [(o[0], o[1], i, o[3], o[4], o[5]) for o, i in zip(out, ids)]

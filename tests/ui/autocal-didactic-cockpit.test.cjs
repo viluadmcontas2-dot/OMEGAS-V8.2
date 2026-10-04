@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
+const arCss = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-refino.css'), 'utf8');
 
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };
 context.globalThis = context;
@@ -102,7 +103,8 @@ const brokenZones = { fields: [{
 }] };
 assert.equal(model.zoneSurface(brokenZones, {}).length, 0, 'limiares não-monótonos falham fechado');
 assert.match(source, /data-autocal-zone-surface/, 'zona precisa estar marcada sobre a malha');
-assert.match(source, /AGORA · Z/, 'cursor precisa identificar sua zona no próprio gráfico');
+assert.match(source, /'AGORA'/, 'cursor curto: a zona fica na faixa de status, não no gráfico');
+assert.match(source, /id="autocalLiveZone"/, 'zona ao lado de MAP, Injeção e RPM');
 assert.equal(model.currentZone(currentZoneSnapshot, { mapBar: 0.85 }), 2,
   'MAP dentro da segunda zona deve orientar o operador como Z2');
 
@@ -207,15 +209,13 @@ assert.equal(typeof model.updateChartView, 'undefined', 'gráfico físico não p
 assert.equal(source.includes('data-autocal-chart-action="zoom-in"'), false);
 assert.equal(source.includes('data-autocal-chart-action="zoom-out"'), false);
 assert.equal(source.includes('data-autocal-chart-action="fit"'), false);
-assert.equal(source.includes('Petrol Inj. (ms)'), true, 'eixo X precisa manter unidade física');
+assert.equal(source.includes('Injeção (ms)'), true, 'eixo X precisa manter unidade física');
 assert.equal(source.includes('MAP (bar)'), true, 'eixo Y precisa manter unidade física');
 assert.equal(source.includes('data-autocal-history'), true, 'comparação com leitura anterior deve permanecer disponível');
 assert.equal(source.includes('data-autocal-toggle'), true);
 assert.equal(source.includes('data-autocal-band-index'), true);
-assert.equal(source.includes('autocalHumanTitle'), true);
-assert.equal(source.includes('autocalTechnicalDetails'), true);
-assert.equal(source.includes('id="autocalReferenceSource"'), true,
-  'fonte da referência deve existir somente no painel técnico existente');
+assert.equal(source.includes('id="autocalHumanAction"'), true, 'UMA frase humana de estado');
+assert.equal(source.includes('autocalTechnicalDetails'), false, 'detalhe técnico vai para a aba Diagnóstico');
 assert.match(source, /autocalReferenceSource[^\n]*referenceSourceLabel|referenceSourceLabel\(this\.projection\)/,
   'render deve expor a fonte selecionada pela projeção Kotlin');
 assert.equal(source.includes('AUTOMATCH ECU'), false);
@@ -241,12 +241,11 @@ assert.match(source, /data-current/,
   'zona física atual precisa ter estado visual AGORA');
 assert.match(css, /\.autocal-zone-cell\s*\{/,
   'mapa de zonas precisa de tratamento visual próprio');
-assert.equal(source.includes('autocal-band-legend'), true, 'estados das 18 faixas precisam de legenda visível');
 assert.equal(source.includes('autocal-review-tech'), true, 'metadados técnicos da ação crítica devem ficar sob demanda');
 assert.match(fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/components/curve-chart.js'), 'utf8'), /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
 assert.match(css, /\.autocal-zone-meter\s*\{/, 'zone meter premium precisa de estilo dedicado');
-assert.match(css, /\.autocal-inline-inspector\s*\{[^}]*font-size:\s*11px/s, 'inspector operacional não pode ficar microscópico');
-assert.match(css, /\.autocal-human-copy strong\s*\{[^}]*font-size:\s*13px/s, 'próxima ação precisa ser legível a distância');
+assert.match(arCss, /\.ar-readout\s*\{[^}]*font-size:\s*22px/s, 'a linha do ponto tocado é legível a distância');
+assert.match(arCss, /\.ar-sentence\s*\{[^}]*font-size:\s*24px/s, 'a frase de estado precisa ser legível a distância');
 
 
 console.log('AUTOCAL_DIDACTIC_COCKPIT=PASS');

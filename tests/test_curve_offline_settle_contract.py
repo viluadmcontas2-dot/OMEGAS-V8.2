@@ -10,7 +10,7 @@ def test_curve_failed_read_settles_instead_of_sticking_in_reading():
     assert "settleReadFailure(message)" in source
     assert "this.reading = false;" in source
     assert "this.root?.classList.remove('is-reading');" in source
-    assert "text('curveSourceStatus', 'Curva não confirmada');" in source
+    assert "text('curveSourceStatus', 'ECU não confirmada');" in source
     assert "if (this.reading && !operation.busy)" in source
     assert "operation.state !== 'COMPLETED' && !operation.demo" in source
     assert "this.settleReadFailure(failureText(operation, 'A leitura da Curva K não foi confirmada pela ECU.'));" in source

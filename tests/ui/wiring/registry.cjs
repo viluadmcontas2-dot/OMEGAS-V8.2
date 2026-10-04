@@ -43,29 +43,6 @@ defect('DEFECT-10', 'ECU conectada e muda (nenhum quadro) aparece como "Leitura 
 
 const probeApp = make => { const app = make(); return app; };
 
-// DEFECT-11: depois de uma gravação confirmada o botão "Gravar N ponto" e a lista "Pontos preparados" ficam OBSOLETOS:
-// botão ativo que não faz nada.
-defect('DEFECT-11', 'Curva K: após gravar OK o botão "Gravar 1 ponto" e a lista de pontos preparados ficam obsoletos (botão ativo que não faz nada)', () => {
-  const a = S.curveApp(); S.editPoint(a, 9); S.tapReview(a); a.settle(4);
-  const stale = !a.byId('curveReviewButton').hasAttribute('disabled') && /Gravar \d+ ponto/.test(a.byId('curveReviewButton').textContent);
-  a.destroy();
-  return stale;
-});
-// DEFECT-12: com a leitura falha/ausente os botões ±nudge e "Preparar este ponto" continuam ativos e não fazem nada.
-defect('DEFECT-12', 'Curva K: ±nudge e "Preparar este ponto" ficam ativos e mortos quando não há curva lida', () => {
-  const a = S.curveApp({ outcome: { curveRead: 'nack' } });
-  const live = !a.$('[data-curve-nudge="0.05"]').hasAttribute('disabled') && !a.byId('curvePreparePoint').hasAttribute('disabled');
-  a.destroy();
-  return live;
-});
-// DEFECT-13: depois de uma gravação com falha o gráfico continua desenhando a curva ANTIGA (pontos mortos) até reler manualmente.
-defect('DEFECT-13', 'Curva K: após falha de gravação o gráfico segue mostrando a curva antiga, com pontos que não respondem', () => {
-  const a = S.curveApp({ outcome: { curveWrite: 'partial' } }); S.editPoint(a, 9); S.tapReview(a); a.settle(4);
-  const dot = a.$('circle[data-curve-index="15"]');
-  const dead = !!dot && require('./lib.cjs').tap(a, dot).effect === 'none';
-  a.destroy();
-  return dead;
-});
 // DEFECT-14: toque duplo em Gravar (ECU ocupada) chama a ponte duas vezes: writePrepared não tem guarda.
 // DEFECT-16: o fator desconhecido de um ponto aparece como "0,0000" (curve.js finite(null) === 0).
 defect('DEFECT-16', 'Curva K: fator desconhecido (null) aparece como "0,0000" em vez de —', () => {
@@ -78,19 +55,6 @@ defect('DEFECT-16', 'Curva K: fator desconhecido (null) aparece como "0,0000" em
   const bad = /^0([,.]0+)?$/.test(a.byId('curveCurrentFactor').textContent.trim());
   a.destroy();
   return bad;
-});
-// DEFECT-17: toque duplo em "Gravar" do Mapa K (ECU ocupada) chama startMapBatchWrite duas vezes.
-defect('DEFECT-17', 'Mapa K: toque duplo em "Gravar" envia a escrita duas vezes (writePrepared sem guarda de ocupado)', () => {
-  const a = S.mapApp({ opPolls: 8 }); a.settle(12);
-  const cell = (r, c) => a.$(`.map-k-cell[data-row="${r}"][data-column="${c}"]`);
-  [[2, 3], [2, 4]].forEach(([r, c]) => { const e = cell(r, c); e.dispatchEvent(new a.win.Event('pointerdown', { bubbles: true, pointerId: 1 })); e.dispatchEvent(new a.win.Event('pointerup', { bubbles: true, pointerId: 1 })); e.click(); });
-  const mode = a.byId('mapAdjustmentMode'); mode.value = 'target'; mode.dispatchEvent(new a.win.Event('change', { bubbles: true }));
-  const input = a.byId('mapAdjustmentValue'); input.value = '150'; input.dispatchEvent(new a.win.Event('input', { bubbles: true }));
-  const mark = a.world.mark();
-  a.byId('mapReviewButton').click(); a.byId('mapReviewButton').click(); a.flush();
-  const n = a.world.since(mark).filter(c => c.method === 'startMapBatchWrite').length;
-  a.destroy();
-  return n > 1;
 });
 // DEFECT-18: eixo/valor desconhecido do Mapa K vira "0,0 ms" (map.js finite(null) === 0).
 defect('DEFECT-18', 'Mapa K: bin de Petrol Inj. desconhecido (null) aparece como "0,0 ms" em vez de —', () => {

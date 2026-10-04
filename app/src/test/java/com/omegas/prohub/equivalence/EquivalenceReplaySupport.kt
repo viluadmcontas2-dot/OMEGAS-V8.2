@@ -11,8 +11,13 @@ object EquivalenceReplaySupport {
         RealSessionReplaySupport.telemetry(RealSessionReplaySupport.fixture(name))
 
     /** Livro alimentado com os quadros da sessão que passam em [keep], na ordem gravada. */
-    fun ledger(name: String, keep: (RealSessionReplaySupport.Telemetry) -> Boolean = { true }): EquivalenceLedger {
+    fun ledger(
+        name: String, keep: (RealSessionReplaySupport.Telemetry) -> Boolean = { true }, curveSeq: Int? = null,
+    ): EquivalenceLedger {
         val ledger = EquivalenceLedger(null)
+        // Com [curveSeq] o livro já conhece a impressão digital da Curva K desse snapshot (como no app em uso): o GNV
+        // guardado vale para ela. Sem ela, o primeiro alinhamento descarta o GNV (curva desconhecida = falha fechada).
+        curveSeq?.let { ledger.alignCurve(EquivalenceLedger.fingerprint(curve(name, it).second)) }
         frames(name).filter(keep).forEach { ledger.accept(RealSessionReplaySupport.ledgerFrame(it)) }
         return ledger
     }

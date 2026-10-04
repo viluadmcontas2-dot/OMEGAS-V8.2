@@ -89,7 +89,7 @@ test('nomes antigos fora da UI: learning/Aprendizado, suggestion, V7 e comentár
 test('folhas de estilo estáticas e em ordem: tokens primeiro; pisos e acabamento do Lote F por último; cor só em tokens.css', () => {
   const links = [...read('index.html').matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1]);
   assert.equal(links[0], 'tokens.css');
-  assert.deepEqual(links.slice(-2), ['styles-floors.css', 'styles-lote-f.css']);
+  assert.deepEqual(links.slice(-4), ['styles-floors.css', 'styles-lote-f.css', 'styles-tela-agora-mapa-curva.css', 'styles-autocal-refino.css']);
   for (const sheet of ['styles-autocal-cockpit.css', 'styles-dashboard-now.css', 'styles-shell-status.css', 'styles-refine.css', 'styles-split-layout.css']) {
     assert.ok(links.indexOf(sheet) > 0 && links.indexOf(sheet) < links.indexOf('styles-floors.css'), `${sheet} antes dos pisos`);
   }
@@ -97,12 +97,12 @@ test('folhas de estilo estáticas e em ordem: tokens primeiro; pisos e acabament
   assert.doesNotMatch(lote, /#[0-9a-fA-F]{3,8}\b(?![^{}]*\{)|rgba?\(\s*\d|backdrop-filter|drop-shadow/);
 });
 
-test('pisos de texto e toque do Lote F: 16 px para microtexto, 24 px para valores e ações, 76 px de alvo, 44 px no gráfico e na grade', () => {
+test('pisos de texto e toque do Lote F: 16 px para microtexto, 22 px para valores e ações, 58 px de alvo, 44 px no gráfico e na grade', () => {
   const lote = read('styles-lote-f.css');
   const chart = read('components/curve-chart.js');
   assert.match(lote, /\.curve-chart-shared text \{ font-size: 16px/);
   assert.match(lote, /\.utility-screen :is\(small, span, p, dd, dt, li, label, em, i\) \{ font-size: 16px/);
-  assert.match(lote, /\.check-setting input\[type="checkbox"\][\s\S]*?inset: 0/, 'a caixa de marcar cobre o rótulo (>= 76 px)');
+  assert.match(lote, /\.check-setting input\[type="checkbox"\][\s\S]*?inset: 0/, 'a caixa de marcar cobre o rótulo (>= 58 px)');
   assert.match(chart, /class="autocal-acquired-hit"[^`]*r="22"/);
   assert.match(read('screens/curve.js'), /class="curve-point-hit"[^`]*r="24"/, 'ponto da Curva K: círculo invisível de 48 px');
   assert.match(lote, /grid-template-rows:\s*44px repeat\(12, minmax\(44px, 1fr\)\)/);
@@ -114,5 +114,5 @@ test('pisos de texto e toque do Lote F: 16 px para microtexto, 24 px para valore
 test('uma ação primária só: botão primário usa o accent; vermelho/âmbar só em perigo e atenção', () => {
   const lote = read('styles-lote-f.css');
   assert.match(lote, /\.primary,[\s\S]*?\.autocal-primary-action[\s\S]*?background:\s*var\(--accent\)/);
-  assert.match(read('screens/refino.js'), /class="primary">Gravar na ECU/, 'a revisão do Refino usa o estilo primário, não o vermelho de perigo');
+  assert.doesNotMatch(read('screens/refino.js'), /class="primary">Gravar na ECU|data-refino-confirm/, 'o Refino grava em um toque, sem modal de revisão');
 });

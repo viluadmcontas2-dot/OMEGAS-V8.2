@@ -23,21 +23,41 @@ class CalibrationOperationsBridge(activity: MainActivity) {
     companion object {
         const val JS_NAME = "OmegasCalibration"
         private const val OPERATION_TIMEOUT_MS = 15 * 60 * 1000L
+
+        // Fila, `busy` e último resultado vivem no PROCESSO, não na Activity: se o Android recriar a
+        // Activity no meio de uma gravação (tela, tema, central multimídia), a gravação não é
+        // interrompida e a Activity nova lê o mesmo resultado ("Gravado"/"parcial") em getLastOperation.
+        private val sharedExecutor = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "omegas-calibration-operations").apply { isDaemon = true }
+        }
+        private val sharedBusy = AtomicBoolean(false)
+        @Volatile private var sharedLastOperation = JSONObject()
+            .put("ok", true)
+            .put("state", "IDLE")
+            .put("busy", false)
+        /** Atualização da tela da Activity VIVA (a que está na frente), nunca da que foi destruída. */
+        @Volatile private var uiRefresher: (() -> Unit)? = null
     }
 
     private val activityRef = java.lang.ref.WeakReference(activity)
     private val activity: MainActivity? get() = activityRef.get()
-    private val executor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "omegas-calibration-operations").apply { isDaemon = true }
-    }
-    private val busy = AtomicBoolean(false)
-    @Volatile private var lastOperation = JSONObject()
-        .put("ok", true)
-        .put("state", "IDLE")
-        .put("busy", false)
+    private val executor get() = sharedExecutor
+    private val busy get() = sharedBusy
+    private var lastOperation: JSONObject
+        get() = sharedLastOperation
+        set(value) { sharedLastOperation = value }
+    private val ownRefresher: () -> Unit = { activityRef.get()?.refreshWebUi() }
 
+    init {
+        uiRefresher = ownRefresher
+    }
+
+    /**
+     * Chamado no onDestroy da Activity. NÃO encerra a fila: uma gravação em curso termina e o resultado
+     * fica guardado para a próxima Activity. Só deixa de empurrar atualização para a tela morta.
+     */
     fun destroy() {
-        executor.shutdownNow()
+        if (uiRefresher === ownRefresher) uiRefresher = null
     }
 
     @JavascriptInterface
@@ -86,6 +106,16 @@ class CalibrationOperationsBridge(activity: MainActivity) {
     fun startMapRestoreWrite(cellsJson: String, adjustmentId: String): String =
         startMapWrite(cellsJson, 0, 0, "Desfazer Mapa K $adjustmentId", adjustmentId)
 
+    /**
+     * "Liberar Mapa K" (toque do dono): a saída do K insertion não foi confirmada (cabo caiu / app fechou)
+     * e o Mapa K ficou travado. Manda a SAÍDA pela fila normal; só vira "Mapa K liberado" depois do ACK da
+     * ECU. Resultado legível em getLastOperation (`recovered`, `failureKind`).
+     */
+    @JavascriptInterface
+    fun startInsertionRecovery(): String = startOperation("INSERTION_RECOVERING") { service ->
+        service.recoverKInsertionState()
+    }
+
     @JavascriptInterface
     fun startCurveReset(): String {
         val currentActivity = activity ?: return unavailable()
@@ -118,9 +148,8 @@ class CalibrationOperationsBridge(activity: MainActivity) {
                 if (finalStatus == null) {
                     val started = JSONObject(service.startKFactorReset())
                     if (!started.optBoolean("ok") || !started.optBoolean("started")) {
-                        finalStatus = JSONObject(started.toString())
+                        finalStatus = withKind(JSONObject(started.toString()))
                             .put("state", "CURVE_RESET_FAILED")
-                            .put("failureKind", FailureKind.APP)
                     } else {
                         val deadline = System.currentTimeMillis() + OPERATION_TIMEOUT_MS
                         while (finalStatus == null) {
@@ -151,10 +180,13 @@ class CalibrationOperationsBridge(activity: MainActivity) {
                                 .put("startedAt", startedAt)
                             when {
                                 writerState == "RESET_CONFIRMED" -> {
+                                    // Só existe quando a leitura já mostrou a curva neutra: nada foi gravado.
+                                    // A tela diz "Nada a gravar", nunca "Gravado".
                                     finalStatus = JSONObject(status.toString())
                                         .put("ok", true)
                                         .put("state", "BATCH_CONFIRMED")
                                         .put("readbackValid", true)
+                                        .put("nothingToChange", true)
                                 }
                                 writerState == "BATCH_CONFIRMED" && details.optBoolean("readbackValid", false) -> {
                                     finalStatus = JSONObject(status.toString())
@@ -195,7 +227,7 @@ class CalibrationOperationsBridge(activity: MainActivity) {
                 .put("state", if (confirmed) "BATCH_CONFIRMED" else "CURVE_RESET_FAILED")
                 .put("readbackValid", confirmed)
                 .put("completedAt", System.currentTimeMillis())
-            refreshUi(currentActivity)
+            refreshUi()
         }
         if (!accepted) return executorClosed()
 
@@ -258,9 +290,8 @@ class CalibrationOperationsBridge(activity: MainActivity) {
                 if (finalStatus == null) {
                     val started = JSONObject(service.startKFactorWrite(points.toString(), reason, restoreFile))
                     if (!started.optBoolean("ok") || !started.optBoolean("started")) {
-                        finalStatus = JSONObject(started.toString())
+                        finalStatus = withKind(JSONObject(started.toString()))
                             .put("state", "CURVE_WRITE_FAILED")
-                            .put("failureKind", FailureKind.APP)
                     } else {
                         val deadline = System.currentTimeMillis() + OPERATION_TIMEOUT_MS
                         while (finalStatus == null) {
@@ -317,7 +348,7 @@ class CalibrationOperationsBridge(activity: MainActivity) {
                     .put("startedAt", startedAt)
                     .put("finishedAt", System.currentTimeMillis())
             }
-            refreshUi(currentActivity)
+            refreshUi()
         }
         if (!accepted) return executorClosed()
         return JSONObject()
@@ -352,7 +383,8 @@ class CalibrationOperationsBridge(activity: MainActivity) {
         }
         val plan = try {
             MapBatchPlan.build(cells)
-        } catch (error: IllegalArgumentException) {
+        } catch (error: Exception) {
+            // IllegalArgumentException (lote inválido) e JSONException (item malformado): nunca derruba a ponte.
             return JSONObject().put("ok", false).put("error", error.message ?: "Lote inválido").toString()
         }
         if (!busy.compareAndSet(false, true)) {
@@ -418,8 +450,7 @@ class CalibrationOperationsBridge(activity: MainActivity) {
                         JSONObject().put("ok", false).put("error", error.message ?: "Falha ao iniciar lote K")
                     }
                     if (!started.optBoolean("ok") || !started.optBoolean("started")) {
-                        failure = JSONObject(started.toString())
-                            .put("failureKind", FailureKind.APP)
+                        failure = withKind(JSONObject(started.toString()))
                             .put("chunk", chunkIndex + 1)
                             .put("chunks", plan.chunks.size)
                         return@forEachIndexed
@@ -530,7 +561,7 @@ class CalibrationOperationsBridge(activity: MainActivity) {
                     .put("error", failed.optString("error", failed.optString("message", "")))
                     .put("failure", failed)
             }
-            refreshUi(currentActivity)
+            refreshUi()
         }
         if (!accepted) return executorClosed()
 
@@ -598,8 +629,8 @@ class CalibrationOperationsBridge(activity: MainActivity) {
         false
     }
 
-    private fun refreshUi(target: MainActivity) {
-        try { target.refreshWebUi() } catch (_: Throwable) {}
+    private fun refreshUi() {
+        try { uiRefresher?.invoke() } catch (_: Throwable) {}
     }
 
     internal fun startOperation(
@@ -623,7 +654,8 @@ class CalibrationOperationsBridge(activity: MainActivity) {
             .put("startedAt", startedAt)
         val accepted = launch("FAILED", startedAt) {
             val result = try {
-                JSONObject(action(service))
+                val raw = JSONObject(action(service))
+                if (raw.optBoolean("ok")) raw else withKind(raw)
             } catch (error: Throwable) {
                 JSONObject().put("ok", false)
                     .put("failureKind", FailureKind.of(error))
@@ -634,7 +666,7 @@ class CalibrationOperationsBridge(activity: MainActivity) {
                 .put("busy", false)
                 .put("startedAt", startedAt)
                 .put("finishedAt", System.currentTimeMillis())
-            refreshUi(currentActivity)
+            refreshUi()
         }
         if (!accepted) return executorClosed()
         return JSONObject()
@@ -643,6 +675,14 @@ class CalibrationOperationsBridge(activity: MainActivity) {
             .put("state", state)
             .put("startedAt", startedAt)
             .toString()
+    }
+
+    /** Falha sem origem declarada: classifica pela mensagem (cabo/USB × ECU × app). Transporte nunca vira "ECU recusou". */
+    private fun withKind(failure: JSONObject): JSONObject {
+        if (failure.optString("failureKind").isBlank()) {
+            failure.put("failureKind", FailureKind.ofMessage(failure.optString("error", failure.optString("message", ""))))
+        }
+        return failure
     }
 
     private fun executorClosed(): String = JSONObject()

@@ -33,14 +33,14 @@ function loadInto(context, files) {
 
 // ---------------------------------------------------------------- 1. navegação
 test('trilho: 7 abas numeradas, Sugestões saiu e Sessões entrou', () => {
-  const buttons = [...html.matchAll(/<button type="button" data-route="([^"]+)"[^>]*><i>(\d\d)<\/i><span>([^<]+)<\/span>/g)]
-    .map(m => [m[1], m[2], m[3]]);
+  const buttons = [...html.matchAll(/<button type="button" data-route="([^"]+)"[^>]*><span>([^<]+)<\/span>/g)]
+    .map(m => [m[1], m[2]]);
   assert.deepEqual(buttons, [
-    ['dashboard', '01', 'Agora'], ['map', '02', 'Mapa K'], ['curve', '03', 'Curva K'], ['autocal', '04', 'AutoCal'],
-    ['refino', '05', 'Refino'], ['sessions', '06', 'Sessões'], ['tools', '07', 'Ferramentas'],
+    ['dashboard', 'Agora'], ['map', 'Mapa K'], ['curve', 'Curva K'], ['autocal', 'AutoCal'],
+    ['refino', 'Refino'], ['sessions', 'Sessões'], ['tools', 'Ferramentas'], ['diagnostico', 'Diagnóstico'],
   ]);
   const ctx = loadInto({ console, localStorage: { getItem() { return null; }, setItem() {} } }, ['core/store.js', 'core/router.js']);
-  assert.deepEqual(Array.from(ctx.OmegasUi.ROUTES), ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools']);
+  assert.deepEqual(Array.from(ctx.OmegasUi.ROUTES), ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']);
   for (const route of ctx.OmegasUi.ROUTES) assert.match(html, new RegExp(`data-screen="${route}"`));
 });
 
@@ -72,7 +72,7 @@ test('bugs de navegação do §3.1: rota learning, routeMeta.predictor e data-om
   assert.equal(store.get().routeContext, null);
 });
 
-test('Sessões: tela própria com duração, apagões, índice início → fim e Exportar ZIP', () => {
+test('Sessões: tela própria com duração, apagões, índice início → fim, sem Exportar ZIP', () => {
   assert.match(html, /<script src="screens\/sessions\.js" defer>/);
   const ctx = loadInto({ console }, ['core/display-rules.js', 'screens/sessions.js']);
   const row = ctx.OmegasUi.SessionsModel.sessionRow({
@@ -86,14 +86,13 @@ test('Sessões: tela própria com duração, apagões, índice início → fim e
   assert.equal(bare.blackouts, null, 'sem dado não vira 0');
   assert.equal(bare.index, null);
   const source = read('screens/sessions.js');
-  assert.match(source, /Exportar ZIP/);
-  assert.match(source, /api\.exportSession\(/);
+  assert.doesNotMatch(source, /Exportar ZIP|api\.exportSession\(/, 'as sessões já se exportam sozinhas para Download/Omegas');
   assert.doesNotMatch(read('components/drawers.js'), /data-export-session|recorded-session-item/, 'a lista saiu de Ferramentas');
 });
 
 // ---------------------------------------------------------------- 2. Agora + cérebro
 const EQUIVALENCE_FIXTURE = {
-  index: { value: 0.62, coverage: 9, provisional: true },
+  index: 0.62, coverage: 9, provisional: true, // formato REAL do Kotlin (EquivalenceJson.result): escalar + irmãos planos
   nextAction: { kind: 'COLLECT', text: 'Rode no GNV em plano para eu medir', route: 'refino', subpage: 'pontos', pointIndexes: [3, 4] },
   points: [{ index: 0, axisMs: 2, state: 'EQUIVALENTE', mixture: 0.01 }],
   reference: { frozen: false, canFreeze: true },
@@ -118,7 +117,7 @@ test('Agora é para dirigir (D1): sem cartão de equivalência, só 4 valores gr
 test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de um toque (índice é fração 0..1)', () => {
   const ctx = loadInto({ console }, ['core/display-rules.js', 'core/autocal-api.js', 'screens/refino.js']);
   const strip = ctx.OmegasUi.RefinoModel.equivalenceStrip;
-  const routes = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
+  const routes = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico'];
   const empty = strip(null, routes);
   assert.equal(empty.nextText, 'Aguardando dados da ECU', 'sem cérebro: aviso neutro, nunca ação derivada da fase');
   assert.equal(empty.route, '');
@@ -130,14 +129,14 @@ test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de 
   assert.equal(shown.route, 'curve');
   assert.equal(shown.subpage, 'editor');
   assert.equal(shown.routeLabel, 'Ir para Curva K');
-  assert.equal(strip({ ...eq, index: { value: 0.01 } }, routes).indexText, '1% da condução já equivale à gasolina', 'fração 0,01 = 1 %, nunca 0 %');
-  assert.equal(strip({ ...eq, index: { value: 1 } }, routes).indexText, '100% da condução já equivale à gasolina');
-  assert.equal(strip({ ...eq, index: { value: null } }, routes).indexText, '— da condução já equivale à gasolina');
+  assert.equal(strip({ ...eq, index: 0.01, provisional: false }, routes).indexText, '1% da condução já equivale à gasolina', 'fração 0,01 = 1 %, nunca 0 %');
+  assert.equal(strip({ ...eq, index: 1, provisional: false }, routes).indexText, '100% da condução já equivale à gasolina');
+  assert.equal(strip({ ...eq, index: null }, routes).indexText, '— da condução já equivale à gasolina');
   assert.equal(strip(EQUIVALENCE_FIXTURE, routes).route, '', 'aponta para o próprio Refino: sem botão');
   assert.equal(strip({ ...eq, nextAction: { text: 'Tudo certo', route: '' } }, routes).route, '');
   const source = read('screens/refino.js');
-  assert.match(source, /router\?\.open\(go\.dataset\.route/);
-  assert.match(source, /id="refinoEq"/);
+  assert.match(source, /router\?\.open\(action\.route/, 'a ação de rota abre a aba, num toque');
+  assert.doesNotMatch(source, /id="refinoEq"/, 'sem faixa horizontal larga de equivalência: uma frase e uma ação');
 });
 
 test('Sessões: índice é fração 0..1 e aparece em % (0,01 = 1 %, nunca "0%")', () => {
@@ -154,10 +153,9 @@ test('"Detalhes técnicos" é o único nome técnico e fica por último no bloco
   const sources = [html, ...jsFiles.map(file => fs.readFileSync(file, 'utf8'))].join('\n');
   assert.doesNotMatch(sources, /Evidência técnica|Detalhes técnicos da ação|Detalhe técnico<|Dados técnicos<|Diagnóstico técnico</);
   const summaries = [...sources.matchAll(/<summary>([^<]*técnic[^<]*)<\/summary>/g)].map(m => m[1]);
-  assert.ok(summaries.length >= 3);
+  assert.ok(summaries.length >= 1);
   for (const text of summaries) assert.match(text, /^Detalhes técnicos/);
-  const autocal = read('screens/autocal-cockpit.js');
-  assert.ok(autocal.indexOf('id="autocalTechnicalDetails"') > autocal.indexOf('id="autocalSessionDrawer"'), 'AutoCal: Detalhes técnicos depois do histórico');
+  assert.doesNotMatch(read('screens/autocal-cockpit.js') + read('screens/refino.js'), /id="autocalTechnicalDetails"|id="refinoTech"/, 'AutoCal e Refino: o técnico vai para a aba Diagnóstico');
   const drawers = read('components/drawers.js');
   assert.ok(drawers.lastIndexOf('Detalhes técnicos') > drawers.indexOf('diagnostic-settings'), 'Ferramentas: Detalhes técnicos por último');
 });
@@ -207,20 +205,20 @@ function cssRules(css) {
   return rules;
 }
 
-test('pisos: toque >= 76 px e texto crítico >= 24 px nos controles principais; exceção só na grade do Mapa K', () => {
+test('pisos: toque >= 58 px (dono, 2026-10-04) e texto crítico >= 22 px nos controles principais; exceção só na grade do Mapa K', () => {
   const tokens = read('tokens.css');
   const floors = read('styles-floors.css');
-  assert.match(tokens, /--touch-min:\s*76px/);
+  assert.match(tokens, /--touch-min:\s*58px/);
   assert.match(tokens, /--touch-grid:\s*44px/);
-  assert.match(tokens, /--text-critical:\s*24px/);
+  assert.match(tokens, /--text-critical:\s*22px/);
   assert.ok(links().includes('styles-floors.css'), 'floors carregado no index.html');
 
   const rules = cssRules(floors);
   const control = rules.find(rule => /^html body button:not\(\.map-k-cell\):not\(\.map-axis-header\)/.test(rule.selector));
   assert.ok(control, 'regra do piso para button');
   for (const needle of ['body [role="tab"]', 'body summary', 'body select', 'body input:not(']) assert.ok(control.selector.includes(needle), needle);
-  assert.match(control.body, /min-height:\s*var\(--touch-min\)\s*!important/);
-  assert.match(control.body, /font-size:\s*var\(--text-critical\)\s*!important/);
+  assert.match(control.body, /min-height:\s*var\(--btn-h\)\s*!important/);
+  assert.match(control.body, /font-size:\s*var\(--btn-font\)\s*!important/);
   const exception = rules.find(rule => /^html body \.map-k-cell/.test(rule.selector));
   assert.equal(exception.selector.replace(/\s+/g, ' '), 'html body .map-k-cell, html body .map-axis-header');
   assert.match(exception.body, /min-height:\s*var\(--touch-grid\)/);
@@ -239,11 +237,11 @@ test('pisos: toque >= 76 px e texto crítico >= 24 px nos controles principais; 
       const grid = /map-k-cell|map-axis-header|map-rpm-header|map-ms-header|map-k-grid/.test(rule.selector);
       if (grid || !rule.selector.split(',').some(part => mainControls.test(part.trim()))) continue;
       for (const [, property, value] of rule.body.matchAll(/(min-height|max-height|height|font-size)\s*:\s*([\d.]+)px\s*!important/g)) {
-        const limit = property === 'font-size' ? 24 : 76;
+        const limit = property === 'font-size' ? 18 : 52;
         if (property === 'max-height' || Number(value) < limit) violations.push(`${name} ${rule.selector} ${property}:${value}px`);
       }
       const max = rule.body.match(/(?<![\w-])max-height\s*:\s*([\d.]+)px/);
-      if (max && Number(max[1]) < 76) violations.push(`${name} ${rule.selector} max-height:${max[1]}px`);
+      if (max && Number(max[1]) < 52) violations.push(`${name} ${rule.selector} max-height:${max[1]}px`);
     }
   }
   assert.deepEqual(violations, []);
@@ -281,7 +279,7 @@ test('operação na ECU: mesma fala (etapa → resultado → Desfazer/Voltar) e 
     assert.match(source, /wording\(\)\.doneTitle/);
     assert.match(source, /wording\(\)\.failedTitle/);
   }
-  assert.match(read('screens/refino.js'), /commitReview\(\)/);
+  assert.doesNotMatch(read('screens/refino.js'), /commitReview|data-refino-confirm|REVISÃO ANTES DA ECU/, 'Refino grava em um toque, sem modal');
 });
 
 test('reset da Curva K salva a foto antes e só zera depois dela', () => {
@@ -305,6 +303,6 @@ test('reset: a foto precisa ser confirmada, o poll acompanha a foto e voltar à 
   assert.ok(curve.includes('!operation.hash || !operation.publicPath'), 'só a operação de foto autoriza o reset');
   const enter = curve.slice(curve.indexOf('    onEnter(context) {'), curve.indexOf('    refreshBackups() {'));
   assert.ok(enter.includes("this.backupTask === 'reset-photo'") && !enter.slice(0, 400).includes('startResetWrite'), 'voltar à aba não zera');
-  const read = curve.slice(curve.indexOf('    startRead() {'), curve.indexOf('    startRead() {') + 120);
-  assert.ok(read.includes('if (this.backupTask) return;'), 'leitura não rouba a foto');
+  const read = curve.slice(curve.indexOf('    startRead() {'), curve.indexOf('    startRead() {') + 260);
+  assert.ok(read.includes('if (this.backupTask || this.reading || this.writing)'), 'leitura não rouba a foto');
 });

@@ -67,7 +67,16 @@ TELEMETRY_ONLY_BAND_PAIRS = 8
 TELEMETRY_ONLY_MIN_BANDS = 3
 # Cobertura por EPISÓDIO (trecho de condução separado por > 3 s): uma faixa só puxa proposta com pares
 # de pelo menos MIN_BAND_EPISODES episódios distintos (8 pares de um único trecho são um só acaso).
-MIN_BAND_EPISODES = 3
+MIN_BAND_EPISODES = 1        # sem portão por contagem de trechos; episódio = bloco de janelas sobrepostas (VISIT_GAP_MS = 3 s)
+EPISODE_PAIR_CAP = 4         # um (faixa, episódio) vale no máximo 4 pares
+TELEMETRY_BAND_WEIGHT_CAP = BAND_FULL_COUNT * TELEMETRY_WEIGHT   # teto de peso da telemetria por faixa do livro
+NATIVE_COVERED_GAIN = 0.5    # a telemetria não move ponto que a nativa madura já cobre
+DEAD_BAND_LOG = math.log(1.04)   # erro de evidência abaixo disto: o nó não se move (= EquivalenceTolerances.MIN)
+DEAD_BAND_MIN_EVIDENCE = 0.1
+REGRESSION_EPS = 1e-4        # proposta que piora o critério do motor nunca sai
+INTERIOR_SLICES = 3          # faixa grossa precisa de pares em >= 2 de 3 terços internos, >= 2 pares cada
+INTERIOR_MIN_SLICES = 2
+INTERIOR_MIN_PAIRS = 2
 # Histerese de proposta: ponto cujo passo proposto fica abaixo disto é MANTIDO (evita o vai-e-vem de ruído).
 # O motor só aplica quando o chamador pede (hold_log); a ponte de produção passa HOLD_MIN_STEP_LOG.
 HOLD_MIN_STEP_LOG = math.log(1.035)
@@ -511,14 +520,14 @@ def inverse_first(target, xs, ys):
 
 # --------------------------------------------------------------- motor
 
-def telemetry_targets(pairs, axis_ms, k_old):
-    """Pares (t_gasolina_ref, t_no_gnv) medidos no mesmo RPM×MAP → alvos de K."""
+def telemetry_targets(pairs, axis_ms, k_old, weights=None):
+    """Pares (t_gasolina_ref, t_no_gnv) medidos no mesmo RPM×MAP → alvos de K. [weights] = fator por par (episódio)."""
     out = []
-    for tp, tg in pairs or []:
+    for i, (tp, tg) in enumerate(pairs or []):
         if tp < TELEMETRY_MIN_MS or tg <= 0 or tp > axis_ms[-1]:
             continue
         out.append({
-            "map": None, "tp": tp, "tg": tg, "w": TELEMETRY_WEIGHT, "ratio": tg / tp,
+            "map": None, "tp": tp, "tg": tg, "w": TELEMETRY_WEIGHT * (weights[i] if weights else 1.0), "ratio": tg / tp,
             "y": math.log(interp(tg, axis_ms, k_old) * tg / tp), "source": "TELEMETRIA",
         })
     return out
@@ -532,31 +541,116 @@ def ledger_band(tp):
     return len(LEDGER_BANDS) if tp >= LEDGER_BANDS[-1][1] else None
 
 
-def plausible_pairs(pairs, episodes=None):
-    """Descarta faixa inteira cuja razão mediana GNV/gasolina é implausível, faixa fina (< 3 pares) e,
-    quando os episódios são conhecidos, faixa com menos de MIN_BAND_EPISODES episódios distintos.
+def interior_covered(tps, lo, hi):
+    """Pares em >= INTERIOR_MIN_SLICES de INTERIOR_SLICES terços da faixa, >= INTERIOR_MIN_PAIRS cada (EvidencePairs.interiorCovered)."""
+    width = (hi - lo) / INTERIOR_SLICES
+    counts = [0] * INTERIOR_SLICES
+    for tp in tps:
+        if lo <= tp < hi:
+            counts[min(max(int((tp - lo) / width), 0), INTERIOR_SLICES - 1)] += 1
+    return sum(1 for c in counts if c >= INTERIOR_MIN_PAIRS) >= INTERIOR_MIN_SLICES
 
-    [episodes] é paralelo a [pairs] (id < 0 = desconhecido; qualquer desconhecido desliga o portão).
-    Retorna (pares_validos, faixas_outlier). Espelho de AutoMatchRefinedEngine.plausiblePairs."""
-    known = episodes is not None and len(episodes) == len(pairs) and all(e >= 0 for e in episodes)
+
+def _interior_ok(band, tps):
+    if band >= len(LEDGER_BANDS):
+        return True  # faixa de cauda
+    lo, hi = LEDGER_BANDS[band]
+    return interior_covered(tps, lo, hi)
+
+
+def plausible_indices(pairs, episodes=None):
+    """Descarta a faixa inteira cuja razão mediana GNV/gasolina é implausível, faixa fina (< 3 pares), faixa sem
+    cobertura interna e, quando há episódios, faixa com menos de MIN_BAND_EPISODES episódios distintos. Par de
+    episódio desconhecido (< 0) sai sozinho (não desliga o portão das outras faixas).
+    Retorna (índices_mantidos, faixas_outlier). Espelho de AutoMatchRefinedEngine.plausibleIndices."""
+    gated = episodes is not None and len(episodes) == len(pairs)
     groups = {}
     for i, (tp, tg) in enumerate(pairs):
-        groups.setdefault(ledger_band(tp), []).append((tp, tg, episodes[i] if known else -1))
-    kept, outliers = [], 0
-    for band in sorted(g for g in groups if g is not None):
-        full = groups[band]
-        group = [(tp, tg) for tp, tg, _ in full]
-        if known and len({e for _, _, e in full}) < MIN_BAND_EPISODES:
+        band = ledger_band(tp)
+        if band is None or (gated and episodes[i] < 0):
             continue
-        ratios = sorted(tg / tp for tp, tg in group)
+        groups.setdefault(band, []).append(i)
+    kept, outliers = [], 0
+    for band in sorted(groups):
+        group = groups[band]
+        if gated and len({episodes[i] for i in group}) < MIN_BAND_EPISODES:
+            continue
+        ratios = sorted(pairs[i][1] / pairs[i][0] for i in group)
         median = ratios[len(ratios) // 2]
         if not (TELEMETRY_RATIO_MIN <= median <= TELEMETRY_RATIO_MAX):
             outliers += 1
             continue
-        if len(group) < BAND_MATURE_COUNT:
+        if len(group) < BAND_MATURE_COUNT or not _interior_ok(band, [pairs[i][0] for i in group]):
             continue
         kept.extend(group)
-    return kept, outliers
+    return sorted(kept), outliers
+
+
+def plausible_pairs(pairs, episodes=None):
+    kept, outliers = plausible_indices(pairs, episodes)
+    return [pairs[i] for i in kept], outliers
+
+
+def pair_weights(pairs, episodes):
+    """Fator de peso por par: um (faixa, episódio) vale no máximo EPISODE_PAIR_CAP pares. Sem episódios = 1."""
+    if episodes is None or len(episodes) != len(pairs):
+        return [1.0] * len(pairs)
+    counts = {}
+    for (tp, _tg), e in zip(pairs, episodes):
+        counts[(ledger_band(tp), e)] = counts.get((ledger_band(tp), e), 0) + 1
+    return [min(1.0, EPISODE_PAIR_CAP / counts[(ledger_band(tp), e)]) for (tp, _tg), e in zip(pairs, episodes)]
+
+
+def cap_band_weight(targets):
+    """Teto de peso total da telemetria por faixa do livro (reduz na mesma proporção)."""
+    sums = {}
+    for t in targets:
+        b = ledger_band(t["tp"])
+        if b is not None:
+            sums[b] = sums.get(b, 0.0) + t["w"]
+    out = []
+    for t in targets:
+        b = ledger_band(t["tp"])
+        total = sums.get(b, 0.0) if b is not None else 0.0
+        out.append(dict(t, w=t["w"] * TELEMETRY_BAND_WEIGHT_CAP / total) if total > TELEMETRY_BAND_WEIGHT_CAP else t)
+    return out
+
+
+def gain_of(observations):
+    """Ganho por nó (0..1): massa espalhada 0,25/0,5/0,25 sobre EVIDENCE_REF."""
+    evidence = [0.0] * POINT_COUNT
+    for o in observations:
+        for j, a in o["a"]:
+            evidence[j] += o["w"] * a
+    out = []
+    for j in range(POINT_COUNT):
+        sp = 0.0
+        for k, kern in ((j - 1, 0.25), (j, 0.5), (j + 1, 0.25)):
+            if 0 <= k < POINT_COUNT:
+                sp += kern * evidence[k]
+        out.append(min(1.0, sp / EVIDENCE_REF))
+    return out
+
+
+def dead_band_nodes(observations, evidence, axis_ms, k_old):
+    """Nós cujo erro de evidência (média ponderada de ln K(ms) − ln K_alvo dos alvos que o tocam) já cabe em DEAD_BAND_LOG
+    E cujo K atual é coerente com os vizinhos (|Δ ln K/Δ ln t| <= E_MAX): K incoerente continua podendo ser reparado."""
+    u = [math.log(t) for t in axis_ms]
+    x = [math.log(k) for k in k_old]
+    coherent = [True] * POINT_COUNT
+    for j in range(POINT_COUNT - 1):
+        if abs(x[j + 1] - x[j]) > E_MAX * (u[j + 1] - u[j]) + 1e-9:
+            coherent[j] = coherent[j + 1] = False
+    num = [0.0] * POINT_COUNT
+    den = [0.0] * POINT_COUNT
+    for o in observations:
+        ms = sum(a * axis_ms[j] for j, a in o["a"])
+        diff = math.log(interp(ms, axis_ms, k_old)) - o["y"]
+        for j, a in o["a"]:
+            num[j] += o["w"] * a * diff
+            den[j] += o["w"] * a
+    return {j for j in range(POINT_COUNT)
+            if coherent[j] and evidence[j] >= DEAD_BAND_MIN_EVIDENCE and den[j] > 0.0 and abs(num[j] / den[j]) <= DEAD_BAND_LOG}
 
 
 def telemetry_covers(pairs):
@@ -716,6 +810,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
     petrol_raw = [raw(snapshot, k) for k in ("PETR_INJ_TBUF", "MNFLD_PRESS_BUF", "NUM_BUF_UPD_PETR")]
     gas_raw = [raw(snapshot, k) for k in ("PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS", "NUM_BUF_UPD_GAS")]
     targets, rejected, petrol, gas = [], [], [], []
+    dropped_native = 0
     stats = {}
     if all(v is not None for v in petrol_raw + gas_raw):
         petrol, rp = monotone_fit(band_points(*petrol_raw, stats=stats))
@@ -740,14 +835,29 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         raw_eps = list(telemetry_episodes) if telemetry_episodes is not None and len(telemetry_episodes) == len(raw_pairs) else None
         keep = [i for i, (tp, tg) in enumerate(raw_pairs) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
         candidate = [raw_pairs[i] for i in keep]
-        usable, outlier_bands = plausible_pairs(candidate, [raw_eps[i] for i in keep] if raw_eps is not None else None)
+        cand_eps = [raw_eps[i] for i in keep] if raw_eps is not None else None
+        kept_idx, outlier_bands = plausible_indices(candidate, cand_eps)
+        usable = [candidate[i] for i in kept_idx]
+        usable_w = pair_weights(usable, [cand_eps[i] for i in kept_idx] if cand_eps is not None else None)
         # A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
         telemetry_only = (not native_equivalence) and telemetry_covers(usable)
         equivalence_available = native_equivalence or telemetry_only
         if telemetry_only:
             targets = []  # faixas nativas imaturas não entram: só a medição própria
         if equivalence_available and usable:
-            targets = targets + telemetry_targets(usable, axis_ms, k_old)
+            telemetry = cap_band_weight(telemetry_targets(usable, axis_ms, k_old, usable_w))
+            # A nativa madura cobre o ponto: a telemetria não o move.
+            if native_equivalence and targets:
+                native_gain = gain_of([{"a": axis_weights(t["tp"], axis_ms), "y": t["y"], "w": t["w"]} for t in targets])
+                kept_tel = []
+                for t in telemetry:
+                    nodes = axis_weights(t["tp"], axis_ms)
+                    dominant = max(nodes, key=lambda na: (na[1], -na[0]))[0]
+                    if native_gain[dominant] < NATIVE_COVERED_GAIN:
+                        kept_tel.append(t)
+                dropped_native = len(telemetry) - len(kept_tel)
+                telemetry = kept_tel
+            targets = targets + telemetry
 
     observations = []
     if equivalence_available:
@@ -766,6 +876,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
     gain = [min(1.0, s / EVIDENCE_REF) for s in spread]
     out_of_range = sum(1 for x in x0 if x < math.log(MIN_FACTOR) - 1e-12 or x > math.log(MAX_FACTOR) + 1e-12)
     e_eff = E_MAX
+    dead_band = 0
     if equivalence_available:
         # Peso do K atual cai continuamente com a evidência: o ganho proporcional
         # nasce do próprio balanço evidência × K atual, sem degraus entre nós.
@@ -775,7 +886,9 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
             t["robustWeight"] = round(r, 4)
         if point_gain_scale is not None and len(point_gain_scale) == POINT_COUNT:
             fitted = [x0[j] + point_gain_scale[j] * (fitted[j] - x0[j]) for j in range(POINT_COUNT)]
-        box = proposal_box(x0, gain)
+        fixed = dead_band_nodes(observations, evidence, axis_ms, k_old)
+        dead_band = len(fixed)
+        box = [(x0[j], x0[j]) if j in fixed else b for j, b in enumerate(proposal_box(x0, gain))]
         e_eff = effective_elasticity(box, u)
         final = enforce_coherence(fitted, box, u, e_eff)
         # Histerese: ponto cujo passo proposto fica abaixo do limiar é ruído; fica exatamente como está,
@@ -807,6 +920,15 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         else:
             origins.append("HELD")
             out_raw[j] = k_raw[j]  # sem evidência e sem anomalia: preserva o valor gravado
+    # Proposta que piora o critério do próprio motor (erro ponderado contra TODOS os alvos usados) nunca sai.
+    regression = False
+    if equivalence_available and targets:
+        err_before = evidence_error(targets, axis_ms, k_old)
+        err_after = evidence_error(targets, axis_ms, [r / Q14 for r in out_raw])
+        if err_before is not None and err_after is not None and err_after > err_before + REGRESSION_EPS:
+            regression = True
+            out_raw = list(k_raw)
+            origins = ["HELD"] * POINT_COUNT
     out_factors = [r / Q14 for r in out_raw]
     if not equivalence_available:
         mature_targets = []
@@ -828,6 +950,9 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         "thinBandsIgnored": stats.get("thin", 0),
         "telemetryOutlierBands": outlier_bands,
         "telemetryPairsUsed": len(usable) if equivalence_available else 0,
+        "telemetryDroppedByNative": dropped_native,
+        "deadBandPoints": dead_band,
+        "regressionBlocked": regression,
         "outOfRangePoints": out_of_range,
         "axisMs": axis_ms,
         "currentRaw": k_raw,

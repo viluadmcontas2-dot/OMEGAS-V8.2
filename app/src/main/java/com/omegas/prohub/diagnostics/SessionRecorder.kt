@@ -152,6 +152,8 @@ class SessionRecorder(
         } catch (error: Exception) {
             recording = false
             lastError = error.message ?: error.javaClass.simpleName
+            // Não deixa escritor meio aberto: a próxima tentativa (monitor do serviço) parte do zero.
+            try { closeWriter() } catch (_: Exception) {}
             JSONObject().put("ok", false).put("error", lastError)
         }
     }
@@ -170,6 +172,13 @@ class SessionRecorder(
             syncDocumentsMirror(force = true)
             statusObject().put("ok", true)
         }
+    }
+
+    /** Verdadeiro se um `full_snapshot` não forçado entraria agora: quem monta o JSON pesado pergunta antes. */
+    fun shouldRecordFullSnapshot(): Boolean {
+        if (!recording) return false
+        val every = settings.sessionFullSnapshotEveryMs
+        return every > 0L && System.currentTimeMillis() - lastSnapshotAt >= every
     }
 
     fun record(type: String, source: String, data: JSONObject, force: Boolean = false) {
@@ -434,8 +443,9 @@ class SessionRecorder(
 
     fun recoverDocumentsMirrorAsync() {
         if (documentsMirror == null) return
-        if (worker.isShutdown) return
-        worker.execute {
+        // Fila de PUBLICAÇÃO (não o worker de eventos): publicar ZIPs demora e travava a gravação de eventos novos.
+        if (publisher.isShutdown) return
+        try { publisher.execute {
             paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
                 ?.sortedBy { it.lastModified() }
                 ?.forEach { dir ->
@@ -447,7 +457,7 @@ class SessionRecorder(
                         publishParts(dir, dir.name, final = true)
                     } catch (_: Exception) {}
                 }
-        }
+        } } catch (_: java.util.concurrent.RejectedExecutionException) {}
     }
 
     /**

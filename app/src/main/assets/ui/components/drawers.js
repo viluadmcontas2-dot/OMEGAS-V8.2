@@ -34,7 +34,6 @@
     }
 
     bind() {
-      document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
       // Exportar logs e autoteste são os botões data-tool-export-logs / data-tool-selftest, tratados em handleToolClick.
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('click', event => this.handleToolClick(event));
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('change', event => this.handleToolChange(event));
@@ -43,14 +42,17 @@
     handleToolClick(event) {
       const target = event.target.closest('button');
       if (!target) return;
-      if (target.matches('[data-session-settings]')) {
+      if (target.matches('[data-tool-export-data]')) {
+        this.api.exportData();
+      } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
       } else if (target.matches('[data-tool-battery-request]')) {
         this.api.requestBatteryOptimizationExemption?.();
         this.toolsSignature = '';
       } else if (target.matches('[data-tool-overlay-request]')) {
-        this.api.requestOverlayPermissionAndEnable?.();
+        this.overlayReply = this.api.requestOverlayPermissionAndEnable?.() || null;
         this.toolsSignature = '';
+        this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-overlay-enable]')) {
         this.api.setTelemetryOverlayEnabled?.(true);
         this.toolsSignature = '';
@@ -156,7 +158,7 @@
       // resetava a rolagem e engolia toques (a aba parecia travada).
       const signature = JSON.stringify([
         appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
-        Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
+        Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay, this.overlayReply, state.identity,
         settings,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
       ]);
@@ -173,58 +175,78 @@
           : overlayInfo.key === 'needs-permission'
             ? '<button type="button" class="primary" data-tool-overlay-request>Autorizar</button>' : '';
       const overlaySizes = overlayInfo.key === 'on'
-        ? `<div class="overlay-size" role="group" aria-label="Tamanho do balão">${[['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
-          `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'secondary' : 'quiet-button'}" data-tool-overlay-scale="${value}">${label}</button>`).join('')}</div>` : '';
+        ? `<div class="ts-sizes segmented" role="group" aria-label="Tamanho do balão"><small>Tamanho</small>${[['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
+          `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'is-on' : ''}" data-tool-overlay-scale="${value}">${label}</button>`).join('')}</div>` : '';
+
+      const reply = this.overlayReply || {};
+      const overlayReplyLine = !this.overlayReply ? '' : reply.permissionRequired === true ? 'Falta autorizar: marque o OMEGAS na tela do Android e volte.' : reply.launched === true ? 'A tela de autorização do Android foi aberta.' : reply.ok === false ? 'Não consegui abrir a autorização. Toque em Autorizar de novo.' : 'Pedido enviado.';
+      const identity = state.identity || {};
+      const chip = (tone, text) => `<span class="ts-chip" data-tone="${tone}">${text}</span>`;
+      const usb = appStatus.usbConnected === true;
+      const tiles = [
+        ['ECU', usb ? (appStatus.engineStuck === true ? 'Sem resposta' : 'Conectada') : 'Desconectada', usb ? (appStatus.engineStuck === true ? 'warn' : 'ok') : 'bad', usb ? 'Falando com o módulo.' : 'Ligue o cabo USB na ECU.'],
+        ['CABO USB', usb ? 'Ligado' : 'Sem cabo', usb ? 'ok' : 'bad', usb ? `Último dado ${rules().ageSinceMs(appStatus.directTelemetryAgeMs)}` : 'Nenhum dado chegando.'],
+        ['SERVIÇO', appStatus.serviceRunning === true ? 'Ativo' : 'Parado', appStatus.serviceRunning === true ? 'ok' : 'bad', appStatus.serviceRunning === true ? 'Roda com a tela apagada.' : 'Abra o OMEGAS de novo.'],
+        ['LEITURA', appStatus.engineRunning === true ? 'Ativa' : 'Parada', appStatus.engineRunning === true ? 'ok' : 'warn', appStatus.engineRunning === true ? 'O app observa sozinho.' : 'Começa ao conectar a ECU.'],
+      ];
+      const batteryFree = battery.ignoringOptimizations === true;
+      const keep = Math.max(20, settingNumber(settings.keepSessions, 20));
+      const telemetryOptions = [...new Set([250, 500, 1000, 2000, 5000, ...(Number.isFinite(Number(settings.telemetryEveryMs)) && Number(settings.telemetryEveryMs) > 0 ? [Number(settings.telemetryEveryMs)] : [])])].sort((a, b) => a - b);
+      const versionRows = [
+        ['Produto', [identity.product || 'OMEGAS', identity.generation].filter(Boolean).join(' ')],
+        ['Versão', identity.versionName || '—'],
+      ];
 
       host.innerHTML = `
-        <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
-          <header><div><small>SAÚDE DO APP</small><h3>${serviceHealthy ? 'Funcionando em segundo plano' : appStatus.serviceRunning ? 'Comunicação com a ECU exige atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div><span>${serviceHealthy ? 'OK' : 'ATENÇÃO'}</span></header>
-          <div class="background-health-grid">
-            <span>ECU <b>${appStatus.usbConnected ? 'conectada' : 'desconectada'}</b></span>
-            <span>Leitura <b>${appStatus.engineRunning ? 'ativa' : 'parada'}</b></span>
-            <span>Telemetria <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
-          </div>
-          <div class="tool-power-rows">
-            <div class="tool-power-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'O Android pode pausar o app'}</b><span>Permita para sessões longas com a tela apagada.</span></div>${batteryAction}</div>
-            <div class="tool-power-row tool-overlay-row" data-overlay-state="${overlayInfo.key}"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlayInfo.title}</b><span>${overlayInfo.help}</span>${overlaySizes}</div>${overlayAction}</div>
-          </div>
+        <div class="ts-grid">
+        <section class="ts-card ts-wide" data-healthy="${serviceHealthy ? 'true' : 'false'}" aria-label="Saúde do sistema">
+          <header class="ts-head"><div><small>SAÚDE DO SISTEMA</small><h3>${serviceHealthy ? 'Tudo funcionando' : appStatus.serviceRunning ? 'A comunicação com a ECU pede atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div>${chip(serviceHealthy ? 'ok' : 'warn', serviceHealthy ? 'Tudo certo' : 'Atenção')}</header>
+          <div class="ts-tiles">${tiles.map(([label, value, tone, hint]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span>${hint}</span></div>`).join('')}</div>
+          <div class="ts-row" data-state="${batteryFree ? 'ok' : 'warn'}"><div><small>SEGUNDO PLANO</small><b>${batteryFree ? 'O Android não pausa o app' : 'O Android pode pausar o app'}</b><span>${batteryFree ? 'Sessões longas com a tela apagada seguem gravando.' : 'Permita para gravar sessões longas com a tela apagada.'}</span></div>${batteryAction}</div>
         </section>
 
-        <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
-          <summary>Retenção das sessões</summary>
-          <div class="diagnostic-settings-grid">
-            <label><span>Telemetria salva</span><select data-session-telemetry>
-              ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
-            </select></label>
-            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${settingNumber(settings.maxSessionMb || status.limitMb, 256)}"><small>MB</small></label>
-            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, settingNumber(settings.keepSessions, 20))}"></label>
-            <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
+        <section class="ts-card" data-overlay-state="${overlayInfo.key}" aria-label="Telemetria flutuante">
+          <header class="ts-head"><div><small>TELEMETRIA FLUTUANTE</small><h3>${overlayInfo.title}</h3></div>${chip(overlayInfo.key === 'on' ? 'ok' : overlayInfo.key === 'needs-permission' ? 'warn' : 'neutral', overlayInfo.key === 'on' ? 'Ligada' : overlayInfo.key === 'off' ? 'Desligada' : overlayInfo.key === 'unsupported' ? 'Indisponível' : 'Autorizar')}</header>
+          <p class="ts-help">${overlayInfo.help}</p>
+          ${overlayReplyLine ? `<p class="ts-help ts-reply">${overlayReplyLine}</p>` : ''}
+          ${overlaySizes || ''}
+          ${overlayAction ? `<div class="ts-actions">${overlayAction}</div>` : ''}
+        </section>
+
+        <section class="ts-card" aria-label="Backup">
+          <header class="ts-head"><div><small>BACKUP</small><h3>Guardar tudo do app</h3></div></header>
+          <p class="ts-help">Calibrações salvas, fotos da curva e sessões em um só arquivo. Exportar nunca altera a ECU.</p>
+          <div class="ts-actions"><button id="toolExportData" type="button" class="primary" data-tool-export-data>Exportar backup completo</button></div>
+        </section>
+
+        <details class="ts-card diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''} aria-label="Retenção das sessões">
+          <summary><span><small>SESSÕES</small><b>Retenção: guarda as ${keep} mais recentes</b></span><em>Ajustar</em></summary>
+          <div class="ts-fields">
+            <label><span>Gravar a cada</span><select data-session-telemetry>${telemetryOptions.map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}</select></label>
+            <label><span>Limite por sessão (MB)</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${settingNumber(settings.maxSessionMb || status.limitMb, 256)}"></label>
+            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${keep}"></label>
+            <label class="ts-check"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto <small>só para investigar falha de cabo; deixa o arquivo bem maior</small></span></label>
           </div>
-          <p>Cada sessão vira <b>um só arquivo ZIP</b> em <b>Download/Omegas</b>, pronto quando ela termina (ou na próxima abertura do app, se ele fechar no meio). O app guarda as ${Math.max(20, settingNumber(settings.keepSessions, 20))} sessões mais recentes e nunca apaga uma que ainda não foi copiada para essa pasta.</p>
-          <p>USB bruto aumenta bastante o tamanho. Use só para investigar falha de comunicação.</p>
-          <button type="button" class="secondary wide" data-session-settings>Aplicar</button>
-          ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
+          <p class="ts-help">Cada sessão vira um ZIP em <b>Download/Omegas</b> quando termina. Nenhuma é apagada antes de ser copiada para lá.</p>
+          <div class="ts-actions"><button type="button" class="secondary" data-session-settings>Aplicar</button>${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}</div>
         </details>
 
-        <details class="tool-logs live-log-console" ${logsOpenBeforeRender ? 'open' : ''}>
-          <summary>Detalhes técnicos (${logs.length} eventos do sistema)</summary>
-          <div class="recorder-actions">
-            <button type="button" class="secondary" data-tool-export-logs>Exportar logs</button>
+        <section class="ts-card" aria-label="Versão e identidade">
+          <header class="ts-head"><div><small>VERSÃO</small><h3>Este é o OMEGAS que você instalou</h3></div></header>
+          <dl class="ts-kv">${versionRows.map(([k, v]) => `<div><dt>${k}</dt><dd>${escapeHtml(String(v))}</dd></div>`).join('')}</dl>
+        </section>
+
+        <details class="ts-card tool-logs live-log-console ts-wide" ${logsOpenBeforeRender ? 'open' : ''}>
+          <summary><span><b>Detalhes técnicos: registro do sistema (${logs.length} eventos)</b></span><em>Abrir</em></summary>
+          <div class="ts-actions">
+            <button type="button" class="secondary" data-tool-export-logs>Exportar registro</button>
             <button type="button" class="secondary" data-tool-selftest>Executar autoteste</button>
+            <select data-log-level>${['ALL', 'ERROR', 'WARN', 'INFO'].map(value => `<option value="${value}" ${this.logLevel === value ? 'selected' : ''}>${value === 'ALL' ? 'Todos os níveis' : value}</option>`).join('')}</select>
+            <select data-log-category><option value="ALL">Todas as categorias</option>${categories.map(value => `<option value="${escapeHtml(value)}" ${this.logCategory === value ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}</select>
           </div>
-          <div class="log-filters">
-            <select data-log-level>
-              ${['ALL', 'ERROR', 'WARN', 'INFO'].map(value => `<option value="${value}" ${this.logLevel === value ? 'selected' : ''}>${value === 'ALL' ? 'Todos níveis' : value}</option>`).join('')}
-            </select>
-            <select data-log-category>
-              <option value="ALL">Todas categorias</option>
-              ${categories.map(value => `<option value="${escapeHtml(value)}" ${this.logCategory === value ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="log-lines">
-            ${filteredLogs.length ? filteredLogs.map(item => `<div data-level="${escapeHtml(String(item.level || 'INFO').toLowerCase())}"><time>${escapeHtml(item.time || '')}</time><b>${escapeHtml(item.category || 'LOG')}</b><span>${escapeHtml(item.message || '')}</span></div>`).join('') : '<p class="empty-copy">Nenhum evento neste filtro.</p>'}
-          </div>
+          <div class="log-lines">${filteredLogs.length ? filteredLogs.map(item => `<div data-level="${escapeHtml(String(item.level || 'INFO').toLowerCase())}"><time>${escapeHtml(item.time || '')}</time><b>${escapeHtml(item.category || 'LOG')}</b><span>${escapeHtml(item.message || '')}</span></div>`).join('') : '<p class="empty-copy">Nenhum evento neste filtro.</p>'}</div>
         </details>
+        </div>
       `;
     }
   }

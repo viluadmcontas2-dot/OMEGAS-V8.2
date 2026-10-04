@@ -102,7 +102,6 @@ def test_curve_reads_no_suggestion_nor_advisor():
                   "kFactorSuggestions", "persistentCurveChanges"):
         assert token not in curve, token
     assert "curve-prediction-state" not in read(UI + "core/router.js")
-    assert "A UI só desenha alvos K exatos vindos do Kotlin" in curve
 
 
 def test_suggestions_tab_is_gone_and_sessions_took_its_place():

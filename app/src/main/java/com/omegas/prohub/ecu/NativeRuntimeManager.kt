@@ -83,6 +83,8 @@ class NativeRuntimeManager(
 
     @Synchronized
     fun start(): Boolean {
+        // `stuck` só vale enquanto a engine de fato ainda roda; se ela terminou depois do prazo, solta.
+        if (stuck && !engine.isRunning()) stuck = false
         if (running || stuck || !usb.connected) return false
         intentionalStop = false
         crashed = false
@@ -105,6 +107,7 @@ class NativeRuntimeManager(
     fun stop(timeoutSeconds: Long = 8): Boolean {
         if (!running && !engine.isRunning()) {
             ready = false
+            stuck = false
             flushPipelines("parada com engine já inativa", timeoutSeconds * 1_000L)
             return true
         }
@@ -270,6 +273,8 @@ class NativeRuntimeManager(
         if (state == "STOPPED") {
             running = false
             ready = false
+            // A engine terminou de fato: o "travado" de uma parada que passou do prazo deixa de valer.
+            stuck = false
             if (wasRunning && !intentionalStop) reportExit(crashed)
         }
         onStateChanged()

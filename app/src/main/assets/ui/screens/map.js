@@ -29,6 +29,8 @@
       // Desfazer do Mapa K: id da foto (= id da escrita) e etapa ('' | 'preparing' | 'writing').
       this.undoId = '';
       this.restorePhase = '';
+      this.releasing = false;
+      this.releaseTicks = 0;
       this.pendingContext = null;
       this.liveContext = null;
       this.bind();
@@ -45,7 +47,16 @@
       document.getElementById('mapClearSelection')?.addEventListener('click', () => {
         this.editor.clearSelection(); this.review = null; this.renderEditor(); this.renderGrid();
       });
-      document.getElementById('mapAdjustmentMode')?.addEventListener('change', () => this.applyAdjustment());
+      document.getElementById('mapAdjustmentMode')?.addEventListener('change', () => { this.syncModeSwitch(); this.applyAdjustment(); });
+      // Seletor segmentado (Somar · Definir · %): um toque troca o modo; o <select> escondido segue sendo a fonte única do modo.
+      document.querySelectorAll('[data-map-mode]').forEach(button => button.addEventListener('click', () => {
+        const select = document.getElementById('mapAdjustmentMode');
+        if (!select || select.value === button.dataset.mapMode) return;
+        select.value = button.dataset.mapMode;
+        this.syncModeSwitch();
+        this.applyAdjustment();
+      }));
+      this.syncModeSwitch();
       document.getElementById('mapAdjustmentValue')?.addEventListener('input', () => this.applyAdjustment());
       document.querySelectorAll('[data-map-nudge]').forEach(button => button.addEventListener('click', () => {
         const input = document.getElementById('mapAdjustmentValue');
@@ -59,8 +70,32 @@
       document.getElementById('mapRereadButton')?.addEventListener('click', () => { this.dismissResult(); this.startRead(); });
     }
 
+    /** Destaca o modo escolhido e diz a unidade do número digitado ao lado (K, não "valor"). */
+    syncModeSwitch() {
+      const mode = document.getElementById('mapAdjustmentMode')?.value || 'percent';
+      document.querySelectorAll('[data-map-mode]').forEach(button => {
+        const on = button.dataset.mapMode === mode;
+        button.classList.toggle('active', on);
+        button.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+      const unit = { percent: '% sobre o K', delta: 'K a somar', target: 'K final' }[mode] || 'K';
+      text('mapAdjustmentUnit', unit);
+    }
+
+    /** O cabo/ECU voltou: lê de novo sozinho (ler é automático; só o toque do dono grava). */
+    onReconnect() {
+      if (this.reading || this.restorePhase || this.store.get().map?.state === 'writing') return;
+      if (this.store.get().route !== 'map') { this.rereadOnEnter = true; return; }
+      this.startRead(true);
+      text('mapSourceStatus', 'ECU voltou · relendo o Mapa K');
+    }
+
     onEnter(context) {
       this.pendingContext = context || null;
+      if (this.rereadOnEnter) {
+        this.rereadOnEnter = false;
+        if (!this.reading && this.store.get().map?.state !== 'writing') { this.startRead(true); return; }
+      }
       // O slot "última operação" é compartilhado com a Curva K/Refino: nunca herdar o estado de outra tela.
       if (this.store.get().map?.state !== 'writing') this.lastOperationState = '';
       if (!this.editor.hasMap() && !this.reading) {
@@ -70,18 +105,55 @@
       if (this.editor.hasMap()) this.applyContext(this.pendingContext);
     }
 
-    settleReadFailure(message) {
+    settleReadFailure(message, result) {
       this.reading = false;
       this.editor.reset();
       this.cells.clear();
       this.rowHeaders = [];
       this.columnHeaders = [];
       if (this.host) {
-        this.host.innerHTML = '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da ECU não confirmada. Verifique a conexão e tente novamente.</span></div>';
+        // Trava de segurança (saída do modo de gravação não confirmada): um toque, a ECU confirma a saída.
+        this.host.innerHTML = result && result.safetyLocked === true
+          ? '<div class="map-empty-state"><b>Mapa K bloqueado por segurança</b><span>A ECU ainda não confirmou a saída da gravação. Toque em Liberar Mapa K.</span><button id="mapReleaseButton" type="button" class="primary btn-primary map-release">Liberar Mapa K</button></div>'
+          : '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da ECU não confirmada. Verifique a conexão e tente novamente.</span></div>';
+        document.getElementById('mapReleaseButton')?.addEventListener('click', () => this.releaseInsertion());
       }
       text('mapSourceStatus', 'Mapa não confirmado');
       this.store.patch({ map: { ...this.store.get().map, state: 'failed', data: null, selection: 0, review: null } });
       if (message) this.alert(message);
+    }
+
+    /**
+     * Um toque do dono em "Liberar Mapa K": o Kotlin manda a saída do modo de gravação pela fila normal e só
+     * `recovered === true` (ACK da ECU) vira "Mapa K liberado". Falha de cabo ≠ recusa da ECU (failureKind).
+     * O acompanhamento roda no poll do scheduler (nenhum timer de tela).
+     */
+    releaseInsertion() {
+      if (this.releasing) return;
+      const started = this.api.releaseMapInsertion();
+      if (!started?.ok || !started?.started) {
+        this.alert(failureText(started, 'Não foi possível liberar o Mapa K.'));
+        return;
+      }
+      this.releasing = true;
+      this.releaseTicks = 0;
+      const button = document.getElementById('mapReleaseButton');
+      if (button) { button.disabled = true; button.textContent = 'Liberando…'; }
+    }
+
+    pollRelease() {
+      if (!this.releasing) return;
+      const operation = this.api.mapWriteOperation();
+      if (operation && operation.busy && this.releaseTicks < 600) { this.releaseTicks += 1; return; }
+      this.releasing = false;
+      if (operation && operation.ok === true && operation.recovered === true) {
+        if (this.host) this.host.innerHTML = '<div class="map-empty-state"><b>Mapa K liberado</b><span>A ECU confirmou a saída. Toque em Reler ECU para ler o mapa desta sessão.</span></div>';
+        text('mapSourceStatus', 'Mapa K liberado · releia a ECU');
+      } else {
+        this.alert(failureText(operation, 'A ECU não confirmou a saída. O Mapa K continua bloqueado.'));
+        const button = document.getElementById('mapReleaseButton');
+        if (button) { button.disabled = false; button.textContent = 'Liberar Mapa K'; }
+      }
     }
 
     startRead(automatic) {
@@ -109,7 +181,7 @@
         if (!result?.busy && result?.state !== 'READING') {
           this.reading = false;
           if (!result?.ok || result?.state === 'FAILED') {
-            this.settleReadFailure(result?.error || 'Falha ao ler o Mapa K.');
+            this.settleReadFailure(failureText(result, 'Falha ao ler o Mapa K.'), result);
           } else {
             try {
               this.editor.load(result);
@@ -126,6 +198,7 @@
         }
       }
       this.pollWrite();
+      this.pollRelease();
     }
 
     buildGrid() {
@@ -162,7 +235,7 @@
         rowHeader.className = 'map-axis-header map-ms-header';
         rowHeader.dataset.selectRow = String(row);
         rowHeader.innerHTML = `<b>${fmt(snapshot.axes.petrolBins[row], 1)} ms</b>`;
-        rowHeader.title = 'Selecionar ou desmarcar toda esta faixa de Petrol Inj.';
+        rowHeader.title = 'Selecionar ou desmarcar toda esta faixa de injeção';
         this.rowHeaders.push(rowHeader);
         table.appendChild(rowHeader);
         for (let column = 0; column < 12; column += 1) {
@@ -288,8 +361,14 @@
       text('mapSelectionCount', D().plural(count, 'selecionada', 'selecionadas'));
       const button = document.getElementById('mapReviewButton');
       if (button) {
-        button.disabled = count === 0;
-        button.textContent = count ? `Gravar ${D().plural(count, 'alteração', 'alterações')} na ECU` : 'Selecione células';
+        // O botão conta as células que MUDAM de verdade (a prévia do Kotlin), não só as selecionadas: nunca "Gravar 144 células"
+        // junto com "a alteração não muda nenhuma célula".
+        let changed = 0;
+        if (count) { try { changed = this.editor.buildReview().count; } catch (_) { changed = 0; } }
+        button.disabled = changed === 0;
+        button.textContent = !count ? 'Selecione células'
+          : changed === 0 ? 'Digite o ajuste para mudar o K'
+            : `Gravar ${D().plural(changed, 'célula', 'células')}`;
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();
@@ -298,13 +377,14 @@
       this.store.patch({ map: { ...this.store.get().map, selection: count, review: this.review } });
     }
 
+    /** Só a célula em que o motor está AGORA: RPM e injeção já estão na faixa de status do cabeçalho (sem duplicar). */
     renderLiveContext(context) {
       this.liveContext = context || null;
-      text('mapLiveLabel', context?.label || 'Aguardando condição válida');
-      const cell = context && Number.isInteger(context.row) && Number.isInteger(context.column)
-        ? `célula ${context.row + 1}×${context.column + 1}`
-        : 'célula —';
-      text('mapLiveCell', cell);
+      const known = context && Number.isInteger(context.row) && Number.isInteger(context.column);
+      text('mapLiveLabel', known ? `${context.row + 1}×${context.column + 1}` : '—');
+      text('mapLiveCell', known ? `célula ${context.row + 1}×${context.column + 1}` : 'célula —');
+      const node = document.getElementById('mapLiveLabel');
+      if (node) node.dataset.state = known ? (context.level === 'late' ? 'late' : 'fresh') : 'none';
     }
 
     writePrepared() {
@@ -415,10 +495,11 @@
       if (result) {
         result.dataset.level = 'critical';
         result.querySelector('b').textContent = partial ? 'ECU parcialmente alterada' : wording().failedTitle;
-        const why = failureText(operation, fallback || 'Releitura obrigatória.');
+        const why = failureText(operation, fallback || 'Leia a ECU de novo.').trim();
+        const whyEnded = /[.!?…]$/.test(why) ? why : `${why}.`;
         result.querySelector('span').textContent = partial
-          ? `${D().plural(done, 'célula', 'células')} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${why} Releia a ECU para ver o estado real.`
-          : why;
+          ? `${D().plural(done, 'célula', 'células')} já ${done === 1 ? 'recebeu' : 'receberam'} o novo valor antes da falha. ${whyEnded} Leia a ECU de novo para ver o estado real.`
+          : whyEnded;
       }
       const lastId = Array.isArray(operation.adjustmentIds) ? String(operation.adjustmentIds[operation.adjustmentIds.length - 1] || '') : String(operation.backupId || '');
       if (partial && lastId) this.undoId = lastId;
@@ -459,7 +540,8 @@
         const result = document.getElementById('mapOperationResult');
         if (result) {
           result.dataset.level = 'ok';
-          result.querySelector('b').textContent = wording().doneTitle(`${operation.confirmedCells || operation.totalCells} célula(s)`);
+          const confirmed = finite(operation.confirmedCells) ?? finite(operation.totalCells);
+          result.querySelector('b').textContent = wording().doneTitle(confirmed === null ? 'células' : D().plural(confirmed, 'célula', 'células'), { fem: true, many: confirmed !== 1 });
           result.querySelector('span').textContent = wording().doneDetail;
         }
         // O Desfazer desta escrita é a foto que o Kotlin guardou antes dela (o id da escrita).

@@ -9,6 +9,8 @@ data class HubStatus(
     val usbConnected: Boolean = false,
     val usbDevice: String = "Nenhum",
     val usbPermissionPending: Boolean = false,
+    /** O dono (ou o Android) negou a permissão USB: o app para de insistir até nova tentativa manual. Só leitura. */
+    val usbPermissionDenied: Boolean = false,
     val autoReconnectUsb: Boolean = true,
     val baudRate: Int = 9600,
     val serialFormat: String = "8N1",
@@ -32,10 +34,12 @@ data class HubStatus(
     val storagePath: String = "",
     val workspaceConfigured: Boolean = false,
     val gpsEnabled: Boolean = false,
-    val gpsSpeedKmh: Double = 0.0,
-    val gpsAccuracyM: Double = 0.0,
+    /** Nulo = desconhecido (GPS desligado/sem fix): nunca 0 km/h. */
+    val gpsSpeedKmh: Double? = null,
+    val gpsAccuracyM: Double? = null,
     val lanEnabled: Boolean = false,
     val lanAddress: String = "",
     val directTelemetryAgeMs: Long = -1,
+    /** O dono negou a permissão USB do Android para esta ECU (só leitura; a UI mostra "USB bloqueado" + botão que chama connectUsb). */
 )
 

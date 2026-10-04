@@ -38,13 +38,13 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('styles-calibration-obd.css', self.html)
         self.assertIn("refinementStyle.href = 'styles-refine.css'", self.app)
 
-    def test_seven_static_human_destinations_with_refino_below_autocal(self):
+    def test_eight_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools']
+        expected = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']", self.router)
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
@@ -64,7 +64,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('store.patch({ telemetry, tick })', self.app)
 
     def test_low_end_1280x720_design_budget(self):
-        self.assertIn('--rail-width:260px', (UI / 'tokens.css').read_text('utf-8'))
+        self.assertIn('--rail-width:200px', (UI / 'tokens.css').read_text('utf-8'))
         self.assertIn('grid-template-columns:var(--rail-width) minmax(0,1fr)', self.css)
         self.assertIn('contain:layout paint style', self.css)
         combined_css = self.css + self.obd_css + self.calibration_obd_css + self.refine_css
@@ -85,12 +85,12 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn("if (isLiveRoute(route)) {\n      const envelope = api.presentSnapshot(lastPresentSequence)", self.app)
 
     def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
-        self.assertIn('PETROL INJECTION', self.dashboard)
+        self.assertIn('INJEÇÃO', self.dashboard)
         self.assertIn('dashHeroPetrol', self.dashboard)
         self.assertIn('now-dashboard-shell', self.dashboard)
-        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashLevelsRaw', 'dashRefino', 'dashCell'):
+        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashLevelsRaw', 'dashRefino'):
             self.assertIn(marker, self.dashboard)
-        self.assertIn('LEVELS RAW', self.dashboard)
+        self.assertIn('NÍVEIS', self.dashboard)
         self.assertIn('level_raw', self.dashboard)
         self.assertNotIn('level_percentage', self.dashboard)
         self.assertNotIn('dashHeroRpm', self.dashboard)
@@ -137,7 +137,8 @@ class CleanUiContract(unittest.TestCase):
     def test_refino_never_writes_without_review_and_readback(self):
         self.assertNotIn('writeMap(', self.refino_screen)
         self.assertNotIn('startKBatchWrite(', self.refino_screen)
-        self.assertIn("data-refino-confirm", self.refino_screen)
+        self.assertNotIn("data-refino-confirm", self.refino_screen)  # um toque grava, sem modal; a leitura de conferência vem antes
+        self.assertIn("startCurveRead", self.refino_screen)
         self.assertIn("state === 'BATCH_CONFIRMED' && done.readbackValid === true", self.refino_screen)
         self.assertIn('A Curva K da ECU mudou', self.refino_screen)
 
@@ -166,7 +167,7 @@ class CleanUiContract(unittest.TestCase):
     def test_sessions_route_replaces_suggestions(self):
         self.assertNotIn('data-screen="suggestions"', self.html)
         self.assertIn('data-screen="sessions"', self.html)
-        self.assertIn('Exportar nunca altera nada.', self.html)
+        self.assertNotIn('Exportar ZIP', self.html)  # as sessões se exportam sozinhas para Download/Omegas
 
     def test_map_and_curve_share_router_state(self):
         self.assertIn("route === 'map'", self.app)

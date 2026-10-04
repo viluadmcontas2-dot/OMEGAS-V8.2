@@ -64,6 +64,17 @@
     return `há ${Math.round(s / 3600)} h`;
   }
 
+  /** Idade em ms (frescor da leitura) na palavra do glossário: "agora" até 1,5 s, depois "há N s" / "há N min" / "há N h". Desconhecida: "—". */
+  function ageSinceMs(ms) {
+    const value = finite(ms);
+    if (value === null || value < 0) return DASH;
+    if (value < 1500) return 'agora';
+    const s = Math.round(value / 1000);
+    if (s < 90) return `há ${s} s`;
+    if (s < 5400) return `há ${Math.round(s / 60)} min`;
+    return `há ${Math.round(s / 3600)} h`;
+  }
+
   /** Contagem inteira ≥ 0. Desconhecido → "—". */
   function count(value) {
     const n = finite(value);
@@ -83,7 +94,7 @@
     if (!value || value === '--' || value === '—' || value === 'NULL' || value === 'UNDEFINED') return DASH;
     if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';
     if (value.includes('CNG') || value.includes('GNV') || value.includes('GAS')) return 'GNV';
-    if (value.includes('CUTOFF')) return 'CUTOFF';
+    if (value.includes('CUTOFF')) return 'CORTE';
     if (value.includes('TRANS')) return 'TRANSIÇÃO';
     if (value.includes('OFF') || value.includes('DESLIG')) return 'DESLIGADO';
     return value;
@@ -134,7 +145,8 @@
   const OPERATION_WORDING = {
     stages: ['Foto antes', 'Gravando', 'Conferindo na ECU'],
     writing: 'Gravando na ECU…',
-    doneTitle: what => `Gravado · ${what} conferido na ECU`,
+    // `opts.fem` = substantivo feminino (Curva K, células); `opts.many` = plural: "conferida", "conferidas".
+    doneTitle: (what, opts) => `Gravado · ${what} ${opts && opts.fem ? (opts.many ? 'conferidas' : 'conferida') : 'conferido'} na ECU`,
     doneDetail: 'A ECU confirmou. A tela foi relida.',
     failedTitle: 'Não foi gravado',
     failedDetail: 'O app não conseguiu confirmar na ECU. A curva anterior continua.',
@@ -151,9 +163,22 @@
     const kind = String(raw || '').toUpperCase();
     return kind === 'TRANSPORTE' || kind === 'ECU' ? kind : 'APP';
   }
+  /** Motivo da política de segurança (Kotlin: CalibrationWriteSafetyPolicy) em palavras simples + próxima ação. */
+  function safetyReason(raw) {
+    const text = String(raw || '');
+    if (/Telemetria não está atual/i.test(text)) return 'a telemetria está velha. Aguarde alguns segundos e toque de novo.';
+    if (/Conecte a ECU/i.test(text)) return 'a ECU não está conectada. Conecte o cabo e toque de novo.';
+    if (/Permissão USB/i.test(text)) return 'falta autorizar o USB no Android. Toque em Permitir.';
+    if (/Comunicação com a ECU/i.test(text)) return 'a comunicação com a ECU não está estável. Aguarde e toque de novo.';
+    if (/Serviço Android/i.test(text)) return 'o serviço do app não está rodando. Reabra o app.';
+    return text || 'a segurança não liberou a gravação agora.';
+  }
   function failureText(operation, fallback) {
     const op = operation || {};
     const failure = op.failure || {};
+    if (op.safetyBlocked === true || failure.safetyBlocked === true || String(op.writerState || '').startsWith('SAFETY_LOCKED')) {
+      return `Gravação bloqueada: ${safetyReason(op.error || failure.error || op.message)}`;
+    }
     const message = String(op.error || failure.error || failure.message || op.message || op.writerMessage || fallback || '').trim();
     const kind = failureKind(op);
     if (kind === 'TRANSPORTE') return `Cabo/USB: ${message || 'a comunicação com a ECU falhou'}`;
@@ -183,7 +208,7 @@
   function overlayState(status) {
     const s = status || {};
     if (s.supported === false) return { key: 'unsupported', title: 'Indisponível neste Android', help: 'Este Android não permite balão sobre outros apps.' };
-    if (s.permissionGranted !== true) return { key: 'needs-permission', title: 'Precisa de autorização', help: 'O balão mostra combustível, RPM, Petrol Inj., MAP e gás por cima de outros apps (mapa, música). Toque em Autorizar: o Android abre a tela certa, marque o OMEGAS e volte.' };
+    if (s.permissionGranted !== true) return { key: 'needs-permission', title: 'Precisa de autorização', help: 'O balão mostra combustível, RPM, Injeção, MAP e gás por cima de outros apps (mapa, música). Toque em Autorizar: o Android abre a tela certa, marque o OMEGAS e volte.' };
     if (s.requestedEnabled === true) return { key: 'on', title: 'Ligada', help: 'Aparece quando você sai do OMEGAS e nunca cobre o app. Arraste para mover e toque no Ω para abrir ou fechar.' };
     return { key: 'off', title: 'Desligada', help: 'Autorizada. Toque em Ativar para mostrar o balão quando você sair do OMEGAS.' };
   }
@@ -195,16 +220,23 @@
   }
 
   /**
-   * Conexão com a ECU em quatro palavras que o motorista entende, cada uma com a próxima ação:
-   * online · Conectando… (permissão USB pendente) · Sem cabo · Serviço parado. Usa só o que o status já traz.
+   * Conexão com a ECU em palavras que o motorista entende, cada uma com a próxima ação:
+   * online · Sem dados da ECU (cabo ligado, nenhuma leitura fresca) · Conectando… (permissão USB pendente) ·
+   * USB bloqueado (o dono negou a permissão: toque para permitir) · Sem cabo · Serviço parado.
+   * "ECU online" só quando chega dado: `reading` (LiveStore.read) com leitura válida e fresca. Sem `reading` o chamador
+   * só sabe do cabo (usbConnected) e a palavra "online" vale só para isso.
    */
-  function connectionState(status) {
+  function connectionState(status, reading) {
     const s = status || {};
     if (s.usbConnected === true) {
       if (s.engineStuck === true) return { key: 'attention', label: 'ECU sem resposta', hint: 'Aguarde ou reconecte o cabo USB', online: true };
+      if (reading && (reading.level === 'none' || reading.level === 'lost')) {
+        return { key: 'nodata', label: 'Sem dados da ECU', hint: 'Confira o cabo e a chave; volta sozinho quando chegar dado', online: false, connected: true };
+      }
       return { key: 'online', label: 'ECU online', hint: '', online: true };
     }
     if (s.usbPermissionPending === true) return { key: 'connecting', label: 'Conectando…', hint: 'Toque em Permitir no aviso de USB do Android', online: false };
+    if (s.usbPermissionDenied === true) return { key: 'denied', label: 'USB bloqueado', hint: 'Toque para permitir o USB', online: false, action: 'connectUsb' };
     if (s.serviceRunning === false) return { key: 'stopped', label: 'Serviço parado', hint: 'Abra o OMEGAS de novo para iniciar o serviço', online: false };
     return { key: 'nocable', label: 'Sem cabo', hint: 'Conecte o cabo USB na ECU', online: false };
   }
@@ -237,8 +269,37 @@
     return `Os pontos do OMEGAS no GNV recomeçaram${clock ? ' às ' + clock : ''} porque ${text} (o GNV medido com a curva antiga não vale para a nova).`;
   }
 
+  /** Escritas no DOM só quando o valor muda (mesmo valor = zero mutação, zero recálculo de estilo). */
+  function setAttrIfChanged(node, name, value) {
+    if (!node) return false;
+    const next = String(value);
+    if (node.getAttribute(name) === next) return false;
+    node.setAttribute(name, next);
+    return true;
+  }
+  function removeAttrIfPresent(node, name) {
+    if (!node || !node.hasAttribute(name)) return false;
+    node.removeAttribute(name);
+    return true;
+  }
+  function setDataIfChanged(node, key, value) {
+    if (!node) return false;
+    const next = String(value);
+    if (node.dataset[key] === next) return false;
+    node.dataset[key] = next;
+    return true;
+  }
+  function setTextIfChanged(node, value) {
+    if (!node) return false;
+    const next = String(value);
+    if (node.textContent === next) return false;
+    node.textContent = next;
+    return true;
+  }
+
   ns.DisplayRules = {
-    DASH, finite, number, fmt, escapeHtml, clamp, ms, msUnit, msBand, bar, barUnit, kValue, rpm, percentFraction, gapPercent, plural, ageText, phaseLabel, PHASE_LABELS, connectionState, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
+    setAttrIfChanged, removeAttrIfPresent, setDataIfChanged, setTextIfChanged,
+    DASH, finite, number, fmt, escapeHtml, clamp, ms, msUnit, msBand, bar, barUnit, kValue, rpm, percentFraction, gapPercent, plural, ageText, ageSinceMs, phaseLabel, PHASE_LABELS, connectionState, count, ratio, fuelLabel, durationLabel, bytesLabel, megabytesLabel,
     ageLabel, sessionDate, OPERATION_WORDING, failureKind, failureText, gasResetNote, GAS_RESET_REASON,
     offRouteTelemetryExpired, OFF_ROUTE_TELEMETRY_MAX_MS, overlayState, shouldPromptOverlay,
   };

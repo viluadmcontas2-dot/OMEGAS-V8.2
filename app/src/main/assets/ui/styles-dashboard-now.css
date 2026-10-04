@@ -34,8 +34,12 @@
   border-radius: var(--radius-l);
   background: var(--surface);
 }
-.now-tile[data-tile="petrol"] { border-color: var(--petrol); }
-.now-tile[data-tile="fuel"] { border-color: var(--cng); }
+.now-tile[data-tile="fuel"] b { font-size: clamp(48px, 7vw, 96px); overflow: visible; white-space: nowrap; }
+.now-tile-sub { color: var(--muted); font-size: 28px; font-weight: 800; line-height: 1.1; }
+.now-tile-sub[hidden], .now-quiet-tile[hidden] { display: none; }
+.now-tile-grid[data-stale="true"] .now-tile small::after { content: " · atrasado"; color: var(--state-warn); letter-spacing: 0; }
+/* "—" = desconhecido: mesma letra e tamanho do número, só mais apagado (sem caixa, sem sombra). */
+[data-empty="true"] { color: var(--dim); font-weight: 900; }
 
 .now-tile small {
   color: var(--muted);
@@ -70,13 +74,15 @@
 
 .now-quiet-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(3, 150px);
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 150px;
   gap: 10px;
 }
 
 .now-session-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   min-height: var(--touch-min);

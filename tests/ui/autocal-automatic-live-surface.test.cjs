@@ -13,7 +13,7 @@ assert.equal(cockpit.includes('Consultar ECU'), false, 'AutoCal cockpit must not
 assert.doesNotMatch(cockpit, /Consulte a ECU/i, 'operator copy must not tell the user to manually refresh ECU state');
 assert.equal(cockpit.includes('data-autocal-read'), false, 'manual reader controls must not be exposed on the operational surface');
 assert.equal(cockpit.includes('this.api.startRead()'), false, 'cockpit must rely on automatic native monitor');
-assert.equal(cockpit.includes('autocal-secondary-details" open'), true, 'secondary information must be open below the chart for multimedia use');
+assert.equal(cockpit.includes('ar-secondary'), true, 'secondary information sits below the chart, no extra tap, vertical scroll');
 assert.equal(cockpit.includes('data-autocal-toggle'), true, 'acquisition control remains available');
 // Actual graph size and visible point context are verified by the rendered layout gate.
 assert.match(app, /setCadenceMs\(route === 'autocal' \? AUTOCAL_CADENCE_MS : 200\)/);

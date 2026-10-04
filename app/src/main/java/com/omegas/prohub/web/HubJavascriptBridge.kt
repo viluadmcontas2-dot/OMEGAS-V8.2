@@ -3,6 +3,7 @@ package com.omegas.prohub.web
 import android.webkit.JavascriptInterface
 import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.MainActivity
+import com.omegas.prohub.calibration.FailureKind
 import com.omegas.prohub.calibration.KFactorManualPlanner
 import com.omegas.prohub.calibration.LiveCellProjection
 import com.omegas.prohub.runtime.RuntimeSnapshotBus
@@ -124,6 +125,7 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("usbConnected", status.usbConnected)
             .put("usbDevice", status.usbDevice)
             .put("usbPermissionPending", status.usbPermissionPending)
+            .put("usbPermissionDenied", status.usbPermissionDenied)
             .put("baudRate", status.baudRate)
             .put("serialFormat", status.serialFormat)
             .put("ecuState", status.ecuState)
@@ -209,7 +211,8 @@ class HubJavascriptBridge(activity: MainActivity) {
             val result = try {
                 JSONObject(service.readKMap())
             } catch (error: Exception) {
-                JSONObject().put("ok", false).put("error", error.message ?: "Falha ao ler mapa K")
+                JSONObject().put("ok", false).put("failureKind", FailureKind.of(error))
+                    .put("error", error.message ?: "Falha ao ler mapa K")
             }
             mapReadResult = JSONObject(result.toString())
                 .put("state", if (result.optBoolean("ok")) "COMPLETED" else "FAILED")

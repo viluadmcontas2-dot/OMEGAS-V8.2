@@ -6,8 +6,12 @@ implementação contra a qual o Kotlin (`com.omegas.prohub.equivalence`) é comp
 (`fixtures/autocal/real/*.json.gz`). Só estados base: prova por ponto e experiência (tremor, quase-apagão)
 ficam fora (dependem de relógio e de eventos que a fixture não tem).
 
+Regras do cérebro (revisão adversarial): veredito só com evidência independente (pares GNV×gasolina por RPM×MAP, ou pela
+curva da ECU, com n efetivo ≥ 3 (autocorrelação) e intervalo de confiança ≤ 4% (sem portão de tempo)); tolerância clamp(2·disp, 4%, 5%); o GNV medido
+NÃO é puxado para a gasolina (sem prior); o índice só é número quando os pontos julgados cobrem ≥ 50% do uso.
+
 Convenções que o Kotlin repete bit a bit:
-  * mediana = ordenado[n // 2] (nunca a média dos dois do meio);
+  * mediana verdadeira (média dos dois do meio com n par);
   * célula da Curva Própria = 0,02 bar, grade [0,10; 1,10) → 50 células;
   * leituras de condução: rpm >= 1000.
 Uso: python3 equivalence_oracle.py <fixture.json.gz> [refSeq curveSeq]   (imprime JSON)
@@ -24,6 +28,21 @@ GRID_CELLS = 50
 PRIOR_N0 = 3.0
 DRIVING_MIN_RPM = 1000.0
 MIN_TOL = 0.04
+MAX_TOL = 0.05               # teto da tolerância: nunca mais largo que ±5%
+MIN_JUDGED_USAGE = 0.5       # o índice só é número quando >= 50% do uso está em pontos julgados
+MIN_POINT_PAIRS = 3          # leituras (pares) ao redor do ponto para julgá-lo
+MIN_POINT_NEFF = 3           # n efetivo (amostras decorrelacionadas) mínimo ao redor do ponto; a confiança vem do intervalo
+VISIT_GAP_MS = 3000          # de-duplicação de janelas sobrepostas (bloco), não exigência de tempo
+MAX_RHO = 0.95
+OVERLAP_MS = 1000            # leituras a < 1 s partilham quadros da janela: mesma amostra
+T975 = [12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2.201, 2.179, 2.160, 2.145, 2.131,
+        2.120, 2.110, 2.101, 2.093, 2.086, 2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042]
+EPISODE_BAND_FACTOR = 100000
+STABLE_MS_SPREAD = 0.10      # janela com ms que pula > 10% não é leitura estável
+MATCH_RPM = 150.0
+MATCH_MAP = 0.02
+LEDGER_BANDS = [(3.0, 4.5), (4.5, 6.0), (6.0, 7.5), (7.5, 9.0), (9.0, 12.0)]
+Z95 = 1.96
 MAX_FRAME_DT_MS = 1000
 MAX_AGE_SESSIONS = 10
 CONF_MAX = MIN_TOL
@@ -41,8 +60,10 @@ STATES_OUT = ("SEM_DADOS", "APRENDENDO", "MEDIDO")
 
 # ------------------------------------------------------------------ utilidades
 def median(values):
+    """Mediana verdadeira (média dos dois do meio com n par): a do índice n//2 enviesa para cima em amostras pequenas."""
     s = sorted(values)
-    return s[len(s) // 2]
+    n = len(s)
+    return s[n // 2] if n % 2 == 1 else (s[n // 2 - 1] + s[n // 2]) / 2.0
 
 
 def interp(x, xs, ys):
@@ -211,7 +232,8 @@ def center(j):
 
 def ledger_obs(frames):
     """Espelho de EquivalenceLedger.accept: janela de 3 quadros do mesmo combustível, ≤ 1,2 s,
-    rpm ±150, map ±0,03; leitura = média dos 3; cada região RPM×MAP guarda as 30 mais recentes."""
+    rpm ±150, map ±0,03, ms ±10% (máx−mín sobre a média); leitura = média dos 3 (+ instante do quadro do meio);
+    cada região RPM×MAP guarda as 30 mais recentes. Obs = (rpm, map, ms, t)."""
     window = []
     lanes = {"GASOLINA": {}, "GNV": {}}
     seq = 0
@@ -232,8 +254,10 @@ def ledger_obs(frames):
             continue
         if max(w["map"] for w in window) - min(w["map"] for w in window) > 0.03:
             continue
-        o = (sum(w["rpm"] for w in window) / 3.0, sum(w["map"] for w in window) / 3.0,
-             sum(w["petrol_ms"] for w in window) / 3.0)
+        mean_ms = sum(w["petrol_ms"] for w in window) / 3.0
+        if max(w["petrol_ms"] for w in window) - min(w["petrol_ms"] for w in window) > STABLE_MS_SPREAD * mean_ms:
+            continue
+        o = (sum(w["rpm"] for w in window) / 3.0, sum(w["map"] for w in window) / 3.0, mean_ms, window[1]["t"])
         key = (math.floor(int(o[0]) / 150), math.floor(int(o[1] * 1000) / 20))
         q = lanes[f["fuel"]].setdefault(key, [])
         q.append((seq, o))
@@ -247,11 +271,80 @@ def ledger_obs(frames):
     return out["GASOLINA"], out["GNV"]
 
 
+# ------------------------------------------------------------------ pares (fonte única de veredito e proposta)
+def clean_reference(points):
+    """Espelho de EvidencePairs.cleanReference: pares (MAP, ms) válidos, deduplicados a 1 mbar, >= 6 pontos e >= 0,20 bar."""
+    good = [(m, t) for m, t in points if 0.05 <= m <= 2.5 and 1.0 <= t <= 40.0]
+    groups = {}
+    for m, t in good:
+        groups.setdefault(round_half_up(m * 1000), []).append((m, t))
+    clean = sorted(((sum(m for m, _ in g) / len(g), sum(t for _, t in g) / len(g)) for g in groups.values()), key=lambda p: p[0])
+    if len(clean) >= REF_MIN_POINTS and clean[-1][0] - clean[0][0] >= REF_MIN_SPAN:
+        return clean
+    return []
+
+
+def reference_at(m, ref):
+    if not ref or m < ref[0][0] - REF_MARGIN or m > ref[-1][0] + REF_MARGIN:
+        return None
+    if m <= ref[0][0]:
+        return ref[0][1]
+    if m >= ref[-1][0]:
+        return ref[-1][1]
+    for (m0, t0), (m1, t1) in zip(ref, ref[1:]):
+        if m0 <= m <= m1:
+            return t0 + (t1 - t0) * (m - m0) / (m1 - m0) if m1 > m0 else t0
+    return None
+
+
+def band_of(tp):
+    for i, (lo, hi) in enumerate(LEDGER_BANDS):
+        if lo <= tp < hi:
+            return i
+    return len(LEDGER_BANDS) if tp >= LEDGER_BANDS[-1][1] else -1
+
+
+def visit_indexes(times):
+    """Índice da visita de cada instante: lacuna >= 60 s até o anterior (ordenado, estável) abre outra."""
+    out = [0] * len(times)
+    visit, last = -1, None
+    for i in sorted(range(len(times)), key=lambda k: times[k]):
+        if last is None or times[i] - last >= VISIT_GAP_MS:
+            visit += 1
+        out[i] = visit
+        last = times[i]
+    return out
+
+
+def build_pairs(petrol_obs, gas_obs, ecu_ref):
+    """Espelho de EvidencePairs.build: um par (petrolRef, gas, rpm, ecuRef, map, t, episódio) por leitura de GNV."""
+    raw = []
+    for g in gas_obs:
+        matches = sorted(p[2] for p in petrol_obs if abs(p[0] - g[0]) <= MATCH_RPM and abs(p[1] - g[1]) <= MATCH_MAP)
+        if len(matches) >= 2:
+            raw.append({"tp": matches[len(matches) // 2], "tg": g[2], "rpm": g[0], "ecu": False, "map": g[1], "t": g[3]})
+        else:
+            ref = reference_at(g[1], ecu_ref)
+            if ref is not None:
+                raw.append({"tp": ref, "tg": g[2], "rpm": g[0], "ecu": True, "map": g[1], "t": g[3]})
+    bands = {}
+    for p in raw:
+        p["episode"] = -1                       # marcha lenta não é condução: não abre nem une visitas
+    for i, p in enumerate(raw):
+        if p["rpm"] >= DRIVING_MIN_RPM and p["tp"] >= AXIS_MIN_MS:
+            bands.setdefault(band_of(p["tp"]), []).append(i)
+    for band, members in bands.items():
+        visits = visit_indexes([raw[i]["t"] for i in members])
+        for i, v in zip(members, visits):
+            raw[i]["episode"] = (band + 1) * EPISODE_BAND_FACTOR + v
+    return raw
+
+
 # ------------------------------------------------------------------ Curva Própria
 def own_curve(obs, ref):
     """50 células {mapBar, petrolMs|None, samples, dispersion, source, divergence|None}."""
     lns = [[] for _ in range(GRID_CELLS)]
-    for rpm, mp, ms in obs:
+    for rpm, mp, ms, *_ in obs:
         j = cell_of(mp)
         if rpm >= DRIVING_MIN_RPM and j is not None and ms > 0:
             lns[j].append(math.log(ms))
@@ -363,48 +456,99 @@ def usage_by_point(cell_ms, axis_ms, own_petrol):
 
 
 # ------------------------------------------------------------------ pontos e índice
-POOL = 1
-DISP_UNKNOWN = 0.10
+def median_of(values):
+    return median(values)
 
 
-def _span(j):
-    return range(max(0, j - POOL), min(GRID_CELLS, j + POOL + 1))
+def effective_n(times, values):
+    """n efetivo de uma série em ordem de tempo: n(1-rho)/(1+rho), rho = autocorrelação lag 1 em [0, MAX_RHO]. Espelho de EvidencePairs.effectiveN."""
+    n = len(values)
+    if n == 0:
+        return 0.0
+    apart, last = 0, None
+    for t in times:
+        if last is None or t - last >= OVERLAP_MS:
+            apart += 1
+            last = t
+    return min(_autocorr_n(values), float(apart))
 
 
-def pooled(cells, j):
-    """Amostras na célula e nas vizinhas (±1): a leitura do MAP já tem tremor de até 0,03 bar (> 1 célula)."""
-    return sum(cells[k]["samples"] for k in _span(j))
+def _autocorr_n(values):
+    n = len(values)
+    if n < 3:
+        return n * (1.0 - MAX_RHO) / (1.0 + MAX_RHO)
+    mean = sum(values) / n
+    var = 0.0
+    cov = 0.0
+    for i in range(n):
+        d = values[i] - mean
+        var += d * d
+        if i > 0:
+            cov += d * (values[i - 1] - mean)
+    rho = MAX_RHO if var / n <= 1e-8 else min(max(cov / var, 0.0), MAX_RHO)
+    return n * (1.0 - rho) / (1.0 + rho)
 
 
-def pooled_disp(cells, j):
-    """Dispersão combinada (variância ponderada por n−1) das células vizinhas; sem par de leituras = desconhecida."""
-    num = sum((cells[k]["samples"] - 1) * cells[k]["dispersion"] ** 2 for k in _span(j) if cells[k]["samples"] >= 2)
-    den = sum(cells[k]["samples"] - 1 for k in _span(j) if cells[k]["samples"] >= 2)
-    return math.sqrt(num / den) if den > 0 else DISP_UNKNOWN
+def t_critical(n_eff):
+    df = int(math.floor(n_eff)) - 1
+    return T975[0] if df < 1 else (1.96 if df > 30 else T975[df - 1])
+
+
+def evidence_at(i, u, pairs, pair_u, pair_ln):
+    """Evidência de um ponto: pares entre os nós vizinhos (em ln ms). Espelho de EquivalenceEngine.evidenceAt."""
+    n = len(u)
+    lo = u[i - 1] if i > 0 else u[0] - (u[1] - u[0])
+    hi = u[i + 1] if i < n - 1 else u[n - 1] + (u[n - 1] - u[n - 2])
+    members = [k for k in range(len(pairs)) if lo <= pair_u[k] <= hi]
+    if not members:
+        return {"pairs": 0, "episodes": 0, "nEff": 0.0, "mixture": None, "dispersion": None, "ecuShare": 0.0, "judgeable": False}
+    ids = visit_indexes([pairs[k]["t"] for k in members])
+    per_visit = {}
+    for k, v in zip(members, ids):
+        per_visit.setdefault(v, []).append(pair_ln[k])
+    center = median_of([median_of(v) for v in per_visit.values()])
+    disp = None
+    if len(members) >= 2:
+        allv = [pair_ln[k] for k in members]
+        mid = median_of(allv)
+        disp = 1.4826 * median_of([abs(v - mid) for v in allv])
+    ordered = sorted(members, key=lambda k: pairs[k]["t"])
+    n_eff = effective_n([pairs[k]["t"] for k in ordered], [pair_ln[k] for k in ordered])
+    out = {"pairs": len(members), "episodes": int(math.floor(n_eff + 0.5)), "nEff": n_eff, "mixture": math.exp(center) - 1.0, "dispersion": disp,
+           "ecuShare": sum(1 for k in members if pairs[k]["ecu"]) / len(members)}
+    out["judgeable"] = (disp is not None and out["pairs"] >= MIN_POINT_PAIRS and n_eff >= MIN_POINT_NEFF
+                        and t_critical(n_eff) * disp / math.sqrt(n_eff) <= CONF_MAX)
+    return out
+
+
+def tolerance_of(dispersion):
+    return min(max(2.0 * (dispersion or 0.0), MIN_TOL), MAX_TOL)
 
 
 def evaluate(axis_raw, k_raw, ref, petrol_obs, gas_obs, cell_ms):
     axis = [a / 512.0 for a in axis_raw]
     k = [v / 16384.0 for v in k_raw]
     own_p = own_curve(petrol_obs, ref)
-    own_g = own_curve(gas_obs, ref)
+    own_g = own_curve(gas_obs, None)          # o GNV medido não é puxado para a gasolina
     usage = usage_by_point(cell_ms, axis, own_p)
+    u = [math.log(a) for a in axis]
+    ecu_ref = clean_reference([(p[0], p[1]) for p in ref]) if ref else []
+    pairs = [p for p in build_pairs(petrol_obs, gas_obs, ecu_ref) if p["rpm"] >= DRIVING_MIN_RPM and p["tp"] >= AXIS_MIN_MS]
+    pair_u = [math.log(p["tp"]) for p in pairs]
+    pair_ln = [math.log(interp(p["tg"], axis, k) * p["tg"] / (p["tp"] * interp(p["tp"], axis, k))) for p in pairs]
     points = []
     for i, t_p in enumerate(axis):
         m = map_for(own_p, t_p)
-        j = cell_of(m) if m is not None else None
+        ev = evidence_at(i, u, pairs, pair_u, pair_ln)
+        tol = tolerance_of(ev["dispersion"])
         t_g = curve_at(own_g, m) if m is not None else None
-        mixture = None
-        if t_g is not None:
-            mixture = interp(t_g, axis, k) * t_g / t_p / k[i] - 1.0
-        samples, disp = (pooled(own_g, j), max(pooled_disp(own_p, j), pooled_disp(own_g, j))) if j is not None else (0, 0.0)
-        tol = max(MIN_TOL, 2.0 * disp)
-        if t_p < AXIS_MIN_MS or m is None:
+        map_mixture = interp(t_g, axis, k) * t_g / t_p / k[i] - 1.0 if t_g is not None else None
+        judged = ev["judgeable"]
+        mixture = ev["mixture"] if judged else map_mixture
+        if t_p < AXIS_MIN_MS or ev["pairs"] == 0:
             state = "SEM_DADOS"
-        elif samples < MATURE_SAMPLES or 1.96 * disp / math.sqrt(samples) > CONF_MAX:
+        elif not judged:
             state = "APRENDENDO"
-        elif mixture is None:
-            state = "MEDIDO"
         elif abs(mixture) <= tol:
             state = "EQUIVALENTE"
         elif mixture > tol:
@@ -412,18 +556,22 @@ def evaluate(axis_raw, k_raw, ref, petrol_obs, gas_obs, cell_ms):
         else:
             state = "RICO"
         points.append({"index": i, "axisMs": t_p, "mixture": mixture, "tolerance": tol, "usage": usage[i],
-                       "samples": samples, "state": state})
-    index, coverage = index_of(points)
-    return {"ownPetrol": own_p, "ownGas": own_g, "points": points, "index": index, "coverage": coverage}
+                       "samples": ev["pairs"], "episodes": ev["episodes"], "state": state})
+    index, coverage, share = index_of(points)
+    return {"ownPetrol": own_p, "ownGas": own_g, "points": points, "index": index, "coverage": coverage,
+            "judgedUsage": share, "pairs": len(pairs)}
 
 
 def index_of(points):
-    inc = [p for p in points if p["state"] not in STATES_OUT and p["mixture"] is not None]
+    """Índice = Σ uso·equivalente / Σ uso dos pontos julgados; nulo quando eles cobrem < 50% do uso."""
+    inc = [p for p in points if p["state"] in ("EQUIVALENTE", "POBRE", "RICO") and p["mixture"] is not None]
     total = sum(p["usage"] for p in inc)
-    if total <= 0:
-        return None, len(inc)
+    all_usage = sum(p["usage"] for p in points)
+    share = total / all_usage if all_usage > 0 else 0.0
+    if total <= 0 or share < MIN_JUDGED_USAGE:
+        return None, len(inc), share
     eq = sum(p["usage"] for p in inc if abs(p["mixture"]) <= p["tolerance"])
-    return eq / total, len(inc)
+    return eq / total, len(inc), share
 
 
 # ------------------------------------------------------------------ replay

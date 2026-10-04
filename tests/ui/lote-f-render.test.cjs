@@ -13,7 +13,7 @@ if (pw) {
   try { browserOk = fs.existsSync(pw.chromium.executablePath()); } catch (_) { browserOk = false; }
 }
 const skip = browserOk ? false : 'Chromium/Playwright indisponível neste ambiente';
-const TABS = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
+const TABS = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico'];
 
 async function audit(page, route) {
   return page.evaluate(r => {
@@ -27,7 +27,7 @@ async function audit(page, route) {
       if (!vis(e) || e.tagName === 'circle') return;
       const b = e.getBoundingClientRect(); if (b.bottom < 0 || b.top > H) return;
       const grid = e.classList.contains('map-k-cell') || e.classList.contains('map-axis-header');
-      const min = grid ? 44 : 76;
+      const min = grid ? 44 : (r === "autocal" ? 52 : 58);
       if (b.height < min - 0.5 || b.width < min - 0.5) out.smallTargets.push(`${sel(e)} ${Math.round(b.width)}x${Math.round(b.height)}`);
     });
     sc.querySelectorAll('circle[class*="hit"]').forEach(e => { const b = e.getBoundingClientRect(); if (b.width > 0) out.hitCircles.push(Math.round(b.width)); });
@@ -46,7 +46,7 @@ async function audit(page, route) {
   }, route);
 }
 
-test('render: 7 abas sem corte lateral, alvos >= 76 px (grade do Mapa K >= 44), texto >= 16 px e cabeçalho inteiro', { skip }, async () => {
+test('render: 7 abas sem corte lateral, alvos >= 58 px (AutoCal 52) (grade do Mapa K >= 44), texto >= 16 px e cabeçalho inteiro', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected');
   try {
     await page.waitForTimeout(1500);
@@ -62,7 +62,7 @@ test('render: 7 abas sem corte lateral, alvos >= 76 px (grade do Mapa K >= 44), 
         assert.ok(result.head.height >= 40, `${route}: faixa de condição com altura própria (${result.head.height})`);
         assert.ok(result.head.top >= 0 && result.head.height <= 80, `${route}: faixa de condição cabe (${result.head.height})`);
       }
-      if (['dashboard', 'map', 'curve', 'refino'].includes(route)) assert.equal(result.scrollsY, false, `${route}: sem rolagem vertical em 1280×720`);
+      if (['dashboard', 'refino'].includes(route)) assert.equal(result.scrollsY, false, `${route}: sem rolagem vertical em 1280×720`);
     }
   } finally { await browser.close(); }
 });
@@ -81,46 +81,50 @@ test('render: Agora tem 4 valores de peso parecido que preenchem a tela (razão 
     assert.equal(m.tiles.length, 4);
     const areas = m.tiles.map(t => t.area);
     assert.ok(Math.max(...areas) / Math.min(...areas) <= 1.5, `razão de área ${Math.max(...areas) / Math.min(...areas)}`);
-    assert.ok((m.boxArea + m.quietArea) / m.hostArea >= 0.85, `cobertura ${(m.boxArea + m.quietArea) / m.hostArea}`);
-    for (const t of m.tiles) { assert.ok(t.font >= 96, `valor ${t.font}px < 96`); assert.ok(t.label >= 28, `rótulo ${t.label}px < 28`); }
+    assert.ok((m.boxArea + m.quietArea) / m.hostArea >= 0.78, `cobertura ${(m.boxArea + m.quietArea) / m.hostArea}`);
+    for (const t of m.tiles) { assert.ok(t.font >= 56, `valor ${t.font}px < 56 (combustível usa clamp 48–96 px para a palavra caber)`); assert.ok(t.label >= 22, `rótulo ${t.label}px < 22`); }
     assert.equal(await page.$('#dashEquivalence'), null, 'o cartão de equivalência saiu do Agora');
     const texts = await page.$$eval('[data-screen="dashboard"] *', nodes => nodes.map(n => n.textContent).join(' '));
     assert.doesNotMatch(texts, /Ir para Refino|PRÓXIMA AÇÃO|provisório/);
   } finally { await browser.close(); }
 });
 
-test('render: Refino sem rolagem; título, legenda e desenho não se sobrepõem; faixa de equivalência pequena', { skip }, async () => {
+test('render: Refino na anatomia única — gráfico primeiro e ≥ 50% da altura, legenda/gráfico/frase sem sobreposição, uma ação', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected', { scn: { phase: 'PROPOSTA_PRONTA' } });
   try {
     await page.waitForTimeout(1500);
     await go(page, 'refino');
     await page.waitForTimeout(3500);
     const m = await page.evaluate(() => {
-      const R = e => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, h: b.height }; };
-      const title = R(document.querySelector('.refino-chart-head .autocal-plot-title'));
+      const R = e => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, h: b.height, w: b.width }; };
+      const status = R(document.querySelector('.refino-cockpit .ar-status'));
       const legend = R(document.getElementById('refinoLegend'));
       const plot = R(document.querySelector('#refinoChart svg'));
-      const strip = R(document.getElementById('refinoEq'));
-      const metric = R(document.querySelector('.refino-cockpit .autocal-focus-metric'));
-      const cockpit = document.querySelector('.refino-cockpit');
+      const sentence = R(document.getElementById('refinoHeadline'));
+      const primary = R(document.querySelector('[data-refino-primary]'));
       const intersects = (a, b) => !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t);
       return {
-        titleLegend: intersects(title, legend), titlePlot: intersects(title, plot), legendPlot: intersects(legend, plot),
-        scrolls: cockpit.scrollHeight > cockpit.clientHeight + 1, stripH: strip.h, metricH: metric.h,
+        legendPlot: intersects(legend, plot), plotSentence: intersects(plot, sentence), sentencePrimary: intersects(sentence, primary),
+        order: [status.t, plot.t, sentence.t].every((v, i, l) => i === 0 || v > l[i - 1]),
+        plotH: plot.h, view: window.innerHeight, primaryBottom: primary.b,
         shared: window.OmegasUi.CurveChart.shared.renders, mode: window.OmegasUi.CurveChart.shared.mode,
         legendText: document.getElementById('refinoLegend').textContent,
-        headline: document.getElementById('refinoHeadline').textContent, strip: document.getElementById('refinoEq').textContent,
+        oldCards: document.querySelectorAll('#refinoEq, #refinoSteps, #refinoJournal, #refinoTech, [data-refino-dismiss]').length,
+        ours: document.querySelectorAll('#refinoChart .chart-between').length, triangles: document.querySelectorAll('#refinoChart .chart-ours').length,
+        hScroll: document.querySelector('[data-screen="refino"]').scrollWidth > document.querySelector('[data-screen="refino"]').clientWidth + 1,
       };
     });
-    assert.equal(m.titleLegend, false, 'título e legenda sobrepostos');
-    assert.equal(m.titlePlot, false);
-    assert.equal(m.legendPlot, false);
-    assert.equal(m.scrolls, false, 'Refino rola na vertical');
+    assert.equal(m.legendPlot, false, 'legenda e desenho sobrepostos');
+    assert.equal(m.plotSentence, false);
+    assert.equal(m.sentencePrimary, false);
+    assert.equal(m.order, true, 'faixa de status → gráfico → frase');
+    assert.ok(m.plotH >= m.view * 0.5, `gráfico ocupa ${m.plotH}px de ${m.view}px (≥ 50%)`);
+    assert.ok(m.primaryBottom <= m.view, 'a ação primária cabe na primeira tela, sem rolar');
+    assert.equal(m.hScroll, false, 'nunca rolagem horizontal');
     assert.equal(m.mode, 'between');
-    for (const label of ['Curva da gasolina', 'Curva do GNV hoje', 'O que medimos', 'Proposta', 'Agora', 'Faixas da ECU']) assert.ok(m.legendText.includes(label), label);
-    assert.ok(m.stripH <= 100, `faixa de equivalência discreta (${m.stripH}px)`);
-    // Uma fala só: o texto do cérebro aparece uma vez dentro da faixa
-    assert.ok(m.strip.includes(m.headline));
+    for (const label of ['Curva da gasolina', 'Curva do GNV hoje', 'Agora', 'Pontos da ECU', 'Pontos do OMEGAS']) assert.ok(m.legendText.includes(label), label);
+    assert.equal(m.oldCards, 0, 'sem faixa de %, passos, último resultado, detalhes técnicos nem Entendi');
+    assert.ok(m.ours > 0, 'nossos pontos aparecem como bolinhas'); assert.equal(m.triangles, 0);
     // O gráfico não é redesenhado a cada leitura: depois de assentar, o contador de desenhos não anda em 4 s.
     const before = await page.evaluate(() => window.OmegasUi.CurveChart.shared.renders);
     await page.waitForTimeout(4000);

@@ -22,27 +22,28 @@ class RefinementCycleScenarioTest {
     private val pilot = EquivalencePhases(null) { now }
 
     /** Faixas de Petrol Inj. de condução: (rpm, MAP, ms de gasolina). Células distintas no RPM×MAP. */
-    private val cells = listOf(
-        Triple(2_000.0, 0.40, 3.6),
-        Triple(2_200.0, 0.50, 5.0),
-        Triple(2_500.0, 0.60, 6.5),
-        Triple(2_800.0, 0.70, 8.0),
-        Triple(3_200.0, 0.85, 10.0),
-    )
+    private val cells = EvidenceTestSupport.CELLS_A
+    /** Segunda célula por faixa (noutro terço dela): sem cobertura interna a faixa não vale. */
+    private val cells2 = EvidenceTestSupport.CELLS_B
     private val axisRaw = IntArray(30) { if (it < 20) 256 * (it + 1) else 5632 + 512 * (it - 20) }
 
     private var t = 0L
 
     private fun drive(fuel: String, rpm: Double, map: Double, ms: Double, frames: Int = 10) {
         repeat(frames) { ledger.accept(EquivalenceLedger.Frame(t, fuel, rpm, map, ms)); t += 280 }
-        t += 5_000
+        t += EvidenceTestSupport.VISIT_GAP
     }
 
-    private fun petrolBaseline() = cells.forEach { (rpm, map, ms) -> drive("GASOLINA", rpm, map, ms) }
+    private fun petrolBaseline() = (cells + cells2).forEach { (rpm, map, ms) -> drive("GASOLINA", rpm, map, ms) }
 
     private fun gas(ratio: Double, bands: List<Int> = cells.indices.toList()) =
-        // Três passagens separadas por lacuna > 3 s: cada faixa precisa de 3 episódios (E3), não só de 8 pares.
-        bands.forEach { i -> val (rpm, map, ms) = cells[i]; repeat(3) { drive("GNV", rpm, map, ms * ratio) } }
+        // Passagens separadas (blocos de leituras): o peso é por bloco, não por quadro.
+        bands.forEach { i ->
+            repeat(3) {
+                val (rpm, map, ms) = cells[i]; drive("GNV", rpm, map, ms * ratio)
+                val (rpm2, map2, ms2) = cells2[i]; drive("GNV", rpm2, map2, ms2 * ratio)
+            }
+        }
 
     private fun monitor(count: Int, max: Int = 3, enabled: Int = 1) = JSONObject()
         .put("autoMatchCount", count).put("maxAutomatch", max).put("autoCalEnabled", enabled)
@@ -74,7 +75,8 @@ class RefinementCycleScenarioTest {
         writeCurve()
         val verifying = observe()
         assertEquals("VERIFICANDO", verifying.getString("phase"))
-        assertTrue(verifying.getString("headline").contains("0 de 15 min"))
+        assertFalse("sem minutos na frase do dono", verifying.getString("headline").contains(" min"))
+        assertEquals(15.0, pilot.json().getJSONObject("verification").getDouble("budgetMinutes"), 1e-9) // regra só em technical
         assertTrue("diz onde dirigir", verifying.getString("next").contains("ms"))
 
         gas(1.0)

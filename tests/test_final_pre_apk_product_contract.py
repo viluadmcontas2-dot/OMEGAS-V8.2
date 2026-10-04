@@ -33,7 +33,7 @@ assert "prepareCurveRestore(" in api
 assert 'id="curveBackupSave"' in index
 assert 'id="curveBackupSelect"' in index
 assert 'id="curveBackupRestore"' in index
-assert "Desfazer (voltar à foto)" in index
+assert ">Desfazer<" in index
 assert "backupTask" in curve
 assert "restoreContext" in curve
 assert "Desfazer: voltar à foto da Curva K" in curve
@@ -52,9 +52,8 @@ assert "page-intro" not in autocal_screen
 assert "autocal-focus" in app
 assert ".app-shell.autocal-focus .workspace-head" in base_css
 assert "display: none" in base_css.split(".app-shell.autocal-focus .workspace-head", 1)[1].split("}", 1)[0]
-assert autocal.index('<details id="autocalTechnicalDetails"') < autocal.index('id="autocalBands"')
-assert "18 REGIÕES · DETALHE TÉCNICO" in autocal
-assert "height: clamp(340px, 52vh, 430px)" in css
+assert 'id="autocalTechnicalDetails"' not in autocal  # detalhe técnico vai para a aba Diagnóstico
+assert "calc(100vh - 300px)" in (ROOT / "app/src/main/assets/ui/styles-autocal-refino.css").read_text(encoding="utf-8")  # gráfico ocupa o espaço
 
 # Custom ROM/head unit: WebView render can lag briefly; AGORA must not vanish mid-refresh.
 assert "const STALE_MS = 3000" in (ROOT / "app/src/main/assets/ui/core/live-store.js").read_text(encoding="utf-8")

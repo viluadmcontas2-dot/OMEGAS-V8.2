@@ -106,7 +106,7 @@ class RefinedEngineKotlinParity(unittest.TestCase):
             ) + "\n", "utf-8")
             (tmp / "Main.kt").write_text(HARNESS, "utf-8")
             jar = tmp / "parity.jar"
-            sources = [str(ENGINE), str(LEDGER), str(LEDGER.with_name("PresentationMedian.kt")), str(LEDGER.with_name("TypicalInjectionBands.kt")), str(LEDGER.with_name("FineBins.kt")), str(tmp / "Main.kt")]
+            sources = [str(ENGINE), str(LEDGER), str(LEDGER.with_name("PresentationMedian.kt")), str(LEDGER.with_name("TypicalInjectionBands.kt")), str(LEDGER.with_name("FineBins.kt")), str(LEDGER.with_name("EvidencePairs.kt")), str(LEDGER.with_name("RefinementJournal.kt")), str(LEDGER.parent.parent / "equivalence" / "JsonFiles.kt"), str(tmp / "Main.kt")]
             subprocess.run([kotlinc(), *sources, "-cp", JSON_JAR, "-include-runtime", "-d", str(jar)],
                            check=True, capture_output=True, text=True, timeout=900)
             out = subprocess.run(["java", "-cp", f"{jar}:{JSON_JAR}", "MainKt", str(tmp / "input.txt"), str(tmp / "frames.txt")],

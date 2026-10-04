@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.equivalence.JsonFiles
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -233,6 +234,8 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
     fun json(): JSONObject = synchronized(lock) {
         val stalls = events.filter { it.optString("kind") == KIND_STALL }
         val near = events.filter { it.optString("kind") == KIND_NEAR }
+        // Região = faixa de 0,5 ms de Petrol Inj. onde o motor engasgou. Cada uma carrega ONDE (MAP, RPM, ms), QUANTAS vezes
+        // e QUANDO (primeira/última), para o cérebro propor um ajuste LOCAL na Curva K (ver [StallLocalFix]).
         val bins = events.groupBy { kotlin.math.floor(it.optDouble("petrolMs") / BIN_MS) * BIN_MS }
             .map { (from, list) ->
                 JSONObject().put("fromMs", from).put("toMs", from + BIN_MS).put("count", list.size)
@@ -240,6 +243,11 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
                     .put("nearCount", list.count { it.optString("kind") == KIND_NEAR })
                     .put("mapBar", median(list.map { it.optDouble("mapBar") }))
                     .put("rpmBefore", median(list.map { it.optDouble("rpmBefore") }))
+                    .put("rpm", median(list.map { it.optDouble("rpmBefore") }))
+                    .put("ms", median(list.map { it.optDouble("petrolMs") }))
+                    .put("firstAt", list.minOf { it.optLong("at") })
+                    .put("lastAt", list.maxOf { it.optLong("at") })
+                    .put("ats", JSONArray(list.map { it.optLong("at") }.sorted()))
             }.sortedByDescending { it.optInt("count") }
         JSONObject().put("format", FORMAT)
             .put("count", stalls.size)
@@ -255,28 +263,33 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
                 .put("after", "só anota: religou em ${RESTART_WINDOW_MS / 1000} s, telemetria parou ou sem religar; o apagão confirmado nunca some"))
     }
 
+    /** Serializa as gravações: a mais recente sempre vence, e dois `save()` nunca se intercalam no mesmo arquivo. */
+    private val saveLock = Any()
+
     private fun save() {
         val target = file ?: return
-        val payload = synchronized(lock) {
-            JSONObject().put("format", FORMAT)
-                .put("idleShutdowns", idleShutdowns)
-                .put("cutShutdowns", cutShutdowns)
-                .put("events", JSONArray(events.map { JSONObject(it.toString()) }))
-        }
-        try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
-        } catch (_: Exception) {
+        synchronized(saveLock) {
+            val payload = synchronized(lock) {
+                JSONObject().put("format", FORMAT)
+                    .put("idleShutdowns", idleShutdowns)
+                    .put("cutShutdowns", cutShutdowns)
+                    .put("events", JSONArray(events.map { JSONObject(it.toString()) }))
+            }
+            try {
+                // .tmp único + fsync + troca atômica (+ .bak se o rename falhar), como o resto do cérebro.
+                JsonFiles.writeAtomic(target, payload.toString())
+            } catch (_: Exception) {
+            }
         }
     }
 
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
         try {
-            val root = JSONObject(source.readText())
-            val format = root.optString("format")
-            if (format != FORMAT && format != LEGACY_FORMAT) return
+            // Principal corrompido/ausente cai no .bak em vez de perder os apagões já registrados.
+            val root = JsonFiles.readJsonWithBak(file) {
+                val format = it.optString("format")
+                format == FORMAT || format == LEGACY_FORMAT
+            } ?: return
             idleShutdowns = root.optInt("idleShutdowns", 0)
             cutShutdowns = root.optInt("cutShutdowns", 0)
             root.optJSONArray("events")?.let { a ->

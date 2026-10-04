@@ -53,6 +53,12 @@ def proposal_sequence(data, hold, gain, episodes):
     return reversals, len(steps), (sum(steps) / len(steps) if steps else 0.0)
 
 
+def interior(band, n):
+    """n ms espalhados por DENTRO da faixa do livro (cobertura interna: uma ponta só não vale como a faixa)."""
+    lo, hi = oracle.LEDGER_BANDS[band]
+    return [lo + (k + 0.5) / n * (hi - lo) for k in range(n)]
+
+
 class PassGain(unittest.TestCase):
     def test_gain_is_1_then_0_7_then_0_5_independent_of_verdict(self):
         self.assertEqual([oracle.pass_gain(n) for n in (0, 1, 2, 3, 9)], [1.0, 0.7, 0.5, 0.5, 0.5])
@@ -86,7 +92,7 @@ class Hysteresis(unittest.TestCase):
         ]}
         centers = (3.75, 5.25, 6.75, 8.25, 10.5)
         for ratio, changes in ((1.02, False), (1.10, True)):
-            pairs = [(c, c * ratio) for c in centers[1:] for _ in range(12)]
+            pairs = [(t, t * ratio) for b in (1, 2, 3, 4) for t in interior(b, 12)]
             free = oracle.refine(snap, pairs)
             held = oracle.refine(snap, pairs, hold_log=oracle.HOLD_MIN_STEP_LOG)
             self.assertNotEqual(free["refinedRaw"], free["currentRaw"])
@@ -112,7 +118,7 @@ class Hysteresis(unittest.TestCase):
 
 
 class EpisodeCoverage(unittest.TestCase):
-    PAIRS = [(c, c * 1.1) for c in (6.75, 8.25, 10.5) for _ in range(9)]
+    PAIRS = [(t, t * 1.1) for b in (2, 3, 4) for t in interior(b, 9)]
 
     def _snapshot(self):
         axis = [round(v * 512) for v in [1.0 + 0.45 * i for i in range(30)]]
@@ -124,8 +130,9 @@ class EpisodeCoverage(unittest.TestCase):
     def test_eight_pairs_from_one_stretch_do_not_drive_a_proposal(self):
         snap = self._snapshot()
         n = len(self.PAIRS)
-        self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[0] * n)["mode"], "POLISH")
-        self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[i % 2 for i in range(n)])["mode"], "POLISH")
+        # Sem portão de visitas (decisão do dono): um bloco só também vale, com peso limitado.
+        self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[0] * n)["mode"], "EQUIVALENCE")
+        self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[i % 2 for i in range(n)])["mode"], "EQUIVALENCE")
         self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[i % 3 for i in range(n)])["mode"], "EQUIVALENCE")
         self.assertEqual(oracle.refine(snap, self.PAIRS)["mode"], "EQUIVALENCE", "episódio desconhecido não liga o portão")
 

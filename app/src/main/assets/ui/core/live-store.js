@@ -25,20 +25,50 @@
     return { petrolMs, mapBar, rpm, fuel: String(live.fuel || live.state || '—'), sequence: finite(source.sequence), ageMs, grey: ageMs > GREY_MS };
   }
 
-  /** Leitura para os números grandes: valores + se estão atrasados. Desconhecido é null (a tela mostra "—"). */
-  function read(state) {
+  /**
+   * UMA regra de frescor para todo número ao vivo (Agora, faixa do cabeçalho, combustível do trilho, Mapa K, Refino):
+   *   fresh  até 1,5 s            · número normal
+   *   late   de 1,5 s a 3 s       · número cinza + "atrasado"
+   *   lost   acima de 3 s         · número vira "—" (valor velho nunca finge ser de agora) + "Sem dados há N s"
+   *   none   sem leitura válida   · "—"
+   * `valid=true` com a idade crescendo (ECU parou de enviar) cai em late e depois lost, nunca fica "ao vivo".
+   * Idade desconhecida com valid=true: o número aparece (a ponte disse que vale), sem selo de atraso.
+   * `fallback`: rota sem bombeador de quadros (Curva K, Sessões, Ferramentas) lê o status de 1 Hz (rpm, injeção, combustível e idade).
+   */
+  function read(state, options) {
     const telemetry = (state && state.telemetry) || {};
-    const live = telemetry.live || telemetry.data || telemetry;
-    const ageMs = finite(telemetry.telemetryAgeMs ?? telemetry.ageMs);
-    const valid = telemetry.valid === true;
+    const status = (state && state.status) || {};
+    let live = telemetry.live || telemetry.data || telemetry;
+    let valid = telemetry.valid === true;
+    let ageMs = finite(telemetry.telemetryAgeMs ?? telemetry.ageMs);
+    if (!valid && options && options.fallback === true && status.usbConnected === true) {
+      const statusAge = finite(status.directTelemetryAgeMs);
+      if (statusAge !== null && statusAge >= 0 && finite(status.rpm) !== null) {
+        live = { rpm: status.rpm, petrol_ms: status.petrolMs, load_bar: status.mapBar, fuel: status.fuelState };
+        valid = true;
+        ageMs = statusAge;
+      }
+    }
+    // Idade negativa = a ponte diz que nunca chegou quadro: nenhuma leitura vale, mesmo com valid=true.
+    if (valid && ageMs !== null && ageMs < 0) valid = false;
+    if (valid && ageMs === null) {
+      const statusAge = finite(status.directTelemetryAgeMs);
+      if (statusAge !== null && statusAge >= 0) ageMs = statusAge;
+    }
+    const known = ageMs !== null && ageMs >= 0;
+    let level = 'none';
+    if (valid) level = !known ? 'fresh' : ageMs > STALE_MS ? 'lost' : ageMs > GREY_MS ? 'late' : 'fresh';
+    const show = level === 'fresh' || level === 'late';
     return {
-      valid, ageMs,
-      rpm: valid ? finite(live.rpm) : null,
-      petrolMs: valid ? finite(live.petrol_ms ?? live.petrolMs) : null,
-      mapBar: valid ? finite(live.load_bar ?? live.map_bar ?? live.mapBar) : null,
-      fuel: valid ? String(live.fuel || live.state || '') : '',
-      grey: valid && ageMs !== null && ageMs > GREY_MS,
-      stale: valid && ageMs !== null && ageMs > STALE_MS,
+      valid, ageMs: known ? ageMs : null, level,
+      ageUnknown: valid && !known,
+      rpm: show ? finite(live.rpm) : null,
+      petrolMs: show ? finite(live.petrol_ms ?? live.petrolMs) : null,
+      mapBar: show ? finite(live.load_bar ?? live.map_bar ?? live.mapBar) : null,
+      fuel: show ? String(live.fuel || live.state || '') : '',
+      levelRaw: show ? finite(live.level_raw ?? live.levelRaw) : null,
+      grey: level === 'late' || level === 'lost',
+      stale: level === 'lost',
     };
   }
 

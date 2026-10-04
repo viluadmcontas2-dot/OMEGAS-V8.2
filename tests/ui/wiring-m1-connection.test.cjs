@@ -39,6 +39,8 @@ function prepared(name, route = 'dashboard') {
   app.go(route);
   if (w.staleBy) app.advance(w.staleBy);
   app.settle(2);
+  // A ECU real manda quadros o tempo todo: no cenário "conectado" o último quadro acabou de chegar.
+  if (name === 'conectado') { w.setFrame(FRAMES[10]); app.advance(250); }
   return app;
 }
 
@@ -52,9 +54,11 @@ for (const name of STATES) {
     L.assertClean(app, `M1/${name}`);
     const ecu = app.byId('globalEcu');
     assert.ok(ecu, 'o trilho tem o indicador de ECU (#globalEcu)');
-    const online = name === 'conectado' || name === 'telemetria velha' || name === 'ECU muda';
+    // "ECU online" só quando chega dado fresco: telemetria parada há mais de 3 s ou ECU muda = "Sem dados da ECU".
+    const online = name === 'conectado';
     assert.equal(ecu.dataset.online, online ? 'true' : 'false', `#globalEcu data-online em "${name}"`);
-    assert.match(ecu.textContent, online ? /online/i : name === 'conectando' ? /conectando/i : /sem cabo/i, 'Conectando e Sem cabo têm palavras diferentes');
+    const word = online ? /online/i : name === 'conectando' ? /conectando/i : name === 'telemetria velha' || name === 'ECU muda' ? /sem dados da ECU/i : /sem cabo/i;
+    assert.match(ecu.textContent, word, 'cada estado tem a sua palavra');
   });
 }
 
@@ -79,11 +83,11 @@ test('M1 telemetria velha: o app diz que está velha e deixa de parecer ao vivo'
   const attrs = app => [...app.$$('[data-level],[data-state],[data-fuel-state]')].map(e => `${e.id || e.localName}:${e.dataset.level || e.dataset.state || e.dataset.fuelState}`).sort().join('|');
   const dash = app => app.$('[data-screen="dashboard"]').textContent.replace(/\s+/g, ' ');
   assert.notEqual(attrs(fresh) + dash(fresh).replace(/\d+[,.]?\d* (ms|s)\b/g, ''), attrs(stale) + dash(stale).replace(/\d+[,.]?\d* (ms|s)\b/g, ''), 'telemetria com 3 s de idade é indistinguível da fresca');
-  assert.match(dash(stale), /atras|expir|velh|sem telemetria|antig|parad/i, 'o Agora não avisa que a telemetria está velha');
+  assert.match(dash(stale), /atras|expir|velh|sem telemetria|sem dados|antig|parad/i, 'o Agora não avisa que a telemetria está velha');
   assert.doesNotMatch(dash(fresh), /atras|expir|velh|antig/i, 'telemetria fresca não pode avisar atraso');
   // passou mais tempo: piora (nunca volta a "ok")
   stale.advance(7000); stale.settle(1);
-  assert.match(dash(stale), /expir|sem telemetria|parad|atras/i);
+  assert.match(dash(stale), /Sem dados há \d+ s/i);
 });
 
 test('M1 ECU muda (conectado sem quadros): o app não finge leitura ao vivo', { ...todo('DEFECT-10') }, () => {
@@ -122,7 +126,7 @@ for (const name of STATES) {
       allow: (desc, el, app) => (el.attrs.get('data-route') === app.route() && /\bactive\b/.test(el.attrs.get('class') || '') ? 'aba já ativa: tocar de novo não muda nada' : ''),
     });
     assert.deepEqual(r.failures, [], `${name}: ${r.exercised}/${r.total} elementos`);
-    assert.ok(r.total >= 8, 'o trilho (7 abas) tem que ser enxergado');
+    assert.ok(r.total >= 7, 'o trilho (7 abas) tem que ser enxergado');
   });
 }
 

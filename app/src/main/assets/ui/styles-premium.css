@@ -1,0 +1,159 @@
+/* OMEGAS · UI/UX premium escuro (F1 da reforma visual, decisão do dono 2026-10-04).
+   Tudo via tokens. Carrega logo antes de styles-floors.css. Classes novas:
+   .btn / .btn-primary / .btn-secondary / .btn-ghost / .btn-danger / .btn-compact, .field, .segmented, .toggle,
+   .card, .chart-surface, .scroll-y.  Botões existentes (.primary .secondary ...) já herdam o visual. */
+
+html, body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+body { font-size: 16px; }
+small { color: var(--dim); }
+
+/* ---- Botões ---- */
+html body button,
+html body .btn,
+html body summary {
+  -webkit-appearance: none; appearance: none;
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+  font-weight: 700;
+  letter-spacing: 0;
+  transition: background-color .12s, box-shadow .12s, border-color .12s, transform .06s;
+}
+html body button:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); }
+html body button:active:not(:disabled) { background: var(--surface-3); transform: translateY(1px); box-shadow: none; }
+html body button:focus-visible, html body summary:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+html body button:disabled, html body button[aria-disabled="true"] {
+  opacity: 1; background: var(--surface-2); color: var(--dim); border-color: var(--line-soft);
+  box-shadow: none; cursor: not-allowed; font-weight: 600;
+}
+html body .primary, html body .btn-primary,
+html body .autocal-primary-action {
+  background: var(--accent); border-color: var(--accent-strong); color: var(--on-accent);
+  box-shadow: 0 2px 6px var(--c-37-99-235-28);
+}
+html body .primary:hover:not(:disabled), html body .btn-primary:hover:not(:disabled),
+html body .autocal-primary-action:hover:not(:disabled) { background: var(--accent-strong); color: var(--on-accent); }
+html body .primary:active:not(:disabled), html body .btn-primary:active:not(:disabled),
+html body .autocal-primary-action:active:not(:disabled) { background: var(--accent-press); box-shadow: none; }
+html body .primary:disabled, html body .btn-primary:disabled, html body .autocal-primary-action:disabled {
+  background: var(--surface-3); color: var(--dim); border-color: var(--line-soft); box-shadow: none;
+}
+html body .secondary, html body .btn-secondary { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+html body .quiet-button, html body .btn-ghost { background: transparent; box-shadow: none; border-color: transparent; color: var(--muted); }
+html body .danger-primary, html body .btn-danger { background: var(--danger); border-color: var(--danger-strong); color: var(--on-accent); }
+html body .side-nav button { box-shadow: none; border-color: transparent; background: transparent; }
+html body .side-nav button:hover:not(.active) { background: var(--surface-2); border-color: transparent; }
+html body .side-nav button.active { background: var(--accent-soft); color: var(--accent-strong); border-color: transparent; }
+html body .alert-toast button, html body .icon-close { box-shadow: none; background: transparent; border-color: transparent; }
+
+/* ---- Campos: branco, borda suave, foco azul, altura = --btn-h ---- */
+html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
+html body select,
+html body textarea,
+html body .field {
+  -webkit-appearance: none; appearance: none;
+  height: var(--btn-h);
+  background-color: var(--field-bg);
+  color: var(--text);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  padding: 0 14px;
+  font-size: 20px; font-weight: 700;
+  box-shadow: inset 0 1px 2px var(--c-15-23-42-05);
+  transition: border-color .12s, box-shadow .12s;
+}
+html body textarea { height: auto; padding: 12px 14px; }
+html body input:focus, html body select:focus, html body textarea:focus {
+  outline: none; border-color: var(--accent); box-shadow: var(--focus-ring);
+}
+html body input:disabled, html body select:disabled { background: var(--surface-2); color: var(--dim); }
+html body input[type="number"] { -moz-appearance: textfield; font-variant-numeric: tabular-nums; }
+html body input[type="number"]::-webkit-inner-spin-button,
+html body input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+html body select {
+  padding-right: 44px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M3 6l5 5 5-5' fill='none' stroke='%238c9bb0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; background-size: 16px;
+}
+html body select::-ms-expand { display: none; }
+html body option { background: var(--white); color: var(--text); }
+html body input[type="range"] {
+  -webkit-appearance: none; appearance: none; height: 28px; padding: 0; border: 0; background: transparent; box-shadow: none; accent-color: var(--accent);
+}
+html body input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--surface-3); }
+html body input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -10px; border-radius: 50%; background: var(--white); border: 2px solid var(--accent); box-shadow: var(--shadow-2); }
+
+/* Toggle (checkbox como interruptor) */
+html body input[type="checkbox"] {
+  -webkit-appearance: none; appearance: none; position: relative; flex: 0 0 auto;
+  width: 50px; height: 30px; border-radius: 15px; border: 1px solid var(--field-border);
+  background: var(--surface-3); box-shadow: none; cursor: pointer; transition: background-color .15s;
+}
+html body input[type="checkbox"]::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--white); box-shadow: 0 1px 3px var(--c-15-23-42-3); transition: transform .15s;
+}
+html body input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent-strong); }
+html body input[type="checkbox"]:checked::after { transform: translateX(20px); }
+html body input[type="checkbox"]:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Controle segmentado (Somar · Definir · %) */
+html body .segmented {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; padding: 0;
+  border: 1px solid var(--field-border); border-radius: var(--radius); background: var(--surface-2); overflow: hidden;
+}
+html body .segmented > button { border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--muted); font-weight: 700; }
+html body .segmented > button + button { border-left: 1px solid var(--line); }
+html body .segmented > button:hover:not(.active):not([aria-checked="true"]) { background: var(--surface-3); border: 0; }
+html body .segmented > button.active, html body .segmented > button[aria-checked="true"] {
+  background: var(--white); color: var(--accent-strong); box-shadow: inset 0 -3px 0 var(--accent); font-weight: 800;
+}
+html body .view-switch { background: var(--surface-2); border-radius: var(--radius); padding: 4px; gap: 4px; }
+html body .view-switch button { border: 0; box-shadow: none; background: transparent; }
+html body .view-switch button.active, html body .view-switch button[aria-pressed="true"], html body .view-switch button[aria-selected="true"] { background: var(--white); color: var(--accent-strong); box-shadow: var(--shadow-2); }
+
+/* ---- Cartões e superfícies ---- */
+.card, .map-surface, .curve-surface, .obd-primary, .inspector-panel, .hero-reading, .condition-strip, .session-state,
+.operation-card, .tool-actions > button, .tool-power-row, .recorded-session-item {
+  background: var(--surface); border: 1px solid var(--line-soft); box-shadow: var(--shadow-1);
+}
+.operation-card, .autocal-review-card { box-shadow: var(--shadow-3); }
+.operation-layer, .autocal-review { background: var(--c-246-248-251-86); }
+.side-rail { background: var(--rail); border-right: 1px solid var(--line-soft); }
+.workspace-head { background: var(--bg); }
+.chart-surface, .curve-chart, .autocal-chart-host, .curve-overview-k { background: var(--chart-bg) !important; border: 1px solid var(--line-soft); }
+details, .diagnostic-settings, .live-trace-detail, .background-health-card, .diagnostic-recorder-card, .recorded-sessions, .live-log-console { background: var(--surface); }
+
+/* ---- Rolagem por tela (sem barra gorda) ---- */
+.screen-host .screen.active { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; contain: none; }
+.screen-host, .screen { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.screen::-webkit-scrollbar, .scroll-y::-webkit-scrollbar { width: 6px; height: 6px; }
+.screen::-webkit-scrollbar-thumb, .scroll-y::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.scroll-y { overflow-y: auto; overscroll-behavior: contain; }
+/* Filhos que enchiam a tela e esmagavam o conteúdo: mantêm altura própria; a rota rola se passar. */
+.screen.active > * { flex-shrink: 0; }
+.map-workspace, .curve-workspace, .obd-workspace { flex: 1 0 auto; min-height: min(100%, 560px); }
+.screen.active > .map-workspace, .screen.active > .curve-workspace { min-height: 100%; }
+.map-surface, .curve-surface { min-height: var(--chart-min-h); }
+.curve-chart, .chart-surface { min-height: var(--chart-min-h); }
+.autocal-chart-host { min-height: var(--chart-min-h); height: auto; }
+.screen.active.autocal-route-screen, .screen.active[data-screen="dashboard"] { overflow-y: auto; }
+
+/* ---- Ajustes de contraste após a inversão do tema (--tone-ffffff agora é a tinta forte) ---- */
+html body .refino-cockpit .autocal-primary-action[data-kind="review"],
+html body .refino-steps li[data-problem="true"] i { color: var(--on-accent); }
+html body .refino-cockpit .autocal-primary-action[data-kind="review"] { background: var(--accent); border-color: var(--accent-strong); }
+html body .refino-cockpit .autocal-primary-action[data-kind="restore"] { background: var(--danger-soft); border-color: var(--danger-line); color: var(--danger); }
+.map-k-cell { background: var(--surface) !important; border: 1px solid var(--line-soft) !important; box-shadow: none; }
+.map-k-cell.selected { background: var(--accent-soft) !important; border-color: var(--accent) !important; }
+.map-k-cell.preview { background: var(--warn-soft) !important; }
+.map-axis-header { background: var(--surface-2) !important; border: 1px solid var(--line-soft) !important; color: var(--muted); }
+
+/* ---- Trilho com 8 itens (08 Diagnóstico): achatado para caber em 720 px ---- */
+.side-nav { gap: 1px; padding: 4px 0; }
+html body .side-nav button { min-height: var(--rail-item-h) !important; }
+.brand-block { height: 40px; }
+/* Nunca rolagem horizontal (DESIGN.md) */
+.screen.active { overflow-x: hidden; }

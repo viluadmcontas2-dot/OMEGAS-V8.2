@@ -36,8 +36,9 @@ class RefinementRealSessionTest {
         val all = ledger.pairs()
         val driving = ledger.drivingPairs()
         val idle = all.count { it.rpm < EquivalenceLedger.DRIVING_MIN_RPM }
-        assertTrue("pares ${all.size}", all.size in 50..90)
-        assertTrue("lenta ${idle} de ${all.size}", idle >= all.size * 0.6)
+        // A janela estável recusa ms que pula > 10% (zigue-zague 8↔9 ms): menos leituras, mais limpas.
+        assertTrue("pares ${all.size}", all.size in 15..90)
+        assertTrue("lenta ${idle} de ${all.size}", idle >= all.size * 0.5)
         assertTrue(driving.all { it.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS })
 
         val snapshot = RealSessionReplaySupport.snapshot(RealSessionReplaySupport.fixture(AUTOMATCH), 1716)
@@ -72,8 +73,24 @@ class RefinementRealSessionTest {
     // ------------------------------------------------------------------ independência do AutoMatch nativo
 
     @Test
+    fun `a conducao real da sessao REFERENCE nao tem cobertura independente e falha fechada`() {
+        // Achado da revisão adversarial: nesta sessão real nenhuma faixa tem pares espalhados por dentro dela em ≥ 3
+        // visitas separadas por ≥ 60 s. Sem cobertura de verdade NÃO há proposta (antes saía uma, de 8 pares de um trecho).
+        val ledger = replay(REFERENCE)
+        val pairs = ledger.drivingPairs()
+        val snapshot = RealSessionReplaySupport.snapshot(RealSessionReplaySupport.fixture(REFERENCE), 962)
+        val withEpisodes = AutoMatchSnapshotAnalysis.analyzeRefined(
+            snapshot, asPairs(pairs), null, pairs.map { it.episode },
+        )
+        assertFalse(withEpisodes.getBoolean("telemetryOnly"))
+        assertEquals("NENHUMA", withEpisodes.getString("evidenceSource"))
+        assertEquals(0, withEpisodes.getInt("changedCount"))
+    }
+
+    @Test
     fun `logo depois do reset da ECU a conducao com cobertura propoe sem esperar faixas nativas`() {
-        val driving = asPairs(replay(REFERENCE).drivingPairs())
+        // Condução sintética COM cobertura: 12 pares por faixa, espalhados por dentro de cada uma, GNV 10% pobre.
+        val driving = EvidenceTestSupport.pairsIn(1.10, 12, listOf(0, 1, 2, 3, 4))
         // seq 962: a ECU acabou de zerar a aquisição de gasolina; nenhuma faixa nativa madura.
         val snapshot = RealSessionReplaySupport.snapshot(RealSessionReplaySupport.fixture(REFERENCE), 962)
         val analysis = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, driving)

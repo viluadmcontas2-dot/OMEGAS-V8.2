@@ -24,7 +24,7 @@ class EquivalenceRuntimeTest {
 
     @Test
     fun `trocar a referencia nao perde dados do livro so reajusta e recomeca a prova`() {
-        val ledger = EquivalenceReplaySupport.ledger(REFERENCE)
+        val ledger = EquivalenceReplaySupport.ledger(REFERENCE, curveSeq = 2183)
         val rt = EquivalenceRuntime(null)
         val phases = phases()
         feed(rt)
@@ -50,7 +50,7 @@ class EquivalenceRuntimeTest {
 
     @Test
     fun `json do resultado traz as chaves do contrato e a deriva da ECU`() {
-        val ledger = EquivalenceReplaySupport.ledger(REFERENCE)
+        val ledger = EquivalenceReplaySupport.ledger(REFERENCE, curveSeq = 2183)
         val rt = EquivalenceRuntime(null)
         val phases = phases()
         feed(rt)
@@ -81,7 +81,7 @@ class EquivalenceRuntimeTest {
     @Test
     fun `sem Curva K lida o resultado diz por que`() {
         val rt = EquivalenceRuntime(null)
-        assertNull(rt.evaluate(EquivalenceReplaySupport.ledger(REFERENCE), phases(), null, null, true, none))
+        assertNull(rt.evaluate(EquivalenceReplaySupport.ledger(REFERENCE, curveSeq = 2183), phases(), null, null, true, none))
         val json = rt.json(null)
         assertEquals(false, json.getBoolean("available"))
         assertEquals("CURVA_K_NAO_LIDA", json.getString("reason"))

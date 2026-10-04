@@ -125,6 +125,10 @@ object AutoCalAcquisition {
         return JSONObject()
             .put("points", points)
             .put("pointCount", points.length())
+            // Flags de zona como a ECU entregou (nulo = o campo não veio): a verdade da ECU, sem interpretação.
+            .put("zoneFlags", JSONObject()
+                .put("petrol", if (petrolZones.isEmpty()) JSONObject.NULL else JSONArray(petrolZones.take(4).map { it > 0 }))
+                .put("gas", if (gasZones.isEmpty()) JSONObject.NULL else JSONArray(gasZones.take(4).map { it > 0 })))
             .put("validCount", valid)
             .put("collectingCount", collecting)
             .put("unknownCount", unknown)

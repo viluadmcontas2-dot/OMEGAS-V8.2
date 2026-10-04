@@ -8,15 +8,15 @@ const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/
 
 assert.doesNotMatch(cockpit, /<summary>Corrigir aquisição<\/summary>/,
   'reaquisição de combustível não deve ficar escondida em menu para uso na multimídia');
-assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Ler o GNV de novo<\/button>/,
+assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV<\/button>/,
   'Reset Gas deve aparecer como intenção humana de readquirir GNV');
-assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Ler a gasolina de novo<\/button>/,
+assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina<\/button>/,
   'Reset Petrol deve aparecer como intenção humana de readquirir gasolina');
 assert.ok(
-  cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
+  cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Mais opções</summary>'),
   'reaquisição diária deve aparecer antes do reset pesado'
 );
-assert.match(cockpit, /<summary>Ações avançadas<\/summary>/,
+assert.match(cockpit, /<summary>Mais opções<\/summary>/,
   'Curva K fica em complexidade sob demanda');
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
@@ -33,12 +33,12 @@ assert.doesNotMatch(cockpit, /data-autocal-action="RESET_ALL"/);
 assert.match(cockpit, /Salvar uma foto antes é opcional/i,
   'backup deve ser opcional e manual, nunca um gate do reset');
 assert.ok(
-  cockpit.indexOf('data-autocal-action="RESET_GAS"') < cockpit.indexOf('<summary>Ações avançadas</summary>') &&
-  cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
+  cockpit.indexOf('data-autocal-action="RESET_GAS"') < cockpit.indexOf('<summary>Mais opções</summary>') &&
+  cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Mais opções</summary>'),
   'a interface deve manter a readquisição diária fora do menu avançado'
 );
-assert.match(cockpit, /RESET_GAS:\s*'Ler o GNV de novo'/);
-assert.match(cockpit, /RESET_PETROL:\s*'Ler a gasolina de novo'/);
+assert.match(cockpit, /RESET_GAS:\s*'Reler GNV'/);
+assert.match(cockpit, /RESET_PETROL:\s*'Reler gasolina'/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
 assert.doesNotMatch(cockpit, />Reset gasolina<\/button>/);
 assert.match(cockpit, /Salvar uma foto antes é opcional/);

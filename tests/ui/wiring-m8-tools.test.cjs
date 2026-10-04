@@ -31,19 +31,19 @@ test('M8 abre limpo: saúde do app, bateria, balão, retenção e logs presentes
   const app = toolsApp();
   L.assertClean(app, 'M8/limpo');
   const t = app.$(SCREEN).textContent;
-  assert.match(t, /Funcionando em segundo plano/i);
-  assert.match(t, /BATERIA/);
+  assert.match(t, /Tudo funcionando/i);
+  assert.match(t, /SEGUNDO PLANO/);
   assert.match(t, /TELEMETRIA FLUTUANTE/);
-  assert.match(t, /Reten[cç][aã]o das sess/i);
+  assert.match(t, /Reten[cç][aã]o/i);
   assert.equal(app.byId('toolExportData').localName, 'button');
 });
 
 test('M8 serviço parado / ECU travada: a saúde diz a verdade (sem "Funcionando")', () => {
   const stopped = toolsApp({ setup: w => { w.status.serviceRunning = false; } });
-  assert.doesNotMatch(stopped.$(SCREEN).textContent, /Funcionando em segundo plano/);
+  assert.doesNotMatch(stopped.$(SCREEN).textContent, /Tudo funcionando/);
   assert.match(stopped.$(SCREEN).textContent, /n[aã]o est[aá] ativo/i);
   const stuck = toolsApp({ setup: w => { w.status.engineStuck = true; } });
-  assert.doesNotMatch(stuck.$(SCREEN).textContent, /Funcionando em segundo plano/);
+  assert.doesNotMatch(stuck.$(SCREEN).textContent, /Tudo funcionando/);
   assert.match(stuck.$(SCREEN).textContent, /aten[cç][aã]o/i);
 });
 
@@ -119,7 +119,7 @@ test('M8 bateria: Permitir chama a ponte; quando o Android libera, o botão some
   app.settle(8);
   app.$$('details').forEach(d => d.setAttribute('open', ''));
   assert.ok(app.$('[data-tool-battery-request]') === null);
-  assert.match(app.$(SCREEN).textContent, /Sem restri[cç][aã]o/);
+  assert.match(app.$(SCREEN).textContent, /n[aã]o pausa o app/);
 });
 
 test('M8 Retenção das sessões: Aplicar envia EXATAMENTE os valores dos campos (mín. 20 sessões) e mostra o resultado', () => {
@@ -194,7 +194,7 @@ test('M8 convite do balão (primeiro uso): aparece uma vez; Autorizar chama a po
 test('M8 idempotência: estado igual duas vezes não muda o DOM; A→B→A restaura; listeners estáveis', () => {
   const app = toolsApp({ openDetails: false });
   // a idade da telemetria anda com o relógio; o resto da tela tem de ficar idêntico
-  const snap = () => L.serialize(app.$(SCREEN)).replace(/Telemetria <b>[^<]*<\/b>/, 'Telemetria <b>#</b>');
+  const snap = () => L.serialize(app.$(SCREEN)).replace(/Último dado [^<]*</, 'Último dado #<');
   const sched = app.win.OmegasApp.scheduler;
   sched.run();
   const dom = snap();

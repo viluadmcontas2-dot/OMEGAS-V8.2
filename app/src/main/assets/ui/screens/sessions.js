@@ -38,9 +38,26 @@
       index: indexRange(item),
       gnvPercent: total > 0 ? gnv : null,
       gasPercent: total > 0 ? 100 - gnv : null,
+      autoMatch: finite(item?.autoMatchExecuted ?? item?.semanticSummary?.autoMatchExecuted),
       raw: item,
     };
   }
+
+  const FOLDER = 'Download/Omegas';
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  /** Uma frase humana por sessão; só afirma o que o dado traz. */
+  function sessionSummary(row) {
+    const parts = [];
+    if (row.gnvPercent !== null) parts.push(row.gnvPercent === 0 ? 'Rodou só na gasolina' : row.gasPercent === 0 ? 'Rodou só no GNV' : `Rodou ${row.gnvPercent}% no GNV`);
+    let text = parts.join(', ');
+    const extra = [];
+    if (row.blackouts !== null) extra.push(row.blackouts === 0 ? 'sem apagões' : plural(row.blackouts, 'apagão', 'apagões'));
+    if (extra.length) text += `${text ? '; ' : ''}${extra.join(', ')}`;
+    if (row.index && row.index.start !== null && row.index.end !== null) text += `${text ? '. ' : ''}GNV igual à gasolina: ${percentText(row.index.start)} → ${percentText(row.index.end)}`;
+    return text ? text + '.' : '';
+  }
+
+  const MAX_ROWS = 20;
 
   class SessionsScreen {
     constructor(store, api) {
@@ -48,10 +65,6 @@
       this.api = api;
       this.host = document.getElementById('sessionsHost');
       this.signature = '';
-      this.host?.addEventListener('click', event => {
-        const button = event.target.closest('[data-export-session]');
-        if (button) this.api.exportSession(button.dataset.exportSession || '');
-      });
     }
 
     render(state) {
@@ -59,42 +72,55 @@
       const status = state.sessionStatus || {};
       const listError = !Array.isArray(state.sessions) && state.sessionsError ? String(state.sessionsError) : '';
       const loading = !Array.isArray(state.sessions) && !listError;
-      const rows = (Array.isArray(state.sessions) ? state.sessions : []).slice(0, 20).map(sessionRow);
+      const all = Array.isArray(state.sessions) ? state.sessions : [];
+      const rows = all.slice(0, MAX_ROWS).map(sessionRow);
       const recording = status.recording === true;
-      const signature = JSON.stringify([recording, status.durationMs && Math.round(status.durationMs / 10000), loading, listError, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index])]);
+      // Enquanto grava, a duração nunca é "—": usa a da ponte; sem ela, a da sessão em andamento; sem ela, o tempo desde que a tela viu a gravação começar.
+      if (!recording) this.recordingSince = 0;
+      else if (!this.recordingSince) this.recordingSince = Date.now();
+      const activeRow = rows.find(row => row.active);
+      const recordingMs = !recording ? null : (finite(status.durationMs) ?? (activeRow ? activeRow.durationMs : null) ?? Math.max(0, Date.now() - this.recordingSince));
+      const signature = JSON.stringify([recording, recordingMs !== null && Math.round(recordingMs / 10000), finite(status.events), loading, listError, all.length, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index, r.autoMatch])]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
       const R = rules();
+      const more = all.length - rows.length;
+      const durationShown = recording ? R.durationLabel(recordingMs) : R.durationLabel(status.durationMs);
       const list = rows.length ? rows.map(row => {
         const date = R.sessionDate(row.raw);
-        const indexText = row.index ? `Índice ${percentText(row.index.start)} → ${percentText(row.index.end)}` : '';
+        const [day, time] = date === R.DASH ? [R.DASH, ''] : date.split(' ');
+        const shortTime = time ? time.slice(0, 5) : '';
+        const summary = sessionSummary(row);
         const facts = [
-          row.durationMs === null ? '' : R.durationLabel(row.durationMs),
-          row.blackouts === null ? '' : `${row.blackouts} ${row.blackouts === 1 ? 'apagão' : 'apagões'}`,
-          indexText,
-          row.gnvPercent === null ? '' : `GNV ${row.gnvPercent}% · gasolina ${row.gasPercent}%`,
-          row.active ? 'em andamento' : '',
-        ].filter(Boolean).join(' · ');
-        return `<article class="recorded-session-item" data-session-id="${escapeHtml(row.id)}">
-          <div class="recorded-session-header"><b>${escapeHtml(row.title)}</b><span class="session-datetime">${escapeHtml(date)}</span></div>
-          <div class="recorded-session-meta"><span>${escapeHtml(facts || '—')}</span></div>
-          ${row.gnvPercent === null ? '' : `<div class="session-fuel-bar"><div class="fuel-segment cng" style="width:${row.gnvPercent}%"></div><div class="fuel-segment petrol" style="width:${row.gasPercent}%"></div></div>`}
-          <button type="button" class="secondary" data-export-session="${escapeHtml(row.id)}">Exportar ZIP</button>
+          ['Duração', row.durationMs === null ? R.DASH : R.durationLabel(row.durationMs)],
+          ['Tamanho', R.bytesLabel(row.bytes)],
+          ['AutoMatch', row.autoMatch === null ? R.DASH : String(row.autoMatch)],
+        ].map(([k, v]) => `<div><dt>${k}</dt><dd>${escapeHtml(v)}</dd></div>`).join('');
+        return `<article class="ss-item" data-session-id="${escapeHtml(row.id)}" data-state="${row.active ? 'recording' : 'closed'}">
+          <div class="ss-when"><b>${escapeHtml(day)}</b><span>${escapeHtml(shortTime)}</span><em class="ss-state" data-state="${row.active ? 'recording' : 'closed'}">${row.active ? 'Gravando' : 'Fechada'}</em></div>
+          <div class="ss-body">
+            <p class="ss-summary">${escapeHtml(summary || (row.active ? 'Gravando agora; o resumo aparece quando ela fechar.' : 'Sem resumo para esta sessão.'))}</p>
+            ${row.gnvPercent === null ? '' : `<div class="session-fuel-bar" role="img" aria-label="GNV ${row.gnvPercent}%, gasolina ${row.gasPercent}%"><div class="fuel-segment cng" style="width:${row.gnvPercent}%"></div><div class="fuel-segment petrol" style="width:${row.gasPercent}%"></div></div>`}
+            <small class="ss-path">${FOLDER}${row.title && row.title !== 'Sessão' ? ' · ' + escapeHtml(row.title) : ''}</small>
+          </div>
+          <dl class="ss-facts">${facts}</dl>
         </article>`;
       }).join('') : (listError
         ? `<p class="empty-copy" data-sessions-error>Não consegui ler as sessões salvas (${escapeHtml(listError)}). O app tenta de novo sozinho; se continuar, feche e abra o app.</p>`
         : loading
         ? '<p class="empty-copy">Lendo as sessões salvas…</p>'
-        : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>');
+        : '<p class="empty-copy">Nenhuma sessão gravada ainda. A primeira começa sozinha quando você ligar a ECU.</p>');
       this.host.innerHTML = `
-        <section class="diagnostic-recorder-card" data-recording="${recording ? 'true' : 'false'}">
-          <header><div><small>AGORA</small><h3>${recording ? 'Gravando esta sessão' : 'Começa sozinha ao conectar a ECU'}</h3></div><span>${recording ? 'GRAVANDO' : 'AUTOMÁTICA'}</span></header>
-          <div class="recorder-metrics"><span><b>${R.durationLabel(status.durationMs)}</b> duração</span><span><b>${R.megabytesLabel(finite(status.megabytes))}</b> usados</span><span><b>${R.count(status.events)}</b> eventos</span></div>
+        <section class="ss-now" data-recording="${recording ? 'true' : 'false'}">
+          <div class="ss-now-main"><small>${recording ? 'GRAVANDO AGORA' : 'GRAVAÇÃO'}</small><h3>${recording ? 'Esta condução está sendo gravada' : 'Nenhuma gravação em andamento'}</h3><p>${recording ? 'Fecha sozinha ao desligar a ECU.' : 'A próxima começa sozinha ao conectar a ECU.'}</p></div>
+          <dl class="ss-facts"><div><dt>Duração</dt><dd>${recording ? durationShown : R.DASH}</dd></div><div><dt>Usado</dt><dd>${R.megabytesLabel(finite(status.megabytes))}</dd></div><div><dt>Eventos</dt><dd>${R.fmt(status.events, 0)}</dd></div></dl>
         </section>
-        <section class="recorded-session-list" aria-label="Sessões gravadas">${list}</section>`;
+        <p class="ss-where">Cada sessão é salva sozinha em <b>${FOLDER}</b> quando termina, pronta para compartilhar.</p>
+        <section class="ss-list" aria-label="Sessões gravadas">${list}</section>
+        ${more > 0 ? `<p class="empty-copy" data-sessions-truncated>Mostrando as ${R.fmt(rows.length, 0)} mais recentes de ${R.fmt(all.length, 0)}. As mais antigas continuam em ${FOLDER}.</p>` : ''}`;
     }
   }
 
   ns.SessionsScreen = SessionsScreen;
-  ns.SessionsModel = { sessionRow, indexRange, blackoutCount, percentText };
+  ns.SessionsModel = { sessionRow, sessionSummary, indexRange, blackoutCount, percentText };
 })(typeof window !== 'undefined' ? window : globalThis);

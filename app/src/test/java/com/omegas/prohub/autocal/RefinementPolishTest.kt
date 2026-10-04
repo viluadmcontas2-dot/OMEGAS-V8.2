@@ -137,22 +137,22 @@ class RefinementPolishTest {
     }
 
     @Test
-    fun `histerese de faixa entra em 3 por cento e so sai abaixo de 2 por cento`() {
+    fun `histerese de faixa entra em 4 por cento e so sai abaixo de 3 por cento`() {
         fun one(ratio: Double) = index(Triple(ratio, 20, null), Triple(1.0, 20, null), Triple(1.0, 20, null), Triple(null, 0, null), Triple(null, 0, null))
         val fresh = EquivalencePhases(null) { now }
-        assertEquals("2,5% sozinho está dentro", "ESTAVEL", fresh.observe(true, monitor(3), null, one(1.025), noJournal, 0).getString("phase"))
+        assertEquals("3,5% sozinho está dentro", "ESTAVEL", fresh.observe(true, monitor(3), null, one(1.035), noJournal, 0).getString("phase"))
         val p = EquivalencePhases(null) { now }
         assertEquals("PROPOSTA_PRONTA", p.observe(true, monitor(3), null, one(1.08), noJournal, 0).getString("phase"))
-        assertEquals("2,5% depois de fora continua fora", "PROPOSTA_PRONTA", p.observe(true, monitor(3), null, one(1.025), noJournal, 0).getString("phase"))
-        assertEquals("1,5% volta para dentro", "ESTAVEL", p.observe(true, monitor(3), null, one(1.015), noJournal, 0).getString("phase"))
+        assertEquals("3,5% depois de fora continua fora", "PROPOSTA_PRONTA", p.observe(true, monitor(3), null, one(1.035), noJournal, 0).getString("phase"))
+        assertEquals("2,5% volta para dentro", "ESTAVEL", p.observe(true, monitor(3), null, one(1.025), noJournal, 0).getString("phase"))
     }
 
     @Test
-    fun `faixa com poucos episodios nao conta como medida mesmo com muitos pares`() {
+    fun `faixa sem nenhum episodio nao conta como medida mesmo com muitos pares`() {
         val p = EquivalencePhases(null) { now }
         val three = index(Triple(1.0, 20, 3), Triple(1.0, 20, 3), Triple(1.0, 20, 3), Triple(null, 0, null), Triple(null, 0, null))
         assertEquals("ESTAVEL", p.observe(true, monitor(3), null, three, noJournal, 0).getString("phase"))
-        val few = index(Triple(1.0, 20, 3), Triple(1.0, 20, 3), Triple(1.0, 20, 2), Triple(null, 0, null), Triple(null, 0, null))
+        val few = index(Triple(1.0, 20, 3), Triple(1.0, 20, 3), Triple(1.0, 20, 0), Triple(null, 0, null), Triple(null, 0, null))
         val q = EquivalencePhases(null) { now }
         val r = q.observe(true, monitor(3), null, few, noJournal, 0)
         assertEquals("COLETANDO_NOSSOS", r.getString("phase"))
@@ -171,12 +171,14 @@ class RefinementPolishTest {
     }
 
     @Test
-    fun `a verificacao nunca mostra mais minutos que o orcamento`() {
+    fun `a verificacao nao cita minutos na frase do dono`() {
         val p = EquivalencePhases(null) { now }
         val journal = JSONObject().put("latest", JSONObject().put("id", "e").put("status", "VERIFICANDO").put("onlineMs", 20 * 60_000L))
         val r = p.observe(true, monitor(3), null, offIndex, journal, 0)
         assertEquals("VERIFICANDO", r.getString("phase"))
-        assertTrue(r.getString("headline"), r.getString("headline").contains("15 de 15 min"))
-        assertFalse(r.getString("headline").contains("20 de"))
+        // A frase do dono nunca cita minutos nem orçamento; o teto (15) fica só em `verification` (technical).
+        assertFalse(r.getString("headline"), r.getString("headline").contains(" min"))
+        assertEquals(15.0, r.getJSONObject("verification").getDouble("budgetMinutes"), 1e-9)
+        assertEquals(15.0, r.getJSONObject("verification").getDouble("onlineMinutes").coerceAtMost(15.0), 1e-9)
     }
 }

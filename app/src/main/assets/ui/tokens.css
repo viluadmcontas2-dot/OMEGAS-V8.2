@@ -1,41 +1,33 @@
 /* OMEGAS tokens: única fonte de cor, raio, espaço e pisos de toque/texto (spec §3.2).
-   Nenhum outro CSS define cor: use var(--…). Cores já existentes na Platina, só nomeadas. */
+   Nenhum outro CSS define cor: use var(--…). Tema ÚNICO escuro premium (dono, 2026-10-04: dirige à noite). */
 :root{
   color-scheme:dark;
   font-family:Inter,Roboto,"Segoe UI",Arial,sans-serif;
-
-  /* base */
-  --bg:#070a0f;
-  --rail:#0b1017;
-  --surface:#101720;
-  --surface-2:#151e29;
-  --surface-3:#1b2633;
-  --line:#263342;
-  --line-soft:#1b2631;
-  --text:#f4f7fb;
-  --muted:#9aa9bc;
-  --dim:#6f7f92;
-  --accent:#7c6cff;
-  --accent-soft:#262248;
-
-  /* dados */
-  --petrol:#76a8ff;
-  --cng:#43d39e;
-
-  /* estados: cor é estado (ok · atenção · erro · neutro · em prova) */
-  --ok:#38d39f;
-  --warn:#f3ba59;
-  --danger:#ff6b6b;
+  --bg:#0a0f18;
+  --rail:#0d1420;
+  --surface:#121a27;
+  --surface-2:#172131;
+  --surface-3:#1f2b3d;
+  --line:#2b3a52;
+  --line-soft:#1d283a;
+  --text:#eef3fa;
+  --muted:#a5b4c8;
+  --dim:#8494aa;
+  --accent:#2f6fe8;
+  --accent-soft:#15233f;
+  --petrol:#6ea8ff;
+  --cng:#3ddc9f;
+  --ok:#34d399;
+  --warn:#f5b942;
+  --danger:#e5484d;
   --state-ok:var(--ok);
   --state-warn:var(--warn);
   --state-error:var(--danger);
   --state-neutral:var(--dim);
   --state-proof:var(--petrol);
-
-  /* raio e espaço */
-  --radius-s:7px;
-  --radius:12px;
-  --radius-l:14px;
+  --radius-s:10px;
+  --radius:14px;
+  --radius-l:18px;
   --space-1:4px;
   --space-2:8px;
   --space-3:12px;
@@ -43,14 +35,11 @@
   --space-5:24px;
   --space-6:32px;
   --gap:10px;
-  --rail-width:260px;
-
-  /* pisos (multimídia 1280×720, ~70 cm) */
-  --touch-min:76px;
+  --rail-width:200px;
+  --rail-item-h:44px;
+  --touch-min:58px;
   --touch-grid:44px;
-  --text-critical:24px;
-
-  /* tons já usados nas telas, nomeados (não são cores novas) */
+  --text-critical:22px;
   --tone-061019:#061019;
   --tone-071018:#071018;
   --tone-07101a:#07101a;
@@ -285,4 +274,30 @@
   --rgb-93-205-255:93,205,255;
   --rgb-93-211-158:93,211,158;
   --rgb-7-10-15:7,10,15;
+  --accent-strong:#6ea2ff;
+  --on-accent:#ffffff;
+  --white:#1a2434;
+  --accent-line:#2d4b86;
+  --accent-press:#2358c8;
+  --danger-line:#7a3036;
+  --danger-strong:#b83a3f;
+  --ok-soft:#0f2b23;
+  --warn-soft:#2d240f;
+  --danger-soft:#2e1618;
+  --field-bg:#0e1522;
+  --field-border:#364763;
+  --chart-bg:#0d1420;
+  --shadow-1:0 1px 2px rgba(0,0,0,.45),0 1px 1px rgba(0,0,0,.3);
+  --shadow-2:0 4px 14px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.35);
+  --shadow-3:0 14px 40px rgba(0,0,0,.6);
+  --focus-ring:0 0 0 3px rgba(79,141,255,.45);
+  --c-15-23-42-05:rgba(0,0,0,.28);
+  --c-15-23-42-3:rgba(0,0,0,.55);
+  --c-246-248-251-86:rgba(6,10,16,.82);
+  --c-37-99-235-28:rgba(47,111,232,.4);
+  --space-7:48px;
+  --btn-h:58px;
+  --btn-h-compact:52px;
+  --btn-font:18px;
+  --chart-min-h:clamp(300px,50vh,420px);
 }
