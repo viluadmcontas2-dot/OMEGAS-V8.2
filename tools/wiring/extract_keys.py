@@ -151,6 +151,8 @@ def extract_scalar_keys(root=None):
             continue
         for m in _PUT_VALUE.finditer(path.read_text(encoding="utf-8")):
             value = m.group(2).strip()
+            if re.match(r"^JSONObject\.NULL\s*[,)]", value):
+                continue  # null não decide a forma: o escalar vem das outras emissões da chave
             certain = value.startswith("num(") or re.match(r"^[a-z]\w*\.[a-z]\w*\s*[,)]", value) or re.match(r'^("[^"]*"|-?\d[\d.]*|true|false)\s*[,)]', value)
             # Só vale como escalar o que é claramente escalar; variável solta (`ref`, `points`) pode ser objeto.
             (scalar if certain and not _OBJECT_EXPR.search(value) else other).add(m.group(1))
