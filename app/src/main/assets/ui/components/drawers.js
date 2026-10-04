@@ -178,6 +178,8 @@
         ? `<div class="ts-sizes segmented" role="group" aria-label="Tamanho do balão"><small>Tamanho</small>${[['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
           `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'is-on' : ''}" data-tool-overlay-scale="${value}">${label}</button>`).join('')}</div>` : '';
 
+      const reply = this.overlayReply || {};
+      const overlayReplyLine = !this.overlayReply ? '' : reply.permissionRequired === true ? 'Falta autorizar: marque o OMEGAS na tela do Android e volte.' : reply.launched === true ? 'A tela de autorização do Android foi aberta.' : reply.ok === false ? 'Não consegui abrir a autorização. Toque em Autorizar de novo.' : 'Pedido enviado.';
       const identity = state.identity || {};
       const chip = (tone, text) => `<span class="ts-chip" data-tone="${tone}">${text}</span>`;
       const usb = appStatus.usbConnected === true;
@@ -206,6 +208,7 @@
         <section class="ts-card" data-overlay-state="${overlayInfo.key}" aria-label="Telemetria flutuante">
           <header class="ts-head"><div><small>TELEMETRIA FLUTUANTE</small><h3>${overlayInfo.title}</h3></div>${chip(overlayInfo.key === 'on' ? 'ok' : overlayInfo.key === 'needs-permission' ? 'warn' : 'neutral', overlayInfo.key === 'on' ? 'Ligada' : overlayInfo.key === 'off' ? 'Desligada' : overlayInfo.key === 'unsupported' ? 'Indisponível' : 'Autorizar')}</header>
           <p class="ts-help">${overlayInfo.help}</p>
+          ${overlayReplyLine ? `<p class="ts-help ts-reply">${overlayReplyLine}</p>` : ''}
           ${overlaySizes || ''}
           ${overlayAction ? `<div class="ts-actions">${overlayAction}</div>` : ''}
         </section>

@@ -50,7 +50,7 @@
     if (!f) return null;
     const one = x => {
       if (!x || typeof x !== 'object') return null;
-      const index = finite(x.index ?? x.smoothness ?? x.score);
+      const index = finite(x.index);
       return index === null ? null : { index: Math.max(0, Math.min(1, index)), jerks: finite(x.jerks), samples: finite(x.samples) };
     };
     const petrol = one(f.gasolina || f.petrol), gnv = one(f.gnv || f.cng);
@@ -206,7 +206,7 @@
       const pilot = (eq && eq.autopilot) || {};
       const rows = [
         ['Pode desconectar (Refino)', pilot.canDisconnect === true ? 'sim' : pilot.canDisconnect === false ? 'ainda não' : '—'],
-        ['Prazo da tentativa', pilot.watchdogExpired === true ? 'vencido' : pilot.watchdogExpired === false ? 'dentro do prazo' : '—'],
+        ['Prazo da tentativa', (pilot.watchdogExpired === true ? 'vencido' : pilot.watchdogExpired === false ? 'dentro do prazo' : '—') + (pilot.timeoutReason ? ' · ' + pilot.timeoutReason : '')],
         ['AutoMatch da ECU', `${fmt(pilot.autoMatchCount, 0)} de ${fmt(pilot.maxAutomatch, 0)}${pilot.ecuDoneReason ? ' · ' + pilot.ecuDoneReason : ''}`],
         ['Motor apagou / quase / religou', eq && eq.stalls ? `${fmt(eq.stalls.count, 0)} / ${fmt(eq.stalls.nearCount, 0)} / ${fmt(eq.stalls.restartedCount, 0)}` : '—'],
         ['Pontos da curva por região', regions.length ? regions.map((r, i) => `#${i + 1}: ${r.curvePoints.length ? r.curvePoints.join(', ') : '—'}`).join(' · ') : '—'],

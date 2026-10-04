@@ -48,8 +48,7 @@ MUTANTS = [
            "      document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());\n", "", [M5]),
     mutant("map-undo-frozen", "botão congelado", f"{UI}/screens/map.js",
            "      document.getElementById('mapUndoButton')?.addEventListener('click', () => this.undoLast());\n", "", [M6]),
-    mutant("sessions-export-frozen", "botão congelado", f"{UI}/screens/sessions.js",
-           "        if (button) this.api.exportSession(button.dataset.exportSession || '');\n", "", [M7], ci=True),
+    # (sessions-export-frozen removido: o botão Exportar ZIP saiu; as sessões se exportam sozinhas)
     mutant("tools-battery-frozen", "botão congelado", f"{UI}/components/drawers.js",
            "        this.api.requestBatteryOptimizationExemption?.();\n", "", [M8], ci=True),
     mutant("agora-next-frozen", "botão congelado", f"{UI}/screens/dashboard.js",
@@ -109,7 +108,7 @@ MUTANTS = [
            "      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n", [M5],
            note="EQUIVALENTE desde a guarda de ocupado de writePrepared (DEFECT-14): o ouvinte duplicado chama duas vezes e a segunda é ignorada"),
     mutant("sessions-no-escape-html", "escapeHtml esquecido", f"{UI}/screens/sessions.js",
-           "<b>${escapeHtml(row.title)}</b>", "<b>${row.title}</b>", [M7], ci=True),
+           "' · ' + escapeHtml(row.title)", "' · ' + row.title", [M7], ci=True),
     mutant("curve-learning-chart-empty-array", "gráfico com lista vazia", f"{UI}/screens/curve.js",
            "const minFactor = factorValues.length ? Math.min(...factorValues) - 0.05 : 0.8;", "const minFactor = true ? Math.min(...factorValues) - 0.05 : 0.8;", [M5],
            note="EQUIVALENTE: sem fatores nenhum caminho/ponto é desenhado, então o mínimo infinito não aparece na tela"),

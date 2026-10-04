@@ -38,8 +38,7 @@
       index: indexRange(item),
       gnvPercent: total > 0 ? gnv : null,
       gasPercent: total > 0 ? 100 - gnv : null,
-      autoMatch: finite(item?.autoMatchCount ?? item?.automatchCount ?? item?.semanticSummary?.autoMatchCount ?? item?.semanticSummary?.autoMatch),
-      path: String(item?.path || item?.folder || ''),
+      autoMatch: finite(item?.autoMatchExecuted ?? item?.semanticSummary?.autoMatchExecuted),
       raw: item,
     };
   }
@@ -102,7 +101,7 @@
           <div class="ss-body">
             <p class="ss-summary">${escapeHtml(summary || (row.active ? 'Gravando agora; o resumo aparece quando ela fechar.' : 'Sem resumo para esta sessão.'))}</p>
             ${row.gnvPercent === null ? '' : `<div class="session-fuel-bar" role="img" aria-label="GNV ${row.gnvPercent}%, gasolina ${row.gasPercent}%"><div class="fuel-segment cng" style="width:${row.gnvPercent}%"></div><div class="fuel-segment petrol" style="width:${row.gasPercent}%"></div></div>`}
-            <small class="ss-path">${escapeHtml(row.path || FOLDER)}${row.title && row.title !== 'Sessão' ? ' · ' + escapeHtml(row.title) : ''}</small>
+            <small class="ss-path">${FOLDER}${row.title && row.title !== 'Sessão' ? ' · ' + escapeHtml(row.title) : ''}</small>
           </div>
           <dl class="ss-facts">${facts}</dl>
         </article>`;

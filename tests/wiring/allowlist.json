@@ -155,6 +155,7 @@
   "ecuState": "DEFECT-1: getStatus.ecuState nunca e lido; so usbConnected decide \"ECU online\" (M1)"
  },
  "consumer_local": {
+  "fluidity": "contrato novo (work/platina-fix-logic): equivalence().fluidity {gasolina,gnv}; o Diagnóstico trata a ausência com texto de espera (UI C)",
   "levelRaw": "alias camelCase lido depois de level_raw (o Kotlin emite level_raw)",
   "dos": "palavra de texto humano dentro de template literal, nao um campo",
   "usable": "campo local do contexto do gráfico (ctx.usable, definido em JS); não vem do Kotlin"
