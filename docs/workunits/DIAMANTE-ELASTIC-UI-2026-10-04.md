@@ -20,3 +20,10 @@ Tudo executado no GitHub Actions. A primeira rodada de reprodução recebeu shut
 
 ## Limites
 Foto da multimídia mencionada não foi localizada neste contexto nem na busca de imagens. Área útil menor é prova conservadora de layout, não medição da barra do aparelho. Nenhuma prova física é afirmada. O APK antigo e as rodadas aprovadas anteriores permanecem rastreáveis. Não há merge nem mudança da branch de destino nesta missão.
+
+## Complemento do dono: Refino de ponta a ponta
+A referência completa extrapolava o trecho realmente adquirido e ainda esticava os eixos. A vista normal agora recorta a régua à faixa da aquisição; Faixa inteira recupera os 30 pontos. Pontos da ECU adquiridos e equivalência pertinente continuam no domínio. O Refino usa betweenPoints agregados (um par por intervalo), sem desenhar cada amostra nem as pontas abertas fora das bandas. Toda evidência continua no Kotlin.
+
+Reiniciar aprendizado GNV é uma ação explícita em Ver detalhes: descarta somente a evidência LOCAL do GNV, preserva gasolina e ECU, informa que essas medições não têm Desfazer. Reutiliza resetGas/onGasReset/interrupção do diário; nenhuma transação de protocolo nem escritor foi alterado. Interlocks de conexão, operação em curso e controle local continuam. Leitura da ECU (pausa/releitura) leva ao fluxo canônico do AutoCal, com efeito distinto.
+
+RED válido remoto: 37187333259 (escala). Chromium 37188171127 passou 17 testes sem skip e a matriz de 32 áreas/estados; é evidência intermediária, anterior ao fechamento. O navegador interativo da sessão bloqueou URLs locais; a prévia HTML em conversa usa o próprio código com mock-bridge, sem representar uma ECU física.

@@ -69,6 +69,19 @@ async function audit(page,route,height,name){
    await page.locator('.screen.active [data-chart-view="gas"]').check();
    await page.screenshot({path:path.join(out,route+'-opcoes.png')});
    await page.locator(summary).click();
+   if(route==='refino'){
+    const beforeWrites=await page.evaluate(()=>Object.entries(window.__mockCalls).filter(([k])=>/Write|Restore|startCurveReset|executeNativeAction/.test(k)));
+    const petrolPath=await page.locator('.screen.active .autocal-reference-line.petrol').getAttribute('d');
+    await page.locator(summary).click();
+    await page.locator('.screen.active [data-refino-reset-gas]').click();
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(()=>window.OmegasUi.AutoCalApi.equivalence().gasObservations),0);
+    assert.equal(await page.locator('.screen.active .chart-between.gas').count(),0);
+    assert.equal(await page.locator('.screen.active .autocal-reference-line.petrol').getAttribute('d'),petrolPath);
+    assert.deepEqual(await page.evaluate(()=>Object.entries(window.__mockCalls).filter(([k])=>/Write|Restore|startCurveReset|executeNativeAction/.test(k))),beforeWrites);
+    await page.screenshot({path:path.join(out,'refino-reinicio-gnv.png')});
+    await page.locator(summary).click();
+   }
    const before=await page.evaluate(()=>window.OmegasUi.CurveChart.shared.renders);
    await page.waitForTimeout(4000);
    assert.equal(await page.evaluate(()=>window.OmegasUi.CurveChart.shared.renders),before,'não repinta por relógio');
