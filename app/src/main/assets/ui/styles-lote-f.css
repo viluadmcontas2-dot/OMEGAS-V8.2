@@ -90,7 +90,7 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .refino-next { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.25; }
 .refino-next[hidden] { display: none; }
 
-.refino-actions-row { display: flex; align-items: stretch; gap: 8px; flex-wrap: nowrap; }
+.refino-actions-row { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
 .refino-actions-row > * { flex: 0 1 auto; min-width: 0; }
 .refino-actions-row .refino-undo { flex: 0 0 auto; }
 .refino-actions-row .refino-undo[hidden],
@@ -106,7 +106,7 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
   background: var(--surface);
 }
 .refino-actions-row .refino-stalls b { color: var(--state-error); font-size: 16px; line-height: 1.2; }
-.refino-actions-row .refino-stalls span { color: var(--muted); font-size: 16px; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.refino-actions-row .refino-stalls span { color: var(--muted); font-size: 16px; line-height: 1.2; }
 .refino-actions-row details { position: relative; flex: 0 0 auto; margin: 0; }
 .refino-actions-row details > summary { min-height: var(--touch-min); display: flex; align-items: center; gap: 12px; padding: 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: var(--text-critical); list-style: none; }
 .refino-actions-row details > summary::-webkit-details-marker { display: none; }
@@ -179,7 +179,8 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .refino-counts { display: flex; gap: 16px; margin: 0; color: var(--muted); font-size: 16px; white-space: nowrap; }
 .refino-counts b { color: var(--text); font-size: 16px; }
 .refino-actions-row .refino-stalls { flex: 1 1 0; }
-.refino-actions-row .refino-stalls b { display: block; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+/* Aviso de segurança nunca é cortado: ocupa a linha inteira e quebra em quantas linhas precisar. */
+.refino-actions-row .refino-stalls b { display: block; overflow: visible; white-space: normal; }
 .refino-actions-row:not(:has(> :not([hidden]))) { display: none; }
 
 /* Refino · estrutura de altura e largura */
@@ -189,7 +190,7 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .refino-chart-head .autocal-plot-title { grid-area: title; }
 .refino-chart-head .refino-counts { grid-area: counts; justify-self: end; }
 .refino-chart-head .autocal-chart-legend { grid-area: legend; }
-.refino-actions-row .refino-stalls { flex: 1 1 200px; min-width: 200px; }
+.refino-actions-row .refino-stalls { flex: 1 1 100%; min-width: 200px; }
 .refino-actions-row details > summary { padding: 0 12px; }
 
 /* Gráfico: sem poluição. Os marcadores da curva da ECU só aparecem quando selecionados; o toque continua pela área invisível. */

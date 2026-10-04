@@ -444,6 +444,8 @@
       }).filter(m => finite(m.tpetMs) !== null && finite(m.mapBar) !== null);
       between = { markers, bands: fromKotlin, total: fromKotlin.length, kept: markers.length };
     }
+    // Refino: UM marcador por intervalo, só com a evidência do GNV (a gasolina é a curva de referência, não pontos).
+    if (between.markers.some(m => m.fuel !== 'GAS')) between = { ...between, markers: between.markers.filter(m => m.fuel === 'GAS') };
     const edges = thresholds ? thresholds.map(Number).filter(Number.isFinite) : [];
     const refined = c.analysis && Array.isArray(c.analysis.points) ? c.analysis.points : [];
     const proposal = refined.filter(p => p && p.origin !== 'HELD' && finite(p.calculatedRaw) !== null && Number(p.calculatedRaw) !== Number(p.currentRaw)).map(p => Number(p.index));

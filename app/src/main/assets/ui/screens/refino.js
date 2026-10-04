@@ -146,7 +146,7 @@
     return value === null ? null : Math.round(Math.max(0, Math.min(1, value)) * 100);
   }
   /**
-   * Faixa única do Refino (D1): "GNV ≈ gasolina em N%" + UMA próxima ação (a do cérebro, eq.nextAction) + o botão de
+   * Faixa única do Refino (D1): "N% da sua condução já equivale à gasolina" + UMA próxima ação (a do cérebro, eq.nextAction) + o botão de
    * um toque quando a ação aponta para outra aba. Só mostra e leva; nunca executa. Sem dado do cérebro: aviso neutro,
    * sem ação (a UI não deriva ação da fase).
    */
@@ -157,7 +157,7 @@
     const text = action && action.text ? String(action.text) : '';
     const route = action && action.route && action.route !== 'refino' && (!routes || routes.includes(action.route)) ? String(action.route) : '';
     return {
-      indexText: percent === null ? 'GNV ≈ gasolina em —' : `GNV ≈ gasolina em ${percent}%${eq.index.provisional === true ? ' (provisório)' : ''}`,
+      indexText: percent === null ? '— da condução já equivale à gasolina' : `${percent}% da condução já equivale à gasolina${eq.index.provisional === true ? ' · provisório' : ''}`,
       nextText: text || WAITING_TEXT,
       hasAction: Boolean(text),
       route,
@@ -249,7 +249,7 @@
               <div class="autocal-title-line"><h3>Refino</h3><span id="refinoPhaseChip" class="autocal-fuel-chip" data-fuel-state="unknown">—</span></div>
             </div>
             <div class="autocal-focus-metrics" aria-live="polite">
-              <div class="autocal-focus-metric"><small>GNV igual à gasolina</small><b><span id="refinoRatio">—</span></b></div>
+              <div class="autocal-focus-metric"><small>Diferença média</small><b><span id="refinoRatio">—</span></b></div>
             </div>
             <div class="autocal-focus-actions"><button type="button" class="autocal-primary-action" data-refino-primary hidden></button></div>
           </header>
@@ -579,7 +579,11 @@
       const available = !busy && (Boolean(this.undoFile()) || undoSource(latest).available);
       host.hidden = !available;
       if (!available) { if (host.innerHTML) host.innerHTML = ''; return; }
-      if (!host.querySelector('[data-refino-undo]')) host.innerHTML = '<button type="button" class="secondary" data-refino-undo>Desfazer a gravação</button>';
+      // Em destaque só quando há a foto de antes; sem foto (só o antes/depois do diário) fica discreto.
+      const prominent = Boolean(this.undoFile());
+      const wanted = prominent ? 'secondary' : 'quiet-button';
+      const current = host.querySelector('[data-refino-undo]');
+      if (!current || !current.classList.contains(wanted)) host.innerHTML = `<button type="button" class="${wanted}" data-refino-undo>Desfazer a gravação</button>`;
     }
 
     /** Tamanho do quadro do gráfico: faz parte da assinatura (outro tamanho = outro desenho). */

@@ -125,14 +125,14 @@ test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de 
   assert.equal(empty.hasAction, false);
   const eq = { ...EQUIVALENCE_FIXTURE, nextAction: { kind: 'COLLECT', text: 'Rode no GNV em plano para eu medir', route: 'curve', subpage: 'editor', pointIndexes: [3, 4] } };
   const shown = strip(eq, routes);
-  assert.equal(shown.indexText, 'GNV ≈ gasolina em 62% (provisório)');
+  assert.equal(shown.indexText, '62% da condução já equivale à gasolina · provisório');
   assert.equal(shown.nextText, 'Rode no GNV em plano para eu medir');
   assert.equal(shown.route, 'curve');
   assert.equal(shown.subpage, 'editor');
   assert.equal(shown.routeLabel, 'Ir para Curva K');
-  assert.equal(strip({ ...eq, index: { value: 0.01 } }, routes).indexText, 'GNV ≈ gasolina em 1%', 'fração 0,01 = 1 %, nunca 0 %');
-  assert.equal(strip({ ...eq, index: { value: 1 } }, routes).indexText, 'GNV ≈ gasolina em 100%');
-  assert.equal(strip({ ...eq, index: { value: null } }, routes).indexText, 'GNV ≈ gasolina em —');
+  assert.equal(strip({ ...eq, index: { value: 0.01 } }, routes).indexText, '1% da condução já equivale à gasolina', 'fração 0,01 = 1 %, nunca 0 %');
+  assert.equal(strip({ ...eq, index: { value: 1 } }, routes).indexText, '100% da condução já equivale à gasolina');
+  assert.equal(strip({ ...eq, index: { value: null } }, routes).indexText, '— da condução já equivale à gasolina');
   assert.equal(strip(EQUIVALENCE_FIXTURE, routes).route, '', 'aponta para o próprio Refino: sem botão');
   assert.equal(strip({ ...eq, nextAction: { text: 'Tudo certo', route: '' } }, routes).route, '');
   const source = read('screens/refino.js');
