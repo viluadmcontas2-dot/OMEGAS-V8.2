@@ -581,7 +581,9 @@
       if (chip) {
         const readyAfterExpiry = phase === 'TENTATIVA_ENCERRADA' && pilot.expiredFrom === 'PROPOSTA_PRONTA';
         chip.dataset.fuelState = (readyAfterExpiry ? 'ready' : PHASE_TONE[phase]) || 'unknown';
-        chip.textContent = D.phaseLabel(phase, pilot.expiredFrom);
+        // A frase e o chip usam o mesmo contrato; um piloto antigo não mascara uma leitura pendente.
+        const human = rs?.phase;
+        chip.textContent = human ? (/^Coletando/.test(human) ? 'Medindo o GNV' : /^Pronto para gravar/.test(human) ? 'Curva pronta' : human) : D.phaseLabel(phase, pilot.expiredFrom);
       }
       const currentEvidence = !['SEM_ECU', 'LENDO_ECU', 'TENTATIVA_ENCERRADA'].includes(phase);
       setText('refinoRatio', pct(currentEvidence ? eq.ratio : null));

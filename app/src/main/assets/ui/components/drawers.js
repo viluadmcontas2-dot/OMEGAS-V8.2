@@ -175,9 +175,10 @@
           ? '<button type="button" class="secondary" data-tool-overlay-enable>Ativar</button>'
           : overlayInfo.key === 'needs-permission'
             ? '<button type="button" class="primary" data-tool-overlay-request>Autorizar</button>' : '';
+      const sizeButtons = [['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
+        `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'is-on' : ''}" data-tool-overlay-scale="${value}">${label}</button>`).join('');
       const overlaySizes = overlayInfo.key === 'on'
-        ? `<div class="ts-sizes segmented" role="group" aria-label="Tamanho do balão"><small>Tamanho</small>${[['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
-          `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'is-on' : ''}" data-tool-overlay-scale="${value}">${label}</button>`).join('')}</div>` : '';
+        ? `<div class="ts-sizes segmented" role="group" aria-label="Tamanho do balão"><small>Tamanho</small>${sizeButtons}</div>` : '';
 
       const reply = this.overlayReply || {};
       const overlayReplyLine = !this.overlayReply ? '' : reply.permissionRequired === true ? 'Falta autorizar: marque o OMEGAS na tela do Android e volte.' : reply.launched === true ? 'A tela de autorização do Android foi aberta.' : reply.ok === false ? 'Não consegui abrir a autorização. Toque em Autorizar de novo.' : 'Pedido enviado.';

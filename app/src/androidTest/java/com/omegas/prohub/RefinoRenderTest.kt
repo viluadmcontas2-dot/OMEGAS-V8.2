@@ -183,15 +183,21 @@ class RefinoRenderTest {
         return decorated
     }
 
-    private fun observe(service: TelemetryForegroundService, snapshot: JSONObject, count: Int?, max: Int = 3): JSONObject =
-        service.equivalencePhases.observe(
+    private fun observe(service: TelemetryForegroundService, snapshot: JSONObject, count: Int?, max: Int = 3): JSONObject {
+        val acquisition = AutoCalAcquisition.fromSnapshot(snapshot)
+        // O serviço está congelado para render: alimenta também o cérebro real consumido por refinoState.
+        // Replay não tem uma ECU conectada; não inventa uma transação nem invalida dados pela conexão simulada.
+        service.equivalenceRuntime.evaluate(service.equivalence, service.equivalencePhases,
+            snapshot, acquisition, false, service.refinementJournal::pointGainScale)
+        return service.equivalencePhases.observe(
             ecuOnline = true,
             monitor = JSONObject().put("autoMatchCount", count ?: JSONObject.NULL).put("maxAutomatch", max).put("autoCalEnabled", 1),
-            acquisition = AutoCalAcquisition.fromSnapshot(snapshot),
+            acquisition = acquisition,
             index = service.equivalence.index(),
             journal = service.refinementJournal.json(),
             restoreCount = service.refinementJournal.restorePoints().length(),
         )
+    }
 
     private fun openRefino(scenario: ActivityScenario<MainActivity>) {
         evalRaw(scenario, "document.querySelector('[data-route=\"refino\"]')?.click(); 'ok';")
@@ -211,7 +217,7 @@ class RefinoRenderTest {
           const q = s => document.querySelector(s);
           const screen = q('[data-screen="refino"]');
           const primary = q('[data-refino-primary]');
-          const legend = q('.refino-cockpit .autocal-chart-legend');
+          const legend = q('#refinoLegend');
           const legendRect = legend ? legend.getBoundingClientRect() : null;
           const live = q('[data-refino-live]');
           const liveCircle = live ? live.querySelector('circle') : null;
@@ -233,7 +239,7 @@ class RefinoRenderTest {
             next: q('#refinoNext')?.textContent ?? null,
             ratio: q('#refinoRatio')?.textContent ?? null,
             ecuPoints: q('#refinoEcuPoints')?.textContent ?? null,
-            ourPoints: q('#refinoOurPoints')?.textContent ?? null,
+            ourPoints: q('#refinoDetailCounts')?.textContent ?? null,
             steps: [...document.querySelectorAll('#refinoSteps li')].map(li => li.dataset.state + (li.dataset.problem ? '!' : '')),
             primaryHidden: primary ? primary.hidden : null,
             primaryText: primary ? primary.textContent : null,
@@ -241,8 +247,8 @@ class RefinoRenderTest {
             stallsVisible: !!stalls && !stalls.hidden,
             stallsText: stalls ? stalls.innerText : '',
             journalText: q('#refinoJournal')?.innerText ?? '',
-            techText: q('#refinoTech')?.textContent ?? '',
-            ourSquares: document.querySelectorAll('.refino-our-point').length,
+            techText: q('#refinoProposals')?.textContent ?? '',
+            ourSquares: document.querySelectorAll('#refinoChart .chart-between.collected').length,
             ecuDots: document.querySelectorAll('#refinoChart .autocal-acquired-point').length,
             stallMarks: document.querySelectorAll('.refino-stall-mark').length,
             referenceLines: document.querySelectorAll('#refinoChart .autocal-reference-line').length,
@@ -562,9 +568,9 @@ class RefinoRenderTest {
             val dom = refinoDom(scenario)
             saveEvidence("refino-coletando", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "só a gasolina da sessão; GNV ainda não medido"))
             assertClean(dom)
-            assertEquals("Nossos pontos", dom.getString("chip"))
-            assertTrue(dom.getString("headline"), dom.getString("headline").contains("A ECU terminou"))
-            assertTrue(dom.getString("ourPoints"), dom.getString("ourPoints").startsWith("Gas "))
+            assertEquals("Medindo o GNV", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("aprendendo seu motor"))
+            assertTrue(dom.getString("ourPoints"), dom.getString("ourPoints").contains("intervalos medidos"))
         } finally { scenario.close() }
     }
 
@@ -588,8 +594,8 @@ class RefinoRenderTest {
             assertClean(dom)
             assertEquals("Curva pronta", dom.getString("chip"))
             assertEquals("review", dom.getString("primaryKind"))
-            assertTrue(dom.getString("primaryText"), Regex("Revisar e gravar \\d+ ponto").containsMatchIn(dom.getString("primaryText")))
-            assertTrue("a proposta diz de onde vem: ${dom.getString("techText")}", dom.getString("techText").contains("sua condução"))
+            assertTrue(dom.getString("primaryText"), Regex("Gravar \\d+ ponto").containsMatchIn(dom.getString("primaryText")))
+            assertTrue("a proposta diz de onde vem: ${dom.getString("techText")}", dom.getString("techText").contains("Curva K"))
             assertTrue("nossos pontos aparecem no gráfico", dom.getInt("ourSquares") > 0)
             assertTrue("curva da ECU desenhada", dom.getInt("referenceLines") >= 1)
         } finally { scenario.close() }
@@ -644,7 +650,7 @@ class RefinoRenderTest {
             saveEvidence("refino-verificando", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "diário recebeu antes/depois da proposta real; nada foi escrito na ECU"))
             assertClean(dom)
             assertEquals("Verificando", dom.getString("chip"))
-            assertTrue(dom.getString("headline"), dom.getString("headline").contains("min de condução"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("confiro se o GNV chegou na gasolina"))
             assertEquals("waiting", dom.getString("primaryKind"))
         } finally { scenario.close() }
     }
