@@ -1,6 +1,7 @@
 REGRAS DO DONO (já repetidas várias vezes; siga sem ele pedir de novo):
 1. TOKENS são o orçamento dele: sem redundância, sem reler o sistema inteiro, sem relatórios longos; agentes com escopo fechado e arquivos disjuntos; confira agentes por git (barato), nunca deixe rodando sem olhar.
-2. Prévia = mockup estático em PNG, só para tela nova/grande; refinamento pequeno aplica direto, sem prévia; nunca reenviar prévia do que ele já viu.
+2. REFORMA/redesenho de qualquer tela = primeiro mande UM mockup PNG por tela (HTML solto → Chromium, a partir do atual) e espere o OK ANTES de aplicar; refinamento pequeno aplica direto; nunca reenviar o que ele já viu. NUNCA remova botão/função existente sem avisar (ex.: 'Selecionar junto' do AutoCal é útil).
+2b. Nenhum agente passa de ~20 min sem entregar: quebre em tarefas pequenas com push a cada uma.
 3. Ele "programa em linguagem humana": pode ter sido mal transcrito (white = UI e UX). Se algo soar estranho, escolha o mais inteligente e diga em 1 linha. Discorde com evidência; busque algo pronto/melhor antes de executar.
 4. UI: tema ESCURO premium único; gráfico PRIMEIRO e dominante; uma frase de estado + uma ação; SEM rolagem horizontal; sem cartão/texto miúdo; sem códigos crus nem info que o leigo não usa; mesmo visual em todas as abas; espaço bem usado (padding apertado); trilho sem números.
 5. ECU é a verdade (AutoMatch/zonas já vêm da ECU). Refino: pontos nossos = bolinhas entre as da ECU; margem 4% (até 5%); nunca exigir "um minuto numa faixa".
