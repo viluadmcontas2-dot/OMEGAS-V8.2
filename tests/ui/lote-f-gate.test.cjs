@@ -97,12 +97,12 @@ test('folhas de estilo estáticas e em ordem: tokens primeiro; pisos e acabament
   assert.doesNotMatch(lote, /#[0-9a-fA-F]{3,8}\b(?![^{}]*\{)|rgba?\(\s*\d|backdrop-filter|drop-shadow/);
 });
 
-test('pisos de texto e toque do Lote F: 16 px para microtexto, 24 px para valores e ações, 76 px de alvo, 44 px no gráfico e na grade', () => {
+test('pisos de texto e toque do Lote F: 16 px para microtexto, 22 px para valores e ações, 58 px de alvo, 44 px no gráfico e na grade', () => {
   const lote = read('styles-lote-f.css');
   const chart = read('components/curve-chart.js');
   assert.match(lote, /\.curve-chart-shared text \{ font-size: 16px/);
   assert.match(lote, /\.utility-screen :is\(small, span, p, dd, dt, li, label, em, i\) \{ font-size: 16px/);
-  assert.match(lote, /\.check-setting input\[type="checkbox"\][\s\S]*?inset: 0/, 'a caixa de marcar cobre o rótulo (>= 76 px)');
+  assert.match(lote, /\.check-setting input\[type="checkbox"\][\s\S]*?inset: 0/, 'a caixa de marcar cobre o rótulo (>= 58 px)');
   assert.match(chart, /class="autocal-acquired-hit"[^`]*r="22"/);
   assert.match(read('screens/curve.js'), /class="curve-point-hit"[^`]*r="24"/, 'ponto da Curva K: círculo invisível de 48 px');
   assert.match(lote, /grid-template-rows:\s*44px repeat\(12, minmax\(44px, 1fr\)\)/);

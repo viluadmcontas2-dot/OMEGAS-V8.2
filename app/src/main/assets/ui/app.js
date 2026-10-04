@@ -29,6 +29,7 @@
     autocal: ['AUTO-CAL', 'AutoCal'],
     refino: ['REFINO', 'Refino'],
     sessions: ['SESSÕES', 'Sessões'],
+    diagnostico: ['DIAGNÓSTICO', 'Diagnóstico'],
     tools: ['SISTEMA', 'Ferramentas'],
   };
 

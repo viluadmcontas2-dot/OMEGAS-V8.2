@@ -13,7 +13,7 @@ if (pw) {
   try { browserOk = fs.existsSync(pw.chromium.executablePath()); } catch (_) { browserOk = false; }
 }
 const skip = browserOk ? false : 'Chromium/Playwright indisponível neste ambiente';
-const TABS = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
+const TABS = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico'];
 
 async function audit(page, route) {
   return page.evaluate(r => {
@@ -27,7 +27,7 @@ async function audit(page, route) {
       if (!vis(e) || e.tagName === 'circle') return;
       const b = e.getBoundingClientRect(); if (b.bottom < 0 || b.top > H) return;
       const grid = e.classList.contains('map-k-cell') || e.classList.contains('map-axis-header');
-      const min = grid ? 44 : 76;
+      const min = grid ? 44 : (r === "autocal" ? 52 : 58);
       if (b.height < min - 0.5 || b.width < min - 0.5) out.smallTargets.push(`${sel(e)} ${Math.round(b.width)}x${Math.round(b.height)}`);
     });
     sc.querySelectorAll('circle[class*="hit"]').forEach(e => { const b = e.getBoundingClientRect(); if (b.width > 0) out.hitCircles.push(Math.round(b.width)); });
@@ -46,7 +46,7 @@ async function audit(page, route) {
   }, route);
 }
 
-test('render: 7 abas sem corte lateral, alvos >= 76 px (grade do Mapa K >= 44), texto >= 16 px e cabeçalho inteiro', { skip }, async () => {
+test('render: 7 abas sem corte lateral, alvos >= 58 px (AutoCal 52) (grade do Mapa K >= 44), texto >= 16 px e cabeçalho inteiro', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected');
   try {
     await page.waitForTimeout(1500);

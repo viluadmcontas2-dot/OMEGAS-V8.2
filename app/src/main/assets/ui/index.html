@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="styles-dashboard-now.css" data-dashboard-now="true">
   <link rel="stylesheet" href="styles-shell-status.css" data-vehicle-strip-style="true">
   <link rel="stylesheet" href="styles-split-layout.css" data-split-layout-style="true">
+  <link rel="stylesheet" href="styles-premium.css">
   <link rel="stylesheet" href="styles-floors.css">
   <link rel="stylesheet" href="styles-lote-f.css">
 </head>
@@ -32,6 +33,7 @@
         <button type="button" data-route="refino"><i>05</i><span>Refino</span></button>
         <button type="button" data-route="sessions"><i>06</i><span>Sessões</span></button>
         <button type="button" data-route="tools"><i>07</i><span>Ferramentas</span></button>
+        <button type="button" data-route="diagnostico"><i>08</i><span>Diagnóstico</span></button>
       </nav>
 
       <div class="rail-status">
@@ -151,6 +153,10 @@
           <div class="tool-actions">
             <button id="toolExportData" type="button"><b>Exportar backup completo</b><span>Tudo do app: calibrações salvas e sessões</span></button>
           </div>
+        </section>
+        <section id="diagnosticoScreen" class="screen utility-screen diagnostico-screen" data-screen="diagnostico" aria-labelledby="diagnosticoTitle">
+          <div class="page-intro"><div><small>DIAGNÓSTICO</small><h2 id="diagnosticoTitle">Diagnóstico</h2></div></div>
+          <div id="diagnosticoHost" class="diagnostico-host"></div>
         </section>
       </main>
     </section>
