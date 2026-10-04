@@ -16,3 +16,10 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/ui/diamante-elastic.test.cjs
+      - name: Premium static owner audit
+        run: python3 tools/ui/audit_premium.py . --mode strict --output premium-audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: premium-ui-audit
+          path: premium-audit.json

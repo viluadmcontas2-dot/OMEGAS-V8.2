@@ -1,0 +1,32 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": [
+    "app/src/main/assets/ui/components",
+    "app/src/main/assets/ui/screens",
+    "app/src/main/assets/ui/core"
+  ],
+  "canonicalMap": "docs/guardian/UX-CONTRACT.md",
+  "requiredCapabilities": [
+    "Table Selection",
+    "Select/Listbox",
+    "Form",
+    "Scrollbar",
+    "Toast",
+    "CRUD"
+  ],
+  "ownership": {
+    "Select/Listbox": "native",
+    "Date": "native"
+  },
+  "requiredCommands": [
+    "browser",
+    "contracts"
+  ],
+  "commands": {
+    "browser": "node tests/ui/render/elastic-evidence.cjs",
+    "contracts": "bash tools/run_checks.sh"
+  },
+  "evidence": {
+    "failurePaths": "tests/ui/diamante-elastic.test.cjs"
+  }
+}
