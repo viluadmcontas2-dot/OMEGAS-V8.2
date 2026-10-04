@@ -16,6 +16,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -666,6 +667,10 @@ class DashboardLevelsRenderTest {
                 backupSaveVisible: visibleInViewport('curveBackupSave'),
                 backupSelectVisible: visibleInViewport('curveBackupSelect'),
                 backupRestoreVisible: visibleInViewport('curveBackupRestore'),
+                readVisible: visibleInViewport('curveReadButton'),
+                writeVisible: visibleInViewport('curveReviewButton'),
+                writeDisabled: document.getElementById('curveReviewButton')?.disabled === true,
+                adjustmentVisible: visibleInViewport('curveTargetFactor'),
                 bodyHasNaN: /\\bNaN\\b/.test(body),
                 bodyHasUndefined: /\\bundefined\\b/i.test(body)
               };
@@ -768,9 +773,15 @@ class DashboardLevelsRenderTest {
             )
             assertEquals("Original Curve K replay must expose all 30 points", 30, dom.getInt("pointCount"))
             assertTrue("Original Curve K line must be drawable", dom.getString("actualPath").length > 20)
-            assertTrue("Save Curve K control must be visible in 1280x720 WebView", dom.getBoolean("backupSaveVisible"))
-            assertTrue("Curve K backup selector must be visible in 1280x720 WebView", dom.getBoolean("backupSelectVisible"))
-            assertTrue("Curve K restore control must be visible in 1280x720 WebView", dom.getBoolean("backupRestoreVisible"))
+            // Diamante already saves the pre-write photo automatically and exposes
+            // one-touch undo only after a photo exists. Manual photo controls are
+            // intentionally hidden; keep checking the user's current editing path.
+            assertFalse("Automatic pre-write photo replaces manual save", dom.getBoolean("backupSaveVisible"))
+            assertFalse("Automatic latest-photo undo replaces manual selector", dom.getBoolean("backupSelectVisible"))
+            assertTrue("Reler ECU must be visible in 1280x720", dom.getBoolean("readVisible"))
+            assertTrue("K adjustment must be visible in 1280x720", dom.getBoolean("adjustmentVisible"))
+            assertTrue("Write action must remain visible in 1280x720", dom.getBoolean("writeVisible"))
+            assertTrue("Reading a curve alone must not authorize a write", dom.getBoolean("writeDisabled"))
             assertTrue("Curve must never render NaN", !dom.getBoolean("bodyHasNaN"))
             assertTrue("Curve must never render undefined", !dom.getBoolean("bodyHasUndefined"))
         } finally {
