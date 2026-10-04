@@ -2,25 +2,8 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  // null/''/boolean não são medição: Number(null) seria 0 e viraria "0 ms" / "0 rpm" (regra única em display-rules).
-  const finite = ns.DisplayRules.finite;
-
-  function fuelLabel(raw) {
-    const value = String(raw || '—').toUpperCase();
-    if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';
-    if (value.includes('CNG') || value.includes('GNV') || value === 'GAS') return 'GNV';
-    if (value.includes('CUTOFF')) return 'CORTE';
-    if (value.includes('TRANS')) return 'TRANSIÇÃO';
-    if (value.includes('OFF') || value.includes('DESLIG')) return 'DESLIGADO';
-    return value || '—';
-  }
-
-  function ageLabel(ageMs) {
-    const age = finite(ageMs);
-    if (age === null || age < 0) return '—';
-    if (age < 1000) return `${Math.round(age)} ms`;
-    return `${(age / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} s`;
-  }
+  // Números e palavras vêm das regras únicas (core/display-rules.js, core/live-store.js): a faixa não tem formato próprio.
+  const rules = ns.DisplayRules;
 
   class VehicleStatusStrip {
     constructor(app) {
@@ -47,12 +30,11 @@
       strip.className = 'vehicle-status-strip';
       strip.setAttribute('aria-label', 'Estado atual do veículo e da ECU');
       strip.innerHTML = `
-        <div data-vehicle-fact="service"><small>SERVIÇO</small><b>—</b></div>
         <div data-vehicle-fact="ecu"><small>ECU</small><b>—</b></div>
-        <div data-vehicle-fact="freshness"><small>FRESCOR</small><b>—</b></div>
         <div data-vehicle-fact="fuel"><small>COMBUSTÍVEL</small><b>—</b></div>
         <div data-vehicle-fact="rpm"><small>RPM</small><b>—</b></div>
-        <div data-vehicle-fact="petrol"><small>INJEÇÃO</small><b>—</b></div>`;
+        <div data-vehicle-fact="petrol"><small>INJEÇÃO</small><b>—</b></div>
+        <div data-vehicle-fact="age"><small>ÚLTIMO DADO</small><b>—</b></div>`;
       header.appendChild(strip);
       return strip;
     }
@@ -60,23 +42,19 @@
     render(state) {
       if (!this.node) return;
       const status = state.status || {};
-      const telemetryRoot = state.telemetry || {};
-      const telemetryValid = telemetryRoot.valid === true;
-      const live = telemetryRoot.live || telemetryRoot.data || telemetryRoot;
-      const serviceRunning = status.serviceRunning === true;
-      const link = ns.DisplayRules.connectionState(status);
-      const ecuOnline = link.online && status.engineReady !== false;
-      const rpm = telemetryValid ? finite(live.rpm ?? status.rpm) : null;
-      const petrol = telemetryValid ? finite(live.petrol_ms ?? live.petrolMs ?? status.petrolMs) : null;
-      const age = finite(telemetryRoot.ageMs ?? telemetryRoot.telemetryAgeMs ?? status.directTelemetryAgeMs);
-      const fuel = telemetryValid ? fuelLabel(live.fuel ?? live.state ?? status.fuelState) : "—";
-
-      this.fact('service', serviceRunning ? 'ATIVO' : 'PARADO', serviceRunning ? 'online' : 'offline');
-      this.fact('ecu', ecuOnline ? 'ONLINE' : link.online ? 'LENDO' : link.label.toUpperCase(), ecuOnline ? 'online' : link.key === 'connecting' ? 'connecting' : 'offline');
-      this.fact('freshness', ageLabel(age), age !== null && age >= 0 ? 'measured' : 'unknown');
-      this.fact('fuel', fuel, fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
-      this.fact('rpm', rpm === null ? '—' : Math.round(rpm).toLocaleString('pt-BR'), rpm === null ? 'unknown' : 'measured');
-      this.fact('petrol', petrol === null ? '—' : `${petrol.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms`, petrol === null ? 'unknown' : 'measured');
+      // Mesma leitura do trilho e do Agora; em rota sem bombeador (Curva K, Ferramentas) vale o status de 1 Hz.
+      const reading = ns.LiveStore.read(state, { fallback: true });
+      const link = rules.connectionState(status, reading);
+      const shown = reading.level === 'fresh' || reading.level === 'late';
+      const late = reading.level === 'late';
+      const fuel = shown ? rules.fuelLabel(reading.fuel || status.fuelState) : '—';
+      this.fact('ecu', link.online ? 'ONLINE' : link.label.toUpperCase(), link.online ? 'online' : link.key === 'connecting' ? 'connecting' : 'offline');
+      this.fact('fuel', fuel, late ? 'late' : fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
+      this.fact('rpm', rules.rpm(reading.rpm), reading.rpm === null ? 'unknown' : late ? 'late' : 'measured');
+      this.fact('petrol', rules.msUnit(reading.petrolMs), reading.petrolMs === null ? 'unknown' : late ? 'late' : 'measured');
+      // Idade na palavra do glossário ("agora", "há 2 s"); atrasado também aqui, não só no Agora.
+      const age = reading.ageMs === null ? '—' : rules.ageSinceMs(reading.ageMs);
+      this.fact('age', late ? `${age} · atrasado` : reading.level === 'lost' ? `${age} · sem dados` : age, reading.ageMs === null ? 'unknown' : reading.level === 'fresh' ? 'measured' : 'late');
     }
 
     fact(key, value, state) {

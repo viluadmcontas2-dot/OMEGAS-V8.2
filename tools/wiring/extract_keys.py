@@ -127,6 +127,57 @@ def extract_js(root=None):
     return reads, defined
 
 
+# Propriedades legítimas de número/texto/booleano: `.chave.length` não é objeto aninhado.
+SCALAR_PROPS = set("length toFixed toString toLocaleString toUpperCase toLowerCase trim padStart padEnd replace replaceAll split match startsWith endsWith includes indexOf substring slice charAt normalize at".split())
+_OBJECT_EXPR = re.compile(r"JSONObject\s*\(|JSONArray\s*\(|\b\w*[Jj]son\w*\s*\(|\.json\s*\(|\bmapOf\b|\blistOf\b|\.map\s*\{|\.toJson")
+_PUT_VALUE = re.compile(r'\.(?:put|putOpt)\(\s*"([A-Za-z_][\w\-]*)"\s*,\s*([^\n]*)')
+# Contrato do cérebro de equivalência (Kotlin -> eq.* no Refino/AutoCal). O nome `index` também existe em outros
+# objetos (sessões, pontos); por isso a leitura só é conferida em variáveis que carregam o resultado do cérebro.
+SHAPE_FILES = ("equivalence/EquivalenceJson.kt",)
+SHAPE_RECEIVERS = ("eq", "equivalence", "view", "result", "analysis")
+
+
+def extract_scalar_keys(root=None):
+    """Chaves que as fontes do contrato (SHAPE_FILES) emitem SEMPRE como escalar (número/texto/booleano).
+
+    `.put("index", num(x))` e `.put("coverage", result.coverage)` são escalares; `JSONObject()`, `JSONArray(...)`
+    ou função de montagem não são. Uma chave com qualquer emissão não escalar fica de fora.
+    """
+    scalar, other = set(), set()
+    base = _root(root) / KOTLIN_REL
+    for rel in SHAPE_FILES:
+        path = base / rel
+        if not path.exists():
+            continue
+        for m in _PUT_VALUE.finditer(path.read_text(encoding="utf-8")):
+            value = m.group(2).strip()
+            certain = value.startswith("num(") or re.match(r"^[a-z]\w*\.[a-z]\w*\s*[,)]", value) or re.match(r'^("[^"]*"|-?\d[\d.]*|true|false)\s*[,)]', value)
+            # Só vale como escalar o que é claramente escalar; variável solta (`ref`, `points`) pode ser objeto.
+            (scalar if certain and not _OBJECT_EXPR.search(value) else other).add(m.group(1))
+    return scalar - other
+
+
+def extract_shape_violations(root=None):
+    """JS que lê `eq.chave.filho` onde o Kotlin emite `chave` escalar (ex.: `eq.index.value` com `index` = 0..1).
+
+    O conjunto BUILTIN contém `value`, o que escondia exatamente este erro; aqui o filho de um escalar é sempre defeito.
+    Devolve {"chave.filho": [arquivos JS]}.
+    """
+    scalar = extract_scalar_keys(root)
+    if not scalar:
+        return {}
+    chain = re.compile(r"\b(?:%s)\s*\??\.\s*(%s)\s*\??\.\s*([A-Za-z_$][\w$]*)" % ("|".join(SHAPE_RECEIVERS), "|".join(sorted(scalar))))
+    out = {}
+    base = _root(root) / UI_REL
+    for path in js_files(root):
+        text = strip_js_noise(path.read_text(encoding="utf-8"))
+        for m in chain.finditer(text):
+            key, child = m.group(1), m.group(2)
+            if child not in SCALAR_PROPS:
+                out.setdefault(f"{key}.{child}", set()).add(path.relative_to(base).as_posix())
+    return {k: sorted(v) for k, v in out.items()}
+
+
 def extract_kotlin_methods(root=None):
     out = {}
     for js_name, rel in BRIDGE_CLASSES.items():
@@ -168,6 +219,7 @@ def extract(root=None):
         "kotlin_methods": {k: sorted(v) for k, v in extract_kotlin_methods(root).items()},
         "js_calls": {k: sorted(v) for k, v in extract_js_calls(root).items()},
         "builtin": sorted(BUILTIN),
+        "shape_violations": extract_shape_violations(root),
     }
 
 

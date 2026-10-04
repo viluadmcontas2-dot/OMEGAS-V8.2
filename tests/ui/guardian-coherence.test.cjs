@@ -20,7 +20,7 @@ test('nenhum texto de ensaio (SINTÉTICO) nos assets ou no Kotlin que vão no AP
 
 test('Refino: dois percentuais com nomes inconfundíveis', () => {
   const refino = fs.readFileSync(path.join(MAIN, 'assets/ui/screens/refino.js'), 'utf8');
-  assert.match(refino, /<small>Erro GNV × gasolina<\/small>/);
+  assert.match(refino, /<small>Diferença GNV × gasolina<\/small>/);
   assert.match(refino, /da condução já equivale à gasolina/);
   assert.doesNotMatch(refino, /GNV ≈ gasolina em/);
 });

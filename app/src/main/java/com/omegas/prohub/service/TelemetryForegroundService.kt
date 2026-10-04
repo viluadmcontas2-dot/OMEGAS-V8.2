@@ -440,6 +440,7 @@ class TelemetryForegroundService : Service() {
             usbConnected = usb.connected,
             usbDevice = usb.deviceLabel,
             usbPermissionPending = usb.permissionPending,
+            usbPermissionDenied = usb.permissionDeniedDeviceName.isNotBlank() && !usb.connected,
             autoReconnectUsb = settings.autoReconnectUsb,
             baudRate = settings.baudRate,
             serialFormat = "${settings.dataBits}$parityLetter${settings.stopBits}",

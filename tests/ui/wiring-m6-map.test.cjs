@@ -231,6 +231,7 @@ test('M6 toque duplo em Desfazer e em Reler: UMA chamada cada', () => {
 
 const allowMap = (desc, el, app) => {
   if (el.id === 'mapClearSelection' && /^0 /.test(selCount(app))) return 'nada selecionado para limpar';
+  if (el.attrs.get('aria-checked') === 'true' && el.attrs.has('data-map-mode')) return 'modo já escolhido: tocar de novo não muda nada';
   if (el.id === 'mapDismissResult') return '';
   return '';
 };

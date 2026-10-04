@@ -306,12 +306,6 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 .curve-screen .curve-axis { padding: 0; font-size: 16px; flex: 0 0 auto; }
 .curve-screen .curve-point-label, .curve-screen .curve-tick-label { font-size: 16px; fill: var(--muted); }
 .curve-screen .curve-grid-line { stroke: var(--line-soft); stroke-width: 1; }
-.curve-screen .evidence-disclosure { flex: 0 0 auto; margin-top: 2px; }
-.curve-screen .evidence-disclosure summary { min-height: var(--touch-min); }
-.curve-screen .evidence-disclosure summary small, .curve-screen .evidence-disclosure summary em { font-size: 16px; }
-.curve-screen .evidence-disclosure summary b { font-size: var(--text-critical); }
-.curve-screen .evidence-disclosure .evidence-grid { position: absolute; left: 6px; right: 6px; bottom: calc(var(--touch-min) + 10px); z-index: 10; max-height: 220px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-s); font-size: 16px; }
-.curve-screen .evidence-disclosure:not([open]) .evidence-grid { display: none; }
 .curve-screen .evidence-grid > article, .curve-screen .evidence-grid > div, .curve-screen .evidence-grid p { font-size: 16px; }
 
 .curve-screen .curve-editor-panel { display: flex; flex-direction: column; gap: 6px; padding: 6px 8px; overflow-y: auto; }
@@ -432,3 +426,58 @@ body[data-omegas-route="dashboard"] .workspace-head { display: block; height: 0;
 /* "ECU online" aparece uma vez só (barra lateral): a faixa do cabeçalho não repete. */
 .workspace-head .vehicle-status-strip [data-vehicle-fact="ecu"] { display: none; }
 .workspace-head .vehicle-status-strip { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+
+/* ---------------------------------------------------------------- Fix UI · Refino */
+/* O botão principal reserva o lugar mesmo escondido: o cabeçalho não pula quando surge "Gravar N pontos". */
+html body .refino-cockpit .autocal-focus-actions [data-refino-primary][hidden] { display: inline-flex; visibility: hidden; }
+.refino-cockpit .autocal-focus-actions { min-width: 280px; }
+/* Motor apagado: âmbar = já aconteceu; vermelho = está apagado AGORA (rotação conhecida e fresca). */
+.refino-stalls[data-tone="history"] { border-color: var(--warn); background: var(--surface-2); }
+.refino-stalls[data-tone="now"] { border-color: var(--danger); background: var(--surface-3); }
+
+/* ---------------------------------------------------------------- Fix UI · aviso, trilho, faixa */
+/* Aviso: 24 px, no canto de baixo à ESQUERDA da área de trabalho (os botões principais ficam à direita/no alto), nunca sobre eles. */
+html body .alert-toast { position: fixed; left: calc(var(--rail-width) + 18px); right: auto; bottom: 12px; top: auto; z-index: 50; width: min(560px, calc(100vw - var(--rail-width) - 36px)); max-width: none; padding: 10px 12px 10px 18px; align-items: center; gap: 12px; border-width: 2px; }
+html body .alert-toast.show { display: flex; }
+html body .alert-toast b { flex: 1 1 auto; min-width: 0; font-size: var(--text-critical); line-height: 1.25; font-weight: 700; color: var(--text); }
+html body .alert-toast button { position: static; flex: 0 0 auto; min-width: var(--touch-min); background: transparent; color: var(--muted); }
+html body .alert-toast[data-level="warning"] { border-color: var(--warn); }
+html body .alert-toast[data-level="critical"], html body .alert-toast[data-level="error"] { border-color: var(--danger); }
+
+/* Trilho: ECU e combustível legíveis de longe (24 px), selo "—" sem caixa vazia quando não há leitura. */
+html body .rail-status { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 8px 7px 0; font-size: var(--text-critical); }
+html body .rail-status span { font-size: var(--text-critical); line-height: 1.15; font-weight: 700; color: var(--muted); }
+html body .rail-status span[data-online="true"] { color: var(--ok); }
+html body .rail-status span[data-link="nodata"], html body .rail-status span[data-link="connecting"], html body .rail-status span[data-link="attention"] { color: var(--warn); }
+html body .rail-status b { grid-column: 1; grid-row: auto; justify-self: start; min-width: 0; padding: 2px 10px; border-radius: var(--radius-s); font-size: var(--text-critical); line-height: 1.2; background: var(--surface); }
+html body .rail-status b[data-fuel="—"] { padding: 2px 0; background: transparent; color: var(--dim); }
+html body .rail-status b[data-late="true"] { opacity: .6; }
+html body .rail-status b[hidden], html body .rail-status span[hidden], html body .rail-status button[hidden] { display: none; }
+html body .rail-status .rail-allow { display: grid; text-align: left; padding: 4px 10px; border-color: var(--warn); line-height: 1.1; font-weight: 800; }
+html body .rail-status .rail-allow small { font-size: 18px; letter-spacing: 0; color: var(--muted); font-weight: 600; }
+
+/* Faixa do cabeçalho: legível (24 px), estados com semântica. */
+.vehicle-status-strip small { font-size: 16px; letter-spacing: .04em; }
+.vehicle-status-strip b { font-size: var(--text-critical); }
+.vehicle-status-strip [data-state="late"] b { color: var(--state-warn); }
+.vehicle-status-strip [data-state="unknown"] b { color: var(--dim); }
+
+/* Curva K: lista de pontos preparados legível; botão primário único. */
+.curve-screen .proposal-list { max-height: 190px; display: grid; gap: 6px; align-content: start; }
+.curve-screen .proposal-list p { margin: 0; color: var(--dim); font-size: 18px; }
+.curve-screen .proposal-list .proposal-row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: baseline; padding: 6px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius-s); background: var(--surface-2); }
+.curve-screen .proposal-list .proposal-row span, .curve-screen .proposal-list .proposal-row small { font-size: 18px; color: var(--muted); letter-spacing: 0; }
+.curve-screen .proposal-list .proposal-row b { font-size: 20px; text-align: right; }
+.curve-screen .curve-prepare-row { display: flex; justify-content: flex-end; }
+.curve-screen .curve-prepare-row[hidden], .curve-screen #curveClearProposals[hidden], #curveBackupRestore[hidden] { display: none; }
+#curveReviewButton { white-space: normal; line-height: 1.15; }
+
+/* Mapa K: seletor segmentado (Somar · Definir · %) com unidade clara ao lado do número. */
+.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface-2); }
+.segmented > button { border: 0; border-radius: 0; background: transparent; color: var(--muted); font-weight: 800; }
+.segmented > button + button { border-left: 1px solid var(--line); }
+.segmented > button.active, .segmented > button[aria-checked="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 -4px 0 var(--accent); }
+.map-adjust-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.map-adjust-unit { color: var(--muted); font-size: var(--text-critical); font-weight: 700; white-space: nowrap; }
+.map-screen .map-live-condition b[data-state="none"] { color: var(--dim); }
+.map-screen .map-live-condition b[data-state="late"] { color: var(--state-warn); }

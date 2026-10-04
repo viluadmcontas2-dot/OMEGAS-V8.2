@@ -38,7 +38,8 @@
 .now-tile-sub { color: var(--muted); font-size: 28px; font-weight: 800; line-height: 1.1; }
 .now-tile-sub[hidden], .now-quiet-tile[hidden] { display: none; }
 .now-tile-grid[data-stale="true"] .now-tile small::after { content: " · atrasado"; color: var(--state-warn); letter-spacing: 0; }
-[data-empty="true"] { opacity: .4; font-weight: 300; }
+/* "—" = desconhecido: mesma letra e tamanho do número, só mais apagado (sem caixa, sem sombra). */
+[data-empty="true"] { color: var(--dim); font-weight: 900; }
 
 .now-tile small {
   color: var(--muted);
@@ -81,7 +82,7 @@
 
 .now-session-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   min-height: var(--touch-min);

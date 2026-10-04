@@ -79,6 +79,36 @@ class WiringGraph(unittest.TestCase):
         self.assertEqual(stale, [], "allowlist cita chave que o Kotlin nao emite mais: %s" % stale)
 
 
+class ScalarShape(unittest.TestCase):
+    """O Kotlin emite `index` (0..1), `coverage` e `provisional` como ESCALARES planos; o JS não pode ler `.index.value`."""
+
+    def test_real_ui_reads_no_child_of_a_scalar_key(self):
+        data = E.extract(SOURCE_ROOT)
+        self.assertEqual(data["shape_violations"], {}, "JS lê filho de chave escalar: %s" % data["shape_violations"])
+
+    def test_extractor_knows_the_equivalence_scalars(self):
+        scalars = E.extract_scalar_keys(SOURCE_ROOT)
+        for key in ("index", "coverage", "provisional"):
+            self.assertIn(key, scalars)
+
+    def test_extractor_catches_the_old_index_value_bug(self):
+        import shutil
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            kotlin = tmp_root / E.KOTLIN_REL / "equivalence"
+            ui = tmp_root / E.UI_REL / "screens"
+            kotlin.mkdir(parents=True)
+            ui.mkdir(parents=True)
+            src = Path(SOURCE_ROOT or ROOT) / E.KOTLIN_REL / "equivalence" / "EquivalenceJson.kt"
+            shutil.copy(src, kotlin / "EquivalenceJson.kt")
+            (ui / "refino.js").write_text("const v = finite(eq?.index?.value); const p = eq.index.provisional;", "utf-8")
+            found = E.extract_shape_violations(tmp_root)
+            self.assertEqual(sorted(found), ["index.provisional", "index.value"])
+            (ui / "refino.js").write_text("const v = finite(eq?.index); const p = eq.provisional; const n = eq.index.toFixed(1);", "utf-8")
+            self.assertEqual(E.extract_shape_violations(tmp_root), {})
+
+
 class DefectsDocumented(unittest.TestCase):
     """Todo defeito registrado na suíte (probe ou allowlist) precisa estar em tests/wiring/DEFECTS.md."""
 

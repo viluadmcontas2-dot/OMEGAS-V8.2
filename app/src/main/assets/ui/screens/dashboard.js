@@ -1,145 +1,151 @@
-(() => {
-  (function(root) {
-    "use strict";
-    const ns = root.OmegasUi = root.OmegasUi || {};
-    const rules = ns.DisplayRules;
-    const finite = rules.finite;
-    const fmt = rules.fmt;
-    function text(id, value) {
-      const node = document.getElementById(id);
-      if (!node) return;
-      const next = value == null ? "\u2014" : String(value);
-      if (node.textContent !== next) node.textContent = next;
-      const empty = next === "\u2014" ? "true" : "false";
-      if (node.dataset.empty !== empty) node.dataset.empty = empty;
+(function (root) {
+  'use strict';
+  const ns = root.OmegasUi = root.OmegasUi || {};
+  const rules = ns.DisplayRules;
+  const DASH = '—';
+
+  function text(id, value) {
+    const node = document.getElementById(id);
+    if (!node) return;
+    const next = value == null ? DASH : String(value);
+    if (node.textContent !== next) node.textContent = next;
+    const empty = next === DASH ? 'true' : 'false';
+    if (node.dataset.empty !== empty) node.dataset.empty = empty;
+  }
+
+  const fuelLabel = rules.fuelLabel;
+  function ensureStyles() {
+    if (document.querySelector('link[data-dashboard-now]')) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'styles-dashboard-now.css';
+    link.dataset.dashboardNow = 'true';
+    document.head.appendChild(link);
+  }
+
+  /**
+   * Agora é para dirigir: 4 valores de peso igual (injeção em ms, RPM, MAP e combustível) lidos de braço esticado.
+   * Frescor numa regra só (LiveStore.read): até 1,5 s normal; de 1,5 a 3 s cinza + "atrasado"; acima de 3 s os números
+   * viram "—" e o cartão de baixo diz "Sem dados há N s · confira o cabo". Valor velho nunca finge ser de agora.
+   */
+  class DashboardScreen {
+    constructor() {
+      ensureStyles();
+      this.root = document.querySelector('[data-screen="dashboard"]');
+      this.lastHealthSignature = '';
+      this.installLayout();
     }
-    function live(state) {
-      const telemetry = state.telemetry || {};
-      return telemetry.live || telemetry.data || telemetry;
+
+    installLayout() {
+      if (!this.root) return;
+      this.root.classList.add('multimedia-now-screen');
+      if (!this.refinoClickBound) {
+        this.refinoClickBound = true;
+        this.root.addEventListener('click', (event) => {
+          if (event.target.closest && event.target.closest('[data-dash-refino]')) {
+            const app = root.OmegasApp;
+            if (app && app.router) app.router.navigate('refino');
+          }
+        });
+      }
+      this.root.innerHTML = `
+        <div class="now-dashboard-shell">
+          <section class="now-tile-grid" aria-label="Leitura principal">
+            <article class="now-tile" data-tile="petrol"><small>INJEÇÃO</small><b><span id="dashHeroPetrol">—</span><em>ms</em></b></article>
+            <article class="now-tile" data-tile="rpm"><small>RPM</small><b><span id="dashRpm">—</span><em>rpm</em></b></article>
+            <article class="now-tile" data-tile="map"><small>MAP</small><b><span id="dashMap">—</span><em>bar</em></b></article>
+            <article class="now-tile" data-tile="fuel"><small>COMBUSTÍVEL</small><b><span id="dashFuel">—</span></b><span class="now-tile-sub" id="dashFuelSub" hidden></span></article>
+          </section>
+
+          <section class="now-quiet-row" aria-label="Condição e apoio">
+            <div id="dashHealth" class="now-session-card" data-level="offline">
+              <span class="state-indicator"></span>
+              <div class="now-session-copy"><b>Sem cabo</b><p data-health-detail>Conecte o cabo USB na ECU</p></div>
+              <button type="button" class="primary" data-usb-allow hidden>Permitir USB</button>
+            </div>
+            <article class="now-quiet-tile" id="dashLevelsTile" hidden><small>NÍVEIS</small><b id="dashLevelsRaw">—</b></article>
+            <article class="now-quiet-tile now-refino-card" id="dashRefinoTile" hidden role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">—</b></article>
+          </section>
+        </div>`;
     }
-    const fuelLabel = rules.fuelLabel;
-    function ensureStyles() {
-      if (document.querySelector("link[data-dashboard-now]")) return;
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "styles-dashboard-now.css";
-      link.dataset.dashboardNow = "true";
-      document.head.appendChild(link);
+
+    /** Fase do refino (o nosso AutoCal) em uma linha; consulta a cada 3 s, no máximo. */
+    renderRefino() {
+      const now = Date.now();
+      if (this.refinoAt && now - this.refinoAt < 3000) return;
+      this.refinoAt = now;
+      const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
+      const eq = api && typeof api.refinementPhase === 'function' ? api.refinementPhase() : null;
+      const pilot = (eq && eq.autopilot) || {};
+      const refinoLabel = pilot.phase ? rules.phaseLabel(pilot.phase, pilot.expiredFrom) : DASH;
+      text('dashRefino', refinoLabel);
+      const refinoTile = document.getElementById('dashRefinoTile');
+      if (refinoTile) refinoTile.hidden = !refinoLabel || refinoLabel === DASH;
     }
-    class DashboardScreen {
-      constructor() {
-        ensureStyles();
-        this.root = document.querySelector('[data-screen="dashboard"]');
-        this.lastHealthSignature = "";
-        this.installLayout();
+
+    /** Mensagem do cartão de saúde: uma frase humana e o que fazer. */
+    health(state, reading) {
+      const status = state.status || {};
+      const link = rules.connectionState(status, reading);
+      const connected = status.usbConnected === true;
+      const age = reading.ageMs;
+      const seconds = age === null ? null : Math.round(age / 1000);
+      if (!connected) {
+        return { level: link.key === 'connecting' || link.key === 'denied' ? 'warning' : 'offline', message: link.label, detail: link.hint, allowUsb: link.key === 'denied' };
       }
-      installLayout() {
-        if (!this.root) return;
-        this.root.classList.add("multimedia-now-screen");
-        if (!this.refinoClickBound) {
-          this.refinoClickBound = true;
-          this.root.addEventListener("click", (event) => {
-            if (event.target.closest && event.target.closest("[data-dash-refino]")) {
-              const app = root.OmegasApp;
-              if (app && app.router) app.router.navigate("refino");
-            }
-          });
-        }
-        // Agora e para dirigir (D1): 4 valores de peso igual, lidos a bra\xe7o esticado; o resto \xe9 uma faixa fina embaixo.
-        this.root.innerHTML = '\n        <div class="now-dashboard-shell">\n          <section class="now-tile-grid" aria-label="Leitura principal">\n            <article class="now-tile" data-tile="petrol"><small>INJEÇÃO</small><b><span id="dashHeroPetrol">\u2014</span><em>ms</em></b></article>\n            <article class="now-tile" data-tile="rpm"><small>RPM</small><b><span id="dashRpm">\u2014</span><em>rpm</em></b></article>\n            <article class="now-tile" data-tile="map"><small>MAP</small><b><span id="dashMap">\u2014</span><em>bar</em></b></article>\n            <article class="now-tile" data-tile="fuel"><small>COMBUST\xcdVEL</small><b><span id="dashFuel">\u2014</span></b><span class="now-tile-sub" id="dashFuelSub" hidden></span></article>\n          </section>\n\n          <section class="now-quiet-row" aria-label="Condi\xe7\xe3o e apoio">\n            <div id="dashHealth" class="now-session-card" data-level="offline">\n              <span class="state-indicator"></span>\n              <div class="now-session-copy"><b>Sem cabo</b><p data-health-detail>Conecte o cabo USB na ECU</p></div>\n            </div>\n            <article class="now-quiet-tile" id="dashLevelsTile" hidden><small>NÍVEIS</small><b id="dashLevelsRaw">\u2014</b></article>\n            <article class="now-quiet-tile"><small>C\xc9LULA</small><b id="dashCell">\u2014</b></article>\n            <article class="now-quiet-tile now-refino-card" id="dashRefinoTile" hidden role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b></article>\n          </section>\n        </div>';
+      if (status.engineStuck === true) {
+        return { level: 'critical', message: 'Comunicação travada', detail: 'Aguarde ou reconecte o cabo USB. Gravar fica bloqueado até a ECU responder.' };
       }
-      /** Fase do refino (o nosso AutoCal) em uma linha; consulta a cada 3 s, no máximo. */
-      renderRefino() {
-        const now = Date.now();
-        if (this.refinoAt && now - this.refinoAt < 3e3) return;
-        this.refinoAt = now;
-        const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
-        const eq = api && typeof api.refinementPhase === "function" ? api.refinementPhase() : null;
-        const pilot = eq && eq.autopilot || {};
-        const refinoLabel = pilot.phase ? rules.phaseLabel(pilot.phase, pilot.expiredFrom) : "\u2014";
-        text("dashRefino", refinoLabel);
-        const refinoTile = document.getElementById("dashRefinoTile");
-        if (refinoTile) refinoTile.hidden = !refinoLabel || refinoLabel === "\u2014";
+      if (reading.level === 'none' || reading.ageUnknown) {
+        return { level: 'warning', message: 'ECU sem dados', detail: 'Conectada, mas ainda não enviou leitura. Confira a chave e o motor.' };
       }
-      render(state) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
-        if (!this.root) return;
-        const data = live(state);
-        const telemetryRoot = state.telemetry || {};
-        const telemetryValid = telemetryRoot.valid === true;
-        const status = state.status || {};
-        const interpolation = ((_a = state.telemetry) == null ? void 0 : _a.interpolation) || {};
-        const interpolationValid = interpolation.valid === true;
-        const cell = interpolation.cell || {};
-        const rpm = telemetryValid ? finite((_b = data.rpm) != null ? _b : status.rpm) : null;
-        const petrol = telemetryValid ? ((_d = (_c = data.petrol_ms) != null ? _c : data.petrolMs) != null ? _d : status.petrolMs) : null;
-        const map = telemetryValid ? ((_g = (_f = (_e = data.load_bar) != null ? _e : data.map_bar) != null ? _f : data.mapBar) != null ? _g : status.mapBar) : null;
-        const fuel = telemetryValid ? fuelLabel(data.fuel || data.state || status.fuelState) : "\u2014";
-        const levelsRaw = telemetryValid ? finite(data.level_raw != null ? data.level_raw : data.levelRaw) : null;
-        const age = finite((_k = (_j = (_h = state.telemetry) == null ? void 0 : _h.telemetryAgeMs) != null ? _j : (_i = state.telemetry) == null ? void 0 : _i.ageMs) != null ? _k : status.directTelemetryAgeMs);
-        const link = rules.connectionState(status);
+      if (reading.level === 'lost') {
+        return { level: age > 8000 ? 'critical' : 'warning', message: `Sem dados há ${seconds} s · confira o cabo`, detail: 'Gravar fica bloqueado até os dados voltarem.' };
+      }
+      if (reading.level === 'late') {
+        return { level: 'warning', message: 'Dados atrasados', detail: `Última leitura ${rules.ageSinceMs(age)}.` };
+      }
+      return { level: 'ok', message: 'Leitura em tempo real', detail: 'ECU e telemetria principal atualizadas' };
+    }
+
+    render(state) {
+      if (!this.root) return;
+      const status = state.status || {};
+      const reading = ns.LiveStore.read(state);
+      const fuel = reading.level === 'fresh' || reading.level === 'late' ? fuelLabel(reading.fuel || status.fuelState) : DASH;
+      const cutoff = fuel === 'CORTE';
+      text('dashHeroPetrol', cutoff ? DASH : rules.ms(reading.petrolMs));
+      text('dashRpm', rules.rpm(reading.rpm));
+      text('dashMap', rules.bar(reading.mapBar));
+      text('dashFuel', fuel);
+      const fuelSub = document.getElementById('dashFuelSub');
+      if (fuelSub) { fuelSub.hidden = !cutoff; fuelSub.textContent = cutoff ? 'Desacelerando' : ''; }
+      const levelsTile = document.getElementById('dashLevelsTile');
+      if (levelsTile) levelsTile.hidden = reading.levelRaw === null;
+      text('dashLevelsRaw', reading.levelRaw === null ? DASH : Math.round(reading.levelRaw).toLocaleString('pt-BR'));
+      this.renderRefino();
+      const tiles = this.root.querySelector('.now-tile-grid');
+      if (tiles) {
         const connected = status.usbConnected === true;
-        const stale = connected && age !== null && age > 2500;
-        const expired = connected && age !== null && age > 8e3;
-        const stuck = status.engineStuck === true;
-        const row = interpolationValid && Number.isFinite(Number(cell.row)) && Number(cell.row) >= 0 ? Number(cell.row) : null;
-        const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
-        const cutoff = fuel === "CORTE";
-        text("dashHeroPetrol", cutoff ? "\u2014" : rules.ms(petrol));
-        text("dashRpm", rules.rpm(rpm));
-        text("dashMap", rules.bar(map));
-        text("dashFuel", fuel);
-        const fuelSub = document.getElementById("dashFuelSub");
-        if (fuelSub) { fuelSub.hidden = !cutoff; fuelSub.textContent = cutoff ? "Desacelerando" : ""; }
-        const levelsTile = document.getElementById("dashLevelsTile");
-        if (levelsTile) levelsTile.hidden = levelsRaw === null;
-        text("dashLevelsRaw", levelsRaw === null ? "\u2014" : Math.round(levelsRaw).toLocaleString("pt-BR"));
-        this.renderRefino();
-        text("dashCell", row !== null && column !== null ? "".concat(row + 1, "\xD7").concat(column + 1) : "\u2014");
-        const tiles = this.root.querySelector(".now-tile-grid");
-        if (tiles) {
-          const staleTiles = connected && telemetryValid && age !== null && age > ns.LiveStore.GREY_MS ? "true" : "false";
-          if (tiles.dataset.stale !== staleTiles) tiles.dataset.stale = staleTiles;
-        }
-        const health = document.getElementById("dashHealth");
-        if (health) {
-          let level = "ok";
-          let message = "Leitura em tempo real";
-          let detail = "ECU e telemetria principal atualizadas";
-          if (!connected) {
-            level = link.key === "connecting" ? "warning" : "offline";
-            message = link.label;
-            detail = link.hint;
-          } else if (stuck) {
-            level = "critical";
-            message = "Comunica\xE7\xE3o travada";
-            detail = "Ajustes permanecem bloqueados at\xE9 a condi\xE7\xE3o normalizar";
-          } else if (!telemetryValid || age === null || age < 0) {
-            // Conectada, mas nenhum quadro válido ainda: nunca "operação estável".
-            level = "warning";
-            message = "ECU sem dados";
-            detail = "Conectada, mas ainda n\xE3o enviou leitura. Confira a chave e o motor.";
-          } else if (expired) {
-            level = "critical";
-            message = "Telemetria expirada";
-            detail = "Ajustes permanecem bloqueados at\xE9 a condi\xE7\xE3o normalizar";
-          } else if (stale) {
-            level = "warning";
-            message = "Telemetria atrasada";
-            detail = "Ajustes permanecem bloqueados at\xE9 a condi\xE7\xE3o normalizar";
-          }
-          const signature = "".concat(level, "|").concat(message, "|").concat(detail);
-          if (signature !== this.lastHealthSignature) {
-            this.lastHealthSignature = signature;
-            health.dataset.level = level;
-            const title = health.querySelector(".now-session-copy b");
-            const copy = health.querySelector("[data-health-detail]");
-            if (title) title.textContent = message;
-            if (copy) copy.textContent = detail;
-          }
+        const staleTiles = connected && reading.grey ? 'true' : 'false';
+        if (tiles.dataset.stale !== staleTiles) tiles.dataset.stale = staleTiles;
+      }
+      const health = document.getElementById('dashHealth');
+      if (health) {
+        const next = this.health(state, reading);
+        const signature = `${next.level}|${next.message}|${next.detail}|${next.allowUsb ? 1 : 0}`;
+        if (signature !== this.lastHealthSignature) {
+          this.lastHealthSignature = signature;
+          health.dataset.level = next.level;
+          const title = health.querySelector('.now-session-copy b');
+          const copy = health.querySelector('[data-health-detail]');
+          if (title) title.textContent = next.message;
+          if (copy) copy.textContent = next.detail;
+          const allow = health.querySelector('[data-usb-allow]');
+          if (allow) allow.hidden = !next.allowUsb;
         }
       }
     }
-    ns.DashboardScreen = DashboardScreen;
-  })(typeof window !== "undefined" ? window : globalThis);
-})();
+  }
+  ns.DashboardScreen = DashboardScreen;
+})(typeof window !== 'undefined' ? window : globalThis);

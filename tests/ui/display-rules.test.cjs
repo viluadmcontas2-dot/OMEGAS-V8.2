@@ -119,7 +119,7 @@ test('faixa de status: null não vira "0 ms" nem "0 rpm"', () => {
   const ui = load('components/vehicle-status-strip.js');
   assert.ok(ui.VehicleStatusStrip || true);
   const source = fs.readFileSync(UI('components/vehicle-status-strip.js'), 'utf8');
-  assert.match(source, /const finite = ns\.DisplayRules\.finite/);
+  assert.match(source, /const rules = ns\.DisplayRules/);
   assert.equal(rules.finite(null), null);
   assert.equal(rules.finite(''), null);
   assert.equal(rules.finite(true), null);

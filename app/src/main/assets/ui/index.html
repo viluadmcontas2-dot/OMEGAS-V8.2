@@ -36,6 +36,7 @@
 
       <div class="rail-status">
         <span id="globalEcu" data-online="false" data-link="nocable">Sem cabo</span>
+        <button type="button" id="globalUsbAllow" class="rail-allow" data-usb-allow hidden>USB bloqueado<small>toque para permitir</small></button>
         <b id="globalFuel" data-fuel="—">—</b>
       </div>
     </aside>
@@ -57,11 +58,16 @@
             <aside class="inspector-panel map-editor-panel">
               <h2 id="mapTitle" class="sr-only">Mapa K</h2>
               <div class="map-source-row"><span id="mapSourceStatus" class="source-status">Mapa não lido</span><button id="mapReadButton" type="button" class="secondary">Reler ECU</button></div>
-              <div class="map-live-condition"><small>AGORA</small><b id="mapLiveLabel">Aguardando condição válida</b><span id="mapLiveCell" class="sr-only">célula —</span></div>
+              <div class="map-live-condition"><small>CÉLULA AGORA</small><b id="mapLiveLabel">—</b><span id="mapLiveCell" class="sr-only">célula —</span></div>
               <div class="editor-heading"><div><small id="mapActiveCell">Toque em uma célula</small><h3 id="mapSelectionCount">0 selecionadas</h3></div><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button></div>
               <button id="mapSelectAll" type="button" class="quiet-button map-select-all">Selecionar 144</button>
-              <select id="mapAdjustmentMode" aria-label="Como ajustar"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select>
-              <input id="mapAdjustmentValue" type="number" inputmode="decimal" step="1" value="0" aria-label="Valor do ajuste">
+              <div class="segmented map-mode-switch" id="mapModeSwitch" role="radiogroup" aria-label="Como ajustar o K das células">
+                <button type="button" role="radio" data-map-mode="delta" aria-checked="false">Somar</button>
+                <button type="button" role="radio" data-map-mode="target" aria-checked="false">Definir</button>
+                <button type="button" role="radio" data-map-mode="percent" aria-checked="true" class="active">%</button>
+              </div>
+              <select id="mapAdjustmentMode" hidden aria-label="Como ajustar"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select>
+              <div class="map-adjust-row"><input id="mapAdjustmentValue" type="number" inputmode="decimal" step="1" value="0" aria-label="Valor do ajuste"><span id="mapAdjustmentUnit" class="map-adjust-unit">% sobre o K</span></div>
               <div class="nudge-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
               <p class="map-safety-line">Gravar é um toque: o app guarda a foto antes e confere na ECU. Desfazer volta à foto.</p>
               <button id="mapReviewButton" type="button" class="primary wide" disabled>Selecione células</button>
@@ -109,16 +115,15 @@
                   <div class="curve-legend"><span><i class="line actual"></i>Atual da ECU</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque em um dos 30 pontos</span></div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
                   <div class="curve-axis">Injeção (ms) →</div>
-                  <details class="evidence-disclosure"><summary><span><small>EVIDÊNCIA</small><b>Detalhes técnicos</b></span><em>abrir</em></summary><div id="curveEvidenceList" class="evidence-grid"></div></details>
                 </section>
                 <aside class="inspector-panel curve-editor-panel">
                   <div class="curve-point-head"><div><small>PONTO ATIVO</small><h3 id="curveActivePoint">Selecione um ponto</h3></div><div class="current-value"><small>Atual</small><b id="curveCurrentFactor">—</b></div></div>
-                  <label class="field-label"><span class="sr-only">K desejado</span><input id="curveTargetFactor" type="number" inputmode="decimal" step="0.001" min="0.6" max="4" placeholder="K desejado" aria-label="K desejado"></label>
+                  <label class="field-label"><span class="sr-only">K desejado</span><input id="curveTargetFactor" type="text" inputmode="decimal" autocomplete="off" placeholder="K desejado (ex.: 1,050)" aria-label="K desejado"></label>
                   <div class="curve-nudge-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>
                   <div id="curveTargetNormalized" class="normalized-preview">Prévia calculada pelo app</div>
-                  <div class="curve-prepare-row"><button id="curvePreparePoint" type="button" class="secondary">Preparar ponto</button><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
+                  <div class="curve-prepare-row"><button id="curveClearProposals" type="button" class="quiet-button" hidden>Limpar pontos</button></div>
                   <div id="curveProposalList" class="proposal-list" title="Gravar é um toque: o app guarda a foto antes e confere na ECU. Desfazer volta à foto."><p>Nenhum ponto preparado.</p></div>
-                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Prepare pontos</button>
+                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Escolha um ponto e ajuste o K</button>
                 </aside>
               </div>
             </div>

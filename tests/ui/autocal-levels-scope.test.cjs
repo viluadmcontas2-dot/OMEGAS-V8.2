@@ -12,7 +12,8 @@ const autocal = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/
 test('LEVELS RAW belongs to Dashboard/AGORA and is absent from AutoCal', () => {
   assert.match(dashboard, /NÍVEIS/);
   assert.match(dashboard, /dashLevelsRaw/);
-  assert.match(dashboard, /level_raw/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/core/live-store.js'), 'utf8'), /level_raw/, 'o Agora lê o nível pela leitura única (LiveStore.read)');
+  assert.match(dashboard, /reading\.levelRaw/);
   assert.doesNotMatch(autocal, /LEVELS RAW/);
   assert.doesNotMatch(autocal, /autocalLiveLevel/);
   assert.doesNotMatch(autocal, /levelRaw/);

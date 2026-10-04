@@ -93,7 +93,7 @@ test('Sessões: tela própria com duração, apagões, índice início → fim e
 
 // ---------------------------------------------------------------- 2. Agora + cérebro
 const EQUIVALENCE_FIXTURE = {
-  index: { value: 0.62, coverage: 9, provisional: true },
+  index: 0.62, coverage: 9, provisional: true, // formato REAL do Kotlin (EquivalenceJson.result): escalar + irmãos planos
   nextAction: { kind: 'COLLECT', text: 'Rode no GNV em plano para eu medir', route: 'refino', subpage: 'pontos', pointIndexes: [3, 4] },
   points: [{ index: 0, axisMs: 2, state: 'EQUIVALENTE', mixture: 0.01 }],
   reference: { frozen: false, canFreeze: true },
@@ -130,9 +130,9 @@ test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de 
   assert.equal(shown.route, 'curve');
   assert.equal(shown.subpage, 'editor');
   assert.equal(shown.routeLabel, 'Ir para Curva K');
-  assert.equal(strip({ ...eq, index: { value: 0.01 } }, routes).indexText, '1% da condução já equivale à gasolina', 'fração 0,01 = 1 %, nunca 0 %');
-  assert.equal(strip({ ...eq, index: { value: 1 } }, routes).indexText, '100% da condução já equivale à gasolina');
-  assert.equal(strip({ ...eq, index: { value: null } }, routes).indexText, '— da condução já equivale à gasolina');
+  assert.equal(strip({ ...eq, index: 0.01, provisional: false }, routes).indexText, '1% da condução já equivale à gasolina', 'fração 0,01 = 1 %, nunca 0 %');
+  assert.equal(strip({ ...eq, index: 1, provisional: false }, routes).indexText, '100% da condução já equivale à gasolina');
+  assert.equal(strip({ ...eq, index: null }, routes).indexText, '— da condução já equivale à gasolina');
   assert.equal(strip(EQUIVALENCE_FIXTURE, routes).route, '', 'aponta para o próprio Refino: sem botão');
   assert.equal(strip({ ...eq, nextAction: { text: 'Tudo certo', route: '' } }, routes).route, '');
   const source = read('screens/refino.js');
@@ -305,6 +305,6 @@ test('reset: a foto precisa ser confirmada, o poll acompanha a foto e voltar à 
   assert.ok(curve.includes('!operation.hash || !operation.publicPath'), 'só a operação de foto autoriza o reset');
   const enter = curve.slice(curve.indexOf('    onEnter(context) {'), curve.indexOf('    refreshBackups() {'));
   assert.ok(enter.includes("this.backupTask === 'reset-photo'") && !enter.slice(0, 400).includes('startResetWrite'), 'voltar à aba não zera');
-  const read = curve.slice(curve.indexOf('    startRead() {'), curve.indexOf('    startRead() {') + 120);
-  assert.ok(read.includes('if (this.backupTask) return;'), 'leitura não rouba a foto');
+  const read = curve.slice(curve.indexOf('    startRead() {'), curve.indexOf('    startRead() {') + 260);
+  assert.ok(read.includes('if (this.backupTask || this.reading || this.writing)'), 'leitura não rouba a foto');
 });
