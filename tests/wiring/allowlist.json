@@ -136,10 +136,17 @@
   "sourceSessionId": "metadados da projecao AutoCal: a tela usa available/usable/age; estes sao auditoria",
   "sourceUpdatedAt": "metadados da projecao AutoCal: a tela usa available/usable/age; estes sao auditoria",
   "liveAcquisitionEpoch": "metadados da projecao AutoCal: a tela usa available/usable/age; estes sao auditoria",
-  "nativeCorrelationState": "metadados da projecao AutoCal: a tela usa available/usable/age; estes sao auditoria"
+  "nativeCorrelationState": "metadados da projecao AutoCal: a tela usa available/usable/age; estes sao auditoria",
+  "legacyIndex": "índice antigo da condução, isolado de propósito para diagnóstico/exportação; a tela nunca o lê (EquivalenceView)",
+  "provisional": "chave plana de compatibilidade; a tela lê o índice aninhado e mostra \"· provisório\" a partir dele",
+  "coverage": "chave plana de compatibilidade; a cobertura aparece pelo guia de cobertura em palavras (coverageGuidance)",
+  "headline": "texto do cérebro duplicado em nextAction.text, que é o que a tela mostra (uma fala só)",
+  "pointIndexes": "índices dos pontos da ação; a tela leva à aba pela rota e ainda não destaca os pontos (decisão de produto pendente)",
+  "frozen": "Referência congelada: a tela não oferece congelar (sem botão); fica no diagnóstico até o dono decidir",
+  "frozenAt": "Referência congelada: a tela não oferece congelar (sem botão); fica no diagnóstico até o dono decidir",
+  "canFreeze": "Referência congelável: a tela não oferece congelar (sem botão); fica no diagnóstico até o dono decidir"
  },
  "defects": {
-  "usbPermissionPending": "DEFECT-1: getStatus.usbPermissionPending nunca e lido; \"conectando/aguardando permissao USB\" nao aparece (M1)",
   "usbDevice": "DEFECT-1: getStatus.usbDevice nunca e lido; a tela nao diz qual cabo/dispositivo (M1)",
   "ecuState": "DEFECT-1: getStatus.ecuState nunca e lido; so usbConnected decide \"ECU online\" (M1)",
   "safetyBlocked": "DEFECT-2: escrita bloqueada por seguranca (safetyBlocked) nao e lida; a UI so mostra error (M5/M6)",
@@ -155,13 +162,10 @@
  },
  "consumer_local": {
   "levelRaw": "alias camelCase lido depois de level_raw (o Kotlin emite level_raw)",
-  "dos": "palavra de texto humano dentro de template literal, nao um campo"
+  "dos": "palavra de texto humano dentro de template literal, nao um campo",
+  "usable": "campo local do contexto do gráfico (ctx.usable, definido em JS); não vem do Kotlin"
  },
  "consumer_defects": {
-  "curveChanges": "DEFECT-7: curve.js le suggestion.curveChanges, mas nenhum produtor Kotlin emite sugestoes (caminho morto: o foco de sugestao nunca aparece)",
-  "mapChanges": "DEFECT-7: map.js le suggestion.mapChanges sem produtor Kotlin (caminho morto)",
-  "rationale": "DEFECT-7: curve.js le suggestion.rationale sem produtor Kotlin (caminho morto)",
-  "explanation": "DEFECT-7: curve.js le suggestion.explanation sem produtor Kotlin (caminho morto)",
   "indexStart": "DEFECT-8: sessions.js le item/summary.indexStart sem produtor Kotlin; faixa do indice na sessao fica \"-\"",
   "indexEnd": "DEFECT-8: sessions.js le item/summary.indexEnd sem produtor Kotlin"
  },

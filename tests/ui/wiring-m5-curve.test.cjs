@@ -333,13 +333,13 @@ test('M5 desconhecido nunca vira 0: fator ausente de um ponto mostra — (nem "0
   assert.doesNotMatch(app.byId('curveCurrentFactor').textContent, /^0([,.]0+)?$/, `fator desconhecido apareceu como "${app.byId('curveCurrentFactor').textContent}"`);
 });
 
-test('M5 as quatro etapas da gravação aparecem na ordem do contrato (foto antes, escrita, ACK, conferindo) na Curva K e no Mapa K', () => {
+test('M5 as etapas da gravação aparecem na ordem do contrato (foto antes, gravando, conferindo na ECU) na Curva K e no Mapa K', () => {
   const app = curveApp();
   const rules = app.win.OmegasUi.DisplayRules.OPERATION_WORDING;
   const order = sel => app.$$(`${sel} .operation-sequence span`).map(e => e.textContent.trim());
   assert.deepEqual(order('[data-screen="curve"]'), Array.from(rules.stages));
   assert.deepEqual(order('[data-screen="map"]'), Array.from(rules.stages));
-  assert.deepEqual(Array.from(rules.stages), ['Foto antes', 'Escrita', 'ACK', 'Conferindo na ECU']);
+  assert.deepEqual(Array.from(rules.stages), ['Foto antes', 'Gravando', 'Conferindo na ECU']);
 });
 
 test('M5 leitura em andamento: mostra "Lendo", não acusa falha e só então mostra os pontos', () => {
@@ -358,7 +358,7 @@ test('M5 leitura em andamento: mostra "Lendo", não acusa falha e só então mos
 
 test('M5 Aprendizado global sem curva lida: gráfico vazio, sem coordenadas NaN', () => {
   const app = curveApp({ outcome: { curveRead: 'transport' } });
-  app.$('[data-curve-view="learning"]').click(); app.settle(3);
+  app.$('[data-curve-view="overview"]').click(); app.settle(3);
   L.assertClean(app, 'M5/aprendizado sem curva');
   app.$('[data-curve-view="editor"]').click(); app.settle(2);
   L.assertClean(app, 'M5/editor sem curva');

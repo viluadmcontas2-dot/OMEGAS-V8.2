@@ -51,7 +51,7 @@ MUTANTS = [
     mutant("tools-battery-frozen", "botão congelado", f"{UI}/components/drawers.js",
            "        this.api.requestBatteryOptimizationExemption?.();\n", "", [M8], ci=True),
     mutant("agora-next-frozen", "botão congelado", f"{UI}/screens/dashboard.js",
-           'if (app && app.router && next.dataset.route) app.router.open(next.dataset.route, next.dataset.subpage || "");', "", [FLOWS, M1]),
+           'if (app && app.router) app.router.navigate("refino");', "", [FLOWS, M1]),
     mutant("refino-confirm-frozen", "botão congelado", f"{UI}/screens/refino.js",
            "      if (event.target.closest('[data-refino-confirm]')) this.commitReview();\n", "", [FLOWS, M4]),
     # ---- desconhecido vira 0
@@ -59,8 +59,8 @@ MUTANTS = [
            "if (value === null || value === undefined || value === '' || typeof value === 'boolean') return null;",
            "if (value === null || value === undefined || value === '' || typeof value === 'boolean') return 0;", [M7, M4]),
     mutant("dashboard-finite-zero", "desconhecido vira 0", f"{UI}/screens/dashboard.js",
-           'if (value === null || value === undefined || value === "") return null;',
-           'if (value === null || value === undefined || value === "") return 0;', [M2, M1], ci=True),
+           'const finite = rules.finite;',
+           'const finite = value => Number(value);', [M2, M1], ci=True),
     # ---- guarda de ocupado
     mutant("save-backup-no-guard", "guarda de ocupado removida", f"{UI}/screens/curve.js",
            "    saveBackup() {\n      if (this.reading || this.writing || this.backupTask) return;\n", "    saveBackup() {\n", [M5]),
@@ -87,7 +87,7 @@ MUTANTS = [
            "'startCurveReset', [], {", "'startCurveResett', [], {", [M5, M3]),
     # ---- rótulos e estados
     mutant("stage-labels-swapped", "rótulos trocados", f"{UI}/index.html",
-           "<span>Foto antes</span><span>Escrita</span>", "<span>Escrita</span><span>Foto antes</span>", [M5], ci=True),
+           "<span>Foto antes</span><span>Gravando</span>", "<span>Gravando</span><span>Foto antes</span>", [M5], ci=True),
     mutant("fuel-label-swapped", "rótulos trocados", f"{UI}/core/display-rules.js",
            "if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';",
            "if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GNV';", [M2]),
@@ -104,11 +104,13 @@ MUTANTS = [
            "      if (this.reading && !operation.busy) {", "      if (this.reading) {", [M5]),
     mutant("curve-listener-registered-twice", "listener duplicado", f"{UI}/screens/curve.js",
            "      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n",
-           "      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n", [M5]),
+           "      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n", [M5],
+           note="EQUIVALENTE desde a guarda de ocupado de writePrepared (DEFECT-14): o ouvinte duplicado chama duas vezes e a segunda é ignorada"),
     mutant("sessions-no-escape-html", "escapeHtml esquecido", f"{UI}/screens/sessions.js",
            "<b>${escapeHtml(row.title)}</b>", "<b>${row.title}</b>", [M7], ci=True),
     mutant("curve-learning-chart-empty-array", "gráfico com lista vazia", f"{UI}/screens/curve.js",
-           "const minFactor = factorValues.length ? Math.min(...factorValues) - 0.05 : 0.8;", "const minFactor = true ? Math.min(...factorValues) - 0.05 : 0.8;", [M5]),
+           "const minFactor = factorValues.length ? Math.min(...factorValues) - 0.05 : 0.8;", "const minFactor = true ? Math.min(...factorValues) - 0.05 : 0.8;", [M5],
+           note="EQUIVALENTE: sem fatores nenhum caminho/ponto é desenhado, então o mínimo infinito não aparece na tela"),
     mutant("toast-never-shown", "aviso invisível", f"{UI}/app.js",
            "    toast.classList.add('show');\n", "", [M5]),
     mutant("scheduler-leaks-timer", "timer vazando", f"{UI}/core/scheduler.js",
@@ -116,12 +118,12 @@ MUTANTS = [
     # ---- grafo produtor/consumidor (estático)
     mutant("kotlin-key-renamed", "chave JSON renomeada no Kotlin", f"{KT}/web/HubJavascriptBridge.kt",
            '.put("usbConnected", status.usbConnected)', '.put("usbConnectd", status.usbConnected)', ["tests/test_wiring_graph.py"], kind="graph", ci=True),
-    mutant("js-key-renamed", "chave JSON renomeada no JS", f"{UI}/app.js",
-           "const online = status.usbConnected === true;", "const online = status.usbConnectd === true;", ["tests/test_wiring_graph.py"], kind="graph", ci=True),
+    mutant("js-key-renamed", "chave JSON renomeada no JS", f"{UI}/core/display-rules.js",
+           "if (s.usbConnected === true) {", "if (s.usbConnectd === true) {", ["tests/test_wiring_graph.py"], kind="graph", ci=True),
     mutant("kotlin-method-renamed", "método de ponte renomeado", f"{KT}/web/HubJavascriptBridge.kt",
            "fun getLiveTelemetry()", "fun getLiveTelemetri()", ["tests/test_wiring_graph.py"], kind="graph"),
     mutant("kotlin-producer-removed", "produtor sem consumidor", f"{KT}/web/HubJavascriptBridge.kt",
-           '.put("telemetryAgeMs", root.optLong("ageMs", -1L))', '.put("telemetryAgeMsX", root.optLong("ageMs", -1L))', ["tests/test_wiring_graph.py"], kind="graph"),
+           'telemetryValid = root.optBoolean("valid", false),\n        )\n        root.put("ok", true)\n            .put("telemetryAgeMs", root.optLong("ageMs", -1L))', 'telemetryValid = root.optBoolean("valid", false),\n        )\n        root.put("ok", true)\n            .put("telemetryAgeMsX", root.optLong("ageMs", -1L))', ["tests/test_wiring_graph.py"], kind="graph"),
 ]
 
 

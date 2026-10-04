@@ -43,3 +43,9 @@ Ordem = impacto para o dono (maior primeiro).
 - Curva K/Mapa K não limitam a seleção em 16 células: o limite do código é 144 (`MapBatchPlan.MAX_USER_CELLS`); o teste M6 cobre 1, 16 e 144.
 - `DESCONHECIDO` (combustível) aparece como a palavra "DESCONHECIDO", não "—": legível e sem 0 (aceito).
 - Botões "Limpar" sem nada para limpar e a aba já ativa são no-ops legítimos (listados em `allow` dos testes com motivo).
+
+## Situação na integração (Guardião, 2026-10-04)
+
+Corrigidos no app (probes não reproduzem mais; testes de uso estritos, 0 `todo`): 1, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 e os mortos de 7 (leituras de sugestão removidas).
+Abertos de propósito (mudam o que o dono vê; decisão de produto), seguem em `allowlist.json` e o teste de grafo exige que continuem violando: 2 (`safetyBlocked`/`writerState`), 3 (`relearnSuggested`/`ecuDrift`), 4 (resposta do pedido de overlay), 5 (`canDisconnect`/`timeoutReason`/`watchdogExpired`), 6 (`typicalBands`), 8 (`indexStart`/`indexEnd`).
+Mutantes: 34, 32 mortos (94%). Sobreviventes equivalentes: `curve-listener-registered-twice` (a guarda de ocupado de `writePrepared` absorve o ouvinte duplicado) e `curve-learning-chart-empty-array` (sem fatores nada é desenhado).

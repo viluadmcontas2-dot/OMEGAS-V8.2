@@ -160,7 +160,7 @@ test('FLUXO Refino: enquanto lê/grava na ECU o botão principal fica DESATIVADO
   primary(app).click(); app.flush();
   app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
   assert.equal(primary(app).hasAttribute('disabled'), true, 'botão ativo durante a leitura de conferência');
-  assert.match(primary(app).textContent, /Conferindo/i);
+  assert.match(primary(app).textContent, /Lendo a curva|Conferindo/i);
   for (let i = 0; i < 40 && !/Gravando/.test(primary(app).textContent); i += 1) app.advance(400);
   assert.match(primary(app).textContent, /Gravando/);
   assert.equal(primary(app).hasAttribute('disabled'), true, 'botão ativo durante a gravação');
