@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.equivalence.JsonFiles
 import com.omegas.prohub.equivalence.EquivalencePoint
 import com.omegas.prohub.equivalence.EquivalenceTolerances
 import com.omegas.prohub.equivalence.PointState
@@ -565,36 +566,49 @@ class EquivalencePhases(
         else -> ""
     }
 
+    /** Um só escritor por vez; o payload é montado e gravado sob `saveLock` (o disco nunca volta atrás). */
+    private val saveLock = Any()
+    private var buildSeq = 0L
+    private var writtenSeq = 0L
+
+    /** Grava já (fim do serviço), ignorando o intervalo mínimo. */
+    fun flush() {
+        synchronized(lock) { dirty = true; lastSaveAt = Long.MIN_VALUE / 2 }
+        save()
+    }
+
     private fun save() {
         val target = file ?: return
-        val payload = synchronized(lock) {
-            val now = clock()
-            if (!dirty || now - lastSaveAt < 60_000L) return
-            dirty = false
-            lastSaveAt = now
-            JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
-                .put("quietMs", quietMs).put("phase", phase).put("alertedPhase", alertedPhase)
-                .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
-                .put("watchedPhase", watchedPhase).put("phaseElapsedMs", phaseElapsedMs)
-                .put("durationMonotonic", durationClock != null)
-                .put("durationAt", lastDurationAt ?: JSONObject.NULL)
-                .put("expiredEvidence", expiredEvidence ?: JSONObject.NULL).put("timeoutReason", timeoutReason)
-                .put("proofs", proofsJson())
-        }
-        try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
-        } catch (_: Exception) {
-            synchronized(lock) { dirty = true }
+        synchronized(saveLock) {
+            val payload = synchronized(lock) {
+                val now = clock()
+                if (!dirty || now - lastSaveAt < 60_000L) return
+                dirty = false
+                lastSaveAt = now
+                JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
+                    .put("quietMs", quietMs).put("phase", phase).put("alertedPhase", alertedPhase)
+                    .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
+                    .put("watchedPhase", watchedPhase).put("phaseElapsedMs", phaseElapsedMs)
+                    .put("durationMonotonic", durationClock != null)
+                    .put("durationAt", lastDurationAt ?: JSONObject.NULL)
+                    .put("expiredEvidence", expiredEvidence ?: JSONObject.NULL).put("timeoutReason", timeoutReason)
+                    .put("proofs", proofsJson())
+            }
+            val seq = ++buildSeq
+            if (seq <= writtenSeq) return
+            try {
+                JsonFiles.writeAtomic(target, payload.toString())
+                writtenSeq = seq
+            } catch (_: Exception) {
+                synchronized(lock) { dirty = true }
+            }
         }
     }
 
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
+        val source = file ?: return
         try {
-            val root = JSONObject(source.readText())
-            if (root.optString("format") != FORMAT) return
+            val root = JsonFiles.readJsonWithBak(source) { it.optString("format") == FORMAT } ?: return
             lastCount = if (root.isNull("lastCount")) null else root.optInt("lastCount")
             quietMs = root.optLong("quietMs", 0L)
             phase = root.optString("phase", "SEM_ECU")

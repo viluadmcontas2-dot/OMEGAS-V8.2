@@ -381,6 +381,8 @@ class TelemetryForegroundService : Service() {
         journalTransitionsObserved = false
         try { equivalence.flush() } catch (_: Exception) {}
         try { equivalenceRuntime.flush() } catch (_: Exception) {}
+        try { refinementJournal.flush() } catch (_: Exception) {}
+        try { equivalencePhases.flush() } catch (_: Exception) {}
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
         scheduler.shutdownNow()
