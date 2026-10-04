@@ -26,23 +26,18 @@ class RefinementJournalGatesTest {
     private val after = before.copyOf().also { for (i in 5..29) it[i] = 17000 }
 
     @Test
-    fun `faixa com amostras de sobra mas poucos episodios nao e julgada`() {
+    fun `faixa com amostras julga sem exigir quantidade de trechos`() {
         val j = journal()
         j.recordCurveWrite(before, after, axisRaw, index(*all(1.06, 20, 3)), "teste")
-        // depois: 20 amostras mas 2 episódios -> continua COLETANDO (não vira CONFIRMADA por 10 s de leitura)
+        // depois: 20 amostras em 2 blocos já julgam: não há portão de "trechos"/minutos
         j.evaluate(index(*all(1.0, 20, 2)))
-        val latest = j.json().getJSONObject("latest")
-        assertEquals("VERIFICANDO", latest.getString("status"))
-        assertEquals("COLETANDO", latest.getJSONArray("bands").getJSONObject(0).getString("verdict"))
-        // com 3 episódios julga
-        j.evaluate(index(*all(1.0, 20, 3)))
         assertEquals("VERIFICADO", j.json().getJSONObject("latest").getString("status"))
     }
 
     @Test
-    fun `antes sem episodios independentes tambem nao serve de base`() {
+    fun `antes sem nenhum episodio tambem nao serve de base`() {
         val j = journal()
-        j.recordCurveWrite(before, after, axisRaw, index(*all(1.06, 20, 1)), "teste")
+        j.recordCurveWrite(before, after, axisRaw, index(*all(1.06, 20, 0)), "teste")
         j.evaluate(index(*all(1.0, 20, 3)))
         assertEquals("SEM_BASE", j.json().getJSONObject("latest").getString("status"))
     }

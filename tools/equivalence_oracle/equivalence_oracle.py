@@ -7,7 +7,7 @@ implementação contra a qual o Kotlin (`com.omegas.prohub.equivalence`) é comp
 ficam fora (dependem de relógio e de eventos que a fixture não tem).
 
 Regras do cérebro (revisão adversarial): veredito só com evidência independente (pares GNV×gasolina por RPM×MAP, ou pela
-curva da ECU, em ≥ 3 visitas separadas por ≥ 60 s e dispersão conhecida); tolerância clamp(2·disp, 4%, 5%); o GNV medido
+curva da ECU, com n efetivo ≥ 3 (autocorrelação) e intervalo de confiança ≤ 4% (sem portão de tempo)); tolerância clamp(2·disp, 4%, 5%); o GNV medido
 NÃO é puxado para a gasolina (sem prior); o índice só é número quando os pontos julgados cobrem ≥ 50% do uso.
 
 Convenções que o Kotlin repete bit a bit:
@@ -31,8 +31,12 @@ MIN_TOL = 0.04
 MAX_TOL = 0.05               # teto da tolerância: nunca mais largo que ±5%
 MIN_JUDGED_USAGE = 0.5       # o índice só é número quando >= 50% do uso está em pontos julgados
 MIN_POINT_PAIRS = 3          # leituras (pares) ao redor do ponto para julgá-lo
-MIN_POINT_VISITS = 3         # visitas distintas (>= 60 s entre trechos) ao redor do ponto
-VISIT_GAP_MS = 60000
+MIN_POINT_NEFF = 3           # n efetivo (amostras decorrelacionadas) mínimo ao redor do ponto; a confiança vem do intervalo
+VISIT_GAP_MS = 3000          # de-duplicação de janelas sobrepostas (bloco), não exigência de tempo
+MAX_RHO = 0.95
+OVERLAP_MS = 1000            # leituras a < 1 s partilham quadros da janela: mesma amostra
+T975 = [12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2.201, 2.179, 2.160, 2.145, 2.131,
+        2.120, 2.110, 2.101, 2.093, 2.086, 2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042]
 EPISODE_BAND_FACTOR = 100000
 STABLE_MS_SPREAD = 0.10      # janela com ms que pula > 10% não é leitura estável
 MATCH_RPM = 150.0
@@ -456,6 +460,40 @@ def median_of(values):
     return median(values)
 
 
+def effective_n(times, values):
+    """n efetivo de uma série em ordem de tempo: n(1-rho)/(1+rho), rho = autocorrelação lag 1 em [0, MAX_RHO]. Espelho de EvidencePairs.effectiveN."""
+    n = len(values)
+    if n == 0:
+        return 0.0
+    apart, last = 0, None
+    for t in times:
+        if last is None or t - last >= OVERLAP_MS:
+            apart += 1
+            last = t
+    return min(_autocorr_n(values), float(apart))
+
+
+def _autocorr_n(values):
+    n = len(values)
+    if n < 3:
+        return n * (1.0 - MAX_RHO) / (1.0 + MAX_RHO)
+    mean = sum(values) / n
+    var = 0.0
+    cov = 0.0
+    for i in range(n):
+        d = values[i] - mean
+        var += d * d
+        if i > 0:
+            cov += d * (values[i - 1] - mean)
+    rho = MAX_RHO if var / n <= 1e-8 else min(max(cov / var, 0.0), MAX_RHO)
+    return n * (1.0 - rho) / (1.0 + rho)
+
+
+def t_critical(n_eff):
+    df = int(math.floor(n_eff)) - 1
+    return T975[0] if df < 1 else (1.96 if df > 30 else T975[df - 1])
+
+
 def evidence_at(i, u, pairs, pair_u, pair_ln):
     """Evidência de um ponto: pares entre os nós vizinhos (em ln ms). Espelho de EquivalenceEngine.evidenceAt."""
     n = len(u)
@@ -463,7 +501,7 @@ def evidence_at(i, u, pairs, pair_u, pair_ln):
     hi = u[i + 1] if i < n - 1 else u[n - 1] + (u[n - 1] - u[n - 2])
     members = [k for k in range(len(pairs)) if lo <= pair_u[k] <= hi]
     if not members:
-        return {"pairs": 0, "episodes": 0, "mixture": None, "dispersion": None, "ecuShare": 0.0, "judgeable": False}
+        return {"pairs": 0, "episodes": 0, "nEff": 0.0, "mixture": None, "dispersion": None, "ecuShare": 0.0, "judgeable": False}
     ids = visit_indexes([pairs[k]["t"] for k in members])
     per_visit = {}
     for k, v in zip(members, ids):
@@ -474,10 +512,12 @@ def evidence_at(i, u, pairs, pair_u, pair_ln):
         allv = [pair_ln[k] for k in members]
         mid = median_of(allv)
         disp = 1.4826 * median_of([abs(v - mid) for v in allv])
-    out = {"pairs": len(members), "episodes": len(per_visit), "mixture": math.exp(center) - 1.0, "dispersion": disp,
+    ordered = sorted(members, key=lambda k: pairs[k]["t"])
+    n_eff = effective_n([pairs[k]["t"] for k in ordered], [pair_ln[k] for k in ordered])
+    out = {"pairs": len(members), "episodes": int(math.floor(n_eff + 0.5)), "nEff": n_eff, "mixture": math.exp(center) - 1.0, "dispersion": disp,
            "ecuShare": sum(1 for k in members if pairs[k]["ecu"]) / len(members)}
-    out["judgeable"] = (disp is not None and out["pairs"] >= MIN_POINT_PAIRS and out["episodes"] >= MIN_POINT_VISITS
-                        and Z95 * disp / math.sqrt(out["episodes"]) <= CONF_MAX)
+    out["judgeable"] = (disp is not None and out["pairs"] >= MIN_POINT_PAIRS and n_eff >= MIN_POINT_NEFF
+                        and t_critical(n_eff) * disp / math.sqrt(n_eff) <= CONF_MAX)
     return out
 
 

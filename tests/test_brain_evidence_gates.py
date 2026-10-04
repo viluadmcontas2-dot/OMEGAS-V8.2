@@ -76,11 +76,11 @@ class P1EvidenceBeforePercentage(unittest.TestCase):
         self.assertTrue(all(p["state"] in ("SEM_DADOS", "APRENDENDO") for p in out["points"]))
         self.assertIsNone(out["index"])
 
-    def test_dense_frames_in_ten_seconds_are_one_visit(self):
-        # ">= 8 amostras e >= 3 episódios cabem em ~10 s": agora 3 s de lacuna não é episódio, 60 s é.
-        gas = [(r, m, ms, i * 300 + j) for (r, m, ms, _t), i, j in ((o, k % 20, k) for k, o in enumerate(synthetic_obs(lambda c: 1.0, lambda i, j: 1.0, 20)))]
+    def test_overlapping_windows_are_one_sample_not_many(self):
+        # Todas as leituras dentro de 0,6 s partilham quadros da janela: n efetivo ~ 1, intervalo largo, ainda sem certeza.
+        gas = [(r, m, ms, (k % 2) * 285) for k, (r, m, ms, _t) in enumerate(synthetic_obs(lambda c: 1.0, lambda i, j: 1.0, 20))]
         out = self.evaluate(gas)
-        self.assertTrue(all(p["episodes"] <= 1 for p in out["points"]))
+        self.assertTrue(all(p["state"] in ("SEM_DADOS", "APRENDENDO") for p in out["points"]))
         self.assertIsNone(out["index"])
 
     def test_unknown_dispersion_is_not_judged_instead_of_wide_tolerance(self):
@@ -146,12 +146,13 @@ class P1GnvIsNotShrunkTowardPetrol(unittest.TestCase):
 
 
 class P2EvidenceIndependenceAndNativePriority(unittest.TestCase):
-    def test_eight_pairs_in_one_band_visit_do_not_count_as_episodes(self):
+    def test_no_visit_gate_one_block_of_pairs_may_drive_a_proposal_weight_capped(self):
         pairs = [(t, t * 1.1) for b in (2, 3, 4) for t in interior(b, 9)]
         snap = snapshot()
         one = refined.refine(snap, pairs, telemetry_episodes=[0] * len(pairs))
         three = refined.refine(snap, pairs, telemetry_episodes=[i % 3 for i in range(len(pairs))])
-        self.assertEqual("POLISH", one["mode"])
+        # Removido o portão de "3 visitas/60 s": a faixa vale pelos pares, com peso limitado por bloco.
+        self.assertEqual("EQUIVALENCE", one["mode"])
         self.assertEqual("EQUIVALENCE", three["mode"])
 
     def test_episode_weight_caps_repeated_readings(self):

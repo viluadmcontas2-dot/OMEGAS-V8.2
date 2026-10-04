@@ -52,18 +52,19 @@ class AutoMatchHysteresisTest {
     // ------------------------------------------------------------------ E3: episódios
 
     @Test
-    fun `faixa com oito pares de um unico trecho nao puxa proposta`() {
+    fun `sem portao de visitas - a evidencia e o peso do bloco e nao o relogio`() {
         val pairs = pairsIn(1.10, 9, listOf(2, 3, 4))
+        // Antes: um único trecho (ou 2) nunca puxava proposta. Agora a faixa vale pelos pares, com peso limitado por bloco.
         val oneEpisode = refine(pairs, List(pairs.size) { 0 })
-        assertEquals(AutoMatchRefinedEngine.Mode.POLISH, oneEpisode.mode)
-        assertEquals(oneEpisode.currentRaw, oneEpisode.refinedRaw)
-        val twoEpisodes = refine(pairs, List(pairs.size) { it % 2 })
-        assertEquals(AutoMatchRefinedEngine.Mode.POLISH, twoEpisodes.mode)
+        assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, oneEpisode.mode)
+        assertTrue(oneEpisode.refinedRaw != oneEpisode.currentRaw)
         val threeEpisodes = refine(pairs, List(pairs.size) { it % 3 })
         assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, threeEpisodes.mode)
         assertTrue(threeEpisodes.telemetryOnly)
-        // Episódios desconhecidos (lista vazia) não ligam o portão: comportamento anterior.
         assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, refine(pairs).mode)
+        // O peso de um bloco segue limitado: muito dado de um bloco só não vale mais que o teto.
+        val w = AutoMatchRefinedEngine.pairWeights(pairs, List(pairs.size) { 0 })
+        assertTrue(w.all { it < 1.0 })
     }
 
     private fun drive(ledger: EquivalenceLedger, fuel: String, ms: Double, start: Long, n: Int): Long {
@@ -73,7 +74,7 @@ class AutoMatchHysteresisTest {
     }
 
     @Test
-    fun `o livro numera os episodios por visita de 60 s e o indice guia onde dirigir`() {
+    fun `o livro numera os blocos de leituras e o indice guia onde dirigir sem citar regras`() {
         val ledger = EquivalenceLedger(null)
         var t = drive(ledger, "GASOLINA", 5.0, 0, 20)
         repeat(3) { t = drive(ledger, "GNV", 5.5, t + EvidenceTestSupport.VISIT_GAP, 6) }
@@ -89,9 +90,10 @@ class AutoMatchHysteresisTest {
         var u = drive(single, "GASOLINA", 5.0, 0, 20)
         drive(single, "GNV", 5.5, u + EvidenceTestSupport.VISIT_GAP, 40)
         val guidance = single.index().getString("coverageGuidance")
-        assertTrue(guidance, guidance.contains("Falta dado na faixa 4,5–6,0 ms"))
+        assertTrue(guidance, guidance.contains("faixa 4,5–6,0 ms"))
         assertTrue(guidance, guidance.contains("0,60"))
-        assertTrue(guidance, guidance.contains("1 de 3 trechos"))
+        // Texto ao dono nunca cita regras internas (trechos, minutos, visitas, episódios).
+        listOf("trecho", "min", "visita", "episód").forEach { assertFalse(guidance, guidance.lowercase().contains(it)) }
     }
 
     @Test

@@ -318,6 +318,54 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         }
     }
 
+    private var cachedBetween: Pair<Long, JSONArray>? = null
+
+    /**
+     * Pontos NOSSOS entre as bolinhas da ECU (só no Refino): um por intervalo entre bandas vizinhas da ECU (17 para as 18),
+     * no centro do intervalo, mais as duas pontas abertas só quando há leitura. No máximo 2× as bandas da ECU (≤ 36; aqui ≤ 19).
+     * Cada um: centro em ms e MAP, o que MEDIMOS no GNV e na gasolina ali, leituras, passagens (blocos) e estado
+     * COLETADO / FALTA. Sem bolinhas infinitas: a grade é fixa (54 bins finos → 18 faixas → 17 intervalos).
+     * Cache por revisão do livro: não recalcula a cada quadro.
+     */
+    fun betweenPointsJson(): JSONArray {
+        val revision = revisionCounter.get()
+        synchronized(lock) { cachedBetween?.takeIf { it.first == revision }?.let { return JSONArray(it.second.toString()) } }
+        val pairs = drivingPairs()
+        val byBin = HashMap<Int, MutableList<EvidencePair>>()
+        for (p in pairs) FineBins.fineIndex(p.petrolRefMs)?.let { byBin.getOrPut(it) { ArrayList() }.add(p) }
+        fun median(values: List<Double>): Double = values.sorted()[values.size / 2]
+        val out = JSONArray()
+        for ((k, member) in FineBins.betweenMembers().withIndex()) {
+            val (kind, from, until) = member
+            val inside = (from until until).flatMap { byBin[it] ?: emptyList() }
+            val fromMs = FineBins.EDGES[from]
+            val toMs = FineBins.EDGES[until]
+            if (kind != "gap" && inside.isEmpty()) continue
+            // Centro: ponto médio (em ln) entre os centros das duas bandas da ECU vizinhas; pontas: centro do bin.
+            val centerMs = kotlin.math.exp(0.5 * (kotlin.math.ln(fromMs) + kotlin.math.ln(toMs)))
+            val petrolMs = if (inside.isEmpty()) null else median(inside.map { it.petrolRefMs })
+            val gnvMs = if (inside.isEmpty()) null else median(inside.map { it.gasPetrolMs })
+            val maps = inside.map { it.map }.filter { it.isFinite() && it > 0.0 }
+            val mapBar = if (maps.isNotEmpty()) median(maps) else bandMapRange(fromMs, toMs)?.let { (it.first + it.second) / 2.0 }
+            val episodes = inside.map { it.episode }
+            val visits = if (inside.isNotEmpty() && episodes.all { it >= 0 }) episodes.toSet().size else null
+            val collected = inside.size >= AutoMatchRefinedEngine.BAND_MATURE_COUNT
+            out.put(JSONObject()
+                .put("index", if (kind == "open-low") -1 else if (kind == "open-high") 17 else k - 1)
+                .put("kind", kind)
+                .put("fromMs", fromMs).put("toMs", toMs).put("centerMs", centerMs)
+                .put("mapBar", mapBar ?: JSONObject.NULL)
+                .put("petrolMs", petrolMs ?: JSONObject.NULL)
+                .put("gnvMs", gnvMs ?: JSONObject.NULL)
+                .put("diffPct", if (petrolMs != null && gnvMs != null && petrolMs > 0.0) Math.round((gnvMs / petrolMs - 1.0) * 1000.0) / 10.0 else JSONObject.NULL)
+                .put("samples", inside.size)
+                .put("visits", visits ?: JSONObject.NULL)
+                .put("state", if (collected) "COLETADO" else "FALTA"))
+        }
+        synchronized(lock) { cachedBetween = revision to JSONArray(out.toString()) }
+        return out
+    }
+
     private fun computePairs(): List<EvidencePair> = EvidencePairs.build(petrol, gas, ecuPetrolRef)
 
     /**
@@ -446,9 +494,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val to = band.optDouble("toMs")
         val range = bandMapRange(from, to)
         val where = if (range != null) " entre %.2f e %.2f bar".format(br, range.first, range.second) else " nessa faixa de injeção"
-        val episodes = if (band.isNull("episodes")) 0 else band.optInt("episodes")
-        val progress = " (%d de %d trechos)".format(br, episodes, MIN_BAND_EPISODES)
-        return "Falta dado na faixa %.1f–%.1f ms: dirija no GNV%s%s.".format(br, from, to, where, progress)
+        // Sem contagens nem regras internas na frase do dono: só a consequência humana.
+        return "Estou aprendendo seu motor na faixa %.1f–%.1f ms: dirija no GNV%s.".format(br, from, to, where)
     }
 
     /** Identidade observacional da época, sem tocar no acumulador. */

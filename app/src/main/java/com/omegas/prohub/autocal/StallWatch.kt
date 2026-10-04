@@ -234,6 +234,8 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
     fun json(): JSONObject = synchronized(lock) {
         val stalls = events.filter { it.optString("kind") == KIND_STALL }
         val near = events.filter { it.optString("kind") == KIND_NEAR }
+        // Região = faixa de 0,5 ms de Petrol Inj. onde o motor engasgou. Cada uma carrega ONDE (MAP, RPM, ms), QUANTAS vezes
+        // e QUANDO (primeira/última), para o cérebro propor um ajuste LOCAL na Curva K (ver [StallLocalFix]).
         val bins = events.groupBy { kotlin.math.floor(it.optDouble("petrolMs") / BIN_MS) * BIN_MS }
             .map { (from, list) ->
                 JSONObject().put("fromMs", from).put("toMs", from + BIN_MS).put("count", list.size)
@@ -241,6 +243,11 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
                     .put("nearCount", list.count { it.optString("kind") == KIND_NEAR })
                     .put("mapBar", median(list.map { it.optDouble("mapBar") }))
                     .put("rpmBefore", median(list.map { it.optDouble("rpmBefore") }))
+                    .put("rpm", median(list.map { it.optDouble("rpmBefore") }))
+                    .put("ms", median(list.map { it.optDouble("petrolMs") }))
+                    .put("firstAt", list.minOf { it.optLong("at") })
+                    .put("lastAt", list.maxOf { it.optLong("at") })
+                    .put("ats", JSONArray(list.map { it.optLong("at") }.sorted()))
             }.sortedByDescending { it.optInt("count") }
         JSONObject().put("format", FORMAT)
             .put("count", stalls.size)

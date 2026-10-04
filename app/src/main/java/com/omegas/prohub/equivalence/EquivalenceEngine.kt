@@ -42,9 +42,8 @@ object EquivalenceEngine {
     const val COLLECT_MIN_USAGE = 0.02
     /** Leituras (pares) mínimas ao redor de um ponto para julgá-lo (= faixa nativa madura). */
     const val MIN_POINT_PAIRS = AutoMatchRefinedEngine.BAND_MATURE_COUNT
-    /** Visitas distintas (trechos separados por ≥ 60 s) mínimas ao redor de um ponto para julgá-lo. */
-    const val MIN_POINT_EPISODES = EvidencePairs.MIN_VISITS
-    private const val Z95 = 1.96
+    /** n efetivo mínimo (amostras decorrelacionadas) ao redor de um ponto; a confiança em si vem do intervalo. */
+    const val MIN_POINT_EPISODES = 3
     private val PT_BR: Locale = Locale.forLanguageTag("pt-BR")
 
     private fun f1(value: Double): String = String.format(PT_BR, "%.1f", value)
@@ -76,10 +75,20 @@ object EquivalenceEngine {
 
     private fun median(values: List<Double>): Double = OwnCurveFitter.median(values)
 
+    /**
+     * Regra única de "julgável" (sem relógio): pares suficientes, n efetivo mínimo e o intervalo de confiança do erro
+     * (t·dispersão/√n efetivo) dentro da margem do dono (±4%). Pouco dado = intervalo largo = ainda sem certeza.
+     */
+    fun isJudgeable(pairs: Int, nEff: Double, dispersion: Double?): Boolean =
+        dispersion != null && pairs >= MIN_POINT_PAIRS && nEff >= MIN_POINT_EPISODES &&
+            EvidencePairs.tCritical(nEff) * dispersion / sqrt(nEff) <= CONFIDENCE_MAX
+
     /** Evidência de um ponto: as leituras (pares GNV × gasolina por RPM×MAP, ou pela curva da ECU) ao redor dele. */
     private class PointEvidence(
         val pairs: Int,
+        /** n efetivo arredondado (amostras decorrelacionadas); 0 sem pares. */
         val episodes: Int,
+        val nEff: Double,
         /** Mediana por visita e depois entre visitas (peso por episódio, não por quadro); nulo sem pares. */
         val mixture: Double?,
         /** Dispersão robusta (1,4826·MAD em ln); nula com menos de 2 pares: dispersão desconhecida não julga. */
@@ -87,8 +96,7 @@ object EquivalenceEngine {
         val ecuShare: Double,
     ) {
         val judgeable: Boolean
-            get() = mixture != null && dispersion != null && pairs >= MIN_POINT_PAIRS && episodes >= MIN_POINT_EPISODES &&
-                Z95 * dispersion / sqrt(episodes.toDouble()) <= CONFIDENCE_MAX
+            get() = mixture != null && isJudgeable(pairs, nEff, dispersion)
     }
 
     /**
@@ -101,7 +109,7 @@ object EquivalenceEngine {
         val lo = if (i > 0) u[i - 1] else u[0] - (u[1] - u[0])
         val hi = if (i < n - 1) u[i + 1] else u[n - 1] + (u[n - 1] - u[n - 2])
         val members = pairs.indices.filter { pairU[it] >= lo && pairU[it] <= hi }
-        if (members.isEmpty()) return PointEvidence(0, 0, null, null, 0.0)
+        if (members.isEmpty()) return PointEvidence(0, 0, 0.0, null, null, 0.0)
         val ids = visitIds(members.map { pairs[it].t })
         val perVisit = HashMap<Int, MutableList<Double>>()
         members.forEachIndexed { k, m -> perVisit.getOrPut(ids[k]) { ArrayList() } += pairLn[m] }
@@ -111,8 +119,11 @@ object EquivalenceEngine {
             val mid = median(all)
             1.4826 * median(all.map { abs(it - mid) })
         } else null
+        // n efetivo: autocorrelação (lag 1) dos erros em ordem de tempo; leituras sobrepostas valem menos que uma.
+        val ordered = members.sortedBy { pairs[it].t }
+        val nEff = EvidencePairs.effectiveN(ordered.map { pairs[it].t }, ordered.map { pairLn[it] })
         return PointEvidence(
-            members.size, perVisit.size, exp(center) - 1.0, dispersion,
+            members.size, Math.round(nEff).toInt(), nEff, exp(center) - 1.0, dispersion,
             members.count { pairs[it].ecuRef }.toDouble() / members.size,
         )
     }
@@ -280,9 +291,8 @@ object EquivalenceEngine {
             return NextAction(NextActionKind.APPLY, text, "refino", null, off.sortedByDescending { it.usage }.map { it.index })
         }
         if (points.any { it.state == PointState.EM_PROVA }) {
-            val remaining = outcome.remainingMinutes
-            val text = if (remaining != null) "Rodando para provar o ajuste · faltam ~$remaining min de condução nessa faixa"
-            else "Rodando para provar o ajuste"
+            // Sem minutos nem regras na frase do dono: o tempo restante fica em `technical` (outcome.remainingMinutes).
+            val text = "Rodando para provar o ajuste"
             return NextAction(NextActionKind.PROVING, text, "refino", null, points.filter { it.state == PointState.EM_PROVA }.map { it.index })
         }
         val candidates = points.filter {
@@ -302,7 +312,7 @@ object EquivalenceEngine {
         if (off.isNotEmpty()) {
             // Há pontos fora, mas o motor refinado não tem evidência para propor: pede mais leitura em vez de dizer "nada a fazer".
             return NextAction(
-                NextActionKind.COLLECT, "Rode mais no GNV: ainda faltam leituras para propor o ajuste",
+                NextActionKind.COLLECT, "Estou aprendendo seu motor: siga dirigindo no GNV",
                 "refino", null, off.sortedByDescending { it.usage }.map { it.index },
             )
         }
@@ -311,17 +321,17 @@ object EquivalenceEngine {
         val unconverged = points.filter { stillOff(it) && outcome.reasons[it.index] == ProofOutcome.REASON_NO_CONVERGENCE }
         if (unconverged.isNotEmpty()) {
             val text = "Ajuste em ${f1(unconverged.minOf { it.axisMs })}–${f1(unconverged.maxOf { it.axisMs })} ms ainda não fechou · " +
-                "rode mais antes de eu propor de novo"
+                "sigo aprendendo antes de propor de novo"
             return NextAction(NextActionKind.COLLECT, text, "refino", null, unconverged.map { it.index })
         }
         val exhausted = points.filter { stillOff(it) && outcome.reasons[it.index] == ProofOutcome.REASON_EXHAUSTED }
         if (exhausted.isNotEmpty()) {
-            val text = "Ajuste em ${f1(exhausted.minOf { it.axisMs })}–${f1(exhausted.maxOf { it.axisMs })} ms não fechou depois de " +
-                "${ProofOutcome.MAX_ATTEMPTS} tentativas · sem nova proposta ali; revise a curva nessa faixa"
+            val text = "Ajuste em ${f1(exhausted.minOf { it.axisMs })}–${f1(exhausted.maxOf { it.axisMs })} ms não fechou · " +
+                "sem nova proposta ali; revise a curva nessa faixa"
             return NextAction(NextActionKind.NOTHING, text, "refino", null, exhausted.map { it.index })
         }
         if (index == null) {
-            return NextAction(NextActionKind.COLLECT, "Rode mais no GNV: ainda é pouco do seu uso medido para afirmar equivalência", "refino", null, emptyList())
+            return NextAction(NextActionKind.COLLECT, "Estou aprendendo seu motor: siga dirigindo no GNV", "refino", null, emptyList())
         }
         return NextAction(NextActionKind.NOTHING, "Equivalente. Nada a fazer.", null, null, emptyList())
     }

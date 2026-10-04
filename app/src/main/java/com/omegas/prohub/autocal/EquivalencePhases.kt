@@ -66,8 +66,8 @@ class EquivalencePhases(
         private const val MAX_TICK_MS = 10_000L
         /** Leituras novas no ponto para julgar a prova (= faixa do diário). */
         const val PROOF_MIN_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
-        /** ...em pelo menos este número de visitas (≥ 60 s entre trechos): leituras seguidas não são evidência independente. */
-        const val PROOF_MIN_EPISODES = EvidencePairs.MIN_VISITS
+        /** ...com pelo menos este n efetivo (amostras decorrelacionadas, não relógio): leituras sobrepostas valem menos. */
+        const val PROOF_MIN_EPISODES = 2
         /** Prova fechada sem convergir volta a poder ser proposta depois de tanto tempo de condução (até [ProofOutcome.MAX_ATTEMPTS] tentativas). */
         const val PROOF_RETRY_COOLDOWN_ONLINE_MS = 10 * 60_000L
         /** Condução online sem leitura suficiente: a prova fecha INCONCLUSIVO. */
@@ -580,12 +580,7 @@ class EquivalencePhases(
             "A ECU terminou e já tem a curva de gasolina. O OMEGAS só precisa medir o GNV rodando."
         else "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
         "PROPOSTA_PRONTA" -> "Curva refinada pronta: $off de $measured faixas fora da gasolina."
-        "VERIFICANDO" -> "Curva nova gravada. O OMEGAS mede faixa por faixa se o GNV chegou na gasolina" +
-            (verification?.let {
-                val budgetMin = Math.round(it.optDouble("budgetMinutes")).toInt()
-                // Nunca "20 de 15": passado o orçamento, mostra o teto (a verificação fecha com o que mediu).
-                " (%d de %d min de condução)".format(minOf(Math.floor(it.optDouble("onlineMinutes")).toInt(), budgetMin), budgetMin)
-            } ?: "") + "."
+        "VERIFICANDO" -> "Curva nova gravada. O OMEGAS confere se o GNV chegou na gasolina."
         "RESTAURAR_TRECHO" -> "Um trecho piorou com a curva nova. Restaure só esse trecho."
         "ESTAVEL" -> "GNV igual à gasolina em $measured faixas (±${Units.percentWhole((exp(TOLERANCE_LOG) - 1) * 100)}" +
             (if (measuredOnEcuRef > 0) ", ±${Units.percentWhole((exp(TOLERANCE_LOG_ECU_REF) - 1) * 100)} onde a gasolina é a da ECU" else "") +

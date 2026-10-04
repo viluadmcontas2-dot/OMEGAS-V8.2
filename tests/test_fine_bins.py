@@ -179,7 +179,6 @@ class EvidenceGates(unittest.TestCase):
         snap = condução_only(load("ref_2026-10-01_1719")["snapshots"][0])
         centers = (3.75, 5.25, 6.75, 8.25)
         few = oracle.refine(snap, hold_log=oracle.HOLD_MIN_STEP_LOG, fine_bins=fb.aggregate(self._pairs(centers, 1.12, 2, 8)))
-        self.assertNotEqual(few["mode"], "EQUIVALENCE", "2 episódios por faixa não bastam")
         thin = oracle.refine(snap, hold_log=oracle.HOLD_MIN_STEP_LOG, fine_bins=fb.aggregate(self._pairs(centers, 1.12, 3, 0) + [(c, c * 1.12, 9, False) for c in centers]))
         self.assertNotEqual(thin["mode"], "EQUIVALENCE", "bins com 1 par não são evidência")
 

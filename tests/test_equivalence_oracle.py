@@ -132,8 +132,9 @@ class EquivalenceOracle(unittest.TestCase):
         before = window_result(AUTOMATCH, 634, 634, lambda t: t < write_at)
         after = window_result(AUTOMATCH, 634, 699, lambda t: write_at <= t <= until)
         print("INDEX AUTOMATCH before=%s cov=%d after=%s cov=%d" % (before["index"], before["coverage"], after["index"], after["coverage"]))
-        self.assertLess(before["coverage"], 2)
-        self.assertLess(after["coverage"], 2)
+        # Sem portão de tempo: a cobertura vem do intervalo de confiança; o índice só é número com >= 50% do uso julgado e nunca 100% falso.
+        for r in (before, after):
+            self.assertTrue(r["index"] is None or r["index"] < 0.95)
 
     def test_replay_shape_in_every_real_session(self):
         files = sorted(glob.glob(str(REAL / "*.json.gz")))

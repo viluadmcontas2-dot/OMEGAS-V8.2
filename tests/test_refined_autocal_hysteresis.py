@@ -130,8 +130,9 @@ class EpisodeCoverage(unittest.TestCase):
     def test_eight_pairs_from_one_stretch_do_not_drive_a_proposal(self):
         snap = self._snapshot()
         n = len(self.PAIRS)
-        self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[0] * n)["mode"], "POLISH")
-        self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[i % 2 for i in range(n)])["mode"], "POLISH")
+        # Sem portão de visitas (decisão do dono): um bloco só também vale, com peso limitado.
+        self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[0] * n)["mode"], "EQUIVALENCE")
+        self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[i % 2 for i in range(n)])["mode"], "EQUIVALENCE")
         self.assertEqual(oracle.refine(snap, self.PAIRS, telemetry_episodes=[i % 3 for i in range(n)])["mode"], "EQUIVALENCE")
         self.assertEqual(oracle.refine(snap, self.PAIRS)["mode"], "EQUIVALENCE", "episódio desconhecido não liga o portão")
 

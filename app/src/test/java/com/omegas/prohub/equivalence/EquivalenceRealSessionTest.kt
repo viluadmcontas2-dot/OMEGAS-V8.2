@@ -67,7 +67,7 @@ class EquivalenceRealSessionTest {
     }
 
     @Test
-    fun `na sessao AUTOMATCH a janela curta nao da cobertura para afirmar que o indice subiu`() {
+    fun `na sessao AUTOMATCH a janela curta nunca afirma um indice falso`() {
         // A escrita de 16:04:38 também foi um reset plano (K = 1,0). 5 minutos de GNV não cobrem 2 pontos com confiança.
         val writeAt = EquivalenceReplaySupport.writeAtMs(AUTOMATCH)
         val until = EquivalenceReplaySupport.snapshotAtMs(AUTOMATCH, 1401)
@@ -75,7 +75,9 @@ class EquivalenceRealSessionTest {
         val before = evaluate(AUTOMATCH, 634, 634) { it.fuel != "GNV" || it.t < writeAt }
         val after = evaluate(AUTOMATCH, 634, 699) { it.fuel != "GNV" || (it.t >= writeAt && it.t <= until) }
         println("INDEX_AUTOMATCH before=${before.index} cov=${before.coverage} after=${after.index} cov=${after.coverage}")
-        assertTrue(before.coverage < 2 && after.coverage < 2)
+        // Sem portão de tempo: a cobertura vem do intervalo; o índice só é número com ≥ 50% do uso julgado e nunca é 100% falso.
+        assertTrue(before.index == null || before.index!! < 0.95)
+        assertTrue(after.index == null || after.index!! < 0.95)
         listOf(before.index, after.index).forEach { assertTrue(it == null || it in 0.0..1.0) }
     }
 

@@ -18,7 +18,7 @@ import refined_oracle as oracle
 REAL = Path(__file__).resolve().parents[2] / "fixtures/autocal/real"
 RPM_TOL = 150
 STABLE_MS_SPREAD = 0.10
-VISIT_GAP_MS = 60000   # = EvidencePairs.VISIT_GAP_MS
+VISIT_GAP_MS = 3000    # = EvidencePairs.VISIT_GAP_MS (bloco de janelas sobrepostas)
 EPISODE_BAND_FACTOR = 100000
 MAP_TOL = 0.02
 
