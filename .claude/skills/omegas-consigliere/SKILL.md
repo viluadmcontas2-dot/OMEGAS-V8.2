@@ -39,3 +39,11 @@ Observar é automático; só o dono muda a ECU, em um toque. "Gravado" só após
 ## Prévia primeiro, barata (trava do dono)
 - Mudança de tela nova ou grande: gere UM mockup estático (HTML/CSS solto → PNG no Chromium) a partir do modelo atual e mostre ao dono. Só implementar no app depois do aprovado. Nunca ler o sistema todo para fazer prévia.
 - Pequenos refinamentos (espaço, padding, tema): aplicar direto, sem prévia.
+
+## Pedidos que o dono já repetiu (fonte: sessões; viraram hook + teste)
+Mecanismos que garantem sem ele pedir de novo:
+- Hook `UserPromptSubmit` (.claude/settings.json → .claude/hooks/owner-rules.txt): reinjeta as 8 regras curtas a cada mensagem.
+- Hook `PreToolUse` bloqueia `git stash` (global entre worktrees; já misturou agentes).
+- CI: tests/test_owner_rules_contract.py quebra se voltar rolagem horizontal, botão "Entendi", "Exportar ZIP", tema claro, números no trilho, ou texto de regra interna na UI.
+Regras (curtas): tokens são o orçamento; prévia = mockup PNG só para tela nova; pode ter sido mal transcrito (white=UI e UX); tema escuro único; gráfico primeiro e dominante; sem rolagem horizontal, sem cartão miúdo, sem código cru; ECU é a verdade; ponta a ponta; autonomia e retomada agendada; OmegasDiamante canônica; um APK quando houver certeza, com link e SHA-256.
+Ao receber pedido novo que ele já fez antes: NÃO pergunte e NÃO prometa; aplique, e se for regra permanente, acrescente aqui + teste.
