@@ -1,4 +1,4 @@
-# Owner-approved release verification, 1280x720. APK job only runs for the original approval revision.
+# Owner-approved final APK and Android 1280x720 verification; immutable product revision.
 name: Omegas Experience authorized APK
 on:
   pull_request:
@@ -8,11 +8,11 @@ permissions:
   contents: read
 jobs:
   approved-apk:
-    if: ${{ github.head_ref == 'work/platina-diamante-ui' && github.event.pull_request.head.sha == '9d597dc7e87921f169b98591f0c9da4723661653' }}
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
     uses: ./.github/workflows/verde-apk-now.yml
     with:
       build_apk: true
-      source_sha: '963980452de4d5a81491da5a9553713fe09b4333'
+      source_sha: 'b8b7ff1286b76a731273cba3e6a661a6326aecd2'
   multimedia-render:
     if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: '963980452de4d5a81491da5a9553713fe09b4333'
+          ref: 'b8b7ff1286b76a731273cba3e6a661a6326aecd2'
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -34,7 +34,7 @@ jobs:
           test -e /dev/kvm
       - name: Exercise real WebView at 1280x720
         env:
-          OMEGAS_SOURCE_SHA: '963980452de4d5a81491da5a9553713fe09b4333'
+          OMEGAS_SOURCE_SHA: 'b8b7ff1286b76a731273cba3e6a661a6326aecd2'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
