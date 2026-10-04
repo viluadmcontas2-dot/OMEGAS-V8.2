@@ -35,3 +35,7 @@ Observar é automático; só o dono muda a ECU, em um toque. "Gravado" só após
 - Agente não relê o que já foi estabelecido: passe o resumo e os caminhos, não peça redescoberta.
 - Teste local barato antes do CI; no máximo 2 rodadas de CI por lote, com causa-raiz de todas as falhas juntas.
 - Emulador e APK: uma vez, no fim.
+
+## Prévia primeiro, barata (trava do dono)
+- Mudança de tela nova ou grande: gere UM mockup estático (HTML/CSS solto → PNG no Chromium) a partir do modelo atual e mostre ao dono. Só implementar no app depois do aprovado. Nunca ler o sistema todo para fazer prévia.
+- Pequenos refinamentos (espaço, padding, tema): aplicar direto, sem prévia.
