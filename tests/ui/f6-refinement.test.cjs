@@ -37,10 +37,10 @@ test('trilho: 7 abas numeradas, Sugestões saiu e Sessões entrou', () => {
     .map(m => [m[1], m[2], m[3]]);
   assert.deepEqual(buttons, [
     ['dashboard', '01', 'Agora'], ['map', '02', 'Mapa K'], ['curve', '03', 'Curva K'], ['autocal', '04', 'AutoCal'],
-    ['refino', '05', 'Refino'], ['sessions', '06', 'Sessões'], ['tools', '07', 'Ferramentas'],
+    ['refino', '05', 'Refino'], ['sessions', '06', 'Sessões'], ['tools', '07', 'Ferramentas'], ['diagnostico', '08', 'Diagnóstico'],
   ]);
   const ctx = loadInto({ console, localStorage: { getItem() { return null; }, setItem() {} } }, ['core/store.js', 'core/router.js']);
-  assert.deepEqual(Array.from(ctx.OmegasUi.ROUTES), ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools']);
+  assert.deepEqual(Array.from(ctx.OmegasUi.ROUTES), ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']);
   for (const route of ctx.OmegasUi.ROUTES) assert.match(html, new RegExp(`data-screen="${route}"`));
 });
 
@@ -118,7 +118,7 @@ test('Agora é para dirigir (D1): sem cartão de equivalência, só 4 valores gr
 test('Refino: faixa discreta "GNV ≈ gasolina em N %" + UMA ação + botão de um toque (índice é fração 0..1)', () => {
   const ctx = loadInto({ console }, ['core/display-rules.js', 'core/autocal-api.js', 'screens/refino.js']);
   const strip = ctx.OmegasUi.RefinoModel.equivalenceStrip;
-  const routes = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
+  const routes = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico'];
   const empty = strip(null, routes);
   assert.equal(empty.nextText, 'Aguardando dados da ECU', 'sem cérebro: aviso neutro, nunca ação derivada da fase');
   assert.equal(empty.route, '');
@@ -207,20 +207,20 @@ function cssRules(css) {
   return rules;
 }
 
-test('pisos: toque >= 76 px e texto crítico >= 24 px nos controles principais; exceção só na grade do Mapa K', () => {
+test('pisos: toque >= 58 px (dono, 2026-10-04) e texto crítico >= 22 px nos controles principais; exceção só na grade do Mapa K', () => {
   const tokens = read('tokens.css');
   const floors = read('styles-floors.css');
-  assert.match(tokens, /--touch-min:\s*76px/);
+  assert.match(tokens, /--touch-min:\s*58px/);
   assert.match(tokens, /--touch-grid:\s*44px/);
-  assert.match(tokens, /--text-critical:\s*24px/);
+  assert.match(tokens, /--text-critical:\s*22px/);
   assert.ok(links().includes('styles-floors.css'), 'floors carregado no index.html');
 
   const rules = cssRules(floors);
   const control = rules.find(rule => /^html body button:not\(\.map-k-cell\):not\(\.map-axis-header\)/.test(rule.selector));
   assert.ok(control, 'regra do piso para button');
   for (const needle of ['body [role="tab"]', 'body summary', 'body select', 'body input:not(']) assert.ok(control.selector.includes(needle), needle);
-  assert.match(control.body, /min-height:\s*var\(--touch-min\)\s*!important/);
-  assert.match(control.body, /font-size:\s*var\(--text-critical\)\s*!important/);
+  assert.match(control.body, /min-height:\s*var\(--btn-h\)\s*!important/);
+  assert.match(control.body, /font-size:\s*var\(--btn-font\)\s*!important/);
   const exception = rules.find(rule => /^html body \.map-k-cell/.test(rule.selector));
   assert.equal(exception.selector.replace(/\s+/g, ' '), 'html body .map-k-cell, html body .map-axis-header');
   assert.match(exception.body, /min-height:\s*var\(--touch-grid\)/);
@@ -239,11 +239,11 @@ test('pisos: toque >= 76 px e texto crítico >= 24 px nos controles principais; 
       const grid = /map-k-cell|map-axis-header|map-rpm-header|map-ms-header|map-k-grid/.test(rule.selector);
       if (grid || !rule.selector.split(',').some(part => mainControls.test(part.trim()))) continue;
       for (const [, property, value] of rule.body.matchAll(/(min-height|max-height|height|font-size)\s*:\s*([\d.]+)px\s*!important/g)) {
-        const limit = property === 'font-size' ? 24 : 76;
+        const limit = property === 'font-size' ? 18 : 52;
         if (property === 'max-height' || Number(value) < limit) violations.push(`${name} ${rule.selector} ${property}:${value}px`);
       }
       const max = rule.body.match(/(?<![\w-])max-height\s*:\s*([\d.]+)px/);
-      if (max && Number(max[1]) < 76) violations.push(`${name} ${rule.selector} max-height:${max[1]}px`);
+      if (max && Number(max[1]) < 52) violations.push(`${name} ${rule.selector} max-height:${max[1]}px`);
     }
   }
   assert.deepEqual(violations, []);

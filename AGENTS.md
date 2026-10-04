@@ -20,9 +20,9 @@
 
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 
-## As 7 abas
+## As 8 abas
 
-01 Agora · 02 Mapa K · 03 Curva K · 04 AutoCal · 05 Refino · 06 Sessões · 07 Ferramentas. Viewport 1280×720; toque ≥ 76 px; texto crítico ≥ 24 px.
+01 Agora · 02 Mapa K · 03 Curva K · 04 AutoCal · 05 Refino · 06 Sessões · 07 Ferramentas · 08 Diagnóstico. Viewport 1280×720; toque ≥ 58 px (decisão do dono, 2026-10-04; era 76); texto crítico ≥ 22 px.
 
 ## Como trabalhar (enxuto — R12 do índice)
 

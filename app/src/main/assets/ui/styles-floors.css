@@ -1,4 +1,4 @@
-/* Pisos de toque e de texto (spec §3.2): alvo >= 76 px e texto crítico >= 24 px (--touch-min, --text-critical em tokens.css).
+/* Pisos de toque e de texto (spec §3.2): alvo >= 58 px (decisão do dono, 2026-10-04) e texto crítico >= 22 px (--touch-min, --text-critical em tokens.css).
    Única exceção: células e cabeçalhos da grade do Mapa K (>= 44 px, --touch-grid). Carrega por último e usa !important
    de propósito: nenhuma regra de tela pode baixar o piso. */
 html body button:not(.map-k-cell):not(.map-axis-header),
@@ -6,8 +6,15 @@ html body [role="tab"],
 html body summary,
 html body select,
 html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
-  min-height: var(--touch-min) !important;
-  font-size: var(--text-critical) !important;
+  min-height: var(--btn-h) !important;
+  font-size: var(--btn-font) !important;
+}
+
+/* AutoCal: botões compactos (52 px) para dar o espaço ao gráfico. */
+html body [data-screen="autocal"] button:not(.map-k-cell),
+html body [data-screen="autocal"] summary,
+html body .btn-compact {
+  min-height: var(--btn-h-compact) !important;
 }
 
 html body .map-k-cell,
@@ -15,7 +22,7 @@ html body .map-axis-header {
   min-height: var(--touch-grid) !important;
 }
 
-/* Trilho: 7 itens de 76 px cabem em 720 px. */
+/* Trilho: 8 itens de 54 px cabem em 720 px. */
 .side-rail { padding: 10px 12px; }
 .brand-block { height: 48px; }
 .side-nav { gap: 2px; padding: 6px 0; }

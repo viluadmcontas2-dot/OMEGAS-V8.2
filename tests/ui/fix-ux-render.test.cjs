@@ -1,6 +1,6 @@
 'use strict';
 // Fix UI · render real em 1280×720 (Chromium + Playwright; pula sozinho sem Chromium). Classe de prova 4 (parcial).
-// Aviso fora dos botões principais e ≥ 24 px; trilho ≥ 24 px; faixa legível; AutoCal com menos rolagem.
+// Aviso fora dos botões principais e ≥ 22 px; trilho ≥ 22 px; faixa legível; AutoCal com menos rolagem.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -14,7 +14,7 @@ const skip = browserOk ? false : 'Chromium/Playwright indisponível neste ambien
 const rect = (page, sel) => page.evaluate(s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, fs: parseFloat(getComputedStyle(e).fontSize), vis: getComputedStyle(e).display !== 'none' }; }, sel);
 const hit = (a, b) => a && b && a.vis && b.vis && a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
 
-test('aviso: ≥ 24 px e nunca sobre um botão principal em nenhuma aba', { skip }, async () => {
+test('aviso: ≥ 22 px e nunca sobre um botão principal em nenhuma aba', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected');
   try {
     await page.waitForTimeout(1500);
@@ -34,7 +34,7 @@ test('aviso: ≥ 24 px e nunca sobre um botão principal em nenhuma aba', { skip
       await page.waitForTimeout(400);
       const toast = await rect(page, '#alertToast b');
       assert.ok(toast && toast.vis, `${route}: aviso visível`);
-      assert.ok(toast.fs >= 24, `${route}: aviso ${toast.fs}px < 24`);
+      assert.ok(toast.fs >= 22, `${route}: aviso ${toast.fs}px < 22`);
       const box = await rect(page, '#alertToast');
       for (const s of selectors) assert.ok(!hit(box, await rect(page, s)), `${route}: o aviso cobre ${s}`);
       await page.evaluate(() => document.getElementById('alertToast').classList.remove('show'));
@@ -42,12 +42,12 @@ test('aviso: ≥ 24 px e nunca sobre um botão principal em nenhuma aba', { skip
   } finally { await browser.close(); }
 });
 
-test('trilho: ECU e combustível ≥ 24 px; sem dado o selo é "—" sem caixa', { skip }, async () => {
+test('trilho: ECU e combustível ≥ 22 px; sem dado o selo é "—" sem caixa', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected');
   try {
     await page.waitForTimeout(2500);
-    assert.ok((await rect(page, '#globalEcu')).fs >= 24);
-    assert.ok((await rect(page, '#globalFuel')).fs >= 24);
+    assert.ok((await rect(page, '#globalEcu')).fs >= 22);
+    assert.ok((await rect(page, '#globalFuel')).fs >= 22);
     const rail = await rect(page, '.rail-status');
     const nav = await rect(page, '.side-nav');
     assert.ok(rail.t >= nav.b - 1, 'o status do trilho não invade a navegação');
@@ -62,7 +62,7 @@ test('trilho: ECU e combustível ≥ 24 px; sem dado o selo é "—" sem caixa',
   } finally { await off.browser.close(); }
 });
 
-test('AutoCal: texto crítico ≥ 24 px na grade de zonas e rolagem menor que antes (1411 px)', { skip }, async () => {
+test('AutoCal: texto crítico ≥ 22 px na grade de zonas e rolagem menor que antes (1411 px)', { skip }, async () => {
   const { browser, page } = await open(pw.chromium, 'connected');
   try {
     await go(page, 'autocal');
@@ -73,7 +73,7 @@ test('AutoCal: texto crítico ≥ 24 px na grade de zonas e rolagem menor que an
       return { height: sc.scrollHeight, zoneFuel: f('.autocal-zone-fuel'), zoneB: f('.autocal-zone-cell b'), zoneSmall: f('.autocal-zone-cell small'), inspector: f('.autocal-chart-inspector b') };
     });
     assert.ok(r.height < 1400, `rolagem total ${r.height}px (era 1411)`);
-    for (const k of ['zoneFuel', 'zoneB', 'zoneSmall', 'inspector']) assert.ok(r[k] === null || r[k] >= 24, `${k} ${r[k]}px < 24`);
+    for (const k of ['zoneFuel', 'zoneB', 'zoneSmall', 'inspector']) assert.ok(r[k] === null || r[k] >= 22, `${k} ${r[k]}px < 22`);
   } finally { await browser.close(); }
 });
 

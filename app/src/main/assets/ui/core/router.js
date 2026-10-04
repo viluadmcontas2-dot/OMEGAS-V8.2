@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools'];
+  const ROUTES = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico'];
   const STORAGE_KEY = 'omegas-v8-route';
   // Rotas que mostram o AGORA ao vivo: só elas recebem o pump de telemetria (Refino incluído:
   // sem isso a bolinha AGORA do Refino ficava congelada no último valor da rota anterior).

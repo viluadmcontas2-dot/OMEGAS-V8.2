@@ -15,6 +15,9 @@ Quem trabalhar aqui age como uma equipe de 10 (arquiteto de software, arquiteto 
 10. **Testes fiéis ao uso.** Compilar não basta: botão congelado, valor nunca alimentado, zero no lugar de "—", consumidor sem produtor, produtor sem consumidor, não-idempotência. Testes de compilação ficam, mas junto com os de uso. Mutantes provam que o teste pega o defeito.
 11. **Cada módulo:** pergunte "dá para ser mais eficiente por dentro e mais didático por fora?" e "isto está fácil, claro e coeso para um carro?"
 
+12. **Tema white premium e proporções menores (decisão do dono, 2026-10-04).** Fundo claro, botões ~58 px (AutoCal 52), alvo de toque ≥ 58 px (antes 76), texto crítico ≥ 22 px; gráficos recebem o espaço ganho; cada rota rola na vertical quando o conteúdo passa da altura útil.
+13. **D7 (dono, 2026-10-04).** Previews em screenshot por aba para aprovação antes de mesclar; nada de rolagem horizontal; Diagnóstico é a 8ª aba (anatomia única em docs/guardian/DESIGN.md).
+
 ## Perguntas obrigatórias em TODA mudança
 - Está coerente? Proporcional? Algo dominante sem motivo? Algo mostrado duas vezes?
 - Esta palavra/unidade/formato é a mesma em todo lugar? (glossário em docs/guardian/GLOSSARIO.md)
