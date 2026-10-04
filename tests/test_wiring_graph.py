@@ -9,6 +9,7 @@ Defeitos conhecidos ficam em `defects`/`consumer_defects`: o teste exige que CON
 (quando o defeito for corrigido, o teste manda remover a entrada).
 """
 import json
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -18,6 +19,8 @@ sys.path.insert(0, str(ROOT / "tools" / "wiring"))
 import extract_keys as E  # noqa: E402
 
 ALLOW = json.loads((ROOT / "tests/wiring/allowlist.json").read_text("utf-8"))
+# Os mutantes (tools/wiring/run_ui_mutants.py) apontam o extrator para uma cópia mutada das fontes.
+SOURCE_ROOT = os.environ.get("WIRING_ROOT") or None
 
 
 def analysis(root=None, allow=None):
@@ -34,7 +37,7 @@ def analysis(root=None, allow=None):
 class WiringGraph(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.data, cls.result, cls.raw = analysis()
+        cls.data, cls.result, cls.raw = analysis(SOURCE_ROOT)
 
     def test_extractor_sees_the_real_surface(self):
         # Se o extrator parar de enxergar, todos os outros testes passariam por vazio.
@@ -74,6 +77,20 @@ class WiringGraph(unittest.TestCase):
                 self.assertTrue(isinstance(reason, str) and len(reason) >= 15, f"{section}.{key} sem motivo")
         stale = [k for k in ALLOW["producer_internal"] if k not in self.data["producers"]]
         self.assertEqual(stale, [], "allowlist cita chave que o Kotlin nao emite mais: %s" % stale)
+
+
+class DefectsDocumented(unittest.TestCase):
+    """Todo defeito registrado na suíte (probe ou allowlist) precisa estar em tests/wiring/DEFECTS.md."""
+
+    def test_every_registered_defect_is_in_defects_md(self):
+        doc = (ROOT / "tests/wiring/DEFECTS.md").read_text("utf-8")
+        registry = (ROOT / "tests/ui/wiring/registry.cjs").read_text("utf-8")
+        ids = set(__import__("re").findall(r"defect\('(DEFECT-\d+)'", registry))
+        for text in list(ALLOW.get("defects", {}).values()) + list(ALLOW.get("consumer_defects", {}).values()):
+            ids |= set(__import__("re").findall(r"DEFECT-\d+", text))
+        self.assertGreaterEqual(len(ids), 15)
+        missing = sorted(i for i in ids if f"| {i} |" not in doc)
+        self.assertEqual(missing, [], "defeito sem linha em tests/wiring/DEFECTS.md: %s" % missing)
 
 
 if __name__ == "__main__":

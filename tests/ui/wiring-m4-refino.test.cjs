@@ -84,7 +84,7 @@ test('M4 Desfazer sempre à vista (fora de <details>) quando há foto de antes; 
   const withPhoto = prepared('ESTAVEL', { latest: { status: 'VERIFICADO', photoFile: 'foto-9.json', beforeRaw: W.bentRaws(), afterRaw: W.bentRaws().map(v => v + 10), bands: [] } });
   const undo = withPhoto.$('[data-refino-undo]');
   assert.ok(undo, 'sem botão Desfazer apesar da foto de antes');
-  assert.equal(undo.closest('details'), null, 'Desfazer dentro de <details> recolhido');
+  assert.ok(undo.closest('details') === null, 'Desfazer dentro de <details> recolhido');
   assert.ok(isEnabled(undo));
   const without = prepared('ESTAVEL', { latest: null });
   const none = without.$('[data-refino-undo]');

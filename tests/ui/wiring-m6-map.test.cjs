@@ -161,8 +161,8 @@ for (const [label, outcome, detailRx, partial] of [
     if (partial) {
       assert.match(r.title, /parcialmente alterada/i);
       assert.ok(r.undo && r.reread, 'falha parcial: Desfazer e Reler ECU visíveis');
-      assert.equal(app.byId('mapUndoButton').closest('details'), null);
-      assert.equal(app.byId('mapUndoButton').closest('[hidden]'), null);
+      assert.ok(app.byId('mapUndoButton').closest('details') === null);
+      assert.ok(app.byId('mapUndoButton').closest('[hidden]') === null);
     } else {
       assert.equal(r.undo, false, 'nada gravado: sem Desfazer');
       assert.ok(same(rows(app), original));

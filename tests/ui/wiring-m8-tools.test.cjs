@@ -78,14 +78,14 @@ test('M8 Exportar logs e Autoteste: chamam a ponte; autoteste mostra o resultado
 test('M8 balão flutuante: precisa de permissão → Autorizar; autorizado → Ativar → Desativar + tamanhos', () => {
   const need = toolsApp({ overlay: { permissionGranted: false, requestedEnabled: false } });
   assert.ok(need.$('[data-tool-overlay-request]'), 'sem permissão deve oferecer Autorizar');
-  assert.equal(need.$('[data-tool-overlay-enable]'), null);
+  assert.ok(need.$('[data-tool-overlay-enable]') === null);
   let mark = need.world.mark();
   need.$('[data-tool-overlay-request]').click(); need.flush();
   assert.equal(call(need, mark, 'requestOverlayPermissionAndEnable').length, 1);
 
   const off = toolsApp({ overlay: { permissionGranted: true, requestedEnabled: false } });
   assert.ok(off.$('[data-tool-overlay-enable]'));
-  assert.equal(off.$('[data-tool-overlay-disable]'), null);
+  assert.ok(off.$('[data-tool-overlay-disable]') === null);
   mark = off.world.mark();
   off.$('[data-tool-overlay-enable]').click(); off.settle(2);
   assert.deepEqual(call(off, mark, 'setOverlayEnabled').map(c => c.args[0]), [true]);
@@ -103,8 +103,8 @@ test('M8 balão flutuante: precisa de permissão → Autorizar; autorizado → A
 
 test('M8 balão indisponível neste Android: sem botão de ação, com explicação', () => {
   const app = toolsApp({ overlay: { supported: false } });
-  assert.equal(app.$('[data-tool-overlay-request]'), null);
-  assert.equal(app.$('[data-tool-overlay-enable]'), null);
+  assert.ok(app.$('[data-tool-overlay-request]') === null);
+  assert.ok(app.$('[data-tool-overlay-enable]') === null);
   assert.match(app.$(SCREEN).textContent, /Indispon[ií]vel neste Android/);
 });
 
@@ -118,7 +118,7 @@ test('M8 bateria: Permitir chama a ponte; quando o Android libera, o botão some
   app.world.battery = { supported: true, ignoringOptimizations: true };
   app.settle(8);
   app.$$('details').forEach(d => d.setAttribute('open', ''));
-  assert.equal(app.$('[data-tool-battery-request]'), null);
+  assert.ok(app.$('[data-tool-battery-request]') === null);
   assert.match(app.$(SCREEN).textContent, /Sem restri[cç][aã]o/);
 });
 
