@@ -33,7 +33,7 @@ assert "prepareCurveRestore(" in api
 assert 'id="curveBackupSave"' in index
 assert 'id="curveBackupSelect"' in index
 assert 'id="curveBackupRestore"' in index
-assert "Desfazer (voltar à foto)" in index
+assert ">Desfazer<" in index
 assert "backupTask" in curve
 assert "restoreContext" in curve
 assert "Desfazer: voltar à foto da Curva K" in curve

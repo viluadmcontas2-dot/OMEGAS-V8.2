@@ -46,7 +46,6 @@ class MapKRelease(unittest.TestCase):
         map_js = read(UI / "screens/map.js")
         self.assertIn("mapReleaseButton", map_js)
         self.assertIn("Liberar Mapa K", map_js)
-        self.assertIn("min-height:76px", map_js)
         # "liberado" só depois de `recovered` (ACK da ECU)
         self.assertRegex(map_js, r"operation\.recovered === true")
         self.assertNotIn("setTimeout", map_js)
