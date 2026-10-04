@@ -382,6 +382,31 @@ class LogicFixesTest {
     }
 
     @Test
+    fun `piloto - falha de leitura do contador nao vira ECU no automatico, e na gasolina o proximo passo nao manda rodar no GNV`() {
+        val ledger = EquivalenceLedger(null)
+        val t0 = drive(ledger, "GASOLINA", 5.0, 0.6, 0, 30)
+        drive(ledger, "GNV", 5.5, 0.6, t0 + EvidenceTestSupport.VISIT_GAP, 20)
+        val phases = EquivalencePhases(null) { 0L }
+        val done = JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1)
+        val acquisition = JSONObject().put("points", JSONArray())
+        val a = phases.observe(true, done, acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
+        assertTrue(a.getString("phase"), a.getString("phase") != "ECU_TRABALHANDO"); assertTrue(a.getBoolean("ecuDone"))
+        // Tick seguinte: o monitor voltou sem o contador (probe falhou) mas a aquisição está lá: a conclusão continua.
+        val b = phases.observe(true, JSONObject(), acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
+        assertTrue(b.getBoolean("ecuDone")); assertTrue(b.getString("phase"), b.getString("phase") != "ECU_TRABALHANDO")
+        // Combustível de agora só muda as palavras: na gasolina não se manda "rodar no GNV".
+        val petrol = phases.observe(true, done, acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0, fuel = "GASOLINA")
+        if (petrol.getString("phase") == "COLETANDO_NOSSOS") {
+            assertFalse(petrol.getString("next"), petrol.getString("next").contains("Rode no GNV") || petrol.getString("next").contains("rodando no GNV"))
+        }
+        // Offline: a referência de gasolina da ECU vale com zona marcada OU contador no limiar da ECU; o resto não.
+        fun point(state: String, counter: Int?, threshold: Int?) = JSONObject().put("fuel", "GASOLINA").put("state", state).put("timeMs", 5.0).put("mapBar", 0.5)
+            .put("counter", counter ?: JSONObject.NULL).put("threshold", threshold ?: JSONObject.NULL)
+        val acq = JSONObject().put("points", JSONArray().put(point("ZONA_ADQUIRIDA", 1, 3)).put(point("ATIVIDADE", 5, 3)).put(point("ATIVIDADE", 1, 3)).put(point("ATIVIDADE", null, null)))
+        assertEquals(2, EcuPetrolReference.fromAcquisition(acq).size)
+    }
+
+    @Test
     fun `refinoState nas sessoes reais nunca cita regra interna e diz a ECU como verdade`() {
         for (name in listOf(RealSessionReplaySupport.GNV_ONLY, RealSessionReplaySupport.AUTOMATCH, RealSessionReplaySupport.REFERENCE)) {
             val ledger = EquivalenceReplaySupport.ledger(name)

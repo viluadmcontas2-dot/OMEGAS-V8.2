@@ -92,10 +92,11 @@
   function fuelLabel(raw) {
     const value = String(raw === null || raw === undefined ? '' : raw).trim().toUpperCase();
     if (!value || value === '--' || value === '—' || value === 'NULL' || value === 'UNDEFINED') return DASH;
+    // Transição antes de GNV: "AGUARDANDO_COMUTACAO_GNV" (estado) contém GNV e não é GNV.
+    if (value.includes('TRANS') || value.includes('COMUT')) return 'TRANSIÇÃO';
+    if (value.includes('CUTOFF')) return 'CORTE';
     if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';
     if (value.includes('CNG') || value.includes('GNV') || value.includes('GAS')) return 'GNV';
-    if (value.includes('CUTOFF')) return 'CORTE';
-    if (value.includes('TRANS')) return 'TRANSIÇÃO';
     if (value.includes('OFF') || value.includes('DESLIG')) return 'DESLIGADO';
     // Nome que a ECU não explica (DESCONHECIDO, código novo) nunca vira rótulo cru: é desconhecido.
     return DASH;

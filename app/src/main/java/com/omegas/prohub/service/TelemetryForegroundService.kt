@@ -1205,7 +1205,8 @@ class TelemetryForegroundService : Service() {
             if (frozenReference != null) {
                 // Referência congelada pelo dono: vale ela, não a curva viva da ECU (que ela pode reaprender).
                 equivalence.setEcuPetrolReference(frozenReference.points.map { it.mapBar to it.petrolMs })
-            } else if (usb.connected) {
+            } else if (usb.connected && acquisition != null) {
+                // Sem aquisição neste tick (assentamento de 8 s, snapshot falhou) a última referência lida continua valendo.
                 equivalence.setEcuPetrolReference(EcuPetrolReference.fromAcquisition(acquisition))
             }
             val before = equivalencePhases.json().optString("phase")
@@ -1216,6 +1217,7 @@ class TelemetryForegroundService : Service() {
                 index = equivalence.index(),
                 journal = refinementJournal.json(),
                 restoreCount = refinementJournal.restorePoints().length(),
+                fuel = equivalence.liveFuel(),
             )
             observeEquivalenceBrain(acquisition)
             // Registra mudanças de decisão, não cada tick da telemetria. Números completos

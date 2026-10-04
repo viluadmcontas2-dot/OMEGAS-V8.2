@@ -138,7 +138,11 @@ class EquivalencePhases(
      * [restoreCount] = pontos que o diário oferece restaurar.
      * Retorna a fase decidida (JSON) — também guardada para a UI.
      */
-    fun observe(ecuOnline: Boolean, monitor: JSONObject?, acquisition: JSONObject?, index: JSONObject, journal: JSONObject, restoreCount: Int): JSONObject {
+    fun observe(
+        ecuOnline: Boolean, monitor: JSONObject?, acquisition: JSONObject?, index: JSONObject, journal: JSONObject, restoreCount: Int,
+        /** Combustível de AGORA pela telemetria (GASOLINA/GNV/…; nulo = sem quadro recente): só muda as palavras do próximo passo. */
+        fuel: String? = null,
+    ): JSONObject {
         val result = synchronized(lock) {
             val now = clock()
             val durationNow = durationClock?.invoke() ?: now
@@ -176,6 +180,9 @@ class EquivalencePhases(
             val fresh = if (!ecuOnline) null else when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
+                // Leitura do contador falhou neste tick (probe/backoff): a última conclusão continua; uma falha de leitura
+                // não transforma "terminou" em "no automático" nem zera o prazo da fase.
+                count == null -> ecuDoneLatch
                 else -> null
             }
             if (fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
@@ -305,7 +312,7 @@ class EquivalencePhases(
             out.put("phase", phase)
                 .put("canDisconnect", phase == "ESTAVEL")
                 .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification, if (expiredEvidence != null) candidate else "", measuredOnEcuRef))
-                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else "", truth))
+                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else "", truth, fuel))
             if (latest != null) out.put("journalStatus", latestStatus)
             last = out
             out
@@ -588,7 +595,10 @@ class EquivalencePhases(
         else -> ""
     }
 
-    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = "", truth: JSONObject = JSONObject()): String = when (phase) {
+    private fun nextStep(
+        phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = "",
+        truth: JSONObject = JSONObject(), fuel: String? = null,
+    ): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
         "TENTATIVA_ENCERRADA" -> if (expiredFrom == "PROPOSTA_PRONTA" || expiredFrom == "ECU_TRABALHANDO")
             "Abra o Refino e toque em Gravar. Nada é gravado sem o seu toque. A próxima leitura nova retoma o acompanhamento."
@@ -612,6 +622,9 @@ class EquivalencePhases(
                     "A ECU ainda não tem curva de gasolina madura. Rode alguns minutos na gasolina para criar a referência."
                 // Guia do livro: a faixa com mais evidência que ainda falta, com o MAP em que dirigir.
                 !index.isNull("coverageGuidance") && index.optString("coverageGuidance").isNotBlank() -> index.optString("coverageGuidance")
+                // Na gasolina o carro não "roda no GNV": a frase diz o que acontece quando ele trocar.
+                fuel == "GASOLINA" && wanted.isNotEmpty() -> "Quando o carro passar para o GNV, passe por cargas de injeção $wanted."
+                fuel == "GASOLINA" -> "Continue dirigindo. Quando o carro passar para o GNV, sigo medindo."
                 wanted.isNotEmpty() -> "Rode no GNV passando por cargas de injeção $wanted."
                 else -> "Continue rodando no GNV."
             }
