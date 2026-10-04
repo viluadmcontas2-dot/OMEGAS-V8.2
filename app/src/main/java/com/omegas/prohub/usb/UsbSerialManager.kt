@@ -64,6 +64,8 @@ class UsbSerialManager(
         private set
     @Volatile var permissionDeniedDeviceName = ""
         private set
+    /** Somente leitura: a permissão USB foi negada para o dispositivo OMEGAS (limpa ao reconectar/nova tentativa). */
+    val permissionDenied: Boolean get() = permissionDeniedDeviceName.isNotBlank()
     @Volatile var deviceLabel = "Nenhum"
         private set
     @Volatile var activeDeviceName = ""

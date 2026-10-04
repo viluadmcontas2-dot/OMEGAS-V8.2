@@ -80,12 +80,18 @@ class TelemetryForegroundService : Service() {
      * Faixa única de análise (refino, diário, full_snapshot, overlay): thread própria, para o trabalho pesado
      * do `healthTick` nunca atrasar o `autoCalTick` que divide o `scheduler` com ações de serviço.
      */
-    private val analysisExecutor = Executors.newSingleThreadExecutor { runnable ->
+    private fun newAnalysisExecutor(): java.util.concurrent.ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-native-analysis").apply { isDaemon = true }
     }
+    @Volatile private var analysisExecutor: java.util.concurrent.ExecutorService = newAnalysisExecutor()
     private val analysisLane = AnalysisLane(
         analysisExecutor,
-        onHang = { ms -> log.add("WARN", "SERVICE", "Faixa de análise travada há ${ms / 1_000L} s; a próxima rodada entra na fila") },
+        onHang = { ms -> log.add("WARN", "SERVICE", "Faixa de análise travada há ${ms / 1_000L} s; rodada presa descartada, executor novo") },
+        // Recupera de verdade: encerra o executor preso (interrompe) e entrega um novo à faixa.
+        replaceExecutor = { stuck ->
+            (stuck as? java.util.concurrent.ExecutorService)?.shutdownNow()
+            newAnalysisExecutor().also { analysisExecutor = it }
+        },
     )
     /**
      * Thread própria do `autoCalTick`: o snapshot completo dorme no árbitro por segundos e um grupo bloqueia até 4 s;
@@ -191,6 +197,10 @@ class TelemetryForegroundService : Service() {
     private var engineRestarts = 0
     private var healthFailures = 0
     @Volatile private var stopping = false
+    /** O dono parou a gravação de sessão com o toque: o monitor não a reinicia até a próxima conexão USB. */
+    @Volatile private var sessionStoppedByOwner = false
+    private var sessionRestartFailures = 0
+    private var sessionRestartNotBefore = 0L
     /** O que a limpeza única do aprendizado antigo apagou; vai para os metadados da primeira sessão gravada. */
     @Volatile private var legacySweepRemoved: List<String> = emptyList()
 
@@ -200,8 +210,15 @@ class TelemetryForegroundService : Service() {
      */
     @Volatile var refinementFrozenForRender = false
 
+    /** Teto de `app_log` gravado na sessão (por segundo). */
+    private val appLogCap = com.omegas.prohub.util.RateCap(maxPerWindow = 40)
+
     override fun onCreate() {
         super.onCreate()
+        // O Android dá poucos segundos para o serviço virar foreground: o aviso entra ANTES de qualquer
+        // leitura de arquivo (ledger, diário, sessões...). O conteúdo real vem logo depois, no fim do onCreate.
+        notifications = NotificationController(this)
+        startForegroundBootstrap()
         paths = AppPaths(this)
         settings = AppSettings(this)
         learningTemperature = LearningTemperatureSettings(this)
@@ -229,7 +246,10 @@ class TelemetryForegroundService : Service() {
         journalTransitionsObserved = true
         sessionRecorder.recoverDocumentsMirrorAsync()
         log.setListener { item ->
-            sessionRecorder.record("app_log", "native", item, force = true)
+            // Teto por segundo: um laço de log (UI, USB) não pode inundar a sessão gravada nem o disco.
+            if (appLogCap.allow(SystemClock.elapsedRealtime())) {
+                sessionRecorder.record("app_log", "native", item, force = true)
+            }
         }
         // Limpeza única dos arquivos do aprendizado antigo, fora da thread principal.
         scheduler.execute {
@@ -238,7 +258,6 @@ class TelemetryForegroundService : Service() {
                 log.add("INFO", "LIMPEZA", "Dados do aprendizado antigo removidos: " + legacySweepRemoved.joinToString())
             }
         }
-        notifications = NotificationController(this)
         overlay = TelemetryOverlayController(this)
         gps = GpsTelemetryManager(this, log, ::consumeGpsUpdate)
         usb = UsbSerialManager(this, settings, log, ::usbStateChanged, sessionRecorder::recordRawUsb)
@@ -386,7 +405,7 @@ class TelemetryForegroundService : Service() {
                 if (usb.connected) disconnectUsb() else connectUsb(userInitiated = true)
             }
             ACTION_RESTART_ENGINE -> scheduler.execute { restartEngine() }
-            ACTION_STOP_SERVICE -> scheduler.execute { stopSelf() }
+            ACTION_STOP_SERVICE -> scheduler.execute { stopFromUser() }
             else -> scheduler.execute {
                 if (settings.autoConnectUsb && !usb.connected && usb.hasCompatibleDevice()) usb.connect()
             }
@@ -396,37 +415,67 @@ class TelemetryForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder = binder
 
+    /**
+     * "Parar" da notificação: com a Activity ligada (bind), `stopSelf()` sozinho NÃO destrói o serviço.
+     * Avisa a Activity para fechar (ela desliga o bind no onDestroy) e pede o fim do serviço.
+     */
+    @Volatile private var stopListener: (() -> Unit)? = null
+    fun setStopListener(listener: (() -> Unit)?) { stopListener = listener }
+
+    private fun stopFromUser() {
+        try { stopListener?.invoke() } catch (_: Throwable) {}
+        stopSelf()
+    }
+
     override fun onDestroy() {
         if (stopping) return
         stopping = true
-        refinementJournal.setDecisionListener(null)
-        journalTransitionsObserved = false
-        try { equivalence.flush() } catch (_: Exception) {}
-        try { equivalenceRuntime.flush() } catch (_: Exception) {}
-        try { refinementJournal.flush() } catch (_: Exception) {}
-        try { equivalencePhases.flush() } catch (_: Exception) {}
+        // O aviso sai primeiro; o resto do desligamento (ECU, USB, disco) corre em thread própria. A thread
+        // principal espera só um pouco: o que passar disso termina sozinho em segundo plano (nunca ANR).
+        try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (_: Throwable) {}
         healthTask?.cancel(true)
         autoCalTask?.cancel(true)
+        val teardown = Thread({ teardownBlocking() }, "omegas-service-teardown")
+        try {
+            teardown.start()
+            teardown.join(4_000L)
+        } catch (_: Throwable) {}
+        super.onDestroy()
+    }
+
+    /** Fecha tudo sem pressa e sem abortar gravação em curso (espera o escritor terminar, com teto). */
+    private fun teardownBlocking() {
+        try { refinementJournal.setDecisionListener(null) } catch (_: Throwable) {}
+        journalTransitionsObserved = false
+        try { equivalence.flush() } catch (_: Throwable) {}
+        try { equivalenceRuntime.flush() } catch (_: Throwable) {}
+        try { refinementJournal.flush() } catch (_: Throwable) {}
+        try { equivalencePhases.flush() } catch (_: Throwable) {}
         scheduler.shutdownNow()
         autoCalExecutor.shutdownNow()
         analysisExecutor.shutdownNow()
-        try { runtime.stop(3) } catch (_: Exception) {}
-        try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
-        try { usb.disconnect() } catch (_: Exception) {}
-        try { link.close() } catch (_: Exception) {}
-        try { lanServer.close() } catch (_: Exception) {}
-        try { gps.stop() } catch (_: Exception) {}
-        try { overlay.close() } catch (_: Exception) {}
-        try { sessionRecorder.close() } catch (_: Exception) {}
-        try { nativeAutoCal.endUsbSession() } catch (_: Exception) {}
-        try { kFactor.close() } catch (_: Exception) {}
-        try { kWriter.close() } catch (_: Exception) {}
-        try { runtime.close() } catch (_: Exception) {}
-        try { usb.close() } catch (_: Exception) {}
+        // Uma escrita em curso termina (ACK + saída segura do K insertion + readback) antes de o USB cair.
+        val deadline = SystemClock.elapsedRealtime() + 20_000L
+        while (SystemClock.elapsedRealtime() < deadline &&
+            (kWriter.isBusy() || kFactor.isBusy() || SerialWriteGuard.shared.isHeld())
+        ) {
+            try { Thread.sleep(100L) } catch (_: InterruptedException) { break }
+        }
+        try { runtime.stop(3) } catch (_: Throwable) {}
+        try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Throwable) {}
+        try { usb.disconnect() } catch (_: Throwable) {}
+        try { link.close() } catch (_: Throwable) {}
+        try { lanServer.close() } catch (_: Throwable) {}
+        try { gps.stop() } catch (_: Throwable) {}
+        try { overlay.close() } catch (_: Throwable) {}
+        try { sessionRecorder.close() } catch (_: Throwable) {}
+        try { nativeAutoCal.endUsbSession() } catch (_: Throwable) {}
+        try { kFactor.close() } catch (_: Throwable) {}
+        try { kWriter.close() } catch (_: Throwable) {}
+        try { runtime.close() } catch (_: Throwable) {}
+        try { usb.close() } catch (_: Throwable) {}
         releaseWakeLock()
-        stopForeground(STOP_FOREGROUND_REMOVE)
         log.setListener(null)
-        super.onDestroy()
     }
 
     fun status(): HubStatus {
@@ -441,6 +490,7 @@ class TelemetryForegroundService : Service() {
             usbConnected = usb.connected,
             usbDevice = usb.deviceLabel,
             usbPermissionPending = usb.permissionPending,
+            usbPermissionDenied = usb.permissionDenied,
             autoReconnectUsb = settings.autoReconnectUsb,
             baudRate = settings.baudRate,
             serialFormat = "${settings.dataBits}$parityLetter${settings.stopBits}",
@@ -757,15 +807,21 @@ class TelemetryForegroundService : Service() {
         return sessionRecorder.stop(reason)
     }
 
-    fun startSessionRecording(reason: String): String = startJournalSession(
-        reason.ifBlank { "manual" },
-        JSONObject()
-            .put("appVersion", BuildConfig.VERSION_NAME)
-            .put("native", true)
-            .put("usbSessionId", if (usb.connected) usb.connectionSessionId else 0L)
-            .put("legacySweep", JSONArray(legacySweepRemoved)),
-    ).toString()
-    fun stopSessionRecording(reason: String): String = stopJournalSession(reason.ifBlank { "manual" }).toString()
+    fun startSessionRecording(reason: String): String {
+        sessionStoppedByOwner = false
+        return startJournalSession(
+            reason.ifBlank { "manual" },
+            JSONObject()
+                .put("appVersion", BuildConfig.VERSION_NAME)
+                .put("native", true)
+                .put("usbSessionId", if (usb.connected) usb.connectionSessionId else 0L)
+                .put("legacySweep", JSONArray(legacySweepRemoved)),
+        ).toString()
+    }
+    fun stopSessionRecording(reason: String): String {
+        sessionStoppedByOwner = true
+        return stopJournalSession(reason.ifBlank { "manual" }).toString()
+    }
     fun exportSession(uri: Uri, sessionId: String): String = sessionRecorder.exportSession(contentResolver, uri, sessionId).toString()
 
     fun setGpsEnabled(enabled: Boolean): JSONObject {
@@ -846,11 +902,18 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         try {
             scheduler.execute {
-                handleUsbTransition()
-                stateChanged()
+                // Exceção aqui derrubava o app (thread do scheduler sem rede). Vira aviso legível; o próximo
+                // healthTick repete a transição (lastUsbConnected só avança depois do sucesso).
+                try {
+                    handleUsbTransition()
+                    stateChanged()
+                } catch (error: Throwable) {
+                    synchronized(this) { healthFailures += 1 }
+                    try { log.add("WARN", "USB", "Transição USB: ${error.message ?: error.javaClass.simpleName}") } catch (_: Throwable) {}
+                }
             }
-        } catch (_: Exception) {
-            stateChanged()
+        } catch (_: Throwable) {
+            try { stateChanged() } catch (_: Throwable) {}
         }
     }
 
@@ -867,66 +930,86 @@ class TelemetryForegroundService : Service() {
 
         val previousSessionId = lastUsbSessionId
         val wasConnected = lastUsbConnected
-        lastUsbConnected = connected
-        lastUsbSessionId = sessionId
         // Fim da sessão USB: a foto do Desfazer da Referência vai embora e os medidores gravam em disco.
-        try {
+        guarded("EQUIVALENCIA", "Fim de sessão") {
             equivalenceRuntime.references.endSession()
             equivalenceRuntime.flush()
-        } catch (error: Exception) {
-            log.add("WARN", "EQUIVALENCIA", "Fim de sessão: ${error.message}")
         }
 
         if (connected) {
             val generationChanged = transition == UsbSessionTransition.GENERATION_CHANGED
             monitoringPausedByUser = false
             if (generationChanged) {
-                if (sessionRecorder.isRecording()) {
-                    refinementJournal.setDecisionListener(null)
-                    journalTransitionsObserved = false
-                    sessionRecorder.stop("USB_SESSION_REPLACED")
+                guarded("USB", "Troca de geração: fechar sessão gravada") {
+                    if (sessionRecorder.isRecording()) {
+                        refinementJournal.setDecisionListener(null)
+                        journalTransitionsObserved = false
+                        sessionRecorder.stop("USB_SESSION_REPLACED")
+                    }
                 }
-                runtime.endUsbSession("USB_SESSION_REPLACED")
-                nativeAutoCal.endUsbSession()
-                telemetryStore.invalidate("USB_SESSION_REPLACED")
+                guarded("USB", "Troca de geração: engine") { runtime.endUsbSession("USB_SESSION_REPLACED") }
+                guarded("USB", "Troca de geração: AutoCal") { nativeAutoCal.endUsbSession() }
+                guarded("USB", "Troca de geração: telemetria") { telemetryStore.invalidate("USB_SESSION_REPLACED") }
                 log.add("INFO", "USB", "Nova geração USB detectada • $previousSessionId → $sessionId")
             }
-            telemetryStore.beginSession(sessionId)
-            runtime.beginUsbSession(sessionId)
-            kWriter.beginUsbSession(sessionId)
-            kFactor.beginUsbSession(sessionId)
-            nativeAutoCal.beginUsbSession(sessionId)
-            publishRevision(RuntimeSnapshotBus.Kind.SESSION)
+            // Cada começo de sessão é isolado: o disco cheio de um não impede a engine nem os outros.
+            guarded("USB", "Telemetria") { telemetryStore.beginSession(sessionId) }
+            guarded("USB", "Engine") { runtime.beginUsbSession(sessionId) }
+            guarded("USB", "Mapa K") { kWriter.beginUsbSession(sessionId) }
+            guarded("USB", "Curva K") { kFactor.beginUsbSession(sessionId) }
+            guarded("USB", "AutoCal") { nativeAutoCal.beginUsbSession(sessionId) }
+            guarded("USB", "Revisão") { publishRevision(RuntimeSnapshotBus.Kind.SESSION) }
             if (!wasConnected) enginePausedByUser = false
             // A gravação é sempre automática ao conectar a ECU; não depende de preferência.
+            sessionStoppedByOwner = false
+            sessionRestartFailures = 0
             if (!sessionRecorder.isRecording()) {
-                startJournalSession(
-                    "MP48 conectado",
-                    JSONObject()
-                        .put("appVersion", BuildConfig.VERSION_NAME)
-                        .put("usb", usb.deviceLabel)
-                        .put("usbSessionId", sessionId)
-                        .put("legacySweep", JSONArray(legacySweepRemoved)),
-                )
+                guarded("SESSAO", "Gravação ao conectar") {
+                    startJournalSession(
+                        "MP48 conectado",
+                        JSONObject()
+                            .put("appVersion", BuildConfig.VERSION_NAME)
+                            .put("usb", usb.deviceLabel)
+                            .put("usbSessionId", sessionId)
+                            .put("legacySweep", JSONArray(legacySweepRemoved)),
+                    )
+                }
             }
             if (settings.autoStartEngine && !enginePausedByUser) {
-                startEngine(if (generationChanged) "nova geração física MP48" else "nova conexão física MP48")
+                guarded("ECU-NATIVE", "Início da engine") {
+                    startEngine(if (generationChanged) "nova geração física MP48" else "nova conexão física MP48")
+                }
             }
         } else {
-            runtime.stop(2)
-            runtime.endUsbSession("USB_DISCONNECTED")
-            nativeAutoCal.endUsbSession()
-            telemetryStore.invalidate("USB_DISCONNECTED")
-            publishRevision(RuntimeSnapshotBus.Kind.SESSION)
-            if (sessionRecorder.isRecording()) {
-                stopJournalSession("MP48 desconectado")
+            guarded("USB", "Parar engine") { runtime.stop(2) }
+            guarded("USB", "Fim da sessão da engine") { runtime.endUsbSession("USB_DISCONNECTED") }
+            guarded("USB", "Fim da sessão AutoCal") { nativeAutoCal.endUsbSession() }
+            guarded("USB", "Telemetria") { telemetryStore.invalidate("USB_DISCONNECTED") }
+            guarded("USB", "Revisão") { publishRevision(RuntimeSnapshotBus.Kind.SESSION) }
+            guarded("SESSAO", "Fechar gravação") {
+                if (sessionRecorder.isRecording()) {
+                    stopJournalSession("MP48 desconectado")
+                }
             }
             if (monitoringPausedByUser || !settings.autoReconnectUsb) {
                 stopSelf()
             }
         }
-        if (::link.isInitialized) link.onLocalCapabilitiesChanged()
-        updateWakeLock()
+        // Só agora a transição conta como feita: se algo acima escapou, o próximo tick repete.
+        lastUsbConnected = connected
+        lastUsbSessionId = sessionId
+        guarded("USB", "Link") { if (::link.isInitialized) link.onLocalCapabilitiesChanged() }
+        guarded("USB", "Wake lock") { updateWakeLock() }
+    }
+
+    /** Roda [block]; qualquer Throwable vira aviso legível e a transição segue (regra 5: nada derruba o app). */
+    private inline fun guarded(category: String, what: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (error: Throwable) {
+            synchronized(this) { healthFailures += 1 }
+            try { log.add("WARN", category, "$what: ${error.message ?: error.javaClass.simpleName}") } catch (_: Throwable) {}
+        }
     }
 
     private fun startEngine(reason: String): Boolean {
@@ -1246,9 +1329,41 @@ class TelemetryForegroundService : Service() {
             }
             if (!usb.connected && runtime.running) runtime.stop(2)
             renewWakeLockIfNeeded()
-        } catch (error: Exception) {
+            resumeSessionRecordingIfStopped()
+        } catch (error: Throwable) {
             healthFailures += 1
-            log.add("WARN", "SERVICE", "Monitor nativo: ${error.message}")
+            try { log.add("WARN", "SERVICE", "Monitor nativo: ${error.message ?: error.javaClass.simpleName}") } catch (_: Throwable) {}
+        }
+    }
+
+    /**
+     * A gravação de sessão cai (disco cheio, limite de tamanho sem continuação, falha ao abrir) e antes não voltava
+     * até reconectar o USB. Com a ECU conectada e a gravação parada (e o dono não a parou), tenta de novo com
+     * espera crescente (5 s → 60 s). Só grava arquivo de sessão; nada vai à ECU.
+     */
+    private fun resumeSessionRecordingIfStopped() {
+        if (!usb.connected || sessionStoppedByOwner || sessionRecorder.isRecording()) {
+            if (sessionRecorder.isRecording()) sessionRestartFailures = 0
+            return
+        }
+        val now = SystemClock.elapsedRealtime()
+        if (now < sessionRestartNotBefore) return
+        val started = startJournalSession(
+            "retomada automática da gravação",
+            JSONObject()
+                .put("appVersion", BuildConfig.VERSION_NAME)
+                .put("usb", usb.deviceLabel)
+                .put("usbSessionId", usb.connectionSessionId)
+                .put("legacySweep", JSONArray(legacySweepRemoved)),
+        )
+        if (started.optBoolean("ok", false)) {
+            sessionRestartFailures = 0
+            log.add("INFO", "SESSAO", "Gravação da sessão retomada")
+        } else {
+            sessionRestartFailures += 1
+            val waitMs = (5_000L shl (sessionRestartFailures - 1).coerceAtMost(4)).coerceAtMost(60_000L)
+            sessionRestartNotBefore = now + waitMs
+            log.add("WARN", "SESSAO", "Gravação parada e sem retomar (${started.optString("error")}); nova tentativa em ${waitMs / 1_000L} s")
         }
     }
 
@@ -1302,8 +1417,8 @@ class TelemetryForegroundService : Service() {
             ) {
                 nativeAutoCal.tick()
             }
-        } catch (error: Exception) {
-            log.add("WARN", "AUTOCAL-NATIVE", "Refresh nativo: ${error.message}")
+        } catch (error: Throwable) {
+            try { log.add("WARN", "AUTOCAL-NATIVE", "Refresh nativo: ${error.message ?: error.javaClass.simpleName}") } catch (_: Throwable) {}
         }
     }
 
@@ -1444,6 +1559,32 @@ class TelemetryForegroundService : Service() {
                 live = live,
             ),
         )
+    }
+
+    /** Primeiro foreground do serviço: não depende de nenhum estado ainda não carregado. */
+    private fun startForegroundBootstrap() {
+        val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+        } else {
+            0
+        }
+        try {
+            ServiceCompat.startForeground(
+                this,
+                NotificationController.NOTIFICATION_ID,
+                notifications.build(HubStatus(serviceRunning = true)),
+                type,
+            )
+        } catch (_: Exception) {
+            try {
+                ServiceCompat.startForeground(
+                    this,
+                    NotificationController.NOTIFICATION_ID,
+                    notifications.build(HubStatus(serviceRunning = true)),
+                    0,
+                )
+            } catch (_: Exception) {}
+        }
     }
 
     private fun startForegroundCompat() {

@@ -9,6 +9,8 @@ data class HubStatus(
     val usbConnected: Boolean = false,
     val usbDevice: String = "Nenhum",
     val usbPermissionPending: Boolean = false,
+    /** O dono (ou o Android) negou a permissão USB: o app para de insistir até nova tentativa manual. Só leitura. */
+    val usbPermissionDenied: Boolean = false,
     val autoReconnectUsb: Boolean = true,
     val baudRate: Int = 9600,
     val serialFormat: String = "8N1",

@@ -12,6 +12,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.provider.Settings
 import android.webkit.ConsoleMessage
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
@@ -29,6 +30,7 @@ import com.omegas.prohub.autocal.AutoCalBridgeProvider
 import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.web.CalibrationOperationsBridge
 import com.omegas.prohub.web.HubJavascriptBridge
+import com.omegas.prohub.util.RateCap
 import com.omegas.prohub.web.PowerJavascriptBridge
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -44,6 +46,9 @@ class MainActivity : AppCompatActivity() {
     private var jsBridge: HubJavascriptBridge? = null
     private var calibrationBridge: CalibrationOperationsBridge? = null
     private var powerBridge: PowerJavascriptBridge? = null
+    private val consoleChatterCap = RateCap(maxPerWindow = 10)
+    private val consoleSeriousCap = RateCap(maxPerWindow = 20)
+    private var lastRenderRebuildAt = 0L
 
     private val exportDataLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip"),
@@ -126,6 +131,8 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             service = (binder as TelemetryForegroundService.LocalBinder).service()
             bound = true
+            // "Parar" da notificação: com a tela ligada ao serviço, só fechar a Activity (desligar o bind) deixa o serviço morrer.
+            service?.setStopListener { runOnUiThread { if (!isFinishing && !isDestroyed) finishAndRemoveTask() } }
             installRevisionPush(service)
             refreshWebUi()
             // App aberto: o balão flutuante não pode cobrir os botões do próprio OMEGAS.
@@ -140,6 +147,7 @@ class MainActivity : AppCompatActivity() {
         override fun onServiceDisconnected(name: ComponentName?) {
             bound = false
             service?.setRevisionListener(null)
+            service?.setStopListener(null)
             service = null
             refreshWebUi()
         }
@@ -152,25 +160,22 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("crash_logs", Context.MODE_PRIVATE)
         val lastCrash = prefs.getString("last_crash", null)
         if (lastCrash != null) {
+            // Frase humana primeiro; a pilha crua só vai para a área de transferência (detalhe técnico).
+            // Dispensável (voltar/tocar fora): nunca um modal que prende o dono diante do carro.
             android.app.AlertDialog.Builder(this)
-                .setTitle("Crash Detectado")
-                .setMessage(lastCrash)
-                .setPositiveButton("Copiar e Fechar") { _, _ ->
+                .setTitle("O app fechou sozinho")
+                .setMessage("Na última vez o OMEGAS fechou de forma inesperada. Nada foi gravado na ECU sem o seu toque. Se quiser, copie os detalhes técnicos para enviar a quem for analisar.")
+                .setPositiveButton("Copiar detalhes") { _, _ ->
                     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                     clipboard.setPrimaryClip(android.content.ClipData.newPlainText("crash", lastCrash))
                     prefs.edit().remove("last_crash").apply()
                 }
-                .setCancelable(false)
+                .setNegativeButton("Dispensar") { _, _ -> prefs.edit().remove("last_crash").apply() }
+                .setOnCancelListener { prefs.edit().remove("last_crash").apply() }
+                .setCancelable(true)
                 .show()
         }
-
-        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
-            val sw = java.io.StringWriter()
-            exception.printStackTrace(java.io.PrintWriter(sw))
-            prefs.edit().putString("last_crash", sw.toString()).commit()
-            defaultHandler?.uncaughtException(thread, exception)
-        }
+        installCrashRecorderOnce(applicationContext)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_main)
@@ -234,6 +239,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         // O serviço sobrevive à Activity: sem isto ele segura a Activity/WebView velha e empurra JS num WebView morto.
         try { service?.setRevisionListener(null) } catch (_: Exception) {}
+        try { service?.setStopListener(null) } catch (_: Exception) {}
         if (bound) {
             try { unbindService(connection) } catch (_: Exception) {}
             bound = false
@@ -302,7 +308,13 @@ class MainActivity : AppCompatActivity() {
         webView.webChromeClient = object : WebChromeClient() {
             override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                 consoleMessage?.let {
-                    service?.log?.add("DEBUG", "WEB", "${it.message()} @${it.lineNumber()}")
+                    // Teto por segundo: um laço de console.log na UI não pode inundar o log nem a sessão gravada.
+                    val serious = it.messageLevel() == ConsoleMessage.MessageLevel.ERROR ||
+                        it.messageLevel() == ConsoleMessage.MessageLevel.WARNING
+                    val cap = if (serious) consoleSeriousCap else consoleChatterCap
+                    if (cap.allow(android.os.SystemClock.elapsedRealtime())) {
+                        service?.log?.add(if (serious) "WARN" else "DEBUG", "WEB", "${it.message()} @${it.lineNumber()}")
+                    }
                 }
                 return true
             }
@@ -313,6 +325,22 @@ class MainActivity : AppCompatActivity() {
                 // Notificação do refino abriu o app a frio: navega depois que a UI montar.
                 webView.postDelayed({ openRouteFromIntent(intent) }, 800L)
             }
+            /**
+             * O processo de renderização da WebView morreu (memória baixa/crash). Sem isto o app inteiro cai.
+             * Devolve true e recria só a WebView/UI: serviço, USB e gravação em curso seguem intocados.
+             */
+            override fun onRenderProcessGone(view: WebView?, detail: RenderProcessGoneDetail?): Boolean {
+                try {
+                    service?.log?.add(
+                        "ERROR", "WEB",
+                        "Processo de renderização da tela terminou (crash=${detail?.didCrash()}); recriando a tela",
+                    )
+                } catch (_: Throwable) {}
+                // Na própria chamada ainda é seguro: adia para depois do callback.
+                runOnUiThread { rebuildWebView() }
+                return true
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return true
                 return uri.scheme != "file"
@@ -321,6 +349,35 @@ class MainActivity : AppCompatActivity() {
         // A ponte AutoCal entra antes do loadUrl: a página já nasce com ela e não precisa recarregar.
         AutoCalBridgeProvider.attachBeforeLoad(this)
         webView.loadUrl("file:///android_asset/ui/index.html")
+    }
+
+    /** Recria a WebView (nova UI, mesma ponte nativa). Não toca serviço, USB, fila de gravação nem a ECU. */
+    private fun rebuildWebView() {
+        if (isDestroyed || isFinishing || !::webView.isInitialized) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        // Laço de morte do renderizador: no máximo uma recriação a cada 3 s.
+        if (lastRenderRebuildAt != 0L && now - lastRenderRebuildAt < 3_000L) {
+            toast("A tela do OMEGAS falhou de novo; feche e abra o app", true)
+            return
+        }
+        lastRenderRebuildAt = now
+        val old = webView
+        val parent = old.parent as? android.view.ViewGroup ?: return
+        val index = parent.indexOfChild(old)
+        val params = old.layoutParams
+        jsBridge?.destroy()
+        calibrationBridge?.destroy()
+        try { old.removeJavascriptInterface("OmegasNative") } catch (_: Exception) {}
+        try { old.removeJavascriptInterface(CalibrationOperationsBridge.JS_NAME) } catch (_: Exception) {}
+        try { old.removeJavascriptInterface("OmegasPower") } catch (_: Exception) {}
+        try { old.removeJavascriptInterface(AutoCalBridgeProvider.INTERFACE_NAME) } catch (_: Exception) {}
+        parent.removeView(old)
+        try { old.destroy() } catch (_: Exception) {}
+        val fresh = WebView(this)
+        fresh.id = R.id.hubWebView
+        fresh.layoutParams = params
+        parent.addView(fresh, index)
+        configureWebView()
     }
 
     fun exportData() = runOnUiThread {
@@ -546,5 +603,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+/**
+ * O registrador de crash entra UMA vez por processo. Antes cada onCreate empilhava mais um handler
+ * (a cadeia crescia a cada recriação da Activity e segurava Contextos velhos).
+ */
+@Volatile private var crashRecorderInstalled = false
+
+private fun installCrashRecorderOnce(context: Context) {
+    if (crashRecorderInstalled) return
+    crashRecorderInstalled = true
+    val prefs = context.getSharedPreferences("crash_logs", Context.MODE_PRIVATE)
+    val previous = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler { thread, exception ->
+        try {
+            val sw = java.io.StringWriter()
+            exception.printStackTrace(java.io.PrintWriter(sw))
+            prefs.edit().putString("last_crash", sw.toString().take(12_000)).commit()
+        } catch (_: Throwable) {
+            // Registrar o crash nunca pode esconder o crash original.
+        }
+        previous?.uncaughtException(thread, exception)
+    }
+}
+
 private const val ROUTE_RETRY_MAX = 10
 private const val ROUTE_RETRY_MS = 300L

@@ -324,7 +324,16 @@ class ResponseDrivenEcuEngine(
         val now = SystemClock.elapsedRealtime()
         val backoff = handshakeBackoffMs(handshakeFailures)
         val wait = backoff - (now - lastHandshakeAttemptMs)
-        if (wait > 0L) SystemClock.sleep(wait)
+        if (wait > 0L) {
+            // Espera fracionada: um pedido de parada durante o backoff encerra em ≤ 50 ms (antes dormia tudo).
+            val until = SystemClock.elapsedRealtime() + wait
+            while (!stopRequested.get() && running.get()) {
+                val left = until - SystemClock.elapsedRealtime()
+                if (left <= 0L) break
+                SystemClock.sleep(minOf(left, 50L))
+            }
+            if (stopRequested.get() || !running.get()) return false
+        }
         lastHandshakeAttemptMs = SystemClock.elapsedRealtime()
         val expectedSessionId = physicalSessionId
 

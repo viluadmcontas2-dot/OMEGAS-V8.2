@@ -12,13 +12,22 @@ import java.util.concurrent.atomic.AtomicLong
  * `skipped`) em vez de enfileirar. Não conhece ECU, serial nem comandos.
  */
 class AnalysisLane(
-    private val executor: Executor,
+    executor: Executor,
     private val clock: () -> Long = { System.nanoTime() / 1_000_000L },
     private val onFailure: (Throwable) -> Unit = {},
     /** Rodada que passa disto é dada como travada: avisa e deixa UMA seguinte entrar na fila atrás dela. */
     private val hangMs: Long = HANG_MS,
     private val onHang: (Long) -> Unit = {},
+    /**
+     * Recuperação real do travamento: recebe o executor preso (para encerrá-lo) e devolve um novo. A rodada
+     * presa é ABANDONADA (se um dia terminar, não mexe mais no estado da faixa) e a nova roda no executor novo.
+     * Sem isto, a rodada nova só esperaria atrás da travada (comportamento antigo).
+     */
+    private val replaceExecutor: ((Executor) -> Executor)? = null,
 ) {
+    @Volatile private var executor: Executor = executor
+    /** Cada troca de executor abre uma geração nova; rodada de geração antiga não atualiza mais nada. */
+    private val generation = AtomicLong(0L)
     /** Rodadas aceitas e ainda não terminadas (em curso + no máximo uma na fila atrás de uma travada). */
     private val pending = java.util.concurrent.atomic.AtomicInteger(0)
     private val hangs = AtomicLong(0L)
@@ -57,11 +66,24 @@ class AnalysisLane(
                 if (hungNow) {
                     hangs.incrementAndGet()
                     try { onHang(hungFor) } catch (_: Throwable) {}
+                    val swap = replaceExecutor
+                    if (swap != null) {
+                        try {
+                            executor = swap(executor)
+                            generation.incrementAndGet()
+                            // Só a rodada nova conta agora; a presa foi descartada.
+                            pending.set(1)
+                            startedAt = -1L
+                        } catch (_: Throwable) {
+                            // Não deu para trocar: mantém o comportamento antigo (a nova espera atrás da presa).
+                        }
+                    }
                 }
                 break
             }
         }
         submitted.incrementAndGet()
+        val myGeneration = generation.get()
         return try {
             executor.execute {
                 val started = clock()
@@ -73,12 +95,15 @@ class AnalysisLane(
                     failed.incrementAndGet()
                     try { onFailure(error) } catch (_: Throwable) {}
                 } finally {
-                    val took = (clock() - started).coerceAtLeast(0L)
-                    lastDurationMs = took
-                    if (took > maxDurationMs) maxDurationMs = took
-                    startedAt = -1L
-                    pending.decrementAndGet()
-                    runDirty()
+                    // Rodada abandonada (executor trocado): termina sem tocar no estado da faixa nova.
+                    if (generation.get() == myGeneration) {
+                        val took = (clock() - started).coerceAtLeast(0L)
+                        lastDurationMs = took
+                        if (took > maxDurationMs) maxDurationMs = took
+                        startedAt = -1L
+                        pending.decrementAndGet()
+                        runDirty()
+                    }
                 }
             }
             true
