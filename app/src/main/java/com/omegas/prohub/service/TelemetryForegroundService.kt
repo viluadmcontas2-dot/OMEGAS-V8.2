@@ -89,16 +89,16 @@ class TelemetryForegroundService : Service() {
      * `live` espelha a sequência do TelemetryStateStore; as demais só sobem quando o dado realmente mudou.
      */
     val revisions = RuntimeSnapshotBus()
-    @Volatile private var revisionListener: ((RuntimeSnapshotBus.Kind, Long) -> Unit)? = null
+    private val revisionSlot = com.omegas.prohub.runtime.RevisionListenerSlot()
 
     /** A Activity registra (e limpa com null) o empurrão `OmegasOnRevision`; o poll de segurança da UI continua. */
     fun setRevisionListener(listener: ((RuntimeSnapshotBus.Kind, Long) -> Unit)?) {
-        revisionListener = listener
+        revisionSlot.set(listener)
     }
 
     private fun publishRevision(kind: RuntimeSnapshotBus.Kind) {
         val revision = revisions.bump(kind)
-        try { revisionListener?.invoke(kind, revision) } catch (_: Exception) {}
+        revisionSlot.publish(kind, revision)
     }
 
     /** `{ok, revisions:{live,evidence,tables,session}}`; `live` = sequência atual da telemetria. */
@@ -1191,7 +1191,7 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         // O trabalho pesado (refino, diário, full_snapshot JSON, overlay) sai desta thread: o autoCalTick
         // divide o `scheduler` com este tick e nunca pode esperar por ele.
-        analysisLane.submit(::analysisTick)
+        analysisLane.submit(rerunKey = "analysisTick", task = ::analysisTick)
         try {
             handleUsbTransition()
             if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
@@ -1214,8 +1214,12 @@ class TelemetryForegroundService : Service() {
     /** Roda na faixa de análise (thread própria, coalescente). Só observa e grava; não toca a ECU. */
     private fun analysisTick() {
         if (stopping) return
-        try {
-            if (!refinementFrozenForRender) {
+        // Cada passo no próprio try/catch: uma exceção no diário não pode pular o stallWatch, o veredito,
+        // o full_snapshot, o overlay nem a notificação.
+        val steps = ArrayList<Pair<String, () -> Unit>>()
+        fun step(name: String, block: () -> Unit) { steps += name to block }
+        if (!refinementFrozenForRender) {
+            step("diario") {
                 // O orçamento da verificação conta só condução: rpm ≥ 1000 numa faixa alterada (quadro fresco).
                 val frameFresh = System.currentTimeMillis() - lastDriveFrameAt < 3_500L
                 if (refinementJournal.evaluate(
@@ -1224,13 +1228,15 @@ class TelemetryForegroundService : Service() {
                         petrolMs = if (frameFresh) lastDrivePetrolMs else null,
                     )
                 ) stateChanged()
-                // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
-                stallWatch.tick(System.currentTimeMillis())
-                recordStallAnnotations()
-                recordJournalDecision()
-                recordVerdictIfClosed()
-                observeRefinement()
             }
+            // Silêncio da telemetria depois de uma queda de RPM decide "desligou" × "apagou".
+            step("stallWatch") { stallWatch.tick(System.currentTimeMillis()) }
+            step("stallNotas") { recordStallAnnotations() }
+            step("decisaoDiario") { recordJournalDecision() }
+            step("veredito") { recordVerdictIfClosed() }
+            step("refino") { observeRefinement() }
+        }
+        step("full_snapshot") {
             if (sessionRecorder.isRecording()) {
                 sessionRecorder.record(
                     "full_snapshot",
@@ -1238,11 +1244,12 @@ class TelemetryForegroundService : Service() {
                     try { JSONObject(fullEngineSnapshotJson()) } catch (_: Exception) { JSONObject() },
                 )
             }
-            updateOverlay()
-            updateNotification()
-        } catch (error: Exception) {
+        }
+        step("overlay") { updateOverlay() }
+        step("notificacao") { updateNotification() }
+        GuardedSteps.run(steps) { message ->
             synchronized(this) { healthFailures += 1 }
-            log.add("WARN", "SERVICE", "Análise nativa: ${error.message}")
+            log.add("WARN", "SERVICE", "Análise nativa: $message")
         }
     }
 

@@ -25,10 +25,18 @@ class AnalysisLane(
     @Volatile private var lastDurationMs = 0L
     @Volatile private var maxDurationMs = 0L
 
-    /** Devolve true se a rodada foi aceita; false se a anterior ainda roda (ou o executor recusou). */
-    fun submit(task: () -> Unit): Boolean {
+    /** Tarefas que chegaram com a faixa ocupada e pediram "rodar de novo uma vez" (uma por chave). */
+    private val rerun = java.util.concurrent.ConcurrentHashMap<String, () -> Unit>()
+
+    /**
+     * Devolve true se a rodada foi aceita; false se a anterior ainda roda (ou o executor recusou).
+     * Com [rerunKey], a rodada recusada por faixa ocupada fica marcada como suja e roda UMA vez quando a faixa
+     * liberar (várias recusas da mesma chave viram uma só): o tique da análise não se perde por azar de horário.
+     */
+    fun submit(rerunKey: String? = null, task: () -> Unit): Boolean {
         if (!running.compareAndSet(false, true)) {
             skipped.incrementAndGet()
+            if (rerunKey != null) rerun[rerunKey] = task
             return false
         }
         submitted.incrementAndGet()
@@ -46,6 +54,7 @@ class AnalysisLane(
                     lastDurationMs = took
                     if (took > maxDurationMs) maxDurationMs = took
                     running.set(false)
+                    runDirty()
                 }
             }
             true
@@ -53,6 +62,16 @@ class AnalysisLane(
             running.set(false) // executor encerrado
             false
         }
+    }
+
+    /** Roda, numa única rodada, o que foi marcado sujo enquanto a faixa estava ocupada. */
+    private fun runDirty() {
+        if (rerun.isEmpty()) return
+        val pending = rerun.keys.toList().mapNotNull { key -> rerun.remove(key)?.let { key to it } }
+        if (pending.isEmpty()) return
+        // Se outra rodada tomou a faixa nesse meio tempo, a pendência volta (e roda quando ela terminar).
+        val accepted = submit { pending.forEach { (_, step) -> try { step() } catch (_: Throwable) {} } }
+        if (!accepted) pending.forEach { (key, step) -> rerun.putIfAbsent(key, step) }
     }
 
     fun isBusy(): Boolean = running.get()
@@ -65,4 +84,17 @@ class AnalysisLane(
         .put("failed", failed.get())
         .put("lastMs", lastDurationMs)
         .put("maxMs", maxDurationMs)
+}
+
+/** Passos independentes: um que lança vira aviso e os demais continuam (nenhuma falha derruba a rodada). */
+object GuardedSteps {
+    fun run(steps: List<Pair<String, () -> Unit>>, warn: (String) -> Unit) {
+        for ((name, step) in steps) {
+            try {
+                step()
+            } catch (error: Throwable) {
+                try { warn("Passo '$name' falhou: ${error.message}") } catch (_: Throwable) {}
+            }
+        }
+    }
 }

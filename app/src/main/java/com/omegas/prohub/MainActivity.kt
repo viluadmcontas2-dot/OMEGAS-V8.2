@@ -221,6 +221,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        // O serviço sobrevive à Activity: sem isto ele segura a Activity/WebView velha e empurra JS num WebView morto.
+        try { service?.setRevisionListener(null) } catch (_: Exception) {}
         if (bound) {
             try { unbindService(connection) } catch (_: Exception) {}
             bound = false
@@ -471,14 +473,25 @@ class MainActivity : AppCompatActivity() {
         val coalescer = com.omegas.prohub.runtime.RevisionPushCoalescer(
             clock = { android.os.SystemClock.elapsedRealtime() },
             schedule = { delayMs, task ->
-                if (::webView.isInitialized) webView.postDelayed({ task() }, delayMs)
+                if (!isDestroyed && ::webView.isInitialized) {
+                    try { webView.postDelayed({ task() }, delayMs) } catch (_: Exception) {}
+                }
             },
             dispatch = { kind, revision ->
-                if (::webView.isInitialized) {
-                    webView.evaluateJavascript(
-                        "window.OmegasOnRevision&&window.OmegasOnRevision('${kind.wireName}',$revision)",
-                        null,
-                    )
+                // O WebView só aceita JS na thread de interface; Activity destruída não recebe nada.
+                if (!isDestroyed && ::webView.isInitialized) {
+                    try {
+                        webView.post {
+                            if (!isDestroyed) {
+                                try {
+                                    webView.evaluateJavascript(
+                                        "window.OmegasOnRevision&&window.OmegasOnRevision('${kind.wireName}',$revision)",
+                                        null,
+                                    )
+                                } catch (_: Exception) {}
+                            }
+                        }
+                    } catch (_: Exception) {}
                 }
             },
         )
