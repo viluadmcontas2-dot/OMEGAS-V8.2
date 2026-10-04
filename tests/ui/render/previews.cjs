@@ -27,6 +27,7 @@ const SHOTS = [
   for (const shot of SHOTS) {
     if (only && !shot.name.includes(only)) continue;
     const { browser, page, errors } = await open(pw.chromium, shot.mode || 'connected', { scn: shot.scn });
+    if (process.env.DARK) await page.addStyleTag({ content: ':root{color-scheme:dark;--bg:#0b1118;--rail:#0f1722;--surface:#131d2a;--surface-2:#182434;--surface-3:#1f2e41;--line:#2b3b50;--line-soft:#223144;--text:#e8eef6;--muted:#a9b8ca;--dim:#8193a8;--accent:#4c8dff;--accent-strong:#8fb8ff;--accent-soft:#16294a;--accent-line:#2c4a80;--on-accent:#06101f;--ok:#3ccf91;--warn:#f0b64a;--danger:#ff6b6b;--ok-soft:#10301f;--warn-soft:#33270d;--danger-soft:#3a1517;--danger-line:#7a2b2e;--danger-strong:#ff9a9a;--field-bg:#101a27;--field-border:#34475f;--chart-bg:#0e1621;--petrol:#5b9bff;--cng:#2fd39c;--c-37-99-235-28:rgba(76,141,255,.28)}' });
     await page.waitForTimeout(1500);
     await go(page, shot.route);
     await page.waitForTimeout(2500);

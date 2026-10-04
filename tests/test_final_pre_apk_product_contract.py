@@ -53,7 +53,7 @@ assert "autocal-focus" in app
 assert ".app-shell.autocal-focus .workspace-head" in base_css
 assert "display: none" in base_css.split(".app-shell.autocal-focus .workspace-head", 1)[1].split("}", 1)[0]
 assert 'id="autocalTechnicalDetails"' not in autocal  # detalhe técnico vai para a aba Diagnóstico
-assert "calc(100vh - 318px)" in (ROOT / "app/src/main/assets/ui/styles-autocal-refino.css").read_text(encoding="utf-8")  # gráfico ocupa o espaço
+assert "calc(100vh - 300px)" in (ROOT / "app/src/main/assets/ui/styles-autocal-refino.css").read_text(encoding="utf-8")  # gráfico ocupa o espaço
 
 # Custom ROM/head unit: WebView render can lag briefly; AGORA must not vanish mid-refresh.
 assert "const STALE_MS = 3000" in (ROOT / "app/src/main/assets/ui/core/live-store.js").read_text(encoding="utf-8")

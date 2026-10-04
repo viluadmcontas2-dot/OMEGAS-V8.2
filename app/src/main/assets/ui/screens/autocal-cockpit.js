@@ -745,7 +745,7 @@
                   <div class="autocal-reset-popover" aria-label="Mais opções do AutoCal">
                     <section class="autocal-reset-group" data-reset-scope="advanced">
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
-                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: o app guarda a foto antes e dá para desfazer. Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU.</p>
+                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU.</p>
                     </section>
                   </div>
                 </details>

@@ -2,7 +2,7 @@
    Faixa de status → gráfico (≥ 50% da altura) → UMA frase + UMA ação → secundário na rolagem VERTICAL.
    Só tokens. Sem rolagem horizontal. Carrega por último (depois de styles-lote-f.css). */
 
-html body .ar-shell { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); align-content: start; min-width: 0; max-width: 100%; padding: 0 0 var(--space-4); overflow: visible; }
+html body .ar-shell { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); align-content: start; min-width: 0; max-width: 100%; padding: 0 0 var(--space-4); overflow: visible; }
 html body .ar-shell * { min-width: 0; }
 html body .ar-shell .ar-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -25,7 +25,7 @@ html body .ar-shell .ar-stall[hidden] { display: none; }
 html body .ar-shell .ar-stall[data-tone="now"] { border-color: var(--danger); background: var(--danger-soft); color: var(--danger-strong); }
 
 /* 2 · gráfico dominante */
-html body .ar-shell .ar-chart-card { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--line-soft); border-radius: var(--radius-l); background: var(--surface); box-shadow: var(--shadow-1); }
+html body .ar-shell .ar-chart-card { display: grid; gap: var(--space-1); padding: var(--space-2); border: 1px solid var(--line-soft); border-radius: var(--radius-l); background: var(--surface); box-shadow: var(--shadow-1); }
 html body .ar-shell .ar-legend-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 28px; }
 html body .ar-shell .ar-legend { display: flex; flex-wrap: wrap; gap: 2px var(--space-4); color: var(--muted); font-size: 18px; font-weight: 600; line-height: 1.3; }
 html body .ar-shell .ar-legend span::before { content: ''; display: inline-block; width: 16px; height: 4px; margin-right: 6px; border-radius: 99px; vertical-align: middle; background: var(--dim); }
@@ -38,7 +38,7 @@ html body .ar-shell .ar-legend [data-legend="stall"]::before { content: '✕'; w
 html body .ar-shell .ar-legend [data-legend="ecudot"]::before { width: 12px; height: 12px; border-radius: 50%; background: var(--petrol); box-shadow: 8px 0 0 -1px var(--cng); margin-right: 16px; }
 html body .ar-shell .ar-legend [data-legend="ourdot"]::before { width: 10px; height: 10px; border: 2px solid var(--petrol); border-radius: 50%; background: var(--surface); box-shadow: 8px 0 0 -1px var(--cng); margin-right: 16px; }
 html body .ar-shell .ar-legend [data-legend="ourmissing"]::before { width: 10px; height: 10px; border: 2px dashed var(--dim); border-radius: 50%; background: transparent; }
-html body .ar-shell .ar-chart-host { position: relative; width: 100%; height: clamp(300px, calc(100vh - 318px), 640px); overflow: hidden; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--chart-bg); }
+html body .ar-shell .ar-chart-host { position: relative; width: 100%; height: clamp(300px, calc(100vh - 300px), 640px); overflow: hidden; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--chart-bg); }
 html body .ar-shell .ar-chart-host .curve-chart-shared, html body .ar-chart-host .autocal-reference-svg { display: block; width: 100%; height: 100%; }
 html body .ar-shell .ar-chart-host .chart-empty { display: grid; gap: var(--space-2); place-content: center; height: 100%; padding: var(--space-5); color: var(--muted); font-size: 22px; text-align: center; }
 html body .ar-shell .ar-chart-host .chart-empty b { color: var(--text); font-size: 24px; }
@@ -52,7 +52,7 @@ html body .ar-shell .autocal-acquired-hit.selected + .chart-between { stroke-wid
 html body .ar-shell .autocal-acquired-hit.selected + .autocal-acquired-point { stroke: var(--text); stroke-width: 3.6; }
 html body .ar-shell .autocal-reference-hit.selected + .autocal-reference-point { opacity: 1; }
 
-html body .ar-shell .ar-readout { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 40px; padding: 0 var(--space-1); color: var(--text); font-size: 22px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+html body .ar-shell .ar-readout { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 36px; padding: 0 var(--space-1); color: var(--text); font-size: 22px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
 html body .ar-shell .ar-readout[data-empty="true"] { color: var(--dim); font-weight: 600; }
 html body .ar-shell .ar-readout > span { flex: 1 1 auto; }
 html body .ar-shell .ar-readout button { flex: 0 0 auto; }
@@ -120,7 +120,7 @@ html body .screen.active.autocal-route-screen { overflow-x: hidden; overflow-y: 
 html body .screen.active.autocal-route-screen .autocal-cockpit-view { overflow: visible; }
 
 html body .ar-shell .ar-refino-spacer { display: none; }
-html body .ar-shell.ar-refino .ar-chart-host { height: clamp(300px, calc(100vh - 352px), 640px); }
+html body .ar-shell.ar-refino .ar-chart-host { height: clamp(300px, calc(100vh - 290px), 640px); }
 html body .ar-shell .ar-readout > span { font-size: inherit; font-weight: inherit; color: inherit; }
 html body .ar-shell .ar-card b, html body .ar-shell .ar-card .autocal-session-copy b { font-size: 22px; font-weight: 800; color: var(--text); }
 html body .ar-shell .ar-card .autocal-session-copy span { font-size: 20px; }
@@ -138,3 +138,4 @@ html body .ar-shell .ar-secondary { position: static; display: grid; grid-templa
 html body .ar-shell .ar-card { position: static; width: 100%; overflow: visible; }
 html body .ar-shell .ar-legend { position: static; }
 html body .ar-shell .ar-readout { position: static; }
+html body .screen-host .screen.autocal-route-screen { padding: var(--space-2) var(--space-3) var(--space-2); }
