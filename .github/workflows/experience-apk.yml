@@ -68,8 +68,6 @@ jobs:
     timeout-minutes: 15
     env:
       OMEGAS_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
-      NODE_PATH: ${{ runner.temp }}/omegas-ui/node_modules
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/omegas-browsers
     steps:
       - uses: actions/checkout@v4
         with:
@@ -78,7 +76,10 @@ jobs:
         with:
           node-version: '22'
       - name: Prove exact source
-        run: test "$(git rev-parse HEAD)" = "$OMEGAS_SOURCE_SHA"
+        run: |
+          test "$(git rev-parse HEAD)" = "$OMEGAS_SOURCE_SHA"
+          echo "NODE_PATH=$RUNNER_TEMP/omegas-ui/node_modules" >> "$GITHUB_ENV"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/omegas-browsers" >> "$GITHUB_ENV"
       - name: Chromium for remote UI evidence
         run: |
           npm install --prefix "$RUNNER_TEMP/omegas-ui" playwright
