@@ -104,6 +104,11 @@
             level = "critical";
             message = "Comunica\xE7\xE3o travada";
             detail = "Ajustes permanecem bloqueados at\xE9 a condi\xE7\xE3o normalizar";
+          } else if (!telemetryValid || age === null || age < 0) {
+            // Conectada, mas nenhum quadro válido ainda: nunca "operação estável".
+            level = "warning";
+            message = "ECU sem dados";
+            detail = "Conectada, mas ainda n\xE3o enviou leitura. Confira a chave e o motor.";
           } else if (expired) {
             level = "critical";
             message = "Telemetria expirada";

@@ -308,6 +308,8 @@
     }
 
     writePrepared() {
+      // Toque duplo com a ECU ocupada: a segunda chamada não envia a escrita de novo.
+      if (this.store.get().map?.state === 'writing' || this.root?.classList.contains('is-writing')) return;
       try {
         if (this.editor.targetOverrides?.size !== this.editor.selectionCount()) this.applyAdjustment();
         this.review = this.editor.buildReview();

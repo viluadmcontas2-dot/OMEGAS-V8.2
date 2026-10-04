@@ -295,6 +295,8 @@
       // null = a lista ainda está sendo lida (a tela diz isso; não afirma "nenhuma sessão").
       const listed = api.sessions();
       patch.sessions = Array.isArray(listed) ? listed : null;
+      // Falha de leitura ≠ "ainda lendo": a tela diz o que houve e o que fazer.
+      patch.sessionsError = !Array.isArray(listed) && listed && listed.ok === false ? String(listed.error || 'sem detalhe') : '';
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();

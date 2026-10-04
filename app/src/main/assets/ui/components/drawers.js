@@ -1,5 +1,7 @@
 (function (root) {
   'use strict';
+  // Configuração que chega da ponte pode vir vazia ou não numérica: nunca vira NaN/Infinity na tela.
+  const settingNumber = (value, fallback) => { const n = Number(value); return value !== '' && value !== null && value !== undefined && Number.isFinite(n) ? n : fallback; };
   const ns = root.OmegasUi = root.OmegasUi || {};
 
   // Regras únicas de exibição (core/display-rules.js): desconhecido mostra "—", nunca 0.
@@ -101,9 +103,9 @@
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
       const settings = {
-        telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 250),
-        maxSessionMb: Number(host.querySelector('[data-session-maxmb]')?.value || 256),
-        keepSessions: Math.max(20, Number(host.querySelector('[data-session-keep]')?.value || 20)),
+        telemetryEveryMs: settingNumber(host.querySelector('[data-session-telemetry]')?.value, 250),
+        maxSessionMb: settingNumber(host.querySelector('[data-session-maxmb]')?.value, 256),
+        keepSessions: Math.max(20, settingNumber(host.querySelector('[data-session-keep]')?.value, 20)),
         autoStartOnUsb: true,
         captureRawUsb: host.querySelector('[data-session-rawusb]')?.checked === true,
       };
@@ -194,11 +196,11 @@
             <label><span>Telemetria salva</span><select data-session-telemetry>
               ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
             </select></label>
-            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
-            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
+            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${settingNumber(settings.maxSessionMb || status.limitMb, 256)}"><small>MB</small></label>
+            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, settingNumber(settings.keepSessions, 20))}"></label>
             <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
           </div>
-          <p>Cada sessão vira <b>um só arquivo ZIP</b> em <b>Download/Omegas</b>, pronto quando ela termina (ou na próxima abertura do app, se ele fechar no meio). O app guarda as ${Math.max(20, Number(settings.keepSessions || 20))} sessões mais recentes e nunca apaga uma que ainda não foi copiada para essa pasta.</p>
+          <p>Cada sessão vira <b>um só arquivo ZIP</b> em <b>Download/Omegas</b>, pronto quando ela termina (ou na próxima abertura do app, se ele fechar no meio). O app guarda as ${Math.max(20, settingNumber(settings.keepSessions, 20))} sessões mais recentes e nunca apaga uma que ainda não foi copiada para essa pasta.</p>
           <p>USB bruto aumenta bastante o tamanho. Use só para investigar falha de comunicação.</p>
           <button type="button" class="secondary wide" data-session-settings>Aplicar</button>
           ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}

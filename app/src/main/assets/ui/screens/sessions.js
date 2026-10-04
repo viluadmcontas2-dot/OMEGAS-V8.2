@@ -57,10 +57,11 @@
     render(state) {
       if (!this.host) return;
       const status = state.sessionStatus || {};
-      const loading = !Array.isArray(state.sessions);
+      const listError = !Array.isArray(state.sessions) && state.sessionsError ? String(state.sessionsError) : '';
+      const loading = !Array.isArray(state.sessions) && !listError;
       const rows = (Array.isArray(state.sessions) ? state.sessions : []).slice(0, 20).map(sessionRow);
       const recording = status.recording === true;
-      const signature = JSON.stringify([recording, status.durationMs && Math.round(status.durationMs / 10000), loading, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index])]);
+      const signature = JSON.stringify([recording, status.durationMs && Math.round(status.durationMs / 10000), loading, listError, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index])]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
       const R = rules();
@@ -69,7 +70,7 @@
         const indexText = row.index ? `Índice ${percentText(row.index.start)} → ${percentText(row.index.end)}` : '';
         const facts = [
           row.durationMs === null ? '' : R.durationLabel(row.durationMs),
-          row.blackouts === null ? '' : `${row.blackouts} apagõ${row.blackouts === 1 ? 'o' : 'es'}`,
+          row.blackouts === null ? '' : `${row.blackouts} ${row.blackouts === 1 ? 'apagão' : 'apagões'}`,
           indexText,
           row.gnvPercent === null ? '' : `GNV ${row.gnvPercent}% · gasolina ${row.gasPercent}%`,
           row.active ? 'em andamento' : '',
@@ -80,7 +81,9 @@
           ${row.gnvPercent === null ? '' : `<div class="session-fuel-bar"><div class="fuel-segment cng" style="width:${row.gnvPercent}%"></div><div class="fuel-segment petrol" style="width:${row.gasPercent}%"></div></div>`}
           <button type="button" class="secondary" data-export-session="${escapeHtml(row.id)}">Exportar ZIP</button>
         </article>`;
-      }).join('') : (loading
+      }).join('') : (listError
+        ? `<p class="empty-copy" data-sessions-error>Não consegui ler as sessões salvas (${escapeHtml(listError)}). O app tenta de novo sozinho; se continuar, feche e abra o app.</p>`
+        : loading
         ? '<p class="empty-copy">Lendo as sessões salvas…</p>'
         : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>');
       this.host.innerHTML = `

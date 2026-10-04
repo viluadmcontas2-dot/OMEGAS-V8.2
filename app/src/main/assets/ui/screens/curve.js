@@ -299,8 +299,9 @@
             this.data = operation.curve;
             this.renderChart();
           }
-          text('curveBackupStatus', (operation.publicPath || 'Download/Omegas') + ' · ' + String(operation.hash || '').slice(0, 8));
+          // A lista é relida primeiro (ela escreve "N fotos salvas"); o caminho e o hash do arquivo novo ficam por último.
           this.refreshBackups();
+          text('curveBackupStatus', (operation.publicPath || 'Download/Omegas') + ' · ' + String(operation.hash || '').slice(0, 8));
           return;
         }
         if (task === 'restore-preview') {
@@ -603,6 +604,8 @@
     }
 
     writePrepared() {
+      // Toque duplo com a ECU ocupada: a segunda chamada não envia a escrita de novo.
+      if (this.writing) return;
       const points = [...this.proposals.values()].map(item => ({
         index: Number(item.index),
         currentRaw: Number(item.currentRaw),
