@@ -17,12 +17,14 @@ async function audit(page,route,height,name){
    important:[...critical].filter(visible).map(e=>({id:e.id||e.dataset.autocalAction||e.textContent.trim(),...rect(e)})),
    bad:/\\bNaN\\b|\\bundefined\\b|\\[object Object\\]/.test(screen.innerText)};
  });
+ metrics.push({name,route,...m});fs.writeFileSync(path.join(out,'metrics.json'),JSON.stringify({source:process.env.OMEGAS_SOURCE_SHA,metrics},null,2));await page.screenshot({path:path.join(out,name+'.png')});
+ console.log(name+' '+JSON.stringify(m));
  assert.equal(m.overflow,false,name+': corte lateral');
  assert.equal(m.bad,false,name+': texto inválido');
  assert.ok(m.nav.b<=height+1&&m.nav.h>=76,name+': navegação cabe');
  for(const b of m.important) assert.ok(b.x>=-1&&b.r<=1281&&b.b<=m.nav.y+1&&b.y>=m.header.b-1,name+': controle fora do alcance '+JSON.stringify(b));
  if(m.plot&&['autocal','refino'].includes(route)) assert.ok(m.plot.h>=m.screen.h*.52,name+': gráfico achatado '+m.plot.h+'/'+m.screen.h);
- metrics.push({name,route,...m});await page.screenshot({path:path.join(out,name+'.png')});
+
 }
 (async()=>{
  const pw=playwright();assert.ok(pw,'Playwright é obrigatório nesta prova');

@@ -86,8 +86,9 @@ jobs:
           "$RUNNER_TEMP/omegas-ui/node_modules/.bin/playwright" install --with-deps chromium
       - name: Eight tabs, real fixtures and usable Android area
         run: |
-          node --test tests/ui/diamante-elastic.test.cjs tests/ui/diamante-usage.test.cjs tests/ui/diamante-layout.test.cjs
           node tests/ui/render/elastic-evidence.cjs rendered-evidence/elastic
+      - name: Preserve layout and touch contracts
+        run: node --test tests/ui/diamante-elastic.test.cjs tests/ui/diamante-usage.test.cjs tests/ui/diamante-layout.test.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
