@@ -197,15 +197,27 @@ object AutoCalUiProjection {
         return copy
     }
 
-    private fun acquisitionZones(nativeCurrent: JSONObject?, selected: JSONObject): JSONObject = JSONObject()
-        .put(
-            "petrol",
-            preferredZoneVector(nativeCurrent, selected, AutoCalProtocol.ACQUIRED_ZONES_PETROL.key),
-        )
-        .put(
-            "gas",
-            preferredZoneVector(nativeCurrent, selected, AutoCalProtocol.ACQUIRED_ZONES_GAS.key),
-        )
+    /**
+     * Zonas que a HMI mostra, por combustível: **a ECU é a verdade**. Zona = flag da ECU OU bandas lidas maduras
+     * ([EcuAcquisitionTruth]); a flag da ECU zera a cada AutoMatch executado e as bandas lidas continuam valendo.
+     * Vetor vazio = a ECU não entregou o campo (desconhecido, nunca "faltam todas"). `petrol`/`gas` mantêm a forma
+     * antiga (4 booleanos); `raw` guarda só as flags como a ECU entregou, para auditoria.
+     */
+    private fun acquisitionZones(nativeCurrent: JSONObject?, selected: JSONObject): JSONObject {
+        fun covered(key: String, fuel: String): JSONArray {
+            val source = nativeCurrent?.takeIf { zoneVector(it, key).length() > 0 } ?: selected
+            if (zoneVector(source, key).length() == 0) return JSONArray()
+            val truth = EcuAcquisitionTruth.fuel(AutoCalAcquisition.fromSnapshot(source), fuel)
+            return JSONArray(truth.covered ?: emptyList<Boolean>())
+        }
+        return JSONObject()
+            .put("petrol", covered(AutoCalProtocol.ACQUIRED_ZONES_PETROL.key, "GASOLINA"))
+            .put("gas", covered(AutoCalProtocol.ACQUIRED_ZONES_GAS.key, "GNV"))
+            .put("raw", JSONObject()
+                .put("petrol", preferredZoneVector(nativeCurrent, selected, AutoCalProtocol.ACQUIRED_ZONES_PETROL.key))
+                .put("gas", preferredZoneVector(nativeCurrent, selected, AutoCalProtocol.ACQUIRED_ZONES_GAS.key)))
+            .put("basis", "ECU_FLAG_OU_BANDAS_LIDAS")
+    }
 
     private fun preferredZoneVector(nativeCurrent: JSONObject?, selected: JSONObject, key: String): JSONArray {
         val native = nativeCurrent?.let { zoneVector(it, key) }

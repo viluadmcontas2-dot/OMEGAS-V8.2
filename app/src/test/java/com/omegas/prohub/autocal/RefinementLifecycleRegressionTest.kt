@@ -3,6 +3,7 @@ package com.omegas.prohub.autocal
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.*
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Classe 2: entrada/saída pública, relógio simulado, sem writer ou matemática fake. */
@@ -38,8 +39,8 @@ class RefinementLifecycleRegressionTest {
         val offline = p.observe(false, done(), acquisition, index(), noJournal, 0)
         assertTrue("gasValid antigo não é medição atual", offline.isNull("gasValid"))
         assertTrue("petrolValid antigo não é medição atual", offline.isNull("petrolValid"))
-        assertEquals(0, offline.getInt("gasZones"))
-        assertEquals(0, offline.getInt("petrolZones"))
+        assertTrue(offline.isNull("gasZones")) // sem leitura da ECU: "—", nunca 0
+        assertTrue(offline.isNull("petrolZones"))
     }
 
     @Test fun readingWithoutAnyEcuResponseExpiresInThirtySeconds() {

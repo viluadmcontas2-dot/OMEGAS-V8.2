@@ -167,8 +167,10 @@ class EquivalencePhases(
             val gasKnown = activeCount(liveAcquisition, "GNV")
             val petrolValid = petrolKnown ?: 0
             val gasValid = gasKnown ?: 0
-            val petrolZones = acquiredZones(liveAcquisition, "GASOLINA")
-            val gasZones = acquiredZones(liveAcquisition, "GNV")
+            // A ECU é a verdade: zona coberta = flag da ECU OU bandas lidas maduras (EcuAcquisitionTruth). Sem leitura = "—".
+            val truth = EcuAcquisitionTruth.fromAcquisition(liveAcquisition, count, max, enabled)
+            val petrolZones = truth.optJSONObject("petrol")?.opt("zonesCovered") ?: JSONObject.NULL
+            val gasZones = truth.optJSONObject("gas")?.opt("zonesCovered") ?: JSONObject.NULL
             // A ECU já entregou o estado dela (contador ou vetores de aquisição)?
             val ecuRead = count != null || liveAcquisition != null
             val fresh = if (!ecuOnline) null else when {
@@ -188,6 +190,7 @@ class EquivalencePhases(
                 .put("gasValid", gasKnown ?: JSONObject.NULL)
                 .put("petrolZones", petrolZones)
                 .put("gasZones", gasZones)
+                .put("ecuTruth", truth)
                 .put("quietMinutes", quietMs / 60_000.0)
                 .put("ecuDone", ecuReason != null)
                 .put("ecuDoneReason", ecuReason ?: JSONObject.NULL)
@@ -302,7 +305,7 @@ class EquivalencePhases(
             out.put("phase", phase)
                 .put("canDisconnect", phase == "ESTAVEL")
                 .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification, if (expiredEvidence != null) candidate else "", measuredOnEcuRef))
-                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else ""))
+                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else "", truth))
             if (latest != null) out.put("journalStatus", latestStatus)
             last = out
             out
@@ -520,19 +523,6 @@ class EquivalencePhases(
         return n
     }
 
-    /** Zonas (0..3) que a ECU marcou como adquiridas para o combustível. */
-    private fun acquiredZones(acquisition: JSONObject?, fuel: String): Int {
-        val points = acquisition?.optJSONArray("points") ?: return 0
-        val zones = HashSet<Int>()
-        for (i in 0 until points.length()) {
-            val p = points.optJSONObject(i) ?: continue
-            if (p.optString("fuel") != fuel) continue
-            if (p.optBoolean("zoneAcquired") || p.optString("state") == "VALIDO") zones += p.optInt("zone", -1)
-        }
-        zones.remove(-1)
-        return zones.size
-    }
-
     /** Quanto da verificação já passou e quais faixas ainda esperam leituras (para a tela explicar). */
     private fun verificationProgress(latest: JSONObject, journal: JSONObject): JSONObject {
         val budget = journal.optLong("verifyBudgetMs", RefinementJournal.VERIFY_PARTIAL_ONLINE_MS).coerceAtLeast(1L)
@@ -549,6 +539,27 @@ class EquivalencePhases(
         return JSONObject().put("onlineMinutes", online / 60_000.0).put("budgetMinutes", budget / 60_000.0).put("waitingBands", waiting)
     }
 
+    /** A ECU já entrega gasolina (zona coberta ou bandas lidas maduras)? Então não se pede gasolina ao dono. */
+    private fun ecuHasPetrol(truth: JSONObject): Boolean {
+        val petrol = truth.optJSONObject("petrol") ?: return false
+        return (petrol.optInt("zonesCovered", 0) > 0) || (petrol.optInt("bandsMature", 0) > 0)
+    }
+
+    /** Só pede o que a ECU realmente não tem; se ela já entregou, diz que ela decide o próximo AutoMatch. */
+    private fun ecuWorkingNext(truth: JSONObject): String {
+        val missing = truth.optJSONArray("missing")
+        val wait = "A gravação libera quando a ECU terminar o automático."
+        return when {
+            missing != null && missing.length() > 0 -> {
+                val list = (0 until missing.length()).joinToString("; ") { missing.getJSONObject(it).getString("text") }
+                "A ECU ainda não marcou: $list. Dirija normalmente; a ECU decide quando roda o próximo AutoMatch. $wait"
+            }
+            truth.optBoolean("allZonesCovered") -> "A ECU já tem as 4 zonas da gasolina e do GNV; ela decide quando roda o próximo AutoMatch. Nada falta adquirir. $wait"
+            truth.optBoolean("delivered") -> "A ECU já entregou o AutoMatch; ela decide sozinha o próximo. Dirija normalmente. $wait"
+            else -> "Dirija normalmente nos dois combustíveis. $wait"
+        }
+    }
+
     private fun headline(
         phase: String, count: Int?, max: Int?, measured: Int, off: Int, out: JSONObject, verification: JSONObject?, expiredFrom: String,
         measuredOnEcuRef: Int = 0,
@@ -563,7 +574,8 @@ class EquivalencePhases(
         }
         "ECU_TRABALHANDO" -> "A ECU está no automático" +
             (if (count != null) " ${count}" + (if (max != null) " de $max" else "") else "") +
-            ". O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
+            ". " + (if (out.optJSONObject("ecuTruth")?.optBoolean("allZonesCovered") == true) "A ECU já tem as 4 zonas da gasolina e do GNV. " else "") +
+            "O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
         "COLETANDO_NOSSOS" -> if (out.optString("petrolReference") == "ECU")
             "A ECU terminou e já tem a curva de gasolina. O OMEGAS só precisa medir o GNV rodando."
         else "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
@@ -581,13 +593,13 @@ class EquivalencePhases(
         else -> ""
     }
 
-    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = ""): String = when (phase) {
+    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = "", truth: JSONObject = JSONObject()): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
         "TENTATIVA_ENCERRADA" -> if (expiredFrom == "PROPOSTA_PRONTA" || expiredFrom == "ECU_TRABALHANDO")
             "Abra o Refino e toque em Gravar. Nada é gravado sem o seu toque. A próxima leitura nova retoma o acompanhamento."
         else "A próxima leitura válida retoma o acompanhamento automaticamente."
         "LENDO_ECU" -> "Aguarde alguns segundos. A ECU guarda o AutoMatch e as curvas e entrega tudo ao conectar."
-        "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
+        "ECU_TRABALHANDO" -> ecuWorkingNext(truth)
         "VERIFICANDO" -> {
             val waiting = verification?.optJSONArray("waitingBands")
             val wanted = (0 until (waiting?.length() ?: 0)).mapNotNull { waiting?.optJSONObject(it) }
@@ -601,7 +613,7 @@ class EquivalencePhases(
             val reference = index.optString("petrolReference", "NENHUMA")
             when {
                 // Só pede gasolina quando nem o app nem a ECU têm referência de gasolina.
-                reference == "NENHUMA" && index.optInt("petrolObservations") < 40 ->
+                reference == "NENHUMA" && index.optInt("petrolObservations") < 40 && !ecuHasPetrol(truth) ->
                     "A ECU ainda não tem curva de gasolina madura. Rode alguns minutos na gasolina para criar a referência."
                 // Guia do livro: a faixa com mais evidência que ainda falta, com o MAP em que dirigir.
                 !index.isNull("coverageGuidance") && index.optString("coverageGuidance").isNotBlank() -> index.optString("coverageGuidance")
