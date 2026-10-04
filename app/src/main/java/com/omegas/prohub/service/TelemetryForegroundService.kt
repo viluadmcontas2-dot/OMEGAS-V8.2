@@ -289,16 +289,24 @@ class TelemetryForegroundService : Service() {
                 sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
             },
             onNativeCalibrationObserved = { payload ->
-                sessionRecorder.record(
-                    "autocal_native_calibration_epoch",
-                    "autocal",
-                    payload,
-                    force = true,
+                // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida. Invalida PRIMEIRO;
+                // gravar a sessão (pode falhar por disco cheio) só depois.
+                EvidenceInvalidation.run(
+                    invalidate = listOf(
+                        "resetGas" to { equivalence.resetGas("AUTOMATCH_NATIVO") },
+                        "cerebro" to { equivalenceRuntime.onGasReset("AUTOMATCH_NATIVO", equivalencePhases) },
+                        "journal" to { refinementJournal.interrupt("AUTOMATCH_NATIVO") },
+                    ),
+                    record = {
+                        sessionRecorder.record(
+                            "autocal_native_calibration_epoch",
+                            "autocal",
+                            payload,
+                            force = true,
+                        )
+                    },
+                    warn = { log.add("WARN", "EVIDENCIA", it) },
                 )
-                // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida.
-                equivalence.resetGas("AUTOMATCH_NATIVO")
-                equivalenceRuntime.onGasReset("AUTOMATCH_NATIVO", equivalencePhases)
-                refinementJournal.interrupt("AUTOMATCH_NATIVO")
                 publishRevision(RuntimeSnapshotBus.Kind.EVIDENCE)
                 if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
             },
@@ -444,12 +452,20 @@ class TelemetryForegroundService : Service() {
             storagePath = paths.externalRoot.absolutePath,
             workspaceConfigured = false,
             gpsEnabled = gps.running,
-            gpsSpeedKmh = gps.json().optDouble("speedKmh", 0.0),
-            gpsAccuracyM = gps.json().optDouble("accuracyM", 0.0),
+            gpsSpeedKmh = gpsValueOrNull("speedKmh"),
+            gpsAccuracyM = gpsValueOrNull("accuracyM"),
             lanEnabled = lanServer.running,
             lanAddress = if (lanServer.running) lanServer.address() else "",
             directTelemetryAgeMs = telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it },
         )
+    }
+
+    /** Valor do GPS só se ele está ligado e a chave existe com número finito; senão desconhecido (nulo), nunca 0. */
+    private fun gpsValueOrNull(key: String): Double? {
+        if (!gps.running) return null
+        val json = gps.json()
+        if (!json.has(key) || json.isNull(key)) return null
+        return json.optDouble(key, Double.NaN).takeIf { it.isFinite() }
     }
 
     fun restartEngine(): Boolean {
@@ -1267,14 +1283,17 @@ class TelemetryForegroundService : Service() {
     }
 
     @Volatile private var lastDriveRpm = 0.0
-    @Volatile private var lastDrivePetrolMs = 0.0
+    /** Nulo = quadro sem leitura de tempo de injeção (desconhecido, nunca 0 ms medido). */
+    @Volatile private var lastDrivePetrolMs: Double? = null
     @Volatile private var lastDriveFrameAt = 0L
 
     private fun consumeEngineEvent(root: JSONObject) {
         val accepted = telemetryStore.updateFromEngineEvent(root) ?: return
         val live = root.optJSONObject("live") ?: root.optJSONObject("data") ?: JSONObject()
         lastDriveRpm = live.optDouble("rpm", 0.0)
-        lastDrivePetrolMs = live.optDouble("petrol_ms", 0.0)
+        lastDrivePetrolMs = if (live.has("petrol_ms") && !live.isNull("petrol_ms")) {
+            live.optDouble("petrol_ms", Double.NaN).takeIf { it.isFinite() }
+        } else null
         lastDriveFrameAt = System.currentTimeMillis()
         val cngActive = live.optString("fuel").uppercase() == "GNV"
         if (cngActive) {
