@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.equivalence.JsonFiles
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -255,28 +256,33 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
                 .put("after", "só anota: religou em ${RESTART_WINDOW_MS / 1000} s, telemetria parou ou sem religar; o apagão confirmado nunca some"))
     }
 
+    /** Serializa as gravações: a mais recente sempre vence, e dois `save()` nunca se intercalam no mesmo arquivo. */
+    private val saveLock = Any()
+
     private fun save() {
         val target = file ?: return
-        val payload = synchronized(lock) {
-            JSONObject().put("format", FORMAT)
-                .put("idleShutdowns", idleShutdowns)
-                .put("cutShutdowns", cutShutdowns)
-                .put("events", JSONArray(events.map { JSONObject(it.toString()) }))
-        }
-        try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
-        } catch (_: Exception) {
+        synchronized(saveLock) {
+            val payload = synchronized(lock) {
+                JSONObject().put("format", FORMAT)
+                    .put("idleShutdowns", idleShutdowns)
+                    .put("cutShutdowns", cutShutdowns)
+                    .put("events", JSONArray(events.map { JSONObject(it.toString()) }))
+            }
+            try {
+                // .tmp único + fsync + troca atômica (+ .bak se o rename falhar), como o resto do cérebro.
+                JsonFiles.writeAtomic(target, payload.toString())
+            } catch (_: Exception) {
+            }
         }
     }
 
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
         try {
-            val root = JSONObject(source.readText())
-            val format = root.optString("format")
-            if (format != FORMAT && format != LEGACY_FORMAT) return
+            // Principal corrompido/ausente cai no .bak em vez de perder os apagões já registrados.
+            val root = JsonFiles.readJsonWithBak(file) {
+                val format = it.optString("format")
+                format == FORMAT || format == LEGACY_FORMAT
+            } ?: return
             idleShutdowns = root.optInt("idleShutdowns", 0)
             cutShutdowns = root.optInt("cutShutdowns", 0)
             root.optJSONArray("events")?.let { a ->

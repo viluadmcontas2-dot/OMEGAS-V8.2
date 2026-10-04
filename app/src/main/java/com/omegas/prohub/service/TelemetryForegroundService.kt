@@ -734,6 +734,9 @@ class TelemetryForegroundService : Service() {
         }
     }
 
+    /** Este aparelho tem o controle principal do MP48 (Link)? Vale para QUALQUER ação que mude a ECU. */
+    fun canWriteLocally(): Boolean = !::link.isInitialized || link.canWriteLocally()
+
     /** Outra operação que MUDA a ECU (AutoCal ou o outro escritor K) já detém a serial? Devolve o aviso humano. */
     private fun writerConflict(self: String): String? =
         SerialWriteGuard.shared.holder()?.takeIf { it != self }?.let {
