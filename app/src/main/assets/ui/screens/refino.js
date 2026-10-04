@@ -400,14 +400,14 @@
       const eq = this.eq || {};
       const rs = eq.refinoState && typeof eq.refinoState === 'object' ? eq.refinoState : null;
       const said = rs && typeof rs.nextAction === 'string' && rs.nextAction.trim() ? rs.nextAction.trim() : '';
+      const frozenNow = this.freeze && this.freeze.phase === 'done' && Date.now() - this.freeze.at < 10000;
       // refinoState decide se existe ação; uma proposta antiga não transforma "seguir dirigindo" em gravação.
       if (rs && rs.canAct !== true) return { kind: 'none', label: '' };
-      if (eq.nextAction?.kind === 'FREEZE_REFERENCE') return { kind: 'freeze', label: said || 'Salvar a gasolina como referência' };
+      if (eq.nextAction?.kind === 'FREEZE_REFERENCE') return frozenNow ? { kind: 'none', label: '' } : { kind: 'freeze', label: said || 'Salvar a gasolina como referência' };
       const action = primaryAction(eq, this.analysis);
       if (action.kind === 'review') return { kind: 'review', label: said || 'Aplicar ajuste' };
       if (action.kind === 'restore') return { kind: 'restore', label: said || 'Desfazer o trecho que piorou' };
       const strip = equivalenceStrip(eq, ns.ROUTES);
-      const frozenNow = this.freeze && this.freeze.phase === 'done' && Date.now() - this.freeze.at < 10000;
       if (action.kind === 'none' && strip.act === 'freeze' && !frozenNow) return { kind: 'freeze', label: said || 'Salvar a gasolina como referência' };
       if (action.kind === 'none' && strip.route) return { kind: 'route', label: said || strip.routeLabel, route: strip.route, subpage: strip.subpage };
       return { kind: 'none', label: '' };

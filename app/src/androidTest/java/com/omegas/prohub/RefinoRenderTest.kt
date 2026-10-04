@@ -187,8 +187,9 @@ class RefinoRenderTest {
         val acquisition = AutoCalAcquisition.fromSnapshot(snapshot)
         // O serviço está congelado para render: alimenta também o cérebro real consumido por refinoState.
         // Replay não tem uma ECU conectada; não inventa uma transação nem invalida dados pela conexão simulada.
-        service.equivalenceRuntime.evaluate(service.equivalence, service.equivalencePhases,
+        val brain = service.equivalenceRuntime.evaluate(service.equivalence, service.equivalencePhases,
             snapshot, acquisition, false, service.refinementJournal::pointGainScale)
+        check(brain != null) { "Replay precisa conter Curva K coerente: ${snapshot}" }
         return service.equivalencePhases.observe(
             ecuOnline = true,
             monitor = JSONObject().put("autoMatchCount", count ?: JSONObject.NULL).put("maxAutomatch", max).put("autoCalEnabled", 1),
@@ -206,6 +207,14 @@ class RefinoRenderTest {
     }
 
     private fun refreshRefino(scenario: ActivityScenario<MainActivity>) {
+        val expectedPhase = service(scenario).equivalencePhases.json().optString("phase")
+        val expectedAvailable = service(scenario).equivalenceRuntime.last() != null
+        // A ponte mantém memo assíncrono; espera a versão nova em vez de fotografar o cache do lançamento.
+        waitFor(12_000L) {
+            val value = evalJson(scenario, "OmegasAutoCal.getEquivalence()")
+            value.optJSONObject("autopilot")?.optString("phase") == expectedPhase &&
+                value.optJSONObject("equivalence")?.optBoolean("available", false) == expectedAvailable
+        }
         evalRaw(scenario, "window.OmegasApp?.refino?.refresh?.(true, true); 'ok';")
         SystemClock.sleep(900L)
     }
