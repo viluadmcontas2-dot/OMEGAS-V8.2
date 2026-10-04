@@ -93,6 +93,9 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .refino-actions-row { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
 .refino-actions-row > * { flex: 0 1 auto; min-width: 0; }
 .refino-actions-row .refino-undo { flex: 0 0 auto; }
+/* Guardião: Desfazer do Refino com a mesma presença dos outros botões da linha (não parece desativado). */
+html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-height: var(--touch-min); padding: 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--text); font-size: var(--text-critical); font-weight: 700; }
+.refino-actions-row .refino-undo button.quiet-button { background: transparent; color: var(--muted); font-weight: 600; }
 .refino-actions-row .refino-undo[hidden],
 .refino-actions-row .refino-stalls[hidden] { display: none; }
 .refino-actions-row .refino-stalls {
@@ -258,7 +261,8 @@ body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-
 .map-screen .map-k-cell span { font-size: 16px !important; line-height: 1 !important; }
 .map-screen .map-k-cell { padding: 0 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-.map-screen .map-editor-panel { display: flex; flex-direction: column; gap: 4px; padding: 4px 8px; overflow: hidden; }
+.map-screen .map-editor-panel { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px; overflow: hidden; }
+.map-screen .map-editor-panel > * { flex-shrink: 0; }
 .map-source-row { display: flex; align-items: center; gap: 8px; }
 .map-source-row .source-status { flex: 1 1 auto; min-width: 0; min-height: 0; padding: 4px 8px; font-size: 16px; line-height: 1.15; white-space: normal; }
 .map-source-row button { flex: 0 0 auto; }
