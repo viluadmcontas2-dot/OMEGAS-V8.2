@@ -194,6 +194,14 @@
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhuma escrita é enviada à ECU.' };
       return invoke(this.calibration, 'startMapBatchWrite', [JSON.stringify(cells || []), 0, 0, reason || 'Ajuste manual'], { ok: false, error: 'Ponte V7 indisponível' });
     }
+    /**
+     * "Liberar Mapa K" (um toque do dono): a saída do modo de gravação não foi confirmada e o Mapa K ficou
+     * travado. O Kotlin manda a saída e só diz `recovered` depois do ACK da ECU; acompanhe por mapWriteOperation().
+     */
+    releaseMapInsertion() {
+      if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhum comando é enviado à ECU.' };
+      return invoke(this.calibration, 'startInsertionRecovery', [], { ok: false, error: 'Liberação do Mapa K indisponível' });
+    }
     mapWriteOperation() { return this.demo ? { ok: true, state: 'IDLE', busy: false, progress: 0 } : invoke(this.calibration, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false }); }
 
     startCurveRead() {

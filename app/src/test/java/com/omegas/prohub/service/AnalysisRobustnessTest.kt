@@ -114,4 +114,44 @@ class AnalysisRobustnessTest {
             executor.shutdownNow()
         }
     }
+
+    @Test
+    fun `com executor substituivel a rodada presa e descartada e a nova roda no executor novo`() {
+        val stuck = named("test-analysis-stuck")
+        val fresh = named("test-analysis-fresh")
+        try {
+            var now = 0L
+            val lane = AnalysisLane(
+                stuck,
+                clock = { now },
+                replaceExecutor = { old ->
+                    (old as java.util.concurrent.ExecutorService).shutdownNow()
+                    fresh
+                },
+            )
+            val started = CountDownLatch(1)
+            val forever = CountDownLatch(1)
+            assertTrue(lane.submit {
+                started.countDown()
+                try { forever.await() } catch (_: InterruptedException) { }
+            })
+            assertTrue(started.await(2, TimeUnit.SECONDS))
+            now = 31_000L
+            val ran = CountDownLatch(1)
+            val ranOn = java.util.concurrent.atomic.AtomicReference("")
+            assertTrue("a rodada nova entra sem esperar a presa", lane.submit {
+                ranOn.set(Thread.currentThread().name)
+                ran.countDown()
+            })
+            assertTrue(ran.await(2, TimeUnit.SECONDS))
+            assertEquals("test-analysis-fresh", ranOn.get())
+            val deadline = System.nanoTime() + 2_000_000_000L
+            while (lane.isBusy() && System.nanoTime() < deadline) Thread.sleep(5)
+            assertFalse("a rodada abandonada não deixa a faixa ocupada nem negativa", lane.isBusy())
+            assertEquals(1L, lane.json().getLong("hangs"))
+        } finally {
+            stuck.shutdownNow()
+            fresh.shutdownNow()
+        }
+    }
 }

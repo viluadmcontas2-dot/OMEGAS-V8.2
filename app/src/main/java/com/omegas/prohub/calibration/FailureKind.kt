@@ -26,14 +26,23 @@ object FailureKind {
         return when {
             text.isBlank() -> APP
             text.contains("ecu retornou") || text.contains("ack inválido") || text.contains("ecu recusou") -> ECU
-            text.contains("usb") || text.contains("timeout") || text.contains("eco divergente") ||
+            text.contains("usb") || text.contains("timeout") || text.contains("tempo esgot") || text.contains("eco divergente") ||
                 text.contains("checksum") || text.contains("resposta incompleta") ||
                 text.contains("resposta sem campo") || text.contains("serial") -> TRANSPORT
             else -> APP
         }
     }
 
-    fun of(error: Throwable): String = (error as? CalibrationFailure)?.kind ?: ofMessage(error.message)
+    /**
+     * Tipo da exceção vale mais que o texto: TimeoutException (muitas vezes sem mensagem) e falhas de E/S
+     * da serial são transporte, nunca "APP" nem "A ECU recusou".
+     */
+    fun of(error: Throwable): String = when {
+        error is CalibrationFailure -> error.kind
+        error is java.util.concurrent.TimeoutException -> TRANSPORT
+        error is java.io.IOException && ofMessage(error.message) == APP -> TRANSPORT
+        else -> ofMessage(error.message)
+    }
 }
 
 /** Falha de calibração com a origem já classificada (transporte × ECU × app). */

@@ -91,17 +91,24 @@ class LanPanelServer(
     }
 
     private fun acceptLoop(server: ServerSocket) {
+        var failures = 0
         while (runningFlag.get()) {
             try {
                 val client = server.accept()
+                failures = 0
                 client.soTimeout = 4000
                 clientExecutor.execute { handle(client) }
             } catch (_: SocketTimeoutException) {
             } catch (e: Exception) {
-                if (runningFlag.get()) {
+                // Servidor fechado (stop) ou desligado: sai. Falha que persiste: espera crescente (50 ms → 2 s),
+                // sem laço quente e sem inundar o log (avisa na 1ª e a cada 20ª).
+                if (!runningFlag.get() || server.isClosed) break
+                failures += 1
+                if (failures == 1 || failures % 20 == 0) {
                     lastError = e.message ?: "Falha no servidor"
                     log.add("WARN", "LAN", lastError)
                 }
+                try { Thread.sleep(minOf(2_000L, 50L shl failures.coerceAtMost(6))) } catch (_: InterruptedException) { break }
             }
         }
     }

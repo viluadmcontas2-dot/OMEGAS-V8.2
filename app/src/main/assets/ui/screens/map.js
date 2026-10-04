@@ -29,6 +29,8 @@
       // Desfazer do Mapa K: id da foto (= id da escrita) e etapa ('' | 'preparing' | 'writing').
       this.undoId = '';
       this.restorePhase = '';
+      this.releasing = false;
+      this.releaseTicks = 0;
       this.pendingContext = null;
       this.liveContext = null;
       this.bind();
@@ -103,18 +105,55 @@
       if (this.editor.hasMap()) this.applyContext(this.pendingContext);
     }
 
-    settleReadFailure(message) {
+    settleReadFailure(message, result) {
       this.reading = false;
       this.editor.reset();
       this.cells.clear();
       this.rowHeaders = [];
       this.columnHeaders = [];
       if (this.host) {
-        this.host.innerHTML = '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da ECU não confirmada. Verifique a conexão e tente novamente.</span></div>';
+        // Trava de segurança (saída do modo de gravação não confirmada): um toque, a ECU confirma a saída.
+        this.host.innerHTML = result && result.safetyLocked === true
+          ? '<div class="map-empty-state"><b>Mapa K bloqueado por segurança</b><span>A saída do modo de gravação não foi confirmada. Toque para a ECU confirmar a saída.</span><button id="mapReleaseButton" type="button" class="primary" style="min-height:76px;min-width:300px;font-size:24px">Liberar Mapa K</button></div>'
+          : '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da ECU não confirmada. Verifique a conexão e tente novamente.</span></div>';
+        document.getElementById('mapReleaseButton')?.addEventListener('click', () => this.releaseInsertion());
       }
       text('mapSourceStatus', 'Mapa não confirmado');
       this.store.patch({ map: { ...this.store.get().map, state: 'failed', data: null, selection: 0, review: null } });
       if (message) this.alert(message);
+    }
+
+    /**
+     * Um toque do dono em "Liberar Mapa K": o Kotlin manda a saída do modo de gravação pela fila normal e só
+     * `recovered === true` (ACK da ECU) vira "Mapa K liberado". Falha de cabo ≠ recusa da ECU (failureKind).
+     * O acompanhamento roda no poll do scheduler (nenhum timer de tela).
+     */
+    releaseInsertion() {
+      if (this.releasing) return;
+      const started = this.api.releaseMapInsertion();
+      if (!started?.ok || !started?.started) {
+        this.alert(failureText(started, 'Não foi possível liberar o Mapa K.'));
+        return;
+      }
+      this.releasing = true;
+      this.releaseTicks = 0;
+      const button = document.getElementById('mapReleaseButton');
+      if (button) { button.disabled = true; button.textContent = 'Liberando…'; }
+    }
+
+    pollRelease() {
+      if (!this.releasing) return;
+      const operation = this.api.mapWriteOperation();
+      if (operation && operation.busy && this.releaseTicks < 600) { this.releaseTicks += 1; return; }
+      this.releasing = false;
+      if (operation && operation.ok === true && operation.recovered === true) {
+        if (this.host) this.host.innerHTML = '<div class="map-empty-state"><b>Mapa K liberado</b><span>A ECU confirmou a saída. Toque em Reler ECU para ler o mapa desta sessão.</span></div>';
+        text('mapSourceStatus', 'Mapa K liberado · releia a ECU');
+      } else {
+        this.alert(failureText(operation, 'A ECU não confirmou a saída. O Mapa K continua bloqueado.'));
+        const button = document.getElementById('mapReleaseButton');
+        if (button) { button.disabled = false; button.textContent = 'Liberar Mapa K'; }
+      }
     }
 
     startRead(automatic) {
@@ -142,7 +181,7 @@
         if (!result?.busy && result?.state !== 'READING') {
           this.reading = false;
           if (!result?.ok || result?.state === 'FAILED') {
-            this.settleReadFailure(result?.error || 'Falha ao ler o Mapa K.');
+            this.settleReadFailure(failureText(result, 'Falha ao ler o Mapa K.'), result);
           } else {
             try {
               this.editor.load(result);
@@ -159,6 +198,7 @@
         }
       }
       this.pollWrite();
+      this.pollRelease();
     }
 
     buildGrid() {

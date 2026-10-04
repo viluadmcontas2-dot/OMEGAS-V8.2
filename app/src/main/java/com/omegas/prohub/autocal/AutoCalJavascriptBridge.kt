@@ -156,6 +156,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun setAcquisitionEnabled(enabled: Boolean): String {
         val actionManager = currentNativeManager() ?: return unavailable()
+        noLocalControlFailure()?.let { return it }
         val action = if (enabled) {
             AutoCalNativeActionManager.Action.ENABLE_AUTO_CAL
         } else {
@@ -213,6 +214,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             return localFailure("Ação destrutiva não suportada")
         }
 
+        // Mesma regra de qualquer escrita K: sem o controle principal do MP48 (Link), nenhuma ação sai deste aparelho.
+        noLocalControlFailure()?.let { return it }
         val result = actionManager.execute(preparationId)
         invalidateAnalysis()
         if (!result.optBoolean("ok", false)) actionManager.clearPreparation()
@@ -224,6 +227,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             .put("manualOnly", true)
             .toString()
     }
+
+    private fun noLocalControlFailure(): String? =
+        if (activityRef.get()?.serviceOrNull()?.canWriteLocally() == false) {
+            localFailure("Este aparelho não possui o controle principal do MP48")
+        } else null
 
     @JavascriptInterface
     fun clearNativeActionPreparation(): String =

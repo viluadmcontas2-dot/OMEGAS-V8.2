@@ -28,7 +28,13 @@ internal object JsonFiles {
         target.parentFile?.mkdirs()
         val tmp = File(target.parentFile, target.name + "." + System.nanoTime() + "." + tmpCounter.incrementAndGet() + ".tmp")
         try {
-            tmp.writeText(text)
+            // fsync do tmp ANTES do rename: um corte de energia nunca deixa o rename apontando para dados que
+            // ainda estavam só na memória do kernel.
+            java.io.FileOutputStream(tmp).use { output ->
+                output.write(text.toByteArray(Charsets.UTF_8))
+                output.flush()
+                output.fd.sync()
+            }
             if (!tmp.renameTo(target)) {
                 if (target.isFile) {
                     try { target.copyTo(File(target.parentFile, target.name + ".bak"), overwrite = true) } catch (_: Exception) {}
