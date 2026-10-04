@@ -59,14 +59,14 @@ async function audit(page,route,height,name){
    const summary=route==='autocal'?'.autocal-reset-menu summary':'.refino-details summary';
    await page.locator(summary).click();await page.waitForTimeout(150);
    const original=await page.evaluate(()=>window.OmegasUi.CurveChart.shared.scale.xMax);
-   await page.locator('[data-chart-view="fullRange"]').check();await page.waitForTimeout(150);
+   await page.locator('.screen.active [data-chart-view="fullRange"]').check();await page.waitForTimeout(150);
    const full=await page.evaluate(()=>window.OmegasUi.CurveChart.shared.scale.xMax);
    assert.ok(full>=22&&full>=original);
-   await page.locator('[data-chart-view="fullRange"]').uncheck();
-   await page.locator('[data-chart-view="gas"]').uncheck();await page.waitForTimeout(150);
+   await page.locator('.screen.active [data-chart-view="fullRange"]').uncheck();
+   await page.locator('.screen.active [data-chart-view="gas"]').uncheck();await page.waitForTimeout(150);
    assert.equal(await page.locator('.ar-chart-host .autocal-reference-line.gas').count(),0);
    assert.equal(await page.locator('.ar-chart-host .chart-between.gas').count(),0);
-   await page.locator('[data-chart-view="gas"]').check();
+   await page.locator('.screen.active [data-chart-view="gas"]').check();
    await page.screenshot({path:path.join(out,route+'-opcoes.png')});
    await page.locator(summary).click();
    const before=await page.evaluate(()=>window.OmegasUi.CurveChart.shared.renders);

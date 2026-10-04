@@ -296,7 +296,7 @@
           <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Refino</h2><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
             <span id="refinoPhaseChip" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
             <div class="instrument-menus"><details class="instrument-details refino-proposals"><summary>Sugestões</summary><div class="instrument-detail-content" id="refinoProposals">Ainda sem proposta. O app continua medindo.</div></details>
-            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}</div></details></div>
+            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-learning-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p><button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar aprendizado GNV</button><button type="button" class="btn-ghost" data-refino-acquisition>Leitura da ECU · pausa e releitura</button></section></div></details></div>
             <div class="refino-stalls ar-stall" id="refinoStalls" hidden></div>
           </header>
           <section class="ar-chart-card" aria-label="Curva de aquisição · Gasolina × GNV">
@@ -332,6 +332,8 @@
     }
 
     onClick(event) {
+      if (event.target.closest('[data-refino-reset-gas]')) { this.resetGasLearning(); return; }
+      if (event.target.closest('[data-refino-acquisition]')) { this.app.router?.open('autocal'); return; }
       if (event.target.closest('[data-refino-unfreeze]')) { this.unfreezeReference(); return; }
       if (event.target.closest('[data-refino-primary]')) { this.primary(); return; }
       if (event.target.closest('[data-refino-undo]')) { this.openUndo(); return; }
@@ -364,6 +366,15 @@
     }
 
     /** Congelar a Referência: não escreve na ECU. Um toque; o resultado fica à vista e o Desfazer volta à anterior. */
+    resetGasLearning() {
+      if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
+      const result = this.api.resetGasLearning?.() || { ok: false, message: 'Reinício do aprendizado indisponível.' };
+      this.freeze = { phase: result.ok === true ? 'done' : 'failed',
+        message: result.message || (result.ok === true ? 'Aprendizado GNV reiniciado. A gasolina continua como referência.' : 'Não foi possível reiniciar agora.'), at: Date.now() };
+      if (result.ok === true) { this.selected = {}; this.readout(''); ns.CurveChart?.reset(); }
+      this.refresh(true, true);
+    }
+
     freezeReference() {
       const result = this.api.freezeReference?.() || { ok: false };
       this.freeze = result.ok === true
@@ -581,6 +592,8 @@
         const points = readyPoints(eq, this.analysis);
         proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'ponto', 'pontos')} da Curva K · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>Ponto ${p.index + 1}</dt><dd>${D.kValue(p.currentRaw / 16384)} → ${D.kValue(p.targetRaw / 16384)}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : '<p>Ainda sem proposta. O app continua medindo.</p>';
       }
+      const resetGas = document.querySelector('[data-refino-reset-gas]');
+      if (resetGas) resetGas.disabled = op.phase === 'reading' || op.phase === 'writing' || this.store.get()?.status?.usbConnected !== true;
       this.renderStalls();
       this.renderSentence(rs, phase, pilot);
       this.renderPrimary();

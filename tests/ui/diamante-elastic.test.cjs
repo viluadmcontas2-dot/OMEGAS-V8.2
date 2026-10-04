@@ -66,3 +66,27 @@ test('AutoCal: leitura anterior precede pausa; estado integrado e ações secund
  assert.ok(app.$('[data-autocal-action="RESET_GAS"]').closest('.ar-buttons').querySelector('summary'));
  L.assertClean(app,'autocal');app.destroy();
 });
+
+test('Refino: a régua completa não espreme aquisição curta; faixa inteira continua disponível',()=>{
+ const c=chart();const axis=Array.from({length:30},(_,i)=>.5+i*.75);
+ const snapshot={available:true,fields:[
+ {key:'PETR_INJ_TBP',status:'VALID',physicalValues:axis},
+ {key:'PETR_MNFLD_PRESS_RV',status:'VALID',physicalValues:axis.map(x=>.1+x*.05)},
+ {key:'GAS_MNFLD_PRESS_RV',status:'VALID',physicalValues:axis.map(x=>.12+x*.05)}]};
+ const eq={betweenPoints:[{index:0,kind:'gap',state:'coletado',gas:{ms:8,mapBar:.5,n:100},petrol:{ms:8.1,mapBar:.5,n:100}}]};
+ const focused=c.buildModel({snapshot,projection:{snapshot},eq,mode:'between'});
+ assert.ok(focused.domain.xMax<10);assert.ok(focused.reference.length<30);
+ const full=c.buildModel({snapshot,projection:{snapshot},eq,mode:'between',view:{fullRange:true}});
+ assert.equal(full.reference.length,30);assert.ok(full.domain.xMax>=22);
+ const ends=c.buildModel({snapshot,projection:{snapshot},eq:{betweenPoints:[...eq.betweenPoints,{index:-1,kind:'open-low',gas:{ms:.2,mapBar:.1,n:100}}]},mode:'between'});
+ assert.equal(ends.betweenPoints.length,1,'somente pontos entre bandas');
+});
+test('Refino: reinício local de GNV é explícito, não escreve a ECU e respeita operação em curso',()=>{
+ const app=L.boot();app.go('refino');app.settle(4);
+ const screen=app.win.OmegasApp.refino;let resets=0;
+ screen.api={...screen.api,resetGasLearning:()=>{resets++;return {ok:true};}};
+ const before=app.world.mark();screen.resetGasLearning();assert.equal(resets,1);
+ assert.equal(L.actionCalls(app,before).length,0,'nenhum escritor nativo acionado');
+ screen.operation={phase:'writing'};screen.resetGasLearning();assert.equal(resets,1);
+ L.assertClean(app,'reset local');app.destroy();
+});

@@ -256,6 +256,7 @@
       const collected = state ? /colet|collected|ok/.test(state) : Boolean(gas || petrol);
       return {
         index: pick(b, ['index']) ?? i,
+        kind: String(b.kind || 'gap'),
         state: collected ? 'collected' : 'missing',
         centerMs: pick(b, ['centerMs']),
         centerMapBar: pick(b, ['centerMapBar']),
@@ -533,7 +534,7 @@
     const snapshot = c.snapshot || projection.snapshot || {};
     const visible = c.view || {};
     const project = p => ({ ...p, petrolMapBar: visible.petrol === false ? null : p.petrolMapBar, gasMapBar: visible.gas === false ? null : p.gasMapBar, gasEquivalentMs: visible.gas === false ? null : p.gasEquivalentMs });
-    const reference = UX.referencePoints(snapshot, projection.analysis || {}).map(project);
+    const allReference = UX.referencePoints(snapshot, projection.analysis || {}).map(project);
     const history = (c.history || []).map(project);
     const ecu = [...(visible.petrol === false ? [] : UX.acquiredPoints(snapshot, 'petrol')), ...(visible.gas === false ? [] : UX.acquiredPoints(snapshot, 'gas'))];
     const eq = c.eq || {};
@@ -544,7 +545,7 @@
     ].filter(p => finite(p.tpetMs) !== null && finite(p.mapBar) !== null && (p.fuel === 'GAS' ? visible.gas !== false : visible.petrol !== false));
     const human = UX.humanState(snapshot, deriveState(projection), projection);
     // AutoCal não desenha pontos nossos: a escala vem só da ECU e das curvas.
-    const given = normalizeBetween(eq.betweenPoints || (c.analysis && c.analysis.betweenPoints)).map(b => ({
+    const given = normalizeBetween(eq.betweenPoints || (c.analysis && c.analysis.betweenPoints)).filter(b => b.kind === 'gap' || (b.kind !== 'open-low' && b.kind !== 'open-high' && b.index >= 0 && b.index < 17)).map(b => ({
       ...b, gas: visible.gas === false ? null : b.gas, petrol: visible.petrol === false ? null : b.petrol,
     }));
     const intervalPoints = given.flatMap(b => [
@@ -553,6 +554,13 @@
     ]);
     const stalls = Array.isArray(eq.stalls && eq.stalls.events) ? eq.stalls.events : [];
     const relevant = c.mode === 'between' ? [...items, ...intervalPoints, ...stalls.map(p => ({ tpetMs: p.petrolMs, mapBar: p.mapBar }))] : [];
+    // A tabela completa é uma régua, não aquisição. Vista normal acompanha a faixa
+    // adquirida; Faixa inteira mantém toda a régua. Nenhum ponto adquirido é descartado.
+    const anchors = [...ecu.map(p => ({ x: p.petrolMs, y: p.mapBar })),
+      ...relevant.map(p => ({ x: p.tpetMs ?? p.petrolMs, y: p.mapBar }))].filter(p => Number.isFinite(p.x) && p.x > 0 && Number.isFinite(p.y) && p.y > 0);
+    const lastMeasured = anchors.length ? Math.max(...anchors.map(p => p.x)) : null;
+    const limit = lastMeasured === null ? Infinity : lastMeasured + Math.max(.25, lastMeasured * .04);
+    const reference = visible.fullRange || !anchors.length ? allReference : allReference.filter(p => p.petrolMs <= limit);
     const domain = focusDomain([...reference, ...history], ecu, relevant, { fullRange: visible.fullRange, equivalent: c.mode === 'between' && visible.gas !== false });
     const thresholds = (() => {
       const f = (Array.isArray(snapshot.fields) ? snapshot.fields : []).find(x => x && x.key === 'MNFLD_PRESS_THD' && x.status === 'VALID');
