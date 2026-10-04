@@ -19,24 +19,137 @@
   <link rel="stylesheet" href="styles-lote-f.css">
   <link rel="stylesheet" href="styles-tela-agora-mapa-curva.css">
   <link rel="stylesheet" href="styles-autocal-refino.css">
+  <link rel="stylesheet" href="styles-diamante.css">
 </head>
 <body>
   <div id="app" class="app-shell" aria-label="OMEGAS V8">
     <aside class="side-rail" aria-label="Navegação principal">
-      <div class="brand-block">
-        <div class="brand-mark" aria-hidden="true">Ω</div>
-        <div><b>OMEGAS</b><span id="buildIdentity">V8</span></div>
-      </div>
+
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
-        <button type="button" data-route="dashboard" class="active"><span>Agora</span></button>
-        <button type="button" data-route="map"><span>Mapa K</span></button>
-        <button type="button" data-route="curve"><span>Curva K</span></button>
-        <button type="button" data-route="autocal"><span>AutoCal</span></button>
-        <button type="button" data-route="refino"><span>Refino</span></button>
-        <button type="button" data-route="sessions"><span>Sessões</span></button>
-        <button type="button" data-route="tools"><span>Ferramentas</span></button>
-        <button type="button" data-route="diagnostico"><span>Diagnóstico</span></button>
+        <button type="button" data-route="dashboard" class="active"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+<span>Agora</span></button>
+        <button type="button" data-route="map"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14" />
+  <path d="M3 10h18" />
+  <path d="M10 3v18" />
+</svg>
+<span>Mapa K</span></button>
+        <button type="button" data-route="curve"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 19l16 0" />
+  <path d="M4 15l4 -6l4 2l4 -5l4 4" />
+</svg>
+<span>Curva K</span></button>
+        <button type="button" data-route="autocal"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M4 10a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+  <path d="M6 4v4" />
+  <path d="M6 12v8" />
+  <path d="M10 16a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+  <path d="M12 4v10" />
+  <path d="M12 18v2" />
+  <path d="M16 7a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+  <path d="M18 4v1" />
+  <path d="M18 9v11" />
+</svg>
+<span>AutoCal</span></button>
+        <button type="button" data-route="refino"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M11.5 12a.5 .5 0 1 0 1 0a.5 .5 0 1 0 -1 0" fill="currentColor" />
+  <path d="M5 12a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+  <path d="M12 3l0 2" />
+  <path d="M3 12l2 0" />
+  <path d="M12 19l0 2" />
+  <path d="M19 12l2 0" />
+</svg>
+<span>Refino</span></button>
+        <button type="button" data-route="sessions"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M12 8l0 4l2 2" />
+  <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" />
+</svg>
+<span>Sessões</span></button>
+        <button type="button" data-route="tools"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5" />
+</svg>
+<span>Ferramentas</span></button>
+        <button type="button" data-route="diagnostico"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 12h4l3 8l4 -16l3 8h4" />
+</svg>
+<span>Diagnóstico</span></button>
       </nav>
 
       <div class="rail-status">
@@ -48,6 +161,10 @@
 
     <section class="workspace">
       <header class="workspace-head">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">Ω</div>
+        <div><b>OMEGAS</b><span id="buildIdentity">V8</span></div>
+      </div>
         <div><small id="routeEyebrow">AGORA</small><h1 id="routeTitle">Agora</h1></div>
         <p>Leitura e ajuste manual assistido da MP48.</p>
       </header>
@@ -146,15 +263,15 @@
         </section>
 
         <section id="sessionsScreen" class="screen utility-screen sessions-screen" data-screen="sessions" aria-labelledby="sessionsTitle">
-          <div class="page-intro"><div><small>SESSÕES</small><h2 id="sessionsTitle">O que aconteceu em cada condução</h2></div></div>
+          <div class="page-intro"><div><small>SESSÕES</small><h2 id="sessionsTitle">Sessões</h2><p class="route-subtitle">O que aconteceu em cada condução</p></div></div>
           <div id="sessionsHost" class="sessions-host"><p class="empty-copy">Lendo as sessões salvas…</p></div>
         </section>
 
         <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
-          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Saúde, backup e ajustes do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
+          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Ferramentas</h2><p class="route-subtitle">Saúde, backup e ajustes do app</p></div><p id="toolEnvironment">Detectando ambiente…</p></div>
         </section>
         <section id="diagnosticoScreen" class="screen utility-screen diagnostico-screen" data-screen="diagnostico" aria-labelledby="diagnosticoTitle">
-          <div class="page-intro"><div><small>DIAGNÓSTICO</small><h2 id="diagnosticoTitle">Engasgos e fluidez do GNV</h2></div></div>
+          <div class="page-intro"><div><small>DIAGNÓSTICO</small><h2 id="diagnosticoTitle">Diagnóstico</h2><p class="route-subtitle">Engasgos e fluidez do GNV</p></div></div>
           <div id="diagnosticoHost" class="diagnostico-host"></div>
         </section>
       </main>

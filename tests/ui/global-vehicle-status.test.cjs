@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '../..');
 const component = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/components/vehicle-status-strip.js'), 'utf8');
 const router = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/core/router.js'), 'utf8');
 
-for (const label of ['ECU', 'COMBUSTÍVEL', 'RPM', 'INJEÇÃO', 'ÚLTIMO DADO']) {
+for (const label of ['ECU', 'COMBUSTÍVEL', 'RPM', 'Inj. gasolina', 'Inj. GNV', 'MAP', 'Leitura']) {
   assert.equal(component.includes(label), true, `missing ${label}`);
 }
 assert.equal(component.includes('app.store'), true);

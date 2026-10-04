@@ -25,3 +25,12 @@ Preview em screenshot (1280×720) por aba para aprovação do dono antes de mesc
 
 ## Tema
 Um só: **escuro premium** (dirige à noite) — fundo grafite/azul-noite, superfícies em camadas (`--surface/-2/-3`), texto claro, acentos semânticos com contraste AA, sem cinza chapado e sem controle nativo. Não há tema claro nem chave de tema; tudo via `var(--x)` de `tokens.css`. Trilho achatado, sem números nos itens.
+
+## Refinamento elástico — 2026-10-04
+- A decisão atual do dono substitui a ordem rígida e o piso permanente de 22 ms. AutoCal e Refino: estado integrado ao cabeçalho, gráfico dominante no centro, trilho de ações ao alcance.
+- Área útil é a área da WebView, descontadas as barras do Android pelo host. Validar também 1280×672 e 1280×648; nunca dimensionar por 720 fixos.
+- AutoCal: Leitura anterior junto à pausa; zonas, releituras e opções em um só trilho. Refino mantém intenção, permissões e Desfazer reais.
+- Escala automática usa somente séries visíveis com coordenadas válidas e pequena margem nos dois eixos. A referência válida e a leitura anterior selecionada nunca são cortadas. Faixa inteira expande para ao menos 22 ms/1,15 bar, sem limitar valores maiores.
+- Gasolina/GNV são opções de apresentação, nunca aquisição ou gravação. Ao menos uma série fica visível. Nenhum novo timer, protocolo ou escritor.
+- tokens.css continua autoridade das cores, sombras e tipografia. styles-diamante.css adapta a composição; CurveChart é dono único do desenho e da escala.
+- A autorização atual dispensa nova aprovação estética; evidência de CI, navegador e Android é obrigatória antes da entrega. Teste físico cabe ao dono.

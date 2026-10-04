@@ -2,6 +2,7 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
   const rules = ns.DisplayRules;
+  const finite = rules.finite;
   const DASH = '—';
 
   function text(id, value) {
@@ -13,7 +14,23 @@
     if (node.dataset.empty !== empty) node.dataset.empty = empty;
   }
 
-  const fuelLabel = rules.fuelLabel;
+    // O serviço calcula em segundo plano; aqui só apresentamos o último resultado pronto.
+    function summary(result) {
+      const eq = result || {};
+      const available = eq.ok === true && eq.available !== false;
+      const index = available ? finite(eq.index) : null;
+      const coverage = available ? finite(eq.coverage) : null;
+      const fraction = value => value !== null && value >= 0 && value <= 1 ? Math.round(value * 100) : null;
+      const action = available && eq.nextAction || {};
+      const routes = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico'];
+      return {
+        percent: fraction(index), coverage: fraction(coverage), provisional: eq.provisional === true,
+        next: typeof action.text === 'string' && action.text.trim() ? action.text.trim() : 'Aguardando medição da ECU.',
+        route: routes.includes(action.route) ? action.route : 'refino',
+        points: available && Array.isArray(eq.points) ? eq.points.filter(p => p && Number.isInteger(p.index) && p.index >= 0 && p.index < 30) : [],
+      };
+    }
+    ns.DashboardModel = { summary };
   function ensureStyles() {
     if (document.querySelector('link[data-dashboard-now]')) return;
     const link = document.createElement('link');
@@ -23,11 +40,7 @@
     document.head.appendChild(link);
   }
 
-  /**
-   * Agora é para dirigir: 4 valores de peso igual (injeção em ms, RPM, MAP e combustível) lidos de braço esticado.
-   * Frescor numa regra só (LiveStore.read): até 1,5 s normal; de 1,5 a 3 s cinza + "atrasado"; acima de 3 s os números
-   * viram "—" (o nível dos gases, level_raw, segue a mesma regra) e o cartão de baixo diz "Sem dados há N s · confira o cabo". Valor velho nunca finge ser de agora.
-   */
+  /** Agora apresenta a intenção do cérebro; os dados vivos ficam no cabeçalho global. */
   class DashboardScreen {
     constructor() {
       ensureStyles();
@@ -44,46 +57,71 @@
         this.root.addEventListener('click', (event) => {
           if (event.target.closest && event.target.closest('[data-dash-refino]')) {
             const app = root.OmegasApp;
-            if (app && app.router) app.router.navigate('refino');
+            if (app && app.router) app.router.navigate(this.nextRoute || 'refino');
           }
         });
       }
-      this.root.innerHTML = `
-        <div class="now-dashboard-shell">
-          <header class="now-head"><small>AGORA</small><h2>O que o motor está fazendo</h2></header>
-          <section class="now-tile-grid" aria-label="Leitura principal">
-            <article class="now-tile" data-tile="petrol"><small>INJEÇÃO</small><b><span id="dashHeroPetrol">—</span><em>ms</em></b></article>
-            <article class="now-tile" data-tile="rpm"><small>RPM</small><b><span id="dashRpm">—</span><em>rpm</em></b></article>
-            <article class="now-tile" data-tile="map"><small>MAP</small><b><span id="dashMap">—</span><em>bar</em></b></article>
-            <article class="now-tile" data-tile="fuel"><small>COMBUSTÍVEL</small><b><span id="dashFuel">—</span></b><span class="now-tile-sub" id="dashFuelSub" hidden></span></article>
-          </section>
-
-          <section class="now-quiet-row" aria-label="Condição e apoio">
-            <div id="dashHealth" class="now-session-card" data-level="offline">
-              <span class="state-indicator"></span>
-              <div class="now-session-copy"><b>Sem cabo</b><p data-health-detail>Conecte o cabo USB na ECU</p></div>
-              <button type="button" class="primary" data-usb-allow hidden>Permitir USB</button>
+        this.root.innerHTML = `
+          <div class="now-dashboard-shell">
+            <header class="now-heading"><h2>Agora</h2><p>Seu ajuste, em uma visão.</p></header>
+            <div class="now-overview">
+              <section class="now-equivalence" aria-label="Equivalência com a gasolina">
+                <p>Equivalência com a gasolina</p><b id="dashEquivalence">—</b>
+                <p id="dashEquivalenceNote">Aguardando medição</p>
+                <progress id="dashEquivalenceProgress" max="100" value="0" aria-label="Condução equivalente à gasolina"></progress>
+              </section>
+              <section class="now-intention"><small>PRÓXIMO PASSO</small><h3 id="dashNext">Aguardando medição da ECU.</h3>
+                <p>O app observa. Você revisa e decide quando gravar.</p>
+                <button type="button" class="primary" data-dash-refino>Abrir Refino</button>
+              </section>
             </div>
-            <article class="now-quiet-tile" id="dashLevelsTile" hidden><small>NÍVEIS</small><b id="dashLevelsRaw">—</b></article>
-            <article class="now-quiet-tile now-refino-card" id="dashRefinoTile" hidden role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">—</b></article>
-          </section>
-        </div>`;
+            <section class="now-coverage"><header><h3>Faixas da sua condução</h3><span id="dashCoverage">— de cobertura medida</span></header>
+              <div id="dashBands" class="now-bands" aria-label="Estado das 30 faixas"></div>
+              <p>● Equivalente <span>● Em medição</span> <em>● Precisa de atenção</em> · O Refino mostra os pontos e as sugestões.</p>
+            </section>
+            <footer class="now-quiet-row">
+              <div id="dashHealth" class="now-session-card" data-level="offline"><span class="state-indicator"></span>
+                <div class="now-session-copy"><b>Sem cabo</b><p data-health-detail>Conecte o cabo USB na ECU</p></div><button type="button" class="primary" data-usb-allow hidden>Permitir USB</button>
+              </div>
+              <details class="now-reading-details"><summary>Detalhes da leitura</summary><div><p>Nível da ECU <b id="dashLevelsRaw">—</b></p><p>Refino <b id="dashRefino">—</b></p></div></details>
+            </footer>
+          </div>`;
     }
-
-    /** Fase do refino (o nosso AutoCal) em uma linha; consulta a cada 3 s, no máximo. */
-    renderRefino() {
-      const now = Date.now();
-      if (this.refinoAt && now - this.refinoAt < 3000) return;
-      this.refinoAt = now;
-      const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
-      const eq = api && typeof api.refinementPhase === 'function' ? api.refinementPhase() : null;
-      const pilot = (eq && eq.autopilot) || {};
-      const refinoLabel = pilot.phase ? rules.phaseLabel(pilot.phase, pilot.expiredFrom) : DASH;
-      text('dashRefino', refinoLabel);
-      const refinoTile = document.getElementById('dashRefinoTile');
-      if (refinoTile) refinoTile.hidden = !refinoLabel || refinoLabel === DASH;
-    }
-
+      /** Uma visão pronta, no máximo a cada 3 s; inclui o ajuste local de engasgos do Refino. */
+      renderRefino() {
+        const now = Date.now();
+        if (this.refinoAt && now - this.refinoAt < 3e3) return;
+        this.refinoAt = now;
+        const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
+        const result = api && typeof api.equivalence === "function" ? api.equivalence() : null;
+        const pilot = result && result.autopilot || {};
+        text("dashRefino", rules.phaseLabel(pilot.phase, pilot.expiredFrom));
+        const model = summary(result);
+        text("dashEquivalence", model.percent === null ? "—" : model.percent + "%");
+        text("dashEquivalenceNote", model.percent === null ? "Ainda sem base para comparar" : "da condução já equivale à gasolina" + (model.provisional ? " · provisório" : ""));
+        text("dashCoverage", model.coverage === null ? "— de cobertura medida" : model.coverage + "% de cobertura medida");
+        text("dashNext", model.next);
+        const progress = document.getElementById("dashEquivalenceProgress");
+        if (progress) {
+          progress.value = model.percent === null ? 0 : model.percent;
+          progress.hidden = model.percent === null;
+        }
+        const button = this.root.querySelector("[data-dash-refino]");
+        const names = { dashboard: 'Agora', map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Refino', sessions: 'Sessões', tools: 'Ferramentas', diagnostico: 'Diagnóstico' };
+        this.nextRoute = model.route === 'dashboard' ? 'refino' : model.route;
+        if (button) button.textContent = 'Abrir ' + names[this.nextRoute];
+        const bands = document.getElementById('dashBands');
+        const key = model.points.map(p => p.index + ':' + p.state).join('|');
+        if (bands && key !== this.bandsKey) {
+          this.bandsKey = key;
+          bands.innerHTML = Array.from({ length: 30 }, (_, index) => {
+            const point = model.points.find(p => p.index === index) || {};
+            const state = String(point.state || 'SEM_DADOS');
+            const tone = ['EQUIVALENTE', 'CONFIRMADO'].includes(state) ? 'ok' : ['POBRE', 'RICO', 'CONTESTADO'].includes(state) ? 'attention' : state === 'SEM_DADOS' ? 'unknown' : 'measuring';
+            return '<span data-tone="' + tone + '" title="Faixa ' + (index + 1) + '"></span>';
+          }).join('');
+        }
+      }
     /** Mensagem do cartão de saúde: uma frase humana e o que fazer. */
     health(state, reading) {
       const status = state.status || {};
@@ -113,24 +151,8 @@
       if (!this.root) return;
       const status = state.status || {};
       const reading = ns.LiveStore.read(state);
-      const fuel = reading.level === 'fresh' || reading.level === 'late' ? fuelLabel(reading.fuel || status.fuelState) : DASH;
-      const cutoff = fuel === 'CORTE';
-      text('dashHeroPetrol', cutoff ? DASH : rules.ms(reading.petrolMs));
-      text('dashRpm', rules.rpm(reading.rpm));
-      text('dashMap', rules.bar(reading.mapBar));
-      text('dashFuel', fuel);
-      const fuelSub = document.getElementById('dashFuelSub');
-      if (fuelSub) { fuelSub.hidden = !cutoff; fuelSub.textContent = cutoff ? 'Desacelerando' : ''; }
-      const levelsTile = document.getElementById('dashLevelsTile');
-      if (levelsTile) levelsTile.hidden = reading.levelRaw === null;
       text('dashLevelsRaw', reading.levelRaw === null ? DASH : Math.round(reading.levelRaw).toLocaleString('pt-BR'));
       this.renderRefino();
-      const tiles = this.root.querySelector('.now-tile-grid');
-      if (tiles) {
-        const connected = status.usbConnected === true;
-        const staleTiles = connected && reading.grey ? 'true' : 'false';
-        if (tiles.dataset.stale !== staleTiles) tiles.dataset.stale = staleTiles;
-      }
       const health = document.getElementById('dashHealth');
       if (health) {
         const next = this.health(state, reading);

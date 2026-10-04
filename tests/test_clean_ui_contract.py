@@ -84,17 +84,17 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn("const LIVE_ROUTES = ['dashboard', 'map', 'autocal', 'refino']", self.router)
         self.assertIn("if (isLiveRoute(route)) {\n      const envelope = api.presentSnapshot(lastPresentSequence)", self.app)
 
-    def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
-        self.assertIn('INJEÇÃO', self.dashboard)
-        self.assertIn('dashHeroPetrol', self.dashboard)
-        self.assertIn('now-dashboard-shell', self.dashboard)
-        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashLevelsRaw', 'dashRefino'):
+    def test_dashboard_prioritizes_intention_with_persistent_telemetry(self):
+        strip = (UI / "components/vehicle-status-strip.js").read_text("utf-8")
+        for marker in ('dashHeroPetrol', 'dashRpm', 'dashMap', 'dashFuel', 'dashGas'):
+            self.assertIn(marker, strip)
+            self.assertNotIn(marker, self.dashboard)
+        for marker in ('now-dashboard-shell', 'dashNext', 'dashEquivalence', 'dashLevelsRaw', 'dashRefino'):
             self.assertIn(marker, self.dashboard)
-        self.assertIn('NÍVEIS', self.dashboard)
-        self.assertIn('level_raw', self.dashboard)
+        self.assertIn('Nível da ECU', self.dashboard)
+        self.assertIn('reading.levelRaw', self.dashboard)
         self.assertNotIn('level_percentage', self.dashboard)
-        self.assertNotIn('dashHeroRpm', self.dashboard)
-        self.assertNotIn('dashGas', self.dashboard)
+        self.assertNotIn('now-tile', self.dashboard)
 
     def test_map_curve_have_expected_contracts(self):
         self.assertIn('id="mapSelectAll"', self.html)

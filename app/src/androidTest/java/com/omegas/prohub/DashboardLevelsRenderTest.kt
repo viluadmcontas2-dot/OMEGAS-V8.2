@@ -16,6 +16,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -453,7 +454,11 @@ class DashboardLevelsRenderTest {
             val bridge = checkNotNull(getPrivateField(activity, "calibrationBridge")) {
                 "Calibration bridge unavailable"
             }
-            setPrivateField(bridge, "lastOperation", JSONObject(fixture.operation.toString()))
+            // The operation result is process-scoped; lastOperation is an accessor,
+            // not a backing field on the Activity-owned bridge instance.
+            val operationField = bridge.javaClass.getDeclaredField("sharedLastOperation")
+            operationField.isAccessible = true
+            operationField.set(null, JSONObject(fixture.operation.toString()))
             activity.refreshWebUi()
         }
         evalRaw(
@@ -662,6 +667,10 @@ class DashboardLevelsRenderTest {
                 backupSaveVisible: visibleInViewport('curveBackupSave'),
                 backupSelectVisible: visibleInViewport('curveBackupSelect'),
                 backupRestoreVisible: visibleInViewport('curveBackupRestore'),
+                readVisible: visibleInViewport('curveReadButton'),
+                writeVisible: visibleInViewport('curveReviewButton'),
+                writeDisabled: document.getElementById('curveReviewButton')?.disabled === true,
+                adjustmentVisible: visibleInViewport('curveTargetFactor'),
                 bodyHasNaN: /\\bNaN\\b/.test(body),
                 bodyHasUndefined: /\\bundefined\\b/i.test(body)
               };
@@ -684,6 +693,10 @@ class DashboardLevelsRenderTest {
             bodyHasUndefined: /\\bundefined\\b/i.test(body),
             learningLive: document.getElementById('learningLiveLabel')?.textContent ?? null,
             learningCoverage: document.getElementById('learningCoverageSummary')?.textContent ?? null,
+            headerRpm: document.querySelector('[data-vehicle-fact="rpm"] [data-reading-value]')?.textContent ?? null,
+            headerPetrol: document.querySelector('[data-vehicle-fact="petrol"] [data-reading-value]')?.textContent ?? null,
+            headerVisible: document.querySelector('.workspace-head')?.getBoundingClientRect().height > 0,
+            navSvgCount: document.querySelectorAll('.side-nav svg.nav-icon').length,
             mapLive: document.getElementById('mapLiveLabel')?.textContent ?? null,
             mapCell: document.getElementById('mapLiveCell')?.textContent ?? null,
             mapSource: document.getElementById('mapSourceStatus')?.textContent ?? null,
@@ -710,8 +723,10 @@ class DashboardLevelsRenderTest {
             val dom = globalRouteDom(scenario, "map")
             saveEvidence("map-fresh-context", dom, scenario)
             assertTrue("Map route must activate", dom.getBoolean("active"))
-            assertTrue("Map must receive live RPM through PresentSnapshot", dom.optString("mapLive").contains("869 RPM"))
-            assertTrue("Map must receive live Petrol Injection through PresentSnapshot", dom.optString("mapLive").contains("4,54 ms"))
+            assertEquals("Persistent header must receive live RPM through PresentSnapshot", "869", dom.optString("headerRpm"))
+            assertEquals("Persistent header must receive live Petrol Injection through PresentSnapshot", "4,54", dom.optString("headerPetrol"))
+            assertTrue("Persistent telemetry header must remain visible", dom.getBoolean("headerVisible"))
+            assertEquals("All eight navigation icons must be embedded SVG", 8, dom.getInt("navSvgCount"))
             assertTrue("Map live cell must stay explicit instead of fabricating undefined coordinates", !dom.optString("mapCell").contains("undefined", ignoreCase = true))
             assertEquals("Offline ECU read must settle as not confirmed", "Mapa não confirmado", dom.optString("mapSource"))
             assertTrue("Failed map read must clear the stale loading spinner", !dom.optString("mapGridText").contains("Lendo Mapa K da ECU"))
@@ -758,9 +773,15 @@ class DashboardLevelsRenderTest {
             )
             assertEquals("Original Curve K replay must expose all 30 points", 30, dom.getInt("pointCount"))
             assertTrue("Original Curve K line must be drawable", dom.getString("actualPath").length > 20)
-            assertTrue("Save Curve K control must be visible in 1280x720 WebView", dom.getBoolean("backupSaveVisible"))
-            assertTrue("Curve K backup selector must be visible in 1280x720 WebView", dom.getBoolean("backupSelectVisible"))
-            assertTrue("Curve K restore control must be visible in 1280x720 WebView", dom.getBoolean("backupRestoreVisible"))
+            // Diamante already saves the pre-write photo automatically and exposes
+            // one-touch undo only after a photo exists. Manual photo controls are
+            // intentionally hidden; keep checking the user's current editing path.
+            assertFalse("Automatic pre-write photo replaces manual save", dom.getBoolean("backupSaveVisible"))
+            assertFalse("Automatic latest-photo undo replaces manual selector", dom.getBoolean("backupSelectVisible"))
+            assertTrue("Reler ECU must be visible in 1280x720", dom.getBoolean("readVisible"))
+            assertTrue("K adjustment must be visible in 1280x720", dom.getBoolean("adjustmentVisible"))
+            assertTrue("Write action must remain visible in 1280x720", dom.getBoolean("writeVisible"))
+            assertTrue("Reading a curve alone must not authorize a write", dom.getBoolean("writeDisabled"))
             assertTrue("Curve must never render NaN", !dom.getBoolean("bodyHasNaN"))
             assertTrue("Curve must never render undefined", !dom.getBoolean("bodyHasUndefined"))
         } finally {

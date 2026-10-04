@@ -1,0 +1,297 @@
+/* Direção visual aprovada: grafite, turquesa, estado persistente e navegação inferior.
+   Componentes e contratos existentes; sem blur, fonte remota ou animação decorativa. */
+html body .app-shell { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 76px; }
+html body .workspace,html body .app-shell.autocal-focus .workspace { grid-row:1; grid-column:1; grid-template-rows:64px minmax(0,1fr); }
+html body .side-rail { grid-row:2; grid-column:1; padding:0 16px; border:0; border-top:1px solid var(--line-soft); background:var(--rail); }
+html body .side-nav { height:100%; padding:0; display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:0; }
+html body .side-nav button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; text-align:center; padding:4px; border-radius:0; min-width:0; border:0; background:none; box-shadow:none; color:var(--muted); }
+html body .side-nav button span { font-size:18px; font-weight:500; }
+html body .side-nav button.active { color:var(--accent); background:var(--accent-soft); }
+html body .side-nav button.active::before { top:auto; bottom:0; left:20%; width:60%; height:3px; border-radius:2px; }
+html body .side-nav button .nav-icon { display:block; width:24px; height:24px; fill:none; stroke:currentColor; flex-shrink:0; }
+html body .rail-status { display:none; }
+html body .workspace-head,html body .app-shell.autocal-focus .workspace-head { display:flex; align-items:center; gap:16px; padding:0 24px; background:var(--bg); border-bottom:1px solid var(--line-soft); }
+html body .workspace-head > div:not(.brand-block),html body .workspace-head > p { display:none; }
+html body .workspace-head .brand-block { display:flex; align-items:center; flex:0 0 145px; height:auto; border:0; padding:0; gap:8px; position:static; width:auto; clip:auto; overflow:visible; }
+html body .workspace-head .brand-block b { font-size:22px; letter-spacing:0; font-weight:650; }
+html body .workspace-head .brand-block span { display:none; }
+html body .workspace-head .brand-mark { width:27px; height:32px; border:0; font-size:30px; color:var(--accent); background:none; }
+html body .workspace-head .vehicle-status-strip { flex:1; display:grid; grid-template-columns:1.15fr .85fr .7fr 1.1fr 1fr .95fr .9fr; gap:0; padding:0; border:0; }
+html body .workspace-head .vehicle-status-strip > div { display:block; border:0; border-left:1px solid var(--line-soft); border-radius:0; background:none; padding:2px 10px; min-width:0; }
+html body .workspace-head .vehicle-status-strip small { color:var(--muted); font-size:14px; font-weight:400; letter-spacing:0; line-height:1.15; }
+html body .workspace-head .vehicle-status-strip b { display:block; font-size:22px; font-weight:550; line-height:1.2; white-space:nowrap; font-variant-numeric:tabular-nums; }
+html body .vehicle-status-strip [data-state="cng"] b { color:var(--cng); }
+html body .vehicle-status-strip [data-state="late"] b { color:var(--muted); }
+html body .screen-host .screen { padding:12px 24px; }
+html body :is(button,summary,input,select) { border-radius:8px; font-weight:550; }
+html body :is(button,summary) { font-size:18px; }
+html body :is(.primary,.btn-primary,.autocal-primary-action) { background:var(--accent); color:var(--on-accent); border-color:var(--accent); box-shadow:var(--shadow-1); }
+html body :is(.secondary,.btn-secondary,.btn-ghost,.quiet-button) { background:var(--surface-2); color:var(--text); border-color:var(--line); box-shadow:var(--shadow-1); }
+html body :is(button,summary):active { transform:none; box-shadow:none; }
+html body :is(.page-intro h2,.instrument-title) { font-size:32px; font-weight:550; letter-spacing:-.025em; margin:0; }
+html body :is(.page-intro small,.surface-heading small) { display:none; }
+/* AutoCal só mostra a ECU; Refino soma os nossos pontos e a intenção do cérebro. */
+html body :is(.autocal-cockpit-view,.autocal-route-panel) { height:100%; min-height:0; }
+html body .screen-host .autocal-route-screen { overflow:visible; }
+html body .ar-shell { display:flex; flex-direction:column; height:100%; min-height:0; padding:0; gap:6px; position:relative; }
+html body .ar-shell .ar-status { order:0; min-height:58px; align-items:center; gap:20px; flex-shrink:0; }
+html body .ar-shell .instrument-title { flex:0 0 auto; }
+html body .ar-shell .ar-fuel { min-width:0; padding:7px 12px; min-height:0; font-size:18px; font-weight:500; background:var(--accent-soft); color:var(--accent-strong); border-radius:20px; }
+html body .ar-autocal .ar-status > .ar-fuel,html body .ar-autocal .ar-status > .ar-tile:not(.ar-zone):not(.ar-automatch) { display:none; }
+html body .ar-shell .ar-status .ar-tile { flex:0 0 auto; padding:0 20px; border:0; border-left:1px solid var(--line-soft); background:none; box-shadow:none; border-radius:0; }
+html body .ar-shell .ar-status .ar-tile b { font-size:22px; font-weight:550; }
+html body .ar-shell .ar-act { order:2; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 20px; align-items:center; flex-shrink:0; min-height:58px; }
+html body .ar-shell .ar-sentence { grid-column:1; font-size:22px; font-weight:500; line-height:1.25; }
+html body .ar-shell .ar-reason { grid-column:1; color:var(--muted); font-size:18px; font-weight:400; line-height:1.25; }
+html body .ar-shell .ar-buttons { grid-column:2; grid-row:1 / span 2; display:flex; flex-wrap:nowrap; gap:8px; }
+html body .ar-shell .ar-buttons > :is(button,.ar-more) { flex:0 0 auto; }
+html body .ar-shell .ar-buttons > [data-refino-primary][hidden] { display:none; }
+html body .ar-shell :is(.ar-buttons button,.ar-more summary) { padding:0 16px; height:58px; min-height:58px; }
+html body .ar-shell .autocal-reacquire-action { border:1px solid var(--line); color:var(--text); background:var(--surface-2); box-shadow:var(--shadow-1); }
+html body .ar-shell .ar-more .autocal-reset-popover { bottom:66px; top:auto; max-height:calc(100vh - 220px); overflow-y:auto; }
+html body .ar-shell .ar-chart-card { order:1; flex:1; display:flex; flex-direction:column; min-height:0; padding:0; border:0; background:none; box-shadow:none; border-radius:0; position:relative; gap:6px; }
+html body .ar-shell .ar-legend-row { min-height:26px; flex-shrink:0; }
+html body .ar-shell .ar-legend { font-size:16px; font-weight:400; gap:4px 20px; }
+html body .ar-shell .ar-legend [data-legend="petrol"]::before { background:none; border-top:2px dashed var(--petrol); height:0; }
+html body .ar-shell .ar-chart-host { flex:1; height:100%; min-height:0; border:0; border-radius:0; background:var(--plot); }
+html body .curve-chart-shared .autocal-reference-line.petrol { stroke:var(--petrol); stroke-width:2; stroke-dasharray:7 5; }
+html body .curve-chart-shared .autocal-reference-line.gas { stroke:var(--cng); stroke-width:2.5; }
+html body .curve-chart-shared .autocal-grid-line { stroke:var(--line); stroke-opacity:.45; }
+html body .curve-chart-shared text { font-weight:400; }
+html body .ar-shell .ar-readout { position:absolute; z-index:5; bottom:60px; right:16px; max-width:400px; min-height:0; padding:12px 16px; background:var(--overlay); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow-2); font-size:20px; font-weight:400; }
+html body .ar-shell .ar-readout[data-empty="true"] { display:none; }
+html body .ar-shell .ar-stall { min-height:0; flex:1; padding:8px 12px; font-size:18px; font-weight:500; border:0; border-left:3px solid var(--warn); background:var(--warn-soft); border-radius:4px; }
+html body .instrument-details { position:relative; margin-left:auto; }
+html body .instrument-details > summary { display:flex; align-items:center; justify-content:center; padding:0 16px; min-height:58px; background:var(--surface-2); border:1px solid var(--line); list-style:none; cursor:pointer; box-shadow:var(--shadow-1); }
+html body .instrument-details > :is(.ar-secondary,.instrument-detail-content) { position:absolute; bottom:66px; top:auto; right:0; width:min(520px,calc(100vw - 48px)); max-height:min(440px,calc(100vh - 200px)); overflow-y:auto; z-index:15; padding:20px; border:1px solid var(--line); border-radius:8px; background:var(--overlay); box-shadow:var(--shadow-3); }
+html body .ar-autocal .ar-buttons > .instrument-details { position:relative; margin:0; z-index:15; }
+html body .instrument-detail-content p { font-size:20px; margin:8px 0 16px; }
+html body .instrument-detail-content small { display:block; color:var(--muted); font-size:18px; }
+html body .instrument-detail-content b { font-size:26px; font-weight:500; }
+html body .ar-shell .ar-card { border:0; box-shadow:none; background:none; padding:10px 0; border-bottom:1px solid var(--line); }
+html body .ar-shell .ar-ghost { min-height:32px; padding:0 8px; font-size:16px; box-shadow:none; background:none; }
+/* Editores mantêm seus fluxos; a tela ganha uma superfície contínua para os dados. */
+html body .map-workspace { grid-template-columns:minmax(0,1fr) 288px; gap:20px; }
+html body :is(.map-surface,.curve-surface) { padding:0; border:0; border-radius:0; box-shadow:none; background:none; }
+html body :is(.map-editor-panel,.curve-editor-panel) { padding:0 0 0 20px; background:none; box-shadow:none; border:0; border-left:1px solid var(--line-soft); border-radius:0; }
+html body .curve-screen .curve-workspace { grid-template-columns:minmax(0,1fr) 288px; gap:20px; }
+html body :is(.map-k-cell,.map-axis-header) { border-radius:4px; }
+html body .map-k-cell.selected { border-color:var(--accent); background:var(--accent-soft); }
+html body .curve-screen .curve-chart { background:var(--plot); border:0; }
+html body .now-session-card { border-top:1px solid var(--line-soft); padding-top:8px; }
+html body .alert-toast { bottom:88px; box-shadow:var(--shadow-3); }
+html body[data-omegas-route="autocal"] .alert-toast,html body[data-omegas-route="refino"] .alert-toast { top:76px; bottom:auto; }
+@media(max-width:1050px) {
+ html body .workspace-head { padding:0 12px; gap:8px; }
+ html body .workspace-head .brand-block { flex-basis:112px; }
+ html body .workspace-head .brand-block b { font-size:18px; }
+ html body .workspace-head .vehicle-status-strip > div { padding-inline:6px; }
+ html body .workspace-head .vehicle-status-strip b { font-size:18px; }
+ html body .side-nav button span { font-size:16px; }
+ html body .ar-shell .ar-act { grid-template-columns:1fr; }
+ html body .ar-shell .ar-buttons { grid-column:1; grid-row:auto; }
+ html body .screen-host .autocal-route-screen { overflow-y:auto; }
+ html body .ar-shell .ar-chart-card { flex:none; height:380px; }
+}
+/* Encerra as antigas exceções de cabeçalho, ordem e cor saudável. */
+html body .workspace-head { visibility:visible; overflow:visible; height:64px; min-height:64px; }
+html body .workspace-head .vehicle-status-strip [data-vehicle-fact="ecu"] { display:block; }
+html body .workspace-head .vehicle-status-strip [data-state="measured"] b { color:var(--text); }
+html body .side-nav button span { font-size:18px !important; }
+html body .refino-cockpit > .ar-status { order:0 !important; }
+html body .refino-cockpit > .ar-act { order:2 !important; }
+html body .refino-cockpit > .ar-chart-card { order:1 !important; flex:1 1 0; }
+html body .curve-chart-shared .autocal-acquired-point.petrol { fill:var(--petrol); }
+html body .curve-chart-shared .autocal-acquired-point.gas { fill:var(--cng); }
+html body .ar-shell .chart-between { stroke-width:2; }
+html body .ar-shell .ar-legend-row [data-autocal-history] { min-height:58px; font-size:18px; }
+html body .workspace-head .vehicle-status-strip em { font-size:16px; font-style:normal; color:var(--muted); font-weight:400; }
+html body .workspace-head .vehicle-status-strip [data-state="unknown"] em { display:none; }
+html body .workspace-head .vehicle-status-strip [data-stale="true"] b { color:var(--muted); }
+html body .ar-shell .ar-buttons .autocal-reacquire-action { border-color:var(--line); color:var(--text); background:var(--surface-2); }
+html body .instrument-menus { margin-left:auto; display:flex; gap:8px; }
+html body .instrument-menus .instrument-details { margin:0; }
+html body .refino-proposals dl { margin:12px 0; }
+html body .refino-proposals dl > div { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:20px; }
+html body .refino-proposals dd { margin:0; font-variant-numeric:tabular-nums; }
+html body .workspace-head .vehicle-status-strip em:not(:empty) { margin-left:5px; }
+html body[data-omegas-route="dashboard"] .workspace { grid-template-rows:64px minmax(0,1fr); }
+html body[data-omegas-route="dashboard"] .workspace-head { display:flex; visibility:visible; overflow:visible; height:64px; min-height:64px; padding:0 24px; border-bottom:1px solid var(--line-soft); }
+html body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip [data-vehicle-fact] { display:block; }
+
+/* Profundidade: borda iluminada, controles elevados e base rebaixada do gráfico. */
+html body .workspace-head { background:var(--rail); box-shadow:var(--shadow-header); position:relative; z-index:20; }
+html body[data-omegas-route="dashboard"] .workspace-head .vehicle-status-strip { grid-template-columns:1.15fr .85fr .7fr 1.1fr 1fr .95fr .9fr; }
+html body :is(.primary,.btn-primary,.autocal-primary-action) { box-shadow:var(--shadow-primary); }
+html body :is(.secondary,.btn-secondary,.btn-ghost,.quiet-button,.instrument-details > summary,.ar-shell .autocal-reacquire-action) { box-shadow:var(--shadow-1); }
+html body .ar-shell .ar-chart-host,html body .curve-screen .curve-chart { border:1px solid var(--line-soft); border-radius:8px; box-shadow:var(--shadow-plot); }
+html body .side-rail { box-shadow:var(--shadow-nav); }
+html body .side-nav button.active { background:var(--rail); }
+html body .side-nav button:hover { color:var(--text); }
+html body .side-nav button.active:hover { color:var(--accent); }
+html body :is(button,summary):focus-visible { outline:2px solid var(--accent-strong); outline-offset:3px; }
+/* Grade com controles fixos; só as linhas do mapa rolam, mantendo os eixos. */
+html body .screen-host .map-screen { overflow:hidden; }
+html body .app-shell .map-screen .map-workspace { height:100%; min-height:0; flex:1 1 0; align-items:stretch; grid-template-columns:minmax(0,1fr) 288px; gap:20px; }
+html body .map-screen .map-surface { min-height:0; padding:0; overflow:hidden; }
+html body .map-screen .map-surface .surface-toolbar { flex:0 0 58px; margin-bottom:8px; }
+html body .map-screen .surface-toolbar h2 { font-size:32px; font-weight:550; }
+html body .map-screen .map-grid-host { flex:1 1 0; min-height:0; overflow-y:auto; border:1px solid var(--line-soft); border-radius:8px; box-shadow:var(--shadow-plot); }
+html body .map-screen .map-surface .map-k-grid-with-axes { height:auto; flex:none; grid-template-columns:78px repeat(12,minmax(0,1fr)); grid-template-rows:44px repeat(12,44px); gap:1px; }
+html body .map-screen .map-surface .map-k-cell { border-radius:0; border:0 !important; background:var(--surface) !important; }
+html body .map-screen .map-surface .map-k-cell.selected { background:var(--accent-soft) !important; box-shadow:inset 0 0 0 1px var(--accent); }
+html body .map-screen .map-surface .map-k-cell.preview { background:var(--warn-soft) !important; }
+html body .map-screen .map-surface .map-rpm-header,html body .map-screen .map-surface .map-axis-corner { position:sticky; top:0; z-index:2; border-radius:0; background:var(--surface-2); }
+html body .map-screen .map-k-cell b { font-size:20px !important; font-weight:500; }
+html body .map-screen .map-editor-panel { position:static; padding:0 0 0 20px; gap:10px; overflow-y:auto; }
+html body .map-screen .editor-heading { margin:0; }
+html body .map-screen .step-row { grid-template-columns:repeat(4,minmax(0,1fr)); }
+html body .map-screen .map-safety-line { margin:0; line-height:1.4; }
+html body .map-screen #mapReviewButton { margin-top:auto; }
+/* Curva K: gráfico e barra de edição cabem juntos na multimídia. */
+html body .screen-host .curve-screen { overflow:hidden; }
+html body .curve-screen .page-intro { flex:0 0 58px; min-height:58px; margin-bottom:10px; }
+html body .curve-screen .curve-view-stack { flex:1 1 0; min-height:0; }
+html body .curve-screen .curve-view.active { height:100%; min-height:0; }
+html body .curve-screen .curve-workspace,html body .curve-screen .curve-editor-view > .curve-workspace { height:100%; min-height:0; display:flex; flex-direction:column; gap:10px; }
+html body .curve-screen .curve-surface { flex:1 1 0; min-height:0; padding:0; }
+html body .curve-screen .curve-chart { flex:1 1 0; min-height:0; }
+html body .curve-screen .curve-action-bar { flex:0 0 58px; }
+html body .curve-screen .curve-legend { min-height:32px; }
+html body .curve-screen .curve-head h2 { font-size:32px; font-weight:550; }
+html body .curve-screen .curve-overview-view { overflow-y:auto; }
+
+/* Sessões e utilidades usam as mesmas camadas, sem alarme no estado normal. */
+html body .now-session-card[data-level="ok"] { background:none; border-radius:0; box-shadow:none; padding:8px 0 0; }
+html body .now-coverage p { color:var(--muted); }
+html body .utility-screen :is(.ts-card,.dg-card,.ss-now,.ss-item) { border-radius:8px; padding:16px 20px; gap:10px; }
+html body .utility-screen :is(.ts-grid,.ss-list,.dg-stack) { gap:12px; }
+html body .utility-screen :is(.ts-head,.dg-head) h3 { font-weight:550; }
+html body .utility-screen :is(.ts-help,.dg-note,.ss-where,.ss-summary) { font-size:18px; }
+html body .utility-screen .ss-now[data-recording="true"] { border-left-color:var(--accent); background:var(--surface); }
+html body .utility-screen .ss-item[data-state="recording"] { border-color:var(--line); }
+html body .utility-screen .ss-state[data-state="recording"] { background:var(--accent-soft); color:var(--accent-strong); }
+html body .utility-screen .ts-tile[data-tone="ok"] { background:var(--surface); border-left:2px solid var(--accent); }
+html body .utility-screen .ts-card[data-healthy="true"] .ts-chip { display:none; }
+html body .utility-screen .ts-card[data-healthy] { position:relative; }
+html body .utility-screen .ts-health-inspect { position:absolute; top:16px; right:20px; }
+html body .utility-screen .ts-health-inspect > summary { padding:0 16px; border:1px solid var(--line); background:var(--surface-2); box-shadow:var(--shadow-1); cursor:pointer; list-style:none; display:flex; align-items:center; }
+html body .utility-screen .ts-health-inspect > .ts-tiles { position:absolute; top:66px; right:0; width:720px; grid-template-columns:repeat(2,minmax(0,1fr)); padding:16px; z-index:15; border:1px solid var(--line); border-radius:8px; background:var(--overlay); box-shadow:var(--shadow-3); }
+html body .utility-screen .ts-row { padding-top:10px; }
+html body .curve-screen #curveTitle,html body .map-screen #mapTitle { font-size:32px; font-weight:550; }
+
+html body .ar-buttons [data-autocal-toggle][data-action="DISABLE_AUTO_CAL"]::before { content:"Ⅱ"; font-size:22px; margin-right:10px; }
+html body .ar-buttons [data-autocal-toggle][data-action="ENABLE_AUTO_CAL"]::before { content:"▶"; font-size:16px; margin-right:10px; }
+html body .ar-shell .ar-status .ar-tile small { font-size:16px; font-weight:400; letter-spacing:0; }
+html body .route-subtitle { font-size:18px; font-weight:400; color:var(--muted); margin:4px 0 0; }
+
+/* Diagnóstico: regiões e fluidez lado a lado; resultado e histórico abaixo. */
+html body .utility-screen .diagnostico-host { grid-template-columns:minmax(0,1.65fr) minmax(0,1fr); gap:12px; }
+html body .utility-screen .dg-chart { grid-column:1; grid-row:1; min-height:280px; }
+html body .utility-screen .dg-fluidity { grid-column:2; grid-row:1; }
+html body .utility-screen .dg-state { grid-column:1 / -1; padding:10px 16px; border-radius:8px; }
+html body .utility-screen .dg-state[data-kind="ok"] { background:var(--surface); border-left:2px solid var(--accent); }
+html body .utility-screen .dg-state p { font-size:20px; margin:0; font-weight:500; }
+html body .utility-screen .dg-stack { grid-column:1 / -1; }
+@media(max-width:1050px) { html body .utility-screen .diagnostico-host { grid-template-columns:1fr; } html body .utility-screen .dg-fluidity { grid-column:1; grid-row:auto; } }
+
+/* Acabamento da referência: iluminação estática, sem filtros nem animação. */
+html body .workspace { background:var(--gradient-page); }
+html body .ar-shell .ar-chart-host,html body .curve-screen .curve-chart { background:var(--gradient-plot) !important; border-color:var(--line); }
+html body :is(.secondary,.btn-secondary,.btn-ghost,.quiet-button,.instrument-details > summary,.ar-shell .autocal-reacquire-action) { background:var(--gradient-control); }
+html body :is(.primary,.btn-primary,.autocal-primary-action) { background:var(--gradient-primary); }
+html body .curve-chart-shared .autocal-reference-depth { fill:none; stroke:var(--shadow-chart-line); stroke-width:8; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke; pointer-events:none; }
+html body .curve-chart-shared .autocal-reference-line.gas { stroke-width:3; stroke-linejoin:round; stroke-linecap:round; }
+html body .curve-chart-shared .autocal-reference-line.petrol { stroke-opacity:.95; stroke-width:2; }
+html body .curve-chart-shared .autocal-grid-line { stroke-opacity:.58; }
+html body .curve-chart-shared .autocal-grid-line.vertical { stroke-dasharray:3 4; stroke-opacity:.4; }
+html body .ar-shell .ar-fuel { box-shadow:inset 0 1px 0 var(--line),0 2px 6px var(--tint-0-0-0-55); border:1px solid var(--accent-line); }
+
+/* Cabeçalhos de instrumento: estado integrado, gráfico no centro, comandos em um só trilho. */
+html body .ar-autocal .ar-status {
+ display:grid; grid-template-columns:minmax(0,1fr) 84px 112px auto;
+ grid-template-rows:auto auto; gap:0 12px; min-height:60px;
+}
+html body .ar-autocal .instrument-title { grid-column:1; grid-row:1; font-size:28px; }
+html body .ar-autocal #autocalHumanAction { grid-column:1; grid-row:2; margin:0; font-size:22px; line-height:1.25; }
+html body .ar-autocal .ar-zone { grid-column:2; grid-row:1 / span 2; }
+html body .ar-autocal .ar-automatch { grid-column:3; grid-row:1 / span 2; }
+html body .ar-autocal .ar-status .ar-tile { padding:0 12px; }
+html body .autocal-reading-controls { grid-column:4; grid-row:1 / span 2; display:flex; gap:8px; align-items:center; }
+html body .autocal-reading-controls :is(button) { min-height:58px; padding:0 16px; font-size:18px; }
+html body .autocal-reading-controls [hidden] { display:none; }
+html body .ar-autocal .ar-act { display:flex; align-items:center; flex-wrap:wrap; min-height:58px; }
+html body .ar-autocal .ar-buttons { display:flex; gap:8px; flex-wrap:wrap; width:100%; }
+html body .ar-autocal .ar-buttons .ar-more { margin-left:auto; }
+html body .ar-autocal .ar-buttons > .instrument-details > .ar-secondary { left:0; right:auto; }
+html body .ar-shell .ar-status .ar-sentence { margin:0; min-width:0; font-size:22px; line-height:1.25; }
+html body .ar-refino .ar-status {
+ display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:0 14px; min-height:60px;
+}
+html body .ar-refino .instrument-title { grid-column:1; grid-row:1; font-size:28px; }
+html body .ar-refino .ar-fuel { grid-column:1; grid-row:2; padding:2px 10px; font-size:18px; }
+html body .ar-refino #refinoHeadline { grid-column:2; grid-row:1 / span 2; }
+html body .ar-refino .instrument-menus { grid-column:3; grid-row:1 / span 2; }
+html body .ar-refino .ar-stall { grid-column:2 / -1; grid-row:3; }
+html body .ar-refino .instrument-details > .instrument-detail-content { top:66px; bottom:auto; }
+html body .ar-refino .ar-act { min-height:58px; grid-template-columns:minmax(0,1fr) auto; }
+html body .ar-refino .ar-act .ar-reason { font-size:20px; margin:0; }
+html body .ar-shell .ar-chart-host { overflow:hidden; }
+html body .ar-shell .ar-legend-row { min-height:26px; }
+html body .ar-shell .ar-readout { bottom:12px; right:12px; max-width:min(520px,calc(100% - 24px)); pointer-events:none; }
+html body .chart-view-controls { margin:0 0 16px; padding:0; border:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+html body .chart-view-controls legend { font-size:22px; margin-bottom:8px; }
+html body .chart-view-controls label { min-height:58px; display:flex; align-items:center; gap:10px; padding:0 12px; border:1px solid var(--line); border-radius:8px; font-size:20px; background:var(--surface-2); cursor:pointer; }
+html body .chart-view-controls label:last-child { grid-column:1 / -1; }
+html body .chart-view-controls input { min-width:24px; width:24px; min-height:24px; height:24px; flex:none; accent-color:var(--accent); }
+html body .chart-view-controls label:focus-within { outline:2px solid var(--accent-strong); outline-offset:2px; }
+html body .map-screen .editor-heading small { font-size:20px; line-height:1.3; color:var(--text); }
+html body .map-screen .map-editor-panel { overscroll-behavior:contain; }
+html body .curve-screen .curve-point-info { flex-wrap:wrap; gap:4px 16px; }
+html body .utility-screen .page-intro { margin-bottom:12px; }
+html body .utility-screen .page-intro > div { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; }
+html body .utility-screen .route-subtitle { margin:0; }
+html body .utility-screen .ss-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+html body .utility-screen .ss-item { grid-template-columns:106px minmax(0,1fr); position:relative; }
+html body .utility-screen .ss-item .ss-actions { grid-column:1 / -1; }
+html body .utility-screen .ss-facts { gap:8px; }
+html body .utility-screen .ts-grid { align-items:start; }
+html body .utility-screen .ts-fields { grid-template-columns:repeat(3,minmax(0,1fr)); }
+html body .utility-screen .diagnostico-host { align-items:stretch; }
+html body .utility-screen .dg-chart { min-height:320px; }
+html body .utility-screen .dg-fluidity { align-content:start; }
+html body .utility-screen .dg-state { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+html body .utility-screen .dg-state > button { flex:none; }
+html body .utility-screen .dg-stack { grid-template-columns:repeat(2,minmax(0,1fr)); }
+html body .utility-screen .dg-stack > details { grid-column:1 / -1; }
+html body .now-dashboard-shell { gap:12px; }
+html body .now-overview { align-items:stretch; }
+html body .now-intention { display:flex; flex-direction:column; }
+html body .now-intention > button { margin-top:auto; align-self:flex-start; }
+html body .now-heading { display:flex; align-items:baseline; gap:16px; }
+html body .now-heading p { margin:0; }
+@media(max-width:1050px) {
+ html body .ar-autocal .ar-status { grid-template-columns:minmax(0,1fr) 84px 112px; }
+ html body .autocal-reading-controls { grid-column:1 / -1; grid-row:3; }
+ html body .ar-refino .ar-status { grid-template-columns:auto minmax(0,1fr); }
+ html body .ar-refino .instrument-menus { grid-column:1 / -1; grid-row:3; margin:4px 0 0; }
+ html body .ar-refino .ar-stall { grid-column:1 / -1; grid-row:4; }
+ html body .utility-screen :is(.ss-list,.dg-stack) { grid-template-columns:1fr; }
+ html body .utility-screen .dg-state { flex-wrap:wrap; }
+}
+
+html body .utility-screen .ss-item .ss-facts { grid-column:1 / -1; justify-content:space-between; padding-top:8px; border-top:1px solid var(--line-soft); }
+html body .ar-shell .ar-chart-host { flex:1 1 0; height:auto; }
+html body .ar-shell.ar-refino .ar-chart-host { height:auto; }
+
+html body .map-k-cell { touch-action:pan-y; }
+
+/* A borda ocupa a própria faixa, sem retirar 1 px dos 76 px de navegação. */
+html body .side-rail { border-top:0; box-shadow:inset 0 1px var(--line-soft); }
+
+html body .refino-evidence-options { border-top:1px solid var(--line-soft); margin-top:12px; padding-top:12px; }
+html body .refino-evidence-options button { min-height:58px; width:100%; margin-top:8px; }
+html body .refino-evidence-options h3 { font-size:22px; margin:0; }
+
+/* Menus cabem também na área útil de 648 px, entre telemetria e navegação. */
+html body .instrument-details > :is(.ar-secondary,.instrument-detail-content) { max-height:min(440px,calc(100vh - 216px)); }

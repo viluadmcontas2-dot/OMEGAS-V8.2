@@ -323,6 +323,17 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Não foi possível congelar a referência")
     }
 
+    /** Toque explícito: reinicia apenas a evidência local do GNV, nunca envia comando à ECU. */
+    @JavascriptInterface
+    fun resetGasEvidence(): String = try {
+        noLocalControlFailure() ?: run {
+            val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+            service.resetGasEvidence().also { invalidateAnalysis() }
+        }
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Não foi possível reiniciar o aprendizado do GNV")
+    }
+
     /** Desfazer do congelamento: volta à Referência anterior desta sessão. */
     @JavascriptInterface
     fun restorePreviousReference(): String = try {

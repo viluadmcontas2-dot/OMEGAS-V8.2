@@ -139,6 +139,7 @@
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
       if (this.preserveSessionSettingsInteraction(host)) return;
+      const healthOpenBeforeRender = host.querySelector('.ts-health-inspect')?.open === true;
       const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
       const status = state.sessionStatus || {};
       const settings = status.settings || {};
@@ -174,9 +175,10 @@
           ? '<button type="button" class="secondary" data-tool-overlay-enable>Ativar</button>'
           : overlayInfo.key === 'needs-permission'
             ? '<button type="button" class="primary" data-tool-overlay-request>Autorizar</button>' : '';
+      const sizeButtons = [['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
+        `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'is-on' : ''}" data-tool-overlay-scale="${value}">${label}</button>`).join('');
       const overlaySizes = overlayInfo.key === 'on'
-        ? `<div class="ts-sizes segmented" role="group" aria-label="Tamanho do balão"><small>Tamanho</small>${[['1', 'Pequeno'], ['1.25', 'Médio'], ['1.6', 'Grande']].map(([value, label]) =>
-          `<button type="button" class="${Math.abs((finite(overlay.scale) ?? 1.25) - Number(value)) < 0.05 ? 'is-on' : ''}" data-tool-overlay-scale="${value}">${label}</button>`).join('')}</div>` : '';
+        ? `<div class="ts-sizes segmented" role="group" aria-label="Tamanho do balão"><small>Tamanho</small>${sizeButtons}</div>` : '';
 
       const reply = this.overlayReply || {};
       const overlayReplyLine = !this.overlayReply ? '' : reply.permissionRequired === true ? 'Falta autorizar: marque o OMEGAS na tela do Android e volte.' : reply.launched === true ? 'A tela de autorização do Android foi aberta.' : reply.ok === false ? 'Não consegui abrir a autorização. Toque em Autorizar de novo.' : 'Pedido enviado.';
@@ -201,7 +203,7 @@
         <div class="ts-grid">
         <section class="ts-card ts-wide" data-healthy="${serviceHealthy ? 'true' : 'false'}" aria-label="Saúde do sistema">
           <header class="ts-head"><div><small>SAÚDE DO SISTEMA</small><h3>${serviceHealthy ? 'Tudo funcionando' : appStatus.serviceRunning ? 'A comunicação com a ECU pede atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div>${chip(serviceHealthy ? 'ok' : 'warn', serviceHealthy ? 'Tudo certo' : 'Atenção')}</header>
-          <div class="ts-tiles">${tiles.map(([label, value, tone, hint]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span>${hint}</span></div>`).join('')}</div>
+          <details class="ts-health-inspect" ${healthOpenBeforeRender ? 'open' : ''}><summary>Ver conexões</summary><div class="ts-tiles">${tiles.map(([label, value, tone, hint]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span>${hint}</span></div>`).join('')}</div></details>
           <div class="ts-row" data-state="${batteryFree ? 'ok' : 'warn'}"><div><small>SEGUNDO PLANO</small><b>${batteryFree ? 'O Android não pausa o app' : 'O Android pode pausar o app'}</b><span>${batteryFree ? 'Sessões longas com a tela apagada seguem gravando.' : 'Permita para gravar sessões longas com a tela apagada.'}</span></div>${batteryAction}</div>
         </section>
 

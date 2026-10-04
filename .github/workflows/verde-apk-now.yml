@@ -54,7 +54,7 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Run contracts, unit tests, lint and assemble
+      - name: Contracts and isolated JVM performance checks
         shell: bash
         env:
           OMEGAS_SOURCE_SHA: ${{ env.PRODUCT_SHA }}
@@ -62,10 +62,32 @@ jobs:
           set -euo pipefail
           chmod +x ./gradlew
           python3 -B tools/run_checks.py
-          ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
+          ./gradlew clean testDebugUnitTest \
+            -PomegasAbis=armeabi-v7a \
+            --no-parallel --max-workers=1 \
+            --no-daemon \
+            --stacktrace
+
+      - name: Lint and assemble after JVM performance checks
+        shell: bash
+        env:
+          OMEGAS_SOURCE_SHA: ${{ env.PRODUCT_SHA }}
+        run: |
+          set -euo pipefail
+          ./gradlew lintDebug assembleDebug \
             -PomegasAbis=armeabi-v7a \
             --no-daemon \
             --stacktrace
+
+      - name: Preserve JVM and performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-jvm-performance-${{ env.PRODUCT_SHA }}
+          path: |
+            app/build/perf
+            app/build/test-results/testDebugUnitTest
+          if-no-files-found: warn
 
       - name: Medição de desempenho do Refino (corpus real)
         shell: bash

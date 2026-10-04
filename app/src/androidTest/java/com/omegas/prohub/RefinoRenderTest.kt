@@ -162,7 +162,15 @@ class RefinoRenderTest {
             observations += AutoCalReadObservation(descriptor, Mp48Protocol.STATUS_ACK, payloadFor(descriptor, IntArray(raw.length()) { raw.getInt(it) }), now)
             expected += descriptor
         }
+        // O fixture reduzido omite MAX_AUTOMATCH, embora o grupo de coerência o exija.
+        // O máximo 3 já é parâmetro explícito destes cenários; completar o monitor não inventa medidas.
+        if (expected.none { it.identity == AutoCalProtocol.MAX_AUTOMATCH.identity }) {
+            expected += AutoCalProtocol.MAX_AUTOMATCH
+            observations += AutoCalReadObservation(AutoCalProtocol.MAX_AUTOMATCH, Mp48Protocol.STATUS_ACK,
+                payloadFor(AutoCalProtocol.MAX_AUTOMATCH, intArrayOf(3)), now)
+        }
         val snapshot = AutoCalSnapshotBuilder.build(observations, expected, "AUTOCAL-$sessionId-REFINO", AutoCalSnapshotSource.REPLAY, now, now)
+        check(snapshot.temporalCoherent) { "Replay decodificado deve manter grupos coerentes" }
         val decorated = snapshot.toJson()
             .put("available", true)
             .put("nativeAutoCal", true)
@@ -183,15 +191,22 @@ class RefinoRenderTest {
         return decorated
     }
 
-    private fun observe(service: TelemetryForegroundService, snapshot: JSONObject, count: Int?, max: Int = 3): JSONObject =
-        service.equivalencePhases.observe(
+    private fun observe(service: TelemetryForegroundService, snapshot: JSONObject, count: Int?, max: Int = 3): JSONObject {
+        val acquisition = AutoCalAcquisition.fromSnapshot(snapshot)
+        // O serviço está congelado para render: alimenta também o cérebro real consumido por refinoState.
+        // Replay não tem uma ECU conectada; não inventa uma transação nem invalida dados pela conexão simulada.
+        val brain = service.equivalenceRuntime.evaluate(service.equivalence, service.equivalencePhases,
+            snapshot, acquisition, false, service.refinementJournal::pointGainScale)
+        check(brain != null) { "Replay precisa conter Curva K coerente: ${snapshot}" }
+        return service.equivalencePhases.observe(
             ecuOnline = true,
             monitor = JSONObject().put("autoMatchCount", count ?: JSONObject.NULL).put("maxAutomatch", max).put("autoCalEnabled", 1),
-            acquisition = AutoCalAcquisition.fromSnapshot(snapshot),
+            acquisition = acquisition,
             index = service.equivalence.index(),
             journal = service.refinementJournal.json(),
             restoreCount = service.refinementJournal.restorePoints().length(),
         )
+    }
 
     private fun openRefino(scenario: ActivityScenario<MainActivity>) {
         evalRaw(scenario, "document.querySelector('[data-route=\"refino\"]')?.click(); 'ok';")
@@ -200,6 +215,14 @@ class RefinoRenderTest {
     }
 
     private fun refreshRefino(scenario: ActivityScenario<MainActivity>) {
+        val expectedPhase = service(scenario).equivalencePhases.json().optString("phase")
+        val expectedAvailable = service(scenario).equivalenceRuntime.last() != null
+        // A ponte mantém memo assíncrono; espera a versão nova em vez de fotografar o cache do lançamento.
+        waitFor(12_000L) {
+            val value = evalJson(scenario, "OmegasAutoCal.getEquivalence()")
+            value.optJSONObject("autopilot")?.optString("phase") == expectedPhase &&
+                value.optJSONObject("equivalence")?.optBoolean("available", false) == expectedAvailable
+        }
         evalRaw(scenario, "window.OmegasApp?.refino?.refresh?.(true, true); 'ok';")
         SystemClock.sleep(900L)
     }
@@ -211,7 +234,7 @@ class RefinoRenderTest {
           const q = s => document.querySelector(s);
           const screen = q('[data-screen="refino"]');
           const primary = q('[data-refino-primary]');
-          const legend = q('.refino-cockpit .autocal-chart-legend');
+          const legend = q('#refinoLegend');
           const legendRect = legend ? legend.getBoundingClientRect() : null;
           const live = q('[data-refino-live]');
           const liveCircle = live ? live.querySelector('circle') : null;
@@ -219,6 +242,7 @@ class RefinoRenderTest {
           const body = screen ? screen.innerText : '';
           return {
             active: !!screen && screen.classList.contains('active'),
+            canonical: JSON.parse(OmegasAutoCal.getEquivalence()),
             chip: q('#refinoPhaseChip')?.textContent ?? null,
             headline: q('#refinoHeadline')?.textContent ?? null,
             headlineVisible: (() => {
@@ -233,7 +257,7 @@ class RefinoRenderTest {
             next: q('#refinoNext')?.textContent ?? null,
             ratio: q('#refinoRatio')?.textContent ?? null,
             ecuPoints: q('#refinoEcuPoints')?.textContent ?? null,
-            ourPoints: q('#refinoOurPoints')?.textContent ?? null,
+            ourPoints: q('#refinoDetailCounts')?.textContent ?? null,
             steps: [...document.querySelectorAll('#refinoSteps li')].map(li => li.dataset.state + (li.dataset.problem ? '!' : '')),
             primaryHidden: primary ? primary.hidden : null,
             primaryText: primary ? primary.textContent : null,
@@ -241,8 +265,8 @@ class RefinoRenderTest {
             stallsVisible: !!stalls && !stalls.hidden,
             stallsText: stalls ? stalls.innerText : '',
             journalText: q('#refinoJournal')?.innerText ?? '',
-            techText: q('#refinoTech')?.textContent ?? '',
-            ourSquares: document.querySelectorAll('.refino-our-point').length,
+            techText: q('#refinoProposals')?.textContent ?? '',
+            ourSquares: document.querySelectorAll('#refinoChart .chart-between.collected').length,
             ecuDots: document.querySelectorAll('#refinoChart .autocal-acquired-point').length,
             stallMarks: document.querySelectorAll('.refino-stall-mark').length,
             referenceLines: document.querySelectorAll('#refinoChart .autocal-reference-line').length,
@@ -277,6 +301,7 @@ class RefinoRenderTest {
         .put("corpus", corpus)
         .put("note", note)
         .put("physicalValidationClaimed", false)
+        .put("monitorMaxAutomatch", "SYNTHETIC_SCENARIO_VALUE_3; campo omitido do fixture reduzido")
 
     // ------------------------------------------------------------------ cenários (uma fase do piloto por print)
 
@@ -562,9 +587,9 @@ class RefinoRenderTest {
             val dom = refinoDom(scenario)
             saveEvidence("refino-coletando", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "só a gasolina da sessão; GNV ainda não medido"))
             assertClean(dom)
-            assertEquals("Nossos pontos", dom.getString("chip"))
-            assertTrue(dom.getString("headline"), dom.getString("headline").contains("A ECU terminou"))
-            assertTrue(dom.getString("ourPoints"), dom.getString("ourPoints").startsWith("Gas "))
+            assertEquals("Medindo o GNV", dom.getString("chip"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("aprendendo seu motor"))
+            assertTrue(dom.getString("ourPoints"), dom.getString("ourPoints").contains("intervalos medidos"))
         } finally { scenario.close() }
     }
 
@@ -584,14 +609,18 @@ class RefinoRenderTest {
             prepareCurvaPronta(service)
             openRefino(scenario)
             val dom = refinoDom(scenario)
-            saveEvidence("refino-curva-pronta", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "snapshot 962 (ECU sem faixas maduras) + pares reais de condução"))
+            saveEvidence("refino-corpus-proposta-bloqueada", dom, scenario,
+                provenance("REAL_REPLAY", "ref_2026-10-01_1719",
+                    "o corpus permite cálculo legado, mas o cérebro atual ainda pede coleta; a UI não oferece gravação"))
             assertClean(dom)
-            assertEquals("Curva pronta", dom.getString("chip"))
-            assertEquals("review", dom.getString("primaryKind"))
-            assertTrue(dom.getString("primaryText"), Regex("Revisar e gravar \\d+ ponto").containsMatchIn(dom.getString("primaryText")))
-            assertTrue("a proposta diz de onde vem: ${dom.getString("techText")}", dom.getString("techText").contains("sua condução"))
-            assertTrue("nossos pontos aparecem no gráfico", dom.getInt("ourSquares") > 0)
+            assertEquals("Medindo o GNV", dom.getString("chip"))
+            assertEquals("COLLECT", dom.getJSONObject("canonical").getJSONObject("nextAction").getString("kind"))
+            assertTrue("contrato impede gravar com evidência ainda insuficiente",
+                !dom.getJSONObject("canonical").getJSONObject("refinoState").getBoolean("canAct"))
+            assertEquals("none", dom.getString("primaryKind"))
+            assertTrue("ação de gravação não pode vazar de uma proposta antiga", dom.getBoolean("primaryHidden"))
             assertTrue("curva da ECU desenhada", dom.getInt("referenceLines") >= 1)
+            assertTrue("gráfico disponível durante coleta", dom.getBoolean("svg"))
         } finally { scenario.close() }
     }
 
@@ -644,8 +673,8 @@ class RefinoRenderTest {
             saveEvidence("refino-verificando", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "diário recebeu antes/depois da proposta real; nada foi escrito na ECU"))
             assertClean(dom)
             assertEquals("Verificando", dom.getString("chip"))
-            assertTrue(dom.getString("headline"), dom.getString("headline").contains("min de condução"))
-            assertEquals("waiting", dom.getString("primaryKind"))
+            assertTrue(dom.getString("headline"), dom.getString("headline").contains("confiro se o GNV chegou na gasolina"))
+            assertEquals("medição não oferece uma gravação nem um botão sem ação", "none", dom.getString("primaryKind"))
         } finally { scenario.close() }
     }
 

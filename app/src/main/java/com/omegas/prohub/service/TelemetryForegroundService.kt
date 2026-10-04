@@ -1312,6 +1312,26 @@ class TelemetryForegroundService : Service() {
         JSONObject().put("ok", false).put("reason", "ERRO").put("message", error.message ?: "Falha ao restaurar a referência").toString()
     }
 
+    /** Reinício manual da evidência LOCAL: mesma invalidação usada quando a curva muda. */
+    fun resetGasEvidence(): String {
+        if (!usb.connected || kWriter.isBusy() || kFactor.isBusy() || SerialWriteGuard.shared.isHeld()) {
+            return JSONObject().put("ok", false).put("message", "Conecte a ECU e aguarde o fim da operação atual.").toString()
+        }
+        val reason = "REINICIO_GNV_PELO_DONO"
+        var failed = false
+        EvidenceInvalidation.run(
+            invalidate = listOf(
+                "resetGas" to { equivalence.resetGas(reason) },
+                "cerebro" to { equivalenceRuntime.onGasReset(reason, equivalencePhases) },
+                "journal" to { refinementJournal.interrupt(reason) },
+            ),
+            record = { sessionRecorder.record("refino_gas_learning_reset", "refino", JSONObject().put("reason", reason), force = true) },
+            warn = { if (it.startsWith("Invalidação")) failed = true; log.add("WARN", "EVIDENCIA", it) },
+        )
+        stateChanged()
+        return JSONObject().put("ok", !failed).put("message", if (failed) "Não foi possível confirmar o reinício completo do aprendizado." else "Aprendizado GNV reiniciado. A gasolina continua como referência.").toString()
+    }
+
     fun equivalenceResultJson(): String = try {
         equivalenceRuntime.json(latestAcquisition()).toString()
     } catch (error: Exception) {

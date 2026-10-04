@@ -89,7 +89,7 @@ test('nomes antigos fora da UI: learning/Aprendizado, suggestion, V7 e comentár
 test('folhas de estilo estáticas e em ordem: tokens primeiro; pisos e acabamento do Lote F por último; cor só em tokens.css', () => {
   const links = [...read('index.html').matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1]);
   assert.equal(links[0], 'tokens.css');
-  assert.deepEqual(links.slice(-4), ['styles-floors.css', 'styles-lote-f.css', 'styles-tela-agora-mapa-curva.css', 'styles-autocal-refino.css']);
+  assert.deepEqual(links.slice(-5), ['styles-floors.css', 'styles-lote-f.css', 'styles-tela-agora-mapa-curva.css', 'styles-autocal-refino.css', 'styles-diamante.css']);
   for (const sheet of ['styles-autocal-cockpit.css', 'styles-dashboard-now.css', 'styles-shell-status.css', 'styles-refine.css', 'styles-split-layout.css']) {
     assert.ok(links.indexOf(sheet) > 0 && links.indexOf(sheet) < links.indexOf('styles-floors.css'), `${sheet} antes dos pisos`);
   }
@@ -106,9 +106,11 @@ test('pisos de texto e toque do Lote F: 16 px para microtexto, 22 px para valore
   assert.match(chart, /class="autocal-acquired-hit"[^`]*r="22"/);
   assert.match(read('screens/curve.js'), /class="curve-point-hit"[^`]*r="24"/, 'ponto da Curva K: círculo invisível de 48 px');
   assert.match(lote, /grid-template-rows:\s*44px repeat\(12, minmax\(44px, 1fr\)\)/);
-  // Valor de 112 px e rótulo de 28 px no Agora
-  assert.match(read('styles-dashboard-now.css'), /\.now-tile b\s*\{[^}]*font-size:\s*112px/s);
-  assert.match(read('styles-dashboard-now.css'), /\.now-tile small\s*\{[^}]*font-size:\s*28px/s);
+  // O pedido Diamante substitui cartões redundantes por um cabeçalho global de 7 fatos.
+  const diamante = read('styles-diamante.css');
+  assert.match(diamante, /vehicle-status-strip b[^}]*font-size:22px/);
+  assert.match(diamante, /vehicle-status-strip small[^}]*font-size:14px/);
+
 });
 
 test('uma ação primária só: botão primário usa o accent; vermelho/âmbar só em perigo e atenção', () => {

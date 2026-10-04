@@ -50,6 +50,13 @@ class WiringGraph(unittest.TestCase):
             self.assertIn(key, self.data["producers"], f"produtor {key} sumiu do extrator")
             self.assertIn(key, self.data["js_reads"], f"leitura {key} sumiu do extrator")
 
+    def test_document_hit_test_is_not_an_ecu_field(self):
+        self.assertIn("elementFromPoint", E.BUILTIN)
+        data = dict(self.data)
+        data["js_reads"] = dict(data["js_reads"], nonexistent_ecu_test_field=["screens/map.js"])
+        self.assertIn("nonexistent_ecu_test_field", E.analyse(data, ALLOW)[0],
+                      "Reconhecer API DOM não pode ocultar campos da ECU sem produtor")
+
     def test_no_unfed_consumer(self):
         unfed = self.result[0]
         self.assertEqual(unfed, [], "UI le chave que nenhum Kotlin emite (mostraria — ou 0 para sempre): %s" % unfed)

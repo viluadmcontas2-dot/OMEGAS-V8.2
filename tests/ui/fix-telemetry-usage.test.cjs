@@ -27,11 +27,11 @@ test('2. valid=true com a idade crescendo: normal → atrasado (cinza) → "—"
   feed(app, 2);
   assert.ok(tiles(app).every(t => t !== '—'), `com dado fresco todos os 4 aparecem: ${tiles(app)}`);
   assert.match(dash(app), /Leitura em tempo real/);
-  assert.equal(app.$('.now-tile-grid').dataset.stale, 'false');
+  assert.equal(app.byId('vehicleStatusStrip').dataset.stale, 'false');
   // a ECU para de mandar (valid continua true; a idade cresce)
   app.advance(2000);
   assert.equal(app.world.telemetry.valid, true);
-  assert.equal(app.$('.now-tile-grid').dataset.stale, 'true', 'de 1,5 a 3 s: cinza');
+  assert.equal(app.byId('vehicleStatusStrip').dataset.stale, 'true', 'de 1,5 a 3 s: cinza');
   assert.ok(tiles(app).every(t => t !== '—'), 'atrasado ainda mostra o último valor, em cinza');
   assert.match(dash(app), /Dados atrasados/);
   app.advance(2500);
@@ -133,9 +133,10 @@ test('12. trilho: texto da ECU/combustível ≥ 24 px e selo "—" sem caixa qua
   app.destroy();
 });
 
-test('17. Agora = só 4 blocos iguais (ms, RPM, MAP, combustível): sem tile CÉLULA e sem retângulo sombreado no "—"', () => {
+test('17. Agora apresenta intenção e cobertura; telemetria global sem duplicar mostradores', () => {
   const app = boot();
-  assert.equal(app.$$('.now-tile').length, 4);
+  assert.equal(app.$$('.now-tile').length, 0);
+  for (const id of ['dashHeroPetrol','dashRpm','dashMap','dashFuel']) assert.ok(app.byId(id).closest('#vehicleStatusStrip'),id+' único no topo');
   assert.doesNotMatch(dash(app), /CÉLULA/);
   assert.equal(app.byId('dashCell'), null);
   const fs = require('node:fs');

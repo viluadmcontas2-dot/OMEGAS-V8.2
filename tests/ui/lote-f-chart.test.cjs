@@ -60,6 +60,18 @@ function dense(count, fuel, seed) {
   })).map(p => ({ ...p, fuel }));
 }
 
+test('Diamante: eixo completo até 22 ms mantém os pontos altos da ECU mesmo com aquisição só em marcha lenta',()=>{
+ const {chart}=load();
+ const reference=[{petrolMs:.5,petrolMapBar:.2,gasMapBar:.21},{petrolMs:22,petrolMapBar:1.2,gasMapBar:1.18}];
+ const domain=chart.focusDomain(reference,[{petrolMs:3,mapBar:.4}],[]);
+ assert.equal(domain.xMin,0);assert.ok(domain.xMax>22 && domain.xMax<24);assert.ok(domain.yMax>=1.2);
+ const svg=chart.buildSvg({reference,domain,ecu:[],ours:[],zones:[]},{}).svg;
+ assert.match(svg,/Injeção de gasolina/);assert.match(svg,/Injeção de gasolina/);
+ assert.ok(chart.focusDomain(reference,[{petrolMs:24,mapBar:1.2}],[]).xMax>=24,'dados além de 22 ms continuam visíveis');
+ const high=chart.buildSvg({reference,domain:{...domain,xMax:25},ecu:[],ours:[],zones:[]},{}).svg;
+ assert.match(high,/>25,0<\/text>/);assert.doesNotMatch(high,/>24,0<\/text>/,'rótulos do extremo não ficam colados');
+});
+
 // ------------------------------------------------------------------ F2: evidência igual = zero redesenho
 test('F2: evidência igual por N leituras do relógio = zero redesenhos; mudou = exatamente um', () => {
   const { chart, document } = load();

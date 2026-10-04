@@ -1,0 +1,97 @@
+# Owner-approved final APK and Android 1280x720 verification; immutable product revision.
+name: Omegas Experience authorized APK
+on:
+  pull_request:
+    branches: [ OmegasDiamante ]
+permissions:
+  contents: read
+jobs:
+  approved-apk:
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    needs: [multimedia-render, elastic-browser]
+    uses: ./.github/workflows/verde-apk-now.yml
+    with:
+      build_apk: true
+      source_sha: ${{ github.event.pull_request.head.sha }}
+  multimedia-render:
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Enable emulator KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          test -e /dev/kvm
+      - name: Exercise real WebView at 1280x720
+        env:
+          OMEGAS_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          cores: 2
+          ram-size: 2048M
+          emulator-build: 15917651
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none -no-metrics
+          disable-animations: true
+          script: |
+            test "$(git rev-parse HEAD)" = "$OMEGAS_SOURCE_SHA"
+            bash tools/ci/run_android_render_evidence.sh autocal-visible-actions autocalVisibleReacquireActionsForMultimedia DashboardLevelsRenderTest
+            bash tools/ci/run_android_render_evidence.sh map-fresh-context mapFreshMp48ContextRender DashboardLevelsRenderTest
+            bash tools/ci/run_android_render_evidence.sh curve-original-lognovo curveOriginalLognovoRendersThirtyDecodedPoints DashboardLevelsRenderTest
+            bash tools/ci/run_android_render_evidence.sh refino-coletando refinoColetando RefinoRenderTest
+            bash tools/ci/run_android_render_evidence.sh refino-pronto refinoCurvaPronta RefinoRenderTest
+            bash tools/ci/run_android_render_evidence.sh refino-verificando refinoVerificando RefinoRenderTest
+            bash tools/ci/run_android_render_evidence.sh refino-latencia-da-ponte refinoLatenciaDaPonte RefinoRenderTest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: experience-1280x720-render-evidence
+          path: rendered-evidence
+          if-no-files-found: warn
+
+  elastic-browser:
+    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OMEGAS_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove exact source
+        run: |
+          test "$(git rev-parse HEAD)" = "$OMEGAS_SOURCE_SHA"
+          echo "NODE_PATH=$RUNNER_TEMP/omegas-ui/node_modules" >> "$GITHUB_ENV"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$RUNNER_TEMP/omegas-browsers" >> "$GITHUB_ENV"
+      - name: Chromium for remote UI evidence
+        run: |
+          npm install --prefix "$RUNNER_TEMP/omegas-ui" playwright
+          "$RUNNER_TEMP/omegas-ui/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Eight tabs, real fixtures and usable Android area
+        run: |
+          node tests/ui/render/elastic-evidence.cjs rendered-evidence/elastic
+      - name: Preserve layout and touch contracts
+        run: node --test tests/ui/diamante-elastic.test.cjs tests/ui/diamante-usage.test.cjs tests/ui/diamante-layout.test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diamante-elastic-browser-${{ github.event.pull_request.head.sha }}
+          path: rendered-evidence/elastic
+          if-no-files-found: error

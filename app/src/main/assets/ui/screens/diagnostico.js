@@ -3,7 +3,7 @@
   // 08 Diagnóstico: engasgos e fluidez do GNV, e tudo que saiu do Refino (último resultado, Desfazer, técnico).
   // Só desenha: a matemática é do Kotlin. Contratos novos (podem faltar; a tela diz "sem dados" em vez de inventar):
   //   equivalence().stalls.regions[] {mapBar, rpm, ms, count, firstAt, lastAt, curvePoints[], proposal?}
-  //   equivalence().fluidity {gasolina|petrol, gnv|cng} cada um {index 0..1, jerks, samples}
+  //   equivalence().fluidity {gasolina|petrol, gnv|gas|cng} cada um {index 0..1, jerks = jerkPct, samples}
   const ns = root.OmegasUi = root.OmegasUi || {};
   const D = ns.DisplayRules;
   const { finite, escapeHtml, fmt } = D;
@@ -53,7 +53,7 @@
       const index = finite(x.index);
       return index === null ? null : { index: Math.max(0, Math.min(1, index)), jerks: finite(x.jerks), samples: finite(x.samples) };
     };
-    const petrol = one(f.gasolina || f.petrol), gnv = one(f.gnv || f.cng);
+    const petrol = one(f.gasolina || f.petrol), gnv = one(f.gnv || f.gas || f.cng);
     return petrol || gnv ? { petrol, gnv } : null;
   }
 
@@ -117,14 +117,14 @@
         <div class="dg-fl-bar" role="img" aria-label="${label}: ${pct === null ? 'sem medida' : pct + '% linear'}"><i style="width:${pct === null ? 0 : pct}%"></i></div>
         <b>${pct === null ? '—' : pct + '%'}</b><span class="dg-fl-hint">${hint}</span></div>`;
     };
-    const hintP = fl && fl.petrol ? 'Acelera em linha reta.' : 'Dirija na gasolina para medir.';
-    const hintG = !fl || !fl.gnv ? 'Dirija no GNV para medir.' : fl.gnv.jerks ? `${plural(fl.gnv.jerks, 'solavanco', 'solavancos')} nas acelerações.` : 'Sem solavancos.';
-    let verdict = 'A fluidez compara a resposta do motor nas acelerações: 100% é linear, como a gasolina.';
+    const hintP = fl && fl.petrol ? 'Referência medida na gasolina.' : 'Dirija na gasolina para medir.';
+    const hintG = !fl || !fl.gnv ? 'Dirija no GNV para medir.' : fl.gnv.jerks === null ? 'Variação brusca ainda sem medida.' : `Variação brusca: ${fl.gnv.jerks.toFixed(1).replace('.', ',')}%.`;
+    let verdict = 'A fluidez compara a resposta do motor nas acelerações: 100% indica uma resposta linear.';
     if (fl && fl.petrol && fl.gnv) {
       const gap = Math.round((fl.petrol.index - fl.gnv.index) * 100);
       verdict = gap <= 3 ? 'O GNV acelera tão linear quanto a gasolina.' : `O GNV está ${gap} pontos menos linear que a gasolina nas acelerações.`;
     }
-    return `<section class="dg-card dg-fluidity" aria-label="Fluidez nas acelerações"><header class="dg-head"><div><small>FLUIDEZ NAS ACELERAÇÕES</small><h3>Gasolina é linear; o GNV pode engasgar</h3></div></header>
+    return `<section class="dg-card dg-fluidity" aria-label="Fluidez nas acelerações"><header class="dg-head"><div><small>FLUIDEZ NAS ACELERAÇÕES</small><h3>Como o motor responde ao acelerar</h3></div></header>
       ${row('Gasolina', 'ok', fl && fl.petrol, hintP)}${row('GNV', fl && fl.gnv && fl.petrol && fl.petrol.index - fl.gnv.index > 0.03 ? 'warn' : 'ok', fl && fl.gnv, hintG)}
       <p class="dg-verdict">${escapeHtml(verdict)}</p></section>`;
   }
@@ -176,9 +176,10 @@
         </section>
         <section class="dg-state" data-kind="${st.kind}"><p>${escapeHtml(st.text)}</p>${act}</section>
         ${fluidityCard(fluidityOf(eq))}
+        <div class="dg-stack">
         ${this.journal(eq)}
         ${this.undo(eq)}
-        ${this.tech(eq, list)}`;
+        ${this.tech(eq, list)}</div>`;
       }
       [...this.host.querySelectorAll('details')].forEach((d, i) => { if (open[i]) d.open = true; });
     }

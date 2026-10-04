@@ -47,6 +47,7 @@
     // Cérebro único: resultado completo, congelar a Referência (toque do dono, sem escrita na ECU) e o Desfazer dele.
     equivalenceResult: () => invoke('getEquivalenceResult', [], { ok: false, available: false }),
     freezeReference: () => invoke('freezeReference', [], { ok: false }),
+    resetGasEvidence: () => invoke('resetGasEvidence', [], { ok: false, message: 'Reinício do aprendizado indisponível.' }),
     restorePreviousReference: () => invoke('restorePreviousReference', [], { ok: false }),
   };
 })(typeof window !== 'undefined' ? window : globalThis);

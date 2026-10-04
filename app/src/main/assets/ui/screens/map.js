@@ -24,6 +24,7 @@
       this.reading = false;
       this.readRequested = false;
       this.dragStart = null;
+      this.activeCell = null;
       this.review = null;
       this.lastOperationState = '';
       // Desfazer do Mapa K: id da foto (= id da escrita) e etapa ('' | 'preparing' | 'writing').
@@ -109,6 +110,7 @@
       this.reading = false;
       this.editor.reset();
       this.cells.clear();
+      this.activeCell = null;
       this.rowHeaders = [];
       this.columnHeaders = [];
       if (this.host) {
@@ -254,6 +256,17 @@
       this.host.appendChild(table);
 
       table.addEventListener('click', event => {
+        // Native click also handles keyboard activation. Pointer taps are consumed on pointerup.
+        const clickedCell = event.target.closest('.map-k-cell');
+        if (clickedCell && event.detail === 0) {
+          try {
+            this.editor.toggle(Number(clickedCell.dataset.row), Number(clickedCell.dataset.column));
+            this.review = null;
+            this.renderEditor(Number(clickedCell.dataset.row), Number(clickedCell.dataset.column));
+            this.refreshSelectionPreview();
+          } catch (error) { this.alert(error.message); }
+          return;
+        }
         const columnHeader = event.target.closest('[data-select-column]');
         const rowHeader = event.target.closest('[data-select-row]');
         if (columnHeader) {
@@ -280,8 +293,11 @@
         this.dragStart = { row: Number(cell.dataset.row), column: Number(cell.dataset.column) };
         try { cell.setPointerCapture?.(event.pointerId); } catch (_) {}
       });
+      table.addEventListener('pointercancel', () => { this.dragStart = null; });
       table.addEventListener('pointerup', event => {
-        const cell = event.target.closest('.map-k-cell');
+        // Pointer capture targets the starting cell; resolve the actual release position.
+        const atPointer = typeof document.elementFromPoint === 'function' ? document.elementFromPoint(event.clientX, event.clientY) : null;
+        const cell = atPointer?.closest('.map-k-cell') || event.target.closest('.map-k-cell');
         if (!cell || !this.dragStart) return;
         const end = { row: Number(cell.dataset.row), column: Number(cell.dataset.column) };
         try {
@@ -301,10 +317,6 @@
         return;
       }
       const value = finite(document.getElementById('mapAdjustmentValue')?.value);
-      if (value === null) {
-        this.renderGrid();
-        return;
-      }
       this.applyAdjustment();
     }
 
@@ -312,7 +324,14 @@
       if (!this.editor.hasMap()) return;
       const mode = document.getElementById('mapAdjustmentMode')?.value || 'percent';
       const value = finite(document.getElementById('mapAdjustmentValue')?.value);
-      if (value === null) return;
+      if (value === null) {
+        // A cleared input is no proposal, never the previous writable preview.
+        this.editor.targetOverrides.clear();
+        this.review = null;
+        this.renderGrid();
+        this.renderEditor();
+        return;
+      }
       try {
         this.editor.setAdjustment(mode, value);
         if (this.editor.selectionCount() > 0) {
@@ -370,10 +389,16 @@
           : changed === 0 ? 'Digite o ajuste para mudar o K'
             : `Gravar ${D().plural(changed, 'célula', 'células')}`;
       }
-      if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
+      if (Number.isInteger(activeRow) && Number.isInteger(activeColumn)) this.activeCell = { row: activeRow, column: activeColumn };
+      const selected = this.editor.hasMap() ? this.editor.selectedCells() : [];
+      if (!this.activeCell || !this.editor.isSelected(this.activeCell.row, this.activeCell.column)) this.activeCell = selected[selected.length - 1] || null;
+      if (this.activeCell) {
+        const { row, column } = this.activeCell;
         const snapshot = this.editor.snapshot();
-        text('mapActiveCell', `${fmt(snapshot.axes.petrolBins[activeRow], 1)} ms · ${snapshot.axes.rpmBins[activeColumn]} RPM`);
-      }
+        const current = snapshot.rows[row][column];
+        const target = this.editor.targetOverrides.get(this.key(row, column));
+        text('mapActiveCell', `${fmt(snapshot.axes.petrolBins[row], 1)} ms · ${snapshot.axes.rpmBins[column]} RPM · K ${current}${target != null && target !== current ? ' → ' + target : ''}`);
+      } else text('mapActiveCell', 'Toque em uma célula');
       this.store.patch({ map: { ...this.store.get().map, selection: count, review: this.review } });
     }
 

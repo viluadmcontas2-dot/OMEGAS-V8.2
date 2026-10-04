@@ -31,34 +31,19 @@ function occurrences(text, token) {
   return (text.match(new RegExp(token, 'g')) || []).length;
 }
 
-test('Agora Verde preserva a hierarquia multimídia Blue', () => {
-  for (const marker of [
-    'multimedia-now-screen',
-    'now-dashboard-shell',
-    'now-tile-grid',
-    'dashHeroPetrol',
-    'dashRpm',
-    'dashMap',
-    'dashFuel',
-    'dashLevelsRaw',
-    'dashRefino',
-    'dashHealth',
-  ]) {
-    assert.match(dashboard, new RegExp(marker), `missing ${marker}`);
+test('Agora Diamante mostra intenção e mantém dados vivos só no topo', () => {
+  const strip=fs.readFileSync(path.join(ROOT,'app/src/main/assets/ui/components/vehicle-status-strip.js'),'utf8');
+  for (const marker of ['multimedia-now-screen','now-dashboard-shell','dashNext','dashEquivalence','dashLevelsRaw','dashRefino','dashHealth']) assert.ok(dashboard.includes(marker),marker);
+  for (const marker of ['dashHeroPetrol','dashRpm','dashMap','dashFuel']) {
+    assert.ok(strip.includes(marker),marker+' global');
+    assert.ok(!dashboard.includes(marker),marker+' sem redundância');
   }
-
-  assert.equal(occurrences(dashboard, '>RPM<'), 1);
-  assert.equal(occurrences(dashboard, '>MAP<'), 1);
-  assert.equal(occurrences(dashboard, '>COMBUSTÍVEL<'), 1);
-  assert.equal(occurrences(dashboard, '>NÍVEIS<'), 1);
-  assert.equal(occurrences(dashboard, '>REFINO<'), 1);
-  assert.equal(occurrences(dashboard, '>CÉLULA<'), 0, 'Agora = só ms, RPM, MAP e combustível: sem tile CÉLULA');
-  assert.doesNotMatch(dashboard, /dashHeroRpm|dashLtft|GAS INJ\./);
+  assert.doesNotMatch(dashboard, /now-tile|dashHeroRpm|dashLtft/);
 });
 
-test('CSS contém somente o recorte Agora', () => {
-  assert.match(styles, /\.now-tile-grid[\s\S]*grid-template-columns:\s*repeat\(2/);
-  assert.match(styles, /\.now-tile b[\s\S]*font-size:\s*112px/);
+test('CSS contém somente o recorte Agora, com resultado, intenção e cobertura', () => {
+  assert.match(styles, /\.now-overview[^}]*grid-template-columns:1fr 1fr/);
+  assert.match(styles, /\.now-equivalence > b[^}]*font-size:104px/);
   assert.doesNotMatch(styles, /witness-|multimedia-obd|map-screen|curve-screen|learning-screen/);
   assert.doesNotMatch(styles, /@keyframes|animation:|backdrop-filter/);
 });

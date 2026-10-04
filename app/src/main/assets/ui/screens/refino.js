@@ -123,6 +123,19 @@
       .map(p => ({ index: Number(p.index), currentRaw: Number(p.currentRaw), targetRaw: Number(p.calculatedRaw) }));
   }
 
+  /** Proposta local já calculada pelo Kotlin; a UI só transporta os valores autorizados. */
+  function readyPoints(eq, analysis) {
+    const action = eq?.nextAction;
+    if (action?.kind !== 'APPLY' || action.local !== true) return proposedPoints(analysis);
+    const before = action.currentRaw, after = action.refinedRaw, indexes = action.pointIndexes;
+    const raw = value => Number.isInteger(value) && value > 0 && value <= 65535;
+    if (!Array.isArray(before) || !Array.isArray(after) || before.length !== 30 || after.length !== 30 ||
+        !before.every(raw) || !after.every(raw) || !Array.isArray(indexes) || !indexes.length ||
+        !indexes.every(i => Number.isInteger(i) && i >= 0 && i < 30)) return [];
+    return [...new Set(indexes)].filter(i => before[i] !== after[i])
+      .map(i => ({ index: i, currentRaw: before[i], targetRaw: after[i] }));
+  }
+
   /** Desfazer a última gravação registrada no diário (antes ← depois). */
   function undoPoints(latest) {
     const before = latest?.beforeRaw;
@@ -142,7 +155,7 @@
     const photo = String(latest?.photoFile || '');
     const status = String(latest?.status || '');
     const partial = status === 'FALHA_PARCIAL';
-    const changedByEcu = status === 'INTERROMPIDO';
+    const changedByEcu = status === 'INTERROMPIDO' && latest?.interruptReason !== 'REINICIO_GNV_PELO_DONO';
     const wasUndo = /desfazer|restaurar/i.test(String(latest?.source || ''));
     const has = Boolean(photo) || undoPoints(latest).length > 0;
     const available = has && (partial || (!changedByEcu && !wasUndo));
@@ -194,11 +207,18 @@
   /** Ação principal conforme a fase do piloto (uma só por vez). */
   function primaryAction(eq, analysis) {
     const phase = eq?.autopilot?.phase || 'SEM_ECU';
-    const proposal = proposedPoints(analysis).length;
+    const proposal = readyPoints(eq, analysis).length;
+    const local = eq?.nextAction?.kind === 'APPLY' && eq.nextAction.local === true;
+    if (local) {
+      const blocked = ['SEM_ECU', 'LENDO_ECU', 'ECU_TRABALHANDO', 'VERIFICANDO'].includes(phase);
+      if (blocked || eq?.refinoState?.canAct !== true || !proposal) return { kind: 'none', label: '' };
+      return { kind: 'review', label: `Gravar ${D.plural(proposal, 'ponto', 'pontos')}` };
+    }
+    const available = analysis?.available;
     if (phase === 'TENTATIVA_ENCERRADA') {
       // O prazo da tentativa pausa o acompanhamento, não a proposta: ela continua válida e o botão continua.
       const from = eq?.autopilot?.expiredFrom;
-      if ((from === 'PROPOSTA_PRONTA' || from === 'ECU_TRABALHANDO') && proposal && analysis?.available) {
+      if ((from === 'PROPOSTA_PRONTA' || from === 'ECU_TRABALHANDO') && proposal && available) {
         return { kind: 'review', label: `Gravar ${D.plural(proposal, 'ponto', 'pontos')}`, expired: true };
       }
       return { kind: 'none', label: '' };
@@ -214,7 +234,7 @@
       return proposal ? { kind: 'waiting', label: `Aguardando a ECU no automático${progress}` } : { kind: 'none', label: '' };
     }
     if (phase === 'VERIFICANDO') return { kind: 'waiting', label: 'Medindo a última gravação…' };
-    if (proposal && analysis?.available) {
+    if (proposal && available) {
       return { kind: 'review', label: `Gravar ${D.plural(proposal, 'ponto', 'pontos')}` };
     }
     return { kind: 'none', label: '' };
@@ -233,6 +253,7 @@
       this.ticks = 0;
       this.operation = { phase: 'idle' };
       this.reviewPoints = null;
+      this.gasResetPending = false;
       // A foto de antes de cada gravação vive no diário (photoFile do ÚLTIMO experimento): o Desfazer restaura
       // exatamente a do último, mesmo que o anterior tenha sido gravado por outra aba.
       this.lastRenderKey = '';
@@ -273,9 +294,10 @@
       if (!host || host.querySelector('.autocal-cockpit')) return;
       host.innerHTML = `
         <section class="autocal-cockpit refino-cockpit ar-shell ar-refino" aria-label="Refino OMEGAS">
-          <header class="ar-status" aria-live="polite">
+          <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Refino</h2><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
             <span id="refinoPhaseChip" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
-            <div class="ar-tile"><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></div>
+            <div class="instrument-menus"><details class="instrument-details refino-proposals"><summary>Sugestões</summary><div class="instrument-detail-content" id="refinoProposals">Ainda sem proposta. O app continua medindo.</div></details>
+            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-evidence-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p><button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar aprendizado GNV</button><button type="button" class="btn-ghost" data-refino-acquisition>Leitura da ECU · pausa e releitura</button></section></div></details></div>
             <div class="refino-stalls ar-stall" id="refinoStalls" hidden></div>
           </header>
           <section class="ar-chart-card" aria-label="Curva de aquisição · Gasolina × GNV">
@@ -284,7 +306,6 @@
             <div class="ar-readout" id="refinoInspector" data-empty="true"><span>Toque num ponto do gráfico.</span></div>
           </section>
           <div class="ar-act">
-            <p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
             <p id="refinoNext" class="ar-reason" hidden></p>
             <div class="ar-buttons">
               <button type="button" class="btn-primary" data-refino-primary hidden></button>
@@ -294,6 +315,7 @@
           </div>
         </section>`;
       host.addEventListener('click', event => this.onClick(event));
+      ns.CurveChart.bindView(host, this, () => this.renderChart());
     }
 
     refresh(force, fresh) {
@@ -301,6 +323,7 @@
       if (!this.api?.available?.()) { this.renderUnavailable(); return; }
       // O Kotlin já deixa o resultado pronto em segundo plano; "fresco" só depois de gravar/desfazer.
       this.eq = (fresh === true ? this.api.equivalenceFresh?.() : this.api.equivalence?.()) || null;
+      if (this.gasResetPending && (this.eq?.gasObservations === 0 || this.eq?.gasEpochReason === 'REINICIO_GNV_PELO_DONO') && this.eq?.refinoState?.canAct === false) this.gasResetPending = false;
       this.analysis = this.api.refinedAnalysis?.() || null;
       const projection = this.api.projection?.() || {};
       this.projection = projection.ok === true ? projection : {};
@@ -311,6 +334,8 @@
     }
 
     onClick(event) {
+      if (event.target.closest('[data-refino-reset-gas]')) { this.resetGasEvidence(); return; }
+      if (event.target.closest('[data-refino-acquisition]')) { this.app.router?.open('autocal'); return; }
       if (event.target.closest('[data-refino-unfreeze]')) { this.unfreezeReference(); return; }
       if (event.target.closest('[data-refino-primary]')) { this.primary(); return; }
       if (event.target.closest('[data-refino-undo]')) { this.openUndo(); return; }
@@ -343,6 +368,15 @@
     }
 
     /** Congelar a Referência: não escreve na ECU. Um toque; o resultado fica à vista e o Desfazer volta à anterior. */
+    resetGasEvidence() {
+      if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
+      const result = this.api.resetGasEvidence?.() || { ok: false, message: 'Reinício do aprendizado indisponível.' };
+      this.gasRestartNotice = { phase: result.ok === true ? 'done' : 'failed',
+        message: result.message || (result.ok === true ? 'Aprendizado GNV reiniciado. A gasolina continua como referência.' : 'Não foi possível reiniciar agora.'), at: Date.now() };
+      if (result.ok === true) { this.gasResetPending = true; this.selected = {}; this.readout(''); ns.CurveChart?.reset(); }
+      this.refresh(true, true);
+    }
+
     freezeReference() {
       const result = this.api.freezeReference?.() || { ok: false };
       this.freeze = result.ok === true
@@ -368,11 +402,14 @@
       const eq = this.eq || {};
       const rs = eq.refinoState && typeof eq.refinoState === 'object' ? eq.refinoState : null;
       const said = rs && typeof rs.nextAction === 'string' && rs.nextAction.trim() ? rs.nextAction.trim() : '';
+      const frozenNow = this.freeze && this.freeze.phase === 'done' && Date.now() - this.freeze.at < 10000;
+      // refinoState decide se existe ação; uma proposta antiga não transforma "seguir dirigindo" em gravação.
+      if (this.gasResetPending || (rs && rs.canAct !== true)) return { kind: 'none', label: '' };
+      if (eq.nextAction?.kind === 'FREEZE_REFERENCE') return frozenNow ? { kind: 'none', label: '' } : { kind: 'freeze', label: said || 'Salvar a gasolina como referência' };
       const action = primaryAction(eq, this.analysis);
       if (action.kind === 'review') return { kind: 'review', label: said || 'Aplicar ajuste' };
       if (action.kind === 'restore') return { kind: 'restore', label: said || 'Desfazer o trecho que piorou' };
       const strip = equivalenceStrip(eq, ns.ROUTES);
-      const frozenNow = this.freeze && this.freeze.phase === 'done' && Date.now() - this.freeze.at < 10000;
       if (action.kind === 'none' && strip.act === 'freeze' && !frozenNow) return { kind: 'freeze', label: said || 'Salvar a gasolina como referência' };
       if (action.kind === 'none' && strip.route) return { kind: 'route', label: said || strip.routeLabel, route: strip.route, subpage: strip.subpage };
       return { kind: 'none', label: '' };
@@ -403,7 +440,7 @@
       let points = [];
       let title = '';
       let reason = '';
-      if (kind === 'apply') { points = proposedPoints(this.analysis); title = 'Gravar curva refinada'; reason = 'Refino OMEGAS: curva refinada confirmada'; }
+      if (kind === 'apply') { points = readyPoints(this.eq, this.analysis); title = 'Gravar curva refinada'; reason = 'Refino OMEGAS: curva refinada confirmada'; }
       if (kind === 'restore') { points = (this.eq?.restorePoints || []).map(p => ({ index: Number(p.index), currentRaw: Number(p.currentRaw), targetRaw: Number(p.targetRaw) })); title = 'Restaurar trecho que piorou'; reason = 'Refino OMEGAS: restaurar trecho que piorou'; }
       if (kind === 'undo') { points = undoPoints(this.eq?.refinement?.latest); title = 'Desfazer última gravação'; reason = 'Refino OMEGAS: desfazer última gravação'; }
       this.showReview(points, title, reason, '');
@@ -539,8 +576,8 @@
       const rs = eq.refinoState && typeof eq.refinoState === 'object' ? eq.refinoState : null;
       const chart = ns.CurveChart;
       const key = [phase, pilot.expiredFrom, eq.refinement?.latest?.photoFile, eq.refinement?.latest?.status, pilot.petrolValid, pilot.gasValid,
-        eq.ratio, eq.index, eq.nextAction?.text, eq.nextAction?.route, op.phase, op.message, op.progress, eq.stalls?.count, eq.stalls?.nearCount, this.stallTone(), eq.gasEpochAt,
-        rs ? [rs.phase, rs.whatNow, rs.nextAction, rs.reason].join('~') : '', this.freeze ? this.freeze.phase + this.freeze.at : '', op.phase === 'idle' ? '' : Math.floor(Date.now() / 5000),
+        eq.ratio, eq.index, eq.nextAction?.local ? readyPoints(eq, this.analysis).map(p => [p.index, p.currentRaw, p.targetRaw].join(':')).join(',') : '', eq.nextAction?.text, eq.nextAction?.route, op.phase, op.message, op.progress, this.gasResetPending, eq.stalls?.count, eq.stalls?.nearCount, this.stallTone(), eq.gasEpochAt,
+        rs ? [rs.phase, rs.whatNow, rs.nextAction, rs.canAct, rs.reason, [rs.counts?.intervalsTotal,rs.counts?.intervalsCollected,rs.counts?.pointsToWrite].join(':'),rs.whyNoProposal].join('~') : '', this.freeze ? this.freeze.phase + this.freeze.at : '', op.phase === 'idle' ? '' : Math.floor(Date.now() / 5000),
         chart ? chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() }) : ''].join('|');
       if (!force && key === this.lastRenderKey) return;
       this.lastRenderKey = key;
@@ -549,10 +586,21 @@
       if (chip) {
         const readyAfterExpiry = phase === 'TENTATIVA_ENCERRADA' && pilot.expiredFrom === 'PROPOSTA_PRONTA';
         chip.dataset.fuelState = (readyAfterExpiry ? 'ready' : PHASE_TONE[phase]) || 'unknown';
-        chip.textContent = D.phaseLabel(phase, pilot.expiredFrom);
+        // A frase e o chip usam o mesmo contrato; um piloto antigo não mascara uma leitura pendente.
+        const human = rs?.phase;
+        chip.textContent = human ? (/^Coletando/.test(human) ? 'Medindo o GNV' : /^Pronto para gravar/.test(human) ? 'Curva pronta' : human) : D.phaseLabel(phase, pilot.expiredFrom);
       }
       const currentEvidence = !['SEM_ECU', 'LENDO_ECU', 'TENTATIVA_ENCERRADA'].includes(phase);
       setText('refinoRatio', pct(currentEvidence ? eq.ratio : null));
+      setText('refinoDetailCounts', rs?.counts ? `${rs.counts.intervalsCollected ?? '—'} de ${rs.counts.intervalsTotal ?? '—'} intervalos medidos · ${rs.counts.pointsToWrite ?? '—'} pontos sugeridos` : 'Aguardando medição');
+      setText('refinoDetailReason', rs?.whyNoProposal || rs?.reason || '');
+      const proposals = document.getElementById('refinoProposals');
+      if (proposals) {
+        const points = this.actionModel().kind === 'review' ? readyPoints(eq, this.analysis) : [];
+        proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'ponto', 'pontos')} da Curva K · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>Ponto ${p.index + 1}</dt><dd>${D.kValue(p.currentRaw / 16384)} → ${D.kValue(p.targetRaw / 16384)}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : '<p>Ainda sem proposta. O app continua medindo.</p>';
+      }
+      const resetGas = document.querySelector('[data-refino-reset-gas]');
+      if (resetGas) resetGas.disabled = op.phase === 'reading' || op.phase === 'writing' || this.store.get()?.status?.usbConnected !== true;
       this.renderStalls();
       this.renderSentence(rs, phase, pilot);
       this.renderPrimary();
@@ -592,6 +640,7 @@
       }
       else if (op.phase === 'reading') text = 'Lendo a curva da ECU…';
       else if (op.phase === 'writing') text = 'Gravando na ECU…';
+      else if (this.gasRestartNotice && Date.now() - this.gasRestartNotice.at < 10000) { text = this.gasRestartNotice.message; level = this.gasRestartNotice.phase === 'failed' ? 'warn' : 'ok'; }
       else if (frz) { text = frz.message; level = frz.phase === 'failed' ? 'warn' : 'ok'; }
       else {
         const strip = equivalenceStrip(this.eq, ns.ROUTES);
@@ -599,9 +648,9 @@
         if (phase === 'ESTAVEL') level = 'ok';
         if (phase === 'TENTATIVA_ENCERRADA' || phase === 'RESTAURAR_TRECHO') level = 'warn';
         const closing = this.eq?.refinement?.latest?.status;
-        if (closing === 'FALHA_PARCIAL' || closing === 'INTERROMPIDO') { reason = JOURNAL_NOTE[closing]; level = 'warn'; }
+        if (closing === 'FALHA_PARCIAL' || closing === 'INTERROMPIDO') { reason = closing === 'INTERROMPIDO' && this.eq?.refinement?.latest?.interruptReason === 'REINICIO_GNV_PELO_DONO' ? 'A verificação foi interrompida pelo reinício das medições do GNV. A curva e a foto anterior continuam disponíveis.' : JOURNAL_NOTE[closing]; level = 'warn'; }
         else if (action.kind === 'freeze') reason = strip.whyText;
-        else if (action.kind === 'none') reason = (rs && rs.reason) || '';
+        else if (action.kind === 'none') reason = (rs && (rs.nextAction || rs.reason)) || '';
         else if (action.kind === 'review' && (pilot.phase === 'TENTATIVA_ENCERRADA' ? pilot.expiredFrom : pilot.phase) === 'ECU_TRABALHANDO') reason = 'A ECU ainda está no automático e pode sobrescrever este ajuste.';
       }
       const node = document.getElementById('refinoHeadline');
@@ -640,7 +689,7 @@
       const host = document.getElementById('refinoChart');
       const w = host?.clientWidth || 0;
       const h = host?.clientHeight || 0;
-      return `between|${Math.round(w / 16)}x${Math.round(h / 16)}`;
+      return `between|${Math.round(w / 16)}x${Math.round(h / 16)}|${ns.CurveChart.viewKey(this.chartView)}`;
     }
 
     /**
@@ -655,7 +704,7 @@
       const width = Math.round(host.clientWidth) || 1000;
       const height = Math.round(host.clientHeight) || 400;
       const signature = chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() });
-      const input = { snapshot: this.snapshot, projection: this.projection || {}, eq, analysis: this.analysis, mode: 'between' };
+      const input = { snapshot: this.snapshot, projection: this.projection || {}, eq, analysis: this.analysis, mode: 'between', view: this.chartView };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
         if (!model || !model.domain || (!model.reference.length && !model.ecu.length && !model.betweenPoints.length)) {
@@ -749,7 +798,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { equivalenceStrip, indexPercent, WAITING_TEXT, proposedPoints, undoPoints, undoSource, primaryAction, explainPoint, ageText, safeMin, safeMax, STATUS_WORDS };
+  ns.RefinoModel = { equivalenceStrip, indexPercent, WAITING_TEXT, proposedPoints, readyPoints, undoPoints, undoSource, primaryAction, explainPoint, ageText, safeMin, safeMax, STATUS_WORDS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);
