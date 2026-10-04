@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const UI = path.join(__dirname, '../../app/src/main/assets/ui');
+const UI = process.env.UI_ROOT || path.join(__dirname, '../../app/src/main/assets/ui');
 const KT = path.join(__dirname, '../../app/src/main/java/com/omegas/prohub');
 
 function refinoApp(mutate) {

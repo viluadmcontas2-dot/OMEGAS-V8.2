@@ -55,7 +55,7 @@ MUTANTS = [
     mutant("agora-next-frozen", "botão congelado", f"{UI}/screens/dashboard.js",
            "if (app && app.router) app.router.navigate('refino');", "", [FLOWS, M1]),
     mutant("refino-confirm-frozen", "botão congelado", f"{UI}/screens/refino.js",
-           "      if (event.target.closest('[data-refino-confirm]')) this.commitReview();\n", "", [FLOWS, M4]),
+           "      if (event.target.closest('[data-refino-primary]')) this.primary();\n", "", [FLOWS, M4]),
     # ---- desconhecido vira 0
     mutant("rules-finite-zero", "desconhecido vira 0", f"{UI}/core/display-rules.js",
            "if (value === null || value === undefined || value === '' || typeof value === 'boolean') return null;",

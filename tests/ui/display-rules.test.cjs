@@ -184,7 +184,7 @@ test('plural em português: alteração/alterações, célula/células, ponto/po
   assert.doesNotMatch(rules.plural(12, 'alteração', 'alterações'), /ãoões/);
   const map = fs.readFileSync(UI('screens/map.js'), 'utf8');
   assert.doesNotMatch(map, /'ões'/, 'nada de "alteraçãoões"');
-  assert.match(map, /plural\(count, 'célula', 'células'\)/);
+  assert.match(map, /plural\(changed, 'célula', 'células'\)/);
 });
 
 test('conexão: Conectando… (permissão USB) é diferente de Sem cabo, cada um com a próxima ação', () => {

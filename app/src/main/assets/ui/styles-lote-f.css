@@ -526,3 +526,4 @@ html body .autocal-secondary-stack .autocal-human-copy h3 { font-size: var(--tex
 html body .autocal-secondary-stack .autocal-human-copy strong { font-size: var(--text-critical); line-height: 1.2; }
 html body .autocal-secondary-stack .autocal-human-copy p, html body .autocal-secondary-stack .autocal-command-copy span, html body .autocal-secondary-stack .autocal-automatch-evidence span, html body .autocal-secondary-stack .autocal-session-copy span { font-size: 18px; line-height: 1.25; }
 html body .autocal-secondary-stack .autocal-automatch-evidence b, html body .autocal-secondary-stack .autocal-session-copy b { font-size: var(--text-critical); line-height: 1.2; }
+html body .autocal-secondary-stack .autocal-zone-cell small { font-size: var(--text-critical); letter-spacing: 0; }
