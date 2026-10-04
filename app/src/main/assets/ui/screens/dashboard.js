@@ -68,14 +68,14 @@
               <section class="now-equivalence" aria-label="Equivalência com a gasolina">
                 <p>Equivalência com a gasolina</p><b id="dashEquivalence">—</b>
                 <p id="dashEquivalenceNote">Aguardando medição</p>
-                <progress id="dashEquivalenceProgress" max="100" value="0" aria-label="Condução equivalente à gasolina"></progress>
+                <progress id="dashEquivalenceProgress" max="100" value="0" hidden aria-label="Condução equivalente à gasolina"></progress>
               </section>
               <section class="now-intention"><small>PRÓXIMO PASSO</small><h3 id="dashNext">Aguardando medição da ECU.</h3>
                 <p>O app observa. Você revisa e decide quando gravar.</p>
                 <button type="button" class="primary" data-dash-refino>Abrir Refino</button>
               </section>
             </div>
-            <section class="now-coverage"><header><h3>Faixas da sua condução</h3><span id="dashCoverage">— de cobertura medida</span></header>
+            <section class="now-coverage"><header><h3>Faixas da sua condução</h3><span id="dashCoverage">—</span></header>
               <div id="dashBands" class="now-bands" aria-label="Estado das 30 faixas"></div>
               <p>● Equivalente <span>● Em medição</span> <em>● Precisa de atenção</em> · O Refino mostra os pontos e as sugestões.</p>
             </section>
@@ -92,17 +92,21 @@
         const now = Date.now();
         if (this.refinoAt && now - this.refinoAt < 3e3) return;
         this.refinoAt = now;
+        // Sem cabo o Kotlin já diz "Sem ECU" / "Aguardar a ECU" (refinoState): a conexão em si fica no cartão de saúde.
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
         const result = api && typeof api.equivalence === "function" ? api.equivalence() : null;
         const pilot = result && result.autopilot || {};
+        const rs = result && result.refinoState && typeof result.refinoState === "object" ? result.refinoState : {};
         // O rótulo curto do Kotlin sabe o combustível de agora ("Medindo a gasolina" × "Medindo o GNV"); a fase do piloto é o reserva.
-        const label = result && result.refinoState && typeof result.refinoState.label === "string" ? result.refinoState.label.trim() : "";
+        const label = typeof rs.label === "string" ? rs.label.trim() : "";
         text("dashRefino", label || rules.phaseLabel(pilot.phase, pilot.expiredFrom));
         const model = summary(result);
         text("dashEquivalence", model.percent === null ? "—" : model.percent + "%");
         text("dashEquivalenceNote", model.percent === null ? "Ainda sem base para comparar" : "da condução já equivale à gasolina" + (model.provisional ? " · provisório" : ""));
-        text("dashCoverage", model.coverage === null ? "— de cobertura medida" : model.coverage + "% de cobertura medida");
-        text("dashNext", model.next);
+        text("dashCoverage", model.coverage === null ? "—" : model.coverage + "% de cobertura medida");
+        // Próximo passo em palavras de dono: a frase do Kotlin (sabe o combustível, sem ms/bar/%); o texto do motor é o reserva.
+        const said = typeof rs.nextAction === "string" && rs.nextAction.trim() ? rs.nextAction.trim() : "";
+        text("dashNext", said || model.next);
         const progress = document.getElementById("dashEquivalenceProgress");
         if (progress) {
           progress.value = model.percent === null ? 0 : model.percent;
@@ -137,7 +141,8 @@
       if (status.engineStuck === true) {
         return { level: 'critical', message: 'Comunicação travada', detail: 'Aguarde ou reconecte o cabo USB. Gravar fica bloqueado até a ECU responder.' };
       }
-      if (reading.level === 'none' || reading.ageUnknown) {
+      // Leitura válida sem relógio continua sendo leitura (a faixa a mostra): só "sem dados" quando não há dado.
+      if (reading.level === 'none') {
         return { level: 'warning', message: 'ECU sem dados', detail: 'Conectada, mas ainda não enviou leitura. Confira a chave e o motor.' };
       }
       if (reading.level === 'lost') {

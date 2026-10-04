@@ -205,7 +205,7 @@ test('conexão: Conectando… (permissão USB) é diferente de Sem cabo, cada um
 
 test('fases do Refino: um rótulo por fase, em todo lugar (sem "—" lendo ou pausado)', () => {
   const expected = {
-    SEM_ECU: 'Sem ECU', LENDO_ECU: 'Lendo a ECU', ECU_TRABALHANDO: 'ECU no automático', COLETANDO_NOSSOS: 'Medindo o GNV',
+    SEM_ECU: 'Sem ECU', LENDO_ECU: 'Lendo a ECU', ECU_TRABALHANDO: 'ECU no automático', COLETANDO_NOSSOS: 'Medindo',
     PROPOSTA_PRONTA: 'Curva pronta', VERIFICANDO: 'Medindo', RESTAURAR_TRECHO: 'Piorou em um trecho', ESTAVEL: 'Estável', TENTATIVA_ENCERRADA: 'Pausado',
   };
   for (const [phase, label] of Object.entries(expected)) assert.equal(rules.phaseLabel(phase), label, phase);

@@ -97,7 +97,8 @@
     if (value.includes('CUTOFF')) return 'CORTE';
     if (value.includes('TRANS')) return 'TRANSIÇÃO';
     if (value.includes('OFF') || value.includes('DESLIG')) return 'DESLIGADO';
-    return value;
+    // Nome que a ECU não explica (DESCONHECIDO, código novo) nunca vira rótulo cru: é desconhecido.
+    return DASH;
   }
 
   function durationLabel(ms) {
@@ -243,7 +244,7 @@
 
   /** Rótulos únicos das fases do Refino (Refino, Agora e qualquer outro lugar que fale da fase). */
   const PHASE_LABELS = {
-    SEM_ECU: 'Sem ECU', LENDO_ECU: 'Lendo a ECU', ECU_TRABALHANDO: 'ECU no automático', COLETANDO_NOSSOS: 'Medindo o GNV',
+    SEM_ECU: 'Sem ECU', LENDO_ECU: 'Lendo a ECU', ECU_TRABALHANDO: 'ECU no automático', COLETANDO_NOSSOS: 'Medindo',
     PROPOSTA_PRONTA: 'Curva pronta', VERIFICANDO: 'Medindo', RESTAURAR_TRECHO: 'Piorou em um trecho', ESTAVEL: 'Estável', TENTATIVA_ENCERRADA: 'Pausado',
   };
   /** Prazo vencido com proposta pronta: a proposta continua válida, então a fase segue "Curva pronta". */

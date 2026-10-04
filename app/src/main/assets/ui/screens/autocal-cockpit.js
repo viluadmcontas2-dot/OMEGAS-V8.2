@@ -1112,7 +1112,8 @@
     }
 
     /** UMA frase humana de estado (nada de jargão): o que a ECU está fazendo e o que falta. */
-    sentenceFor(human, acquisitionName) {
+    /** [fuelKind] = combustível de AGORA pela telemetria ('petrol', 'gas', …): a frase nunca manda "dirigir no GNV" com o carro na gasolina. */
+    sentenceFor(human, acquisitionName, fuelKind) {
       const zones = list => list.map(zone => 'Z' + zone).join(', ');
       if (acquisitionName === 'UNAVAILABLE' || acquisitionName === 'PROBE_FAILED' || acquisitionName === 'FAILED') {
         return { level: 'error', text: 'Sem leitura da ECU. Confira o cabo: o app tenta de novo sozinho.' };
@@ -1120,7 +1121,11 @@
       if (acquisitionName === 'WAITING_TELEMETRY_SETTLE') return { level: 'neutral', text: 'Conectando à leitura da ECU…' };
       if (human.enabled === 0) return { level: 'warn', text: 'Leitura pausada. Toque em Iniciar leitura para continuar aprendendo.' };
       if (human.enabled === 1) {
-        if (human.gasMissingZones.length) return { level: 'neutral', text: 'Aprendendo: dirija normal no GNV. Falta ' + zones(human.gasMissingZones) + '.' };
+        if (human.gasMissingZones.length) {
+          return fuelKind === 'petrol'
+            ? { level: 'neutral', text: 'Aprendendo. Quando o carro passar para o GNV, falta ' + zones(human.gasMissingZones) + '.' }
+            : { level: 'neutral', text: 'Aprendendo: dirija normal no GNV. Falta ' + zones(human.gasMissingZones) + '.' };
+        }
         if (human.petrolMissingZones.length) return { level: 'neutral', text: 'GNV completo. Falta a gasolina em ' + zones(human.petrolMissingZones) + '.' };
         if (human.gasZones === 4 && human.petrolZones === 4) return { level: 'ok', text: 'Gasolina e GNV aprendidos.' };
         return { level: 'neutral', text: 'Leitura ativa. Aguardando a ECU publicar as zonas.' };
@@ -1131,7 +1136,8 @@
     renderSentence(human, acquisitionName) {
       const node = document.getElementById('autocalHumanAction');
       if (!node) return;
-      const sentence = this.sentenceFor(human, acquisitionName);
+      const live = ns.LiveStore && typeof ns.LiveStore.read === 'function' && this.store ? ns.LiveStore.read(this.store.get(), { fallback: true }) : null;
+      const sentence = this.sentenceFor(human, acquisitionName, live ? AutoCalUxModel.liveFuelState(live.fuel).kind : 'unknown');
       if (node.textContent !== sentence.text) node.textContent = sentence.text;
       if (node.dataset.level !== sentence.level) node.dataset.level = sentence.level;
     }

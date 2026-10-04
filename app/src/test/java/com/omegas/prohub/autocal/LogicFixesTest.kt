@@ -343,7 +343,7 @@ class LogicFixesTest {
     }
 
     @Test
-    fun `refinoState - proposta com a ECU no automatico nao promete botao; estavel e pausado idem`() {
+    fun `refinoState - proposta com a ECU no automatico nao promete botao, estavel e pausado idem`() {
         val ledger = EquivalenceLedger(null)
         val t0 = drive(ledger, "GASOLINA", 5.0, 0.6, 0, 30)
         drive(ledger, "GNV", 5.5, 0.6, t0 + EvidenceTestSupport.VISIT_GAP, 20)
