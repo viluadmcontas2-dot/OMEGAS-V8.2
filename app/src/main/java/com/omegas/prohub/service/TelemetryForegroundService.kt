@@ -260,6 +260,8 @@ class TelemetryForegroundService : Service() {
                         "resetGas" to { equivalence.resetGas("MAPA_K_GRAVADO") },
                         "cerebro" to { equivalenceRuntime.onGasReset("MAPA_K_GRAVADO", equivalencePhases) },
                         "journal" to { refinementJournal.interrupt("MAPA_K_GRAVADO") },
+                        // Leituras do round feitas antes desta gravação não valem depois dela.
+                        "round" to { if (::nativeAutoCal.isInitialized) nativeAutoCal.invalidateRound() },
                     ),
                     record = { sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true) },
                     warn = { log.add("WARN", "EVIDENCIA", it) },
@@ -281,7 +283,8 @@ class TelemetryForegroundService : Service() {
         )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = runtime.serialScheduler(),
-            calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
+            // Escritores K e ações AutoCal (a trava serial é compartilhada): nenhuma leitura de round durante uma escrita.
+            calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() || SerialWriteGuard.shared.isHeld() },
             onFreshSnapshot = { snapshot ->
                 sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
             },
@@ -905,6 +908,7 @@ class TelemetryForegroundService : Service() {
                 "adoptCurve" to {
                     rawNow?.let { raw -> equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) })) }
                 },
+                "round" to { if (::nativeAutoCal.isInitialized) nativeAutoCal.invalidateRound() },
             ),
             record = { sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true) },
             warn = { log.add("WARN", "EVIDENCIA", it) },
@@ -946,6 +950,7 @@ class TelemetryForegroundService : Service() {
             invalidate = listOf(
                 "resetGas" to { equivalence.resetGas("CURVA_K_FALHA_PARCIAL") },
                 "cerebro" to { equivalenceRuntime.onGasReset("CURVA_K_FALHA_PARCIAL", equivalencePhases) },
+                "round" to { if (::nativeAutoCal.isInitialized) nativeAutoCal.invalidateRound() },
                 "journal" to {
                     refinementJournal.recordFailedWrite(
                         photoFile = payload.optString("photoFile", ""),
