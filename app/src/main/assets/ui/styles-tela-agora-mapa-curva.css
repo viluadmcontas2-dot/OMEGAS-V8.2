@@ -107,11 +107,11 @@ html body .step-row > button:hover:not(:disabled) { background: var(--accent-sof
 .curve-legend .line.actual { background: var(--dim); }
 .curve-legend .line.proposal { background: var(--accent); height: 3px; }
 
-.map-screen .map-surface .map-k-grid-with-axes { grid-template-columns: 76px repeat(12, minmax(0, 1fr)); grid-template-rows: 44px repeat(12, 50px); gap: 3px; }
-.map-screen .map-surface .map-rpm-header b { font-size: 15px; letter-spacing: -.02em; }
+.map-screen .map-surface .map-k-grid-with-axes { grid-template-columns: 74px repeat(12, minmax(0, 1fr)); grid-template-rows: 44px repeat(12, 50px); gap: 2px; }
+.map-screen .map-surface .map-rpm-header b { font-size: 16px; letter-spacing: -.03em; }
 .map-screen .map-surface .map-k-cell b { font-size: 21px; }
-.map-screen .map-surface .map-axis-corner small, .map-screen .map-surface .map-axis-corner b { font-size: 14px; }
-.app-shell .map-screen .map-workspace { grid-template-columns: minmax(0, 1fr) 320px; }
+.map-screen .map-surface .map-axis-corner small, .map-screen .map-surface .map-axis-corner b { font-size: 16px; line-height: 1; }
+.app-shell .map-screen .map-workspace { grid-template-columns: minmax(0, 1fr) 300px; }
 .curve-screen .route-actions-stack { flex-direction: row; flex-wrap: nowrap; }
 .curve-screen .curve-head { flex-wrap: nowrap; }
 .curve-screen .curve-point-head h3 { font-size: 22px; }

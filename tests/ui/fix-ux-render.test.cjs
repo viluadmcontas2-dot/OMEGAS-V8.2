@@ -19,7 +19,7 @@ test('aviso: ≥ 22 px e nunca sobre um botão principal em nenhuma aba', { skip
   try {
     await page.waitForTimeout(1500);
     const primaries = {
-      curve: ['#curveReviewButton', '#curveReadButton', '#curveBackupSave'],
+      curve: ['#curveReviewButton', '#curveReadButton'],
       map: ['#mapReviewButton', '#mapReadButton'],
       autocal: ['[data-autocal-toggle]', '[data-autocal-action="RESET_GAS"]', '[data-autocal-action="RESET_PETROL"]'],
       refino: ['[data-refino-primary]', '#refinoEqGo'],

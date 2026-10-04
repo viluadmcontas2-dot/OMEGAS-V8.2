@@ -89,7 +89,7 @@ test('nomes antigos fora da UI: learning/Aprendizado, suggestion, V7 e comentár
 test('folhas de estilo estáticas e em ordem: tokens primeiro; pisos e acabamento do Lote F por último; cor só em tokens.css', () => {
   const links = [...read('index.html').matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map(m => m[1]);
   assert.equal(links[0], 'tokens.css');
-  assert.deepEqual(links.slice(-2), ['styles-floors.css', 'styles-lote-f.css']);
+  assert.deepEqual(links.slice(-3), ['styles-floors.css', 'styles-lote-f.css', 'styles-tela-agora-mapa-curva.css']);
   for (const sheet of ['styles-autocal-cockpit.css', 'styles-dashboard-now.css', 'styles-shell-status.css', 'styles-refine.css', 'styles-split-layout.css']) {
     assert.ok(links.indexOf(sheet) > 0 && links.indexOf(sheet) < links.indexOf('styles-floors.css'), `${sheet} antes dos pisos`);
   }

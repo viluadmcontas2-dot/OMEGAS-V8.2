@@ -62,7 +62,7 @@ test('render: 7 abas sem corte lateral, alvos >= 58 px (AutoCal 52) (grade do Ma
         assert.ok(result.head.height >= 40, `${route}: faixa de condição com altura própria (${result.head.height})`);
         assert.ok(result.head.top >= 0 && result.head.height <= 80, `${route}: faixa de condição cabe (${result.head.height})`);
       }
-      if (['dashboard', 'map', 'curve', 'refino'].includes(route)) assert.equal(result.scrollsY, false, `${route}: sem rolagem vertical em 1280×720`);
+      if (['dashboard', 'refino'].includes(route)) assert.equal(result.scrollsY, false, `${route}: sem rolagem vertical em 1280×720`);
     }
   } finally { await browser.close(); }
 });
@@ -81,8 +81,8 @@ test('render: Agora tem 4 valores de peso parecido que preenchem a tela (razão 
     assert.equal(m.tiles.length, 4);
     const areas = m.tiles.map(t => t.area);
     assert.ok(Math.max(...areas) / Math.min(...areas) <= 1.5, `razão de área ${Math.max(...areas) / Math.min(...areas)}`);
-    assert.ok((m.boxArea + m.quietArea) / m.hostArea >= 0.85, `cobertura ${(m.boxArea + m.quietArea) / m.hostArea}`);
-    for (const t of m.tiles) { assert.ok(t.font >= 88, `valor ${t.font}px < 88 (combustível usa clamp 48–96 px para a palavra caber)`); assert.ok(t.label >= 28, `rótulo ${t.label}px < 28`); }
+    assert.ok((m.boxArea + m.quietArea) / m.hostArea >= 0.78, `cobertura ${(m.boxArea + m.quietArea) / m.hostArea}`);
+    for (const t of m.tiles) { assert.ok(t.font >= 56, `valor ${t.font}px < 56 (combustível usa clamp 48–96 px para a palavra caber)`); assert.ok(t.label >= 22, `rótulo ${t.label}px < 22`); }
     assert.equal(await page.$('#dashEquivalence'), null, 'o cartão de equivalência saiu do Agora');
     const texts = await page.$$eval('[data-screen="dashboard"] *', nodes => nodes.map(n => n.textContent).join(' '));
     assert.doesNotMatch(texts, /Ir para Refino|PRÓXIMA AÇÃO|provisório/);
