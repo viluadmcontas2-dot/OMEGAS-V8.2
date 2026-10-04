@@ -113,11 +113,18 @@ class NewEvidenceGatesTest {
 
     @Test
     fun `a telemetria nao entra em ponto que a nativa madura ja cobre e tem teto por faixa`() {
-        val native = AutoMatchSnapshotAnalysis.analyzeRefined(refSnapshot)
+        val nativeOnly = AutoMatchRefinedEngine.refine(fieldsToInput(JSONObject(refSnapshot.toString())))
         val pairs = (0..4).flatMap { b -> interior(b, 12).map { it to it * 1.3 } }
-        val mixed = AutoMatchSnapshotAnalysis.analyzeRefined(refSnapshot, pairs)
-        assertNotNull(native)
-        assertNotNull(mixed)
+        val mixed = AutoMatchRefinedEngine.refine(fieldsToInput(JSONObject(refSnapshot.toString())).copy(telemetryPairs = pairs))
+        assertTrue("alguma telemetria cai em ponto coberto e é descartada", mixed.telemetryDroppedByNative > 0)
+        val telemetry = mixed.targets.filter { it.mapBar.isNaN() }
+        assertTrue(telemetry.isNotEmpty())
+        for (t in telemetry) {
+            // nó dominante do alvo (maior participação na interpolação do eixo) não pode ter ganho nativo >= 0,5
+            val axis = nativeOnly.axisMs
+            val j = axis.indexOfFirst { it >= t.petrolMs }.let { if (it <= 0) 0 else if (axis[it] - t.petrolMs < t.petrolMs - axis[it - 1]) it else it - 1 }
+            assertTrue("alvo em ${t.petrolMs} ms cai no ponto $j de ganho ${nativeOnly.gain[j]}", nativeOnly.gain[j] < AutoMatchRefinedEngine.NATIVE_COVERED_GAIN)
+        }
         // teto de peso por faixa: 300 pares da mesma faixa pesam o mesmo que o teto
         val many = interior(2, 300).map { it to it * 1.1 }
         val targets = many.map { (tp, tg) -> AutoMatchRefinedEngine.Target(Double.NaN, tp, tg, AutoMatchRefinedEngine.TELEMETRY_WEIGHT, tg / tp, 0.0) }
