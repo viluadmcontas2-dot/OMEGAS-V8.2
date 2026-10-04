@@ -51,7 +51,7 @@
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
       document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
-      document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.writeRestore());
+      document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.undoCurve());
       document.getElementById('curveBackupSelect')?.addEventListener('change', event => {
         const fileName = String(event.target?.value || '');
         this.cancelRestorePreview('');
@@ -175,11 +175,27 @@
     syncRestoreButton() {
       const restore = document.getElementById('curveBackupRestore');
       if (!restore) return;
+      const select = document.getElementById('curveBackupSelect');
+      const hasPhoto = Boolean(select && (select.value || /value="[^"]+"/.test(String(select.innerHTML || ''))));
       const ready = Boolean(this.restoreContext && this.proposals.size);
-      restore.hidden = !ready && this.backupTask !== 'restore-preview';
-      restore.disabled = !ready;
-      restore.textContent = ready ? `Desfazer · ${D.plural(this.proposals.size, 'ponto', 'pontos')}`
-        : this.backupTask === 'restore-preview' ? 'Conferindo a foto…' : 'Desfazer (voltar à foto)';
+      const busy = this.backupTask === 'restore-preview';
+      restore.hidden = !(hasPhoto || ready || busy);
+      restore.disabled = busy;
+      restore.textContent = busy ? 'Conferindo…' : ready ? `Desfazer · ${D.plural(this.proposals.size, 'ponto', 'pontos')}` : 'Desfazer';
+      if (ready && this.autoRestore) { this.autoRestore = false; this.writeRestore(); }
+    }
+
+    /** Um toque: usa por baixo a foto mais recente (guardada em silêncio) e grava de volta; o fim é o readback da ECU. */
+    undoCurve() {
+      if (this.reading || this.writing || this.backupTask) return;
+      if (this.restoreContext && this.proposals.size) { this.writeRestore(); return; }
+      const select = document.getElementById('curveBackupSelect');
+      const rows = (this.api.curveBackups() || []).filter(item => item && item.fileName);
+      if (!rows.length) { this.alert('Ainda não há o que desfazer.'); return; }
+      rows.sort((a, b) => (finite(b.createdAt) || 0) - (finite(a.createdAt) || 0));
+      if (select) select.value = rows[0].fileName;
+      this.autoRestore = true;
+      this.prepareRestore(rows[0].fileName);
     }
 
     saveBackup() {

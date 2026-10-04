@@ -64,7 +64,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('store.patch({ telemetry, tick })', self.app)
 
     def test_low_end_1280x720_design_budget(self):
-        self.assertIn('--rail-width:260px', (UI / 'tokens.css').read_text('utf-8'))
+        self.assertIn('--rail-width:200px', (UI / 'tokens.css').read_text('utf-8'))
         self.assertIn('grid-template-columns:var(--rail-width) minmax(0,1fr)', self.css)
         self.assertIn('contain:layout paint style', self.css)
         combined_css = self.css + self.obd_css + self.calibration_obd_css + self.refine_css

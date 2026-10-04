@@ -33,11 +33,11 @@ function loadInto(context, files) {
 
 // ---------------------------------------------------------------- 1. navegação
 test('trilho: 7 abas numeradas, Sugestões saiu e Sessões entrou', () => {
-  const buttons = [...html.matchAll(/<button type="button" data-route="([^"]+)"[^>]*><i>(\d\d)<\/i><span>([^<]+)<\/span>/g)]
-    .map(m => [m[1], m[2], m[3]]);
+  const buttons = [...html.matchAll(/<button type="button" data-route="([^"]+)"[^>]*><span>([^<]+)<\/span>/g)]
+    .map(m => [m[1], m[2]]);
   assert.deepEqual(buttons, [
-    ['dashboard', '01', 'Agora'], ['map', '02', 'Mapa K'], ['curve', '03', 'Curva K'], ['autocal', '04', 'AutoCal'],
-    ['refino', '05', 'Refino'], ['sessions', '06', 'Sessões'], ['tools', '07', 'Ferramentas'], ['diagnostico', '08', 'Diagnóstico'],
+    ['dashboard', 'Agora'], ['map', 'Mapa K'], ['curve', 'Curva K'], ['autocal', 'AutoCal'],
+    ['refino', 'Refino'], ['sessions', 'Sessões'], ['tools', 'Ferramentas'], ['diagnostico', 'Diagnóstico'],
   ]);
   const ctx = loadInto({ console, localStorage: { getItem() { return null; }, setItem() {} } }, ['core/store.js', 'core/router.js']);
   assert.deepEqual(Array.from(ctx.OmegasUi.ROUTES), ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']);

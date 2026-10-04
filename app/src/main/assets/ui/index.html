@@ -27,14 +27,14 @@
       </div>
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
-        <button type="button" data-route="dashboard" class="active"><i>01</i><span>Agora</span></button>
-        <button type="button" data-route="map"><i>02</i><span>Mapa K</span></button>
-        <button type="button" data-route="curve"><i>03</i><span>Curva K</span></button>
-        <button type="button" data-route="autocal"><i>04</i><span>AutoCal</span></button>
-        <button type="button" data-route="refino"><i>05</i><span>Refino</span></button>
-        <button type="button" data-route="sessions"><i>06</i><span>Sessões</span></button>
-        <button type="button" data-route="tools"><i>07</i><span>Ferramentas</span></button>
-        <button type="button" data-route="diagnostico"><i>08</i><span>Diagnóstico</span></button>
+        <button type="button" data-route="dashboard" class="active"><span>Agora</span></button>
+        <button type="button" data-route="map"><span>Mapa K</span></button>
+        <button type="button" data-route="curve"><span>Curva K</span></button>
+        <button type="button" data-route="autocal"><span>AutoCal</span></button>
+        <button type="button" data-route="refino"><span>Refino</span></button>
+        <button type="button" data-route="sessions"><span>Sessões</span></button>
+        <button type="button" data-route="tools"><span>Ferramentas</span></button>
+        <button type="button" data-route="diagnostico"><span>Diagnóstico</span></button>
       </nav>
 
       <div class="rail-status">
@@ -73,7 +73,7 @@
               <select id="mapAdjustmentMode" hidden aria-label="Como ajustar"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select>
               <div class="value-field"><input id="mapAdjustmentValue" class="input-lg" type="number" inputmode="decimal" step="1" value="0" aria-label="Valor do ajuste"><span id="mapAdjustmentUnit" class="map-adjust-unit">% sobre o K</span></div>
               <div class="nudge-row step-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
-              <p class="map-safety-line">Antes de gravar o app guarda uma foto e confere na ECU. Desfazer volta à foto.</p>
+              <p class="map-safety-line">Gravar é um toque: o app guarda a foto antes e confere na ECU. Desfazer volta à foto.</p>
               <button id="mapReviewButton" type="button" class="primary btn-primary wide" disabled>Selecione células</button>
             </aside>
           </div>
@@ -109,33 +109,27 @@
             <div class="curve-view curve-editor-view active" data-curve-panel="editor">
               <div class="curve-workspace">
                 <section class="curve-surface">
-                  <div class="curve-legend"><span><i class="line actual"></i>Atual da ECU</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque num ponto para ajustar</span></div>
+                  <div class="curve-legend">
+                    <span class="curve-point-info"><h3 id="curveActivePoint">Selecione um ponto</h3><span>K atual <b id="curveCurrentFactor">—</b></span><span id="curveTargetNormalized" class="normalized-preview">Prévia calculada pelo app</span></span>
+                    <span class="curve-keys"><span><i class="line actual"></i>Atual</span><span><i class="line proposal"></i>Proposta</span></span>
+                  </div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
                   <div class="curve-axis">Injeção (ms) →</div>
+                  <div class="curve-action-bar" aria-label="Ajustar o ponto escolhido">
+                    <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button></div>
+                    <div class="value-field"><input id="curveTargetFactor" class="input-lg" type="text" inputmode="decimal" autocomplete="off" placeholder="K" aria-label="K desejado"></div>
+                    <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>
+                    <button id="curveReviewButton" type="button" class="primary btn-primary" disabled>Escolha um ponto e ajuste o K</button>
+                    <button id="curveBackupRestore" type="button" class="secondary" hidden>Desfazer</button>
+                    <button id="curveClearProposals" type="button" class="quiet-button" hidden>Limpar</button>
+                    <details class="more-menu"><summary aria-label="Mais ações">⋯</summary><div class="more-menu-list"><button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button></div></details>
+                  </div>
+                  <div id="curveProposalList" class="proposal-list" hidden></div>
+                  <div hidden><button id="curveBackupSave" type="button">Salvar</button><select id="curveBackupSelect"><option value="">Nenhuma foto salva</option></select><span id="curveBackupStatus"></span></div>
                 </section>
-                <aside class="inspector-panel curve-editor-panel">
-                  <div class="curve-point-head"><div><small>PONTO ATIVO</small><h3 id="curveActivePoint">Selecione um ponto</h3></div><div class="current-value"><small>Atual</small><b id="curveCurrentFactor">—</b></div></div>
-                  <div class="value-field"><input id="curveTargetFactor" class="input-lg" type="text" inputmode="decimal" autocomplete="off" placeholder="K desejado" aria-label="K desejado"></div>
-                  <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>
-                  <div id="curveTargetNormalized" class="normalized-preview">Prévia calculada pelo app</div>
-                  <div class="curve-prepare-row"><button id="curveClearProposals" type="button" class="quiet-button" hidden>Limpar pontos</button></div>
-                  <div id="curveProposalList" class="proposal-list" title="Gravar é um toque: o app guarda a foto antes e confere na ECU. Desfazer volta à foto."><p>Nenhum ponto preparado.</p></div>
-                  <button id="curveReviewButton" type="button" class="primary btn-primary wide" disabled>Escolha um ponto e ajuste o K</button>
-                </aside>
               </div>
             </div>
           </div>
-
-          <details class="curve-photos">
-            <summary>Fotos da curva e reset</summary>
-            <div class="curve-backup-bar" aria-label="Foto da Curva K">
-              <button id="curveBackupSave" type="button" class="secondary">Salvar foto da curva</button>
-              <select id="curveBackupSelect" aria-label="Foto salva da Curva K"><option value="">Nenhuma foto salva</option></select>
-              <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Desfazer (voltar à foto)</button>
-              <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
-              <span id="curveBackupStatus" class="curve-backup-status">Nenhuma foto salva</span>
-            </div>
-          </details>
 
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Gravando na ECU…</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence" id="curveOperationSteps"><span>Foto antes</span><span>Gravando</span><span>Conferindo na ECU</span></div></div></div>
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Gravado</b><span>Resultado da ECU.</span></div><button id="curveUndoButton" type="button" class="secondary" hidden>Desfazer</button><button id="curveDismissResult" type="button" class="secondary">Voltar</button></div></div>

@@ -79,7 +79,7 @@ class Block1SessionContract(unittest.TestCase):
         self.assertIn('Gravar fica bloqueado até os dados voltarem', self.dashboard)
 
     def test_multimedia_1280x720_is_the_explicit_primary_surface(self):
-        self.assertIn('--rail-width:260px', (UI / 'tokens.css').read_text('utf-8'))
+        self.assertIn('--rail-width:200px', (UI / 'tokens.css').read_text('utf-8'))
         self.assertIn('grid-template-columns:var(--rail-width) minmax(0,1fr)', self.css)
         self.assertIn('O layout é intencionalmente fixado para a multimídia 1280×720', self.css)
         self.assertNotIn('@media (max-width:680px)', self.css.replace(' ', ''))

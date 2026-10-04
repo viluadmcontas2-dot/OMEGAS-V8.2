@@ -1,5 +1,5 @@
 'use strict';
-// F1 da reforma visual (white premium, dono 2026-10-04): tokens, controles, rolagem e gráficos. Classe de prova 1 (contrato de CSS).
+// F1 da reforma visual (UI/UX premium, tema escuro, dono 2026-10-04): tokens, controles, rolagem e gráficos. Classe de prova 1 (contrato de CSS).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -8,14 +8,14 @@ const UI = path.resolve(__dirname, '../../app/src/main/assets/ui');
 const read = f => fs.readFileSync(path.join(UI, f), 'utf8');
 const tokens = read('tokens.css'), premium = read('styles-premium.css'), floors = read('styles-floors.css'), html = read('index.html');
 
-test('tokens: escala de toque 58/52, fonte de botão >= 18, texto crítico >= 22, tema claro', () => {
+test('tokens: escala de toque 58/52, fonte de botão >= 18, texto crítico >= 22, tema escuro padrão', () => {
   assert.match(tokens, /--touch-min:\s*58px/);
   assert.match(tokens, /--btn-h:\s*58px/);
   assert.match(tokens, /--btn-h-compact:\s*52px/);
   assert.ok(Number(tokens.match(/--btn-font:\s*(\d+)px/)[1]) >= 18);
   assert.ok(Number(tokens.match(/--text-critical:\s*(\d+)px/)[1]) >= 22);
-  assert.match(tokens, /color-scheme:\s*light/);
-  assert.match(tokens, /--bg:\s*#f[0-9a-f]{5}/i);
+  assert.match(tokens, /color-scheme:\s*dark/);
+  assert.match(tokens, /--bg:\s*#0[0-9a-f]{5}/i);
   for (const t of ['--space-1', '--space-6', '--radius-s', '--radius-l', '--shadow-1', '--shadow-2', '--shadow-3', '--chart-min-h', '--field-border']) assert.ok(tokens.includes(t + ':'), t);
   assert.match(tokens, /--radius:\s*14px/);
 });

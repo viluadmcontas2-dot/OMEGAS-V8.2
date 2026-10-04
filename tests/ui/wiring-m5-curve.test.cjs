@@ -219,13 +219,9 @@ test('M5 restaurar backup da lista: prévia, botão só ativa depois, uma grava�
   const select = app.byId('curveBackupSelect');
   const manual = select.options.find(o => /curva-/.test(o.attrs.get('value') || ''));
   assert.ok(manual, 'backup manual listado');
-  assert.equal(app.byId('curveBackupRestore').hasAttribute('disabled'), true, 'restaurar bloqueado antes de escolher');
-  select.value = manual.attrs.get('value');
-  select.dispatchEvent(new app.win.Event('change', { bubbles: true }));
-  app.settle(3);
-  assert.equal(app.byId('curveBackupRestore').hasAttribute('disabled'), false, 'prévia pronta libera Restaurar');
-  assert.equal(app.world.callsOf('startCurveRestoreWrite').length, 0, 'prévia não grava');
-  app.byId('curveBackupRestore').click(); app.settle(4);
+  assert.equal(app.byId('curveBackupRestore').hasAttribute('hidden'), false, 'Desfazer aparece quando há foto guardada');
+  assert.equal(app.world.callsOf('startCurveRestoreWrite').length, 0, 'sem toque nada grava');
+  app.byId('curveBackupRestore').click(); app.settle(6); // um toque: foto mais recente por baixo, prévia e gravação
   assert.equal(app.world.callsOf('startCurveRestoreWrite').length, 1);
   assert.ok(same(raws(app), original));
 });
