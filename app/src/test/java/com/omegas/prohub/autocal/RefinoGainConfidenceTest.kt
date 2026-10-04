@@ -9,6 +9,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
+import kotlin.math.exp
 
 /** Classe 2: ganho só aprende de evidência independente e precisa, sem tocar nos escritores. */
 class RefinoGainConfidenceTest {
@@ -119,5 +120,23 @@ class RefinoGainConfidenceTest {
         assertNotNull("confiança precisa vir da telemetria real, não de fixture", stats)
         assertEquals("overlap-lag1-mad-v1", stats!!.getString("model"))
         assertTrue(stats.getDouble("effectiveSamples") < 3.0)
+    }
+
+    @Test fun independentAlternatingMeasurementsKeepTheirEffectiveSampleCount() {
+        val pairs = List(20) { i ->
+            EquivalenceLedger.EvidencePair(5.0, 5.0 * exp(if (i % 2 == 0) 0.01 else -0.01),
+                2000.0, t = i * 1_000L)
+        }
+        val confidence = EvidencePairs.confidence(pairs)
+        assertEquals(20.0, confidence.effectiveSamples, 1e-12)
+        // Mediana superior dos erros = +0,01; MAD superior = 0,02.
+        assertEquals(1.4826 * 0.02, confidence.dispersionLog!!, 1e-12)
+    }
+
+    @Test fun unknownTimestampsAndInvalidPairsCannotInventIndependentEvidence() {
+        val unknown = List(20) { EquivalenceLedger.EvidencePair(5.0, 5.5, 2000.0) }
+        assertEquals(0.0, EvidencePairs.confidence(unknown).effectiveSamples, 0.0)
+        val invalid = List(20) { i -> EquivalenceLedger.EvidencePair(0.0, 5.5, 2000.0, t = i * 1_000L) }
+        assertEquals(0.0, EvidencePairs.confidence(invalid).effectiveSamples, 0.0)
     }
 }

@@ -392,9 +392,13 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         BANDS.forEach { (lo, hi) ->
             val sel = all.filter { it.petrolRefMs >= lo && it.petrolRefMs < hi }
             val ratio = median(sel.map { ln(it.gasPetrolMs / it.petrolRefMs) })?.let(::exp)
+            val confidence = EvidencePairs.confidence(sel)
             val episodes = sel.map { it.episode }
             val episodeCount = if (sel.isNotEmpty() && episodes.all { it >= 0 }) episodes.toSet().size else null
             bands.put(JSONObject().put("fromMs", lo).put("toMs", hi).put("samples", sel.size)
+                .put("evidenceStats", JSONObject().put("model", EvidencePairs.CONFIDENCE_MODEL)
+                    .put("effectiveSamples", confidence.effectiveSamples)
+                    .put("dispersionLog", confidence.dispersionLog ?: JSONObject.NULL))
                 .put("episodes", episodeCount ?: JSONObject.NULL)
                 // Faixa grossa só vale com leituras espalhadas por dentro dela (não todas numa ponta).
                 .put("interiorCovered", EvidencePairs.interiorCovered(sel.map { it.petrolRefMs }, lo, hi))
