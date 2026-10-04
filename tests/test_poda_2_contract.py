@@ -63,8 +63,8 @@ class Poda2Contract(unittest.TestCase):
         for gone in ("toolExportLearning", "toolImportLearning", "Exportar aprendizado", "Importar aprendizado",
                      "learning-portability-card", "arquivo .omegas", "regiões gasolina", "petrolCount"):
             self.assertNotIn(gone, html + drawers, gone)
-        self.assertIn('id="toolExportData"', html)
-        self.assertIn("Tudo do app: calibrações salvas e sessões", html)
+        self.assertIn('id="toolExportData"', drawers)
+        self.assertIn('Calibrações salvas, fotos da curva e sessões', drawers)
         self.assertIn("data-tool-export-logs", drawers)
         self.assertNotIn("getElementById('toolExportLogs')", drawers)
 
