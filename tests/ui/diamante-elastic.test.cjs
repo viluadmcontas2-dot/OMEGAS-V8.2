@@ -60,7 +60,7 @@ test('Mapa K: trocar e desmarcar célula atualiza contexto, K e prévia',()=>{
 test('AutoCal: leitura anterior precede pausa; estado integrado e ações secundárias agrupadas',()=>{
  const app=L.boot();app.go('autocal');app.settle(3);
  const pause=app.$('[data-autocal-toggle]'),history=app.$('[data-autocal-history]');
- assert.equal(pause.parentNode,history.parentNode);
+ assert.ok(pause.parentNode===history.parentNode,'histórico e pausa no mesmo grupo');
  assert.equal(pause.parentNode.children.indexOf(history)+1,pause.parentNode.children.indexOf(pause));
  assert.ok(app.byId('autocalHumanAction').closest('.ar-status'));
  assert.ok(app.$('[data-autocal-action="RESET_GAS"]').closest('.ar-buttons').querySelector('summary'));
