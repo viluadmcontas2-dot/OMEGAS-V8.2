@@ -121,3 +121,12 @@ test('M7 fuzz das respostas de sessões: nunca exceção/NaN, recupera', () => {
   assert.ok(effective > cases * 0.2, `fuzz inócuo ${effective}/${cases}`);
   assert.deepEqual(failures.slice(0, 6), [], `${failures.length}/${cases}`);
 });
+
+test('M7 texto vindo do Kotlin é mostrado como TEXTO: marcação HTML no motivo da sessão não vira elemento', () => {
+  const evil = '<img src=x><b>negrito</b> & aspas';
+  const app = sessionsApp({ sessions: [{ id: 'session_2026-10-02_10-00-00', reason: evil, durationMs: 1000, bytes: 1, cngTicks: 1, petrolTicks: 1, semanticSummary: { blackouts: 0 } }] });
+  const item = app.$('.recorded-session-item');
+  assert.ok(item.querySelector('img') === null, 'HTML injetado virou elemento');
+  assert.equal(item.querySelectorAll('b').length, 1, 'só o título da sessão pode ser <b>');
+  assert.match(item.textContent, /<img src=x><b>negrito<\/b>/);
+});

@@ -39,6 +39,8 @@ class DomEvent {
 
 class Node {
   constructor(doc) { this.ownerDocument = doc; this.parentNode = null; this.childNodes = []; }
+  // Falha de asserção com nó do DOM não pode tentar imprimir a árvore inteira (ciclos, minutos de CPU).
+  [Symbol.for('nodejs.util.inspect.custom')]() { return `<${this.localName || this.nodeName || '#node'}${this.id ? '#' + this.id : ''}>`; }
   get parentElement() { return this.parentNode && this.parentNode.nodeType === 1 ? this.parentNode : null; }
   get firstChild() { return this.childNodes[0] || null; }
   get lastChild() { return this.childNodes[this.childNodes.length - 1] || null; }

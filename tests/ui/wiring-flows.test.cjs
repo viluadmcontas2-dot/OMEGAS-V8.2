@@ -154,3 +154,14 @@ test('FLUXO AutoCal→Refino→Agora: a próxima ação do Agora leva à aba cer
   assert.equal(app.route(), next.dataset.route || 'refino');
   assert.equal(app.world.since(mark).filter(c => WRITE.includes(c.method)).length, 0, 'navegar não pode gravar');
 });
+
+test('FLUXO Refino: enquanto lê/grava na ECU o botão principal fica DESATIVADO e diz o que está fazendo', D9, () => {
+  const app = refinoApp({ opPolls: 8 });
+  primary(app).click(); app.flush();
+  app.byId('refinoReview').querySelector('[data-refino-confirm]').click(); app.flush();
+  assert.equal(primary(app).hasAttribute('disabled'), true, 'botão ativo durante a leitura de conferência');
+  assert.match(primary(app).textContent, /Conferindo/i);
+  for (let i = 0; i < 40 && !/Gravando/.test(primary(app).textContent); i += 1) app.advance(400);
+  assert.match(primary(app).textContent, /Gravando/);
+  assert.equal(primary(app).hasAttribute('disabled'), true, 'botão ativo durante a gravação');
+});

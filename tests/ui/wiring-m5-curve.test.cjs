@@ -110,8 +110,8 @@ for (const [label, outcome, detailRx, partial] of FAILS) {
     if (partial) {
       assert.match(r.title, /parcialmente alterada/i);
       assert.ok(r.undoVisible, 'falha parcial exige Desfazer visível');
-      assert.equal(app.byId('curveUndoButton').closest('details'), null, 'Desfazer dentro de <details>');
-      assert.equal(app.byId('curveUndoButton').closest('[hidden]'), null);
+      assert.ok(app.byId('curveUndoButton').closest('details') === null, 'Desfazer dentro de <details>');
+      assert.ok(app.byId('curveUndoButton').closest('[hidden]') === null);
       assert.ok(!same(raws(app), original), 'controle: a ECU realmente foi alterada em parte');
       // Desfazer volta à foto de antes
       app.byId('curveUndoButton').click(); app.settle(3);
@@ -331,4 +331,46 @@ test('M5 desconhecido nunca vira 0: fator ausente de um ponto mostra — (nem "0
   app.go('curve'); app.settle(4);
   app.$('circle[data-curve-index="3"]').click(); app.flush();
   assert.doesNotMatch(app.byId('curveCurrentFactor').textContent, /^0([,.]0+)?$/, `fator desconhecido apareceu como "${app.byId('curveCurrentFactor').textContent}"`);
+});
+
+test('M5 as quatro etapas da gravação aparecem na ordem do contrato (foto antes, escrita, ACK, conferindo) na Curva K e no Mapa K', () => {
+  const app = curveApp();
+  const rules = app.win.OmegasUi.DisplayRules.OPERATION_WORDING;
+  const order = sel => app.$$(`${sel} .operation-sequence span`).map(e => e.textContent.trim());
+  assert.deepEqual(order('[data-screen="curve"]'), Array.from(rules.stages));
+  assert.deepEqual(order('[data-screen="map"]'), Array.from(rules.stages));
+  assert.deepEqual(Array.from(rules.stages), ['Foto antes', 'Escrita', 'ACK', 'Conferindo na ECU']);
+});
+
+test('M5 leitura em andamento: mostra "Lendo", não acusa falha e só então mostra os pontos', () => {
+  const w = new (require('./wiring/world.cjs').World)({ opPolls: 5 });
+  const app = L.boot({ world: w });
+  app.$('.side-nav [data-route="curve"]').click(); app.flush();
+  for (let i = 0; i < 3; i += 1) {
+    app.advance(250);
+    assert.match(app.byId('curveSourceStatus').textContent, /Lendo/, `tick ${i}: ainda lendo`);
+    assert.equal(app.state().alert, null, 'leitura em andamento não é falha');
+    assert.equal(app.$$('circle[data-curve-index]').length, 0);
+  }
+  app.settle(8);
+  assert.equal(app.$$('circle[data-curve-index]').length, 30);
+});
+
+test('M5 Aprendizado global sem curva lida: gráfico vazio, sem coordenadas NaN', () => {
+  const app = curveApp({ outcome: { curveRead: 'transport' } });
+  app.$('[data-curve-view="learning"]').click(); app.settle(3);
+  L.assertClean(app, 'M5/aprendizado sem curva');
+  app.$('[data-curve-view="editor"]').click(); app.settle(2);
+  L.assertClean(app, 'M5/editor sem curva');
+});
+
+test('M5 o aviso de falha aparece na tela (toast), não só no estado interno', () => {
+  const app = curveApp({ outcome: { curveBackup: 'transport' } });
+  app.byId('curveResetButton').click(); app.settle(5);
+  const toast = app.byId('alertToast');
+  assert.ok(toast._classes().has('show'), 'o aviso não foi mostrado ao dono');
+  assert.match(toast.querySelector('b').textContent, /foto|zerado|Cabo/i);
+  // some sozinho depois do prazo (sem timer próprio)
+  app.advance(5000);
+  assert.ok(!toast._classes().has('show'), 'o aviso ficou na tela para sempre');
 });
