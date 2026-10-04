@@ -22,6 +22,7 @@ import com.omegas.prohub.equivalence.EquivalenceRuntime
 import androidx.core.app.ServiceCompat
 import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
+import com.omegas.prohub.calibration.FailureKind
 import com.omegas.prohub.calibration.KFactorManager
 import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.calibration.SerialWriteGuard
@@ -538,8 +539,21 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readLine(row).toString()
     @Synchronized fun readKMap(): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readFullMap().toString()
-    @Synchronized fun recoverKInsertionState(): String =
-        if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.recoverInsertionState().toString()
+    /** "Liberar Mapa K" (toque do dono, via CalibrationOperationsBridge): mesmas guardas de qualquer escrita. */
+    @Synchronized fun recoverKInsertionState(): String {
+        if (!usb.connected) {
+            return JSONObject().put("ok", false).put("failureKind", FailureKind.TRANSPORT)
+                .put("error", "USB desconectado").toString()
+        }
+        if (kFactor.isBusy()) return calibrationBusy("K factor")
+        writerConflict(SerialWriteGuard.OWNER_K_MAP)?.let { return it }
+        if (::link.isInitialized && !link.canWriteLocally()) {
+            return JSONObject().put("ok", false)
+                .put("error", "Este aparelho não possui o controle principal do MP48")
+                .toString()
+        }
+        return kWriter.recoverInsertionState().toString()
+    }
     fun kWriteStatusJson(): String = kWriter.statusJson()
     fun kWriteHistoryJson(): String = kWriter.historyJson()
 

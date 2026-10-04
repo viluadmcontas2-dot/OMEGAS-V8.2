@@ -387,14 +387,15 @@
             this.root?.classList.add('has-result');
             // Desfazer = a foto desta operação. Reset: a foto tirada antes dele; escrita/restauração: a que o
             // Kotlin guardou antes do primeiro ACK (`photoFile`). Sem foto (ou sem nada alterado) não há Desfazer.
-            const unchanged = operation.details && Number(operation.details.changedPoints) === 0;
+            const unchanged = operation.nothingToChange === true || (operation.details && Number(operation.details.changedPoints) === 0);
             this.undoFile = unchanged ? '' : String((this.writeKind === 'reset' && this.resetPhotoFile) || operation.photoFile || '');
             const result = document.getElementById('curveOperationResult');
             if (result) {
               result.dataset.level = 'ok';
-              result.querySelector('b').textContent = wording().doneTitle('Curva K');
-              result.querySelector('span').textContent = wording().doneDetail;
-              this.showUndo(true);
+              const nothing = operation.nothingToChange === true;
+              result.querySelector('b').textContent = nothing ? 'Nada a gravar' : wording().doneTitle('Curva K');
+              result.querySelector('span').textContent = nothing ? 'A Curva K já estava em 1,000. Nada foi enviado à ECU.' : wording().doneDetail;
+              this.showUndo(!nothing);
             }
             this.data = null;
             this.proposals.clear();

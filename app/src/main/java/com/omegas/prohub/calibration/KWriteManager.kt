@@ -10,6 +10,9 @@ import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -71,12 +74,18 @@ class KWriteManager(
 
     @Synchronized
     fun beginUsbSession(sessionId: Long) {
-        val cache = loadCache()
-        cache.put("sessionConfirmed", false)
-            .put("sessionStartedAt", System.currentTimeMillis())
-            .put("sessionId", sessionId)
-            .put("source", "PREVIOUS_SESSION")
-        atomicWrite(cacheFile, cache.toString(2))
+        try {
+            val cache = loadCache()
+            cache.put("sessionConfirmed", false)
+                .put("sessionStartedAt", System.currentTimeMillis())
+                .put("sessionId", sessionId)
+                .put("source", "PREVIOUS_SESSION")
+            atomicWrite(cacheFile, cache.toString(2))
+        } catch (error: Exception) {
+            // Disco cheio/somente leitura: a sessão USB segue; o cache em disco fica como estava
+            // (o gate de escrita exige leitura confirmada nesta sessão, então nada grava sem leitura nova).
+            log.add("WARN", "K-WRITE", "Cache do mapa K não atualizado ao conectar: ${error.message}")
+        }
         if (insertionStateUnknown.get()) {
             update("SAFETY_LOCKED_INSERTION_UNKNOWN", "Confirme a saída do modo K insertion antes de qualquer operação", 0)
         } else {
@@ -137,7 +146,7 @@ class KWriteManager(
         if (!validCell(row, column)) return error("Célula inválida")
         if (insertionStateUnknown.get()) return safetyError()
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
-            return error(error.message ?: "USB desconectado")
+            return error(error.message ?: "USB desconectado", FailureKind.TRANSPORT)
         }
         return runSynchronous("READING_CELL", "Lendo célula K") {
             val line = readRow(row, "leitura da célula K[$row,$column]", expectedSessionId)
@@ -157,7 +166,7 @@ class KWriteManager(
         if (row !in 0 until ROW_COUNT) return error("Linha inválida")
         if (insertionStateUnknown.get()) return safetyError()
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
-            return error(error.message ?: "USB desconectado")
+            return error(error.message ?: "USB desconectado", FailureKind.TRANSPORT)
         }
         return runSynchronous("READING_LINE", "Lendo linha K") {
             val line = readRow(row, "leitura da linha K[$row]", expectedSessionId)
@@ -182,7 +191,7 @@ class KWriteManager(
         }
         if (insertionStateUnknown.get()) return safetyError()
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
-            return error(error.message ?: "USB desconectado")
+            return error(error.message ?: "USB desconectado", FailureKind.TRANSPORT)
         }
         return runSynchronous("READING_MAP", "Lendo mapa K completo") {
             val allRows = JSONArray()
@@ -237,9 +246,14 @@ class KWriteManager(
         }
     }
 
+    /**
+     * Toque do dono em "Liberar Mapa K": manda a SAÍDA do K insertion (o mesmo comando de sempre) e só
+     * solta a trava depois do ACK da ECU. Sem ACK a trava continua e a falha vem classificada
+     * (cabo/USB × ECU). Operação normal: usa `busy` e a trava da serial como qualquer escrita.
+     */
     fun recoverInsertionState(): JSONObject {
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
-            return error(error.message ?: "USB desconectado")
+            return error(error.message ?: "USB desconectado", FailureKind.TRANSPORT)
         }
         return runSynchronous("RECOVERING_INSERTION", "Confirmando saída do modo K insertion", mutating = true) {
             requireAck(
@@ -253,11 +267,25 @@ class KWriteManager(
                 ),
                 "recuperação da saída K insertion",
             )
-            setInsertionSafetyLock(false, "Saída confirmada manualmente")
-            val stale = loadCache().put("sessionConfirmed", false).put("sessionId", expectedSessionId)
-            atomicWrite(cacheFile, stale.toString(2))
+            // A ECU confirmou a saída: o estado em memória solta primeiro; o arquivo é melhor esforço
+            // (se não gravar, a trava antiga só reaparece num reinício e o dono toca de novo).
+            insertionStateUnknown.set(false)
+            try { setInsertionSafetyLock(false, "Saída confirmada manualmente") } catch (failure: Exception) {
+                log.add("WARN", "K-WRITE", "Saída confirmada; trava em disco não limpa: ${failure.message}")
+            }
+            try {
+                val stale = loadCache().put("sessionConfirmed", false).put("sessionId", expectedSessionId)
+                atomicWrite(cacheFile, stale.toString(2))
+            } catch (failure: Exception) {
+                log.add("WARN", "K-WRITE", "Cache do mapa K não marcado como antigo: ${failure.message}")
+            }
             update("MAP_PENDING", "Saída confirmada; releia o mapa K desta sessão", 100)
-            JSONObject().put("ok", true).put("recovered", true).put("sessionId", expectedSessionId)
+            JSONObject()
+                .put("ok", true)
+                .put("recovered", true)
+                .put("released", true)
+                .put("message", "Mapa K liberado")
+                .put("sessionId", expectedSessionId)
         }
     }
 
@@ -306,34 +334,41 @@ class KWriteManager(
                 .put("current", current).put("target", target))
         }
         if (!busy.compareAndSet(false, true)) return error("Outra operação K está em andamento")
-        val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
-            busy.set(false)
-            return error(error.message ?: "USB desconectado")
-        }
-        if (!guard.tryAcquire(SerialWriteGuard.OWNER_K_MAP)) {
-            busy.set(false)
-            return error("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento")
-        }
-        val adjustmentId = "ADJ-${System.currentTimeMillis()}-${UUID.randomUUID().toString().take(8)}"
-        onBusyChanged(true)
-        update("BATCH_QUEUED", "Alteração enfileirada entre telemetrias", 0,
-            JSONObject().put("adjustmentId", adjustmentId).put("cells", normalized))
-        try {
+        // Tudo entre adquirir `busy` e entregar o trabalho ao executor fica sob try/finally:
+        // nenhuma exceção (nem Error) deixa `busy` ou a trava da serial presas.
+        var guardHeld = false
+        var submitted = false
+        return try {
+            val expectedSessionId = try { currentSessionId() } catch (cause: Exception) {
+                return error(cause.message ?: "USB desconectado", FailureKind.TRANSPORT)
+            }
+            if (!guard.tryAcquire(SerialWriteGuard.OWNER_K_MAP)) {
+                return error("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento")
+            }
+            guardHeld = true
+            val adjustmentId = "ADJ-${System.currentTimeMillis()}-${UUID.randomUUID().toString().take(8)}"
+            onBusyChanged(true)
+            update("BATCH_QUEUED", "Alteração enfileirada entre telemetrias", 0,
+                JSONObject().put("adjustmentId", adjustmentId).put("cells", normalized))
             executor.execute {
                 executeBatch(adjustmentId, normalized, reason, expectedSessionId)
             }
+            submitted = true
+            JSONObject()
+                .put("ok", true)
+                .put("started", true)
+                .put("adjustmentId", adjustmentId)
+                .put("cells", normalized.length())
         } catch (_: RejectedExecutionException) {
-            guard.release(SerialWriteGuard.OWNER_K_MAP)
-            busy.set(false)
-            try { onBusyChanged(false) } catch (_: Throwable) {}
-            synchronized(statusLock) { status.put("busy", false) }
-            return error("O escritor do Mapa K foi encerrado; reabra o aplicativo")
+            error("O escritor do Mapa K foi encerrado; reabra o aplicativo")
+        } finally {
+            if (!submitted) {
+                if (guardHeld) guard.release(SerialWriteGuard.OWNER_K_MAP)
+                busy.set(false)
+                try { onBusyChanged(false) } catch (_: Throwable) {}
+                synchronized(statusLock) { status.put("busy", false) }
+            }
         }
-        return JSONObject()
-            .put("ok", true)
-            .put("started", true)
-            .put("adjustmentId", adjustmentId)
-            .put("cells", normalized.length())
     }
 
     /**
@@ -685,36 +720,46 @@ class KWriteManager(
                     .put("recoveryRows", recovery))
             log.add("ERROR", "K-BATCH", "$adjustmentId interrompido: ${error.message}")
         } finally {
-            if (insertionEnabled) {
-                try {
-                    requireAck(
-                        transaction(
-                            Mp48Protocol.kInsertionMode(false),
+            try {
+                if (insertionEnabled) {
+                    try {
+                        requireAck(
+                            transaction(
+                                Mp48Protocol.kInsertionMode(false),
+                                "saída segura K insertion",
+                                800,
+                                expectedSessionId,
+                                Mp48WorkClass.SAFETY,
+                                telemetryAfter = false,
+                            ),
                             "saída segura K insertion",
-                            800,
-                            expectedSessionId,
-                            Mp48WorkClass.SAFETY,
-                            telemetryAfter = false,
-                        ),
-                        "saída segura K insertion",
-                    )
-                    setInsertionSafetyLock(false, "Saída segura confirmada")
-                } catch (error: Exception) {
-                    setInsertionSafetyLock(true, error.message ?: "Saída K insertion não confirmada")
-                    val stale = loadCache().put("sessionConfirmed", false)
-                    atomicWrite(cacheFile, stale.toString(2))
-                    update(
-                        "SAFETY_LOCKED_INSERTION_UNKNOWN",
-                        "Saída K insertion não confirmada; execute a recuperação antes de continuar",
-                        100,
-                        JSONObject().put("error", error.message ?: "Sem ACK"),
-                    )
+                        )
+                        try { setInsertionSafetyLock(false, "Saída segura confirmada") } catch (failure: Exception) {
+                            log.add("WARN", "K-WRITE", "Saída confirmada; trava em disco não limpa: ${failure.message}")
+                        }
+                    } catch (failure: Exception) {
+                        // Sem ACK de saída: a trava (em memória e em disco) segura o Mapa K até o dono tocar em "Liberar".
+                        insertionStateUnknown.set(true)
+                        try { setInsertionSafetyLock(true, failure.message ?: "Saída K insertion não confirmada") } catch (_: Exception) {}
+                        try {
+                            val stale = loadCache().put("sessionConfirmed", false)
+                            atomicWrite(cacheFile, stale.toString(2))
+                        } catch (_: Exception) {}
+                        update(
+                            "SAFETY_LOCKED_INSERTION_UNKNOWN",
+                            "Saída K insertion não confirmada; toque em Liberar Mapa K antes de continuar",
+                            100,
+                            JSONObject().put("error", failure.message ?: "Sem ACK")
+                                .put("failureKind", FailureKind.of(failure)),
+                        )
+                    }
                 }
+            } finally {
+                guard.release(SerialWriteGuard.OWNER_K_MAP)
+                busy.set(false)
+                try { onBusyChanged(false) } catch (_: Throwable) {}
+                synchronized(statusLock) { status.put("busy", false) }
             }
-            guard.release(SerialWriteGuard.OWNER_K_MAP)
-            busy.set(false)
-            onBusyChanged(false)
-            synchronized(statusLock) { status.put("busy", false) }
         }
     }
 
@@ -723,23 +768,27 @@ class KWriteManager(
             @Suppress("UNCHECKED_CAST")
             return error("Outra operação K está em andamento") as T
         }
-        if (mutating && !guard.tryAcquire(SerialWriteGuard.OWNER_K_MAP)) {
-            busy.set(false)
+        var guardHeld = false
+        try {
+            if (mutating) {
+                if (!guard.tryAcquire(SerialWriteGuard.OWNER_K_MAP)) {
+                    @Suppress("UNCHECKED_CAST")
+                    return error("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento") as T
+                }
+                guardHeld = true
+            }
+            onBusyChanged(true)
+            update(state, message, 5)
+            return block()
+        } catch (failure: Exception) {
+            val kind = FailureKind.of(failure)
+            update("FAILED", failure.message ?: "Falha na operação K", 100, JSONObject().put("failureKind", kind))
             @Suppress("UNCHECKED_CAST")
-            return error("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento") as T
-        }
-        onBusyChanged(true)
-        update(state, message, 5)
-        return try {
-            block()
-        } catch (error: Exception) {
-            update("FAILED", error.message ?: "Falha na operação K", 100)
-            @Suppress("UNCHECKED_CAST")
-            error(error.message ?: "Falha na operação K") as T
+            return error(failure.message ?: "Falha na operação K", kind) as T
         } finally {
-            if (mutating) guard.release(SerialWriteGuard.OWNER_K_MAP)
+            if (guardHeld) guard.release(SerialWriteGuard.OWNER_K_MAP)
             busy.set(false)
-            onBusyChanged(false)
+            try { onBusyChanged(false) } catch (_: Throwable) {}
             synchronized(statusLock) { status.put("busy", false) }
         }
     }
@@ -831,7 +880,8 @@ class KWriteManager(
     private fun validCell(row: Int, column: Int): Boolean =
         row in 0 until ROW_COUNT && column in 0 until COLUMN_COUNT
 
-    private fun error(message: String): JSONObject = JSONObject().put("ok", false).put("error", message)
+    private fun error(message: String, kind: String? = null): JSONObject =
+        JSONObject().put("ok", false).put("error", message).apply { if (kind != null) put("failureKind", kind) }
 
     private fun update(state: String, message: String, progress: Int, details: JSONObject = JSONObject()) {
         synchronized(statusLock) {
@@ -958,14 +1008,22 @@ class KWriteManager(
             .digest(bytes).joinToString("") { "%02x".format(it) }
     }
 
+    /** Temporário + fsync + troca atômica: nunca apaga o destino antes de o novo conteúdo estar no disco. */
     private fun atomicWrite(file: File, text: String) {
         file.parentFile?.mkdirs()
         val temp = File(file.parentFile, file.name + ".tmp")
-        temp.writeText(text)
-        if (file.exists()) file.delete()
-        if (!temp.renameTo(file)) {
-            file.writeText(text)
-            temp.delete()
+        FileOutputStream(temp).use { output ->
+            output.write(text.toByteArray(Charsets.UTF_8))
+            output.flush()
+            output.fd.sync()
+        }
+        try {
+            Files.move(
+                temp.toPath(), file.toPath(),
+                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING,
+            )
+        } catch (_: Exception) {
+            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
     }
 }

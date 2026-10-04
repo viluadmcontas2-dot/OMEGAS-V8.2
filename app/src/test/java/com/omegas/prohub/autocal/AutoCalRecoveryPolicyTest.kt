@@ -43,4 +43,11 @@ class AutoCalRecoveryPolicyTest {
         assertEquals("INSPECT_TECHNICAL_DETAILS", recovery.nextActionCode)
         assertFalse(recovery.automaticRetry)
     }
+
+    @Test fun `timeout de transporte nao vira ack da ecu ausente`() {
+        val recovery = AutoCalRecoveryPolicy.classify("Timeout aguardando ACK da leitura")
+        assertEquals("TRANSPORT_FAILURE", recovery.reasonCode)
+        assertTrue(recovery.retryable)
+        assertFalse(recovery.automaticRetry)
+    }
 }
