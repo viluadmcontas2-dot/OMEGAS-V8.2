@@ -12,9 +12,10 @@ test('Diamante: gasolina, GNV e MAP no estado persistente; dados vencidos não f
  for(const key of ['petrol','gas','map']) assert.equal(strip.querySelector(`[data-vehicle-fact="${key}"] b`).textContent,'—',key+' vencido');
  app.destroy();
 });
-test('Diamante: Agora apresenta resultado e próxima intenção, sem repetir os mostradores do topo',()=>{
+test('Diamante: Agora apresenta 4 blocos de direção, resultado e próxima intenção (mockup aprovado 2026-10-05)',()=>{
  const app=boot();
- assert.equal(app.$('[data-screen="dashboard"]').querySelectorAll('.now-tile').length,0);
+ assert.equal(app.$('[data-screen="dashboard"]').querySelectorAll('.now-tile').length,4);
+ for (const id of ['dashDriveFuel','dashDriveMs','dashDriveRpm','dashDriveMap']) assert.ok(app.byId(id),id);
  assert.ok(app.byId('dashNext'));assert.ok(app.byId('dashEquivalence'));assert.ok(app.byId('dashHealth'));
  L.assertClean(app,'Agora');app.destroy();
 });

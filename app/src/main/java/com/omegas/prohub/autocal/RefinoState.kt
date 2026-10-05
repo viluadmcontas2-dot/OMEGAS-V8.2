@@ -8,19 +8,31 @@ import org.json.JSONObject
  *
  *  - `phase`: a fase humana ("Lendo a ECU", "Coletando entre as faixas da ECU: 14 de 17 intervalos", "Pronto para gravar 5 pontos",
  *    "Verificando", "Estável", ...);
+ *  - `label`: a mesma fase em duas ou três palavras, para o chip e para a aba Agora ("Medindo o GNV", "Medindo a gasolina",
+ *    "Curva pronta", "ECU no automático"); diz o combustível que o motor está queimando AGORA, nunca o que ele "deveria" estar;
  *  - `whatNow`: uma frase do que está acontecendo agora;
  *  - `nextAction`: a frase do botão (o que vai fazer ao tocar) e `canAct` (há botão de gravar?);
  *  - `counts`: intervalos coletados/faltando, AutoMatch da ECU lidos, zonas lidas, pontos a gravar;
  *  - `whyNoProposal`: o motivo humano quando não propõe (nulo quando propõe ou quando não há o que propor);
- *  - `technical`: códigos e regras internas (fase, motivo, tipo da ação). NUNCA no texto do dono.
+ *  - `technical`: códigos e regras internas (fase, motivo, tipo da ação, combustível vivo). NUNCA no texto do dono.
  *
- * Nenhum texto de `phase`/`whatNow`/`nextAction`/`whyNoProposal` cita regra interna (minutos, visitas, intervalos de confiança,
- * episódios, contagem mínima): só a consequência humana. Só observa; nada grava.
+ * `canAct` é a autoridade única do botão: a UI nunca mostra "Gravar" quando aqui é false, e aqui nunca é true numa fase em que a
+ * UI não grava (ECU no automático, lendo, sem ECU, verificando). Nenhum texto de `phase`/`label`/`whatNow`/`nextAction`/
+ * `whyNoProposal` cita regra interna (minutos, visitas, intervalos de confiança, episódios, contagem mínima): só a consequência
+ * humana. Só observa; nada grava.
  */
 object RefinoState {
-    private fun num(o: JSONObject?, key: String): Int? = if (o == null || !o.has(key) || o.isNull(key)) null else o.optInt(key)
+    /** Combustível vivo como a ECU informa (Mp48Fuel.wireName). */
+    const val FUEL_PETROL = "GASOLINA"
+    const val FUEL_GAS = "GNV"
 
-    fun build(autopilot: JSONObject, equivalence: JSONObject?, between: JSONArray, stalls: JSONObject?): JSONObject {
+    private fun points(n: Int) = "$n ${if (n == 1) "ponto" else "pontos"}"
+
+    /**
+     * [fuel] = combustível do último quadro recente da telemetria (GASOLINA, GNV, TRANSICAO, DESLIGADO, CUTOFF) ou nulo sem
+     * quadro recente. Só muda as palavras: a fase, a ação e o `canAct` não dependem dele.
+     */
+    fun build(autopilot: JSONObject, equivalence: JSONObject?, between: JSONArray, stalls: JSONObject?, fuel: String? = null): JSONObject {
         val code = autopilot.optString("phase", "SEM_ECU")
         val truth = autopilot.optJSONObject("ecuTruth")
         val gaps = (0 until between.length()).mapNotNull { between.optJSONObject(it) }.filter { it.optString("kind") == "gap" }
@@ -30,51 +42,114 @@ object RefinoState {
         val available = equivalence?.optBoolean("available", false) == true
         val action = equivalence?.optJSONObject("nextAction")
         val kind = action?.optString("kind").orEmpty()
-        val pointsToWrite = if (kind == "APPLY") action?.optJSONArray("pointIndexes")?.length() ?: 0 else 0
+        val actionPoints = action?.optJSONArray("pointIndexes")?.length() ?: 0
+        val pointsToWrite = if (kind == "APPLY") actionPoints else 0
         val local = action?.optBoolean("local", false) == true
         val index = if (equivalence != null && !equivalence.isNull("index")) equivalence.optDouble("index") else null
+        val onPetrol = fuel == FUEL_PETROL
+        val onGas = fuel == FUEL_GAS
+        val keepDriving = if (onGas) "Seguir dirigindo no GNV" else "Seguir dirigindo"
+        // Fases em que a UI não grava a curva inteira (o ajuste local de engasgo segue a própria regra): o botão e a frase
+        // obedecem à mesma tabela, então "Pronto para gravar" nunca aparece sem botão.
+        val expiredFrom = autopilot.optString("expiredFrom")
+        val pausedNoWrite = code == "TENTATIVA_ENCERRADA" && !local && expiredFrom != "PROPOSTA_PRONTA" && expiredFrom != "ECU_TRABALHANDO"
+        val stableNoWrite = code == "ESTAVEL" && !local
 
         var phase: String
+        var label: String
         var whatNow: String
         var next: String
         var canAct = false
         var why: String? = null
         when {
-            code == "SEM_ECU" -> { phase = "Sem ECU"; whatNow = "Conecte o cabo e ligue o motor."; next = "Aguardar a ECU" }
+            code == "SEM_ECU" -> {
+                phase = "Sem ECU"; label = phase
+                whatNow = "Conecte o cabo e ligue o motor."; next = "Aguardar a ECU"
+            }
             code == "LENDO_ECU" || !available -> {
-                phase = "Lendo a ECU"
-                whatNow = "Estou lendo o AutoMatch e as curvas que a ECU guarda."
+                val failed = !autopilot.isNull("readFailure") && autopilot.optString("readFailure").isNotBlank()
+                phase = if (failed) "Leitura da ECU falhou" else "Lendo a ECU"; label = if (failed) "Leitura falhou" else "Lendo a ECU"
+                whatNow = if (failed) "A ECU não respondeu à leitura do AutoCal. Tento de novo sozinho; nada muda na ECU."
+                else "Estou lendo o AutoMatch e as curvas que a ECU guarda."
                 next = "Aguardar a leitura"
             }
             code == "RESTAURAR_TRECHO" || kind == "CONTESTED" -> {
-                phase = "Piorou em um trecho"; whatNow = "Um trecho ficou pior com a curva nova."
+                phase = "Piorou em um trecho"; label = phase
+                whatNow = "Um trecho ficou pior com a curva nova."
                 next = "Restaurar o trecho"; canAct = true
             }
             code == "VERIFICANDO" || kind == "PROVING" -> {
-                phase = "Verificando"; whatNow = "A curva nova foi gravada; confiro se o GNV chegou na gasolina."; next = "Seguir dirigindo"
+                phase = "Verificando"; label = "Medindo"
+                whatNow = if (onPetrol) "A curva nova foi gravada. O carro está na gasolina; confiro o GNV quando ele voltar."
+                else "A curva nova foi gravada; confiro se o GNV chegou na gasolina."
+                next = keepDriving
+            }
+            // Proposta pronta, mas a ECU ainda está no automático e pode sobrescrever a curva: a UI não grava, então aqui
+            // não há botão. A frase diz a verdade (há proposta; espero a ECU) em vez de prometer "Gravar" sem botão.
+            kind == "APPLY" && pointsToWrite > 0 && code == "ECU_TRABALHANDO" -> {
+                phase = "A ECU está no automático"; label = "ECU no automático"
+                whatNow = "Já tenho ${points(pointsToWrite)} para gravar, mas a ECU ainda está no automático e pode sobrescrever a curva. Espero ela terminar."
+                next = "Aguardar a ECU"
+                why = truth?.optString("summary")?.takeIf { it.isNotBlank() }
+            }
+            kind == "APPLY" && pointsToWrite > 0 && stableNoWrite -> {
+                phase = "Estável"; label = phase
+                whatNow = "Nas faixas medidas o GNV está igual à gasolina. Guardo um ajuste fino de ${points(pointsToWrite)}; só proponho gravar se alguma faixa sair do lugar."
+                next = "Nada a fazer"
+            }
+            kind == "APPLY" && pointsToWrite > 0 && pausedNoWrite -> {
+                phase = "Pausado"; label = phase
+                whatNow = "Já tenho ${points(pointsToWrite)} para gravar. O acompanhamento pausou sem leitura nova; a próxima leitura libera a gravação."
+                next = "Aguardar a próxima leitura"
             }
             kind == "APPLY" && pointsToWrite > 0 -> {
-                phase = if (local) "Pronto para corrigir um engasgo" else "Pronto para gravar $pointsToWrite ${if (pointsToWrite == 1) "ponto" else "pontos"}"
+                phase = if (local) "Pronto para corrigir um engasgo" else "Pronto para gravar ${points(pointsToWrite)}"
+                label = if (local) "Ajuste pronto" else "Curva pronta"
                 whatNow = action?.optString("text").orEmpty()
-                next = if (local) "Corrigir ${if (pointsToWrite == 1) "o ponto" else "os $pointsToWrite pontos"} da Curva K" else "Gravar $pointsToWrite ${if (pointsToWrite == 1) "ponto" else "pontos"} na Curva K"
+                next = if (local) "Corrigir ${if (pointsToWrite == 1) "o ponto" else "os $pointsToWrite pontos"} da Curva K" else "Gravar ${points(pointsToWrite)} na Curva K"
                 canAct = true
             }
             kind == "FREEZE_REFERENCE" -> {
-                phase = "Pronto para salvar a referência"; whatNow = "A ECU já entregou a curva de gasolina dela."
+                phase = "Pronto para salvar a referência"; label = "Referência pronta"
+                whatNow = "A ECU já entregou a curva de gasolina dela."
                 next = "Salvar a gasolina da ECU como referência"; canAct = true
             }
             code == "ECU_TRABALHANDO" -> {
-                phase = "A ECU está no automático"
+                phase = "A ECU está no automático"; label = "ECU no automático"
                 whatNow = truth?.optString("summary").orEmpty().ifBlank { "A ECU está calibrando; só observo." }
                 next = "Aguardar a ECU"
             }
-            code == "ESTAVEL" || (kind == "NOTHING" && index != null) -> {
-                phase = "Estável"; whatNow = "O GNV está igual à gasolina."; next = "Nada a fazer"
+            code == "ESTAVEL" || (kind == "NOTHING" && index != null && actionPoints == 0) -> {
+                phase = "Estável"; label = phase
+                whatNow = "O GNV está igual à gasolina."; next = "Nada a fazer"
+            }
+            // Prova que fechou sem convergir e esgotou as tentativas: não é "estável" nem "coletando"; o cérebro diz onde.
+            kind == "NOTHING" && actionPoints > 0 -> {
+                phase = "Sem nova proposta nessa faixa"; label = "Sem proposta"
+                whatNow = action?.optString("text").orEmpty().ifBlank { "O ajuste nessa faixa não fechou; não proponho de novo ali." }
+                next = "Revisar a Curva K nessa faixa"
+            }
+            code == "TENTATIVA_ENCERRADA" -> {
+                phase = "Pausado"; label = phase
+                whatNow = autopilot.optString("headline").ifBlank { "O acompanhamento pausou sem leitura nova. Nada foi gravado." }
+                next = autopilot.optString("next").ifBlank { "Aguardar a próxima leitura" }
+            }
+            onPetrol -> {
+                // Na gasolina o app mede a referência, não o GNV: dizer "Medindo o GNV" aqui era mentira.
+                phase = "Na gasolina: medindo a referência"; label = "Medindo a gasolina"
+                whatNow = "O carro está na gasolina. Estou medindo a referência da gasolina; comparo com o GNV quando o carro trocar."
+                next = keepDriving
+                why = when {
+                    missing > 0 -> "Ainda sem leituras em $missing ${if (missing == 1) "intervalo" else "intervalos"}."
+                    index == null -> "Ainda aprendendo seu motor para afirmar a diferença."
+                    else -> null
+                }
             }
             else -> {
                 phase = if (total > 0) "Coletando entre as faixas da ECU: $collected de $total intervalos" else "Coletando"
+                label = if (onGas) "Medindo o GNV" else "Medindo"
                 whatNow = "Estou aprendendo seu motor entre as faixas da ECU."
-                next = "Seguir dirigindo no GNV"
+                next = keepDriving
                 why = when {
                     missing > 0 -> "Ainda sem leituras em $missing ${if (missing == 1) "intervalo" else "intervalos"}."
                     index == null -> "Ainda aprendendo seu motor para afirmar a diferença."
@@ -98,7 +173,7 @@ object RefinoState {
             .put("ecuZonesGas", autopilot.opt("gasZones") ?: JSONObject.NULL)
             .put("pointsToWrite", pointsToWrite)
         return JSONObject()
-            .put("phase", phase).put("whatNow", whatNow).put("nextAction", next).put("canAct", canAct)
+            .put("phase", phase).put("label", label).put("whatNow", whatNow).put("nextAction", next).put("canAct", canAct)
             .put("counts", counts)
             .put("whyNoProposal", why ?: JSONObject.NULL)
             .put("reason", why ?: JSONObject.NULL)
@@ -108,6 +183,7 @@ object RefinoState {
                 .put("failureDomain", autopilot.opt("failureDomain") ?: JSONObject.NULL)
                 .put("nextActionKind", if (kind.isEmpty()) JSONObject.NULL else kind)
                 .put("local", local)
+                .put("fuel", fuel ?: JSONObject.NULL)
                 .put("index", index ?: JSONObject.NULL)
                 .put("judgedUsage", equivalence?.opt("judgedUsage") ?: JSONObject.NULL))
     }

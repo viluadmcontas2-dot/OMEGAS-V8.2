@@ -92,12 +92,14 @@
   function fuelLabel(raw) {
     const value = String(raw === null || raw === undefined ? '' : raw).trim().toUpperCase();
     if (!value || value === '--' || value === '—' || value === 'NULL' || value === 'UNDEFINED') return DASH;
+    // Transição antes de GNV: "AGUARDANDO_COMUTACAO_GNV" (estado) contém GNV e não é GNV.
+    if (value.includes('TRANS') || value.includes('COMUT')) return 'TRANSIÇÃO';
+    if (value.includes('CUTOFF')) return 'CORTE';
     if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';
     if (value.includes('CNG') || value.includes('GNV') || value.includes('GAS')) return 'GNV';
-    if (value.includes('CUTOFF')) return 'CORTE';
-    if (value.includes('TRANS')) return 'TRANSIÇÃO';
     if (value.includes('OFF') || value.includes('DESLIG')) return 'DESLIGADO';
-    return value;
+    // Nome que a ECU não explica (DESCONHECIDO, código novo) nunca vira rótulo cru: é desconhecido.
+    return DASH;
   }
 
   function durationLabel(ms) {
@@ -229,7 +231,15 @@
   function connectionState(status, reading) {
     const s = status || {};
     if (s.usbConnected === true) {
-      if (s.engineStuck === true) return { key: 'attention', label: 'ECU sem resposta', hint: 'Aguarde ou reconecte o cabo USB', online: true };
+      const link = String(s.ecuLinkState || '').toUpperCase();
+      const fresh = reading && (reading.level === 'fresh' || reading.level === 'late');
+      // Pausa pelo dono, app travado, ECU que recusou e USB recuperando são estados DIFERENTES de "sem dados":
+      // cada um diz quem falhou (app, cabo ou ECU) e o que fazer. Dado fresco sempre vence: a ECU está falando.
+      if (s.enginePausedByUser === true && !fresh) return { key: 'paused', label: 'Leitura pausada', hint: 'Retome pela notificação do OMEGAS', online: false, connected: true };
+      if (s.engineStuck === true) return { key: 'attention', label: 'App travado', hint: 'Feche e reabra o OMEGAS', online: false, connected: true };
+      if (!fresh && (link === 'RECOVERING_HARD' || link === 'ERROR')) return { key: 'refused', label: 'ECU não responde', hint: 'Desconecte e religue o cabo USB', online: false, connected: true };
+      if (!fresh && (s.usbRecovering === true || link === 'RECOVERING' || link === 'RECOVERING_SOFT')) return { key: 'recovering', label: 'USB recuperando', hint: 'Aguarde; volta sozinho', online: false, connected: true };
+      if (!fresh && (link === 'HANDSHAKE' || link === 'WAITING_USB') && !(reading && reading.level === 'lost')) return { key: 'handshake', label: 'Conectando à ECU…', hint: 'Aguarde alguns segundos', online: false, connected: true };
       if (reading && (reading.level === 'none' || reading.level === 'lost')) {
         return { key: 'nodata', label: 'Sem dados da ECU', hint: 'Confira o cabo e a chave; volta sozinho quando chegar dado', online: false, connected: true };
       }
@@ -243,7 +253,7 @@
 
   /** Rótulos únicos das fases do Refino (Refino, Agora e qualquer outro lugar que fale da fase). */
   const PHASE_LABELS = {
-    SEM_ECU: 'Sem ECU', LENDO_ECU: 'Lendo a ECU', ECU_TRABALHANDO: 'ECU no automático', COLETANDO_NOSSOS: 'Medindo o GNV',
+    SEM_ECU: 'Sem ECU', LENDO_ECU: 'Lendo a ECU', ECU_TRABALHANDO: 'ECU no automático', COLETANDO_NOSSOS: 'Medindo',
     PROPOSTA_PRONTA: 'Curva pronta', VERIFICANDO: 'Medindo', RESTAURAR_TRECHO: 'Piorou em um trecho', ESTAVEL: 'Estável', TENTATIVA_ENCERRADA: 'Pausado',
   };
   /** Prazo vencido com proposta pronta: a proposta continua válida, então a fase segue "Curva pronta". */

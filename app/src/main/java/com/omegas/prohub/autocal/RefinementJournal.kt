@@ -61,7 +61,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         /** Estados em que o experimento ainda espera dados. */
         const val STATUS_VERIFYING = "VERIFICANDO"
 
-        private val UNDO_REASON = Regex("^\\s*(restaurar|desfazer|reset|neutralizar)", RegexOption.IGNORE_CASE)
+        private val UNDO_REASON = Regex("(restaurar|desfazer|reset|neutralizar)", RegexOption.IGNORE_CASE)
 
         /**
          * A gravação de Curva K era um Desfazer/Restaurar/Reset (o motivo que o escritor da ECU registra)? Voltar a uma

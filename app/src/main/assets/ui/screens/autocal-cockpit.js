@@ -77,7 +77,11 @@
     humanState(snapshot = {}, state = {}, projection = {}) {
       const nativeSnapshot = state.latestSnapshot?.fields ? state.latestSnapshot : {};
       const evidenceSnapshot = nativeSnapshot.fields ? nativeSnapshot : snapshot;
+      // Pausar/Iniciar só com o flag que a ECU entregou: em falha de leitura ou sem cabo o estado é desconhecido, nunca o cache.
+      const stateName = String(state.state || '').toUpperCase();
+      const unreadable = ['PROBE_FAILED', 'FAILED', 'UNAVAILABLE', 'DISCONNECTED', 'IDLE'].includes(stateName);
       const enabled = finite(state.autoCalEnabled ?? nativeSnapshot.autoCalEnabled ?? scalarValue(nativeSnapshot, 'AUTO_CAL_ENABLE'));
+      const enabledLive = unreadable ? null : enabled;
       const projectedPetrolZones = projectedZoneFlags(projection, 'petrol');
       const projectedGasZones = projectedZoneFlags(projection, 'gas');
       const petrolFieldAvailable = field(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL') !== null;
@@ -106,10 +110,10 @@
           ? 'AutoCal com erro de leitura'
           : acquisitionState === 'WAITING_TELEMETRY_SETTLE'
             ? 'Conectando à leitura da ECU'
-            : enabled === 1 && autoMatchQuotaReached
+            : enabledLive === 1 && autoMatchQuotaReached
               ? 'AutoCal ativo · AutoMatch ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch)
-              : enabled === 1 ? 'AutoCal adquirindo'
-              : enabled === 0 ? 'AutoCal pausado'
+              : enabledLive === 1 ? 'AutoCal adquirindo'
+              : enabledLive === 0 ? 'AutoCal pausado'
               : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
       let progress = 'Gasolina ' + (petrolZones === null ? '—' : petrolZones) + '/4 zonas · GNV ' + (gasZones === null ? '—' : gasZones) + '/4 zonas';
       if (gasMissingZones.length) progress += ' · Faltam GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ');
@@ -158,18 +162,18 @@
         nextAction = String(state.message || state.error || 'O AutoCal da ECU está indisponível.') + ' · Nenhuma referência será escolhida pela interface.';
       } else if (acquisitionState === 'PROBE_FAILED' || acquisitionState === 'FAILED') {
         nextAction = String(state.message || state.error || 'Não foi possível ler o estado do AutoCal da ECU.') + ' · Verifique a conexão; o monitor tentará novamente automaticamente.';
-      } else if (enabled === 0) nextAction = 'Inicie a leitura quando quiser continuar.';
-      else if (enabled === 1 && autoMatchQuotaReached) nextAction = 'A cota automática de AutoMatch foi atingida. A leitura continua ativa e pode preencher novas zonas; pause só se quiser interromper.';
-      else if (enabled === 1 && gasMissingZones.length) nextAction = 'Leitura ativa. Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
-      else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando: o próximo AutoMatch é decisão da ECU.';
-      else if (enabled === 1) nextAction = 'Leitura ativa; aguardando a ECU publicar as quatro zonas.';
+      } else if (enabledLive === 0) nextAction = 'Inicie a leitura quando quiser continuar.';
+      else if (enabledLive === 1 && autoMatchQuotaReached) nextAction = 'A cota automática de AutoMatch foi atingida. A leitura continua ativa e pode preencher novas zonas; pause só se quiser interromper.';
+      else if (enabledLive === 1 && gasMissingZones.length) nextAction = 'Leitura ativa. Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
+      else if (enabledLive === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando: o próximo AutoMatch é decisão da ECU.';
+      else if (enabledLive === 1) nextAction = 'Leitura ativa; aguardando a ECU publicar as quatro zonas.';
       return {
         title, progress, autoMatch, nextAction,
         autoMatchEvidenceState: evidenceState || 'WAITING',
         autoMatchEvidenceTitle: evidenceTitle,
         autoMatchEvidenceDetail: evidenceDetail,
         petrolZones, gasZones, petrolMissingZones, gasMissingZones,
-        petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch, autoMatchQuotaReached,
+        petrolZoneFlags, gasZoneFlags, enabled: enabledLive, autoMatchCount, maxAutoMatch, autoMatchQuotaReached,
       };
     },
 
@@ -713,7 +717,7 @@
         panel.innerHTML = `
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
             <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
-              <h2 class="instrument-title">AutoCal</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
+              <h2 class="instrument-title">AutoCal</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
               <div class="ar-tile"><small>MAP</small><b><span id="autocalLiveMap">—</span><em>bar</em></b></div>
               <div class="ar-tile"><small>Injeção</small><b><span id="autocalLivePetrol">—</span><em>ms</em></b></div>
               <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
@@ -1079,6 +1083,11 @@
       this.renderSessionState();
       this.renderLiveNarrative();
 
+      if (this.toggleWaiting && String(this.actionState?.state || '').toUpperCase() === 'FAILED') {
+        // A ECU não confirmou (readback diferente, sem ACK): o botão volta e o dono fica sabendo; nada mudou na ECU.
+        this.toggleWaiting = null;
+        this.store.patch({ alert: { level: 'warning', message: 'A ECU não confirmou a mudança da leitura: ' + String(this.actionState.message || 'tente de novo') + '.' } });
+      }
       if (this.toggleWaiting && (human.enabled === this.toggleWaiting.target || Date.now() - this.toggleWaiting.since > 10000)) this.toggleWaiting = null;
       const waiting = this.operationalPending || Boolean(this.toggleWaiting);
       // "Lendo estado…" não pode ficar eterno: se o estado da ECU não chega em 6 s, o botão diz isso e deixa reler com um toque.
@@ -1112,7 +1121,8 @@
     }
 
     /** UMA frase humana de estado (nada de jargão): o que a ECU está fazendo e o que falta. */
-    sentenceFor(human, acquisitionName) {
+    /** [fuelKind] = combustível de AGORA pela telemetria ('petrol', 'gas', …): a frase nunca manda "dirigir no GNV" com o carro na gasolina. */
+    sentenceFor(human, acquisitionName, fuelKind) {
       const zones = list => list.map(zone => 'Z' + zone).join(', ');
       if (acquisitionName === 'UNAVAILABLE' || acquisitionName === 'PROBE_FAILED' || acquisitionName === 'FAILED') {
         return { level: 'error', text: 'Sem leitura da ECU. Confira o cabo: o app tenta de novo sozinho.' };
@@ -1120,7 +1130,11 @@
       if (acquisitionName === 'WAITING_TELEMETRY_SETTLE') return { level: 'neutral', text: 'Conectando à leitura da ECU…' };
       if (human.enabled === 0) return { level: 'warn', text: 'Leitura pausada. Toque em Iniciar leitura para continuar aprendendo.' };
       if (human.enabled === 1) {
-        if (human.gasMissingZones.length) return { level: 'neutral', text: 'Aprendendo: dirija normal no GNV. Falta ' + zones(human.gasMissingZones) + '.' };
+        if (human.gasMissingZones.length) {
+          return fuelKind === 'petrol'
+            ? { level: 'neutral', text: 'Aprendendo. Quando o carro passar para o GNV, falta ' + zones(human.gasMissingZones) + '.' }
+            : { level: 'neutral', text: 'Aprendendo: dirija normal no GNV. Falta ' + zones(human.gasMissingZones) + '.' };
+        }
         if (human.petrolMissingZones.length) return { level: 'neutral', text: 'GNV completo. Falta a gasolina em ' + zones(human.petrolMissingZones) + '.' };
         if (human.gasZones === 4 && human.petrolZones === 4) return { level: 'ok', text: 'Gasolina e GNV aprendidos.' };
         return { level: 'neutral', text: 'Leitura ativa. Aguardando a ECU publicar as zonas.' };
@@ -1131,7 +1145,8 @@
     renderSentence(human, acquisitionName) {
       const node = document.getElementById('autocalHumanAction');
       if (!node) return;
-      const sentence = this.sentenceFor(human, acquisitionName);
+      const live = ns.LiveStore && typeof ns.LiveStore.read === 'function' && this.store ? ns.LiveStore.read(this.store.get(), { fallback: true }) : null;
+      const sentence = this.sentenceFor(human, acquisitionName, live ? AutoCalUxModel.liveFuelState(live.fuel).kind : 'unknown');
       if (node.textContent !== sentence.text) node.textContent = sentence.text;
       if (node.dataset.level !== sentence.level) node.dataset.level = sentence.level;
     }
@@ -1822,6 +1837,7 @@
       const uncertainty = failed && mutationMayHaveStarted
         ? ' · Estado incerto: a ECU pode ter mudado. Releia antes de repetir.'
         : '';
+      host.hidden = name === 'IDLE';
       host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
       host.dataset.reasonCode = recoveryCode;
       host.dataset.mutationUncertain = mutationMayHaveStarted ? 'true' : 'false';

@@ -94,7 +94,10 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('Nível da ECU', self.dashboard)
         self.assertIn('reading.levelRaw', self.dashboard)
         self.assertNotIn('level_percentage', self.dashboard)
-        self.assertNotIn('now-tile', self.dashboard)
+        # Decisão do dono (2026-10-05): o Agora tem 4 blocos de direção próprios (dashDrive*), pela leitura única.
+        self.assertEqual(self.dashboard.count('class="now-tile"'), 4)
+        for marker in ('dashDriveFuel', 'dashDriveMs', 'dashDriveRpm', 'dashDriveMap'):
+            self.assertIn(marker, self.dashboard)
 
     def test_map_curve_have_expected_contracts(self):
         self.assertIn('id="mapSelectAll"', self.html)

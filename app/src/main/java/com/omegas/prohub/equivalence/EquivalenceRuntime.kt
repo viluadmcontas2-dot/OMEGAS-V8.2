@@ -41,9 +41,15 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
      * com GNV guardado, o GNV sai do livro E a experiência/provas do cérebro saem junto. Idempotente: a ponte (tela)
      * e o tique do serviço chamam a mesma coisa; o alinhamento não depende de a tela estar aberta.
      */
+    /** Chamado quando a Curva K mudou por fora (o serviço liga ao diário: a verificação e a foto do Desfazer perdem validade). */
+    @Volatile var onExternalCurveChange: ((String) -> Unit)? = null
+
     fun alignCurve(ledger: EquivalenceLedger, phases: EquivalencePhases, mulActRaw: IntArray): Boolean {
         val reset = ledger.alignCurve(EquivalenceLedger.fingerprint(mulActRaw))
-        if (reset) onGasReset("CURVA_K_MUDOU_FORA_DO_APP", phases)
+        if (reset) {
+            onGasReset("CURVA_K_MUDOU_FORA_DO_APP", phases)
+            try { onExternalCurveChange?.invoke("CURVA_K_MUDOU_FORA_DO_APP") } catch (_: Exception) {}
+        }
         return reset
     }
 

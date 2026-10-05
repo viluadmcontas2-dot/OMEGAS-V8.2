@@ -97,6 +97,7 @@ class ResponseDrivenEcuEngine(
     fun start(): Boolean {
         if (!running.compareAndSet(false, true)) return true
         stopRequested.set(false)
+        handshakeFailures = 0 // um reinício é uma tentativa nova; o teto de 40 vale por tentativa, não para sempre
         executor.execute(::runLoop)
         return true
     }

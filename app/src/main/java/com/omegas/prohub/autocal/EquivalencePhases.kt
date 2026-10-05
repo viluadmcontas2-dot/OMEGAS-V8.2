@@ -138,7 +138,11 @@ class EquivalencePhases(
      * [restoreCount] = pontos que o diário oferece restaurar.
      * Retorna a fase decidida (JSON) — também guardada para a UI.
      */
-    fun observe(ecuOnline: Boolean, monitor: JSONObject?, acquisition: JSONObject?, index: JSONObject, journal: JSONObject, restoreCount: Int): JSONObject {
+    fun observe(
+        ecuOnline: Boolean, monitor: JSONObject?, acquisition: JSONObject?, index: JSONObject, journal: JSONObject, restoreCount: Int,
+        /** Combustível de AGORA pela telemetria (GASOLINA/GNV/…; nulo = sem quadro recente): só muda as palavras do próximo passo. */
+        fuel: String? = null,
+    ): JSONObject {
         val result = synchronized(lock) {
             val now = clock()
             val durationNow = durationClock?.invoke() ?: now
@@ -154,8 +158,10 @@ class EquivalencePhases(
             val liveAcquisition = acquisition.takeIf { ecuOnline }
             val enabled = liveMonitor?.optInt("autoCalEnabled", -1)?.takeIf { liveMonitor.has("autoCalEnabled") && !liveMonitor.isNull("autoCalEnabled") }
             val count = liveMonitor?.optInt("autoMatchCount", -1)?.takeIf { it >= 0 }
-            val max = liveMonitor?.optInt("maxAutomatch", -1)?.takeIf { it > 0 && !liveMonitor.isNull("maxAutomatch") }
-                ?: liveAcquisition?.optJSONObject("thresholds")?.takeIf { !it.isNull("maxAutomatch") }?.optInt("maxAutomatch", -1)?.takeIf { it > 0 }
+            // MAX_AUTOMATCH = 0 é a ECU dizendo que já cumpriu os automáticos (decisão do dono, 2026-10-05): conta como máximo
+            // válido, então count >= max fecha a fase em vez de prender em "no automático" por 40 min.
+            val max = liveMonitor?.optInt("maxAutomatch", -1)?.takeIf { it >= 0 && !liveMonitor.isNull("maxAutomatch") }
+                ?: liveAcquisition?.optJSONObject("thresholds")?.takeIf { !it.isNull("maxAutomatch") }?.optInt("maxAutomatch", -1)?.takeIf { it >= 0 }
             if (ecuOnline && count != null) {
                 if (lastCount != null && count != lastCount) { quietMs = 0L; ecuDoneLatch = null; dirty = true }
                 else { quietMs += dt; if (dt > 0) dirty = true }
@@ -171,11 +177,14 @@ class EquivalencePhases(
             val truth = EcuAcquisitionTruth.fromAcquisition(liveAcquisition, count, max, enabled)
             val petrolZones = truth.optJSONObject("petrol")?.opt("zonesCovered") ?: JSONObject.NULL
             val gasZones = truth.optJSONObject("gas")?.opt("zonesCovered") ?: JSONObject.NULL
-            // A ECU já entregou o estado dela (contador ou vetores de aquisição)?
-            val ecuRead = count != null || liveAcquisition != null
+            // A ECU entrega o contador continuamente: sem contador neste tick o app está lendo (ou a leitura falhou);
+            // aquisição sozinha não diz se a ECU está no automático. Falha de transporte ≠ estado da ECU.
+            val ecuRead = count != null
+            val readFailure = liveMonitor?.optString("readFailure")?.takeIf { liveMonitor.has("readFailure") && !liveMonitor.isNull("readFailure") && it.isNotBlank() }
             val fresh = if (!ecuOnline) null else when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
+                // Contador ausente neste tick: a conclusão NÃO sobrevive (falha fechada; RefinementLifecycleRegressionTest).
                 else -> null
             }
             if (fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
@@ -195,6 +204,7 @@ class EquivalencePhases(
                 .put("ecuDone", ecuReason != null)
                 .put("ecuDoneReason", ecuReason ?: JSONObject.NULL)
                 .put("ecuRead", ecuRead)
+                .put("readFailure", readFailure ?: JSONObject.NULL)
                 .put("petrolReference", index.optString("petrolReference", "NENHUMA"))
                 .put("ecuPetrolPoints", index.optInt("ecuPetrolPoints", 0))
                 .put("ourPoints", index.optInt("samples", 0))
@@ -305,7 +315,7 @@ class EquivalencePhases(
             out.put("phase", phase)
                 .put("canDisconnect", phase == "ESTAVEL")
                 .put("headline", headline(phase, count, max, measured.size, off.length(), out, verification, if (expiredEvidence != null) candidate else "", measuredOnEcuRef))
-                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else "", truth))
+                .put("next", nextStep(phase, petrolValid, gasValid, missing, index, verification, if (expiredEvidence != null) candidate else "", truth, fuel))
             if (latest != null) out.put("journalStatus", latestStatus)
             last = out
             out
@@ -407,7 +417,9 @@ class EquivalencePhases(
                 val closed = proof.verdict
                 if (closed != null) {
                     // Fechada sem convergir mas com tentativas sobrando: depois de um tempo de condução volta a poder ser proposta.
-                    if (closed == PointState.INCONCLUSIVO && proof.reason == ProofOutcome.REASON_NO_CONVERGENCE) {
+                    // Fechada sem veredito por qualquer motivo que não esgote as tentativas (não convergiu, sem leitura no prazo,
+                    // sem evidência independente): o ponto volta a poder ser proposto; só TENTATIVAS_ESGOTADAS congela.
+                    if (closed == PointState.INCONCLUSIVO && proof.reason != ProofOutcome.REASON_EXHAUSTED) {
                         if (ecuOnline && dt > 0L) { proof.closedOnlineMs += dt; dirty = true }
                         if (proof.closedOnlineMs >= PROOF_RETRY_COOLDOWN_ONLINE_MS) {
                             iterator.remove()
@@ -565,7 +577,8 @@ class EquivalencePhases(
         measuredOnEcuRef: Int = 0,
     ): String = when (phase) {
         "SEM_ECU" -> "Conecte a ECU para acompanhar a calibração."
-        "LENDO_ECU" -> "Lendo o estado da ECU: AutoMatch e curvas."
+        "LENDO_ECU" -> if (out.isNull("readFailure")) "Lendo o estado da ECU: AutoMatch e curvas."
+        else "A ECU não respondeu à leitura do AutoCal. O app tenta de novo sozinho; nada muda na ECU."
         "TENTATIVA_ENCERRADA" -> when {
             out.optString("reasonCode") == "ECU_READ_TIMEOUT" -> "A ECU não respondeu a tempo. O app continua tentando ler, sem gravar."
             expiredFrom == "PROPOSTA_PRONTA" -> "Proposta ainda válida, grave quando quiser. O acompanhamento automático pausou; nada mudou na ECU."
@@ -588,7 +601,10 @@ class EquivalencePhases(
         else -> ""
     }
 
-    private fun nextStep(phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = "", truth: JSONObject = JSONObject()): String = when (phase) {
+    private fun nextStep(
+        phase: String, petrolValid: Int, gasValid: Int, missing: JSONArray, index: JSONObject, verification: JSONObject?, expiredFrom: String = "",
+        truth: JSONObject = JSONObject(), fuel: String? = null,
+    ): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
         "TENTATIVA_ENCERRADA" -> if (expiredFrom == "PROPOSTA_PRONTA" || expiredFrom == "ECU_TRABALHANDO")
             "Abra o Refino e toque em Gravar. Nada é gravado sem o seu toque. A próxima leitura nova retoma o acompanhamento."
@@ -612,6 +628,9 @@ class EquivalencePhases(
                     "A ECU ainda não tem curva de gasolina madura. Rode alguns minutos na gasolina para criar a referência."
                 // Guia do livro: a faixa com mais evidência que ainda falta, com o MAP em que dirigir.
                 !index.isNull("coverageGuidance") && index.optString("coverageGuidance").isNotBlank() -> index.optString("coverageGuidance")
+                // Na gasolina o carro não "roda no GNV": a frase diz o que acontece quando ele trocar.
+                fuel == "GASOLINA" && wanted.isNotEmpty() -> "Quando o carro passar para o GNV, passe por cargas de injeção $wanted."
+                fuel == "GASOLINA" -> "Continue dirigindo. Quando o carro passar para o GNV, sigo medindo."
                 wanted.isNotEmpty() -> "Rode no GNV passando por cargas de injeção $wanted."
                 else -> "Continue rodando no GNV."
             }

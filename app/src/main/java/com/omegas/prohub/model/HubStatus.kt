@@ -5,6 +5,13 @@ data class HubStatus(
     val engineRunning: Boolean = false,
     val engineReady: Boolean = false,
     val engineStuck: Boolean = false,
+    /** EngineState.name (STOPPED, WAITING_USB, HANDSHAKE, ONLINE, RECOVERING_SOFT, RECOVERING, RECOVERING_HARD, ERROR). */
+    val ecuLinkState: String = "STOPPED",
+    val ecuLinkMessage: String = "",
+    /** A porta USB caiu e está sendo reaberta: erro de transporte, não da ECU. */
+    val usbRecovering: Boolean = false,
+    /** O dono pausou a leitura pela notificação: não é falta de dado da ECU. */
+    val enginePausedByUser: Boolean = false,
     val engineVersion: String = "--",
     val usbConnected: Boolean = false,
     val usbDevice: String = "Nenhum",

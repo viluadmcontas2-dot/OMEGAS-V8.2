@@ -63,21 +63,22 @@
       }
         this.root.innerHTML = `
           <div class="now-dashboard-shell">
-            <header class="now-heading"><h2>Agora</h2><p>Seu ajuste, em uma visão.</p></header>
-            <div class="now-overview">
-              <section class="now-equivalence" aria-label="Equivalência com a gasolina">
-                <p>Equivalência com a gasolina</p><b id="dashEquivalence">—</b>
-                <p id="dashEquivalenceNote">Aguardando medição</p>
-                <progress id="dashEquivalenceProgress" max="100" value="0" aria-label="Condução equivalente à gasolina"></progress>
-              </section>
-              <section class="now-intention"><small>PRÓXIMO PASSO</small><h3 id="dashNext">Aguardando medição da ECU.</h3>
-                <p>O app observa. Você revisa e decide quando gravar.</p>
-                <button type="button" class="primary" data-dash-refino>Abrir Refino</button>
-              </section>
-            </div>
-            <section class="now-coverage"><header><h3>Faixas da sua condução</h3><span id="dashCoverage">— de cobertura medida</span></header>
-              <div id="dashBands" class="now-bands" aria-label="Estado das 30 faixas"></div>
-              <p>● Equivalente <span>● Em medição</span> <em>● Precisa de atenção</em> · O Refino mostra os pontos e as sugestões.</p>
+            <section class="now-drive" aria-label="Direção agora">
+              <div class="now-tile" data-tile="fuel"><small>Combustível</small><b id="dashDriveFuel" data-empty="true">—</b><span id="dashDriveFuelNote">sem leitura</span></div>
+              <div class="now-tile" data-tile="ms"><small>Injeção</small><b id="dashDriveMs" data-empty="true">—</b><span id="dashDriveMsNote">ms</span></div>
+              <div class="now-tile" data-tile="rpm"><small>RPM</small><b id="dashDriveRpm" data-empty="true">—</b><span id="dashDriveRpmNote">agora</span></div>
+              <div class="now-tile" data-tile="map"><small>MAP</small><b id="dashDriveMap" data-empty="true">—</b><span id="dashDriveMapNote">bar</span></div>
+            </section>
+            <section class="now-intention" aria-label="Estado e próximo passo">
+              <div><h3 id="dashState">Aguardando dados da ECU</h3><p id="dashNext">Aguardando medição da ECU.</p></div>
+              <button type="button" class="primary" data-dash-refino>Abrir Refino</button>
+            </section>
+            <section class="now-coverage" aria-label="Equivalência com a gasolina">
+              <div class="now-equivalence"><b id="dashEquivalence">—</b><p id="dashEquivalenceNote">Aguardando medição</p>
+                <progress id="dashEquivalenceProgress" max="100" value="0" hidden aria-label="Condução equivalente à gasolina"></progress></div>
+              <div class="now-coverage-bands"><header><h3>Faixas da sua condução</h3><span id="dashCoverage">—</span></header>
+                <div id="dashBands" class="now-bands" aria-label="Estado das 30 faixas"></div>
+                <p>● Igual à gasolina <em>● Fora</em> <span>● Medindo</span> <i>● Sem dado</i></p></div>
             </section>
             <footer class="now-quiet-row">
               <div id="dashHealth" class="now-session-card" data-level="offline"><span class="state-indicator"></span>
@@ -92,15 +93,23 @@
         const now = Date.now();
         if (this.refinoAt && now - this.refinoAt < 3e3) return;
         this.refinoAt = now;
+        // Sem cabo o Kotlin já diz "Sem ECU" / "Aguardar a ECU" (refinoState): a conexão em si fica no cartão de saúde.
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
         const result = api && typeof api.equivalence === "function" ? api.equivalence() : null;
         const pilot = result && result.autopilot || {};
-        text("dashRefino", rules.phaseLabel(pilot.phase, pilot.expiredFrom));
+        const rs = result && result.refinoState && typeof result.refinoState === "object" ? result.refinoState : {};
+        // O rótulo curto do Kotlin sabe o combustível de agora ("Medindo a gasolina" × "Medindo o GNV"); a fase do piloto é o reserva.
+        const label = typeof rs.label === "string" ? rs.label.trim() : "";
+        text("dashRefino", label || rules.phaseLabel(pilot.phase, pilot.expiredFrom));
         const model = summary(result);
         text("dashEquivalence", model.percent === null ? "—" : model.percent + "%");
         text("dashEquivalenceNote", model.percent === null ? "Ainda sem base para comparar" : "da condução já equivale à gasolina" + (model.provisional ? " · provisório" : ""));
-        text("dashCoverage", model.coverage === null ? "— de cobertura medida" : model.coverage + "% de cobertura medida");
-        text("dashNext", model.next);
+        text("dashCoverage", model.coverage === null ? "—" : model.coverage + "% de cobertura medida");
+        // Próximo passo em palavras de dono: a frase do Kotlin (sabe o combustível, sem ms/bar/%); o texto do motor é o reserva.
+        const said = typeof rs.nextAction === "string" && rs.nextAction.trim() ? rs.nextAction.trim() : "";
+        text("dashNext", said || model.next);
+        const what = typeof rs.phase === "string" && rs.phase.trim() ? rs.phase.trim() : "";
+        text("dashState", what || "Aguardando dados da ECU");
         const progress = document.getElementById("dashEquivalenceProgress");
         if (progress) {
           progress.value = model.percent === null ? 0 : model.percent;
@@ -122,6 +131,24 @@
           }).join('');
         }
       }
+    /** 4 blocos iguais de direção (combustível, injeção do combustível ativo, RPM, MAP): só a leitura única; "—" sem dado. */
+    renderDrive(state, reading) {
+      const shown = reading.level === 'fresh' || reading.level === 'late';
+      const fuel = shown ? rules.fuelLabel(reading.fuel || (state.status || {}).fuelState) : DASH;
+      const gas = fuel === 'GNV';
+      const ms = fuel === 'CORTE' ? null : gas ? reading.gasMs : reading.petrolMs;
+      text('dashDriveFuel', fuel);
+      text('dashDriveFuelNote', !shown ? (reading.level === 'lost' ? 'sem dados' : 'sem leitura') : reading.level === 'late' ? 'atrasado' : fuel === 'GASOLINA' ? 'medindo a referência' : gas ? 'medindo o GNV' : 'agora');
+      text('dashDriveMs', rules.ms(ms));
+      text('dashDriveMsNote', ms === null ? 'ms' : gas ? 'ms · GNV' : 'ms · gasolina');
+      text('dashDriveRpm', rules.rpm(reading.rpm));
+      text('dashDriveRpmNote', reading.level === 'late' ? 'atrasado' : 'agora');
+      text('dashDriveMap', rules.bar(reading.mapBar));
+      text('dashDriveMapNote', reading.mapBar === null ? 'bar' : reading.mapBar < 0.45 ? 'bar · plano' : reading.mapBar <= 0.75 ? 'bar · subida leve' : 'bar · subida forte');
+      const drive = this.root.querySelector('.now-drive');
+      if (drive) rules.setDataIfChanged(drive, 'stale', reading.grey ? 'true' : 'false');
+    }
+
     /** Mensagem do cartão de saúde: uma frase humana e o que fazer. */
     health(state, reading) {
       const status = state.status || {};
@@ -132,10 +159,15 @@
       if (!connected) {
         return { level: link.key === 'connecting' || link.key === 'denied' ? 'warning' : 'offline', message: link.label, detail: link.hint, allowUsb: link.key === 'denied' };
       }
-      if (status.engineStuck === true) {
-        return { level: 'critical', message: 'Comunicação travada', detail: 'Aguarde ou reconecte o cabo USB. Gravar fica bloqueado até a ECU responder.' };
+      // Mesma frase do trilho para os estados que não são "sem dados": pausa, app travado, ECU recusou, USB recuperando.
+      if (['paused', 'attention', 'refused', 'recovering', 'handshake'].includes(link.key)) {
+        const stuck = status.engineStuck === true; // 'App travado' (connectionState): crítico, como a ECU que recusou
+        const level = stuck || link.key === 'refused' ? 'critical' : 'warning';
+        const detail = link.key === 'paused' || link.key === 'handshake' || link.key === 'recovering' ? link.hint : link.hint + '. Gravar fica bloqueado até a ECU responder.';
+        return { level, message: link.label, detail };
       }
-      if (reading.level === 'none' || reading.ageUnknown) {
+      // Leitura válida sem relógio continua sendo leitura (a faixa a mostra): só "sem dados" quando não há dado.
+      if (reading.level === 'none') {
         return { level: 'warning', message: 'ECU sem dados', detail: 'Conectada, mas ainda não enviou leitura. Confira a chave e o motor.' };
       }
       if (reading.level === 'lost') {
@@ -151,6 +183,7 @@
       if (!this.root) return;
       const status = state.status || {};
       const reading = ns.LiveStore.read(state);
+      this.renderDrive(state, reading);
       text('dashLevelsRaw', reading.levelRaw === null ? DASH : Math.round(reading.levelRaw).toLocaleString('pt-BR'));
       this.renderRefino();
       const health = document.getElementById('dashHealth');

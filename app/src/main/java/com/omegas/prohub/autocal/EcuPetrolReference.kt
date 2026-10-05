@@ -16,7 +16,13 @@ object EcuPetrolReference {
         for (i in 0 until points.length()) {
             val p = points.optJSONObject(i) ?: continue
             if (p.optString("fuel") != "GASOLINA" || p.optBoolean("previous")) continue
-            if (p.optString("state") != "ZONA_ADQUIRIDA") continue
+            // Mesma regra de EcuAcquisitionTruth: zona marcada pela ECU OU banda com contador no limiar da própria ECU.
+            // A flag zera a cada AutoMatch; as bandas lidas continuam valendo, então a referência não some do nada.
+            val flagged = p.optString("state") == "ZONA_ADQUIRIDA"
+            val threshold = if (p.isNull("threshold")) -1 else p.optInt("threshold", -1)
+            val counter = if (p.isNull("counter")) -1 else p.optInt("counter", -1)
+            val mature = threshold > 0 && counter >= threshold
+            if (!flagged && !mature) continue
             if (p.isNull("timeMs") || p.isNull("mapBar")) continue
             val time = p.optDouble("timeMs", Double.NaN)
             val map = p.optDouble("mapBar", Double.NaN)

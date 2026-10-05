@@ -154,7 +154,10 @@
     "ecuTruth": "contrato novo (fix-logic, docs/ARCHITECTURE.md): produzido pelo Kotlin; a UI (Refino/Diagnostico/AutoCal) passa a consumir",
     "fluidity": "contrato novo (fix-logic, docs/ARCHITECTURE.md): produzido pelo Kotlin; a UI (Refino/Diagnostico/AutoCal) passa a consumir",
     "refinoState": "contrato novo (fix-logic, docs/ARCHITECTURE.md): produzido pelo Kotlin; a UI (Refino/Diagnostico/AutoCal) passa a consumir",
-    "ecuDoneReason": "lido pela aba Diagnóstico (o detalhe técnico saiu do Refino); o texto humano vem em refinoState.reason"
+    "ecuDoneReason": "lido pela aba Diagnóstico (o detalhe técnico saiu do Refino); o texto humano vem em refinoState.reason",
+    "readFailure": "autopilot.readFailure: falha de leitura do AutoCal (monitor -> fases -> RefinoState/headline), lida pelo Kotlin; a tela recebe a frase humana, nao a chave",
+    "countStale": "autoMatchProgressJson.countStale: contador de AutoMatch da ultima leitura boa durante um probe falho (so diagnostico/sessao)",
+    "ecuLinkMessage": "getStatus.ecuLinkMessage: frase da engine para diagnostico/sessao; a tela usa ecuLinkState traduzido por connectionState"
   },
   "defects": {
     "usbDevice": "DEFECT-1: getStatus.usbDevice nunca e lido; a tela nao diz qual cabo/dispositivo (M1)",

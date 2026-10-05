@@ -225,9 +225,11 @@ class NativeAutoCalMonitor(
         requestSnapshot("ACTION_${receipt.optString("action", "UNKNOWN")}")
         // O dono acabou de ligar/desligar a aquisição (ACK + readback no gerenciador de ações): a tela mostra já;
         // o próximo snapshot completo confirma (ou corrige) o valor.
-        when (receipt.optString("action")) {
-            "ENABLE_AUTO_CAL" -> applyOptimisticEnabled(1)
-            "DISABLE_AUTO_CAL" -> applyOptimisticEnabled(0)
+        val readBack = enabledFromSnapshotJson(receipt.optJSONObject("after"))
+        when {
+            readBack != null -> { enabledCheckedAtMs = clockMs(); applyOptimisticEnabled(readBack) }
+            receipt.optString("action") == "ENABLE_AUTO_CAL" -> applyOptimisticEnabled(1)
+            receipt.optString("action") == "DISABLE_AUTO_CAL" -> applyOptimisticEnabled(0)
         }
         val beforeMul = mulActRawFromSnapshot(receipt.optJSONObject("before"))
         val afterMul = mulActRawFromSnapshot(receipt.optJSONObject("after"))
@@ -330,6 +332,9 @@ class NativeAutoCalMonitor(
         }
         probeBackoff.onSuccess()
         val observed = observeProbe(currentSession, probe)
+        // A ECU entrega o AUTO_CAL_ENABLE em tempo real: relê o flag (leitura já existente) em vez de confiar no cache do
+        // último snapshot completo. Pausa feita por fora (outro aparelho, firmware) aparece em segundos, não "nunca".
+        recheckEnabled(currentSession)
         val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
         val thresholdsReady = thresholds.first != null && thresholds.second != null && thresholds.third == 1
         val referenceDue = refreshPlanner.due(clockMs()).reference
@@ -338,7 +343,7 @@ class NativeAutoCalMonitor(
                 currentSession, probe, thresholdsReady,
                 acquisitionRefresh = false, referenceRefresh = false,
                 referenceDue = referenceDue, counterEvent = observed.counterEvent != null,
-            )
+            ).put("autoCalEnabled", autoCalEnabled ?: JSONObject.NULL).put("autoCalEnabledAtMs", enabledCheckedAtMs)
             if (observed.changed) {
                 snapshotRequested = true
                 snapshotReason = if (observed.countIncreased) "AUTOMATCH_COUNT_CHANGED" else "NATIVE_STATUS_CHANGED"
@@ -639,6 +644,7 @@ class NativeAutoCalMonitor(
     fun tablesRevision(): Long = tablesRevisionValue
 
     private var acquisitionMemo: Pair<JSONObject, JSONObject>? = null
+    private var acquisitionMemoBlocked = false
 
     /**
      * Leve, para o piloto do refino (a cada tick do serviço): contador vivo de AutoMatch,
@@ -646,21 +652,94 @@ class NativeAutoCalMonitor(
      * snapshot muda (evita copiar o snapshot inteiro a cada 3 s).
      */
     fun autoMatchProgressJson(): JSONObject = synchronized(lock) {
-        val count = state.optInt("autoMatchCount", -1).takeIf { state.has("autoMatchCount") && it >= 0 }
+        val read = state.optInt("autoMatchCount", -1).takeIf { state.has("autoMatchCount") && it >= 0 }
+        val now = clockMs()
+        val session = state.optLong("sessionId", 0L)
+        val stateName = state.optString("state")
+        if (read != null) { lastGoodCount = read; lastGoodCountAt = now; lastGoodCountSession = session }
+        else if (stateName == "DISCONNECTED" || stateName == "IDLE" || session != lastGoodCountSession) lastGoodCount = null
+        // A ECU entrega o contador continuamente: um probe que falhou é erro do app/transporte, não estado da ECU.
+        // Por um curto prazo a última leitura boa da mesma sessão continua valendo (marcada `countStale`); depois, nulo.
+        val probeFailed = stateName == "PROBE_FAILED"
+        val stale = read == null && probeFailed && lastGoodCount != null && now - lastGoodCountAt <= COUNT_GRACE_MS
+        val count = read ?: (if (stale) lastGoodCount else null)
         val snapshot = latestSnapshot
+        // Época: depois de RESET_GAS/AutoMatch a aquisição antiga não vale para comparação. A aba AutoCal já mascara na
+        // projeção; o Refino/piloto lia o snapshot cru e contava zonas velhas. Mesma máscara aqui (B4, 2026-10-05).
+        val epoch = acquisitionEpochJson()
+        val blocked = !epoch.optBoolean("comparisonAllowed", false)
         val acquisition = if (snapshot.has("fields")) {
-            acquisitionMemo?.takeIf { it.first === snapshot }?.second
-                ?: AutoCalAcquisition.fromSnapshot(snapshot).also { acquisitionMemo = snapshot to it }
+            val source = if (blocked) AutoCalUiProjection.maskedAcquisition(snapshot, epoch, false) else snapshot
+            acquisitionMemo?.takeIf { it.first === snapshot && acquisitionMemoBlocked == blocked }?.second
+                ?: AutoCalAcquisition.fromSnapshot(source).also { acquisitionMemo = snapshot to it; acquisitionMemoBlocked = blocked }
         } else null
         JSONObject()
             .put("autoMatchCount", count ?: JSONObject.NULL)
+            .put("countStale", stale)
+            .put("readFailure", if (probeFailed) state.optString("message").ifBlank { "Leitura do AutoCal falhou" } else JSONObject.NULL)
             .put("maxAutomatch", snapshot.opt("maxAutomatch") ?: JSONObject.NULL)
             .put("autoCalEnabled", snapshot.opt("autoCalEnabled") ?: JSONObject.NULL)
             .put("acquisition", acquisition ?: JSONObject.NULL)
     }
 
+    /** Última leitura boa do contador de AutoMatch (sob [lock]); sobrevive a um probe falho por [COUNT_GRACE_MS]. */
+    private var lastGoodCount: Int? = null
+    private var lastGoodCountAt = 0L
+    private var lastGoodCountSession = 0L
+
     fun latestSnapshotJson(): JSONObject = synchronized(lock) {
         JSONObject(latestSnapshot.toString()).put("liveAcquisitionEpoch", acquisitionEpochJson())
+    }
+
+    /** Quando o AUTO_CAL_ENABLE foi relido pela última vez (elapsedRealtime); 0 = nunca nesta sessão. */
+    @Volatile private var enabledCheckedAtMs = 0L
+
+    /**
+     * Relê só o AUTO_CAL_ENABLE (uma leitura READ_ONLY já existente, sem bytes novos) no máximo a cada
+     * [ENABLE_RECHECK_MS]. Mudou por fora → snapshot completo, para a aquisição seguir o estado real.
+     */
+    private fun recheckEnabled(expectedSessionId: Long) {
+        val now = clockMs()
+        if (enabledCheckedAtMs > 0L && now - enabledCheckedAtMs < ENABLE_RECHECK_MS) return
+        val read = serial.transaction(
+            request = AutoCalProtocol.read(AutoCalProtocol.AUTO_CAL_ENABLE),
+            reason = "AutoCal AUTO_CAL_ENABLE vivo",
+            timeoutMs = 700,
+            purgeBefore = false,
+            expectedSessionId = expectedSessionId,
+            workClass = Mp48WorkClass.READ_ONLY,
+        )
+        if (!read.ok) return
+        val value = try {
+            AutoCalProtocol.decode(AutoCalProtocol.AUTO_CAL_ENABLE, read.status, read.payload).rawValues.single()
+        } catch (_: Exception) { return }
+        if (value != 0 && value != 1) return
+        enabledCheckedAtMs = now
+        val changed: Boolean
+        synchronized(lock) {
+            changed = autoCalEnabled != null && autoCalEnabled != value
+            autoCalEnabled = value
+            if (latestSnapshot.optBoolean("available", false)) {
+                latestSnapshot = JSONObject(latestSnapshot.toString())
+                    .put("autoCalEnabled", value).put("frozen", value == 0).put("freshAcquisition", value == 1)
+                    .put("autoCalEnabledOptimistic", false)
+            }
+            state = JSONObject(state.toString()).put("autoCalEnabled", value).put("autoCalEnabledAtMs", now)
+            if (changed) { snapshotRequested = true; snapshotReason = "AUTO_CAL_ENABLE_CHANGED" }
+        }
+        if (changed) onStateChanged()
+    }
+
+    /** AUTO_CAL_ENABLE lido de verdade no `after` do recibo (readback da ação), ou nulo. */
+    private fun enabledFromSnapshotJson(snapshot: JSONObject?): Int? {
+        val fields = snapshot?.optJSONArray("fields") ?: return null
+        for (i in 0 until fields.length()) {
+            val f = fields.optJSONObject(i) ?: continue
+            if (f.optString("key") != AutoCalProtocol.AUTO_CAL_ENABLE.key || f.optString("status") != AutoCalFieldStatus.VALID.name) continue
+            val raw = f.optJSONArray("rawValues") ?: return null
+            return if (raw.length() >= 1) raw.optInt(0, -1).takeIf { it == 0 || it == 1 } else null
+        }
+        return null
     }
 
     private fun probe(expectedSessionId: Long): AutoCalProtocol.NativeStatus? {
@@ -1469,6 +1548,10 @@ class NativeAutoCalMonitor(
     companion object {
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
         private const val SESSION_SETTLE_MS = 8_000L
+        /** Quanto tempo a última leitura boa do contador vale enquanto o probe falha (poucos ciclos); depois é desconhecido. */
+        const val COUNT_GRACE_MS = 30_000L
+        /** Intervalo mínimo entre releituras vivas do AUTO_CAL_ENABLE (o flag que decide "Pausar"/"Iniciar"). */
+        const val ENABLE_RECHECK_MS = 5_000L
         /** ECU silenciosa: 2 timeouts de transporte seguidos abortam a varredura do snapshot completo. */
         private const val SNAPSHOT_MAX_CONSECUTIVE_TIMEOUTS = 2
         /** Época nativa mudou durante o snapshot completo: refaz logo (a ECU respondeu; não é falha de transporte). */

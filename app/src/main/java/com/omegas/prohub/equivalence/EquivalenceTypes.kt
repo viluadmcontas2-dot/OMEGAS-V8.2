@@ -91,7 +91,15 @@ data class NextAction(
     val text: String,
     val route: String?,
     val subpage: String?,
+    /** APPLY: os pontos que a gravação muda (= o que o botão grava); COLLECT/PROVING/...: os pontos a que a frase se refere. */
     val pointIndexes: List<Int>,
+    /**
+     * APPLY do cérebro: a Curva K lida (30 raw) e a proposta (30 raw, já com a trava da baixa de
+     * [com.omegas.prohub.autocal.AutoMatchSnapshotAnalysis.LOW_GUARD_MS]). Fonte única do que a UI grava: o mesmo
+     * motor e os mesmos pares do veredito. Nulos nas outras ações.
+     */
+    val currentRaw: List<Int>? = null,
+    val refinedRaw: List<Int>? = null,
 )
 
 data class EquivalenceResult(

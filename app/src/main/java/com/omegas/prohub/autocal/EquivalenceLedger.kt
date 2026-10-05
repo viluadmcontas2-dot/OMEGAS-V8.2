@@ -69,6 +69,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         const val STALE_ALIGN_MS = 20_000L
         /** Episódios distintos que uma faixa precisa ter para puxar proposta (= AutoMatchRefinedEngine.MIN_BAND_EPISODES). */
         const val MIN_BAND_EPISODES = AutoMatchRefinedEngine.MIN_BAND_EPISODES
+        /** Quadro mais velho que isso não diz em que combustível o motor está agora. */
+        const val LIVE_FUEL_MAX_AGE_MS = 5_000L
     }
 
     data class Frame(val t: Long, val fuel: String, val rpm: Double, val map: Double, val petrolMs: Double, val gasMs: Double = 0.0)
@@ -180,9 +182,23 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         }
     }
 
+    /** Combustível do último quadro (como a ECU informa: GASOLINA, GNV, TRANSICAO, DESLIGADO, CUTOFF) e quando chegou. */
+    @Volatile private var liveFuelName: String? = null
+    @Volatile private var liveFuelAt: Long = Long.MIN_VALUE
+
+    /**
+     * Em que combustível o motor está AGORA, pelo último quadro da telemetria; nulo sem quadro recente
+     * (≤ [LIVE_FUEL_MAX_AGE_MS]). Só leitura, para a aba dizer "medindo a gasolina" ou "medindo o GNV" com verdade.
+     */
+    fun liveFuel(now: Long = clock()): String? {
+        val name = liveFuelName ?: return null
+        return if (now - liveFuelAt in 0..LIVE_FUEL_MAX_AGE_MS) name else null
+    }
+
     /** Alimenta um quadro de telemetria (fuel = GASOLINA/GNV/…). */
     fun accept(frame: Frame) {
         val obs: Obs?
+        if (frame.fuel.isNotBlank()) { liveFuelName = frame.fuel; liveFuelAt = frame.t }
         synchronized(lock) {
             if (frame.fuel != "GASOLINA" && frame.fuel != "GNV" || frame.rpm <= 0 || frame.map <= 0 || frame.petrolMs < MIN_PETROL_MS) {
                 window.clear()
@@ -505,6 +521,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     /** Identidade observacional da época, sem tocar no acumulador. */
     fun gasEpochToken(): String = synchronized(lock) { "$gasEpochAt:$gasEpochReason" }
+    /** Quando a época atual do GNV começou (Mapa K, AutoMatch, reset): engasgos de antes não contam para propor. */
+    fun gasEpochAt(): Long = synchronized(lock) { gasEpochAt }
 
     fun gasPerAir(): Double? = synchronized(lock) { if (airRpmBar > 0) gasUsefulRpmMs / airRpmBar else null }
 
