@@ -399,6 +399,10 @@ class LogicFixesTest {
         assertEquals("LENDO_ECU", failed.getString("phase")); assertTrue(failed.getString("headline").contains("não respondeu"))
         val rsFailed = RefinoState.build(failed, brain(), ledger.betweenPointsJson(), null)
         assertEquals("Leitura da ECU falhou", rsFailed.getString("phase")); assertFalse(rsFailed.getBoolean("canAct")); assertHuman(rsFailed)
+        // MAX_AUTOMATCH = 0: a ECU já cumpriu os automáticos (decisão do dono): fase fecha, não prende em "no automático".
+        val zero = EquivalencePhases(null) { 0L }
+        val z = zero.observe(true, JSONObject().put("autoMatchCount", 0).put("maxAutomatch", 0).put("autoCalEnabled", 1), acquisition, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
+        assertTrue(z.getBoolean("ecuDone")); assertTrue(z.getString("phase"), z.getString("phase") != "ECU_TRABALHANDO")
         // Buffers sem dado (leitura falhou) não viram "0 de 4 zonas".
         val noData = JSONObject().put("points", JSONArray().put(JSONObject().put("fuel", "GASOLINA").put("zone", 0).put("state", "SEM_DADO")))
             .put("zoneFlags", JSONObject().put("petrol", JSONObject.NULL).put("gas", JSONObject.NULL))

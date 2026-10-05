@@ -31,19 +31,23 @@ function occurrences(text, token) {
   return (text.match(new RegExp(token, 'g')) || []).length;
 }
 
-test('Agora Diamante mostra intenção e mantém dados vivos só no topo', () => {
+test('Agora Diamante mostra 4 blocos de direção pela leitura única, intenção e resultado', () => {
   const strip=fs.readFileSync(path.join(ROOT,'app/src/main/assets/ui/components/vehicle-status-strip.js'),'utf8');
   for (const marker of ['multimedia-now-screen','now-dashboard-shell','dashNext','dashEquivalence','dashLevelsRaw','dashRefino','dashHealth']) assert.ok(dashboard.includes(marker),marker);
   for (const marker of ['dashHeroPetrol','dashRpm','dashMap','dashFuel']) {
     assert.ok(strip.includes(marker),marker+' global');
     assert.ok(!dashboard.includes(marker),marker+' sem redundância');
   }
-  assert.doesNotMatch(dashboard, /now-tile|dashHeroRpm|dashLtft/);
+  assert.doesNotMatch(dashboard, /dashHeroRpm|dashLtft/);
+  // Os blocos leem a leitura única (nunca o status cru) e nascem "—".
+  assert.equal((dashboard.match(/class="now-tile"/g) || []).length, 4);
+  assert.match(dashboard, /renderDrive\(state, reading\)/);
+  for (const id of ['dashDriveFuel', 'dashDriveMs', 'dashDriveRpm', 'dashDriveMap']) assert.match(dashboard, new RegExp('id="' + id + '" data-empty="true">—<'));
 });
 
 test('CSS contém somente o recorte Agora, com resultado, intenção e cobertura', () => {
-  assert.match(styles, /\.now-overview[^}]*grid-template-columns:1fr 1fr/);
-  assert.match(styles, /\.now-equivalence > b[^}]*font-size:104px/);
+  assert.match(styles, /\.now-drive[^}]*grid-template-columns:repeat\(4,1fr\)/);
+  assert.match(styles, /\.now-equivalence > b[^}]*font-size:64px/);
   assert.doesNotMatch(styles, /witness-|multimedia-obd|map-screen|curve-screen|learning-screen/);
   assert.doesNotMatch(styles, /@keyframes|animation:|backdrop-filter/);
 });

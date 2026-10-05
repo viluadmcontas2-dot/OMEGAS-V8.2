@@ -644,6 +644,7 @@ class NativeAutoCalMonitor(
     fun tablesRevision(): Long = tablesRevisionValue
 
     private var acquisitionMemo: Pair<JSONObject, JSONObject>? = null
+    private var acquisitionMemoBlocked = false
 
     /**
      * Leve, para o piloto do refino (a cada tick do serviço): contador vivo de AutoMatch,
@@ -663,9 +664,14 @@ class NativeAutoCalMonitor(
         val stale = read == null && probeFailed && lastGoodCount != null && now - lastGoodCountAt <= COUNT_GRACE_MS
         val count = read ?: (if (stale) lastGoodCount else null)
         val snapshot = latestSnapshot
+        // Época: depois de RESET_GAS/AutoMatch a aquisição antiga não vale para comparação. A aba AutoCal já mascara na
+        // projeção; o Refino/piloto lia o snapshot cru e contava zonas velhas. Mesma máscara aqui (B4, 2026-10-05).
+        val epoch = acquisitionEpochJson()
+        val blocked = !epoch.optBoolean("comparisonAllowed", false)
         val acquisition = if (snapshot.has("fields")) {
-            acquisitionMemo?.takeIf { it.first === snapshot }?.second
-                ?: AutoCalAcquisition.fromSnapshot(snapshot).also { acquisitionMemo = snapshot to it }
+            val source = if (blocked) AutoCalUiProjection.maskedAcquisition(snapshot, epoch, false) else snapshot
+            acquisitionMemo?.takeIf { it.first === snapshot && acquisitionMemoBlocked == blocked }?.second
+                ?: AutoCalAcquisition.fromSnapshot(source).also { acquisitionMemo = snapshot to it; acquisitionMemoBlocked = blocked }
         } else null
         JSONObject()
             .put("autoMatchCount", count ?: JSONObject.NULL)

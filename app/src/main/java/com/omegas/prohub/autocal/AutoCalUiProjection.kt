@@ -151,7 +151,8 @@ object AutoCalUiProjection {
      * Remove apenas a elegibilidade de apresentação das famílias da época anterior.
      * O histórico bruto, os recibos e os 30 valores originais continuam preservados.
      */
-    private fun maskedAcquisition(snapshot: JSONObject, epoch: JSONObject, forceAll: Boolean): JSONObject {
+    /** Também usada pelo monitor (`autoMatchProgressJson`): o Refino e a aba AutoCal veem a MESMA aquisição mascarada. */
+    internal fun maskedAcquisition(snapshot: JSONObject, epoch: JSONObject, forceAll: Boolean): JSONObject {
         val copy = copy(snapshot)
         val petrolPending = forceAll || epoch.optBoolean("petrolPending", false)
         val gasPending = forceAll || epoch.optBoolean("gasPending", false)

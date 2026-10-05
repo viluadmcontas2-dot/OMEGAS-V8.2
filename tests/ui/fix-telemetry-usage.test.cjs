@@ -135,8 +135,10 @@ test('12. trilho: texto da ECU/combustível ≥ 24 px e selo "—" sem caixa qua
 
 test('17. Agora apresenta intenção e cobertura; telemetria global sem duplicar mostradores', () => {
   const app = boot();
-  assert.equal(app.$$('.now-tile').length, 0);
+  // 4 blocos de direção no Agora (decisão do dono, 2026-10-05) com ids próprios; os do trilho continuam únicos no topo.
+  assert.equal(app.$$('.now-tile').length, 4);
   for (const id of ['dashHeroPetrol','dashRpm','dashMap','dashFuel']) assert.ok(app.byId(id).closest('#vehicleStatusStrip'),id+' único no topo');
+  for (const id of ['dashDriveFuel','dashDriveMs','dashDriveRpm','dashDriveMap']) assert.ok(app.byId(id).closest('[data-screen="dashboard"]'), id + ' no Agora');
   assert.doesNotMatch(dash(app), /CÉLULA/);
   assert.equal(app.byId('dashCell'), null);
   const fs = require('node:fs');

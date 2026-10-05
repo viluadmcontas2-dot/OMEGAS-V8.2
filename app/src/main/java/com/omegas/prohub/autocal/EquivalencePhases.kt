@@ -158,8 +158,10 @@ class EquivalencePhases(
             val liveAcquisition = acquisition.takeIf { ecuOnline }
             val enabled = liveMonitor?.optInt("autoCalEnabled", -1)?.takeIf { liveMonitor.has("autoCalEnabled") && !liveMonitor.isNull("autoCalEnabled") }
             val count = liveMonitor?.optInt("autoMatchCount", -1)?.takeIf { it >= 0 }
-            val max = liveMonitor?.optInt("maxAutomatch", -1)?.takeIf { it > 0 && !liveMonitor.isNull("maxAutomatch") }
-                ?: liveAcquisition?.optJSONObject("thresholds")?.takeIf { !it.isNull("maxAutomatch") }?.optInt("maxAutomatch", -1)?.takeIf { it > 0 }
+            // MAX_AUTOMATCH = 0 é a ECU dizendo que já cumpriu os automáticos (decisão do dono, 2026-10-05): conta como máximo
+            // válido, então count >= max fecha a fase em vez de prender em "no automático" por 40 min.
+            val max = liveMonitor?.optInt("maxAutomatch", -1)?.takeIf { it >= 0 && !liveMonitor.isNull("maxAutomatch") }
+                ?: liveAcquisition?.optJSONObject("thresholds")?.takeIf { !it.isNull("maxAutomatch") }?.optInt("maxAutomatch", -1)?.takeIf { it >= 0 }
             if (ecuOnline && count != null) {
                 if (lastCount != null && count != lastCount) { quietMs = 0L; ecuDoneLatch = null; dirty = true }
                 else { quietMs += dt; if (dt > 0) dirty = true }

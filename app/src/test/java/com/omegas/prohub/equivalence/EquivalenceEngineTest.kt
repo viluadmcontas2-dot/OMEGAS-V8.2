@@ -61,6 +61,22 @@ class EquivalenceEngineTest {
         assertEquals((0 until 30).filter { before[it] != after[it] }.toSet(), r.nextAction.pointIndexes.toSet())
         assertTrue(r.nextAction.pointIndexes.isNotEmpty())
         after.forEachIndexed { j, v -> if (r.proposal!!.axisMs[j] < com.omegas.prohub.autocal.AutoMatchSnapshotAnalysis.LOW_GUARD_MS) assertTrue(v >= before[j]) }
+        // Ponta a ponta: o mesmo resultado, serializado como a ponte entrega, vira "Pronto para gravar N pontos" com botão
+        // (canAct) e a ação carrega a curva que o botão grava. É isto que garante que o Refino SUGERE de verdade.
+        val brain = EquivalenceJson.result(r, reference, null, null)
+        val phases = com.omegas.prohub.autocal.EquivalencePhases(null) { 0L }
+        phases.observe(true, org.json.JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1),
+            org.json.JSONObject().put("points", org.json.JSONArray()), org.json.JSONObject().put("samples", 60).put("revision", 1).put("bands", org.json.JSONArray()),
+            org.json.JSONObject().put("latest", org.json.JSONObject.NULL), 0)
+        val view = com.omegas.prohub.autocal.EquivalenceView.build(
+            EquivalenceLedger(null), com.omegas.prohub.autocal.RefinementJournal(null), phases, com.omegas.prohub.autocal.StallWatch(null), brain,
+        )
+        val rs = view.getJSONObject("refinoState")
+        assertTrue(rs.getString("phase"), rs.getBoolean("canAct"))
+        assertEquals("Pronto para gravar ${r.nextAction.pointIndexes.size} pontos", rs.getString("phase"))
+        assertEquals(r.nextAction.pointIndexes.size, rs.getJSONObject("counts").getInt("pointsToWrite"))
+        val action = view.getJSONObject("nextAction")
+        assertEquals(30, action.getJSONArray("currentRaw").length()); assertEquals(30, action.getJSONArray("refinedRaw").length())
         r.proposal!!.refinedRaw.forEachIndexed { j, v ->
             assertTrue("ponto $j: $v fora do intervalo do AutoMatch", v == r.proposal!!.currentRaw[j] || v in 12288..19661)
         }
