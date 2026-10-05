@@ -869,6 +869,23 @@ class AutoCalNativeActionManager(
                 missing.joinToString(", ") { it.key }
         }
 
+        // Reler GNV/gasolina: "concluído" só quando a releitura mostra o que o comando pediu — contadores e zonas daquele
+        // combustível zerados. Campos presentes mas com dado antigo não são conclusão (decisão do dono, 2026-10-05).
+        val mustBeZero = when (prepared.action) {
+            Action.RESET_GAS -> listOf(AutoCalProtocol.NUM_BUF_UPD_GAS, AutoCalProtocol.ACQUIRED_ZONES_GAS)
+            Action.RESET_PETROL -> listOf(AutoCalProtocol.NUM_BUF_UPD_PETR, AutoCalProtocol.ACQUIRED_ZONES_PETROL)
+            Action.RESET_ALL -> listOf(
+                AutoCalProtocol.NUM_BUF_UPD_GAS, AutoCalProtocol.ACQUIRED_ZONES_GAS,
+                AutoCalProtocol.NUM_BUF_UPD_PETR, AutoCalProtocol.ACQUIRED_ZONES_PETROL,
+            )
+            else -> emptyList()
+        }
+        val notZero = mustBeZero.filter { field -> after.field(field)?.rawValues?.any { it != 0 } == true }
+        require(notZero.isEmpty()) {
+            "A ECU aceitou o comando, mas a releitura ainda mostra leituras antigas (" +
+                notZero.joinToString(", ") { it.key } + " não zerados). Toque de novo em alguns segundos."
+        }
+
         val expected = prepared.action.expectedEnableReadback ?: return
         val actual = after.field(AutoCalProtocol.AUTO_CAL_ENABLE)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
