@@ -173,7 +173,7 @@
         autoMatchEvidenceTitle: evidenceTitle,
         autoMatchEvidenceDetail: evidenceDetail,
         petrolZones, gasZones, petrolMissingZones, gasMissingZones,
-        petrolZoneFlags, gasZoneFlags, enabled, autoMatchCount, maxAutoMatch, autoMatchQuotaReached,
+        petrolZoneFlags, gasZoneFlags, enabled: enabledLive, autoMatchCount, maxAutoMatch, autoMatchQuotaReached,
       };
     },
 
