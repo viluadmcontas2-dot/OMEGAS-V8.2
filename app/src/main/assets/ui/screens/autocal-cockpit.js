@@ -1016,7 +1016,9 @@
         return;
       }
       this.prepared = result;
-      this.renderReview();
+      // Um toque (decisão do dono, 2026-10-05): sem cartão de revisão em nenhum botão. A proteção é o ACK + readback no
+      // escritor e, onde existe, a foto antes com Desfazer.
+      this.confirmPrepared();
     }
 
     cancelPrepared() {

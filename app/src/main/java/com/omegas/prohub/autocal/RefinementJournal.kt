@@ -206,7 +206,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             var worse = 0
             var pending = 0
             var withoutBase = 0
-            val timeboxed = onlineMs >= VERIFY_PARTIAL_ONLINE_MS
+            // Sem relógio (decisão do dono, 2026-10-05): a verificação fecha quando as faixas tocadas forem julgadas, nunca por
+            // minutos de condução. `onlineMs` continua só como diagnóstico.
+            val timeboxed = false
             for (i in BANDS.indices) {
                 val b = before.optJSONObject(i) ?: JSONObject()
                 val a = after.optJSONObject(i) ?: JSONObject()
@@ -280,7 +282,6 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 pending == 0 && touchedBands > 0 && withoutBase == touchedBands -> "SEM_BASE"
                 pending == 0 && touchedBands == 0 -> "SEM_BASE"
                 timeboxed && judged > 0 -> if (worse > 0) "PIOROU_EM_PARTE" else "VERIFICADO"
-                onlineMs >= VERIFY_GIVE_UP_ONLINE_MS -> "INCONCLUSIVO"
                 else -> null
             }
             if (closedStatus != null) {

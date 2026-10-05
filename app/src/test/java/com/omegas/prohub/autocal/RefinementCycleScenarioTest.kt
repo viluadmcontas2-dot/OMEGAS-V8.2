@@ -127,14 +127,14 @@ class RefinementCycleScenarioTest {
     }
 
     @Test
-    fun `sem nenhuma faixa julgavel em 40 min fica INCONCLUSIVO e o refino volta a medir`() {
+    fun `sem nenhuma faixa julgavel a verificacao continua aberta - nenhum relogio a fecha`() {
         petrolBaseline(); gas(1.08)
         observe()
         writeCurve()
         var phase = ""
         repeat(260) { phase = observe(stepMs = 10_000L).getString("phase") } // ~43 min de condução, nenhum GNV novo
-        assertEquals("INCONCLUSIVO", status())
-        assertNotEquals("VERIFICANDO", phase)
+        assertEquals("VERIFICANDO", status())
+        assertEquals("VERIFICANDO", phase)
     }
 
     @Test

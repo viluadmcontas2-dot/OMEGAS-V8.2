@@ -71,12 +71,11 @@ class EquivalencePhasesProofTest {
             return p.judgePoints(listOf(point(12, 0.09, 8)), true)
         }
         assertEquals(ProofOutcome.REASON_NO_CONVERGENCE, attempt().reasons[12])
-        // depois de um tempo de condução o ponto volta a poder ser proposto (a prova fechada some)...
-        var guard = 0
-        while (guard++ < 200 && p.json().getJSONArray("proofs").length() > 0) {
-            now += 10_000
-            p.judgePoints(listOf(point(12, 0.09, 8)), true)
-        }
+        // sem leitura julgável nova a prova fechada fica (e o tempo não a apaga)...
+        repeat(50) { now += 10_000; p.judgePoints(listOf(point(12, null, 0)), true) }
+        assertEquals(1, p.json().getJSONArray("proofs").length())
+        // ...quando o cérebro julga o ponto de novo com evidência, ele volta a poder ser proposto (a prova fechada some).
+        p.judgePoints(listOf(point(12, 0.09, 8)), true)
         assertEquals(0, p.json().getJSONArray("proofs").length())
         // ...mas a segunda tentativa que não fecha esgota: sem nova proposta ali, e o motivo fica registrado.
         val second = attempt()
@@ -100,26 +99,17 @@ class EquivalencePhasesProofTest {
     }
 
     @Test
-    fun `sem amostra ate o timebox de 15 min de conducao vira INCONCLUSIVO e o restante e informado`() {
+    fun `sem amostra a prova continua EM_PROVA sem relogio - horas conectado ou dias desconectado nao fecham nada`() {
         val p = phases()
         p.beginProof(listOf(12), listOf(point(12, 0.06, 20)))
-        p.judgePoints(listOf(point(12, null, 0)), true)
-        repeat(6) {
-            now += 10_000
-            p.judgePoints(listOf(point(12, null, 0)), true)
-        }
-        assertEquals(14, p.judgePoints(listOf(point(12, null, 0)), false).remainingMinutes)
-        // offline não conta
-        now += 20 * 60_000L
+        repeat(400) { now += 10_000; p.judgePoints(listOf(point(12, null, 0)), true) } // > 1 h online sem leitura julgável
+        val outcome = p.judgePoints(listOf(point(12, null, 0)), true)
+        assertEquals(PointState.EM_PROVA, outcome.states[12])
+        assertNull(outcome.remainingMinutes)
+        now += 3L * 24 * 60 * 60_000L // três dias depois, desconectado
         assertEquals(PointState.EM_PROVA, p.judgePoints(listOf(point(12, null, 0)), false).states[12])
-        var verdict: PointState? = null
-        var guard = 0
-        while (verdict != PointState.INCONCLUSIVO && guard++ < 200) {
-            now += 10_000
-            verdict = p.judgePoints(listOf(point(12, null, 0)), true).states[12]
-        }
-        assertEquals(PointState.INCONCLUSIVO, verdict)
-        assertTrue("prazo estourou cedo ou tarde: $guard iterações", guard in 80..90)
+        // Só a evidência fecha: leitura julgável dentro da tolerância confirma.
+        assertEquals(PointState.CONFIRMADO, p.judgePoints(listOf(point(12, 0.01, 8)), true).states[12])
     }
 
     @Test
