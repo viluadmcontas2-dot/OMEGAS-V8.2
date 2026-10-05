@@ -133,7 +133,7 @@ class RefinementLifecycleRegressionTest {
     }
 
     @Test fun everyWaitingPhaseHasAnIndependentExitAndRecoversOnNewEvidence() {
-        val cases = listOf("COLETANDO_NOSSOS", "PROPOSTA_PRONTA", "VERIFICANDO", "RESTAURAR_TRECHO")
+        val cases = listOf("COLETANDO_NOSSOS", "PROPOSTA_PRONTA", "RESTAURAR_TRECHO") // VERIFICANDO: sem teto (fecha só por evidência)
         for (phase in cases) {
             now = 1_000L
             val p = EquivalencePhases(null) { now }

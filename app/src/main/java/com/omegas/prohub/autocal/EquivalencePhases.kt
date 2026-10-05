@@ -72,13 +72,15 @@ class EquivalencePhases(
         const val PROOF_RETRY_COOLDOWN_ONLINE_MS = 10 * 60_000L
         /** Condução online sem leitura suficiente: a prova fecha INCONCLUSIVO. */
         const val PROOF_TIMEBOX_ONLINE_MS = RefinementJournal.VERIFY_PARTIAL_ONLINE_MS
-        /** Tetos da tentativa do host; nunca representam conclusão do AutoMatch na ECU. */
+        /**
+         * Tetos da tentativa do host; nunca representam conclusão do AutoMatch na ECU. VERIFICANDO não tem teto (decisão do
+         * dono, 2026-10-05): a verificação fecha só por evidência medida nas faixas tocadas; o carro pode ficar dias desconectado.
+         */
         val PHASE_BUDGET_MS = mapOf(
             "LENDO_ECU" to 30_000L,
             "ECU_TRABALHANDO" to 40 * 60_000L,
             "COLETANDO_NOSSOS" to 40 * 60_000L,
             "PROPOSTA_PRONTA" to 30 * 60_000L,
-            "VERIFICANDO" to 40 * 60_000L,
             "RESTAURAR_TRECHO" to 30 * 60_000L,
         )
         /** Fases que merecem avisar o motorista uma vez. */
