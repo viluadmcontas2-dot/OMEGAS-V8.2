@@ -593,6 +593,26 @@ class AutoCalNativeActionManagerTest {
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
     }
 
+    @Test
+    fun `reset com releitura ainda cheia nao e concluido - a ECU aceitou mas nao zerou`() {
+        val witnesses = gasReadbackFields()
+        val manager = manager(receiptFile = temporaryFile(), fieldsForReceipt = witnesses) { request, _, _, _ ->
+            if (request.contentEquals(AutoCalNativeActionManager.Action.RESET_GAS.request)) reply(request, byteArrayOf())
+            else {
+                val payload = validReadPayload(request, witnesses)
+                if (AutoCalProtocol.read(AutoCalProtocol.NUM_BUF_UPD_GAS).contentEquals(request)) payload[0] = 7 // contador ainda com dado
+                reply(request, payload)
+            }
+        }
+        val prepared = manager.prepare("RESET_GAS")
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("FAILED", manager.statusJson().getString("state"))
+        assertTrue(manager.statusJson().getString("message").contains("não zerados"))
+        assertEquals("FAILED", manager.receiptsJson().getJSONObject(0).getString("outcome"))
+        manager.close()
+    }
+
     private fun petrolReadbackFields(): List<AutoCalProtocol.Field> = listOf(
         AutoCalProtocol.NUM_BUF_UPD_PETR,
         AutoCalProtocol.PETR_INJ_TBUF,

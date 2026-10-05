@@ -87,20 +87,26 @@ class RefinementCycleScenarioTest {
     }
 
     @Test
-    fun `faixa que o motorista nunca visita nao segura a verificacao para sempre`() {
+    fun `faixa que o motorista nunca visita fica em aberto - as outras ja tem veredito e nenhum relogio pausa`() {
         petrolBaseline(); gas(1.08)
         observe()
         writeCurve()
         gas(1.0, bands = listOf(0, 1, 3, 4)) // a faixa 6,0–7,5 ms nunca é visitada
         var phase = observe().getString("phase")
-        assertEquals("ainda dentro do prazo, espera", "VERIFICANDO", phase)
+        assertEquals("VERIFICANDO", phase)
         assertTrue(pilot.json().getJSONObject("verification").getJSONArray("waitingBands").length() >= 1)
-        // 16+ minutos de condução depois (100 ticks de 10 s): fecha com o que mediu.
-        repeat(100) { phase = observe(stepMs = 10_000L).getString("phase") }
-        assertNotEquals("VERIFICANDO", phase)
+        // Horas de condução sem passar ali (sem relógio: o ajuste é pontual, o carro pode ficar desconectado dias).
+        repeat(400) { phase = observe(stepMs = 10_000L).getString("phase") }
+        assertEquals("VERIFICANDO", phase)
+        assertEquals("VERIFICANDO", status())
+        val bands = journal.json().getJSONObject("latest").getJSONArray("bands")
+        assertEquals("a faixa não visitada segue esperando leitura", "COLETANDO", bands.getJSONObject(2).getString("verdict"))
+        assertEquals("as visitadas já têm veredito", "CONFIRMADA", bands.getJSONObject(0).getString("verdict"))
+        // Quando o motorista passar ali, fecha com o que mediu.
+        gas(1.0, bands = listOf(2))
+        phase = observe().getString("phase")
         assertEquals("VERIFICADO", status())
-        val band = journal.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(2)
-        assertEquals("SEM_DADOS", band.getString("verdict"))
+        assertEquals("ESTAVEL", phase)
     }
 
     @Test
@@ -127,14 +133,14 @@ class RefinementCycleScenarioTest {
     }
 
     @Test
-    fun `sem nenhuma faixa julgavel em 40 min fica INCONCLUSIVO e o refino volta a medir`() {
+    fun `sem nenhuma faixa julgavel a verificacao continua aberta - nenhum relogio a fecha`() {
         petrolBaseline(); gas(1.08)
         observe()
         writeCurve()
         var phase = ""
         repeat(260) { phase = observe(stepMs = 10_000L).getString("phase") } // ~43 min de condução, nenhum GNV novo
-        assertEquals("INCONCLUSIVO", status())
-        assertNotEquals("VERIFICANDO", phase)
+        assertEquals("VERIFICANDO", status())
+        assertEquals("VERIFICANDO", phase)
     }
 
     @Test

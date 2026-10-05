@@ -72,13 +72,15 @@ class EquivalencePhases(
         const val PROOF_RETRY_COOLDOWN_ONLINE_MS = 10 * 60_000L
         /** Condução online sem leitura suficiente: a prova fecha INCONCLUSIVO. */
         const val PROOF_TIMEBOX_ONLINE_MS = RefinementJournal.VERIFY_PARTIAL_ONLINE_MS
-        /** Tetos da tentativa do host; nunca representam conclusão do AutoMatch na ECU. */
+        /**
+         * Tetos da tentativa do host; nunca representam conclusão do AutoMatch na ECU. VERIFICANDO não tem teto (decisão do
+         * dono, 2026-10-05): a verificação fecha só por evidência medida nas faixas tocadas; o carro pode ficar dias desconectado.
+         */
         val PHASE_BUDGET_MS = mapOf(
             "LENDO_ECU" to 30_000L,
             "ECU_TRABALHANDO" to 40 * 60_000L,
             "COLETANDO_NOSSOS" to 40 * 60_000L,
             "PROPOSTA_PRONTA" to 30 * 60_000L,
-            "VERIFICANDO" to 40 * 60_000L,
             "RESTAURAR_TRECHO" to 30 * 60_000L,
         )
         /** Fases que merecem avisar o motorista uma vez. */
@@ -417,11 +419,15 @@ class EquivalencePhases(
                 val closed = proof.verdict
                 if (closed != null) {
                     // Fechada sem convergir mas com tentativas sobrando: depois de um tempo de condução volta a poder ser proposta.
-                    // Fechada sem veredito por qualquer motivo que não esgote as tentativas (não convergiu, sem leitura no prazo,
-                    // sem evidência independente): o ponto volta a poder ser proposto; só TENTATIVAS_ESGOTADAS congela.
+                    // Sem relógio (decisão do dono, 2026-10-05): uma prova fechada sem convergir volta a liberar o ponto quando
+                    // o cérebro o JULGA de novo com evidência (leituras e episódios), não depois de X minutos. Só
+                    // TENTATIVAS_ESGOTADAS congela o ponto.
                     if (closed == PointState.INCONCLUSIVO && proof.reason != ProofOutcome.REASON_EXHAUSTED) {
-                        if (ecuOnline && dt > 0L) { proof.closedOnlineMs += dt; dirty = true }
-                        if (proof.closedOnlineMs >= PROOF_RETRY_COOLDOWN_ONLINE_MS) {
+                        val fresh = points.firstOrNull { it.index == proof.index }
+                        val judgedAgain = fresh != null && fresh.mixture != null &&
+                            (fresh.state == PointState.EQUIVALENTE || fresh.state == PointState.POBRE || fresh.state == PointState.RICO) &&
+                            fresh.samples >= PROOF_MIN_SAMPLES && fresh.episodes >= PROOF_MIN_EPISODES
+                        if (judgedAgain) {
                             iterator.remove()
                             changed = true
                             continue
@@ -442,17 +448,9 @@ class EquivalencePhases(
                 // visitas, dispersão conhecida), com leituras novas e episódios, não só quadros seguidos.
                 val judgedBase = point != null && (point.state == PointState.EQUIVALENTE || point.state == PointState.POBRE || point.state == PointState.RICO)
                 if (point == null || mixture == null || !judgedBase || point.samples < PROOF_MIN_SAMPLES || point.episodes < PROOF_MIN_EPISODES) {
-                    if (proof.onlineMs >= PROOF_TIMEBOX_ONLINE_MS) {
-                        proof.verdict = PointState.INCONCLUSIVO
-                        proof.reason = if (judgedBase) ProofOutcome.REASON_TIMEBOX else ProofOutcome.REASON_UNJUDGED
-                        states[proof.index] = PointState.INCONCLUSIVO
-                        reasons[proof.index] = proof.reason!!
-                        changed = true
-                    } else {
-                        states[proof.index] = PointState.EM_PROVA
-                        val left = ceil((PROOF_TIMEBOX_ONLINE_MS - proof.onlineMs) / 60_000.0).toInt()
-                        remaining = maxOf(remaining ?: 0, left)
-                    }
+                    // Sem evidência nova o ponto simplesmente continua em prova: o carro pode ficar dias desconectado; a prova
+                    // fecha quando houver leitura julgável, nunca por tempo (decisão do dono, 2026-10-05).
+                    states[proof.index] = PointState.EM_PROVA
                     continue
                 }
                 val worse = experienceWorse(proof.roughBefore, point.roughnessRatio) ||
@@ -615,7 +613,7 @@ class EquivalencePhases(
             val waiting = verification?.optJSONArray("waitingBands")
             val wanted = (0 until (waiting?.length() ?: 0)).mapNotNull { waiting?.optJSONObject(it) }
                 .joinToString(", ") { "${Units.msBand(it.optDouble("fromMs"))}–${Units.msBand(it.optDouble("toMs"))} ms" }
-            if (wanted.isNotEmpty()) "Rode no GNV passando por $wanted. Se não passar por lá, o OMEGAS fecha a verificação com o que mediu."
+            if (wanted.isNotEmpty()) "Rode no GNV passando por $wanted. A verificação fecha quando houver leitura ali; pode desconectar e seguir outro dia."
             else "Continue rodando: faltam poucas leituras para fechar o resultado."
         }
         "COLETANDO_NOSSOS" -> {
