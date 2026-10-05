@@ -30,7 +30,7 @@ object EquivalenceView {
         val refinement = journal.json()
         // Engasgo repetido vira ajuste LOCAL (só depois da última gravação da Curva K) e a próxima ação do cérebro quando não há outra a aplicar.
         val appliedAt = refinement.optJSONObject("latest")?.optLong("appliedAt", 0L) ?: 0L
-        val stallsView = StallLocalFix.enrich(stalls.json(), equivalence, appliedAt)
+        val stallsView = StallLocalFix.enrich(stalls.json(), equivalence, maxOf(appliedAt, ledger.gasEpochAt()))
         val brain = equivalence?.let { JSONObject(it.toString()) }
         if (brain != null && brain.optBoolean("available", false)) {
             val kind = brain.optJSONObject("nextAction")?.optString("kind")

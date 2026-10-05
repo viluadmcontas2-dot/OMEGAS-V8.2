@@ -417,7 +417,9 @@ class EquivalencePhases(
                 val closed = proof.verdict
                 if (closed != null) {
                     // Fechada sem convergir mas com tentativas sobrando: depois de um tempo de condução volta a poder ser proposta.
-                    if (closed == PointState.INCONCLUSIVO && proof.reason == ProofOutcome.REASON_NO_CONVERGENCE) {
+                    // Fechada sem veredito por qualquer motivo que não esgote as tentativas (não convergiu, sem leitura no prazo,
+                    // sem evidência independente): o ponto volta a poder ser proposto; só TENTATIVAS_ESGOTADAS congela.
+                    if (closed == PointState.INCONCLUSIVO && proof.reason != ProofOutcome.REASON_EXHAUSTED) {
                         if (ecuOnline && dt > 0L) { proof.closedOnlineMs += dt; dirty = true }
                         if (proof.closedOnlineMs >= PROOF_RETRY_COOLDOWN_ONLINE_MS) {
                             iterator.remove()

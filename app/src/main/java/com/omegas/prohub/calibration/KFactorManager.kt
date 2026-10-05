@@ -461,7 +461,8 @@ class KFactorManager(
 
     fun startBatchWrite(points: JSONArray, reason: String = "Ajuste manual assistido", allowBelowFloor: Boolean = false): JSONObject {
         val normalized = try {
-            normalizePoints(points, allowBelowFloor, hadBefore = { index, raw -> photoHadRaw(index, raw) })
+            // Abaixo do piso só no Desfazer/restauração (allowBelowFloor): gravação nova nunca herda um valor baixo de uma foto antiga.
+            normalizePoints(points, allowBelowFloor, hadBefore = { index, raw -> allowBelowFloor && photoHadRaw(index, raw) })
         } catch (invalid: IllegalArgumentException) {
             return error(invalid.message ?: "Lote de pontos inválido")
         }

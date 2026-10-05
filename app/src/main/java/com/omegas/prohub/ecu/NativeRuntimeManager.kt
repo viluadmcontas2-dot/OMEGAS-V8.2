@@ -252,12 +252,21 @@ class NativeRuntimeManager(
         }
     }
 
+    /** Estado da engine como ela o declara (EngineState.name): a UI mostra "ECU não responde" ou "recuperando" por ele. */
+    @Volatile var engineState: String = "STOPPED"
+        private set
+    @Volatile var engineMessage: String = ""
+        private set
+
     private fun consumeState(status: JSONObject) {
         val state = status.optString("state")
         val wasRunning = running
         running = engine.isRunning()
         ready = engine.isSessionReady()
-        lastError = status.optString("lastError", status.optString("message", lastError))
+        engineState = state.ifBlank { "STOPPED" }
+        engineMessage = status.optString("message")
+        // `lastError` costuma vir vazio no JSON (a chave existe): aí vale a mensagem da engine, não o erro anterior.
+        lastError = status.optString("lastError").ifBlank { status.optString("message").ifBlank { lastError } }
         if (state == "ERROR") crashed = true
         synchronized(snapshotLock) {
             val root = JSONObject(latestSnapshot.toString())

@@ -521,6 +521,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     /** Identidade observacional da época, sem tocar no acumulador. */
     fun gasEpochToken(): String = synchronized(lock) { "$gasEpochAt:$gasEpochReason" }
+    /** Quando a época atual do GNV começou (Mapa K, AutoMatch, reset): engasgos de antes não contam para propor. */
+    fun gasEpochAt(): Long = synchronized(lock) { gasEpochAt }
 
     fun gasPerAir(): Double? = synchronized(lock) { if (airRpmBar > 0) gasUsefulRpmMs / airRpmBar else null }
 

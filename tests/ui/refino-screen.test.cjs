@@ -62,6 +62,17 @@ test('o botão grava a proposta do cérebro quando a ação a traz (local ou cur
   assert.equal(m.brainPoints({ ...whole, currentRaw: before.map((v, i) => (i ? v : 0)) }), null);
 });
 
+test('Desfazer some depois de um Desfazer e sobrevive a Mapa K gravado; só AutoMatch/curva externa o invalidam', () => {
+  const m = model();
+  const before = Array.from({ length: 30 }, () => 16384), after = before.map((v, i) => (i === 3 ? v + 200 : v));
+  const base = { status: 'VERIFICADO', photoFile: 'foto.json', beforeRaw: before, afterRaw: after, appliedAt: 1000, source: 'KF-123' };
+  assert.equal(m.undoSource(base, 2000).available, true);
+  assert.equal(m.undoSource({ ...base, restore: true }, 2000).available, false, 'depois de desfazer não há o que desfazer');
+  assert.equal(m.undoSource({ ...base, status: 'INTERROMPIDO', interruptReason: 'MAPA_K_GRAVADO' }, 2000).available, true, 'Mapa K não muda a Curva K');
+  assert.equal(m.undoSource({ ...base, status: 'INTERROMPIDO', interruptReason: 'AUTOMATCH_NATIVO' }, 2000).available, false);
+  assert.equal(m.undoSource({ ...base, status: 'INTERROMPIDO', interruptReason: 'CURVA_K_MUDOU_FORA_DO_APP' }, 2000).available, false);
+});
+
 test('desfazer usa antes/depois do diário', () => {
   const m = model();
   const before = Array(30).fill(16384);

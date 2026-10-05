@@ -73,8 +73,8 @@ class Block1SessionContract(unittest.TestCase):
         self.assertNotIn('MutationObserver', self.app + self.scheduler)
 
     def test_dashboard_makes_stale_expired_and_stuck_visible(self):
-        # Frescor numa regra só (LiveStore.read): atrasado (cinza) e perdido ("Sem dados há N s"); travado continua à parte.
-        for marker in ('LiveStore.read', 'engineStuck', 'Dados atrasados', 'Sem dados há', 'Comunicação travada'):
+        # Frescor numa regra só (LiveStore.read): atrasado (cinza) e perdido ("Sem dados há N s"); travado é o APP (connectionState), à parte.
+        for marker in ('LiveStore.read', 'engineStuck', 'Dados atrasados', 'Sem dados há', 'App travado'):
             self.assertIn(marker, self.dashboard)
         self.assertIn('Gravar fica bloqueado até os dados voltarem', self.dashboard)
 

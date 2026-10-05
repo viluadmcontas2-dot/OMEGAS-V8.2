@@ -240,6 +240,8 @@ class TelemetryForegroundService : Service() {
         equivalencePhases = EquivalencePhases(File(paths.runtimeRoot, "refinement_autopilot.json"), durationClock = SystemClock::elapsedRealtime)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         equivalenceRuntime = EquivalenceRuntime(paths.runtimeRoot)
+        // Curva K mudou por fora (ProgBase, outro aparelho): a verificação do diário e a foto do Desfazer perdem validade.
+        equivalenceRuntime.onExternalCurveChange = { reason -> refinementJournal.interrupt(reason) }
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
         refinementJournal.setDecisionListener(::recordJournalTransition)
@@ -486,6 +488,10 @@ class TelemetryForegroundService : Service() {
             engineRunning = runtime.running,
             engineReady = runtime.ready,
             engineStuck = runtime.stuck,
+            ecuLinkState = runtime.engineState,
+            ecuLinkMessage = runtime.engineMessage,
+            usbRecovering = usb.recovering,
+            enginePausedByUser = enginePausedByUser,
             engineVersion = BuildConfig.VERSION_NAME,
             usbConnected = usb.connected,
             usbDevice = usb.deviceLabel,
@@ -1053,6 +1059,9 @@ class TelemetryForegroundService : Service() {
                 val index = point.optInt("index", -1)
                 if (index in 0 until 30) beforeRaw[index] = point.optInt("currentRaw", beforeRaw[index])
             }
+            val restoreWrite = RefinementJournal.isUndoReason(
+                payload.optJSONArray("confirmedEvents")?.optJSONObject(0)?.optString("reason").orEmpty(),
+            )
             refinementJournal.recordCurveWrite(
                 beforeRaw = beforeRaw,
                 afterRaw = afterRaw,
@@ -1061,12 +1070,11 @@ class TelemetryForegroundService : Service() {
                 source = payload.optString("adjustmentId", "K_FACTOR"),
                 photoFile = payload.optString("photoFile", ""),
                 // Desfazer/Restaurar/Reset não é passada de ganho (o motivo vem do escritor da ECU, sem mudar comando algum).
-                restore = RefinementJournal.isUndoReason(
-                    payload.optJSONArray("confirmedEvents")?.optJSONObject(0)?.optString("reason").orEmpty(),
-                ),
+                restore = restoreWrite,
             )
-            // Cada ponto que o dono acabou de mudar entra em prova no cérebro único.
-            equivalenceRuntime.onCurveWritten(beforeRaw, afterRaw, equivalencePhases)
+            // Cada ponto que o dono acabou de mudar entra em prova no cérebro único; voltar a uma foto não é experimento
+            // (senão a prova podia dar CONTESTADO e oferecer "desfazer o Desfazer").
+            if (!restoreWrite) equivalenceRuntime.onCurveWritten(beforeRaw, afterRaw, equivalencePhases)
         } catch (error: Exception) {
             log.add("WARN", "REFINO", "Experimento não registrado: ${error.message}")
         }
@@ -1289,7 +1297,9 @@ class TelemetryForegroundService : Service() {
 
     /** O dono tocou "Congelar": a gasolina madura da ECU vira a Referência. Não toca a ECU. */
     fun freezeReference(): String = try {
-        val reference = equivalenceRuntime.freeze(latestAcquisition(), equivalencePhases)
+        val acquisitionNow = latestAcquisition()
+            ?: return JSONObject().put("ok", false).put("reason", "SEM_ECU").put("message", "Conecte a ECU para salvar a referência.").toString()
+        val reference = equivalenceRuntime.freeze(acquisitionNow, equivalencePhases)
         val frozenPayload = JSONObject().put("id", reference.id).put("frozenAt", reference.frozenAt).put("points", reference.points.size)
         sessionRecorder.record("reference_frozen", "autocal", frozenPayload, force = true)
         JSONObject().put("ok", true).put("reference", equivalenceRuntime.json(latestAcquisition()).optJSONObject("reference")).toString()

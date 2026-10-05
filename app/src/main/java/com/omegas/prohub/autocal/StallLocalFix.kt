@@ -137,8 +137,14 @@ object StallLocalFix {
             val delta = p.optDouble("mixture").coerceIn(-MAX_STEP, MAX_STEP)
             var after = (k * (1.0 + delta)).coerceIn(K_MIN, K_MAX)
             val axis = p.optDouble("axisMs")
-            if (after < k && axis < AutoMatchSnapshotAnalysis.LOW_GUARD_MS) { blocked = true; continue } // nunca empobrece na baixa
+            val index = p.optInt("index")
+            // Trava da baixa: o nó e o trecho interpolado até o nó anterior (empobrecer 3,6 ms empobrece abaixo de 3,5 ms).
+            val previousAxis = covering.firstOrNull { it.optInt("index") == index - 1 }?.optDouble("axisMs", Double.NaN) ?: Double.NaN
+            val lowGuard = axis < AutoMatchSnapshotAnalysis.LOW_GUARD_MS || (previousAxis.isFinite() && previousAxis < AutoMatchSnapshotAnalysis.LOW_GUARD_MS)
+            if (after < k && lowGuard) { blocked = true; continue } // nunca empobrece na baixa
             val appliedDelta = after / k - 1.0
+            // O teto 0,75..1,20 nunca pode inverter a direção (K 1,30 pobre → 1,20 empobrecia) nem passar de ±8%.
+            if (appliedDelta * delta <= 0.0 || abs(appliedDelta) > MAX_STEP + 1e-9) continue
             if (abs(appliedDelta) < MIN_DELTA) continue
             val raw = (after * Q14).roundToInt().coerceIn(AutoMatchRefinedEngine.MIN_RAW_PROPOSAL, AutoMatchRefinedEngine.MAX_RAW_PROPOSAL)
             after = raw / Q14

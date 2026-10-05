@@ -114,14 +114,21 @@ class NotificationController(private val context: Context) {
 
     fun content(status: HubStatus): Content {
         val title = when {
-            status.engineStuck -> "OMEGAS — NÚCLEO BLOQUEADO"
+            status.engineStuck -> "OMEGAS — APP TRAVADO · REABRA"
             status.engineReady -> "OMEGAS — ECU ONLINE"
             status.engineRunning -> "OMEGAS — CONECTANDO À ECU"
             status.usbConnected -> "OMEGAS — MP48 CONECTADO"
             else -> "OMEGAS — AGUARDANDO MP48"
         }
-        val line1 = if (status.engineReady) {
-            "${Units.rpm(status.rpm)} RPM • ${status.fuelState} • ${Units.msUnit(status.petrolMs)}"
+        val fresh = status.directTelemetryAgeMs in 0..3000
+        val fuel = when (status.fuelState.uppercase()) {
+            "GASOLINA" -> "Gasolina"; "GNV" -> "GNV"; "TRANSICAO" -> "Transição"; "CUTOFF" -> "Corte"; "DESLIGADO" -> "Motor desligado"
+            else -> "—"
+        }
+        val line1 = if (status.engineReady && fresh) {
+            "${Units.rpm(status.rpm)} RPM • $fuel • ${Units.msUnit(status.petrolMs)}"
+        } else if (status.engineReady) {
+            "Sem dado recente da ECU"
         } else {
             "USB ${if (status.usbConnected) "conectado" else "desconectado"} • núcleo ${if (status.engineRunning) "ativo" else "parado"}"
         }

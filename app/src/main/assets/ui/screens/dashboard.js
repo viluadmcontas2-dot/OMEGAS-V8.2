@@ -159,8 +159,12 @@
       if (!connected) {
         return { level: link.key === 'connecting' || link.key === 'denied' ? 'warning' : 'offline', message: link.label, detail: link.hint, allowUsb: link.key === 'denied' };
       }
-      if (status.engineStuck === true) {
-        return { level: 'critical', message: 'Comunicação travada', detail: 'Aguarde ou reconecte o cabo USB. Gravar fica bloqueado até a ECU responder.' };
+      // Mesma frase do trilho para os estados que não são "sem dados": pausa, app travado, ECU recusou, USB recuperando.
+      if (['paused', 'attention', 'refused', 'recovering', 'handshake'].includes(link.key)) {
+        const stuck = status.engineStuck === true; // 'App travado' (connectionState): crítico, como a ECU que recusou
+        const level = stuck || link.key === 'refused' ? 'critical' : 'warning';
+        const detail = link.key === 'paused' || link.key === 'handshake' || link.key === 'recovering' ? link.hint : link.hint + '. Gravar fica bloqueado até a ECU responder.';
+        return { level, message: link.label, detail };
       }
       // Leitura válida sem relógio continua sendo leitura (a faixa a mostra): só "sem dados" quando não há dado.
       if (reading.level === 'none') {

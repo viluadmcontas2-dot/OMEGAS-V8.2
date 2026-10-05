@@ -169,8 +169,12 @@
     const photo = String(latest?.photoFile || '');
     const status = String(latest?.status || '');
     const partial = status === 'FALHA_PARCIAL';
-    const changedByEcu = status === 'INTERROMPIDO' && latest?.interruptReason !== 'REINICIO_GNV_PELO_DONO';
-    const wasUndo = /desfazer|restaurar/i.test(String(latest?.source || ''));
+    // A ECU (ou outro aparelho) reescreveu a curva: a foto não vale mais. Mapa K gravado pelo dono não muda a Curva K.
+    // Falha fechada: INTERROMPIDO sem motivo conhecido = mudou por fora. Só o que o próprio dono fez (Mapa K, reinício do GNV)
+    // mantém a foto válida.
+    const changedByEcu = status === 'INTERROMPIDO' && !['REINICIO_GNV_PELO_DONO', 'MAPA_K_GRAVADO'].includes(String(latest?.interruptReason || ''));
+    // Depois de um Desfazer não há o que desfazer (senão virava "refazer"); o diário marca `restore`, o `source` é só o id.
+    const wasUndo = latest?.restore === true || /desfazer|restaurar/i.test(String(latest?.source || ''));
     const has = Boolean(photo) || undoPoints(latest).length > 0;
     const available = has && (partial || (!changedByEcu && !wasUndo));
     const at = finite(latest?.appliedAt);

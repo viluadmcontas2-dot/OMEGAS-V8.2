@@ -54,7 +54,8 @@
       // ECU travada (sem resposta) não é "Conectada": mesma palavra do cartão do Agora e do glossário.
       const stuck = link.key === 'attention';
       const ecuOnline = link.online && !stuck && status.engineReady !== false;
-      this.fact('ecu', stuck ? 'Sem resposta' : ecuOnline ? 'Conectada' : link.online ? 'Lendo…' : link.label, ecuOnline ? 'online' : link.key === 'connecting' ? 'connecting' : 'offline');
+      // A palavra vem de um lugar só (connectionState): "App travado", "ECU não responde", "USB recuperando", "Leitura pausada"…
+      this.fact('ecu', stuck ? link.label : ecuOnline ? 'Conectada' : link.online ? 'Lendo…' : link.label, ecuOnline ? 'online' : link.key === 'connecting' || link.key === 'handshake' || link.key === 'recovering' ? 'connecting' : 'offline');
       this.fact('fuel', fuel, late ? 'late' : fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
       this.fact('rpm', rules.rpm(reading.rpm), reading.rpm === null ? 'unknown' : late ? 'late' : 'measured');
       this.fact('petrol', fuel === 'CORTE' ? '—' : rules.ms(reading.petrolMs), fuel === 'CORTE' || reading.petrolMs === null ? 'unknown' : late ? 'late' : 'measured');
