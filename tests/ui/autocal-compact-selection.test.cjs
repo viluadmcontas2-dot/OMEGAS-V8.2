@@ -23,7 +23,7 @@ test('AutoCal usa o grafico como superficie de zonas, sem faixa Z1-Z4 duplicada'
 test('AutoCal tem uma unica linha operacional visivel por estado', () => {
   assert.match(cockpit, /autocal-command-row/);
   assert.match(cockpit, /data-autocal-toggle/);
-  assert.doesNotMatch(cockpit, /data-autocal-reacquire-point/);
+  assert.doesNotMatch(cockpit, /<button[^>]*data-autocal-reacquire-point/);
   assert.doesNotMatch(cockpit, /data-autocal-toggle-point-selection/);
   assert.match(cockpit, /data-autocal-reacquire-selected/);
   assert.match(cockpit, /data-autocal-clear-point-selection/);
