@@ -136,3 +136,64 @@ html body .ar-shell .ar-card { position: static; width: 100%; overflow: visible;
 html body .ar-shell .ar-legend { position: static; }
 html body .ar-shell .ar-readout { position: static; }
 html body .screen-host .screen.autocal-route-screen { padding: var(--space-2) var(--space-3) var(--space-2); }
+
+
+/* 2026-10-06 · AutoCal graph-first: zonas já vivem dentro do gráfico; nenhum segundo painel Z1-Z4. */
+html body .ar-shell.ar-autocal .ar-chart-host {
+  height: clamp(360px, calc(100vh - 240px), 640px);
+}
+html body .ar-shell.ar-autocal .ar-legend-row {
+  min-height: 30px;
+  flex-wrap: nowrap;
+}
+html body .ar-shell.ar-autocal .autocal-graph-status {
+  flex: 1 1 auto;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html body .ar-shell.ar-autocal .autocal-graph-status[data-level="warn"] { color: var(--warn); }
+html body .ar-shell.ar-autocal .autocal-graph-status[data-level="error"] { color: var(--danger-strong); }
+html body .ar-shell.ar-autocal .autocal-noise-summary {
+  flex: 0 1 auto;
+  color: var(--dim);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+html body .ar-shell.ar-autocal .autocal-command-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--space-2);
+  width: 100%;
+}
+html body .ar-shell.ar-autocal .autocal-command-row > button,
+html body .ar-shell.ar-autocal .autocal-command-row > details {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--btn-h-compact);
+}
+html body .ar-shell.ar-autocal .autocal-command-row > [hidden] {
+  display: none !important;
+}
+html body .ar-shell.ar-autocal .autocal-command-row > button {
+  overflow: hidden;
+  padding-inline: var(--space-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html body .ar-shell.ar-autocal .autocal-secondary-details {
+  width: 100%;
+}
+html body .ar-shell.ar-autocal .autocal-secondary-details > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
