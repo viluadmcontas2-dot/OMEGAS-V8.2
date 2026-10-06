@@ -116,7 +116,7 @@
   const RS = {
     COLETANDO_NOSSOS: { canAct: false, phase: 'Coletando entre as faixas da ECU: 12 de 17 intervalos', label: 'Medindo o GNV', whatNow: 'Dirija normalmente: o app está medindo o GNV entre os pontos da ECU.', nextAction: '', reason: 'Ainda faltam medidas em alguns trechos.' },
     PROPOSTA_PRONTA: { canAct: true, phase: 'Pronto para gravar 3 pontos', label: 'Curva pronta', whatNow: 'Falta 1 ajuste para o GNV chegar perto da gasolina.', nextAction: 'Aplicar ajuste', reason: '' },
-    VERIFICANDO: { canAct: false, phase: 'Verificando', label: 'Medindo', whatNow: 'Ajuste aplicado. Dirija normalmente: o app confere se o GNV chegou perto da gasolina.', nextAction: '', reason: 'Nada a fazer agora.' },
+    VERIFICANDO: { canAct: false, phase: 'Verificando', label: 'Verificando', whatNow: 'Ajuste aplicado. Dirija normalmente: o app confere se o GNV chegou perto da gasolina.', nextAction: '', reason: 'Nada a fazer agora.' },
     ESTAVEL: { canAct: false, phase: 'Estável', label: 'Estável', whatNow: 'GNV perto da gasolina em toda a curva. Pode desconectar.', nextAction: '', reason: '' },
     SEM_ECU: { canAct: false, phase: 'Sem ECU', label: 'Sem ECU', whatNow: 'Conecte a ECU para o Refino medir o GNV.', nextAction: '', reason: 'O cabo USB não está conectado.' },
   };
@@ -169,7 +169,11 @@
   };
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),
-    getUiProjection: () => J(projection()), getSessionLedgerStatus: () => J({}), listAutoCalSessions: () => '[]', getNativeActionStatus: () => J({}),
+    getUiProjection: () => J(projection()), getSessionLedgerStatus: () => J({}), listAutoCalSessions: () => '[]', getNativeActionStatus: () => J(window.__pointAction || {}),
+    preparePointDelete: (fuel,index) => { window.__pointTargets=[{fuel,index}]; return J({ok:true,prepared:true,preparationId:'point-single'}); },
+    preparePointDeleteBatch: targets => { window.__pointTargets=JSON.parse(targets); return J({ok:true,prepared:true,preparationId:'point-batch'}); },
+    executeNativeAction: id => { window.__pointAction={action:'DELETE_POINT',state:'READING_AFTER',busy:true}; return J({ok:true,started:true}); },
+    clearNativeActionPreparation: () => J({ok:true}),
     resetGasEvidence: () => { S.gasReset = true; S.phase = 'COLETANDO_NOSSOS'; return J({ ok: true, message: 'Aprendizado GNV reiniciado. A gasolina continua como referência.' }); },
     getRefinedAnalysis: () => J(refined()), getEquivalence: () => J(eq()), getEquivalenceFresh: () => J(eq()), getRefinementPhase: () => J({ ok: true, autopilot: eq().autopilot }), getEquivalenceResult: () => J({ ...eq(), available: true }),
   };

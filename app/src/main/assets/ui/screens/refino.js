@@ -316,7 +316,7 @@
           <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Refino</h2><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
             <span id="refinoPhaseChip" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
             <div class="instrument-menus"><details class="instrument-details refino-proposals"><summary>Sugestões</summary><div class="instrument-detail-content" id="refinoProposals">Ainda sem proposta. O app continua medindo.</div></details>
-            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-evidence-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p><button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar aprendizado GNV</button><button type="button" class="btn-ghost" data-refino-acquisition>Leitura da ECU · pausa e releitura</button></section></div></details></div>
+            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-evidence-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p></section></div></details></div>
             <div class="refino-stalls ar-stall" id="refinoStalls" hidden></div>
           </header>
           <section class="ar-chart-card" aria-label="Curva de aquisição · Gasolina × GNV">
@@ -328,6 +328,8 @@
             <p id="refinoNext" class="ar-reason" hidden></p>
             <div class="ar-buttons">
               <button type="button" class="btn-primary" data-refino-primary hidden></button>
+              <button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar medições GNV</button>
+              <button type="button" class="btn-ghost" data-refino-acquisition>Leitura da ECU</button>
               <span class="refino-undo" id="refinoUndo" hidden></span>
               <button type="button" class="btn-ghost" id="refinoEqUnfreeze" data-refino-unfreeze hidden>Desfazer referência</button>
             </div>

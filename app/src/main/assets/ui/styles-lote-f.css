@@ -495,8 +495,7 @@ html body .autocal-secondary-stack > .autocal-hero { order: 1; }
 html body .autocal-secondary-stack > .autocal-zone-card { order: 2; }
 html body .autocal-secondary-stack > .autocal-command-bar { order: 3; }
 html body .autocal-secondary-stack > .autocal-automatch-evidence { order: 4; }
-html body .autocal-secondary-stack > .autocal-session-strip { order: 5; grid-column: 1 / -1; }
-html body .autocal-secondary-stack > .autocal-session-drawer { order: 6; grid-column: 1 / -1; }
+html body .autocal-secondary-stack > .autocal-session-strip  { order: 5; grid-column: 1 / -1; }
 html body .autocal-secondary-stack > .autocal-technical-details { order: 7; grid-column: 1 / -1; }
 html body .autocal-secondary-details > summary { min-height: var(--touch-min); }
 html body .autocal-zone-meter { flex-wrap: wrap; row-gap: 6px; }
@@ -524,6 +523,6 @@ html body .background-health-card .health-badge[data-healthy="false"] { color: v
 html body .autocal-secondary-stack small { font-size: 18px; letter-spacing: .03em; }
 html body .autocal-secondary-stack .autocal-human-copy h3 { font-size: var(--text-critical); }
 html body .autocal-secondary-stack .autocal-human-copy strong { font-size: var(--text-critical); line-height: 1.2; }
-html body .autocal-secondary-stack .autocal-human-copy p, html body .autocal-secondary-stack .autocal-command-copy span, html body .autocal-secondary-stack .autocal-automatch-evidence span, html body .autocal-secondary-stack .autocal-session-copy span { font-size: 18px; line-height: 1.25; }
-html body .autocal-secondary-stack .autocal-automatch-evidence b, html body .autocal-secondary-stack .autocal-session-copy b { font-size: var(--text-critical); line-height: 1.2; }
+html body .autocal-secondary-stack .autocal-human-copy p, html body .autocal-secondary-stack .autocal-command-copy span, html body .autocal-secondary-stack .autocal-automatch-evidence span, html body .autocal-secondary-stack .autocal-session-copy span  { font-size: 18px; line-height: 1.25; }
+html body .autocal-secondary-stack .autocal-automatch-evidence b, html body .autocal-secondary-stack .autocal-session-copy b  { font-size: var(--text-critical); line-height: 1.2; }
 html body .autocal-secondary-stack .autocal-zone-cell small { font-size: var(--text-critical); letter-spacing: 0; }

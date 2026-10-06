@@ -57,7 +57,8 @@ def test_finish_is_not_misrepresented_as_acquisition_stop():
     assert 'data-autocal-action="FINISH_AUTOMATCH"' not in COCKPIT
     assert "O AutoMatch é automático e decidido pela ECU." in COCKPIT
     assert "A leitura continua ativa e pode preencher novas zonas" in COCKPIT
-    assert "Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU." in COCKPIT
+    assert "Pausar interrompe a aquisição." in COCKPIT
+    assert "Reler gasolina ou GNV reinicia somente os dados daquele combustível." in COCKPIT
     assert "setEnabled(false)" in MANAGER
 
 

@@ -37,6 +37,7 @@
       this.writing = false;
       this.backupTask = null;
       this.restoreContext = null;
+      this.pendingRestoreFile = '';
       // A foto que o Desfazer restaura: a que o Kotlin guardou ANTES desta escrita, nunca "a mais nova".
       this.undoFile = '';
       this.resetPhotoFile = '';
@@ -54,6 +55,10 @@
       document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.undoCurve());
       document.getElementById('curveBackupSelect')?.addEventListener('change', event => {
         const fileName = String(event.target?.value || '');
+        if (this.reading || this.writing || this.backupTask) {
+          event.target.value = this.pendingRestoreFile || this.restoreContext?.fileName || '';
+          return;
+        }
         this.cancelRestorePreview('');
         if (fileName) this.prepareRestore(fileName);
       });
@@ -137,6 +142,11 @@
     /** Sem curva lida não há o que ajustar: ±K e o botão principal ficam desativados e dizem o que fazer. */
     updateControls() {
       const ready = this.points().length > 0;
+      const busy = this.reading || this.writing || Boolean(this.backupTask);
+      ['curveBackupSave','curveBackupSelect','curveResetButton'].forEach(id => {
+        const control = document.getElementById(id);
+        if (control) { control.disabled = busy; control.title = busy ? 'Aguarde a operação atual da ECU' : ''; }
+      });
       document.querySelectorAll('[data-curve-nudge]').forEach(button => {
         button.disabled = !ready || this.activeIndex === null || this.reading || this.writing;
         button.title = button.disabled ? DISABLED_REASON : '';
@@ -206,6 +216,7 @@
         return;
       }
       this.backupTask = 'save';
+      this.updateControls();
       text('curveBackupStatus', 'Salvando curva atual…');
     }
 
@@ -224,6 +235,7 @@
         return;
       }
       this.backupTask = 'reset-photo';
+      this.updateControls();
       text('curveBackupStatus', 'Salvando a foto da curva antes de zerar…');
       // A foto antes aparece como etapa do cartão de operação, não como linha de status miúda.
       this.root?.classList.remove('has-result');
@@ -271,6 +283,9 @@
     prepareRestore(fileName = String(document.getElementById('curveBackupSelect')?.value || '')) {
       if (this.reading || this.writing || this.backupTask) return;
       if (!fileName) return;
+      this.pendingRestoreFile = fileName;
+      const chosen = document.getElementById('curveBackupSelect');
+      if (chosen) chosen.value = fileName;
       this.restoreContext = null;
       this.backupTask = 'restore-preview';
       this.syncRestoreButton();
@@ -287,6 +302,7 @@
         return;
       }
       this.backupTask = 'restore-preview';
+      this.updateControls();
       this.syncRestoreButton();
       text('curveBackupStatus', 'Conferindo a foto e a curva atual…');
     }
@@ -353,6 +369,7 @@
       if (this.backupTask && !operation.busy) {
         const task = this.backupTask;
         this.backupTask = null;
+        this.updateControls();
         if (operation.state !== 'COMPLETED' || !operation.ok) {
           this.restoreContext = null;
           const select = document.getElementById('curveBackupSelect');
@@ -402,6 +419,9 @@
             this.alert('A Curva K atual já é igual à foto escolhida.');
             return;
           }
+          const chosen = document.getElementById('curveBackupSelect');
+          if (chosen) chosen.value = operation.fileName;
+          this.pendingRestoreFile = '';
           this.restoreContext = {
             fileName: operation.fileName,
             hash: operation.hash,

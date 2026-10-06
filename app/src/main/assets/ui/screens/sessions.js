@@ -65,6 +65,21 @@
       this.api = api;
       this.host = document.getElementById('sessionsHost');
       this.signature = '';
+      this.selectedSessionId = '';
+      this.host?.addEventListener('change', event => {
+        if (event.target.matches('[data-session-choice]')) {
+          this.selectedSessionId = event.target.value;
+          this.host.querySelectorAll('.ss-item').forEach(item => { item.dataset.selected = String(item.dataset.sessionId === this.selectedSessionId); });
+        }
+      });
+      this.host?.addEventListener('submit', event => { event.preventDefault(); });
+      this.host?.addEventListener('click', event => {
+        if (event.target.closest('[data-session-export]')) {
+          event.preventDefault();
+          const id = this.host.querySelector('[data-session-choice]')?.value;
+          if (id) this.api?.exportSession?.(id);
+        }
+      });
     }
 
     render(state) {
@@ -116,6 +131,7 @@
           <dl class="ss-facts"><div><dt>Duração</dt><dd>${recording ? durationShown : R.DASH}</dd></div><div><dt>Usado</dt><dd>${R.megabytesLabel(finite(status.megabytes))}</dd></div><div><dt>Eventos</dt><dd>${R.fmt(status.events, 0)}</dd></div></dl>
         </section>
         <p class="ss-where">Cada sessão é salva sozinha em <b>${FOLDER}</b> quando termina, pronta para compartilhar.</p>
+        ${rows.length ? `<form class="session-export-toolbar" novalidate><label>Sessão para exportar${rows.length === 1 ? `<span>${escapeHtml(R.sessionDate(rows[0].raw))} · ${escapeHtml(rows[0].title)}</span><input type="hidden" data-session-choice value="${escapeHtml(rows[0].id)}">` : `<select data-session-choice aria-label="Sessão para exportar">${rows.map(row => `<option value="${escapeHtml(row.id)}"${row.id === this.selectedSessionId ? ' selected' : ''}>${escapeHtml(R.sessionDate(row.raw))} · ${escapeHtml(row.title)}</option>`).join('')}</select>`}</label><button type="submit" data-session-export>Exportar sessão</button></form>` : ''}
         <section class="ss-list" aria-label="Sessões gravadas">${list}</section>
         ${more > 0 ? `<p class="empty-copy" data-sessions-truncated>Mostrando as ${R.fmt(rows.length, 0)} mais recentes de ${R.fmt(all.length, 0)}. As mais antigas continuam em ${FOLDER}.</p>` : ''}`;
     }

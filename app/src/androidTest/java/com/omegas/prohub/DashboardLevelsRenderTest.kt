@@ -773,11 +773,10 @@ class DashboardLevelsRenderTest {
             )
             assertEquals("Original Curve K replay must expose all 30 points", 30, dom.getInt("pointCount"))
             assertTrue("Original Curve K line must be drawable", dom.getString("actualPath").length > 20)
-            // Diamante already saves the pre-write photo automatically and exposes
-            // one-touch undo only after a photo exists. Manual photo controls are
-            // intentionally hidden; keep checking the user's current editing path.
-            assertFalse("Automatic pre-write photo replaces manual save", dom.getBoolean("backupSaveVisible"))
-            assertFalse("Automatic latest-photo undo replaces manual selector", dom.getBoolean("backupSelectVisible"))
+            // A manual snapshot preserves the chosen curve in Download/Omegas;
+            // it is a separate intention from the automatic photo for one-touch undo.
+            assertTrue("Save to Downloads must be visible in 1280x720", dom.getBoolean("backupSaveVisible"))
+            assertTrue("Saved curves must be selectable in 1280x720", dom.getBoolean("backupSelectVisible"))
             assertTrue("Reler ECU must be visible in 1280x720", dom.getBoolean("readVisible"))
             assertTrue("K adjustment must be visible in 1280x720", dom.getBoolean("adjustmentVisible"))
             assertTrue("Write action must remain visible in 1280x720", dom.getBoolean("writeVisible"))

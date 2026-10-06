@@ -5,6 +5,7 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+const chartSource = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/components/curve-chart.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
 const arCss = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-refino.css'), 'utf8');
 
@@ -210,7 +211,7 @@ assert.equal(source.includes('data-autocal-chart-action="zoom-in"'), false);
 assert.equal(source.includes('data-autocal-chart-action="zoom-out"'), false);
 assert.equal(source.includes('data-autocal-chart-action="fit"'), false);
 assert.equal(source.includes('Injeção (ms)'), true, 'eixo X precisa manter unidade física');
-assert.equal(source.includes('MAP (bar)'), true, 'eixo Y precisa manter unidade física');
+assert.equal(chartSource.includes('MAP (bar)'), true, 'eixo Y compartilhado precisa manter unidade física');
 assert.equal(source.includes('data-autocal-history'), true, 'comparação com leitura anterior deve permanecer disponível');
 assert.equal(source.includes('data-autocal-toggle'), true);
 assert.equal(source.includes('data-autocal-band-index'), true);
@@ -253,7 +254,7 @@ console.log('AUTOCAL_DIDACTIC_COCKPIT=PASS');
 assert.equal(source.includes('>Ajustar</button>'), false, 'fit visual não pode parecer ajuste de ECU');
 assert.equal(source.includes('>Ver tudo</button>'), false, 'fit/zoom não pode voltar sem transformar também os eixos físicos');
 assert.equal(css.includes('touch-action: pan-y'), true, 'gráfico físico continua sem pan/zoom arbitrário');
-assert.equal(source.includes('autocal-live-point'), true, 'cursor AGORA precisa de camada própria');
+assert.equal(chartSource.includes('autocal-live-point'), true, 'cursor AGORA precisa de camada própria no gráfico compartilhado');
 
 const staleManualWhilePaused = model.humanState(
   { ...snapshot, autoCalEnabled: 1 },

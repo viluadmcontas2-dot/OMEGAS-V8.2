@@ -60,9 +60,10 @@ fake.store = { get: () => ({ telemetry: { valid: false } }) };
 fake.text = (id, value) => { labels[id] = value; };
 fake.readout = text => { labels.autocalChartInspector = text; };
 fake.renderLiveNarrative = () => {};
+fake.cursor = new context.OmegasUi.LiveStore.EaseCursor(() => null);
 
 proto.renderReferenceChart.call(fake, fake.snapshot);
-assert.match(host.innerHTML, /AQUISIÇÃO EM TEMPO REAL/);
+assert.match(host.innerHTML, /CURVAS DA ECU/);
 assert.match(host.innerHTML, /autocal-acquired-point petrol/);
 assert.doesNotMatch(host.innerHTML, /autocal-acquired-point gas/);
 assert.match(labels.autocalReferenceCount, /GNV 0\/18 faixas com amostra/);
@@ -83,7 +84,9 @@ assert.match(host.innerHTML, /autocal-acquired-point gas/);
 assert.match(host.innerHTML, /autocal-reference-line petrol epoch-anchor/,
   'gasolina continua até que só ela seja reiniciada');
 assert.match(labels.autocalReferenceCount, /Gasolina 8\/18 · GNV 18\/18/);
-assert.equal(fake.chartScale, null, 'aquisição parcial não deve reutilizar escala/equivalência RV30');
+assert.ok(fake.chartScale, 'aquisição parcial tem escala física para o cursor vivo');
+assert.equal(fake.chartSignature, null, 'aquisição parcial não reutiliza comparação RV30');
+assert.match(host.innerHTML, /autocal-live-layer/, 'mesma camada rápida de telemetria');
 
 fake.state = { maxAutomatch: 3 };
 fake.projection.liveAcquisitionEpoch.nativeAutoMatchCount = 3;
@@ -100,6 +103,6 @@ for (const field of fake.snapshot.fields) {
 proto.renderReferenceChart.call(fake, fake.snapshot);
 assert.doesNotMatch(host.innerHTML, /autocal-reference-line petrol epoch-anchor/,
   'RESET_PETROL deve retirar a referência gasolina anterior');
-assert.match(labels.autocalChartInspector, /Gasolina reiniciada/);
+assert.match(labels.autocalChartInspector, /curvas atuais de gasolina e GNV/);
 
 console.log('AUTOCAL_LIVE_EPOCH_GUARD=PASS');
