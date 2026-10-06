@@ -63,8 +63,9 @@
     const zones = projection?.ok === true && projection?.acquisitionZones && typeof projection.acquisitionZones === 'object'
       ? projection.acquisitionZones[fuel]
       : null;
-    if (!Array.isArray(zones)) return null;
-    return Array.from({ length: 4 }, (_, index) => zones[index] === true);
+    // The bridge uses [] for unknown, not for four missing zones.
+    if (!Array.isArray(zones) || zones.length !== 4 || !zones.every(value => typeof value === 'boolean')) return null;
+    return zones.slice();
   }
 
   function scalarValue(snapshot, key) {
@@ -74,6 +75,15 @@
   }
 
   const AutoCalUxModel = {
+    epochNarrative(epoch = {}) {
+      const petrol = epoch.petrolPending === true || epoch.petrolReferencePending === true;
+      const gas = epoch.gasPending === true || epoch.gasReferencePending === true;
+      if (petrol && gas) return 'Aguardando curvas atuais de gasolina e GNV da ECU';
+      if (petrol) return 'Referência de gasolina pendente: aguardando a curva atual da ECU';
+      if (gas) return 'Referência de GNV pendente: aguardando a curva atual da ECU';
+      if (epoch.referencePending) return 'Aguardando curvas atuais da ECU para comparar';
+      return 'Coleta em andamento; aguardando dados para comparar';
+    },
     humanState(snapshot = {}, state = {}, projection = {}) {
       const nativeSnapshot = state.latestSnapshot?.fields ? state.latestSnapshot : {};
       const evidenceSnapshot = nativeSnapshot.fields ? nativeSnapshot : snapshot;
@@ -86,10 +96,11 @@
       const projectedGasZones = projectedZoneFlags(projection, 'gas');
       const petrolFieldAvailable = field(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL') !== null;
       const gasFieldAvailable = field(evidenceSnapshot, 'ACQUIRED_ZONES_GAS') !== null;
-      const petrolZoneFlags = projectedPetrolZones
-        ?? (petrolFieldAvailable ? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL') : null);
-      const gasZoneFlags = projectedGasZones
-        ?? (gasFieldAvailable ? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_GAS') : null);
+      const hasProjectedZones = projection.ok === true && projection.acquisitionZones;
+      const petrolZoneFlags = hasProjectedZones ? projectedPetrolZones
+        : (petrolFieldAvailable ? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_PETROL') : null);
+      const gasZoneFlags = hasProjectedZones ? projectedGasZones
+        : (gasFieldAvailable ? nativeZoneFlags(evidenceSnapshot, 'ACQUIRED_ZONES_GAS') : null);
       const petrolZones = Array.isArray(petrolZoneFlags) ? petrolZoneFlags.filter(Boolean).length : null;
       const gasZones = Array.isArray(gasZoneFlags) ? gasZoneFlags.filter(Boolean).length : null;
       const petrolMissingZones = Array.isArray(petrolZoneFlags)
@@ -729,6 +740,14 @@
               <span id="autocalNativeState" hidden>Leitura da ECU: aguardando</span>
             </header>
 
+              <section class="autocal-zone-card autocal-zone-strip" aria-label="Cobertura das zonas">
+                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
+                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
+                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
+                </div>
+                <span id="autocalZoneSummary" class="ar-sr">—</span>
+              </section>
+
             <section class="ar-chart-card" aria-label="Leitura da ECU · Gasolina × GNV">
               <div class="ar-legend-row">
                 <div class="ar-legend" id="autocalLegend" aria-label="Legenda do gráfico"></div>
@@ -740,15 +759,8 @@
 
             <div class="ar-act">
               <div class="ar-buttons">
-                <details class="instrument-details"><summary>Zonas e histórico</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
-              <section class="ar-card autocal-zone-card" aria-label="Cobertura das zonas">
-                <h4>Zonas aprendidas pela ECU</h4>
-                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
-                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                </div>
-                <span id="autocalZoneSummary" class="ar-sr">—</span>
-              </section>
+                <details class="instrument-details"><summary>Histórico e detalhes</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
+
 
               <section id="autocalAutoMatchEvidence" class="ar-card autocal-automatch-evidence" data-state="WAITING" aria-live="polite">
                 <h4>O que o AutoMatch mudou</h4>
@@ -778,11 +790,12 @@
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
                 <details class="autocal-reset-menu ar-more">
                   <summary>Mais opções</summary>
-                  <div class="autocal-reset-popover" aria-label="Mais opções do AutoCal">
+                  <div class="autocal-reset-popover" id="autocalOptionsPanel" aria-label="Mais opções do AutoCal">
+                    <button type="button" class="autocal-options-close" data-autocal-close-options>Fechar opções ×</button>
                     ${ns.CurveChart.viewControls()}
                     <section class="autocal-reset-group" data-reset-scope="advanced">
                       <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
-                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar a leitura é a única ação desta tela que muda o AutoCal da ECU.</p>
+                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar interrompe a aquisição. Reler gasolina ou GNV reinicia somente os dados daquele combustível.</p>
                     </section>
                   </div>
                 </details>
@@ -801,6 +814,22 @@
 
     bind() {
       ns.CurveChart.bindView(this.panel, this, () => this.renderReferenceChart(this.snapshot || {}));
+      const options = this.panel?.querySelector('.ar-more');
+      const syncOptions = () => {
+        const open = options?.hasAttribute('open') === true;
+        const summary = options?.querySelector('summary');
+        if (summary) {
+          summary.setAttribute('aria-expanded', String(open));
+          summary.setAttribute('aria-controls', 'autocalOptionsPanel');
+          summary.textContent = open ? 'Fechar opções ▴' : 'Mais opções ▾';
+        }
+      };
+      options?.addEventListener('toggle', syncOptions);
+      this.panel?.querySelector('[data-autocal-close-options]')?.addEventListener('click', () => {
+        options?.removeAttribute('open');
+        syncOptions();
+      });
+      syncOptions();
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
         if (action) this.runOperational(action);
@@ -808,6 +837,7 @@
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
         button.addEventListener('click', () => {
           button.closest('.autocal-reset-menu')?.removeAttribute('open');
+          syncOptions();
           this.prepare(button.dataset.autocalAction);
         });
       });
@@ -1126,18 +1156,24 @@
     /** [fuelKind] = combustível de AGORA pela telemetria ('petrol', 'gas', …): a frase nunca manda "dirigir no GNV" com o carro na gasolina. */
     sentenceFor(human, acquisitionName, fuelKind) {
       const zones = list => list.map(zone => 'Z' + zone).join(', ');
-      if (acquisitionName === 'UNAVAILABLE' || acquisitionName === 'PROBE_FAILED' || acquisitionName === 'FAILED') {
+      if (['UNAVAILABLE', 'PROBE_FAILED', 'FAILED', 'DISCONNECTED', 'STALE_SESSION'].includes(acquisitionName)) {
         return { level: 'error', text: 'Sem leitura da ECU. Confira o cabo: o app tenta de novo sozinho.' };
+      }
+      const action = this.actionState || {};
+      if (action.busy === true && ['RESET_PETROL', 'RESET_GAS'].includes(action.action)) {
+        const fuel = action.action === 'RESET_PETROL' ? 'gasolina' : 'GNV';
+        return { level: 'neutral', text: 'Reler ' + fuel + ': conferindo o reinício na ECU…' };
       }
       if (acquisitionName === 'WAITING_TELEMETRY_SETTLE') return { level: 'neutral', text: 'Conectando à leitura da ECU…' };
       if (human.enabled === 0) return { level: 'warn', text: 'Leitura pausada. Toque em Iniciar leitura para continuar aprendendo.' };
       if (human.enabled === 1) {
-        if (human.gasMissingZones.length) {
-          return fuelKind === 'petrol'
-            ? { level: 'neutral', text: 'Aprendendo. Quando o carro passar para o GNV, falta ' + zones(human.gasMissingZones) + '.' }
-            : { level: 'neutral', text: 'Aprendendo: dirija normal no GNV. Falta ' + zones(human.gasMissingZones) + '.' };
-        }
-        if (human.petrolMissingZones.length) return { level: 'neutral', text: 'GNV completo. Falta a gasolina em ' + zones(human.petrolMissingZones) + '.' };
+        const petrol = human.petrolMissingZones;
+        const gas = human.gasMissingZones;
+        if (fuelKind === 'petrol' && petrol.length) return { level: 'neutral', text: 'Adquirindo gasolina · falta ' + zones(petrol) + '.' };
+        if (fuelKind === 'gas' && gas.length) return { level: 'neutral', text: 'Adquirindo GNV · falta ' + zones(gas) + '.' };
+        if (petrol.length) return { level: 'neutral', text: 'Gasolina pendente · falta ' + zones(petrol) + '. Aguarda uso na gasolina.' };
+        if (gas.length) return { level: 'neutral', text: 'GNV pendente · falta ' + zones(gas) + '. Aguarda uso no GNV.' };
+        if (human.petrolZones === null || human.gasZones === null) return { level: 'neutral', text: 'Aguardando a ECU confirmar as zonas de gasolina e GNV.' };
         if (human.gasZones === 4 && human.petrolZones === 4) return { level: 'ok', text: 'Gasolina e GNV aprendidos.' };
         return { level: 'neutral', text: 'Leitura ativa. Aguardando a ECU publicar as zonas.' };
       }
@@ -1343,8 +1379,8 @@
           node.dataset.state = state;
           node.dataset.active = acquired ? 'true' : 'false';
           const status = node.querySelector('small');
-          // Só o que falta aparece escrito: zona já lida fica só colorida (nada de "OK" repetido 8 vezes).
-          if (status) status.textContent = state === 'acquired' ? '' : state === 'missing' ? 'FALTA' : '—';
+          // Estado visível sem depender só da cor: adquirida ✓, falta FALTA, desconhecida —.
+          if (status) status.textContent = state === 'acquired' ? '✓' : state === 'missing' ? 'FALTA' : '—';
           node.setAttribute('aria-label', fuelLabel + ' Z' + (index + 1) + ': ' +
             (state === 'acquired' ? 'adquirida' : state === 'missing' ? 'falta adquirir' : 'estado não lido'));
         });
@@ -1391,17 +1427,7 @@
       const quota = finite(this.state?.maxAutomatch ?? snapshot.maxAutomatch);
       const step = automatch === null ? '—' : String(automatch) + (quota !== null ? '/' + quota : '');
       const restartBoth = epoch.petrolPending === true && epoch.gasPending === true;
-      const petrolRestart = epoch.petrolPending === true;
-      const gasRestart = epoch.gasPending === true;
-      const stage = restartBoth
-        ? 'Aguardando nova leitura de gasolina e GNV'
-        : petrolRestart
-          ? 'Gasolina reiniciada: a referência anterior não é a atual'
-          : gasRestart
-            ? 'GNV reiniciado: gasolina preservada; aguardando leitura nova da ECU'
-            : epoch.referencePending
-              ? 'GNV atual sendo adquirido: aguardando novo grupo de curvas da ECU'
-              : 'Coleta em andamento; ainda sem suporte para comparação';
+      const stage = AutoCalUxModel.epochNarrative(epoch);
 
       // A referência gasolina sobrevive ao RESET_GAS e ao AutoMatch, mas jamais
       // ao RESET_PETROL/RESET_ALL. Verifique também coerência temporal do PAR
@@ -1468,6 +1494,9 @@
         const x = value => left + (value - domain.xMin) / (domain.xMax - domain.xMin) * (width - left - right);
         const y = value => height - bottom -
           (value - domain.yMin) / (domain.yMax - domain.yMin) * (height - top - bottom);
+        // Acquisition mode uses the same fast telemetry/EaseCursor path as the
+        // comparison chart. The plot no longer waits for a slow snapshot refresh.
+        this.chartScale = { ...domain, width, height, xFor: x, yFor: y };
         const within = point => point.petrolMs >= domain.xMin && point.petrolMs <= domain.xMax &&
           (point.mapBar ?? point.petrolMapBar) >= domain.yMin &&
           (point.mapBar ?? point.petrolMapBar) <= domain.yMax;
@@ -1494,14 +1523,10 @@
           '<circle class="autocal-previous-gas-point" cx="' + x(point.petrolMs).toFixed(1) +
           '" cy="' + y(point.mapBar).toFixed(1) + '" r="4.5"></circle>').join('');
 
-        const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
-        const inDomain = live && live.petrolMs >= domain.xMin && live.petrolMs <= domain.xMax &&
-          live.mapBar >= domain.yMin && live.mapBar <= domain.yMax;
-        const liveMarkup = inDomain
-          ? '<circle class="autocal-live-point" cx="' + x(live.petrolMs).toFixed(1) +
-            '" cy="' + y(live.mapBar).toFixed(1) + '" r="6"></circle>' +
-            '<text class="autocal-live-label" x="' + (x(live.petrolMs) + 10).toFixed(1) +
-            '" y="' + (y(live.mapBar) - 8).toFixed(1) + '">AGORA</text>' : '';
+        const liveMarkup = '<g class="autocal-live-layer" data-chart-live display="none" aria-label="Posição atual do motor">' +
+          '<circle class="autocal-live-halo" r="13" cx="0" cy="0"></circle>' +
+          '<circle class="autocal-live-point" r="6" cx="0" cy="0"></circle>' +
+          '<text class="autocal-live-label" data-autocal-live-label x="0" y="0">AGORA</text></g>';
 
         chart = '<svg class="autocal-reference-svg" viewBox="0 0 1000 400" role="img" ' +
           'aria-label="Aquisição atual da ECU; referência gasolina independente; sem equivalência durante reset">' +
@@ -1517,6 +1542,7 @@
       host.innerHTML = chart || '<div class="chart-empty"><b>AQUISIÇÃO EM TEMPO REAL</b><span>' +
         escapeHtml(stage) + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.</span></div>';
       this.renderLiveNarrative();
+      this.renderLiveCursor();
     }
 
     renderReferenceChart(snapshot) {

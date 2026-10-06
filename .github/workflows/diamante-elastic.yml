@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   regression:
-    if: ${{ github.head_ref == 'work/platina-diamante-ui' }}
+    if: ${{ (github.head_ref == 'work/platina-diamante-ui' || github.head_ref == 'work/platina-autocal-coerencia') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
