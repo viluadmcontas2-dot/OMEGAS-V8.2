@@ -207,3 +207,86 @@
 .refino-route-screen { position: relative; }
 /* Refino: inspector explica o ponto (de quem, quando, por que conta) e histórico em palavras */
 /* O texto de contexto do ponto nunca empurra o inspector para fora da tela 1280x720: passa a rolar dentro da própria caixa (nada é cortado, só deixa de crescer a página). */
+
+
+/* 2026-10-06 — graph-first AutoCal for 1280×720.
+ * Global telemetry already tells RPM/MAP/fuel; this surface spends pixels on
+ * the acquisition itself. Z1–Z4 state lives on the graph edges, not in cards. */
+html body .ar-shell.ar-autocal .ar-chart-host {
+  height: clamp(340px, calc(100vh - 215px), 640px);
+  min-height: 340px;
+}
+.autocal-graph-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.autocal-graph-tools .ar-legend { flex: 1 1 auto; min-width: 0; }
+.autocal-legend-toggle {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: var(--veil-035);
+  color: var(--tone-cbd7e4);
+  font-size: 11px;
+}
+.autocal-inline-status {
+  flex: 0 1 auto;
+  max-width: 32ch;
+  margin: 0;
+  overflow: hidden;
+  color: var(--tone-cbd7e4);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.autocal-main-actions,
+.autocal-point-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+}
+.autocal-main-actions > button,
+.autocal-main-actions > .ar-more,
+.autocal-point-actions > button {
+  min-width: 0;
+  min-height: 58px;
+  flex: 1 1 0;
+}
+.autocal-main-actions button,
+.autocal-point-actions button,
+.autocal-main-actions > .ar-more > summary {
+  padding-inline: 9px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.autocal-point-actions [data-autocal-reacquire-selected] {
+  flex-grow: 1.25;
+}
+.autocal-point-actions [data-autocal-done-points] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+.autocal-reset-popover {
+  max-height: min(62vh, 410px);
+  overflow-y: auto;
+}
+.autocal-zone-petrol-edge,
+.autocal-zone-gas-edge {
+  opacity: .98;
+}
+@container (max-width: 860px) {
+  .autocal-main-actions button,
+  .autocal-point-actions button,
+  .autocal-main-actions > .ar-more > summary {
+    padding-inline: 6px;
+    font-size: 11px;
+  }
+}
