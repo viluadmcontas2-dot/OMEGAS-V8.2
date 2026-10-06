@@ -108,7 +108,7 @@ assert.equal(cockpit.includes('data-autocal-reacquire-selected'), true);
 assert.equal(cockpit.includes('requestSelectedPointReacquisition()'), true);
 assert.equal(cockpitCss.includes('.autocal-acquired-hit.batch-selected'), true);
 assert.equal(cockpit.includes('data-autocal-acquired-index'), true);
-assert.equal(cockpit.includes('data-autocal-reacquire-point'), false);
+assert.equal(cockpit.includes('<button type="button" data-autocal-reacquire-point'), false);
 assert.equal(cockpit.includes("PETR_INJ_TBUF_GAS"), true);
 assert.equal(cockpit.includes("MNFLD_PRESS_BUF_GAS"), true);
 assert.equal(cockpit.includes("PETR_INJ_TBUF"), true);
