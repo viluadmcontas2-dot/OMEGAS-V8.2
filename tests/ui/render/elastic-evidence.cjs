@@ -131,23 +131,24 @@ async function audit(page,route,height,name){
   assert.match(await page.locator('#mapSelectionCount').textContent(),/1 selecionada/);
  }finally{await browser.close();}
  // Transições sintéticas sobre os vetores reais: nenhuma escrita/protocolo é simulada como prova física.
- for(const fuel of ['petrol','gas']){
+ for(const transition of ['petrol','gas','automatch']){
+  const fuel=transition==='automatch'?'gas':transition;
   const {browser,page,errors}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672},scn:{noStalls:true}});
   try{
    await go(page,'autocal');await page.waitForTimeout(1700);
-   await page.evaluate(fuel=>{
+   await page.evaluate(({fuel,transition})=>{
     const screen=window.OmegasApp.autoCalCockpit;
     const original=screen.api.projection();window.__transitionOriginal=original;
     const next=JSON.parse(JSON.stringify(original));next.referenceUsable=false;
     next.acquisitionZones[fuel]=[];
-    next.liveAcquisitionEpoch={comparisonAllowed:false,petrolPending:fuel==='petrol',gasPending:fuel==='gas',petrolReferencePending:fuel==='petrol',gasReferencePending:fuel==='gas',petrolGeneration:fuel==='petrol'?1:0,gasGeneration:fuel==='gas'?1:0,nativeAutoMatchCount:1};
+    next.liveAcquisitionEpoch={comparisonAllowed:false,petrolPending:fuel==='petrol',gasPending:fuel==='gas',petrolReferencePending:fuel==='petrol',gasReferencePending:fuel==='gas',petrolGeneration:fuel==='petrol'?1:0,gasGeneration:fuel==='gas'?1:0,nativeAutoMatchCount:transition==='automatch'?2:1};
     const keys=fuel==='petrol'?['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF','MNFLD_PRESS_BUF','NUM_BUF_UPD_PETR','ACQUIRED_ZONES_PETROL']:['GAS_MNFLD_PRESS_RV','PETR_INJ_TBUF_GAS','MNFLD_PRESS_BUF_GAS','NUM_BUF_UPD_GAS','ACQUIRED_ZONES_GAS'];
     for(const snap of [next.snapshot,next.nativeSnapshot])for(const field of snap.fields||[])if(keys.includes(field.key)){field.status='STALE_EPOCH';field.rawValues=[];field.physicalValues=[];}
     window.__transitionProjection=next;
-    screen.api={...screen.api,projection:()=>window.__transitionProjection,actionStatus:()=>({action:fuel==='petrol'?'RESET_PETROL':'RESET_GAS',state:'CONFIRMED',busy:false})};screen.refresh();
+    screen.api={...screen.api,projection:()=>window.__transitionProjection,actionStatus:()=>transition==='automatch'?{}:({action:fuel==='petrol'?'RESET_PETROL':'RESET_GAS',state:'CONFIRMED',busy:false})};screen.refresh();
     window.__transitionSvg=document.querySelector('#autocalReferenceChart svg');
     window.__transitionRoot=document.querySelector('.screen.active');
-   },fuel);
+   },{fuel,transition});
    assert.equal(await page.locator('#autocalReferenceChart svg').count(),1,'reinício mantém um gráfico com escala');
    assert.ok(await page.locator('#autocalReferenceChart .autocal-axis-tick-x').count()>0,'eixos permanecem legíveis na reaquisição');
    assert.equal(await page.locator('#autocalReferenceChart .autocal-reference-line.'+fuel).count(),0,'curva reiniciada não aparece como atual');
@@ -162,10 +163,10 @@ async function audit(page,route,height,name){
     return {sameSvg:document.querySelector('#autocalReferenceChart svg')===svg,sameScreen:document.querySelector('.screen.active')===window.__transitionRoot,moved:before!==layer.style.transform,visible:!layer.hasAttribute('display')};
    });
    assert.deepEqual(live,{sameSvg:true,sameScreen:true,moved:true,visible:true},'telemetria permanece viva sem remontar tela ou SVG');
-   await audit(page,'autocal',672,'autocal-reinicio-'+fuel);
+   await audit(page,'autocal',672,'autocal-reinicio-'+transition);
    await page.evaluate(()=>{window.__transitionProjection=window.__transitionOriginal;window.OmegasApp.autoCalCockpit.refresh();});
    assert.equal(await page.locator('#autocalReferenceChart .autocal-reference-line.petrol').count(),1,'referência nova volta sem recarregar a tela');
-   await audit(page,'autocal',672,'autocal-retomada-'+fuel);assert.deepEqual(errors,[]);
+   await audit(page,'autocal',672,'autocal-retomada-'+transition);assert.deepEqual(errors,[]);
   }finally{await browser.close();}
  }
  fs.writeFileSync(path.join(out,'metrics.json'),JSON.stringify({source:process.env.OMEGAS_SOURCE_SHA,proof:'Chromium, ponte falsa com fixtures reais; não é aparelho físico',metrics},null,2));
