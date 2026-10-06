@@ -559,10 +559,11 @@ def _interior_ok(band, tps):
 
 
 def plausible_indices(pairs, episodes=None):
-    """Descarta a faixa inteira cuja razão mediana GNV/gasolina é implausível, faixa fina (< 3 pares), faixa sem
-    cobertura interna e, quando há episódios, faixa com menos de MIN_BAND_EPISODES episódios distintos. Par de
-    episódio desconhecido (< 0) sai sozinho (não desliga o portão das outras faixas).
-    Retorna (índices_mantidos, faixas_outlier). Espelho de AutoMatchRefinedEngine.plausibleIndices."""
+    """Filtro robusto local antes da cobertura; espelho do Kotlin.
+
+    Retorna (índices_mantidos, faixas_outlier, pares_rejeitados). Rejeição é só
+    evidência do cálculo, nunca exclusão/escrita na ECU.
+    """
     gated = episodes is not None and len(episodes) == len(pairs)
     groups = {}
     for i, (tp, tg) in enumerate(pairs):
@@ -570,24 +571,33 @@ def plausible_indices(pairs, episodes=None):
         if band is None or (gated and episodes[i] < 0):
             continue
         groups.setdefault(band, []).append(i)
-    kept, outliers = [], 0
+    kept, outliers, rejected_pairs = [], 0, 0
     for band in sorted(groups):
         group = groups[band]
-        if gated and len({episodes[i] for i in group}) < MIN_BAND_EPISODES:
+        if not group:
             continue
-        ratios = sorted(pairs[i][1] / pairs[i][0] for i in group)
-        median = ratios[len(ratios) // 2]
-        if not (TELEMETRY_RATIO_MIN <= median <= TELEMETRY_RATIO_MAX):
+        logs = [math.log(pairs[i][1] / pairs[i][0]) for i in group]
+        weights = [1.0] * len(logs)
+        center = weighted_median(logs, weights)
+        center_ratio = math.exp(center)
+        if not (TELEMETRY_RATIO_MIN <= center_ratio <= TELEMETRY_RATIO_MAX):
             outliers += 1
+            rejected_pairs += len(group)
             continue
-        if len(group) < BAND_MATURE_COUNT or not _interior_ok(band, [pairs[i][0] for i in group]):
+        mad = weighted_median([abs(x - center) for x in logs], weights) * 1.4826
+        limit = max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad)
+        coherent = [idx for idx, log_ratio in zip(group, logs) if abs(log_ratio - center) <= limit]
+        rejected_pairs += len(group) - len(coherent)
+        if gated and len({episodes[i] for i in coherent}) < MIN_BAND_EPISODES:
             continue
-        kept.extend(group)
-    return sorted(kept), outliers
+        if len(coherent) < BAND_MATURE_COUNT or not _interior_ok(band, [pairs[i][0] for i in coherent]):
+            continue
+        kept.extend(coherent)
+    return sorted(kept), outliers, rejected_pairs
 
 
 def plausible_pairs(pairs, episodes=None):
-    kept, outliers = plausible_indices(pairs, episodes)
+    kept, outliers, _rejected_pairs = plausible_indices(pairs, episodes)
     return [pairs[i] for i in kept], outliers
 
 
@@ -811,6 +821,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
     gas_raw = [raw(snapshot, k) for k in ("PETR_INJ_TBUF_GAS", "MNFLD_PRESS_BUF_GAS", "NUM_BUF_UPD_GAS")]
     targets, rejected, petrol, gas = [], [], [], []
     dropped_native = 0
+    telemetry_outlier_pairs = 0
     stats = {}
     if all(v is not None for v in petrol_raw + gas_raw):
         petrol, rp = monotone_fit(band_points(*petrol_raw, stats=stats))
@@ -836,7 +847,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         keep = [i for i, (tp, tg) in enumerate(raw_pairs) if tp >= TELEMETRY_MIN_MS and tg > 0 and tp <= axis_ms[-1]]
         candidate = [raw_pairs[i] for i in keep]
         cand_eps = [raw_eps[i] for i in keep] if raw_eps is not None else None
-        kept_idx, outlier_bands = plausible_indices(candidate, cand_eps)
+        kept_idx, outlier_bands, telemetry_outlier_pairs = plausible_indices(candidate, cand_eps)
         usable = [candidate[i] for i in kept_idx]
         usable_w = pair_weights(usable, [cand_eps[i] for i in kept_idx] if cand_eps is not None else None)
         # A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
@@ -949,6 +960,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         "invalidEvidenceBands": stats.get("invalid", 0),
         "thinBandsIgnored": stats.get("thin", 0),
         "telemetryOutlierBands": outlier_bands,
+        "telemetryOutlierPairs": telemetry_outlier_pairs,
         "telemetryPairsUsed": len(usable) if equivalence_available else 0,
         "telemetryDroppedByNative": dropped_native,
         "deadBandPoints": dead_band,

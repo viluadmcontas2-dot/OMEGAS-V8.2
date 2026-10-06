@@ -62,7 +62,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         const val ECU_REF_MARGIN_BAR = 0.03
         /**
          * Lacuna entre leituras estáveis de GNV que abre outro trecho (guardado em [Obs.episode]; diagnóstico).
-         * O portão de evidência NÃO usa este id: usa as visitas por faixa de [EvidencePairs] (≥ 60 s entre trechos).
+         * A semântica temporal atual vem de [EvidencePairs.VISIT_GAP_MS] (3 s); não existe portão legado de 60 s.
          */
         const val EPISODE_GAP_MS = EvidencePairs.VISIT_GAP_MS
         /** Depois de o app gravar a curva, uma impressão digital igual à ANTERIOR por este tempo é leitura velha, não mudança externa. */

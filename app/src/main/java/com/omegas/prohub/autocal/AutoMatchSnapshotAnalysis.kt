@@ -275,6 +275,7 @@ object AutoMatchSnapshotAnalysis {
             .put("invalidEvidenceBands", result.invalidEvidenceBands)
             .put("thinBandsIgnored", result.thinBandsIgnored)
             .put("telemetryOutlierBands", result.telemetryOutlierBands)
+            .put("telemetryOutlierPairs", result.telemetryOutlierPairs)
             .put("telemetryPairsUsed", result.telemetryPairsUsed)
             .put("outOfRangePoints", result.outOfRangePoints)
             .put("buffersCoherent", buffersCoherent)

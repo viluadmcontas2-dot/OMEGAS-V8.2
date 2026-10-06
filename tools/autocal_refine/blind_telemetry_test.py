@@ -85,8 +85,8 @@ def tag_episodes(obs, gap_ms=EPISODE_GAP_MS):
 
 
 def visit_ids(items):
-    """Id de episódio de cada par = (faixa+1)·100000 + visita: dentro da faixa do livro, lacuna >= 60 s entre pares abre outra
-    visita (espelho de EvidencePairs.withVisitIds). items = [(tp, at)] em ordem de chegada; devolve ids paralelos."""
+    """Id de episódio de cada par = (faixa+1)·100000 + visita: dentro da faixa do livro,
+    a lacuna segue VISIT_GAP_MS (hoje 3 s), espelho de EvidencePairs.withVisitIds."""
     bands = {}
     for i, (tp, _at) in enumerate(items):
         b = oracle.ledger_band(tp)

@@ -74,8 +74,8 @@ class RefinementRealSessionTest {
 
     @Test
     fun `a conducao real da sessao REFERENCE nao tem cobertura independente e falha fechada`() {
-        // Achado da revisão adversarial: nesta sessão real nenhuma faixa tem pares espalhados por dentro dela em ≥ 3
-        // visitas separadas por ≥ 60 s. Sem cobertura de verdade NÃO há proposta (antes saía uma, de 8 pares de um trecho).
+        // Achado da revisão adversarial: nesta sessão real a condução não satisfaz a cobertura independente exigida
+        // pela arquitetura atual. Sem cobertura de verdade NÃO há proposta (antes saía uma, de 8 pares de um trecho).
         val ledger = replay(REFERENCE)
         val pairs = ledger.drivingPairs()
         val snapshot = RealSessionReplaySupport.snapshot(RealSessionReplaySupport.fixture(REFERENCE), 962)

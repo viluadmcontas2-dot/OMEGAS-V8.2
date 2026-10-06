@@ -85,8 +85,8 @@ object AutoMatchRefinedEngine {
     const val TELEMETRY_ONLY_BAND_PAIRS = 8
     const val TELEMETRY_ONLY_MIN_BANDS = 3
     /**
-     * Uma faixa só puxa proposta com pares de ao menos este número de episódios = visitas à faixa separadas por
-     * ≥ 60 s de condução ([EvidencePairs.VISIT_GAP_MS]); leituras estáveis seguidas NÃO são episódios distintos.
+     * Uma faixa só puxa proposta com pares de ao menos [EvidencePairs.MIN_VISITS] visitas lógicas.
+     * A definição temporal pertence a [EvidencePairs] (hoje 3 s); não existe portão legado de 60 s.
      */
     const val MIN_BAND_EPISODES = EvidencePairs.MIN_VISITS
     /** Peso por episódio: um episódio de uma faixa vale no máximo este número de pares (o resto é a mesma leitura repetida). */
@@ -213,6 +213,8 @@ object AutoMatchRefinedEngine {
         val thinBandsIgnored: Int = 0,
         /** Faixas de condução descartadas por razão GNV/gasolina implausível. */
         val telemetryOutlierBands: Int = 0,
+        /** Pares locais rejeitados por desvio robusto dos vizinhos da mesma faixa. */
+        val telemetryOutlierPairs: Int = 0,
         val telemetryPairsUsed: Int = 0,
         /** Alvos da telemetria descartados porque a evidência nativa madura já cobre o ponto. */
         val telemetryDroppedByNative: Int = 0,
@@ -268,6 +270,7 @@ object AutoMatchRefinedEngine {
         var usablePairs: List<kotlin.Pair<Double, Double>> = emptyList()
         var usableWeights: List<Double> = emptyList()
         var outlierBands = 0
+        var outlierPairs = 0
         var usedCount = 0
         if (fine != null) {
             // Lote H: bins finos. Bin fino (< 3 pares) não é evidência; a faixa de 18 precisa de ≥ 3 episódios.
@@ -287,6 +290,7 @@ object AutoMatchRefinedEngine {
             usablePairs = plausible.kept.map { candidates[it] }
             usableWeights = pairWeights(usablePairs, episodeIds?.let { ids -> plausible.kept.map { ids[it] } })
             outlierBands = plausible.outliers
+            outlierPairs = plausible.rejectedPairs
             usedCount = usablePairs.size
         }
         // A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
@@ -411,6 +415,7 @@ object AutoMatchRefinedEngine {
             invalidEvidenceBands = stats.invalid,
             thinBandsIgnored = stats.thin,
             telemetryOutlierBands = outlierBands,
+            telemetryOutlierPairs = outlierPairs,
             telemetryPairsUsed = if (equivalence) usedCount else 0,
             telemetryDroppedByNative = droppedByNative,
             deadBandPoints = deadBand,
@@ -483,14 +488,18 @@ object AutoMatchRefinedEngine {
         return if (tp >= EquivalenceLedger.BANDS.last().second) EquivalenceLedger.BANDS.size else null
     }
 
-    internal class Plausible(val kept: List<Int>, val outliers: Int)
+    internal class Plausible(val kept: List<Int>, val outliers: Int, val rejectedPairs: Int = 0)
 
     /**
-     * Descarta a faixa inteira cuja razão mediana GNV/gasolina é implausível ([TELEMETRY_RATIO_MIN]..[TELEMETRY_RATIO_MAX]),
-     * a faixa fina (< [BAND_MATURE_COUNT] pares) e a faixa cujos pares não se espalham por dentro dela
-     * ([EvidencePairs.interiorCovered]). Com episódios: a faixa precisa de [MIN_BAND_EPISODES] episódios distintos, e o par
-     * de episódio desconhecido (< 0) não conta e sai (um único -1 não desliga o portão das outras faixas).
-     * Devolve os ÍNDICES mantidos (em ordem de entrada) e o nº de faixas outlier.
+     * Filtra evidência local ANTES de contar cobertura.
+     *
+     * A faixa inteira continua sendo descartada quando sua razão central GNV/gasolina sai de
+     * [TELEMETRY_RATIO_MIN]..[TELEMETRY_RATIO_MAX]. Dentro de uma faixa plausível, cada par é comparado
+     * aos vizinhos da própria faixa em ln(T_gnv/T_petrol): centro por mediana e dispersão por MAD.
+     * Só os pares coerentes podem satisfazer maturidade, visitas e cobertura interna. Assim um ponto
+     * isolado/repetido não fabrica cobertura, sem regra absoluta do tipo "X% abaixo da curva".
+     *
+     * Isto rejeita SOMENTE evidência do cálculo. Não apaga ponto e não escreve na ECU.
      */
     internal fun plausibleIndices(pairs: List<kotlin.Pair<Double, Double>>, episodes: List<Int>? = null): Plausible {
         val gated = episodes != null && episodes.size == pairs.size
@@ -502,18 +511,27 @@ object AutoMatchRefinedEngine {
         }
         val kept = ArrayList<Int>()
         var outliers = 0
+        var rejectedPairs = 0
         groups.entries.forEach { (band, group) ->
-            // Poucos episódios: oito pares de um só trecho são um acaso, não cobertura.
-            if (gated && group.map { episodes!![it] }.toSet().size < MIN_BAND_EPISODES) return@forEach
-            val ratios = group.map { pairs[it].second / pairs[it].first }.sorted()
-            val median = ratios[ratios.size / 2]
-            if (median < TELEMETRY_RATIO_MIN || median > TELEMETRY_RATIO_MAX) {
+            if (group.isEmpty()) return@forEach
+            val logRatios = group.map { i -> ln(pairs[i].second / pairs[i].first) }
+            val unitWeights = List(logRatios.size) { 1.0 }
+            val center = weightedMedian(logRatios, unitWeights)
+            val centerRatio = exp(center)
+            if (centerRatio < TELEMETRY_RATIO_MIN || centerRatio > TELEMETRY_RATIO_MAX) {
                 outliers++
-            } else if (group.size >= BAND_MATURE_COUNT && interiorOk(band, group.map { pairs[it].first })) {
-                kept += group
+                rejectedPairs += group.size
+                return@forEach
             }
+            val mad = weightedMedian(logRatios.map { abs(it - center) }, unitWeights) * 1.4826
+            val limit = max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad)
+            val coherent = group.filterIndexed { local, _ -> abs(logRatios[local] - center) <= limit }
+            rejectedPairs += group.size - coherent.size
+
+            if (gated && coherent.map { episodes!![it] }.toSet().size < MIN_BAND_EPISODES) return@forEach
+            if (coherent.size >= BAND_MATURE_COUNT && interiorOk(band, coherent.map { pairs[it].first })) kept += coherent
         }
-        return Plausible(kept.sorted(), outliers)
+        return Plausible(kept.sorted(), outliers, rejectedPairs)
     }
 
     private fun interiorOk(band: Int, tps: List<Double>): Boolean {

@@ -1185,8 +1185,15 @@
       this.renderEvents(events);
       this.renderActionState();
       this.renderPointActions();
-      const rejected = this.referenceUsable === true && Array.isArray(this.analysis?.rejectedBands) ? this.analysis.rejectedBands.length : 0;
-      this.text('autocalNoiseSummary', rejected ? D.plural(rejected, 'ponto incoerente ignorado', 'pontos incoerentes ignorados') + ' no cálculo do Refino' : '');
+      const rejectedNative = this.referenceUsable === true && Array.isArray(this.analysis?.rejectedBands) ? this.analysis.rejectedBands.length : 0;
+      const rejectedTelemetry = Math.max(0, Number(this.analysis?.telemetryOutlierPairs) || 0);
+      const rejectedEvidence = rejectedNative + rejectedTelemetry;
+      this.text(
+        'autocalNoiseSummary',
+        rejectedEvidence
+          ? D.plural(rejectedEvidence, 'evidência incoerente ignorada', 'evidências incoerentes ignoradas') + ' só no cálculo do Refino'
+          : '',
+      );
     }
 
     /** UMA frase humana de estado (nada de jargão): o que a ECU está fazendo e o que falta. */

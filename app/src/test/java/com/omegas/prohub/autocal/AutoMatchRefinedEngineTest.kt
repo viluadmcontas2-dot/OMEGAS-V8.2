@@ -79,6 +79,7 @@ class AutoMatchRefinedEngineTest {
             "dois pontos incoerentes repetidos não podem completar sozinhos o segundo terço da faixa",
             plausible.kept.isEmpty(),
         )
+        assertEquals("os dois ruídos ficam fora só da evidência local", 2, plausible.rejectedPairs)
     }
 
     @Test
