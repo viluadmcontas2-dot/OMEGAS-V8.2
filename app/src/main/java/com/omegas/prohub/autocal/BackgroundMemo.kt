@@ -49,6 +49,18 @@ class BackgroundMemo(
         }
     }
 
+    /**
+     * Leitura para superfícies síncronas como addJavascriptInterface.
+     *
+     * Nunca executa [compute] na thread chamadora: marca o memo como observado e
+     * devolve o último valor seguro, mesmo vencido/invalidado, enquanto o warmer
+     * produz a próxima versão. Sem valor anterior, devolve [fallback].
+     */
+    fun getNonBlocking(fallback: String): String {
+        requestedAt = clock()
+        return value ?: fallback
+    }
+
     fun invalidate() {
         valid = false
     }

@@ -30,6 +30,27 @@ import java.security.MessageDigest
  * Instrumentação: [statusJson] ganhou `acquisitionTiming` (idade do vivo, idade/duração por grupo,
  * fatia de barramento estimada), `slotArbiter` e `tablesRevision`.
  */
+internal object NativeAutoCalAcquisitionMemoKey {
+    private val keys = listOf(
+        "usbSessionId",
+        "nativeAutoMatchCount",
+        "petrolGeneration",
+        "gasGeneration",
+        "petrolPending",
+        "gasPending",
+        "referencePending",
+        "petrolReferencePending",
+        "gasReferencePending",
+        "comparisonAllowed",
+    )
+
+    fun from(epoch: JSONObject): String =
+        keys.joinToString("|") { key ->
+            val value = if (epoch.has(key)) epoch.opt(key) else "<missing>"
+            "$key=$value"
+        }
+}
+
 class NativeAutoCalMonitor(
     private val serial: Mp48SerialScheduler,
     private val calibrationBusy: () -> Boolean,
@@ -644,7 +665,7 @@ class NativeAutoCalMonitor(
     fun tablesRevision(): Long = tablesRevisionValue
 
     private var acquisitionMemo: Pair<JSONObject, JSONObject>? = null
-    private var acquisitionMemoBlocked = false
+    private var acquisitionMemoEpochKey = ""
 
     /**
      * Leve, para o piloto do refino (a cada tick do serviço): contador vivo de AutoMatch,
@@ -668,10 +689,14 @@ class NativeAutoCalMonitor(
         // projeção; o Refino/piloto lia o snapshot cru e contava zonas velhas. Mesma máscara aqui (B4, 2026-10-05).
         val epoch = acquisitionEpochJson()
         val blocked = !epoch.optBoolean("comparisonAllowed", false)
+        val epochKey = NativeAutoCalAcquisitionMemoKey.from(epoch)
         val acquisition = if (snapshot.has("fields")) {
             val source = if (blocked) AutoCalUiProjection.maskedAcquisition(snapshot, epoch, false) else snapshot
-            acquisitionMemo?.takeIf { it.first === snapshot && acquisitionMemoBlocked == blocked }?.second
-                ?: AutoCalAcquisition.fromSnapshot(source).also { acquisitionMemo = snapshot to it; acquisitionMemoBlocked = blocked }
+            acquisitionMemo?.takeIf { it.first === snapshot && acquisitionMemoEpochKey == epochKey }?.second
+                ?: AutoCalAcquisition.fromSnapshot(source).also {
+                    acquisitionMemo = snapshot to it
+                    acquisitionMemoEpochKey = epochKey
+                }
         } else null
         JSONObject()
             .put("autoMatchCount", count ?: JSONObject.NULL)
