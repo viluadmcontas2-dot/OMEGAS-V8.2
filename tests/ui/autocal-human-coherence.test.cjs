@@ -43,9 +43,10 @@ test('desconexão e zonas desconhecidas não instruem dirigir para zonas inventa
  assert.match(pending.text,/Aguardando.*zonas/i);assert.doesNotMatch(pending.text,/Falta Z1/);
 });
 const L=require('./wiring/lib.cjs');
-test('zonas ficam na superfície principal e opções abertas têm estado e fechamento explícitos',()=>{
+test('zonas ficam dentro do gráfico e opções abertas têm estado e fechamento explícitos',()=>{
  const app=L.boot();try{app.go('autocal');app.settle(3);
-  assert.equal(app.byId('autocalZoneMeter').closest('details'),null);
+  assert.equal(app.$('#autocalZoneMeter'),null);
+  assert.ok(app.$('#autocalReferenceChart [data-autocal-zone-surface="1"]'));
   const menu=app.$('.ar-more'),summary=menu.querySelector('summary');
   assert.equal(summary.getAttribute('aria-expanded'),'false');
   menu.setAttribute('open','');menu.dispatchEvent(new app.win.Event('toggle'));
@@ -77,7 +78,7 @@ test('normal → gasolina reiniciada → curva nova restaura o gráfico sem refe
   for(const snap of [reset.snapshot,reset.nativeSnapshot]) for(const f of snap.fields||[]) if(['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF','MNFLD_PRESS_BUF','NUM_BUF_UPD_PETR','ACQUIRED_ZONES_PETROL'].includes(f.key)){f.status='STALE_EPOCH';f.rawValues=[];f.physicalValues=[];}
   let current=reset;screen.api={...screen.api,projection:()=>current,actionStatus:()=>({action:'RESET_PETROL',state:'CONFIRMED',busy:false})};screen.refresh();
   assert.equal(app.$('#autocalReferenceChart .autocal-reference-line.petrol'),null);
-  assert.equal(app.$('[data-autocal-zone-petrol="0"]').dataset.state,'unknown');
+  assert.equal(app.$('#autocalReferenceChart [data-autocal-zone-surface="1"]').dataset.petrolState,'unknown');
   assert.match(app.byId('autocalChartInspector').textContent,/gasolina/i);
   current=original;screen.refresh();assert.ok(app.$('#autocalReferenceChart [data-chart-live]'));
   assert.equal(screen.referenceUsable,true);L.assertClean(app,'transição gasolina');
@@ -94,7 +95,8 @@ test('curva pendente não afirma aquisição ativa com leitura pausada ou descon
 
 test('comandos operacionais ficam fora dos painéis de detalhes',()=>{
  const app=L.boot();try{app.go('autocal');app.settle(3);
-  for(const selector of ['[data-autocal-action="RESET_GAS"]','[data-autocal-action="RESET_PETROL"]','[data-autocal-action="RESET_K_FACTOR"]','[data-autocal-sessions]']) assert.equal(app.$(selector).closest('details'),null,selector);
+  for(const selector of ['[data-autocal-action="RESET_GAS"]','[data-autocal-action="RESET_PETROL"]','[data-autocal-sessions]']) assert.equal(app.$(selector).closest('details'),null,selector);
+  assert.ok(app.$('[data-autocal-action="RESET_K_FACTOR"]').closest('.ar-more'),'reset K secundário fica em Mais opções');
   app.$('[data-autocal-sessions]').click();assert.equal(app.$('.screen.active').dataset.screen,'sessions');
   app.go('refino');app.settle(3);
   for(const selector of ['[data-refino-reset-gas]','[data-refino-acquisition]']) assert.equal(app.$(selector).closest('details'),null,selector);
@@ -109,7 +111,7 @@ test('pontos têm comandos tocáveis na barra, seleção múltipla e conferênci
   let status={};let targets=[];
   screen.api={...screen.api,actionStatus:()=>status,preparePointDeleteBatch:t=>{targets=t;return {ok:true,prepared:true,preparationId:'batch'};},execute:()=>{status={action:'DELETE_POINT',state:'READING_AFTER',busy:true};return {ok:true,started:true};}};
   const svg=app.$('#autocalReferenceChart svg');
-  for(const p of points){screen.inspectAcquiredPoint(p.fuel,p.index);app.$('[data-autocal-toggle-point-selection]').click();}
+  for(const p of points) screen.toggleAcquiredPointSelection(p.fuel,p.index);
   assert.equal(screen.selectedAcquiredPoints.size,2);
   const button=app.$('[data-autocal-reacquire-selected]');assert.equal(button.closest('details'),null);assert.equal(button.closest('.ar-readout'),null);
   assert.equal(app.$('#autocalChartInspector button'),null);assert.match(button.textContent,/\(2\)/);
@@ -117,7 +119,8 @@ test('pontos têm comandos tocáveis na barra, seleção múltipla e conferênci
   button.click();assert.equal(targets.length,2);assert.equal(screen.selectedAcquiredPoints.size,2);assert.equal(button.disabled,true);
   status={action:'DELETE_POINT',state:'FAILED',busy:false};screen.refresh();assert.equal(screen.selectedAcquiredPoints.size,2);assert.equal(button.disabled,false);
   button.click();
-  status={action:'DELETE_POINT',state:'CONFIRMED',busy:false};screen.refresh();assert.equal(screen.selectedAcquiredPoints.size,0);assert.equal(app.$('.autocal-point-actions').hidden,true);
+  status={action:'DELETE_POINT',state:'CONFIRMED',busy:false};screen.refresh();assert.equal(screen.selectedAcquiredPoints.size,0);
+  assert.equal(app.$('[data-autocal-reacquire-selected]').hidden,true);assert.equal(app.$('[data-autocal-sessions]').hidden,false);
   L.assertClean(app,'seleção e conferência');
  }finally{app.destroy();}
 });
