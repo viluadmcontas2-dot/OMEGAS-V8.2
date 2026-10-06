@@ -613,6 +613,44 @@ class AutoCalNativeActionManagerTest {
         manager.close()
     }
 
+    @Test
+    fun `readquisicao automatica registra mutacao sem fingir confirmacao humana`() {
+        val receiptFile = temporaryFile()
+        val witnesses = gasReadbackFields()
+        val requests = mutableListOf<ByteArray>()
+        val manager = manager(
+            receiptFile = receiptFile,
+            fieldsForReceipt = witnesses,
+        ) { request, _, _, _ ->
+            requests += request
+            reply(request, validReadPayloadOrNull(request, witnesses) ?: byteArrayOf())
+        }
+
+        val result = manager.executeAutomaticPointDelete(
+            target = AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, 8),
+            evidence = org.json.JSONObject()
+                .put("reason", "ISOLATED_NATIVE_POINT_AT_IDLE")
+                .put("rpm", 870)
+                .put("correlationConfidence", 0.92),
+        )
+
+        assertTrue(result.toString(), result.getBoolean("ok"))
+        awaitIdle(manager)
+        val receipts = manager.receiptsJson()
+        assertEquals(1, receipts.length())
+        val receipt = receipts.getJSONObject(0)
+        assertEquals("DELETE_POINT", receipt.getString("action"))
+        assertTrue(receipt.getBoolean("automatic"))
+        assertFalse(receipt.getBoolean("manualOnly"))
+        assertFalse(receipt.getBoolean("humanConfirmed"))
+        assertEquals("ISOLATED_NATIVE_POINT_AT_IDLE", receipt.getJSONObject("automationEvidence").getString("reason"))
+        assertArrayEquals(
+            AutoCalPointDeleteProtocol.commit(),
+            requests[2],
+        )
+        assertTrue(requests.size >= 3 + witnesses.size)
+    }
+
     private fun petrolReadbackFields(): List<AutoCalProtocol.Field> = listOf(
         AutoCalProtocol.NUM_BUF_UPD_PETR,
         AutoCalProtocol.PETR_INJ_TBUF,
