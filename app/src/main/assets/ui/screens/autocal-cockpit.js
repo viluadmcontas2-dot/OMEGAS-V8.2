@@ -786,7 +786,7 @@
                         </section>
                       </div>
                     </details>
-                    <p>O AutoMatch continua sendo decidido pela ECU. Reler reinicia somente o combustível escolhido.</p>
+                    <p>O AutoMatch é automático e decidido pela ECU. Reler reinicia somente o combustível escolhido.</p>
                   </div>
                 </details>
               </div>
