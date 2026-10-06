@@ -734,6 +734,12 @@
           this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateCursor(timestamp));
         }
         if (this.firstRefreshPending) { this.firstRefreshPending = false; this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
+        else if (this.projectionWarming) {
+          // A bridge é deliberadamente não bloqueante. Enquanto o warmer produz a primeira
+          // projeção autoritativa, relê a 5 Hz sem esperar o watchdog de 2,5 s.
+          this.refresh();
+          this.dataGate.mark();
+        }
         else if (this.dataDirty) { this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
         this.renderLiveCursor();
       });
@@ -944,6 +950,7 @@
       const authoritative = projection?.ok === true;
       const previousProjection = this.projection || {};
       this.projection = projection;
+      this.projectionWarming = !authoritative;
 
       if (!authoritative) {
         const message = String(projection?.error || 'O AutoCal da ECU não respondeu com estado confiável.');
