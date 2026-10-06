@@ -1430,7 +1430,7 @@
         axisAt !== null && rvAt !== null && limit !== null && Math.abs(axisAt - rvAt) <= limit,
         ['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF_GAS_PREV','MNFLD_PRESS_BUF_GAS_PREV','MNFLD_PRESS_THD','ACQUIRED_ZONES_PETROL','ACQUIRED_ZONES_GAS','MUL_ACT']
           .map(name => [field(snapshot, name)?.status, physicalVector(snapshot, name)]),
-        Math.round(host.clientWidth || 1000), Math.round(host.clientHeight || 400),
+        Math.round((host.clientWidth || 1000) / 16), Math.round((host.clientHeight || 400) / 16),
         ns.CurveChart?.viewKey(this.chartView)]);
       if (this.epochChartHost === host && this.epochChartKey === key &&
           this.epochChartNode && host.firstElementChild === this.epochChartNode) {

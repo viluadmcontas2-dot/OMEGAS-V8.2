@@ -138,6 +138,7 @@ async function audit(page,route,height,name){
    await go(page,'autocal');await page.waitForTimeout(1700);
    await page.evaluate(({fuel,transition})=>{
     const screen=window.OmegasApp.autoCalCockpit;
+    window.__transitionRoot=document.querySelector('.screen.active');
     const original=screen.api.projection();window.__transitionOriginal=original;
     const next=JSON.parse(JSON.stringify(original));next.referenceUsable=false;
     next.acquisitionZones[fuel]=[];
@@ -146,22 +147,27 @@ async function audit(page,route,height,name){
     for(const snap of [next.snapshot,next.nativeSnapshot])for(const field of snap.fields||[])if(keys.includes(field.key)){field.status='STALE_EPOCH';field.rawValues=[];field.physicalValues=[];}
     window.__transitionProjection=next;
     screen.api={...screen.api,projection:()=>window.__transitionProjection,actionStatus:()=>transition==='automatch'?{}:({action:fuel==='petrol'?'RESET_PETROL':'RESET_GAS',state:'CONFIRMED',busy:false})};screen.refresh();
-    window.__transitionSvg=document.querySelector('#autocalReferenceChart svg');
-    window.__transitionRoot=document.querySelector('.screen.active');
    },{fuel,transition});
+   // A mudança de mensagem pode alterar a altura disponível: concluir o layout
+   // antes de medir atualizações com geometria estável, sem parar a leitura.
+   await page.waitForTimeout(250);
+   await page.evaluate(()=>{window.OmegasApp.autoCalCockpit.refresh();window.__transitionSvg=document.querySelector('#autocalReferenceChart svg');});
    assert.equal(await page.locator('#autocalReferenceChart svg').count(),1,'reinício mantém um gráfico com escala');
    assert.ok(await page.locator('#autocalReferenceChart .autocal-axis-tick-x').count()>0,'eixos permanecem legíveis na reaquisição');
    assert.equal(await page.locator('#autocalReferenceChart .autocal-reference-line.'+fuel).count(),0,'curva reiniciada não aparece como atual');
    if(fuel==='gas')assert.equal(await page.locator('#autocalReferenceChart .autocal-reference-line.petrol').count(),1,'reset GNV preserva gasolina');
-   const live=await page.evaluate(()=>{
+   const {diagnostics,...live}=await page.evaluate(()=>{
     const s=window.OmegasApp.autoCalCockpit;const svg=window.__transitionSvg;
+    const beforeKey=JSON.parse(s.epochChartKey),beforeSize=[s.epochChartHost.clientWidth,s.epochChartHost.clientHeight];
     s.refresh();s.refresh();
     const layer=svg.querySelector('[data-chart-live]');const scale=s.chartScale;
     const set=(fraction)=>{const t=s.store.get().telemetry;const ms=scale.xMin+(scale.xMax-scale.xMin)*fraction;
      s.store.patch({telemetry:{...t,valid:true,ageMs:0,telemetryAgeMs:0,sequence:(t.sequence||0)+1,live:{...t.live,petrol_ms:ms,load_bar:(scale.yMin+scale.yMax)/2,rpm:1500,fuel:'GNV'}}});s.renderLiveCursor();for(let i=0;i<30;i++)s.animateCursor(performance.now()+i*20);};
     set(.3);const before=layer.style.transform;set(.6);
-    return {sameSvg:document.querySelector('#autocalReferenceChart svg')===svg,sameScreen:document.querySelector('.screen.active')===window.__transitionRoot,moved:before!==layer.style.transform,visible:!layer.hasAttribute('display')};
+    const afterKey=JSON.parse(s.epochChartKey);
+    return {sameSvg:document.querySelector('#autocalReferenceChart svg')===svg,sameScreen:document.querySelector('.screen.active')===window.__transitionRoot,moved:before!==layer.style.transform,visible:!layer.hasAttribute('display'),diagnostics:{beforeSize,afterSize:[s.epochChartHost.clientWidth,s.epochChartHost.clientHeight],changedKeyParts:beforeKey.map((v,i)=>JSON.stringify(v)===JSON.stringify(afterKey[i])?null:i).filter(v=>v!==null)}};
    });
+   console.log('TRANSITION '+transition+' '+JSON.stringify(diagnostics));
    assert.deepEqual(live,{sameSvg:true,sameScreen:true,moved:true,visible:true},'telemetria permanece viva sem remontar tela ou SVG');
    await audit(page,'autocal',672,'autocal-reinicio-'+transition);
    await page.evaluate(()=>{window.__transitionProjection=window.__transitionOriginal;window.OmegasApp.autoCalCockpit.refresh();});
