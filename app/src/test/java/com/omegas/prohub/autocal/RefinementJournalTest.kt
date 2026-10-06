@@ -59,6 +59,38 @@ class RefinementJournalTest {
     }
 
     @Test
+    fun `faixa que piorou fecha na hora mesmo com as outras ainda sem leitura`() {
+        val journal = RefinementJournal(null)
+        val before = IntArray(30) { 16384 }
+        val after = before.copyOf().also { for (i in 5..29) it[i] = 18000 }
+        write(journal, before, after, index(1.03 to 20, 1.03 to 20, 1.03 to 20, 1.03 to 20, 1.03 to 20))
+        // Só a faixa 3 tem leitura depois da gravação e saiu da margem (8,6%, pior que os 3% de antes).
+        journal.evaluate(index(null to 0, null to 0, null to 0, 1.09 to 10, null to 0))
+        val latest = journal.json().getJSONObject("latest")
+        assertEquals("PIOROU_EM_PARTE", latest.getString("status"))
+        assertEquals("PIOROU", latest.getJSONArray("bands").getJSONObject(3).getString("verdict"))
+        assertEquals("COLETANDO", latest.getJSONArray("bands").getJSONObject(0).getString("verdict"))
+        assertTrue(journal.restorePoints().length() > 0)
+    }
+
+    @Test
+    fun `piorou tem criterio - fora da margem aceita e pior que antes alem do ruido`() {
+        val before = IntArray(30) { 16384 }
+        val after = before.copyOf().also { for (i in 5..29) it[i] = 17000 }
+        fun verdict(b: Double, a: Double): String {
+            val j = RefinementJournal(null)
+            write(j, before, after, index(b to 20, b to 20, b to 20, b to 20, b to 20))
+            j.evaluate(index(a to 10, a to 10, a to 10, a to 10, a to 10))
+            return j.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(2).getString("verdict")
+        }
+        assertEquals("dentro dos 5% aceitos nunca é piorou", "CONFIRMADA", verdict(1.02, 1.045))
+        assertEquals("fora da margem, mas pior só pelo ruído", "CURTA", verdict(1.06, 1.07))
+        assertEquals("fora da margem e pior além do ruído", "PIOROU", verdict(1.03, 1.07))
+        assertEquals("fora da margem e piorou a partir de dentro", "PIOROU", verdict(1.01, 1.06))
+        assertEquals("trocou de lado dentro da margem: passou do ponto, não piorou", "PASSOU", verdict(1.05, 0.96))
+    }
+
+    @Test
     fun `diferenca de poucos por cento nao e piorou`() {
         val journal = RefinementJournal(null)
         val before = IntArray(30) { 16384 }
@@ -74,7 +106,7 @@ class RefinementJournalTest {
     }
 
     @Test
-    fun `oferta de restaurar expira e so vale para o ultimo experimento`() {
+    fun `oferta de restaurar nao expira por relogio e so vale para o ultimo experimento`() {
         var now = 1_000L
         val journal = RefinementJournal(null) { now }
         val before = IntArray(30) { 16384 }
@@ -82,8 +114,8 @@ class RefinementJournalTest {
         write(journal, before, after, index(1.05 to 20, 1.06 to 20, 1.05 to 20, 1.02 to 20, 1.03 to 20))
         journal.evaluate(index(0.96 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 10, 1.0 to 10))
         assertTrue(journal.restorePoints().length() > 0)
-        now += RefinementJournal.RESTORE_OFFER_MS + 1
-        assertEquals(0, journal.restorePoints().length())
+        now += 3 * 24 * 60 * 60_000L // três dias desconectado: a oferta continua (sem métrica de tempo)
+        assertTrue(journal.restorePoints().length() > 0)
         now = 2_000L
         val journal2 = RefinementJournal(null) { now }
         write(journal2, before, after, index(1.05 to 20, 1.06 to 20, 1.05 to 20, 1.02 to 20, 1.03 to 20))
