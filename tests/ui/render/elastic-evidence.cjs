@@ -50,7 +50,6 @@ async function audit(page,route,height,name){
    assert.equal(targets.length,2,'pontos precisam ser tocáveis no HTML real');
    for(const target of targets){
     await page.locator('#autocalReferenceChart .autocal-acquired-hit[data-autocal-acquired-fuel="'+target.fuel+'"][data-autocal-acquired-index="'+target.index+'"]').click();
-    await page.locator('[data-autocal-toggle-point-selection]').click();
    }
    assert.equal(await page.locator('#autocalChartInspector button').count(),0);
    assert.equal(await page.evaluate(()=>window.__pointSvg===document.querySelector('#autocalReferenceChart svg')),true);
