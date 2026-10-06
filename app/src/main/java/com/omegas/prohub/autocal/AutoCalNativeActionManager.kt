@@ -16,8 +16,9 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Executa somente ações AutoCal nativas escolhidas e confirmadas pelo operador.
- * Não possui agenda, gatilho automático ou ligação com sugestões.
+ * Executa ações AutoCal nativas com ACK/readback e uma única exceção automática:
+ * readquirir um ponto nativo isolado classificado pelo detector robusto. Todas as
+ * demais mutações continuam dependendo do toque do operador.
  */
 class AutoCalNativeActionManager(
     private val receiptFile: File,
@@ -117,6 +118,8 @@ class AutoCalNativeActionManager(
         val createdAtMs: Long,
         val expiresAtMs: Long,
         val pointDeleteTargets: List<AutoCalPointDeleteProtocol.Target> = emptyList(),
+        val automatic: Boolean = false,
+        val automationEvidence: JSONObject = JSONObject(),
     )
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
@@ -234,6 +237,76 @@ class AutoCalNativeActionManager(
             .put("automatic", false)
             .put("manualOnly", true)
             .put("automaticBackup", false)
+    }
+
+    /**
+     * Única mutação automática permitida: liberar uma banda nativa para a ECU
+     * readquiri-la. Usa exatamente o mesmo writer, trava serial, ACK e readback
+     * da ação manual; só elimina a etapa de confirmação humana.
+     */
+    fun executeAutomaticPointDelete(
+        target: AutoCalPointDeleteProtocol.Target,
+        evidence: JSONObject,
+    ): JSONObject = try {
+        val prepared = synchronized(lock) {
+            if (preparation != null) {
+                return automaticFailure("Há uma ação manual preparada; a limpeza automática vai aguardar")
+            }
+            require(!busy.get()) { "Outra ação AutoCal está em andamento" }
+            require(isConnected()) { "USB desconectado" }
+            require(!otherCalibrationBusy()) { "Outra operação de calibração está em andamento" }
+            unsafeMutationReason()?.let { throw IllegalStateException(it) }
+            val sessionId = currentSessionId()
+            require(sessionId > 0L) { "Sessão USB inválida" }
+            if (!busy.compareAndSet(false, true)) {
+                return automaticFailure("Outra ação AutoCal está em andamento")
+            }
+            if (!guard.tryAcquire(SerialWriteGuard.OWNER_AUTOCAL)) {
+                busy.set(false)
+                return automaticFailure("Aguarde: ${SerialWriteGuard.label(guard.holder())} em andamento")
+            }
+            val now = System.currentTimeMillis()
+            Preparation(
+                id = "ACA-AUTO-$now-${UUID.randomUUID().toString().take(8)}",
+                action = Action.DELETE_POINT,
+                sessionId = sessionId,
+                createdAtMs = now,
+                expiresAtMs = now + PREPARATION_TTL_MS,
+                pointDeleteTargets = listOf(target),
+                automatic = true,
+                automationEvidence = JSONObject(evidence.toString()),
+            )
+        }
+        var submitted = false
+        try {
+            update(
+                "QUEUED",
+                "Ponto nativo isolado detectado; liberando para nova aquisição",
+                0,
+                prepared,
+                prepared.automationEvidence,
+            )
+            executor.execute { executePrepared(prepared) }
+            submitted = true
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            return automaticFailure("O executor do AutoCal foi encerrado; reabra o aplicativo")
+        } finally {
+            if (!submitted) {
+                guard.release(SerialWriteGuard.OWNER_AUTOCAL)
+                busy.set(false)
+                synchronized(lock) { status.put("busy", false) }
+            }
+        }
+        JSONObject()
+            .put("ok", true)
+            .put("started", true)
+            .put("action", prepared.action.name)
+            .put("automatic", true)
+            .put("manualOnly", false)
+            .put("humanConfirmed", false)
+            .put("automationEvidence", JSONObject(prepared.automationEvidence.toString()))
+    } catch (error: Exception) {
+        automaticFailure(error.message ?: "Readquisição automática indisponível")
     }
 
     fun execute(preparationId: String): JSONObject {
@@ -728,9 +801,13 @@ class AutoCalNativeActionManager(
             .put("after", after.toJson())
             .put("ecuMutation", true)
             .put("mayChangeMulAct", prepared.action.mayChangeMulAct)
-            .put("humanConfirmed", true)
-            .put("automatic", false)
-            .put("manualOnly", true)
+            .put("humanConfirmed", !prepared.automatic)
+            .put("automatic", prepared.automatic)
+            .put("manualOnly", !prepared.automatic)
+            .put(
+                "automationEvidence",
+                if (prepared.automatic) JSONObject(prepared.automationEvidence.toString()) else JSONObject.NULL,
+            )
             .put("readbackValid", true)
             .put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))
             .put("preMutationBackup", JSONObject.NULL)
@@ -916,6 +993,9 @@ class AutoCalNativeActionManager(
     ) {
         synchronized(lock) {
             status = baseStatus(stateName, message, progress)
+                .put("automatic", prepared.automatic)
+                .put("manualOnly", !prepared.automatic)
+                .put("humanConfirmed", !prepared.automatic)
                 .put("action", prepared.action.name)
                 .put("preparationId", prepared.id)
                 .put("sessionId", prepared.sessionId)
@@ -972,6 +1052,11 @@ class AutoCalNativeActionManager(
             .put("automatic", false)
             .put("manualOnly", true)
     }
+
+    private fun automaticFailure(message: String): JSONObject = failure(message)
+        .put("automatic", true)
+        .put("manualOnly", false)
+        .put("humanConfirmed", false)
 
     private fun ByteArray.hex(): String = joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
 
