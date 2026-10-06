@@ -30,6 +30,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private data class AutoRelearnAttempt(var count: Int, var lastAtMs: Long)
     private val autoRelearnAttempts = mutableMapOf<String, AutoRelearnAttempt>()
     private var autoRelearnSessionId = -1L
+    private var autoRelearnLastSnapshotHash = ""
     private val autoRelearnCooldownMs = 15_000L
     private val autoRelearnMaxPerPoint = 3
 
@@ -429,6 +430,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         } catch (_: Exception) {
             return
         }
+        val snapshotHash = snapshot.optString("snapshotHash")
+        synchronized(autoRelearnAttempts) {
+            if (snapshotHash.isNotBlank() && snapshotHash == autoRelearnLastSnapshotHash) return
+            if (snapshotHash.isNotBlank()) autoRelearnLastSnapshotHash = snapshotHash
+        }
         val candidates = AutoCalNativeOutlierDetector.detectSnapshot(snapshot)
         if (candidates.isEmpty()) return
 
@@ -436,6 +442,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         val candidate = synchronized(autoRelearnAttempts) {
             if (autoRelearnSessionId != sessionId) {
                 autoRelearnAttempts.clear()
+                autoRelearnLastSnapshotHash = snapshotHash
                 autoRelearnSessionId = sessionId
             }
             candidates.firstOrNull { item ->
