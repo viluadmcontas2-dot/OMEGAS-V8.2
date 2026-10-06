@@ -587,7 +587,9 @@ class RefinoRenderTest {
             val dom = refinoDom(scenario)
             saveEvidence("refino-coletando", dom, scenario, provenance("REAL_REPLAY", "ref_2026-10-01_1719", "só a gasolina da sessão; GNV ainda não medido"))
             assertClean(dom)
-            assertEquals("Medindo o GNV", dom.getString("chip"))
+            // O replay alimenta o livro de pontos, não publica combustível vivo.
+            // Sem telemetria recente a tela não pode afirmar que o carro está no GNV.
+            assertEquals("Medindo", dom.getString("chip"))
             assertTrue(dom.getString("headline"), dom.getString("headline").contains("aprendendo seu motor"))
             assertTrue(dom.getString("ourPoints"), dom.getString("ourPoints").contains("intervalos medidos"))
         } finally { scenario.close() }
@@ -613,7 +615,8 @@ class RefinoRenderTest {
                 provenance("REAL_REPLAY", "ref_2026-10-01_1719",
                     "o corpus permite cálculo legado, mas o cérebro atual ainda pede coleta; a UI não oferece gravação"))
             assertClean(dom)
-            assertEquals("Medindo o GNV", dom.getString("chip"))
+            // Histórico com GNV não comprova o combustível atual sem quadro vivo.
+            assertEquals("Medindo", dom.getString("chip"))
             assertEquals("COLLECT", dom.getJSONObject("canonical").getJSONObject("nextAction").getString("kind"))
             assertTrue("contrato impede gravar com evidência ainda insuficiente",
                 !dom.getJSONObject("canonical").getJSONObject("refinoState").getBoolean("canAct"))
