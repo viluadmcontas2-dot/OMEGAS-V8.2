@@ -59,6 +59,29 @@ class AutoMatchRefinedEngineTest {
     }
 
     @Test
+    fun `outlier repetido nao pode fabricar cobertura de uma faixa`() {
+        // Quatro leituras coerentes ocupam só o primeiro terço de 3,0–4,5 ms.
+        // Duas leituras incoerentes repetidas no segundo terço não podem ser usadas
+        // para fingir que a faixa ganhou cobertura real.
+        val pairs = listOf(
+            3.10 to 3.41,
+            3.20 to 3.52,
+            3.28 to 3.608,
+            3.34 to 3.674,
+            3.60 to 2.34,
+            3.70 to 2.405,
+        )
+        val sameEpisode = List(pairs.size) { 100_001 }
+
+        val plausible = AutoMatchRefinedEngine.plausibleIndices(pairs, sameEpisode)
+
+        assertTrue(
+            "dois pontos incoerentes repetidos não podem completar sozinhos o segundo terço da faixa",
+            plausible.kept.isEmpty(),
+        )
+    }
+
+    @Test
     fun `sem bandas comuns maduras o motor nao inventa correcao`() {
         val analysis = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot("automatch_2026-10-01_1301", 1401))
 
