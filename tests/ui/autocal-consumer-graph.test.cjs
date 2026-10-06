@@ -8,6 +8,7 @@ const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 
 const api = read('app/src/main/assets/ui/core/autocal-api.js');
 const cockpit = read('app/src/main/assets/ui/screens/autocal-cockpit.js');
+const chart = read('app/src/main/assets/ui/components/curve-chart.js');
 const index = read('app/src/main/assets/ui/index.html');
 const bridge = read('app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt');
 const actions = read('app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt');
@@ -38,7 +39,8 @@ for (const [selector, hook, handler] of controls) {
 assert.equal(cockpit.includes('data-autocal-chart-action'), false, 'zoom/pan genérico não pode voltar com eixos físicos fixos');
 assert.equal(cockpit.includes('updateChartView'), false, 'transformação visual desacoplada dos eixos não pode voltar');
 assert.ok(cockpit.includes('Injeção (ms)'), 'eixo X físico precisa permanecer explícito');
-assert.ok(cockpit.includes('MAP (bar)'), 'eixo Y físico precisa permanecer explícito');
+assert.ok(chart.includes('MAP (bar)'), 'eixo Y físico precisa permanecer explícito no construtor compartilhado');
+assert.ok(cockpit.includes('ns.CurveChart.buildSvg(model'), 'reaquisição deve usar os mesmos eixos');
 assert.ok(cockpit.includes('data-autocal-history'), 'histórico de leitura continua sendo o controle gráfico permitido');
 
 assert.ok(index.includes('data-route="autocal"'), 'rota AutoCal ausente');

@@ -116,7 +116,7 @@
   const RS = {
     COLETANDO_NOSSOS: { canAct: false, phase: 'Coletando entre as faixas da ECU: 12 de 17 intervalos', label: 'Medindo o GNV', whatNow: 'Dirija normalmente: o app está medindo o GNV entre os pontos da ECU.', nextAction: '', reason: 'Ainda faltam medidas em alguns trechos.' },
     PROPOSTA_PRONTA: { canAct: true, phase: 'Pronto para gravar 3 pontos', label: 'Curva pronta', whatNow: 'Falta 1 ajuste para o GNV chegar perto da gasolina.', nextAction: 'Aplicar ajuste', reason: '' },
-    VERIFICANDO: { canAct: false, phase: 'Verificando', label: 'Medindo', whatNow: 'Ajuste aplicado. Dirija normalmente: o app confere se o GNV chegou perto da gasolina.', nextAction: '', reason: 'Nada a fazer agora.' },
+    VERIFICANDO: { canAct: false, phase: 'Verificando', label: 'Verificando', whatNow: 'Ajuste aplicado. Dirija normalmente: o app confere se o GNV chegou perto da gasolina.', nextAction: '', reason: 'Nada a fazer agora.' },
     ESTAVEL: { canAct: false, phase: 'Estável', label: 'Estável', whatNow: 'GNV perto da gasolina em toda a curva. Pode desconectar.', nextAction: '', reason: '' },
     SEM_ECU: { canAct: false, phase: 'Sem ECU', label: 'Sem ECU', whatNow: 'Conecte a ECU para o Refino medir o GNV.', nextAction: '', reason: 'O cabo USB não está conectado.' },
   };

@@ -169,6 +169,24 @@ async function audit(page,route,height,name){
    await audit(page,'autocal',672,'autocal-retomada-'+transition);assert.deepEqual(errors,[]);
   }finally{await browser.close();}
  }
+ {
+  const {browser,page,errors}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672},scn:{noStalls:true}});
+  try{
+   await go(page,'refino');await page.waitForTimeout(1700);
+   await page.evaluate(()=>{window.__refinoRoot=document.querySelector('.screen.active');window.__S.phase='VERIFICANDO';window.OmegasApp.refino.refresh(true,true);});
+   assert.equal(await page.locator('#refinoPhaseChip').textContent(),'Verificando');
+   assert.equal(await page.locator('[data-refino-primary]').isVisible(),false,'verificação não oferece gravação');
+   const stable=await page.evaluate(()=>{
+    const s=window.OmegasApp.refino;const svg=document.querySelector('#refinoChart svg');s.refresh(true,true);
+    const layer=svg.querySelector('[data-chart-live]'),scale=s.chartScale;
+    const set=fraction=>{const t=s.store.get().telemetry;s.store.patch({telemetry:{...t,valid:true,ageMs:0,telemetryAgeMs:0,sequence:(t.sequence||0)+1,live:{...t.live,petrol_ms:scale.xMin+(scale.xMax-scale.xMin)*fraction,load_bar:(scale.yMin+scale.yMax)/2,rpm:1500,fuel:'GNV'}}});s.renderLive();for(let i=0;i<30;i++)s.animateLive(performance.now()+i*20);};
+    set(.3);const before=layer.style.transform;set(.6);
+    return {sameSvg:document.querySelector('#refinoChart svg')===svg,sameScreen:document.querySelector('.screen.active')===window.__refinoRoot,moved:before!==layer.style.transform};
+   });
+   assert.deepEqual(stable,{sameSvg:true,sameScreen:true,moved:true},'Refino continua vivo durante verificação');
+   await audit(page,'refino',672,'refino-transicao-verificando');assert.deepEqual(errors,[]);
+  }finally{await browser.close();}
+ }
  fs.writeFileSync(path.join(out,'metrics.json'),JSON.stringify({source:process.env.OMEGAS_SOURCE_SHA,proof:'Chromium, ponte falsa com fixtures reais; não é aparelho físico',metrics},null,2));
  console.log('ELASTIC_UI_RENDER=PASS '+metrics.length+' estados/áreas úteis');
 })().catch(e=>{console.error(e);process.exitCode=1;});

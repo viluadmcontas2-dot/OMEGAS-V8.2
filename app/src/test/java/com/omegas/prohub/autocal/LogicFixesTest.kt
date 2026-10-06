@@ -338,7 +338,7 @@ class LogicFixesTest {
         val proving = brain().put("nextAction", JSONObject().put("kind", "PROVING").put("text", "Rodando para provar o ajuste").put("pointIndexes", JSONArray()))
         ledger.accept(EquivalenceLedger.Frame(now - 200L, "GASOLINA", 2000.0, 0.6, 5.0))
         val verifying = view(ledger, proving, phases).getJSONObject("refinoState")
-        assertEquals("Verificando", verifying.getString("phase")); assertEquals("Medindo", verifying.getString("label"))
+        assertEquals("Verificando", verifying.getString("phase")); assertEquals("Verificando", verifying.getString("label"))
         assertTrue(verifying.getString("whatNow"), verifying.getString("whatNow").contains("na gasolina")); assertHuman(verifying)
     }
 

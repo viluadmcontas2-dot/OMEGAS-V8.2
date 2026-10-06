@@ -79,7 +79,7 @@ object RefinoState {
                 next = "Restaurar o trecho"; canAct = true
             }
             code == "VERIFICANDO" || kind == "PROVING" -> {
-                phase = "Verificando"; label = "Medindo"
+                phase = "Verificando"; label = phase
                 whatNow = if (onPetrol) "A curva nova foi gravada. O carro está na gasolina; confiro o GNV quando ele voltar."
                 else "A curva nova foi gravada; confiro se o GNV chegou na gasolina."
                 next = keepDriving
