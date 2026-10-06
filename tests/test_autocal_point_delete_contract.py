@@ -49,10 +49,11 @@ for token in (
     "MNFLD_PRESS_BUF",
     "NUM_BUF_UPD_PETR",
     "data-autocal-acquired-index",
-    "Apagar ponto",
+    "Apagar selecionados",
 ):
     assert token in cockpit, token
-assert "data-autocal-reacquire-point" in cockpit
+assert "data-autocal-reacquire-point" not in cockpit
+assert "data-autocal-reacquire-selected" in cockpit
 assert "preparePointDelete" in api
 assert "preparePointDeleteBatch" in api
 assert "fun preparePointDelete" in bridge
