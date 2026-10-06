@@ -202,7 +202,13 @@ class AutoCalNativeOutlierDetector(
                 residualByBand[point.index] = expectedMap - point.mapBar
             }
             if (residualByBand.isEmpty()) return@forEach
-            val robustMapNoise = 1.4826 * median(residualByBand.values.map { abs(it) })
+            // O ponto que o Refino já rejeitou não pode inflar a estimativa do próprio ruído.
+            // Mede a vizinhança aceita e usa esse piso robusto para decidir se o desvio para baixo é local.
+            val acceptedResiduals = residualByBand
+                .filterKeys { it !in rejected }
+                .values
+                .map { abs(it) }
+            val robustMapNoise = if (acceptedResiduals.isEmpty()) 0.0 else 1.4826 * median(acceptedResiduals)
             val limit = max(MIN_DOWN_GAP_BAR, AutoMatchRefinedEngine.OUTLIER_MAD_K * robustMapNoise)
             val generation = if (fuel == AutoCalPointDeleteProtocol.Fuel.GAS) {
                 epoch.optInt("gasGeneration", 0)
