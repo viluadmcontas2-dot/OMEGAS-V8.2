@@ -27,6 +27,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private var managerService: TelemetryForegroundService? = null
     private var manager: AutoCalSnapshotManager? = null
     private var nativeActions: AutoCalNativeActionManager? = null
+    private data class AutoRelearnAttempt(var count: Int, var lastAtMs: Long)
+    private val autoRelearnAttempts = mutableMapOf<String, AutoRelearnAttempt>()
+    private var autoRelearnSessionId = -1L
+    private val autoRelearnCooldownMs = 15_000L
+    private val autoRelearnMaxPerPoint = 3
 
     // Resultados prontos para a WebView: o cálculo pesado roda em segundo plano enquanto a tela
     // está aberta e a chamada devolve o último valor na hora (a bridge bloqueia o JavaScript).
@@ -40,6 +45,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             try { projectionMemo.refreshIfWatched() } catch (_: Throwable) {}
             try { equivalenceMemo.refreshIfWatched() } catch (_: Throwable) {}
             try { refinedAnalysisMemo.refreshIfWatched() } catch (_: Throwable) {}
+            try { runAutomaticPointRelearn() } catch (_: Throwable) {}
         }, 300L, 300L, TimeUnit.MILLISECONDS)
     }
 
@@ -401,6 +407,51 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             monitorAt >= manualAt -> monitor!!
             else -> manual!!
         }
+    }
+
+    /**
+     * Observador silencioso da aquisição nativa. Só o DELETE_POINT pode sair
+     * daqui sem toque: detector robusto + contexto físico de lenta. Um ponto
+     * não pode martelar a serial; no máximo [autoRelearnMaxPerPoint] vezes
+     * por sessão e respeitando cooldown.
+     */
+    private fun runAutomaticPointRelearn() {
+        val activity = activityRef.get() ?: return
+        val service = activity.serviceOrNull() ?: return
+        val actionManager = currentNativeManager() ?: return
+        if (actionManager.isBusy()) return
+        val serial = service.runtime.serialScheduler()
+        val sessionId = serial.currentSessionId()
+        if (sessionId <= 0L || !serial.isConnected()) return
+
+        val snapshot = try {
+            JSONObject(service.nativeAutoCalSnapshotJson())
+        } catch (_: Exception) {
+            return
+        }
+        val candidates = AutoCalNativeOutlierDetector.detectSnapshot(snapshot)
+        if (candidates.isEmpty()) return
+
+        val now = System.currentTimeMillis()
+        val candidate = synchronized(autoRelearnAttempts) {
+            if (autoRelearnSessionId != sessionId) {
+                autoRelearnAttempts.clear()
+                autoRelearnSessionId = sessionId
+            }
+            candidates.firstOrNull { item ->
+                val key = "$sessionId:${item.target.fuel.wireName}:${item.target.index}"
+                val attempt = autoRelearnAttempts[key]
+                attempt == null ||
+                    (attempt.count < autoRelearnMaxPerPoint && now - attempt.lastAtMs >= autoRelearnCooldownMs)
+            }?.also { item ->
+                val key = "$sessionId:${item.target.fuel.wireName}:${item.target.index}"
+                val attempt = autoRelearnAttempts[key]
+                if (attempt == null) autoRelearnAttempts[key] = AutoRelearnAttempt(1, now)
+                else { attempt.count += 1; attempt.lastAtMs = now }
+            }
+        } ?: return
+
+        actionManager.executeAutomaticPointDelete(candidate.target, candidate.evidenceJson())
     }
 
     fun destroy() {
