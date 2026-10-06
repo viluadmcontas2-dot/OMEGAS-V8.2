@@ -11,6 +11,7 @@ const index = read('app/src/main/assets/ui/index.html');
 const app = read('app/src/main/assets/ui/app.js');
 const api = read('app/src/main/assets/ui/core/autocal-api.js');
 const cockpit = read('app/src/main/assets/ui/screens/autocal-cockpit.js');
+const chart = read('app/src/main/assets/ui/components/curve-chart.js');
 const bridge = read('app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt');
 const projection = read('app/src/main/java/com/omegas/prohub/autocal/AutoCalUiProjection.kt');
 const monitor = read('app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt');
@@ -65,9 +66,9 @@ assert.match(cockpit, /AUTOCAL_PROJECTION_UNAVAILABLE/,
   'perda da projeção deve falhar fechado e ficar explícita');
 assert.match(cockpit, /livePoint\(/,
   'modelo deve separar cursor vivo da evidência adquirida');
-assert.match(cockpit, /autocal-live-point/,
+assert.match(chart, /autocal-live-point/,
   'gráfico deve ter camada visual própria para o cursor AGORA');
-assert.match(cockpit, />AGORA</,
+assert.match(chart, />AGORA</,
   'cursor vivo precisa ser rotulado para o operador');
 assert.equal(cockpit.includes('>Ajustar</button>'), false,
   'controle visual não pode parecer ajuste da ECU');
@@ -75,7 +76,7 @@ assert.equal(cockpit.includes('data-autocal-chart-action'), false,
   'zoom/pan desacoplado dos eixos físicos não pode voltar');
 assert.match(cockpit, /Injeção \(ms\)/,
   'eixo X deve declarar a unidade física');
-assert.match(cockpit, /MAP \(bar\)/,
+assert.match(chart, /MAP \(bar\)/,
   'eixo Y deve declarar a unidade física');
 assert.match(cockpit, /data-autocal-history/,
   'leitura anterior continua sendo a comparação gráfica permitida');
