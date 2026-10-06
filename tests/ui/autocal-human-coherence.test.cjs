@@ -60,6 +60,10 @@ test('AGORA se move durante reaquisição sem atualizar snapshot ou referência'
   const epoch={comparisonAllowed:false,petrolPending:false,petrolReferencePending:true,gasReferencePending:true};
   screen.renderAcquisitionEpochChart([point],[],epoch,app.byId('autocalReferenceChart'));
   const snapshot=screen.snapshot;assert.ok(screen.chartScale);const layer=app.$('.autocal-live-layer');assert.ok(layer);
+  const svg=app.$('#autocalReferenceChart svg');
+  screen.renderAcquisitionEpochChart([{...point}],[],{...epoch},app.byId('autocalReferenceChart'));
+  assert.equal(app.$('#autocalReferenceChart svg'),svg,'dados iguais preservam o SVG durante reaquisição');
+  assert.equal(app.$('.autocal-live-layer'),layer,'a camada viva não é recriada');
   const setLive=ms=>{const t=screen.store.get().telemetry;screen.store.patch({telemetry:{...t,valid:true,ageMs:0,telemetryAgeMs:0,live:{...t.live,petrol_ms:ms,load_bar:.4,rpm:1200,fuel:'GASOLINA'}}});screen.renderLiveCursor();for(let i=0;i<25;i++)screen.animateCursor(i*20);};
   setLive(4);const before=layer.style.transform;setLive(5);assert.notEqual(layer.style.transform,before);
   assert.equal(screen.snapshot,snapshot,'cursor não depende de nova leitura de curva');L.assertClean(app,'cursor aquisição');

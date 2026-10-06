@@ -82,7 +82,7 @@
       if (petrol) return 'Referência de gasolina pendente: aguardando a curva atual da ECU';
       if (gas) return 'Referência de GNV pendente: aguardando a curva atual da ECU';
       if (epoch.referencePending) return 'Aguardando curvas atuais da ECU para comparar';
-      return 'Coleta em andamento; aguardando dados para comparar';
+      return 'Aguardando dados atuais da ECU para comparar';
     },
     humanState(snapshot = {}, state = {}, projection = {}) {
       const nativeSnapshot = state.latestSnapshot?.fields ? state.latestSnapshot : {};
@@ -1414,13 +1414,35 @@
     }
 
     renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host) {
+      if (this.chartScale) {
+        const { xMin, xMax, yMin, yMax } = this.chartScale;
+        this.epochDomain = { xMin, xMax, yMin, yMax };
+      }
+      const snapshot = this.snapshot || {};
+      const axis = field(snapshot, 'PETR_INJ_TBP');
+      const rv = field(snapshot, 'PETR_MNFLD_PRESS_RV');
+      const axisAt = finite(axis?.capturedAtMs), rvAt = finite(rv?.capturedAtMs);
+      const limit = finite(this.projection?.referenceTimingLimitMs);
+      // A revisão da ponte e a telemetria não são geometria. Preserve o SVG e
+      // o cursor quando só eles mudam; invalide por dados ou máscara da época.
+      const key = JSON.stringify([acquiredPetrol, acquiredGas, epoch,
+        snapshot.source, this.state?.maxAutomatch ?? snapshot.maxAutomatch,
+        axisAt !== null && rvAt !== null && limit !== null && Math.abs(axisAt - rvAt) <= limit,
+        ['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF_GAS_PREV','MNFLD_PRESS_BUF_GAS_PREV','MNFLD_PRESS_THD','ACQUIRED_ZONES_PETROL','ACQUIRED_ZONES_GAS','MUL_ACT']
+          .map(name => [field(snapshot, name)?.status, physicalVector(snapshot, name)]),
+        Math.round(host.clientWidth || 1000), Math.round(host.clientHeight || 400),
+        ns.CurveChart?.viewKey(this.chartView)]);
+      if (this.epochChartHost === host && this.epochChartKey === key &&
+          this.epochChartNode && host.firstElementChild === this.epochChartNode) {
+        this.renderLiveCursor();
+        return;
+      }
       ns.CurveChart?.release(host);
       this.chartSignature = null;
       // ProgBase DUMP/TAutoCalUI separates PetrolCurve (native RV), PetrolPoint,
       // GasPoint, GasPointPrev and KLine. Do not collapse them into one reference.
       this.chartScale = null;
       this.chartRenderKey = null;
-      const snapshot = this.snapshot || {};
       const petrolCount = acquiredPetrol.length;
       const gasCount = acquiredGas.length;
       const automatch = finite(epoch.nativeAutoMatchCount);
@@ -1486,61 +1508,44 @@
         ? ' Cota de AutoMatch atingida; a leitura NÃO terminou.' : '';
       this.readout(stage + '.' + (automatch !== null && quota !== null && automatch >= quota ? ' AutoMatch ' + step + ': a leitura continua.' : ''));
 
-      const current = [...acquiredPetrol, ...acquiredGas, ...petrolCurve, ...previousGas];
-      const domain = AutoCalUxModel.referenceDomain([], [], [], current);
+      const visible = this.chartView || {};
+      const petrol = visible.petrol === false ? [] : acquiredPetrol;
+      const gas = visible.gas === false ? [] : acquiredGas;
+      const reference = visible.petrol === false ? [] : petrolCurve;
+      const previous = visible.gas === false ? [] : previousGas;
+      const ecu = [...petrol.map(p => ({ ...p, fuel: 'PETROL' })), ...gas.map(p => ({ ...p, fuel: 'GAS' }))];
+      const previousDomain = this.epochDomain;
+      const domain = ns.CurveChart.focusDomain(reference, ecu, previous, { fullRange: visible.fullRange === true }) || previousDomain;
       let chart = '';
       if (domain) {
-        const width = 1000, height = 400, left = 64, right = 28, top = 22, bottom = 48;
-        const x = value => left + (value - domain.xMin) / (domain.xMax - domain.xMin) * (width - left - right);
-        const y = value => height - bottom -
-          (value - domain.yMin) / (domain.yMax - domain.yMin) * (height - top - bottom);
-        // Acquisition mode uses the same fast telemetry/EaseCursor path as the
-        // comparison chart. The plot no longer waits for a slow snapshot refresh.
-        this.chartScale = { ...domain, width, height, xFor: x, yFor: y };
-        const within = point => point.petrolMs >= domain.xMin && point.petrolMs <= domain.xMax &&
-          (point.mapBar ?? point.petrolMapBar) >= domain.yMin &&
-          (point.mapBar ?? point.petrolMapBar) <= domain.yMax;
-        const ordered = list => list.filter(within).slice().sort((a, b) => a.petrolMs - b.petrolMs);
-        const lineFor = (list, valueKey) => ordered(list).map((point, index) =>
-          (index ? 'L' : 'M') + ' ' + x(point.petrolMs).toFixed(1) + ' ' +
-          y(point[valueKey]).toFixed(1)).join(' ');
-        const acquisition = (list, fuel) => {
-          const items = ordered(list);
-          const line = items.length >= 2
-            ? '<path class="autocal-epoch-acquisition-line ' + fuel + '" d="' +
-              lineFor(items, 'mapBar') + '"></path>' : '';
-          const dots = items.map(point =>
-            '<circle class="autocal-acquired-point ' + fuel + ' ' +
-            (point.acquisitionState === 'ACQUIRED' ? 'acquired' : 'collecting') +
-            '" cx="' + x(point.petrolMs).toFixed(1) +
-            '" cy="' + y(point.mapBar).toFixed(1) + '" r="5.5"></circle>').join('');
-          return line + dots;
+        this.epochDomain = { ...domain };
+        const width = Math.round(host.clientWidth) || 1000;
+        const height = Math.round(host.clientHeight) || 400;
+        const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
+        const model = { domain, reference, ecu, zones: AutoCalUxModel.zoneSurface(snapshot, human), history: [] };
+        const built = ns.CurveChart.buildSvg(model, { width, height });
+        this.chartScale = built.scale;
+        const { xFor: x, yFor: y } = built.scale;
+        const within = p => p.petrolMs >= domain.xMin && p.petrolMs <= domain.xMax &&
+          p.mapBar >= domain.yMin && p.mapBar <= domain.yMax;
+        const line = (list, fuel) => {
+          const ordered = list.filter(within).slice().sort((a, b) => a.petrolMs - b.petrolMs);
+          if (ordered.length < 2) return '';
+          const d = ordered.map((p, i) => (i ? 'L' : 'M') + ' ' + x(p.petrolMs).toFixed(1) + ' ' + y(p.mapBar).toFixed(1)).join(' ');
+          return '<path class="autocal-epoch-acquisition-line ' + fuel + '" d="' + d + '"></path>';
         };
-        const reference = petrolCurve.length >= 2
-          ? '<path class="autocal-reference-line petrol epoch-anchor" d="' +
-            lineFor(petrolCurve, 'petrolMapBar') + '"></path>' : '';
-        const oldGas = previousGas.filter(within).map(point =>
-          '<circle class="autocal-previous-gas-point" cx="' + x(point.petrolMs).toFixed(1) +
-          '" cy="' + y(point.mapBar).toFixed(1) + '" r="4.5"></circle>').join('');
-
-        const liveMarkup = '<g class="autocal-live-layer" data-chart-live display="none" aria-label="Posição atual do motor">' +
-          '<circle class="autocal-live-halo" r="13" cx="0" cy="0"></circle>' +
-          '<circle class="autocal-live-point" r="6" cx="0" cy="0"></circle>' +
-          '<text class="autocal-live-label" data-autocal-live-label x="0" y="0">AGORA</text></g>';
-
-        chart = '<svg class="autocal-reference-svg" viewBox="0 0 1000 400" role="img" ' +
-          'aria-label="Aquisição atual da ECU; referência gasolina independente; sem equivalência durante reset">' +
-          '<title>AQUISIÇÃO EM TEMPO REAL · gasolina e GNV por época nativa</title>' +
-          '<path d="M64 22 V352 H972" fill="none" stroke="currentColor" opacity=".2"></path>' +
-          reference + oldGas +
-          acquisition(acquiredPetrol, 'petrol') + acquisition(acquiredGas, 'gas') + liveMarkup +
-          '<text class="autocal-axis-title x" x="518" y="395" text-anchor="middle">' +
-          AUTO_CAL_X_AXIS_LABEL + '</text>' +
-          '<text class="autocal-axis-title y" x="14" y="200" text-anchor="middle" ' +
-          'transform="rotate(-90 14 200)">MAP (bar)</text></svg>';
+        const historical = previous.filter(within).map(p => '<circle class="autocal-previous-gas-point" cx="' +
+          x(p.petrolMs).toFixed(1) + '" cy="' + y(p.mapBar).toFixed(1) + '" r="4.5"></circle>').join('');
+        chart = built.svg
+          .replace('class="autocal-reference-line petrol"', 'class="autocal-reference-line petrol epoch-anchor"')
+          .replace('<g class="autocal-live-layer"', line(petrol, 'petrol') + line(gas, 'gas') + historical + '<g class="autocal-live-layer"')
+          .replace('</svg>', '<title>CURVAS DA ECU · aquisição atual, sem equivalência durante reinício</title></svg>');
       }
-      host.innerHTML = chart || '<div class="chart-empty"><b>AQUISIÇÃO EM TEMPO REAL</b><span>' +
+      host.innerHTML = chart ? '<div class="curve-chart-shared" data-mode="ecu18">' + chart + '</div>' : '<div class="chart-empty"><b>CURVAS DA ECU</b><span>' +
         escapeHtml(stage) + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.</span></div>';
+      this.epochChartHost = host;
+      this.epochChartKey = key;
+      this.epochChartNode = host.firstElementChild;
       this.renderLiveNarrative();
       this.renderLiveCursor();
     }

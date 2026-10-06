@@ -9,6 +9,8 @@ Correções limitadas à HMI, base de produto bf744566:
 - Espera de curva respeita petrolReferencePending e gasReferencePending depois de novos contadores; não presume GNV.
 - Gráfico de época utiliza a mesma camada viva, escala física e EaseCursor da telemetria rápida. Sem novo polling/timer.
 - Mais opções tem destaque ao abrir, aria-expanded, indicação Fechar e botão explícito. Histórico permanece secundário.
+- Reaquisição usa o mesmo construtor de gráfico, eixos, grade, zonas e estilos da comparação normal. Revisões iguais preservam SVG/cursor; sem pontos novos, a última escala permanece como régua, sem reapresentar curvas invalidadas.
+- Prova visual adicional: normal→reset gasolina/GNV→reaquisição→referência nova, com eixos legíveis, cursor em movimento e identidade da tela/SVG preservada nas atualizações sem mudança de geometria. Cenário sintético da máscara sobre vetores de captura real; não prova USB físico.
 
 Protocolos, comandos, leitores/escritores nativos e algoritmos de calibração preservados. Testes novos reproduzem desconhecido, combustível, comando em conferência, desconexão, fechamento do painel, cursor durante reaquisição e normal→reset gasolina→referência nova sem sessão/hash novos.
 

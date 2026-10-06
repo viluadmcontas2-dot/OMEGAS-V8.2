@@ -63,7 +63,7 @@ fake.renderLiveNarrative = () => {};
 fake.cursor = new context.OmegasUi.LiveStore.EaseCursor(() => null);
 
 proto.renderReferenceChart.call(fake, fake.snapshot);
-assert.match(host.innerHTML, /AQUISIÇÃO EM TEMPO REAL/);
+assert.match(host.innerHTML, /CURVAS DA ECU/);
 assert.match(host.innerHTML, /autocal-acquired-point petrol/);
 assert.doesNotMatch(host.innerHTML, /autocal-acquired-point gas/);
 assert.match(labels.autocalReferenceCount, /GNV 0\/18 faixas com amostra/);

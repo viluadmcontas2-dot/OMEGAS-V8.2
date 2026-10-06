@@ -130,6 +130,44 @@ async function audit(page,route,height,name){
   await page.keyboard.press('Enter');
   assert.match(await page.locator('#mapSelectionCount').textContent(),/1 selecionada/);
  }finally{await browser.close();}
+ // Transições sintéticas sobre os vetores reais: nenhuma escrita/protocolo é simulada como prova física.
+ for(const fuel of ['petrol','gas']){
+  const {browser,page,errors}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672},scn:{noStalls:true}});
+  try{
+   await go(page,'autocal');await page.waitForTimeout(1700);
+   await page.evaluate(fuel=>{
+    const screen=window.OmegasApp.autoCalCockpit;
+    const original=screen.api.projection();window.__transitionOriginal=original;
+    const next=JSON.parse(JSON.stringify(original));next.referenceUsable=false;
+    next.acquisitionZones[fuel]=[];
+    next.liveAcquisitionEpoch={comparisonAllowed:false,petrolPending:fuel==='petrol',gasPending:fuel==='gas',petrolReferencePending:fuel==='petrol',gasReferencePending:fuel==='gas',petrolGeneration:fuel==='petrol'?1:0,gasGeneration:fuel==='gas'?1:0,nativeAutoMatchCount:1};
+    const keys=fuel==='petrol'?['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF','MNFLD_PRESS_BUF','NUM_BUF_UPD_PETR','ACQUIRED_ZONES_PETROL']:['GAS_MNFLD_PRESS_RV','PETR_INJ_TBUF_GAS','MNFLD_PRESS_BUF_GAS','NUM_BUF_UPD_GAS','ACQUIRED_ZONES_GAS'];
+    for(const snap of [next.snapshot,next.nativeSnapshot])for(const field of snap.fields||[])if(keys.includes(field.key)){field.status='STALE_EPOCH';field.rawValues=[];field.physicalValues=[];}
+    window.__transitionProjection=next;
+    screen.api={...screen.api,projection:()=>window.__transitionProjection,actionStatus:()=>({action:fuel==='petrol'?'RESET_PETROL':'RESET_GAS',state:'CONFIRMED',busy:false})};screen.refresh();
+    window.__transitionSvg=document.querySelector('#autocalReferenceChart svg');
+    window.__transitionRoot=document.querySelector('.screen.active');
+   },fuel);
+   assert.equal(await page.locator('#autocalReferenceChart svg').count(),1,'reinício mantém um gráfico com escala');
+   assert.ok(await page.locator('#autocalReferenceChart .autocal-axis-tick-x').count()>0,'eixos permanecem legíveis na reaquisição');
+   assert.equal(await page.locator('#autocalReferenceChart .autocal-reference-line.'+fuel).count(),0,'curva reiniciada não aparece como atual');
+   if(fuel==='gas')assert.equal(await page.locator('#autocalReferenceChart .autocal-reference-line.petrol').count(),1,'reset GNV preserva gasolina');
+   const live=await page.evaluate(()=>{
+    const s=window.OmegasApp.autoCalCockpit;const svg=window.__transitionSvg;
+    s.refresh();s.refresh();
+    const layer=svg.querySelector('[data-chart-live]');const scale=s.chartScale;
+    const set=(fraction)=>{const t=s.store.get().telemetry;const ms=scale.xMin+(scale.xMax-scale.xMin)*fraction;
+     s.store.patch({telemetry:{...t,valid:true,ageMs:0,telemetryAgeMs:0,sequence:(t.sequence||0)+1,live:{...t.live,petrol_ms:ms,load_bar:(scale.yMin+scale.yMax)/2,rpm:1500,fuel:'GNV'}}});s.renderLiveCursor();for(let i=0;i<30;i++)s.animateCursor(performance.now()+i*20);};
+    set(.3);const before=layer.style.transform;set(.6);
+    return {sameSvg:document.querySelector('#autocalReferenceChart svg')===svg,sameScreen:document.querySelector('.screen.active')===window.__transitionRoot,moved:before!==layer.style.transform,visible:!layer.hasAttribute('display')};
+   });
+   assert.deepEqual(live,{sameSvg:true,sameScreen:true,moved:true,visible:true},'telemetria permanece viva sem remontar tela ou SVG');
+   await audit(page,'autocal',672,'autocal-reinicio-'+fuel);
+   await page.evaluate(()=>{window.__transitionProjection=window.__transitionOriginal;window.OmegasApp.autoCalCockpit.refresh();});
+   assert.equal(await page.locator('#autocalReferenceChart .autocal-reference-line.petrol').count(),1,'referência nova volta sem recarregar a tela');
+   await audit(page,'autocal',672,'autocal-retomada-'+fuel);assert.deepEqual(errors,[]);
+  }finally{await browser.close();}
+ }
  fs.writeFileSync(path.join(out,'metrics.json'),JSON.stringify({source:process.env.OMEGAS_SOURCE_SHA,proof:'Chromium, ponte falsa com fixtures reais; não é aparelho físico',metrics},null,2));
  console.log('ELASTIC_UI_RENDER=PASS '+metrics.length+' estados/áreas úteis');
 })().catch(e=>{console.error(e);process.exitCode=1;});
