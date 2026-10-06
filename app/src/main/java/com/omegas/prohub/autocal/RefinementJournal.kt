@@ -28,13 +28,18 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         const val MIN_BAND_SAMPLES = 8
         /** Diferença abaixo disso é ruído de medição (~2%). */
         const val NOISE_LOG = 0.02
-        /** Dentro de ±3% depois da correção é "ok": a mesma tolerância do piloto. */
-        const val OK_AFTER_LOG = 0.0296
-        /** Só "piorou" se ficou mais de ~4% pior E acima de ~5% de erro. Menos que isso é ruído. */
-        const val WORSE_MARGIN_LOG = 0.04
-        const val WORSE_MIN_ERROR_LOG = 0.05
-        /** A oferta de restaurar vale por um tempo; depois o refino segue sozinho (nunca trava). */
-        const val RESTORE_OFFER_MS = 30 * 60_000L
+        /**
+         * Critério único da margem (decisão do dono, 2026-10-06): GNV dentro de ±4% é o alvo e até ±5% é aceito
+         * ([EquivalenceTolerances.MAX]). Depois da correção, uma faixa dentro disso é CONFIRMADA.
+         */
+        val OK_AFTER_LOG = ln(1.0 + com.omegas.prohub.equivalence.EquivalenceTolerances.MAX)
+        /**
+         * "Piorou" tem critério e mínimo: a faixa ficou FORA da margem aceita ([WORSE_MIN_ERROR_LOG]) E pior que antes além
+         * do ruído de medição ([WORSE_MARGIN_LOG] = [NOISE_LOG]). Dentro da margem nunca é "piorou"; piora menor que o ruído
+         * também não.
+         */
+        const val WORSE_MARGIN_LOG = NOISE_LOG
+        val WORSE_MIN_ERROR_LOG = ln(1.0 + com.omegas.prohub.equivalence.EquivalenceTolerances.WORSE_ERROR)
 
         /** Uma faixa só é julgada com leituras em ≥ este número de episódios (visitas separadas por ≥ 60 s), não só 8 quadros. */
         const val MIN_BAND_EPISODES = EvidencePairs.MIN_VISITS
@@ -236,10 +241,12 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                     else -> {
                         val e0 = ln(rb)
                         val e1 = ln(ra)
+                        // Ordem: piorou (fora da margem e pior além do ruído) → passou do ponto (trocou de lado além do
+                        // ruído: ensina o ganho) → confirmada (dentro da margem aceita) → curta (mesmo lado, ainda fora).
                         val v = when {
-                            abs(e1) <= max(NOISE_LOG, OK_AFTER_LOG) || abs(e1) <= abs(e0) * 0.35 -> "CONFIRMADA"
-                            abs(e1) > abs(e0) + WORSE_MARGIN_LOG && abs(e1) > WORSE_MIN_ERROR_LOG -> "PIOROU"
-                            e0 * e1 < 0 -> "PASSOU"
+                            abs(e1) > WORSE_MIN_ERROR_LOG && abs(e1) > abs(e0) + WORSE_MARGIN_LOG -> "PIOROU"
+                            e0 * e1 < 0 && abs(e1) > NOISE_LOG -> "PASSOU"
+                            abs(e1) <= OK_AFTER_LOG -> "CONFIRMADA"
                             else -> "CURTA"
                         }
                         verdict.put("verdict", v)
@@ -277,7 +284,11 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             exp.put("verdictSignature", signature)
             exp.put("bands", verdicts).put("indexAfter", indexNow).put("evaluatedAt", now)
             val closedStatus: String? = when {
-                pending == 0 && judged > 0 -> if (worse > 0) "PIOROU_EM_PARTE" else "VERIFICADO"
+                // Responsivo: uma faixa que piorou (com evidência) fecha na hora e oferece restaurar só aquele trecho;
+                // não espera as outras faixas terem leitura. Nenhuma faixa tocada é ignorada: as demais seguem julgadas
+                // pela prova por ponto do cérebro.
+                worse > 0 -> "PIOROU_EM_PARTE"
+                pending == 0 && judged > 0 -> "VERIFICADO"
                 // Nada a esperar e nada julgável: não há medição de antes nas faixas tocadas.
                 pending == 0 && touchedBands > 0 && withoutBase == touchedBands -> "SEM_BASE"
                 pending == 0 && touchedBands == 0 -> "SEM_BASE"
@@ -357,10 +368,13 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         }
     }
 
-    /** Pontos a restaurar do último experimento: só os das faixas que pioraram. */
+    /**
+     * Pontos a restaurar do último experimento: só os das faixas que pioraram. Sem relógio: a oferta vale enquanto este for
+     * o último experimento (uma gravação nova, Desfazer ou interrupção a substitui) e o piloto só a mostra enquanto a faixa
+     * seguir fora da margem.
+     */
     fun restorePoints(): JSONArray = synchronized(lock) {
         val exp = experiments.lastOrNull()?.takeIf { it.optString("status") == "PIOROU_EM_PARTE" } ?: return JSONArray()
-        if (clock() - exp.optLong("closedAt", 0L) > RESTORE_OFFER_MS) return JSONArray()
         val axis = exp.optJSONArray("axisRaw") ?: return JSONArray()
         val before = exp.optJSONArray("beforeRaw") ?: return JSONArray()
         val after = exp.optJSONArray("afterRaw") ?: return JSONArray()
