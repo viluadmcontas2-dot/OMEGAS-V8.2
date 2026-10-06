@@ -736,7 +736,7 @@
         if (this.firstRefreshPending) { this.firstRefreshPending = false; this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
         else if (this.projectionWarming) {
           // A bridge é deliberadamente não bloqueante. Enquanto o warmer produz a primeira
-          // projeção autoritativa, relê a 5 Hz sem esperar o watchdog de 2,5 s.
+          // projeção autoritativa, relê a 5 Hz sem esperar o watchdog longo.
           this.refresh();
           this.dataGate.mark();
         }
