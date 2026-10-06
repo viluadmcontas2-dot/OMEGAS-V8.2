@@ -67,6 +67,39 @@ async function audit(page,route,height,name){
    assert.deepEqual(errors,[]);
   } finally { await browser.close(); }
  }
+ // Intenção RESET_* antes do readback: a tela deve reagir já, sem fingir confirmação.
+ for(const action of ['RESET_GAS','RESET_PETROL']){
+  const target=action==='RESET_GAS'?'gas':'petrol';
+  const other=target==='gas'?'petrol':'gas';
+  const {browser,page,errors}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672},scn:{noStalls:true}});
+  try{
+   await go(page,'autocal');await page.waitForTimeout(1700);
+   const before=await page.evaluate(()=>({
+    gas:document.querySelectorAll('#autocalReferenceChart .autocal-reference-line.gas:not(.previous),#autocalReferenceChart .autocal-epoch-acquisition-line.gas').length,
+    petrol:document.querySelectorAll('#autocalReferenceChart .autocal-reference-line.petrol:not(.previous),#autocalReferenceChart .autocal-epoch-acquisition-line.petrol').length,
+   }));
+   assert.ok(before[target]>0,'fixture precisa exibir '+target+' antes do RESET pendente');
+   await page.evaluate(action=>{
+    const screen=window.OmegasApp.autoCalCockpit;
+    window.__pendingResetRoot=document.querySelector('.screen.active');
+    screen.api={...screen.api,actionStatus:()=>({action,state:'READING_AFTER',busy:true,message:'Conferindo na ECU'})};
+    screen.refresh();
+   },action);
+   const pending=await page.evaluate(({target,other})=>({
+    sameScreen:document.querySelector('.screen.active')===window.__pendingResetRoot,
+    targetLines:document.querySelectorAll('#autocalReferenceChart .autocal-reference-line.'+target+':not(.previous),#autocalReferenceChart .autocal-epoch-acquisition-line.'+target).length,
+    otherLines:document.querySelectorAll('#autocalReferenceChart .autocal-reference-line.'+other+':not(.previous),#autocalReferenceChart .autocal-epoch-acquisition-line.'+other).length,
+    sentence:document.getElementById('autocalHumanAction')?.textContent||'',
+    action:document.getElementById('autocalActionStatus')?.textContent||'',
+   }),{target,other});
+   assert.equal(pending.sameScreen,true,'RESET pendente não remonta a tela');
+   assert.equal(pending.targetLines,0,'curva antiga do combustível alvo não pode parecer aquisição atual');
+   if(action==='RESET_GAS') assert.ok(pending.otherLines>0,'RESET GNV preserva gasolina');
+   assert.match(pending.sentence,/releitura|conferindo|aguardando/i,'intenção pendente deve ser explícita');
+   await audit(page,'autocal',672,'autocal-pendente-'+target);
+   assert.deepEqual(errors,[]);
+  }finally{await browser.close();}
+ }
  const states=[
  ['autocal-completo','autocal',{zonesGas:[1,1,1,1],zonesPetrol:[1,1,1,1],autoMatch:3}],
  ['autocal-coleta','autocal',{zonesGas:[1,1,0,1]}],

@@ -7,14 +7,14 @@ permissions:
   contents: read
 jobs:
   approved-apk:
-    if: ${{ (github.head_ref == 'work/platina-diamante-ui' || github.head_ref == 'work/platina-autocal-coerencia') }}
+    if: ${{ (github.head_ref == 'work/platina-diamante-ui' || github.head_ref == 'work/platina-autocal-coerencia' || github.head_ref == 'work/platina-live-acquisition') }}
     needs: [multimedia-render, elastic-browser]
     uses: ./.github/workflows/verde-apk-now.yml
     with:
       build_apk: true
       source_sha: ${{ github.event.pull_request.head.sha }}
   multimedia-render:
-    if: ${{ (github.head_ref == 'work/platina-diamante-ui' || github.head_ref == 'work/platina-autocal-coerencia') }}
+    if: ${{ (github.head_ref == 'work/platina-diamante-ui' || github.head_ref == 'work/platina-autocal-coerencia' || github.head_ref == 'work/platina-live-acquisition') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -49,6 +49,7 @@ jobs:
           script: |
             test "$(git rev-parse HEAD)" = "$OMEGAS_SOURCE_SHA"
             bash tools/ci/run_android_render_evidence.sh autocal-visible-actions autocalVisibleReacquireActionsForMultimedia DashboardLevelsRenderTest
+            bash tools/ci/run_android_render_evidence.sh autocal-pending-reset-gas autocalPendingReacquireMasksOldGasImmediately DashboardLevelsRenderTest
             bash tools/ci/run_android_render_evidence.sh map-fresh-context mapFreshMp48ContextRender DashboardLevelsRenderTest
             bash tools/ci/run_android_render_evidence.sh curve-original-lognovo curveOriginalLognovoRendersThirtyDecodedPoints DashboardLevelsRenderTest
             bash tools/ci/run_android_render_evidence.sh refino-coletando refinoColetando RefinoRenderTest
@@ -63,7 +64,7 @@ jobs:
           if-no-files-found: warn
 
   elastic-browser:
-    if: ${{ (github.head_ref == 'work/platina-diamante-ui' || github.head_ref == 'work/platina-autocal-coerencia') }}
+    if: ${{ (github.head_ref == 'work/platina-diamante-ui' || github.head_ref == 'work/platina-autocal-coerencia' || github.head_ref == 'work/platina-live-acquisition') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:

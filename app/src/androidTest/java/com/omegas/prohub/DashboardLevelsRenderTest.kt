@@ -972,6 +972,54 @@ class DashboardLevelsRenderTest {
     }
 
     @Test
+    fun autocalPendingReacquireMasksOldGasImmediately() {
+        val scenario = launch()
+        try {
+            val live = liveFixture()
+            val provenance = installOriginalAutoCalReferenceFixture(scenario)
+            activateAutocal(scenario)
+            injectFresh(scenario, live, settleMs = 850L)
+            val before = autocalReferenceDom(scenario)
+            assertTrue("Fixture must start with gasoline curve", before.getString("petrolPath").length > 20)
+            assertTrue("Fixture must start with GNV curve", before.getString("gasPath").length > 20)
+
+            evalRaw(
+                scenario,
+                """
+                (() => {
+                  const screen = window.OmegasApp.autoCalCockpit;
+                  window.__pendingResetRoot = document.querySelector('.screen.active');
+                  screen.api = {
+                    ...screen.api,
+                    actionStatus: () => ({ action: 'RESET_GAS', state: 'READING_AFTER', busy: true, message: 'Conferindo na ECU' })
+                  };
+                  screen.refresh();
+                  return 'ok';
+                })()
+                """.trimIndent(),
+            )
+            Thread.sleep(250L)
+            val pending = autocalReferenceDom(scenario)
+            saveEvidence("autocal-pending-reset-gas", pending, scenario, provenance)
+
+            assertTrue("RESET GNV pending must keep gasoline reference visible", pending.getString("petrolPath").length > 20)
+            assertEquals("Old GNV curve must stop looking current before readback", "", pending.getString("gasPath"))
+            assertTrue(
+                "Operator must see pending intent before ECU confirmation",
+                pending.getString("action").contains("releitura", ignoreCase = true) ||
+                    pending.getString("action").contains("confer", ignoreCase = true) ||
+                    pending.getString("action").contains("aguard", ignoreCase = true),
+            )
+            assertTrue(
+                "Pending reset must not create horizontal overflow",
+                pending.getDouble("screenScrollWidth") <= pending.getDouble("screenClientWidth") + 1.0,
+            )
+        } finally {
+            scenario.close()
+        }
+    }
+
+    @Test
     fun autocalSparseZoneMapShowsExactMissingRegions() {
         val scenario = launch()
         try {
