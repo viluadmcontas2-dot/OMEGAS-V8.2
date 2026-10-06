@@ -16,8 +16,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Executa somente ações AutoCal nativas escolhidas e confirmadas pelo operador.
- * Não possui agenda, gatilho automático ou ligação com sugestões.
+ * Executa as ações AutoCal nativas pelo caminho canônico de trava serial, ACK e readback.
+ *
+ * Regra: ações continuam manuais, com uma única exceção explicitamente autorizada pelo dono:
+ * DELETE_POINT pode ser disparado pelo detector robusto de outlier para liberar uma bolinha nativa
+ * para readquisição. Nenhuma outra ação possui entrada automática.
  */
 class AutoCalNativeActionManager(
     private val receiptFile: File,
@@ -117,6 +120,8 @@ class AutoCalNativeActionManager(
         val createdAtMs: Long,
         val expiresAtMs: Long,
         val pointDeleteTargets: List<AutoCalPointDeleteProtocol.Target> = emptyList(),
+        val automatic: Boolean = false,
+        val automaticReason: JSONObject? = null,
     )
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
@@ -160,10 +165,42 @@ class AutoCalNativeActionManager(
         failure(error.message ?: "Seleção AutoCal inválida")
     }
 
+    /**
+     * ÚNICA mutação automática autorizada: libera um ponto nativo incoerente para a ECU readquirir.
+     * Usa exatamente o mesmo writer, SerialWriteGuard, máscaras, commit e readback da ação manual.
+     */
+    fun executeAutomaticPointDelete(
+        target: AutoCalPointDeleteProtocol.Target,
+        reason: JSONObject,
+    ): JSONObject = try {
+        val prepared = prepareInternal(
+            action = Action.DELETE_POINT,
+            pointDeleteTargets = listOf(target),
+            automatic = true,
+            automaticReason = JSONObject(reason.toString()),
+        )
+        if (!prepared.optBoolean("ok", false) || !prepared.optBoolean("prepared", false)) {
+            prepared.put("automatic", true).put("manualOnly", false)
+        } else {
+            execute(prepared.getString("preparationId"))
+                .put("automatic", true)
+                .put("manualOnly", false)
+        }
+    } catch (error: Exception) {
+        failure(error.message ?: "Readquisição automática inválida")
+            .put("automatic", true)
+            .put("manualOnly", false)
+    }
+
     private fun prepareInternal(
         action: Action,
         pointDeleteTargets: List<AutoCalPointDeleteProtocol.Target>,
+        automatic: Boolean = false,
+        automaticReason: JSONObject? = null,
     ): JSONObject {
+        require(!automatic || action == Action.DELETE_POINT) {
+            "Somente readquirir ponto AutoCal pode ser automático"
+        }
         require(!busy.get()) { "Outra ação AutoCal está em andamento" }
         require(isConnected()) { "USB desconectado" }
         require(!otherCalibrationBusy()) { "Outra operação de calibração está em andamento" }
@@ -178,6 +215,8 @@ class AutoCalNativeActionManager(
             createdAtMs = now,
             expiresAtMs = now + PREPARATION_TTL_MS,
             pointDeleteTargets = pointDeleteTargets,
+            automatic = automatic,
+            automaticReason = automaticReason?.let { JSONObject(it.toString()) },
         )
         val label = if (pointDeleteTargets.isNotEmpty()) {
             if (pointDeleteTargets.size == 1) "Readquirir ${pointDeleteTargets.single().toLabel()}"
@@ -195,6 +234,7 @@ class AutoCalNativeActionManager(
             1 -> pointTargetJson(pointDeleteTargets.single())
             else -> pointTargetsJson(pointDeleteTargets)
         }
+        automaticReason?.let { details.put("automaticReason", JSONObject(it.toString())) }
         synchronized(lock) {
             preparation = prepared
             status = baseStatus("PREPARED", label, 0)
@@ -203,6 +243,8 @@ class AutoCalNativeActionManager(
                 .put("sessionId", sessionId)
                 .put("expiresAtMs", prepared.expiresAtMs)
                 .put("details", details)
+                .put("automatic", prepared.automatic)
+                .put("manualOnly", !prepared.automatic)
         }
         onStateChanged()
         return JSONObject()
@@ -228,11 +270,11 @@ class AutoCalNativeActionManager(
             .put("ecuMutation", true)
             .put("mayChangeMulAct", action.mayChangeMulAct)
             .put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))
-            .put("requiresCriticalConfirmation", !action.operationalToggle)
+            .put("requiresCriticalConfirmation", !action.operationalToggle && !automatic)
             .put("operationalOneTouch", action.operationalToggle)
             .put("details", details)
-            .put("automatic", false)
-            .put("manualOnly", true)
+            .put("automatic", automatic)
+            .put("manualOnly", !automatic)
             .put("automaticBackup", false)
     }
 
@@ -264,7 +306,12 @@ class AutoCalNativeActionManager(
         // Trava e `busy` já foram adquiridos: nada entre aqui e a entrega ao executor pode vazá-los.
         var submitted = false
         try {
-            update("QUEUED", "Ação confirmada; enviando para a ECU", 0, prepared)
+            update(
+                "QUEUED",
+                if (prepared.automatic) "Outlier confirmado; liberando ponto para readquisição" else "Ação confirmada; enviando para a ECU",
+                0,
+                prepared,
+            )
             executor.execute { executePrepared(prepared) }
             submitted = true
         } catch (_: java.util.concurrent.RejectedExecutionException) {
@@ -728,9 +775,9 @@ class AutoCalNativeActionManager(
             .put("after", after.toJson())
             .put("ecuMutation", true)
             .put("mayChangeMulAct", prepared.action.mayChangeMulAct)
-            .put("humanConfirmed", true)
-            .put("automatic", false)
-            .put("manualOnly", true)
+            .put("humanConfirmed", !prepared.automatic)
+            .put("automatic", prepared.automatic)
+            .put("manualOnly", !prepared.automatic)
             .put("readbackValid", true)
             .put("readbackWitnesses", JSONArray(actionReadbackWitnesses(prepared).map { it.key }))
             .put("preMutationBackup", JSONObject.NULL)
@@ -920,6 +967,8 @@ class AutoCalNativeActionManager(
                 .put("preparationId", prepared.id)
                 .put("sessionId", prepared.sessionId)
                 .put("details", details)
+                .put("automatic", prepared.automatic)
+                .put("manualOnly", !prepared.automatic)
         }
         onStateChanged()
     }
