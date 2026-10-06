@@ -266,8 +266,16 @@ html body .utility-screen .dg-stack { grid-template-columns:repeat(2,minmax(0,1f
 html body .utility-screen .dg-stack > details { grid-column:1 / -1; }
 html body .now-dashboard-shell { gap:12px; }
 html body .now-overview { align-items:stretch; }
-html body .now-intention { display:flex; flex-direction:column; }
-html body .now-intention > button { margin-top:auto; align-self:flex-start; }
+html body .now-drive { grid-template-columns:repeat(4,minmax(0,1fr)); flex:none; }
+html body .now-tile { min-width:0; padding:14px 22px; min-height:150px; }
+html body .now-tile b { font-size:clamp(56px,8vh,64px); }
+html body .now-tile[data-tile="fuel"] b { font-size:clamp(52px,8vh,64px); }
+html body .now-intention { display:grid; grid-template-columns:minmax(0,1fr) auto; flex:none; }
+html body .now-intention > button { margin:0; align-self:center; min-height:58px; }
+html body .now-coverage { grid-template-columns:240px minmax(0,1fr); }
+html body .now-coverage-bands { min-width:0; }
+html body .now-bands { grid-template-columns:repeat(30,minmax(0,1fr)); }
+html body .now-quiet-row { flex:none; }
 html body .now-heading { display:flex; align-items:baseline; gap:16px; }
 html body .now-heading p { margin:0; }
 @media(max-width:1050px) {
