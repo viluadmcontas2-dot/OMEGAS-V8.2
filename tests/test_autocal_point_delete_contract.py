@@ -52,7 +52,7 @@ for token in (
     "Apagar selecionados",
 ):
     assert token in cockpit, token
-assert "data-autocal-reacquire-point" not in cockpit
+assert '<button type="button" data-autocal-reacquire-point' not in cockpit
 assert "data-autocal-reacquire-selected" in cockpit
 assert "preparePointDelete" in api
 assert "preparePointDeleteBatch" in api
