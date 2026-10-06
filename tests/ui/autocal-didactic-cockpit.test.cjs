@@ -231,20 +231,21 @@ assert.equal(css.includes('container-type: inline-size'), true);
 assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
 // Actual graph size and visible point context are verified by the rendered layout gate.
-assert.equal(source.includes('id="autocalZoneMeter"'), true, 'cockpit premium deve expor progresso visual das zonas');
-assert.equal(source.includes('data-autocal-zone-petrol'), true);
-assert.equal(source.includes('data-autocal-zone-gas'), true);
-assert.equal(source.includes('autocal-zone-cell'), true,
-  'zonas precisam ser células rotuladas Z1..Z4, não bolinhas anônimas');
-assert.match(source, /FALTA/,
-  'estado visual precisa nomear explicitamente zona faltante');
-assert.match(source, /data-current/,
-  'zona física atual precisa ter estado visual AGORA');
-assert.match(css, /\.autocal-zone-cell\s*\{/,
-  'mapa de zonas precisa de tratamento visual próprio');
+assert.equal(source.includes('id="autocalZoneMeter"'), false,
+  'zonas não devem ocupar uma segunda faixa fora do gráfico');
+assert.match(chartSource, /data-autocal-zone-surface/,
+  'Z1..Z4 precisam existir dentro da malha do gráfico');
+assert.match(chartSource, /autocal-zone-petrol-edge/,
+  'cada zona precisa carregar estado visual da gasolina');
+assert.match(chartSource, /autocal-zone-gas-edge/,
+  'cada zona precisa carregar estado visual do GNV');
+assert.match(chartSource, /FALTA/,
+  'o SVG deve continuar expondo semanticamente a zona faltante');
+assert.match(chartSource, /data-current/,
+  'zona física atual precisa ter estado visual AGORA no gráfico');
 assert.equal(source.includes('autocal-review-tech'), true, 'metadados técnicos da ação crítica devem ficar sob demanda');
 assert.match(fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/components/curve-chart.js'), 'utf8'), /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
-assert.match(css, /\.autocal-zone-meter\s*\{/, 'zone meter premium precisa de estilo dedicado');
+assert.match(css, /\.autocal-zone-petrol-edge\s*\{/, 'estado de gasolina precisa de tratamento visual no gráfico');
 assert.match(arCss, /\.ar-readout\s*\{[^}]*font-size:\s*22px/s, 'a linha do ponto tocado é legível a distância');
 assert.match(arCss, /\.ar-sentence\s*\{[^}]*font-size:\s*24px/s, 'a frase de estado precisa ser legível a distância');
 
