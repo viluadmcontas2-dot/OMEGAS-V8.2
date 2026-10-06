@@ -169,7 +169,11 @@
   };
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),
-    getUiProjection: () => J(projection()), getSessionLedgerStatus: () => J({}), listAutoCalSessions: () => '[]', getNativeActionStatus: () => J({}),
+    getUiProjection: () => J(projection()), getSessionLedgerStatus: () => J({}), listAutoCalSessions: () => '[]', getNativeActionStatus: () => J(window.__pointAction || {}),
+    preparePointDelete: (fuel,index) => { window.__pointTargets=[{fuel,index}]; return J({ok:true,prepared:true,preparationId:'point-single'}); },
+    preparePointDeleteBatch: targets => { window.__pointTargets=JSON.parse(targets); return J({ok:true,prepared:true,preparationId:'point-batch'}); },
+    executeNativeAction: id => { window.__pointAction={action:'DELETE_POINT',state:'READING_AFTER',busy:true}; return J({ok:true,started:true}); },
+    clearNativeActionPreparation: () => J({ok:true}),
     resetGasEvidence: () => { S.gasReset = true; S.phase = 'COLETANDO_NOSSOS'; return J({ ok: true, message: 'Aprendizado GNV reiniciado. A gasolina continua como referência.' }); },
     getRefinedAnalysis: () => J(refined()), getEquivalence: () => J(eq()), getEquivalenceFresh: () => J(eq()), getRefinementPhase: () => J({ ok: true, autopilot: eq().autopilot }), getEquivalenceResult: () => J({ ...eq(), available: true }),
   };

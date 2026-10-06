@@ -113,7 +113,7 @@ assert.equal(cockpit.includes("PETR_INJ_TBUF_GAS"), true);
 assert.equal(cockpit.includes("MNFLD_PRESS_BUF_GAS"), true);
 assert.equal(cockpit.includes("PETR_INJ_TBUF"), true);
 assert.equal(cockpit.includes("MNFLD_PRESS_BUF"), true);
-assert.equal(cockpit.includes('Ler de novo'), true);
+assert.equal(cockpit.includes('Apagar ponto'), true);
 assert.equal(cockpit.includes("acquisitionState: acquired ? 'ACQUIRED' : 'COLLECTING'"), true);
 assert.equal(chart.includes("data-acquisition-state"), true);
 assert.equal(cockpit.includes("ainda lendo"), true);

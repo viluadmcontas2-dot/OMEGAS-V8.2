@@ -378,3 +378,23 @@ test('M5 o aviso de falha aparece na tela (toast), não só no estado interno', 
   app.advance(5000);
   assert.ok(!toast._classes().has('show'), 'o aviso ficou na tela para sempre');
 });
+
+test('M5 foto escolhida fica bloqueada durante a prévia e coincide com a curva confirmada', () => {
+  const app = curveApp({ opPolls: 3 });
+  try {
+    app.byId('curveBackupSave').click(); app.settle(6);
+    const select = app.byId('curveBackupSelect');
+    const option = select.options.find(o => o.attrs.get('value'));
+    assert.ok(option);
+    const chosen = option.attrs.get('value');
+    select.value = chosen;
+    select.dispatchEvent(new app.win.Event('change', { bubbles: true }));
+    assert.equal(select.disabled, true, 'durante a leitura a foto não pode mudar');
+    assert.equal(select.value, chosen, 'a prévia preserva a foto solicitada');
+    app.settle(6);
+    assert.equal(select.disabled, false);
+    assert.equal(select.value, chosen);
+    assert.equal(app.world.callsOf('startCurveRestorePrepare').slice(-1)[0].args[0], chosen);
+    L.assertClean(app, 'foto confirmada');
+  } finally { app.destroy(); }
+});

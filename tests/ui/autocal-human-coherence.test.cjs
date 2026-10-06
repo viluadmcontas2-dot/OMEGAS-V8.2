@@ -102,3 +102,22 @@ test('comandos operacionais ficam fora dos painéis de detalhes',()=>{
   L.assertClean(app,'comandos diretos');
  }finally{app.destroy();}
 });
+
+test('pontos têm comandos tocáveis na barra, seleção múltipla e conferência antes de limpar',()=>{
+ const app=L.boot();try{app.go('autocal');app.settle(3);const screen=app.win.OmegasApp.autoCalCockpit;
+  const points=screen.currentAcquiredPoints.slice(0,2);assert.equal(points.length,2);
+  let status={};let targets=[];
+  screen.api={...screen.api,actionStatus:()=>status,preparePointDeleteBatch:t=>{targets=t;return {ok:true,prepared:true,preparationId:'batch'};},execute:()=>{status={action:'DELETE_POINT',state:'READING_AFTER',busy:true};return {ok:true,started:true};}};
+  const svg=app.$('#autocalReferenceChart svg');
+  for(const p of points){screen.inspectAcquiredPoint(p.fuel,p.index);app.$('[data-autocal-toggle-point-selection]').click();}
+  assert.equal(screen.selectedAcquiredPoints.size,2);
+  const button=app.$('[data-autocal-reacquire-selected]');assert.equal(button.closest('details'),null);assert.equal(button.closest('.ar-readout'),null);
+  assert.equal(app.$('#autocalChartInspector button'),null);assert.match(button.textContent,/\(2\)/);
+  assert.equal(app.$('#autocalReferenceChart svg'),svg,'selecionar não refaz o gráfico');
+  button.click();assert.equal(targets.length,2);assert.equal(screen.selectedAcquiredPoints.size,2);assert.equal(button.disabled,true);
+  status={action:'DELETE_POINT',state:'FAILED',busy:false};screen.refresh();assert.equal(screen.selectedAcquiredPoints.size,2);assert.equal(button.disabled,false);
+  button.click();
+  status={action:'DELETE_POINT',state:'CONFIRMED',busy:false};screen.refresh();assert.equal(screen.selectedAcquiredPoints.size,0);assert.equal(app.$('.autocal-point-actions').hidden,true);
+  L.assertClean(app,'seleção e conferência');
+ }finally{app.destroy();}
+});

@@ -20,3 +20,10 @@ Achado adjacente, não alterado nesta fatia: memo acquisitionMemo de NativeAutoC
 
 ### Comandos fora dos cartões (direcionamento final do dono)
 Resetar Curva K e Ver sessões ficam na barra principal do AutoCal. Sessões abre a rota própria; o exportador nativo foi preservado em uma barra antes da lista, com seleção persistente durante atualizações. Reiniciar medições GNV e Leitura da ECU ficam na barra principal do Refino. Os painéis de detalhes explicam os estados e não escondem esses comandos. A prova no browser verifica o alcance dos comandos adicionais e mantém o piso de altura do gráfico.
+
+### Pontos e preservação da curva (direcionamento adicional do dono)
+A ação de ponto estava no readout do gráfico, cuja camada é informativa e não recebe toque. Os comandos agora ficam em uma barra contextual no lugar dos comandos gerais durante a seleção: apagar ponto, selecionar/retirar, apagar selecionados, limpar e concluir. O comando nativo continua sendo a readquisição por máscaras; a tela explica que a ECU volta a medir o ponto. Falha preserva a intenção, confirmação limpa a seleção. Não houve mudança dos protocolos ou exclusão automática de amostras da ECU.
+
+Salvar curva, escolher foto e resetar Curva K saíram do bloco oculto/menu. Salvar usa o caminho existente validado de publicação em Download/Omegas; as fotos MANUAL não entram na poda automática. A escolha de uma foto é bloqueada durante a conferência e sincronizada com a foto retornada para impedir que Desfazer aplique A enquanto a tela mostra B. O filtro robusto existente do Refino continua responsável por rejeitar evidência incoerente; sua contagem é exibida apenas com referência válida, identificando explicitamente o cálculo do Refino.
+
+Provas: seleção sem recriar SVG; lote pendente → falha → nova tentativa → confirmação; destino exportável preservado; seletor bloqueado até terminar a prévia. O teste HTML usa clicks reais nos hits tocáveis dos pontos, nos comandos e nos toggles, mantendo os cenários de época e cursor.

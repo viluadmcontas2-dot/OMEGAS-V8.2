@@ -750,6 +750,7 @@
             <section class="ar-chart-card" aria-label="Leitura da ECU · Gasolina × GNV">
               <div class="ar-legend-row">
                 <div class="ar-legend" id="autocalLegend" aria-label="Legenda do gráfico"></div>
+                <span id="autocalNoiseSummary" class="autocal-noise-summary" aria-live="polite"></span>
                 <span id="autocalReferenceCount" class="ar-sr" hidden>—</span>
               </div>
               <div id="autocalReferenceChart" class="ar-chart-host"><div class="chart-empty">Aguardando as curvas da ECU.</div></div>
@@ -757,7 +758,7 @@
             </section>
 
             <div class="ar-act">
-              <div class="ar-buttons">
+              <div class="ar-buttons autocal-main-actions">
                 <details class="instrument-details"><summary>Histórico e detalhes</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
 
 
@@ -794,6 +795,13 @@
                     </section>
                   </div>
                 </details>
+              </div>
+              <div class="ar-buttons autocal-point-actions" hidden role="group" aria-label="Pontos da ECU selecionados">
+                <button type="button" data-autocal-reacquire-point>Apagar ponto</button>
+                <button type="button" data-autocal-toggle-point-selection>Selecionar ponto</button>
+                <button type="button" data-autocal-reacquire-selected>Apagar selecionados</button>
+                <button type="button" data-autocal-clear-point-selection>Limpar seleção</button>
+                <button type="button" data-autocal-done-points>Concluir seleção</button>
               </div>
               <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
             </div>
@@ -846,6 +854,12 @@
         this.app?.router?.open('sessions');
       });
       this.panel?.addEventListener('click', event => {
+        if (event.target.closest('[data-autocal-done-points]')) {
+          this.selectedAcquiredPoint = null;
+          this.selectedAcquiredPoints.clear();
+          this.readout('');
+          this.renderPointActions();
+        }
         if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
         if (event.target.closest('[data-autocal-confirm]')) this.confirmPrepared();
         const band = event.target.closest('[data-autocal-band-index]');
@@ -1132,6 +1146,9 @@
       this.renderBands(snapshot);
       this.renderEvents(events);
       this.renderActionState();
+      this.renderPointActions();
+      const rejected = this.referenceUsable === true && Array.isArray(this.analysis?.rejectedBands) ? this.analysis.rejectedBands.length : 0;
+      this.text('autocalNoiseSummary', rejected ? D.plural(rejected, 'ponto incoerente ignorado', 'pontos incoerentes ignorados') + ' no cálculo do Refino' : '');
     }
 
     /** UMA frase humana de estado (nada de jargão): o que a ECU está fazendo e o que falta. */
@@ -1506,6 +1523,10 @@
       this.epochChartNode = host.firstElementChild;
       this.renderLiveNarrative();
       this.renderLiveCursor();
+      if (this.selectedAcquiredPoint) {
+        const [fuel,index] = this.selectedAcquiredPoint.split(':');
+        this.inspectAcquiredPoint(fuel,Number(index));
+      }
     }
 
     renderReferenceChart(snapshot) {
@@ -1663,14 +1684,43 @@
       const amostras = Math.round(point.counter);
       const line = [point.fuelLabel, 'ponto ' + point.point, D.msUnit(point.petrolMs), D.barUnit(point.mapBar), 'Z' + point.zone,
         amostras + (amostras === 1 ? ' amostra' : ' amostras'), point.acquisitionState === 'ACQUIRED' ? '' : 'ainda lendo'].filter(Boolean).join(' · ');
-      this.readout(line, '<button type="button" class="btn-secondary btn-compact" data-autocal-reacquire-point data-autocal-reacquire-fuel="' + point.fuel +
-        '" data-autocal-reacquire-index="' + point.index + '">Ler de novo</button>');
+      this.readout(line + ' · Apagar limpa este ponto; a ECU volta a adquiri-lo.');
+      this.renderPointActions();
       document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => {
         const nodeKey = String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex);
         node.classList.toggle('selected', nodeKey === this.selectedAcquiredPoint);
         node.classList.toggle('batch-selected', this.selectedAcquiredPoints.has(nodeKey));
       });
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => node.classList.remove('selected'));
+    }
+
+    renderPointActions() {
+      const point = this.currentAcquiredPoints.find(p => p.fuel + ':' + p.index === this.selectedAcquiredPoint);
+      const count = this.selectedAcquiredPoints.size;
+      const editing = Boolean(point || count);
+      const bar = this.panel?.querySelector('.autocal-point-actions');
+      const main = this.panel?.querySelector('.autocal-main-actions');
+      if (!bar || !main) return;
+      bar.hidden = !editing; main.hidden = editing;
+      const busy = this.refreshBusy();
+      const one = bar.querySelector('[data-autocal-reacquire-point]');
+      const select = bar.querySelector('[data-autocal-toggle-point-selection]');
+      [one, select].forEach(button => {
+        button.disabled = busy || !point;
+        button.dataset.autocalReacquireFuel = point?.fuel || '';
+        button.dataset.autocalReacquireIndex = String(point?.index ?? '');
+      });
+      select.textContent = point && this.selectedAcquiredPoints.has(point.fuel + ':' + point.index) ? 'Retirar da seleção' : 'Selecionar ponto';
+      const batch = bar.querySelector('[data-autocal-reacquire-selected]');
+      batch.disabled = busy || !count;
+      batch.textContent = busy ? 'Conferindo ECU…' : 'Apagar selecionados' + (count ? ' (' + count + ')' : '');
+      bar.querySelector('[data-autocal-clear-point-selection]').disabled = busy || !count;
+      bar.querySelector('[data-autocal-done-points]').disabled = busy;
+      this.panel.querySelectorAll('[data-autocal-acquired-index]').forEach(node => {
+        const key = node.dataset.autocalAcquiredFuel + ':' + node.dataset.autocalAcquiredIndex;
+        node.classList.toggle('selected', key === this.selectedAcquiredPoint);
+        node.classList.toggle('batch-selected', this.selectedAcquiredPoints.has(key));
+      });
     }
 
     requestPointReacquisition(fuel, index) {
@@ -1686,6 +1736,8 @@
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível abrir a confirmação do ponto.' } });
         return;
       }
+      this.pendingPointReacquisitionKeys = new Set([String(fuel) + ':' + index]);
+      this.renderPointActions();
       this.store.patch({ alert: { level: 'working', message: 'Leitura nova enviada para a ECU. Aguarde a conferência deste ponto.' } });
       this.refresh();
     }
@@ -1741,6 +1793,7 @@
       if (!coherent) { this.selectedReferenceIndex = null; this.readout(''); return; }
       this.selectedReferenceIndex = point.index;
       this.selectedAcquiredPoint = null;
+      this.renderPointActions();
       this.readout('Curva · ponto ' + (point.index + 1) + ' · ' + D.msUnit(point.petrolMs) + ' · gasolina ' + D.bar(point.petrolMapBar) + ' · GNV ' + D.barUnit(point.gasMapBar));
       ns.CurveChart?.applySelection({ ref: point.index, ecu: null, batch: this.selectedAcquiredPoints });
       document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => node.classList.remove('selected'));

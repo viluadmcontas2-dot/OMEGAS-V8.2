@@ -10,7 +10,7 @@ async function audit(page,route,height,name){
   const visible=e=>{const c=getComputedStyle(e),b=e.getBoundingClientRect();return b.width>0&&b.height>0&&c.display!=='none'&&c.visibility!=='hidden'&&!e.closest('[hidden]')&&!e.closest('details:not([open]) *:not(summary)');};
   const screen=document.querySelector('.screen.active'),nav=rect(document.querySelector('.side-nav'));
   const plot=screen.querySelector('.ar-chart-host');
-  const critical=screen.querySelectorAll('[data-autocal-sessions],[data-autocal-action="RESET_K_FACTOR"],[data-refino-reset-gas],[data-refino-acquisition],[data-autocal-toggle],[data-autocal-action="RESET_GAS"],[data-autocal-action="RESET_PETROL"],[data-refino-primary],[data-refino-undo],#mapReadButton,#mapReviewButton,#mapAdjustmentValue,#curveReadButton,#curveReviewButton,#curveTargetFactor,[data-dash-refino]');
+  const critical=screen.querySelectorAll('#curveBackupSave,#curveBackupSelect,#curveResetButton,[data-autocal-reacquire-point],[data-autocal-toggle-point-selection],[data-autocal-reacquire-selected],[data-autocal-clear-point-selection],[data-autocal-done-points],[data-autocal-sessions],[data-autocal-action="RESET_K_FACTOR"],[data-refino-reset-gas],[data-refino-acquisition],[data-autocal-toggle],[data-autocal-action="RESET_GAS"],[data-autocal-action="RESET_PETROL"],[data-refino-primary],[data-refino-undo],#mapReadButton,#mapReviewButton,#mapAdjustmentValue,#curveReadButton,#curveReviewButton,#curveTargetFactor,[data-dash-refino]');
   return {view:{w:innerWidth,h:innerHeight},screen:rect(screen),nav,header:rect(document.querySelector('.workspace-head')),
    plot:plot?rect(plot):null,domain:window.OmegasUi.CurveChart.shared.scale?{xMax:window.OmegasUi.CurveChart.shared.scale.xMax,yMin:window.OmegasUi.CurveChart.shared.scale.yMin,yMax:window.OmegasUi.CurveChart.shared.scale.yMax}:null,
    overflow:screen.scrollWidth>screen.clientWidth+1,
@@ -37,6 +37,35 @@ async function audit(page,route,height,name){
    }
    assert.deepEqual(errors,[]);
   }finally{await browser.close();}
+ }
+ // Comandos reais no HTML: pontos, seleção e feedback pendente sem reconstruir a tela.
+ {
+  const {browser,page,errors}=await open(pw.chromium,'connected',{viewport:{width:1280,height:648},scn:{noStalls:true}});
+  try {
+   await go(page,'autocal');await page.waitForTimeout(1700);
+   const targets=await page.evaluate(()=>{
+    window.__pointSvg=document.querySelector('#autocalReferenceChart svg');
+    return [...document.querySelectorAll('#autocalReferenceChart .autocal-acquired-hit[data-autocal-acquired-fuel]')].filter(node=>{const r=node.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===node;}).slice(0,2).map(node=>({fuel:node.dataset.autocalAcquiredFuel,index:node.dataset.autocalAcquiredIndex}));
+   });
+   assert.equal(targets.length,2,'pontos precisam ser tocáveis no HTML real');
+   for(const target of targets){
+    await page.locator('#autocalReferenceChart .autocal-acquired-hit[data-autocal-acquired-fuel="'+target.fuel+'"][data-autocal-acquired-index="'+target.index+'"]').click();
+    await page.locator('[data-autocal-toggle-point-selection]').click();
+   }
+   assert.equal(await page.locator('#autocalChartInspector button').count(),0);
+   assert.equal(await page.evaluate(()=>window.__pointSvg===document.querySelector('#autocalReferenceChart svg')),true);
+   await audit(page,'autocal',648,'autocal-selecao-pontos');
+   await page.locator('[data-autocal-reacquire-selected]').click();
+   assert.equal(await page.evaluate(()=>window.__pointTargets.length),2);
+   assert.equal(await page.locator('[data-autocal-reacquire-selected]').isDisabled(),true);
+   await page.evaluate(()=>{window.__pointAction={action:'DELETE_POINT',state:'FAILED',busy:false};window.OmegasApp.autoCalCockpit.refresh();});
+   assert.equal(await page.evaluate(()=>window.OmegasApp.autoCalCockpit.selectedAcquiredPoints.size),2);
+   assert.equal(await page.locator('[data-autocal-reacquire-selected]').isDisabled(),false);
+   await page.locator('[data-autocal-reacquire-selected]').click();
+   await page.evaluate(()=>{window.__pointAction={action:'DELETE_POINT',state:'CONFIRMED',busy:false};window.OmegasApp.autoCalCockpit.refresh();});
+   assert.equal(await page.evaluate(()=>window.OmegasApp.autoCalCockpit.selectedAcquiredPoints.size),0);
+   assert.deepEqual(errors,[]);
+  } finally { await browser.close(); }
  }
  const states=[
  ['autocal-completo','autocal',{zonesGas:[1,1,1,1],zonesPetrol:[1,1,1,1],autoMatch:3}],

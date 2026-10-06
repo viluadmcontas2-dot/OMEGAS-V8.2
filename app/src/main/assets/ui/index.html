@@ -213,6 +213,12 @@
             </div>
           </div>
 
+          <div class="curve-backup-toolbar" aria-label="Preservar a Curva K">
+            <button id="curveBackupSave" type="button" aria-label="Salvar Curva K em Downloads/Omegas">Salvar em Downloads</button>
+            <select id="curveBackupSelect" aria-label="Curvas salvas"><option value="">Nenhuma curva salva</option></select>
+            <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
+          </div>
+          <span id="curveBackupStatus" class="curve-backup-status" role="status"></span>
           <div class="curve-view-stack">
             <div class="curve-view curve-overview-view" data-curve-panel="overview">
               <section class="curve-overview-surface">
@@ -241,10 +247,10 @@
                     <button id="curveReviewButton" type="button" class="primary btn-primary" disabled>Escolha um ponto e ajuste o K</button>
                     <button id="curveBackupRestore" type="button" class="secondary" hidden>Desfazer</button>
                     <button id="curveClearProposals" type="button" class="quiet-button" hidden>Limpar</button>
-                    <details class="more-menu"><summary aria-label="Mais ações">⋯</summary><div class="more-menu-list"><button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button></div></details>
+
                   </div>
                   <div id="curveProposalList" class="proposal-list" hidden></div>
-                  <div hidden><button id="curveBackupSave" type="button">Salvar</button><select id="curveBackupSelect"><option value="">Nenhuma foto salva</option></select><span id="curveBackupStatus"></span></div>
+
                 </section>
               </div>
             </div>

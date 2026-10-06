@@ -324,3 +324,11 @@ html body .session-export-toolbar label { display:grid; gap:4px; min-width:0; fl
 html body .session-export-toolbar :is(select,button) { min-height:58px; font-size:22px; }
 html body .session-export-toolbar select { width:100%; }
 html body .ss-item[data-selected="true"] { border-color:var(--accent); }
+
+html body .autocal-point-actions[hidden],html body .autocal-main-actions[hidden] { display:none; }
+html body .autocal-point-actions { justify-content:flex-start; }
+html body .autocal-noise-summary { margin-left:auto; font-size:20px; color:var(--muted); }
+html body .curve-backup-toolbar { display:flex; align-items:center; gap:8px; flex:none; }
+html body .curve-backup-toolbar :is(button,select) { min-height:58px; font-size:22px; }
+html body .curve-backup-toolbar select { flex:1; min-width:0; }
+html body .curve-backup-status { flex:none; font-size:20px; line-height:1.25; }
