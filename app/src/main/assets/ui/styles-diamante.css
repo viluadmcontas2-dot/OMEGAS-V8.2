@@ -233,7 +233,7 @@ html body .ar-refino .ar-fuel { grid-column:1; grid-row:2; padding:2px 10px; fon
 html body .ar-refino #refinoHeadline { grid-column:2; grid-row:1 / span 2; }
 html body .ar-refino .instrument-menus { grid-column:3; grid-row:1 / span 2; }
 html body .ar-refino .ar-stall { grid-column:2 / -1; grid-row:3; }
-html body .ar-refino .instrument-details > .instrument-detail-content { top:66px; bottom:auto; }
+html body .ar-refino .instrument-details > .instrument-detail-content { top:66px; bottom:auto; max-height:min(440px,calc(100vh - 340px)); }
 html body .ar-refino .ar-act { min-height:58px; grid-template-columns:minmax(0,1fr); }
 html body .ar-refino .ar-act .ar-buttons { width:100%; justify-content:flex-start; gap:8px; }
 html body .ar-refino .ar-act .ar-reason { font-size:20px; margin:0; }

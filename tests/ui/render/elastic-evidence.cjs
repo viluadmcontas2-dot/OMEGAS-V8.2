@@ -83,6 +83,7 @@ async function audit(page,route,height,name){
     const beforeWrites=await page.evaluate(()=>Object.entries(window.__mockCalls).filter(([k])=>/Write|Restore|startCurveReset|executeNativeAction/.test(k)));
     const petrolPath=await page.locator('.screen.active .autocal-reference-line.petrol').getAttribute('d');
     await page.locator(summary).click();
+    assert.equal(await page.locator('.screen.active [data-refino-reset-gas]').evaluate(button => { const r=button.getBoundingClientRect(); return button.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)); }),true,'detalhes não podem cobrir o comando principal');
     await page.locator('.screen.active [data-refino-reset-gas]').click();
     await page.waitForTimeout(200);
     assert.equal(await page.evaluate(()=>window.OmegasUi.AutoCalApi.equivalence().gasObservations),0);
