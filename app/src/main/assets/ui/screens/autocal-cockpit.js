@@ -726,30 +726,23 @@
         panel.className = 'autocal-route-panel';
         panel.innerHTML = `
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
-            <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
-              <h2 class="instrument-title">AutoCal</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
-              <div class="ar-tile"><small>MAP</small><b><span id="autocalLiveMap">—</span><em>bar</em></b></div>
-              <div class="ar-tile"><small>Injeção</small><b><span id="autocalLivePetrol">—</span><em>ms</em></b></div>
-              <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
-              <div class="ar-tile ar-zone"><small>Zona</small><b id="autocalLiveZone">—</b></div>
-              <div class="ar-tile ar-automatch" id="autocalAutoMatchTile" data-state="unknown"><small>AutoMatch</small><b id="autocalAutoMatchCount">—</b></div>
-              <div class="autocal-reading-controls"><button type="button" class="ar-ghost" data-autocal-history hidden aria-label="Mostrar leitura anterior">Leitura anterior</button><button type="button" data-autocal-toggle class="btn-primary btn-compact" data-loading="true" disabled>Lendo estado…</button></div>
-              <span id="autocalLiveTitle" hidden>Aguardando telemetria</span>
-              <p id="autocalLiveNarrative" class="ar-sr" hidden></p>
-              <span id="autocalNativeState" hidden>Leitura da ECU: aguardando</span>
-            </header>
-
-              <section class="autocal-zone-card autocal-zone-strip" aria-label="Cobertura das zonas">
-                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
-                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                </div>
-                <span id="autocalZoneSummary" class="ar-sr">—</span>
-              </section>
+            <div class="autocal-semantic-state ar-sr" aria-live="polite">
+              <span id="autocalActionStatus" data-level="neutral"></span>
+              <span id="autocalLiveFuel">—</span>
+              <span id="autocalLiveMap">—</span>
+              <span id="autocalLivePetrol">—</span>
+              <span id="autocalLiveRpm">—</span>
+              <span id="autocalLiveZone">—</span>
+              <span id="autocalAutoMatchTile" data-state="unknown"><span id="autocalAutoMatchCount">—</span></span>
+              <span id="autocalLiveTitle">Aguardando telemetria</span>
+              <span id="autocalLiveNarrative"></span>
+              <span id="autocalNativeState">Leitura da ECU: aguardando</span>
+            </div>
 
             <section class="ar-chart-card" aria-label="Leitura da ECU · Gasolina × GNV">
               <div class="ar-legend-row">
                 <div class="ar-legend" id="autocalLegend" aria-label="Legenda do gráfico"></div>
+                <p id="autocalHumanAction" class="autocal-graph-status" data-level="neutral">Lendo a ECU…</p>
                 <span id="autocalNoiseSummary" class="autocal-noise-summary" aria-live="polite"></span>
                 <span id="autocalReferenceCount" class="ar-sr" hidden>—</span>
               </div>
@@ -758,50 +751,44 @@
             </section>
 
             <div class="ar-act">
-              <div class="ar-buttons autocal-main-actions">
-                <details class="instrument-details"><summary>Histórico e detalhes</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
+              <div class="ar-buttons autocal-command-row" role="group" aria-label="Comandos do AutoCal">
+                <button type="button" data-autocal-reacquire-selected data-autocal-selection hidden>Apagar selecionados</button>
+                <button type="button" data-autocal-clear-point-selection data-autocal-selection hidden>Limpar seleção</button>
+                <button type="button" data-autocal-toggle class="btn-primary btn-compact" data-loading="true" disabled>Lendo estado…</button>
+                <button type="button" data-autocal-done-points data-autocal-selection hidden>Concluir seleção</button>
 
-
-              <section id="autocalAutoMatchEvidence" class="ar-card autocal-automatch-evidence" data-state="WAITING" aria-live="polite">
-                <h4>O que o AutoMatch mudou</h4>
-                <b id="autocalAutoMatchEvidenceTitle">Aguardando o primeiro AutoMatch</b>
-                <span id="autocalAutoMatchEvidenceDetail"></span>
-              </section>
-
-              <div id="autocalResetComparison" class="ar-card autocal-reset-comparison" hidden aria-live="polite"></div>
-
-              <section class="ar-card autocal-session-strip" data-session-level="ok" aria-live="polite">
-                <div class="autocal-session-copy">
-                  <h4>Sessão</h4>
-                  <b id="autocalSessionSummary">Sessões prontas</b>
-                  <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
-                  <span id="autocalSessionState">Salvo automaticamente</span>
-                </div>
-              </section>
-            </div>
-
-            </details>
-                <button type="button" data-autocal-sessions>Ver sessões</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
-                <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
-                <details class="autocal-reset-menu ar-more">
+                <button type="button" data-autocal-sessions data-autocal-normal>Ver sessões</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS" data-autocal-normal>Reler GNV</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL" data-autocal-normal>Reler gasolina</button>
+                <details class="autocal-reset-menu ar-more" data-autocal-normal>
                   <summary>Mais opções</summary>
                   <div class="autocal-reset-popover" id="autocalOptionsPanel" aria-label="Mais opções do AutoCal">
                     <button type="button" class="autocal-options-close" data-autocal-close-options>Fechar opções ×</button>
+                    <button type="button" data-autocal-history hidden aria-label="Mostrar leitura anterior">Leitura anterior</button>
+                    <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
                     ${ns.CurveChart.viewControls()}
-                    <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar interrompe a aquisição. Reler gasolina ou GNV reinicia somente os dados daquele combustível.</p>
-                    </section>
+                    <details class="instrument-details autocal-secondary-details">
+                      <summary>Histórico e detalhes</summary>
+                      <div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
+                        <section id="autocalAutoMatchEvidence" class="ar-card autocal-automatch-evidence" data-state="WAITING" aria-live="polite">
+                          <h4>O que o AutoMatch mudou</h4>
+                          <b id="autocalAutoMatchEvidenceTitle">Aguardando o primeiro AutoMatch</b>
+                          <span id="autocalAutoMatchEvidenceDetail"></span>
+                        </section>
+                        <div id="autocalResetComparison" class="ar-card autocal-reset-comparison" hidden aria-live="polite"></div>
+                        <section class="ar-card autocal-session-strip" data-session-level="ok" aria-live="polite">
+                          <div class="autocal-session-copy">
+                            <h4>Sessão</h4>
+                            <b id="autocalSessionSummary">Sessões prontas</b>
+                            <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
+                            <span id="autocalSessionState">Salvo automaticamente</span>
+                          </div>
+                        </section>
+                      </div>
+                    </details>
+                    <p>O AutoMatch continua sendo decidido pela ECU. Reler reinicia somente o combustível escolhido.</p>
                   </div>
                 </details>
-              </div>
-              <div class="ar-buttons autocal-point-actions" hidden role="group" aria-label="Pontos da ECU selecionados">
-                <button type="button" data-autocal-reacquire-point>Apagar ponto</button>
-                <button type="button" data-autocal-toggle-point-selection>Selecionar ponto</button>
-                <button type="button" data-autocal-reacquire-selected>Apagar selecionados</button>
-                <button type="button" data-autocal-clear-point-selection>Limpar seleção</button>
-                <button type="button" data-autocal-done-points>Concluir seleção</button>
               </div>
               <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
             </div>
@@ -866,7 +853,7 @@
         if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
         if (acquiredPoint) {
-          this.inspectAcquiredPoint(
+          this.toggleAcquiredPointSelection(
             acquiredPoint.dataset.autocalAcquiredFuel,
             Number(acquiredPoint.dataset.autocalAcquiredIndex),
           );
@@ -878,13 +865,6 @@
           this.requestPointReacquisition(
             reacquire.dataset.autocalReacquireFuel,
             Number(reacquire.dataset.autocalReacquireIndex),
-          );
-        }
-        const togglePoint = event.target.closest('[data-autocal-toggle-point-selection]');
-        if (togglePoint) {
-          this.toggleAcquiredPointSelection(
-            togglePoint.dataset.autocalReacquireFuel,
-            Number(togglePoint.dataset.autocalReacquireIndex),
           );
         }
         if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
@@ -1695,27 +1675,24 @@
     }
 
     renderPointActions() {
-      const point = this.currentAcquiredPoints.find(p => p.fuel + ':' + p.index === this.selectedAcquiredPoint);
       const count = this.selectedAcquiredPoints.size;
-      const editing = Boolean(point || count);
-      const bar = this.panel?.querySelector('.autocal-point-actions');
-      const main = this.panel?.querySelector('.autocal-main-actions');
-      if (!bar || !main) return;
-      bar.hidden = !editing; main.hidden = editing;
+      const editing = count > 0;
+      const row = this.panel?.querySelector('.autocal-command-row');
+      if (!row) return;
+      row.querySelectorAll('[data-autocal-normal]').forEach(node => { node.hidden = editing; });
+      row.querySelectorAll('[data-autocal-selection]').forEach(node => { node.hidden = !editing; });
+
       const busy = this.refreshBusy();
-      const one = bar.querySelector('[data-autocal-reacquire-point]');
-      const select = bar.querySelector('[data-autocal-toggle-point-selection]');
-      [one, select].forEach(button => {
-        button.disabled = busy || !point;
-        button.dataset.autocalReacquireFuel = point?.fuel || '';
-        button.dataset.autocalReacquireIndex = String(point?.index ?? '');
-      });
-      select.textContent = point && this.selectedAcquiredPoints.has(point.fuel + ':' + point.index) ? 'Retirar da seleção' : 'Selecionar ponto';
-      const batch = bar.querySelector('[data-autocal-reacquire-selected]');
-      batch.disabled = busy || !count;
-      batch.textContent = busy ? 'Conferindo ECU…' : 'Apagar selecionados' + (count ? ' (' + count + ')' : '');
-      bar.querySelector('[data-autocal-clear-point-selection]').disabled = busy || !count;
-      bar.querySelector('[data-autocal-done-points]').disabled = busy;
+      const batch = row.querySelector('[data-autocal-reacquire-selected]');
+      if (batch) {
+        batch.disabled = busy || !count;
+        batch.textContent = busy ? 'Conferindo ECU…' : 'Apagar selecionados' + (count ? ' (' + count + ')' : '');
+      }
+      const clear = row.querySelector('[data-autocal-clear-point-selection]');
+      if (clear) clear.disabled = busy || !count;
+      const done = row.querySelector('[data-autocal-done-points]');
+      if (done) done.disabled = busy;
+
       this.panel.querySelectorAll('[data-autocal-acquired-index]').forEach(node => {
         const key = node.dataset.autocalAcquiredFuel + ':' + node.dataset.autocalAcquiredIndex;
         node.classList.toggle('selected', key === this.selectedAcquiredPoint);
@@ -1745,17 +1722,37 @@
     toggleAcquiredPointSelection(fuel, index) {
       if (!Number.isInteger(index)) return;
       const key = String(fuel) + ':' + String(index);
-      if (this.selectedAcquiredPoints.has(key)) this.selectedAcquiredPoints.delete(key);
-      else this.selectedAcquiredPoints.add(key);
-      this.inspectAcquiredPoint(fuel, index);
-      this.renderReferenceChart(this.snapshot);
+      if (this.selectedAcquiredPoints.has(key)) {
+        this.selectedAcquiredPoints.delete(key);
+        if (this.selectedAcquiredPoint === key) {
+          this.selectedAcquiredPoint = this.selectedAcquiredPoints.size
+            ? Array.from(this.selectedAcquiredPoints).at(-1)
+            : null;
+        }
+      } else {
+        this.selectedAcquiredPoints.add(key);
+        this.selectedAcquiredPoint = key;
+      }
+      if (this.selectedAcquiredPoint) {
+        const [selectedFuel, selectedIndex] = this.selectedAcquiredPoint.split(':');
+        this.inspectAcquiredPoint(selectedFuel, Number(selectedIndex));
+      } else {
+        this.readout('');
+        this.renderPointActions();
+      }
+      ns.CurveChart?.applySelection({
+        ref: null,
+        ecu: this.selectedAcquiredPoint,
+        batch: this.selectedAcquiredPoints,
+      });
     }
 
     clearAcquiredPointSelection() {
       this.selectedAcquiredPoints.clear();
-      const current = this.selectedAcquiredPoint?.split(':');
-      if (current?.length === 2) this.inspectAcquiredPoint(current[0], Number(current[1]));
-      this.renderReferenceChart(this.snapshot);
+      this.selectedAcquiredPoint = null;
+      this.readout('');
+      this.renderPointActions();
+      ns.CurveChart?.applySelection({ ref: null, ecu: null, batch: this.selectedAcquiredPoints });
     }
 
     requestSelectedPointReacquisition() {
