@@ -17,3 +17,6 @@ Protocolos, comandos, leitores/escritores nativos e algoritmos de calibração p
 Prova local: contratos/modelo/mini-DOM. Browser local indisponível (Chromium Playwright não instalado); layout real 1280×720 e área reduzida executados na CI, além do emulador Android pelo fluxo existente. Validação USB/ECU física depende do proprietário.
 
 Achado adjacente, não alterado nesta fatia: memo acquisitionMemo de NativeAutoCalMonitor depende do snapshot e de comparisonAllowed, podendo conservar aquisição antiga quando só a máscara da época muda. Não é fonte da cobertura primária desta HMI; requer regressão nativa específica antes de alterar.
+
+### Comandos fora dos cartões (direcionamento final do dono)
+Resetar Curva K e Ver sessões ficam na barra principal do AutoCal. Sessões abre a rota própria; o exportador nativo foi preservado em uma barra antes da lista, com seleção persistente durante atualizações. Reiniciar medições GNV e Leitura da ECU ficam na barra principal do Refino. Os painéis de detalhes explicam os estados e não escondem esses comandos. A prova no browser verifica o alcance dos comandos adicionais e mantém o piso de altura do gráfico.

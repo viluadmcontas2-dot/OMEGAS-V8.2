@@ -72,20 +72,13 @@
 .source-status[data-level="working"], .autocal-read-context[data-read-level="working"] { border-color: rgba(var(--rgb-120-183-255),.4); }
 .source-status[data-level="error"], .autocal-read-context[data-read-level="error"] { border-color: rgba(var(--rgb-255-119-119),.5); }
 /* Sessão: contexto operacional compacto, sem competir com a curva. */
-.autocal-session-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 12px; border: 1px solid var(--veil-08); border-radius: 14px; background: var(--veil-018); }
-.autocal-session-strip[data-session-level="warning"] { border-color: rgba(var(--rgb-255-190-92),.5); }
-.autocal-session-copy small, .autocal-session-item small { display: block; color: var(--tone-8291a4); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
-.autocal-session-copy b { display: block; margin-top: 2px; font-size: 14px; }
-.autocal-session-copy span, .autocal-session-actions > span, .autocal-session-item span { color: var(--tone-9dacbc); font-size: 11px; line-height: 1.35; }
-.autocal-session-drawer { padding: 10px 12px; border: 1px solid rgba(var(--rgb-255-255-255),.075); border-radius: 14px; background: rgba(var(--rgb-8-14-22),.68); }
-.autocal-session-list { display: grid; gap: 8px; }
-.autocal-session-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; min-width: 0; padding: 9px 10px; border-radius: 11px; background: var(--veil-025); }
-.autocal-session-item[data-active="true"] { box-shadow: inset 3px 0 0 rgba(var(--rgb-93-211-158),.75); }
-.autocal-session-item b, .autocal-session-item span { display: block; }
-.autocal-session-item b { margin: 2px 0; font-size: 13px; }
-.autocal-session-item button, .autocal-session-actions button { min-height: 44px; }
+.autocal-session-strip  { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 12px; border: 1px solid var(--veil-08); border-radius: 14px; background: var(--veil-018); }
+.autocal-session-strip[data-session-level="warning"]  { border-color: rgba(var(--rgb-255-190-92),.5); }
+.autocal-session-copy small { display: block; color: var(--tone-8291a4); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.autocal-session-copy b  { display: block; margin-top: 2px; font-size: 14px; }
+.autocal-session-copy span { color: var(--tone-9dacbc); font-size: 11px; line-height: 1.35; }
 @container (max-width: 760px) {
-  .autocal-session-strip, .autocal-session-item { grid-template-columns: 1fr; }
+  .autocal-session-strip { grid-template-columns: 1fr; }
 }
 /* HMI automotiva: texto operacional legível a aproximadamente um braço de distância. */
 .autocal-zone-meter span { font-size: 12px; }
@@ -95,23 +88,19 @@
 .autocal-review-card p, .autocal-review-card dd, .autocal-review-card dt { font-size: 13px; }
 .autocal-review-tech > summary { font-size: 13px; }
 .autocal-live-label { font-size: 13px; }
-.autocal-session-copy small, .autocal-session-item small { font-size: 11px; }
-.autocal-session-copy b { font-size: 16px; }
-.autocal-session-copy span { font-size: 13px; }
-.autocal-session-item span { font-size: 13px; }
-.autocal-session-item b { font-size: 14px; }
-.autocal-session-item button, .autocal-session-actions button { min-height: 52px; font-size: 14px; }
+.autocal-session-copy small { font-size: 11px; }
+.autocal-session-copy b  { font-size: 16px; }
+.autocal-session-copy span  { font-size: 13px; }
 /* 2026-09-21 — hierarchy refinement: curve is the dominant instrument surface. */
 .autocal-cockpit { gap: 7px; }
-.autocal-session-strip { order: 3; }
-.autocal-session-drawer { order: 4; }
+.autocal-session-strip  { order: 3; }
 .autocal-review { order: 8; }
 .autocal-live-halo { fill: rgba(var(--rgb-23-218-246),.14); stroke: rgba(var(--rgb-23-218-246),.55); stroke-width: 2; }
 .autocal-live-point { fill: var(--tone-19daf4); stroke: var(--tone-dffcff); stroke-width: 1.5; }
 .autocal-live-label { fill: var(--tone-49e7fb); stroke: var(--tone-061019); }
 .autocal-zone-meter { margin-top: 5px; }
 .autocal-hero-actions button, .autocal-primary-action, .autocal-reset-actions button, .autocal-chart-tools button, .autocal-review-card button { min-height: 48px; }
-.autocal-session-strip { padding: 8px 11px; border-radius: 11px; }
+.autocal-session-strip  { padding: 8px 11px; border-radius: 11px; }
 /* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
 .autocal-reference-line.petrol:not(.previous) { stroke-width: 4; opacity: .62; }
 .autocal-reference-line.gas:not(.previous) { stroke-width: 2.5; }
@@ -167,10 +156,10 @@
 .autocal-reset-comparison b { margin-top: 2px; color: var(--tone-e6f4ff); font-size: 13px; }
 .autocal-reset-comparison span { margin-top: 2px; color: var(--tone-91a4b4); font-size: 9px; }
 .autocal-secondary-stack { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; min-width: 0; overflow: visible; }
-.autocal-session-strip.autocal-secondary-card { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 10px 12px; }
-.autocal-session-copy small { font-size: 9px; }
-.autocal-session-copy b { font-size: 14px; }
-.autocal-session-copy span { font-size: 11px; }
+.autocal-session-strip.autocal-secondary-card  { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 10px 12px; }
+.autocal-session-copy small  { font-size: 9px; }
+.autocal-session-copy b  { font-size: 14px; }
+.autocal-session-copy span  { font-size: 11px; }
 .autocal-zone-card { display: grid; align-content: center; gap: 7px; padding: 10px 12px; }
 .autocal-secondary-stack .autocal-zone-meter { display: grid; gap: 7px; margin: 0; }
 .autocal-secondary-stack .autocal-zone-meter > div { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: 8px; align-items: center; }
@@ -178,7 +167,6 @@
 .autocal-secondary-stack .autocal-zone-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .autocal-secondary-stack .autocal-zone-cell { min-width: 0; min-height: 44px; padding: 4px 5px; }
 .autocal-zone-card > #autocalZoneSummary { color: var(--tone-8fa3b6); font-size: var(--text-critical); }
-.autocal-session-drawer.autocal-secondary-card { min-width: 0; padding: 10px 12px; }
 @container (max-width: 980px) {
   .autocal-reset-menu > summary { min-width: 132px; padding: 0 10px; }
 }

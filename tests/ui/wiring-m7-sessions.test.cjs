@@ -125,3 +125,23 @@ test('M7 texto vindo do Kotlin é mostrado como TEXTO: marcação HTML no motivo
   assert.equal(item.querySelectorAll('b').length, 1, 'só o título da sessão pode ser <b>');
   assert.match(item.textContent, /<img src=x><b>negrito<\/b>/);
 });
+
+test('M7 exportar permanece na barra principal e usa a sessão escolhida mesmo após telemetria nova', () => {
+  const list = [ITEM(0), ITEM(1)];
+  const app = sessionsApp({ sessions: list });
+  try {
+    const select = app.$('[data-session-choice]');
+    select.value = list[1].id;
+    select.dispatchEvent(new app.win.Event('change', { bubbles: true }));
+    assert.equal(app.$('[data-session-export]').closest('.ss-item'), null);
+    app.world.sessionStatus.events += 1;
+    app.win.OmegasApp.scheduler.run(); app.settle(3);
+    assert.equal(app.$('[data-session-choice]').value, list[1].id);
+    const mark = app.world.mark();
+    app.$('[data-session-export]').click();
+    const calls = app.world.since(mark).filter(c => c.method === 'exportSession');
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].args[0], list[1].id);
+    L.assertClean(app, 'exportação direta');
+  } finally { app.destroy(); }
+});

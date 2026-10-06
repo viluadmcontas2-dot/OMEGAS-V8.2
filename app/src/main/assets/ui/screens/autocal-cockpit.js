@@ -667,7 +667,6 @@
       this.actionState = {};
       this.sessionState = {};
       this.sessions = [];
-      this.sessionDrawerOpen = false;
       this.chartScale = null;
       this.cursor = new ns.LiveStore.EaseCursor(() => this.panel?.querySelector('.autocal-live-layer'));
       this.previousReferencePoints = [];
@@ -777,24 +776,20 @@
                   <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
                   <span id="autocalSessionState">Salvo automaticamente</span>
                 </div>
-                <button type="button" data-autocal-sessions class="btn-secondary btn-compact">Ver sessões</button>
-              </section>
-              <section id="autocalSessionDrawer" class="ar-card autocal-session-drawer" hidden aria-label="Sessões recentes">
-                <h4>Sessões recentes</h4><p id="autocalSessionNext"></p>
-                <div id="autocalSessionList" class="autocal-session-list"></div>
               </section>
             </div>
 
             </details>
+                <button type="button" data-autocal-sessions>Ver sessões</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
+                <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
                 <details class="autocal-reset-menu ar-more">
                   <summary>Mais opções</summary>
                   <div class="autocal-reset-popover" id="autocalOptionsPanel" aria-label="Mais opções do AutoCal">
                     <button type="button" class="autocal-options-close" data-autocal-close-options>Fechar opções ×</button>
                     ${ns.CurveChart.viewControls()}
                     <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
                       <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar interrompe a aquisição. Reler gasolina ou GNV reinicia somente os dados daquele combustível.</p>
                     </section>
                   </div>
@@ -848,11 +843,7 @@
         this.renderReferenceChart(this.snapshot);
       });
       this.panel?.querySelector('[data-autocal-sessions]')?.addEventListener('click', event => {
-        this.sessionDrawerOpen = !this.sessionDrawerOpen;
-        const drawer = document.getElementById('autocalSessionDrawer');
-        if (drawer) drawer.hidden = !this.sessionDrawerOpen;
-        event.currentTarget.textContent = this.sessionDrawerOpen ? 'Ocultar sessões' : 'Ver sessões';
-        if (this.sessionDrawerOpen) this.loadSessions();
+        this.app?.router?.open('sessions');
       });
       this.panel?.addEventListener('click', event => {
         if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
@@ -884,8 +875,6 @@
         }
         if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
         if (event.target.closest('[data-autocal-clear-point-selection]')) this.clearAcquiredPointSelection();
-        const exportButton = event.target.closest('[data-autocal-export-session]');
-        if (exportButton?.dataset?.sessionId) this.api?.exportSession?.(exportButton.dataset.sessionId);
       });
     }
 
@@ -1000,13 +989,6 @@
         ].includes(String(this.actionState?.state || ''));
       this.sessionState = this.api.sessionStatus?.() || {};
       this.render();
-    }
-
-    loadSessions() {
-      if (!this.api?.available?.()) return;
-      const next = this.api.sessions?.();
-      this.sessions = Array.isArray(next) ? next : [];
-      this.renderSessionState();
     }
 
     runOperational(action) {
@@ -1213,31 +1195,7 @@
       const strip = this.panel?.querySelector('.autocal-session-strip');
       if (strip) strip.dataset.sessionLevel = narrative.level;
 
-      const host = document.getElementById('autocalSessionList');
-      if (!host || !this.sessionDrawerOpen) return;
-      const sessions = Array.isArray(this.sessions) ? this.sessions.slice(0, 8) : [];
-      if (!sessions.length) {
-        host.innerHTML = '<p class="empty-copy">Nenhuma sessão gravada ainda.</p>';
-        return;
-      }
-      host.innerHTML = sessions.map((item, index) => {
-        const summary = item?.semanticSummary && typeof item.semanticSummary === 'object' ? item.semanticSummary : {};
-        const autocal = summary?.autocal && typeof summary.autocal === 'object' ? summary.autocal : {};
-        const when = finite(item.createdAt);
-        const date = when === null ? 'Data indisponível' : new Date(when).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-        const durationRaw = finite(item.durationMs ?? summary.durationMs);
-        const minutes = durationRaw === null ? '—' : Math.max(0, Math.floor(durationRaw / 60000));
-        const regionsKnown = Array.isArray(autocal.correlatedRegions);
-        const regions = regionsKnown ? autocal.correlatedRegions.length : '—';
-        const gasZonesRaw = finite(autocal.gasZones);
-        const gasZones = gasZonesRaw === null ? '—' : Math.max(0, Math.min(4, Math.round(gasZonesRaw)));
-        const active = item.active === true;
-        const id = escapeHtml(item.id || '');
-        return '<article class="autocal-session-item" data-active="' + (active ? 'true' : 'false') + '">' +
-          '<div><small>' + (active ? 'AGORA' : date) + '</small><b>' + minutes + ' min · ' + regions + ' ' + (regions === 1 ? 'região' : 'regiões') + '</b><span>GNV ' + gasZones + '/4 · ' + escapeHtml(item.reason || 'Sessão MP48') + '</span></div>' +
-          '<button type="button" class="secondary" data-autocal-export-session data-session-id="' + id + '">Exportar</button>' +
-        '</article>';
-      }).join('');
+
     }
 
     /** Uma linha discreta, só quando o cérebro diz que a ECU reaprendeu (ecuDrift/relearnSuggested); senão nada. */

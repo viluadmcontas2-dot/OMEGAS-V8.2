@@ -91,3 +91,14 @@ test('curva pendente não afirma aquisição ativa com leitura pausada ou descon
   for(const epoch of [{petrolReferencePending:true},{gasReferencePending:true}])assert.doesNotMatch(model.epochNarrative(epoch),/em aquisição|adquirindo/i);
  }
 });
+
+test('comandos operacionais ficam fora dos painéis de detalhes',()=>{
+ const app=L.boot();try{app.go('autocal');app.settle(3);
+  for(const selector of ['[data-autocal-action="RESET_GAS"]','[data-autocal-action="RESET_PETROL"]','[data-autocal-action="RESET_K_FACTOR"]','[data-autocal-sessions]']) assert.equal(app.$(selector).closest('details'),null,selector);
+  app.$('[data-autocal-sessions]').click();assert.equal(app.$('.screen.active').dataset.screen,'sessions');
+  app.go('refino');app.settle(3);
+  for(const selector of ['[data-refino-reset-gas]','[data-refino-acquisition]']) assert.equal(app.$(selector).closest('details'),null,selector);
+  app.$('[data-refino-acquisition]').click();assert.equal(app.$('.screen.active').dataset.screen,'autocal');
+  L.assertClean(app,'comandos diretos');
+ }finally{app.destroy();}
+});

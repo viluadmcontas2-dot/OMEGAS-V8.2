@@ -10,7 +10,7 @@ async function audit(page,route,height,name){
   const visible=e=>{const c=getComputedStyle(e),b=e.getBoundingClientRect();return b.width>0&&b.height>0&&c.display!=='none'&&c.visibility!=='hidden'&&!e.closest('[hidden]')&&!e.closest('details:not([open]) *:not(summary)');};
   const screen=document.querySelector('.screen.active'),nav=rect(document.querySelector('.side-nav'));
   const plot=screen.querySelector('.ar-chart-host');
-  const critical=screen.querySelectorAll('[data-autocal-toggle],[data-autocal-action="RESET_GAS"],[data-autocal-action="RESET_PETROL"],[data-refino-primary],[data-refino-undo],#mapReadButton,#mapReviewButton,#mapAdjustmentValue,#curveReadButton,#curveReviewButton,#curveTargetFactor,[data-dash-refino]');
+  const critical=screen.querySelectorAll('[data-autocal-sessions],[data-autocal-action="RESET_K_FACTOR"],[data-refino-reset-gas],[data-refino-acquisition],[data-autocal-toggle],[data-autocal-action="RESET_GAS"],[data-autocal-action="RESET_PETROL"],[data-refino-primary],[data-refino-undo],#mapReadButton,#mapReviewButton,#mapAdjustmentValue,#curveReadButton,#curveReviewButton,#curveTargetFactor,[data-dash-refino]');
   return {view:{w:innerWidth,h:innerHeight},screen:rect(screen),nav,header:rect(document.querySelector('.workspace-head')),
    plot:plot?rect(plot):null,domain:window.OmegasUi.CurveChart.shared.scale?{xMax:window.OmegasUi.CurveChart.shared.scale.xMax,yMin:window.OmegasUi.CurveChart.shared.scale.yMin,yMax:window.OmegasUi.CurveChart.shared.scale.yMax}:null,
    overflow:screen.scrollWidth>screen.clientWidth+1,
