@@ -26,7 +26,7 @@ CELL_BAR = 0.02
 GRID_MIN = 0.10
 GRID_CELLS = 50
 PRIOR_N0 = 3.0
-DRIVING_MIN_RPM = 1000.0
+DRIVING_MIN_RPM = 1200.0     # lenta da ECU abaixo disso (85 sessões: +20–30% de ms no mesmo MAP)
 MIN_TOL = 0.04
 MAX_TOL = 0.05               # teto da tolerância: nunca mais largo que ±5%
 MIN_JUDGED_USAGE = 0.5       # o índice só é número quando >= 50% do uso está em pontos julgados
@@ -167,7 +167,7 @@ def zone(index):
 
 
 def reference_points(snapshot):
-    """Pontos de gasolina que a ECU deu como adquiridos, limpos como o livro limpa a curva da ECU.
+    """Pontos de gasolina maduros da ECU (zona marcada OU contador no limiar), limpos como o livro limpa a curva da ECU.
     [] se imatura (< 6 pontos ou faixa < 0,20 bar). Retorna [(map, ms, maturidade)]."""
     times = snapshot_raw(snapshot, "PETR_INJ_TBUF") or []
     maps = snapshot_raw(snapshot, "MNFLD_PRESS_BUF") or []
@@ -175,6 +175,16 @@ def reference_points(snapshot):
     zones = snapshot_raw(snapshot, "ACQUIRED_ZONES_PETROL") or []
     if counts is None:
         return []
+    # Limiares como AutoCalAcquisition (lidos sem exigir status, como lá): lenta = VECT_AUTOCAL_U8_1[0]; resto = CALIBRATION_VAL_1[2].
+    def any_raw(key):
+        for f in snapshot.get("fields", []):
+            if f.get("key") == key:
+                return list(f.get("rawValues") or [])
+        return []
+    idle = any_raw("VECT_AUTOCAL_U8_1")
+    calibration = any_raw("CALIBRATION_VAL_1")
+    idle_thd = idle[0] if idle else None
+    normal_thd = calibration[2] if len(calibration) > 2 else None
     raw = []
     for i in range(18):
         if i >= len(times) or i >= len(maps) or i >= len(counts):
@@ -182,7 +192,10 @@ def reference_points(snapshot):
         t_raw, m_raw, c = times[i], maps[i], counts[i]
         active = t_raw != 0 or m_raw != 0 or c > 0
         z = zones[zone(i)] if zone(i) < len(zones) else None
-        if not (active and z == 1):
+        # Critério único (EcuPetrolReference.isMaturePetrolPoint): zona marcada OU contador no limiar da própria ECU.
+        threshold = idle_thd if i <= 5 else normal_thd
+        mature = threshold is not None and threshold > 0 and c >= threshold
+        if not ((active and z == 1) or mature):
             continue
         ms, bar = t_raw / 512.0, m_raw / 1024.0
         if ms > 0 and bar > 0:
@@ -320,7 +333,9 @@ def build_pairs(petrol_obs, gas_obs, ecu_ref):
     """Espelho de EvidencePairs.build: um par (petrolRef, gas, rpm, ecuRef, map, t, episódio) por leitura de GNV."""
     raw = []
     for g in gas_obs:
-        matches = sorted(p[2] for p in petrol_obs if abs(p[0] - g[0]) <= MATCH_RPM and abs(p[1] - g[1]) <= MATCH_MAP)
+        # Mesmo regime (EvidencePairs.sameRegime): nunca gasolina em lenta × GNV andando, nem o contrário.
+        matches = sorted(p[2] for p in petrol_obs if abs(p[0] - g[0]) <= MATCH_RPM and abs(p[1] - g[1]) <= MATCH_MAP
+                         and (p[0] >= DRIVING_MIN_RPM) == (g[0] >= DRIVING_MIN_RPM))
         if len(matches) >= 2:
             raw.append({"tp": matches[len(matches) // 2], "tg": g[2], "rpm": g[0], "ecu": False, "map": g[1], "t": g[3]})
         else:

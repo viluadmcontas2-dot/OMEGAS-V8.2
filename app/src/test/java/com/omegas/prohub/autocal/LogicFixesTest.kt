@@ -41,7 +41,8 @@ class LogicFixesTest {
             .put("nextAction", JSONObject().put("kind", "COLLECT").put("text", "Rode mais").put("pointIndexes", JSONArray()))
     }
 
-    private fun stalls(count: Int, ms: Double = 5.2, map: Double = 0.45, rpm: Double = 1100.0, startAt: Long = 1_000L): JSONObject {
+    // rpm 1400 (era 1100): abaixo de 1200 rpm o engasgo é da lenta e não conta para propor (StallLocalFixGatesTest).
+    private fun stalls(count: Int, ms: Double = 5.2, map: Double = 0.45, rpm: Double = 1400.0, startAt: Long = 1_000L): JSONObject {
         val ats = JSONArray((0 until count).map { startAt + it * 90_000L })
         return JSONObject().put("regions", JSONArray().put(JSONObject()
             .put("fromMs", 5.0).put("toMs", 5.5).put("count", count).put("stallCount", 0).put("nearCount", count)
@@ -55,7 +56,7 @@ class LogicFixesTest {
     fun `regiao carrega onde e quantas vezes e os pontos da Curva K que a cobrem`() {
         val out = StallLocalFix.enrich(stalls(3), brain())
         val r = region(out)
-        assertEquals(3, r.getInt("count")); assertEquals(0.45, r.getDouble("mapBar"), 1e-9); assertEquals(1100.0, r.getDouble("rpm"), 1e-9)
+        assertEquals(3, r.getInt("count")); assertEquals(0.45, r.getDouble("mapBar"), 1e-9); assertEquals(1400.0, r.getDouble("rpm"), 1e-9)
         assertEquals(5.2, r.getDouble("ms"), 1e-9); assertTrue(r.getLong("firstAt") <= r.getLong("lastAt"))
         // ms 5,0–5,5: nós 4 (5,0) e 5 (6,0)
         assertEquals(listOf(4, 5), (0 until r.getJSONArray("curvePoints").length()).map { r.getJSONArray("curvePoints").getInt(it) })
@@ -79,7 +80,9 @@ class LogicFixesTest {
         val p = region(out).getJSONObject("proposal")
         assertEquals("POBRE", p.getString("direction"))
         val items = p.getJSONArray("points")
-        assertEquals(2, items.length())
+        // Só o ponto 4: o 5 (1,19 → teto 1,20, +0,8%) fica abaixo da histerese do motor refinado (3,5%) e é mantido.
+        assertEquals(1, items.length())
+        assertEquals(4, items.getJSONObject(0).getInt("index"))
         for (i in 0 until items.length()) {
             val it = items.getJSONObject(i)
             val step = it.getDouble("kAfter") / it.getDouble("kBefore") - 1.0
@@ -87,7 +90,6 @@ class LogicFixesTest {
             assertTrue(it.getDouble("kAfter") in 0.75..1.2001)
         }
         assertEquals(1.08, items.getJSONObject(0).getDouble("kAfter"), 0.001) // 15% pedido → 8%
-        assertEquals(1.2, items.getJSONObject(1).getDouble("kAfter"), 0.001)  // 1,19 → teto 1,20 (não 1,29)
         // forma do `proposal` do cérebro: 30 inteiros, só os pontos da região mudam
         val lp = out.getJSONObject("localProposal")
         val cur = lp.getJSONArray("currentRaw"); val ref = lp.getJSONArray("refinedRaw")

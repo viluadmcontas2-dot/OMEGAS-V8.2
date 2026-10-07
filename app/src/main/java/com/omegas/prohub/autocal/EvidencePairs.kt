@@ -71,6 +71,14 @@ object EvidencePairs {
     const val INTERIOR_MIN_PAIRS = 2
     /** Id de episódio de um par = faixa × este fator + índice da visita (único entre faixas). */
     const val EPISODE_BAND_FACTOR = 100_000
+    /**
+     * Fronteira de regime: abaixo dela a ECU está na estratégia de lenta (85 sessões reais: rpm < 1200 dá +20–30% de ms
+     * no mesmo MAP). Um par só junta leituras do MESMO lado desta fronteira.
+     */
+    const val REGIME_SPLIT_RPM = EquivalenceLedger.DRIVING_MIN_RPM
+
+    /** As duas leituras estão no mesmo regime (lenta × condução)? */
+    fun sameRegime(rpmA: Double, rpmB: Double): Boolean = (rpmA >= REGIME_SPLIT_RPM) == (rpmB >= REGIME_SPLIT_RPM)
 
     /** Mesma limpeza de [EquivalenceLedger.setEcuPetrolReference]: pares (MAP, ms) válidos, deduplicados a 1 mbar. */
     fun cleanReference(points: List<Pair<Double, Double>>): List<Pair<Double, Double>> {
@@ -135,7 +143,8 @@ object EvidencePairs {
     }
 
     /**
-     * Um par por leitura de GNV: gasolina mediana das leituras de gasolina no mesmo RPM±150/MAP±0,02 (≥ 2) ou,
+     * Um par por leitura de GNV: gasolina mediana das leituras de gasolina no mesmo RPM±150/MAP±0,02 e no mesmo regime
+     * ([sameRegime]: nunca lenta × condução) (≥ 2) ou,
      * sem elas, a curva de gasolina da ECU no MAP. [EquivalenceLedger.EvidencePair.episode] = visita da faixa.
      */
     fun build(
@@ -157,7 +166,7 @@ object EvidencePairs {
             val m0 = mapCell(g.map)
             for (dr in -1L..1L) for (dm in -1L..1L) {
                 grid[(r0 + dr) * 1_000_003L + (m0 + dm)]?.forEach {
-                    if (abs(it.rpm - g.rpm) <= mr && abs(it.map - g.map) <= mm) matches += it.petrolMs
+                    if (abs(it.rpm - g.rpm) <= mr && abs(it.map - g.map) <= mm && sameRegime(it.rpm, g.rpm)) matches += it.petrolMs
                 }
             }
             if (matches.size >= 2) {

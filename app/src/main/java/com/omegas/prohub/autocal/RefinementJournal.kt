@@ -12,7 +12,7 @@ import kotlin.math.min
 /**
  * Ciclo fechado da Curva K: cada gravação confirmada vira um experimento.
  *
- * Antes: o índice de equivalência por faixa (t_no_GNV / t_gasolina, condução ≥1000 rpm)
+ * Antes: o índice de equivalência por faixa (t_no_GNV / t_gasolina, condução ≥ DRIVING_MIN_RPM)
  * medido com a curva antiga. Depois: o mesmo índice medido com a curva nova, conforme o
  * motorista roda. Por faixa o resultado é CONFIRMADO (chegou perto da gasolina),
  * PASSOU (inverteu o sinal além do ruído), CURTO (mesmo sinal, pouca melhora) ou
@@ -55,7 +55,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         const val STATUS_FAILED_PARTIAL = "FALHA_PARCIAL"
         val BANDS = EquivalenceLedger.BANDS
         /**
-         * Tempo de CONDUÇÃO (rpm ≥ 1000 numa faixa alterada) depois da gravação. Passado isso a verificação fecha com o
+         * Tempo de CONDUÇÃO (rpm ≥ DRIVING_MIN_RPM numa faixa alterada) depois da gravação. Passado isso a verificação fecha com o
          * que já deu para julgar: faixa que o motorista não visita não pode segurar o refino para sempre.
          */
         const val VERIFY_PARTIAL_ONLINE_MS = 15 * 60_000L
@@ -198,7 +198,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             val dt = if (lastEvaluateAt == 0L) 0L else (now - lastEvaluateAt).coerceIn(0L, MAX_TICK_MS)
             lastEvaluateAt = now
             val exp = experiments.lastOrNull()?.takeIf { it.optString("status") == STATUS_VERIFYING } ?: return false
-            // O orçamento conta CONDUÇÃO, não tempo conectado: rpm ≥ 1000 numa faixa que a gravação alterou.
+            // O orçamento conta CONDUÇÃO, não tempo conectado: rpm ≥ DRIVING_MIN_RPM numa faixa que a gravação alterou.
             // Sem leitura de rpm (chamador antigo/teste) cai no tempo online.
             val driving = rpm == null || (rpm >= DRIVING_MIN_RPM && petrolMs != null && bandVisited(exp, petrolMs))
             if (ecuOnline && driving) exp.put("onlineMs", exp.optLong("onlineMs", 0L) + dt)

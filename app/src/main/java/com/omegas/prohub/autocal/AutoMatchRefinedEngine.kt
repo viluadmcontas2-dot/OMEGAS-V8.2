@@ -30,13 +30,18 @@ import kotlin.math.roundToInt
  *
  * Segurança da proposta (Fatia H-evidência): sem evidência suficiente NÃO há proposta (a curva fica
  * como está); faixa nativa fina (< 3 amostras) não é evidência; a condução sozinha exige ≥ 3 faixas
- * com ≥ 8 pares e descarta faixa com razão GNV/gasolina fora de [0,6; 1,6]; K novo limitado ao
+ * com ≥ 8 pares e descarta faixa com razão GNV/gasolina fora de [0,80; 1,25]; K novo limitado ao
  * intervalo do AutoMatch nativo [0,75; 1,20]; MUL_ACT fora de [0,5; 2,0] é rejeitado.
  */
 object AutoMatchRefinedEngine {
     const val ALGORITHM = "OMEGAS_REFINED_EQUIVALENCE_V1"
     const val POINT_COUNT = 30
     const val BAND_COUNT = 18
+    /**
+     * Bandas nativas que valem para T(MAP): 0..15. A banda b cobre [THD[b]; THD[b+1]] (MNFLD_PRESS_THD); as 16 e 17 são
+     * a cauda acima do último limiar útil (sem fim superior) e nunca tiveram dado nas sessões reais.
+     */
+    const val USEFUL_BAND_COUNT = 16
     const val AXIS_COUNTS_PER_MS = 512.0
     const val MAP_COUNTS_PER_BAR = 1024.0
     const val Q14 = 16384.0
@@ -68,6 +73,13 @@ object AutoMatchRefinedEngine {
     const val PRIOR_UNSUPPORTED = 1.0
     const val EVIDENCE_REF = 0.5
     val MAX_STEP_LOG = ln(1.15)
+    /**
+     * Trava da baixa (ms de Petrol Inj.): abaixo disto a proposta nunca empobrece (K só mantém ou sobe). Marcha lenta,
+     * desaceleração e embreagem vivem aqui e é onde o motor apaga no GNV; a lenta real medida fica em ~4,5 ms (85 sessões),
+     * então o limiar antigo de 3,5 ms deixava a própria lenta empobrecer. Entra como limite INFERIOR da caixa de cada
+     * nó ([proposalBox]) ANTES da trava de coerência: a curva final respeita a trava e continua sem degrau.
+     */
+    const val LOW_GUARD_MS = 5.0
     const val E_MAX = 0.35
     const val IRLS_ITERATIONS = 6
     const val TUKEY_C = 4.685
@@ -111,9 +123,13 @@ object AutoMatchRefinedEngine {
     /** Ganho decrescente por ponto já alterado: 1ª passada 1,0 · 2ª 0,7 · 3ª em diante 0,5 (independe do veredito). */
     val PASS_GAIN = doubleArrayOf(1.0, 0.7, 0.5)
     fun passGain(passes: Int): Double = PASS_GAIN[passes.coerceIn(0, PASS_GAIN.size - 1)]
-    /** Razão mediana GNV/gasolina de uma faixa fora disto é erro de medida: a faixa inteira é descartada. */
-    const val TELEMETRY_RATIO_MIN = 0.6
-    const val TELEMETRY_RATIO_MAX = 1.6
+    /**
+     * Razão mediana GNV/gasolina de uma faixa fora disto é erro de medida: a faixa inteira é descartada. A própria ECU
+     * mede a equivalência (PETR_INJ_TBUF_GAS/PETR_INJ_TBUF no mesmo MAP, 85 sessões) em 1,013 com IQR [0,975; 1,062] e
+     * o AutoMatch nativo corrige em [0,75; 1,20]: [0,80; 1,25] já folga ~4 IQR; o antigo [0,6; 1,6] deixava passar lixo.
+     */
+    const val TELEMETRY_RATIO_MIN = 0.80
+    const val TELEMETRY_RATIO_MAX = 1.25
 
     /**
      * Lote H: a condução como evidência em 54 bins finos (FineBins), em vez de um alvo por par. A produção só passa
@@ -149,6 +165,8 @@ object AutoMatchRefinedEngine {
         val holdMinStepLog: Double = 0.0,
         /** Lote H: bins finos da condução (54). Quando presente, substitui [telemetryPairs] como evidência da condução. */
         val fineBins: List<FineBins.Bin>? = null,
+        /** MNFLD_PRESS_THD (18): com ele, banda cujo MAP de buffer cai fora de [THD[b]; THD[b+1]] é evidência inválida. */
+        val pressureThresholdsRaw: IntArray? = null,
     )
 
     enum class Mode { EQUIVALENCE, POLISH, UNAVAILABLE }
@@ -254,8 +272,9 @@ object AutoMatchRefinedEngine {
             listOf(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts, input.gasTimeRaw, input.gasMapRaw, input.gasCounts)
                 .all { it.size == BAND_COUNT }
         ) {
-            val (petrol, rp) = monotoneFit(bandPoints(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts, stats))
-            val (gas, rg) = monotoneFit(bandPoints(input.gasTimeRaw, input.gasMapRaw, input.gasCounts, stats))
+            val thd = input.pressureThresholdsRaw?.takeIf { it.size == BAND_COUNT }
+            val (petrol, rp) = monotoneFit(bandPoints(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts, stats, thd))
+            val (gas, rg) = monotoneFit(bandPoints(input.gasTimeRaw, input.gasMapRaw, input.gasCounts, stats, thd))
             rp.forEach { rejected += RejectedBand("GASOLINA", it.band, it.mapBar, it.timeMs) }
             rg.forEach { rejected += RejectedBand("GNV", it.band, it.mapBar, it.timeMs) }
             if (petrol.size >= 2 && gas.size >= 2) targets = equivalenceTargets(petrol, gas, axisMs, kOld)
@@ -341,7 +360,7 @@ object AutoMatchRefinedEngine {
             val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
             val fixedNodes = deadBandNodes(observations, evidence, axisMs, kOld)
             deadBand = fixedNodes.size
-            val initialBox = proposalBox(x0, gain).mapIndexed { j, b -> if (j in fixedNodes) x0[j] to x0[j] else b }
+            val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b -> if (j in fixedNodes) x0[j] to x0[j] else b }
             eEff = effectiveElasticity(initialBox, u)
             val enforced = enforceCoherence(scaled, initialBox, u, eEff)
             // Histerese: ponto cujo passo proposto é ruído fica exatamente como está, desde que a curva continue
@@ -353,7 +372,7 @@ object AutoMatchRefinedEngine {
             final = finalCurve
         } else {
             // Sem evidência suficiente NÃO existe proposta: a curva fica exatamente como está.
-            box = proposalBox(x0, gain)
+            box = proposalBox(x0, gain, axisMs)
             final = x0
             gain = List(POINT_COUNT) { 0.0 }
         }
@@ -607,15 +626,17 @@ object AutoMatchRefinedEngine {
     }
 
     /**
-     * Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20]. Ponto que não alcança a faixa
-     * (K atual fora dela e fora do alcance do passo) ou K atual fora dela sem evidência fica fixo em x0.
+     * Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20] e, abaixo de [LOW_GUARD_MS] (com [axisMs]), nunca abaixo
+     * do K atual (trava da baixa como limite, antes da coerência). Ponto que não alcança a faixa (K atual fora dela e
+     * fora do alcance do passo) ou K atual fora dela sem evidência fica fixo em x0.
      */
-    internal fun proposalBox(x0: List<Double>, gain: List<Double>): List<Pair<Double, Double>> {
+    internal fun proposalBox(x0: List<Double>, gain: List<Double>, axisMs: List<Double>? = null): List<Pair<Double, Double>> {
         val loRange = ln(MIN_FACTOR)
         val hiRange = ln(MAX_FACTOR)
         return x0.mapIndexed { j, x ->
             var lo = max(x - MAX_STEP_LOG, loRange)
             var hi = min(x + MAX_STEP_LOG, hiRange)
+            if (axisMs != null && axisMs[j] < LOW_GUARD_MS) lo = max(lo, x)
             val outside = x < loRange - 1e-12 || x > hiRange + 1e-12
             if (lo > hi + 1e-12 || (outside && gain[j] <= 0.0)) { lo = x; hi = x }
             lo to hi
@@ -708,11 +729,22 @@ object AutoMatchRefinedEngine {
 
     // ------------------------------------------------------------- evidência
 
-    internal fun bandPoints(timeRaw: IntArray, mapRaw: IntArray, counts: IntArray, stats: BandStats? = null): List<BandPoint> =
-        (0 until BAND_COUNT).mapNotNull { band ->
+    /** O MAP do buffer está dentro dos limiares da própria banda ([THD[b]; THD[b+1]])? Sem limiares válidos: aceita. */
+    internal fun mapInsideBand(band: Int, mapRaw: Int, thresholds: IntArray?): Boolean {
+        if (thresholds == null || band + 1 >= thresholds.size) return true
+        val lo = thresholds[band]
+        val hi = thresholds[band + 1]
+        if (lo <= 0 || hi <= lo) return true
+        return mapRaw in lo..hi
+    }
+
+    internal fun bandPoints(
+        timeRaw: IntArray, mapRaw: IntArray, counts: IntArray, stats: BandStats? = null, thresholds: IntArray? = null,
+    ): List<BandPoint> =
+        (0 until USEFUL_BAND_COUNT).mapNotNull { band ->
             val n = counts[band]
             if (n <= 0) return@mapNotNull null
-            if (mapRawInvalid(mapRaw[band]) || timeRaw[band] <= 0 || mapRaw[band] <= 0) {
+            if (mapRawInvalid(mapRaw[band]) || timeRaw[band] <= 0 || mapRaw[band] <= 0 || !mapInsideBand(band, mapRaw[band], thresholds)) {
                 stats?.let { it.invalid++ }
                 return@mapNotNull null
             }
@@ -798,6 +830,8 @@ object AutoMatchRefinedEngine {
             val tg = interp(m, gm, gt)
             val w = min(localWeight(m, pm, pw), localWeight(m, gm, gw))
             if (w <= 0.0 || tp <= 0.0 || tg <= 0.0) return@mapNotNull null
+            // K(T_g) tem de ser o K sob o qual o T_g foi ADQUIRIDO. Quem chama garante que só chegam bandas da época do
+            // MUL_ACT atual (NativeGasEvidenceEpoch: contagem só do que subiu depois da última gravação de K).
             val kAtGas = interp(tg, axisMs, kOld)
             Target(m, tp, tg, w, tg / tp, ln(kAtGas * tg / tp))
         }

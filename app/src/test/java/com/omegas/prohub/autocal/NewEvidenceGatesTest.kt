@@ -113,7 +113,8 @@ class NewEvidenceGatesTest {
     @Test
     fun `a telemetria nao entra em ponto que a nativa madura ja cobre e tem teto por faixa`() {
         val nativeOnly = AutoMatchRefinedEngine.refine(fieldsToInput(JSONObject(refSnapshot.toString())))
-        val pairs = (0..4).flatMap { b -> interior(b, 12).map { it to it * 1.3 } }
+        // 1,2 (e não 1,3): dentro do portão de plausibilidade [0,80; 1,25]; o teste é sobre a prioridade da nativa.
+        val pairs = (0..4).flatMap { b -> interior(b, 12).map { it to it * 1.2 } }
         val mixed = AutoMatchRefinedEngine.refine(fieldsToInput(JSONObject(refSnapshot.toString())).copy(telemetryPairs = pairs))
         assertTrue("alguma telemetria cai em ponto coberto e é descartada", mixed.telemetryDroppedByNative > 0)
         val telemetry = mixed.targets.filter { it.mapBar.isNaN() }

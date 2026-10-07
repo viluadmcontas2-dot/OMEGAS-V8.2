@@ -288,7 +288,10 @@ object EquivalenceEngine {
         val off = poor + rich
         // A gravação é a proposta do próprio motor (os mesmos pares do veredito), com a trava da baixa; só existe APPLY
         // quando ela muda algum ponto de fato. Assim "Pronto para gravar N pontos" e o botão falam dos mesmos N pontos.
-        val guarded = proposal?.takeIf { it.mode == AutoMatchRefinedEngine.Mode.EQUIVALENCE }?.let { guardedRefined(it) }
+        // Ponto em prova (gravação ainda sendo verificada) não é regravado por cima: a proposta só libera os outros.
+        val guarded = proposal?.takeIf { it.mode == AutoMatchRefinedEngine.Mode.EQUIVALENCE }?.let { p ->
+            guardedRefined(p).mapIndexed { i, raw -> if (points.getOrNull(i)?.state == PointState.EM_PROVA) p.currentRaw[i] else raw }
+        }
         val changed = guarded?.let { refined ->
             points.indices.filter { proposal!!.origins[it] != AutoMatchRefinedEngine.Origin.HELD && refined[it] != proposal.currentRaw[it] }
         }.orEmpty()
