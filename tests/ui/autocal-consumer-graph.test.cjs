@@ -23,8 +23,8 @@ assert.equal(cockpit.includes('requestRead()'), false, 'cockpit deve depender do
 
 const controls = [
   ['data-autocal-toggle', "querySelector('[data-autocal-toggle]')", 'this.runOperational(action)'],
+  // Revisto (W2): sem botão "Leitura anterior"; Reler GNV/gasolina em um toque (sem confirmação).
   ['data-autocal-action', "querySelectorAll('[data-autocal-action]')", 'this.prepare(button.dataset.autocalAction)'],
-  ['data-autocal-history', "querySelector('[data-autocal-history]')", 'chartHistoryVisible'],
   ['data-autocal-ref-index', "closest('[data-autocal-ref-index]')", 'inspectReferencePoint'],
   ['data-autocal-acquired-index', "closest('[data-autocal-acquired-index]')", 'tapAcquiredPoint'],
   ['data-autocal-reacquire-selected', "closest('[data-autocal-reacquire-selected]')", 'requestSelectedPointReacquisition'],

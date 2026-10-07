@@ -45,7 +45,7 @@ test('Agora Diamante mostra 4 blocos de direção pela leitura única, intençã
 });
 
 test('CSS contém somente o recorte Agora, com resultado, intenção e cobertura', () => {
-  assert.match(styles, /\.now-drive[^}]*grid-template-columns:repeat\(4,1fr\)/);
+  assert.doesNotMatch(styles, /.now-drive|.now-tile/); // Revisto (W2)
   assert.match(styles, /\.now-equivalence > b[^}]*font-size:64px/);
   assert.doesNotMatch(styles, /witness-|multimedia-obd|map-screen|curve-screen|learning-screen/);
   assert.doesNotMatch(styles, /@keyframes|animation:|backdrop-filter/);

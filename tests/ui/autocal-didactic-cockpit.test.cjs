@@ -1,3 +1,4 @@
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (4).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -105,7 +106,6 @@ const brokenZones = { fields: [{
 assert.equal(model.zoneSurface(brokenZones, {}).length, 0, 'limiares não-monótonos falham fechado');
 assert.match(source, /data-autocal-zone-surface/, 'zona precisa estar marcada sobre a malha');
 assert.match(source, /'AGORA'/, 'cursor curto: a zona fica na faixa de status, não no gráfico');
-assert.match(source, /id="autocalLiveZone"/, 'zona ao lado de MAP, Injeção e RPM');
 assert.equal(model.currentZone(currentZoneSnapshot, { mapBar: 0.85 }), 2,
   'MAP dentro da segunda zona deve orientar o operador como Z2');
 
@@ -211,7 +211,6 @@ assert.equal(source.includes('data-autocal-chart-action="zoom-out"'), false);
 assert.equal(source.includes('data-autocal-chart-action="fit"'), false);
 assert.equal(source.includes('Injeção (ms)'), true, 'eixo X precisa manter unidade física');
 assert.equal(chartSource.includes('MAP (bar)'), true, 'eixo Y compartilhado precisa manter unidade física');
-assert.equal(source.includes('data-autocal-history'), true, 'comparação com leitura anterior deve permanecer disponível');
 assert.equal(source.includes('data-autocal-toggle'), true);
 assert.equal(source.includes('data-autocal-band-index'), false);
 assert.equal(source.includes('id="autocalHumanAction"'), true, 'UMA frase humana de estado');
@@ -230,15 +229,12 @@ assert.equal(css.includes('container-type: inline-size'), true);
 assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
 // Actual graph size and visible point context are verified by the rendered layout gate.
-assert.equal(source.includes('id="autocalZoneMeter"'), true, 'cockpit premium deve expor progresso visual das zonas');
 assert.equal(source.includes('data-autocal-zone-petrol'), true);
 assert.equal(source.includes('data-autocal-zone-gas'), true);
 assert.equal(source.includes('autocal-zone-cell'), true,
   'zonas precisam ser células rotuladas Z1..Z4, não bolinhas anônimas');
 assert.match(source, /FALTA/,
   'estado visual precisa nomear explicitamente zona faltante');
-assert.match(source, /data-current/,
-  'zona física atual precisa ter estado visual AGORA');
 assert.match(css, /\.autocal-zone-cell\s*\{/,
   'mapa de zonas precisa de tratamento visual próprio');
 // Revisto (P3): o cartão de revisão saiu (código morto); os números técnicos do ponto ficam sob demanda.

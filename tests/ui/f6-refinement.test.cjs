@@ -1,4 +1,5 @@
 'use strict';
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (1).
 // Fatia F6 (R14): refinamento de UI. Classe de prova 1 (contrato) e 2 (sintético, fixture do cérebro).
 
 const test = require('node:test');

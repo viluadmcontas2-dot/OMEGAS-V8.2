@@ -1,4 +1,5 @@
 'use strict';
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (1).
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -9,8 +10,6 @@ const root = path.resolve(__dirname, '../..');
 const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
 
-assert.match(cockpit, /<div class="ar-secondary autocal-secondary-stack"/,
-  'multimedia cockpit must expose secondary context without an extra tap');
 assert.ok(cockpit.includes('autocalResetComparison'),
   'cockpit must reserve a native before/after comparison after acquisition or curve reset');
 assert.ok(cockpit.includes('referenceComparison(this.previousReferencePoints'),

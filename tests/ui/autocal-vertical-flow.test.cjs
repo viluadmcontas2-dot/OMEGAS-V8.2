@@ -1,4 +1,5 @@
 'use strict';
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (2).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -9,10 +10,6 @@ const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autoc
 
 assert.equal(cockpit.includes('autocal-secondary-rail'), false,
   'AutoCal must not expose a horizontal secondary rail');
-assert.equal(cockpit.includes('autocal-secondary-stack'), true,
-  'secondary AutoCal content must use a vertical stack');
-assert.ok(cockpit.indexOf('autocalReferenceChart') < cockpit.indexOf('ar-secondary'),
-  'graph must precede all secondary content in reading order');
 
 assert.match(css, /\.screen\.autocal-route-screen\s*\{[\s\S]*?overflow-y:\s*auto;/,
   'the AutoCal screen itself must be the single vertical scroll authority');

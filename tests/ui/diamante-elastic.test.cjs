@@ -57,13 +57,17 @@ test('Mapa K: trocar e desmarcar célula atualiza contexto, K e prévia',()=>{
  assert.equal(app.byId('mapActiveCell').textContent,'Toque em uma célula');
  L.assertClean(app,'seleção');app.destroy();
 });
-test('AutoCal: leitura anterior precede pausa; estado integrado e ações secundárias agrupadas',()=>{
+// Revisto (W2): barra única [Pausar/Retomar] [Reler GNV] [Reler gasolina], todos lado a lado e sem menus.
+test('AutoCal: Pausar, Reler GNV e Reler gasolina ficam lado a lado numa só barra',()=>{
  const app=L.boot();app.go('autocal');app.settle(3);
- const pause=app.$('[data-autocal-toggle]'),history=app.$('[data-autocal-history]');
- assert.ok(pause.parentNode===history.parentNode,'histórico e pausa no mesmo grupo');
- assert.equal(pause.parentNode.children.indexOf(history)+1,pause.parentNode.children.indexOf(pause));
- assert.ok(app.byId('autocalHumanAction').closest('.ar-status'));
- assert.ok(app.$('[data-autocal-action="RESET_GAS"]').closest('.ar-buttons').querySelector('summary'));
+ const pause=app.$('[data-autocal-toggle]');
+ const bar=pause.parentNode;
+ assert.ok(bar.classList.contains('ar-buttons'));
+ assert.ok(app.$('[data-autocal-action="RESET_GAS"]').parentNode===bar);
+ assert.ok(app.$('[data-autocal-action="RESET_PETROL"]').parentNode===bar);
+ assert.equal(app.$('[data-autocal-action="RESET_GAS"]').textContent,'Reler GNV');
+ assert.equal(app.$('[data-autocal-action="RESET_PETROL"]').textContent,'Reler gasolina');
+ assert.equal(bar.querySelector('summary'),null);
  L.assertClean(app,'autocal');app.destroy();
 });
 

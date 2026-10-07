@@ -1,4 +1,5 @@
 'use strict';
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (1).
 // M3 · AutoCal: pausado / monitorando / snapshot parcial / leitura atrasada / época nova (snapshots REAIS gravados).
 const test = require('node:test');
 const L = require('./wiring/lib.cjs');
@@ -135,7 +136,7 @@ for (const name of STATES) {
   test(`M3 ${name}: nenhum elemento tocável da aba AutoCal está congelado`, () => {
     const r = L.sweep({ prepare: () => prepared(name), within: SCREEN, allow: desc => (/data-autocal-ref-index=0\b/.test(desc) ? 'o ponto 1 já vem inspecionado (tocar de novo não muda nada: idempotente)' : '') });
     assert.deepEqual(r.failures, [], `${r.exercised}/${r.total} elementos`);
-    assert.ok(r.total >= 4);
+    assert.ok(r.total >= 3); // Revisto (W2): a barra do AutoCal tem 3 botões fixos (antes ≥4 com Ver sessões/Opções)
   });
 }
 

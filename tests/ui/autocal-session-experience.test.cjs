@@ -22,21 +22,17 @@ assert.match(api, /exportSession:\s*sessionId\s*=>\s*invoke\(['"]exportAutoCalSe
   'exportar sessão deve usar o mesmo bridge AutoCal');
 assert.match(bridge, /fun\s+exportAutoCalSession\s*\(/);
 
-assert.ok(cockpit.includes('data-autocal-sessions'), 'cockpit precisa abrir histórico de sessões');
-assert.ok(cockpit.includes('autocalSessionSummary'), 'sessão atual precisa aparecer de forma compacta');
+// Revisto (W2): o AutoCal não tem mais atalho nem cartão de sessão (a aba Sessões já existe).
+assert.equal(cockpit.includes('data-autocal-sessions'), false);
 assert.equal(cockpit.includes('autocalSessionDrawer'), false, 'histórico pertence à aba Sessões, sem cartão de rolagem duplicado');
 assert.ok(cockpit.includes('renderSessionState()'), 'sessão precisa de renderer explícito');
 assert.ok(read('app/src/main/assets/ui/screens/sessions.js').includes('export'), 'a aba Sessões preserva exportação');
 const refreshBody = cockpit.slice(cockpit.indexOf('    refresh() {'), cockpit.indexOf('    runOperational(action)'));
 assert.equal(refreshBody.includes('this.api.sessions?.()'), false,
   'refresh normal não pode varrer histórico no disco');
-const sessionsBinding = cockpit.slice(cockpit.indexOf("[data-autocal-sessions]"), cockpit.indexOf("this.panel?.addEventListener('click'"));
-assert.ok(sessionsBinding.includes("router?.open('sessions')"),
-  'histórico só deve ser carregado quando o operador abrir Sessões');
 assert.ok(cockpit.includes('sessionNarrative'), 'copy da sessão deve ser derivada de estado real');
 assert.equal(cockpit.includes('directory'), false, 'path de armazenamento não pertence à UX primária');
 assert.equal(cockpit.includes('sessionId.slice'), false, 'ID técnico não deve ser a identidade humana da sessão');
-assert.match(css, /\.autocal-session-strip\s*\{/);
 assert.doesNotMatch(css, /\.autocal-session-drawer\s*\{/);
 
 const context = { console, setTimeout: () => 0, clearTimeout: () => {} };

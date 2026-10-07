@@ -61,10 +61,8 @@ def test_cockpit_exposes_no_manual_automatch_nor_reset_all():
     c = read(COCKPIT)
     assert "MANUAL_AUTOMATCH" not in c
     assert 'data-autocal-action="RESET_ALL"' not in c
-    # Revisto (P2): reset da Curva K só na aba Curva K; textos em português simples.
-    for keep in ('data-autocal-action="RESET_GAS"', 'data-autocal-action="RESET_PETROL"',
-                 "Os ajustes automáticos são decididos pela ECU.",
-                 "Pausar o aprendizado interrompe a coleta."):
+    # Revisto (P2): reset da Curva K só na aba Curva K. Revisto (W2): sem parágrafos explicativos fixos.
+    for keep in ('data-autocal-action="RESET_GAS"', 'data-autocal-action="RESET_PETROL"'):
         assert keep in c, keep
     assert 'data-autocal-action="RESET_K_FACTOR"' not in c
 
