@@ -116,6 +116,7 @@ class HubJavascriptBridge(activity: MainActivity) {
         val kStatus = try { JSONObject(service.kWriteStatusJson()) } catch (_: Exception) { JSONObject() }
         val kDetails = kStatus.optJSONObject("details") ?: JSONObject()
         val factorStatus = try { JSONObject(service.kFactorStatusJson()) } catch (_: Exception) { JSONObject() }
+        val writeBlockedReason = service.writeBlockedReason()
         JSONObject()
             .put("serviceRunning", status.serviceRunning)
             .put("engineRunning", status.engineRunning)
@@ -145,6 +146,8 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("lanEnabled", status.lanEnabled)
             .put("lanAddress", status.lanAddress)
             .put("directTelemetryAgeMs", status.directTelemetryAgeMs)
+            .put("canWrite", writeBlockedReason == null)
+            .put("writeBlockedReason", writeBlockedReason ?: "")
             .put("calibrationBusy", service.kWriter.isBusy() || service.kFactor.isBusy())
             .put("kMapState", kStatus.optString("state", "IDLE"))
             .put("kMapMessage", kStatus.optString("message", ""))
@@ -160,6 +163,8 @@ class HubJavascriptBridge(activity: MainActivity) {
             .toString()
     } ?: JSONObject()
         .put("serviceRunning", false)
+        .put("canWrite", false)
+        .put("writeBlockedReason", "O serviço do app não está rodando")
         .put("appVersion", BuildConfig.VERSION_NAME)
         .put("release", releaseIdentity())
         .toString()

@@ -151,12 +151,62 @@
       }
     }
     noteLinkTransition(link, reading);
+    writeGate = status.canWrite === false ? { blocked: true, reason: String(status.writeBlockedReason || 'Gravar na ECU não está disponível agora.') } : { blocked: false, reason: '' };
+    applyWriteGate();
 
     if (state.alert && state.alert !== previousAlert) {
       previousAlert = state.alert;
       showAlert(state.alert);
     }
   }
+
+  // Gravar na ECU: o Kotlin diz se pode (canWrite) e por quê não (writeBlockedReason, mesma CalibrationWriteSafetyPolicy
+  // das escritas reais). Bloqueado = botão apagado + motivo ao tocar (aria-disabled, sem sumir) e o clique não passa.
+  const WRITE_GATE_SELECTOR = '#mapReviewButton,#mapUndoButton,#curveReviewButton,#curveBackupRestore,#curveResetButton,#curveUndoButton,[data-refino-primary],[data-refino-undo],[data-autocal-toggle],[data-autocal-action]';
+  let writeGate = { blocked: false, reason: '' };
+  // Onde o motivo aparece por escrito (botão apagado sozinho não explica nada em tela de toque).
+  const WRITE_NOTES = [
+    { key: 'map', host: '#mapReviewButton', where: 'afterend' },
+    { key: 'curve', host: '.curve-action-bar', where: 'afterend' },
+    { key: 'refino', host: '.refino-cockpit .ar-act', where: 'beforeend' },
+    { key: 'autocal', host: '.autocal-chart-overlay .autocal-chip-row', where: 'beforeend' },
+  ];
+  function syncWriteNotes() {
+    WRITE_NOTES.forEach(({ key, host, where }) => {
+      const anchor = document.querySelector(host);
+      if (!anchor) return;
+      let note = document.querySelector('[data-write-note="' + key + '"]');
+      if (!note && writeGate.blocked) {
+        note = document.createElement('small');
+        note.className = 'write-reason';
+        note.dataset.writeNote = key;
+        note.setAttribute('role', 'status');
+        if (where === 'afterend' && anchor.parentNode) anchor.parentNode.appendChild(note);
+        else anchor.appendChild(note);
+      }
+      if (!note) return;
+      const text = writeGate.blocked ? 'Gravar bloqueado: ' + writeGate.reason : '';
+      if (note.textContent !== text) note.textContent = text;
+      note.hidden = !writeGate.blocked;
+    });
+  }
+  function applyWriteGate() {
+    syncWriteNotes();
+    document.querySelectorAll(WRITE_GATE_SELECTOR).forEach(node => {
+      if (writeGate.blocked) {
+        if (node.dataset.writeBlocked !== 'true') { node.dataset.writeBlocked = 'true'; node.setAttribute('aria-disabled', 'true'); }
+        if (node.title !== writeGate.reason) node.title = writeGate.reason;
+      } else if (node.dataset.writeBlocked === 'true') {
+        delete node.dataset.writeBlocked; node.removeAttribute('aria-disabled'); node.removeAttribute('title');
+      }
+    });
+  }
+  document.addEventListener('click', event => {
+    const node = writeGate.blocked && event.target.closest ? event.target.closest(WRITE_GATE_SELECTOR) : null;
+    if (!node) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    store.patch({ alert: { level: 'warning', message: 'Gravar está bloqueado: ' + writeGate.reason, at: Date.now() } });
+  }, true);
 
   // Resgate pós-reconexão: quando os dados voltam (cabo/ECU), Mapa K e Curva K releem sozinhos.
   // Ler é automático (regra 1); nada grava. Só a transição "sem dados → com dados" dispara, uma vez.

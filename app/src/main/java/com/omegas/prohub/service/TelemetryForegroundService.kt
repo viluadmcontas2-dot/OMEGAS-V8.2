@@ -594,6 +594,15 @@ class TelemetryForegroundService : Service() {
         log.setListener(null)
     }
 
+    /**
+     * Motivo (em português simples) pelo qual gravar na ECU está bloqueado agora, ou null se pode revisar e gravar.
+     * Mesma regra das escritas reais: controle principal do MP48 + CalibrationWriteSafetyPolicy.
+     */
+    fun writeBlockedReason(): String? {
+        if (::link.isInitialized && !link.canWriteLocally()) return "Este aparelho não possui o controle principal"
+        return CalibrationWriteSafetyPolicy.unsafeReason(status())
+    }
+
     fun status(): HubStatus {
         val live = telemetryStore.telemetryCopy()
         val parityLetter = settings.parity.firstOrNull()?.uppercaseChar() ?: 'N'

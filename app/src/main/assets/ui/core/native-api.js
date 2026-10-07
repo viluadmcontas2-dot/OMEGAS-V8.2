@@ -102,6 +102,7 @@
         usbConnected: true, usbPermissionPending: false, fuelState: 'GNV', rpm: demoTelemetry().live.rpm,
         petrolMs: demoTelemetry().live.petrol_ms, gasMs: demoTelemetry().live.gas_ms_diagnostic,
         mapBar: demoTelemetry().live.load_bar, directTelemetryAgeMs: 42, wakeLockHeld: true, demo: true,
+        canWrite: true, writeBlockedReason: '',
       };
       return invoke(this.native, 'getStatus', [], {});
     }

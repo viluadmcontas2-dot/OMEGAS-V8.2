@@ -362,3 +362,9 @@ html body .ar-autocal .autocal-alert-strip[hidden],html body .ar-autocal #autoca
 html body .ar-autocal #autocalActionStatus { margin:0; padding:6px 12px; border-radius:6px; background:var(--overlay); font-size:18px; }
 html body .ar-autocal .autocal-chip-row { display:flex; justify-content:flex-end; gap:8px; }
 html body .ar-autocal .autocal-chip-row small { padding:4px 10px; border-radius:14px; border:1px solid var(--line); background:var(--overlay); font-size:16px; color:var(--muted); }
+
+/* Revisto (W2): gravar bloqueado (sem USB, telemetria velha, motor não pronto, sem controle principal): botão apagado; o toque mostra o motivo. */
+html body [data-write-blocked="true"] { opacity:.45; filter:grayscale(.5); cursor:not-allowed; }
+html body .write-reason { display:block; margin:4px 0 0; padding:4px 10px; border-left:3px solid var(--warn); background:var(--warn-soft); border-radius:4px; font-size:16px; color:var(--text); }
+html body .write-reason[hidden] { display:none; }
+html body .autocal-chip-row .write-reason { margin:0; border:1px solid var(--warn); border-radius:14px; background:var(--overlay); }
