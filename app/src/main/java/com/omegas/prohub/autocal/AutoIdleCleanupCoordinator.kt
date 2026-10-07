@@ -36,6 +36,21 @@ class AutoIdleCleanupCoordinator(
         val observedAtElapsedMs: Long,
     )
 
+    /** Por que o automático pausou nesta sessão; a tela traduz em português simples. */
+    enum class PauseCode { PETROL_GUARD, REPEATED_FAILURES, READBACK_INEFFECTIVE }
+
+    /** Apagamento automático confirmado pela ECU (só as bandas com readback que provou o apagamento). */
+    class RecentDelete(val receiptId: String, val indexes: List<Int>, val atMs: Long)
+
+    /** O que a tela do AutoCal mostra: ligado/pausado, motivo e quantos pontos o app pediu para reaprender. */
+    class UiSummary(
+        val active: Boolean,
+        val enabled: Boolean,
+        val pauseCode: PauseCode?,
+        val relearnedThisSession: Int,
+        val recentDeletes: List<RecentDelete>,
+    )
+
     private val tracker = IdleAcquisitionTracker()
     private val cleaner = AutoIdlePointCleaner()
     private var sessionId = 0L
@@ -43,6 +58,10 @@ class AutoIdleCleanupCoordinator(
     private var lastResult: JSONObject = JSONObject()
     @Volatile private var lastJson: JSONObject = JSONObject()
     @Volatile private var enabledNow = true
+    private var pauseCode: PauseCode? = null
+    private var relearned = 0
+    private val recent = ArrayDeque<RecentDelete>()
+    @Volatile private var summary = UiSummary(false, true, null, 0, emptyList())
 
     fun onGasBuffers(buffers: GasBuffers) = submit {
         if (buffers.sessionId != sessionId) resetSessionLocked(buffers.sessionId)
@@ -72,11 +91,17 @@ class AutoIdleCleanupCoordinator(
         val ambiguousBands = bandsWithResult(details, "AMBIGUOUS")
         // Readback ambíguo (revisão #1): consome o intervalo e espera releitura; nunca desliga a sessão.
         cleaner.onSucceeded(clock(), rereadRequired = details.optBoolean("readbackAmbiguous", false))
-        tracker.markDeleted(targetBands(details) - ambiguousBands.toSet())
+        val deleted = targetBands(details) - ambiguousBands.toSet()
+        tracker.markDeleted(deleted)
         tracker.forget(ambiguousBands + intList(details.optJSONArray("skippedChanged")))
+        if (deleted.isNotEmpty()) {
+            relearned += deleted.size
+            recent.addLast(RecentDelete(receipt.optString("id"), deleted.sorted(), receipt.optLong("finishedAtMs", 0L)))
+            while (recent.size > MAX_RECENT) recent.removeFirst()
+        }
         val petrol = details.optJSONObject("petrolGuard")
         if (petrol?.optBoolean("abnormal", false) == true) {
-            disableLocked("Gasolina mudou de forma anormal durante o apagamento automático", receipt)
+            disableLocked("Gasolina mudou de forma anormal durante o apagamento automático", receipt, PauseCode.PETROL_GUARD)
         }
         publish()
     }
@@ -88,13 +113,16 @@ class AutoIdleCleanupCoordinator(
         // A banda readquiriu andando entre a marca e o disparo (revisão #3): a marca sai.
         tracker.forget(intList(receipt.optJSONArray("skippedChanged")))
         if (receipt.has("effective") && !receipt.optBoolean("effective", true)) {
-            disableLocked("Readback mostrou que a ECU não apagou o ponto", receipt)
+            disableLocked("Readback mostrou que a ECU não apagou o ponto", receipt, PauseCode.READBACK_INEFFECTIVE)
         } else {
             // Toda falha consome tempo (revisão #2); N seguidas desligam a sessão.
             val wasEnabled = cleaner.disabledReason() == null
             cleaner.onFailed(clock(), receipt.optBoolean("mutationMayHaveStarted", false))
             val reason = cleaner.disabledReason()
-            if (wasEnabled && reason != null) recordDisabled(reason, receipt)
+            if (wasEnabled && reason != null) {
+                pauseCode = PauseCode.REPEATED_FAILURES
+                recordDisabled(reason, receipt)
+            }
         }
         publish()
     }
@@ -110,6 +138,9 @@ class AutoIdleCleanupCoordinator(
     }
 
     fun json(): JSONObject = JSONObject(lastJson.toString())
+
+    /** Resumo para a tela (leitura sem trava: publicado a cada mudança). */
+    fun uiSummary(): UiSummary = summary
 
     /** O apagamento automático está ligado nesta sessão (não foi desligado por readback ineficaz/gasolina). */
     fun automaticEnabled(): Boolean = enabledNow
@@ -173,10 +204,14 @@ class AutoIdleCleanupCoordinator(
         cleaner.resetSession()
         inFlightSinceMs = null
         lastResult = JSONObject()
+        pauseCode = null
+        relearned = 0
+        recent.clear()
         publish()
     }
 
-    private fun disableLocked(reason: String, receipt: JSONObject) {
+    private fun disableLocked(reason: String, receipt: JSONObject, code: PauseCode) {
+        if (cleaner.disabledReason() == null) pauseCode = code
         cleaner.disable(reason)
         recordDisabled(reason, receipt)
     }
@@ -213,6 +248,13 @@ class AutoIdleCleanupCoordinator(
             .put("tracker", tracker.json())
             .put("policy", cleaner.json())
             .put("lastResult", lastResult)
+        summary = UiSummary(
+            active = sessionId > 0L,
+            enabled = enabledNow,
+            pauseCode = if (enabledNow) null else pauseCode,
+            relearnedThisSession = relearned,
+            recentDeletes = recent.toList(),
+        )
     }
 
     private fun submit(block: () -> Unit) {
@@ -228,5 +270,7 @@ class AutoIdleCleanupCoordinator(
     companion object {
         /** Se o recibo nunca chegar (falha inesperada), libera a decisão depois deste prazo. */
         const val IN_FLIGHT_TIMEOUT_MS = 30_000L
+        /** A tela só precisa dos últimos apagamentos para acinzentar os pontos até a próxima leitura. */
+        const val MAX_RECENT = 5
     }
 }

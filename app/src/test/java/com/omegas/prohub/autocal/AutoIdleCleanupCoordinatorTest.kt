@@ -257,6 +257,77 @@ class AutoIdleCleanupCoordinatorTest {
         assertEquals(1, calls.size)
     }
 
+    @Test
+    fun `resumo para a tela conta pontos reaprendidos e lista o apagamento recente`() {
+        val start = coordinator.uiSummary()
+        assertTrue(start.enabled)
+        assertEquals(0, start.relearnedThisSession)
+        markIdle(band = 4)
+        drive()
+        coordinator.evaluate()
+        coordinator.onActionConfirmed(confirmedReceipt(4).put("id", "R-1").put("finishedAtMs", 1_234L))
+        val summary = coordinator.uiSummary()
+        assertTrue(summary.active)
+        assertTrue(summary.enabled)
+        assertEquals(null, summary.pauseCode)
+        assertEquals(1, summary.relearnedThisSession)
+        val recent = summary.recentDeletes.single()
+        assertEquals("R-1", recent.receiptId)
+        assertEquals(listOf(4), recent.indexes)
+        assertEquals(1_234L, recent.atMs)
+    }
+
+    @Test
+    fun `resumo nao conta banda de readback ambiguo`() {
+        markIdle(band = 4)
+        drive()
+        coordinator.evaluate()
+        val receipt = confirmedReceipt(4).put("id", "R-2")
+        receipt.getJSONObject("details")
+            .put("readbackAmbiguous", true)
+            .put("effect", JSONArray().put(JSONObject().put("index", 4).put("result", "AMBIGUOUS")))
+        coordinator.onActionConfirmed(receipt)
+        val summary = coordinator.uiSummary()
+        assertEquals(0, summary.relearnedThisSession)
+        assertTrue(summary.recentDeletes.isEmpty())
+    }
+
+    @Test
+    fun `resumo diz o motivo simples da pausa e a sessao nova religa`() {
+        markIdle(band = 4)
+        drive()
+        coordinator.evaluate()
+        coordinator.onActionConfirmed(confirmedReceipt(4, petrolAbnormal = true))
+        assertFalse(coordinator.uiSummary().enabled)
+        assertEquals(AutoIdleCleanupCoordinator.PauseCode.PETROL_GUARD, coordinator.uiSummary().pauseCode)
+
+        coordinator.onSessionChanged(2L)
+        val fresh = coordinator.uiSummary()
+        assertTrue(fresh.enabled)
+        assertEquals(null, fresh.pauseCode)
+        assertEquals(0, fresh.relearnedThisSession)
+        assertTrue(fresh.recentDeletes.isEmpty())
+    }
+
+    @Test
+    fun `resumo distingue readback ineficaz de falhas seguidas`() {
+        markIdle(band = 4)
+        drive()
+        coordinator.evaluate()
+        coordinator.onActionFailed(failedReceipt(mutation = true, effective = false))
+        assertEquals(AutoIdleCleanupCoordinator.PauseCode.READBACK_INEFFECTIVE, coordinator.uiSummary().pauseCode)
+
+        coordinator.onSessionChanged(3L)
+        markIdle(band = 4)
+        repeat(5) {
+            drive()
+            coordinator.evaluate()
+            coordinator.onActionFailed(failedReceipt(mutation = false))
+            now += 6_000
+        }
+        assertEquals(AutoIdleCleanupCoordinator.PauseCode.REPEATED_FAILURES, coordinator.uiSummary().pauseCode)
+    }
+
     // ---- apoio ----
 
     /** Duas leituras confirmadas: a segunda adquire a banda com telemetria de lenta no intervalo. */
