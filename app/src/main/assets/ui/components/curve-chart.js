@@ -50,6 +50,7 @@
     'PETR_INJ_TBUF_GAS_PREV', 'MNFLD_PRESS_BUF_GAS_PREV', 'ACQUIRED_ZONES_PETROL', 'ACQUIRED_ZONES_GAS',
     'NUM_AUTOMATCH_EXECUTED', 'MUL_ACT', 'CALIBRATION_VAL_1', 'VECT_AUTOCAL_U8_1',
   ];
+  const COUNTER_KEYS = new Set(['NUM_BUF_UPD_PETR', 'NUM_BUF_UPD_GAS']);
   function tableSignature(snapshot) {
     let h = 2166136261;
     const fields = Array.isArray(snapshot && snapshot.fields) ? snapshot.fields : [];
@@ -58,7 +59,10 @@
       h = mixString(h, key);
       if (!item) { h = mixNumber(h, -1); continue; }
       h = mixString(h, item.status);
-      h = mixArray(h, item.rawValues || item.physicalValues);
+      // Contadores da ECU (NUM_BUF_UPD_*) sobem o tempo todo: só a EXISTÊNCIA do ponto (contador > 0) é desenho.
+      // O progresso de cada ponto é atualizado por atributo (updatePoints), sem refazer o gráfico.
+      if (COUNTER_KEYS.has(key)) h = mixArray(h, (item.rawValues || item.physicalValues || []).map(v => (Number(v) > 0 ? 1 : 0)));
+      else h = mixArray(h, item.rawValues || item.physicalValues);
     }
     return h.toString(36);
   }
@@ -407,7 +411,7 @@
       const progress = finite(p.progress);
       const done = p.acquisitionState === 'ACQUIRED';
       return `<circle class="autocal-acquired-hit${sel.ecu === key ? ' selected' : ''}${sel.batch && sel.batch.has(key) ? ' batch-selected' : ''}" data-autocal-acquired-fuel="${p.fuel}" data-autocal-acquired-index="${p.index}" data-refino-dot="ecu:${i}" cx="${x}" cy="${y}" r="22"></circle>` +
-        `<circle class="autocal-acquired-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'} ${done ? 'acquired' : 'collecting'}" data-acquisition-state="${p.acquisitionState}" data-acquisition-progress="${(progress ?? 0).toFixed(3)}" cx="${x}" cy="${y}" r="6"${done || progress === null ? '' : ` fill-opacity="${(0.35 + 0.65 * progress).toFixed(2)}"`}></circle>`;
+        `<circle class="autocal-acquired-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'} ${done ? 'acquired' : 'collecting'}" data-autocal-point-key="${key}" data-acquisition-state="${p.acquisitionState}" data-acquisition-progress="${(progress ?? 0).toFixed(3)}" cx="${x}" cy="${y}" r="6"${done || progress === null ? '' : ` fill-opacity="${(0.35 + 0.65 * progress).toFixed(2)}"`}></circle>`;
     }).join('');
 
     // Refino: pontos do OMEGAS são BOLINHAS do tamanho das da ECU, entre elas. AutoCal não mostra pontos do OMEGAS.
@@ -541,6 +545,32 @@
   }
 
 
+  /**
+   * Progresso dos pontos da ECU sem redesenhar: por chave fuel:index, troca só estado, progresso e opacidade.
+   * `root` = nó do gráfico (ou o quadro); `points` = acquiredPoints de agora.
+   */
+  function updatePoints(root, points) {
+    if (!root || typeof root.querySelector !== 'function') return 0;
+    let touched = 0;
+    for (const p of points || []) {
+      const circle = root.querySelector(`[data-autocal-point-key="${p.fuel}:${p.index}"]`);
+      if (!circle) continue;
+      const progress = finite(p.progress);
+      const done = p.acquisitionState === 'ACQUIRED';
+      const state = String(p.acquisitionState || '');
+      const progressText = (progress ?? 0).toFixed(3);
+      if (circle.getAttribute('data-acquisition-state') === state && circle.getAttribute('data-acquisition-progress') === progressText) continue;
+      touched += 1;
+      circle.setAttribute('data-acquisition-state', state);
+      circle.setAttribute('data-acquisition-progress', progressText);
+      circle.classList.toggle('acquired', done);
+      circle.classList.toggle('collecting', !done);
+      if (done || progress === null) circle.removeAttribute('fill-opacity');
+      else circle.setAttribute('fill-opacity', (0.35 + 0.65 * progress).toFixed(2));
+    }
+    return touched;
+  }
+
   // ------------------------------------------------------------------ modelo único e armazém de evidência
   /** Estado nativo do AutoCal derivado da projeção (igual para as duas telas). */
   function deriveState(projection) {
@@ -628,6 +658,6 @@
   ns.CurveChart = {
     LEGEND, STALL_LEGEND, BETWEEN_LEGEND, normalizeBetween, betweenFromMarkers, describeBetween, ECU_BAND_COUNT, TABLE_KEYS, bandSlots,
     evidenceSignature, tableSignature, aggregateEvidence, curveAt, focusDomain, buildSvg, legendHtml,
-    viewKey, viewControls, bindView, mount, release, reset, applySelection, nodeFor, shared, buildModel, deriveState, evidence, updateEvidence, setEvidence, WATCHDOG_MS,
+    viewKey, viewControls, bindView, mount, release, reset, applySelection, nodeFor, updatePoints, shared, buildModel, deriveState, evidence, updateEvidence, setEvidence, WATCHDOG_MS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

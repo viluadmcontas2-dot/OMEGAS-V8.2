@@ -1414,7 +1414,9 @@
       const limit = finite(this.projection?.referenceTimingLimitMs);
       // A revisão da ponte e a telemetria não são geometria. Preserve o SVG e
       // o cursor quando só eles mudam; invalide por dados ou máscara da época.
-      const key = JSON.stringify([acquiredPetrol, acquiredGas, epoch,
+      // Pontos entram só pela geometria: o contador (progresso) é atualizado por atributo, sem refazer o SVG.
+      const geometry = list => list.map(p => [p.index, p.petrolMs, p.mapBar]);
+      const key = JSON.stringify([geometry(acquiredPetrol), geometry(acquiredGas), epoch,
         snapshot.source, this.state?.maxAutomatch ?? snapshot.maxAutomatch,
         axisAt !== null && rvAt !== null && limit !== null && Math.abs(axisAt - rvAt) <= limit,
         ['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF_GAS_PREV','MNFLD_PRESS_BUF_GAS_PREV','MNFLD_PRESS_THD','ACQUIRED_ZONES_PETROL','ACQUIRED_ZONES_GAS','MUL_ACT']
@@ -1423,6 +1425,7 @@
         ns.CurveChart?.viewKey(this.chartView)]);
       if (this.epochChartHost === host && this.epochChartKey === key &&
           this.epochChartNode && host.firstElementChild === this.epochChartNode) {
+        ns.CurveChart?.updatePoints(host, [...acquiredPetrol, ...acquiredGas]);
         this.renderLiveCursor();
         return;
       }
@@ -1602,6 +1605,7 @@
       });
       const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.nodeFor('ecu18')) !== false;
       if (alreadyShown) {
+        chart.updatePoints(chart.nodeFor('ecu18'), acquiredPoints);
         this.renderLiveCursor();
         return;
       }
@@ -1622,7 +1626,10 @@
         return;
       }
       this.currentReferencePoints = model.reference;
-      this.currentAcquiredPoints = model.ecu;
+      // Contadores de agora (o modelo pode vir do cache deste modo), só dos pontos visíveis no desenho.
+      this.currentAcquiredPoints = acquiredPoints.filter(p => model.ecu.some(m => m.fuel === p.fuel && m.index === p.index));
+      // O desenho pode ter vindo do cache deste modo: o progresso de agora entra por atributo.
+      chart.updatePoints(chart.nodeFor('ecu18'), acquiredPoints);
       const legend = document.getElementById('autocalLegend');
       const legendKey = `ecu18|${history.length > 0}`;
       if (legend && this.legendKey !== legendKey) {
