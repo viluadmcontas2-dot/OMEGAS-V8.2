@@ -40,6 +40,15 @@ class NativeAutoCalMonitor(
     /** Dispara (fora do lock) quando uma tabela AutoCal realmente mudou (resposta diferente da em cache). */
     private val onTablesChanged: () -> Unit = {},
     private val clockMs: () -> Long = { SystemClock.elapsedRealtime() },
+    /**
+     * Leitura confirmada dos buffers GNV (grupo G4 aceito pela época, ou snapshot completo), entregue ao
+     * apagamento automático de pontos aprendidos na lenta. Deve só enfileirar: roda na thread do autoCalTick.
+     */
+    private val onGasBuffersConfirmed: (AutoIdleCleanupCoordinator.GasBuffers) -> Unit = {},
+    /** As leituras anteriores deixaram de valer: `sessionChanged`=true para sessão USB nova/encerrada. */
+    private val onAcquisitionReset: (sessionChanged: Boolean, sessionId: Long) -> Unit = { _, _ -> },
+    /** Verdade sobre escrita automática do app (só o apagamento de pontos GNV na lenta, quando ligado). */
+    private val appAutomaticWriteEnabled: () -> Boolean = { false },
 ) {
     private data class PendingMaturity(
         val transition: NativeAutoCalMaturityTracker.Transition,
@@ -117,8 +126,7 @@ class NativeAutoCalMonitor(
      * Evidência de AutoMatch que o snapshot completo ainda não entregou: o contador é consumido uma vez só no
      * tick, então se o snapshot é abortado (época mudou de novo, transporte) o evento precisa esperar a próxima tentativa.
      */
-    private var pendingCounterEvent: NativeAutoMatchCounterTracker.Event? = null
-    private var pendingCountIncreased = false
+    private val pendingEvidence = PendingAutoMatchEvidence()
 
     fun beginUsbSession(newSessionId: Long) {
         synchronized(lock) {
@@ -131,8 +139,7 @@ class NativeAutoCalMonitor(
             gasNormalThreshold = null
             autoCalEnabled = null
             pendingMaturity = emptyList()
-            pendingCounterEvent = null
-            pendingCountIncreased = false
+            pendingEvidence.clear()
             maturityTracker.reset()
             autoMatchCounterTracker.reset()
             refreshPlanner.reset()
@@ -150,6 +157,7 @@ class NativeAutoCalMonitor(
                 .put("sessionId", newSessionId)
                 .put("settleMs", SESSION_SETTLE_MS)
         }
+        try { onAcquisitionReset(true, newSessionId) } catch (_: Exception) {}
         onStateChanged()
     }
 
@@ -164,8 +172,7 @@ class NativeAutoCalMonitor(
             gasNormalThreshold = null
             autoCalEnabled = null
             pendingMaturity = emptyList()
-            pendingCounterEvent = null
-            pendingCountIncreased = false
+            pendingEvidence.clear()
             maturityTracker.reset()
             autoMatchCounterTracker.reset()
             refreshPlanner.reset()
@@ -178,7 +185,29 @@ class NativeAutoCalMonitor(
             latestSnapshot = JSONObject().put("available", false)
             state = baseState("DISCONNECTED", "USB desconectado")
         }
+        try { onAcquisitionReset(true, 0L) } catch (_: Exception) {}
         onStateChanged()
+    }
+
+    /** AUTO_CAL_ENABLE conhecido agora (snapshot completo, releitura viva ou readback de ação), ou nulo. */
+    fun autoCalEnabledNow(): Int? = synchronized(lock) { autoCalEnabled }
+
+    /** Idade da sessão USB atual no relógio elapsed; 0 sem sessão. */
+    fun sessionAgeMs(): Long {
+        val startedAt = synchronized(lock) { sessionStartedAtElapsedMs }
+        return if (startedAt > 0L) (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L) else 0L
+    }
+
+    /** Último vetor VALID de um campo no snapshot do monitor (cópia), ou nulo. Só leitura de cache. */
+    fun lastKnownVector(field: AutoCalProtocol.Field): IntArray? = synchronized(lock) {
+        val fields = latestSnapshot.optJSONArray("fields") ?: return@synchronized null
+        for (index in 0 until fields.length()) {
+            val item = fields.optJSONObject(index) ?: continue
+            if (item.optString("key") != field.key || item.optString("status") != AutoCalFieldStatus.VALID.name) continue
+            val raw = item.optJSONArray("rawValues") ?: return@synchronized null
+            return@synchronized IntArray(raw.length()) { raw.optInt(it) }
+        }
+        null
     }
 
     /** Sob [lock]: zera o round em voo, o árbitro e a instrumentação (sessão USB nova/encerrada). */
@@ -212,6 +241,7 @@ class NativeAutoCalMonitor(
         synchronized(lock) { scratch.invalidate() }
         refreshPlanner.abandonRound()
         refreshPlanner.requestReferenceNow()
+        try { onAcquisitionReset(false, sessionId) } catch (_: Exception) {}
     }
 
     fun onManualActionConfirmed(receipt: JSONObject) {
@@ -245,10 +275,10 @@ class NativeAutoCalMonitor(
                     .put("oldHash", beforeMul)
                     .put("newHash", afterMul)
                     .put("readbackValid", true)
-                    .put("humanConfirmed", true)
+                    .put("humanConfirmed", receipt.optBoolean("humanConfirmed", !receipt.optBoolean("automatic", false)))
                     .put("ecuNativeObserved", true)
                     .put("appWritePerformed", true)
-                    .put("appAutomaticWrite", false),
+                    .put("appAutomaticWrite", receipt.optBoolean("automatic", false)),
             )
         }
     }
@@ -353,16 +383,23 @@ class NativeAutoCalMonitor(
         val shouldSnapshot = synchronized(lock) { snapshotDue() }
         if (shouldSnapshot) {
             // Evidência de uma tentativa anterior abortada (época mudou no meio / transporte) entra junto.
-            val (event, increased) = synchronized(lock) {
-                val carried = pendingCounterEvent
-                val current = observed.counterEvent
-                val merged = if (carried != null && current != null) {
-                    current.copy(beforeCount = carried.beforeCount, delta = current.afterCount - carried.beforeCount)
-                } else carried ?: current
-                merged to (observed.countIncreased || pendingCountIncreased)
+            val (event, increased) = synchronized(lock) { pendingEvidence.merge(observed.counterEvent, observed.countIncreased) }
+            try {
+                readFullSnapshot(currentSession, probe, increased, event)
+            } catch (interrupted: InterruptedException) {
+                carryEvidence(event, increased)
+                throw interrupted
+            } catch (failure: Exception) {
+                // Falha inesperada no meio do snapshot: a evidência de AutoMatch não pode sumir (ECU#6).
+                carryEvidence(event, increased)
+                backOffSnapshot()
+                onStateChanged()
             }
-            readFullSnapshot(currentSession, probe, increased, event)
         } else {
+            // Snapshot em recuo: o contador já foi consumido pelo tracker; a evidência espera a próxima vez (ECU#6).
+            if (observed.counterEvent != null || observed.countIncreased) {
+                carryEvidence(observed.counterEvent, observed.countIncreased)
+            }
             onStateChanged()
         }
     }
@@ -557,6 +594,7 @@ class NativeAutoCalMonitor(
                     scratch.petrolCounters = vector(read.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR)
                 }
                 NativeAutoCalRefreshPlanner.Group.G4_GAS -> {
+                    publishGasBuffers(currentSession, read.snapshot, read.observedAtElapsedMs)
                     val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
                     synchronized(lock) {
                         acquisitionEpoch.acquisitionGroup(
@@ -633,8 +671,21 @@ class NativeAutoCalMonitor(
             .put("acquisitionTiming", duty.json(serial.liveFrameAgeMs(), serial.liveFrameCount()))
             .put("slotArbiter", arbiter.json())
             .put("roundRemaining", JSONArray().also { array -> refreshPlanner.roundRemaining().forEach { array.put(it.label) } })
-            .put("appAutomaticWrite", false)
+            .put("appAutomaticWrite", appAutomaticWriteEnabled())
+            .put("appAutomaticWriteScope", if (appAutomaticWriteEnabled()) "DELETE_GNV_IDLE_POINTS" else "NONE")
             .put("manualAutoMatchExposed", false)
+    }
+
+    /** Entrega uma leitura confirmada dos três buffers GNV ao apagamento automático (só enfileira). */
+    private fun publishGasBuffers(currentSession: Long, snapshot: AutoCalSnapshot, observedAtElapsedMs: Long) {
+        val counters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS) ?: return
+        val time = vector(snapshot, AutoCalProtocol.PETR_INJ_TBUF_GAS) ?: return
+        val map = vector(snapshot, AutoCalProtocol.MNFLD_PRESS_BUF_GAS) ?: return
+        try {
+            onGasBuffersConfirmed(
+                AutoIdleCleanupCoordinator.GasBuffers(currentSession, counters, time, map, observedAtElapsedMs),
+            )
+        } catch (_: Exception) {}
     }
 
     /**
@@ -1081,10 +1132,7 @@ class NativeAutoCalMonitor(
 
     /** Guarda a evidência de AutoMatch de uma tentativa abortada para a próxima. */
     private fun carryEvidence(event: NativeAutoMatchCounterTracker.Event?, countIncreased: Boolean) {
-        synchronized(lock) {
-            if (event != null) pendingCounterEvent = event
-            if (countIncreased) pendingCountIncreased = true
-        }
+        synchronized(lock) { pendingEvidence.carry(event, countIncreased) }
     }
 
     /** Falha de transporte no snapshot completo: recuo exponencial (2 s, 4 s, ... teto 60 s). */
@@ -1195,7 +1243,9 @@ class NativeAutoCalMonitor(
             startedAtMs = started,
             finishedAtMs = System.currentTimeMillis(),
         )
-        val enabled = scalar(snapshot, AutoCalProtocol.AUTO_CAL_ENABLE)
+        // ECU#5: AUTO_CAL_ENABLE não lido nesta varredura (parcial) não zera o que a sessão já sabia.
+        val enabledRead = scalar(snapshot, AutoCalProtocol.AUTO_CAL_ENABLE)
+        val enabled = SnapshotCarryOver.keepIfUnread(enabledRead, synchronized(lock) { autoCalEnabled })
         val maxAutomatch = scalar(snapshot, AutoCalProtocol.MAX_AUTOMATCH)
         val mulActHash = snapshot.field(AutoCalProtocol.MUL_ACT)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
@@ -1217,8 +1267,14 @@ class NativeAutoCalMonitor(
                 afterPayloadHex = mulActField?.rawPayloadHex.orEmpty(),
             )
         }
-        val decorated = snapshot.toJson()
+        val previousSnapshot = synchronized(lock) { latestSnapshot }
+        val decorated = SnapshotCarryOver.mergeFields(
+            previous = previousSnapshot,
+            fresh = snapshot.toJson().put("available", true).put("usbSessionId", expectedSessionId),
+            usbSessionId = expectedSessionId,
+        )
             .put("available", true)
+            .put("autoCalEnabledRead", enabledRead != null)
             .put("nativeAutoCal", true)
             .put("nativeStatus", JSONObject()
                 .put("nativeFlag13", probe.nativeFlag13)
@@ -1388,12 +1444,13 @@ class NativeAutoCalMonitor(
             refreshPlanner.markFullSnapshot(SystemClock.elapsedRealtime())
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
             if (stableAfter != null) lastStableMulAct = stableAfter
-            gasLowThreshold = newGasLowThreshold
-            gasNormalThreshold = newGasNormalThreshold
+            // ECU#5: limiar/flag não lidos (snapshot parcial) mantêm o valor anterior; maturidade pendente só
+            // é descartada quando o AUTO_CAL_ENABLE foi de fato lido nesta varredura.
+            gasLowThreshold = SnapshotCarryOver.keepIfUnread(newGasLowThreshold, gasLowThreshold)
+            gasNormalThreshold = SnapshotCarryOver.keepIfUnread(newGasNormalThreshold, gasNormalThreshold)
             autoCalEnabled = enabled
-            pendingMaturity = emptyList()
-            pendingCounterEvent = null
-            pendingCountIncreased = false
+            if (enabledRead != null) pendingMaturity = emptyList()
+            pendingEvidence.clear()
             snapshotRequested = false
             snapshotFailures = 0
             snapshotBackoffUntilElapsedMs = 0L
@@ -1414,6 +1471,7 @@ class NativeAutoCalMonitor(
         if (tablesChangedByFullSnapshot) {
             try { onTablesChanged() } catch (_: Exception) {}
         }
+        publishGasBuffers(expectedSessionId, snapshot, afterMulActCapturedAtElapsedMs)
         if (enabled == 1) {
             try { onFreshSnapshot(decorated) } catch (_: Exception) {}
         }
@@ -1547,7 +1605,7 @@ class NativeAutoCalMonitor(
 
     companion object {
         const val SOURCE_NATIVE_AUTOCAL = "ECU_NATIVE_AUTOCAL"
-        private const val SESSION_SETTLE_MS = 8_000L
+        const val SESSION_SETTLE_MS = 8_000L
         /** Quanto tempo a última leitura boa do contador vale enquanto o probe falha (poucos ciclos); depois é desconhecido. */
         const val COUNT_GRACE_MS = 30_000L
         /** Intervalo mínimo entre releituras vivas do AUTO_CAL_ENABLE (o flag que decide "Pausar"/"Iniciar"). */

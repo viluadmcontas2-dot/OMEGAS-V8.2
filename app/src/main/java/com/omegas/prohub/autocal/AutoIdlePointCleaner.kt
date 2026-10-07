@@ -135,7 +135,7 @@ class AutoIdlePointCleaner(
         const val MIN_INTERVAL_MS = 5_000L
         const val FAILURE_BLOCK_MS = 10_000L
         /** Mesmo tempo de estabilização do [NativeAutoCalMonitor]. */
-        const val SESSION_SETTLE_MS = 8_000L
+        const val SESSION_SETTLE_MS = NativeAutoCalMonitor.SESSION_SETTLE_MS
         const val FRAME_MAX_AGE_MS = 1_500L
     }
 }
