@@ -299,6 +299,141 @@ class AutoCalAutomaticPointDeleteTest {
         assertTrue(manager.statusJson().getString("message").contains("não zerados"))
     }
 
+    // ---- revisão adversarial (2026-10-07) ----
+
+    @Test
+    fun `R1 readquisicao imediata andando conta como apagado e readquirido`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 1)
+        ecu.set(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, 4 to 410)
+        ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 4 to 1_500, phase = "before")
+        ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 4 to 1_530, phase = "after") // ECU apagou e aprendeu de novo
+        val manager = manager(ecu)
+        manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence())
+        awaitIdle(manager)
+        assertEquals(manager.statusJson().toString(), "CONFIRMED", manager.statusJson().getString("state"))
+        val row = manager.receiptsJson().getJSONObject(0).getJSONObject("details").getJSONArray("effect").getJSONObject(0)
+        assertEquals("DELETED_AND_REACQUIRED", row.getString("result"))
+        assertTrue(failures.isEmpty())
+    }
+
+    @Test
+    fun `R1 nada mudou no ponto continua ineficaz`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 1)
+        ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 4 to 1_500)
+        ecu.set(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, 4 to 410)
+        val manager = manager(ecu)
+        manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence())
+        awaitIdle(manager)
+        assertEquals("FAILED", manager.statusJson().getString("state"))
+        assertFalse(manager.receiptsJson().getJSONObject(0).getBoolean("effective"))
+    }
+
+    @Test
+    fun `R1 manual sem antes conhecido nao falha a toa e marca ambiguo`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 1, phase = "after")
+        ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 4 to 1_530, phase = "after")
+        val manager = manager(ecu) // lastKnown nulo
+        val prepared = manager.preparePointDelete("GAS", 4)
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        val details = manager.receiptsJson().getJSONObject(0).getJSONObject("details")
+        assertTrue(details.getBoolean("readbackAmbiguous"))
+    }
+
+    @Test
+    fun `R1 manual com antes velho e ponto que mudou e ambiguo nao falha`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 4, phase = "after")
+        ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 4 to 1_700, phase = "after")
+        val known = mapOf(
+            AutoCalProtocol.NUM_BUF_UPD_GAS.key to IntArray(18).also { it[4] = 2 },
+            AutoCalProtocol.PETR_INJ_TBUF_GAS.key to IntArray(18).also { it[4] = 1_500 },
+        )
+        val manager = manager(ecu, lastKnown = { known[it.key] })
+        val prepared = manager.preparePointDelete("GAS", 4)
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        assertTrue(manager.receiptsJson().getJSONObject(0).getJSONObject("details").getBoolean("readbackAmbiguous"))
+    }
+
+    @Test
+    fun `R3 banda que mudou entre a marca e o disparo e pulada`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 4, 6 to 2, phase = "before") // banda 4 aprendeu de novo (andando)
+        ecu.set(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, 4 to 410, 6 to 500)
+        ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 4 to 1_600, 6 to 1_400)
+        val manager = manager(ecu)
+        val evidence = JSONObject().put("reason", "lenta").put(
+            "bands",
+            org.json.JSONArray()
+                .put(JSONObject().put("band", 4).put("counterAfter", 3).put("timeRaw", 1_500).put("mapRaw", 410))
+                .put(JSONObject().put("band", 6).put("counterAfter", 2).put("timeRaw", 1_400).put("mapRaw", 500)),
+        )
+        manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4), Target(Fuel.GAS, 6)), evidence)
+        awaitIdle(manager)
+        val gasMask = AutoCalProtocol.writeVectorU8(
+            AutoCalPointDeleteProtocol.GAS_DELETE_ADDRESS,
+            IntArray(18) { if (it == 6) 0 else 1 },
+        )
+        assertArrayEquals(gasMask, ecu.writes()[0])
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("CONFIRMED", receipt.getString("outcome"))
+        assertEquals(4, receipt.getJSONObject("details").getJSONArray("skippedChanged").getInt(0))
+        // R6: recibo e mensagem usam só os alvos realmente apagados.
+        assertEquals(6, receipt.getJSONObject("pointDelete").getInt("index"))
+        assertTrue(manager.statusJson().getString("message"), manager.statusJson().getString("message").contains("1 ponto"))
+    }
+
+    @Test
+    fun `R3 todas as bandas mudaram nao gera escrita`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 4)
+        val manager = manager(ecu)
+        val evidence = JSONObject().put("reason", "lenta").put(
+            "bands", org.json.JSONArray().put(JSONObject().put("band", 4).put("counterAfter", 3).put("timeRaw", 0).put("mapRaw", 0)),
+        )
+        manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence)
+        awaitIdle(manager)
+        assertTrue(ecu.writes().isEmpty())
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("POINT_CHANGED_SINCE_MARK", receipt.getString("reasonCode"))
+        assertFalse(receipt.getBoolean("mutationMayHaveStarted"))
+        assertEquals(4, receipt.getJSONArray("skippedChanged").getInt(0))
+    }
+
+    @Test
+    fun `R4 preparacao manual expirada nao bloqueia o automatico`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3, phase = "before")
+        var now = 1_000_000L
+        val manager = manager(ecu, clock = { now })
+        assertTrue(manager.prepare("RESET_GAS").getBoolean("prepared"))
+        assertTrue(manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence()).getBoolean("retryLater"))
+        now += 121_000
+        val started = manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence())
+        assertTrue(started.toString(), started.getBoolean("ok"))
+        awaitIdle(manager)
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+    }
+
+    @Test
+    fun `R6 recibo FAILED automatico leva o antes`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3)
+        ecu.failOn = { it.contentEquals(AutoCalPointDeleteProtocol.commit()) }
+        val manager = manager(ecu)
+        manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence())
+        awaitIdle(manager)
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("FAILED", receipt.getString("outcome"))
+        assertTrue(receipt.has("before"))
+    }
+
     // ---- apoio ----
 
     private fun evidence() = JSONObject()
@@ -310,6 +445,7 @@ class AutoCalAutomaticPointDeleteTest {
         guard: SerialWriteGuard = SerialWriteGuard(),
         otherBusy: () -> Boolean = { false },
         lastKnown: (AutoCalProtocol.Field) -> IntArray? = { null },
+        clock: () -> Long = System::currentTimeMillis,
     ) = AutoCalNativeActionManager(
         receiptFile = temporaryFile(),
         isConnected = { true },
@@ -320,6 +456,7 @@ class AutoCalAutomaticPointDeleteTest {
         onFailed = { failures += it },
         guard = guard,
         lastKnownVector = lastKnown,
+        wallClock = clock,
     )
 
     private fun temporaryFile(): File = Files.createTempDirectory("autocal-auto-delete").resolve("receipts.json").toFile()
