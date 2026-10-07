@@ -111,3 +111,6 @@ Release notes da AEB sobre a autocalibração MP32/MP48 (https://intergasservice
 - O método do fabricante compara o **tempo de injeção da gasolina (Ti) calculado pela ECU original em modo gás** com o Ti em modo gasolina, no mesmo MAP. Com calibração certa, o Ti não muda ao trocar de combustível.
 - Logo `PETR_INJ_TBUF_GAS` é o Ti da gasolina medido rodando em GNV, e a razão GNV/gasolina dos buffers (F7, mediana 1,013) **é** a medida de equivalência da própria ECU. Deixa de ser inferência.
 - AEB: subzona válida com ≥7 amostras; linha traçada com 3 de 4 faixas completas; K limitado a [0,5; 1,5]; cada automatch muda K no máximo ±20% sobre o anterior; dados acima de 3000 rpm descartados. Compare F10 (passos observados de 6%, 12%, 25%).
+
+## F13 — Portmon (2 logs do ProgBase, 36.463 + ~39.500 transações)
+Parser `scripts/omegas/portmon_parser.py`. Os logs são do ProgBase (fabricante) lendo a ECU: telemetria `48 01 49` (21.167 no AUTOCAL), leituras `29 xx 01` dos campos AutoCal e um único reset manual `02 24 04 04 2E` (RESET_ALL). **Não há nenhuma escrita das máscaras de apagar ponto (0x016D/0x016E) nem do commit `01 24 05`.** A ordem real desses bytes NÃO pode ser confirmada por estes logs; fica coberta por teste de contrato no app e pela prova física do dono.
