@@ -48,3 +48,19 @@ Sessão 2026-10-06_19-21-14, DELETE_POINT em GNV, snapshot antes vs primeiro sna
 - **Leitura:** desvio reprodutível de uma banda (b7 ≈ +16% sempre) é FORMA real da curva (efeito rpm/regime na aquisição), não ruído. Detector que compara só com vizinhos vai marcar a mesma banda para sempre e o apagar-ponto repetiria o mesmo ponto.
 - Limites: n=1 sessão com repetição (5+ apagamentos nas mesmas 2–3 bandas); builds antigas não registram o alvo do DELETE_POINT. Efeito físico/regime NÃO provado.
 - **Implicação de projeto (decisão do dono: apagar sozinho, mas só com persistência):** critério precisa de (a) contador maduro, (b) desvio contra o formato típico da banda aprendido de TODAS as sessões (não só vizinhos), (c) desvio que NÃO se reproduz entre readquisições/sessões, (d) limite de tentativas por banda.
+
+## Cobertura (livro-razão, tools/autocal_refine/teia_ledger.py)
+992 arquivos no Drive (incl. dentro de zips): 194 events, 7 backups de Curva K (`MANUAL-*.json`), 593 meta (manifest/summary/README/RESUMO/parte), 2 Portmon, 109 zips, 87 desktop.ini ignorados. **0 sem categoria.** A 1ª varredura tinha perdido: Sessaoutil, sessão 02/10 em 106 partes, os 7 MANUAL-*.json.
+Cópias da mesma sessão em pastas diferentes (21-06-38_ae619822): a menor é prefixo byte-a-byte da maior (conferido).
+**Consumido até agora:** events (85 sessões). **Ainda NÃO consumido:** k_backup (7), RESUMO.md/summary (344+), Portmon (2).
+
+## F6 — gasolina estacionária é quase linear em MAP; marcha lenta é um regime à parte  [classe 3]
+- GASOLINA, estacionário (|ΔMAP|<0,015, |Δrpm|<60, >600 rpm), n=8401 leituras, 30 sessões: `ms ≈ 9,44·MAP − 0,09`, R²=0,934, resíduo sd 0,56 ms. Acrescentar rpm quase não muda (R²=0,935; +0,15 ms por 1000 rpm). Hipótese "o ponto anômalo é só rpm diferente" **não se sustenta na forma linear simples**.
+- Porém, no mesmo MAP, rpm<1200 fica acima do cruzeiro: MAP 0,45: 4,15 ms vs 3,3 (>1200 rpm); MAP 0,50: 4,56 vs 3,46 (rpm>2000) → +20–30%. Efeito de regime (marcha lenta), não linear em rpm. Causa não provada.
+
+## F7 — a razão GNV/gasolina dos buffers nativos é ≈1,00 (medida direta de equivalência)  [classe 3; semântica inferida]
+- n=2032 pares (banda GNV madura, contador ≥5, gasolina interpolada no mesmo MAP), 64 sessões: razão mediana 1,01, IQR [0,97; 1,06].
+- Por faixa de ms da gasolina: 1–2,5 ms: 0,94 (GNV abaixo); 2,5–3,5: 0,99; 3,5–5: 1,03; 5–7: 1,00; 7–12: 1,01.
+- MUL_ACT (decodificado do hex) vai de 1,00 a 1,43 e NÃO acompanha a razão (corr −0,23). Inferência: o buffer `*_GAS` já está no domínio equivalente à gasolina; MUL_ACT é o fator de conversão, não o resíduo. **Semântica não confirmada** — validar com o código da ECU/Portmon.
+- Eixo do MUL_ACT (dos backups MANUAL): 20 pontos em ms de gasolina 0,5…10,0 (passo 0,5) + 10 pontos de 11 a 22 ms (a cauda repetida de F2 é região não treinada).
+- Uso: erro de equivalência por banda `e_b = razão − 1` com ruído ≈ ±3%; a faixa <2,5 ms (marcha lenta/desaceleração) é a pior e é onde ocorrem os "quase apagou".
