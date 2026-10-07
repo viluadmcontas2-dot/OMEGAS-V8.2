@@ -105,3 +105,9 @@ Método cru (sem rótulos de correlação do app): para cada incremento de NUM_B
 - Coerente com F6: na GASOLINA estacionária, mesma MAP em rpm<1200 também dá +20–30% de ms → é física real do regime, não "erro". O problema não é a lenta: é **misturar regimes** (banda da gasolina aprendida andando × banda do GNV aprendida na lenta → falsa diferença de equivalência).
 - **Gasolina quase não aprende nestes dados:** só 3 incrementos de NUM_BUF_UPD_PETR em 43 sessões. A base (gasolina) está praticamente congelada; o regime em que foi aprendida é desconhecido aqui.
 - Explica F5: b7 (o ponto mais apagado à mão, +16% vs vizinhos) é a banda com maior inflação de lenta (1,26). Apagar parado = readquirir na lenta = mesmo ponto.
+
+## F12 — confirmação externa da semântica do buffer GNV (fonte do fabricante)  [fonte forte]
+Release notes da AEB sobre a autocalibração MP32/MP48 (https://intergasservice.ru/upload/iblock/e42/e42b906b0b85ee2965685789d6787eea.pdf):
+- O método do fabricante compara o **tempo de injeção da gasolina (Ti) calculado pela ECU original em modo gás** com o Ti em modo gasolina, no mesmo MAP. Com calibração certa, o Ti não muda ao trocar de combustível.
+- Logo `PETR_INJ_TBUF_GAS` é o Ti da gasolina medido rodando em GNV, e a razão GNV/gasolina dos buffers (F7, mediana 1,013) **é** a medida de equivalência da própria ECU. Deixa de ser inferência.
+- AEB: subzona válida com ≥7 amostras; linha traçada com 3 de 4 faixas completas; K limitado a [0,5; 1,5]; cada automatch muda K no máximo ±20% sobre o anterior; dados acima de 3000 rpm descartados. Compare F10 (passos observados de 6%, 12%, 25%).
