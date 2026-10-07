@@ -344,3 +344,7 @@ html body .ar-shell .ar-readout .autocal-point-tech { pointer-events:auto; margi
 html body .ar-shell .ar-readout .autocal-point-tech summary { min-height:44px; display:flex; align-items:center; cursor:pointer; }
 html body .autocal-zone-legend { display:block; margin-top:4px; font-size:16px; color:var(--muted); }
 html body .autocal-reacquire-note { align-self:center; max-width:360px; font-size:16px; line-height:1.25; color:var(--muted); }
+html body .refino-confirm { display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%; padding:12px 16px; border:1px solid var(--warn); border-radius:10px; background:var(--warn-soft); }
+html body .refino-confirm[hidden] { display:none; }
+html body .refino-confirm p { flex:1 1 320px; margin:0; font-size:20px; }
+html body .refino-confirm button { min-height:58px; font-size:20px; }

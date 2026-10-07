@@ -334,9 +334,14 @@
             <div class="ar-buttons">
               <button type="button" class="btn-primary" data-refino-primary hidden></button>
               <button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar medições GNV</button>
-              <button type="button" class="btn-ghost" data-refino-acquisition>Leitura da ECU</button>
+              <button type="button" class="btn-ghost" data-refino-acquisition>Ver aprendizado da ECU</button>
               <span class="refino-undo" id="refinoUndo" hidden></span>
               <button type="button" class="btn-ghost" id="refinoEqUnfreeze" data-refino-unfreeze hidden>Desfazer referência</button>
+            </div>
+            <div class="refino-confirm" id="refinoResetConfirm" role="alertdialog" aria-label="Confirmar apagar medições do GNV" hidden>
+              <p>Apagar tudo que o app mediu no GNV? Não dá para desfazer.</p>
+              <button type="button" class="btn-danger" data-refino-reset-confirm>Apagar</button>
+              <button type="button" class="btn-ghost" data-refino-reset-cancel>Cancelar</button>
             </div>
           </div>
         </section>`;
@@ -368,7 +373,10 @@
     }
 
     onClick(event) {
-      if (event.target.closest('[data-refino-reset-gas]')) { this.resetGasEvidence(); return; }
+      // Apagar as medições do GNV não tem volta: pede confirmação antes.
+      if (event.target.closest('[data-refino-reset-gas]')) { this.askResetGas(true); return; }
+      if (event.target.closest('[data-refino-reset-cancel]')) { this.askResetGas(false); return; }
+      if (event.target.closest('[data-refino-reset-confirm]')) { this.askResetGas(false); this.resetGasEvidence(); return; }
       if (event.target.closest('[data-refino-acquisition]')) { this.app.router?.open('autocal'); return; }
       if (event.target.closest('[data-refino-unfreeze]')) { this.unfreezeReference(); return; }
       if (event.target.closest('[data-refino-primary]')) { this.primary(); return; }
@@ -378,6 +386,15 @@
       // Ponto da curva de referência (área de toque do gráfico compartilhado).
       const reference = event.target.closest('[data-autocal-ref-index]');
       if (reference) this.inspectReference(Number(reference.dataset.autocalRefIndex));
+    }
+
+    /** Mostra/esconde a confirmação "Apagar tudo que o app mediu no GNV? Não dá para desfazer." */
+    askResetGas(open) {
+      const box = document.getElementById('refinoResetConfirm');
+      if (!box) return;
+      box.hidden = !open;
+      const trigger = document.querySelector('[data-refino-reset-gas]');
+      if (trigger) trigger.hidden = !!open;
     }
 
     /** Linha curta ao tocar; sem card, sem código. */
@@ -392,7 +409,7 @@
     inspectReference(index) {
       const point = ((this.model || {}).reference || []).find(item => Number(item.index) === Number(index));
       if (!point || finite(point.petrolMs) === null) return;
-      this.readout(`Curva · ponto ${Number(point.index) + 1} · ${D.msUnit(point.petrolMs)}`);
+      this.readout(`Trecho ${Number(point.index) + 1} da curva · ${D.msUnit(point.petrolMs)} de injeção`);
       this.select({ ref: Number(point.index) });
     }
 
@@ -633,7 +650,7 @@
       const proposals = document.getElementById('refinoProposals');
       if (proposals) {
         const points = this.actionModel().kind === 'review' ? readyPoints(eq, this.analysis) : [];
-        proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'ponto', 'pontos')} da Curva K · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>Ponto ${p.index + 1}</dt><dd>${D.kValue(p.currentRaw / 16384)} → ${D.kValue(p.targetRaw / 16384)}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : '<p>Ainda sem proposta. O app continua medindo.</p>';
+        proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'trecho', 'trechos')} da curva · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>${escapeHtml(this.stretchLabel(p.index))}</dt><dd>${escapeHtml(this.changeLabel(p))}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : '<p>Ainda sem proposta. O app continua medindo.</p>';
       }
       const resetGas = document.querySelector('[data-refino-reset-gas]');
       if (resetGas) resetGas.disabled = op.phase === 'reading' || op.phase === 'writing' || this.store.get()?.status?.usbConnected !== true;
@@ -642,6 +659,26 @@
       this.renderPrimary();
       this.renderUndo();
       this.renderChart();
+    }
+
+    /** "Trecho 3,2–3,6 ms": o trecho da curva entre este ponto e o seguinte (injeção de gasolina). Sem eixo: "Trecho N". */
+    stretchLabel(index) {
+      const byIndex = new Map((Array.isArray(this.analysis?.points) ? this.analysis.points : []).map(p => [Number(p.index), p]));
+      const reference = (this.model && Array.isArray(this.model.reference)) ? this.model.reference : [];
+      const msOf = i => finite(byIndex.get(i)?.referenceTimeMs) ?? finite(reference.find(r => Number(r.index) === i)?.petrolMs);
+      const from = msOf(index);
+      const to = msOf(index + 1);
+      if (from === null) return `Trecho ${index + 1}`;
+      return to === null || to <= from ? `Trecho ${fmt(from, 1)} ms` : `Trecho ${fmt(from, 1)}–${fmt(to, 1)} ms`;
+    }
+
+    /** "+4% de GNV" / "−3% de GNV": quanto a mistura do GNV muda nesse trecho. */
+    changeLabel(point) {
+      const change = point.currentRaw > 0 ? point.targetRaw / point.currentRaw - 1 : null;
+      if (change === null || !Number.isFinite(change)) return '—';
+      const percent = Math.round(change * 100);
+      if (percent === 0) return 'ajuste fino (menos de 1%)';
+      return `${percent > 0 ? '+' : '−'}${Math.abs(percent)}% de GNV`;
     }
 
     renderStalls() {
@@ -653,11 +690,13 @@
       stallNode.hidden = !(real > 0 || near > 0);
       stallNode.dataset.tone = this.stallTone();
       const region = Array.isArray(stalls.regions) ? stalls.regions[0] : null;
-      const where = region ? `Mais perto de ${D.msBand(region.fromMs, region.toMs)} (desaceleração ou embreagem). ` : '';
-      const guard = fmt(this.analysis?.guards?.lowGuardMs, 1);
-      this.stallDetail = (real > 0 || near > 0) ? `${where}${guard === '—' ? '' : `O Refino nunca deixa a mistura mais pobre abaixo de ${guard} ms; `}se continuar, deixe a mistura mais rica nessa região, na Curva K.` : '';
+      // Em vez de mandar o dono mexer na Curva K: o próprio Refino cuida da região (a faixa técnica fica no título).
+      const where = region ? `Mais perto de ${D.msBand(region.fromMs, region.toMs)}. ` : '';
+      this.stallDetail = (real > 0 || near > 0) ? 'O Refino vai propor um ajuste para essa região. Continue dirigindo.' : '';
+      stallNode.dataset.where = where.trim();
       stallNode.title = this.stallDetail;
-      const text = real > 0 ? `O motor apagou ${real === 1 ? '1 vez' : real + ' vezes'} no GNV` : near > 0 ? 'O motor quase apagou no GNV' : '';
+      const base = real > 0 ? `O motor apagou ${real === 1 ? '1 vez' : real + ' vezes'} no GNV` : near > 0 ? 'O motor quase apagou no GNV' : '';
+      const text = base ? `${base}. ${this.stallDetail}` : '';
       if (stallNode.textContent !== text) stallNode.textContent = text;
     }
 
@@ -829,7 +868,7 @@
       const p = (model.ecu || [])[index];
       const coherent = p && finite(p.petrolMs) !== null && finite(p.mapBar) !== null;
       if (!coherent) { this.readout(''); return; }
-      this.readout(`${p.fuelLabel} · ponto ${p.point} da ECU · ${D.msUnit(p.petrolMs)} · ${p.acquisitionState === 'ACQUIRED' ? 'já lido' : 'ainda lendo'}`);
+      this.readout(`Ponto ${p.point} ${p.fuel === 'GAS' ? 'do GNV' : 'da gasolina'} (zona ${p.zone}) · ${p.acquisitionState === 'ACQUIRED' ? 'a ECU já aprendeu' : 'a ECU ainda está aprendendo'}`);
       this.select({ ecu: `${p.fuel}:${p.index}` });
     }
   }

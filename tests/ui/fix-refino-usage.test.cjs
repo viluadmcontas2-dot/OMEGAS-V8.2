@@ -179,3 +179,21 @@ test('P1-6: o laço de quadros para quando todos chegam no alvo (devolvem false)
   scheduler.wake();
   assert.equal(frames.length, 1, 'sem pedido duplicado');
 });
+
+test('P2: "Reiniciar medições GNV" é irreversível e pede confirmação antes de apagar', () => {
+  const app = refinoApp();
+  try {
+    const mark = app.world.mark();
+    app.$('[data-refino-reset-gas]').click(); app.flush();
+    assert.equal(app.world.since(mark).filter(c => c.method === 'resetGasEvidence').length, 0, 'primeiro toque só pergunta');
+    const box = app.byId('refinoResetConfirm');
+    assert.equal(box.hidden, false);
+    assert.match(box.textContent, /Apagar tudo que o app mediu no GNV\? Não dá para desfazer\./);
+    app.$('[data-refino-reset-cancel]').click(); app.flush();
+    assert.equal(box.hidden, true, 'Cancelar fecha sem apagar');
+    assert.equal(app.world.since(mark).filter(c => c.method === 'resetGasEvidence').length, 0);
+    app.$('[data-refino-reset-gas]').click(); app.$('[data-refino-reset-confirm]').click(); app.flush();
+    assert.equal(app.world.since(mark).filter(c => c.method === 'resetGasEvidence').length, 1, 'só apaga depois de confirmar');
+    assert.equal(app.$('[data-refino-acquisition]').textContent, 'Ver aprendizado da ECU');
+  } finally { app.destroy(); }
+});
