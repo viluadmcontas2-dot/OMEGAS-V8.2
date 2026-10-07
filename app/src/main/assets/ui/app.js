@@ -166,7 +166,7 @@
   let writeGate = { blocked: false, reason: '' };
   // Onde o motivo aparece por escrito (botão apagado sozinho não explica nada em tela de toque).
   const WRITE_NOTES = [
-    { key: 'map', host: '#mapReviewButton', where: 'afterend' },
+    { key: 'map', host: '.map-safety-line', where: 'beforeend' },
     { key: 'curve', host: '.curve-action-bar', where: 'afterend' },
     { key: 'refino', host: '.refino-cockpit .ar-act', where: 'beforeend' },
     { key: 'autocal', host: '.autocal-chart-overlay .autocal-chip-row', where: 'beforeend' },

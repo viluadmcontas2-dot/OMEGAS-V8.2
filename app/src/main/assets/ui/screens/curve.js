@@ -81,6 +81,16 @@
         this.renderChart(); this.renderProposalList();
       });
       document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
+      // Aviso breve (Revisto (W2)): o texto de status aparece sobre o gráfico e some sozinho depois de alguns segundos.
+      const statusNode = document.getElementById('curveBackupStatus');
+      if (statusNode && typeof root.MutationObserver === 'function') {
+        let hideTimer = null;
+        new root.MutationObserver(() => {
+          statusNode.dataset.fresh = 'true';
+          if (hideTimer) clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => { statusNode.dataset.fresh = 'false'; }, 5000);
+        }).observe(statusNode, { childList: true, characterData: true, subtree: true });
+      }
       document.getElementById('curveDismissResult')?.addEventListener('click', () => this.dismissResult());
       document.getElementById('curveUndoButton')?.addEventListener('click', () => this.undoLast());
     }
@@ -176,7 +186,7 @@
       // A foto escolhida e a prévia do Desfazer sobrevivem a uma releitura da lista (ex.: voltar do segundo plano).
       if (keep && rows.some(item => item.fileName === keep)) select.value = keep;
       this.syncRestoreButton();
-      if (this.restoreContext) text('curveBackupStatus', 'Pronto: confira antes→depois e toque em Desfazer');
+      if (this.restoreContext) text('curveBackupStatus', 'Pronto: toque em Desfazer para voltar a esta foto');
       else if (rows.length) text('curveBackupStatus', `${D.plural(rows.length, 'foto salva', 'fotos salvas')} · escolha uma para ver o que volta`);
       else text('curveBackupStatus', 'Nenhuma foto salva');
     }
@@ -440,7 +450,7 @@
           }));
           this.renderProposalList();
           this.syncRestoreButton();
-          text('curveBackupStatus', 'Pronto: confira antes→depois e toque em Desfazer');
+          text('curveBackupStatus', 'Pronto: toque em Desfazer para voltar a esta foto');
           return;
         }
       }

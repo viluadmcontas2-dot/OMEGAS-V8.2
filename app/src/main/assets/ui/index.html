@@ -209,15 +209,18 @@
                 <button type="button" data-curve-view="overview">Visão geral</button>
                 <button type="button" data-curve-view="editor" class="active">Editar pontos</button>
               </div>
+              <details class="curve-photos" aria-label="Preservar a Curva K">
+                <summary>Fotos</summary>
+                <div class="curve-photos-menu">
+                  <button id="curveBackupSave" type="button" aria-label="Salvar Curva K em Downloads/Omegas">Salvar foto</button>
+                  <select id="curveBackupSelect" aria-label="Curvas salvas"><option value="">Nenhuma curva salva</option></select>
+                  <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
+                </div>
+              </details>
               <button id="curveReadButton" type="button" class="secondary">Reler ECU</button>
             </div>
           </div>
 
-          <div class="curve-backup-toolbar" aria-label="Preservar a Curva K">
-            <button id="curveBackupSave" type="button" aria-label="Salvar Curva K em Downloads/Omegas">Salvar em Downloads</button>
-            <select id="curveBackupSelect" aria-label="Curvas salvas"><option value="">Nenhuma curva salva</option></select>
-            <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
-          </div>
           <span id="curveBackupStatus" class="curve-backup-status" role="status"></span>
           <div class="curve-view-stack">
             <div class="curve-view curve-overview-view" data-curve-panel="overview">
@@ -236,10 +239,9 @@
                 <section class="curve-surface">
                   <div class="curve-legend">
                     <span class="curve-point-info"><h3 id="curveActivePoint">Selecione um ponto</h3><span>K atual <b id="curveCurrentFactor">—</b></span><span id="curveTargetNormalized" class="normalized-preview">Prévia calculada pelo app</span></span>
-                    <span class="curve-keys"><span><i class="line actual"></i>Atual</span><span><i class="line proposal"></i>Proposta</span></span>
+                    <span class="curve-keys"><span><i class="line actual"></i>Atual</span><span><i class="line proposal"></i>Proposta</span><span class="curve-axis">Eixo: injeção (ms) →</span></span>
                   </div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
-                  <div class="curve-axis">Injeção (ms) →</div>
                   <div class="curve-action-bar" aria-label="Ajustar o ponto escolhido">
                     <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button></div>
                     <div class="value-field"><input id="curveTargetFactor" class="input-lg" type="text" inputmode="decimal" autocomplete="off" placeholder="K" aria-label="K desejado"></div>
