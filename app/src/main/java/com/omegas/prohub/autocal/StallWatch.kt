@@ -34,8 +34,12 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
         const val LEGACY_FORMAT = "omegas-stall-watch-v1"
         const val RUNNING_RPM = 600.0
         const val DEAD_RPM = 300.0
-        /** Condução de verdade (acima da lenta) nos 2 s anteriores a uma queda brusca. */
-        const val DRIVING_RPM = RegimeThresholds.DRIVING_RPM
+        /**
+         * Condução de verdade (acima da lenta) nos 2 s anteriores a uma queda brusca. É um limiar PRÓPRIO do detector
+         * de engasgo: apagão que parte de 1000–1199 rpm (desaceleração até a lenta) é real e tem de aparecer no
+         * diagnóstico. O 1200 de [RegimeThresholds] vale só para a EVIDÊNCIA de equivalência, não para engasgo.
+         */
+        const val DRIVING_RPM = 1_000.0
         /** RPM < DEAD_RPM por este tempo, com telemetria chegando = apagou (não foi ruído). */
         const val CONFIRM_MS = 800L
         /** Janela antes da queda onde o motor tem que estar girando no GNV. */

@@ -12,10 +12,6 @@ import org.junit.Test
  * "quase apagões": o RPM despenca de condução para 400–590 rpm e volta (embreagem,
  * quebra-molas, reentrada do GNV depois do corte). As contagens abaixo foram conferidas
  * quadro a quadro na extração e são o contrato do detector sobre dado real.
- *
- * Limiar de condução unificado em 1200 rpm ([RegimeThresholds.DRIVING_RPM]; antes 1000 aqui): as quedas que partiam de
- * 1000–1199 rpm (lenta alta, regime em que a gasolina injeta +20–30% no mesmo MAP) deixaram de contar como quase apagão
- * (só GNV 5→4, AutoMatch 6→4, referência 3→2); o StallLocalFix já as ignorava para propor Curva K.
  */
 class StallWatchRealSessionTest {
     private fun replay(name: String): StallWatch {
@@ -27,9 +23,9 @@ class StallWatchRealSessionTest {
     }
 
     @Test
-    fun `sessao so GNV tem quatro quase apagoes e nenhum apagao`() {
+    fun `sessao so GNV tem cinco quase apagoes e nenhum apagao`() {
         val json = replay(RealSessionReplaySupport.GNV_ONLY).json()
-        assertEquals(4, json.getInt("nearCount"))
+        assertEquals(5, json.getInt("nearCount"))
         assertEquals(0, json.getInt("count"))
         // A sessão começa com a ECU em DESLIGADO (RPM 0) antes da partida: não é apagão.
         assertEquals(0, json.getJSONObject("ignored").getInt("idleShutdowns"))
@@ -47,16 +43,16 @@ class StallWatchRealSessionTest {
     }
 
     @Test
-    fun `sessao do AutoMatch nativo tem quatro quase apagoes e nenhum apagao`() {
+    fun `sessao do AutoMatch nativo tem seis quase apagoes e nenhum apagao`() {
         val json = replay(RealSessionReplaySupport.AUTOMATCH).json()
-        assertEquals(4, json.getInt("nearCount"))
+        assertEquals(6, json.getInt("nearCount"))
         assertEquals(0, json.getInt("count"))
     }
 
     @Test
-    fun `sessao de referencia tem dois quase apagoes incluindo a reentrada do GNV depois do corte`() {
+    fun `sessao de referencia tem tres quase apagoes incluindo a reentrada do GNV depois do corte`() {
         val json = replay(RealSessionReplaySupport.REFERENCE).json()
-        assertEquals(2, json.getInt("nearCount"))
+        assertEquals(3, json.getInt("nearCount"))
         assertEquals(0, json.getInt("count"))
         // Regiões onde mais acontece: faixa de Petrol Inj. com MAP mediano, para a tela.
         val regions = json.getJSONArray("regions")
