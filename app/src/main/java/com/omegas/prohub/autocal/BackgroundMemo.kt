@@ -10,8 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger
  * travando). Aqui o resultado é recalculado em segundo plano, só enquanto alguém está olhando
  * ([watchMs]), e a chamada da tela devolve o último valor na hora.
  *
- * - [get]: devolve o valor guardado se ainda for novo ([staleMs]); senão calcula na hora (primeira
- *   chamada, depois de [invalidate], ou se o segundo plano parou).
+ * - [get]: devolve o valor guardado na hora. Velho ([staleMs]) ou invalidado: agenda UM recálculo em
+ *   segundo plano ([background]) e devolve o último valor mesmo assim. Só a primeira chamada (sem valor
+ *   algum) calcula dentro da chamada (ECU#2: a troca de zona não trava mais o JavaScript).
+ * - [getFresh]: calcula dentro da chamada (pedido explícito de leitura fresca, depois de gravar/restaurar).
  * - [refreshIfWatched]: chamado pelo relógio de segundo plano; recalcula a cada [refreshMs] só se
  *   a tela pediu o valor nos últimos [watchMs].
  * - [invalidate]: depois de uma ação que muda o estado (gravação, reset) a próxima leitura é fresca.
@@ -24,8 +26,11 @@ class BackgroundMemo(
     private val watchMs: Long = 15_000L,
     private val clock: () -> Long = System::currentTimeMillis,
     private val onError: (Exception) -> String = { """{"ok":false,"error":"${it.message?.replace('"', '\'') ?: "falha"}"}""" },
+    /** Onde o recálculo atrasado roda; padrão: uma thread de fundo compartilhada. */
+    private val background: (Runnable) -> Unit = { task -> SHARED_BACKGROUND.execute(task) },
     private val compute: () -> String,
 ) {
+    private val refreshQueued = java.util.concurrent.atomic.AtomicBoolean(false)
     private val computeLock = Any()
     @Volatile private var value: String? = null
     @Volatile private var valid = false
@@ -41,11 +46,37 @@ class BackgroundMemo(
         requestedAt = now
         val cached = value
         if (valid && cached != null && now - computedAt <= staleMs) return cached
+        if (cached != null) {
+            scheduleRefresh()
+            return cached
+        }
         synchronized(computeLock) {
-            // Outra thread pode ter acabado de recalcular enquanto esta esperava o cadeado.
-            val again = value
-            if (valid && again != null && clock() - computedAt <= staleMs) return again
+            // Primeira chamada: outra thread pode ter acabado de calcular enquanto esta esperava o cadeado.
+            value?.let { return it }
             return runCompute()
+        }
+    }
+
+    /** Valor calculado agora, dentro da chamada. Só para pedido explícito de leitura fresca. */
+    fun getFresh(): String {
+        requestedAt = clock()
+        synchronized(computeLock) { return runCompute() }
+    }
+
+    private fun scheduleRefresh() {
+        if (!refreshQueued.compareAndSet(false, true)) return
+        try {
+            background(Runnable {
+                try {
+                    synchronized(computeLock) {
+                        if (!(valid && clock() - computedAt <= staleMs)) runCompute()
+                    }
+                } finally {
+                    refreshQueued.set(false)
+                }
+            })
+        } catch (_: Exception) {
+            refreshQueued.set(false)
         }
     }
 
@@ -64,6 +95,13 @@ class BackgroundMemo(
             runCompute()
         }
         return true
+    }
+
+    private companion object {
+        val SHARED_BACKGROUND: java.util.concurrent.ExecutorService =
+            java.util.concurrent.Executors.newSingleThreadExecutor { runnable ->
+                Thread(runnable, "omegas-memo-refresh").apply { isDaemon = true; priority = Thread.NORM_PRIORITY - 1 }
+            }
     }
 
     private fun runCompute(): String {

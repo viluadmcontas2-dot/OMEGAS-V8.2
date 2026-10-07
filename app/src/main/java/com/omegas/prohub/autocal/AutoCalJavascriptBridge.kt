@@ -19,14 +19,15 @@ import java.util.concurrent.TimeUnit
  * reproduz operações host-side comprovadas do ProgBase; inteligência adicional
  * do OMEGAS não substitui comandos/estados nativos. Projeção, leitura manual e monitor nativo permanecem separados. As ações nativas
  * ficam numa superfície separada: são preparadas, revisadas no OMEGAS e então
- * executadas diretamente pelo manager canônico com ACK/readback.
+ * executadas diretamente pelo manager canônico com ACK/readback. O manager mora no serviço
+ * ([TelemetryForegroundService.nativeActions]): o apagamento automático de pontos GNV aprendidos na lenta
+ * (spec 2026-10-07) funciona com a tela fechada, e esta ponte só usa a mesma instância.
  */
 class AutoCalJavascriptBridge(activity: MainActivity) {
     private val activityRef = java.lang.ref.WeakReference(activity)
     private val managerLock = Any()
     private var managerService: TelemetryForegroundService? = null
     private var manager: AutoCalSnapshotManager? = null
-    private var nativeActions: AutoCalNativeActionManager? = null
 
     // Resultados prontos para a WebView: o cálculo pesado roda em segundo plano enquanto a tela
     // está aberta e a chamada devolve o último valor na hora (a bridge bloqueia o JavaScript).
@@ -248,7 +249,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
         .put("nativeAndroidConfirmation", false)
-        .put("appAutomaticWrite", false)
+        // Única escrita automática do app: apagar pontos GNV aprendidos na lenta (spec 2026-10-07).
+        .put("appAutomaticWrite", activityRef.get()?.serviceOrNull()?.autoIdleCleanup?.automaticEnabled() == true)
+        .put("appAutomaticWriteScope", "DELETE_GNV_IDLE_POINTS")
         .put("nativeAutoMatchInsideEcu", true)
         .put("manualAutoMatchExposed", false)
         .put("obdIndependent", true)
@@ -265,13 +268,13 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         val snapshot = refinementSnapshot()
         val evidence = refinementEvidence(snapshot)
         val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L) + "|" + evidence.signature
-        synchronized(managerLock) {
-            refinedMemo?.takeIf { it.first == key }?.second
-                ?: AutoMatchSnapshotAnalysis.analyzeRefined(
-                    snapshot, evidence.pairs, evidence.gainScale, evidence.episodes, AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG, evidence.fineBins,
-                )
-                    .toString().also { refinedMemo = key to it }
-        }
+        // ECU#2: o cálculo pesado roda FORA do managerLock (o mesmo de getStatus/getSnapshot do JavaScript);
+        // o lock fica só no memo, senão a troca de zona travava a tela enquanto a análise rodava.
+        refinedMemo?.takeIf { it.first == key }?.second
+            ?: AutoMatchSnapshotAnalysis.analyzeRefined(
+                snapshot, evidence.pairs, evidence.gainScale, evidence.episodes, AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG, evidence.fineBins,
+            )
+                .toString().also { value -> synchronized(refinedMemoLock) { refinedMemo = key to value } }
     } catch (error: Exception) {
         localFailure(error.message ?: "Equivalência refinada indisponível")
     }
@@ -284,7 +287,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getEquivalenceFresh(): String {
         invalidateAnalysis()
-        return equivalenceMemo.get()
+        return equivalenceMemo.getFresh()
     }
 
     private fun invalidateAnalysis() {
@@ -362,6 +365,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     )
 
     @Volatile private var refinedMemo: Pair<String, String>? = null
+    private val refinedMemoLock = Any()
 
     /** Telemetria da curva vigente + ganho aprendido; alinha o acumulador à MUL_ACT lida da ECU. */
     private fun refinementEvidence(snapshot: JSONObject): Evidence {
@@ -406,11 +410,15 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun destroy() {
         warmer.shutdownNow()
         synchronized(managerLock) {
+            // As ações nativas são do serviço (o automático segue com a tela fechada); só a preparação
+            // manual pendente desta tela é descartada.
+            managerService?.let { service ->
+                try { service.nativeActions.clearPreparation() } catch (_: Exception) {}
+                service.setAutoCalActionUiListener(null)
+                service.setManualAutoCalReadBusy { false }
+            }
             manager?.close()
-            nativeActions?.clearPreparation()
-            nativeActions?.close()
             manager = null
-            nativeActions = null
             managerService = null
         }
     }
@@ -426,7 +434,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     isConnected = serial::isConnected,
                     currentSessionId = serial::currentSessionId,
                     otherCalibrationBusy = {
-                        service.kWriter.isBusy() || service.kFactor.isBusy() || nativeActions?.isBusy() == true
+                        service.kWriter.isBusy() || service.kFactor.isBusy() || service.nativeActions.isBusy()
                     },
                     transaction = { request, reason, timeoutMs, expectedSessionId ->
                         serial.transaction(
@@ -449,59 +457,27 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         }
     }
 
+    /**
+     * O manager de ações nativas é do serviço (dono: [TelemetryForegroundService.nativeActions]). Recibos na
+     * sessão, invalidação do round e a política de segurança de escrita ficam na fiação do serviço.
+     */
     private fun currentNativeManager(): AutoCalNativeActionManager? {
         val activity = activityRef.get() ?: return null
         val service = activity.serviceOrNull() ?: return null
         synchronized(managerLock) {
             bindService(service)
-            if (nativeActions == null) {
-                val serial = service.runtime.serialScheduler()
-                nativeActions = AutoCalNativeActionManager(
-                    receiptFile = File(service.paths.runtimeRoot, "autocal_native_receipts.json"),
-                    isConnected = serial::isConnected,
-                    currentSessionId = serial::currentSessionId,
-                    otherCalibrationBusy = {
-                        service.kWriter.isBusy() || service.kFactor.isBusy() || manager?.isBusy() == true
-                    },
-                    unsafeMutationReason = {
-                        CalibrationWriteSafetyPolicy.unsafeReason(service.status())
-                    },
-                    transaction = { request, reason, timeoutMs, expectedSessionId ->
-                        val workClass = when (request.firstOrNull()?.toInt()?.and(0xFF)) {
-                            0x09, 0x29, 0x0A -> Mp48WorkClass.READ_ONLY
-                            else -> Mp48WorkClass.MANUAL_WRITE
-                        }
-                        serial.transaction(
-                            request = request,
-                            reason = reason,
-                            timeoutMs = timeoutMs,
-                            purgeBefore = true,
-                            expectedSessionId = expectedSessionId,
-                            workClass = workClass,
-                        )
-                    },
-                    onConfirmed = { receipt ->
-                        service.sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
-                        service.nativeAutoCal.onManualActionConfirmed(receipt)
-                        try { service.link.markDataChanged("ação AutoCal nativa confirmada") } catch (_: Exception) {}
-                    },
-                    onStateChanged = activity::refreshWebUi,
-                )
-            }
-            return nativeActions
+            service.setAutoCalActionUiListener(activity::refreshWebUi)
         }
+        return service.nativeActions
     }
 
     private fun bindService(service: TelemetryForegroundService) {
         if (managerService !== service) {
             manager?.close()
-            nativeActions?.clearPreparation()
-            nativeActions?.close()
             manager = null
-            nativeActions = null
             managerService = service
-            return
         }
+        service.setManualAutoCalReadBusy { manager?.isBusy() == true }
     }
 
     private fun localFailure(message: String): String = JSONObject()

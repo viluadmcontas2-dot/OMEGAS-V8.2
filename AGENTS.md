@@ -7,14 +7,14 @@
 
 ## Regras invariantes (spec §0.2)
 
-1. Observar é automático; mudar é sempre o dono. Nada grava K, zera, restaura ou aplica sozinho.
-2. Todo botão é um toque: sem confirmação, sem segurar. Proteção = foto antes + Desfazer depois.
+1. Observar é automático; mudar é sempre o dono. Nada grava K, zera, restaura ou aplica sozinho. Exceção: o OMEGAS apaga sozinho pontos do GNV aprendidos na marcha lenta (spec 2026-10-07-autocal-apagar-lenta), com readback e registro. Gasolina e Curva K continuam só com o dono.
+2. Todo botão é um toque: sem confirmação, sem segurar. Proteção = foto antes + Desfazer depois. Exceção: o OMEGAS apaga sozinho pontos do GNV aprendidos na marcha lenta (spec 2026-10-07-autocal-apagar-lenta), com readback e registro. Gasolina e Curva K continuam só com o dono.
 3. O fim de toda ação é o readback da ECU; "Gravado" só depois dele.
 4. Uma autoridade de estado: uma ponte, um `snapshot()` com revisão, uma fila de operações.
 5. Nenhuma falha derruba o app: toda exceção vira estado `✗` legível com próxima ação.
 6. Dois níveis: frase humana primeiro; comando, bytes e readback em "Detalhes técnicos".
 7. Erro de transporte ≠ erro da ECU.
-8. Comandos de leitura/escrita da ECU não mudam (`UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager`, `AutoCalNativeActionManager`).
+8. Comandos de leitura/escrita da ECU não mudam (`UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager`, `AutoCalNativeActionManager`). Exceção: o OMEGAS apaga sozinho pontos do GNV aprendidos na marcha lenta (spec 2026-10-07-autocal-apagar-lenta), com readback e registro. Gasolina e Curva K continuam só com o dono. O automático reusa os bytes do apagamento manual (máscaras 0x016D/0x016E + `01 24 05`), com a máscara da gasolina toda preservada.
 9. Todo teste roda no GitHub Actions; nada é compilado ou testado na sessão.
 10. Uma direção visual: tokens, cor com semântica, normalidade compacta.
 

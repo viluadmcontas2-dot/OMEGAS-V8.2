@@ -109,6 +109,15 @@
       "classification": "PROVEN_OBSERVED_AUTONOMOUS",
       "host_write_allowed": false,
       "evidence": "counter 0→1→2→3 with only read/poll PC traffic; causal MUL_ACT bracket is read-only"
+    },
+    {
+      "name": "APP_AUTO_DELETE_GNV_IDLE_POINTS",
+      "classification": "OWNER_DECISION_2026_10_07",
+      "host_write_allowed": true,
+      "scope": "GAS only; PETROL_POINT_2DELETE 0x016D sent all KEEP (18x1); same wire as DELETE_POINT_BATCH",
+      "trigger": "GNV band whose last native acquisition was at idle (>=80% rpm<1000), deleted while driving on GNV (rpm>=1000), min 5 s between deletions",
+      "readback": "target NUM_BUF_UPD_GAS 0 or lower than before; petrol counters/buffers re-read before/after",
+      "spec": "docs/superpowers/specs/2026-10-07-autocal-apagar-lenta-design.md"
     }
   ],
   "non_blocking_unknowns": [
