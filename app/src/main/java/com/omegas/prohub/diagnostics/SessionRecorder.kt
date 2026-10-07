@@ -46,6 +46,10 @@ class SessionRecorder(
     }
 
     private val droppedEvents = AtomicLong(0L)
+    /** Pastas (caminho absoluto) na fila ou no meio da publicação: a poda nunca as apaga. */
+    private val publishing = java.util.concurrent.ConcurrentHashMap<String, Int>()
+    private val publishFailures = AtomicLong(0L)
+    @Volatile private var lastPublishError = ""
     private val summaryCache = java.util.concurrent.ConcurrentHashMap<String, Pair<String, JSONObject>>()
     @Volatile private var listCache: Pair<Long, String>? = null
     /** Publicação no Drive em fila própria: nunca segura o bloqueio do gravador nem a tela. */
@@ -245,6 +249,8 @@ class SessionRecorder(
             .put("durationMs", if (startedAt > 0L) (end - startedAt).coerceAtLeast(0L) else 0L)
             .put("events", eventCount)
             .put("droppedEvents", droppedEvents.get())
+            .put("publishFailures", publishFailures.get())
+            .put("lastPublishError", lastPublishError)
             .put("bytes", byteCount)
             .put("megabytes", byteCount / (1024.0 * 1024.0))
             .put("limitMb", settings.sessionLogMaxMb)
@@ -452,12 +458,13 @@ class SessionRecorder(
                     // Já publicada (ZIP ou espelho antigo) ou ainda gravando: não toca.
                     if (documentsMirrorMarker(dir).isFile) return@forEach
                     if (synchronized(this) { recording && sessionDir?.absolutePath == dir.absolutePath }) return@forEach
-                    try {
-                        // Sessão interrompida (energia cortada): publica o que faltou como parte final.
-                        publishParts(dir, dir.name, final = true)
-                    } catch (_: Exception) {}
+                    // Sessão interrompida (energia cortada): publica o que faltou como parte final.
+                    publishGuarded(dir, dir.name, final = true)
                 }
-        } } catch (_: java.util.concurrent.RejectedExecutionException) {}
+            pruneAfterPublish()
+        } } catch (_: java.util.concurrent.RejectedExecutionException) {
+            notePublishFailure("recuperação", "fila de publicação encerrada")
+        }
     }
 
     /**
@@ -770,8 +777,25 @@ class SessionRecorder(
             semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
             val id = sessionId
             val final = !recording
+            if (documentsMirror == null) return
             // O ZIP da sessão inteira pode levar segundos: sai numa fila própria, fora do bloqueio do gravador.
-            publisher.execute { try { publishParts(dir, id, final) } catch (_: Exception) {} }
+            // Marcada como "em publicação" já na fila: a poda (start() da sessão seguinte) não a apaga.
+            val key = dir.absolutePath
+            publishing.merge(key, 1, Int::plus)
+            try {
+                publisher.execute {
+                    try {
+                        publishGuarded(dir, id, final)
+                    } finally {
+                        publishing.computeIfPresent(key) { _, count -> (count - 1).takeIf { it > 0 } }
+                    }
+                    // Poda só depois de publicar: agora a sessão tem (ou não) o marcador de cópia pública.
+                    pruneAfterPublish()
+                }
+            } catch (_: java.util.concurrent.RejectedExecutionException) {
+                publishing.computeIfPresent(key) { _, count -> (count - 1).takeIf { it > 0 } }
+                notePublishFailure(id, "fila de publicação encerrada; a próxima abertura do app publica")
+            }
         } finally {
             lastDocumentsMirrorAt = now
             listCache = null
@@ -793,16 +817,45 @@ class SessionRecorder(
         // Sessão que morreu sem fechar (app morto, energia cortada) ganha o RESUMO.md reconstruído
         // dos eventos, para a parte final já levar fases, apagões, gravações e veredictos.
         if (final) try { SessionResumo.rebuildIfOpen(dir) } catch (_: Exception) {}
-        val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
+        val plan = try {
+            SessionPartPlanner.plan(dir, final)
+        } catch (error: Exception) {
+            notePublishFailure(id, "plano da parte: ${error.message ?: error.javaClass.simpleName}")
+            return false
+        }
         if (plan == null) {
             if (final) markDocumentsMirrored(dir)
             return true
         }
         val result = mirror.publishPart(id, plan)
-        if (!result.optBoolean("ok")) return false
-        try { SessionPartPlanner.commit(dir, plan) } catch (_: Exception) { return false }
+        if (!result.optBoolean("ok")) {
+            notePublishFailure(id, "publicação: ${result.optString("error").ifBlank { "falha sem motivo" }}")
+            return false
+        }
+        try {
+            SessionPartPlanner.commit(dir, plan)
+        } catch (error: Exception) {
+            notePublishFailure(id, "registro da parte ${plan.part}: ${error.message ?: error.javaClass.simpleName}")
+            return false
+        }
         if (final) markDocumentsMirrored(dir)
         return true
+    }
+
+    /** Publica sem deixar exceção escapar da fila, mas sempre registrando a falha (antes era engolida). */
+    private fun publishGuarded(dir: File, id: String, final: Boolean): Boolean = try {
+        publishParts(dir, id, final)
+    } catch (error: Exception) {
+        notePublishFailure(id, error.message ?: error.javaClass.simpleName)
+        false
+    }
+
+    private fun notePublishFailure(id: String, reason: String) {
+        publishFailures.incrementAndGet()
+        lastPublishError = "$id: $reason"
+        listCache = null
+        // Fica no registro da sessão ativa (se houver) para a análise ver a lacuna de cópia pública.
+        record("documents_publish_failed", "native", JSONObject().put("sessionId", id).put("reason", reason), force = true)
     }
 
     private fun documentsMirrorMarker(dir: File): File = File(dir, ".documents_mirrored")
@@ -813,16 +866,25 @@ class SessionRecorder(
         } catch (_: Exception) {}
     }
 
+    /** Poda depois de uma publicação, fora do bloqueio do gravador (só lê qual pasta está ativa). */
+    private fun pruneAfterPublish() {
+        try { pruneOldSessions() } catch (_: Exception) {}
+    }
+
     private fun pruneOldSessions() {
+        // A sessão corrente OU a recém-parada (sessionDir só muda no próximo start) nunca sai daqui.
+        val activeDir = synchronized(this) { sessionDir?.absolutePath }
+        fun protectedDir(dir: File) = dir.absolutePath == activeDir || publishing.containsKey(dir.absolutePath)
+        fun published(dir: File) = documentsMirror == null || documentsMirrorMarker(dir).isFile
+
         val dirs = paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
             ?.sortedByDescending { it.lastModified() }
             .orEmpty()
 
         // Sessão sem cópia pública confirmada nunca é podada automaticamente.
         val validDirs = dirs.filter { dir ->
-            val durable = documentsMirror == null || documentsMirrorMarker(dir).isFile
             val size = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-            if (size < 10 * 1024 && durable) {
+            if (size < 10 * 1024 && published(dir) && !protectedDir(dir)) {
                 dir.deleteRecursively()
                 false
             } else {
@@ -833,18 +895,19 @@ class SessionRecorder(
         // A tela de Ferramentas promete exatamente este número (mínimo 20, já garantido pelas configurações).
         val keep = settings.sessionKeepCount
         validDirs.drop((keep - 1).coerceAtLeast(0)).forEach { old ->
-            if (documentsMirror == null || documentsMirrorMarker(old).isFile) old.deleteRecursively()
+            if (published(old) && !protectedDir(old)) old.deleteRecursively()
         }
 
-        // Teto de espaço: sem o espelho em Documentos nada acima poda, e o armazenamento do app
-        // encheria. Passou de 1,5 GB, apaga a sessão fechada mais antiga, com ou sem marcador.
-        val activeDir = if (recording) sessionDir?.absolutePath else null
+        // Teto de espaço: acima de 1,5 GB saem as sessões fechadas e já publicadas, da mais antiga.
+        // Sessão sem `.documents_mirrored` (fila do publisher, publicação que falhou) só sai acima do teto
+        // de emergência (3 GB); a que está gravando ou em publicação nunca sai.
         val remaining = paths.sessionLogsRoot.listFiles { file -> file.isDirectory }.orEmpty().map { dir ->
             SessionByteCap.Info(
                 name = dir.name,
                 bytes = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() },
                 modifiedAtMs = dir.lastModified(),
-                active = dir.absolutePath == activeDir,
+                active = protectedDir(dir),
+                published = published(dir),
             )
         }
         SessionByteCap.select(remaining, SessionByteCap.TOTAL_BYTES_CAP).forEach { name ->
