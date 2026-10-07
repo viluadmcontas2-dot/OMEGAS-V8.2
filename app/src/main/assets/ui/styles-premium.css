@@ -119,8 +119,8 @@ html body .view-switch button.active, html body .view-switch button[aria-pressed
 .operation-card, .tool-actions > button, .tool-power-row, .recorded-session-item {
   background: var(--surface); border: 1px solid var(--line-soft); box-shadow: var(--shadow-1);
 }
-.operation-card, .autocal-review-card { box-shadow: var(--shadow-3); }
-.operation-layer, .autocal-review { background: var(--c-246-248-251-86); }
+.operation-card { box-shadow: var(--shadow-3); }
+.operation-layer { background: var(--c-246-248-251-86); }
 .side-rail { background: var(--rail); border-right: 1px solid var(--line-soft); }
 .workspace-head { background: var(--bg); }
 .chart-surface, .curve-chart, .autocal-chart-host, .curve-overview-k { background: var(--chart-bg) !important; border: 1px solid var(--line-soft); }

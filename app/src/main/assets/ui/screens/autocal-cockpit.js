@@ -21,18 +21,6 @@
     const item = field(snapshot, key);
     return Array.isArray(item?.rawValues) ? item.rawValues.map(value => finite(value) ?? 0) : [];
   }
-  function actionLabel(action) {
-    return ({
-      ENABLE_AUTO_CAL: 'Retomar aprendizado',
-      DISABLE_AUTO_CAL: 'Pausar aprendizado da ECU',
-      FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
-      FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
-      RESET_PETROL: 'Recomeçar aprendizado da gasolina',
-      RESET_GAS: 'Recomeçar aprendizado do GNV',
-      RESET_ALL: 'Nova leitura completa',
-    })[action] || action;
-  }
-
   function physicalVector(snapshot, key) {
     const item = field(snapshot, key);
     return Array.isArray(item?.physicalValues) ? item.physicalValues.map(value => finite(value)) : [];
@@ -684,7 +672,6 @@
       // Pontos que a ECU confirmou ter apagado: chave fuel:index → hora da confirmação. Ficam cinza e intocáveis
       // até chegar uma leitura da ECU mais nova que a confirmação (a leitura antiga ainda os mostra).
       this.recentlyDeleted = new Map();
-      this.selectedBandIndex = null;
       this.inject();
       this.bind();
       // Releitura por revisão: evidência, tabelas e sessão só quando andaram (ou o vigia vence);
@@ -771,6 +758,7 @@
               <section class="ar-card autocal-live-tech">
                 <h4>Detalhes técnicos</h4>
                 <span>MAP <span id="autocalLiveMap">—</span> bar · Injeção <span id="autocalLivePetrol">—</span> ms</span>
+                <span id="autocalReferenceSource">—</span>
               </section>
 
               <section id="autocalAutoMatchEvidence" class="ar-card autocal-automatch-evidence" data-state="WAITING" aria-live="polite">
@@ -814,7 +802,6 @@
               <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
             </div>
 
-<div id="autocalReview" class="autocal-review" hidden></div>
           </section>`;
         stack.appendChild(panel);
         this.panel = panel;
@@ -862,10 +849,6 @@
         this.app?.router?.open('sessions');
       });
       this.panel?.addEventListener('click', event => {
-        if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
-        if (event.target.closest('[data-autocal-confirm]')) this.confirmPrepared();
-        const band = event.target.closest('[data-autocal-band-index]');
-        if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
         if (acquiredPoint) {
           this.tapAcquiredPoint(
@@ -1086,14 +1069,6 @@
       this.confirmPrepared();
     }
 
-    cancelPrepared() {
-      this.api?.cancelPreparation?.();
-      this.prepared = null;
-      const review = document.getElementById('autocalReview');
-      if (review) { review.hidden = true; review.innerHTML = ''; }
-      this.refresh();
-    }
-
     confirmPrepared() {
       const prepared = this.prepared;
       if (!prepared?.preparationId) return;
@@ -1108,8 +1083,6 @@
         this.chartHistoryVisible = this.comparisonPinned;
       }
       this.prepared = null;
-      const review = document.getElementById('autocalReview');
-      if (review) { review.hidden = true; review.innerHTML = ''; }
       this.store.patch({ alert: { level: 'working', message: 'Comando enviado para a ECU. Aguarde a conferência.' } });
       this.refresh();
     }
@@ -1119,9 +1092,6 @@
       const snapshot = this.snapshot || {};
       this.pruneSelection(snapshot);
       const state = this.state || {};
-      const events = Array.isArray(this.projection?.correlation)
-        ? this.projection.correlation
-        : Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
       const human = AutoCalUxModel.humanState(snapshot, state, this.projection);
       const acquisitionName = String(state.state || '').toUpperCase();
       const acquisitionLabel = acquisitionName === 'UNAVAILABLE' ? 'indisponível'
@@ -1141,12 +1111,8 @@
       if (autoMatchEvidence) autoMatchEvidence.dataset.state = human.autoMatchEvidenceState;
       this.text('autocalNativeState', 'Leitura da ECU: ' + acquisitionLabel);
       this.text('autocalZoneSummary', human.gasZones === null ? 'Zonas GNV sem leitura' : human.gasZones + '/4 zonas GNV');
-      this.text('autocalStateRaw', state.state || '—');
-      this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
-      this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
       const readingNote = AutoCalUxModel.readingNote(snapshot, Date.now());
       this.text('autocalReferenceSource', AutoCalUxModel.referenceSourceLabel(this.projection) + (readingNote ? ' · ' + readingNote : ''));
-      this.text('autocalMaturityRaw', events.length);
       this.renderZoneMeter(human);
       this.renderSessionState();
       this.renderLiveNarrative();
@@ -1183,8 +1149,6 @@
       this.renderHistoryControl();
 
       this.renderReferenceChart(snapshot);
-      this.renderBands(snapshot);
-      this.renderEvents(events);
       this.renderActionState();
       this.renderPointActions();
       const rejected = this.referenceUsable === true && Array.isArray(this.analysis?.rejectedBands) ? this.analysis.rejectedBands.length : 0;
@@ -1251,7 +1215,6 @@
           ? 'Protegido na memória interna'
           : narrative.recording ? 'Salvando em Downloads/Omegas' : 'Salvo em Downloads/Omegas',
       );
-      this.text('autocalSessionNext', narrative.next);
       const strip = this.panel?.querySelector('.autocal-session-strip');
       if (strip) strip.dataset.sessionLevel = narrative.level;
 
@@ -1268,7 +1231,6 @@
       const relearned = cells.some(cell => cell && cell.relearnSuggested === true) || (drift !== null && Math.abs(drift) > 0.08);
       const note = document.getElementById('autocalRelearnNote');
       if (note) note.hidden = !relearned;
-      this.text('autocalDriftRaw', drift === null ? '—' : (drift * 100).toFixed(1).replace('.', ',') + ' %');
     }
 
     renderLiveNarrative() {
@@ -1861,69 +1823,6 @@
       this.paintSelection();
     }
 
-    renderBands(snapshot) {
-      const host = document.getElementById('autocalBands');
-      if (!host) return;
-      // Evidência: só redesenha quando a tabela da ECU mudou (D2), não a cada leitura do relógio.
-      const bandsKey = (ns.CurveChart ? ns.CurveChart.tableSignature(snapshot) : '') + '|' + this.selectedBandIndex + '|' + host.childElementCount;
-      if (this.bandsKey === bandsKey) return;
-      this.bandsKey = bandsKey;
-      const bands = AutoCalUxModel.bandStrip(snapshot, this.projection);
-      host.innerHTML = bands.map(band => {
-        const stateLabel = band.state === 'anchored' ? 'correlacionada'
-          : band.state === 'mature' ? 'evento'
-          : band.state === 'activity' ? 'atividade' : 'vazia';
-        return '<button type="button" class="autocal-band-segment" data-autocal-band-index="' + band.index +
-          '" data-state="' + band.state + '" data-zone-acquired="' + (band.zoneAcquired ? 'true' : 'false') +
-          '" role="listitem" aria-pressed="false" aria-label="Região ' + (band.index + 1) + ' de 18, ' + stateLabel +
-          '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'zona ok' : stateLabel) + '</small></button>';
-      }).join('');
-      const preferred = Number.isInteger(this.selectedBandIndex)
-        ? this.selectedBandIndex
-        : (bands.find(item => item.state !== 'empty')?.index ?? 0);
-      this.inspectBand(preferred);
-    }
-
-    inspectBand(index) {
-      const band = AutoCalUxModel.bandStrip(this.snapshot || {}, this.projection).find(item => item.index === index);
-      const host = document.getElementById('autocalBandInspector');
-      if (!band || !host) return;
-      this.selectedBandIndex = index;
-      document.querySelectorAll('[data-autocal-band-index]').forEach(node => {
-        const selected = Number(node.dataset.autocalBandIndex) === index;
-        node.classList.toggle('selected', selected);
-        node.setAttribute('aria-pressed', selected ? 'true' : 'false');
-      });
-
-      const message = AutoCalUxModel.bandNarrative(band);
-
-      const zoneText = band.zoneAcquired
-        ? 'Zona ' + (band.zone + 1) + ' confirmada pela ECU'
-        : 'Zona ' + (band.zone + 1) + ' ainda não confirmada pela ECU';
-      host.innerHTML = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
-    }
-
-    renderEvents(events) {
-      const host = document.getElementById('autocalEvents');
-      if (!host) return;
-      const last = events.length ? events[events.length - 1] : {};
-      const eventsKey = [events.length, last.counter, last.bandIndex, last.correlationState, last.rpm].join('|');
-      if (this.eventsKey === eventsKey) return;
-      this.eventsKey = eventsKey;
-      if (!events.length) {
-        host.innerHTML = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a ECU já acumulou.</p>';
-        return;
-      }
-      host.innerHTML = events.slice(-6).reverse().map(event => {
-        const correlated = String(event.correlationState || '') === 'CORRELATED';
-        const rpm = finite(event.rpm);
-        const confidenceRaw = finite(event.correlationConfidence);
-        const confidence = confidenceRaw === null ? '—' : Math.round(confidenceRaw * 100);
-        const bandIndex = finite(event.bandIndex);
-        return `<article data-state="${correlated ? 'correlated' : 'raw'}"><div><b>${bandIndex === null ? 'B—' : 'B' + (bandIndex + 1)}</b><span>${escapeHtml(event.zone || 'zona')}</span></div><p>${correlated ? `${rpm === null ? 'RPM —' : `${Math.round(rpm).toLocaleString('pt-BR')} RPM`} · confiança ${confidence}${confidence === '—' ? '' : '%'}` : escapeHtml(event.correlationReason || 'NO_RELIABLE_CORRELATION')}</p><small>contador ${finite(event.counter) ?? '—'} · limiar ${finite(event.threshold) ?? '—'}</small></article>`;
-      }).join('');
-    }
-
     renderActionState() {
       const host = document.getElementById('autocalActionStatus');
       if (!host) return;
@@ -1953,25 +1852,14 @@
         : 'Fazendo agora · ' + message;
     }
 
-    renderReview() {
-      const review = document.getElementById('autocalReview');
-      const prepared = this.prepared;
-      if (!review || !prepared) return;
-      review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Confirmar executa agora pelo OMEGAS e confere na ECU. Salvar uma foto antes é opcional: só se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Executar agora</button></div></div>`;
-    }
-
     renderUnavailable() {
       this.chartRenderKey = null;
       this.text('autocalNativeState', 'AUTOCAL INDISPONÍVEL');
-      this.text('autocalHumanTitle', 'AutoCal indisponível');
-      this.text('autocalHumanProgress', 'A tela não recebeu o AutoCal da ECU.');
       this.text('autocalHumanAction', 'AutoCal indisponível. Reconecte a ECU e tente de novo.');
       const sentence = document.getElementById('autocalHumanAction');
       if (sentence) sentence.dataset.level = 'error';
       this.text('autocalZoneSummary', '—');
       this.text('autocalReferenceCount', '—');
-      this.text('autocalMaturityRaw', '—');
       const host = document.getElementById('autocalReferenceChart');
       if (host) host.innerHTML = '<div class="chart-empty"><b>Sem ligação com a ECU</b><span>Nenhum dado foi inventado para preencher o gráfico.</span></div>';
     }

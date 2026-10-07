@@ -431,13 +431,6 @@
       }
       return shapes.join('');
     }).join('')}</g>` : '';
-    const tickMarkup = '';
-
-    const proposalMarkup = true ? '' : (model.proposal || []).map(index => {
-      const p = reference.find(r => r.index === index);
-      if (!p || !inY(p.gasMapBar) || p.petrolMs > xMax) return '';
-      return `<circle class="chart-proposal" cx="${xFor(p.petrolMs).toFixed(1)}" cy="${yFor(p.gasMapBar).toFixed(1)}" r="11"></circle>`;
-    }).join('');
 
     const stallMarkup = !between ? '' : (model.stalls || []).filter(e => finite(e.petrolMs) !== null && finite(e.mapBar) !== null && e.petrolMs <= xMax && inY(e.mapBar))
       .map(e => { const x = xFor(e.petrolMs); const y = yFor(e.mapBar); return `<path class="refino-stall-mark" d="M${(x - 6).toFixed(1)} ${(y - 6).toFixed(1)} L${(x + 6).toFixed(1)} ${(y + 6).toFixed(1)} M${(x + 6).toFixed(1)} ${(y - 6).toFixed(1)} L${(x - 6).toFixed(1)} ${(y + 6).toFixed(1)}"></path>`; }).join('');
@@ -447,12 +440,12 @@
     const equivalent = reference.filter(p => finite(p.gasEquivalentMs) !== null);
     const equivalencePath = between && equivalent.length > 1 ? `<path class="autocal-equivalence-line" d="${pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs')}"></path>` : '';
 
-    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>${tickMarkup}` +
+    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>` +
       `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção de gasolina (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${previous}${equivalencePath}` +
       `${hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +
-      `${refMarkup}${oursMarkup}${ecuMarkup}${proposalMarkup}${stallMarkup}${live}</g></svg>`;
+      `${refMarkup}${oursMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
     return { svg, scale };
   }
 

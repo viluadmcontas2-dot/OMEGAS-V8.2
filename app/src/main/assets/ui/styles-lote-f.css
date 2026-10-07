@@ -171,9 +171,6 @@ html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-heigh
 .autocal-primary-action[data-kind="review"] { background: var(--accent); border-color: var(--accent); color: var(--text); }
 
 /* Revisão: o cartão cabe no conteúdo; a lista usa duas colunas e rola com dica visível. */
-.refino-cockpit .autocal-review-card { width: min(900px, 100%); }
-.refino-cockpit .autocal-review-card p, .refino-cockpit .autocal-review-card dd, .refino-cockpit .autocal-review-card dt, .refino-cockpit .autocal-review-card span { font-size: 16px; }
-.refino-cockpit .autocal-review-card h3 { font-size: var(--text-critical); }
 
 /* Refino · ajustes de linha */
 .refino-cockpit .autocal-focus-toolbar { display: flex; align-items: center; gap: 12px; }

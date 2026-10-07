@@ -32,18 +32,19 @@ assert.match(cockpit, /Os ajustes automáticos são decididos pela ECU\./,
 assert.doesNotMatch(cockpit, /data-autocal-action="RESET_K_FACTOR"/,
   'zerar a Curva K fica só na aba Curva K');
 assert.doesNotMatch(cockpit, /data-autocal-action="RESET_ALL"/);
-assert.match(cockpit, /Salvar uma foto antes é opcional/i,
-  'backup deve ser opcional e manual, nunca um gate do reset');
+// Revisto (P3): o cartão de revisão (onde estava "Salvar uma foto antes é opcional") era código morto; um toque, sem
+// cartão (decisão do dono). O backup segue opcional no Kotlin (automaticBackup=false, contrato Python).
+assert.doesNotMatch(cockpit, /REVISÃO ANTES DA ECU/, 'sem cartão de revisão antes da ECU');
 assert.ok(
   cockpit.indexOf('data-autocal-action="RESET_GAS"') < cockpit.indexOf('<summary>Mais opções</summary>') &&
   cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Mais opções</summary>'),
   'a interface deve manter a readquisição diária fora do menu avançado'
 );
-assert.match(cockpit, /RESET_GAS:\s*'Recomeçar aprendizado do GNV'/);
-assert.match(cockpit, /RESET_PETROL:\s*'Recomeçar aprendizado da gasolina'/);
+// Revisto (P3): o mapa de rótulos (actionLabel) só servia ao cartão de revisão morto; os rótulos vivem nos botões.
+assert.doesNotMatch(cockpit, /function actionLabel/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
 assert.doesNotMatch(cockpit, />Reset gasolina<\/button>/);
-assert.match(cockpit, /Salvar uma foto antes é opcional/);
+
 assert.doesNotMatch(cockpit, /PERSISTING_BACKUP/,
   'reaquisição não pode depender de persistência de backup; READING_BEFORE pode existir como estado de leitura para ações que alteram K');
 assert.doesNotMatch(cockpit, /CONFIRMED_WITH_SCOPE_WARNING/);

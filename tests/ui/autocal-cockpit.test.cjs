@@ -40,8 +40,8 @@ assert.equal(cockpit.includes("addHook('status'"), true);
 assert.equal(cockpit.includes("addHook('context'"), false);
 assert.equal(cockpit.includes('setInterval'), false);
 assert.equal(cockpit.includes('NUM_BUF_UPD_GAS'), true);
-assert.equal(cockpit.includes('correlationReason'), true);
-assert.equal(cockpit.includes('correlationConfidence'), true);
+// Revisto (P3): a lista de eventos de correlação (renderEvents) não tinha onde aparecer e saiu.
+assert.equal(cockpit.includes('renderEvents'), false);
 assert.equal(cockpit.includes("data-autocal-toggle"), true);
 assert.equal(cockpit.includes("data-autocal-action=\"ENABLE_AUTO_CAL\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"DISABLE_AUTO_CAL\""), false);
@@ -79,8 +79,9 @@ assert.equal(cockpit.includes('prepare('), true);
 assert.equal(cockpit.includes('execute(prepared.preparationId)'), true);
 assert.equal(cockpit.includes('Continuar para confirmação Android'), false);
 assert.equal(cockpit.includes('Confirmação Android aberta'), false);
-assert.equal(cockpit.includes('Executar agora'), true);
-assert.equal(cockpit.includes('e confere na ECU'), true);
+// Revisto (P3): o cartão "Executar agora" (renderReview) era código morto: um toque, conferência na ECU.
+assert.equal(cockpit.includes('Executar agora'), false);
+assert.equal(cockpit.includes('Conferindo na ECU'), true);
 assert.equal(cockpit.includes('VERIFYING_FINISH'), true);
 assert.equal(cockpit.includes('RESETTING_K'), true);
 assert.equal(cockpit.includes("querySelectorAll('[data-autocal-action]')"), true);

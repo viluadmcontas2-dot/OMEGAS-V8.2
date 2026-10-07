@@ -187,10 +187,9 @@ assert.match(persistedRetryNarrative, /aguardando.*janela|nova janela/i,
 
 assert.match(source, /AutoCalUxModel\.humanState\(snapshot,\s*state,\s*this\.projection\)/,
   'render deve consumir a projeção Kotlin para zonas');
-assert.match(source, /AutoCalUxModel\.bandStrip\([^)]*this\.projection/,
-  'render/inspector de regiões devem consumir a projeção Kotlin');
-assert.match(source, /this\.projection\?\.correlation/,
-  'eventos de correlação exibidos devem vir da projeção Kotlin');
+// Revisto (P3 código morto): a faixa de 18 regiões e a lista de eventos não tinham onde aparecer (ids inexistentes)
+// e saíram da tela; o modelo bandStrip/bandNarrative continua testado acima e consome a projeção Kotlin.
+assert.doesNotMatch(source, /renderBands\(|inspectBand\(|renderEvents\(/);
 
 const bands = model.bandStrip(snapshot);
 assert.equal(bands.length, 18);
@@ -214,7 +213,7 @@ assert.equal(source.includes('Injeção (ms)'), true, 'eixo X precisa manter uni
 assert.equal(chartSource.includes('MAP (bar)'), true, 'eixo Y compartilhado precisa manter unidade física');
 assert.equal(source.includes('data-autocal-history'), true, 'comparação com leitura anterior deve permanecer disponível');
 assert.equal(source.includes('data-autocal-toggle'), true);
-assert.equal(source.includes('data-autocal-band-index'), true);
+assert.equal(source.includes('data-autocal-band-index'), false);
 assert.equal(source.includes('id="autocalHumanAction"'), true, 'UMA frase humana de estado');
 assert.equal(source.includes('autocalTechnicalDetails'), false, 'detalhe técnico vai para a aba Diagnóstico');
 assert.match(source, /autocalReferenceSource[^\n]*referenceSourceLabel|referenceSourceLabel\(this\.projection\)/,
@@ -242,7 +241,8 @@ assert.match(source, /data-current/,
   'zona física atual precisa ter estado visual AGORA');
 assert.match(css, /\.autocal-zone-cell\s*\{/,
   'mapa de zonas precisa de tratamento visual próprio');
-assert.equal(source.includes('autocal-review-tech'), true, 'metadados técnicos da ação crítica devem ficar sob demanda');
+// Revisto (P3): o cartão de revisão saiu (código morto); os números técnicos do ponto ficam sob demanda.
+assert.equal(source.includes('autocal-point-tech'), true, 'metadados técnicos ficam sob demanda');
 assert.match(fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/components/curve-chart.js'), 'utf8'), /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
 assert.match(css, /\.autocal-zone-meter\s*\{/, 'zone meter premium precisa de estilo dedicado');
 assert.match(arCss, /\.ar-readout\s*\{[^}]*font-size:\s*22px/s, 'a linha do ponto tocado é legível a distância');

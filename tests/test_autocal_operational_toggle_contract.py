@@ -31,8 +31,9 @@ assert 'data-autocal-action="RESET_K_FACTOR"' not in cockpit
 assert 'data-autocal-action="RESET_ALL"' not in cockpit
 assert "Continuar para confirmação Android" not in cockpit
 assert "Confirmação Android aberta" not in cockpit
-assert "Executar agora" in cockpit
-assert "e confere na ECU" in cockpit
+# Revisto (P3): o cartão "Executar agora" era código morto (um toque, sem cartão); a conferência na ECU continua.
+assert "Executar agora" not in cockpit
+assert "Conferindo na ECU" in cockpit
 assert "actionManager.execute(preparationId)" in bridge
 assert "AlertDialog" not in bridge
 
