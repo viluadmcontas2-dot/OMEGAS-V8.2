@@ -668,7 +668,7 @@
       this.sessionState = {};
       this.sessions = [];
       this.chartScale = null;
-      this.cursor = new ns.LiveStore.EaseCursor(() => this.panel?.querySelector('.autocal-live-layer'));
+      this.cursor = new ns.LiveStore.EaseCursor(() => this.chartPart('.autocal-live-layer'));
       this.previousReferencePoints = [];
       this.comparisonPinned = false;
       this.currentReferencePoints = [];
@@ -1291,8 +1291,8 @@
       }
       this.renderZoneCursor(live);
       const scale = this.chartScale;
-      const layer = this.panel?.querySelector('.autocal-live-layer');
-      const bandLayer = this.panel?.querySelector('[data-autocal-current-band]');
+      const layer = this.chartPart('.autocal-live-layer');
+      const bandLayer = this.chartPart('[data-autocal-current-band]');
       if (!live) {
         D.setAttrIfChanged(layer, 'display', 'none');
         D.setAttrIfChanged(bandLayer, 'display', 'none');
@@ -1328,12 +1328,18 @@
       // O alvo muda a cada quadro novo; quem move o ponto é o quadro de animação (CSS transform, ease ~150 ms).
       this.cursor.setTarget(projected.x, projected.y, scale, projected.outOfRange);
       if (typeof this.scheduler?.addFrameHook !== 'function' || seen?.scale !== this.chartScale) this.cursor.paint();
-      const label = this.panel?.querySelector('[data-autocal-live-label]');
+      const label = this.chartPart('[data-autocal-live-label]');
       if (label) {
         const text = projected.outOfRange ? 'AGORA · fora da escala' : 'AGORA';
         const shown = live.grey ? text + ' · atrasado' : text;
         if (label.textContent !== shown) label.textContent = shown;
       }
+    }
+
+    /** Peça do gráfico do AutoCal: só dentro do próprio quadro (o Refino tem a sua camada AGORA). */
+    chartPart(selector) {
+      const host = document.getElementById('autocalReferenceChart');
+      return host && typeof host.querySelector === 'function' ? host.querySelector(selector) : null;
     }
 
     /** Quadro de animação (rAF do scheduler): o cursor compartilhado só move a camada com CSS transform. */

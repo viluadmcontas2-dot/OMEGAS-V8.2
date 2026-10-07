@@ -276,7 +276,8 @@
       // A foto de antes de cada gravação vive no diário (photoFile do ÚLTIMO experimento): o Desfazer restaura
       // exatamente a do último, mesmo que o anterior tenha sido gravado por outra aba.
       this.lastRenderKey = '';
-      this.cursor = new ns.LiveStore.EaseCursor(() => document.querySelector('[data-chart-live]'));
+      // A bolinha AGORA do Refino mora só no quadro do Refino: o AutoCal também tem uma (outro quadro, outro nó).
+      this.cursor = new ns.LiveStore.EaseCursor(() => this.liveLayer());
       this.inject();
       // Evidência, tabelas e sessão só são relidas quando a revisão do tipo andou (ou o vigia vence); ocupado relê sempre.
       const revisions = ns.Revisions;
@@ -756,7 +757,7 @@
     /** Cursor AGORA: só calcula o alvo a partir da leitura viva única (LiveStore); quem move é o quadro de animação. */
     renderLive() {
       const scale = this.chartScale;
-      const layer = document.querySelector('[data-chart-live]');
+      const layer = this.liveLayer();
       if (!layer || !scale) { this.cursor.clear(); return; }
       const live = ns.LiveStore.point(this.store.get().telemetry || {});
       if (!live) { layer.setAttribute('display', 'none'); this.cursor.clear(); return; }
@@ -768,6 +769,12 @@
       const label = layer.querySelector('[data-autocal-live-label]');
       const text = projected.outOfRange ? 'Agora · fora da escala' : 'Agora';
       if (label && label.textContent !== text) label.textContent = text;
+    }
+
+    /** Camada AGORA do gráfico do Refino (nunca a do AutoCal, que vem antes no documento). */
+    liveLayer() {
+      const host = document.getElementById('refinoChart');
+      return host && typeof host.querySelector === 'function' ? host.querySelector('[data-chart-live]') : null;
     }
 
     ensureFrame() {
