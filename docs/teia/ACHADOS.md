@@ -114,3 +114,11 @@ Release notes da AEB sobre a autocalibração MP32/MP48 (https://intergasservice
 
 ## F13 — Portmon (2 logs do ProgBase, 36.463 + ~39.500 transações)
 Parser `scripts/omegas/portmon_parser.py`. Os logs são do ProgBase (fabricante) lendo a ECU: telemetria `48 01 49` (21.167 no AUTOCAL), leituras `29 xx 01` dos campos AutoCal e um único reset manual `02 24 04 04 2E` (RESET_ALL). **Não há nenhuma escrita das máscaras de apagar ponto (0x016D/0x016E) nem do commit `01 24 05`.** A ordem real desses bytes NÃO pode ser confirmada por estes logs; fica coberta por teste de contrato no app e pela prova física do dono.
+
+## F14 — temperatura da água muda a equivalência medida; escalas de injeção batem  [classe 3]
+Telemetria GNV estacionária (|ΔMAP|<0,015, |Δrpm|<60, rpm≥1200, petrol ≥3 ms), n=16.301 leituras, 56 sessões. Script: tools/autocal_refine/teia_temperatura.py.
+- **Escalas OK:** ms da telemetria (gasolina, estacionário) ÷ ms do buffer nativo (÷512) na mesma banda e MAP = 0,993 (IQR 0,961–1,008, n=27 pares banda×sessão). Não existe o viés de 31% que as constantes (0,00256 ms/contagem vs 1/512) sugeriam.
+- **Razão instantânea gas_ms_diagnostic ÷ petrol_ms** (mediana 2,22): sobe com a água de 1,96 (35–40 °C) a 2,39 (75–80 °C), +22%, e estabiliza a partir de 65–70 °C. Cai com o gás de 2,38 (30–50 °C) a 2,05 (90–100 °C), −14%. Spearman: água +0,49, gás −0,47, pressão abs. −0,17, dynamic_correction +0,11, MAP −0,11. R² só MAP = 0,01; com dc+gas_c+pressão+MAP = 0,26.
+- **Confusão:** água e gás aquecem juntos na sessão; não separa qual dos dois causa. Hipótese física (não provada): a ECU original enriquece a gasolina a frio e o GNV não acompanha.
+- **87% do tempo registrado é com água <70 °C** (44% <60 °C, 14% <50 °C): um portão fixo de aquecimento apagaria quase tudo. A conduta é PAREAR GNV×gasolina na mesma faixa de água (como já se faz com rpm), não filtrar.
+- `dynamic_correction` não ajuda a normalizar a razão (ρ=+0,11); só serve para validar combustível (0 em gasolina).
