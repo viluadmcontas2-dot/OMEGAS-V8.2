@@ -78,7 +78,6 @@
     startCurveRead: curveRead,
     getLastOperation: () => J(op),
     listCurveBackups: () => J([{ fileName: 'curve_antes_do_reset.json', label: 'Antes do reset', createdAt: Date.now() - 600000 }]),
-    listMapBackups: () => '[]',
     startCurveBackup: label => { op = { ok: true, state: 'BACKUP', busy: true }; later(400, () => { op = { ok: true, state: 'COMPLETED', busy: false, hash: 'h123', publicPath: '/sdcard/omegas/curve_antes_do_reset.json', fileName: 'curve_antes_do_reset.json', curve: { points: curPts() } }; }); return J({ ok: true, started: true }); },
     startCurveReset: () => {
       op = { ok: true, state: 'BATCH_WRITING', busy: true, progress: 40, message: 'Escrita 12 de 30 · ACK' };

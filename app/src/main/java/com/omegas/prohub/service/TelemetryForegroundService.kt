@@ -789,7 +789,6 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    fun listKMapBackups(): String = kWriter.listMapBackups().toString()
 
     /** Prévia do Desfazer do Mapa K: relê o mapa (somente leitura) e lista o que voltaria. */
     @Synchronized fun prepareKMapRestore(adjustmentId: String): String =

@@ -176,11 +176,7 @@
     "fluidity": "contrato novo (work/platina-fix-logic): equivalence().fluidity {gasolina,gnv}; o Diagnóstico trata a ausência com texto de espera (UI C)"
   },
   "consumer_defects": {},
-  "methods_unused": {
-    "OmegasNative.startSessionRecording": "a gravacao de sessao e sempre automatica (contrato); o botao manual nao existe e o wrapper JS saiu na poda W2. O Kotlin sera podado pelo agente do servico",
-    "OmegasNative.stopSessionRecording": "idem startSessionRecording",
-    "OmegasCalibration.listMapBackups": "wrapper JS mapBackups nunca chamado (poda W2); a lista de fotos do Mapa K vive em outro metodo. Kotlin sera podado pelo agente do servico"
-  },
+  "methods_unused": {},
   "methods_missing_ok": {
     "OmegasNative.getEquivalence": "fallback protegido por typeof em native-api.js; a leitura real vai por OmegasAutoCal.getEquivalence"
   }

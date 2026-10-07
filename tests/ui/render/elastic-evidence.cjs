@@ -91,11 +91,11 @@ async function audit(page,route,height,name){
   }
   finally{await browser.close();}
  }
- for(const route of ['autocal','refino']){
+ for(const route of ['refino']){ // AutoCal não tem mais menu de opções (decisão do dono); ver bloco da barra única abaixo
   const {browser,page}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672},scn:{phase:'PROPOSTA_PRONTA',noStalls:true}});
   try{
    await go(page,route);await page.waitForTimeout(2500);
-   const summary=route==='autocal'?'.autocal-reset-menu summary':'.refino-details summary';
+   const summary='.refino-details summary';
    await page.locator(summary).click();await page.waitForTimeout(150);
    const original=await page.evaluate(()=>window.OmegasUi.CurveChart.shared.scale.xMax);
    await page.locator('.screen.active [data-chart-view="fullRange"]').check();await page.waitForTimeout(150);
@@ -127,11 +127,11 @@ async function audit(page,route,height,name){
    assert.equal(await page.evaluate(()=>window.OmegasUi.CurveChart.shared.renders),before,'não repinta por relógio');
   }finally{await browser.close();}
  }
- for(const route of ['autocal','refino']){
+ for(const route of ['refino']){
   const {browser,page}=await open(pw.chromium,'connected',{viewport:{width:1280,height:648},scn:{noStalls:true}});
   try{
    await go(page,route);await page.waitForTimeout(1800);
-   const summary=route==='autocal'?'.ar-buttons .instrument-details summary':'.refino-details summary';
+   const summary='.refino-details summary';
    await page.locator(summary).click();
    const bounds=await page.evaluate(()=>{
     const pop=document.querySelector('.screen.active details[open] > .ar-secondary,.screen.active details[open] > .instrument-detail-content').getBoundingClientRect();
@@ -141,6 +141,21 @@ async function audit(page,route,height,name){
    });
    assert.ok(bounds.y>=bounds.top-1&&bounds.b<=bounds.bottom+1,route+': opções na área útil '+JSON.stringify(bounds));
    await page.screenshot({path:path.join(out,'648-'+route+'-detalhes.png')});
+  }finally{await browser.close();}
+ }
+
+ // AutoCal: UMA barra de ações (Pausar | Reler GNV | Reler gasolina) na mesma linha, sem menu de opções (decisão do dono).
+ {
+  const {browser,page,errors}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672},scn:{noStalls:true}});
+  try{
+   await go(page,'autocal');await page.waitForTimeout(1800);
+   const bar=await page.evaluate(()=>{
+    const q=s=>document.querySelector(s),r=e=>e&&e.getBoundingClientRect();
+    const t=r(q('[data-autocal-toggle]')),g=r(q('[data-autocal-action="RESET_GAS"]')),p=r(q('[data-autocal-action="RESET_PETROL"]'));
+    return {toggle:!!t,gas:!!g,petrol:!!p,sameRow:!!(t&&g&&p)&&Math.abs(t.top-g.top)<6&&Math.abs(g.top-p.top)<6,order:!!(t&&g&&p)&&t.left<g.left&&g.left<p.left,menu:!!q('.autocal-reset-menu, .ar-buttons .instrument-details, .autocal-secondary-details')};
+   });
+   assert.deepEqual(bar,{toggle:true,gas:true,petrol:true,sameRow:true,order:true,menu:false},'AutoCal: barra única sem menu de opções '+JSON.stringify(bar));
+   await audit(page,'autocal',672,'autocal-barra-unica');assert.deepEqual(errors,[]);
   }finally{await browser.close();}
  }
  const {browser,page}=await open(pw.chromium,'connected',{viewport:{width:1280,height:672}});

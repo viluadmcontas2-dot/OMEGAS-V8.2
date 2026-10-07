@@ -261,8 +261,6 @@ class HubJavascriptBridge(activity: MainActivity) {
         autoStartOnUsb,
         captureRawUsb,
     ) ?: unavailable()
-    @JavascriptInterface fun startSessionRecording(reason: String): String = activity?.serviceOrNull()?.startSessionRecording(reason) ?: unavailable()
-    @JavascriptInterface fun stopSessionRecording(reason: String): String = activity?.serviceOrNull()?.stopSessionRecording(reason) ?: unavailable()
     @JavascriptInterface fun exportSession(sessionId: String) = activity?.exportSession(sessionId)
     @JavascriptInterface fun getLogs(): String = activity?.serviceOrNull()?.logsJson() ?: "[]"
     @JavascriptInterface fun exportLogs() = activity?.exportLogs()
