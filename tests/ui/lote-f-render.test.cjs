@@ -18,7 +18,9 @@ const TABS = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'too
 async function audit(page, route) {
   return page.evaluate(r => {
     const W = 1280, H = 720;
-    const vis = e => { const cs = getComputedStyle(e); const b = e.getBoundingClientRect(); return cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0 && b.width > 0 && b.height > 0; };
+    // Atualizado de propósito (07/10): o conteúdo de um <details> fechado (menu Fotos da Curva K etc.) não está na tela; só o <summary> conta.
+    const inClosed = e => { const d = e.closest('details:not([open])'); return !!d && !e.closest('summary'); };
+    const vis = e => { if (inClosed(e)) return false; const cs = getComputedStyle(e); const b = e.getBoundingClientRect(); return cs.visibility !== 'hidden' && cs.display !== 'none' && +cs.opacity > 0 && b.width > 0 && b.height > 0; };
     const sel = e => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (e.className && typeof e.className === 'string' ? '.' + e.className.split(' ')[0] : '');
     const sc = document.querySelector(`[data-screen="${r}"]`);
     const out = { overflowX: [], smallTargets: [], smallText: [], hitCircles: [] };
@@ -27,8 +29,13 @@ async function audit(page, route) {
       if (!vis(e) || e.tagName === 'circle') return;
       const b = e.getBoundingClientRect(); if (b.bottom < 0 || b.top > H) return;
       const grid = e.classList.contains('map-k-cell') || e.classList.contains('map-axis-header');
-      const min = grid ? 44 : (r === "autocal" ? 52 : 58);
-      if (b.height < min - 0.5 || b.width < min - 0.5) out.smallTargets.push(`${sel(e)} ${Math.round(b.width)}x${Math.round(b.height)}`);
+      // Atualizado de propósito (07/10, rodada 2): no rodapé único do Mapa K os botões de passo (%, −5, −1, +1, +5) têm 58 px de altura
+      // e 48–52 px de largura para a barra caber numa linha (layout travado pelo dono); a altura de 58 px continua obrigatória.
+      const step = r === 'map' && !!e.closest('.map-bar');
+      // Atualizado de propósito: bolhas de região do gráfico do Diagnóstico (<g role=button> dentro do SVG) seguem a regra de área de toque do gráfico (>= 44 px), como os círculos de acerto.
+      const min = (grid || !!e.closest('svg')) ? 44 : (r === "autocal" ? 52 : 58);
+      const minW = step ? 44 : min, minH = step ? 58 : min;
+      if (b.height < minH - 0.5 || b.width < minW - 0.5) out.smallTargets.push(`${sel(e)} ${Math.round(b.width)}x${Math.round(b.height)}`);
     });
     sc.querySelectorAll('circle[class*="hit"]').forEach(e => { const b = e.getBoundingClientRect(); if (b.width > 0) out.hitCircles.push(Math.round(b.width)); });
     const walker = document.createTreeWalker(sc, NodeFilter.SHOW_TEXT);
@@ -67,6 +74,20 @@ test('render: 8 abas sem corte lateral, alvos >= 58 px (AutoCal 52) (grade do Ma
   } finally { await browser.close(); }
 });
 
+// Atualizado de propósito (07/10, rodada 2): a Agora já não tem .now-overview; tem a intenção (.now-intention) no topo, a cobertura
+// (.now-coverage) e a linha quieta. Os 7 dados vivos seguem na faixa única do topo.
+test('render: menu Fotos da Curva K, aberto, fica inteiro dentro da tela e acima do rodapé (bug real corrigido em 07/10: abria cortado à direita)', { skip }, async () => {
+  const { browser, page } = await open(pw.chromium, 'connected');
+  try {
+    await page.waitForTimeout(1500); await go(page, 'curve'); await page.waitForTimeout(3500);
+    await page.click('.curve-photos > summary');
+    await page.waitForTimeout(300);
+    const m = await page.evaluate(() => { const b = document.querySelector('.curve-photos-menu').getBoundingClientRect(); const f = document.querySelector('.curve-photos > summary').getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, b: b.bottom, footTop: f.top }; });
+    assert.ok(m.l >= 0 && m.r <= 1280, `menu Fotos fora da tela: ${Math.round(m.l)}–${Math.round(m.r)}`);
+    assert.ok(m.t >= 0 && m.b <= m.footTop, 'menu Fotos não cobre o rodapé');
+  } finally { await browser.close(); }
+});
+
 test('render: Agora apresenta resultado e intenção, com dados vivos únicos no cabeçalho', { skip }, async () => {
   const { browser,page }=await open(pw.chromium,'connected');
   try {
@@ -75,10 +96,10 @@ test('render: Agora apresenta resultado e intenção, com dados vivos únicos no
       const sc=document.querySelector('[data-screen="dashboard"]'), header=document.querySelector('.workspace-head');
       const rect=e=>{const b=e.getBoundingClientRect();return {h:b.height,b:b.bottom,w:b.width};};
       return {duplicates:sc.querySelectorAll('.now-tile').length,facts:header.querySelectorAll('[data-vehicle-fact]').length,
-       overview:rect(sc.querySelector('.now-overview')),next:rect(sc.querySelector('[data-dash-refino]')),eq:!!sc.querySelector('#dashEquivalence')};
+       intention:rect(sc.querySelector('.now-intention')),coverage:rect(sc.querySelector('.now-coverage')),next:rect(sc.querySelector('[data-dash-refino]')),eq:!!sc.querySelector('#dashEquivalence')};
     });
     assert.equal(m.duplicates,0); assert.equal(m.facts,7); assert.ok(m.eq);
-    assert.ok(m.overview.h>=240); assert.ok(m.next.h>=58&&m.next.b<=644);
+    assert.ok(m.intention.h>=58&&m.intention.b<=m.coverage.b); assert.ok(m.coverage.h>=120); assert.ok(m.next.h>=58&&m.next.b<=644);
   } finally {await browser.close();}
 });
 
@@ -90,7 +111,7 @@ test('render: Refino na anatomia única — intenção primeiro e gráfico ≥ 5
     await page.waitForTimeout(3500);
     const m = await page.evaluate(() => {
       const R = e => { const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, h: b.height, w: b.width }; };
-      const status = R(document.querySelector('.refino-cockpit .ar-status'));
+      const hasHeader = !!document.querySelector('.refino-cockpit .ar-status');
       const legend = R(document.getElementById('refinoLegend'));
       const plot = R(document.querySelector('#refinoChart svg'));
       const sentence = R(document.getElementById('refinoHeadline'));
@@ -98,7 +119,7 @@ test('render: Refino na anatomia única — intenção primeiro e gráfico ≥ 5
       const intersects = (a, b) => !(a.r <= b.l || b.r <= a.l || a.b <= b.t || b.b <= a.t);
       return {
         legendPlot: intersects(legend, plot), plotSentence: intersects(plot, sentence), sentencePrimary: intersects(sentence, primary),
-        order: sentence.t >= status.t && sentence.b <= status.b && plot.t > status.b,
+        order: !hasHeader && sentence.t >= plot.b && sentence.b <= primary.t,
         plotH: plot.h, view: window.innerHeight, primaryBottom: primary.b,
         shared: window.OmegasUi.CurveChart.shared.renders, mode: window.OmegasUi.CurveChart.shared.mode,
         legendText: document.getElementById('refinoLegend').textContent,
@@ -110,7 +131,7 @@ test('render: Refino na anatomia única — intenção primeiro e gráfico ≥ 5
     assert.equal(m.legendPlot, false, 'legenda e desenho sobrepostos');
     assert.equal(m.plotSentence, false);
     assert.equal(m.sentencePrimary, false);
-    assert.equal(m.order, true, 'intenção integrada ao cabeçalho → gráfico');
+    assert.equal(m.order, true, 'sem cabeçalho: gráfico → frase de estado abaixo do gráfico → rodapé único (atualizado de propósito, 07/10)');
     assert.ok(m.plotH >= m.view * 0.5, `gráfico ocupa ${m.plotH}px de ${m.view}px (≥ 50%)`);
     assert.ok(m.primaryBottom <= m.view, 'a ação primária cabe na primeira tela, sem rolar');
     assert.equal(m.hScroll, false, 'nunca rolagem horizontal');
