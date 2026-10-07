@@ -668,13 +668,14 @@ class MotorSampleAnalyzer(
     }
 
     private fun SampleDecision.withCell(frame: Mp48Telemetry): SampleDecision {
-        val cell = com.omegas.prohub.calibration.LiveCellProjection.cellFor(frame.rpm.toDouble(), frame.petrolMs)
+        // Só linha/coluna: o JSON completo (pesos bilineares e trilineares) era montado por quadro e descartado.
+        val (row, column) = com.omegas.prohub.calibration.LiveCellProjection.cellIndex(frame.rpm.toDouble(), frame.petrolMs)
         return copy(
             minimumFrames = this@MotorSampleAnalyzer.minimumFrames,
             desiredFrames = this@MotorSampleAnalyzer.desiredFrames,
-            cellKey = cell.optString("key"),
-            cellRow = cell.optInt("row"),
-            cellColumn = cell.optInt("column"),
+            cellKey = "$row:$column",
+            cellRow = row,
+            cellColumn = column,
             tolerancePolicy = policySignature,
             windowAgeMs = if (windowAgeMs > 0L) windowAgeMs else durationMs,
             windowBudgetMs = if (windowBudgetMs > 0L) windowBudgetMs else effectiveWindowBudgetMs(),
