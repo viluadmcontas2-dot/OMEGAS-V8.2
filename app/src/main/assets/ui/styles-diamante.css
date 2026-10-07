@@ -434,3 +434,28 @@ html body .curve-screen .curve-action-bar .curve-nudge-row { display:flex; gap:8
 html body .curve-screen .curve-action-bar .curve-nudge-row button { min-width:64px; }
 html body .curve-screen .curve-action-bar .value-field { width:auto !important; min-width:0 !important; }
 html body .curve-screen .curve-action-bar .value-field input { width:110px !important; min-width:0 !important; }
+
+/* Curva K (rodada 2): UMA barra no rodapé (editar, visões, Fotos, Salvar, Desfazer); sem cabeçalho. */
+html body .curve-screen .curve-foot { display:flex; flex-wrap:wrap; row-gap:8px; align-items:stretch; justify-content:flex-start; flex:0 0 auto; padding:8px 0 0; }
+html body .curve-screen .curve-foot > * { flex:0 0 auto; width:auto; margin:0; }
+html body .curve-screen .curve-foot .curve-edit-only { display:flex; flex-wrap:nowrap; gap:8px; align-items:stretch; }
+html body .curve-screen .curve-foot .curve-edit-only > :is(.curve-nudge-row,.value-field,button):not([hidden]) { flex:0 0 auto !important; width:auto !important; }
+html body .curve-screen .curve-foot .curve-edit-only .curve-nudge-row { display:flex; gap:8px; }
+html body .curve-screen .curve-foot .curve-edit-only .curve-nudge-row button { min-width:56px; padding:0 12px; }
+html body .curve-screen .curve-foot .curve-edit-only .value-field input { width:100px !important; }
+html body .curve-screen .curve-foot .curve-photos { position:relative; }
+html body .curve-screen .curve-foot .curve-photos-menu { top:auto; bottom:calc(100% + 6px); right:auto; left:0; }
+html body .curve-screen:has([data-curve-panel="overview"].active) .curve-foot .curve-edit-only { display:none; }
+html body .curve-screen .source-status { margin:0 12px 0 0; font-size:15px; font-weight:700; color:var(--ok,#3ddc84); }
+html body .curve-screen .curve-foot .view-switch { display:flex; gap:0; padding:0; height:58px; align-items:stretch; border-radius:14px; overflow:hidden; box-sizing:border-box; }
+html body .curve-screen .curve-foot .view-switch button { height:58px; min-height:58px; padding:0 16px; border-radius:0; }
+html body .curve-screen .curve-foot .curve-photos > summary, html body .curve-screen .curve-foot > button, html body .curve-screen .curve-foot .curve-edit-only button { height:58px; min-height:58px; box-sizing:border-box; }
+html body .curve-screen .curve-foot .curve-photos { height:58px; display:flex; }
+html body .curve-screen .curve-foot .curve-photos > summary { padding:0 16px; }
+html body .curve-screen .curve-foot .curve-edit-only .value-field { height:58px; display:flex; align-items:center; }
+html body .curve-screen .curve-foot .curve-edit-only .value-field input { height:58px; box-sizing:border-box; }
+html body .curve-screen .curve-foot .curve-edit-only .curve-nudge-row button { min-width:48px; padding:0 8px; }
+html body .curve-screen .curve-foot .curve-edit-only .value-field input { width:84px !important; }
+html body .curve-screen .curve-foot .view-switch button { padding:0 12px; }
+html body .curve-screen .curve-foot .curve-photos > summary { padding:0 12px; }
+html body .curve-screen .curve-foot > button { padding:0 14px; }

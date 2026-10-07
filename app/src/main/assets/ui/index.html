@@ -202,24 +202,7 @@
         </section>
 
         <section class="screen curve-screen" data-screen="curve" aria-labelledby="curveTitle">
-          <div class="page-intro action-intro curve-head">
-            <div class="curve-title"><h2 id="curveTitle">Curva K</h2><p id="curveSourceStatus" class="source-status">Curva não lida</p></div>
-            <div class="route-actions-stack btn-bar">
-              <div class="view-switch" id="curveViewSwitch" role="tablist" aria-label="Visão da Curva K">
-                <button type="button" data-curve-view="overview">Visão geral</button>
-                <button type="button" data-curve-view="editor" class="active">Editar pontos</button>
-              </div>
-              <details class="curve-photos" aria-label="Preservar a Curva K">
-                <summary>Fotos</summary>
-                <div class="curve-photos-menu">
-                  <button id="curveBackupSave" type="button" aria-label="Salvar Curva K em Downloads/Omegas">Salvar foto</button>
-                  <select id="curveBackupSelect" aria-label="Curvas salvas"><option value="">Nenhuma curva salva</option></select>
-                  <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
-                </div>
-              </details>
-              <button id="curveSaveButton" type="button" class="secondary" title="Salva a Curva K em Downloads/Omegas">Salvar curva</button>
-            </div>
-          </div>
+          <h2 id="curveTitle" class="sr-only">Curva K</h2>
 
           <span id="curveBackupStatus" class="curve-backup-status" role="status"></span>
           <div class="curve-view-stack">
@@ -239,23 +222,39 @@
                 <section class="curve-surface">
                   <div class="curve-legend">
                     <span class="curve-point-info"><h3 id="curveActivePoint">Selecione um ponto</h3><span>K atual <b id="curveCurrentFactor">—</b></span><span id="curveTargetNormalized" class="normalized-preview">Prévia calculada pelo app</span></span>
-                    <span class="curve-keys"><span><i class="line actual"></i>Atual</span><span><i class="line proposal"></i>Proposta</span><span class="curve-axis">Eixo: injeção (ms) →</span></span>
+                    <p id="curveSourceStatus" class="source-status">Curva não lida</p><span class="curve-keys"><span><i class="line actual"></i>Atual</span><span><i class="line proposal"></i>Proposta</span><span class="curve-axis">Eixo: injeção (ms) →</span></span>
                   </div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
-                  <div class="curve-action-bar btn-bar" aria-label="Ajustar o ponto escolhido">
-                    <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button></div>
-                    <div class="value-field"><input id="curveTargetFactor" class="input-lg" type="text" inputmode="decimal" autocomplete="off" placeholder="K" aria-label="K desejado"></div>
-                    <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>
-                    <button id="curveReviewButton" type="button" class="primary btn-primary" disabled>Escolha um ponto e ajuste o K</button>
-                    <button id="curveBackupRestore" type="button" class="secondary" hidden>Desfazer</button>
-                    <button id="curveClearProposals" type="button" class="quiet-button" hidden>Limpar</button>
-
-                  </div>
                   <div id="curveProposalList" class="proposal-list" hidden></div>
 
                 </section>
               </div>
             </div>
+          </div>
+
+          <div class="curve-foot btn-bar" aria-label="Ações da Curva K">
+            <div class="curve-edit-only">
+                    <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button></div>
+                    <div class="value-field"><input id="curveTargetFactor" class="input-lg" type="text" inputmode="decimal" autocomplete="off" placeholder="K" aria-label="K desejado"></div>
+                    <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>
+                    <button id="curveReviewButton" type="button" class="primary btn-primary" disabled>Escolha um ponto</button>
+                    <button id="curveBackupRestore" type="button" class="secondary" hidden>Desfazer</button>
+                    <button id="curveClearProposals" type="button" class="quiet-button" hidden>Limpar</button>
+
+            </div>
+              <div class="view-switch" id="curveViewSwitch" role="tablist" aria-label="Visão da Curva K">
+                <button type="button" data-curve-view="overview">Visão geral</button>
+                <button type="button" data-curve-view="editor" class="active">Editar pontos</button>
+              </div>
+              <details class="curve-photos" aria-label="Preservar a Curva K">
+                <summary>Fotos</summary>
+                <div class="curve-photos-menu">
+                  <button id="curveBackupSave" type="button" aria-label="Salvar Curva K em Downloads/Omegas">Salvar foto</button>
+                  <select id="curveBackupSelect" aria-label="Curvas salvas"><option value="">Nenhuma curva salva</option></select>
+                  <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
+                </div>
+              </details>
+              <button id="curveSaveButton" type="button" class="secondary" title="Salva a Curva K em Downloads/Omegas">Salvar</button>
           </div>
 
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Gravando na ECU…</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence" id="curveOperationSteps"><span>Foto antes</span><span>Gravando</span><span>Conferindo na ECU</span></div></div></div>

@@ -18,7 +18,7 @@
   }
   /** K mostrado em pt-BR com 3 casas ("0,800"). */
   const kText = value => (finite(value) === null ? '' : D.kValue(value));
-  const DISABLED_REASON = 'Escolha um ponto e ajuste o K';
+  const DISABLED_REASON = 'Escolha um ponto';
   function text(id, value) {
     const node = document.getElementById(id);
     if (!node) return;

@@ -8,3 +8,4 @@ REGRAS DO DONO (já repetidas várias vezes; siga sem ele pedir de novo):
 6. Pense de ponta a ponta: quem produz o dado, quem consome, que botão usa. Testes fiéis ao uso.
 7. Autonomia: ele fica offline; agende retomada; só pare se a decisão for dele. Respostas curtas e em português simples.
 8. Branch canônica OmegasDiamante; um PR; limpar branches; um APK só quando sobra certeza; ao gerar: link do artefato + SHA-256.
+9. UI/CSS/botões: invoque a skill omegas-ui-fluxo (OBRIGATÓRIA): dizer, mudar, MEDIR no Chromium, olhar a captura, corrigir, só então mostrar. Barras de botões: tamanho natural, 58 px, 8 px entre eles, mesma linha, classe .btn-bar. Nunca diga "alinhado" sem medida.
