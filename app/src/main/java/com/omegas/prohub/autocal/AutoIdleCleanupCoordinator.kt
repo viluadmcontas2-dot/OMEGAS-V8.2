@@ -125,6 +125,15 @@ class AutoIdleCleanupCoordinator(
                 else -> null
             }
             if (error != null) {
+                // A geração USB que o coordenador viu já não é a atual (ou não há USB). Um armamento anterior não
+                // pode seguir valendo para a geração nova: desarma e publica agora; a sessão nova nunca é armada
+                // por tabela (o dono toca de novo depois do reset da sessão). Intervalo/bloqueio/releitura do
+                // cleaner ficam como estão; nada é escrito.
+                if (this.armed) {
+                    setArmedLocked(false, "session")
+                    disarmedReason = error
+                    publish()
+                }
                 return JSONObject().put("ok", false).put("armed", false).put("enabled", enabledNow)
                     .put("pauseCode", pauseCode?.name ?: JSONObject.NULL).put("error", error)
             }

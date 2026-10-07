@@ -430,11 +430,37 @@ class AutoIdleCleanupCoordinatorTest {
         liveSession = 2L // o cabo reconectou; o reset assíncrono da sessão ainda está na fila
         val refused = coordinator.setArmed(true, "dono")
         assertFalse(refused.getBoolean("ok"))
-        assertFalse(coordinator.uiSummary().armed)
+        assertFalse(refused.getBoolean("armed"))
+        assertFalse("armamento da geração 1 não vale para a geração 2", coordinator.uiSummary().armed)
+        assertFalse(coordinator.json().getBoolean("armed"))
         assertTrue(refused.getString("error"), refused.getString("error").contains("USB"))
+        val disarm = records.last { it.first == "autocal_auto_cleanup_armed" }.second
+        assertFalse(disarm.getBoolean("armed"))
+        assertEquals("session", disarm.getString("source"))
+        assertTrue(calls.isEmpty())
         coordinator.onSessionChanged(2L)
+        assertFalse("o reset da sessão não arma por tabela", coordinator.uiSummary().armed)
         assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
         assertTrue(coordinator.uiSummary().armed)
+    }
+
+    @Test
+    fun `armar com USB caida desarma o armamento anterior sem mexer no bloqueio da politica`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        coordinator.onActionFailed(failed(mutation = true))
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        val blockedUntil = coordinator.json().getJSONObject("policy").getLong("blockedUntilElapsedMs")
+        liveSession = 0L // cabo caiu; o reset da sessão ainda não chegou
+        val refused = coordinator.setArmed(true, "dono")
+        assertFalse(refused.getBoolean("ok"))
+        assertFalse(coordinator.uiSummary().armed)
+        assertTrue(refused.getString("error"), refused.getString("error").contains("USB"))
+        val policy = coordinator.json().getJSONObject("policy")
+        assertTrue("bloqueio e releitura obrigatória preservados", policy.getBoolean("needsReread"))
+        assertEquals(blockedUntil, policy.getLong("blockedUntilElapsedMs"))
+        assertEquals("nenhuma escrita", 1, calls.size)
     }
 
     // ---- cenários clássicos (spec rev2), agora com dono armado e duas leituras ----
@@ -773,9 +799,29 @@ class AutoIdleCleanupCoordinatorTest {
         assertTrue(coordinator.uiSummary().armed)
         assertEquals(0, coordinator.uiSummary().relearnedThisSession)
         assertTrue(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        // Recibo FAILED contraditório da MESMA operação, já encerrada pelo CONFIRMED: duplicata velha, ignorada.
+        val closed = lastPreparationId
+        records.clear()
+        coordinator.onActionFailed(failed(mutation = true, effective = false, preparationId = closed))
+        assertEquals(null, coordinator.uiSummary().pauseCode)
+        assertTrue("duplicata velha não pausa nem desarma", coordinator.uiSummary().armed)
+        assertTrue(coordinator.uiSummary().enabled)
+        val ignored = records.single { it.first == "autocal_auto_idle_receipt_ignored" }.second
+        assertEquals(closed, ignored.getString("preparationId"))
+        assertTrue(ignored.getString("reason").contains("atrasado"))
+        // Releitura completa, nova e posterior do alvo + intervalo: nova operação, nova preparação.
+        now += 6_000
+        outlier(Fuel.GAS, 6, counters = 20 to 21)
+        drive("GNV")
+        coordinator.evaluate()
+        assertFalse(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        assertEquals(2, calls.size)
+        assertTrue(lastPreparationId != closed)
+        // Readback ineficaz da operação em voo (identidade certa): pausa e desarma.
         coordinator.onActionFailed(failed(mutation = true, effective = false))
         assertEquals(AutoIdleCleanupCoordinator.PauseCode.READBACK_INEFFECTIVE, coordinator.uiSummary().pauseCode)
         assertFalse(coordinator.uiSummary().armed)
+        assertFalse(coordinator.uiSummary().enabled)
     }
 
     @Test
