@@ -35,7 +35,7 @@ Apagar uma banda ruim antes do automatch **atrasa o automatch**, e esse é o obj
 ## Onde entra no código (Diamante)
 
 - **Detecção:** nova unidade `autocal/IdleAcquisitionTracker.kt`. Recebe snapshots nativos (via `NativeAutoCalMonitor`) e telemetria. Mantém por banda: último contador, último snapshot, regime da última aquisição. Sem I/O, só uma função pura do estado.
-- **Política:** nova unidade `autocal/AutoIdlePointCleaner.kt`. Decide "apagar agora: bandas [..]" a partir do tracker, da telemetria atual, do relógio (intervalo) e do estado do automatch.
+- **Política:** nova unidade `autocal/AutoIdlePointCleaner.kt`. Decide "apagar agora: bandas [..]" a partir do tracker, da telemetria atual e do relógio (intervalo).
 - **Execução:** reaproveita `AutoCalNativeActionManager.executePointDelete` / `AutoCalPointDeleteProtocol` (máscaras 0x016D/0x016E + commit `01 24 05`), sem mudar bytes. Um novo caminho não-humano com `automatic = true` e `humanConfirmed = false` vai no recibo.
 - **Registro:** cada apagamento automático vira `autocal_native_action` com `automatic: true`, as bandas, o motivo ("lenta"), a evidência (n leituras, fração rpm<1000) e o readback.
 
