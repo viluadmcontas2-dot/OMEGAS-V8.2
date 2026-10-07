@@ -22,12 +22,15 @@ Sem categoria de "suspeito", sem teto de tentativas por sessão. Readquirir de n
 
 Quando existir pelo menos uma banda marcada como "lenta" e o carro estiver andando, o app manda um `DELETE_POINT` com todas as bandas marcadas, no comando de máscara que já existe.
 
+### Efeito sobre o automatch (intencional)
+
+Apagar uma banda ruim antes do automatch **atrasa o automatch**, e esse é o objetivo: a ECU só fecha a conta quando a banda tiver sido reaprendida, de preferência rodando. Em trânsito de cidade, uma banda que volta sempre na lenta vai sendo apagada a cada saída, e o automatch fica adiado enquanto isso durar. Isso é aceito por design; não há guarda contra.
+
 ### Guardas (as únicas)
 
 1. **Intervalo mínimo entre apagamentos: 5 s.** É o ACK/readback (~1,2 s) mais um snapshot nativo (mediana ~3 s). O valor é configurável.
 2. **Só GNV.** A máscara da gasolina (0x016D) vai inteira como "preservar" (1). Depois do readback, se qualquer banda da gasolina tiver mudado (contador ou valor), o apagamento automático é desligado na sessão e o app registra o evento. A gasolina aprendeu só 3 vezes em 43 sessões; perder um ponto dela não tem volta.
-3. **Fora da janela de coleta do automatch.** Enquanto a ECU estiver coletando para o próximo automatch (`NUM_AUTOMATCH_EXECUTED < MAX_AUTOMATCH` com AutoCal ativo, e todas as bandas usadas na última época já maduras), o app segura o comando. Assim a ECU não fecha a conta sem a banda. A condição exata de "véspera de automatch" precisa ser medida nos dados antes da implementação: ver *Pendências*.
-4. **Seleção limpa.** Depois do readback, toda banda apagada sai da seleção da tela. Hoje há 3 casos de apagamento manual de banda que já estava zerada (seleção fantasma).
+3. **Seleção limpa.** Depois do readback, toda banda apagada sai da seleção da tela. Hoje há 3 casos de apagamento manual de banda que já estava zerada (seleção fantasma).
 
 ## Onde entra no código (Diamante)
 
@@ -44,7 +47,7 @@ Quando existir pelo menos uma banda marcada como "lenta" e o carro estiver andan
 
 ## Teste
 
-- **Unidade (CI):** tracker e política com sequências sintéticas: aquisição na lenta → andou → apaga; aquisição andando → não apaga; segundo disparo antes de 5 s → espera; gasolina mudou no readback → desliga; janela de automatch → segura.
+- **Unidade (CI):** tracker e política com sequências sintéticas: aquisição na lenta → andou → apaga; aquisição andando → não apaga; segundo disparo antes de 5 s → espera; gasolina mudou no readback → desliga; apagamento na véspera do automatch → apaga normalmente.
 - **Replay real (classe 3):** fixtures recortadas (< 300 KB) das sessões 2026-10-06 19:21 e 20:30. O replay precisa reproduzir quantas bandas seriam marcadas e quando o app dispararia. Esperado nestes dados: as bandas b4–b7 marcadas várias vezes.
 - **Físico (classe 5, só o dono):** uma sessão em pista com o apagamento ligado.
 
@@ -56,5 +59,4 @@ Quando existir pelo menos uma banda marcada como "lenta" e o carro estiver andan
 
 ## Pendências antes do plano
 
-- Medir nos 14 automatches como reconhecer a "véspera" de um automatch (contadores, tempo desde a última época) para a guarda 3. Se não der para prever, a guarda vira: não apagar nos 30 s seguintes a qualquer banda chegar à maturidade.
 - Confirmar no Portmon (2 logs, ainda não analisados) a ordem real dos bytes do comando de máscara e do commit.
