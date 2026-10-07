@@ -41,7 +41,9 @@ test('M7 lista: uma linha por sessão com data, duração, apagões e % GNV — 
   const first = items(app)[0].textContent;
   assert.match(first, /30 min/i, `duração 1800000 ms: ${first}`);
   assert.match(first, /60% no GNV/);
-  assert.match(first, /Download\/Omegas/, 'cada sessão diz onde está a pasta');
+  // Atualizado de propósito (07/10, rodada 2): a pasta é dita UMA vez no topo da tela, não repetida em cada cartão.
+  assert.doesNotMatch(first, /Download\/Omegas/, 'o cartão não repete a pasta');
+  assert.match(app.$(SCREEN).textContent, /Download\/Omegas/, 'a tela diz onde está a pasta');
   assert.match(first, /Fechada/);
   assert.match(items(app)[1].textContent, /1 apag[aã]o\b/);
   assert.match(items(app)[2].textContent, /2 apag[oõ]es/);
@@ -121,9 +123,10 @@ test('M7 texto vindo do Kotlin é mostrado como TEXTO: marcação HTML no motivo
   const evil = '<img src=x><b>negrito</b> & aspas';
   const app = sessionsApp({ sessions: [{ id: 'session_2026-10-02_10-00-00', reason: evil, durationMs: 1000, bytes: 1, cngTicks: 1, petrolTicks: 1, semanticSummary: { blackouts: 0 } }] });
   const item = app.$('.ss-item');
-  assert.ok(item.querySelector('img') === null, 'HTML injetado virou elemento');
+  // Atualizado de propósito (07/10, rodada 2): o motivo da sessão deixou de aparecer no cartão (era na linha do caminho); segue na lista de exportação.
+  assert.ok(app.$(SCREEN).querySelector('img') === null, 'HTML injetado virou elemento');
   assert.equal(item.querySelectorAll('b').length, 1, 'só o título da sessão pode ser <b>');
-  assert.match(item.textContent, /<img src=x><b>negrito<\/b>/);
+  assert.match(app.$(SCREEN).textContent, /<img src=x><b>negrito<\/b>/, 'o motivo aparece como texto puro na tela');
 });
 
 test('M7 exportar permanece na barra principal e usa a sessão escolhida mesmo após telemetria nova', () => {

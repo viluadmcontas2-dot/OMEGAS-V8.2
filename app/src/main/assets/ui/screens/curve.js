@@ -18,11 +18,12 @@
   }
   /** K mostrado em pt-BR com 3 casas ("0,800"). */
   const kText = value => (finite(value) === null ? '' : D.kValue(value));
-  const DISABLED_REASON = 'Escolha um ponto e ajuste o K';
+  const DISABLED_REASON = 'Escolha um ponto';
   function text(id, value) {
     const node = document.getElementById(id);
     if (!node) return;
     const next = value == null ? '—' : String(value);
+    if (id === 'curveSourceStatus') { const b = document.getElementById('curveReadButton'); if (b) b.hidden = !/não confirmad/i.test(next); }
     if (node.textContent !== next) {
       node.textContent = next;
       // Aviso breve (Revisto (W2)): o status da Curva K aparece sobre o gráfico e some sozinho.
@@ -57,6 +58,7 @@
 
     bind() {
       document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
+      document.getElementById('curveSaveButton')?.addEventListener('click', () => document.getElementById('curveBackupSave')?.click());
       document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
       document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
       document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.undoCurve());

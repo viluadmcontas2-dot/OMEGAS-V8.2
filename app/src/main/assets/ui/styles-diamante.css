@@ -57,7 +57,7 @@ html body .curve-chart-shared .autocal-grid-line { stroke:var(--line); stroke-op
 html body .curve-chart-shared text { font-weight:400; }
 html body .ar-shell .ar-readout { position:absolute; z-index:5; bottom:60px; right:16px; max-width:400px; min-height:0; padding:12px 16px; background:var(--overlay); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow-2); font-size:20px; font-weight:400; }
 html body .ar-shell .ar-readout[data-empty="true"] { display:none; }
-html body .ar-shell .ar-stall { min-height:0; flex:1; padding:8px 12px; font-size:18px; font-weight:500; border:0; border-left:3px solid var(--warn); background:var(--warn-soft); border-radius:4px; }
+html body .ar-shell .ar-stall { min-height:0; flex:none; padding:8px 12px; font-size:18px; font-weight:500; border:0; border-left:3px solid var(--warn); background:var(--warn-soft); border-radius:4px; }
 html body .instrument-details { position:relative; margin-left:auto; }
 html body .instrument-details > summary { display:flex; align-items:center; justify-content:center; padding:0 16px; min-height:58px; background:var(--surface-2); border:1px solid var(--line); list-style:none; cursor:pointer; box-shadow:var(--shadow-1); }
 html body .instrument-details > :is(.ar-secondary,.instrument-detail-content) { position:absolute; bottom:66px; top:auto; right:0; width:min(520px,calc(100vw - 48px)); max-height:min(440px,calc(100vh - 200px)); overflow-y:auto; z-index:15; padding:20px; border:1px solid var(--line); border-radius:8px; background:var(--overlay); box-shadow:var(--shadow-3); }
@@ -235,7 +235,7 @@ html body .map-screen .map-editor-panel { overscroll-behavior:contain; }
 html body .curve-screen .curve-point-info { flex-wrap:wrap; gap:4px 16px; }
 html body .utility-screen .page-intro { margin-bottom:12px; }
 html body .utility-screen .page-intro > div { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; }
-html body .utility-screen .route-subtitle { margin:0; }
+html body .utility-screen .page-intro .route-subtitle { margin:0; font-size:18px; }
 html body .utility-screen .ss-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
 html body .utility-screen .ss-item { grid-template-columns:106px minmax(0,1fr); position:relative; }
 html body .utility-screen .ss-facts { gap:8px; }
@@ -370,3 +370,100 @@ html body .head-usb-chip { flex:0 0 auto; min-height:48px; padding:0 18px; borde
 html body .head-usb-chip[hidden] { display:none; }
 html body details.ts-card > summary { min-height:58px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
 html body .ts-advanced > summary { min-height:48px; display:flex; align-items:center; cursor:pointer; font-weight:600; }
+
+/* Telas Ajuste GNV e AutoCal (rodada 2): sem cabeçalho; frase de estado e motivo acima da barra; botões do tamanho natural
+   (como "Sugestões"), colados uns nos outros com 8 px, alinhados à esquerda. Nada de esticar para ocupar a linha. */
+html body :is(.ar-refino,.ar-autocal) .ar-act { display:flex; flex-direction:column; align-items:stretch; gap:6px; min-height:0; }
+html body :is(.ar-refino,.ar-autocal) .refino-statusline { display:flex; align-items:baseline; gap:6px 18px; flex-wrap:wrap; min-width:0; }
+html body :is(.ar-refino,.ar-autocal) .refino-statusline .ar-sentence { margin:0; font-size:22px; font-weight:700; min-width:0; }
+html body :is(.ar-refino,.ar-autocal) .refino-statusline .ar-reason { margin:0; color:var(--warn); font-size:20px; font-weight:700; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons { display:flex; flex-wrap:nowrap; align-items:stretch; justify-content:flex-start; gap:8px; width:100%; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > :is(button,.instrument-details,.autocal-point-actions,.refino-undo):not([hidden]) { flex:0 0 auto; width:auto; min-width:0; margin:0; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > button, html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > .instrument-details > summary, html body .ar-refino .ar-act > .ar-buttons > .refino-undo > button { height:58px; min-height:58px; display:flex; align-items:center; justify-content:center; white-space:nowrap; padding:0 18px; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > .instrument-details { position:relative; z-index:15; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > .autocal-point-actions { display:flex; gap:8px; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > .autocal-point-actions[hidden], html body .ar-refino .ar-act > .ar-buttons > .refino-undo[hidden] { display:none; }
+html body .ar-refino .ar-buttons .instrument-details > .instrument-detail-content { top:auto; bottom:66px; right:auto; left:0; max-height:min(420px,calc(100vh - 250px)); overflow:auto; }
+html body .ar-refino .ar-legend-row { display:flex; align-items:center; gap:12px; }
+html body .ar-refino .ar-legend-row > .ar-fuel { margin-left:auto; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > [hidden] { display:none !important; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > * { margin:0 !important; }
+
+/* ===== DIREÇÃO VISUAL · barra de botões (regra única, todas as abas) =====
+   Cada botão tem o tamanho natural do seu texto (como "Sugestões"), 58 px de altura, 8 px entre eles, alinhados à esquerda
+   na mesma linha. Nunca esticar para ocupar a linha; botão escondido não ocupa lugar. Use a classe .btn-bar em toda barra nova. */
+html body .btn-bar { display:flex; flex-wrap:nowrap; align-items:stretch; justify-content:flex-start; gap:8px; }
+html body .btn-bar > [hidden] { display:none !important; }
+html body .btn-bar > :is(button,.segmented,.value-field,.nudge-row,.map-bar-sel,.instrument-details) { flex:0 0 auto; width:auto; min-width:0; margin:0; }
+html body .btn-bar button, html body .btn-bar .instrument-details > summary { height:58px; min-height:58px; padding:0 18px; display:flex; align-items:center; justify-content:center; white-space:nowrap; }
+html body .btn-bar :is(.segmented,.nudge-row,.value-field) { display:flex; gap:8px; align-items:stretch; }
+html body .btn-bar .segmented { gap:0; }
+html body .btn-bar .segmented button, html body .btn-bar .nudge-row button { padding:0 16px; }
+html body .btn-bar .nudge-row button { min-width:58px; }
+
+/* Mapa K (rodada 2): grade em largura total; controles numa barra de baixo, como na Curva K. */
+html body .app-shell .map-screen .map-workspace { display:flex; flex-direction:column; gap:8px; grid-template-columns:none; }
+html body .map-screen .map-surface { flex:1 1 auto; min-height:0; }
+html body .map-screen .map-head { display:flex; align-items:center; gap:14px; min-height:0; height:30px; padding:0 4px; }
+html body .map-screen .map-head .source-status { margin:0; font-size:16px; font-weight:700; color:var(--ok); }
+html body .map-screen .map-head .map-live-condition { margin-left:auto; display:flex; align-items:baseline; gap:8px; }
+html body .map-screen .map-bar { flex:0 0 auto; }
+html body .map-screen .map-bar .map-bar-sel { display:flex; flex-direction:column; justify-content:center; min-width:130px; }
+html body .map-screen .map-bar .map-bar-sel small { color:var(--muted); font-size:14px; }
+html body .map-screen .map-bar .map-bar-sel b { font-size:20px; }
+html body .map-screen .map-bar .value-field { align-items:center; }
+html body .map-screen .map-bar .value-field input { width:96px; height:58px; }
+html body .map-screen .map-bar #mapReviewButton { position:static; box-shadow:none; }
+html body .map-screen .map-bar { flex-wrap:wrap; row-gap:8px; }
+html body .map-screen .map-bar .map-bar-sel { min-width:0; }
+html body .map-screen .map-bar .map-bar-sel small { display:none; }
+html body .map-screen .map-bar .value-field { width:auto; padding:0 12px; gap:8px; position:relative; }
+html body .map-screen .map-bar .value-field input { width:72px; flex:0 0 auto; font-size:26px; padding:0 6px; }
+html body .map-screen .map-bar .map-adjust-unit { position:static; font-size:15px; white-space:nowrap; }
+html body .map-screen .map-bar button, html body .map-screen .map-bar .segmented button { padding:0 14px; }
+html body .map-screen .map-bar .nudge-row { gap:8px; }
+html body .map-screen .map-bar .nudge-row button { min-width:52px; padding:0 10px; }
+html body .map-screen .map-bar .value-field { flex:0 0 auto !important; width:190px !important; }
+html body .map-screen .map-bar .value-field input { width:64px !important; }
+html body .map-screen .map-bar #mapReviewButton, html body .map-screen .map-bar .wide { width:auto !important; flex:0 0 auto !important; }
+html body .map-screen .map-bar .map-adjust-unit { font-size:16px; }
+html body .curve-screen .curve-action-bar.btn-bar { display:flex; flex-wrap:wrap; row-gap:8px; justify-content:flex-start; }
+html body .curve-screen .curve-action-bar.btn-bar > :is(.curve-nudge-row,.value-field,button) { flex:0 0 auto !important; width:auto !important; }
+html body .curve-screen .curve-action-bar .value-field input { width:110px; height:58px; text-align:center; }
+html body .curve-screen .curve-action-bar .curve-nudge-row { display:flex; gap:8px; }
+html body .curve-screen .curve-action-bar .curve-nudge-row button { min-width:64px; }
+html body .curve-screen .curve-action-bar .value-field { width:auto !important; min-width:0 !important; }
+html body .curve-screen .curve-action-bar .value-field input { width:110px !important; min-width:0 !important; }
+
+/* Curva K (rodada 2): UMA barra no rodapé (editar, visões, Fotos, Salvar, Desfazer); sem cabeçalho. */
+html body .curve-screen .curve-foot { display:flex; flex-wrap:wrap; row-gap:8px; align-items:stretch; justify-content:flex-start; flex:0 0 auto; padding:8px 0 0; }
+html body .curve-screen .curve-foot > * { flex:0 0 auto; width:auto; margin:0; }
+html body .curve-screen .curve-foot .curve-edit-only { display:flex; flex-wrap:nowrap; gap:8px; align-items:stretch; }
+html body .curve-screen .curve-foot .curve-edit-only > :is(.curve-nudge-row,.value-field,button):not([hidden]) { flex:0 0 auto !important; width:auto !important; }
+html body .curve-screen .curve-foot .curve-edit-only .curve-nudge-row { display:flex; gap:8px; }
+html body .curve-screen .curve-foot .curve-edit-only .curve-nudge-row button { min-width:56px; padding:0 12px; }
+html body .curve-screen .curve-foot .curve-edit-only .value-field input { width:100px !important; }
+html body .curve-screen .curve-foot .curve-photos { position:relative; }
+html body .curve-screen .curve-foot .curve-photos-menu { top:auto; bottom:calc(100% + 6px); right:0; left:auto; }
+html body .curve-screen:has([data-curve-panel="overview"].active) .curve-foot .curve-edit-only { display:none; }
+html body .curve-screen .source-status { margin:0 12px 0 0; font-size:16px; font-weight:700; color:var(--ok); }
+html body .curve-screen .curve-foot .view-switch { display:flex; gap:0; padding:0; height:58px; align-items:stretch; border-radius:14px; overflow:hidden; box-sizing:border-box; }
+html body .curve-screen .curve-foot .view-switch button { height:58px; min-height:58px; padding:0 16px; border-radius:0; }
+html body .curve-screen .curve-foot .curve-photos > summary, html body .curve-screen .curve-foot > button, html body .curve-screen .curve-foot .curve-edit-only button { height:58px; min-height:58px; box-sizing:border-box; }
+html body .curve-screen .curve-foot .curve-photos { height:58px; display:flex; }
+html body .curve-screen .curve-foot .curve-photos > summary { padding:0 16px; }
+html body .curve-screen .curve-foot .curve-edit-only .value-field { height:58px; display:flex; align-items:center; }
+html body .curve-screen .curve-foot .curve-edit-only .value-field input { height:58px; box-sizing:border-box; }
+html body .curve-screen .curve-foot .curve-edit-only .curve-nudge-row button { min-width:48px; padding:0 8px; }
+html body .curve-screen .curve-foot .curve-edit-only .value-field input { width:84px !important; }
+html body .curve-screen .curve-foot .view-switch button { padding:0 12px; }
+html body .curve-screen .curve-foot .curve-photos > summary { padding:0 12px; }
+html body .curve-screen .curve-foot > button { padding:0 14px; }
+
+/* Telas com rodapé único (Mapa K e Curva K também): o aviso passageiro aparece no topo e nunca cobre o botão principal. */
+html body[data-omegas-route="map"] .alert-toast, html body[data-omegas-route="curve"] .alert-toast { top:76px; bottom:auto; }
+
+/* Sessões (rodada 2): a data nunca invade o resumo (coluna fixa de 150 px); o caminho da pasta aparece uma vez só, no aviso do topo. */
+html body .utility-screen .ss-item { grid-template-columns:150px minmax(0,1fr); column-gap:16px; }
+html body .utility-screen .ss-item .ss-when { min-width:0; }
+html body .utility-screen .ss-item .ss-when b { white-space:nowrap; }

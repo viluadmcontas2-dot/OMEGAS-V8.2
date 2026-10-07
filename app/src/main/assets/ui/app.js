@@ -162,8 +162,8 @@
   let writeGate = { blocked: false, reason: '' };
   // Onde o motivo aparece por escrito (botão apagado sozinho não explica nada em tela de toque).
   const WRITE_NOTES = [
-    { key: 'map', host: '.map-safety-line', where: 'beforeend' },
-    { key: 'curve', host: '.curve-action-bar', where: 'afterend' },
+    { key: 'map', host: '.map-bar', where: 'beforebegin' },
+    { key: 'curve', host: '.curve-foot', where: 'beforebegin' },
     { key: 'refino', host: '.refino-cockpit .ar-act', where: 'beforeend' },
     { key: 'autocal', host: '.autocal-chart-overlay .autocal-chip-row', where: 'beforeend' },
   ];
@@ -178,6 +178,7 @@
         note.dataset.writeNote = key;
         note.setAttribute('role', 'status');
         if (where === 'afterend' && anchor.parentNode) anchor.parentNode.appendChild(note);
+        else if (where === 'beforebegin' && anchor.parentNode) anchor.parentNode.insertBefore(note, anchor);
         else anchor.appendChild(note);
       }
       if (!note) return;

@@ -123,7 +123,6 @@
           <div class="ss-body">
             <p class="ss-summary">${escapeHtml(summary || (row.active ? 'Gravando agora; o resumo aparece quando ela fechar.' : 'Sem resumo para esta sessão.'))}</p>
             ${row.gnvPercent === null ? '' : `<div class="session-fuel-bar" role="img" aria-label="GNV ${row.gnvPercent}%, gasolina ${row.gasPercent}%"><div class="fuel-segment cng" style="width:${row.gnvPercent}%"></div><div class="fuel-segment petrol" style="width:${row.gasPercent}%"></div></div>`}
-            <small class="ss-path">${FOLDER}${row.title && row.title !== 'Sessão' ? ' · ' + escapeHtml(row.title) : ''}</small>
           </div>
           <dl class="ss-facts">${facts}</dl>
         </article>`;

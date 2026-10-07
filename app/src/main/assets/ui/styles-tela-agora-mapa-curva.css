@@ -168,8 +168,8 @@ html body #curveTargetFactor { height: 58px; min-height: 58px; font-size: 28px; 
 .app-shell .map-screen .map-workspace { gap: var(--space-2); }
 .map-screen .map-editor-panel { padding: var(--space-3); gap: var(--space-2); }
 
-/* o aviso sobe na Curva K para não cobrir a barra de ação */
-body:has([data-screen="curve"].active) .alert-toast { bottom: 140px; }
+/* Curva K: o aviso fica no topo (top:76px; bottom:auto em styles-diamante.css), longe do rodapé único. A regra antiga bottom:140px
+   somada ao top esticava o aviso por cima do gráfico e do botão (bug medido em 07/10). */
 
 /* Refino (efeito colateral do trilho de 200 px): o "Último resultado" aberto ocupa a linha toda em vez de vazar à esquerda. */
 

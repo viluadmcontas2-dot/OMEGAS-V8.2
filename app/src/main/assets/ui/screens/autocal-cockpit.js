@@ -867,9 +867,7 @@
                 <span id="autocalReferenceCount" class="ar-sr" hidden>—</span>
               </div>
               <div class="autocal-chart-overlay" aria-live="polite">
-                <p id="autocalHumanAction" class="ar-sentence" data-level="neutral" hidden>Lendo o estado da ECU…</p>
                 <p id="autocalAlertStrip" class="autocal-alert-strip" role="alert" hidden></p>
-                <p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p>
                 <div class="autocal-chip-row"><small id="autocalAutoCleanLine" class="autocal-autoclean-line" data-level="neutral" hidden></small><small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small></div>
               </div>
               <div id="autocalReferenceChart" class="ar-chart-host"><div class="chart-empty">Aguardando as curvas da ECU.</div></div>
@@ -877,6 +875,10 @@
             </section>
 
             <div class="ar-act">
+              <div class="refino-statusline" aria-live="polite">
+                <p id="autocalHumanAction" class="ar-sentence" data-level="neutral" hidden>Lendo o estado da ECU…</p>
+                <p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p>
+              </div>
               <div class="ar-buttons autocal-main-actions">
                 <button type="button" data-autocal-toggle class="btn-primary" data-loading="true" disabled>Lendo estado…</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>

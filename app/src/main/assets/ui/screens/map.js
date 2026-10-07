@@ -8,7 +8,11 @@
   const { finite, fmt } = root.OmegasUi.DisplayRules;
   const D = () => root.OmegasUi.DisplayRules;
   const signed = value => (value > 0 ? '+' : value < 0 ? '−' : '') + Math.abs(value);
-  function text(id, value) { const node = document.getElementById(id); if (node) node.textContent = value == null ? '—' : String(value); }
+  function text(id, value) {
+    const node = document.getElementById(id); if (node) node.textContent = value == null ? '—' : String(value);
+    // Reler ECU só aparece quando a leitura não foi confirmada (a leitura normal é automática).
+    if (id === 'mapSourceStatus') { const b = document.getElementById('mapReadButton'); if (b) b.hidden = !/não confirmad/i.test(String(value)); }
+  }
 
   class MapScreen {
     constructor(store, api, router) {
@@ -149,7 +153,7 @@
       if (operation && operation.busy && this.releaseTicks < 600) { this.releaseTicks += 1; return; }
       this.releasing = false;
       if (operation && operation.ok === true && operation.recovered === true) {
-        if (this.host) this.host.innerHTML = '<div class="map-empty-state"><b>Mapa K liberado</b><span>A ECU confirmou a saída. Toque em Reler ECU para ler o mapa desta sessão.</span></div>';
+        if (this.host) this.host.innerHTML = '<div class="map-empty-state"><b>Mapa K liberado</b><span>A ECU confirmou a saída. O app lê a ECU sozinho; aguarde a leitura.</span></div>';
         text('mapSourceStatus', 'Mapa K liberado · releia a ECU');
       } else {
         this.alert(failureText(operation, 'A ECU não confirmou a saída. O Mapa K continua bloqueado.'));

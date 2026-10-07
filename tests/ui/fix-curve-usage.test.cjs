@@ -8,7 +8,7 @@ const { curveApp, editPoint, tapReview } = require('./wiring/scenarios.cjs');
 const review = app => app.byId('curveReviewButton');
 const nudges = app => app.$$('[data-curve-nudge]');
 const writes = app => app.world.calls.filter(c => ['startCurveBatchWrite', 'startCurveRestoreWrite', 'startCurveReset'].includes(c.method));
-const DISABLED = 'Escolha um ponto e ajuste o K';
+const DISABLED = 'Escolha um ponto';
 
 test('14. UM botão primário: sem "Preparar ponto" nem "Prepare pontos"; desabilitado diz o que fazer; a lista mostra o ponto preparado', () => {
   const app = curveApp();
