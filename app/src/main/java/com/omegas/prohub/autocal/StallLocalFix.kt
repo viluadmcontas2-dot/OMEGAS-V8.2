@@ -4,6 +4,8 @@ import com.omegas.prohub.util.Units
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.roundToInt
 
 /**
@@ -15,8 +17,12 @@ import kotlin.math.roundToInt
  *    pontos (GNV × gasolina por RPM×MAP). Sem evidência julgada a direção é DESCONHECIDA: nada se inventa e a frase pede mais
  *    coleta;
  *  - `proposal` (só com ≥ [MIN_REPEATS] engasgos desde a última gravação, direção determinada e passo possível): o delta de K por
- *    ponto, limitado a ±[MAX_STEP] (8%) do K atual e a [K_MIN, K_MAX] (0,75..1,20) e respeitando a trava da baixa
- *    (nunca empobrece abaixo de [AutoMatchSnapshotAnalysis.LOW_GUARD_MS]).
+ *    ponto, limitado a ±[MAX_STEP] (8%) do K atual e a [K_MIN, K_MAX] (0,75..1,20), e passado pelos MESMOS portões do motor
+ *    refinado: caixa com a trava da baixa ([AutoMatchRefinedEngine.proposalBox], nunca empobrece abaixo de
+ *    [AutoMatchRefinedEngine.LOW_GUARD_MS]), trava de inclinação ([AutoMatchRefinedEngine.enforceCoherence] com
+ *    [AutoMatchRefinedEngine.E_MAX]), histerese ([AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG]) e regressão (a proposta nunca
+ *    afasta os pontos fora do alvo). Só contam APAGOU/QUASE_APAGOU vindos de condução (rpm ≥
+ *    [EquivalenceLedger.DRIVING_MIN_RPM], `drivingAts` do [StallWatch]): engasgo de lenta não pede Curva K.
  *
  * `localProposal` (no nível de `stalls`) tem a forma do `proposal` do cérebro (`currentRaw`/`refinedRaw`, 30 inteiros) para a
  * UI aplicar com o mesmo toque de sempre (foto antes, Desfazer depois, readback). Nada aqui grava: só o dono, por um toque.
@@ -48,10 +54,9 @@ object StallLocalFix {
             val region = regions.optJSONObject(r) ?: continue
             val covering = coveringPoints(region, points)
             region.put("curvePoints", JSONArray(covering.map { it.optInt("index") }))
-            val ats = region.optJSONArray("ats")
-            val recent = if (ats == null) region.optInt("count") else (0 until ats.length()).count { ats.optLong(it) > sinceMs }
+            val recent = drivingEvents(region).count { it > sinceMs }
             region.put("recentCount", recent)
-            val diagnosis = diagnose(region, covering, recent)
+            val diagnosis = diagnose(region, covering, recent, allPoints(points))
             region.put("diagnosis", diagnosis.json)
             diagnosis.proposal?.let { region.put("proposal", it) }
             if (diagnosis.proposal != null && (best == null || region.optInt("count") > best.optInt("count"))) { best = region; bestRegion = r }
@@ -76,6 +81,27 @@ object StallLocalFix {
         }
         if (!out.has("localProposal")) out.put("localProposal", JSONObject.NULL)
         return out
+    }
+
+    /**
+     * Instantes dos engasgos que contam: `drivingAts` (APAGOU/QUASE_APAGOU com rpm ≥ [EquivalenceLedger.DRIVING_MIN_RPM]).
+     * JSON antigo sem a lista: `ats` só se a região inteira veio de condução; nunca a lenta.
+     */
+    private fun drivingEvents(region: JSONObject): List<Long> {
+        val driving = region.optJSONArray("drivingAts")
+        if (driving != null) return (0 until driving.length()).map { driving.optLong(it) }
+        if (region.optDouble("rpmBefore", region.optDouble("rpm", 0.0)) < EquivalenceLedger.DRIVING_MIN_RPM) return emptyList()
+        val ats = region.optJSONArray("ats") ?: return List(region.optInt("count")) { Long.MAX_VALUE }
+        return (0 until ats.length()).map { ats.optLong(it) }
+    }
+
+    /** Os 30 pontos do cérebro por índice (eixo e K atual), ou nulo se faltar algum. */
+    private fun allPoints(points: JSONArray?): List<JSONObject>? {
+        if (points == null) return null
+        val byIndex = (0 until points.length()).mapNotNull { points.optJSONObject(it) }.associateBy { it.optInt("index", -1) }
+        val list = (0 until AutoMatchRefinedEngine.POINT_COUNT).map { byIndex[it] ?: return null }
+        if (list.any { !(it.optDouble("axisMs") > 0.0) || !(it.optDouble("kCurrent") > 0.0) }) return null
+        return list
     }
 
     private fun coveringPoints(region: JSONObject, points: JSONArray?): List<JSONObject> {
@@ -104,7 +130,7 @@ object StallLocalFix {
 
     private fun times(n: Int) = if (n == 1) "1 engasgo" else "$n engasgos"
 
-    private fun diagnose(region: JSONObject, covering: List<JSONObject>, recent: Int): Diagnosis {
+    private fun diagnose(region: JSONObject, covering: List<JSONObject>, recent: Int, all: List<JSONObject>?): Diagnosis {
         val place = where(region)
         val count = region.optInt("count")
         fun result(direction: String, text: String, reason: String, proposal: JSONObject? = null) = Diagnosis(
@@ -129,28 +155,63 @@ object StallLocalFix {
         if (recent < MIN_REPEATS) {
             return result(direction, "Região $place com ${times(count)}; a mistura está $directionText aí. Se repetir, proponho um ajuste local.", "POUCOS_ENGASGOS")
         }
-        // Passo local: cada ponto fora vai ao alvo do cérebro, limitado a ±8% do K atual, a 0,75..1,20 e à trava da baixa.
+        // Passo local: cada ponto fora vai ao alvo do cérebro, limitado a ±8% do K atual e a 0,75..1,20, e passa pelos portões do
+        // motor refinado (caixa com trava da baixa → coerência E_MAX → histerese → regressão). Os outros pontos ficam parados.
         val items = JSONArray()
         var blocked = false
-        for (p in off) {
-            val k = p.optDouble("kCurrent")
-            val delta = p.optDouble("mixture").coerceIn(-MAX_STEP, MAX_STEP)
-            var after = (k * (1.0 + delta)).coerceIn(K_MIN, K_MAX)
-            val axis = p.optDouble("axisMs")
-            val index = p.optInt("index")
-            // Trava da baixa: o nó e o trecho interpolado até o nó anterior (empobrecer 3,6 ms empobrece abaixo de 3,5 ms).
-            val previousAxis = covering.firstOrNull { it.optInt("index") == index - 1 }?.optDouble("axisMs", Double.NaN) ?: Double.NaN
-            val lowGuard = axis < AutoMatchSnapshotAnalysis.LOW_GUARD_MS || (previousAxis.isFinite() && previousAxis < AutoMatchSnapshotAnalysis.LOW_GUARD_MS)
-            if (after < k && lowGuard) { blocked = true; continue } // nunca empobrece na baixa
-            val appliedDelta = after / k - 1.0
-            // O teto 0,75..1,20 nunca pode inverter a direção (K 1,30 pobre → 1,20 empobrecia) nem passar de ±8%.
-            if (appliedDelta * delta <= 0.0 || abs(appliedDelta) > MAX_STEP + 1e-9) continue
-            if (abs(appliedDelta) < MIN_DELTA) continue
-            val raw = (after * Q14).roundToInt().coerceIn(AutoMatchRefinedEngine.MIN_RAW_PROPOSAL, AutoMatchRefinedEngine.MAX_RAW_PROPOSAL)
-            after = raw / Q14
-            items.put(JSONObject().put("index", p.optInt("index")).put("axisMs", p.optDouble("axisMs"))
-                .put("kBefore", k).put("kAfter", after).put("kAfterRaw", raw)
-                .put("deltaPct", Math.round((after / k - 1.0) * 1000.0) / 10.0))
+        if (all != null) {
+            val n = all.size
+            val axis = all.map { it.optDouble("axisMs") }
+            val u = axis.map { ln(it) }
+            val x0 = all.map { ln(it.optDouble("kCurrent")) }
+            val target = x0.toMutableList()
+            val movable = BooleanArray(n)
+            val wanted = HashMap<Int, Double>()
+            for (p in off) {
+                val j = p.optInt("index")
+                if (j !in 0 until n) continue
+                val delta = p.optDouble("mixture").coerceIn(-MAX_STEP, MAX_STEP)
+                // Trava da baixa: o nó e o trecho interpolado até o nó anterior (empobrecer o nó acima da trava empobrece abaixo dela).
+                val guarded = axis[j] < AutoMatchRefinedEngine.LOW_GUARD_MS || (j > 0 && axis[j - 1] < AutoMatchRefinedEngine.LOW_GUARD_MS)
+                if (delta < 0.0 && guarded) { blocked = true; continue }
+                target[j] = x0[j] + ln(1.0 + delta)
+                wanted[j] = target[j]
+                movable[j] = true
+            }
+            val engineBox = AutoMatchRefinedEngine.proposalBox(x0, List(n) { if (movable[it]) 1.0 else 0.0 }, axis)
+            val box = engineBox.mapIndexed { j, b ->
+                val lo = b.first
+                val hi = b.second
+                val pair = if (!movable[j]) x0[j] to x0[j]
+                else if (direction == DIR_POOR) maxOf(lo, x0[j]) to minOf(hi, x0[j] + ln(1.0 + MAX_STEP))
+                else maxOf(lo, x0[j] + ln(1.0 - MAX_STEP)) to minOf(hi, x0[j])
+                if (pair.first > pair.second) pair.second to pair.second else pair
+            }
+            val e = AutoMatchRefinedEngine.effectiveElasticity(box, u)
+            val enforced = AutoMatchRefinedEngine.enforceCoherence(target, box, u, e)
+            val final = AutoMatchRefinedEngine.holdSmallSteps(target, box, x0, enforced, u, e, AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG).second
+            val raws = IntArray(n) { j ->
+                if (!movable[j]) (exp(x0[j]) * Q14).roundToInt()
+                else (exp(final[j]) * Q14).roundToInt().coerceIn(AutoMatchRefinedEngine.MIN_RAW_PROPOSAL, AutoMatchRefinedEngine.MAX_RAW_PROPOSAL)
+            }
+            // Regressão: a proposta nunca afasta do alvo do cérebro os pontos que ele julgou fora.
+            val errBefore = wanted.entries.sumOf { (x0[it.key] - it.value) * (x0[it.key] - it.value) }
+            val errAfter = wanted.entries.sumOf { (ln(raws[it.key] / Q14) - it.value) * (ln(raws[it.key] / Q14) - it.value) }
+            if (errAfter <= errBefore + AutoMatchRefinedEngine.REGRESSION_EPS) {
+                for (j in 0 until n) {
+                    if (!movable[j]) continue
+                    val k = exp(x0[j])
+                    val after = raws[j] / Q14
+                    val applied = after / k - 1.0
+                    val requested = exp(wanted.getValue(j) - x0[j]) - 1.0
+                    // O teto 0,75..1,20 nunca pode inverter a direção nem passar de ±8%; passo de ruído (histerese) fica.
+                    if (applied * requested <= 0.0 || abs(applied) > MAX_STEP + 1e-3) continue
+                    if (abs(ln(after / k)) < AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG - 1e-9 || abs(applied) < MIN_DELTA) continue
+                    items.put(JSONObject().put("index", j).put("axisMs", axis[j])
+                        .put("kBefore", k).put("kAfter", after).put("kAfterRaw", raws[j])
+                        .put("deltaPct", Math.round(applied * 1000.0) / 10.0))
+                }
+            }
         }
         if (items.length() == 0) {
             val why = if (blocked) "a trava da baixa não deixa empobrecer ali" else "o passo seria pequeno demais"

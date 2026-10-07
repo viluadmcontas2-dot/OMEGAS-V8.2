@@ -248,6 +248,11 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
                     .put("firstAt", list.minOf { it.optLong("at") })
                     .put("lastAt", list.maxOf { it.optLong("at") })
                     .put("ats", JSONArray(list.map { it.optLong("at") }.sorted()))
+                    // Só APAGOU/QUASE_APAGOU vindos de condução (rpm ≥ DRIVING_MIN_RPM, fora da lenta) podem pedir ajuste da Curva K.
+                    .put("drivingAts", JSONArray(list.filter {
+                        it.optString("kind") in setOf(KIND_STALL, KIND_NEAR) &&
+                            it.optDouble("rpmBefore", 0.0) >= EquivalenceLedger.DRIVING_MIN_RPM
+                    }.map { it.optLong("at") }.sorted()))
             }.sortedByDescending { it.optInt("count") }
         JSONObject().put("format", FORMAT)
             .put("count", stalls.size)
