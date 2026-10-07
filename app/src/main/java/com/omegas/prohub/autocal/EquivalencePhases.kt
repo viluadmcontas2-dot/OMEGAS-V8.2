@@ -256,11 +256,15 @@ class EquivalencePhases(
             val latestStatus = latest?.optString("status").orEmpty()
             val verification = if (latestStatus == "VERIFICANDO") verificationProgress(latest!!, journal) else null
             if (verification != null) out.put("verification", verification)
+            // A verificação só fecha com leitura nas faixas que a gravação TOCOU (sem relógio): se o motorista não passa por
+            // elas, ela nunca fecha. Isso não pode travar para sempre a proposta nas faixas que a gravação NÃO tocou.
+            val untouchedOff = if (latestStatus == "VERIFICANDO") untouchedOffBands(latest, off) else 0
             val candidate = when {
                 !ecuOnline -> "SEM_ECU"
                 // Conectou mas a ECU ainda não entregou nada: não afirma "no automático" nem "terminou".
                 ecuOnline && !ecuRead -> "LENDO_ECU"
                 ecuReason == null -> "ECU_TRABALHANDO"
+                latestStatus == "VERIFICANDO" && untouchedOff > 0 && measured.size >= 2 -> "PROPOSTA_PRONTA"
                 latestStatus == "VERIFICANDO" -> "VERIFICANDO"
                 latestStatus == "PIOROU_EM_PARTE" && restoreCount > 0 && worseStillOff(latest, off) -> "RESTAURAR_TRECHO"
                 measured.size >= MIN_STABLE_BANDS && off.length() == 0 -> "ESTAVEL"
@@ -332,6 +336,19 @@ class EquivalencePhases(
         }
         save()
         return JSONObject(result.toString())
+    }
+
+    /** Faixas "fora" agora que a gravação em verificação NÃO tocou (veredito NAO_ALTERADA no experimento). */
+    private fun untouchedOffBands(latest: JSONObject?, off: JSONArray): Int {
+        val verdicts = latest?.optJSONArray("bands") ?: return 0
+        var count = 0
+        for (j in 0 until off.length()) {
+            val o = off.optJSONObject(j) ?: continue
+            val untouched = (0 until verdicts.length()).mapNotNull { verdicts.optJSONObject(it) }
+                .any { it.optDouble("fromMs") == o.optDouble("fromMs") && it.optString("verdict") == "NAO_ALTERADA" }
+            if (untouched) count++
+        }
+        return count
     }
 
     /** O trecho que piorou ainda está fora da tolerância agora? Se já voltou, não há o que restaurar. */
