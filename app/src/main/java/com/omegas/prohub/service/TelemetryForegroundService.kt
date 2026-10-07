@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.EvidenceInvalidation
+import com.omegas.prohub.autocal.NativeGasEvidenceEpoch
 import com.omegas.prohub.autocal.EquivalencePhases
 import com.omegas.prohub.autocal.RefinementJournal
 import com.omegas.prohub.autocal.StallWatch
@@ -241,7 +242,10 @@ class TelemetryForegroundService : Service() {
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         equivalenceRuntime = EquivalenceRuntime(paths.runtimeRoot)
         // Curva K mudou por fora (ProgBase, outro aparelho): a verificação do diário e a foto do Desfazer perdem validade.
-        equivalenceRuntime.onExternalCurveChange = { reason -> refinementJournal.interrupt(reason) }
+        equivalenceRuntime.onExternalCurveChange = { reason ->
+            NativeGasEvidenceEpoch.shared.markWrite(System.currentTimeMillis())
+            refinementJournal.interrupt(reason)
+        }
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
         refinementJournal.setDecisionListener(::recordJournalTransition)
@@ -289,6 +293,7 @@ class TelemetryForegroundService : Service() {
                 // (que pode falhar por disco cheio) só depois.
                 EvidenceInvalidation.run(
                     invalidate = listOf(
+                        "epocaNativa" to { NativeGasEvidenceEpoch.shared.markWrite(System.currentTimeMillis()) },
                         "resetGas" to { equivalence.resetGas("MAPA_K_GRAVADO") },
                         "cerebro" to { equivalenceRuntime.onGasReset("MAPA_K_GRAVADO", equivalencePhases) },
                         "journal" to { refinementJournal.interrupt("MAPA_K_GRAVADO") },
@@ -318,6 +323,7 @@ class TelemetryForegroundService : Service() {
             // Escritores K e ações AutoCal (a trava serial é compartilhada): nenhuma leitura de round durante uma escrita.
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() || SerialWriteGuard.shared.isHeld() },
             onFreshSnapshot = { snapshot ->
+                NativeGasEvidenceEpoch.shared.observe(snapshot)
                 sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
             },
             onNativeCalibrationObserved = { payload ->
@@ -1036,6 +1042,7 @@ class TelemetryForegroundService : Service() {
         // Curva nova: o GNV medido com a antiga sai; a gasolina (referência) fica. Invalida PRIMEIRO.
         EvidenceInvalidation.run(
             invalidate = listOf(
+                "epocaNativa" to { NativeGasEvidenceEpoch.shared.markWrite(System.currentTimeMillis()) },
                 "resetGas" to { equivalence.resetGas("CURVA_K_GRAVADA") },
                 "cerebro" to { equivalenceRuntime.onGasReset("CURVA_K_GRAVADA", equivalencePhases) },
                 "adoptCurve" to {
@@ -1087,6 +1094,7 @@ class TelemetryForegroundService : Service() {
     private fun recordFailedCurveWrite(payload: JSONObject) {
         EvidenceInvalidation.run(
             invalidate = listOf(
+                "epocaNativa" to { NativeGasEvidenceEpoch.shared.markWrite(System.currentTimeMillis()) },
                 "resetGas" to { equivalence.resetGas("CURVA_K_FALHA_PARCIAL") },
                 "cerebro" to { equivalenceRuntime.onGasReset("CURVA_K_FALHA_PARCIAL", equivalencePhases) },
                 "round" to { if (::nativeAutoCal.isInitialized) nativeAutoCal.invalidateRound() },

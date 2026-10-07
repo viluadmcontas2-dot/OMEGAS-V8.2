@@ -798,6 +798,8 @@ object AutoMatchRefinedEngine {
             val tg = interp(m, gm, gt)
             val w = min(localWeight(m, pm, pw), localWeight(m, gm, gw))
             if (w <= 0.0 || tp <= 0.0 || tg <= 0.0) return@mapNotNull null
+            // K(T_g) tem de ser o K sob o qual o T_g foi ADQUIRIDO. Quem chama garante que só chegam bandas da época do
+            // MUL_ACT atual (NativeGasEvidenceEpoch: contagem só do que subiu depois da última gravação de K).
             val kAtGas = interp(tg, axisMs, kOld)
             Target(m, tp, tg, w, tg / tp, ln(kAtGas * tg / tp))
         }
