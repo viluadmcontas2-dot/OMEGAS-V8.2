@@ -645,7 +645,7 @@
       }
       const currentEvidence = !['SEM_ECU', 'LENDO_ECU', 'TENTATIVA_ENCERRADA'].includes(phase);
       setText('refinoRatio', pct(currentEvidence ? eq.ratio : null));
-      setText('refinoDetailCounts', rs?.counts ? `${rs.counts.intervalsCollected ?? '—'} de ${rs.counts.intervalsTotal ?? '—'} intervalos medidos · ${rs.counts.pointsToWrite ?? '—'} pontos sugeridos` : 'Aguardando medição');
+      setText('refinoDetailCounts', rs?.counts ? `${rs.counts.intervalsCollected ?? '—'} de ${rs.counts.intervalsTotal ?? '—'} regiões medidas · ${rs.counts.pointsToWrite ?? '—'} trechos da curva com ajuste sugerido` : 'Aguardando medição');
       setText('refinoDetailReason', rs?.whyNoProposal || rs?.reason || '');
       const proposals = document.getElementById('refinoProposals');
       if (proposals) {
