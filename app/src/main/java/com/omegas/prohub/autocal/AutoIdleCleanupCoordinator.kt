@@ -42,6 +42,7 @@ class AutoIdleCleanupCoordinator(
     private var inFlightSinceMs: Long? = null
     private var lastResult: JSONObject = JSONObject()
     @Volatile private var lastJson: JSONObject = JSONObject()
+    @Volatile private var enabledNow = true
 
     fun onGasBuffers(buffers: GasBuffers) = submit {
         if (buffers.sessionId != sessionId) resetSessionLocked(buffers.sessionId)
@@ -93,6 +94,9 @@ class AutoIdleCleanupCoordinator(
     }
 
     fun json(): JSONObject = JSONObject(lastJson.toString())
+
+    /** O apagamento automático está ligado nesta sessão (não foi desligado por readback ineficaz/gasolina). */
+    fun automaticEnabled(): Boolean = enabledNow
 
     private fun evaluateLocked() {
         val now = clock()
@@ -180,6 +184,7 @@ class AutoIdleCleanupCoordinator(
     }
 
     private fun publish() {
+        enabledNow = cleaner.disabledReason() == null
         lastJson = JSONObject()
             .put("sessionId", sessionId)
             .put("automatic", true)
