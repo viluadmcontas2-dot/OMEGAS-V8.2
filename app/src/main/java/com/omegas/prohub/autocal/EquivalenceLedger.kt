@@ -277,13 +277,16 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     /**
      * Alinha à Curva K lida da ECU; se mudou por fora do app (ProgBase, AutoMatch), descarta o GNV. Devolve true
      * quando descartou. Sem impressão digital anterior e com GNV guardado = curva desconhecida: descarta (falha
-     * fechada). Uma leitura igual à curva ANTERIOR logo depois de o app gravar é leitura velha: é ignorada.
+     * fechada). Uma leitura igual à curva ANTERIOR à última gravação do app é leitura velha e é ignorada quando o
+     * MUL_ACT foi LIDO antes da gravação ([capturedAtMs] < instante da gravação): a época é decidida pelo instante da
+     * leitura, não por relógio. Sem o instante (chamador antigo) vale a janela de [STALE_ALIGN_MS].
      */
-    fun alignCurve(fingerprint: String): Boolean {
+    fun alignCurve(fingerprint: String, capturedAtMs: Long? = null): Boolean {
         val reason = synchronized(lock) {
             val previous = curveFingerprint
-            if (previous != null && previous != fingerprint && fingerprint == previousFingerprint &&
-                clock() - adoptedAt < STALE_ALIGN_MS
+            val staleRead = if (capturedAtMs != null && capturedAtMs > 0L) capturedAtMs < adoptedAt
+            else clock() - adoptedAt < STALE_ALIGN_MS
+            if (previous != null && previous != fingerprint && fingerprint == previousFingerprint && staleRead
             ) return@synchronized "IGNORAR"
             if (previous != null && previous != fingerprint) { previousFingerprint = previous; adoptedAt = 0L }
             curveFingerprint = fingerprint
