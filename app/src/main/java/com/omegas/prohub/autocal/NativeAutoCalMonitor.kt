@@ -1157,6 +1157,9 @@ class NativeAutoCalMonitor(
         var consecutiveTimeouts = 0
         // Também fatiado: grupos de <= 3 leituras, cada um precedido do slot do árbitro (>= 3 quadros vivos antes).
         var sliceReads = 0
+        // Quando o NUM_BUF_UPD_GAS desta varredura foi lido (elapsed): é o instante da leitura GNV que vai para o
+        // apagamento automático, não o fim do snapshot (revisão 2026-10-07 #8).
+        var gasCountersReadAtElapsedMs = 0L
         var sliceOpen = false
         var sliceOwned = false
         try {
@@ -1175,6 +1178,7 @@ class NativeAutoCalMonitor(
                     expectedSessionId = expectedSessionId,
                     workClass = Mp48WorkClass.READ_ONLY,
                 )
+                if (field == AutoCalProtocol.NUM_BUF_UPD_GAS) gasCountersReadAtElapsedMs = SystemClock.elapsedRealtime()
                 observations += AutoCalReadObservation(
                     field = field,
                     status = reply.status.takeIf { it >= 0 },
@@ -1471,7 +1475,11 @@ class NativeAutoCalMonitor(
         if (tablesChangedByFullSnapshot) {
             try { onTablesChanged() } catch (_: Exception) {}
         }
-        publishGasBuffers(expectedSessionId, snapshot, afterMulActCapturedAtElapsedMs)
+        publishGasBuffers(
+            expectedSessionId,
+            snapshot,
+            gasCountersReadAtElapsedMs.takeIf { it > 0L } ?: afterMulActCapturedAtElapsedMs,
+        )
         if (enabled == 1) {
             try { onFreshSnapshot(decorated) } catch (_: Exception) {}
         }
