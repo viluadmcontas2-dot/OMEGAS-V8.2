@@ -279,6 +279,15 @@ class RefinoRenderTest {
             viewportHeight: window.innerHeight,
             screenScrollWidth: screen ? screen.scrollWidth : 0,
             screenClientWidth: screen ? screen.clientWidth : 0,
+            horizontalOverflow: [...screen.querySelectorAll('*')].filter(e => {
+              const r = e.getBoundingClientRect();
+              const style = getComputedStyle(e);
+              if (!r.width || !r.height || style.visibility === 'hidden') return false;
+              return ((style.overflowX === 'auto' || style.overflowX === 'scroll') && e.scrollWidth > e.clientWidth + 1)
+                || r.right > window.innerWidth + 1 || r.left < -1;
+            }).map(e => ({ tag: e.tagName, id: e.id, classes: e.className?.baseVal ?? e.className,
+              width: e.clientWidth, scrollWidth: e.scrollWidth })),
+            documentOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
             bodyHasNaN: /\bNaN\b/.test(body),
             bodyHasUndefined: /\bundefined\b/i.test(body)
           };
@@ -288,6 +297,8 @@ class RefinoRenderTest {
 
     private fun assertClean(dom: JSONObject) {
         assertTrue("Refino precisa estar ativo", dom.getBoolean("active"))
+        assertTrue("documento não pode ultrapassar viewport", !dom.getBoolean("documentOverflow"))
+        assertEquals("nenhuma rolagem interna ou conteúdo fora da tela: ${dom.optJSONArray("horizontalOverflow")}", 0, dom.getJSONArray("horizontalOverflow").length())
         assertTrue("sem NaN na tela", !dom.getBoolean("bodyHasNaN"))
         assertTrue("sem undefined na tela", !dom.getBoolean("bodyHasUndefined"))
         assertTrue(
