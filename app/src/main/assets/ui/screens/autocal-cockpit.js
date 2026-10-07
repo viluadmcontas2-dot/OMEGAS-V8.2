@@ -1335,6 +1335,8 @@
       D.setAttrIfChanged(layer, 'data-stale', live.grey ? 'true' : 'false');
       // O alvo muda a cada quadro novo; quem move o ponto é o quadro de animação (CSS transform, ease ~150 ms).
       this.cursor.setTarget(projected.x, projected.y, scale, projected.outOfRange);
+      // O laço de quadros dorme quando o cursor chega; alvo novo o acorda.
+      this.scheduler?.wake?.();
       if (typeof this.scheduler?.addFrameHook !== 'function' || seen?.scale !== this.chartScale) this.cursor.paint();
       const label = this.chartPart('[data-autocal-live-label]');
       if (label) {
@@ -1351,7 +1353,7 @@
     }
 
     /** Quadro de animação (rAF do scheduler): o cursor compartilhado só move a camada com CSS transform. */
-    animateCursor(timestamp) { this.cursor.frame(timestamp); }
+    animateCursor(timestamp) { return this.cursor.frame(timestamp); }
 
     renderZoneMeter(human) {
       const meter = document.getElementById('autocalZoneMeter');

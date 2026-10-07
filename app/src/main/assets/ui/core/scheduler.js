@@ -34,16 +34,23 @@
       this.armFrame();
       return () => this.frameHooks.delete(listener);
     }
+    /**
+     * Pede o próximo quadro. O laço NÃO é eterno: se todos os desenhistas devolverem `false` ("cheguei no alvo"),
+     * ele para; quem recebe um alvo novo chama wake() para rearmar. Devolver qualquer outra coisa mantém o laço.
+     */
     armFrame() {
       if (this.frameHandle !== null || !this.frameHooks.size || typeof root.requestAnimationFrame !== 'function') return;
       this.frameHandle = root.requestAnimationFrame(timestamp => {
         this.frameHandle = null;
+        let busy = false;
         this.frameHooks.forEach(listener => {
-          try { listener(timestamp); } catch (error) { console.error('[OMEGAS scheduler frame hook]', error); }
+          try { if (listener(timestamp) !== false) busy = true; } catch (error) { console.error('[OMEGAS scheduler frame hook]', error); }
         });
-        this.armFrame();
+        if (busy) this.armFrame();
       });
     }
+    /** Alvo novo para algum desenhista: volta a pedir quadros (sem efeito se já está armado). */
+    wake() { this.armFrame(); }
     armTimer() {
       if (!this.running || this.timer) return;
       this.timer = root.setInterval(() => this.run(), this.intervalMs);

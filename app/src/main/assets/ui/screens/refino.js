@@ -295,6 +295,8 @@
         this.tickJob();
         if (this.store.get().route !== 'refino') { this.releaseFrame(); return; }
         this.ensureFrame();
+        // Leitura nova chega no tick rápido: o laço de quadros pode estar dormindo (cursor parado no alvo).
+        this.updateLiveTarget();
         if (this.enterRefreshPending) { this.enterRefreshPending = false; this.refresh(true); this.dataGate.mark(); this.dataDirty = false; }
         else if (this.dataDirty) { this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
       });
@@ -798,11 +800,19 @@
 
     /** Quadro de animação (rAF do scheduler): só na aba Refino; o alvo só é recalculado quando chega leitura nova. */
     animateLive(timestamp) {
-      if (this.store.get().route !== 'refino') { this.cursor.frameAt = null; return; }
+      if (this.store.get().route !== 'refino') { this.cursor.frameAt = null; return false; }
+      this.updateLiveTarget();
+      return this.cursor.frame(timestamp);
+    }
+
+    /** Alvo do cursor: só recalcula quando chega leitura nova (ou o gráfico mudou); alvo novo acorda o laço de quadros. */
+    updateLiveTarget() {
       const telemetry = this.store.get().telemetry || {};
       const key = `${telemetry.sequence}|${Math.round((telemetry.telemetryAgeMs || 0) / 500)}|${this.chartSignature}`;
-      if (key !== this.liveKey) { this.liveKey = key; this.renderLive(); }
-      this.cursor.frame(timestamp);
+      if (key === this.liveKey) return;
+      this.liveKey = key;
+      this.renderLive();
+      this.scheduler?.wake?.();
     }
 
     inspect(token) {
