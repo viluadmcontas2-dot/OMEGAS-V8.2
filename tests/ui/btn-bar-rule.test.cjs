@@ -19,14 +19,14 @@ async function bars(page) {
     const screen = document.querySelector('.screen.active');
     const barsEls = [...screen.querySelectorAll('.btn-bar, .ar-act > .ar-buttons')];
     for (const bar of barsEls) {
-      const items = [...bar.querySelectorAll('button, summary, input, .segmented, .view-switch')].filter(e => {
+      const items = [...bar.querySelectorAll('button, summary, .value-field, .segmented, .view-switch')].filter(e => {
         const b = e.getBoundingClientRect();
         if (!(b.width > 0 && b.height > 0)) return false;
         if (e.closest('[hidden]')) return false;
         if (e.parentElement && e.parentElement.closest('.segmented, .view-switch')) return false;
         if (e.closest('.curve-photos-menu, .instrument-detail-content, .operation-layer')) return false;
         return true;
-      }).map(e => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, h: b.height, name: (e.id || e.textContent.trim().slice(0, 20)) }; });
+      }).map(e => { const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, t: b.top, h: b.height, name: (e.id || (e.querySelector('input') || {}).id || e.textContent.trim().slice(0, 20)) }; });
       out.push({ cls: bar.className, items, overflow: screen.scrollWidth > screen.clientWidth + 1 });
     }
     return out;

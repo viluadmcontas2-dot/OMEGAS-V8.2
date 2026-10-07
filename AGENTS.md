@@ -19,7 +19,7 @@
 10. Uma direção visual: tokens, cor com semântica, normalidade compacta.
 11. Navegação inferior = 8 abas de primeiro nível, nesta ordem: Agora, Mapa K, Curva K, AutoCal, Ajuste GNV, Sessões, Ferramentas, Diagnóstico. O AutoCal é aba independente e não pode ser removido, escondido nem agrupado (nada de menu "Avançado"). Mudar isso exige pedido explícito do dono.
 
-12. Direção visual dos botões (dono, 2026-10-07): toda barra de botões usa `.btn-bar`: tamanho natural do texto, 58 px de altura, 8 px entre eles, mesma linha, nunca esticada; botão `hidden` não ocupa lugar. Fluxo de UI obrigatório: skill `.claude/skills/omegas-ui-fluxo` (dizer, mudar, medir, olhar, corrigir, mostrar); o teste `tests/ui/btn-bar-rule.test.cjs` mede todas as abas no CI.
+12. Direção visual dos botões (dono, 2026-10-07): toda barra de botões usa `.btn-bar`: tamanho natural do texto, 58 px de altura, 8 px entre eles, mesma linha, nunca esticada; botão `hidden` não ocupa lugar. Princípio: rodapé único por tela (todo botão realocável desce para a mesma barra; o espaço liberado vai para o conteúdo). Fluxo de UI obrigatório: skill `.claude/skills/omegas-ui-fluxo` (dizer, mudar, medir, olhar, corrigir, mostrar); o teste `tests/ui/btn-bar-rule.test.cjs` mede todas as abas no CI.
 
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 

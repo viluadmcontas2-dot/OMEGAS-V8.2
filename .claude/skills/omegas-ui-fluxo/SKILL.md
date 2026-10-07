@@ -20,6 +20,9 @@ O dono pediu este nível de raciocínio e coerência como regra. Nada de "ficou 
 - Botão com `hidden` não ocupa lugar. Sem rolagem lateral; se faltar espaço, a barra quebra para uma segunda linha.
 - Toda barra nova usa a classe `.btn-bar` (definida em `app/src/main/assets/ui/styles-diamante.css`). O teste `tests/ui/btn-bar-rule.test.cjs` mede todas as abas e quebra o CI se uma barra fugir da regra.
 
+## Princípio: rodapé único (dono, 2026-10-07)
+Em toda tela, qualquer botão que possa ser realocado vai para **um rodapé único** (uma `.btn-bar`, uma linha, junto do Desfazer quando houver). Cabeçalhos de título e botões soltos no topo saem; o espaço liberado vai para o gráfico/grade. Estado vira uma frase curta sobre o conteúdo, não um cabeçalho. Ao revisar uma tela, perguntar sempre: "que botão aqui pode descer para o rodapé?".
+
 ## Disciplina
 - Mudou estrutura de tela → rodar `node --test tests/ui/*.test.cjs` e atualizar os testes que afirmavam a estrutura antiga (de propósito, dizendo no commit).
 - Salvar no GitHub (commit + push) a cada etapa; branch de trabalho temporária some quando entra na Diamante.
