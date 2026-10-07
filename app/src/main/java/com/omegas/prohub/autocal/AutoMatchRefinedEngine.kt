@@ -37,6 +37,11 @@ object AutoMatchRefinedEngine {
     const val ALGORITHM = "OMEGAS_REFINED_EQUIVALENCE_V1"
     const val POINT_COUNT = 30
     const val BAND_COUNT = 18
+    /**
+     * Bandas nativas que valem para T(MAP): 0..15. A banda b cobre [THD[b]; THD[b+1]] (MNFLD_PRESS_THD); as 16 e 17 são
+     * a cauda acima do último limiar útil (sem fim superior) e nunca tiveram dado nas sessões reais.
+     */
+    const val USEFUL_BAND_COUNT = 16
     const val AXIS_COUNTS_PER_MS = 512.0
     const val MAP_COUNTS_PER_BAR = 1024.0
     const val Q14 = 16384.0
@@ -160,6 +165,8 @@ object AutoMatchRefinedEngine {
         val holdMinStepLog: Double = 0.0,
         /** Lote H: bins finos da condução (54). Quando presente, substitui [telemetryPairs] como evidência da condução. */
         val fineBins: List<FineBins.Bin>? = null,
+        /** MNFLD_PRESS_THD (18): com ele, banda cujo MAP de buffer cai fora de [THD[b]; THD[b+1]] é evidência inválida. */
+        val pressureThresholdsRaw: IntArray? = null,
     )
 
     enum class Mode { EQUIVALENCE, POLISH, UNAVAILABLE }
@@ -265,8 +272,9 @@ object AutoMatchRefinedEngine {
             listOf(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts, input.gasTimeRaw, input.gasMapRaw, input.gasCounts)
                 .all { it.size == BAND_COUNT }
         ) {
-            val (petrol, rp) = monotoneFit(bandPoints(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts, stats))
-            val (gas, rg) = monotoneFit(bandPoints(input.gasTimeRaw, input.gasMapRaw, input.gasCounts, stats))
+            val thd = input.pressureThresholdsRaw?.takeIf { it.size == BAND_COUNT }
+            val (petrol, rp) = monotoneFit(bandPoints(input.petrolTimeRaw, input.petrolMapRaw, input.petrolCounts, stats, thd))
+            val (gas, rg) = monotoneFit(bandPoints(input.gasTimeRaw, input.gasMapRaw, input.gasCounts, stats, thd))
             rp.forEach { rejected += RejectedBand("GASOLINA", it.band, it.mapBar, it.timeMs) }
             rg.forEach { rejected += RejectedBand("GNV", it.band, it.mapBar, it.timeMs) }
             if (petrol.size >= 2 && gas.size >= 2) targets = equivalenceTargets(petrol, gas, axisMs, kOld)
@@ -721,11 +729,22 @@ object AutoMatchRefinedEngine {
 
     // ------------------------------------------------------------- evidência
 
-    internal fun bandPoints(timeRaw: IntArray, mapRaw: IntArray, counts: IntArray, stats: BandStats? = null): List<BandPoint> =
-        (0 until BAND_COUNT).mapNotNull { band ->
+    /** O MAP do buffer está dentro dos limiares da própria banda ([THD[b]; THD[b+1]])? Sem limiares válidos: aceita. */
+    internal fun mapInsideBand(band: Int, mapRaw: Int, thresholds: IntArray?): Boolean {
+        if (thresholds == null || band + 1 >= thresholds.size) return true
+        val lo = thresholds[band]
+        val hi = thresholds[band + 1]
+        if (lo <= 0 || hi <= lo) return true
+        return mapRaw in lo..hi
+    }
+
+    internal fun bandPoints(
+        timeRaw: IntArray, mapRaw: IntArray, counts: IntArray, stats: BandStats? = null, thresholds: IntArray? = null,
+    ): List<BandPoint> =
+        (0 until USEFUL_BAND_COUNT).mapNotNull { band ->
             val n = counts[band]
             if (n <= 0) return@mapNotNull null
-            if (mapRawInvalid(mapRaw[band]) || timeRaw[band] <= 0 || mapRaw[band] <= 0) {
+            if (mapRawInvalid(mapRaw[band]) || timeRaw[band] <= 0 || mapRaw[band] <= 0 || !mapInsideBand(band, mapRaw[band], thresholds)) {
                 stats?.let { it.invalid++ }
                 return@mapNotNull null
             }

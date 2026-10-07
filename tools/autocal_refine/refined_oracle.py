@@ -201,18 +201,32 @@ def map_raw_invalid(value):
     return value < 0 or (value & 0x8000) != 0
 
 
-def band_points(time_raw, map_raw, counts, stats=None):
+USEFUL_BAND_COUNT = 16       # bandas 0..15; 16 e 17 são cauda sem limite superior (= AutoMatchRefinedEngine.USEFUL_BAND_COUNT)
+
+
+def map_inside_band(band, m, thresholds):
+    """MAP do buffer dentro de [THD[b]; THD[b+1]] (MNFLD_PRESS_THD); sem limiares válidos aceita."""
+    if thresholds is None or band + 1 >= len(thresholds):
+        return True
+    lo, hi = thresholds[band], thresholds[band + 1]
+    if lo <= 0 or hi <= lo:
+        return True
+    return lo <= m <= hi
+
+
+def band_points(time_raw, map_raw, counts, stats=None, thresholds=None):
     """(MAP bar, T ms, peso, contagem, banda) das bandas com evidência.
 
     Banda com menos de BAND_MATURE_COUNT amostras (fina) entra no desenho de T(MAP) mas tem peso de
     evidência 0: nenhum alvo que dependa dela existe (nem conta, nem muda curva). Banda com dado mas MAP
     inválido (bit 0x8000) ou tempo/MAP não positivo é contada em stats["invalid"]."""
     points = []
-    for band in range(BAND_COUNT):
+    for band in range(USEFUL_BAND_COUNT):
         n = counts[band]
         if n <= 0:
             continue
-        if map_raw_invalid(map_raw[band]) or time_raw[band] <= 0 or map_raw[band] <= 0:
+        if (map_raw_invalid(map_raw[band]) or time_raw[band] <= 0 or map_raw[band] <= 0
+                or not map_inside_band(band, map_raw[band], thresholds)):
             if stats is not None:
                 stats["invalid"] = stats.get("invalid", 0) + 1
             continue
@@ -817,8 +831,10 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
     dropped_native = 0
     stats = {}
     if all(v is not None for v in petrol_raw + gas_raw):
-        petrol, rp = monotone_fit(band_points(*petrol_raw, stats=stats))
-        gas, rg = monotone_fit(band_points(*gas_raw, stats=stats))
+        thd = raw(snapshot, "MNFLD_PRESS_THD")
+        thd = thd if thd is not None and len(thd) == BAND_COUNT else None
+        petrol, rp = monotone_fit(band_points(*petrol_raw, stats=stats, thresholds=thd))
+        gas, rg = monotone_fit(band_points(*gas_raw, stats=stats, thresholds=thd))
         rejected = [dict(r, fuel="GASOLINA") for r in rp] + [dict(r, fuel="GNV") for r in rg]
         if len(petrol) >= 2 and len(gas) >= 2:
             targets = equivalence_targets(petrol, gas, axis_ms, k_old)

@@ -225,6 +225,7 @@ object AutoMatchSnapshotAnalysis {
                     telemetryEpisodes = telemetryEpisodes,
                     holdMinStepLog = holdMinStepLog,
                     fineBins = fineBins,
+                    pressureThresholdsRaw = valid(AutoCalProtocol.MNFLD_PRESS_THD, bands),
                 ),
             )
             if (!result.available) {
