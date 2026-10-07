@@ -30,7 +30,7 @@ import kotlin.math.roundToInt
  *
  * Segurança da proposta (Fatia H-evidência): sem evidência suficiente NÃO há proposta (a curva fica
  * como está); faixa nativa fina (< 3 amostras) não é evidência; a condução sozinha exige ≥ 3 faixas
- * com ≥ 8 pares e descarta faixa com razão GNV/gasolina fora de [0,6; 1,6]; K novo limitado ao
+ * com ≥ 8 pares e descarta faixa com razão GNV/gasolina fora de [0,80; 1,25]; K novo limitado ao
  * intervalo do AutoMatch nativo [0,75; 1,20]; MUL_ACT fora de [0,5; 2,0] é rejeitado.
  */
 object AutoMatchRefinedEngine {
@@ -111,9 +111,13 @@ object AutoMatchRefinedEngine {
     /** Ganho decrescente por ponto já alterado: 1ª passada 1,0 · 2ª 0,7 · 3ª em diante 0,5 (independe do veredito). */
     val PASS_GAIN = doubleArrayOf(1.0, 0.7, 0.5)
     fun passGain(passes: Int): Double = PASS_GAIN[passes.coerceIn(0, PASS_GAIN.size - 1)]
-    /** Razão mediana GNV/gasolina de uma faixa fora disto é erro de medida: a faixa inteira é descartada. */
-    const val TELEMETRY_RATIO_MIN = 0.6
-    const val TELEMETRY_RATIO_MAX = 1.6
+    /**
+     * Razão mediana GNV/gasolina de uma faixa fora disto é erro de medida: a faixa inteira é descartada. A própria ECU
+     * mede a equivalência (PETR_INJ_TBUF_GAS/PETR_INJ_TBUF no mesmo MAP, 85 sessões) em 1,013 com IQR [0,975; 1,062] e
+     * o AutoMatch nativo corrige em [0,75; 1,20]: [0,80; 1,25] já folga ~4 IQR; o antigo [0,6; 1,6] deixava passar lixo.
+     */
+    const val TELEMETRY_RATIO_MIN = 0.80
+    const val TELEMETRY_RATIO_MAX = 1.25
 
     /**
      * Lote H: a condução como evidência em 54 bins finos (FineBins), em vez de um alvo por par. A produção só passa

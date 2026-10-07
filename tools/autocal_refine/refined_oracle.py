@@ -89,8 +89,8 @@ def pass_gain(passes):
     return PASS_GAIN[min(max(int(passes), 0), len(PASS_GAIN) - 1)]
 # Plausibilidade: a razão mediana GNV/gasolina de uma faixa fora disto não é equivalência, é erro de
 # medida (outra curva, outro combustível, transiente): a faixa inteira é descartada como outlier.
-TELEMETRY_RATIO_MIN = 0.6
-TELEMETRY_RATIO_MAX = 1.6
+TELEMETRY_RATIO_MIN = 0.80   # ECU: razão GNV/gasolina mediana 1,013, IQR [0,975; 1,062]
+TELEMETRY_RATIO_MAX = 1.25
 LEDGER_BANDS = [(3.0, 4.5), (4.5, 6.0), (6.0, 7.5), (7.5, 9.0), (9.0, 12.0)]  # = EquivalenceLedger.BANDS
 
 # Lote H: evidência em bins finos (ver fine_bins.py). Só entra quando o chamador passa `fine_bins`.
