@@ -163,6 +163,8 @@ object AutoMatchSnapshotAnalysis {
         telemetryEpisodes: List<Int> = emptyList(),
         holdMinStepLog: Double = 0.0,
         fineBins: List<FineBins.Bin>? = null,
+        /** Época da evidência nativa do GNV (ver [NativeGasEvidenceEpoch]): buffers de antes de uma gravação de K não contam. */
+        epoch: NativeGasEvidenceEpoch = NativeGasEvidenceEpoch.shared,
     ): JSONObject {
         val fields = fieldsByKey(snapshot.optJSONArray("fields") ?: JSONArray())
         fun valid(field: AutoCalProtocol.Field, elements: Int): IntArray? {
@@ -196,6 +198,17 @@ object AutoMatchSnapshotAnalysis {
         val acquisitionGroup = coherenceGroup(snapshot, "ACQUISITION_CURRENT")
         val buffersCoherent = acquisitionGroup?.optBoolean("coherent", false) ?: true
         fun band(field: AutoCalProtocol.Field) = if (buffersCoherent) valid(field, bands) else null
+        // Época: o T_g de cada banda tem de ter sido adquirido sob o MUL_ACT deste snapshot (o motor usa K(T_g) = kOld).
+        val rawGasCounts = band(AutoCalProtocol.NUM_BUF_UPD_GAS)
+        val gasCounts = rawGasCounts?.let {
+            epoch.effectiveGasCounts(
+                it,
+                gasCapturedAtMs = epoch.fieldTime(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS.key),
+                mulCapturedAtMs = epoch.fieldTime(snapshot, AutoCalProtocol.MUL_ACT.key),
+            )
+        }
+        val epochFiltered = rawGasCounts != null && gasCounts != null && !rawGasCounts.contentEquals(gasCounts)
+        base.put("nativeEpochFiltered", epochFiltered)
         return try {
             val result = AutoMatchRefinedEngine.refine(
                 AutoMatchRefinedEngine.Input(
@@ -206,12 +219,13 @@ object AutoMatchSnapshotAnalysis {
                     petrolCounts = band(AutoCalProtocol.NUM_BUF_UPD_PETR),
                     gasTimeRaw = band(AutoCalProtocol.PETR_INJ_TBUF_GAS),
                     gasMapRaw = band(AutoCalProtocol.MNFLD_PRESS_BUF_GAS),
-                    gasCounts = band(AutoCalProtocol.NUM_BUF_UPD_GAS),
+                    gasCounts = gasCounts,
                     telemetryPairs = telemetryPairs,
                     pointGainScale = pointGainScale,
                     telemetryEpisodes = telemetryEpisodes,
                     holdMinStepLog = holdMinStepLog,
                     fineBins = fineBins,
+                    pressureThresholdsRaw = valid(AutoCalProtocol.MNFLD_PRESS_THD, bands),
                 ),
             )
             if (!result.available) {
@@ -225,8 +239,8 @@ object AutoMatchSnapshotAnalysis {
         }
     }
 
-    /** Abaixo disso (ms de Petrol Inj.) o refino não reduz K: protege contra o motor apagar. */
-    const val LOW_GUARD_MS = 3.5
+    /** Abaixo disso (ms de Petrol Inj.) o refino não reduz K: protege contra o motor apagar. Fonte: [AutoMatchRefinedEngine.LOW_GUARD_MS]. */
+    const val LOW_GUARD_MS = AutoMatchRefinedEngine.LOW_GUARD_MS
 
     const val SNAPSHOT_INCOHERENT_REASON = "SNAPSHOT_INCOERENTE_NO_TEMPO"
 
@@ -235,8 +249,8 @@ object AutoMatchSnapshotAnalysis {
         result.refinedRaw.forEachIndexed { index, engineRaw ->
             val currentRaw = result.currentRaw[index]
             // Trava da baixa: marcha lenta, desaceleração e embreagem (Petrol Inj. < LOW_GUARD_MS)
-            // é onde o motor apaga no GNV quando a curva fica pobre. O refino nunca empobrece
-            // essa região; só mantém ou enriquece.
+            // é onde o motor apaga no GNV quando a curva fica pobre. O motor já aplica a trava como limite da
+            // caixa ANTES da coerência (sem degrau); isto é só a rede de segurança e não deve disparar.
             val lowGuard = result.axisMs[index] < LOW_GUARD_MS && engineRaw < currentRaw
             val refinedRaw = if (lowGuard) currentRaw else engineRaw
             points.put(JSONObject()

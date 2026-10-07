@@ -41,8 +41,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
         fun cellKey(rpm: Double, map: Double): Long = Math.floorDiv(rpm.toLong(), MATCH_RPM.toLong()) * 1_000_003L +
             Math.floorDiv((map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
-        /** Abaixo disso a ECU tem estratégia de lenta própria: fora do índice de condução. */
-        const val DRIVING_MIN_RPM = 1_000.0
+        /**
+         * Abaixo disso a ECU tem estratégia de lenta própria: fora do índice de condução. 1200 rpm vem das 85 sessões
+         * reais (rpm < 1200: mesmo MAP dá +20–30% de ms na gasolina). Também é a fronteira de regime do pareamento.
+         */
+        const val DRIVING_MIN_RPM = 1_200.0
         val BANDS = listOf(3.0 to 4.5, 4.5 to 6.0, 6.0 to 7.5, 7.5 to 9.0, 9.0 to 12.0)
         private const val SAVE_INTERVAL_MS = 60_000L
         /** O índice só é recalculado se algo mudou E passou ao menos isto desde o último cálculo (mudança estrutural fura). */
@@ -200,11 +203,14 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val obs: Obs?
         if (frame.fuel.isNotBlank()) { liveFuelName = frame.fuel; liveFuelAt = frame.t }
         synchronized(lock) {
-            if (frame.fuel != "GASOLINA" && frame.fuel != "GNV" || frame.rpm <= 0 || frame.map <= 0 || frame.petrolMs < MIN_PETROL_MS) {
+            // NaN passa por qualquer comparação (<=, <): sem isFinite um quadro corrompido virava leitura e envenenava medianas.
+            if (frame.fuel != "GASOLINA" && frame.fuel != "GNV" || !frame.rpm.isFinite() || !frame.map.isFinite() ||
+                !frame.petrolMs.isFinite() || frame.rpm <= 0 || frame.map <= 0 || frame.petrolMs < MIN_PETROL_MS
+            ) {
                 window.clear()
                 return
             }
-            if (frame.fuel == "GNV" && frame.rpm >= DRIVING_MIN_RPM && frame.gasMs > 0.0) {
+            if (frame.fuel == "GNV" && frame.rpm >= DRIVING_MIN_RPM && frame.gasMs.isFinite() && frame.gasMs > 0.0) {
                 gasUsefulRpmMs += (frame.gasMs - GAS_DEAD_TIME_MS).coerceAtLeast(0.0) * frame.rpm
                 airRpmBar += frame.map * frame.rpm
             }
@@ -274,13 +280,16 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     /**
      * Alinha à Curva K lida da ECU; se mudou por fora do app (ProgBase, AutoMatch), descarta o GNV. Devolve true
      * quando descartou. Sem impressão digital anterior e com GNV guardado = curva desconhecida: descarta (falha
-     * fechada). Uma leitura igual à curva ANTERIOR logo depois de o app gravar é leitura velha: é ignorada.
+     * fechada). Uma leitura igual à curva ANTERIOR à última gravação do app é leitura velha e é ignorada quando o
+     * MUL_ACT foi LIDO antes da gravação ([capturedAtMs] < instante da gravação): a época é decidida pelo instante da
+     * leitura, não por relógio. Sem o instante (chamador antigo) vale a janela de [STALE_ALIGN_MS].
      */
-    fun alignCurve(fingerprint: String): Boolean {
+    fun alignCurve(fingerprint: String, capturedAtMs: Long? = null): Boolean {
         val reason = synchronized(lock) {
             val previous = curveFingerprint
-            if (previous != null && previous != fingerprint && fingerprint == previousFingerprint &&
-                clock() - adoptedAt < STALE_ALIGN_MS
+            val staleRead = if (capturedAtMs != null && capturedAtMs > 0L) capturedAtMs < adoptedAt
+            else clock() - adoptedAt < STALE_ALIGN_MS
+            if (previous != null && previous != fingerprint && fingerprint == previousFingerprint && staleRead
             ) return@synchronized "IGNORAR"
             if (previous != null && previous != fingerprint) { previousFingerprint = previous; adoptedAt = 0L }
             curveFingerprint = fingerprint
@@ -390,7 +399,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private fun computePairs(): List<EvidencePair> = EvidencePairs.build(petrol, gas, ecuPetrolRef)
 
     /**
-     * Índice de equivalência da condução (rpm ≥ 1000, ≥ 3 ms): razão mediana t_no_GNV / t_gasolina.
+     * Índice de equivalência da condução (rpm ≥ [DRIVING_MIN_RPM], ≥ 3 ms): razão mediana t_no_GNV / t_gasolina.
      * 1,00 = GNV pede exatamente o que a gasolina pede. >1 = GNV pobre (ECU compensa somando).
      */
     fun index(): JSONObject {

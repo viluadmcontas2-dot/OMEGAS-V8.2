@@ -5,7 +5,7 @@
 .autocal-zone-meter span { color: var(--tone-9aa8b8); font-size: 10px; font-weight: 700; }
 .autocal-zone-meter .petrol i[data-active="true"] { border-color: rgba(var(--rgb-120-183-255),.72); background: var(--tone-78b7ff); box-shadow: 0 0 0 3px rgba(var(--rgb-120-183-255),.09); }
 .autocal-zone-meter .gas i[data-active="true"] { border-color: rgba(var(--rgb-93-211-158),.72); background: var(--tone-5dd39e); box-shadow: 0 0 0 3px rgba(var(--rgb-93-211-158),.09); }
-.autocal-hero-actions button, .autocal-primary-action, .autocal-reset-actions button, .autocal-chart-tools button, .autocal-review-card button { min-height: 56px; }
+.autocal-hero-actions button, .autocal-primary-action, .autocal-reset-actions button, .autocal-chart-tools button { min-height: 56px; }
 .autocal-reference-svg { width: 100%; height: 100%; display: block; touch-action: pan-y; user-select: none; }
 .autocal-grid-line { stroke: var(--veil-07); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .autocal-axis-label, .autocal-axis-tick-x, .autocal-axis-tick-y { fill: var(--tone-8fa0b3); font-size: 11px; pointer-events: none; }
@@ -24,27 +24,6 @@
 .autocal-reference-hit.selected { fill: var(--veil-08); stroke: rgba(var(--rgb-255-255-255),.38); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .chart-empty { min-height: 100%; display: grid; place-content: center; gap: 4px; text-align: center; color: var(--tone-8190a2); font-size: 11px; }
 .chart-empty b { color: var(--tone-d6e0ea); font-size: 13px; }
-.autocal-band-segment { --band-accent: var(--tone-505d6c); display: grid; grid-template-rows: auto 3px auto; gap: 4px; align-content: center; min-width: 0; min-height: 56px; padding: 5px 2px; border: 1px solid color-mix(in srgb, var(--band-accent) 35%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--band-accent) 7%, var(--tone-0a0e14)); color: var(--tone-cdd7e1); text-align: center; }
-.autocal-band-segment[data-state="activity"] { --band-accent: var(--tone-4fa3ff); }
-.autocal-band-segment[data-state="mature"] { --band-accent: var(--tone-d9aa3e); }
-.autocal-band-segment[data-state="anchored"] { --band-accent: var(--tone-36c28a); }
-.autocal-band-segment[data-zone-acquired="true"] { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--band-accent) 70%, var(--tone-ffffff)); }
-.autocal-band-segment.selected { border-color: rgba(var(--rgb-255-255-255),.46); outline: 2px solid rgba(var(--rgb-255-255-255),.72); outline-offset: 1px; box-shadow: 0 0 0 4px var(--veil-05), inset 0 -2px 0 var(--band-accent); }
-.autocal-band-segment span, .autocal-band-segment small { overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
-.autocal-band-segment i { display: block; border-radius: 99px; background: var(--band-accent); }
-.autocal-review { position: absolute; inset: 0; z-index: 30; display: grid; align-items: start; justify-items: center; padding: 20px; overflow-y: auto; overflow-x: hidden; background: rgba(var(--rgb-4-7-11),.84); }
-.autocal-review[hidden] { display: none; }
-.curve-screen:has(.autocal-review:not([hidden])) { position: relative; }
-.autocal-review-card { width: min(620px, 100%); max-height: none; overflow: visible; padding: 18px; border: 1px solid rgba(var(--rgb-226-94-94),.28); border-radius: 14px; background: var(--tone-10151d); box-shadow: 0 18px 48px rgba(var(--rgb-0-0-0),.48); }
-.autocal-review-card header { display: flex; justify-content: space-between; gap: 12px; }
-.autocal-review-card p, .autocal-review-card dd, .autocal-review-card dt { font-size: 11px; }
-.autocal-review-tech { margin: 12px 0; border-top: 1px solid var(--veil-06); border-bottom: 1px solid var(--veil-06); }
-.autocal-review-tech > summary { min-height: 48px; display: flex; align-items: center; color: var(--tone-aab7c6); font-size: 11px; font-weight: 700; cursor: pointer; list-style: none; }
-.autocal-review-tech > summary::-webkit-details-marker { display: none; }
-.autocal-review-card dl { display: grid; gap: 6px; margin: 12px 0; }
-.autocal-review-card dl > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--veil-05); }
-.autocal-review-card dt { color: var(--tone-8793a4); }
-.autocal-review-card dd { margin: 0; color: var(--tone-e0e8f1); overflow-wrap: anywhere; }
 .autocal-cockpit button:focus-visible, .autocal-cockpit summary:focus-visible { outline: 3px solid rgba(var(--rgb-120-183-255),.7); outline-offset: 2px; }
 .autocal-route-screen { min-width: 0; min-height: 0; overflow: hidden; }
 .autocal-route-panel { min-width: 0; }
@@ -84,9 +63,6 @@
 .autocal-zone-meter span { font-size: 12px; }
 .chart-empty { font-size: 13px; }
 .chart-empty b { font-size: 15px; }
-.autocal-band-segment span, .autocal-band-segment small { font-size: 11px; }
-.autocal-review-card p, .autocal-review-card dd, .autocal-review-card dt { font-size: 13px; }
-.autocal-review-tech > summary { font-size: 13px; }
 .autocal-live-label { font-size: 13px; }
 .autocal-session-copy small { font-size: 11px; }
 .autocal-session-copy b  { font-size: 16px; }
@@ -94,12 +70,11 @@
 /* 2026-09-21 — hierarchy refinement: curve is the dominant instrument surface. */
 .autocal-cockpit { gap: 7px; }
 .autocal-session-strip  { order: 3; }
-.autocal-review { order: 8; }
 .autocal-live-halo { fill: rgba(var(--rgb-23-218-246),.14); stroke: rgba(var(--rgb-23-218-246),.55); stroke-width: 2; }
 .autocal-live-point { fill: var(--tone-19daf4); stroke: var(--tone-dffcff); stroke-width: 1.5; }
 .autocal-live-label { fill: var(--tone-49e7fb); stroke: var(--tone-061019); }
 .autocal-zone-meter { margin-top: 5px; }
-.autocal-hero-actions button, .autocal-primary-action, .autocal-reset-actions button, .autocal-chart-tools button, .autocal-review-card button { min-height: 48px; }
+.autocal-hero-actions button, .autocal-primary-action, .autocal-reset-actions button, .autocal-chart-tools button { min-height: 48px; }
 .autocal-session-strip  { padding: 8px 11px; border-radius: 11px; }
 /* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
 .autocal-reference-line.petrol:not(.previous) { stroke-width: 4; opacity: .62; }

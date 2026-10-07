@@ -109,6 +109,15 @@
       "classification": "PROVEN_OBSERVED_AUTONOMOUS",
       "host_write_allowed": false,
       "evidence": "counter 0→1→2→3 with only read/poll PC traffic; causal MUL_ACT bracket is read-only"
+    },
+    {
+      "name": "APP_AUTO_DELETE_OUTLIER_POINTS",
+      "classification": "OWNER_DECISION_2026_10_07_REV2",
+      "host_write_allowed": true,
+      "scope": "GAS or PETROL, one fuel per command; the other fuel's mask (0x016D/0x016E) sent all KEEP (18x1); same wire as DELETE_POINT_BATCH",
+      "trigger": "band outside the ms x MAP curve (AutoMatchRefinedEngine.monotoneFit LOO residual > max(5%, 3 MAD)), deleted while the car runs on that band's fuel (rpm>=1000), every time it is outside the curve; min 5 s between deletions (global)",
+      "readback": "target counter 0, lower than before, or <=1 with new time/MAP; the other fuel's counters/buffers re-read before/after (abnormal change pauses the connection)",
+      "spec": "docs/superpowers/specs/2026-10-07-autocal-apagar-lenta-design.md"
     }
   ],
   "non_blocking_unknowns": [

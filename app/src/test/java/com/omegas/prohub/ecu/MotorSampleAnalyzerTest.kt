@@ -269,6 +269,23 @@ class MotorSampleAnalyzerTest {
     }
 
     @Test
+    fun `assinatura da politica e serializada so quando a politica muda`() {
+        var policy = LearningTolerancePolicy(requiredFrames = 12)
+        val analyzer = MotorSampleAnalyzer { policy }
+        repeat(5) { analyzer.add(frame(it * 50L)) }
+        assertEquals(1, analyzer.policySignatureComputations)
+        // Instância nova com os mesmos valores (ex.: settings relidas) não reserializa nem reinicia a janela.
+        policy = policy.copy()
+        val same = analyzer.add(frame(250L))
+        assertEquals(1, analyzer.policySignatureComputations)
+        assertEquals(6, same.frameCount)
+        assertEquals(LearningTolerancePolicy(requiredFrames = 12).normalized().toJson().toString(), same.tolerancePolicy)
+        policy = policy.copy(requiredFrames = 6)
+        analyzer.add(frame(300L))
+        assertEquals(2, analyzer.policySignatureComputations)
+    }
+
+    @Test
     fun `strict and tolerant rpm policies produce opposite decisions`() {
         val strict = MotorSampleAnalyzer { LearningTolerancePolicy(requiredFrames = 6) }
         val tolerant = MotorSampleAnalyzer {

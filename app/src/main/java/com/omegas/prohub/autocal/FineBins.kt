@@ -91,7 +91,7 @@ object FineBins {
         val counts = IntArray(FINE_COUNT)
         for (p in pairs) {
             val idx = fineIndex(p.petrolRefMs) ?: continue
-            if (p.gasPetrolMs <= 0.0 || p.petrolRefMs <= 0.0) continue
+            if (!p.gasPetrolMs.isFinite() || !p.petrolRefMs.isFinite() || p.gasPetrolMs <= 0.0 || p.petrolRefMs <= 0.0) continue
             counts[idx]++
             val queue = reservoirs[idx]
             queue.addLast(Entry(ln(p.gasPetrolMs / p.petrolRefMs), p.petrolRefMs, p.episode, p.ecuRef))

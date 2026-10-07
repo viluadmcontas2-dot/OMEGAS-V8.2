@@ -37,7 +37,11 @@ for forbidden in ('persistPreMutationBackup', 'PERSISTING_BACKUP'):
 
 point_delete_body = manager.split('private fun executePointDelete', 1)[1].split('private fun confirm', 1)[0]
 assert 'readMulActSnapshot' not in point_delete_body, 'point reacquisition must not add a K pre-read'
-assert 'READING_BEFORE' not in point_delete_body, 'point reacquisition remains mask -> commit -> readback'
+# 2026-10-07 (spec autocal-apagar-lenta): só o apagamento AUTOMÁTICO relê GNV + gasolina antes da máscara
+# (prova de que a gasolina não mudou e de que o ponto tinha dado). O manual continua mask -> commit -> readback.
+_manual_head, _auto_and_rest = point_delete_body.split('val beforeSnapshot = if (prepared.automatic) {', 1)
+assert 'READING_BEFORE' not in _manual_head, 'point reacquisition remains mask -> commit -> readback'
+assert 'READING_BEFORE' not in _auto_and_rest.split('} else null', 1)[1], 'manual path has no pre-read'
 assert 'AutoCalPointDeleteProtocol.multiPointPlan(targets)' in point_delete_body
 assert 'maskFrames.forEachIndexed' in point_delete_body
 assert 'readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))' in point_delete_body
@@ -49,10 +53,11 @@ for token in (
     "MNFLD_PRESS_BUF",
     "NUM_BUF_UPD_PETR",
     "data-autocal-acquired-index",
-    "Apagar ponto",
+    "Reaprender ",
 ):
     assert token in cockpit, token
-assert "data-autocal-reacquire-point" in cockpit
+# Revisto (P2 seleção): tocar no ponto marca/desmarca e um só botão "Reaprender N pontos" manda o lote.
+assert "data-autocal-reacquire-selected" in cockpit
 assert "preparePointDelete" in api
 assert "preparePointDeleteBatch" in api
 assert "fun preparePointDelete" in bridge

@@ -95,10 +95,17 @@
       else if (!this.recordingSince) this.recordingSince = Date.now();
       const activeRow = rows.find(row => row.active);
       const recordingMs = !recording ? null : (finite(status.durationMs) ?? (activeRow ? activeRow.durationMs : null) ?? Math.max(0, Date.now() - this.recordingSince));
-      const signature = JSON.stringify([recording, recordingMs !== null && Math.round(recordingMs / 10000), finite(status.events), loading, listError, all.length, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index, r.autoMatch])]);
-      if (signature === this.signature && this.host.childElementCount) return;
-      this.signature = signature;
       const R = rules();
+      // A duração da gravação anda sozinha: atualizada no lugar, sem refazer a tela (refazer fechava o seletor de sessão).
+      const signature = JSON.stringify([recording, finite(status.events), loading, listError, all.length, rows.map(r => [r.id, r.bytes, r.active, r.blackouts, r.index, r.autoMatch])]);
+      const choosing = document.activeElement && this.host.contains(document.activeElement) && document.activeElement.tagName === 'SELECT';
+      if ((signature === this.signature || choosing) && this.host.childElementCount) {
+        const durationNode = this.host.querySelector('[data-session-duration]');
+        const durationText = recording ? R.durationLabel(recordingMs) : R.DASH;
+        if (durationNode && durationNode.textContent !== durationText) durationNode.textContent = durationText;
+        return;
+      }
+      this.signature = signature;
       const more = all.length - rows.length;
       const durationShown = recording ? R.durationLabel(recordingMs) : R.durationLabel(status.durationMs);
       const list = rows.length ? rows.map(row => {
@@ -128,7 +135,7 @@
       this.host.innerHTML = `
         <section class="ss-now" data-recording="${recording ? 'true' : 'false'}">
           <div class="ss-now-main"><small>${recording ? 'GRAVANDO AGORA' : 'GRAVAÇÃO'}</small><h3>${recording ? 'Esta condução está sendo gravada' : 'Nenhuma gravação em andamento'}</h3><p>${recording ? 'Fecha sozinha ao desligar a ECU.' : 'A próxima começa sozinha ao conectar a ECU.'}</p></div>
-          <dl class="ss-facts"><div><dt>Duração</dt><dd>${recording ? durationShown : R.DASH}</dd></div><div><dt>Usado</dt><dd>${R.megabytesLabel(finite(status.megabytes))}</dd></div><div><dt>Eventos</dt><dd>${R.fmt(status.events, 0)}</dd></div></dl>
+          <dl class="ss-facts"><div><dt>Duração</dt><dd data-session-duration>${recording ? durationShown : R.DASH}</dd></div><div><dt>Usado</dt><dd>${R.megabytesLabel(finite(status.megabytes))}</dd></div><div><dt>Eventos</dt><dd>${R.fmt(status.events, 0)}</dd></div></dl>
         </section>
         <p class="ss-where">Cada sessão é salva sozinha em <b>${FOLDER}</b> quando termina, pronta para compartilhar.</p>
         ${rows.length ? `<form class="session-export-toolbar" novalidate><label>Sessão para exportar${rows.length === 1 ? `<span>${escapeHtml(R.sessionDate(rows[0].raw))} · ${escapeHtml(rows[0].title)}</span><input type="hidden" data-session-choice value="${escapeHtml(rows[0].id)}">` : `<select data-session-choice aria-label="Sessão para exportar">${rows.map(row => `<option value="${escapeHtml(row.id)}"${row.id === this.selectedSessionId ? ' selected' : ''}>${escapeHtml(R.sessionDate(row.raw))} · ${escapeHtml(row.title)}</option>`).join('')}</select>`}</label><button type="submit" data-session-export>Exportar sessão</button></form>` : ''}

@@ -105,7 +105,17 @@ test('7. voltando do segundo plano o cursor AGORA do Refino volta a andar (app i
   app.doc.hidden = false;
   app.doc.dispatchEvent(new app.win.Event('visibilitychange'));
   app.advance(900);
-  assert.notEqual(app.win.OmegasApp.scheduler.frameHandle, null, 'visível de novo: quadro armado');
+  // Revisto (P1-6): o laço de quadros não é mais eterno; com o cursor parado no alvo ele dorme.
+  // O que importa é que leitura nova depois do segundo plano acorde o laço e mova o cursor.
+  const layer = () => app.$('#refinoChart [data-chart-live]');
+  const transformBefore = layer() && layer().style.transform;
+  app.world.setFrame({ rpm: 2600, load_bar: 0.72, petrol_ms: 5.4, gas_ms_diagnostic: null, fuel: 'GNV' });
+  app.advance(1000);
+  assert.ok(layer(), 'camada AGORA do Refino presente');
+  assert.notEqual(layer().style.transform, transformBefore, 'visível de novo e leitura nova: o cursor andou');
+  const cursor = app.win.OmegasApp.refino.cursor;
+  assert.deepEqual([cursor.pos.x, cursor.pos.y], [cursor.target.x, cursor.target.y], 'chegou no alvo');
+  assert.equal(app.win.OmegasApp.scheduler.frameHandle, null, 'parado no alvo: o laço de quadros dorme (sem 60 Hz eterno)');
   assert.ok(before !== undefined);
   app.destroy();
 });
@@ -148,4 +158,42 @@ test('16. textos do Refino: "Diferença GNV × gasolina" com sinal e %, "GNV igu
   const chart = fs.readFileSync(path.join(UI, 'components/curve-chart.js'), 'utf8');
   assert.match(chart, /autocal-axis-tick-y[^`]*\$\{tick\(v, 3\)\}/, 'eixo MAP com 3 casas');
   app.destroy();
+});
+
+test('P1-6: o laço de quadros para quando todos chegam no alvo (devolvem false) e wake() rearma', () => {
+  const frames = [];
+  const root = { requestAnimationFrame: fn => { frames.push(fn); return frames.length; }, cancelAnimationFrame: () => {}, setInterval: () => 1, clearInterval: () => {} };
+  root.window = root;
+  vm.createContext(root);
+  vm.runInContext(fs.readFileSync(path.join(UI, 'core/scheduler.js'), 'utf8'), root);
+  const scheduler = new root.OmegasUi.Scheduler({ intervalMs: 200 });
+  let moving = 2;
+  scheduler.addFrameHook(() => (moving-- > 0));
+  frames.shift()(1); frames.shift()(2);
+  assert.equal(frames.length, 1, 'ainda andando: rearma');
+  frames.shift()(3);
+  assert.equal(frames.length, 0, 'chegou no alvo: o laço dorme');
+  moving = 1;
+  scheduler.wake();
+  assert.equal(frames.length, 1, 'alvo novo: wake() rearma');
+  scheduler.wake();
+  assert.equal(frames.length, 1, 'sem pedido duplicado');
+});
+
+test('P2: "Reiniciar medições GNV" é irreversível e pede confirmação antes de apagar', () => {
+  const app = refinoApp();
+  try {
+    const mark = app.world.mark();
+    app.$('[data-refino-reset-gas]').click(); app.flush();
+    assert.equal(app.world.since(mark).filter(c => c.method === 'resetGasEvidence').length, 0, 'primeiro toque só pergunta');
+    const box = app.byId('refinoResetConfirm');
+    assert.equal(box.hidden, false);
+    assert.match(box.textContent, /Apagar tudo que o app mediu no GNV\? Não dá para desfazer\./);
+    app.$('[data-refino-reset-cancel]').click(); app.flush();
+    assert.equal(box.hidden, true, 'Cancelar fecha sem apagar');
+    assert.equal(app.world.since(mark).filter(c => c.method === 'resetGasEvidence').length, 0);
+    app.$('[data-refino-reset-gas]').click(); app.$('[data-refino-reset-confirm]').click(); app.flush();
+    assert.equal(app.world.since(mark).filter(c => c.method === 'resetGasEvidence').length, 1, 'só apaga depois de confirmar');
+    assert.equal(app.$('[data-refino-acquisition]').textContent, 'Ver aprendizado da ECU');
+  } finally { app.destroy(); }
 });

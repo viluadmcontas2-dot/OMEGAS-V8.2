@@ -13,7 +13,11 @@
     const fn = bridge && bridge[name];
     if (typeof fn !== 'function') return fallback;
     try { return parse(fn.apply(bridge, args || []), fallback); }
-    catch (error) { return { ok: false, error: error?.message || String(error), automatic: false, manualOnly: true }; }
+    catch (error) {
+      // Nunca engolir calado: o console diz QUAL chamada da ponte falhou.
+      console.warn(`[OMEGAS AutoCalApi] ${name} falhou:`, error);
+      return { ok: false, error: error?.message || String(error), automatic: false, manualOnly: true };
+    }
   }
 
   ns.AutoCalApi = {
@@ -28,6 +32,8 @@
     sessions: () => invoke('listAutoCalSessions', [], []),
     exportSession: sessionId => invoke('exportAutoCalSession', [String(sessionId || '')], false),
     actionStatus: () => invoke('getNativeActionStatus', [], {}),
+    // Limpeza automática do GNV (pontos aprendidos na lenta): ligada/pausada, motivo e apagamentos recentes.
+    autoCleanup: () => invoke('getAutoCleanupStatus', [], { ok: false }),
     startRead: () => invoke('startRead', [], {}),
     cancelRead: () => invoke('cancelRead', [], {}),
     setAcquisitionEnabled: enabled => invoke('setAcquisitionEnabled', [!!enabled], {}),

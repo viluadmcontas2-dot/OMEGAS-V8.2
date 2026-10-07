@@ -22,7 +22,8 @@ test('Diamante: telemetria persistente, navegação inferior e gráfico dominant
       });
       assert.ok(m.header.h>=48 && m.header.h<=80, route+': estado persistente');
       assert.ok(m.nav.y>=620 && m.nav.h>=76 && m.nav.b<=720, route+': navegação inferior');
-      assert.equal(m.labels.length,8);
+      // Revisto (P2 navegação): 8 rotas + o botão "Avançado".
+      assert.equal(m.labels.length,9);
       for (const f of m.facts) assert.ok(f.w>0 && f.h>0, route+': telemetria não some');
       if (['autocal','refino'].includes(route)) {
         assert.ok(m.chart,route+': gráfico presente');

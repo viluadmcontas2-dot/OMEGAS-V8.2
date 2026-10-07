@@ -114,6 +114,17 @@ class EquivalenceEngineTest {
     }
 
     @Test
+    fun `ponto em prova nao e regravado mas os outros pontos fora seguem propostos`() {
+        val free = EquivalenceEngine.evaluate(input(gasWithRichPlateau(1.06)))
+        assertEquals(NextActionKind.APPLY, free.nextAction.kind)
+        val inProof = free.nextAction.pointIndexes.first()
+        val r = EquivalenceEngine.evaluate(input(gasWithRichPlateau(1.06))) { ProofOutcome(mapOf(inProof to PointState.EM_PROVA), null) }
+        assertEquals(NextActionKind.APPLY, r.nextAction.kind)
+        assertTrue(inProof !in r.nextAction.pointIndexes)
+        assertEquals(r.nextAction.currentRaw!![inProof], r.nextAction.refinedRaw!![inProof])
+    }
+
+    @Test
     fun `prioridade da proxima acao segue a spec`() {
         val flat = gasWithRichPlateau(1.0)
         val contested = EquivalenceEngine.evaluate(input(gasWithRichPlateau(1.06))) { ProofOutcome(mapOf(12 to PointState.CONTESTADO), null) }

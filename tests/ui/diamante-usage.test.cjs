@@ -35,7 +35,8 @@ test('Diamante: proposta local da ponte aparece em Sugestões e só grava após 
  const app=L.boot({world:w});app.go('refino');app.settle(4);
  const button=app.$('[data-refino-primary]');
  assert.equal(button.hidden,false,'o ajuste local tem ação');
- assert.match(app.byId('refinoProposals').textContent,/Ponto 5/);
+ // Revisto (P2): Sugestões falam em trecho da curva e % de GNV, não em "Ponto 5: 1,000 → 1,040".
+ assert.match(app.byId('refinoProposals').textContent,/Trecho [\d,–]+( ms)?/);assert.match(app.byId('refinoProposals').textContent,/% de GNV/);
  assert.equal(w.callsOf('startCurveBatchWrite').length,0,'só observar não grava');
  button.click();app.settle(8);
  assert.equal(w.callsOf('startCurveBatchWrite').length,1,'um toque, caminho habitual de foto e conferência');
@@ -84,6 +85,7 @@ test('Diamante: Diagnóstico apresenta jerkPct como percentual e aceita o nome g
 test('Diamante: ícones de navegação são SVG incorporado, sem máscaras externas incompatíveis com file:// no WebView',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const html=fs.readFileSync(path.join(__dirname,'../../app/src/main/assets/ui/index.html'),'utf8');
- assert.equal((html.match(/<svg class="nav-icon"/g)||[]).length,8);
+ // Revisto (P2 navegação): 8 rotas + o botão "Avançado", todos com SVG incorporado.
+ assert.equal((html.match(/<svg class="nav-icon"/g)||[]).length,9);
  assert.doesNotMatch(html,/--nav-icon:url/);
 });

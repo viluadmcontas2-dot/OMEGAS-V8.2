@@ -103,6 +103,8 @@ class EquivalencePhases(
     private var nonAlertSince = 0L
     /** Faixas (pelo início, em ms) atualmente "fora": a histerese de ±3%/±2% precisa lembrar. */
     private val offLatch = HashSet<Double>()
+    /** Época do GNV do livro (gasEpochAt/motivo) com que o [offLatch] foi montado: GNV zerado = histerese recomeça. */
+    private var offLatchEpoch: String? = null
     /** Conclusão nativa da observação atual; ausente/ambígua não autoriza o refino. */
     private var ecuDoneLatch: String? = null
     private var dirty = false
@@ -215,6 +217,12 @@ class EquivalencePhases(
                 .put("automatic", false)
 
             val bands = index.optJSONArray("bands") ?: JSONArray()
+            // O GNV foi zerado (curva/mapa/AutoMatch/reinício): o "fora" medido com a curva anterior não vale para a nova.
+            val gasEpoch = if (index.has("gasEpochAt")) index.optLong("gasEpochAt").toString() + ":" + index.optString("gasEpochReason") else null
+            if (gasEpoch != null && gasEpoch != offLatchEpoch) {
+                if (offLatchEpoch != null) offLatch.clear()
+                offLatchEpoch = gasEpoch
+            }
             val measured = ArrayList<JSONObject>()
             var measuredOnEcuRef = 0
             val off = JSONArray()
@@ -248,11 +256,15 @@ class EquivalencePhases(
             val latestStatus = latest?.optString("status").orEmpty()
             val verification = if (latestStatus == "VERIFICANDO") verificationProgress(latest!!, journal) else null
             if (verification != null) out.put("verification", verification)
+            // A verificação só fecha com leitura nas faixas que a gravação TOCOU (sem relógio): se o motorista não passa por
+            // elas, ela nunca fecha. Isso não pode travar para sempre a proposta nas faixas que a gravação NÃO tocou.
+            val untouchedOff = if (latestStatus == "VERIFICANDO") untouchedOffBands(latest, off) else 0
             val candidate = when {
                 !ecuOnline -> "SEM_ECU"
                 // Conectou mas a ECU ainda não entregou nada: não afirma "no automático" nem "terminou".
                 ecuOnline && !ecuRead -> "LENDO_ECU"
                 ecuReason == null -> "ECU_TRABALHANDO"
+                latestStatus == "VERIFICANDO" && untouchedOff > 0 && measured.size >= 2 -> "PROPOSTA_PRONTA"
                 latestStatus == "VERIFICANDO" -> "VERIFICANDO"
                 latestStatus == "PIOROU_EM_PARTE" && restoreCount > 0 && worseStillOff(latest, off) -> "RESTAURAR_TRECHO"
                 measured.size >= MIN_STABLE_BANDS && off.length() == 0 -> "ESTAVEL"
@@ -324,6 +336,19 @@ class EquivalencePhases(
         }
         save()
         return JSONObject(result.toString())
+    }
+
+    /** Faixas "fora" agora que a gravação em verificação NÃO tocou (veredito NAO_ALTERADA no experimento). */
+    private fun untouchedOffBands(latest: JSONObject?, off: JSONArray): Int {
+        val verdicts = latest?.optJSONArray("bands") ?: return 0
+        var count = 0
+        for (j in 0 until off.length()) {
+            val o = off.optJSONObject(j) ?: continue
+            val untouched = (0 until verdicts.length()).mapNotNull { verdicts.optJSONObject(it) }
+                .any { it.optDouble("fromMs") == o.optDouble("fromMs") && it.optString("verdict") == "NAO_ALTERADA" }
+            if (untouched) count++
+        }
+        return count
     }
 
     /** O trecho que piorou ainda está fora da tolerância agora? Se já voltou, não há o que restaurar. */
@@ -455,8 +480,6 @@ class EquivalencePhases(
                 }
                 val worse = experienceWorse(proof.roughBefore, point.roughnessRatio) ||
                     experienceWorse(proof.nearBefore, point.nearStallRatio)
-                val before = proof.mixtureBefore
-                val improved = before != null && abs(mixture) < abs(before)
                 when {
                     abs(mixture) <= point.tolerance && !worse -> {
                         proof.verdict = PointState.CONFIRMADO
@@ -464,7 +487,9 @@ class EquivalencePhases(
                         attemptsByPoint.remove(proof.index)
                         changed = true
                     }
-                    improved && worse -> {
+                    // A suavidade piorou depois do ajuste: CONTESTADO (oferece desfazer), tenha a mistura melhorado ou
+                    // piorado. Antes "mistura piorou E suavidade piorou" caía em INCONCLUSIVO e o ajuste ruim ficava.
+                    worse -> {
                         proof.verdict = PointState.CONTESTADO
                         states[proof.index] = PointState.CONTESTADO
                         changed = true

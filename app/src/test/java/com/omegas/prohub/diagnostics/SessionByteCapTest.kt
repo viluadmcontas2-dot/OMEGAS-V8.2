@@ -5,8 +5,49 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SessionByteCapTest {
-    private fun info(name: String, bytes: Long, at: Long, active: Boolean = false) =
-        SessionByteCap.Info(name, bytes, at, active)
+    private fun info(name: String, bytes: Long, at: Long, active: Boolean = false, published: Boolean = true) =
+        SessionByteCap.Info(name, bytes, at, active, published)
+
+    @Test
+    fun `acima do teto normal sessao sem copia publica nao e apagada`() {
+        val entries = listOf(
+            info("nao-publicada-antiga", 600, 1, published = false),
+            info("publicada", 400, 5),
+            info("nova", 400, 9),
+        )
+        // total 1400, teto 1000, emergência 2000: a mais antiga é a não publicada, mas sai a publicada
+        assertEquals(listOf("publicada"), SessionByteCap.select(entries, 1_000, emergencyCapBytes = 2_000))
+        // mesmo sem publicada suficiente para caber, a não publicada fica
+        assertEquals(listOf("publicada", "nova"), SessionByteCap.select(entries, 100, emergencyCapBytes = 2_000))
+    }
+
+    @Test
+    fun `acima do teto de emergencia a nao publicada mais antiga sai`() {
+        val entries = listOf(
+            info("nao-publicada-antiga", 600, 1, published = false),
+            info("nao-publicada-nova", 600, 2, published = false),
+            info("publicada", 400, 5),
+        )
+        // total 1600 > emergência 1000: primeiro as publicadas, depois a não publicada mais antiga
+        assertEquals(
+            listOf("publicada", "nao-publicada-antiga"),
+            SessionByteCap.select(entries, 500, emergencyCapBytes = 1_000),
+        )
+    }
+
+    @Test
+    fun `sessao em publicacao nunca e apagada nem na emergencia`() {
+        val entries = listOf(
+            info("parada-na-fila-do-publisher", 5_000, 1, active = true, published = false),
+            info("publicada", 400, 5),
+        )
+        assertEquals(listOf("publicada"), SessionByteCap.select(entries, 100, emergencyCapBytes = 1_000))
+    }
+
+    @Test
+    fun `teto de emergencia de 3 GB`() {
+        assertEquals(3L * 1024L * 1024L * 1024L, SessionByteCap.EMERGENCY_TOTAL_BYTES_CAP)
+    }
 
     @Test
     fun `abaixo do teto nada e apagado`() {

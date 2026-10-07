@@ -1,6 +1,7 @@
 package com.omegas.prohub.equivalence
 
 import com.omegas.prohub.autocal.AutoMatchRefinedEngine
+import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
 import org.json.JSONArray
 import org.json.JSONObject
@@ -20,7 +21,7 @@ class ReferenceStore(private val file: File?) {
         const val PROVISIONAL_ID = "PROVISORIO"
 
         /**
-         * Pontos de gasolina que a ECU deu como adquiridos (ZONA_ADQUIRIDA, não "anterior"), limpos como o
+         * Pontos de gasolina maduros da ECU (zona marcada OU contador no limiar; ver EcuPetrolReference), limpos como o
          * livro limpa a curva da ECU. Lista vazia = aquisição imatura (poucos pontos ou faixa curta demais).
          */
         fun pointsFrom(acquisition: JSONObject?): List<RefPoint> {
@@ -28,8 +29,8 @@ class ReferenceStore(private val file: File?) {
             val raw = ArrayList<RefPoint>()
             for (i in 0 until array.length()) {
                 val p = array.optJSONObject(i) ?: continue
-                if (p.optString("fuel") != "GASOLINA" || p.optBoolean("previous")) continue
-                if (p.optString("state") != "ZONA_ADQUIRIDA") continue
+                // Mesmo critério da curva de gasolina da ECU do livro (EcuPetrolReference.isMaturePetrolPoint).
+                if (!EcuPetrolReference.isMaturePetrolPoint(p)) continue
                 if (p.isNull("timeMs") || p.isNull("mapBar")) continue
                 val ms = p.optDouble("timeMs", Double.NaN)
                 val map = p.optDouble("mapBar", Double.NaN)

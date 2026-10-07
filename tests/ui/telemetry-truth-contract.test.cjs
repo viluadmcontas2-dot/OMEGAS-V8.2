@@ -21,9 +21,13 @@ function between(source, start, end) {
   return source.slice(a, b);
 }
 
-test('fast snapshot identity follows native sequence and freshness instead of freezing semantic progress', () => {
+// Revisto (P1-4): a sequência nativa muda a cada quadro e forçava redesenho de tudo com os mesmos números.
+// O quadro novo segue rastreado por lastPresentSequence (o pedido incremental à ponte); a assinatura visual
+// só leva o que aparece na tela e o frescor, que continua andando (cinza/sumir não congela).
+test('fast snapshot identity follows visible values and freshness, not the per-frame sequence', () => {
   const signature = between(app, 'function telemetryVisualSignature', 'function renderLightLiveContext');
-  assert.match(signature, /source\.sequence/, 'native sequence must participate in fast snapshot identity');
+  assert.doesNotMatch(signature, /sourceSequence,|source\.sequence\)/, 'per-frame sequence must not force a repaint');
+  assert.match(app, /lastPresentSequence = Number\.isFinite\(Number\(telemetry\.sequence\)\)/, 'frame identity still tracked for the bridge');
   assert.match(signature, /source\.(?:telemetryAgeMs|ageMs)/, 'freshness must participate in fast snapshot identity');
 });
 

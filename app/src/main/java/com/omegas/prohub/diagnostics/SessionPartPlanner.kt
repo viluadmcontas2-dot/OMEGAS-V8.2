@@ -3,7 +3,10 @@ package com.omegas.prohub.diagnostics
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
 import java.io.OutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.io.RandomAccessFile
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
@@ -18,21 +21,43 @@ import java.util.zip.ZipOutputStream
  *
  * O mecanismo de partes continua aqui para sessões antigas que já têm partes publicadas: cada parte
  * leva só os bytes novos dos `events_*.jsonl` (até a última linha completa) e os arquivos pequenos
- * que mudaram, e uma parte publicada nunca é reescrita (sem duplicata no Drive). Puro: sem Android.
+ * que mudaram. Puro: sem Android.
+ *
+ * Um nome publicado nunca é reescrito: antes de escrever, o número da parte é reservado num marcador
+ * vazio (`.reserved_part_NNNN`, sobrevive a estado corrompido porque é só o nome). Se o app morrer
+ * entre publicar e registrar, a nova tentativa usa o PRÓXIMO número e repete a faixa desde o último
+ * registro (bytes idênticos; o `parte.json` diz quais partes foram substituídas). O estado é gravado
+ * de forma atômica (temporário + fsync + rename) e, se mesmo assim estiver ilegível, a próxima parte
+ * leva tudo desde o byte 0 com número acima de qualquer reserva: duplica, nunca perde nem volta à 1.
  */
 object SessionPartPlanner {
     const val STATE_FILE = ".public_parts.json"
     const val FORMAT = "omegas-session-part-v1"
+    private const val RESERVATION_PREFIX = ".reserved_part_"
 
     data class Slice(val name: String, val file: File, val from: Long, val to: Long)
 
     class Plan(
-        val part: Int,
+        part: Int,
         val slices: List<Slice>,
         val files: List<File>,
         val final: Boolean,
-        internal val nextState: JSONObject,
+        internal val dir: File,
+        internal val nextOffsets: JSONObject,
+        internal val nextMeta: JSONObject,
+        /** Partes registradas antes desta (a ordem de junção). */
+        val committedBefore: List<Int>,
+        supersededParts: List<Int>,
+        /** O estado estava ilegível: esta parte recomeça do byte 0 de cada arquivo. */
+        val stateRecovered: Boolean,
     ) {
+        var part: Int = part
+            internal set
+
+        /** Números reservados e nunca registrados (podem ter saído; a faixa deles está repetida aqui). */
+        var supersededParts: List<Int> = supersededParts
+            internal set
+
         /** Primeira publicação já final: é a sessão inteira, vira um ZIP só com nomes simples. */
         val single: Boolean get() = part == 1 && final
     }
@@ -44,11 +69,37 @@ object SessionPartPlanner {
     fun fileName(sessionId: String, plan: Plan): String =
         if (plan.single) DocumentsSessionMirror.safeName(sessionId) + ".zip" else partName(sessionId, plan.part)
 
-    private fun readState(dir: File): JSONObject = try {
-        File(dir, STATE_FILE).takeIf { it.isFile }?.let { JSONObject(it.readText()) } ?: JSONObject()
-    } catch (_: Exception) {
-        JSONObject()
+    private class StateRead(val state: JSONObject, val corrupted: Boolean)
+
+    /**
+     * Estado registrado. Um temporário completo que não chegou ao rename (queda no meio do registro)
+     * vale mais que o principal: ele foi escrito depois de a parte ter saído.
+     */
+    private fun readState(dir: File): StateRead {
+        val main = File(dir, STATE_FILE)
+        val tmp = File(dir, "$STATE_FILE.tmp")
+        parseState(tmp)?.let { return StateRead(it, corrupted = false) }
+        if (!main.exists()) return StateRead(JSONObject(), corrupted = false)
+        return parseState(main)?.let { StateRead(it, corrupted = false) } ?: StateRead(JSONObject(), corrupted = true)
     }
+
+    private fun parseState(file: File): JSONObject? = try {
+        if (file.isFile) JSONObject(file.readText(Charsets.UTF_8)).takeIf { it.has("nextPart") } else null
+    } catch (_: Exception) {
+        null
+    }
+
+    private fun reservationFile(dir: File, part: Int) =
+        File(dir, RESERVATION_PREFIX + part.toString().padStart(4, '0'))
+
+    /** Números de parte já reservados (publicados ou tentados) nesta sessão. */
+    fun reservedParts(dir: File): List<Int> = dir.listFiles()
+        ?.mapNotNull { file -> file.name.takeIf { it.startsWith(RESERVATION_PREFIX) }?.removePrefix(RESERVATION_PREFIX)?.toIntOrNull() }
+        ?.sorted()
+        .orEmpty()
+
+    private fun intList(array: JSONArray?): List<Int> =
+        if (array == null) emptyList() else List(array.length()) { array.optInt(it) }.filter { it > 0 }
 
     /** Posição logo após o último '\n' (linha cortada por queda de energia fica para depois). */
     fun completeLength(file: File): Long {
@@ -74,7 +125,8 @@ object SessionPartPlanner {
     /** O que entraria na próxima parte; null quando não há nada novo. */
     fun plan(dir: File, final: Boolean): Plan? {
         if (!dir.isDirectory) return null
-        val state = readState(dir)
+        val read = readState(dir)
+        val state = read.state
         val offsets = state.optJSONObject("offsets") ?: JSONObject()
         val meta = state.optJSONObject("meta") ?: JSONObject()
         val nextOffsets = JSONObject(offsets.toString())
@@ -98,11 +150,59 @@ object SessionPartPlanner {
             }
         }
         if (slices.isEmpty() && files.isEmpty()) return null
-        val part = state.optInt("nextPart", 1)
-        val next = JSONObject().put("format", FORMAT).put("nextPart", part + 1)
-            .put("offsets", nextOffsets).put("meta", nextMeta)
-        return Plan(part, slices, files, final, next)
+        val stateNext = state.optInt("nextPart", 1).coerceAtLeast(1)
+        // Estado antigo (sem a lista): as partes 1..nextPart-1 foram registradas em ordem.
+        val committed = state.optJSONArray("committedParts")?.let(::intList)
+            ?: (1 until stateNext).toList()
+        val reserved = reservedParts(dir)
+        val part = maxOf(stateNext, (reserved.maxOrNull() ?: 0) + 1)
+        val superseded = reserved.filter { it !in committed && it < part }
+        return Plan(
+            part = part,
+            slices = slices,
+            files = files,
+            final = final,
+            dir = dir,
+            nextOffsets = nextOffsets,
+            nextMeta = nextMeta,
+            committedBefore = if (read.corrupted) emptyList() else committed,
+            supersededParts = superseded,
+            stateRecovered = read.corrupted,
+        )
     }
+
+    /**
+     * Reserva o número da parte ANTES de escrever. Número já reservado ou nome já existente no destino
+     * ([isTaken] recebe o plano já com o número candidato, ex.: `fileName(id, it)` no MediaStore) nunca é
+     * reaproveitado: a parte sobe para o próximo livre.
+     */
+    fun reserve(plan: Plan, isTaken: (Plan) -> Boolean) {
+        val first = plan.part
+        val skipped = ArrayList<Int>()
+        var part = first
+        while (true) {
+            require(part < first + 10_000) { "Nenhum número de parte livre" }
+            plan.part = part
+            val marker = reservationFile(plan.dir, part)
+            if (isTaken(plan)) {
+                // Nome já existe no destino sem reserva local (estado perdido): marca para não testar de novo.
+                marker.createNewFile()
+                skipped += part
+            } else if (marker.createNewFile()) {
+                break
+            }
+            part += 1
+        }
+        if (skipped.isNotEmpty()) plan.supersededParts = (plan.supersededParts + skipped).distinct().sorted()
+    }
+
+    /** Estado depois de [plan] registrada (também usado no teste de queda entre fsync e rename). */
+    fun stateAfter(plan: Plan): JSONObject = JSONObject()
+        .put("format", FORMAT)
+        .put("nextPart", plan.part + 1)
+        .put("offsets", plan.nextOffsets)
+        .put("meta", plan.nextMeta)
+        .put("committedParts", JSONArray((plan.committedBefore + plan.part).distinct().sorted()))
 
     /** ZIP da parte: `<sessão>/events_0001.from_<byte>.jsonl`, arquivos mudados e `parte.json`. */
     fun writeZip(plan: Plan, sessionId: String, output: OutputStream): Int {
@@ -139,19 +239,36 @@ object SessionPartPlanner {
             zip.putNextEntry(ZipEntry("$prefix/parte.json"))
             zip.write(JSONObject().put("format", FORMAT).put("sessionId", sessionId).put("part", plan.part)
                 .put("final", plan.final).put("single", plan.single).put("createdAtMs", System.currentTimeMillis())
+                .put("committedPartsBefore", JSONArray(plan.committedBefore))
+                .put("supersededParts", JSONArray(plan.supersededParts))
+                .put("expectedParts", if (plan.final) JSONArray((plan.committedBefore + plan.part).distinct().sorted()) else JSONObject.NULL)
+                .put("cumulativeToByte", plan.nextOffsets)
+                .put("stateRecovered", plan.stateRecovered)
                 .put("howToJoin", if (plan.single) "Sessão inteira neste ZIP: nada a juntar."
-                    else "Concatene os events_NNNN.from_*.jsonl de todas as partes em ordem de byte.")
+                    else "Para cada events_NNNN, grave cada trecho .from_<byte> na posição fromByte. " +
+                        "expectedParts (na parte final) lista todas as partes necessárias; falta de uma delas é buraco. " +
+                        "supersededParts podem ter saído antes de uma queda: repetem faixas já cobertas, com bytes idênticos. " +
+                        "cumulativeToByte é o tamanho de cada arquivo coberto até esta parte.")
                 .put("entries", listing).toString(2).toByteArray(Charsets.UTF_8))
             zip.closeEntry()
         }
         return plan.slices.size + plan.files.size
     }
 
-    /** Só depois da parte publicada: avança os offsets (escrita atômica). */
+    /** Só depois da parte publicada: avança os offsets (temporário + fsync + rename atômico). */
     fun commit(dir: File, plan: Plan) {
         val target = File(dir, STATE_FILE)
         val tmp = File(dir, "$STATE_FILE.tmp")
-        tmp.writeText(plan.nextState.toString(), Charsets.UTF_8)
-        if (!tmp.renameTo(target)) { target.writeText(plan.nextState.toString(), Charsets.UTF_8); tmp.delete() }
+        FileOutputStream(tmp).use { output ->
+            output.write(stateAfter(plan).toString().toByteArray(Charsets.UTF_8))
+            output.flush()
+            output.fd.sync()
+        }
+        try {
+            Files.move(tmp.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+        } catch (_: Exception) {
+            // Sem rename atômico: o temporário completo continua valendo para readState até o próximo registro.
+            Files.move(tmp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
     }
 }

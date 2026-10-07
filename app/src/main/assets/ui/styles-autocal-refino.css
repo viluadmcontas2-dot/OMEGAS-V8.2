@@ -81,6 +81,9 @@ html body .ar-shell .ar-more .autocal-reset-popover { position: absolute; right:
 html body .ar-shell .ar-more .autocal-reset-popover p { margin: 0; color: var(--muted); font-size: 18px; line-height: 1.3; }
 html body .ar-shell .ar-more .autocal-reset-popover button { border-color: var(--danger-line); color: var(--danger-strong); background: var(--danger-soft); }
 html body .ar-shell .autocal-relearn-note { color: var(--warn); font-size: 18px; font-weight: 700; }
+/* Limpeza automática do GNV: discreta quando ligada; em aviso quando pausada nesta conexão. */
+html body .ar-shell .autocal-autoclean-line { color: var(--muted); font-size: 18px; line-height: 1.3; }
+html body .ar-shell .autocal-autoclean-line[data-level="warn"] { color: var(--warn); font-weight: 700; }
 
 /* 4 · secundário (rolagem vertical da rota) */
 html body .ar-shell .ar-secondary { display: grid; gap: var(--space-3); }

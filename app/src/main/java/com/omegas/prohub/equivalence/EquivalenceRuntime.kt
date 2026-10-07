@@ -44,8 +44,8 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
     /** Chamado quando a Curva K mudou por fora (o serviço liga ao diário: a verificação e a foto do Desfazer perdem validade). */
     @Volatile var onExternalCurveChange: ((String) -> Unit)? = null
 
-    fun alignCurve(ledger: EquivalenceLedger, phases: EquivalencePhases, mulActRaw: IntArray): Boolean {
-        val reset = ledger.alignCurve(EquivalenceLedger.fingerprint(mulActRaw))
+    fun alignCurve(ledger: EquivalenceLedger, phases: EquivalencePhases, mulActRaw: IntArray, capturedAtMs: Long? = null): Boolean {
+        val reset = ledger.alignCurve(EquivalenceLedger.fingerprint(mulActRaw), capturedAtMs)
         if (reset) {
             onGasReset("CURVA_K_MUDOU_FORA_DO_APP", phases)
             try { onExternalCurveChange?.invoke("CURVA_K_MUDOU_FORA_DO_APP") } catch (_: Exception) {}
@@ -92,7 +92,8 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
         val (axisRaw, mulActRaw) = curve
         // O alinhamento do livro à curva da ECU roda aqui, no tique do serviço, sem depender de a tela estar aberta
         // (antes só a ponte alinhava: com a tela fechada o GNV de uma curva antiga seguia valendo). Sem cabo não há curva viva.
-        if (ecuOnline) alignCurve(ledger, phases, mulActRaw)
+        // A época da leitura velha é decidida pelo instante em que o MUL_ACT foi lido (não por relógio fixo).
+        if (ecuOnline) alignCurve(ledger, phases, mulActRaw, mulActCapturedAt(snapshot))
         val reference = references.current()
         val provisional = if (reference == null) references.provisional(acquisition) else null
         val scale = gainScale(axisRaw.map { it / com.omegas.prohub.autocal.AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS })
@@ -120,6 +121,15 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
     }
 
     fun last(): EquivalenceResult? = last
+
+    private fun mulActCapturedAt(snapshot: JSONObject?): Long? {
+        val fields = snapshot?.optJSONArray("fields") ?: return null
+        for (i in 0 until fields.length()) {
+            val f = fields.optJSONObject(i) ?: continue
+            if (f.optString("key") == "MUL_ACT") return f.optLong("capturedAtMs", 0L).takeIf { it > 0L }
+        }
+        return snapshot.optLong("capturedAtMs", 0L).takeIf { it > 0L }
+    }
 
     /** JSON do último resultado (a ponte só lê; o cálculo já aconteceu no tique do serviço). */
     fun json(acquisition: JSONObject?): JSONObject = EquivalenceJson.result(

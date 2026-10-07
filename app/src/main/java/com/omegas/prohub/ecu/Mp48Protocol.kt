@@ -55,17 +55,18 @@ object Mp48Protocol {
 
     fun checksum(bytes: ByteArray): Int = bytes.sumOf { it.toInt() and 0xFF } and 0xFF
 
+    /** O quadro 48 01 tem tamanho fixo; todas as capturas reais (Portmon/ProgBase) têm exatamente 34 bytes. */
+    fun isTelemetryPayloadSize(size: Int): Boolean = size == TELEMETRY_PAYLOAD_SIZE
+
+    /**
+     * Decodifica um quadro de telemetria alinhado (offset 0, tamanho exato). Não há janela deslizante:
+     * procurar um trecho "plausível" dentro de um payload maior aceitava quadros desalinhados como reais.
+     */
     fun decodeTelemetry(payload: ByteArray, capturedAtElapsedMs: Long): Mp48Telemetry {
-        if (payload.size < TELEMETRY_PAYLOAD_SIZE) {
-            throw IllegalArgumentException("Telemetria MP48 exige no mínimo $TELEMETRY_PAYLOAD_SIZE bytes; recebidos ${payload.size}")
+        require(isTelemetryPayloadSize(payload.size)) {
+            "Telemetria MP48 exige exatamente $TELEMETRY_PAYLOAD_SIZE bytes; recebidos ${payload.size}"
         }
-        var bestFit: Mp48Telemetry? = null
-        for (i in 0..payload.size - TELEMETRY_PAYLOAD_SIZE) {
-            val telemetry = decodeStrict(payload.copyOfRange(i, i + TELEMETRY_PAYLOAD_SIZE), capturedAtElapsedMs)
-            if (telemetry.plausible) return telemetry
-            if (bestFit == null) bestFit = telemetry
-        }
-        return bestFit ?: throw IllegalArgumentException("Nenhuma telemetria extraída")
+        return decodeStrict(payload, capturedAtElapsedMs)
     }
 
     private fun decodeStrict(payload: ByteArray, capturedAtElapsedMs: Long): Mp48Telemetry {

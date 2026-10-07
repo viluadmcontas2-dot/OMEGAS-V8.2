@@ -251,7 +251,10 @@ class EquivalenceLedgerTest {
             t += 5_000
         }
         val expected = gas.mapNotNull { g ->
-            val m = petrol.filter { abs(it[0] - g[0]) <= 150.0 && abs(it[1] - g[1]) <= 0.02 }.map { it[2] }.sorted()
+            // Busca exaustiva com a mesma regra de regime (nunca lenta × condução, fronteira 1200 rpm).
+            val m = petrol.filter {
+                abs(it[0] - g[0]) <= 150.0 && abs(it[1] - g[1]) <= 0.02 && (it[0] >= 1_200.0) == (g[0] >= 1_200.0)
+            }.map { it[2] }.sorted()
             if (m.size < 2) null else m[m.size / 2] to g[2]
         }
         val actual = ledger.pairs().map { it.petrolRefMs to it.gasPetrolMs }

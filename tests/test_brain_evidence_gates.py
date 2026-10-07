@@ -172,7 +172,8 @@ class P2EvidenceIndependenceAndNativePriority(unittest.TestCase):
 
     def test_telemetry_does_not_move_points_the_mature_native_evidence_covers(self):
         base = refined.refine(REF95)
-        pairs = [(t, t * 1.3) for b in range(5) for t in interior(b, 12)]
+        # 1,2 (e não 1,3): dentro do portão de plausibilidade [0,80; 1,25]; o teste é sobre a prioridade da nativa.
+        pairs = [(t, t * 1.2) for b in range(5) for t in interior(b, 12)]
         mixed = refined.refine(REF95, pairs)
         self.assertGreater(mixed["telemetryDroppedByNative"], 0)
         axis = base["axisMs"]

@@ -32,13 +32,18 @@ function loadInto(context, files) {
 }
 
 // ---------------------------------------------------------------- 1. navegação
+// Revisto (P2 navegação): as oito rotas continuam (mesma ordem no HTML), o Refino aparece como "Ajuste GNV" e
+// Mapa K, Curva K, AutoCal e Ferramentas ficam dentro de "Avançado" (nav-advanced-item + botão data-nav-advanced).
 test('navegação: oito abas com ícones, incluindo Diagnóstico', () => {
   const buttons = [...html.matchAll(/<button type="button" data-route="([^"]+)"[^>]*>[\s\S]*?<span>([^<]+)<\/span>/g)]
     .map(m => [m[1], m[2]]);
   assert.deepEqual(buttons, [
     ['dashboard', 'Agora'], ['map', 'Mapa K'], ['curve', 'Curva K'], ['autocal', 'AutoCal'],
-    ['refino', 'Refino'], ['sessions', 'Sessões'], ['tools', 'Ferramentas'], ['diagnostico', 'Diagnóstico'],
+    ['refino', 'Ajuste GNV'], ['sessions', 'Sessões'], ['tools', 'Ferramentas'], ['diagnostico', 'Diagnóstico'],
   ]);
+  const advanced = [...html.matchAll(/data-route="([^"]+)" class="nav-advanced-item"/g)].map(m => m[1]);
+  assert.deepEqual(advanced, ['map', 'curve', 'autocal', 'tools']);
+  assert.match(html, /data-nav-advanced[^>]*>[\s\S]*?<span>Avançado<\/span>/);
   const ctx = loadInto({ console, localStorage: { getItem() { return null; }, setItem() {} } }, ['core/store.js', 'core/router.js']);
   assert.deepEqual(Array.from(ctx.OmegasUi.ROUTES), ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']);
   for (const route of ctx.OmegasUi.ROUTES) assert.match(html, new RegExp(`data-screen="${route}"`));

@@ -8,6 +8,7 @@ CALIBRATION = ROOT / "app/src/main/java/com/omegas/prohub/web/CalibrationOperati
 HUB = ROOT / "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt"
 AUTOCAL_BRIDGE = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt"
 AUTOCAL_ACTION = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt"
+SERVICE = ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt"
 WRITER = ROOT / "app/src/main/java/com/omegas/prohub/calibration/KWriteManager.kt"
 MAP_UI = ROOT / "app/src/main/assets/ui/screens/map.js"
 MANIFEST = ROOT / "config/omegas-release.json"
@@ -21,6 +22,7 @@ class V8MapBatchContract(unittest.TestCase):
         self.hub = HUB.read_text("utf-8")
         self.autocal_bridge = AUTOCAL_BRIDGE.read_text("utf-8")
         self.autocal_action = AUTOCAL_ACTION.read_text("utf-8")
+        self.service = SERVICE.read_text("utf-8")
         self.writer = WRITER.read_text("utf-8")
         self.map_ui = MAP_UI.read_text("utf-8")
         self.manifest = MANIFEST.read_text("utf-8")
@@ -81,8 +83,11 @@ class V8MapBatchContract(unittest.TestCase):
         # A ponte OmegasNative não escreve mais na ECU (F3): nenhuma escrita sem a política fica nela.
         self.assertNotIn("fun startKWrite(", self.hub)
         self.assertNotIn("fun startKFactorWrite(", self.hub)
-        self.assertIn("unsafeMutationReason =", self.autocal_bridge)
-        self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(service.status())", self.autocal_bridge)
+        # 2026-10-07: o AutoCalNativeActionManager é criado no serviço (spec autocal-apagar-lenta); a mesma
+        # política de segurança é ligada lá, e a ponte só usa service.nativeActions.
+        self.assertIn("unsafeMutationReason =", self.service)
+        self.assertIn("CalibrationWriteSafetyPolicy.unsafeReason(status())", self.service)
+        self.assertIn("service.nativeActions", self.autocal_bridge)
         self.assertGreaterEqual(self.autocal_action.count("unsafeMutationReason()"), 3)
 
     def test_writer_safety_boundaries_remain_present(self):

@@ -31,7 +31,10 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         # DUMP/runtime coherence: fuel/all reacquisition is mask/action -> readback.
         # READING_BEFORE is reserved for direct K-changing manual actions only.
         point_delete = text.split("private fun executePointDelete", 1)[1].split("private fun confirm", 1)[0]
-        self.assertNotIn("READING_BEFORE", point_delete)
+        # 2026-10-07 (spec autocal-apagar-lenta): só o caminho automático relê antes; o manual não.
+        manual_head, auto_and_rest = point_delete.split("val beforeSnapshot = if (prepared.automatic) {", 1)
+        self.assertNotIn("READING_BEFORE", manual_head)
+        self.assertNotIn("READING_BEFORE", auto_and_rest.split("} else null", 1)[1])
         self.assertNotIn("readMulActSnapshot", point_delete)
         self.assertIn("if (prepared.action.mayChangeMulAct)", text)
 

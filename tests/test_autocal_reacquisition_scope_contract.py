@@ -47,10 +47,10 @@ assert '.put("preMutationBackup", JSONObject.NULL)' in manager
 assert 'update("SENDING_ACTION"' in manager
 assert 'update("READING_AFTER", "Atualizando estado da ECU"' in manager
 
-# UX says exactly what the operator asked for: backups are optional/manual.
-assert 'Salvar uma foto antes é opcional' in cockpit
-assert 'Salvar uma foto antes é opcional' in cockpit
-assert 'Confirmar executa agora pelo OMEGAS' in cockpit
+# Revisto (P3 código morto): o cartão de revisão que dizia "Salvar uma foto antes é opcional" nunca era mostrado
+# (um toque, decisão do dono). Backup segue opcional/manual pelo manager (automaticBackup=false acima).
+assert 'REVISÃO ANTES DA ECU' not in cockpit
+assert 'renderReview' not in cockpit
 assert 'AlertDialog' not in bridge
 assert 'nativeAndroidConfirmation", true' not in bridge
 assert 'backup pré-mutação' not in bridge.lower()

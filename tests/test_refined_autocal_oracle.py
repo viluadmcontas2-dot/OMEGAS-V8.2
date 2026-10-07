@@ -212,15 +212,16 @@ def assert_no_proposal(case, result):
 
 
 def session_pairs(name):
-    """Pares (gasolina de referência, GNV) de condução (rpm ≥ 1000, ≥ 3 ms) da sessão inteira, como o livro."""
+    """Pares (gasolina de referência, GNV) de condução (rpm ≥ 1200, ≥ 3 ms, mesmo regime) da sessão inteira, como o livro."""
     with gzip.open(REAL / f"{name}.json.gz", "rt", encoding="utf-8") as handle:
         telemetry = json.load(handle)["telemetry"]
     petrol = blind.cap_cells(blind.stable_frames(telemetry, "GASOLINA"))
     gas = blind.cap_cells(blind.stable_frames(telemetry, "GNV"))
     out = []
     for g in gas:
-        match = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= 150 and abs(p["map"] - g["map"]) <= 0.02)
-        if len(match) >= 2 and g["rpm"] >= 1000 and match[len(match) // 2] >= oracle.TELEMETRY_MIN_MS:
+        match = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= 150 and abs(p["map"] - g["map"]) <= 0.02
+                       and (p["rpm"] >= 1200) == (g["rpm"] >= 1200))
+        if len(match) >= 2 and g["rpm"] >= 1200 and match[len(match) // 2] >= oracle.TELEMETRY_MIN_MS:
             out.append((match[len(match) // 2], g["t"]))
     return out
 

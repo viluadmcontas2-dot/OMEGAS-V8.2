@@ -21,19 +21,6 @@
     const item = field(snapshot, key);
     return Array.isArray(item?.rawValues) ? item.rawValues.map(value => finite(value) ?? 0) : [];
   }
-  function actionLabel(action) {
-    return ({
-      ENABLE_AUTO_CAL: 'Iniciar a leitura da ECU',
-      DISABLE_AUTO_CAL: 'Pausar a leitura da ECU',
-      FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
-      FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
-      RESET_PETROL: 'Reler gasolina',
-      RESET_GAS: 'Reler GNV',
-      RESET_K_FACTOR: 'Resetar Curva K para 1,000',
-      RESET_ALL: 'Nova leitura completa',
-    })[action] || action;
-  }
-
   function physicalVector(snapshot, key) {
     const item = field(snapshot, key);
     return Array.isArray(item?.physicalValues) ? item.physicalValues.map(value => finite(value)) : [];
@@ -622,8 +609,17 @@
           reason: referenceTransition?.resetSelection === true ? 'REFERENCE_CHANGED' : 'IDLE',
         };
       }
+      if (actionState?.automatic === true) {
+        // A limpeza automática só começa com o escritor livre: a ação do dono já terminou e o estado dela foi
+        // sobrescrito. Sem saber o desfecho, a seleção sai sem marcar nada como apagado (o nativo recusa ponto vazio).
+        return { clear: true, preserve: false, restore: [], pending: [], reason: 'SUPERSEDED_BY_AUTOMATIC' };
+      }
       if (state === 'CONFIRMED') {
         return { clear: true, preserve: false, restore: [], pending: [], reason: 'CONFIRMED' };
+      }
+      if (state === 'FAILED' && actionState?.mutationMayHaveStarted === true) {
+        // A ECU pode ter apagado parte dos pontos: a seleção antiga não vale mais (evita apagar ponto já zerado).
+        return { clear: true, preserve: false, restore: [], pending: [], reason: 'FAILED_UNCERTAIN' };
       }
       if (state === 'FAILED') {
         return {
@@ -643,8 +639,105 @@
       };
     },
 
+    /** "o ponto 5" · "os pontos 3 e 5" (índices da ECU, 0..17 → pontos 1..18). */
+    pointsPhrase(indexes = []) {
+      const points = [...new Set((Array.isArray(indexes) ? indexes : []).map(Number).filter(Number.isInteger))]
+        .sort((a, b) => a - b).map(index => index + 1);
+      if (!points.length) return null;
+      if (points.length === 1) return 'o ponto ' + points[0];
+      return 'os pontos ' + points.slice(0, -1).join(', ') + ' e ' + points[points.length - 1];
+    },
+
+    /** Aviso do apagamento automático: o app (não o dono) pediu, e por quê, em palavras de leigo. */
+    autoDeleteSentence(indexes = [], fuel = 'GAS') {
+      const phrase = AutoCalUxModel.pointsPhrase(indexes);
+      const of = AutoCalUxModel.autoFuelOf(fuel);
+      if (!phrase) return 'O app pediu para a ECU reaprender um ponto ' + of + ' — ele estava fora da curva.';
+      const many = phrase.startsWith('os ');
+      return 'O app pediu para a ECU reaprender ' + phrase + ' ' + of + ' — ' +
+        (many ? 'eles estavam' : 'ele estava') + ' fora da curva.';
+    },
+
+    /** "do GNV" / "da gasolina" para o combustível do apagamento automático (GAS ou PETROL). */
+    autoFuelOf(fuel) {
+      return String(fuel || '').toUpperCase() === 'PETROL' ? 'da gasolina' : 'do GNV';
+    },
+
+    /** Combustível (GAS/PETROL) de um estado da ação automática; GNV quando o estado não diz. */
+    autoActionFuel(actionState = {}) {
+      const details = actionState?.details && typeof actionState.details === 'object' ? actionState.details : {};
+      const firstFuel = list => Array.isArray(list) && list.length ? list[0]?.fuel : null;
+      const found = [
+        details.fuel,
+        details.details?.fuel,
+        firstFuel(details.targets),
+        firstFuel(details.details?.targets),
+        details.pointDelete?.fuel,
+        firstFuel(details.pointDelete?.targets),
+      ].map(value => String(value || '').toUpperCase()).find(value => value === 'GAS' || value === 'PETROL');
+      return found || 'GAS';
+    },
+
+    /** Índices de um estado da ação automática (evidência antes do envio, alvos durante, recibo no fim). */
+    autoActionIndexes(actionState = {}) {
+      const details = actionState?.details && typeof actionState.details === 'object' ? actionState.details : {};
+      const fromTargets = list => Array.isArray(list) ? list.map(t => Number(t?.index)).filter(Number.isInteger) : [];
+      const candidates = [
+        fromTargets(details.targets),
+        fromTargets(details.details?.targets),
+        Array.isArray(details.bands) ? details.bands.map(b => Number(b?.band)).filter(Number.isInteger) : [],
+        fromTargets(details.pointDelete?.targets),
+        Number.isInteger(details.pointDelete?.index) ? [details.pointDelete.index] : [],
+        Number.isInteger(details.index) ? [details.index] : [],
+      ];
+      return candidates.find(list => list.length) || [];
+    },
+
+    /** Recibo do apagamento automático no estado CONFIRMED da ação: só bandas cujo readback provou o apagamento. */
+    automaticDeleteReceipt(actionState = {}) {
+      if (actionState?.automatic !== true || String(actionState?.state || '').toUpperCase() !== 'CONFIRMED') return null;
+      if (String(actionState?.action || '') !== 'DELETE_POINT') return null;
+      const receipt = actionState.details && typeof actionState.details === 'object' ? actionState.details : {};
+      const id = String(receipt.id || '');
+      if (!id) return null;
+      const effect = Array.isArray(receipt.details?.effect) ? receipt.details.effect : [];
+      const ambiguous = new Set(effect.filter(row => row?.result === 'AMBIGUOUS').map(row => Number(row.index)));
+      const indexes = AutoCalUxModel.autoActionIndexes(actionState).filter(index => !ambiguous.has(index));
+      return { receiptId: id, fuel: AutoCalUxModel.autoActionFuel(actionState), indexes, atMs: finite(receipt.finishedAtMs) };
+    },
+
+    /** Motivo da pausa da limpeza automática em palavras simples (o código vem do app). */
+    autoCleanupPauseReason(code) {
+      switch (String(code || '')) {
+        case 'OTHER_FUEL_GUARD':
+        case 'PETROL_GUARD': return 'o outro combustível mudou de um jeito estranho durante a limpeza';
+        case 'REPEATED_FAILURES': return 'a ECU não respondeu bem várias vezes seguidas';
+        case 'READBACK_INEFFECTIVE': return 'a ECU não apagou o ponto quando o app pediu';
+        default: return 'o app encontrou algo inesperado';
+      }
+    },
+
+    /** Linha discreta: "Limpeza automática: ligada · N pontos reaprendidos nesta sessão" ou pausada com o que fazer. */
+    autoCleanupLine(status = {}) {
+      if (status?.ok !== true || status.active !== true) return { hidden: true, text: '', level: 'neutral' };
+      if (status.enabled !== true) {
+        return {
+          hidden: false,
+          level: 'warn',
+          text: 'Limpeza automática pausada nesta conexão: ' + AutoCalUxModel.autoCleanupPauseReason(status.pauseCode) +
+            '. Reconecte o cabo para tentar de novo.',
+        };
+      }
+      const count = Math.max(0, Math.round(finite(status.relearnedThisSession) ?? 0));
+      const tally = count === 0 ? 'nenhum ponto reaprendido'
+        : count === 1 ? '1 ponto reaprendido' : count + ' pontos reaprendidos';
+      return { hidden: false, level: 'neutral', text: 'Limpeza automática: ligada · ' + tally + ' nesta sessão' };
+    },
 
   };
+
+  /** Apagamento automático mais velho que isto (a tela estava fechada) já foi coberto por leituras novas. */
+  const AUTO_DELETE_FRESH_MS = 60000;
 
   class AutoCalCockpit {
     constructor(app) {
@@ -668,7 +761,7 @@
       this.sessionState = {};
       this.sessions = [];
       this.chartScale = null;
-      this.cursor = new ns.LiveStore.EaseCursor(() => this.panel?.querySelector('.autocal-live-layer'));
+      this.cursor = new ns.LiveStore.EaseCursor(() => this.chartPart('.autocal-live-layer'));
       this.previousReferencePoints = [];
       this.comparisonPinned = false;
       this.currentReferencePoints = [];
@@ -678,7 +771,12 @@
       this.selectedAcquiredPoint = null;
       this.selectedAcquiredPoints = new Set();
       this.pendingPointReacquisitionKeys = new Set();
-      this.selectedBandIndex = null;
+      // Pontos que a ECU confirmou ter apagado: chave fuel:index → hora da confirmação. Ficam cinza e intocáveis
+      // até chegar uma leitura da ECU mais nova que a confirmação (a leitura antiga ainda os mostra).
+      this.recentlyDeleted = new Map();
+      // Limpeza automática do GNV: último estado e os recibos já absorvidos (cada um acinzenta e avisa uma vez).
+      this.autoCleanup = {};
+      this.seenAutoDeletes = new Set();
       this.inject();
       this.bind();
       // Releitura por revisão: evidência, tabelas e sessão só quando andaram (ou o vigia vence);
@@ -727,12 +825,11 @@
         panel.innerHTML = `
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
             <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
-              <h2 class="instrument-title">AutoCal</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
-              <div class="ar-tile"><small>MAP</small><b><span id="autocalLiveMap">—</span><em>bar</em></b></div>
-              <div class="ar-tile"><small>Injeção</small><b><span id="autocalLivePetrol">—</span><em>ms</em></b></div>
+              <h2 class="instrument-title">Aprendizado da ECU</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
+              <div class="ar-tile ar-load"><small>Carga do motor</small><b id="autocalLiveLoad">—</b></div>
               <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
-              <div class="ar-tile ar-zone"><small>Zona</small><b id="autocalLiveZone">—</b></div>
-              <div class="ar-tile ar-automatch" id="autocalAutoMatchTile" data-state="unknown"><small>AutoMatch</small><b id="autocalAutoMatchCount">—</b></div>
+              <div class="ar-tile ar-zone" title="Zona = quanto o motor está carregado: zona 1 = lenta … zona 4 = acelerando forte"><small>Zona de carga</small><b id="autocalLiveZone">—</b></div>
+              <div class="ar-tile ar-automatch" id="autocalAutoMatchTile" data-state="unknown"><small>Ajustes automáticos da ECU</small><b id="autocalAutoMatchCount">—</b></div>
               <div class="autocal-reading-controls"><button type="button" class="ar-ghost" data-autocal-history hidden aria-label="Mostrar leitura anterior">Leitura anterior</button><button type="button" data-autocal-toggle class="btn-primary btn-compact" data-loading="true" disabled>Lendo estado…</button></div>
               <span id="autocalLiveTitle" hidden>Aguardando telemetria</span>
               <p id="autocalLiveNarrative" class="ar-sr" hidden></p>
@@ -744,6 +841,7 @@
                   <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
                   <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
                 </div>
+                <small class="autocal-zone-legend">Zona 1 = lenta · 2 = rodando leve · 3 = acelerando · 4 = acelerando forte</small>
                 <span id="autocalZoneSummary" class="ar-sr">—</span>
               </section>
 
@@ -761,6 +859,12 @@
               <div class="ar-buttons autocal-main-actions">
                 <details class="instrument-details"><summary>Histórico e detalhes</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
 
+
+              <section class="ar-card autocal-live-tech">
+                <h4>Detalhes técnicos</h4>
+                <span>MAP <span id="autocalLiveMap">—</span> bar · Injeção <span id="autocalLivePetrol">—</span> ms</span>
+                <span id="autocalReferenceSource">—</span>
+              </section>
 
               <section id="autocalAutoMatchEvidence" class="ar-card autocal-automatch-evidence" data-state="WAITING" aria-live="polite">
                 <h4>O que o AutoMatch mudou</h4>
@@ -782,31 +886,28 @@
 
             </details>
                 <button type="button" data-autocal-sessions>Ver sessões</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
-                <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Recomeçar aprendizado do GNV</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Recomeçar aprendizado da gasolina</button>
+                <small class="autocal-reacquire-note">A ECU esquece o que aprendeu e aprende de novo enquanto você dirige.</small>
                 <details class="autocal-reset-menu ar-more">
                   <summary>Mais opções</summary>
                   <div class="autocal-reset-popover" id="autocalOptionsPanel" aria-label="Mais opções do AutoCal">
                     <button type="button" class="autocal-options-close" data-autocal-close-options>Fechar opções ×</button>
                     ${ns.CurveChart.viewControls()}
                     <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar interrompe a aquisição. Reler gasolina ou GNV reinicia somente os dados daquele combustível.</p>
+                      <p>Os ajustes automáticos são decididos pela ECU. Pausar o aprendizado interrompe a coleta. Recomeçar o aprendizado da gasolina ou do GNV apaga só o que a ECU aprendeu daquele combustível. Para zerar a Curva K, use a aba Curva K (em Avançado).</p>
                     </section>
                   </div>
                 </details>
               </div>
-              <div class="ar-buttons autocal-point-actions" hidden role="group" aria-label="Pontos da ECU selecionados">
-                <button type="button" data-autocal-reacquire-point>Apagar ponto</button>
-                <button type="button" data-autocal-toggle-point-selection>Selecionar ponto</button>
-                <button type="button" data-autocal-reacquire-selected>Apagar selecionados</button>
-                <button type="button" data-autocal-clear-point-selection>Limpar seleção</button>
-                <button type="button" data-autocal-done-points>Concluir seleção</button>
+              <div class="ar-buttons autocal-point-actions" hidden role="group" aria-label="Pontos marcados para a ECU medir de novo">
+                <button type="button" class="btn-primary" data-autocal-reacquire-selected>Reaprender 1 ponto</button>
+                <button type="button" data-autocal-clear-point-selection>Cancelar</button>
               </div>
               <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
+              <small id="autocalAutoCleanLine" class="autocal-autoclean-line" data-level="neutral" hidden></small>
             </div>
 
-<div id="autocalReview" class="autocal-review" hidden></div>
           </section>`;
         stack.appendChild(panel);
         this.panel = panel;
@@ -854,46 +955,30 @@
         this.app?.router?.open('sessions');
       });
       this.panel?.addEventListener('click', event => {
-        if (event.target.closest('[data-autocal-done-points]')) {
-          this.selectedAcquiredPoint = null;
-          this.selectedAcquiredPoints.clear();
-          this.readout('');
-          this.renderPointActions();
-        }
-        if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
-        if (event.target.closest('[data-autocal-confirm]')) this.confirmPrepared();
-        const band = event.target.closest('[data-autocal-band-index]');
-        if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
         if (acquiredPoint) {
-          this.inspectAcquiredPoint(
+          this.tapAcquiredPoint(
             acquiredPoint.dataset.autocalAcquiredFuel,
             Number(acquiredPoint.dataset.autocalAcquiredIndex),
           );
         }
         const point = event.target.closest('[data-autocal-ref-index]');
         if (point) this.inspectReferencePoint(Number(point.dataset.autocalRefIndex));
-        const reacquire = event.target.closest('[data-autocal-reacquire-point]');
-        if (reacquire) {
-          this.requestPointReacquisition(
-            reacquire.dataset.autocalReacquireFuel,
-            Number(reacquire.dataset.autocalReacquireIndex),
-          );
-        }
-        const togglePoint = event.target.closest('[data-autocal-toggle-point-selection]');
-        if (togglePoint) {
-          this.toggleAcquiredPointSelection(
-            togglePoint.dataset.autocalReacquireFuel,
-            Number(togglePoint.dataset.autocalReacquireIndex),
-          );
-        }
         if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
         if (event.target.closest('[data-autocal-clear-point-selection]')) this.clearAcquiredPointSelection();
       });
     }
 
+    /** Entrar na aba é barato: nada de ponte aqui (o gráfico deste modo continua montado). A leitura vem em refreshNow(). */
     enter() {
       this.active = true;
+      this.firstRefreshPending = false;
+    }
+
+    /** UMA releitura ao entrar (o app chama depois do primeiro quadro pintado). */
+    refreshNow() {
+      this.firstRefreshPending = false;
+      this.dataDirty = false;
       this.refresh();
       this.dataGate.mark();
     }
@@ -935,6 +1020,7 @@
         this.referenceUsable = false;
         this.selectedAcquiredPoint = null;
         this.selectedAcquiredPoints?.clear?.();
+        this.autoCleanup = {};
         this.actionState = this.api.actionStatus() || {};
         this.operationalPending = this.actionState?.busy === true ||
           [
@@ -987,12 +1073,24 @@
         this.selectedReferenceIndex = null;
         this.selectedAcquiredPoint = null;
       }
+      if (selectionTransition.reason === 'CONFIRMED') {
+        // Marca = depois da confirmação E depois da leitura que estava na mão nesse instante (relógios podem diferir).
+        const confirmedAt = Date.now();
+        this.pendingPointReacquisitionKeys.forEach(key => {
+          const seen = this.countersCapturedAt(nextSnapshot, key.split(':')[0]);
+          this.deletedPoints().set(key, Math.max(confirmedAt, seen ?? -Infinity));
+        });
+      }
       if (selectionTransition.clear) this.selectedAcquiredPoints?.clear?.();
       if (selectionTransition.restore.length) {
         this.selectedAcquiredPoints = new Set(selectionTransition.restore);
       }
       this.pendingPointReacquisitionKeys = new Set(selectionTransition.pending);
       this.snapshot = nextSnapshot || {};
+      this.autoCleanup = this.api.autoCleanup?.() || {};
+      this.absorbAutomaticDeletes(this.autoCleanup, this.snapshot, nextActionState);
+      this.expireRecentlyDeleted(this.snapshot);
+      this.pruneSelection(this.snapshot);
       this.analysis = nextAnalysis;
       this.actionState = nextActionState;
       this.operationalPending = this.actionState?.busy === true ||
@@ -1005,6 +1103,80 @@
       this.render();
     }
 
+    /** Mapa dos pontos recém-apagados (criado sob demanda). */
+    deletedPoints() {
+      if (!(this.recentlyDeleted instanceof Map)) this.recentlyDeleted = new Map();
+      return this.recentlyDeleted;
+    }
+
+    /**
+     * O app apagou sozinho pontos fora da curva (GNV ou gasolina): eles entram no MESMO cinza do apagamento do dono
+     * (intocáveis até chegar leitura da ECU mais nova) e o aviso curto sai uma vez por recibo. Recibo velho
+     * (tela fechada na hora) só é registrado: as leituras seguintes já mostram a ECU como ela está.
+     */
+    absorbAutomaticDeletes(status, snapshot, actionState = {}) {
+      const items = status?.ok === true && Array.isArray(status.recentDeletes) ? status.recentDeletes.slice() : [];
+      // O recibo também chega no estado da ação (CONFIRMED) e pode vir antes do resumo: as duas vias, um aviso só.
+      const receipt = AutoCalUxModel.automaticDeleteReceipt(actionState);
+      if (receipt) items.push(receipt);
+      if (!(this.seenAutoDeletes instanceof Set)) this.seenAutoDeletes = new Set();
+      const now = Date.now();
+      const fresh = { GAS: [], PETROL: [] };
+      items.forEach(item => {
+        const id = String(item?.receiptId || '');
+        if (!id || this.seenAutoDeletes.has(id)) return;
+        this.seenAutoDeletes.add(id);
+        const at = finite(item.atMs);
+        const fuel = String(item?.fuel || 'GAS').toUpperCase() === 'PETROL' ? 'PETROL' : 'GAS';
+        const indexes = Array.isArray(item.indexes) ? item.indexes.map(Number).filter(Number.isInteger) : [];
+        if (at === null || now - at > AUTO_DELETE_FRESH_MS || !indexes.length) return;
+        const seen = this.countersCapturedAt(snapshot, fuel);
+        indexes.forEach(index => this.deletedPoints().set(fuel + ':' + index, Math.max(at, seen ?? -Infinity)));
+        fresh[fuel].push(...indexes);
+      });
+      const fuels = Object.keys(fresh).filter(fuel => fresh[fuel].length);
+      if (!fuels.length) return;
+      if (this.selectedAcquiredPoints instanceof Set) {
+        fuels.forEach(fuel => fresh[fuel].forEach(index => this.selectedAcquiredPoints.delete(fuel + ':' + index)));
+      }
+      const message = fuels.map(fuel => AutoCalUxModel.autoDeleteSentence(fresh[fuel], fuel)).join(' ');
+      this.store.patch({ alert: { level: 'ok', message } });
+    }
+
+    /** Hora da leitura dos contadores da ECU (campo NUM_BUF_UPD_*; senão a do snapshot). */
+    countersCapturedAt(snapshot, fuel) {
+      const key = fuel === 'PETROL' ? 'NUM_BUF_UPD_PETR' : 'NUM_BUF_UPD_GAS';
+      return finite(field(snapshot, key)?.capturedAtMs) ?? finite(snapshot?.capturedAtMs);
+    }
+
+    /** Um ponto apagado sai da lista quando chega leitura mais nova que a marca da confirmação (ou em 60 s sem hora conhecida). */
+    expireRecentlyDeleted(snapshot) {
+      const now = Date.now();
+      this.deletedPoints().forEach((mark, key) => {
+        const capturedAt = this.countersCapturedAt(snapshot, key.split(':')[0]);
+        if ((capturedAt !== null && capturedAt > mark) || (capturedAt === null && now - mark > 60000)) this.deletedPoints().delete(key);
+      });
+    }
+
+    /** Chaves dos pontos que existem AGORA na ECU (contador > 0) e não acabaram de ser apagados. */
+    livePointKeys(snapshot) {
+      const keys = new Set();
+      for (const fuel of ['petrol', 'gas']) {
+        AutoCalUxModel.acquiredPoints(snapshot || {}, fuel).forEach(p => keys.add(p.fuel + ':' + p.index));
+      }
+      this.deletedPoints().forEach((_, key) => keys.delete(key));
+      return keys;
+    }
+
+    /** A seleção só guarda pontos que existem agora: nada de "seleção fantasma" de ponto já zerado. */
+    pruneSelection(snapshot) {
+      if (this.pendingPointReacquisitionKeys?.size) return;
+      if (!(this.selectedAcquiredPoints instanceof Set)) return;
+      const live = this.livePointKeys(snapshot);
+      [...this.selectedAcquiredPoints].forEach(key => { if (!live.has(key)) this.selectedAcquiredPoints.delete(key); });
+      if (this.selectedAcquiredPoint && !live.has(this.selectedAcquiredPoint)) this.selectedAcquiredPoint = null;
+    }
+
     runOperational(action) {
       if (action === 'REREAD_STATE') { this.stateUnknownSince = Date.now(); this.refresh(); return; }
       if (!['ENABLE_AUTO_CAL', 'DISABLE_AUTO_CAL'].includes(action) || !this.api?.available?.()) return;
@@ -1014,28 +1186,21 @@
       const result = this.api.setAcquisitionEnabled?.(enable) || { ok: false, error: 'Ação operacional indisponível.' };
       if (result?.ok !== true) {
         this.operationalPending = false;
-        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível alterar a leitura do AutoCal.' } });
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível mudar o aprendizado da ECU.' } });
       } else {
         // O botão só volta quando a ECU confirmar o novo estado (ou em 10 s): uma resposta "ok" do envio não é a conferência.
         this.toggleWaiting = { target: enable ? 1 : 0, since: Date.now() };
         this.store.patch({ alert: { level: 'ok', message: enable
-          ? 'Início enviado. Conferindo na ECU…'
-          : 'Pausa enviada. Conferindo na ECU…' } });
+          ? 'Pedido para retomar o aprendizado enviado. Conferindo na ECU…'
+          : 'Pedido de pausa enviado. Conferindo na ECU…' } });
       }
       this.refresh();
     }
 
-    /** Um toque: abre a Curva K, que tira a foto e só então zera. Sem a tela Curva K cai no fluxo antigo. */
-    resetViaCurve() {
-      const router = this.app?.router || root.OmegasApp?.router;
-      if (!router || typeof router.open !== 'function') return false;
-      return router.open('curve', 'editor', { resetNow: true }) === true;
-    }
-
     prepare(action) {
       if (!action || !this.api?.available?.()) return;
-      // Resetar a Curva K tem UM caminho: o da aba Curva K (foto antes, zera, conferência, Desfazer).
-      if (action === 'RESET_K_FACTOR' && this.resetViaCurve()) return;
+      // Zerar a Curva K tem UM caminho: o botão da aba Curva K (foto antes, zera, conferência, Desfazer).
+      if (action === 'RESET_K_FACTOR') return;
       const result = this.api.prepare(action);
       if (!result?.ok || !result?.prepared) {
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'A ação AutoCal não pôde ser preparada.' } });
@@ -1045,14 +1210,6 @@
       // Um toque (decisão do dono, 2026-10-05): sem cartão de revisão em nenhum botão. A proteção é o ACK + readback no
       // escritor e, onde existe, a foto antes com Desfazer.
       this.confirmPrepared();
-    }
-
-    cancelPrepared() {
-      this.api?.cancelPreparation?.();
-      this.prepared = null;
-      const review = document.getElementById('autocalReview');
-      if (review) { review.hidden = true; review.innerHTML = ''; }
-      this.refresh();
     }
 
     confirmPrepared() {
@@ -1069,8 +1226,6 @@
         this.chartHistoryVisible = this.comparisonPinned;
       }
       this.prepared = null;
-      const review = document.getElementById('autocalReview');
-      if (review) { review.hidden = true; review.innerHTML = ''; }
       this.store.patch({ alert: { level: 'working', message: 'Comando enviado para a ECU. Aguarde a conferência.' } });
       this.refresh();
     }
@@ -1078,10 +1233,8 @@
 
     render() {
       const snapshot = this.snapshot || {};
+      this.pruneSelection(snapshot);
       const state = this.state || {};
-      const events = Array.isArray(this.projection?.correlation)
-        ? this.projection.correlation
-        : Array.isArray(snapshot.nativeMaturityEvents) ? snapshot.nativeMaturityEvents : [];
       const human = AutoCalUxModel.humanState(snapshot, state, this.projection);
       const acquisitionName = String(state.state || '').toUpperCase();
       const acquisitionLabel = acquisitionName === 'UNAVAILABLE' ? 'indisponível'
@@ -1095,18 +1248,15 @@
       this.renderSentence(human, acquisitionName);
       this.renderAutoMatchTile(human);
       this.renderRelearn();
+      this.renderAutoCleanLine();
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
       const autoMatchEvidence = document.getElementById('autocalAutoMatchEvidence');
       if (autoMatchEvidence) autoMatchEvidence.dataset.state = human.autoMatchEvidenceState;
       this.text('autocalNativeState', 'Leitura da ECU: ' + acquisitionLabel);
       this.text('autocalZoneSummary', human.gasZones === null ? 'Zonas GNV sem leitura' : human.gasZones + '/4 zonas GNV');
-      this.text('autocalStateRaw', state.state || '—');
-      this.text('autocalEnableRaw', human.enabled === 1 ? 'ATIVA' : human.enabled === 0 ? 'PAUSADA' : '—');
-      this.text('autocalSnapshotHash', snapshot.snapshotHash ? String(snapshot.snapshotHash).slice(0, 10) : '—');
       const readingNote = AutoCalUxModel.readingNote(snapshot, Date.now());
       this.text('autocalReferenceSource', AutoCalUxModel.referenceSourceLabel(this.projection) + (readingNote ? ' · ' + readingNote : ''));
-      this.text('autocalMaturityRaw', events.length);
       this.renderZoneMeter(human);
       this.renderSessionState();
       this.renderLiveNarrative();
@@ -1114,10 +1264,12 @@
       if (this.toggleWaiting && String(this.actionState?.state || '').toUpperCase() === 'FAILED') {
         // A ECU não confirmou (readback diferente, sem ACK): o botão volta e o dono fica sabendo; nada mudou na ECU.
         this.toggleWaiting = null;
-        this.store.patch({ alert: { level: 'warning', message: 'A ECU não confirmou a mudança da leitura: ' + String(this.actionState.message || 'tente de novo') + '.' } });
+        this.store.patch({ alert: { level: 'warning', message: 'A ECU não confirmou a mudança do aprendizado: ' + String(this.actionState.message || 'tente de novo') + '.' } });
       }
       if (this.toggleWaiting && (human.enabled === this.toggleWaiting.target || Date.now() - this.toggleWaiting.since > 10000)) this.toggleWaiting = null;
       const waiting = this.operationalPending || Boolean(this.toggleWaiting);
+      // Limpeza automática em curso: os botões esperam, mas o texto não finge que o dono pediu algo.
+      const automaticOnly = waiting && !this.toggleWaiting && this.actionState?.automatic === true;
       // "Lendo estado…" não pode ficar eterno: se o estado da ECU não chega em 6 s, o botão diz isso e deixa reler com um toque.
       if (human.enabled === null || human.enabled === undefined || toggleActionKnown(human.enabled) === null) {
         if (!this.stateUnknownSince) this.stateUnknownSince = Date.now();
@@ -1128,11 +1280,11 @@
         const action = AutoCalUxModel.toggleAction(human.enabled) || (stateStuck ? 'REREAD_STATE' : null);
         toggle.dataset.action = action || '';
         toggle.disabled = !action || waiting;
-        toggle.textContent = waiting
+        toggle.textContent = waiting && !automaticOnly
           ? 'Confirmando ECU…'
           : action === 'DISABLE_AUTO_CAL'
-            ? 'Pausar leitura'
-            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar leitura' : action === 'REREAD_STATE' ? 'Estado não chegou · reler' : 'Lendo estado…';
+            ? 'Pausar aprendizado da ECU'
+            : action === 'ENABLE_AUTO_CAL' ? 'Retomar aprendizado' : action === 'REREAD_STATE' ? 'Estado não chegou · ler de novo' : 'Lendo estado…';
         toggle.dataset.loading = action || waiting ? 'false' : 'true';
       }
 
@@ -1143,8 +1295,6 @@
       this.renderHistoryControl();
 
       this.renderReferenceChart(snapshot);
-      this.renderBands(snapshot);
-      this.renderEvents(events);
       this.renderActionState();
       this.renderPointActions();
       const rejected = this.referenceUsable === true && Array.isArray(this.analysis?.rejectedBands) ? this.analysis.rejectedBands.length : 0;
@@ -1154,27 +1304,30 @@
     /** UMA frase humana de estado (nada de jargão): o que a ECU está fazendo e o que falta. */
     /** [fuelKind] = combustível de AGORA pela telemetria ('petrol', 'gas', …): a frase nunca manda "dirigir no GNV" com o carro na gasolina. */
     sentenceFor(human, acquisitionName, fuelKind) {
-      const zones = list => list.map(zone => 'Z' + zone).join(', ');
+      // "zona 2" · "zonas 1 e 3" · "zonas 1, 2 e 4"
+      const zones = list => list.length === 1 ? 'a zona ' + list[0]
+        : 'as zonas ' + list.slice(0, -1).join(', ') + ' e ' + list[list.length - 1];
+      const missing = list => (list.length === 1 ? 'falta ' : 'faltam ') + zones(list);
       if (['UNAVAILABLE', 'PROBE_FAILED', 'FAILED', 'DISCONNECTED', 'STALE_SESSION'].includes(acquisitionName)) {
         return { level: 'error', text: 'Sem leitura da ECU. Confira o cabo: o app tenta de novo sozinho.' };
       }
       const action = this.actionState || {};
       if (action.busy === true && ['RESET_PETROL', 'RESET_GAS'].includes(action.action)) {
-        const fuel = action.action === 'RESET_PETROL' ? 'gasolina' : 'GNV';
-        return { level: 'neutral', text: 'Reler ' + fuel + ': conferindo o reinício na ECU…' };
+        const fuel = action.action === 'RESET_PETROL' ? 'da gasolina' : 'do GNV';
+        return { level: 'neutral', text: 'Recomeçando o aprendizado ' + fuel + ': conferindo na ECU…' };
       }
-      if (acquisitionName === 'WAITING_TELEMETRY_SETTLE') return { level: 'neutral', text: 'Conectando à leitura da ECU…' };
-      if (human.enabled === 0) return { level: 'warn', text: 'Leitura pausada. Toque em Iniciar leitura para continuar aprendendo.' };
+      if (acquisitionName === 'WAITING_TELEMETRY_SETTLE') return { level: 'neutral', text: 'Conectando à ECU…' };
+      if (human.enabled === 0) return { level: 'warn', text: 'Aprendizado pausado. Toque em Retomar aprendizado para continuar.' };
       if (human.enabled === 1) {
         const petrol = human.petrolMissingZones;
         const gas = human.gasMissingZones;
-        if (fuelKind === 'petrol' && petrol.length) return { level: 'neutral', text: 'Adquirindo gasolina · falta ' + zones(petrol) + '.' };
-        if (fuelKind === 'gas' && gas.length) return { level: 'neutral', text: 'Adquirindo GNV · falta ' + zones(gas) + '.' };
-        if (petrol.length) return { level: 'neutral', text: 'Gasolina pendente · falta ' + zones(petrol) + '. Aguarda uso na gasolina.' };
-        if (gas.length) return { level: 'neutral', text: 'GNV pendente · falta ' + zones(gas) + '. Aguarda uso no GNV.' };
+        if (fuelKind === 'petrol' && petrol.length) return { level: 'neutral', text: 'A ECU está aprendendo a gasolina · ' + missing(petrol) + '.' };
+        if (fuelKind === 'gas' && gas.length) return { level: 'neutral', text: 'A ECU está aprendendo o GNV · ' + missing(gas) + '.' };
+        if (petrol.length) return { level: 'neutral', text: 'Falta aprender a gasolina n' + zones(petrol) + '. Dirija um pouco na gasolina.' };
+        if (gas.length) return { level: 'neutral', text: 'Falta aprender o GNV n' + zones(gas) + '. Dirija um pouco no GNV.' };
         if (human.petrolZones === null || human.gasZones === null) return { level: 'neutral', text: 'Aguardando a ECU confirmar as zonas de gasolina e GNV.' };
         if (human.gasZones === 4 && human.petrolZones === 4) return { level: 'ok', text: 'Gasolina e GNV aprendidos.' };
-        return { level: 'neutral', text: 'Leitura ativa. Aguardando a ECU publicar as zonas.' };
+        return { level: 'neutral', text: 'Aprendizado ativo. Aguardando a ECU confirmar as zonas.' };
       }
       return { level: 'neutral', text: 'Lendo o estado da ECU…' };
     }
@@ -1192,7 +1345,7 @@
     renderAutoMatchTile(human) {
       const count = human.autoMatchCount;
       const max = human.maxAutoMatch;
-      const text = count === null ? '—' : Math.round(count) + (max !== null && max > 0 ? '/' + Math.round(max) : '');
+      const text = count === null ? '—' : Math.round(count) + (max !== null && max > 0 ? ' de ' + Math.round(max) : '');
       this.text('autocalAutoMatchCount', text);
       const tile = document.getElementById('autocalAutoMatchTile');
       if (tile) D.setDataIfChanged(tile, 'state', count === null ? 'unknown' : human.autoMatchQuotaReached ? 'full' : 'running');
@@ -1208,11 +1361,20 @@
           ? 'Protegido na memória interna'
           : narrative.recording ? 'Salvando em Downloads/Omegas' : 'Salvo em Downloads/Omegas',
       );
-      this.text('autocalSessionNext', narrative.next);
       const strip = this.panel?.querySelector('.autocal-session-strip');
       if (strip) strip.dataset.sessionLevel = narrative.level;
 
 
+    }
+
+    /** Linha discreta da limpeza automática do GNV (ligada · N reaprendidos, ou pausada com o que fazer). */
+    renderAutoCleanLine() {
+      const node = document.getElementById('autocalAutoCleanLine');
+      if (!node) return;
+      const line = AutoCalUxModel.autoCleanupLine(this.autoCleanup || {});
+      if (node.hidden !== line.hidden) node.hidden = line.hidden;
+      if (node.textContent !== line.text) node.textContent = line.text;
+      if (node.dataset.level !== line.level) node.dataset.level = line.level;
     }
 
     /** Uma linha discreta, só quando o cérebro diz que a ECU reaprendeu (ecuDrift/relearnSuggested); senão nada. */
@@ -1225,7 +1387,6 @@
       const relearned = cells.some(cell => cell && cell.relearnSuggested === true) || (drift !== null && Math.abs(drift) > 0.08);
       const note = document.getElementById('autocalRelearnNote');
       if (note) note.hidden = !relearned;
-      this.text('autocalDriftRaw', drift === null ? '—' : (drift * 100).toFixed(1).replace('.', ',') + ' %');
     }
 
     renderLiveNarrative() {
@@ -1241,6 +1402,7 @@
         this.text('autocalLiveRpm', '—');
         this.text('autocalLivePetrol', '—');
         this.text('autocalLiveMap', '—');
+        this.text('autocalLiveLoad', '—');
         this.text('autocalLiveZone', '—');
         this.text('autocalLiveNarrative', stale
           ? 'Leitura atrasada há ' + Math.round(ageMs / 1000) + ' s: a última leitura passou da janela curta. AGORA foi ocultado até chegar uma leitura nova; a referência da ECU não foi alterada.'
@@ -1257,11 +1419,13 @@
       this.text('autocalLivePetrol', D.ms(live.petrolMs));
       this.text('autocalLiveMap', D.bar(live.mapBar));
       const region = AutoCalUxModel.liveRegion(this.snapshot || {}, live);
-      this.text('autocalLiveZone', region.kind === 'idle' ? 'Lenta' : region.zone === null ? '—' : 'Z' + region.zone);
+      this.text('autocalLiveZone', region.kind === 'idle' ? 'Marcha lenta' : region.zone === null ? '—' : 'Zona ' + region.zone + ' de 4');
+      // Carga em palavras (a pressão em bar fica nos Detalhes técnicos).
+      this.text('autocalLiveLoad', live.mapBar < 0.45 ? 'leve' : live.mapBar <= 0.75 ? 'média' : 'forte');
       const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}, this.projection).enabled;
       const acquisitionCopy = enabled === 1
-        ? 'Leitura da ECU ativa. Se a condição estabilizar, a ECU pode fortalecer esta região.'
-        : enabled === 0 ? 'Leitura da ECU pausada. O ponto AGORA é só leitura ao vivo.' : 'Estado da leitura da ECU ainda não confirmado.';
+        ? 'Aprendizado da ECU ativo. Se a condição estabilizar, a ECU pode aprender mais nesta região.'
+        : enabled === 0 ? 'Aprendizado da ECU pausado. O ponto AGORA só mostra onde o motor está.' : 'Estado do aprendizado da ECU ainda não confirmado.';
       const delayCopy = live.grey ? ' Leitura atrasada há ' + Math.max(1, Math.round(live.ageMs / 1000)) + ' s: o cursor está em cinza.' : '';
       this.text('autocalLiveNarrative', rpmLabel + ' · ' + D.msUnit(live.petrolMs) + ' · ' + D.barUnit(live.mapBar) + '. ' + acquisitionCopy + delayCopy);
     }
@@ -1291,8 +1455,8 @@
       }
       this.renderZoneCursor(live);
       const scale = this.chartScale;
-      const layer = this.panel?.querySelector('.autocal-live-layer');
-      const bandLayer = this.panel?.querySelector('[data-autocal-current-band]');
+      const layer = this.chartPart('.autocal-live-layer');
+      const bandLayer = this.chartPart('[data-autocal-current-band]');
       if (!live) {
         D.setAttrIfChanged(layer, 'display', 'none');
         D.setAttrIfChanged(bandLayer, 'display', 'none');
@@ -1327,8 +1491,10 @@
       D.setAttrIfChanged(layer, 'data-stale', live.grey ? 'true' : 'false');
       // O alvo muda a cada quadro novo; quem move o ponto é o quadro de animação (CSS transform, ease ~150 ms).
       this.cursor.setTarget(projected.x, projected.y, scale, projected.outOfRange);
+      // O laço de quadros dorme quando o cursor chega; alvo novo o acorda.
+      this.scheduler?.wake?.();
       if (typeof this.scheduler?.addFrameHook !== 'function' || seen?.scale !== this.chartScale) this.cursor.paint();
-      const label = this.panel?.querySelector('[data-autocal-live-label]');
+      const label = this.chartPart('[data-autocal-live-label]');
       if (label) {
         const text = projected.outOfRange ? 'AGORA · fora da escala' : 'AGORA';
         const shown = live.grey ? text + ' · atrasado' : text;
@@ -1336,8 +1502,14 @@
       }
     }
 
+    /** Peça do gráfico do AutoCal: só dentro do próprio quadro (o Refino tem a sua camada AGORA). */
+    chartPart(selector) {
+      const host = document.getElementById('autocalReferenceChart');
+      return host && typeof host.querySelector === 'function' ? host.querySelector(selector) : null;
+    }
+
     /** Quadro de animação (rAF do scheduler): o cursor compartilhado só move a camada com CSS transform. */
-    animateCursor(timestamp) { this.cursor.frame(timestamp); }
+    animateCursor(timestamp) { return this.cursor.frame(timestamp); }
 
     renderZoneMeter(human) {
       const meter = document.getElementById('autocalZoneMeter');
@@ -1400,7 +1572,9 @@
       const limit = finite(this.projection?.referenceTimingLimitMs);
       // A revisão da ponte e a telemetria não são geometria. Preserve o SVG e
       // o cursor quando só eles mudam; invalide por dados ou máscara da época.
-      const key = JSON.stringify([acquiredPetrol, acquiredGas, epoch,
+      // Pontos entram só pela geometria: o contador (progresso) é atualizado por atributo, sem refazer o SVG.
+      const geometry = list => list.map(p => [p.index, p.petrolMs, p.mapBar]);
+      const key = JSON.stringify([geometry(acquiredPetrol), geometry(acquiredGas), epoch,
         snapshot.source, this.state?.maxAutomatch ?? snapshot.maxAutomatch,
         axisAt !== null && rvAt !== null && limit !== null && Math.abs(axisAt - rvAt) <= limit,
         ['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF_GAS_PREV','MNFLD_PRESS_BUF_GAS_PREV','MNFLD_PRESS_THD','ACQUIRED_ZONES_PETROL','ACQUIRED_ZONES_GAS','MUL_ACT']
@@ -1409,6 +1583,7 @@
         ns.CurveChart?.viewKey(this.chartView)]);
       if (this.epochChartHost === host && this.epochChartKey === key &&
           this.epochChartNode && host.firstElementChild === this.epochChartNode) {
+        ns.CurveChart?.updatePoints(host, [...acquiredPetrol, ...acquiredGas]);
         this.renderLiveCursor();
         return;
       }
@@ -1560,14 +1735,13 @@
           const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
           const limitLabel = timingLimitMs === null ? 'limite nativo' : 'limite ' + Math.round(timingLimitMs) + ' ms';
           this.text('autocalReferenceCount', D.plural(points.length, 'ponto', 'pontos') + ' · fora da janela');
-          host.innerHTML = '<div class="chart-empty"><b>REFERÊNCIA FORA DA JANELA</b><span>Os vetores físicos foram lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '. Aguarde a próxima atualização automática da ECU. O AGORA continua vivo sem virar referência.</span></div>';
-          this.readout( 'Referência física temporalmente incoerente. Aguarde a próxima atualização automática da ECU; o cursor AGORA continua somente como telemetria.');
+          host.innerHTML = '<div class="chart-empty"><b>Aguarde alguns segundos</b><span>A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.</span>' +
+            '<details class="instrument-details"><summary>Detalhes técnicos</summary><span>Vetores lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '.</span></details></div>';
+          this.readout('A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
-          host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não publicou uma referência física utilizável. O AGORA continua nos valores ao lado, sem inventar escala.</span></div>';
-          this.readout( live
-            ? 'AGORA: ' + D.msUnit(live.petrolMs) + ' · ' + D.barUnit(live.mapBar) + '. Referência da ECU indisponível.'
-            : 'Aguardando Injeção e MAP nativos.');
+          host.innerHTML = '<div class="chart-empty"><b>Curva da gasolina ainda não chegou</b><span>Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.</span></div>';
+          this.readout('Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.');
         }
         this.renderLiveNarrative();
         return;
@@ -1586,8 +1760,9 @@
         snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId, history,
         extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}|${chart.viewKey(this.chartView)}`,
       });
-      const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.shared.node) !== false;
+      const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.nodeFor('ecu18')) !== false;
       if (alreadyShown) {
+        chart.updatePoints(chart.nodeFor('ecu18'), acquiredPoints);
         this.renderLiveCursor();
         return;
       }
@@ -1608,14 +1783,17 @@
         return;
       }
       this.currentReferencePoints = model.reference;
-      this.currentAcquiredPoints = model.ecu;
+      // Contadores de agora (o modelo pode vir do cache deste modo), só dos pontos visíveis no desenho.
+      this.currentAcquiredPoints = acquiredPoints.filter(p => model.ecu.some(m => m.fuel === p.fuel && m.index === p.index));
+      // O desenho pode ter vindo do cache deste modo: o progresso de agora entra por atributo.
+      chart.updatePoints(chart.nodeFor('ecu18'), acquiredPoints);
       const legend = document.getElementById('autocalLegend');
       const legendKey = `ecu18|${history.length > 0}`;
       if (legend && this.legendKey !== legendKey) {
         this.legendKey = legendKey;
         legend.innerHTML = chart.legendHtml({ mode: 'ecu18' }) + (history.length ? '<span class="previous" data-legend="previous">Leitura anterior</span>' : '');
       }
-      chart.applySelection({ ref: this.selectedReferenceIndex, ecu: this.selectedAcquiredPoint, batch: this.selectedAcquiredPoints });
+      chart.applySelection({ ref: this.selectedReferenceIndex, ecu: this.selectedAcquiredPoint, batch: this.selectedAcquiredPoints }, 'ecu18');
       if (this.selectedAcquiredPoint) {
         const [fuel, rawIndex] = this.selectedAcquiredPoint.split(':');
         this.inspectAcquiredPoint(fuel, Number(rawIndex));
@@ -1670,6 +1848,7 @@
       host.innerHTML = html;
     }
 
+    /** Detalhe do ponto em português simples; os números técnicos ficam num "Detalhes técnicos". */
     inspectAcquiredPoint(fuel, index) {
       const point = this.currentAcquiredPoints.find(item =>
         String(item.fuel) === String(fuel) && Number(item.index) === Number(index));
@@ -1681,98 +1860,100 @@
       }
       this.selectedAcquiredPoint = point.fuel + ':' + point.index;
       this.selectedReferenceIndex = null;
-      const amostras = Math.round(point.counter);
-      const line = [point.fuelLabel, 'ponto ' + point.point, D.msUnit(point.petrolMs), D.barUnit(point.mapBar), 'Z' + point.zone,
-        amostras + (amostras === 1 ? ' amostra' : ' amostras'), point.acquisitionState === 'ACQUIRED' ? '' : 'ainda lendo'].filter(Boolean).join(' · ');
-      this.readout(line + ' · Apagar limpa este ponto; a ECU volta a adquiri-lo.');
+      const passes = Math.round(point.counter);
+      const fuelName = point.fuel === 'GAS' ? 'do GNV' : 'da gasolina';
+      const line = 'Ponto ' + point.point + ' ' + fuelName + ' (zona ' + point.zone + '). A ECU já passou aqui ' +
+        (passes === 1 ? '1 vez' : passes + ' vezes') + '. Reaprender faz a ECU medir este ponto de novo.';
+      const technical = [D.msUnit(point.petrolMs), D.barUnit(point.mapBar),
+        'contador ' + passes + (finite(point.threshold) === null ? '' : ' de ' + Math.round(point.threshold)),
+        point.acquisitionState === 'ACQUIRED' ? 'aprendido' : 'ainda aprendendo'].join(' · ');
+      this.readout(line, '<details class="autocal-point-tech"><summary>Detalhes técnicos</summary><span>' + escapeHtml(technical) + '</span></details>');
       this.renderPointActions();
-      document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => {
-        const nodeKey = String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex);
-        node.classList.toggle('selected', nodeKey === this.selectedAcquiredPoint);
-        node.classList.toggle('batch-selected', this.selectedAcquiredPoints.has(nodeKey));
-      });
-      document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => node.classList.remove('selected'));
     }
 
+    /** Tocar num ponto marca ou desmarca; ponto recém-apagado é intocável até a ECU mandar leitura nova. */
+    tapAcquiredPoint(fuel, index) {
+      if (!Number.isInteger(index)) return;
+      const key = String(fuel) + ':' + String(index);
+      if (this.deletedPoints().has(key)) {
+        this.readout('Este ponto acabou de ser apagado. Ele some do gráfico quando a ECU mandar a próxima leitura.');
+        return;
+      }
+      if (this.refreshBusy()) return;
+      if (this.selectedAcquiredPoints.has(key)) {
+        this.selectedAcquiredPoints.delete(key);
+        if (this.selectedAcquiredPoint === key) this.selectedAcquiredPoint = null;
+        if (this.selectedAcquiredPoints.size) {
+          const [lastFuel, lastIndex] = [...this.selectedAcquiredPoints].pop().split(':');
+          this.inspectAcquiredPoint(lastFuel, Number(lastIndex));
+        } else this.readout('');
+      } else {
+        if (!this.livePointKeys(this.snapshot).has(key)) return;
+        this.selectedAcquiredPoints.add(key);
+        this.inspectAcquiredPoint(fuel, index);
+      }
+      this.renderPointActions();
+    }
+
+    /** Classes da seleção e dos recém-apagados direto no gráfico do AutoCal (sem redesenhar). */
+    paintSelection() {
+      const host = document.getElementById('autocalReferenceChart');
+      if (!host || typeof host.querySelectorAll !== 'function') return;
+      host.querySelectorAll('[data-autocal-acquired-index]').forEach(node => {
+        const key = node.dataset.autocalAcquiredFuel + ':' + node.dataset.autocalAcquiredIndex;
+        const deleted = this.deletedPoints().has(key);
+        node.classList.toggle('selected', !deleted && key === this.selectedAcquiredPoint);
+        node.classList.toggle('batch-selected', !deleted && this.selectedAcquiredPoints.has(key));
+        node.classList.toggle('recently-deleted', deleted);
+        if (deleted) node.setAttribute('aria-disabled', 'true'); else node.removeAttribute('aria-disabled');
+      });
+      host.querySelectorAll('[data-autocal-point-key]').forEach(node => {
+        node.classList.toggle('recently-deleted', this.deletedPoints().has(node.getAttribute('data-autocal-point-key')));
+      });
+    }
+
+    /** Só dois botões: "Reaprender N pontos" e "Cancelar". Aparecem com pontos marcados (ou enquanto a ECU confere). */
     renderPointActions() {
-      const point = this.currentAcquiredPoints.find(p => p.fuel + ':' + p.index === this.selectedAcquiredPoint);
       const count = this.selectedAcquiredPoints.size;
-      const editing = Boolean(point || count);
+      const busy = this.refreshBusy();
+      const pending = this.pendingPointReacquisitionKeys.size > 0;
+      const editing = count > 0 || pending;
       const bar = this.panel?.querySelector('.autocal-point-actions');
       const main = this.panel?.querySelector('.autocal-main-actions');
       if (!bar || !main) return;
       bar.hidden = !editing; main.hidden = editing;
-      const busy = this.refreshBusy();
-      const one = bar.querySelector('[data-autocal-reacquire-point]');
-      const select = bar.querySelector('[data-autocal-toggle-point-selection]');
-      [one, select].forEach(button => {
-        button.disabled = busy || !point;
-        button.dataset.autocalReacquireFuel = point?.fuel || '';
-        button.dataset.autocalReacquireIndex = String(point?.index ?? '');
-      });
-      select.textContent = point && this.selectedAcquiredPoints.has(point.fuel + ':' + point.index) ? 'Retirar da seleção' : 'Selecionar ponto';
       const batch = bar.querySelector('[data-autocal-reacquire-selected]');
       batch.disabled = busy || !count;
-      batch.textContent = busy ? 'Conferindo ECU…' : 'Apagar selecionados' + (count ? ' (' + count + ')' : '');
-      bar.querySelector('[data-autocal-clear-point-selection]').disabled = busy || !count;
-      bar.querySelector('[data-autocal-done-points]').disabled = busy;
-      this.panel.querySelectorAll('[data-autocal-acquired-index]').forEach(node => {
-        const key = node.dataset.autocalAcquiredFuel + ':' + node.dataset.autocalAcquiredIndex;
-        node.classList.toggle('selected', key === this.selectedAcquiredPoint);
-        node.classList.toggle('batch-selected', this.selectedAcquiredPoints.has(key));
-      });
+      batch.textContent = busy && pending ? 'Conferindo na ECU…' : 'Reaprender ' + D.plural(Math.max(count, 1), 'ponto', 'pontos');
+      bar.querySelector('[data-autocal-clear-point-selection]').disabled = busy;
+      this.paintSelection();
     }
 
-    requestPointReacquisition(fuel, index) {
-      if (!this.api?.available?.() || !Number.isInteger(index)) return;
-      const prepared = this.api.preparePointDelete?.(fuel, index) || { ok: false, error: 'Readquisição pontual indisponível.' };
-      if (!prepared?.ok || !prepared?.prepared) {
-        this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar este ponto.' } });
-        return;
-      }
-      const result = this.api.execute(prepared.preparationId);
-      if (result?.ok !== true) {
-        this.api?.cancelPreparation?.();
-        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível abrir a confirmação do ponto.' } });
-        return;
-      }
-      this.pendingPointReacquisitionKeys = new Set([String(fuel) + ':' + index]);
-      this.renderPointActions();
-      this.store.patch({ alert: { level: 'working', message: 'Leitura nova enviada para a ECU. Aguarde a conferência deste ponto.' } });
-      this.refresh();
-    }
- 
-    toggleAcquiredPointSelection(fuel, index) {
-      if (!Number.isInteger(index)) return;
-      const key = String(fuel) + ':' + String(index);
-      if (this.selectedAcquiredPoints.has(key)) this.selectedAcquiredPoints.delete(key);
-      else this.selectedAcquiredPoints.add(key);
-      this.inspectAcquiredPoint(fuel, index);
-      this.renderReferenceChart(this.snapshot);
-    }
-
+    /** "Cancelar": desmarca tudo e volta aos botões normais. */
     clearAcquiredPointSelection() {
       this.selectedAcquiredPoints.clear();
-      const current = this.selectedAcquiredPoint?.split(':');
-      if (current?.length === 2) this.inspectAcquiredPoint(current[0], Number(current[1]));
-      this.renderReferenceChart(this.snapshot);
+      this.selectedAcquiredPoint = null;
+      this.readout('');
+      this.renderPointActions();
     }
 
     requestSelectedPointReacquisition() {
-      if (!this.api?.available?.() || this.selectedAcquiredPoints.size === 0) return;
+      // Antes de apagar: só pontos que existem agora (contador > 0) e não acabaram de ser apagados.
+      this.pruneSelection(this.snapshot);
+      if (!this.api?.available?.() || this.selectedAcquiredPoints.size === 0 || this.refreshBusy()) { this.renderPointActions(); return; }
       const targets = Array.from(this.selectedAcquiredPoints).map(key => {
         const [fuel, rawIndex] = key.split(':');
         return { fuel, index: Number(rawIndex) };
       }).filter(item => Number.isInteger(item.index));
-      const prepared = this.api.preparePointDeleteBatch?.(targets) || { ok: false, error: 'Readquisição múltipla indisponível.' };
+      const prepared = this.api.preparePointDeleteBatch?.(targets) || { ok: false, error: 'Reaprender pontos indisponível.' };
       if (!prepared?.ok || !prepared?.prepared) {
-        this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar os pontos selecionados.' } });
+        this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar os pontos marcados.' } });
         return;
       }
       const result = this.api.execute(prepared.preparationId);
       if (result?.ok !== true) {
         this.api?.cancelPreparation?.();
-        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível iniciar a readquisição selecionada.' } });
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível começar a reaprender os pontos.' } });
         return;
       }
       const count = targets.length;
@@ -1780,8 +1961,7 @@
       this.store.patch({
         alert: {
           level: 'working',
-          message: D.plural(count, 'ponto', 'pontos') +
-            ' sendo lidos de novo. A seleção só é limpa depois que a ECU confirmar.',
+          message: D.plural(count, 'ponto vai', 'pontos vão') + ' ser medidos de novo. A seleção só é limpa depois que a ECU confirmar.',
         },
       });
       this.refresh();
@@ -1795,71 +1975,8 @@
       this.selectedAcquiredPoint = null;
       this.renderPointActions();
       this.readout('Curva · ponto ' + (point.index + 1) + ' · ' + D.msUnit(point.petrolMs) + ' · gasolina ' + D.bar(point.petrolMapBar) + ' · GNV ' + D.barUnit(point.gasMapBar));
-      ns.CurveChart?.applySelection({ ref: point.index, ecu: null, batch: this.selectedAcquiredPoints });
-      document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => node.classList.remove('selected'));
-    }
-
-    renderBands(snapshot) {
-      const host = document.getElementById('autocalBands');
-      if (!host) return;
-      // Evidência: só redesenha quando a tabela da ECU mudou (D2), não a cada leitura do relógio.
-      const bandsKey = (ns.CurveChart ? ns.CurveChart.tableSignature(snapshot) : '') + '|' + this.selectedBandIndex + '|' + host.childElementCount;
-      if (this.bandsKey === bandsKey) return;
-      this.bandsKey = bandsKey;
-      const bands = AutoCalUxModel.bandStrip(snapshot, this.projection);
-      host.innerHTML = bands.map(band => {
-        const stateLabel = band.state === 'anchored' ? 'correlacionada'
-          : band.state === 'mature' ? 'evento'
-          : band.state === 'activity' ? 'atividade' : 'vazia';
-        return '<button type="button" class="autocal-band-segment" data-autocal-band-index="' + band.index +
-          '" data-state="' + band.state + '" data-zone-acquired="' + (band.zoneAcquired ? 'true' : 'false') +
-          '" role="listitem" aria-pressed="false" aria-label="Região ' + (band.index + 1) + ' de 18, ' + stateLabel +
-          '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'zona ok' : stateLabel) + '</small></button>';
-      }).join('');
-      const preferred = Number.isInteger(this.selectedBandIndex)
-        ? this.selectedBandIndex
-        : (bands.find(item => item.state !== 'empty')?.index ?? 0);
-      this.inspectBand(preferred);
-    }
-
-    inspectBand(index) {
-      const band = AutoCalUxModel.bandStrip(this.snapshot || {}, this.projection).find(item => item.index === index);
-      const host = document.getElementById('autocalBandInspector');
-      if (!band || !host) return;
-      this.selectedBandIndex = index;
-      document.querySelectorAll('[data-autocal-band-index]').forEach(node => {
-        const selected = Number(node.dataset.autocalBandIndex) === index;
-        node.classList.toggle('selected', selected);
-        node.setAttribute('aria-pressed', selected ? 'true' : 'false');
-      });
-
-      const message = AutoCalUxModel.bandNarrative(band);
-
-      const zoneText = band.zoneAcquired
-        ? 'Zona ' + (band.zone + 1) + ' confirmada pela ECU'
-        : 'Zona ' + (band.zone + 1) + ' ainda não confirmada pela ECU';
-      host.innerHTML = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
-    }
-
-    renderEvents(events) {
-      const host = document.getElementById('autocalEvents');
-      if (!host) return;
-      const last = events.length ? events[events.length - 1] : {};
-      const eventsKey = [events.length, last.counter, last.bandIndex, last.correlationState, last.rpm].join('|');
-      if (this.eventsKey === eventsKey) return;
-      this.eventsKey = eventsKey;
-      if (!events.length) {
-        host.innerHTML = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a ECU já acumulou.</p>';
-        return;
-      }
-      host.innerHTML = events.slice(-6).reverse().map(event => {
-        const correlated = String(event.correlationState || '') === 'CORRELATED';
-        const rpm = finite(event.rpm);
-        const confidenceRaw = finite(event.correlationConfidence);
-        const confidence = confidenceRaw === null ? '—' : Math.round(confidenceRaw * 100);
-        const bandIndex = finite(event.bandIndex);
-        return `<article data-state="${correlated ? 'correlated' : 'raw'}"><div><b>${bandIndex === null ? 'B—' : 'B' + (bandIndex + 1)}</b><span>${escapeHtml(event.zone || 'zona')}</span></div><p>${correlated ? `${rpm === null ? 'RPM —' : `${Math.round(rpm).toLocaleString('pt-BR')} RPM`} · confiança ${confidence}${confidence === '—' ? '' : '%'}` : escapeHtml(event.correlationReason || 'NO_RELIABLE_CORRELATION')}</p><small>contador ${finite(event.counter) ?? '—'} · limiar ${finite(event.threshold) ?? '—'}</small></article>`;
-      }).join('');
+      ns.CurveChart?.applySelection({ ref: point.index, ecu: null, batch: this.selectedAcquiredPoints }, 'ecu18');
+      this.paintSelection();
     }
 
     renderActionState() {
@@ -1874,42 +1991,46 @@
         'RESETTING_K', 'VERIFYING_K_RESET',
       ].includes(name);
       const failed = name === 'FAILED';
+      if (state.automatic === true && name !== 'IDLE') {
+        // Limpeza automática: o app agiu sozinho; nunca "Pronto"/"você confirmou", nunca jargão do protocolo.
+        const indexes = AutoCalUxModel.autoActionIndexes(state);
+        const fuel = AutoCalUxModel.autoActionFuel(state);
+        host.hidden = false;
+        host.dataset.level = name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
+        host.dataset.reasonCode = '';
+        host.dataset.mutationUncertain = 'false';
+        host.textContent = name === 'CONFIRMED'
+          ? AutoCalUxModel.autoDeleteSentence(indexes, fuel)
+          : failed ? 'A limpeza automática não conseguiu agora; o app tenta de novo sozinho.'
+          : 'O app está pedindo para a ECU reaprender ' + (AutoCalUxModel.pointsPhrase(indexes) || 'um ponto') +
+            ' ' + AutoCalUxModel.autoFuelOf(fuel) + ', que estava fora da curva.';
+        return;
+      }
       const recovery = state?.recovery && typeof state.recovery === 'object' ? state.recovery : null;
       const recoveryNext = String(recovery?.nextAction || '').trim();
       const recoveryCode = String(recovery?.reasonCode || state?.reasonCode || '');
       const mutationMayHaveStarted = state?.mutationMayHaveStarted === true;
       const uncertainty = failed && mutationMayHaveStarted
-        ? ' · Estado incerto: a ECU pode ter mudado. Releia antes de repetir.'
+        ? ' · A ECU pode ter mudado em parte: a seleção foi limpa; espere a próxima leitura antes de tentar de novo.'
         : '';
       host.hidden = name === 'IDLE';
       host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
       host.dataset.reasonCode = recoveryCode;
       host.dataset.mutationUncertain = mutationMayHaveStarted ? 'true' : 'false';
       host.textContent = name === 'IDLE' ? message
-        : name === 'CONFIRMED' ? 'Concluído · ' + message
-        : failed ? 'Não concluído · ' + message + uncertainty + (recoveryNext ? ' · Próximo: ' + recoveryNext : '')
-        : 'Executando · ' + message;
-    }
-
-    renderReview() {
-      const review = document.getElementById('autocalReview');
-      const prepared = this.prepared;
-      if (!review || !prepared) return;
-      review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(prepared.label || actionLabel(prepared.action))}</h3></div><button type="button" data-autocal-cancel class="icon-close" aria-label="Fechar revisão">×</button></header><p>${escapeHtml(prepared.description || '')}</p><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Confirmar executa agora pelo OMEGAS e confere na ECU. Salvar uma foto antes é opcional: só se você quiser.</span></div><details class="autocal-review-tech"><summary>Detalhes técnicos</summary><dl><div><dt>Ação</dt><dd>${escapeHtml(actionLabel(prepared.action))}</dd></div><div><dt>Comando</dt><dd>${escapeHtml(prepared.commandHex || '—')}</dd></div><div><dt>Sessão</dt><dd>${escapeHtml(prepared.sessionId || '—')}</dd></div><div><dt>Verificação pós-ação</dt><dd>ACK + leitura posterior da ECU</dd></div></dl></details><div class="operation-actions"><button type="button" data-autocal-cancel class="secondary">Cancelar</button><button type="button" data-autocal-confirm class="danger-primary">Executar agora</button></div></div>`;
+        : name === 'CONFIRMED' ? 'Pronto · ' + message
+        : failed ? 'Não deu certo · ' + message + uncertainty + (recoveryNext ? ' · Próximo passo: ' + recoveryNext : '')
+        : 'Fazendo agora · ' + message;
     }
 
     renderUnavailable() {
       this.chartRenderKey = null;
       this.text('autocalNativeState', 'AUTOCAL INDISPONÍVEL');
-      this.text('autocalHumanTitle', 'AutoCal indisponível');
-      this.text('autocalHumanProgress', 'A tela não recebeu o AutoCal da ECU.');
       this.text('autocalHumanAction', 'AutoCal indisponível. Reconecte a ECU e tente de novo.');
       const sentence = document.getElementById('autocalHumanAction');
       if (sentence) sentence.dataset.level = 'error';
       this.text('autocalZoneSummary', '—');
       this.text('autocalReferenceCount', '—');
-      this.text('autocalMaturityRaw', '—');
       const host = document.getElementById('autocalReferenceChart');
       if (host) host.innerHTML = '<div class="chart-empty"><b>Sem ligação com a ECU</b><span>Nenhum dado foi inventado para preencher o gráfico.</span></div>';
     }

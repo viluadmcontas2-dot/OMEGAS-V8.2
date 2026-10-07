@@ -56,8 +56,9 @@ class DocumentsSessionMirror(private val context: Context) {
 
     /**
      * Publica UMA parte imutável da sessão em `Download/Omegas/<sessão>/<sessão>_parte_NNNN.zip`.
-     * Se a mesma parte já existir (queda entre publicar e registrar), o mesmo arquivo é
-     * reaproveitado: nunca nasce "(1).zip".
+     * O número é reservado antes de escrever (SessionPartPlanner.reserve) e um nome que já existe no
+     * destino — publicado ou pendente de uma queda — nunca é reaberto: a parte sobe de número. Assim
+     * uma parte publicada nunca é regravada com outra faixa e nunca nasce "(1).zip".
      */
     @Synchronized
     fun publishPart(sessionId: String, plan: SessionPartPlanner.Plan): JSONObject {
@@ -73,6 +74,9 @@ class DocumentsSessionMirror(private val context: Context) {
         }
         return try {
             val safeSession = safeName(sessionId)
+            SessionPartPlanner.reserve(plan) { candidate ->
+                publicNameExists(safeSession, SessionPartPlanner.fileName(sessionId, candidate))
+            }
             val name = SessionPartPlanner.fileName(sessionId, plan)
             val write: (OutputStream) -> Int = { SessionPartPlanner.writeZip(plan, sessionId, it) }
             val count = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) publishZipScoped("$PUBLIC_ROOT/$safeSession/", name, write)
@@ -90,10 +94,10 @@ class DocumentsSessionMirror(private val context: Context) {
     }
 
     @TargetApi(Build.VERSION_CODES.Q)
-    private fun publishZipScoped(relativePath: String, name: String, write: (OutputStream) -> Int): Int {
+    private fun scopedItem(relativePath: String, name: String): android.net.Uri? {
         val resolver = context.contentResolver
         val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        // Inclui itens ainda pendentes (gravação interrompida): reaproveita em vez de criar "(1).zip".
+        // Inclui itens ainda pendentes (gravação interrompida): também contam como nome usado.
         val selection = MediaStore.MediaColumns.RELATIVE_PATH + "=? AND " + MediaStore.MediaColumns.DISPLAY_NAME + "=?"
         val args = arrayOf(relativePath, name)
         val projection = arrayOf(MediaStore.MediaColumns._ID)
@@ -111,15 +115,36 @@ class DocumentsSessionMirror(private val context: Context) {
         cursor?.use {
             if (it.moveToFirst()) existing = ContentUris.withAppendedId(collection, it.getLong(it.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)))
         }
-        existing?.let { uri -> resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 1) }, null, null) }
-        val uri = existing ?: resolver.insert(collection, ContentValues().apply {
+        return existing
+    }
+
+    @Suppress("DEPRECATION")
+    private fun publicNameExists(safeSession: String, name: String): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            scopedItem("$PUBLIC_ROOT/$safeSession/", name) != null
+        } else {
+            File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Omegas/$safeSession/$name").exists()
+        }
+
+    @TargetApi(Build.VERSION_CODES.Q)
+    private fun publishZipScoped(relativePath: String, name: String, write: (OutputStream) -> Int): Int {
+        val resolver = context.contentResolver
+        val collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        // Nome reservado e conferido antes: se mesmo assim existir, não reescreve (nunca "rwt" sobre parte publicada).
+        check(scopedItem(relativePath, name) == null) { "$name já existe em Download/Omegas; parte publicada não é reescrita" }
+        val uri = resolver.insert(collection, ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
             put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
             put(MediaStore.MediaColumns.IS_PENDING, 1)
         }) ?: error("Não foi possível criar $name em Download/Omegas")
-        val count = resolver.openOutputStream(uri, "rwt")?.use { write(it) }
-            ?: error("Destino público indisponível")
+        val count = try {
+            resolver.openOutputStream(uri, "w")?.use { write(it) } ?: error("Destino público indisponível")
+        } catch (error: Exception) {
+            // ZIP pela metade não fica pendente com o nome reservado; a próxima tentativa usa outro número.
+            try { resolver.delete(uri, null, null) } catch (_: Exception) {}
+            throw error
+        }
         resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
         return count
     }
@@ -128,9 +153,10 @@ class DocumentsSessionMirror(private val context: Context) {
     private fun publishZipLegacy(safeSession: String, name: String, write: (OutputStream) -> Int): Int {
         val root = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Omegas/$safeSession").apply { mkdirs() }
         val target = File(root, name)
+        check(!target.exists()) { "$name já existe em Download/Omegas; parte publicada não é reescrita" }
         val tmp = File(root, ".$name.tmp")
         val count = FileOutputStream(tmp).use { write(it) }
-        if (!tmp.renameTo(target)) { tmp.copyTo(target, overwrite = true); tmp.delete() }
+        if (!tmp.renameTo(target)) { tmp.copyTo(target, overwrite = false); tmp.delete() }
         return count
     }
 

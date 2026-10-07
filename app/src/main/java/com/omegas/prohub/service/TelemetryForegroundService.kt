@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.EvidenceInvalidation
+import com.omegas.prohub.autocal.NativeGasEvidenceEpoch
 import com.omegas.prohub.autocal.EquivalencePhases
 import com.omegas.prohub.autocal.RefinementJournal
 import com.omegas.prohub.autocal.StallWatch
@@ -27,6 +28,9 @@ import com.omegas.prohub.calibration.KFactorManager
 import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.calibration.SerialWriteGuard
 import com.omegas.prohub.autocal.NativeAutoCalMonitor
+import com.omegas.prohub.autocal.AutoCalNativeActionManager
+import com.omegas.prohub.autocal.AutoIdleCleanupCoordinator
+import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.diagnostics.DocumentsSessionMirror
 import com.omegas.prohub.diagnostics.LegacyDataSweeper
 import com.omegas.prohub.diagnostics.SessionRecorder
@@ -100,6 +104,13 @@ class TelemetryForegroundService : Service() {
     private val autoCalExecutor = Executors.newSingleThreadScheduledExecutor { runnable ->
         Thread(runnable, "omegas-autocal-tick").apply { isDaemon = true }
     }
+    /**
+     * Thread própria do apagamento automático de pontos fora da curva (GNV e gasolina): decide fora do autoCalTick
+     * (que só entrega leituras) e reavalia a cada 500 ms, porque o carro pode começar a andar sem leitura nova.
+     */
+    private val autoIdleExecutor = Executors.newSingleThreadScheduledExecutor { runnable ->
+        Thread(runnable, "omegas-autocal-idle-cleanup").apply { isDaemon = true }
+    }
 
     /**
      * Revisões por tipo de dado (live/evidence/tables/session) que a UI consulta antes de reler qualquer coisa.
@@ -157,6 +168,39 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
         private set
+    /**
+     * Ações AutoCal nativas (manuais e o apagamento automático de pontos fora da curva). Mora no serviço, não na tela:
+     * o automático funciona com a WebView fechada e a ponte só usa esta instância.
+     */
+    lateinit var nativeActions: AutoCalNativeActionManager
+        private set
+    /** Detecção + política + execução do apagamento automático (spec 2026-10-07-autocal-apagar-lenta). */
+    lateinit var autoIdleCleanup: AutoIdleCleanupCoordinator
+        private set
+    /** Quem recarrega a WebView quando o estado da ação AutoCal muda (a ponte da Activity atual). */
+    private val autoCalActionUi = com.omegas.prohub.autocal.OwnedSlot<() -> Unit>()
+    /** A leitura AutoCal manual mora na ponte; ela informa aqui se está lendo, para nenhuma ação cruzar a leitura. */
+    private val manualAutoCalRead = com.omegas.prohub.autocal.OwnedSlot<() -> Boolean>()
+
+    /** A ponte da tela atual se registra como dona do listener de UI e do "lendo" manual. */
+    fun bindAutoCalUi(owner: Any, refreshUi: () -> Unit, manualReadBusy: () -> Boolean) {
+        autoCalActionUi.set(owner, refreshUi)
+        manualAutoCalRead.set(owner, manualReadBusy)
+    }
+
+    /**
+     * Solta o registro só se [owner] ainda for o dono: o destroy de uma Activity antiga não desarma a ponte da
+     * nova (revisão 2026-10-07 #5). Devolve se era o dono.
+     */
+    fun releaseAutoCalUi(owner: Any): Boolean {
+        val wasOwner = autoCalActionUi.clearIf(owner)
+        manualAutoCalRead.clearIf(owner)
+        return wasOwner
+    }
+
+    fun isAutoCalUiOwner(owner: Any): Boolean = autoCalActionUi.isOwner(owner)
+
+    private fun manualAutoCalReadBusy(): Boolean = try { manualAutoCalRead.get()?.invoke() == true } catch (_: Exception) { false }
     lateinit var link: OmegasLinkManager
         private set
     lateinit var overlay: TelemetryOverlayController
@@ -241,7 +285,10 @@ class TelemetryForegroundService : Service() {
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         equivalenceRuntime = EquivalenceRuntime(paths.runtimeRoot)
         // Curva K mudou por fora (ProgBase, outro aparelho): a verificação do diário e a foto do Desfazer perdem validade.
-        equivalenceRuntime.onExternalCurveChange = { reason -> refinementJournal.interrupt(reason) }
+        equivalenceRuntime.onExternalCurveChange = { reason ->
+            NativeGasEvidenceEpoch.shared.markWrite(System.currentTimeMillis())
+            refinementJournal.interrupt(reason)
+        }
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
         refinementJournal.setDecisionListener(::recordJournalTransition)
@@ -289,6 +336,7 @@ class TelemetryForegroundService : Service() {
                 // (que pode falhar por disco cheio) só depois.
                 EvidenceInvalidation.run(
                     invalidate = listOf(
+                        "epocaNativa" to { NativeGasEvidenceEpoch.shared.markWrite(System.currentTimeMillis()) },
                         "resetGas" to { equivalence.resetGas("MAPA_K_GRAVADO") },
                         "cerebro" to { equivalenceRuntime.onGasReset("MAPA_K_GRAVADO", equivalencePhases) },
                         "journal" to { refinementJournal.interrupt("MAPA_K_GRAVADO") },
@@ -318,6 +366,7 @@ class TelemetryForegroundService : Service() {
             // Escritores K e ações AutoCal (a trava serial é compartilhada): nenhuma leitura de round durante uma escrita.
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() || SerialWriteGuard.shared.isHeld() },
             onFreshSnapshot = { snapshot ->
+                NativeGasEvidenceEpoch.shared.observe(snapshot)
                 sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
             },
             onNativeCalibrationObserved = { payload ->
@@ -354,6 +403,65 @@ class TelemetryForegroundService : Service() {
             // Overlay/notificação nunca rodam na thread do autoCalTick: vão para a faixa de análise (coalescente).
             onStateChanged = { analysisLane.submit { stateChanged() } },
             onTablesChanged = { publishRevision(RuntimeSnapshotBus.Kind.TABLES) },
+            onBuffersConfirmed = { buffers ->
+                if (::autoIdleCleanup.isInitialized) autoIdleCleanup.onBuffers(buffers)
+            },
+            onAcquisitionReset = { sessionChanged, sessionId ->
+                if (::autoIdleCleanup.isInitialized) {
+                    if (sessionChanged) autoIdleCleanup.onSessionChanged(sessionId) else autoIdleCleanup.onRoundInvalidated()
+                }
+            },
+            appAutomaticWriteEnabled = { ::autoIdleCleanup.isInitialized && autoIdleCleanup.automaticEnabled() },
+        )
+        val actionSerial = runtime.serialScheduler()
+        nativeActions = AutoCalNativeActionManager(
+            receiptFile = File(paths.runtimeRoot, "autocal_native_receipts.json"),
+            isConnected = actionSerial::isConnected,
+            currentSessionId = actionSerial::currentSessionId,
+            otherCalibrationBusy = { kWriter.isBusy() || kFactor.isBusy() || manualAutoCalReadBusy() },
+            unsafeMutationReason = { CalibrationWriteSafetyPolicy.unsafeReason(status()) },
+            transaction = { request, reason, timeoutMs, expectedSessionId ->
+                val workClass = when (request.firstOrNull()?.toInt()?.and(0xFF)) {
+                    0x09, 0x29, 0x0A -> Mp48WorkClass.READ_ONLY
+                    else -> Mp48WorkClass.MANUAL_WRITE
+                }
+                actionSerial.transaction(
+                    request = request,
+                    reason = reason,
+                    timeoutMs = timeoutMs,
+                    purgeBefore = true,
+                    expectedSessionId = expectedSessionId,
+                    workClass = workClass,
+                )
+            },
+            onConfirmed = { receipt ->
+                sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
+                nativeAutoCal.onManualActionConfirmed(receipt)
+                autoIdleCleanup.onActionConfirmed(receipt)
+                try { link.markDataChanged("ação AutoCal nativa confirmada") } catch (_: Exception) {}
+            },
+            onFailed = { receipt ->
+                sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
+                // A escrita pode ter chegado à ECU: nada lido antes dela vale mais (M2).
+                if (receipt.optBoolean("mutationMayHaveStarted", false)) nativeAutoCal.invalidateRound()
+                autoIdleCleanup.onActionFailed(receipt)
+            },
+            onStateChanged = {
+                publishRevision(RuntimeSnapshotBus.Kind.TABLES)
+                try { autoCalActionUi.get()?.invoke() } catch (_: Exception) {}
+            },
+            lastKnownVector = { field -> nativeAutoCal.lastKnownVector(field) },
+        )
+        autoIdleCleanup = AutoIdleCleanupCoordinator(
+            telemetry = actionSerial,
+            executeDelete = { targets, evidence -> nativeActions.executeAutomaticPointDelete(targets, evidence) },
+            autoCalEnabled = { nativeAutoCal.autoCalEnabledNow() },
+            sessionAgeMs = { nativeAutoCal.sessionAgeMs() },
+            // Mesma regra de qualquer escrita: sem o controle principal do MP48 (Link), nada sai deste aparelho.
+            canAct = { if (stopping) "Serviço encerrando" else if (!canWriteLocally()) "Este aparelho não possui o controle principal do MP48" else null },
+            record = { type, payload -> sessionRecorder.record(type, "autocal", payload, force = true) },
+            clock = SystemClock::elapsedRealtime,
+            executor = autoIdleExecutor,
         )
         link = OmegasLinkManager(
             settings = settings,
@@ -367,8 +475,10 @@ class TelemetryForegroundService : Service() {
                 JSONObject()
                     .put("schema", "landi-autocal-18x30-v2")
                     .put("source", "ECU_NATIVE")
-                    .put("automaticCalibration", false)
-                    .put("manualOnly", true)
+                    // Única escrita automática: apagar pontos fora da curva do GNV e da gasolina (spec 2026-10-07 rev2).
+                    .put("automaticCalibration", autoIdleCleanup.automaticEnabled())
+                    .put("automaticScope", "DELETE_OUTLIER_POINTS")
+                    .put("manualOnly", false)
             },
             mergeAutoCalContext = { payload ->
                 JSONObject().put("ok", true).put("accepted", false).put("source", payload.optString("source", "UNKNOWN"))
@@ -396,6 +506,7 @@ class TelemetryForegroundService : Service() {
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
         // Cadência curta (100 ms): cada tick lê no máximo UM grupo AutoCal (SlotArbiter) ou volta de imediato.
         autoCalTask = autoCalExecutor.scheduleWithFixedDelay(::autoCalTick, 1_000L, 100L, TimeUnit.MILLISECONDS)
+        autoIdleExecutor.scheduleWithFixedDelay({ if (!stopping) autoIdleCleanup.evaluate() }, 2_000L, 500L, TimeUnit.MILLISECONDS)
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
     }
@@ -455,6 +566,7 @@ class TelemetryForegroundService : Service() {
         try { equivalencePhases.flush() } catch (_: Throwable) {}
         scheduler.shutdownNow()
         autoCalExecutor.shutdownNow()
+        autoIdleExecutor.shutdownNow()
         analysisExecutor.shutdownNow()
         // Uma escrita em curso termina (ACK + saída segura do K insertion + readback) antes de o USB cair.
         val deadline = SystemClock.elapsedRealtime() + 20_000L
@@ -472,6 +584,8 @@ class TelemetryForegroundService : Service() {
         try { overlay.close() } catch (_: Throwable) {}
         try { sessionRecorder.close() } catch (_: Throwable) {}
         try { nativeAutoCal.endUsbSession() } catch (_: Throwable) {}
+        try { nativeActions.clearPreparation() } catch (_: Throwable) {}
+        try { nativeActions.close() } catch (_: Throwable) {}
         try { kFactor.close() } catch (_: Throwable) {}
         try { kWriter.close() } catch (_: Throwable) {}
         try { runtime.close() } catch (_: Throwable) {}
@@ -877,7 +991,10 @@ class TelemetryForegroundService : Service() {
 
     fun nativeAutoCalStatusJson(): String =
         if (::nativeAutoCal.isInitialized) {
-            nativeAutoCal.statusJson().put("analysisLane", analysisLane.json()).toString()
+            nativeAutoCal.statusJson()
+                .put("analysisLane", analysisLane.json())
+                .put("autoIdleCleanup", if (::autoIdleCleanup.isInitialized) autoIdleCleanup.json() else JSONObject.NULL)
+                .toString()
         } else "{}"
 
     fun nativeAutoCalSnapshotJson(): String =
@@ -1036,6 +1153,7 @@ class TelemetryForegroundService : Service() {
         // Curva nova: o GNV medido com a antiga sai; a gasolina (referência) fica. Invalida PRIMEIRO.
         EvidenceInvalidation.run(
             invalidate = listOf(
+                "epocaNativa" to { NativeGasEvidenceEpoch.shared.markWrite(System.currentTimeMillis()) },
                 "resetGas" to { equivalence.resetGas("CURVA_K_GRAVADA") },
                 "cerebro" to { equivalenceRuntime.onGasReset("CURVA_K_GRAVADA", equivalencePhases) },
                 "adoptCurve" to {
@@ -1087,6 +1205,7 @@ class TelemetryForegroundService : Service() {
     private fun recordFailedCurveWrite(payload: JSONObject) {
         EvidenceInvalidation.run(
             invalidate = listOf(
+                "epocaNativa" to { NativeGasEvidenceEpoch.shared.markWrite(System.currentTimeMillis()) },
                 "resetGas" to { equivalence.resetGas("CURVA_K_FALHA_PARCIAL") },
                 "cerebro" to { equivalenceRuntime.onGasReset("CURVA_K_FALHA_PARCIAL", equivalencePhases) },
                 "round" to { if (::nativeAutoCal.isInitialized) nativeAutoCal.invalidateRound() },

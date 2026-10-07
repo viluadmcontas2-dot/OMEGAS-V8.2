@@ -26,7 +26,7 @@
     <aside class="side-rail" aria-label="Navegação principal">
 
 
-      <nav class="side-nav" aria-label="Áreas do aplicativo">
+      <nav class="side-nav" aria-label="Áreas do aplicativo" data-advanced-open="false">
         <button type="button" data-route="dashboard" class="active"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
@@ -42,7 +42,7 @@
   <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
 </svg>
 <span>Agora</span></button>
-        <button type="button" data-route="map"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+        <button type="button" data-route="map" class="nav-advanced-item" style="--slot:3"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
   viewBox="0 0 24 24"
@@ -57,7 +57,7 @@
   <path d="M10 3v18" />
 </svg>
 <span>Mapa K</span></button>
-        <button type="button" data-route="curve"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+        <button type="button" data-route="curve" class="nav-advanced-item" style="--slot:2"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
   viewBox="0 0 24 24"
@@ -71,7 +71,7 @@
   <path d="M4 15l4 -6l4 2l4 -5l4 4" />
 </svg>
 <span>Curva K</span></button>
-        <button type="button" data-route="autocal"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+        <button type="button" data-route="autocal" class="nav-advanced-item" style="--slot:1"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
   viewBox="0 0 24 24"
@@ -109,7 +109,7 @@
   <path d="M12 19l0 2" />
   <path d="M19 12l2 0" />
 </svg>
-<span>Refino</span></button>
+<span>Ajuste GNV</span></button>
         <button type="button" data-route="sessions"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
@@ -124,7 +124,7 @@
   <path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" />
 </svg>
 <span>Sessões</span></button>
-        <button type="button" data-route="tools"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+        <button type="button" data-route="tools" class="nav-advanced-item" style="--slot:0"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
   width="24"
   height="24"
   viewBox="0 0 24 24"
@@ -150,6 +150,8 @@
   <path d="M3 12h4l3 8l4 -16l3 8h4" />
 </svg>
 <span>Diagnóstico</span></button>
+        <!-- Avançado: Mapa K, Curva K, AutoCal e Ferramentas ficam numa lista que abre ao tocar (as funções continuam todas). -->
+        <button type="button" class="nav-advanced-toggle" data-nav-advanced aria-expanded="false" aria-haspopup="true"><svg class="nav-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" /></svg><span>Avançado</span></button>
       </nav>
 
       <div class="rail-status">
@@ -166,7 +168,7 @@
         <div><b>OMEGAS</b><span id="buildIdentity">V8</span></div>
       </div>
         <div><small id="routeEyebrow">AGORA</small><h1 id="routeTitle">Agora</h1></div>
-        <p>Leitura e ajuste manual assistido da MP48.</p>
+        <p>Deixa o GNV andar igual à gasolina.</p>
       </header>
 
       <main class="screen-host">
@@ -264,7 +266,7 @@
           <div id="autocalScreenHost" class="autocal-cockpit-view" aria-live="polite"></div>
         </section>
 
-        <section class="screen autocal-route-screen refino-route-screen" data-screen="refino" aria-label="Refino">
+        <section class="screen autocal-route-screen refino-route-screen" data-screen="refino" aria-label="Ajuste GNV">
           <div id="refinoScreenHost" class="autocal-cockpit-view" aria-live="polite"></div>
         </section>
 

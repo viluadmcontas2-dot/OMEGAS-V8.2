@@ -158,13 +158,23 @@
       // Só redesenha quando algo visível mudou: redesenho a cada tick fechava seletores,
       // resetava a rolagem e engolia toques (a aba parecia travada).
       const signature = JSON.stringify([
+        // A idade do último dado NÃO entra: mudava a cada 2 s, refazia a tela e a rolagem voltava ao topo.
+        // Ela é atualizada no lugar (data-tool-usb-age) logo abaixo.
         appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
-        Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay, this.overlayReply, state.identity,
+        battery, overlay, this.overlayReply, state.identity,
         settings,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
       ]);
-      if (signature === this.toolsSignature && host.childElementCount) return;
+      const usbAge = appStatus.usbConnected === true ? `Último dado ${rules().ageSinceMs(appStatus.directTelemetryAgeMs)}` : 'Nenhum dado chegando.';
+      if (signature === this.toolsSignature && host.childElementCount) {
+        const ageNode = host.querySelector('[data-tool-usb-age]');
+        if (ageNode && ageNode.textContent !== usbAge) ageNode.textContent = usbAge;
+        return;
+      }
       this.toolsSignature = signature;
+      // Redesenho de verdade (algo mudou): a rolagem da tela fica onde o dono deixou.
+      const scroller = this.tools;
+      const scrollTop = scroller ? scroller.scrollTop : 0;
       const logsOpenBeforeRender = host.querySelector('.tool-logs')?.open === true;
       const batteryAction = battery.supported !== false && battery.ignoringOptimizations !== true
         ? '<button type="button" class="secondary" data-tool-battery-request>Permitir</button>' : '';
@@ -187,7 +197,7 @@
       const usb = appStatus.usbConnected === true;
       const tiles = [
         ['ECU', usb ? (appStatus.engineStuck === true ? 'Sem resposta' : 'Conectada') : 'Desconectada', usb ? (appStatus.engineStuck === true ? 'warn' : 'ok') : 'bad', usb ? 'Falando com o módulo.' : 'Ligue o cabo USB na ECU.'],
-        ['CABO USB', usb ? 'Ligado' : 'Sem cabo', usb ? 'ok' : 'bad', usb ? `Último dado ${rules().ageSinceMs(appStatus.directTelemetryAgeMs)}` : 'Nenhum dado chegando.'],
+        ['CABO USB', usb ? 'Ligado' : 'Sem cabo', usb ? 'ok' : 'bad', usbAge, 'data-tool-usb-age'],
         ['SERVIÇO', appStatus.serviceRunning === true ? 'Ativo' : 'Parado', appStatus.serviceRunning === true ? 'ok' : 'bad', appStatus.serviceRunning === true ? 'Roda com a tela apagada.' : 'Abra o OMEGAS de novo.'],
         ['LEITURA', appStatus.engineRunning === true ? 'Ativa' : 'Parada', appStatus.engineRunning === true ? 'ok' : 'warn', appStatus.engineRunning === true ? 'O app observa sozinho.' : 'Começa ao conectar a ECU.'],
       ];
@@ -203,7 +213,7 @@
         <div class="ts-grid">
         <section class="ts-card ts-wide" data-healthy="${serviceHealthy ? 'true' : 'false'}" aria-label="Saúde do sistema">
           <header class="ts-head"><div><small>SAÚDE DO SISTEMA</small><h3>${serviceHealthy ? 'Tudo funcionando' : appStatus.serviceRunning ? 'A comunicação com a ECU pede atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div>${chip(serviceHealthy ? 'ok' : 'warn', serviceHealthy ? 'Tudo certo' : 'Atenção')}</header>
-          <details class="ts-health-inspect" ${healthOpenBeforeRender ? 'open' : ''}><summary>Ver conexões</summary><div class="ts-tiles">${tiles.map(([label, value, tone, hint]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span>${hint}</span></div>`).join('')}</div></details>
+          <details class="ts-health-inspect" ${healthOpenBeforeRender ? 'open' : ''}><summary>Ver conexões</summary><div class="ts-tiles">${tiles.map(([label, value, tone, hint, hook]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span${hook ? ' ' + hook : ''}>${hint}</span></div>`).join('')}</div></details>
           <div class="ts-row" data-state="${batteryFree ? 'ok' : 'warn'}"><div><small>SEGUNDO PLANO</small><b>${batteryFree ? 'O Android não pausa o app' : 'O Android pode pausar o app'}</b><span>${batteryFree ? 'Sessões longas com a tela apagada seguem gravando.' : 'Permita para gravar sessões longas com a tela apagada.'}</span></div>${batteryAction}</div>
         </section>
 
@@ -250,6 +260,7 @@
         </details>
         </div>
       `;
+      if (scroller && scroller.scrollTop !== scrollTop) scroller.scrollTop = scrollTop;
     }
   }
 

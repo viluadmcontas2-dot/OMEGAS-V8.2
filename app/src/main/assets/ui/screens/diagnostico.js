@@ -137,7 +137,13 @@
       this.eq = null;
       this.sig = '';
       this.host?.addEventListener('click', e => this.onClick(e));
-      this.host?.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') this.onClick(e); });
+      // Enter/Espaço num item tocável age como toque; preventDefault evita a rolagem do Espaço e o clique duplo do Enter.
+      this.host?.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        if (!e.target.closest || !e.target.closest('[data-region],[data-diag-go-refino]')) return;
+        e.preventDefault();
+        this.onClick(e);
+      });
     }
     onClick(e) {
       const go = e.target.closest('[data-diag-go-refino]');

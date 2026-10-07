@@ -285,7 +285,7 @@ function fuzz({ prepare, methods, maxPathsPerMethod = 30, extra, perTick }) {
   return { cases, effective, failures, knownHits };
 }
 
-const POLL = new Set(['getStatus', 'getPresentSnapshot', 'getPresentSnapshotIfChanged', 'getLastOperation', 'getKMapReadResult', 'getUiProjection', 'getEquivalence', 'getEquivalenceFresh', 'getRefinedAnalysis', 'getRefinementPhase', 'getNativeActionStatus', 'getNativeMonitorStatus', 'getNativeMonitorSnapshot', 'getSessionLedgerStatus', 'listCurveBackups', 'listMapBackups', 'getSessionRecorderStatus', 'listRecordedSessions', 'getLogs', 'getOverlayStatus', 'getBatteryOptimizationStatus', 'getReleaseIdentity', 'getSnapshot', 'getEquivalenceResult', 'listAutoCalSessions', 'getLiveTelemetry', 'getFullEngineSnapshot', 'getIdentity', 'previewKFactorPoint', 'previewMapAdjustment']);
+const POLL = new Set(['getStatus', 'getPresentSnapshot', 'getPresentSnapshotIfChanged', 'getLastOperation', 'getKMapReadResult', 'getUiProjection', 'getEquivalence', 'getEquivalenceFresh', 'getRefinedAnalysis', 'getRefinementPhase', 'getNativeActionStatus', 'getAutoCleanupStatus', 'getNativeMonitorStatus', 'getNativeMonitorSnapshot', 'getSessionLedgerStatus', 'listCurveBackups', 'listMapBackups', 'getSessionRecorderStatus', 'listRecordedSessions', 'getLogs', 'getOverlayStatus', 'getBatteryOptimizationStatus', 'getReleaseIdentity', 'getSnapshot', 'getEquivalenceResult', 'listAutoCalSessions', 'getLiveTelemetry', 'getFullEngineSnapshot', 'getIdentity', 'previewKFactorPoint', 'previewMapAdjustment']);
 /** Métodos de ponte chamados desde `mark`, sem o polling de leitura (a sequência de AÇÕES). */
 function actionCalls(app, mark) { return app.world.since(mark).filter(c => !POLL.has(c.method)).map(c => c.method); }
 

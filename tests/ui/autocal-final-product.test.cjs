@@ -112,9 +112,10 @@ assert.match(cockpit, /const nativeSnapshot = state\.latestSnapshot\?\.fields \?
   'estado de aquisição deve vir do monitor nativo');
 assert.match(cockpit, /const enabled = finite\(state\.autoCalEnabled \?\? nativeSnapshot\.autoCalEnabled \?\? scalarValue\(nativeSnapshot, 'AUTO_CAL_ENABLE'\)\);/,
   'snapshot manual não pode ser autoridade de enable/pause');
-const inspectReferenceBlock = cockpit.slice(cockpit.indexOf('inspectReferencePoint(index)'), cockpit.indexOf('renderBands(snapshot)'));
+const inspectReferenceBlock = cockpit.slice(cockpit.indexOf('inspectReferencePoint(index)'), cockpit.indexOf('renderActionState() {'));
 assert.equal(inspectReferenceBlock.includes('GNV equivalente'), false,
   'inspetor principal da curva não deve competir com a leitura gasolina/GNV usando equivalência secundária');
-const inspectBandBlock = cockpit.slice(cockpit.indexOf('inspectBand(index)'), cockpit.indexOf('renderEvents(events)'));
-assert.equal(/contador|limiar/.test(inspectBandBlock), false,
-  'contador/limiar são RAW técnico e não podem vazar no inspetor humano');
+// Revisto (P3): o inspetor de regiões saiu (código morto). No detalhe do ponto, o contador só aparece em "Detalhes técnicos".
+assert.equal(cockpit.includes('inspectBand('), false);
+const pointBlock = cockpit.slice(cockpit.indexOf('    inspectAcquiredPoint(fuel, index) {'), cockpit.indexOf('    tapAcquiredPoint('));
+assert.ok(pointBlock.indexOf("'contador '") > pointBlock.indexOf('const technical'), 'contador só nos Detalhes técnicos');
