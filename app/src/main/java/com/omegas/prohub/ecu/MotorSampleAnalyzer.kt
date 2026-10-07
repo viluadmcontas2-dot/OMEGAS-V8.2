@@ -578,12 +578,8 @@ class MotorSampleAnalyzer(
         )
     }
 
-    private fun isPhysicalCutoff(frame: Mp48Telemetry): Boolean = policy.let { active ->
-        frame.rpm >= active.cutoffMinimumRpm &&
-            frame.petrolMs < active.cutoffMaximumPetrolMs &&
-            frame.gasRaw == 0 &&
-            frame.mapBar < active.cutoffMaximumMapBar
-    }
+    private fun isPhysicalCutoff(frame: Mp48Telemetry): Boolean =
+        PhysicalCutoff.isCutoff(frame.rpm, frame.petrolMs, frame.gasRaw, frame.mapBar)
 
     /** Depois do mínimo, cada quadro novo provoca uma nova avaliação. */
     private fun evaluationDue(): Boolean =
