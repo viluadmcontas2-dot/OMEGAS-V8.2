@@ -64,8 +64,6 @@ class KFactorManager(
 
     fun statusJson(): String = synchronized(statusLock) { JSONObject(status.toString()).toString() }
 
-    fun historyJson(): String = loadHistory().toString()
-
     /**
      * Réplica funcional do ActionResetKFactorExecute do ProgBase 4.2.0.6.
      *

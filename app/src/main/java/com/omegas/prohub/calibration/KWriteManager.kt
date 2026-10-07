@@ -70,7 +70,6 @@ class KWriteManager(
 
     fun isBusy(): Boolean = busy.get()
     fun statusJson(): String = synchronized(statusLock) { JSONObject(status.toString()).toString() }
-    fun historyJson(): String = loadHistory().toString()
 
     @Synchronized
     fun beginUsbSession(sessionId: Long) {

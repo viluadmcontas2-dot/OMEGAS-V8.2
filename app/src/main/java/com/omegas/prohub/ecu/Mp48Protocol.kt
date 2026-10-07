@@ -14,7 +14,6 @@ object Mp48Protocol {
     val CMD_INIT_2 = byteArrayOf(0x01, 0x00, 0x3A, 0x3B)
     val CMD_IDENTIFY = byteArrayOf(0x00, 0x25, 0x25)
     val CMD_TELEMETRY = byteArrayOf(0x48, 0x01, 0x49)
-    val CMD_SECONDARY_STATUS = byteArrayOf(0x48, 0x08, 0x50)
     val CMD_DISCONNECT = byteArrayOf(0x00, 0x01, 0x01)
 
     const val STATUS_ACK = 0x53

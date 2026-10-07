@@ -1,0 +1,48 @@
+[
+  {
+    "phase": "holdout",
+    "class": "TRUST",
+    "coverage": 0.00909090909090909,
+    "N": 2,
+    "sessions": 1,
+    "safe_rate": 0.5,
+    "MAE": 0.1877076450904911,
+    "P90": 0.2880782660369818,
+    "direction_N": 1,
+    "direction_accuracy": 0.0,
+    "jeffreys_low": 0.06083027592009732,
+    "jeffreys_high": 0.9391697240799026,
+    "session_macro_safe": 0.5
+  },
+  {
+    "phase": "holdout",
+    "class": "PROVISIONAL",
+    "coverage": 0.21363636363636362,
+    "N": 47,
+    "sessions": 1,
+    "safe_rate": 0.6595744680851063,
+    "MAE": 0.38371754255366813,
+    "P90": 0.4543630828444897,
+    "direction_N": 29,
+    "direction_accuracy": 0.8620689655172413,
+    "jeffreys_low": 0.5178071968224806,
+    "jeffreys_high": 0.7823582119350191,
+    "session_macro_safe": 0.6595744680851063
+  },
+  {
+    "phase": "holdout",
+    "class": "WAIT",
+    "coverage": 0.7772727272727272,
+    "N": 171,
+    "sessions": 1,
+    "safe_rate": 0.38596491228070173,
+    "MAE": 0.865714158892765,
+    "P90": 1.3866297431278696,
+    "direction_N": 141,
+    "direction_accuracy": 0.6312056737588653,
+    "jeffreys_low": 0.3154085735267909,
+    "jeffreys_high": 0.4603450161384741,
+    "session_macro_safe": 0.38596491228070173
+  }
+]
+EXTERNAL_DETERMINISTIC_PASS; no ZIP opened; frozen hash unchanged

@@ -45,8 +45,6 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
         const val GAP_MS = 5_000L
         /** Prazo para o motor religar na mesma sessão e confirmar "apagou e religou". */
         const val RESTART_WINDOW_MS = 60_000L
-        /** Acima disso o GPS diz que o carro andava quando o motor morreu. */
-        const val MOVING_KMH = 5.0
         const val MAX_EVENTS = 50
         const val BIN_MS = 0.5
         const val KIND_STALL = "APAGOU"

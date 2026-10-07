@@ -541,14 +541,6 @@ object AutoMatchRefinedEngine {
         return EvidencePairs.interiorCovered(tps, lo, hi)
     }
 
-    internal fun plausiblePairs(
-        pairs: List<kotlin.Pair<Double, Double>>,
-        episodes: List<Int>? = null,
-    ): kotlin.Pair<List<kotlin.Pair<Double, Double>>, Int> {
-        val plausible = plausibleIndices(pairs, episodes)
-        return plausible.kept.map { pairs[it] } to plausible.outliers
-    }
-
 
     // ------------------------------------------------------- evidência fina (Lote H)
 
