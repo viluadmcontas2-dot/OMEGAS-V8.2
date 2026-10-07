@@ -69,9 +69,11 @@ class AutoIdleCleanupCoordinator(
         if (!receipt.optBoolean("automatic", false) || receipt.optString("action") != "DELETE_POINT") return@submit
         inFlightSinceMs = null
         val details = receipt.optJSONObject("details") ?: JSONObject()
-        val bands = targetBands(details)
-        cleaner.onSucceeded(clock())
-        tracker.markDeleted(bands)
+        val ambiguousBands = bandsWithResult(details, "AMBIGUOUS")
+        // Readback ambíguo (revisão #1): consome o intervalo e espera releitura; nunca desliga a sessão.
+        cleaner.onSucceeded(clock(), rereadRequired = details.optBoolean("readbackAmbiguous", false))
+        tracker.markDeleted(targetBands(details) - ambiguousBands.toSet())
+        tracker.forget(ambiguousBands + intList(details.optJSONArray("skippedChanged")))
         val petrol = details.optJSONObject("petrolGuard")
         if (petrol?.optBoolean("abnormal", false) == true) {
             disableLocked("Gasolina mudou de forma anormal durante o apagamento automático", receipt)
@@ -82,15 +84,29 @@ class AutoIdleCleanupCoordinator(
     fun onActionFailed(receipt: JSONObject) = submit {
         if (!receipt.optBoolean("automatic", false) || receipt.optString("action") != "DELETE_POINT") return@submit
         inFlightSinceMs = null
-        receipt.optJSONArray("emptyBands")?.let { array ->
-            tracker.markDeleted(List(array.length()) { array.optInt(it) })
-        }
+        receipt.optJSONArray("emptyBands")?.let { array -> tracker.markDeleted(intList(array)) }
+        // A banda readquiriu andando entre a marca e o disparo (revisão #3): a marca sai.
+        tracker.forget(intList(receipt.optJSONArray("skippedChanged")))
         if (receipt.has("effective") && !receipt.optBoolean("effective", true)) {
             disableLocked("Readback mostrou que a ECU não apagou o ponto", receipt)
         } else {
+            // Toda falha consome tempo (revisão #2); N seguidas desligam a sessão.
+            val wasEnabled = cleaner.disabledReason() == null
             cleaner.onFailed(clock(), receipt.optBoolean("mutationMayHaveStarted", false))
+            val reason = cleaner.disabledReason()
+            if (wasEnabled && reason != null) recordDisabled(reason, receipt)
         }
         publish()
+    }
+
+    private fun intList(array: JSONArray?): List<Int> =
+        if (array == null) emptyList() else List(array.length()) { array.optInt(it, -1) }.filter { it >= 0 }
+
+    private fun bandsWithResult(details: JSONObject, result: String): List<Int> {
+        val rows = details.optJSONArray("effect") ?: return emptyList()
+        return List(rows.length()) { rows.optJSONObject(it) }
+            .filter { it?.optString("result") == result }
+            .mapNotNull { it?.optInt("index", -1)?.takeIf { index -> index >= 0 } }
     }
 
     fun json(): JSONObject = JSONObject(lastJson.toString())
@@ -162,6 +178,10 @@ class AutoIdleCleanupCoordinator(
 
     private fun disableLocked(reason: String, receipt: JSONObject) {
         cleaner.disable(reason)
+        recordDisabled(reason, receipt)
+    }
+
+    private fun recordDisabled(reason: String, receipt: JSONObject) {
         try {
             record(
                 "autocal_auto_idle_disabled",

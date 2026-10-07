@@ -204,6 +204,59 @@ class AutoIdleCleanupCoordinatorTest {
         assertEquals(1, calls.size)
     }
 
+    @Test
+    fun `R2 falha repetida na releitura de antes nao vira Delete a cada 500 ms`() {
+        markIdle(band = 4)
+        drive()
+        coordinator.evaluate()
+        coordinator.onActionFailed(failedReceipt(mutation = false))
+        repeat(8) { now += 500; drive(); coordinator.evaluate() }
+        assertEquals("só depois do intervalo mínimo", 1, calls.size)
+        now += 1_500
+        drive()
+        coordinator.evaluate()
+        assertEquals(2, calls.size)
+    }
+
+    @Test
+    fun `R2 falhas persistentes desligam o automatico na sessao com registro`() {
+        markIdle(band = 4)
+        repeat(5) {
+            drive()
+            coordinator.evaluate()
+            coordinator.onActionFailed(failedReceipt(mutation = false))
+            now += 6_000
+        }
+        assertEquals(5, calls.size)
+        drive()
+        coordinator.evaluate()
+        assertEquals(5, calls.size)
+        assertFalse(coordinator.json().getJSONObject("policy").getBoolean("enabled"))
+        assertTrue(records.any { it.first == "autocal_auto_idle_disabled" })
+    }
+
+    @Test
+    fun `R1 readback ambiguo nao desliga e espera releitura`() {
+        markIdle(band = 4)
+        drive()
+        coordinator.evaluate()
+        coordinator.onActionConfirmed(confirmedReceipt(4).also { it.getJSONObject("details").put("readbackAmbiguous", true) })
+        assertTrue(coordinator.json().getJSONObject("policy").getBoolean("enabled"))
+        assertTrue(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+    }
+
+    @Test
+    fun `R3 banda pulada por ter mudado perde a marca`() {
+        markIdle(band = 4)
+        drive()
+        coordinator.evaluate()
+        coordinator.onActionFailed(failedReceipt(mutation = false).put("skippedChanged", JSONArray().put(4)))
+        now += 6_000
+        drive()
+        coordinator.evaluate()
+        assertEquals(1, calls.size)
+    }
+
     // ---- apoio ----
 
     /** Duas leituras confirmadas: a segunda adquire a banda com telemetria de lenta no intervalo. */
