@@ -63,7 +63,18 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
         )
         self.assertIn("if (workClass == Mp48WorkClass.READ_ONLY)", source)
         self.assertIn("future.get(waitTimeoutMs.coerceAtLeast(250L), TimeUnit.MILLISECONDS)", source)
-        self.assertIn("future.get()", source)
+        # Escrita/safety: espera longa mas finita, com resultado que diz se a mutação pode ter começado.
+        self.assertIn("awaitCritical(maxOf(waitTimeoutMs, criticalWaitMs))", source)
+        self.assertIn("CRITICAL_RESULT_WAIT_MS = 15_000L", source)
+        self.assertIn("mutationMayHaveStarted = true", source)
+        self.assertIn("mutationMayHaveStarted = false", source)
+        # Sem loop, ninguém tira trabalho da fila: o fim do loop, stop() e USB ausente falham os pendentes.
+        run_loop = source[source.index("private fun runLoop()"):source.index("private fun performHandshakeOrResume()")]
+        finally_block = run_loop[run_loop.index("} finally {"):]
+        self.assertIn("queue.failAll(", finally_block)
+        self.assertIn("queue.failAll(", run_loop[run_loop.index("if (!usb.connected)"):run_loop.index("if (!sessionReady)")])
+        stop_fn = source[source.index("fun stop(graceful: Boolean = true)"):source.index("fun close()")]
+        self.assertIn("queue.failAll(", stop_fn)
 
 
 

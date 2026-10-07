@@ -90,6 +90,30 @@ class AutoCalProtocolTest {
     }
 
     @Test
+    fun `erro de forma cita a forma fixa do campo e nao MODULE_VERSION`() {
+        val eighteen = AutoCalProtocol.decode(AutoCalProtocol.MUL_ACT, Mp48Protocol.STATUS_ACK, ByteArray(36))
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            AutoCalProtocol.requireExpectedShape(eighteen, 4)
+        }
+        val message = error.message.orEmpty()
+        assertTrue(message, message.contains("MUL_ACT"))
+        assertTrue(message, message.contains("18"))
+        assertTrue(message, message.contains("30"))
+        assertTrue("a dimensão não depende de MODULE_VERSION: $message", !message.contains("MODULE_VERSION"))
+    }
+
+    @Test
+    fun `reset da curva K nunca escreve indice fora do vetor MUL_ACT`() {
+        assertEquals(30, AutoCalProtocol.resetKFactorMulActFrames().size)
+        assertThrows(IllegalArgumentException::class.java) {
+            AutoCalProtocol.resetKFactorMulActFrames(31)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AutoCalProtocol.resetKFactorMulActFrames(0)
+        }
+    }
+
+    @Test
     fun `acoes manuais progbase geram frames exatos`() {
         assertArrayEquals(hex("02 24 04 01 2B"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_PETROL))
         assertArrayEquals(hex("02 24 04 02 2C"), AutoCalProtocol.manualAction(AutoCalProtocol.ManualActionMode.RESET_GAS))

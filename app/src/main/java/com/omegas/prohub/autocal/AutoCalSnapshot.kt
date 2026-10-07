@@ -177,12 +177,6 @@ object AutoCalSnapshotBuilder {
         val fields = linkedMapOf<Int, AutoCalFieldValue>()
         val warnings = mutableListOf<String>()
         val moduleVersion = decodeModuleVersion(latestByIdentity[AutoCalProtocol.MODULE_VERSION.identity])
-        val hasModuleSizedField = expectedFields.any {
-            AutoCalProtocol.expectedElements(it, null) == null && it.expectedElementsHint != null
-        }
-        if (moduleVersion == null && hasModuleSizedField) {
-            warnings += "MODULE_VERSION indisponível; vetores dinâmicos foram decodificados sem promover forma 18/30"
-        }
 
         expectedFields.distinctBy { it.identity }
             .sortedWith(compareBy<AutoCalProtocol.Field> { it.address }.thenBy { it.index ?: -1 })

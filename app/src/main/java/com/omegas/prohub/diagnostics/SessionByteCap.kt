@@ -7,21 +7,39 @@ package com.omegas.prohub.diagnostics
 internal object SessionByteCap {
     const val TOTAL_BYTES_CAP = 1_536L * 1024L * 1024L
 
+    /** Só acima disto uma sessão SEM cópia pública confirmada pode sair (o aparelho ficaria sem espaço). */
+    const val EMERGENCY_TOTAL_BYTES_CAP = 3L * 1024L * 1024L * 1024L
+
     data class Info(
         val name: String,
         val bytes: Long,
         val modifiedAtMs: Long,
-        /** A sessão que está gravando agora nunca é apagada. */
+        /** Gravando agora ou na fila/no meio da publicação: nunca é apagada. */
         val active: Boolean,
+        /** Tem `.documents_mirrored` (ou não há espelho): a cópia pública existe. */
+        val published: Boolean = true,
     )
 
-    /** Do mais antigo ao mais novo, só sessões fechadas, até o total caber em [capBytes]. */
-    fun select(entries: List<Info>, capBytes: Long): List<String> {
+    /**
+     * Do mais antigo ao mais novo, até o total caber em [capBytes], apagando só sessões publicadas e
+     * inativas. Sessão sem cópia pública só sai se o total ainda passar de [emergencyCapBytes].
+     */
+    fun select(
+        entries: List<Info>,
+        capBytes: Long,
+        emergencyCapBytes: Long = EMERGENCY_TOTAL_BYTES_CAP,
+    ): List<String> {
         var total = entries.sumOf { it.bytes }
         if (total <= capBytes) return emptyList()
         val doomed = mutableListOf<String>()
-        for (entry in entries.filter { !it.active }.sortedBy { it.modifiedAtMs }) {
+        val candidates = entries.filter { !it.active }.sortedBy { it.modifiedAtMs }
+        for (entry in candidates.filter { it.published }) {
             if (total <= capBytes) break
+            doomed += entry.name
+            total -= entry.bytes
+        }
+        for (entry in candidates.filter { !it.published }) {
+            if (total <= emergencyCapBytes) break
             doomed += entry.name
             total -= entry.bytes
         }

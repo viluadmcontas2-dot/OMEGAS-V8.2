@@ -14,8 +14,9 @@ import org.json.JSONObject
  * simples reinício do loop não cria outra sessão nem aumenta confiança.
  *
  * A thread da ECU publica somente o quadro leve e volta imediatamente ao ciclo
- * MP48. A entrega visual mantém somente o quadro mais recente enquanto o consumidor
- * está ocupado. A sessão gravada permanece como backlog frio/durável para
+ * MP48: montar o JSON do quadro, copiar o snapshot e avisar overlay/notificação
+ * acontecem em filas próprias (latest-only), nunca na thread serial. A entrega
+ * visual mantém somente o quadro mais recente enquanto o consumidor está ocupado. A sessão gravada permanece como backlog frio/durável para
  * auditoria/exportação.
  */
 class NativeRuntimeManager(
@@ -38,6 +39,21 @@ class NativeRuntimeManager(
             )
         },
     )
+    /** Estado da engine (merge do snapshot + overlay/notificação) fora da thread serial. */
+    private val stateDeliveryPipeline = LatestOnlyBackgroundPipeline(
+        threadName = "omegas-engine-state-delivery",
+        threadPriority = Thread.NORM_PRIORITY,
+        onFailure = { sequence, error ->
+            log.add(
+                "ERROR",
+                "ENGINE-STATE-DELIVERY",
+                "Falha ao entregar estado $sequence fora da thread ECU: ${error.message}",
+            )
+        },
+    )
+    private val stateSequence = java.util.concurrent.atomic.AtomicLong(0L)
+    /** Saída da engine ainda não avisada (true = crash); entregue pela fila de estado, nunca descartada. */
+    private val pendingExitNotice = java.util.concurrent.atomic.AtomicReference<Boolean?>(null)
     private val engine = ResponseDrivenEcuEngine(
         usb = usb,
         log = log,
@@ -150,6 +166,7 @@ class NativeRuntimeManager(
         .put("last_error", lastError)
         .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
         .put("telemetryDeliveryPipeline", telemetryDeliveryPipeline.metricsJson())
+        .put("stateDeliveryPipeline", stateDeliveryPipeline.metricsJson())
         .put("serialAdmission", serialAdmission.metricsJson())
 
     fun fullSnapshotJson(): String = snapshotJson()
@@ -197,9 +214,14 @@ class NativeRuntimeManager(
         stop(3)
         flushPipelines("encerramento do runtime", 2_000L)
         try { telemetryDeliveryPipeline.close() } catch (_: Exception) {}
+        try { stateDeliveryPipeline.close() } catch (_: Exception) {}
         try { engine.close() } catch (_: Exception) {}
     }
 
+    /**
+     * Roda na thread serial: só marca flags baratas e entrega o quadro imutável à fila.
+     * O JSON (quadro + amostra + métricas) é montado na thread de entrega.
+     */
     private fun consumeTelemetry(
         telemetry: Mp48Telemetry,
         decision: SampleDecision,
@@ -207,6 +229,31 @@ class NativeRuntimeManager(
     ) {
         val sequence = metrics.telemetryFrames
         val generation = currentUsbSessionId
+        val frameAtWallMs = System.currentTimeMillis()
+        running = true
+        ready = true
+        lastError = ""
+
+        val accepted = telemetryDeliveryPipeline.submit(sequence) {
+            val root = telemetryEvent(telemetry, decision, metrics, generation, frameAtWallMs)
+            synchronized(snapshotLock) {
+                // Quadro atrasado de uma sessão USB já encerrada não sobrescreve o snapshot novo.
+                if (generation == currentUsbSessionId) latestSnapshot = root
+            }
+            onTelemetryEvent(root)
+        }
+        if (!accepted) {
+            log.add("WARN", "TELEMETRY-DELIVERY", "Quadro $sequence não aceito porque a fila está encerrando")
+        }
+    }
+
+    private fun telemetryEvent(
+        telemetry: Mp48Telemetry,
+        decision: SampleDecision,
+        metrics: EngineMetrics,
+        generation: Long,
+        frameAtWallMs: Long,
+    ): JSONObject {
         val live = telemetry.toJson()
             .put("session_id", generation)
             .put("version", "OMEGAS-NATIVE-CORE-5")
@@ -224,7 +271,7 @@ class NativeRuntimeManager(
             .put("k_interpolated", 0.0)
             .put("k_suggested", JSONObject.NULL)
             .put("delta_k", JSONObject.NULL)
-            .put("last_frame_at", System.currentTimeMillis() / 1000.0)
+            .put("last_frame_at", frameAtWallMs / 1000.0)
             .put("last_frame_age_ms", 0)
 
         val runtime = metrics.toJson()
@@ -235,21 +282,12 @@ class NativeRuntimeManager(
             .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
             .put("telemetry_delivery_pipeline", telemetryDeliveryPipeline.metricsJson())
 
-        val root = JSONObject()
+        return JSONObject()
             .put("event", "telemetry")
             .put("session_id", generation)
             .put("version", "OMEGAS-NATIVE-CORE-5")
             .put("live", live)
             .put("runtime", runtime)
-
-        synchronized(snapshotLock) { latestSnapshot = root }
-        running = true
-        ready = true
-        lastError = ""
-
-        if (!telemetryDeliveryPipeline.submit(sequence) { onTelemetryEvent(root) }) {
-            log.add("WARN", "TELEMETRY-DELIVERY", "Quadro $sequence não aceito porque a fila está encerrando")
-        }
     }
 
     /** Estado da engine como ela o declara (EngineState.name): a UI mostra "ECU não responde" ou "recuperando" por ele. */
@@ -258,6 +296,10 @@ class NativeRuntimeManager(
     @Volatile var engineMessage: String = ""
         private set
 
+    /**
+     * Roda na thread serial: atualiza só os campos voláteis baratos. A cópia do snapshot e o aviso a
+     * overlay/notificação (onStateChanged) vão para a fila de estado, fora da thread serial.
+     */
     private fun consumeState(status: JSONObject) {
         val state = status.optString("state")
         val wasRunning = running
@@ -268,6 +310,20 @@ class NativeRuntimeManager(
         // `lastError` costuma vir vazio no JSON (a chave existe): aí vale a mensagem da engine, não o erro anterior.
         lastError = status.optString("lastError").ifBlank { status.optString("message").ifBlank { lastError } }
         if (state == "ERROR") crashed = true
+        if (state == "STOPPED") {
+            running = false
+            ready = false
+            // A engine terminou de fato: o "travado" de uma parada que passou do prazo deixa de valer.
+            stuck = false
+            if (wasRunning && !intentionalStop) reportExit(crashed, deferNotice = true)
+        }
+        if (!stateDeliveryPipeline.submit(stateSequence.incrementAndGet()) { deliverState(state) }) {
+            // Fila encerrando (close): entrega aqui mesmo para não perder o último estado.
+            deliverState(state)
+        }
+    }
+
+    private fun deliverState(state: String) {
         synchronized(snapshotLock) {
             val root = JSONObject(latestSnapshot.toString())
             root.put(
@@ -279,21 +335,15 @@ class NativeRuntimeManager(
             )
             latestSnapshot = root
         }
-        if (state == "STOPPED") {
-            running = false
-            ready = false
-            // A engine terminou de fato: o "travado" de uma parada que passou do prazo deixa de valer.
-            stuck = false
-            if (wasRunning && !intentionalStop) reportExit(crashed)
-        }
+        pendingExitNotice.getAndSet(null)?.let { wasCrash -> onEngineExited(wasCrash) }
         onStateChanged()
     }
 
-    private fun reportExit(wasCrash: Boolean) {
+    private fun reportExit(wasCrash: Boolean, deferNotice: Boolean = false) {
         if (exitReported) return
         exitReported = true
         exitCount += 1
-        onEngineExited(wasCrash)
+        if (deferNotice) pendingExitNotice.set(wasCrash) else onEngineExited(wasCrash)
     }
 
     private fun snapshotJson(): String = synchronized(snapshotLock) {
@@ -307,7 +357,11 @@ class NativeRuntimeManager(
         if (!deliveryOk) {
             log.add("WARN", "TELEMETRY-DELIVERY", "Fila não drenou em $boundary dentro de ${timeoutMs}ms")
         }
-        return deliveryOk
+        val stateOk = stateDeliveryPipeline.flush(timeoutMs)
+        if (!stateOk) {
+            log.add("WARN", "ENGINE-STATE-DELIVERY", "Fila de estado não drenou em $boundary dentro de ${timeoutMs}ms")
+        }
+        return deliveryOk && stateOk
     }
 
     private fun emptySnapshot(sessionId: Long = 0L, reason: String = "OFFLINE"): JSONObject = JSONObject()

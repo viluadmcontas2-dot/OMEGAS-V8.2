@@ -21,48 +21,145 @@ class SessionPartPlannerTest {
         return out
     }
 
-    private fun publish(dir: File, final: Boolean = false, commit: Boolean = true): Pair<Int, Map<String, ByteArray>>? {
+    /** Simula o espelho: reserva o número (nunca reaproveitado), escreve o ZIP e só então registra. */
+    private fun publish(
+        dir: File,
+        final: Boolean = false,
+        commit: Boolean = true,
+        published: MutableSet<String> = mutableSetOf(),
+    ): Pair<Int, Map<String, ByteArray>>? {
         val plan = SessionPartPlanner.plan(dir, final) ?: return null
+        SessionPartPlanner.reserve(plan) { SessionPartPlanner.fileName("s1", it) in published }
+        val name = SessionPartPlanner.fileName("s1", plan)
+        assertTrue("nome já publicado nunca é reescrito: $name", published.add(name))
         val out = ByteArrayOutputStream()
         SessionPartPlanner.writeZip(plan, "s1", out)
         if (commit) SessionPartPlanner.commit(dir, plan)
         return plan.part to unzip(out.toByteArray())
     }
 
-    private fun events(parts: List<Map<String, ByteArray>>): ByteArray =
-        parts.flatMap { p -> p.filterKeys { it.contains("events_0001.from_") }.toSortedMap(compareBy { it.substringAfter("from_").substringBefore(".").toLong() }).values }
-            .fold(ByteArray(0)) { acc, b -> acc + b }
+    /** Junta as partes como o leitor faz: cada trecho é escrito na posição fromByte do arquivo de origem. */
+    private fun events(parts: List<Map<String, ByteArray>>): ByteArray {
+        var image = ByteArray(0)
+        parts.forEach { part ->
+            part.filterKeys { it.contains("events_0001.from_") }.forEach { (key, bytes) ->
+                val from = key.substringAfter("from_").substringBefore(".").toInt()
+                if (image.size < from + bytes.size) image = image.copyOf(from + bytes.size)
+                System.arraycopy(bytes, 0, image, from, bytes.size)
+            }
+        }
+        return image
+    }
 
     @Test
-    fun `corte de energia no meio da direcao nao perde nem duplica eventos`() {
+    fun `corte de energia no meio da direcao nao perde eventos nem reescreve parte publicada`() {
         val dir = Files.createTempDirectory("sess").toFile()
+        val published = mutableSetOf<String>()
         val log = File(dir, "events_0001.jsonl")
         File(dir, "manifest.json").writeText("{\"v\":1}")
         log.writeText("{\"seq\":1}\n{\"seq\":2}\n")
-        val p1 = publish(dir)!!
+        val p1 = publish(dir, published = published)!!
         assertEquals(1, p1.first)
         assertTrue(p1.second.containsKey("s1/manifest.json"))
 
         // Mais eventos e uma linha cortada pela queda de energia.
         log.appendText("{\"seq\":3}\n{\"seq\":4}\n{\"se")
-        // Queda ENTRE publicar e registrar: a mesma parte (mesmo nome) é refeita, sem "(1)".
-        val lost = publish(dir, commit = false)!!
+        // Queda ENTRE publicar e registrar: a parte 2 já saiu; a nova tentativa usa o PRÓXIMO número
+        // (antes regravava a mesma _parte_0002 com faixa maior via "rwt").
+        val lost = publish(dir, commit = false, published = published)!!
         assertEquals(2, lost.first)
-        val p2 = publish(dir)!!
-        assertEquals(2, p2.first)
-        assertTrue("manifest não mudou, não repete", !p2.second.containsKey("s1/manifest.json"))
+        val p3 = publish(dir, published = published)!!
+        assertEquals(3, p3.first)
+        val info3 = JSONObject(String(p3.second.getValue("s1/parte.json")))
+        assertEquals("[2]", info3.getJSONArray("supersededParts").toString())
+        assertEquals("[1]", info3.getJSONArray("committedPartsBefore").toString())
 
         // Nada novo: nenhuma parte.
-        assertNull(publish(dir))
+        assertNull(publish(dir, published = published))
 
         // App reabre depois do corte; a linha cortada é completada e sai na parte final.
         log.appendText("q\":5}\n")
-        val p3 = publish(dir, final = true)!!
-        assertEquals(3, p3.first)
-        assertTrue(JSONObject(String(p3.second.getValue("s1/parte.json"))).getBoolean("final"))
+        val p4 = publish(dir, final = true, published = published)!!
+        assertEquals(4, p4.first)
+        val info4 = JSONObject(String(p4.second.getValue("s1/parte.json")))
+        assertTrue(info4.getBoolean("final"))
+        assertEquals("[1,3,4]", info4.getJSONArray("expectedParts").toString())
+        assertEquals(log.length(), info4.getJSONObject("cumulativeToByte").getLong("events_0001.jsonl"))
 
-        // Juntando as partes publicadas = exatamente o arquivo local, byte a byte.
-        assertArrayEquals(log.readBytes(), events(listOf(p1.second, p2.second, p3.second)))
+        // Juntando as partes necessárias (sem a 2) = exatamente o arquivo local, byte a byte.
+        assertArrayEquals(log.readBytes(), events(listOf(p1.second, p3.second, p4.second)))
+        // E com a 2 (publicada antes da queda) também: as faixas sobrepostas têm bytes idênticos.
+        assertArrayEquals(log.readBytes(), events(listOf(p1.second, lost.second, p3.second, p4.second)))
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `estado corrompido nao volta para a parte 1 e reenvia tudo do inicio`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        val published = mutableSetOf<String>()
+        val log = File(dir, "events_0001.jsonl")
+        log.writeText("{\"seq\":1}\n")
+        repeat(3) { index ->
+            log.appendText("{\"seq\":${index + 2}}\n")
+            publish(dir, published = published)
+        }
+        File(dir, SessionPartPlanner.STATE_FILE).writeText("{\"nextPart\": 4, \"offs")
+        log.appendText("{\"seq\":9}\n")
+        val recovered = publish(dir, published = published)!!
+        assertEquals(4, recovered.first)
+        val info = JSONObject(String(recovered.second.getValue("s1/parte.json")))
+        assertTrue(info.getBoolean("stateRecovered"))
+        // Sem saber o que já saiu, a parte recuperada leva o arquivo inteiro: duplica, nunca perde.
+        assertArrayEquals(log.readBytes(), events(listOf(recovered.second)))
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `estado corrompido sem reservas pula nomes ja publicados`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n")
+        File(dir, SessionPartPlanner.STATE_FILE).writeText("lixo")
+        val plan = SessionPartPlanner.plan(dir, final = false)!!
+        val existing = setOf("s1_parte_0001.zip", "s1_parte_0002.zip", "s1_parte_0003.zip")
+        SessionPartPlanner.reserve(plan) { SessionPartPlanner.fileName("s1", it) in existing }
+        assertEquals(4, plan.part)
+        assertEquals("s1_parte_0004.zip", SessionPartPlanner.fileName("s1", plan))
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `registro do estado e atomico e sobrevive a temporario completo sem rename`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        val log = File(dir, "events_0001.jsonl")
+        log.writeText("{\"seq\":1}\n")
+        val first = SessionPartPlanner.plan(dir, final = false)!!
+        SessionPartPlanner.reserve(first) { false }
+        SessionPartPlanner.commit(dir, first)
+        assertTrue(File(dir, SessionPartPlanner.STATE_FILE).isFile)
+        assertTrue("sem temporário sobrando", !File(dir, SessionPartPlanner.STATE_FILE + ".tmp").exists())
+
+        // Queda entre gravar o temporário (completo, com fsync) e o rename: o temporário vale.
+        log.appendText("{\"seq\":2}\n")
+        val second = SessionPartPlanner.plan(dir, final = false)!!
+        SessionPartPlanner.reserve(second) { false }
+        File(dir, SessionPartPlanner.STATE_FILE + ".tmp").writeText(SessionPartPlanner.stateAfter(second).toString())
+        File(dir, SessionPartPlanner.STATE_FILE).writeText("{corrompido")
+        assertNull("nada novo depois da parte 2", SessionPartPlanner.plan(dir, final = false))
+        log.appendText("{\"seq\":3}\n")
+        assertEquals(3, SessionPartPlanner.plan(dir, final = false)!!.part)
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `reserva repetida do mesmo numero e recusada`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n")
+        val a = SessionPartPlanner.plan(dir, final = false)!!
+        val b = SessionPartPlanner.plan(dir, final = false)!!
+        SessionPartPlanner.reserve(a) { false }
+        SessionPartPlanner.reserve(b) { false }
+        assertEquals(1, a.part)
+        assertEquals("dois planos concorrentes nunca recebem o mesmo nome", 2, b.part)
         dir.deleteRecursively()
     }
 
