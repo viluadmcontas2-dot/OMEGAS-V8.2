@@ -4,7 +4,7 @@
 >
 > - **Detecção:** para cada combustível, a curva ms × MAP dos buffers nativos (bandas 0..15 com contador > 0 e MAP > 0) passa pelo ajuste robusto do Refino (`AutoMatchRefinedEngine.monotoneFit`: resíduo leave-one-out em ln ms, limiar max(5%, 3·MAD)). Banda rejeitada = fora da curva.
 > - **Disparo:** banda GNV fora da curva → apaga com o carro rodando em GNV (rpm ≥ 1000). Banda gasolina fora da curva → apaga com o carro rodando em **gasolina** (rpm ≥ 1000). Motivo: a gasolina quase não reaprende (3 aquisições em 43 sessões); apagar com o carro em GNV deixaria a base com buraco e o Refino sem referência.
-> - **Forma real ("ver a média"):** se o ponto readquirido voltar a menos de 3% do valor apagado em 2 readquisições seguidas, a banda é forma real da curva e não é mais apagada nesta conexão. Voltou em outro lugar = ruído; segue normal.
+> - **Sem regra de "forma real" (correção do dono):** parado o carro injeta mais, então um ponto contaminado volta sempre no mesmo lugar; repetição não prova forma real. Ponto fora da curva é apagado toda vez, com o carro rodando no combustível dele; o único freio é o intervalo de 5 s.
 > - **Guardas mantidas:** 5 s entre apagamentos; readback que prova o apagamento; bandas do outro combustível relidas antes/depois e mudança anormal pausa o automático na conexão; falhas consomem intervalo; 5 falhas seguidas pausam.
 > - **Tela:** "O app pediu para a ECU reaprender o ponto X da gasolina/do GNV — ele estava fora da curva."
 
