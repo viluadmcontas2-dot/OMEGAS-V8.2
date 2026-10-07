@@ -1221,11 +1221,7 @@ class AutoCalNativeActionManager(
     }
 
     private fun appendReceipt(receipt: JSONObject) {
-        val current = loadReceipts().put(receipt)
-        val trimmed = JSONArray()
-        val start = (current.length() - MAX_RECEIPTS).coerceAtLeast(0)
-        for (index in start until current.length()) trimmed.put(current.get(index))
-        atomicWrite(receiptFile, trimmed.toString(2))
+        atomicWrite(receiptFile, trimReceipts(loadReceipts().put(receipt), MAX_RECEIPTS).toString(2))
     }
 
     private fun atomicWrite(file: File, text: String) {
@@ -1268,6 +1264,25 @@ class AutoCalNativeActionManager(
         private const val HOST_MODE_SETTLE_MS = 1_000L
         private const val POINT_DELETE_SETTLE_MS = 500L
         private const val MAX_RECEIPTS = 200
+
+        /**
+         * Mantém os últimos [max] recibos manuais e os últimos [max] automáticos, na ordem original.
+         * O apagamento automático pode disparar muitas vezes na cidade; sem a separação ele empurraria
+         * o histórico das ações do dono para fora do arquivo.
+         */
+        internal fun trimReceipts(all: JSONArray, max: Int): JSONArray {
+            val automatic = BooleanArray(all.length()) { all.optJSONObject(it)?.optBoolean("automatic", false) == true }
+            var dropAuto = automatic.count { it }.minus(max).coerceAtLeast(0)
+            var dropManual = automatic.count { !it }.minus(max).coerceAtLeast(0)
+            val out = JSONArray()
+            for (index in 0 until all.length()) {
+                if (automatic[index]) {
+                    if (dropAuto > 0) { dropAuto--; continue }
+                } else if (dropManual > 0) { dropManual--; continue }
+                out.put(all.get(index))
+            }
+            return out
+        }
         /** Gasolina relida antes/depois do apagamento automático (A4). */
         private val PETROL_GUARD_FIELDS = listOf(
             AutoCalProtocol.NUM_BUF_UPD_PETR,
