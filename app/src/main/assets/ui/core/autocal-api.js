@@ -32,6 +32,8 @@
     sessions: () => invoke('listAutoCalSessions', [], []),
     exportSession: sessionId => invoke('exportAutoCalSession', [String(sessionId || '')], false),
     actionStatus: () => invoke('getNativeActionStatus', [], {}),
+    // Limpeza automática do GNV (pontos aprendidos na lenta): ligada/pausada, motivo e apagamentos recentes.
+    autoCleanup: () => invoke('getAutoCleanupStatus', [], { ok: false }),
     startRead: () => invoke('startRead', [], {}),
     cancelRead: () => invoke('cancelRead', [], {}),
     setAcquisitionEnabled: enabled => invoke('setAcquisitionEnabled', [!!enabled], {}),

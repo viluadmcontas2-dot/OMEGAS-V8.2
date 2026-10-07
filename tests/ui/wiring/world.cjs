@@ -162,6 +162,7 @@ class World {
     this.refined = refinedAnalysis(false, this.curve);
     this.projection = realProjection('ref_', 0);
     this.autocalActionStatus = { busy: false, state: 'IDLE' };
+    this.autocalAutoCleanup = { ok: true, active: true, enabled: true, pauseCode: null, relearnedThisSession: 0, recentDeletes: [] };
     this.autocalAvailable = true;
     this.overlay = { ok: true, supported: true, permissionGranted: true, requestedEnabled: false, visible: false, observationalOnly: true };
     this.battery = { supported: true, ignoringOptimizations: false };
@@ -374,6 +375,7 @@ class World {
       listAutoCalSessions: () => [],
       exportAutoCalSession: () => true,
       getNativeActionStatus: () => w.autocalActionStatus,
+      getAutoCleanupStatus: () => w.autocalAutoCleanup,
       startRead: () => ({ ok: true, started: true }),
       cancelRead: () => ({ ok: true }),
       setAcquisitionEnabled: enabled => ({ ok: true, enabled }),

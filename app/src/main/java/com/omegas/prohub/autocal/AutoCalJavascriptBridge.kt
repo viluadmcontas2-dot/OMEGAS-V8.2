@@ -101,6 +101,39 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getNativeActionStatus(): String =
         currentNativeManager()?.statusJson()?.toString() ?: unavailable()
 
+    /**
+     * Limpeza automática do GNV (pontos aprendidos na lenta), para a linha discreta do AutoCal: ligada ou pausada,
+     * o motivo (código; a tela traduz), quantos pontos o app pediu para reaprender nesta conexão e os apagamentos
+     * recentes (a tela acinzenta esses pontos até a próxima leitura da ECU, como no apagamento pelo dono).
+     */
+    @JavascriptInterface
+    fun getAutoCleanupStatus(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        val summary = service.autoIdleCleanup.uiSummary()
+        JSONObject()
+            .put("ok", true)
+            .put("active", summary.active)
+            .put("enabled", summary.enabled)
+            .put("pauseCode", summary.pauseCode?.name ?: JSONObject.NULL)
+            .put("relearnedThisSession", summary.relearnedThisSession)
+            .put(
+                "recentDeletes",
+                JSONArray().also { array ->
+                    summary.recentDeletes.forEach { item ->
+                        array.put(
+                            JSONObject()
+                                .put("receiptId", item.receiptId)
+                                .put("indexes", JSONArray(item.indexes))
+                                .put("atMs", item.atMs),
+                        )
+                    }
+                },
+            )
+            .toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Limpeza automática indisponível")
+    }
+
     @JavascriptInterface
     fun prepareNativeAction(action: String): String {
         val requested = action.trim().uppercase()
