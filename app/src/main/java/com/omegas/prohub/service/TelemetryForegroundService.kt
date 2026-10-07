@@ -1609,6 +1609,9 @@ class TelemetryForegroundService : Service() {
                 map = live.optDouble("load_bar", 0.0),
                 petrolMs = live.optDouble("petrol_ms", 0.0),
                 gasMs = live.optDouble("gas_ms_diagnostic", 0.0),
+                waterC = if (live.has("water_c") && !live.isNull("water_c")) live.optDouble("water_c", Double.NaN) else Double.NaN,
+                dynamicCorrection = if (live.has("dynamic_correction") && !live.isNull("dynamic_correction")) live.optInt("dynamic_correction", -1) else -1,
+                capturedMs = live.optLong("captured_elapsed_ms", -1L),
             ),
         )
         try {

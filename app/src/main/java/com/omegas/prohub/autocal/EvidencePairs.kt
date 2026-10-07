@@ -15,7 +15,7 @@ import kotlin.math.abs
  * janelas sobrepostas: pares da mesma faixa separados por menos de [VISIT_GAP_MS] são o mesmo bloco, e o peso de um
  * bloco é limitado (nunca por quadro). Não existe mais portão de "visitas separadas por 60 s".
  *
- * Espelho Python: tools/equivalence_oracle (build_pairs, visit_ids) e tools/autocal_refine/blind_telemetry_test.py.
+ * Espelho Python: tools/equivalence_oracle (ledger_obs, build_pairs com água, visit_ids) e tools/autocal_refine/blind_telemetry_test.py.
  */
 object EvidencePairs {
     /** Lacuna que separa dois blocos de leituras sobrepostas (≈ 10 quadros): de-duplicação, não exigência de tempo. */
@@ -76,6 +76,18 @@ object EvidencePairs {
      * no mesmo MAP). Um par só junta leituras do MESMO lado desta fronteira.
      */
     const val REGIME_SPLIT_RPM = EquivalenceLedger.DRIVING_MIN_RPM
+
+    /**
+     * Diferença máxima de temperatura da água (°C) entre a leitura de GNV e a de gasolina de um par. Achado F14 (79 sessões
+     * reais): gas_ms_diagnostic / petrol_ms em GNV sobe 22% com a água (1,96 a 35–40 °C → 2,39 a 75–80 °C, estável a
+     * partir de ~65–70 °C) e 87% do tempo registrado é água < 70 °C; um portão fixo de temperatura apagaria quase toda
+     * a evidência, então o par exige água comparável, não água quente.
+     */
+    const val MAX_WATER_DELTA_C = 8.0
+
+    /** Águas comparáveis? Água desconhecida (NaN: leitura gravada antes do campo) não reprova o par. */
+    fun sameWater(waterA: Double, waterB: Double): Boolean =
+        !waterA.isFinite() || !waterB.isFinite() || kotlin.math.abs(waterA - waterB) <= MAX_WATER_DELTA_C
 
     /** As duas leituras estão no mesmo regime (lenta × condução)? */
     fun sameRegime(rpmA: Double, rpmB: Double): Boolean = (rpmA >= REGIME_SPLIT_RPM) == (rpmB >= REGIME_SPLIT_RPM)
@@ -143,8 +155,8 @@ object EvidencePairs {
     }
 
     /**
-     * Um par por leitura de GNV: gasolina mediana das leituras de gasolina no mesmo RPM±150/MAP±0,02 e no mesmo regime
-     * ([sameRegime]: nunca lenta × condução) (≥ 2) ou,
+     * Um par por leitura de GNV: gasolina mediana das leituras de gasolina no mesmo RPM±150/MAP±0,02, no mesmo regime
+     * ([sameRegime]: nunca lenta × condução) e com água comparável ([sameWater], ≤ [MAX_WATER_DELTA_C] °C) (≥ 2) ou,
      * sem elas, a curva de gasolina da ECU no MAP. [EquivalenceLedger.EvidencePair.episode] = visita da faixa.
      */
     fun build(
@@ -166,7 +178,8 @@ object EvidencePairs {
             val m0 = mapCell(g.map)
             for (dr in -1L..1L) for (dm in -1L..1L) {
                 grid[(r0 + dr) * 1_000_003L + (m0 + dm)]?.forEach {
-                    if (abs(it.rpm - g.rpm) <= mr && abs(it.map - g.map) <= mm && sameRegime(it.rpm, g.rpm)) matches += it.petrolMs
+                    if (abs(it.rpm - g.rpm) <= mr && abs(it.map - g.map) <= mm && sameRegime(it.rpm, g.rpm) &&
+                    sameWater(it.waterC, g.waterC)) matches += it.petrolMs
                 }
             }
             if (matches.size >= 2) {
