@@ -21,7 +21,34 @@ class MotorSampleAnalyzer(
     private val policyProvider: () -> LearningTolerancePolicy = { LearningToleranceSettings.current },
 ) {
     private val fuelResolver = com.omegas.prohub.ecu.FuelStateResolver()
-    private val policy: LearningTolerancePolicy get() = policyProvider().normalized()
+    private var cachedRawPolicy: LearningTolerancePolicy? = null
+    private var cachedPolicy: LearningTolerancePolicy? = null
+    private var cachedPolicySignature = ""
+
+    /** Quantas vezes a política foi serializada (só quando muda; antes era a cada quadro, na thread serial). */
+    internal var policySignatureComputations = 0
+        private set
+
+    private val policy: LearningTolerancePolicy get() = currentPolicy()
+
+    /** Política normalizada + assinatura em cache: normaliza só se a instância mudar, serializa só se o valor mudar. */
+    private fun currentPolicy(): LearningTolerancePolicy {
+        val raw = policyProvider()
+        val cached = cachedPolicy
+        if (cached != null && raw === cachedRawPolicy) return cached
+        val normalized = raw.normalized()
+        cachedRawPolicy = raw
+        if (cached != null && normalized == cached) return cached
+        cachedPolicy = normalized
+        cachedPolicySignature = normalized.toJson().toString()
+        policySignatureComputations += 1
+        return normalized
+    }
+
+    private val policySignature: String get() {
+        currentPolicy()
+        return cachedPolicySignature
+    }
     private val minimumFrames: Int get() = AdaptiveSampleWindow.minimumFrames(policy.requiredFrames)
     private val desiredFrames: Int get() = policy.requiredFrames
     private val maximumAttemptMs: Long get() = policy.maximumAttemptMs
@@ -93,7 +120,7 @@ class MotorSampleAnalyzer(
         plannedGap: Boolean,
         toleratedGap: Boolean,
     ): SampleDecision {
-        val signature = policy.toJson().toString()
+        val signature = policySignature
         if (activePolicySignature.isNotEmpty() && activePolicySignature != signature) {
             resetSamples(requireFullWindow = true)
         }
@@ -648,7 +675,7 @@ class MotorSampleAnalyzer(
             cellKey = cell.optString("key"),
             cellRow = cell.optInt("row"),
             cellColumn = cell.optInt("column"),
-            tolerancePolicy = policy.toJson().toString(),
+            tolerancePolicy = policySignature,
             windowAgeMs = if (windowAgeMs > 0L) windowAgeMs else durationMs,
             windowBudgetMs = if (windowBudgetMs > 0L) windowBudgetMs else effectiveWindowBudgetMs(),
         )
