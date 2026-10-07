@@ -188,11 +188,11 @@
     const freshnessAge = finite(source.telemetryAgeMs ?? source.ageMs);
     // Meio segundo até 10 s; depois de 1 em 1 s (o "Sem dados há N s" continua andando em vez de congelar em 10 s).
     const freshnessBucket = freshnessAge === null || freshnessAge < 0 ? -1 : freshnessAge < 10000 ? Math.floor(freshnessAge / 500) : 20 + Math.min(3600, Math.floor(freshnessAge / 1000));
-    const sourceSequence = Number.isFinite(Number(source.sequence)) ? Number(source.sequence) : -1;
+    // A sequência do quadro NÃO entra: ela muda a cada quadro e forçava redesenho mesmo com os números iguais.
+    // Quadro novo já é rastreado por lastPresentSequence; aqui só o que o motorista vê (valores + frescor).
     if (route === 'dashboard') {
       return [
         source.valid === false ? 0 : 1,
-        sourceSequence,
         freshnessBucket,
         rounded(live.rpm, 0),
         rounded(live.petrol_ms ?? live.petrolMs, 2),
@@ -205,7 +205,6 @@
     const cell = interpolation.cell || {};
     return [
       source.valid === false ? 0 : 1,
-      sourceSequence,
       freshnessBucket,
       Math.round((finite(interpolation.rpm ?? live.rpm) || 0) / 25) * 25,
       Math.round((finite(interpolation.petrolMs ?? live.petrol_ms ?? live.petrolMs) || 0) * 20) / 20,
