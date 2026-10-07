@@ -1,6 +1,7 @@
 {
   "_about": "Allowlist do grafo produtor<->consumidor. producer_internal: chave emitida pelo Kotlin e nunca lida pela UI, com o MOTIVO. defects: o mesmo, mas e defeito real conhecido (DEFECT-n em tests/wiring/DEFECTS.md); o teste exige que continue violando e falha quando for corrigido (remova a entrada).",
   "producer_internal": {
+    "snapshotHash": "identidade do snapshot AutoCal; a tela nao a mostra (nao e geometria: o grafico usa tableSignature) desde que as escritas em ids inexistentes sairam",
     "attempts": "persistencia do arquivo de fases (tentativas de prova por ponto, limita a re-proposta em laco); nao vai a tela",
     "closedOnlineMs": "persistencia do arquivo de fases (relogio do recuo de uma prova fechada sem convergir); nao vai a tela",
     "judgedUsage": "fracao 0..1 do uso julgada que decide se `index` e numero (novo; o JS corrigido por outro agente passa a ler; contrato em BrainContractTest e docs/ARCHITECTURE.md)",
@@ -165,6 +166,8 @@
     "ecuState": "DEFECT-1: getStatus.ecuState nunca e lido; so usbConnected decide \"ECU online\" (M1)"
   },
   "consumer_local": {
+    "location": "window.location do navegador: o aviso 'Algo falhou nesta tela; toque para recarregar' chama location.reload(); nao vem do Kotlin",
+    "resetNow": "contexto de rota JS (router.open('curve', 'editor', { resetNow: true })) lido pela Curva K; pedido local da UI, nao vem do Kotlin",
     "levelRaw": "alias camelCase lido depois de level_raw (o Kotlin emite level_raw)",
     "dos": "palavra de texto humano dentro de template literal, nao um campo",
     "usable": "campo local do contexto do gráfico (ctx.usable, definido em JS); não vem do Kotlin",

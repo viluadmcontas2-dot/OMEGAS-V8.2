@@ -137,7 +137,10 @@ test('F2: nenhuma tela serializa pontos nem repinta curva por relógio (sem JSON
 });
 
 // ------------------------------------------------------------------ F4: um gráfico, dois quadros, um desenho
-test('F4: AutoCal e Refino montam o MESMO nó: uma renderização por evidência, dois quadros', () => {
+// Revisto (P0-3, travada ao trocar AutoCal↔Refino): na prática as assinaturas dos dois modos nunca são iguais
+// (extra 'ecu18|…' × 'between|…'), então o nó único era refeito a CADA troca de aba. Agora há um nó por modo:
+// cada modo desenha uma vez e trocar de aba não redesenha nada.
+test('F4: AutoCal e Refino têm um nó por modo: trocar de aba não redesenha', () => {
   const { chart, document } = load();
   const autocal = document.makeNode();
   const refino = document.makeNode();
@@ -145,12 +148,18 @@ test('F4: AutoCal e Refino montam o MESMO nó: uma renderização por evidência
   let builds = 0;
   const build = () => { builds += 1; return { svg: '<svg data-shared></svg>', scale: {}, model: {} }; };
   const start = chart.shared.renders;
-  chart.mount(autocal, signature, build, 'ecu18');
-  chart.mount(refino, signature, build, 'between');
-  chart.mount(autocal, signature, build, 'ecu18');
-  assert.equal(builds, 1, 'um desenho só para as duas telas');
-  assert.equal(chart.shared.renders - start, 1);
-  assert.equal(chart.shared.mounts >= 3, true, 'o nó foi movido entre os quadros');
+  chart.mount(autocal, signature + 'ecu18', build, 'ecu18');
+  chart.mount(refino, signature + 'between', build, 'between');
+  const autocalNode = chart.nodeFor('ecu18');
+  for (let i = 0; i < 5; i += 1) {
+    chart.mount(autocal, signature + 'ecu18', build, 'ecu18');
+    chart.mount(refino, signature + 'between', build, 'between');
+  }
+  assert.equal(builds, 2, 'um desenho por modo, nenhum a mais ao trocar de aba');
+  assert.equal(chart.shared.renders - start, 2);
+  chart.mount(autocal, signature + 'ecu18', build, 'ecu18');
+  assert.equal(chart.shared.node, autocalNode, 'o nó do AutoCal é o mesmo de antes');
+  assert.notEqual(chart.nodeFor('between'), autocalNode, 'cada modo tem o seu nó');
   assert.equal(chart.shared.node.attrs['data-mode'], 'ecu18');
 });
 
@@ -278,4 +287,28 @@ test('cursor único: LiveStore (cinza 1,5 s, some 3 s) e CSS transform, sem text
   assert.match(read('screens/dashboard.js'), /LiveStore\.read/);
   assert.match(read('screens/autocal-cockpit.js'), /ns\.LiveStore\.point/);
   assert.match(read('screens/refino.js'), /ns\.LiveStore\.point/);
+});
+
+// P1-5: o contador da ECU (NUM_BUF_UPD_*) sobe a cada passagem; só a existência do ponto é desenho.
+test('P1-5: contador subindo não muda a assinatura; ponto novo muda; progresso vai por atributo', () => {
+  const { chart } = load();
+  const counters = values => snapshot([{ key: 'NUM_BUF_UPD_GAS', status: 'VALID', rawValues: values }]);
+  const base = chart.tableSignature(counters([3, 0, 7]));
+  assert.equal(chart.tableSignature(counters([9, 0, 12])), base, 'só contadores subiram: mesmo desenho');
+  assert.notEqual(chart.tableSignature(counters([9, 1, 12])), base, 'ponto novo (0 → 1): redesenha');
+  assert.notEqual(chart.tableSignature(counters([0, 0, 12])), base, 'ponto apagado (→ 0): redesenha');
+  const attrs = {}; const classes = new Set(['collecting']);
+  const circle = {
+    getAttribute: name => attrs[name] ?? null, setAttribute: (name, value) => { attrs[name] = String(value); },
+    removeAttribute: name => { delete attrs[name]; }, classList: { toggle: (name, on) => (on ? classes.add(name) : classes.delete(name)) },
+  };
+  const root = { querySelector: selector => (selector === '[data-autocal-point-key="GAS:2"]' ? circle : null) };
+  assert.equal(chart.updatePoints(root, [{ fuel: 'GAS', index: 2, progress: 0.5, acquisitionState: 'COLLECTING' }]), 1);
+  assert.equal(attrs['data-acquisition-progress'], '0.500');
+  assert.equal(chart.updatePoints(root, [{ fuel: 'GAS', index: 2, progress: 0.5, acquisitionState: 'COLLECTING' }]), 0, 'igual: não escreve');
+  chart.updatePoints(root, [{ fuel: 'GAS', index: 2, progress: 1, acquisitionState: 'ACQUIRED' }]);
+  assert.equal(classes.has('acquired'), true);
+  assert.equal(attrs['fill-opacity'], undefined);
+  assert.match(chart.buildSvg({ domain: { xMin: 0, xMax: 10, yMin: 0, yMax: 1.2 }, reference: [], ecu: [{ fuel: 'GAS', index: 2, petrolMs: 3, mapBar: 0.5, acquisitionState: 'ACQUIRED', progress: 1 }] }, {}).svg,
+    /data-autocal-point-key="GAS:2"/);
 });

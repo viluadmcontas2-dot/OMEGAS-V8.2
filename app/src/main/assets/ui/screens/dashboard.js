@@ -71,7 +71,7 @@
             </section>
             <section class="now-intention" aria-label="Estado e próximo passo">
               <div><h3 id="dashState">Aguardando dados da ECU</h3><p id="dashNext">Aguardando medição da ECU.</p></div>
-              <button type="button" class="primary" data-dash-refino>Abrir Refino</button>
+              <button type="button" class="primary" data-dash-refino>Abrir Ajuste GNV</button>
             </section>
             <section class="now-coverage" aria-label="Equivalência com a gasolina">
               <div class="now-equivalence"><b id="dashEquivalence">—</b><p id="dashEquivalenceNote">Aguardando medição</p>
@@ -92,10 +92,20 @@
       renderRefino() {
         const now = Date.now();
         if (this.refinoAt && now - this.refinoAt < 3e3) return;
-        this.refinoAt = now;
         // Sem cabo o Kotlin já diz "Sem ECU" / "Aguardar a ECU" (refinoState): a conexão em si fica no cartão de saúde.
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
-        const result = api && typeof api.equivalence === "function" ? api.equivalence() : null;
+        // equivalence() é pesado (milhares de pontos serializados): o Agora reaproveita o resultado que o Refino/AutoCal
+        // acabaram de ler e, fora isso, só relê quando a revisão da evidência andou (ou o vigia de 15 s vence).
+        const revisions = ns.Revisions;
+        if (!this.refinoGate && revisions) this.refinoGate = revisions.gate(['evidence'], 15000);
+        const shared = ns.CurveChart && ns.CurveChart.evidence;
+        let result = null;
+        if (shared && shared.eq && now - (shared.fetchedAt || 0) < 5000) result = shared.eq;
+        else if (!this.refinoGate || this.refinoGate.due(false, now)) {
+          result = api && typeof api.equivalence === "function" ? api.equivalence() : null;
+          if (this.refinoGate) this.refinoGate.mark(now);
+        } else return;
+        this.refinoAt = now;
         const pilot = result && result.autopilot || {};
         const rs = result && result.refinoState && typeof result.refinoState === "object" ? result.refinoState : {};
         // O rótulo curto do Kotlin sabe o combustível de agora ("Medindo a gasolina" × "Medindo o GNV"); a fase do piloto é o reserva.
@@ -116,7 +126,7 @@
           progress.hidden = model.percent === null;
         }
         const button = this.root.querySelector("[data-dash-refino]");
-        const names = { dashboard: 'Agora', map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Refino', sessions: 'Sessões', tools: 'Ferramentas', diagnostico: 'Diagnóstico' };
+        const names = { dashboard: 'Agora', map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Ajuste GNV', sessions: 'Sessões', tools: 'Ferramentas', diagnostico: 'Diagnóstico' };
         this.nextRoute = model.route === 'dashboard' ? 'refino' : model.route;
         if (button) button.textContent = 'Abrir ' + names[this.nextRoute];
         const bands = document.getElementById('dashBands');

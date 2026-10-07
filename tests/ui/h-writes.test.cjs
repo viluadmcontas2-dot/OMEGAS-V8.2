@@ -213,10 +213,11 @@ test('restauração grava pelo caminho que confere a foto (restoreCurve), não p
   assert.equal(calls.write, 0);
 });
 
-test('AutoCal "Resetar Curva K" abre a Curva K com resetNow (foto antes, um toque) e a Curva K só zera depois da leitura', () => {
+// Revisto (P2): o AutoCal não tem mais o botão de zerar a Curva K (fica só na aba Curva K); o fluxo resetNow da
+// Curva K continua garantido aqui.
+test('Curva K com resetNow: foto antes, um toque, e só zera depois da leitura; o AutoCal não repete o reset', () => {
   const cockpit = read('screens/autocal-cockpit.js');
-  assert.match(cockpit, /action === 'RESET_K_FACTOR' && this\.resetViaCurve\(\)/);
-  assert.match(cockpit, /router\.open\('curve', 'editor', \{ resetNow: true \}\)/);
+  assert.doesNotMatch(cockpit, /data-autocal-action="RESET_K_FACTOR"/);
   const calls = { photo: 0 };
   const api = {
     startCurveBackup: () => { calls.photo += 1; return { ok: true, started: true }; },

@@ -25,11 +25,14 @@ const controls = [
   ['data-autocal-toggle', "querySelector('[data-autocal-toggle]')", 'this.runOperational(action)'],
   ['data-autocal-action', "querySelectorAll('[data-autocal-action]')", 'this.prepare(button.dataset.autocalAction)'],
   ['data-autocal-history', "querySelector('[data-autocal-history]')", 'chartHistoryVisible'],
-  ['data-autocal-band-index', "closest('[data-autocal-band-index]')", 'inspectBand'],
   ['data-autocal-ref-index', "closest('[data-autocal-ref-index]')", 'inspectReferencePoint'],
-  ['data-autocal-confirm', "closest('[data-autocal-confirm]')", 'confirmPrepared'],
-  ['data-autocal-cancel', "closest('[data-autocal-cancel]')", 'cancelPrepared'],
+  ['data-autocal-acquired-index', "closest('[data-autocal-acquired-index]')", 'tapAcquiredPoint'],
+  ['data-autocal-reacquire-selected', "closest('[data-autocal-reacquire-selected]')", 'requestSelectedPointReacquisition'],
 ];
+// Revisto (P3 código morto): faixa de regiões e cartão de revisão não existiam mais na tela (um toque, decisão do dono).
+for (const dead of ['data-autocal-band-index', 'data-autocal-confirm', 'data-autocal-cancel', 'renderReview']) {
+  assert.equal(cockpit.includes(dead), false, dead + ' é código morto');
+}
 for (const [selector, hook, handler] of controls) {
   assert.ok(cockpit.includes(selector), selector + ' não existe no cockpit');
   assert.ok(cockpit.includes(hook), selector + ' existe sem binding de clique');

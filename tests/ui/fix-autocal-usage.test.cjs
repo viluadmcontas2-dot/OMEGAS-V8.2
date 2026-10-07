@@ -24,7 +24,7 @@ const toggle = app => app.$('[data-autocal-toggle]');
 
 test('5. Pausar/Iniciar leitura: depois do toque o botão fica em "Confirmando ECU…" até a ECU confirmar (não reabilita antes da resposta)', () => {
   const app = boot(1);
-  assert.equal(toggle(app).textContent, 'Pausar leitura');
+  assert.equal(toggle(app).textContent, 'Pausar aprendizado da ECU');
   assert.equal(toggle(app).hasAttribute('disabled'), false);
   const mark = app.world.mark();
   toggle(app).click(); app.flush();
@@ -40,7 +40,7 @@ test('5. Pausar/Iniciar leitura: depois do toque o botão fica em "Confirmando E
   app.world.projection = { ...app.world.projection, nativeStatus: { ...app.world.projection.nativeStatus, autoCalEnabled: 0 } };
   app.advance(2500);
   assert.equal(toggle(app).hasAttribute('disabled'), false);
-  assert.equal(toggle(app).textContent, 'Iniciar leitura');
+  assert.equal(toggle(app).textContent, 'Retomar aprendizado');
   app.destroy();
 });
 
@@ -49,7 +49,7 @@ test('5. se a ECU não confirma em 10 s o botão volta (não fica preso para sem
   toggle(app).click(); app.flush();
   app.advance(11000);
   assert.equal(toggle(app).hasAttribute('disabled'), false);
-  assert.equal(toggle(app).textContent, 'Pausar leitura');
+  assert.equal(toggle(app).textContent, 'Pausar aprendizado da ECU');
   app.destroy();
 });
 
@@ -57,7 +57,7 @@ test('13. "Lendo estado…" não fica eterno: sem estado da ECU o botão diz iss
   const app = boot();
   assert.equal(toggle(app).textContent, 'Lendo estado…');
   app.advance(8000);
-  assert.match(toggle(app).textContent, /Estado não chegou · reler/);
+  assert.match(toggle(app).textContent, /Estado não chegou · ler de novo/);
   assert.equal(toggle(app).hasAttribute('disabled'), false);
   const mark = app.world.mark();
   toggle(app).click(); app.flush();

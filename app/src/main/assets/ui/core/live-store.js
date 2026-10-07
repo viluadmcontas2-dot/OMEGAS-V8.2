@@ -130,6 +130,8 @@
       if (Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05) {
         pos.x = target.x; pos.y = target.y;
         this.paint();
+        // Parado no alvo: o próximo movimento recomeça com passo normal (o laço de quadros dorme até lá).
+        this.frameAt = null;
         return false;
       }
       const k = 1 - Math.exp(-dt / EASE_MS);

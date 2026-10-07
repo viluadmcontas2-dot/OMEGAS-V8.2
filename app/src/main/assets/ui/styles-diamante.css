@@ -37,7 +37,7 @@ html body .ar-shell { display:flex; flex-direction:column; height:100%; min-heig
 html body .ar-shell .ar-status { order:0; min-height:58px; align-items:center; gap:20px; flex-shrink:0; }
 html body .ar-shell .instrument-title { flex:0 0 auto; }
 html body .ar-shell .ar-fuel { min-width:0; padding:7px 12px; min-height:0; font-size:18px; font-weight:500; background:var(--accent-soft); color:var(--accent-strong); border-radius:20px; }
-html body .ar-autocal .ar-status > .ar-fuel,html body .ar-autocal .ar-status > .ar-tile:not(.ar-zone):not(.ar-automatch) { display:none; }
+html body .ar-autocal .ar-status > .ar-fuel,html body .ar-autocal .ar-status > .ar-tile:not(.ar-zone):not(.ar-automatch):not(.ar-load) { display:none; }
 html body .ar-shell .ar-status .ar-tile { flex:0 0 auto; padding:0 20px; border:0; border-left:1px solid var(--line-soft); background:none; box-shadow:none; border-radius:0; }
 html body .ar-shell .ar-status .ar-tile b { font-size:22px; font-weight:550; }
 html body .ar-shell .ar-act { order:2; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 20px; align-items:center; flex-shrink:0; min-height:58px; }
@@ -209,15 +209,17 @@ html body .ar-shell .ar-fuel { box-shadow:inset 0 1px 0 var(--line),0 2px 6px va
 
 /* Cabeçalhos de instrumento: estado integrado, gráfico no centro, comandos em um só trilho. */
 html body .ar-autocal .ar-status {
- display:grid; grid-template-columns:minmax(0,1fr) 84px 112px auto;
+ display:grid; grid-template-columns:minmax(0,1fr) auto auto auto auto;
  grid-template-rows:auto auto; gap:0 12px; min-height:60px;
 }
 html body .ar-autocal .instrument-title { grid-column:1; grid-row:1; font-size:28px; }
 html body .ar-autocal #autocalHumanAction { grid-column:1; grid-row:2; margin:0; font-size:22px; line-height:1.25; }
-html body .ar-autocal .ar-zone { grid-column:2; grid-row:1 / span 2; }
-html body .ar-autocal .ar-automatch { grid-column:3; grid-row:1 / span 2; }
+html body .ar-autocal .ar-load { grid-column:2; grid-row:1 / span 2; }
+html body .ar-autocal .ar-zone { grid-column:3; grid-row:1 / span 2; }
+html body .ar-autocal .ar-automatch { grid-column:4; grid-row:1 / span 2; max-width:170px; }
+html body .ar-autocal .ar-automatch small { white-space:normal; }
 html body .ar-autocal .ar-status .ar-tile { padding:0 12px; }
-html body .autocal-reading-controls { grid-column:4; grid-row:1 / span 2; display:flex; gap:8px; align-items:center; }
+html body .autocal-reading-controls { grid-column:5; grid-row:1 / span 2; display:flex; gap:8px; align-items:center; }
 html body .autocal-reading-controls :is(button) { min-height:58px; padding:0 16px; font-size:18px; }
 html body .autocal-reading-controls [hidden] { display:none; }
 html body .ar-autocal .ar-act { display:flex; align-items:center; flex-wrap:wrap; min-height:58px; }
@@ -280,7 +282,7 @@ html body .now-quiet-row { flex:none; }
 html body .now-heading { display:flex; align-items:baseline; gap:16px; }
 html body .now-heading p { margin:0; }
 @media(max-width:1050px) {
- html body .ar-autocal .ar-status { grid-template-columns:minmax(0,1fr) 84px 112px; }
+ html body .ar-autocal .ar-status { grid-template-columns:minmax(0,1fr) auto auto auto; }
  html body .autocal-reading-controls { grid-column:1 / -1; grid-row:3; }
  html body .ar-refino .ar-status { grid-template-columns:auto minmax(0,1fr); }
  html body .ar-refino .instrument-menus { grid-column:1 / -1; grid-row:3; margin:4px 0 0; }
@@ -332,3 +334,27 @@ html body .curve-backup-toolbar { display:flex; align-items:center; gap:8px; fle
 html body .curve-backup-toolbar :is(button,select) { min-height:58px; font-size:22px; }
 html body .curve-backup-toolbar select { flex:1; min-width:0; }
 html body .curve-backup-status { flex:none; font-size:20px; line-height:1.25; }
+/* Falhas de tela: aviso tocável (3 erros seguidos) e tela que não carregou. */
+html body .screen-error-banner { position:fixed; left:50%; top:76px; transform:translateX(-50%); z-index:60; min-height:58px; padding:0 24px; border:1px solid var(--warn); border-radius:12px; background:var(--warn-soft); color:var(--text); font-size:22px; }
+html body .screen-load-failure { margin:24px; font-size:22px; color:var(--warn); }
+/* Pontos da ECU: recém-apagados ficam cinza e intocáveis até a próxima leitura; números técnicos sob demanda. */
+html body .curve-chart-shared .autocal-acquired-point.recently-deleted,html body .ar-chart-host .autocal-acquired-point.recently-deleted { fill:var(--dim); stroke:var(--line); fill-opacity:.45; }
+html body .ar-chart-host .autocal-acquired-hit.recently-deleted { pointer-events:none; }
+html body .ar-shell .ar-readout .autocal-point-tech { pointer-events:auto; margin-top:6px; font-size:18px; color:var(--muted); }
+html body .ar-shell .ar-readout .autocal-point-tech summary { min-height:44px; display:flex; align-items:center; cursor:pointer; }
+html body .autocal-zone-legend { display:block; margin-top:4px; font-size:16px; color:var(--muted); }
+html body .autocal-reacquire-note { align-self:center; max-width:360px; font-size:16px; line-height:1.25; color:var(--muted); }
+html body .refino-confirm { display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%; padding:12px 16px; border:1px solid var(--warn); border-radius:10px; background:var(--warn-soft); }
+html body .refino-confirm[hidden] { display:none; }
+html body .refino-confirm p { flex:1 1 320px; margin:0; font-size:20px; }
+html body .refino-confirm button { min-height:58px; font-size:20px; }
+/* Navegação: à vista só Agora, Ajuste GNV, Diagnóstico e Sessões; o resto abre em "Avançado" (lista sobre a barra). */
+html body .side-nav { position:relative; grid-template-columns:repeat(5,minmax(0,1fr)); }
+html body .side-nav [data-route="dashboard"] { order:1; }
+html body .side-nav [data-route="refino"] { order:2; }
+html body .side-nav [data-route="diagnostico"] { order:3; }
+html body .side-nav [data-route="sessions"] { order:4; }
+html body .side-nav .nav-advanced-toggle { order:5; }
+html body .side-nav .nav-advanced-item { display:none; }
+html body .side-nav[data-advanced-open="true"] .nav-advanced-item { display:flex; position:absolute; z-index:40; right:0; bottom:calc(100% + 8px + var(--slot) * 72px); width:300px; height:68px; flex-direction:row; justify-content:flex-start; gap:14px; padding:0 20px; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:var(--shadow-2); }
+html body .side-nav .nav-advanced-toggle[aria-expanded="true"] { color:var(--text); background:var(--surface-2); }

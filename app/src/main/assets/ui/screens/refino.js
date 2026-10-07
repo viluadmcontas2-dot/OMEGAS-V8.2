@@ -181,7 +181,7 @@
     return { photoFile: photo, available, ageText: at === null ? '—' : ageText(at, now === undefined ? Date.now() : now), changedByEcu };
   }
 
-  const ROUTE_NAMES = { map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Refino', sessions: 'Sessões', tools: 'Ferramentas' };
+  const ROUTE_NAMES = { map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Ajuste GNV', sessions: 'Sessões', tools: 'Ferramentas' };
   /**
    * Índice de equivalência: o Kotlin manda `index` como NÚMERO escalar 0..1 (percentual = ×100), com `coverage` e
    * `provisional` irmãos planos (EquivalenceJson.result). Sem número válido: null (nunca 0%).
@@ -276,7 +276,8 @@
       // A foto de antes de cada gravação vive no diário (photoFile do ÚLTIMO experimento): o Desfazer restaura
       // exatamente a do último, mesmo que o anterior tenha sido gravado por outra aba.
       this.lastRenderKey = '';
-      this.cursor = new ns.LiveStore.EaseCursor(() => document.querySelector('[data-chart-live]'));
+      // A bolinha AGORA do Refino mora só no quadro do Refino: o AutoCal também tem uma (outro quadro, outro nó).
+      this.cursor = new ns.LiveStore.EaseCursor(() => this.liveLayer());
       this.inject();
       // Evidência, tabelas e sessão só são relidas quando a revisão do tipo andou (ou o vigia vence); ocupado relê sempre.
       const revisions = ns.Revisions;
@@ -294,17 +295,21 @@
         this.tickJob();
         if (this.store.get().route !== 'refino') { this.releaseFrame(); return; }
         this.ensureFrame();
+        // Leitura nova chega no tick rápido: o laço de quadros pode estar dormindo (cursor parado no alvo).
+        this.updateLiveTarget();
         if (this.enterRefreshPending) { this.enterRefreshPending = false; this.refresh(true); this.dataGate.mark(); this.dataDirty = false; }
         else if (this.dataDirty) { this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
       });
       // O cursor AGORA anda no quadro de animação (rAF do scheduler), sem redesenhar o gráfico; só enquanto a aba está aberta.
       this.unsubscribeFrame = null;
       // Ao entrar na aba, desenha na hora (sem esperar o próximo tick).
+      // A releitura ao entrar vem do app (refreshNow, uma vez só); aqui só quando a tela nasce já aberta.
       let lastRoute = null;
+      this.enterRefreshPending = this.store.get().route === 'refino';
       this.store.subscribe(state => {
         if (state.route === lastRoute) return;
         lastRoute = state.route;
-        if (state.route === 'refino') { this.enterRefreshPending = true; this.ensureFrame(); } else this.releaseFrame();
+        if (state.route === 'refino') this.ensureFrame(); else this.releaseFrame();
       }, true);
     }
 
@@ -313,7 +318,7 @@
       if (!host || host.querySelector('.autocal-cockpit')) return;
       host.innerHTML = `
         <section class="autocal-cockpit refino-cockpit ar-shell ar-refino" aria-label="Refino OMEGAS">
-          <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Refino</h2><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
+          <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Ajuste do GNV</h2><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
             <span id="refinoPhaseChip" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
             <div class="instrument-menus"><details class="instrument-details refino-proposals"><summary>Sugestões</summary><div class="instrument-detail-content" id="refinoProposals">Ainda sem proposta. O app continua medindo.</div></details>
             <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-evidence-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p></section></div></details></div>
@@ -329,9 +334,14 @@
             <div class="ar-buttons">
               <button type="button" class="btn-primary" data-refino-primary hidden></button>
               <button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar medições GNV</button>
-              <button type="button" class="btn-ghost" data-refino-acquisition>Leitura da ECU</button>
+              <button type="button" class="btn-ghost" data-refino-acquisition>Ver aprendizado da ECU</button>
               <span class="refino-undo" id="refinoUndo" hidden></span>
               <button type="button" class="btn-ghost" id="refinoEqUnfreeze" data-refino-unfreeze hidden>Desfazer referência</button>
+            </div>
+            <div class="refino-confirm" id="refinoResetConfirm" role="alertdialog" aria-label="Confirmar apagar medições do GNV" hidden>
+              <p>Apagar tudo que o app mediu no GNV? Não dá para desfazer.</p>
+              <button type="button" class="btn-danger" data-refino-reset-confirm>Apagar</button>
+              <button type="button" class="btn-ghost" data-refino-reset-cancel>Cancelar</button>
             </div>
           </div>
         </section>`;
@@ -354,8 +364,19 @@
       this.render(force === true);
     }
 
+    /** UMA releitura ao entrar na aba (o app chama depois do primeiro quadro pintado). */
+    refreshNow() {
+      this.enterRefreshPending = false;
+      this.dataDirty = false;
+      this.refresh(true);
+      this.dataGate.mark();
+    }
+
     onClick(event) {
-      if (event.target.closest('[data-refino-reset-gas]')) { this.resetGasEvidence(); return; }
+      // Apagar as medições do GNV não tem volta: pede confirmação antes.
+      if (event.target.closest('[data-refino-reset-gas]')) { this.askResetGas(true); return; }
+      if (event.target.closest('[data-refino-reset-cancel]')) { this.askResetGas(false); return; }
+      if (event.target.closest('[data-refino-reset-confirm]')) { this.askResetGas(false); this.resetGasEvidence(); return; }
       if (event.target.closest('[data-refino-acquisition]')) { this.app.router?.open('autocal'); return; }
       if (event.target.closest('[data-refino-unfreeze]')) { this.unfreezeReference(); return; }
       if (event.target.closest('[data-refino-primary]')) { this.primary(); return; }
@@ -365,6 +386,15 @@
       // Ponto da curva de referência (área de toque do gráfico compartilhado).
       const reference = event.target.closest('[data-autocal-ref-index]');
       if (reference) this.inspectReference(Number(reference.dataset.autocalRefIndex));
+    }
+
+    /** Mostra/esconde a confirmação "Apagar tudo que o app mediu no GNV? Não dá para desfazer." */
+    askResetGas(open) {
+      const box = document.getElementById('refinoResetConfirm');
+      if (!box) return;
+      box.hidden = !open;
+      const trigger = document.querySelector('[data-refino-reset-gas]');
+      if (trigger) trigger.hidden = !!open;
     }
 
     /** Linha curta ao tocar; sem card, sem código. */
@@ -379,13 +409,13 @@
     inspectReference(index) {
       const point = ((this.model || {}).reference || []).find(item => Number(item.index) === Number(index));
       if (!point || finite(point.petrolMs) === null) return;
-      this.readout(`Curva · ponto ${Number(point.index) + 1} · ${D.msUnit(point.petrolMs)}`);
+      this.readout(`Trecho ${Number(point.index) + 1} da curva · ${D.msUnit(point.petrolMs)} de injeção`);
       this.select({ ref: Number(point.index) });
     }
 
     select(sel) {
       this.selected = sel || {};
-      ns.CurveChart?.applySelection(this.selected);
+      ns.CurveChart?.applySelection(this.selected, 'between');
     }
 
     /** Congelar a Referência: não escreve na ECU. Um toque; o resultado fica à vista e o Desfazer volta à anterior. */
@@ -615,12 +645,12 @@
       }
       const currentEvidence = !['SEM_ECU', 'LENDO_ECU', 'TENTATIVA_ENCERRADA'].includes(phase);
       setText('refinoRatio', pct(currentEvidence ? eq.ratio : null));
-      setText('refinoDetailCounts', rs?.counts ? `${rs.counts.intervalsCollected ?? '—'} de ${rs.counts.intervalsTotal ?? '—'} intervalos medidos · ${rs.counts.pointsToWrite ?? '—'} pontos sugeridos` : 'Aguardando medição');
+      setText('refinoDetailCounts', rs?.counts ? `${rs.counts.intervalsCollected ?? '—'} de ${rs.counts.intervalsTotal ?? '—'} regiões medidas · ${rs.counts.pointsToWrite ?? '—'} trechos da curva com ajuste sugerido` : 'Aguardando medição');
       setText('refinoDetailReason', rs?.whyNoProposal || rs?.reason || '');
       const proposals = document.getElementById('refinoProposals');
       if (proposals) {
         const points = this.actionModel().kind === 'review' ? readyPoints(eq, this.analysis) : [];
-        proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'ponto', 'pontos')} da Curva K · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>Ponto ${p.index + 1}</dt><dd>${D.kValue(p.currentRaw / 16384)} → ${D.kValue(p.targetRaw / 16384)}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : '<p>Ainda sem proposta. O app continua medindo.</p>';
+        proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'trecho', 'trechos')} da curva · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>${escapeHtml(this.stretchLabel(p.index))}</dt><dd>${escapeHtml(this.changeLabel(p))}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : '<p>Ainda sem proposta. O app continua medindo.</p>';
       }
       const resetGas = document.querySelector('[data-refino-reset-gas]');
       if (resetGas) resetGas.disabled = op.phase === 'reading' || op.phase === 'writing' || this.store.get()?.status?.usbConnected !== true;
@@ -629,6 +659,26 @@
       this.renderPrimary();
       this.renderUndo();
       this.renderChart();
+    }
+
+    /** "Trecho 3,2–3,6 ms": o trecho da curva entre este ponto e o seguinte (injeção de gasolina). Sem eixo: "Trecho N". */
+    stretchLabel(index) {
+      const byIndex = new Map((Array.isArray(this.analysis?.points) ? this.analysis.points : []).map(p => [Number(p.index), p]));
+      const reference = (this.model && Array.isArray(this.model.reference)) ? this.model.reference : [];
+      const msOf = i => finite(byIndex.get(i)?.referenceTimeMs) ?? finite(reference.find(r => Number(r.index) === i)?.petrolMs);
+      const from = msOf(index);
+      const to = msOf(index + 1);
+      if (from === null) return `Trecho ${index + 1}`;
+      return to === null || to <= from ? `Trecho ${fmt(from, 1)} ms` : `Trecho ${fmt(from, 1)}–${fmt(to, 1)} ms`;
+    }
+
+    /** "+4% de GNV" / "−3% de GNV": quanto a mistura do GNV muda nesse trecho. */
+    changeLabel(point) {
+      const change = point.currentRaw > 0 ? point.targetRaw / point.currentRaw - 1 : null;
+      if (change === null || !Number.isFinite(change)) return '—';
+      const percent = Math.round(change * 100);
+      if (percent === 0) return 'ajuste fino (menos de 1%)';
+      return `${percent > 0 ? '+' : '−'}${Math.abs(percent)}% de GNV`;
     }
 
     renderStalls() {
@@ -640,11 +690,13 @@
       stallNode.hidden = !(real > 0 || near > 0);
       stallNode.dataset.tone = this.stallTone();
       const region = Array.isArray(stalls.regions) ? stalls.regions[0] : null;
-      const where = region ? `Mais perto de ${D.msBand(region.fromMs, region.toMs)} (desaceleração ou embreagem). ` : '';
-      const guard = fmt(this.analysis?.guards?.lowGuardMs, 1);
-      this.stallDetail = (real > 0 || near > 0) ? `${where}${guard === '—' ? '' : `O Refino nunca deixa a mistura mais pobre abaixo de ${guard} ms; `}se continuar, deixe a mistura mais rica nessa região, na Curva K.` : '';
+      // Em vez de mandar o dono mexer na Curva K: o próprio Refino cuida da região (a faixa técnica fica no título).
+      const where = region ? `Mais perto de ${D.msBand(region.fromMs, region.toMs)}. ` : '';
+      this.stallDetail = (real > 0 || near > 0) ? 'O Refino vai propor um ajuste para essa região. Continue dirigindo.' : '';
+      stallNode.dataset.where = where.trim();
       stallNode.title = this.stallDetail;
-      const text = real > 0 ? `O motor apagou ${real === 1 ? '1 vez' : real + ' vezes'} no GNV` : near > 0 ? 'O motor quase apagou no GNV' : '';
+      const base = real > 0 ? `O motor apagou ${real === 1 ? '1 vez' : real + ' vezes'} no GNV` : near > 0 ? 'O motor quase apagou no GNV' : '';
+      const text = base ? `${base}. ${this.stallDetail}` : '';
       if (stallNode.textContent !== text) stallNode.textContent = text;
     }
 
@@ -739,6 +791,7 @@
       const shown = chart.shared;
       this.chartScale = shown.scale;
       this.model = shown.model;
+      this.chartSignature = signature;
       const legend = document.getElementById('refinoLegend');
       const flags = { mode: 'between', proposal: false, stall: !!(this.model && this.model.stalls.length), missing: !!(this.model && this.model.betweenPoints.some(b => b.state === 'missing')) };
       const legendKey = `between|${flags.stall}|${flags.missing}`;
@@ -756,7 +809,7 @@
     /** Cursor AGORA: só calcula o alvo a partir da leitura viva única (LiveStore); quem move é o quadro de animação. */
     renderLive() {
       const scale = this.chartScale;
-      const layer = document.querySelector('[data-chart-live]');
+      const layer = this.liveLayer();
       if (!layer || !scale) { this.cursor.clear(); return; }
       const live = ns.LiveStore.point(this.store.get().telemetry || {});
       if (!live) { layer.setAttribute('display', 'none'); this.cursor.clear(); return; }
@@ -770,6 +823,12 @@
       if (label && label.textContent !== text) label.textContent = text;
     }
 
+    /** Camada AGORA do gráfico do Refino (nunca a do AutoCal, que vem antes no documento). */
+    liveLayer() {
+      const host = document.getElementById('refinoChart');
+      return host && typeof host.querySelector === 'function' ? host.querySelector('[data-chart-live]') : null;
+    }
+
     ensureFrame() {
       if (!this.unsubscribeFrame && typeof this.scheduler.addFrameHook === 'function') this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateLive(timestamp));
     }
@@ -780,11 +839,19 @@
 
     /** Quadro de animação (rAF do scheduler): só na aba Refino; o alvo só é recalculado quando chega leitura nova. */
     animateLive(timestamp) {
-      if (this.store.get().route !== 'refino') { this.cursor.frameAt = null; return; }
+      if (this.store.get().route !== 'refino') { this.cursor.frameAt = null; return false; }
+      this.updateLiveTarget();
+      return this.cursor.frame(timestamp);
+    }
+
+    /** Alvo do cursor: só recalcula quando chega leitura nova (ou o gráfico mudou); alvo novo acorda o laço de quadros. */
+    updateLiveTarget() {
       const telemetry = this.store.get().telemetry || {};
-      const key = `${telemetry.sequence}|${Math.round((telemetry.telemetryAgeMs || 0) / 500)}|${ns.CurveChart?.shared.signature}`;
-      if (key !== this.liveKey) { this.liveKey = key; this.renderLive(); }
-      this.cursor.frame(timestamp);
+      const key = `${telemetry.sequence}|${Math.round((telemetry.telemetryAgeMs || 0) / 500)}|${this.chartSignature}`;
+      if (key === this.liveKey) return;
+      this.liveKey = key;
+      this.renderLive();
+      this.scheduler?.wake?.();
     }
 
     inspect(token) {
@@ -801,7 +868,7 @@
       const p = (model.ecu || [])[index];
       const coherent = p && finite(p.petrolMs) !== null && finite(p.mapBar) !== null;
       if (!coherent) { this.readout(''); return; }
-      this.readout(`${p.fuelLabel} · ponto ${p.point} da ECU · ${D.msUnit(p.petrolMs)} · ${p.acquisitionState === 'ACQUIRED' ? 'já lido' : 'ainda lendo'}`);
+      this.readout(`Ponto ${p.point} ${p.fuel === 'GAS' ? 'do GNV' : 'da gasolina'} (zona ${p.zone}) · ${p.acquisitionState === 'ACQUIRED' ? 'a ECU já aprendeu' : 'a ECU ainda está aprendendo'}`);
       this.select({ ecu: `${p.fuel}:${p.index}` });
     }
   }

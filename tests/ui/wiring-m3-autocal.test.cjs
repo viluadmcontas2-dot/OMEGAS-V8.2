@@ -139,20 +139,11 @@ for (const name of STATES) {
   });
 }
 
-test('M3 reset do AutoCal vai pela Curva K em UM toque (foto antes, depois zera)', () => {
+// Revisto (P2): "Resetar Curva K para 1,000" saiu do AutoCal; o único caminho é o botão da própria Curva K.
+test('M3 zerar a Curva K não aparece no AutoCal; continua na aba Curva K', () => {
   const app = prepared('monitorando');
-  const reset = app.$('[data-autocal-action="RESET_K_FACTOR"]');
-  assert.ok(reset, 'ação de reset da Curva K ausente no AutoCal');
-  const mark = app.world.mark();
-  reset.click();
-  app.settle(8);
-  assert.equal(app.route(), 'curve', 'o reset do AutoCal precisa levar à Curva K (único caminho)');
-  const calls = app.world.since(mark).map(c => c.method).filter(m => /startCurve/.test(m));
-  const photo = calls.indexOf('startCurveBackup');
-  const zero = calls.indexOf('startCurveReset');
-  assert.ok(calls.indexOf('startCurveRead') >= 0, 'lê a curva antes');
-  assert.ok(photo >= 0 && zero > photo, `foto antes de zerar: ${calls.join(' > ')}`);
-  assert.equal(calls.filter(m => m === 'startCurveReset').length, 1, 'zera uma única vez');
+  assert.equal(app.$('[data-autocal-action="RESET_K_FACTOR"]'), null, 'o AutoCal não repete o reset da Curva K');
+  assert.ok(app.byId('curveResetButton'), 'o reset continua na Curva K');
 });
 
 test('M3 fuzz da projeção AutoCal: nunca exceção, nunca NaN/undefined na tela, recupera', () => {

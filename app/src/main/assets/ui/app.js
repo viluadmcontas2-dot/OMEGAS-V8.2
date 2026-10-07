@@ -27,12 +27,14 @@
     map: ['MAPA K', 'Mapa K'],
     curve: ['CURVA K', 'Curva K'],
     autocal: ['AUTO-CAL', 'AutoCal'],
-    refino: ['REFINO', 'Refino'],
+    refino: ['AJUSTE GNV', 'Ajuste GNV'],
     sessions: ['SESSÕES', 'Sessões'],
     diagnostico: ['DIAGNÓSTICO', 'Diagnóstico'],
     tools: ['SISTEMA', 'Ferramentas'],
   };
 
+  // Rotas dentro de "Avançado" (continuam todas acessíveis).
+  const ADVANCED_ROUTES = ['map', 'curve', 'autocal', 'tools'];
   let renderedRoute = null;
   let previousGlobalSignature = '';
   let previousTelemetrySignature = '';
@@ -116,6 +118,9 @@
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
       });
+      // Rota escondida em "Avançado" acende o botão Avançado (o dono sabe onde está).
+      byId('app')?.querySelector?.('[data-nav-advanced]')?.classList.toggle('active', ADVANCED_ROUTES.includes(state.route));
+      setAdvancedOpen(false);
       screenNodes.forEach(screen => {
         const active = screen.dataset.screen === state.route;
         screen.classList.toggle('active', active);
@@ -188,11 +193,11 @@
     const freshnessAge = finite(source.telemetryAgeMs ?? source.ageMs);
     // Meio segundo até 10 s; depois de 1 em 1 s (o "Sem dados há N s" continua andando em vez de congelar em 10 s).
     const freshnessBucket = freshnessAge === null || freshnessAge < 0 ? -1 : freshnessAge < 10000 ? Math.floor(freshnessAge / 500) : 20 + Math.min(3600, Math.floor(freshnessAge / 1000));
-    const sourceSequence = Number.isFinite(Number(source.sequence)) ? Number(source.sequence) : -1;
+    // A sequência do quadro NÃO entra: ela muda a cada quadro e forçava redesenho mesmo com os números iguais.
+    // Quadro novo já é rastreado por lastPresentSequence; aqui só o que o motorista vê (valores + frescor).
     if (route === 'dashboard') {
       return [
         source.valid === false ? 0 : 1,
-        sourceSequence,
         freshnessBucket,
         rounded(live.rpm, 0),
         rounded(live.petrol_ms ?? live.petrolMs, 2),
@@ -205,7 +210,6 @@
     const cell = interpolation.cell || {};
     return [
       source.valid === false ? 0 : 1,
-      sourceSequence,
       freshnessBucket,
       Math.round((finite(interpolation.rpm ?? live.rpm) || 0) / 25) * 25,
       Math.round((finite(interpolation.petrolMs ?? live.petrol_ms ?? live.petrolMs) || 0) * 20) / 20,
@@ -350,15 +354,16 @@
     }
     if (route === 'autocal') {
       resetPresentCursor();
+      // Um refresh só ao entrar: enter() não toca a ponte; a leitura vem depois do primeiro quadro pintado.
       root.OmegasApp?.autoCalCockpit?.enter?.();
       afterPaint(() => {
         refreshFast();
-        root.OmegasApp?.autoCalCockpit?.refresh?.();
+        root.OmegasApp?.autoCalCockpit?.refreshNow?.();
       });
       return;
     }
     if (route === 'refino') {
-      afterPaint(() => root.OmegasApp?.refino?.refresh?.(true));
+      afterPaint(() => root.OmegasApp?.refino?.refreshNow?.());
       return;
     }
     if (route === 'sessions') {
@@ -386,8 +391,26 @@
     onContext: refreshContext,
   });
 
+  /** Abre/fecha a lista "Avançado" da barra de navegação. */
+  function setAdvancedOpen(open) {
+    const nav = document.querySelector('.side-nav');
+    const toggle = nav?.querySelector('[data-nav-advanced]');
+    if (!nav || !toggle) return;
+    const next = open ? 'true' : 'false';
+    if (nav.dataset.advancedOpen !== next) nav.dataset.advancedOpen = next;
+    if (toggle.getAttribute('aria-expanded') !== next) toggle.setAttribute('aria-expanded', next);
+  }
+
   function bindGlobalEvents() {
-    routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
+    routeButtons.forEach(button => button.addEventListener('click', () => { setAdvancedOpen(false); router.navigate(button.dataset.route); }));
+    document.querySelector('[data-nav-advanced]')?.addEventListener('click', event => {
+      event.stopPropagation?.();
+      setAdvancedOpen(document.querySelector('.side-nav')?.dataset.advancedOpen !== 'true');
+    });
+    // Tocar fora da lista fecha.
+    document.addEventListener('click', event => {
+      if (!event.target.closest || !event.target.closest('.side-nav')) setAdvancedOpen(false);
+    });
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
     // "Permitir USB": o dono negou a permissão do Android; um toque pede de novo (ação humana explícita).
     document.addEventListener('click', event => {

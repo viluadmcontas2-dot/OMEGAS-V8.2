@@ -48,7 +48,8 @@ class CleanUiContract(unittest.TestCase):
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
-        for label in ('Agora', 'Mapa K', 'Curva K', 'AutoCal', 'Refino', 'Sessões', 'Ferramentas'):
+        # Revisto (P2 navegação): o Refino aparece como "Ajuste GNV"; o resto fica em "Avançado".
+        for label in ('Agora', 'Mapa K', 'Curva K', 'AutoCal', 'Ajuste GNV', 'Sessões', 'Ferramentas', 'Avançado'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):
