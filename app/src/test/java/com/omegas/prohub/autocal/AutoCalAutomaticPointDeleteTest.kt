@@ -101,22 +101,65 @@ class AutoCalAutomaticPointDeleteTest {
         assertTrue(receipt.getBoolean("automatic"))
         assertFalse(receipt.getBoolean("humanConfirmed"))
         assertFalse(receipt.getBoolean("manualOnly"))
-        assertEquals("lenta", receipt.getJSONObject("automationEvidence").getString("reason"))
+        assertEquals("fora_da_curva", receipt.getJSONObject("automationEvidence").getString("reason"))
         val details = receipt.getJSONObject("details")
         assertTrue(details.getBoolean("effective"))
-        assertFalse(details.getJSONObject("petrolGuard").getBoolean("abnormal"))
+        assertFalse(details.getJSONObject("otherFuelGuard").getBoolean("abnormal"))
         assertEquals(1, receipts.size)
         assertTrue(receipts.single().getBoolean("automatic"))
     }
 
     @Test
-    fun `automatico recusa alvo de gasolina sem tocar a ECU`() {
+    fun `automatico recusa dois combustiveis no mesmo comando sem tocar a ECU`() {
         val ecu = FakeEcu()
         val manager = manager(ecu)
-        val result = manager.executeAutomaticPointDelete(listOf(Target(Fuel.PETROL, 4)), evidence())
+        val result = manager.executeAutomaticPointDelete(listOf(Target(Fuel.PETROL, 4), Target(Fuel.GAS, 5)), evidence())
         assertFalse(result.getBoolean("ok"))
         assertFalse(result.getBoolean("retryLater"))
         assertTrue(ecu.requests.isEmpty())
+    }
+
+    @Test
+    fun `apagamento automatico so gasolina envia mascara do GNV toda KEEP e guarda o GNV`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_PETR, 5 to 4, phase = "before")
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 2 to 3) // GNV não muda
+        val manager = manager(ecu)
+        val started = manager.executeAutomaticPointDelete(listOf(Target(Fuel.PETROL, 5)), evidence())
+        assertTrue(started.toString(), started.getBoolean("ok"))
+        awaitIdle(manager)
+        val writes = ecu.writes()
+        assertEquals(3, writes.size)
+        assertArrayEquals(
+            AutoCalProtocol.writeVectorU8(AutoCalPointDeleteProtocol.GAS_DELETE_ADDRESS, IntArray(18) { 1 }),
+            writes[0],
+        )
+        assertArrayEquals(
+            AutoCalProtocol.writeVectorU8(AutoCalPointDeleteProtocol.PETROL_DELETE_ADDRESS, IntArray(18) { if (it == 5) 0 else 1 }),
+            writes[1],
+        )
+        assertArrayEquals(AutoCalPointDeleteProtocol.commit(), writes[2])
+        assertEquals(manager.statusJson().toString(), "CONFIRMED", manager.statusJson().getString("state"))
+        val details = manager.receiptsJson().getJSONObject(0).getJSONObject("details")
+        assertEquals("PETROL", details.getString("fuel"))
+        val guard = details.getJSONObject("otherFuelGuard")
+        assertEquals("GAS", guard.getString("fuel"))
+        assertFalse(guard.getBoolean("abnormal"))
+        assertTrue(manager.statusJson().getString("message").contains("gasolina"))
+    }
+
+    @Test
+    fun `GNV zerado durante o apagamento da gasolina e anormal`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_PETR, 5 to 4, phase = "before")
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 2 to 3, phase = "before")
+        ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 2 to 1_500, phase = "before")
+        val manager = manager(ecu)
+        manager.executeAutomaticPointDelete(listOf(Target(Fuel.PETROL, 5)), evidence())
+        awaitIdle(manager)
+        val guard = manager.receiptsJson().getJSONObject(0).getJSONObject("details").getJSONObject("otherFuelGuard")
+        assertTrue(guard.getBoolean("abnormal"))
+        assertEquals(2, guard.getJSONArray("bands").getJSONObject(0).getInt("band"))
     }
 
     @Test
@@ -219,7 +262,7 @@ class AutoCalAutomaticPointDeleteTest {
         val manager = manager(ecu)
         manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence())
         awaitIdle(manager)
-        val guard = manager.receiptsJson().getJSONObject(0).getJSONObject("details").getJSONObject("petrolGuard")
+        val guard = manager.receiptsJson().getJSONObject(0).getJSONObject("details").getJSONObject("otherFuelGuard")
         assertTrue(guard.getBoolean("changed"))
         assertFalse(guard.getBoolean("abnormal"))
     }
@@ -234,7 +277,7 @@ class AutoCalAutomaticPointDeleteTest {
         manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence())
         awaitIdle(manager)
         val receipt = manager.receiptsJson().getJSONObject(0)
-        val guard = receipt.getJSONObject("details").getJSONObject("petrolGuard")
+        val guard = receipt.getJSONObject("details").getJSONObject("otherFuelGuard")
         assertTrue(guard.getBoolean("changed"))
         assertTrue(guard.getBoolean("abnormal"))
         assertEquals(7, guard.getJSONArray("bands").getJSONObject(0).getInt("band"))
@@ -368,7 +411,7 @@ class AutoCalAutomaticPointDeleteTest {
         ecu.set(AutoCalProtocol.MNFLD_PRESS_BUF_GAS, 4 to 410, 6 to 500)
         ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 4 to 1_600, 6 to 1_400)
         val manager = manager(ecu)
-        val evidence = JSONObject().put("reason", "lenta").put(
+        val evidence = JSONObject().put("reason", "fora_da_curva").put(
             "bands",
             org.json.JSONArray()
                 .put(JSONObject().put("band", 4).put("counterAfter", 3).put("timeRaw", 1_500).put("mapRaw", 410))
@@ -394,7 +437,7 @@ class AutoCalAutomaticPointDeleteTest {
         val ecu = FakeEcu()
         ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 4)
         val manager = manager(ecu)
-        val evidence = JSONObject().put("reason", "lenta").put(
+        val evidence = JSONObject().put("reason", "fora_da_curva").put(
             "bands", org.json.JSONArray().put(JSONObject().put("band", 4).put("counterAfter", 3).put("timeRaw", 0).put("mapRaw", 0)),
         )
         manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence)
@@ -437,7 +480,7 @@ class AutoCalAutomaticPointDeleteTest {
     // ---- apoio ----
 
     private fun evidence() = JSONObject()
-        .put("reason", "lenta")
+        .put("reason", "fora_da_curva")
         .put("bands", org.json.JSONArray().put(JSONObject().put("band", 4).put("frames", 5).put("idleFraction", 1.0)))
 
     private fun manager(

@@ -18,10 +18,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Executa ações AutoCal nativas escolhidas e confirmadas pelo operador.
  *
- * Exceção única (spec 2026-10-07-autocal-apagar-lenta): [executeAutomaticPointDelete] apaga sozinho
- * pontos do GNV aprendidos na marcha lenta, sem confirmação humana, pelo mesmo writer, trava serial,
- * ACK e readback do manual. A máscara da gasolina vai inteira KEEP; os campos da gasolina são lidos
- * antes/depois e qualquer mudança anormal é relatada no recibo. Gasolina e Curva K continuam só com o dono.
+ * Exceção única (spec 2026-10-07-autocal-apagar-lenta, rev2): [executeAutomaticPointDelete] apaga sozinho
+ * pontos FORA DA CURVA do GNV e da gasolina, um combustível por comando, sem confirmação humana, pelo mesmo
+ * writer, trava serial, ACK e readback do manual. A máscara do outro combustível vai inteira KEEP; os campos
+ * dele são relidos antes/depois e qualquer mudança anormal é relatada no recibo. Curva K continua só com o dono.
  * Este gerenciador não possui agenda: quem decide quando apagar é o [AutoIdleCleanupCoordinator].
  */
 class AutoCalNativeActionManager(
@@ -59,9 +59,9 @@ class AutoCalNativeActionManager(
     private class PointsAlreadyEmptyException(val bands: List<Int>) :
         IllegalStateException("Este ponto já está vazio")
 
-    /** Toda banda alvo mudou desde a marca de lenta (readquiriu andando): nada a apagar, nada escrito. */
+    /** Toda banda alvo mudou desde a marca (a ECU readquiriu): nada a apagar, nada escrito. */
     private class PointsChangedSinceMarkException(val bands: List<Int>) :
-        IllegalStateException("O ponto foi readquirido desde a marca de lenta; nada foi apagado")
+        IllegalStateException("O ponto foi readquirido desde a marca; nada foi apagado")
 
     /** O que a execução de um DELETE_POINT apurou, para o recibo FAILED usar os alvos e o "antes" reais. */
     private class PointDeleteRun {
@@ -209,8 +209,8 @@ class AutoCalNativeActionManager(
     }
 
     /**
-     * Única mutação automática permitida (spec 2026-10-07-autocal-apagar-lenta): liberar bandas do GNV
-     * aprendidas na lenta para a ECU readquirir. Mesmo writer, trava serial, ACK e readback do manual; só
+     * Única mutação automática permitida (spec 2026-10-07-autocal-apagar-lenta, rev2): liberar bandas fora da
+     * curva de UM combustível (GNV ou gasolina) para a ECU readquirir. Mesmo writer, trava serial, ACK e readback do manual; só
      * não há confirmação humana. Porta ocupada, preparação manual pendente ou outra calibração →
      * `retryLater=true`, nada enviado (o coordenador não consome o intervalo).
      */
@@ -231,8 +231,9 @@ class AutoCalNativeActionManager(
     ): JSONObject {
         val normalized = targets.distinctBy { it.fuel to it.index }.sortedBy { it.index }
         if (normalized.isEmpty()) return automaticFailure("Nenhum ponto GNV para apagar", retryLater = false)
-        if (normalized.any { it.fuel != AutoCalPointDeleteProtocol.Fuel.GAS }) {
-            return automaticFailure("O apagamento automático só toca o GNV", retryLater = false)
+        // Um combustível por comando: a máscara do outro vai toda KEEP (spec rev2).
+        if (normalized.map { it.fuel }.distinct().size != 1) {
+            return automaticFailure("O apagamento automático toca um combustível por vez", retryLater = false)
         }
         val prepared = synchronized(lock) {
             // Preparação manual esquecida e já expirada não segura o automático (revisão 2026-10-07 #4).
@@ -270,7 +271,7 @@ class AutoCalNativeActionManager(
         }
         var submitted = false
         try {
-            update("QUEUED", "Ponto GNV aprendido na lenta; liberando para nova aquisição", 0, prepared, prepared.automationEvidence)
+            update("QUEUED", "Ponto fora da curva; liberando para nova aquisição", 0, prepared, prepared.automationEvidence)
             executor.execute { executePrepared(prepared) }
             submitted = true
         } catch (_: java.util.concurrent.RejectedExecutionException) {
@@ -469,7 +470,7 @@ class AutoCalNativeActionManager(
                         reasonCode = "POINT_CHANGED_SINCE_MARK",
                         retryable = false,
                         nextActionCode = "NOTHING_TO_DELETE",
-                        nextAction = "O ponto foi aprendido de novo desde a marca de lenta; nada foi enviado.",
+                        nextAction = "O ponto foi aprendido de novo desde a marca; nada foi enviado.",
                     )
                     else -> classified
                 }
@@ -700,18 +701,21 @@ class AutoCalNativeActionManager(
 
     private fun executePointDelete(prepared: Preparation, startedAt: Long, run: PointDeleteRun = PointDeleteRun()) {
         require(prepared.pointDeleteTargets.isNotEmpty()) { "Pontos para readquirir não foram preparados" }
-        // "Antes" do readback: no automático, releitura fresca (contador/tempo/MAP do GNV + campos da gasolina);
-        // no manual, o último vetor válido do monitor (sem bytes novos antes da máscara).
+        // "Antes" do readback: no automático, releitura fresca (contador/tempo/MAP do combustível alvo + do OUTRO
+        // combustível, que serve de guarda); no manual, o último vetor válido do monitor (sem bytes antes da máscara).
+        val targetFuel = prepared.pointDeleteTargets.first().fuel
+        val otherFuel = AutoCalPointDeleteProtocol.Fuel.entries.first { it != targetFuel }
+        val beforeFields = bufferFields(targetFuel) + bufferFields(otherFuel)
         val beforeSnapshot = if (prepared.automatic) {
             ensureSession(prepared)
             update("READING_BEFORE", "Relendo GNV e gasolina antes de apagar", 4, prepared, prepared.automationEvidence)
             readSnapshot(
                 prepared,
                 AutoCalSnapshotSource.ECU_READ,
-                GAS_BEFORE_FIELDS + PETROL_GUARD_FIELDS,
+                beforeFields,
             ).also { snapshot ->
                 run.before = snapshot
-                val missing = (GAS_BEFORE_FIELDS + PETROL_GUARD_FIELDS)
+                val missing = beforeFields
                     .filter { snapshot.field(it)?.status != AutoCalFieldStatus.VALID }
                 require(missing.isEmpty()) {
                     "A ECU não confirmou a releitura antes do apagamento: " + missing.joinToString(", ") { it.key }
@@ -731,7 +735,7 @@ class AutoCalNativeActionManager(
             }
         val skippedChanged = mutableListOf<Int>()
         val targets = if (prepared.automatic) {
-            val gas = before.getValue(AutoCalPointDeleteProtocol.Fuel.GAS)
+            val gas = before.getValue(targetFuel)
             val marked = markedValues(prepared.automationEvidence)
             val (withData, empty) = prepared.pointDeleteTargets.partition { (gas.counters?.getOrNull(it.index) ?: 0) > 0 }
             // Revisão 2026-10-07 #3: a banda readquiriu (andando) entre a marca e o disparo → pula e a marca sai.
@@ -796,9 +800,10 @@ class AutoCalNativeActionManager(
         if (prepared.automatic) {
             targetDetails
                 .put("automatic", true)
-                .put("reason", prepared.automationEvidence.optString("reason", "lenta"))
+                .put("reason", prepared.automationEvidence.optString("reason", "fora_da_curva"))
+                .put("fuel", targetFuel.wireName)
                 .put("automationEvidence", JSONObject(prepared.automationEvidence.toString()))
-                .put("petrolGuard", petrolGuard(requireNotNull(beforeSnapshot), after))
+                .put("otherFuelGuard", otherFuelGuard(otherFuel, requireNotNull(beforeSnapshot), after))
         }
         confirm(effective, commitReply, after, startedAt, targetDetails, before = beforeSnapshot)
     }
@@ -809,7 +814,7 @@ class AutoCalNativeActionManager(
 
     private class PointDeleteEffect(val rows: JSONArray, val ambiguous: Boolean)
 
-    /** Contador/tempo/MAP de cada banda na leitura que a classificou como lenta (evidência do coordenador). */
+    /** Contador/tempo/MAP de cada banda na leitura que a marcou fora da curva (evidência do coordenador). */
     private fun markedValues(evidence: JSONObject): Map<Int, MarkedValues> {
         val bands = evidence.optJSONArray("bands") ?: return emptyMap()
         val out = HashMap<Int, MarkedValues>()
@@ -824,6 +829,10 @@ class AutoCalNativeActionManager(
         }
         return out
     }
+
+    /** Contador + tempo + MAP de um combustível (releitura de antes do automático e guarda do outro combustível). */
+    private fun bufferFields(fuel: AutoCalPointDeleteProtocol.Fuel): List<AutoCalProtocol.Field> =
+        listOf(counterField(fuel), timeField(fuel), mapField(fuel))
 
     private fun timeField(fuel: AutoCalPointDeleteProtocol.Fuel): AutoCalProtocol.Field = when (fuel) {
         AutoCalPointDeleteProtocol.Fuel.PETROL -> AutoCalProtocol.PETR_INJ_TBUF
@@ -899,19 +908,23 @@ class AutoCalNativeActionManager(
     }
 
     /**
-     * Gasolina antes/depois do apagamento automático. Contador subiu (ou contador igual com valor novo)
-     * = aprendizado normal da ECU. Contador caiu ou tempo/MAP zerou = anormal → o coordenador desliga o
-     * automático na sessão e registra.
+     * Guarda do OUTRO combustível (o que não foi alvo), antes/depois do apagamento automático. Contador subiu
+     * (ou contador igual com valor novo) = aprendizado normal da ECU. Contador caiu ou tempo/MAP zerou = anormal
+     * → o coordenador pausa o automático na conexão e registra.
      */
-    private fun petrolGuard(before: AutoCalSnapshot, after: AutoCalSnapshot): JSONObject {
+    private fun otherFuelGuard(
+        fuel: AutoCalPointDeleteProtocol.Fuel,
+        before: AutoCalSnapshot,
+        after: AutoCalSnapshot,
+    ): JSONObject {
         fun values(snapshot: AutoCalSnapshot, field: AutoCalProtocol.Field): IntArray? =
             snapshot.field(field)?.takeIf { it.status == AutoCalFieldStatus.VALID }?.rawValues
-        val counterBefore = values(before, AutoCalProtocol.NUM_BUF_UPD_PETR)
-        val counterAfter = values(after, AutoCalProtocol.NUM_BUF_UPD_PETR)
-        val timeBefore = values(before, AutoCalProtocol.PETR_INJ_TBUF)
-        val timeAfter = values(after, AutoCalProtocol.PETR_INJ_TBUF)
-        val mapBefore = values(before, AutoCalProtocol.MNFLD_PRESS_BUF)
-        val mapAfter = values(after, AutoCalProtocol.MNFLD_PRESS_BUF)
+        val counterBefore = values(before, counterField(fuel))
+        val counterAfter = values(after, counterField(fuel))
+        val timeBefore = values(before, timeField(fuel))
+        val timeAfter = values(after, timeField(fuel))
+        val mapBefore = values(before, mapField(fuel))
+        val mapAfter = values(after, mapField(fuel))
         val complete = listOf(counterBefore, counterAfter, timeBefore, timeAfter, mapBefore, mapAfter).all { it != null }
         val bands = JSONArray()
         var abnormal = !complete
@@ -942,7 +955,8 @@ class AutoCalNativeActionManager(
             .put("changed", bands.length() > 0)
             .put("abnormal", abnormal)
             .put("bands", bands)
-            .put("petrolMask", "KEEP_ALL")
+            .put("fuel", fuel.wireName)
+            .put("mask", "KEEP_ALL")
     }
 
     private fun confirm(
@@ -958,7 +972,7 @@ class AutoCalNativeActionManager(
         try { onConfirmed(receipt) } catch (_: Exception) {}
         val confirmedMessage = when {
             prepared.action == Action.DELETE_POINT && prepared.automatic ->
-                "GNV: ${prepared.pointDeleteTargets.size} ponto(s) aprendido(s) na lenta liberado(s) automaticamente; readback confirmado"
+                "${prepared.pointDeleteTargets.first().fuel.label}: ${prepared.pointDeleteTargets.size} ponto(s) fora da curva liberado(s) automaticamente; readback confirmado"
             prepared.action == Action.DELETE_POINT -> {
                 val count = prepared.pointDeleteTargets.size
                 if (count <= 1) "Ponto liberado para nova aquisição; estado da ECU atualizado"
@@ -1218,13 +1232,15 @@ class AutoCalNativeActionManager(
             Action.RESET_K_FACTOR -> listOf(AutoCalProtocol.MUL_ACT)
             Action.DELETE_POINT -> {
                 val scoped = mutableListOf<AutoCalProtocol.Field>()
-                // Automático (só GNV): a gasolina também é relida para provar que não mudou.
+                // Automático (um combustível por vez): o outro combustível também é relido para provar que não mudou.
                 if (prepared.automatic ||
                     prepared.pointDeleteTargets.any { it.fuel == AutoCalPointDeleteProtocol.Fuel.PETROL }
                 ) {
                     scoped += petrolAcquisitionReadbackFields()
                 }
-                if (prepared.pointDeleteTargets.any { it.fuel == AutoCalPointDeleteProtocol.Fuel.GAS }) {
+                if (prepared.automatic ||
+                    prepared.pointDeleteTargets.any { it.fuel == AutoCalPointDeleteProtocol.Fuel.GAS }
+                ) {
                     scoped += gasAcquisitionReadbackFields()
                 }
                 scoped
@@ -1398,18 +1414,6 @@ class AutoCalNativeActionManager(
             }
             return out
         }
-        /** GNV relido antes do apagamento automático: contador + tempo + MAP (readback e revisão #1/#3). */
-        private val GAS_BEFORE_FIELDS = listOf(
-            AutoCalProtocol.NUM_BUF_UPD_GAS,
-            AutoCalProtocol.PETR_INJ_TBUF_GAS,
-            AutoCalProtocol.MNFLD_PRESS_BUF_GAS,
-        )
-        /** Gasolina relida antes/depois do apagamento automático (A4). */
-        private val PETROL_GUARD_FIELDS = listOf(
-            AutoCalProtocol.NUM_BUF_UPD_PETR,
-            AutoCalProtocol.PETR_INJ_TBUF,
-            AutoCalProtocol.MNFLD_PRESS_BUF,
-        )
         private val MUTATION_MAY_HAVE_STARTED_STATES = setOf(
             "SENDING_ACTION",
             "READING_AFTER",
