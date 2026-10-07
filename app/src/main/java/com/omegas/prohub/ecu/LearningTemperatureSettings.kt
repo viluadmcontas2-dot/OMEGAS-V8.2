@@ -27,13 +27,6 @@ class LearningTemperatureSettings(context: Context) {
 
     fun minimumWaterC(): Int = currentMinimumWaterC
 
-    fun setMinimumWaterC(value: Int): Int {
-        val applied = value.coerceIn(MIN_ALLOWED_C, MAX_ALLOWED_C)
-        prefs.edit().putInt("minimumLandiWaterC", applied).apply()
-        currentMinimumWaterC = applied
-        return applied
-    }
-
     fun toJson(): JSONObject = JSONObject()
         .put("ok", true)
         .put("source", "LANDI_ECU")

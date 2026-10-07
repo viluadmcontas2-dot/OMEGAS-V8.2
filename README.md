@@ -1,30 +1,24 @@
-# OMEGAS V8.2
+# OMEGAS Diamante (V8.2)
 
 Aplicativo Android para leitura, aprendizado, diagnóstico e ajuste manual assistido de centrais OMEGAS/MP48.
 
-Esta linha usa governança **repo-first**: GitHub remoto, Issues, `PROJECT.md`, `STATUS.md`, Spec Kit e WorkUnit ativa formam a superfície canônica de continuidade. Notion é referência read-only quando explicitamente necessário para critérios de UX/produto.
+A branch canônica é `OmegasDiamante`. A continuidade vive no repositório: `AGENTS.md` (contrato do agente), `PROJECT.md`, `STATUS.md` (último APK e último CI), Issues e os planos em `docs/superpowers/`. Notion é referência somente leitura para critérios de UX/produto.
 
 ## Contratos duráveis do produto
 
-- nenhuma sugestão ou conexão grava automaticamente na ECU;
-- toda escrita é iniciada manualmente e depende de revisão/confirmação, ACK e readback;
+- nenhuma sugestão ou conexão grava na ECU sozinha; a única exceção é o apagamento automático de pontos fora da curva do GNV e da gasolina (regra 1 de `AGENTS.md`), com readback e registro; Curva K continua só com o dono;
+- toda outra escrita é iniciada manualmente e depende de ACK e readback;
 - falha de ACK ou readback divergente não é sucesso;
 - OBD permanece observacional;
 - Mapa K e Curva K permanecem separados;
 - a linha técnica do Mapa K não é editável;
 - matemática e protocolo críticos permanecem no Kotlin.
 
-## Verificação local
+## Verificação
 
-Use testes proporcionais ao escopo. O gate rápido disponível nesta baseline é:
+A fonte de verdade é o CI no GitHub Actions (`.github/workflows/ci.yml`; resumo de todos os workflows em `docs/ci/WORKFLOWS.md`). Sessões também podem rodar testes locais:
 
 ```bash
+./gradlew testDebugUnitTest
 python -B tools/run_checks.py
 ```
-
-GitHub Actions não fazem parte deste bootstrap inicial.
-
-
-## Programa ativo — OMEGAS Verde
-
-O programa atual está indexado em `docs/spec-kits/OMEGAS-SK-001.md` e rastreado pela Issue #81. O foco é paridade observável do AutoCal com o ProgBase original, replay derivado de logs reais e gate visual/runtime. SIL/CIU permanece fora do escopo até autorização explícita.

@@ -239,6 +239,20 @@ class SafetyGates(unittest.TestCase):
             self.assertEqual(result["telemetryOutlierBands"], 2)
         assert_no_proposal(self, self.refine(pairs_in(2.0, 12, [1, 2, 3, 4])))
 
+    def test_repeated_local_outlier_cannot_fabricate_band_coverage(self):
+        pairs = [
+            (3.10, 3.41),
+            (3.20, 3.52),
+            (3.28, 3.608),
+            (3.34, 3.674),
+            (3.60, 2.34),
+            (3.70, 2.405),
+        ]
+        kept, outlier_bands, rejected_pairs = oracle.plausible_indices(pairs, [100001] * len(pairs))
+        self.assertEqual(kept, [])
+        self.assertEqual(outlier_bands, 0)
+        self.assertEqual(rejected_pairs, 2)
+
     def test_driving_needs_three_distinct_bands_with_eight_valid_pairs(self):
         assert_no_proposal(self, self.refine(pairs_in(1.1, 40, [3, 4])))
         assert_no_proposal(self, self.refine(pairs_in(1.1, 7, [2, 3, 4])))

@@ -179,14 +179,6 @@ class ExperienceMeter(private val file: File?, private val clock: () -> Long = S
         private val gnvNear: IntArray,
         private val petrolNear: IntArray,
     ) {
-        companion object {
-            val EMPTY: Reading = Reading(
-                Array(OwnCurveFitter.GRID_CELLS) { DoubleArray(0) }, Array(OwnCurveFitter.GRID_CELLS) { DoubleArray(0) },
-                DoubleArray(OwnCurveFitter.GRID_CELLS), DoubleArray(OwnCurveFitter.GRID_CELLS),
-                IntArray(OwnCurveFitter.GRID_CELLS), IntArray(OwnCurveFitter.GRID_CELLS),
-            )
-        }
-
         private fun span(cell: Int): IntRange = max(0, cell - POOL_CELLS)..minOf(OwnCurveFitter.GRID_CELLS - 1, cell + POOL_CELLS)
 
         private fun median(values: List<Double>): Double = values.sorted()[values.size / 2]

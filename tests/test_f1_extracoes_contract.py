@@ -26,7 +26,7 @@ class T12SampleAnalyzerInEcu(unittest.TestCase):
         self.assertFalse((K / "learning/MotorSampleAnalyzer.kt").exists())
         src = read(K / "ecu/MotorSampleAnalyzer.kt")
         self.assertTrue(src.startswith("package com.omegas.prohub.ecu"))
-        for must in ("class MotorSampleAnalyzer(", "data class SampleDecision(", "LiveCellProjection.cellFor("):
+        for must in ("class MotorSampleAnalyzer(", "data class SampleDecision(", "LiveCellProjection.cellIndex("):
             self.assertIn(must, src)
         self.assertNotIn("LearningGridProjection", src)
         # O pacote de aprendizado inteiro saiu na F3 (tests/test_poda_2_contract.py).

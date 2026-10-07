@@ -14,6 +14,9 @@ class RefinementJournalTest {
         JSONArray(bands.mapIndexed { i, (ratio, n) ->
             JSONObject().put("fromMs", EquivalenceLedger.BANDS[i].first).put("toMs", EquivalenceLedger.BANDS[i].second)
                 .put("samples", n).put("ratio", ratio ?: JSONObject.NULL)
+                // Fixture explícita de medições independentes e precisas para testar a resposta do ganho.
+                .put("evidenceStats", JSONObject().put("model", "overlap-lag1-mad-v1")
+                    .put("effectiveSamples", n.toDouble()).put("dispersionLog", 0.002))
         }))
 
     private fun write(journal: RefinementJournal, before: IntArray, after: IntArray, idx: JSONObject) =

@@ -282,10 +282,6 @@ class SessionRecorder(
             )
     }
 
-    fun previewJson(): String = synchronized(previewLock) {
-        JSONArray(preview.map { JSONObject(it.toString()) }).toString()
-    }
-
     /**
      * Lista de sessões para a tela de Ferramentas. NÃO pega o bloqueio do gravador (antes pegava, e uma
      * reconstrução de resumo lendo arquivos de eventos inteiros parava a gravação e congelava a tela) e
@@ -335,24 +331,6 @@ class SessionRecorder(
         val result = array.toString()
         listCache = System.currentTimeMillis() to result
         return result
-    }
-
-    fun clearStoppedSessions(): JSONObject {
-        listCache = null
-        var deleted = 0
-        var preserved = 0
-        paths.sessionLogsRoot.listFiles { file -> file.isDirectory }?.forEach { dir ->
-            if (recording && dir.absolutePath == sessionDir?.absolutePath) return@forEach
-            if (documentsMirror != null && !documentsMirrorMarker(dir).isFile) {
-                val published = try { publishParts(dir, dir.name, final = true) } catch (_: Exception) { false }
-                if (!published) {
-                    preserved += 1
-                    return@forEach
-                }
-            }
-            if (dir.deleteRecursively()) deleted += 1
-        }
-        return JSONObject().put("ok", true).put("deleted", deleted).put("preservedWithoutPublicCopy", preserved)
     }
 
     fun exportSession(

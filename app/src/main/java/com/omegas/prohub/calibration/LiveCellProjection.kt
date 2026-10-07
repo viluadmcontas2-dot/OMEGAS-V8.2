@@ -14,6 +14,15 @@ object LiveCellProjection {
     val petrolBins: DoubleArray = KMapPhysicalAxes.petrolBins()
     val mapBins: DoubleArray = doubleArrayOf(0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00)
 
+    private val rpmBinsDouble: DoubleArray = rpmBins.map { it.toDouble() }.toDoubleArray()
+
+    /**
+     * (linha, coluna) da célula mais próxima, sem montar JSON nem pesos: para o caminho quente por quadro
+     * (MotorSampleAnalyzer só lia a chave daqui). Idêntico ao que [cellFor] devolve em "row" e "column".
+     */
+    fun cellIndex(rpm: Double, petrolMs: Double): Pair<Int, Int> =
+        nearest(petrolBins, petrolMs) to nearest(rpmBinsDouble, rpm)
+
     fun cellFor(rpm: Double, petrolMs: Double, mapBar: Double = 0.60): JSONObject {
         val row = nearest(petrolBins, petrolMs)
         val column = nearest(rpmBins.map { it.toDouble() }.toDoubleArray(), rpm)
