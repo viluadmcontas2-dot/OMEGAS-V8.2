@@ -1,4 +1,14 @@
-# AutoCal — apagar automaticamente ponto GNV aprendido na lenta
+# AutoCal — apagar automaticamente ponto fora da curva (GNV e gasolina)
+
+> **Revisão 2 (2026-10-07, decisão do dono):** o critério é **ponto fora da curva**, em GNV **e gasolina**; a lenta deixa de ser gatilho e vira só evidência no recibo. Esta revisão substitui a seção "Regra" abaixo; o restante continua valendo onde não conflitar.
+>
+> - **Detecção:** para cada combustível, a curva ms × MAP dos buffers nativos (bandas 0..15 com contador > 0 e MAP > 0) passa pelo ajuste robusto do Refino (`AutoMatchRefinedEngine.monotoneFit`: resíduo leave-one-out em ln ms, limiar max(5%, 3·MAD)). Banda rejeitada = fora da curva.
+> - **Disparo:** banda GNV fora da curva → apaga com o carro rodando em GNV (rpm ≥ 1000). Banda gasolina fora da curva → apaga com o carro rodando em **gasolina** (rpm ≥ 1000). Motivo: a gasolina quase não reaprende (3 aquisições em 43 sessões); apagar com o carro em GNV deixaria a base com buraco e o Refino sem referência.
+> - **Forma real ("ver a média"):** se o ponto readquirido voltar a menos de 3% do valor apagado em 2 readquisições seguidas, a banda é forma real da curva e não é mais apagada nesta conexão. Voltou em outro lugar = ruído; segue normal.
+> - **Guardas mantidas:** 5 s entre apagamentos; readback que prova o apagamento; bandas do outro combustível relidas antes/depois e mudança anormal pausa o automático na conexão; falhas consomem intervalo; 5 falhas seguidas pausam.
+> - **Tela:** "O app pediu para a ECU reaprender o ponto X da gasolina/do GNV — ele estava fora da curva."
+
+## Texto original (revisão 1: lenta como gatilho)
 
 Data: 2026-10-07 · Branch alvo: OmegasDiamante (79afa705) · Evidência: `docs/teia/ACHADOS.md` (F5, F9, F11)
 
