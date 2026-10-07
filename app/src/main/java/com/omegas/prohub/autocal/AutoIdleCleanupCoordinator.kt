@@ -312,7 +312,18 @@ class AutoIdleCleanupCoordinator(
     private fun submit(block: () -> Unit) {
         try {
             executor.execute {
-                try { synchronized(this) { block() } } catch (_: Exception) {}
+                try {
+                    synchronized(this) {
+                        try {
+                            block()
+                        } catch (error: Exception) {
+                            // Regra 5: falha vira estado legível com próxima ação, nunca silêncio.
+                            lastResult = JSONObject().put("ok", false).put("retryLater", true)
+                                .put("error", "Apagamento automático: ${error.message ?: "falha inesperada"}; vai tentar de novo na próxima leitura")
+                            try { publish() } catch (_: Exception) {}
+                        }
+                    }
+                } catch (_: Exception) {}
             }
         } catch (_: java.util.concurrent.RejectedExecutionException) {
             // Serviço encerrando: nada a decidir.

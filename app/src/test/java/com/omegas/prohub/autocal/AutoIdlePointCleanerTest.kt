@@ -150,6 +150,14 @@ class AutoIdlePointCleanerTest {
     }
 
     @Test
+    fun `reset nao libera o bloqueio de falha com mutacao possivel`() {
+        cleaner.onFailed(20_000, mutationMayHaveStarted = true)
+        cleaner.reset()
+        cleaner.onReread()
+        assertWait(cleaner.decide(input(now = 21_000, marks = listOf(4))), "bloqueado")
+    }
+
+    @Test
     fun `apagamento na vespera do automatch apaga normalmente`() {
         // Não existe guarda de AutoMatch: a política nem recebe o contador/MAX do AutoMatch.
         val decision = cleaner.decide(input(now = 20_000, marks = listOf(7), counters = counters(7 to 9)))

@@ -29,5 +29,12 @@ jobs:
         run: python3 -B tools/run_checks.py
       - name: JVM unit tests
         run: ./gradlew testDebugUnitTest
+      - name: Relatorio do replay do apagamento automatico
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: replay-apagamento-automatico
+          path: app/build/test-results/testDebugUnitTest/TEST-com.omegas.prohub.autocal.AutoIdleRealSessionReplayTest.xml
+          if-no-files-found: ignore
       - name: Android lint
         run: ./gradlew lintDebug

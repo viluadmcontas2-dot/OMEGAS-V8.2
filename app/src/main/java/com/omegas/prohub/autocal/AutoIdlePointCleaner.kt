@@ -133,10 +133,12 @@ class AutoIdlePointCleaner(
 
     fun disabledReason(): String? = disabledReason
 
-    /** invalidateRound / ação manual: zera bloqueios de leitura, mantém intervalo e desligamento da sessão. */
+    /**
+     * invalidateRound / ação manual: zera só a espera por releitura; mantém intervalo, o bloqueio de falha com
+     * mutação possível ([blockedUntilMs]) e o desligamento da sessão.
+     */
     fun reset() {
         needsReread = false
-        blockedUntilMs = 0L
     }
 
     /** Sessão USB nova ou encerrada: tudo volta ao início. */
