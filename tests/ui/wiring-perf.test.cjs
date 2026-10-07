@@ -65,3 +65,22 @@ test('troca AutoCal↔Refino: um refresh só ao entrar e nenhum redesenho do gr�
     if (autocalNode) assert.equal(app.$('#autocalReferenceChart .curve-chart-shared'), autocalNode, 'o nó do AutoCal é reaproveitado');
   } finally { app.destroy(); }
 });
+
+test('P1-7: Ferramentas e Sessões não se refazem só porque o relógio andou; o Agora não relê a equivalência a cada 3 s', () => {
+  const app = boot();
+  try {
+    app.go('tools'); app.settle(4);
+    const tools = app.chartWrites('toolDiagnosticsWorkspace');
+    app.settle(40); // 10 s de relógio: a idade do último dado muda, o resto não
+    assert.equal(app.chartWrites('toolDiagnosticsWorkspace'), tools, 'Ferramentas: idade muda no lugar, sem refazer (a rolagem fica)');
+    app.go('sessions'); app.settle(4);
+    const sessions = app.chartWrites('sessionsHost');
+    app.settle(80); // 20 s: a duração da gravação anda
+    assert.equal(app.chartWrites('sessionsHost'), sessions, 'Sessões: duração no lugar, o seletor não fecha');
+    app.go('dashboard'); app.settle(4);
+    const mark = app.world.mark();
+    app.settle(40); // 10 s sem a evidência mudar
+    const reads = app.world.since(mark).filter(c => c.method === 'getEquivalence').length;
+    assert.ok(reads <= 1, `Agora: no máximo uma leitura da equivalência em 10 s sem evidência nova (leu ${reads})`);
+  } finally { app.destroy(); }
+});

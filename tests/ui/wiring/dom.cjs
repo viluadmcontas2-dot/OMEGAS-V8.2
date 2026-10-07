@@ -46,6 +46,8 @@ class Node {
   get lastChild() { return this.childNodes[this.childNodes.length - 1] || null; }
   get children() { return this.childNodes.filter(n => n.nodeType === 1); }
   get firstElementChild() { return this.children[0] || null; }
+  // Como no navegador: telas usam isto para saber se já desenharam (sem isto o teste sempre redesenhava).
+  get childElementCount() { return this.children.length; }
   get nextElementSibling() {
     if (!this.parentNode) return null;
     const siblings = this.parentNode.children; return siblings[siblings.indexOf(this) + 1] || null;

@@ -92,10 +92,20 @@
       renderRefino() {
         const now = Date.now();
         if (this.refinoAt && now - this.refinoAt < 3e3) return;
-        this.refinoAt = now;
         // Sem cabo o Kotlin já diz "Sem ECU" / "Aguardar a ECU" (refinoState): a conexão em si fica no cartão de saúde.
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
-        const result = api && typeof api.equivalence === "function" ? api.equivalence() : null;
+        // equivalence() é pesado (milhares de pontos serializados): o Agora reaproveita o resultado que o Refino/AutoCal
+        // acabaram de ler e, fora isso, só relê quando a revisão da evidência andou (ou o vigia de 15 s vence).
+        const revisions = ns.Revisions;
+        if (!this.refinoGate && revisions) this.refinoGate = revisions.gate(['evidence'], 15000);
+        const shared = ns.CurveChart && ns.CurveChart.evidence;
+        let result = null;
+        if (shared && shared.eq && now - (shared.fetchedAt || 0) < 5000) result = shared.eq;
+        else if (!this.refinoGate || this.refinoGate.due(false, now)) {
+          result = api && typeof api.equivalence === "function" ? api.equivalence() : null;
+          if (this.refinoGate) this.refinoGate.mark(now);
+        } else return;
+        this.refinoAt = now;
         const pilot = result && result.autopilot || {};
         const rs = result && result.refinoState && typeof result.refinoState === "object" ? result.refinoState : {};
         // O rótulo curto do Kotlin sabe o combustível de agora ("Medindo a gasolina" × "Medindo o GNV"); a fase do piloto é o reserva.
