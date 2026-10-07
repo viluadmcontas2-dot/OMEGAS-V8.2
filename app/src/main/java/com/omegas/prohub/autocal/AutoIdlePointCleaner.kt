@@ -49,6 +49,7 @@ class AutoIdlePointCleaner(
     private var blockedUntilMs = 0L
     private var needsReread = false
     private var disabledReason: String? = null
+    private var consecutiveFailures = 0
     private var lastDecision: String = ""
 
     fun decide(input: Input): Decision = decideInternal(input).also { lastDecision = it.toString().take(200) }
@@ -79,19 +80,36 @@ class AutoIdlePointCleaner(
         return Decision.Delete(targets, targets.mapNotNull { input.idleBands[it] }, frame!!)
     }
 
-    fun onSucceeded(nowElapsedMs: Long) {
+    /**
+     * Apagamento confirmado. `rereadRequired`: o readback foi ambíguo (não prova nem desprova o apagamento):
+     * consome o intervalo e espera uma releitura dos buffers GNV; nunca desliga a sessão.
+     */
+    fun onSucceeded(nowElapsedMs: Long, rereadRequired: Boolean = false) {
         lastSuccessAtMs = nowElapsedMs
-        needsReread = false
+        needsReread = rereadRequired
         blockedUntilMs = 0L
+        consecutiveFailures = 0
     }
 
     /** Porta ocupada, preparação manual, guarda serial: só tenta de novo; nada é consumido. */
     fun onRetryLater() = Unit
 
+    /**
+     * Toda falha da ação automática (já aberta) consome tempo: sem mutação, o intervalo mínimo; com mutação
+     * possível, [failureBlockMs] + releitura. [MAX_CONSECUTIVE_FAILURES] seguidas (ex.: NAK persistente)
+     * desligam o automático na sessão. Colisão de porta/guarda antes de abrir a ação é [onRetryLater].
+     */
     fun onFailed(nowElapsedMs: Long, mutationMayHaveStarted: Boolean) {
-        if (!mutationMayHaveStarted) return
-        blockedUntilMs = nowElapsedMs + failureBlockMs
-        needsReread = true
+        consecutiveFailures += 1
+        if (mutationMayHaveStarted) {
+            blockedUntilMs = maxOf(blockedUntilMs, nowElapsedMs + failureBlockMs)
+            needsReread = true
+        } else {
+            blockedUntilMs = maxOf(blockedUntilMs, nowElapsedMs + minIntervalMs)
+        }
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES && disabledReason == null) {
+            disable("$consecutiveFailures falhas seguidas do apagamento automático")
+        }
     }
 
     /** Chegou uma leitura nova e confirmada dos buffers GNV. */
@@ -117,6 +135,7 @@ class AutoIdlePointCleaner(
         blockedUntilMs = 0L
         needsReread = false
         disabledReason = null
+        consecutiveFailures = 0
         lastDecision = ""
     }
 
@@ -134,6 +153,7 @@ class AutoIdlePointCleaner(
         /** ACK/readback (~1,2 s) + um snapshot nativo (mediana ~3 s). */
         const val MIN_INTERVAL_MS = 5_000L
         const val FAILURE_BLOCK_MS = 10_000L
+        const val MAX_CONSECUTIVE_FAILURES = 5
         /** Mesmo tempo de estabilização do [NativeAutoCalMonitor]. */
         const val SESSION_SETTLE_MS = NativeAutoCalMonitor.SESSION_SETTLE_MS
         const val FRAME_MAX_AGE_MS = 1_500L

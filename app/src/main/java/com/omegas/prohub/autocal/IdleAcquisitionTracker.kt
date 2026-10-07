@@ -45,6 +45,8 @@ class IdleAcquisitionTracker(
         val idleFraction: Double,
         val mapBar: Double,
         val mapRaw: Int,
+        /** PETR_INJ_TBUF_GAS[i] da leitura que classificou (0 = não lido): o disparo confere se mudou. */
+        val timeRaw: Int = 0,
         val counterBefore: Int,
         val counterAfter: Int,
         val valueChangedAtSameCounter: Boolean,
@@ -59,6 +61,7 @@ class IdleAcquisitionTracker(
             .put("idleFraction", idleFraction)
             .put("mapBar", mapBar)
             .put("mapRaw", mapRaw)
+            .put("timeRaw", timeRaw)
             .put("counterBefore", counterBefore)
             .put("counterAfter", counterAfter)
             .put("valueChangedAtSameCounter", valueChangedAtSameCounter)
@@ -84,13 +87,15 @@ class IdleAcquisitionTracker(
         frames: (fromElapsedMs: Long, toElapsedMs: Long) -> List<NativeAnchorTelemetryWindow.Frame>,
     ): List<Acquisition> {
         val before = previous
+        // Leitura fora de ordem (ou repetida) não substitui a linha de base (revisão 2026-10-07 #8).
+        if (before != null && reading.observedAtElapsedMs <= before.observedAtElapsedMs) return emptyList()
         previous = Reading(
             counters = reading.counters.copyOf(),
             timeRaw = reading.timeRaw?.copyOf(),
             mapRaw = reading.mapRaw?.copyOf(),
             observedAtElapsedMs = reading.observedAtElapsedMs,
         )
-        if (before == null || reading.observedAtElapsedMs <= before.observedAtElapsedMs) return emptyList()
+        if (before == null) return emptyList()
 
         val acquired = ArrayList<Pair<Int, Boolean>>()
         for (band in 0 until minOf(bandCount, reading.counters.size)) {
@@ -134,6 +139,7 @@ class IdleAcquisitionTracker(
                 idleFraction = fraction,
                 mapBar = mapBar,
                 mapRaw = mapRaw,
+                timeRaw = reading.timeRaw?.getOrNull(band) ?: 0,
                 counterBefore = before.counters.getOrElse(band) { 0 },
                 counterAfter = reading.counters[band],
                 valueChangedAtSameCounter = valueChanged,
@@ -152,6 +158,11 @@ class IdleAcquisitionTracker(
         val counters = last.counters.copyOf()
         bands.forEach { if (it in counters.indices) counters[it] = 0 }
         previous = Reading(counters, last.timeRaw, last.mapRaw, last.observedAtElapsedMs)
+    }
+
+    /** A banda mudou desde a marca (readquiriu andando): a marca sai, o contador conhecido não muda. */
+    fun forget(bands: Collection<Int>) {
+        bands.forEach { marks.remove(it) }
     }
 
     fun reset() {

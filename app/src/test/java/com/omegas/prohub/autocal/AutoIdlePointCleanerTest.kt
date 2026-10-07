@@ -77,9 +77,36 @@ class AutoIdlePointCleanerTest {
     }
 
     @Test
-    fun `falha sem mutacao nao bloqueia nem consome intervalo`() {
+    fun `falha sem mutacao tambem consome o intervalo minimo`() {
+        // Revisão 2026-10-07: falha na releitura de antes não pode virar Delete a cada 500 ms para sempre.
         cleaner.onFailed(20_000, mutationMayHaveStarted = false)
-        assertTrue(cleaner.decide(input(now = 20_001, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
+        assertWait(cleaner.decide(input(now = 20_500, marks = listOf(4))), "bloqueado")
+        assertTrue(cleaner.decide(input(now = 25_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
+    }
+
+    @Test
+    fun `cinco falhas seguidas desligam o automatico na sessao`() {
+        repeat(4) { cleaner.onFailed(20_000L + it * 6_000L, mutationMayHaveStarted = false) }
+        assertEquals(null, cleaner.disabledReason())
+        cleaner.onFailed(50_000, mutationMayHaveStarted = false)
+        assertTrue(cleaner.disabledReason()!!.contains("falhas"))
+    }
+
+    @Test
+    fun `sucesso zera a contagem de falhas seguidas`() {
+        repeat(4) { cleaner.onFailed(20_000L + it * 6_000L, mutationMayHaveStarted = false) }
+        cleaner.onSucceeded(60_000)
+        repeat(4) { cleaner.onFailed(70_000L + it * 6_000L, mutationMayHaveStarted = false) }
+        assertEquals(null, cleaner.disabledReason())
+    }
+
+    @Test
+    fun `readback ambiguo consome o intervalo e exige releitura sem desligar`() {
+        cleaner.onSucceeded(20_000, rereadRequired = true)
+        assertWait(cleaner.decide(input(now = 30_000, marks = listOf(4))), "releitura")
+        cleaner.onReread()
+        assertTrue(cleaner.decide(input(now = 30_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
+        assertEquals(null, cleaner.disabledReason())
     }
 
     @Test

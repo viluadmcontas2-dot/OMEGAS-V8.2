@@ -138,6 +138,24 @@ class IdleAcquisitionTrackerTest {
         assertNull(tracker.lastCounters())
     }
 
+    @Test
+    fun `R8 leitura fora de ordem nao substitui a linha de base`() {
+        tracker.observe(reading(counters(4 to 3), map(4 to 410), at = 3_000), frames())
+        tracker.observe(reading(counters(4 to 9), map(4 to 410), at = 2_000), frames())
+        assertEquals(3, tracker.lastCounters()!![4])
+        assertEquals(3_000L, tracker.lastObservedAtElapsedMs())
+    }
+
+    @Test
+    fun `R3 evidencia leva contador tempo e MAP da classificacao`() {
+        tracker.observe(reading(counters(4 to 3), map(4 to 410), time(4 to 1_500), at = 1_000), frames())
+        tracker.observe(reading(counters(4 to 4), map(4 to 410), time(4 to 1_520), at = 3_000), idleFrames(410 / 1024.0, 1_100, 5))
+        val json = tracker.idleBands().getValue(4).toJson()
+        assertEquals(4, json.getInt("counterAfter"))
+        assertEquals(1_520, json.getInt("timeRaw"))
+        assertEquals(410, json.getInt("mapRaw"))
+    }
+
     // ---- apoio ----
 
     private fun frames(): (Long, Long) -> List<NativeAnchorTelemetryWindow.Frame> = { _, _ -> emptyList() }
