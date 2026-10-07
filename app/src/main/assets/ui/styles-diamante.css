@@ -370,3 +370,25 @@ html body .head-usb-chip { flex:0 0 auto; min-height:48px; padding:0 18px; borde
 html body .head-usb-chip[hidden] { display:none; }
 html body details.ts-card > summary { min-height:58px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
 html body .ts-advanced > summary { min-height:48px; display:flex; align-items:center; cursor:pointer; font-weight:600; }
+
+/* Ajuste GNV (rodada 2): sem cabeçalho; frase de estado e motivo acima da barra de botões; menus na barra de baixo. */
+html body .ar-refino .ar-act { display:flex; flex-direction:column; align-items:stretch; gap:6px; min-height:0; }
+html body .ar-refino .refino-statusline { display:flex; align-items:baseline; gap:6px 18px; flex-wrap:wrap; min-width:0; }
+html body .ar-refino .refino-statusline .ar-sentence { margin:0; font-size:22px; font-weight:700; min-width:0; }
+html body .ar-refino .refino-statusline .ar-reason { margin:0; color:var(--warn,#ffd23f); font-size:20px; font-weight:700; }
+html body .ar-refino .ar-buttons { display:flex; flex-wrap:nowrap; align-items:stretch; gap:8px; width:100%; }
+html body .ar-refino .ar-buttons > .instrument-details { position:relative; margin:0; z-index:15; flex:1 1 0; min-width:0; }
+html body .ar-refino .ar-buttons > .instrument-details > summary { width:100%; justify-content:center; }
+html body .ar-refino .ar-buttons > :is(button,.refino-undo) { flex:1 1 0; min-width:0; }
+html body .ar-refino .ar-buttons > .instrument-details > summary { height:58px; min-height:58px; display:flex; align-items:center; padding:0 16px; }
+html body .ar-refino .ar-buttons .instrument-details > .instrument-detail-content { top:auto; bottom:66px; right:auto; left:0; max-height:min(420px,calc(100vh - 250px)); overflow:auto; }
+html body .ar-refino .ar-legend-row { display:flex; align-items:center; gap:12px; }
+html body .ar-refino .ar-legend-row > .ar-fuel { margin-left:auto; }
+
+/* Barra de botões única (Ajuste GNV e AutoCal): todos os visíveis com a mesma largura, mesmo espaço, linha inteira, sem buraco. */
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons { display:flex; flex-wrap:nowrap; align-items:stretch; justify-content:stretch; gap:8px; width:100%; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > :is(button,.instrument-details,.autocal-point-actions,.refino-undo):not([hidden]) { flex:1 1 0; min-width:0; margin:0; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > :is(button,.instrument-details > summary) { height:58px; min-height:58px; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.15; padding:0 10px; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > .autocal-point-actions { display:flex; gap:8px; }
+html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > .autocal-point-actions[hidden], html body .ar-refino .ar-act > .ar-buttons > .refino-undo[hidden] { display:none; }
+html body .ar-refino .ar-act > .ar-buttons > .refino-undo > button { width:100%; height:58px; }

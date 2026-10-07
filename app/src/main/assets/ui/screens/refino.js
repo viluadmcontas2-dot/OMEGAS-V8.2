@@ -318,20 +318,17 @@
       if (!host || host.querySelector('.autocal-cockpit')) return;
       host.innerHTML = `
         <section class="autocal-cockpit refino-cockpit ar-shell ar-refino" aria-label="Refino OMEGAS">
-          <header class="ar-status" aria-live="polite"><h2 class="instrument-title">Ajuste do GNV</h2><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p>
-            <span id="refinoPhaseChip" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
-            <div class="instrument-menus"><details class="instrument-details refino-proposals"><summary>Sugestões</summary><div class="instrument-detail-content" id="refinoProposals">Ainda sem proposta. O app continua medindo.</div></details>
-            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-evidence-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p></section></div></details></div>
-            <div class="refino-stalls ar-stall" id="refinoStalls" hidden></div>
-          </header>
           <section class="ar-chart-card" aria-label="Curva de aquisição · Gasolina × GNV">
-            <div class="ar-legend-row"><div class="ar-legend" id="refinoLegend" aria-label="Legenda do gráfico"></div></div>
+            <div class="ar-legend-row"><div class="ar-legend" id="refinoLegend" aria-label="Legenda do gráfico"></div><span id="refinoPhaseChip" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span></div>
+            <div class="refino-stalls ar-stall" id="refinoStalls" hidden></div>
             <div id="refinoChart" class="ar-chart-host"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
             <div class="ar-readout" id="refinoInspector" data-empty="true"><span>Toque num ponto do gráfico.</span></div>
           </section>
           <div class="ar-act">
-            <p id="refinoNext" class="ar-reason" hidden></p>
+            <div class="refino-statusline" aria-live="polite"><p id="refinoHeadline" class="ar-sentence" data-level="neutral">Aguardando dados da ECU</p><p id="refinoNext" class="ar-reason" hidden></p></div>
             <div class="ar-buttons">
+              <div class="instrument-menus"><details class="instrument-details refino-proposals"><summary>Sugestões</summary><div class="instrument-detail-content" id="refinoProposals">Ainda sem proposta. O app continua medindo.</div></details>
+            <details class="instrument-details refino-details"><summary>Ver detalhes</summary><div class="instrument-detail-content"><p><small>Diferença GNV × gasolina</small><b id="refinoRatio">—</b></p><p id="refinoDetailCounts">Aguardando medição</p><p id="refinoDetailReason"></p>${ns.CurveChart.viewControls()}<section class="refino-evidence-options"><h3>Aprendizado do GNV</h3><p>Descarta apenas as medições de GNV do OMEGAS. Mantém a gasolina como referência e a calibração da ECU. As medições descartadas não podem ser desfeitas.</p></section></div></details></div>
               <button type="button" class="btn-primary" data-refino-primary hidden></button>
               <button type="button" class="btn-ghost" data-refino-reset-gas>Apagar medições do app (GNV)</button>
               <button type="button" class="btn-ghost" data-refino-acquisition>Ver aprendizado da ECU</button>
