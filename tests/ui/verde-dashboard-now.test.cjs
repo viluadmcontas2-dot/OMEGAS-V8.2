@@ -39,10 +39,9 @@ test('Agora Diamante mostra 4 blocos de direção pela leitura única, intençã
     assert.ok(!dashboard.includes(marker),marker+' sem redundância');
   }
   assert.doesNotMatch(dashboard, /dashHeroRpm|dashLtft/);
-  // Os blocos leem a leitura única (nunca o status cru) e nascem "—".
-  assert.equal((dashboard.match(/class="now-tile"/g) || []).length, 4);
-  assert.match(dashboard, /renderDrive\(state, reading\)/);
-  for (const id of ['dashDriveFuel', 'dashDriveMs', 'dashDriveRpm', 'dashDriveMap']) assert.match(dashboard, new RegExp('id="' + id + '" data-empty="true">—<'));
+  // Revisto (W2): o Agora não tem mais blocos de direção; a leitura única vive só no cabeçalho.
+  assert.equal((dashboard.match(/class="now-tile"/g) || []).length, 0);
+  assert.doesNotMatch(dashboard, /renderDrive/);
 });
 
 test('CSS contém somente o recorte Agora, com resultado, intenção e cobertura', () => {

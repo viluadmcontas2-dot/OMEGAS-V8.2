@@ -48,8 +48,8 @@ class CleanUiContract(unittest.TestCase):
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
-        # Revisto (P2 navegação): o Refino aparece como "Ajuste GNV"; o resto fica em "Avançado".
-        for label in ('Agora', 'Mapa K', 'Curva K', 'AutoCal', 'Ajuste GNV', 'Sessões', 'Ferramentas', 'Avançado'):
+        # Revisto (P2 navegação): o Refino aparece como "Ajuste GNV"; Revisto (W2): sem "Avançado", as 8 abas são de primeiro nível.
+        for label in ('Agora', 'Mapa K', 'Curva K', 'AutoCal', 'Ajuste GNV', 'Sessões', 'Ferramentas', 'Diagnóstico'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):
@@ -95,10 +95,10 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('Nível da ECU', self.dashboard)
         self.assertIn('reading.levelRaw', self.dashboard)
         self.assertNotIn('level_percentage', self.dashboard)
-        # Decisão do dono (2026-10-05): o Agora tem 4 blocos de direção próprios (dashDrive*), pela leitura única.
-        self.assertEqual(self.dashboard.count('class="now-tile"'), 4)
+        # Revisto (W2): os 4 blocos de direção repetiam o cabeçalho e esmagavam equivalência e faixas; saíram do Agora.
+        self.assertEqual(self.dashboard.count('class="now-tile"'), 0)
         for marker in ('dashDriveFuel', 'dashDriveMs', 'dashDriveRpm', 'dashDriveMap'):
-            self.assertIn(marker, self.dashboard)
+            self.assertNotIn(marker, self.dashboard)
 
     def test_map_curve_have_expected_contracts(self):
         self.assertIn('id="mapSelectAll"', self.html)

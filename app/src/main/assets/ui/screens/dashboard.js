@@ -63,12 +63,6 @@
       }
         this.root.innerHTML = `
           <div class="now-dashboard-shell">
-            <section class="now-drive" aria-label="Direção agora">
-              <div class="now-tile" data-tile="fuel"><small>Combustível</small><b id="dashDriveFuel" data-empty="true">—</b><span id="dashDriveFuelNote">sem leitura</span></div>
-              <div class="now-tile" data-tile="ms"><small>Injeção</small><b id="dashDriveMs" data-empty="true">—</b><span id="dashDriveMsNote">ms</span></div>
-              <div class="now-tile" data-tile="rpm"><small>RPM</small><b id="dashDriveRpm" data-empty="true">—</b><span id="dashDriveRpmNote">agora</span></div>
-              <div class="now-tile" data-tile="map"><small>MAP</small><b id="dashDriveMap" data-empty="true">—</b><span id="dashDriveMapNote">bar</span></div>
-            </section>
             <section class="now-intention" aria-label="Estado e próximo passo">
               <div><h3 id="dashState">Aguardando dados da ECU</h3><p id="dashNext">Aguardando medição da ECU.</p></div>
               <button type="button" class="primary" data-dash-refino>Abrir Ajuste GNV</button>
@@ -141,24 +135,6 @@
           }).join('');
         }
       }
-    /** 4 blocos iguais de direção (combustível, injeção do combustível ativo, RPM, MAP): só a leitura única; "—" sem dado. */
-    renderDrive(state, reading) {
-      const shown = reading.level === 'fresh' || reading.level === 'late';
-      const fuel = shown ? rules.fuelLabel(reading.fuel || (state.status || {}).fuelState) : DASH;
-      const gas = fuel === 'GNV';
-      const ms = fuel === 'CORTE' ? null : gas ? reading.gasMs : reading.petrolMs;
-      text('dashDriveFuel', fuel);
-      text('dashDriveFuelNote', !shown ? (reading.level === 'lost' ? 'sem dados' : 'sem leitura') : reading.level === 'late' ? 'atrasado' : fuel === 'GASOLINA' ? 'medindo a referência' : gas ? 'medindo o GNV' : 'agora');
-      text('dashDriveMs', rules.ms(ms));
-      text('dashDriveMsNote', ms === null ? 'ms' : gas ? 'ms · GNV' : 'ms · gasolina');
-      text('dashDriveRpm', rules.rpm(reading.rpm));
-      text('dashDriveRpmNote', reading.level === 'late' ? 'atrasado' : 'agora');
-      text('dashDriveMap', rules.bar(reading.mapBar));
-      text('dashDriveMapNote', reading.mapBar === null ? 'bar' : reading.mapBar < 0.45 ? 'bar · plano' : reading.mapBar <= 0.75 ? 'bar · subida leve' : 'bar · subida forte');
-      const drive = this.root.querySelector('.now-drive');
-      if (drive) rules.setDataIfChanged(drive, 'stale', reading.grey ? 'true' : 'false');
-    }
-
     /** Mensagem do cartão de saúde: uma frase humana e o que fazer. */
     health(state, reading) {
       const status = state.status || {};
@@ -193,7 +169,6 @@
       if (!this.root) return;
       const status = state.status || {};
       const reading = ns.LiveStore.read(state);
-      this.renderDrive(state, reading);
       text('dashLevelsRaw', reading.levelRaw === null ? DASH : Math.round(reading.levelRaw).toLocaleString('pt-BR'));
       this.renderRefino();
       const health = document.getElementById('dashHealth');

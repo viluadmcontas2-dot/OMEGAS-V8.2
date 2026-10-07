@@ -825,7 +825,7 @@
         panel.innerHTML = `
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
             <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
-              <h2 class="instrument-title">Aprendizado da ECU</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
+              <div class="autocal-title-row"><h2 class="instrument-title">Aprendizado da ECU</h2><small id="autocalAutoCleanLine" class="autocal-autoclean-line" data-level="neutral" hidden></small><small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small></div><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
               <div class="ar-tile ar-load"><small>Carga do motor</small><b id="autocalLiveLoad">—</b></div>
               <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
               <div class="ar-tile ar-zone" title="Zona = quanto o motor está carregado: zona 1 = lenta … zona 4 = acelerando forte"><small>Zona de carga</small><b id="autocalLiveZone">—</b></div>
@@ -885,17 +885,21 @@
             </div>
 
             </details>
-                <button type="button" data-autocal-sessions>Ver sessões</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Recomeçar aprendizado do GNV</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Recomeçar aprendizado da gasolina</button>
-                <small class="autocal-reacquire-note">A ECU esquece o que aprendeu e aprende de novo enquanto você dirige.</small>
                 <details class="autocal-reset-menu ar-more">
                   <summary>Mais opções</summary>
                   <div class="autocal-reset-popover" id="autocalOptionsPanel" aria-label="Mais opções do AutoCal">
                     <button type="button" class="autocal-options-close" data-autocal-close-options>Fechar opções ×</button>
                     ${ns.CurveChart.viewControls()}
-                    <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <p>Os ajustes automáticos são decididos pela ECU. Pausar o aprendizado interrompe a coleta. Recomeçar o aprendizado da gasolina ou do GNV apaga só o que a ECU aprendeu daquele combustível. Para zerar a Curva K, use a aba Curva K (em Avançado).</p>
+                    <section class="autocal-reset-group" data-reset-scope="relearn">
+                      <p class="autocal-reacquire-note">Só se a ECU aprendeu errado: ela esquece o que aprendeu daquele combustível e aprende de novo enquanto você dirige.</p>
+                      <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Zerar aprendizado da ECU (GNV)</button>
+                      <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Zerar aprendizado da ECU (gasolina)</button>
+                      <div class="autocal-reset-confirm" id="autocalResetConfirm" role="alertdialog" aria-label="Confirmar zerar o aprendizado da ECU" hidden>
+                        <p id="autocalResetConfirmText">Zerar o que a ECU aprendeu? Não dá para desfazer.</p>
+                        <button type="button" class="btn-danger" data-autocal-reset-confirm>Zerar</button>
+                        <button type="button" class="btn-ghost" data-autocal-reset-cancel>Cancelar</button>
+                      </div>
+                      <p>Para zerar a Curva K, use a aba Curva K.</p>
                     </section>
                   </div>
                 </details>
@@ -904,8 +908,6 @@
                 <button type="button" class="btn-primary" data-autocal-reacquire-selected>Reaprender 1 ponto</button>
                 <button type="button" data-autocal-clear-point-selection>Cancelar</button>
               </div>
-              <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
-              <small id="autocalAutoCleanLine" class="autocal-autoclean-line" data-level="neutral" hidden></small>
             </div>
 
           </section>`;
@@ -940,19 +942,26 @@
       });
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
         button.addEventListener('click', () => {
+          // Zerar o aprendizado apaga na ECU: pede confirmação antes (Revisto (W2)).
+          if (String(button.dataset.autocalAction).startsWith('RESET_')) { this.askResetConfirm(button.dataset.autocalAction); return; }
           button.closest('.autocal-reset-menu')?.removeAttribute('open');
           syncOptions();
           this.prepare(button.dataset.autocalAction);
         });
       });
+      this.panel?.querySelector('[data-autocal-reset-confirm]')?.addEventListener('click', () => {
+        const action = this.pendingResetAction;
+        this.askResetConfirm(null);
+        options?.removeAttribute('open');
+        syncOptions();
+        if (action) this.prepare(action);
+      });
+      this.panel?.querySelector('[data-autocal-reset-cancel]')?.addEventListener('click', () => this.askResetConfirm(null));
       this.panel?.querySelector('[data-autocal-history]')?.addEventListener('click', () => {
         if (!this.previousReferencePoints.length) return;
         this.chartHistoryVisible = !this.chartHistoryVisible;
         this.renderHistoryControl();
         this.renderReferenceChart(this.snapshot);
-      });
-      this.panel?.querySelector('[data-autocal-sessions]')?.addEventListener('click', event => {
-        this.app?.router?.open('sessions');
       });
       this.panel?.addEventListener('click', event => {
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
@@ -1195,6 +1204,16 @@
           : 'Pedido de pausa enviado. Conferindo na ECU…' } });
       }
       this.refresh();
+    }
+
+    /** Mostra (action) ou esconde (null) a confirmação de zerar o aprendizado da ECU. */
+    askResetConfirm(action) {
+      this.pendingResetAction = action || null;
+      const box = this.panel?.querySelector('#autocalResetConfirm');
+      if (!box) return;
+      box.hidden = !action;
+      const text = this.panel.querySelector('#autocalResetConfirmText');
+      if (text && action) text.textContent = 'Zerar o que a ECU aprendeu ' + (action === 'RESET_PETROL' ? 'da gasolina' : 'do GNV') + '? Ela volta a aprender enquanto você dirige. Não dá para desfazer.';
     }
 
     prepare(action) {

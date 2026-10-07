@@ -33,8 +33,6 @@
     tools: ['SISTEMA', 'Ferramentas'],
   };
 
-  // Rotas dentro de "Avançado" (continuam todas acessíveis).
-  const ADVANCED_ROUTES = ['map', 'curve', 'autocal', 'tools'];
   let renderedRoute = null;
   let previousGlobalSignature = '';
   let previousTelemetrySignature = '';
@@ -118,9 +116,6 @@
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
       });
-      // Rota escondida em "Avançado" acende o botão Avançado (o dono sabe onde está).
-      byId('app')?.querySelector?.('[data-nav-advanced]')?.classList.toggle('active', ADVANCED_ROUTES.includes(state.route));
-      setAdvancedOpen(false);
       screenNodes.forEach(screen => {
         const active = screen.dataset.screen === state.route;
         screen.classList.toggle('active', active);
@@ -391,26 +386,8 @@
     onContext: refreshContext,
   });
 
-  /** Abre/fecha a lista "Avançado" da barra de navegação. */
-  function setAdvancedOpen(open) {
-    const nav = document.querySelector('.side-nav');
-    const toggle = nav?.querySelector('[data-nav-advanced]');
-    if (!nav || !toggle) return;
-    const next = open ? 'true' : 'false';
-    if (nav.dataset.advancedOpen !== next) nav.dataset.advancedOpen = next;
-    if (toggle.getAttribute('aria-expanded') !== next) toggle.setAttribute('aria-expanded', next);
-  }
-
   function bindGlobalEvents() {
-    routeButtons.forEach(button => button.addEventListener('click', () => { setAdvancedOpen(false); router.navigate(button.dataset.route); }));
-    document.querySelector('[data-nav-advanced]')?.addEventListener('click', event => {
-      event.stopPropagation?.();
-      setAdvancedOpen(document.querySelector('.side-nav')?.dataset.advancedOpen !== 'true');
-    });
-    // Tocar fora da lista fecha.
-    document.addEventListener('click', event => {
-      if (!event.target.closest || !event.target.closest('.side-nav')) setAdvancedOpen(false);
-    });
+    routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
     // "Permitir USB": o dono negou a permissão do Android; um toque pede de novo (ação humana explícita).
     document.addEventListener('click', event => {

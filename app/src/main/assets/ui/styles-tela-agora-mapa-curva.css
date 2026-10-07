@@ -6,14 +6,6 @@
 .now-dashboard-shell { grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--space-3); }
 .now-head small { display: block; color: var(--accent-strong); font-size: 16px; font-weight: 800; letter-spacing: .08em; }
 .now-head h2 { margin: 2px 0 0; font-size: 26px; line-height: 1.1; letter-spacing: -.01em; }
-.now-tile-grid { gap: var(--space-3); }
-.now-tile { padding: var(--space-3) var(--space-5); border-radius: var(--radius-l); box-shadow: var(--shadow-1); gap: var(--space-1); }
-.now-tile small { font-size: var(--text-critical); letter-spacing: .06em; color: var(--muted); }
-.now-tile b { font-size: clamp(64px, 11vh, 92px); letter-spacing: -.035em; gap: var(--space-3); }
-.now-tile[data-tile="fuel"] b { font-size: clamp(56px, 10vh, 84px); }
-.now-tile[data-tile="petrol"] small { color: var(--petrol); }
-.now-tile[data-tile="fuel"] b { color: var(--cng); }
-.now-tile b em { font-size: 28px; color: var(--muted); }
 .now-session-card { border-radius: var(--radius); box-shadow: var(--shadow-1); }
 .now-session-card[data-level="ok"] { background: var(--ok-soft); border-color: var(--line-soft); }
 .now-session-card[data-level="warning"] { background: var(--warn-soft); }
@@ -125,17 +117,6 @@ html body .step-row > button:hover:not(:disabled) { background: var(--accent-sof
 .now-dashboard-shell { gap: var(--space-2); }
 .now-head { display: flex; align-items: baseline; gap: var(--space-3); }
 .now-head h2 { font-size: 24px; margin: 0; }
-.now-tile-grid { gap: var(--space-2); }
-.now-tile { position: relative; padding: var(--space-3) var(--space-6); background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%); border-color: var(--line); box-shadow: var(--shadow-2); justify-content: center; gap: var(--space-2); }
-.now-tile::before { content: ""; position: absolute; left: 0; top: var(--space-5); bottom: var(--space-5); width: 5px; border-radius: 0 var(--space-1) var(--space-1) 0; background: var(--line); }
-.now-tile[data-tile="petrol"]::before { background: var(--petrol); }
-.now-tile[data-tile="rpm"]::before { background: var(--accent-strong); }
-.now-tile[data-tile="map"]::before { background: var(--warn); }
-.now-tile[data-tile="fuel"]::before { background: var(--cng); }
-.now-tile small { font-size: var(--text-critical); }
-.now-tile b { font-size: clamp(88px, 17vh, 132px); }
-.now-tile[data-tile="fuel"] b { font-size: clamp(80px, 15vh, 120px); }
-.now-tile b em { font-size: 32px; }
 .now-session-card { padding: var(--space-2) var(--space-5); min-height: 64px; }
 
 /* Trilho achatado, sem números */

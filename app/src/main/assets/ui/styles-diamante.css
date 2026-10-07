@@ -81,7 +81,7 @@ html body .curve-screen .curve-chart { background:var(--plot); border:0; }
 html body .now-session-card { border-top:1px solid var(--line-soft); padding-top:8px; }
 html body .alert-toast { bottom:88px; box-shadow:var(--shadow-3); }
 html body[data-omegas-route="autocal"] .alert-toast,html body[data-omegas-route="refino"] .alert-toast { top:76px; bottom:auto; }
-@media(max-width:1050px) {
+@media(max-width:900px) {
  html body .workspace-head { padding:0 12px; gap:8px; }
  html body .workspace-head .brand-block { flex-basis:112px; }
  html body .workspace-head .brand-block b { font-size:18px; }
@@ -193,7 +193,7 @@ html body .utility-screen .dg-state { grid-column:1 / -1; padding:10px 16px; bor
 html body .utility-screen .dg-state[data-kind="ok"] { background:var(--surface); border-left:2px solid var(--accent); }
 html body .utility-screen .dg-state p { font-size:20px; margin:0; font-weight:500; }
 html body .utility-screen .dg-stack { grid-column:1 / -1; }
-@media(max-width:1050px) { html body .utility-screen .diagnostico-host { grid-template-columns:1fr; } html body .utility-screen .dg-fluidity { grid-column:1; grid-row:auto; } }
+@media(max-width:900px) { html body .utility-screen .diagnostico-host { grid-template-columns:1fr; } html body .utility-screen .dg-fluidity { grid-column:1; grid-row:auto; } }
 
 /* Acabamento da referência: iluminação estática, sem filtros nem animação. */
 html body .workspace { background:var(--gradient-page); }
@@ -269,10 +269,6 @@ html body .utility-screen .dg-stack { grid-template-columns:repeat(2,minmax(0,1f
 html body .utility-screen .dg-stack > details { grid-column:1 / -1; }
 html body .now-dashboard-shell { gap:12px; }
 html body .now-overview { align-items:stretch; }
-html body .now-drive { grid-template-columns:repeat(4,minmax(0,1fr)); flex:none; }
-html body .now-tile { min-width:0; padding:14px 22px; min-height:150px; }
-html body .now-tile b { font-size:clamp(56px,8vh,64px); }
-html body .now-tile[data-tile="fuel"] b { font-size:clamp(52px,8vh,64px); }
 html body .now-intention { display:grid; grid-template-columns:minmax(0,1fr) auto; flex:none; }
 html body .now-intention > button { margin:0; align-self:center; min-height:58px; }
 html body .now-coverage { grid-template-columns:240px minmax(0,1fr); }
@@ -281,7 +277,7 @@ html body .now-bands { grid-template-columns:repeat(30,minmax(0,1fr)); }
 html body .now-quiet-row { flex:none; }
 html body .now-heading { display:flex; align-items:baseline; gap:16px; }
 html body .now-heading p { margin:0; }
-@media(max-width:1050px) {
+@media(max-width:900px) {
  html body .ar-autocal .ar-status { grid-template-columns:minmax(0,1fr) auto auto auto; }
  html body .autocal-reading-controls { grid-column:1 / -1; grid-row:3; }
  html body .ar-refino .ar-status { grid-template-columns:auto minmax(0,1fr); }
@@ -348,13 +344,3 @@ html body .refino-confirm { display:flex; flex-wrap:wrap; align-items:center; ga
 html body .refino-confirm[hidden] { display:none; }
 html body .refino-confirm p { flex:1 1 320px; margin:0; font-size:20px; }
 html body .refino-confirm button { min-height:58px; font-size:20px; }
-/* Navegação: à vista só Agora, Ajuste GNV, Diagnóstico e Sessões; o resto abre em "Avançado" (lista sobre a barra). */
-html body .side-nav { position:relative; grid-template-columns:repeat(5,minmax(0,1fr)); }
-html body .side-nav [data-route="dashboard"] { order:1; }
-html body .side-nav [data-route="refino"] { order:2; }
-html body .side-nav [data-route="diagnostico"] { order:3; }
-html body .side-nav [data-route="sessions"] { order:4; }
-html body .side-nav .nav-advanced-toggle { order:5; }
-html body .side-nav .nav-advanced-item { display:none; }
-html body .side-nav[data-advanced-open="true"] .nav-advanced-item { display:flex; position:absolute; z-index:40; right:0; bottom:calc(100% + 8px + var(--slot) * 72px); width:300px; height:68px; flex-direction:row; justify-content:flex-start; gap:14px; padding:0 20px; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:var(--shadow-2); }
-html body .side-nav .nav-advanced-toggle[aria-expanded="true"] { color:var(--text); background:var(--surface-2); }

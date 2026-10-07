@@ -12,10 +12,10 @@ test('Diamante: gasolina, GNV e MAP no estado persistente; dados vencidos não f
  for(const key of ['petrol','gas','map']) assert.equal(strip.querySelector(`[data-vehicle-fact="${key}"] b`).textContent,'—',key+' vencido');
  app.destroy();
 });
-test('Diamante: Agora apresenta 4 blocos de direção, resultado e próxima intenção (mockup aprovado 2026-10-05)',()=>{
+test('Diamante: Agora apresenta resultado e próxima intenção (Revisto (W2): sem os 4 blocos que repetiam o cabeçalho)',()=>{
  const app=boot();
- assert.equal(app.$('[data-screen="dashboard"]').querySelectorAll('.now-tile').length,4);
- for (const id of ['dashDriveFuel','dashDriveMs','dashDriveRpm','dashDriveMap']) assert.ok(app.byId(id),id);
+ assert.equal(app.$('[data-screen="dashboard"]').querySelectorAll('.now-tile').length,0);
+ for (const id of ['dashDriveFuel','dashDriveMs','dashDriveRpm','dashDriveMap']) assert.equal(app.byId(id),null,id);
  assert.ok(app.byId('dashNext'));assert.ok(app.byId('dashEquivalence'));assert.ok(app.byId('dashHealth'));
  L.assertClean(app,'Agora');app.destroy();
 });
@@ -85,7 +85,7 @@ test('Diamante: Diagnóstico apresenta jerkPct como percentual e aceita o nome g
 test('Diamante: ícones de navegação são SVG incorporado, sem máscaras externas incompatíveis com file:// no WebView',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const html=fs.readFileSync(path.join(__dirname,'../../app/src/main/assets/ui/index.html'),'utf8');
- // Revisto (P2 navegação): 8 rotas + o botão "Avançado", todos com SVG incorporado.
- assert.equal((html.match(/<svg class="nav-icon"/g)||[]).length,9);
+ // Revisto (W2): 8 rotas de primeiro nível, todas com SVG incorporado.
+ assert.equal((html.match(/<svg class="nav-icon"/g)||[]).length,8);
  assert.doesNotMatch(html,/--nav-icon:url/);
 });
