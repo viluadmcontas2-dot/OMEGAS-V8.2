@@ -89,11 +89,6 @@ class CalibrationOperationsBridge(activity: MainActivity) {
             service.prepareKFactorRestore(fileName)
         }
 
-    /** Fotos do Mapa K (uma por escrita) para o Desfazer do mapa. */
-    @JavascriptInterface
-    fun listMapBackups(): String =
-        activity?.serviceOrNull()?.listKMapBackups() ?: "[]"
-
     /** Desfazer do Mapa K, passo 1: relê o mapa (somente leitura) e devolve o que voltaria. */
     @JavascriptInterface
     fun startMapRestorePrepare(adjustmentId: String): String =

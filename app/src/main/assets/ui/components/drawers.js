@@ -211,12 +211,6 @@
 
       host.innerHTML = `
         <div class="ts-grid">
-        <section class="ts-card ts-wide" data-healthy="${serviceHealthy ? 'true' : 'false'}" aria-label="Saúde do sistema">
-          <header class="ts-head"><div><small>SAÚDE DO SISTEMA</small><h3>${serviceHealthy ? 'Tudo funcionando' : appStatus.serviceRunning ? 'A comunicação com a ECU pede atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div>${chip(serviceHealthy ? 'ok' : 'warn', serviceHealthy ? 'Tudo certo' : 'Atenção')}</header>
-          <details class="ts-health-inspect" ${healthOpenBeforeRender ? 'open' : ''}><summary>Ver conexões</summary><div class="ts-tiles">${tiles.map(([label, value, tone, hint, hook]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span${hook ? ' ' + hook : ''}>${hint}</span></div>`).join('')}</div></details>
-          <div class="ts-row" data-state="${batteryFree ? 'ok' : 'warn'}"><div><small>SEGUNDO PLANO</small><b>${batteryFree ? 'O Android não pausa o app' : 'O Android pode pausar o app'}</b><span>${batteryFree ? 'Sessões longas com a tela apagada seguem gravando.' : 'Permita para gravar sessões longas com a tela apagada.'}</span></div>${batteryAction}</div>
-        </section>
-
         <section class="ts-card" data-overlay-state="${overlayInfo.key}" aria-label="Telemetria flutuante">
           <header class="ts-head"><div><small>TELEMETRIA FLUTUANTE</small><h3>${overlayInfo.title}</h3></div>${chip(overlayInfo.key === 'on' ? 'ok' : overlayInfo.key === 'needs-permission' ? 'warn' : 'neutral', overlayInfo.key === 'on' ? 'Ligada' : overlayInfo.key === 'off' ? 'Desligada' : overlayInfo.key === 'unsupported' ? 'Indisponível' : 'Autorizar')}</header>
           <p class="ts-help">${overlayInfo.help}</p>
@@ -231,22 +225,30 @@
           <div class="ts-actions"><button id="toolExportData" type="button" class="primary" data-tool-export-data>Exportar backup completo</button></div>
         </section>
 
+        <section class="ts-card ts-wide" data-healthy="${serviceHealthy ? 'true' : 'false'}" aria-label="Saúde do sistema">
+          <header class="ts-head"><div><small>SAÚDE DO SISTEMA</small><h3>${serviceHealthy ? 'Tudo funcionando' : appStatus.serviceRunning ? 'A comunicação com a ECU pede atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div>${chip(serviceHealthy ? 'ok' : 'warn', serviceHealthy ? 'Tudo certo' : 'Atenção')}</header>
+          <details class="ts-health-inspect" ${healthOpenBeforeRender ? 'open' : ''}><summary>Ver conexões</summary><div class="ts-tiles">${tiles.map(([label, value, tone, hint, hook]) => `<div class="ts-tile" data-tone="${tone}"><small>${label}</small><b>${value}</b><span${hook ? ' ' + hook : ''}>${hint}</span></div>`).join('')}</div></details>
+          <div class="ts-row" data-state="${batteryFree ? 'ok' : 'warn'}"><div><small>SEGUNDO PLANO</small><b>${batteryFree ? 'O Android não pausa o app' : 'O Android pode pausar o app'}</b><span>${batteryFree ? 'Sessões longas com a tela apagada seguem gravando.' : 'Permita para gravar sessões longas com a tela apagada.'}</span></div>${batteryAction}</div>
+        </section>
+
         <details class="ts-card diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''} aria-label="Retenção das sessões">
           <summary><span><small>SESSÕES</small><b>Retenção: guarda as ${keep} mais recentes</b></span><em>Ajustar</em></summary>
           <div class="ts-fields">
             <label><span>Gravar a cada</span><select data-session-telemetry>${telemetryOptions.map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}</select></label>
+            <details class="ts-advanced"><summary>Avançado</summary>
             <label><span>Limite por sessão (MB)</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${settingNumber(settings.maxSessionMb || status.limitMb, 256)}"></label>
             <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${keep}"></label>
             <label class="ts-check"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto <small>só para investigar falha de cabo; deixa o arquivo bem maior</small></span></label>
+            </details>
           </div>
           <p class="ts-help">Cada sessão vira um ZIP em <b>Download/Omegas</b> quando termina. Nenhuma é apagada antes de ser copiada para lá.</p>
           <div class="ts-actions"><button type="button" class="secondary" data-session-settings>Aplicar</button>${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}</div>
         </details>
 
-        <section class="ts-card" aria-label="Versão e identidade">
-          <header class="ts-head"><div><small>VERSÃO</small><h3>Este é o OMEGAS que você instalou</h3></div></header>
+        <details class="ts-card ts-version" aria-label="Versão e identidade">
+          <summary><span><small>VERSÃO</small><b>Este é o OMEGAS que você instalou</b></span><em>Abrir</em></summary>
           <dl class="ts-kv">${versionRows.map(([k, v]) => `<div><dt>${k}</dt><dd>${escapeHtml(String(v))}</dd></div>`).join('')}</dl>
-        </section>
+        </details>
 
         <details class="ts-card tool-logs live-log-console ts-wide" ${logsOpenBeforeRender ? 'open' : ''}>
           <summary><span><b>Detalhes técnicos: registro do sistema (${logs.length} eventos)</b></span><em>Abrir</em></summary>

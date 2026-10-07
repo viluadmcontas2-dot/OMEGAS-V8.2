@@ -37,9 +37,7 @@ html body .ar-shell { display:flex; flex-direction:column; height:100%; min-heig
 html body .ar-shell .ar-status { order:0; min-height:58px; align-items:center; gap:20px; flex-shrink:0; }
 html body .ar-shell .instrument-title { flex:0 0 auto; }
 html body .ar-shell .ar-fuel { min-width:0; padding:7px 12px; min-height:0; font-size:18px; font-weight:500; background:var(--accent-soft); color:var(--accent-strong); border-radius:20px; }
-html body .ar-autocal .ar-status > .ar-fuel,html body .ar-autocal .ar-status > .ar-tile:not(.ar-zone):not(.ar-automatch):not(.ar-load) { display:none; }
-html body .ar-shell .ar-status .ar-tile { flex:0 0 auto; padding:0 20px; border:0; border-left:1px solid var(--line-soft); background:none; box-shadow:none; border-radius:0; }
-html body .ar-shell .ar-status .ar-tile b { font-size:22px; font-weight:550; }
+html body .ar-autocal .ar-status > .ar-fuel{ display:none; }
 html body .ar-shell .ar-act { order:2; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 20px; align-items:center; flex-shrink:0; min-height:58px; }
 html body .ar-shell .ar-sentence { grid-column:1; font-size:22px; font-weight:500; line-height:1.25; }
 html body .ar-shell .ar-reason { grid-column:1; color:var(--muted); font-size:18px; font-weight:400; line-height:1.25; }
@@ -48,7 +46,6 @@ html body .ar-shell .ar-buttons > :is(button,.ar-more) { flex:0 0 auto; }
 html body .ar-shell .ar-buttons > [data-refino-primary][hidden] { display:none; }
 html body .ar-shell :is(.ar-buttons button,.ar-more summary) { padding:0 16px; height:58px; min-height:58px; }
 html body .ar-shell .autocal-reacquire-action { border:1px solid var(--line); color:var(--text); background:var(--surface-2); box-shadow:var(--shadow-1); }
-html body .ar-shell .ar-more .autocal-reset-popover { bottom:66px; top:auto; max-height:calc(100vh - 220px); overflow-y:auto; }
 html body .ar-shell .ar-chart-card { order:1; flex:1; display:flex; flex-direction:column; min-height:0; padding:0; border:0; background:none; box-shadow:none; border-radius:0; position:relative; gap:6px; }
 html body .ar-shell .ar-legend-row { min-height:26px; flex-shrink:0; }
 html body .ar-shell .ar-legend { font-size:16px; font-weight:400; gap:4px 20px; }
@@ -68,8 +65,6 @@ html body .ar-autocal .ar-buttons > .instrument-details { position:relative; mar
 html body .instrument-detail-content p { font-size:20px; margin:8px 0 16px; }
 html body .instrument-detail-content small { display:block; color:var(--muted); font-size:18px; }
 html body .instrument-detail-content b { font-size:26px; font-weight:500; }
-html body .ar-shell .ar-card { border:0; box-shadow:none; background:none; padding:10px 0; border-bottom:1px solid var(--line); }
-html body .ar-shell .ar-ghost { min-height:32px; padding:0 8px; font-size:16px; box-shadow:none; background:none; }
 /* Editores mantêm seus fluxos; a tela ganha uma superfície contínua para os dados. */
 html body .map-workspace { grid-template-columns:minmax(0,1fr) 288px; gap:20px; }
 html body :is(.map-surface,.curve-surface) { padding:0; border:0; border-radius:0; box-shadow:none; background:none; }
@@ -81,7 +76,7 @@ html body .curve-screen .curve-chart { background:var(--plot); border:0; }
 html body .now-session-card { border-top:1px solid var(--line-soft); padding-top:8px; }
 html body .alert-toast { bottom:88px; box-shadow:var(--shadow-3); }
 html body[data-omegas-route="autocal"] .alert-toast,html body[data-omegas-route="refino"] .alert-toast { top:76px; bottom:auto; }
-@media(max-width:1050px) {
+@media(max-width:900px) {
  html body .workspace-head { padding:0 12px; gap:8px; }
  html body .workspace-head .brand-block { flex-basis:112px; }
  html body .workspace-head .brand-block b { font-size:18px; }
@@ -134,8 +129,6 @@ html body :is(button,summary):focus-visible { outline:2px solid var(--accent-str
 html body .screen-host .map-screen { overflow:hidden; }
 html body .app-shell .map-screen .map-workspace { height:100%; min-height:0; flex:1 1 0; align-items:stretch; grid-template-columns:minmax(0,1fr) 288px; gap:20px; }
 html body .map-screen .map-surface { min-height:0; padding:0; overflow:hidden; }
-html body .map-screen .map-surface .surface-toolbar { flex:0 0 58px; margin-bottom:8px; }
-html body .map-screen .surface-toolbar h2 { font-size:32px; font-weight:550; }
 html body .map-screen .map-grid-host { flex:1 1 0; min-height:0; overflow-y:auto; border:1px solid var(--line-soft); border-radius:8px; box-shadow:var(--shadow-plot); }
 html body .map-screen .map-surface .map-k-grid-with-axes { height:auto; flex:none; grid-template-columns:78px repeat(12,minmax(0,1fr)); grid-template-rows:44px repeat(12,44px); gap:1px; }
 html body .map-screen .map-surface .map-k-cell { border-radius:0; border:0 !important; background:var(--surface) !important; }
@@ -182,7 +175,6 @@ html body .curve-screen #curveTitle,html body .map-screen #mapTitle { font-size:
 
 html body .ar-buttons [data-autocal-toggle][data-action="DISABLE_AUTO_CAL"]::before { content:"Ⅱ"; font-size:22px; margin-right:10px; }
 html body .ar-buttons [data-autocal-toggle][data-action="ENABLE_AUTO_CAL"]::before { content:"▶"; font-size:16px; margin-right:10px; }
-html body .ar-shell .ar-status .ar-tile small { font-size:16px; font-weight:400; letter-spacing:0; }
 html body .route-subtitle { font-size:18px; font-weight:400; color:var(--muted); margin:4px 0 0; }
 
 /* Diagnóstico: regiões e fluidez lado a lado; resultado e histórico abaixo. */
@@ -193,7 +185,7 @@ html body .utility-screen .dg-state { grid-column:1 / -1; padding:10px 16px; bor
 html body .utility-screen .dg-state[data-kind="ok"] { background:var(--surface); border-left:2px solid var(--accent); }
 html body .utility-screen .dg-state p { font-size:20px; margin:0; font-weight:500; }
 html body .utility-screen .dg-stack { grid-column:1 / -1; }
-@media(max-width:1050px) { html body .utility-screen .diagnostico-host { grid-template-columns:1fr; } html body .utility-screen .dg-fluidity { grid-column:1; grid-row:auto; } }
+@media(max-width:900px) { html body .utility-screen .diagnostico-host { grid-template-columns:1fr; } html body .utility-screen .dg-fluidity { grid-column:1; grid-row:auto; } }
 
 /* Acabamento da referência: iluminação estática, sem filtros nem animação. */
 html body .workspace { background:var(--gradient-page); }
@@ -214,18 +206,8 @@ html body .ar-autocal .ar-status {
 }
 html body .ar-autocal .instrument-title { grid-column:1; grid-row:1; font-size:28px; }
 html body .ar-autocal #autocalHumanAction { grid-column:1; grid-row:2; margin:0; font-size:22px; line-height:1.25; }
-html body .ar-autocal .ar-load { grid-column:2; grid-row:1 / span 2; }
-html body .ar-autocal .ar-zone { grid-column:3; grid-row:1 / span 2; }
-html body .ar-autocal .ar-automatch { grid-column:4; grid-row:1 / span 2; max-width:170px; }
-html body .ar-autocal .ar-automatch small { white-space:normal; }
-html body .ar-autocal .ar-status .ar-tile { padding:0 12px; }
-html body .autocal-reading-controls { grid-column:5; grid-row:1 / span 2; display:flex; gap:8px; align-items:center; }
-html body .autocal-reading-controls :is(button) { min-height:58px; padding:0 16px; font-size:18px; }
-html body .autocal-reading-controls [hidden] { display:none; }
 html body .ar-autocal .ar-act { display:flex; align-items:center; flex-wrap:wrap; min-height:58px; }
 html body .ar-autocal .ar-buttons { display:flex; gap:8px; flex-wrap:wrap; width:100%; }
-html body .ar-autocal .ar-buttons .ar-more { margin-left:auto; }
-html body .ar-autocal .ar-buttons > .instrument-details > .ar-secondary { left:0; right:auto; }
 html body .ar-shell .ar-status .ar-sentence { margin:0; min-width:0; font-size:22px; line-height:1.25; }
 html body .ar-refino .ar-status {
  display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:0 14px; min-height:60px;
@@ -256,7 +238,6 @@ html body .utility-screen .page-intro > div { display:flex; align-items:baseline
 html body .utility-screen .route-subtitle { margin:0; }
 html body .utility-screen .ss-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
 html body .utility-screen .ss-item { grid-template-columns:106px minmax(0,1fr); position:relative; }
-html body .utility-screen .ss-item .ss-actions { grid-column:1 / -1; }
 html body .utility-screen .ss-facts { gap:8px; }
 html body .utility-screen .ts-grid { align-items:start; }
 html body .utility-screen .ts-fields { grid-template-columns:repeat(3,minmax(0,1fr)); }
@@ -268,22 +249,14 @@ html body .utility-screen .dg-state > button { flex:none; }
 html body .utility-screen .dg-stack { grid-template-columns:repeat(2,minmax(0,1fr)); }
 html body .utility-screen .dg-stack > details { grid-column:1 / -1; }
 html body .now-dashboard-shell { gap:12px; }
-html body .now-overview { align-items:stretch; }
-html body .now-drive { grid-template-columns:repeat(4,minmax(0,1fr)); flex:none; }
-html body .now-tile { min-width:0; padding:14px 22px; min-height:150px; }
-html body .now-tile b { font-size:clamp(56px,8vh,64px); }
-html body .now-tile[data-tile="fuel"] b { font-size:clamp(52px,8vh,64px); }
 html body .now-intention { display:grid; grid-template-columns:minmax(0,1fr) auto; flex:none; }
 html body .now-intention > button { margin:0; align-self:center; min-height:58px; }
 html body .now-coverage { grid-template-columns:240px minmax(0,1fr); }
 html body .now-coverage-bands { min-width:0; }
 html body .now-bands { grid-template-columns:repeat(30,minmax(0,1fr)); }
 html body .now-quiet-row { flex:none; }
-html body .now-heading { display:flex; align-items:baseline; gap:16px; }
-html body .now-heading p { margin:0; }
-@media(max-width:1050px) {
+@media(max-width:900px) {
  html body .ar-autocal .ar-status { grid-template-columns:minmax(0,1fr) auto auto auto; }
- html body .autocal-reading-controls { grid-column:1 / -1; grid-row:3; }
  html body .ar-refino .ar-status { grid-template-columns:auto minmax(0,1fr); }
  html body .ar-refino .instrument-menus { grid-column:1 / -1; grid-row:3; margin:4px 0 0; }
  html body .ar-refino .ar-stall { grid-column:1 / -1; grid-row:4; }
@@ -307,17 +280,12 @@ html body .refino-evidence-options h3 { font-size:22px; margin:0; }
 html body .instrument-details > :is(.ar-secondary,.instrument-detail-content) { max-height:min(440px,calc(100vh - 216px)); }
 
 /* AutoCal: coverage is operational information, not a hidden history detail. */
-html body .ar-autocal .autocal-zone-strip { order:0; flex-shrink:0; padding:0; gap:0; }
-html body .ar-autocal .autocal-zone-strip .autocal-zone-meter { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0; }
-html body .ar-autocal .autocal-zone-meter > div { display:flex; gap:8px; align-items:center; min-width:0; }
-html body .ar-autocal .autocal-zone-fuel { display:block; min-width:86px; font-size:22px; }
-html body .ar-autocal .autocal-zone-cells { display:flex; flex:1; gap:6px; }
+
 html body .ar-autocal .autocal-zone-cell { flex:1; min-height:40px; padding:4px 6px; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:6px; }
 html body .ar-autocal .autocal-zone-cell b { font-size:22px; }
 html body .ar-autocal .autocal-zone-cell small { font-size:22px; }
 html body .ar-autocal .autocal-zone-cell[data-current="true"]::after { display:none; }
 html body .ar-autocal #autocalActionStatus { grid-column:1 / -1; margin:0; font-size:20px; line-height:1.2; }
-html body .ar-autocal .autocal-options-close { display:block; width:100%; min-height:58px; margin-bottom:12px; }
 html body :is(.ar-more,.instrument-details)[open] > summary { color:var(--accent); border-color:var(--accent); background:var(--surface-3,var(--surface-2)); box-shadow:inset 0 -3px 0 var(--accent); }
 html body :is(.ar-more,.instrument-details) > summary:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 
@@ -330,9 +298,6 @@ html body .ss-item[data-selected="true"] { border-color:var(--accent); }
 html body .autocal-point-actions[hidden],html body .autocal-main-actions[hidden] { display:none; }
 html body .autocal-point-actions { justify-content:flex-start; }
 html body .autocal-noise-summary { margin-left:auto; font-size:20px; color:var(--muted); }
-html body .curve-backup-toolbar { display:flex; align-items:center; gap:8px; flex:none; }
-html body .curve-backup-toolbar :is(button,select) { min-height:58px; font-size:22px; }
-html body .curve-backup-toolbar select { flex:1; min-width:0; }
 html body .curve-backup-status { flex:none; font-size:20px; line-height:1.25; }
 /* Falhas de tela: aviso tocável (3 erros seguidos) e tela que não carregou. */
 html body .screen-error-banner { position:fixed; left:50%; top:76px; transform:translateX(-50%); z-index:60; min-height:58px; padding:0 24px; border:1px solid var(--warn); border-radius:12px; background:var(--warn-soft); color:var(--text); font-size:22px; }
@@ -342,19 +307,66 @@ html body .curve-chart-shared .autocal-acquired-point.recently-deleted,html body
 html body .ar-chart-host .autocal-acquired-hit.recently-deleted { pointer-events:none; }
 html body .ar-shell .ar-readout .autocal-point-tech { pointer-events:auto; margin-top:6px; font-size:18px; color:var(--muted); }
 html body .ar-shell .ar-readout .autocal-point-tech summary { min-height:44px; display:flex; align-items:center; cursor:pointer; }
-html body .autocal-zone-legend { display:block; margin-top:4px; font-size:16px; color:var(--muted); }
-html body .autocal-reacquire-note { align-self:center; max-width:360px; font-size:16px; line-height:1.25; color:var(--muted); }
 html body .refino-confirm { display:flex; flex-wrap:wrap; align-items:center; gap:8px; width:100%; padding:12px 16px; border:1px solid var(--warn); border-radius:10px; background:var(--warn-soft); }
 html body .refino-confirm[hidden] { display:none; }
 html body .refino-confirm p { flex:1 1 320px; margin:0; font-size:20px; }
 html body .refino-confirm button { min-height:58px; font-size:20px; }
-/* Navegação: à vista só Agora, Ajuste GNV, Diagnóstico e Sessões; o resto abre em "Avançado" (lista sobre a barra). */
-html body .side-nav { position:relative; grid-template-columns:repeat(5,minmax(0,1fr)); }
-html body .side-nav [data-route="dashboard"] { order:1; }
-html body .side-nav [data-route="refino"] { order:2; }
-html body .side-nav [data-route="diagnostico"] { order:3; }
-html body .side-nav [data-route="sessions"] { order:4; }
-html body .side-nav .nav-advanced-toggle { order:5; }
-html body .side-nav .nav-advanced-item { display:none; }
-html body .side-nav[data-advanced-open="true"] .nav-advanced-item { display:flex; position:absolute; z-index:40; right:0; bottom:calc(100% + 8px + var(--slot) * 72px); width:300px; height:68px; flex-direction:row; justify-content:flex-start; gap:14px; padding:0 20px; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:var(--shadow-2); }
-html body .side-nav .nav-advanced-toggle[aria-expanded="true"] { color:var(--text); background:var(--surface-2); }
+
+/* Revisto (W2) AutoCal: o gráfico ocupa a área toda; UMA linha de comandos embaixo
+   ([Pausar/Retomar] [Reler GNV] [Reler gasolina] + [Reaprender N pontos] [Cancelar] só com pontos marcados).
+   Erro vira faixa fina e o chip de limpeza automática fica sobre o gráfico. */
+html body .ar-autocal { display:flex; flex-direction:column; gap:6px; }
+html body .ar-autocal .ar-chart-card { flex:1 1 0; min-height:0; order:0; }
+html body .ar-autocal .ar-act { order:2; display:block; min-height:58px; }
+html body .ar-autocal .ar-act > .ar-buttons { display:flex; flex-wrap:nowrap; gap:8px; width:100%; }
+html body .ar-autocal .ar-act > .ar-buttons > :is(button,.autocal-point-actions) { flex:1 1 0; min-width:0; }
+html body .ar-autocal .autocal-point-actions { display:flex; gap:8px; flex:2 1 0; }
+html body .ar-autocal .autocal-point-actions[hidden] { display:none; }
+html body .ar-autocal .autocal-point-actions > button { flex:1 1 0; }
+html body .ar-autocal .autocal-chart-overlay { position:absolute; top:34px; left:8px; right:8px; z-index:6; display:flex; flex-direction:column; align-items:stretch; gap:4px; pointer-events:none; }
+html body .ar-autocal .autocal-alert-strip { margin:0; padding:6px 12px; border-left:3px solid var(--danger); background:var(--danger-soft); border-radius:4px; font-size:18px; font-weight:500; }
+html body .ar-autocal .autocal-alert-strip[hidden],html body .ar-autocal #autocalActionStatus[hidden],html body .ar-autocal #autocalHumanAction[hidden],html body .ar-autocal .autocal-chip-row small[hidden] { display:none; }
+html body .ar-autocal #autocalActionStatus { margin:0; padding:6px 12px; border-radius:6px; background:var(--overlay); font-size:18px; }
+html body .ar-autocal .autocal-chip-row { display:flex; justify-content:flex-end; gap:8px; }
+html body .ar-autocal .autocal-chip-row small { padding:4px 10px; border-radius:14px; border:1px solid var(--line); background:var(--overlay); font-size:16px; color:var(--muted); }
+
+/* Revisto (W2): gravar bloqueado (sem USB, telemetria velha, motor não pronto, sem controle principal): botão apagado; o toque mostra o motivo. */
+html body [data-write-blocked="true"] { opacity:.45; filter:grayscale(.5); cursor:not-allowed; }
+html body .write-reason { display:block; margin:4px 0 0; padding:4px 10px; border-left:3px solid var(--warn); background:var(--warn-soft); border-radius:4px; font-size:16px; color:var(--text); }
+html body .write-reason[hidden] { display:none; }
+html body .autocal-chip-row .write-reason { margin:0; border:1px solid var(--warn); border-radius:14px; background:var(--overlay); }
+
+/* Revisto (W2) Curva K: fotos num menu só, aviso breve, legenda e eixo na mesma linha, gráfico ≥ 260 px em 1024×600. */
+html body .curve-screen .curve-photos { position:relative; margin:0; }
+html body .curve-screen .curve-photos > summary { display:flex; align-items:center; justify-content:center; min-height:58px; padding:0 20px; list-style:none; cursor:pointer; border:1px solid var(--line); border-radius:var(--radius,10px); background:var(--surface-2); font-size:22px; font-weight:600; }
+html body .curve-screen .curve-photos > summary::-webkit-details-marker { display:none; }
+html body .curve-screen .curve-photos[open] > summary { color:var(--accent); border-color:var(--accent); }
+html body .curve-screen .curve-photos-menu { position:absolute; top:calc(100% + 6px); right:0; z-index:30; display:grid; gap:8px; width:min(420px,calc(100vw - 32px)); padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--overlay); box-shadow:var(--shadow-2); }
+html body .curve-screen .curve-photos-menu :is(button,select) { min-height:58px; font-size:22px; width:100%; }
+html body .curve-screen .curve-backup-status { position:absolute; top:198px; left:84px; z-index:25; max-width:min(520px,60%); margin:0; padding:6px 12px; border:1px solid var(--line); border-radius:8px; background:var(--overlay); font-size:18px; pointer-events:none; }
+html body .curve-screen .curve-backup-status:empty { display:none; }
+html body .curve-screen .curve-keys { display:flex; align-items:center; gap:16px; margin-left:auto; }
+html body .curve-screen .curve-keys .curve-axis { margin:0; font-size:16px; color:var(--muted); }
+html body .curve-screen .curve-surface .curve-legend { min-height:30px; height:30px; }
+html body .curve-screen { gap:4px; }
+html body .curve-screen .curve-surface, html body .curve-screen .curve-workspace { gap:4px; }
+html body .curve-screen .curve-backup-status[data-seq="a"] { animation:w2-status-a 5s forwards; }
+html body .curve-screen .curve-backup-status[data-seq="b"] { animation:w2-status-b 5s forwards; }
+@keyframes w2-status-a { 0%,85% { opacity:1; } 100% { opacity:0; visibility:hidden; } }
+@keyframes w2-status-b { 0%,85% { opacity:1; } 100% { opacity:0; visibility:hidden; } }
+
+/* Mapa K: botão de gravar fixo no rodapé do painel (não rola nem corta). As células mantêm 44 px: piso de toque do projeto (tests/ui/lote-f-gate.test.cjs). */
+html body .map-screen .map-editor-panel { display:flex; flex-direction:column; overflow-y:auto; }
+html body .map-screen .map-editor-panel #mapReviewButton { position:sticky; bottom:0; z-index:5; flex:0 0 auto; min-height:58px; box-shadow:0 -8px 12px var(--bg); }
+html body .map-screen .map-editor-panel .write-reason { display:inline-block; margin-left:6px; }
+
+/* Revisto (W2) Diagnóstico: dois cartões à vista (onde engasga, fluidez); o resto fica em "Detalhes". */
+html body .utility-screen .dg-more > summary { min-height:58px; display:flex; align-items:center; padding:0 20px; font-size:22px; font-weight:600; cursor:pointer; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); list-style:none; }
+html body .utility-screen .dg-more > summary::-webkit-details-marker { display:none; }
+html body .utility-screen .dg-more[open] > .dg-stack { margin-top:12px; }
+
+/* Revisto (W2): "USB bloqueado: toque" fica no cabeçalho de qualquer aba (antes vivia num trilho escondido). */
+html body .head-usb-chip { flex:0 0 auto; min-height:48px; padding:0 18px; border:1px solid var(--warn); border-radius:24px; background:var(--warn-soft); color:var(--text); font-size:18px; font-weight:600; }
+html body .head-usb-chip[hidden] { display:none; }
+html body details.ts-card > summary { min-height:58px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+html body .ts-advanced > summary { min-height:48px; display:flex; align-items:center; cursor:pointer; font-weight:600; }

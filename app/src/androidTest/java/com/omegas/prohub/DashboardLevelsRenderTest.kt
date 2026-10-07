@@ -522,18 +522,20 @@ class DashboardLevelsRenderTest {
               quickActions: (() => {
                 const gas = document.querySelector('.autocal-reacquire-action[data-autocal-action="RESET_GAS"]');
                 const petrol = document.querySelector('.autocal-reacquire-action[data-autocal-action="RESET_PETROL"]');
-                const advanced = document.querySelector('.autocal-reset-menu > summary');
+                const toggle = document.querySelector('[data-autocal-toggle]');
                 const gasRect = gas?.getBoundingClientRect();
                 const petrolRect = petrol?.getBoundingClientRect();
-                const advancedRect = advanced?.getBoundingClientRect();
+                const toggleRect = toggle?.getBoundingClientRect();
+                const big = rect => !!rect && rect.width >= 110 && rect.height >= 46 && rect.bottom <= window.innerHeight;
                 return {
-                  gasVisible: !!gas && gasRect.width >= 110 && gasRect.height >= 46 && gasRect.bottom <= window.innerHeight,
-                  petrolVisible: !!petrol && petrolRect.width >= 110 && petrolRect.height >= 46 && petrolRect.bottom <= window.innerHeight,
-                  advancedVisible: !!advanced && advancedRect.width >= 110 && advancedRect.height >= 46 && advancedRect.bottom <= window.innerHeight,
-                  fuelActionsHiddenInDetails: document.querySelector('.autocal-reset-menu [data-autocal-action="RESET_GAS"], .autocal-reset-menu [data-autocal-action="RESET_PETROL"]') !== null,
+                  gasVisible: !!gas && big(gasRect),
+                  petrolVisible: !!petrol && big(petrolRect),
+                  toggleVisible: !!toggle && big(toggleRect),
+                  sameRow: !!gasRect && !!petrolRect && !!toggleRect && Math.abs(gasRect.top - petrolRect.top) < 6 && Math.abs(toggleRect.top - gasRect.top) < 6,
+                  noOptionsMenu: document.querySelector('.autocal-reset-menu, .ar-buttons .instrument-details, .autocal-secondary-details') === null,
                   gasLeft: gasRect?.left ?? 0,
                   petrolLeft: petrolRect?.left ?? 0,
-                  advancedLeft: advancedRect?.left ?? 0
+                  toggleLeft: toggleRect?.left ?? 0
                 };
               })(),
               geometry: (() => {
@@ -960,12 +962,12 @@ class DashboardLevelsRenderTest {
             saveEvidence("autocal-visible-actions", dom, scenario)
             val actions = dom.getJSONObject("quickActions")
             assertTrue("AutoCal route must activate", dom.getBoolean("active"))
-            assertTrue("Readquirir GNV must be visible without opening a menu", actions.getBoolean("gasVisible"))
-            assertTrue("Readquirir gasolina must be visible without opening a menu", actions.getBoolean("petrolVisible"))
-            assertTrue("Reset avançado must remain visible as the heavy-action boundary", actions.getBoolean("advancedVisible"))
-            assertTrue("Daily fuel reacquire actions must not be hidden inside the advanced menu", !actions.getBoolean("fuelActionsHiddenInDetails"))
-            assertTrue("Fuel actions must appear before advanced reset", actions.getDouble("gasLeft") < actions.getDouble("advancedLeft"))
-            assertTrue("Fuel actions must appear before advanced reset", actions.getDouble("petrolLeft") < actions.getDouble("advancedLeft"))
+            assertTrue("Reler GNV must be visible without opening a menu", actions.getBoolean("gasVisible"))
+            assertTrue("Reler gasolina must be visible without opening a menu", actions.getBoolean("petrolVisible"))
+            assertTrue("Pausar aprendizado must be visible in the single action bar", actions.getBoolean("toggleVisible"))
+            assertTrue("Pausar, Reler GNV and Reler gasolina must share one row", actions.getBoolean("sameRow"))
+            assertTrue("AutoCal must not have an options/details menu (owner decision: minimum friction)", actions.getBoolean("noOptionsMenu"))
+            assertTrue("Action order must be Pausar | Reler GNV | Reler gasolina", actions.getDouble("toggleLeft") < actions.getDouble("gasLeft") && actions.getDouble("gasLeft") < actions.getDouble("petrolLeft"))
         } finally {
             scenario.close()
         }

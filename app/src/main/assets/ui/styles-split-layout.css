@@ -11,11 +11,7 @@
 }
 
 .app-shell[data-layout="split-compact"] .map-workspace,
-.app-shell[data-layout="split-compact"] .curve-workspace,
-.app-shell[data-layout="split-compact"] .autocal-layout,
-.app-shell[data-layout="split-compact"] .obd-observe-layout,
-.app-shell[data-layout="split-compact"] .obd-map-layout,
-.app-shell[data-layout="split-compact"] .obd-setup-layout {
+.app-shell[data-layout="split-compact"] .curve-workspace{
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -29,8 +25,7 @@
 }
 
 .app-shell[data-layout="split-compact"] .page-intro,
-.app-shell[data-layout="split-compact"] .action-intro,
-.app-shell[data-layout="split-compact"] .autocal-head {
+.app-shell[data-layout="split-compact"] .action-intro{
   align-items: flex-start;
   flex-direction: column;
 }

@@ -38,7 +38,6 @@
     cancelRead: () => invoke('cancelRead', [], {}),
     setAcquisitionEnabled: enabled => invoke('setAcquisitionEnabled', [!!enabled], {}),
     prepare: action => invoke('prepareNativeAction', [String(action || '')], {}),
-    prepareKFactorReset: () => invoke('prepareNativeAction', ['RESET_K_FACTOR'], {}),
     preparePointDelete: (fuel, index) => invoke('preparePointDelete', [String(fuel || ''), Number(index)], {}),
     preparePointDeleteBatch: targets => invoke('preparePointDeleteBatch', [JSON.stringify(Array.isArray(targets) ? targets : [])], {}),
     execute: preparationId => invoke('executeNativeAction', [String(preparationId || '')], {}),

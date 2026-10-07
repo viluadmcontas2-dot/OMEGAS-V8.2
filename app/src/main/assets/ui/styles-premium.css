@@ -28,25 +28,21 @@ html body button:disabled, html body button[aria-disabled="true"] {
   opacity: 1; background: var(--surface-2); color: var(--dim); border-color: var(--line-soft);
   box-shadow: none; cursor: not-allowed; font-weight: 600;
 }
-html body .primary, html body .btn-primary,
-html body .autocal-primary-action {
+html body .primary, html body .btn-primary{
   background: var(--accent); border-color: var(--accent-strong); color: var(--on-accent);
   box-shadow: 0 2px 6px var(--c-37-99-235-28);
 }
-html body .primary:hover:not(:disabled), html body .btn-primary:hover:not(:disabled),
-html body .autocal-primary-action:hover:not(:disabled) { background: var(--accent-strong); color: var(--on-accent); }
-html body .primary:active:not(:disabled), html body .btn-primary:active:not(:disabled),
-html body .autocal-primary-action:active:not(:disabled) { background: var(--accent-press); box-shadow: none; }
-html body .primary:disabled, html body .btn-primary:disabled, html body .autocal-primary-action:disabled {
+html body .primary:hover:not(:disabled), html body .btn-primary:hover:not(:disabled){ background: var(--accent-strong); color: var(--on-accent); }
+html body .primary:active:not(:disabled), html body .btn-primary:active:not(:disabled){ background: var(--accent-press); box-shadow: none; }
+html body .primary:disabled, html body .btn-primary:disabled{
   background: var(--surface-3); color: var(--dim); border-color: var(--line-soft); box-shadow: none;
 }
 html body .secondary, html body .btn-secondary { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
-html body .quiet-button, html body .btn-ghost { background: transparent; box-shadow: none; border-color: transparent; color: var(--muted); }
-html body .danger-primary, html body .btn-danger { background: var(--danger); border-color: var(--danger-strong); color: var(--on-accent); }
+html body .quiet-button, html body .btn-ghost { background: transparent; box-shadow: none; border-color: transparent; color: var(--muted); } html body .btn-danger { background: var(--danger); border-color: var(--danger-strong); color: var(--on-accent); }
 html body .side-nav button { box-shadow: none; border-color: transparent; background: transparent; }
 html body .side-nav button:hover:not(.active) { background: var(--surface-2); border-color: transparent; }
 html body .side-nav button.active { background: var(--accent-soft); color: var(--accent-strong); border-color: transparent; }
-html body .alert-toast button, html body .icon-close { box-shadow: none; background: transparent; border-color: transparent; }
+html body .alert-toast button{ box-shadow: none; background: transparent; border-color: transparent; }
 
 /* ---- Campos: branco, borda suave, foco azul, altura = --btn-h ---- */
 html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
@@ -115,37 +111,31 @@ html body .view-switch button { border: 0; box-shadow: none; background: transpa
 html body .view-switch button.active, html body .view-switch button[aria-pressed="true"], html body .view-switch button[aria-selected="true"] { background: var(--white); color: var(--accent-strong); box-shadow: var(--shadow-2); }
 
 /* ---- Cartões e superfícies ---- */
-.card, .map-surface, .curve-surface, .obd-primary, .inspector-panel, .hero-reading, .condition-strip, .session-state,
-.operation-card, .tool-actions > button, .tool-power-row, .recorded-session-item {
+.card, .map-surface, .curve-surface, .inspector-panel,
+.operation-card{
   background: var(--surface); border: 1px solid var(--line-soft); box-shadow: var(--shadow-1);
 }
 .operation-card { box-shadow: var(--shadow-3); }
 .operation-layer { background: var(--c-246-248-251-86); }
 .side-rail { background: var(--rail); border-right: 1px solid var(--line-soft); }
-.workspace-head { background: var(--bg); }
-.chart-surface, .curve-chart, .autocal-chart-host, .curve-overview-k { background: var(--chart-bg) !important; border: 1px solid var(--line-soft); }
-details, .diagnostic-settings, .live-trace-detail, .background-health-card, .diagnostic-recorder-card, .recorded-sessions, .live-log-console { background: var(--surface); }
+.workspace-head { background: var(--bg); } .curve-chart, .curve-overview-k { background: var(--chart-bg) !important; border: 1px solid var(--line-soft); }
+details, .diagnostic-settings, .live-log-console { background: var(--surface); }
 
 /* ---- Rolagem por tela (sem barra gorda) ---- */
 .screen-host .screen.active { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; contain: none; }
 .screen-host, .screen { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
-.screen::-webkit-scrollbar, .scroll-y::-webkit-scrollbar { width: 6px; height: 6px; }
-.screen::-webkit-scrollbar-thumb, .scroll-y::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-.scroll-y { overflow-y: auto; overscroll-behavior: contain; }
+.screen::-webkit-scrollbar{ width: 6px; height: 6px; }
+.screen::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 3px; }
 /* Filhos que enchiam a tela e esmagavam o conteúdo: mantêm altura própria; a rota rola se passar. */
 .screen.active > * { flex-shrink: 0; }
-.map-workspace, .curve-workspace, .obd-workspace { flex: 1 0 auto; min-height: min(100%, 560px); }
+.map-workspace, .curve-workspace{ flex: 1 0 auto; min-height: min(100%, 560px); }
 .screen.active > .map-workspace, .screen.active > .curve-workspace { min-height: 100%; }
 .map-surface, .curve-surface { min-height: var(--chart-min-h); }
-.curve-chart, .chart-surface { min-height: var(--chart-min-h); }
-.autocal-chart-host { min-height: var(--chart-min-h); height: auto; }
+.curve-chart{ min-height: var(--chart-min-h); }
 .screen.active.autocal-route-screen, .screen.active[data-screen="dashboard"] { overflow-y: auto; }
 
 /* ---- Ajustes de contraste após a inversão do tema (--tone-ffffff agora é a tinta forte) ---- */
-html body .refino-cockpit .autocal-primary-action[data-kind="review"],
-html body .refino-steps li[data-problem="true"] i { color: var(--on-accent); }
-html body .refino-cockpit .autocal-primary-action[data-kind="review"] { background: var(--accent); border-color: var(--accent-strong); }
-html body .refino-cockpit .autocal-primary-action[data-kind="restore"] { background: var(--danger-soft); border-color: var(--danger-line); color: var(--danger); }
+
 .map-k-cell { background: var(--surface) !important; border: 1px solid var(--line-soft) !important; box-shadow: none; }
 .map-k-cell.selected { background: var(--accent-soft) !important; border-color: var(--accent) !important; }
 .map-k-cell.preview { background: var(--warn-soft) !important; }

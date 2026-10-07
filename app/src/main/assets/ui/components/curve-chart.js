@@ -105,12 +105,6 @@
     return h.toString(36);
   }
 
-  // ------------------------------------------------------------------ agregação nas 18 faixas da ECU
-  function median(values) {
-    const sorted = values.slice().sort((a, b) => a - b);
-    const mid = sorted.length >> 1;
-    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-  }
   function weightedMean(values, weights) {
     const total = weights.reduce((a, b) => a + b, 0) || 1;
     return values.reduce((acc, v, i) => acc + v * weights[i], 0) / total;
@@ -308,7 +302,8 @@
       ...(ours || []).map(p => ({ x: p.tpetMs ?? p.petrolMs, y: p.mapBar })),
     ].filter(p => Number.isFinite(p.x) && p.x > 0 && Number.isFinite(p.y) && p.y > 0);
     if (!points.length) return null;
-    const maxX = Math.max(...points.map(p => p.x));
+    // Revisto (W2): a escala horizontal sempre contém o cursor (liveMs), nunca "fora da escala".
+    const maxX = Math.max(...points.map(p => p.x), Number.isFinite(o.liveMs) && o.liveMs > 0 ? o.liveMs : 0);
     const margin = Math.max(0.25, maxX * 0.04);
     const xMax = Math.max(o.fullRange ? 22 : 1, Math.ceil((maxX + margin) * 2) / 2);
     const ys = points.map(p => p.y);
@@ -385,12 +380,12 @@
       const top = Math.min(yFor(lower), yFor(upper));
       const zoneHeight = Math.abs(yFor(lower) - yFor(upper));
       const label = state => state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
+      // Revisto (W2): sem barras laterais sem legenda; o rótulo da zona diz o estado do GNV em palavras.
+      const zoneText = `Z${zone.zone}` + (zone.gasState === 'acquired' ? ' · GNV ok' : zone.gasState === 'missing' ? ' · GNV falta' : '');
       const caption = `Z${zone.zone} · Gasolina ${label(zone.petrolState)} · GNV ${label(zone.gasState)}`;
       return `<g class="autocal-zone-surface" data-autocal-zone-surface="${zone.zone}" data-gas-state="${zone.gasState}" data-petrol-state="${zone.petrolState}" data-current="false" aria-label="${caption}">` +
         `<rect class="autocal-zone-background" x="${padLeft}" y="${top.toFixed(1)}" width="${width - padLeft - padRight}" height="${zoneHeight.toFixed(1)}"></rect>` +
-        `<rect class="autocal-zone-petrol-edge" x="${padLeft + 2}" y="${top.toFixed(1)}" width="5" height="${zoneHeight.toFixed(1)}"></rect>` +
-        `<rect class="autocal-zone-gas-edge" x="${padLeft + 9}" y="${top.toFixed(1)}" width="5" height="${zoneHeight.toFixed(1)}"></rect>` +
-        (zoneHeight >= 24 ? `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="Z${zone.zone}" x="${width - padRight - 10}" y="${(top + zoneHeight / 2 + 5).toFixed(1)}" text-anchor="end">Z${zone.zone}</text>` : '') + '</g>';
+        (zoneHeight >= 24 ? `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="${zoneText}" x="${width - padRight - 10}" y="${(top + zoneHeight / 2 + 5).toFixed(1)}" text-anchor="end">${zoneText}</text>` : '') + '</g>';
     }).join('');
 
     const history = between ? [] : (model.history || []);
@@ -607,7 +602,7 @@
     const lastMeasured = anchors.length ? Math.max(...anchors.map(p => p.x)) : null;
     const limit = lastMeasured === null ? Infinity : lastMeasured + Math.max(.25, lastMeasured * .04);
     const reference = visible.fullRange || !anchors.length ? allReference : allReference.filter(p => p.petrolMs <= limit);
-    const domain = focusDomain([...reference, ...history], ecu, relevant, { fullRange: visible.fullRange, equivalent: c.mode === 'between' && visible.gas !== false });
+    const domain = focusDomain([...reference, ...history], ecu, relevant, { fullRange: visible.fullRange, equivalent: c.mode === 'between' && visible.gas !== false, liveMs: Number(c.liveMs) });
     const thresholds = (() => {
       const f = (Array.isArray(snapshot.fields) ? snapshot.fields : []).find(x => x && x.key === 'MNFLD_PRESS_THD' && x.status === 'VALID');
       return f && Array.isArray(f.physicalValues) ? f.physicalValues : null;

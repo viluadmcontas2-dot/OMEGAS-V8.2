@@ -16,8 +16,7 @@ assert.ok(cockpit.includes('Salvo em Downloads/Omegas') || cockpit.includes('Sal
 
 // The graph is the primary driving surface. Secondary information is already
 // available below it in the same vertical flow; no nested horizontal rail.
-assert.match(css, /\.ar-tile b\s*\{[^}]*font-size:\s*24px/);
-assert.match(css, /\.ar-tile\.ar-zone b/);
+// Revisto (W2): os quadros .ar-tile saíram do AutoCal (e o CSS deles foi podado).
 // Actual graph size and visible point context are verified by the rendered layout gate.
 
 const P = 'html body .ar-shell ';
@@ -25,8 +24,6 @@ const primaryTiny = [
   [P + '.ar-sentence', 24],
   [P + '.ar-readout', 22],
   [P + '.ar-legend', 18],
-  [P + '.ar-card .autocal-session-copy span', 20],
-  [P + '.ar-tile small', 16],
 ];
 function cssDeclarationsFor(selector) {
   const blocks = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];

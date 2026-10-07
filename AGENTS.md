@@ -17,6 +17,7 @@
 8. Comandos de leitura/escrita da ECU não mudam (`UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager`, `AutoCalNativeActionManager`). Mesma exceção da regra 1. O automático reusa os bytes do apagamento manual (máscaras 0x016D/0x016E + `01 24 05`), um combustível por comando, com a máscara do outro toda preservada.
 9. A fonte de verdade dos testes é o CI no GitHub Actions; a sessão pode rodar testes locais para iterar, mas só o CI verde no SHA vale para entrar.
 10. Uma direção visual: tokens, cor com semântica, normalidade compacta.
+11. Navegação inferior = 8 abas de primeiro nível, nesta ordem: Agora, Mapa K, Curva K, AutoCal, Ajuste GNV, Sessões, Ferramentas, Diagnóstico. O AutoCal é aba independente e não pode ser removido, escondido nem agrupado (nada de menu "Avançado"). Mudar isso exige pedido explícito do dono.
 
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 

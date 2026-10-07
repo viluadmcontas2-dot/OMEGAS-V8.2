@@ -1,14 +1,7 @@
 .autocal-cockpit-view { min-width: 0; max-width: 100%; overflow-y: auto; overscroll-behavior: contain; container-type: inline-size; }
 .autocal-cockpit { display: grid; gap: 8px; min-width: 0; max-width: 100%; overflow-x: hidden; padding-bottom: 10px; }
-.autocal-zone-meter { display: flex; gap: 16px; align-items: center; margin-top: 8px; }
-.autocal-zone-meter > div { display: flex; gap: 7px; align-items: center; }
-.autocal-zone-meter span { color: var(--tone-9aa8b8); font-size: 10px; font-weight: 700; }
-.autocal-zone-meter .petrol i[data-active="true"] { border-color: rgba(var(--rgb-120-183-255),.72); background: var(--tone-78b7ff); box-shadow: 0 0 0 3px rgba(var(--rgb-120-183-255),.09); }
-.autocal-zone-meter .gas i[data-active="true"] { border-color: rgba(var(--rgb-93-211-158),.72); background: var(--tone-5dd39e); box-shadow: 0 0 0 3px rgba(var(--rgb-93-211-158),.09); }
-.autocal-hero-actions button, .autocal-primary-action, .autocal-reset-actions button, .autocal-chart-tools button { min-height: 56px; }
 .autocal-reference-svg { width: 100%; height: 100%; display: block; touch-action: pan-y; user-select: none; }
-.autocal-grid-line { stroke: var(--veil-07); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.autocal-axis-label, .autocal-axis-tick-x, .autocal-axis-tick-y { fill: var(--tone-8fa0b3); font-size: 11px; pointer-events: none; }
+.autocal-grid-line { stroke: var(--veil-07); stroke-width: 1; vector-effect: non-scaling-stroke; } .autocal-axis-tick-x, .autocal-axis-tick-y { fill: var(--tone-8fa0b3); font-size: 11px; pointer-events: none; }
 .autocal-axis-title { fill: var(--tone-cbd7e4); font-size: 12px; font-weight: 800; letter-spacing: .03em; pointer-events: none; }
 .autocal-grid-line.vertical { stroke: rgba(var(--rgb-255-255-255),.045); }
 .autocal-reference-line { fill: none; stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
@@ -32,11 +25,6 @@
 .autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-background { fill: rgba(var(--rgb-58-208-149),.085); }
 .autocal-zone-surface[data-gas-state="missing"] .autocal-zone-background { fill: rgba(var(--rgb-242-177-79),.10); }
 .autocal-zone-surface[data-current="true"] .autocal-zone-background { stroke: var(--tone-f4f9ff); stroke-width: 2; fill-opacity: 1; }
-.autocal-zone-petrol-edge { fill: rgba(var(--rgb-120-183-255),.24); }
-.autocal-zone-surface[data-petrol-state="acquired"] .autocal-zone-petrol-edge { fill: var(--tone-78b7ff); }
-.autocal-zone-gas-edge { fill: rgba(var(--rgb-177-191-199),.25); }
-.autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-gas-edge { fill: var(--tone-5dd39e); }
-.autocal-zone-surface[data-gas-state="missing"] .autocal-zone-gas-edge { fill: var(--tone-f0b65e); }
 .autocal-zone-label { fill: var(--tone-dbe7f2); font-size: 12px; font-weight: 750; paint-order: stroke; stroke: var(--tone-07101a); stroke-width: 3px; }
 .autocal-zone-surface[data-current="true"] .autocal-zone-label { fill: var(--tone-ffffff); font-weight: 900; }
 .autocal-current-band-layer { fill: rgba(var(--rgb-79-163-255),.10); stroke: rgba(var(--rgb-120-183-255),.38); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
@@ -48,33 +36,25 @@
 .autocal-live-halo { fill: var(--veil-08); stroke: rgba(var(--rgb-255-255-255),.55); stroke-width: 2; }
 .autocal-live-point { fill: var(--tone-ffffff); stroke: var(--tone-071018); stroke-width: 2; }
 .autocal-live-label { fill: var(--tone-ffffff); font-size: 12px; font-weight: 900; letter-spacing: .08em; paint-order: stroke; stroke: var(--tone-071018); stroke-width: 4px; }
-.source-status[data-level="working"], .autocal-read-context[data-read-level="working"] { border-color: rgba(var(--rgb-120-183-255),.4); }
-.source-status[data-level="error"], .autocal-read-context[data-read-level="error"] { border-color: rgba(var(--rgb-255-119-119),.5); }
+.source-status[data-level="working"]{ border-color: rgba(var(--rgb-120-183-255),.4); }
+.source-status[data-level="error"]{ border-color: rgba(var(--rgb-255-119-119),.5); }
 /* Sessão: contexto operacional compacto, sem competir com a curva. */
 .autocal-session-strip  { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 12px; border: 1px solid var(--veil-08); border-radius: 14px; background: var(--veil-018); }
 .autocal-session-strip[data-session-level="warning"]  { border-color: rgba(var(--rgb-255-190-92),.5); }
-.autocal-session-copy small { display: block; color: var(--tone-8291a4); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
-.autocal-session-copy b  { display: block; margin-top: 2px; font-size: 14px; }
-.autocal-session-copy span { color: var(--tone-9dacbc); font-size: 11px; line-height: 1.35; }
 @container (max-width: 760px) {
   .autocal-session-strip { grid-template-columns: 1fr; }
 }
 /* HMI automotiva: texto operacional legível a aproximadamente um braço de distância. */
-.autocal-zone-meter span { font-size: 12px; }
+
 .chart-empty { font-size: 13px; }
 .chart-empty b { font-size: 15px; }
 .autocal-live-label { font-size: 13px; }
-.autocal-session-copy small { font-size: 11px; }
-.autocal-session-copy b  { font-size: 16px; }
-.autocal-session-copy span  { font-size: 13px; }
 /* 2026-09-21 — hierarchy refinement: curve is the dominant instrument surface. */
 .autocal-cockpit { gap: 7px; }
 .autocal-session-strip  { order: 3; }
 .autocal-live-halo { fill: rgba(var(--rgb-23-218-246),.14); stroke: rgba(var(--rgb-23-218-246),.55); stroke-width: 2; }
 .autocal-live-point { fill: var(--tone-19daf4); stroke: var(--tone-dffcff); stroke-width: 1.5; }
 .autocal-live-label { fill: var(--tone-49e7fb); stroke: var(--tone-061019); }
-.autocal-zone-meter { margin-top: 5px; }
-.autocal-hero-actions button, .autocal-primary-action, .autocal-reset-actions button, .autocal-chart-tools button { min-height: 48px; }
 .autocal-session-strip  { padding: 8px 11px; border-radius: 11px; }
 /* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
 .autocal-reference-line.petrol:not(.previous) { stroke-width: 4; opacity: .62; }
@@ -82,17 +62,10 @@
 .autocal-reference-point.petrol { fill: var(--tone-07101a); stroke: var(--tone-78b7ff); stroke-width: 2.6; }
 .autocal-reference-point.gas { fill: var(--tone-5dd39e); stroke: var(--tone-d9fff0); stroke-width: 1.2; }
 /* AutoCal operator zone map: preserve ECU Z1..Z4 identity instead of only N/4. */
-.autocal-zone-meter { display: flex; align-items: center; gap: 8px; margin: 0; }
-.autocal-zone-meter > div { display: flex; align-items: center; gap: 5px; }
-.autocal-zone-fuel { color: var(--tone-90a2b4); font-size: var(--text-critical); font-weight: 800; letter-spacing: .06em; }
-.autocal-zone-cells { display: flex; gap: 3px; }
+
 .autocal-zone-cell { position: relative; display: grid; grid-template-rows: auto auto; place-items: center; min-width: 76px; min-height: 64px; padding: 4px 6px; border: 1px solid rgba(var(--rgb-255-255-255),.10); border-radius: 7px; background: var(--veil-025); }
 .autocal-zone-cell b { color: var(--tone-dbe5ef); font-size: var(--text-critical); line-height: 1; }
 .autocal-zone-cell small { margin-top: 2px; color: var(--tone-7f90a2); font-size: var(--text-critical); font-weight: 900; letter-spacing: .04em; line-height: 1; }
-.autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] { border-color: rgba(var(--rgb-120-183-255),.52); background: rgba(var(--rgb-120-183-255),.13); }
-.autocal-zone-meter .petrol .autocal-zone-cell[data-state="acquired"] small { color: var(--tone-8dc5ff); }
-.autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] { border-color: rgba(var(--rgb-93-211-158),.52); background: rgba(var(--rgb-93-211-158),.13); }
-.autocal-zone-meter .gas .autocal-zone-cell[data-state="acquired"] small { color: var(--tone-79ddb0); }
 .autocal-zone-cell[data-state="missing"] { border-color: rgba(var(--rgb-240-196-92),.42); border-style: dashed; background: rgba(var(--rgb-240-196-92),.06); }
 .autocal-zone-cell[data-state="missing"] small { color: var(--tone-f0c45c); }
 .autocal-zone-cell[data-current="true"] { outline: 2px solid var(--tone-19daf4); outline-offset: 1px; box-shadow: 0 0 0 3px rgba(var(--rgb-25-218-244),.10); }
@@ -104,7 +77,7 @@
 /* Custom-ROM/1280x720 focus: use reclaimed chrome for the acquisition geometry. */
 /* WebView-safe disclosure: engineering regions never leak into the driving surface. */
 /* 2026-09-23 — owner physical envelope: the vehicle does not use MAP above 1.15 bar. No expanded-scale mode: spend the surface on Z1–Z4 and the live cursor. */
-.autocal-zone-meter { display: none; }
+
 /* 2026-09-24 — Premium cockpit final direction. Primary surface = graph. Secondary context stays below it in one vertical flow. */
 .screen.autocal-route-screen { overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; contain: layout style; }
 .autocal-cockpit-view { overflow: visible; }
@@ -112,38 +85,10 @@
 .autocal-fuel-chip { flex: 0 0 auto; min-width: 62px; padding: 5px 9px; border: 1px solid rgba(var(--rgb-151-169-185),.26); border-radius: 999px; color: var(--tone-b7c6d2); background: var(--tint-35-47-58-45); font-size: 10px; font-weight: 900; text-align: center; }
 .autocal-fuel-chip[data-fuel-state="gas"] { border-color: rgba(var(--rgb-93-211-158),.42); color: var(--tone-c9f7e3); background: var(--tint-30-103-75-32); }
 .autocal-fuel-chip[data-fuel-state="petrol"] { border-color: var(--tint-120-183-255-42); color: var(--tone-d6eaff); background: var(--tint-37-82-128-32); }
-.autocal-fuel-chip[data-fuel-state="transition"] { border-color: rgba(var(--rgb-226-178-76),.42); color: var(--tone-ffefbd); background: var(--tint-104-78-26-28); }
-.autocal-focus-actions .autocal-primary-action, .autocal-reacquire-action, .autocal-reset-menu > summary { min-height: 50px; padding: 0 12px; font-size: 12px; }
+.autocal-fuel-chip[data-fuel-state="transition"] { border-color: rgba(var(--rgb-226-178-76),.42); color: var(--tone-ffefbd); background: var(--tint-104-78-26-28); } .autocal-reacquire-action{ min-height: 50px; padding: 0 12px; font-size: 12px; }
 .autocal-reacquire-action { border-color: rgba(var(--rgb-226-178-76),.32); color: var(--tone-f7e7b7); background: rgba(var(--rgb-104-78-26),.24); font-weight: 800; }
-.autocal-reset-menu { position: relative; min-width: 0; }
-.autocal-reset-menu > summary { display: grid; place-items: center; border: 1px solid rgba(var(--rgb-255-105-115),.32); border-radius: 10px; color: var(--tone-ffd7db); background: rgba(var(--rgb-80-26-32),.46); font-weight: 800; cursor: pointer; list-style: none; text-align: center; }
-.autocal-reset-menu > summary::-webkit-details-marker { display: none; }
-.autocal-reset-popover { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; display: grid; gap: 8px; width: min(320px, calc(100vw - 230px)); padding: 10px; overflow: hidden; border: 1px solid rgba(var(--rgb-255-105-115),.26); border-radius: 12px; background: rgba(var(--rgb-9-14-22),.98); box-shadow: 0 18px 42px rgba(var(--rgb-0-0-0),.45); }
-.autocal-reset-popover button { min-height: 48px; border-color: rgba(var(--rgb-255-105-115),.24); color: var(--tone-f3c8cc); }
-.autocal-reset-group { display: grid; grid-template-columns: 1fr; gap: 7px; min-width: 0; }
-.autocal-reset-group > small { color: var(--tone-9fb0c0); font-size: 9px; font-weight: 900; letter-spacing: .11em; }
-.autocal-reset-popover p { margin: 1px 1px 0; color: var(--tone-a99ca4); font-size: 10px; line-height: 1.4; }
-.autocal-reset-comparison { position: static; grid-area: compare; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; padding: 7px; border: 1px solid var(--tint-80-170-220-18); border-radius: 11px; background: rgba(var(--rgb-4-13-22),.74); }
-.autocal-reset-comparison[hidden] { display: none; }
-.autocal-reset-comparison > div { min-width: 0; padding: 6px 8px; border-radius: 8px; background: var(--veil-035); }
-.autocal-reset-comparison small, .autocal-reset-comparison b, .autocal-reset-comparison span { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.autocal-reset-comparison small { color: var(--tone-8398aa); font-size: 8px; font-weight: 900; letter-spacing: .11em; }
-.autocal-reset-comparison b { margin-top: 2px; color: var(--tone-e6f4ff); font-size: 13px; }
-.autocal-reset-comparison span { margin-top: 2px; color: var(--tone-91a4b4); font-size: 9px; }
-.autocal-secondary-stack { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; min-width: 0; overflow: visible; }
 .autocal-session-strip.autocal-secondary-card  { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 10px 12px; }
-.autocal-session-copy small  { font-size: 9px; }
-.autocal-session-copy b  { font-size: 14px; }
-.autocal-session-copy span  { font-size: 11px; }
-.autocal-zone-card { display: grid; align-content: center; gap: 7px; padding: 10px 12px; }
-.autocal-secondary-stack .autocal-zone-meter { display: grid; gap: 7px; margin: 0; }
-.autocal-secondary-stack .autocal-zone-meter > div { display: grid; grid-template-columns: 112px minmax(0,1fr); gap: 8px; align-items: center; }
-.autocal-secondary-stack .autocal-zone-fuel { width: auto; font-size: var(--text-critical); }
-.autocal-secondary-stack .autocal-zone-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.autocal-secondary-stack .autocal-zone-cell { min-width: 0; min-height: 44px; padding: 4px 5px; }
-.autocal-zone-card > #autocalZoneSummary { color: var(--tone-8fa3b6); font-size: var(--text-critical); }
 @container (max-width: 980px) {
-  .autocal-reset-menu > summary { min-width: 132px; padding: 0 10px; }
 }
 /* ProgBase-parity: only current acquired dots expose point reacquisition. */
 .autocal-acquired-hit { fill: transparent; cursor: pointer; pointer-events: all; }
@@ -155,14 +100,7 @@
 .autocal-acquired-hit.selected + .autocal-acquired-point { stroke: var(--tone-fff4cf); stroke-width: 3.4; }
 .autocal-acquired-hit.batch-selected + .autocal-acquired-point { stroke: var(--tone-f0c45c); stroke-width: 3.6; }
 /* Platina P-002: causal AutoMatch evidence, deterministic and read-only. */
-.autocal-automatch-evidence { display: grid; gap: 6px; border-color: rgba(var(--rgb-121-169-214),.16); background: linear-gradient(135deg, rgba(var(--rgb-45-83-116),.12), var(--veil-018)); }
-.autocal-automatch-evidence > div { display: grid; gap: 5px; min-width: 0; }
-.autocal-automatch-evidence small { color: var(--tone-8fa8bd); font-size: 9px; font-weight: 900; letter-spacing: .12em; }
-.autocal-automatch-evidence b { color: var(--tone-e7f0f7); font-size: 13px; line-height: 1.25; }
-.autocal-automatch-evidence span { color: var(--tone-9aaaba); font-size: 11px; line-height: 1.35; }
-.autocal-automatch-evidence[data-state="FACTOR_CHANGE_CONFIRMED"] { border-color: rgba(var(--rgb-93-211-158),.28); background: linear-gradient(135deg, rgba(var(--rgb-48-128-93),.14), var(--veil-018)); }
-.autocal-automatch-evidence[data-state="NO_FACTOR_CHANGE_OBSERVED"] { border-color: rgba(var(--rgb-120-183-255),.22); }
-.autocal-automatch-evidence[data-state="INCONCLUSIVE"] { border-color: rgba(var(--rgb-240-182-94),.32); background: linear-gradient(135deg, rgba(var(--rgb-132-91-31),.13), var(--veil-018)); }
+
 /* DUMP/TAUTOCALUI: PetrolCurve != PetrolPoint/GasPoint != GasPointPrev. Estilos distintos, sem mudar o significado dos vetores originais da ECU. */
 .autocal-reference-line.petrol.epoch-anchor { stroke: var(--tone-78b7ff); stroke-width: 3.8; opacity: .85; }
 .autocal-epoch-acquisition-line { fill: none; stroke-width: 2.1; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; stroke-linecap: round; opacity: .72; }

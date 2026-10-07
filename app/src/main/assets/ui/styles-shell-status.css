@@ -89,5 +89,4 @@
 .overlay-prompt-actions button { min-height: 52px; padding: 0 22px; font-size: 16px; }
 
 /* Ferramentas: tamanho do balão flutuante */
-.overlay-size { display: flex; gap: 8px; margin-top: 10px; }
-.overlay-size button { min-height: 44px; padding: 0 16px; }
+

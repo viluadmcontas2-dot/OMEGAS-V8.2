@@ -4,16 +4,6 @@
 /* ---------- Agora: 4 valores iguais, cabeçalho curto, faixa de situação embaixo ---------- */
 .screen-host .multimedia-now-screen { padding: var(--space-4) var(--space-5); }
 .now-dashboard-shell { grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--space-3); }
-.now-head small { display: block; color: var(--accent-strong); font-size: 16px; font-weight: 800; letter-spacing: .08em; }
-.now-head h2 { margin: 2px 0 0; font-size: 26px; line-height: 1.1; letter-spacing: -.01em; }
-.now-tile-grid { gap: var(--space-3); }
-.now-tile { padding: var(--space-3) var(--space-5); border-radius: var(--radius-l); box-shadow: var(--shadow-1); gap: var(--space-1); }
-.now-tile small { font-size: var(--text-critical); letter-spacing: .06em; color: var(--muted); }
-.now-tile b { font-size: clamp(64px, 11vh, 92px); letter-spacing: -.035em; gap: var(--space-3); }
-.now-tile[data-tile="fuel"] b { font-size: clamp(56px, 10vh, 84px); }
-.now-tile[data-tile="petrol"] small { color: var(--petrol); }
-.now-tile[data-tile="fuel"] b { color: var(--cng); }
-.now-tile b em { font-size: 28px; color: var(--muted); }
 .now-session-card { border-radius: var(--radius); box-shadow: var(--shadow-1); }
 .now-session-card[data-level="ok"] { background: var(--ok-soft); border-color: var(--line-soft); }
 .now-session-card[data-level="warning"] { background: var(--warn-soft); }
@@ -83,17 +73,10 @@ html body .step-row > button:hover:not(:disabled) { background: var(--accent-sof
 .curve-screen .curve-point.active { stroke: var(--accent-strong); }
 .curve-screen .curve-line.actual { stroke: var(--dim); stroke-dasharray: 5 5; fill: none; }
 .curve-screen .curve-line.proposal { stroke: var(--accent); stroke-width: 3; fill: none; }
-.curve-screen .curve-editor-panel { overflow: visible; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-l); }
-.curve-screen .curve-point-head h3 { font-size: 24px; }
-.curve-screen .curve-point-head small { font-size: 16px; }
-.curve-screen .curve-point-head .current-value { background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: var(--radius-s); text-align: center; }
 .curve-screen .normalized-preview { font-size: 18px; color: var(--muted); background: none; padding: 0; }
 .curve-screen .proposal-list { max-height: 150px; overflow-x: hidden; overflow-y: auto; }
-.curve-screen .curve-editor-panel > #curveReviewButton { position: static; width: 100%; font-size: 20px; }
 .curve-photos { margin-top: var(--space-2); border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); }
 .curve-photos > summary { display: flex; align-items: center; padding: 0 var(--space-4); border: 0; box-shadow: none; background: transparent; color: var(--muted); cursor: pointer; }
-.curve-photos .curve-backup-bar { display: flex; flex-wrap: wrap; gap: var(--space-2); padding: 0 var(--space-4) var(--space-3); }
-.curve-photos .curve-backup-bar select { flex: 1 1 220px; min-width: 0; }
 .curve-photos .curve-backup-status { flex: 1 1 100%; color: var(--dim); font-size: 16px; }
 
 /* ---------- ajustes após primeira renderização ---------- */
@@ -114,7 +97,6 @@ html body .step-row > button:hover:not(:disabled) { background: var(--accent-sof
 .app-shell .map-screen .map-workspace { grid-template-columns: minmax(0, 1fr) 300px; }
 .curve-screen .route-actions-stack { flex-direction: row; flex-wrap: nowrap; }
 .curve-screen .curve-head { flex-wrap: nowrap; }
-.curve-screen .curve-point-head h3 { font-size: 22px; }
 .curve-screen .curve-workspace { grid-template-columns: minmax(0, 1fr) 320px; }
 .curve-screen .curve-chart { min-height: max(var(--chart-min-h), 50vh); }
 
@@ -123,19 +105,6 @@ html body .step-row > button:hover:not(:disabled) { background: var(--accent-sof
 /* Agora: tiles preenchem a tela; cartões em camadas com barra de cor por dado (como a Platina original) */
 .screen-host .multimedia-now-screen { padding: var(--space-3) var(--space-4); }
 .now-dashboard-shell { gap: var(--space-2); }
-.now-head { display: flex; align-items: baseline; gap: var(--space-3); }
-.now-head h2 { font-size: 24px; margin: 0; }
-.now-tile-grid { gap: var(--space-2); }
-.now-tile { position: relative; padding: var(--space-3) var(--space-6); background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%); border-color: var(--line); box-shadow: var(--shadow-2); justify-content: center; gap: var(--space-2); }
-.now-tile::before { content: ""; position: absolute; left: 0; top: var(--space-5); bottom: var(--space-5); width: 5px; border-radius: 0 var(--space-1) var(--space-1) 0; background: var(--line); }
-.now-tile[data-tile="petrol"]::before { background: var(--petrol); }
-.now-tile[data-tile="rpm"]::before { background: var(--accent-strong); }
-.now-tile[data-tile="map"]::before { background: var(--warn); }
-.now-tile[data-tile="fuel"]::before { background: var(--cng); }
-.now-tile small { font-size: var(--text-critical); }
-.now-tile b { font-size: clamp(88px, 17vh, 132px); }
-.now-tile[data-tile="fuel"] b { font-size: clamp(80px, 15vh, 120px); }
-.now-tile b em { font-size: 32px; }
 .now-session-card { padding: var(--space-2) var(--space-5); min-height: 64px; }
 
 /* Trilho achatado, sem números */
@@ -160,11 +129,6 @@ html body .map-screen .step-row > button { min-width: 0; font-size: 18px; border
 
 /* Curva K: painel ≥ 30% menor; o gráfico ganha o espaço */
 .curve-screen .curve-workspace, .curve-screen .curve-editor-view > .curve-workspace { grid-template-columns: minmax(0, 1fr) 224px; }
-.curve-screen .curve-editor-panel { gap: var(--space-2); padding: var(--space-3); }
-.curve-screen .curve-point-head { flex-wrap: wrap; gap: var(--space-1); }
-.curve-screen .curve-point-head h3 { font-size: 20px; }
-.curve-screen .curve-point-head .current-value { min-width: 0; padding: 0 var(--space-2); }
-.curve-screen .curve-point-head .current-value b { font-size: 20px; }
 .curve-screen .value-field { min-height: 56px; padding: 0 var(--space-3); }
 html body #curveTargetFactor { height: 52px; min-height: 52px; font-size: 28px; }
 .curve-screen .step-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1); }
@@ -174,7 +138,6 @@ html body .curve-screen .step-row > button { font-size: 18px; border-radius: var
 .curve-screen .proposal-list .proposal-row { padding: 2px var(--space-2); }
 .curve-screen .proposal-list .proposal-row span, .curve-screen .proposal-list .proposal-row small { font-size: 16px; }
 .curve-screen .proposal-list .proposal-row b { font-size: 18px; }
-.curve-screen .curve-editor-panel > #curveReviewButton { font-size: 18px; padding: 0 var(--space-2); line-height: 1.15; }
 .curve-screen .curve-chart { min-height: max(var(--chart-min-h), 56vh); }
 .curve-screen .curve-surface { min-height: calc(max(var(--chart-min-h), 56vh) + 64px); }
 
@@ -196,11 +159,6 @@ html body .curve-screen .step-row > button { font-size: 18px; border-radius: var
 .curve-action-bar .value-field { flex: 0 0 132px; min-height: 58px; padding: 0 var(--space-3); }
 html body #curveTargetFactor { height: 58px; min-height: 58px; font-size: 28px; text-align: center; }
 .curve-screen .curve-action-bar > #curveReviewButton { position: static; flex: 1 1 auto; width: auto; min-width: 200px; font-size: 20px; padding: 0 var(--space-3); }
-.curve-action-bar .more-menu { position: relative; flex: 0 0 auto; }
-.curve-action-bar .more-menu > summary { display: grid; place-items: center; width: 58px; padding: 0; list-style: none; font-size: 26px; color: var(--muted); cursor: pointer; }
-.curve-action-bar .more-menu > summary::-webkit-details-marker { display: none; }
-.more-menu-list { position: absolute; right: 0; bottom: calc(100% + var(--space-2)); min-width: 200px; padding: var(--space-2); background: var(--surface-3); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-3); z-index: 5; }
-.more-menu-list button { width: 100%; }
 .curve-screen .page-intro.curve-head { padding: 0 0 var(--space-1); }
 
 /* espaços coerentes e mais apertados em Agora / Mapa K / Curva K */
@@ -214,5 +172,5 @@ html body #curveTargetFactor { height: 58px; min-height: 58px; font-size: 28px; 
 body:has([data-screen="curve"].active) .alert-toast { bottom: 140px; }
 
 /* Refino (efeito colateral do trilho de 200 px): o "Último resultado" aberto ocupa a linha toda em vez de vazar à esquerda. */
-.refino-actions-row > .autocal-secondary-details { flex: 1 1 100%; }
+
 .curve-screen .proposal-list[hidden] { display: none; }

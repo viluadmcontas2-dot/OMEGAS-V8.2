@@ -33,8 +33,6 @@
     tools: ['SISTEMA', 'Ferramentas'],
   };
 
-  // Rotas dentro de "Avançado" (continuam todas acessíveis).
-  const ADVANCED_ROUTES = ['map', 'curve', 'autocal', 'tools'];
   let renderedRoute = null;
   let previousGlobalSignature = '';
   let previousTelemetrySignature = '';
@@ -82,10 +80,6 @@
   function isLiveRoute(route) {
     return ((root.OmegasUi || ui).LIVE_ROUTES || ['dashboard', 'map', 'autocal', 'refino']).includes(route);
   }
-  function liveFrom(state) {
-    const telemetry = state.telemetry || {};
-    return telemetry.live || telemetry.data || telemetry;
-  }
   /** Depois de um quadro pintado, sem timer: dois requestAnimationFrame seguidos. */
   function afterPaint(task) {
     if (typeof root.requestAnimationFrame === 'function') {
@@ -118,9 +112,6 @@
         button.classList.toggle('active', active);
         button.setAttribute('aria-current', active ? 'page' : 'false');
       });
-      // Rota escondida em "Avançado" acende o botão Avançado (o dono sabe onde está).
-      byId('app')?.querySelector?.('[data-nav-advanced]')?.classList.toggle('active', ADVANCED_ROUTES.includes(state.route));
-      setAdvancedOpen(false);
       screenNodes.forEach(screen => {
         const active = screen.dataset.screen === state.route;
         screen.classList.toggle('active', active);
@@ -156,12 +147,62 @@
       }
     }
     noteLinkTransition(link, reading);
+    writeGate = status.canWrite === false ? { blocked: true, reason: String(status.writeBlockedReason || 'Gravar na ECU não está disponível agora.') } : { blocked: false, reason: '' };
+    applyWriteGate();
 
     if (state.alert && state.alert !== previousAlert) {
       previousAlert = state.alert;
       showAlert(state.alert);
     }
   }
+
+  // Gravar na ECU: o Kotlin diz se pode (canWrite) e por quê não (writeBlockedReason, mesma CalibrationWriteSafetyPolicy
+  // das escritas reais). Bloqueado = botão apagado + motivo ao tocar (aria-disabled, sem sumir) e o clique não passa.
+  const WRITE_GATE_SELECTOR = '#mapReviewButton,#mapUndoButton,#curveReviewButton,#curveBackupRestore,#curveResetButton,#curveUndoButton,[data-refino-primary],[data-refino-undo],[data-autocal-toggle],[data-autocal-action]';
+  let writeGate = { blocked: false, reason: '' };
+  // Onde o motivo aparece por escrito (botão apagado sozinho não explica nada em tela de toque).
+  const WRITE_NOTES = [
+    { key: 'map', host: '.map-safety-line', where: 'beforeend' },
+    { key: 'curve', host: '.curve-action-bar', where: 'afterend' },
+    { key: 'refino', host: '.refino-cockpit .ar-act', where: 'beforeend' },
+    { key: 'autocal', host: '.autocal-chart-overlay .autocal-chip-row', where: 'beforeend' },
+  ];
+  function syncWriteNotes() {
+    WRITE_NOTES.forEach(({ key, host, where }) => {
+      const anchor = document.querySelector(host);
+      if (!anchor) return;
+      let note = document.querySelector('[data-write-note="' + key + '"]');
+      if (!note && writeGate.blocked) {
+        note = document.createElement('small');
+        note.className = 'write-reason';
+        note.dataset.writeNote = key;
+        note.setAttribute('role', 'status');
+        if (where === 'afterend' && anchor.parentNode) anchor.parentNode.appendChild(note);
+        else anchor.appendChild(note);
+      }
+      if (!note) return;
+      const text = writeGate.blocked ? 'Gravar bloqueado: ' + writeGate.reason : '';
+      if (note.textContent !== text) note.textContent = text;
+      note.hidden = !writeGate.blocked;
+    });
+  }
+  function applyWriteGate() {
+    syncWriteNotes();
+    document.querySelectorAll(WRITE_GATE_SELECTOR).forEach(node => {
+      if (writeGate.blocked) {
+        if (node.dataset.writeBlocked !== 'true') { node.dataset.writeBlocked = 'true'; node.setAttribute('aria-disabled', 'true'); }
+        if (node.title !== writeGate.reason) node.title = writeGate.reason;
+      } else if (node.dataset.writeBlocked === 'true') {
+        delete node.dataset.writeBlocked; node.removeAttribute('aria-disabled'); node.removeAttribute('title');
+      }
+    });
+  }
+  document.addEventListener('click', event => {
+    const node = writeGate.blocked && event.target.closest ? event.target.closest(WRITE_GATE_SELECTOR) : null;
+    if (!node) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    store.patch({ alert: { level: 'warning', message: 'Gravar está bloqueado: ' + writeGate.reason, at: Date.now() } });
+  }, true);
 
   // Resgate pós-reconexão: quando os dados voltam (cabo/ECU), Mapa K e Curva K releem sozinhos.
   // Ler é automático (regra 1); nada grava. Só a transição "sem dados → com dados" dispara, uma vez.
@@ -391,26 +432,8 @@
     onContext: refreshContext,
   });
 
-  /** Abre/fecha a lista "Avançado" da barra de navegação. */
-  function setAdvancedOpen(open) {
-    const nav = document.querySelector('.side-nav');
-    const toggle = nav?.querySelector('[data-nav-advanced]');
-    if (!nav || !toggle) return;
-    const next = open ? 'true' : 'false';
-    if (nav.dataset.advancedOpen !== next) nav.dataset.advancedOpen = next;
-    if (toggle.getAttribute('aria-expanded') !== next) toggle.setAttribute('aria-expanded', next);
-  }
-
   function bindGlobalEvents() {
-    routeButtons.forEach(button => button.addEventListener('click', () => { setAdvancedOpen(false); router.navigate(button.dataset.route); }));
-    document.querySelector('[data-nav-advanced]')?.addEventListener('click', event => {
-      event.stopPropagation?.();
-      setAdvancedOpen(document.querySelector('.side-nav')?.dataset.advancedOpen !== 'true');
-    });
-    // Tocar fora da lista fecha.
-    document.addEventListener('click', event => {
-      if (!event.target.closest || !event.target.closest('.side-nav')) setAdvancedOpen(false);
-    });
+    routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
     // "Permitir USB": o dono negou a permissão do Android; um toque pede de novo (ação humana explícita).
     document.addEventListener('click', event => {

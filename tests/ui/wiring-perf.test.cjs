@@ -105,24 +105,18 @@ test('P1-8: erro repetido numa tela vira aviso tocável; extensão que não carr
   } finally { app.destroy(); }
 });
 
-test('P2 navegação: "Avançado" abre a lista com Mapa K, Curva K, AutoCal e Ferramentas e fecha ao escolher', () => {
+// Revisto (W2): sem grupo "Avançado"; as oito abas são botões de primeiro nível (AutoCal incluído).
+test('W2 navegação: AutoCal é botão de primeiro nível na barra e as oito abas estão visíveis', () => {
   const app = boot();
   try {
     app.settle(2);
-    const nav = app.$('.side-nav');
-    const toggle = app.$('[data-nav-advanced]');
-    assert.equal(nav.dataset.advancedOpen, 'false');
-    toggle.click(); app.flush();
-    assert.equal(nav.dataset.advancedOpen, 'true');
-    assert.equal(toggle.getAttribute('aria-expanded'), 'true');
-    const items = app.$$('.side-nav .nav-advanced-item').map(b => b.dataset.route);
-    assert.deepEqual(items, ['map', 'curve', 'autocal', 'tools']);
-    app.$('.side-nav [data-route="autocal"]').click(); app.settle(2);
+    const routes = app.$$('.side-nav > button[data-route]').map(b => b.dataset.route);
+    assert.deepEqual(routes, ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico']);
+    assert.equal(app.$('[data-nav-advanced]'), null);
+    assert.equal(app.$$('.side-nav .nav-advanced-item').length, 0);
+    app.$('.side-nav > [data-route="autocal"]').click(); app.settle(2);
     assert.equal(app.route(), 'autocal');
-    assert.equal(nav.dataset.advancedOpen, 'false', 'escolher fecha a lista');
-    assert.equal(toggle.classList.contains('active'), true, 'rota avançada acende o Avançado');
-    app.$('.side-nav [data-route="refino"]').click(); app.settle(2);
-    assert.equal(toggle.classList.contains('active'), false);
+    assert.equal(app.$('.side-nav > [data-route="autocal"]').classList.contains('active'), true);
     assert.equal(app.$('.side-nav [data-route="refino"]').textContent.trim(), 'Ajuste GNV');
   } finally { app.destroy(); }
 });

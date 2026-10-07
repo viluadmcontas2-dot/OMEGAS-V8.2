@@ -333,7 +333,7 @@
             <p id="refinoNext" class="ar-reason" hidden></p>
             <div class="ar-buttons">
               <button type="button" class="btn-primary" data-refino-primary hidden></button>
-              <button type="button" class="btn-ghost" data-refino-reset-gas>Reiniciar medições GNV</button>
+              <button type="button" class="btn-ghost" data-refino-reset-gas>Apagar medições do app (GNV)</button>
               <button type="button" class="btn-ghost" data-refino-acquisition>Ver aprendizado da ECU</button>
               <span class="refino-undo" id="refinoUndo" hidden></span>
               <button type="button" class="btn-ghost" id="refinoEqUnfreeze" data-refino-unfreeze hidden>Desfazer referência</button>
@@ -524,18 +524,6 @@
       this.runWrite(points, reason, restoreFile || '');
     }
 
-    /** Resumo em uma linha, mostrado ANTES do toque: "10 pontos · mudança média +4,2% · maior +9% em 3,4–4,2 ms". */
-    changeSummary(points) {
-      const byIndex = new Map((Array.isArray(this.analysis?.points) ? this.analysis.points : []).map(p => [Number(p.index), p]));
-      const rows = points.map(p => ({ change: p.targetRaw / p.currentRaw - 1, ms: finite(byIndex.get(p.index)?.referenceTimeMs) })).filter(r => Number.isFinite(r.change));
-      if (!rows.length) return '';
-      const signed = value => `${value >= 0 ? '+' : '−'}${fmt(Math.abs(value) * 100, 1)}%`;
-      const mean = rows.reduce((sum, r) => sum + r.change, 0) / rows.length;
-      const peak = rows.reduce((best, r) => (Math.abs(r.change) > Math.abs(best.change) ? r : best), rows[0]);
-      const near = rows.filter(r => r.ms !== null && Math.abs(r.change) >= Math.abs(peak.change) * 0.8).map(r => r.ms);
-      const where = near.length ? ` em ${fmt(Math.min(...near), 1)}–${fmt(Math.max(...near), 1)} ms` : '';
-      return `${D.plural(rows.length, 'ponto', 'pontos')} · mudança média ${signed(mean)} · maior ${signed(peak.change).replace(/\.0%$/, '%')}${where}`;
-    }
 
     /** Lê a Curva K nesta conexão, confere com o snapshot e só então grava (ACK + readback no Kotlin). */
     runWrite(points, reason, restoreFile) {

@@ -42,9 +42,6 @@
     return Array.from({ length: 4 }, (_, index) => (finite(values[index]) ?? 0) > 0);
   }
 
-  function nativeZoneCount(snapshot, key) {
-    return nativeZoneFlags(snapshot, key).filter(Boolean).length;
-  }
 
   function projectedZoneFlags(projection, fuel) {
     const zones = projection?.ok === true && projection?.acquisitionZones && typeof projection.acquisitionZones === 'object'
@@ -824,26 +821,7 @@
         panel.className = 'autocal-route-panel';
         panel.innerHTML = `
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
-            <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
-              <h2 class="instrument-title">Aprendizado da ECU</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
-              <div class="ar-tile ar-load"><small>Carga do motor</small><b id="autocalLiveLoad">—</b></div>
-              <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
-              <div class="ar-tile ar-zone" title="Zona = quanto o motor está carregado: zona 1 = lenta … zona 4 = acelerando forte"><small>Zona de carga</small><b id="autocalLiveZone">—</b></div>
-              <div class="ar-tile ar-automatch" id="autocalAutoMatchTile" data-state="unknown"><small>Ajustes automáticos da ECU</small><b id="autocalAutoMatchCount">—</b></div>
-              <div class="autocal-reading-controls"><button type="button" class="ar-ghost" data-autocal-history hidden aria-label="Mostrar leitura anterior">Leitura anterior</button><button type="button" data-autocal-toggle class="btn-primary btn-compact" data-loading="true" disabled>Lendo estado…</button></div>
-              <span id="autocalLiveTitle" hidden>Aguardando telemetria</span>
-              <p id="autocalLiveNarrative" class="ar-sr" hidden></p>
-              <span id="autocalNativeState" hidden>Leitura da ECU: aguardando</span>
-            </header>
 
-              <section class="autocal-zone-card autocal-zone-strip" aria-label="Cobertura das zonas">
-                <div id="autocalZoneMeter" class="autocal-zone-meter" aria-label="Zonas AutoCal aguardando leitura">
-                  <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                  <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
-                </div>
-                <small class="autocal-zone-legend">Zona 1 = lenta · 2 = rodando leve · 3 = acelerando · 4 = acelerando forte</small>
-                <span id="autocalZoneSummary" class="ar-sr">—</span>
-              </section>
 
             <section class="ar-chart-card" aria-label="Leitura da ECU · Gasolina × GNV">
               <div class="ar-legend-row">
@@ -851,61 +829,26 @@
                 <span id="autocalNoiseSummary" class="autocal-noise-summary" aria-live="polite"></span>
                 <span id="autocalReferenceCount" class="ar-sr" hidden>—</span>
               </div>
+              <div class="autocal-chart-overlay" aria-live="polite">
+                <p id="autocalHumanAction" class="ar-sentence" data-level="neutral" hidden>Lendo o estado da ECU…</p>
+                <p id="autocalAlertStrip" class="autocal-alert-strip" role="alert" hidden></p>
+                <p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p>
+                <div class="autocal-chip-row"><small id="autocalAutoCleanLine" class="autocal-autoclean-line" data-level="neutral" hidden></small><small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small></div>
+              </div>
               <div id="autocalReferenceChart" class="ar-chart-host"><div class="chart-empty">Aguardando as curvas da ECU.</div></div>
               <div class="ar-readout" id="autocalChartInspector" data-empty="true"><span>Toque num ponto da curva.</span></div>
             </section>
 
             <div class="ar-act">
               <div class="ar-buttons autocal-main-actions">
-                <details class="instrument-details"><summary>Histórico e detalhes</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
-
-
-              <section class="ar-card autocal-live-tech">
-                <h4>Detalhes técnicos</h4>
-                <span>MAP <span id="autocalLiveMap">—</span> bar · Injeção <span id="autocalLivePetrol">—</span> ms</span>
-                <span id="autocalReferenceSource">—</span>
-              </section>
-
-              <section id="autocalAutoMatchEvidence" class="ar-card autocal-automatch-evidence" data-state="WAITING" aria-live="polite">
-                <h4>O que o AutoMatch mudou</h4>
-                <b id="autocalAutoMatchEvidenceTitle">Aguardando o primeiro AutoMatch</b>
-                <span id="autocalAutoMatchEvidenceDetail"></span>
-              </section>
-
-              <div id="autocalResetComparison" class="ar-card autocal-reset-comparison" hidden aria-live="polite"></div>
-
-              <section class="ar-card autocal-session-strip" data-session-level="ok" aria-live="polite">
-                <div class="autocal-session-copy">
-                  <h4>Sessão</h4>
-                  <b id="autocalSessionSummary">Sessões prontas</b>
-                  <span id="autocalSessionDetail">Histórico ainda sem dados desta conexão.</span>
-                  <span id="autocalSessionState">Salvo automaticamente</span>
-                </div>
-              </section>
-            </div>
-
-            </details>
-                <button type="button" data-autocal-sessions>Ver sessões</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Recomeçar aprendizado do GNV</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Recomeçar aprendizado da gasolina</button>
-                <small class="autocal-reacquire-note">A ECU esquece o que aprendeu e aprende de novo enquanto você dirige.</small>
-                <details class="autocal-reset-menu ar-more">
-                  <summary>Mais opções</summary>
-                  <div class="autocal-reset-popover" id="autocalOptionsPanel" aria-label="Mais opções do AutoCal">
-                    <button type="button" class="autocal-options-close" data-autocal-close-options>Fechar opções ×</button>
-                    ${ns.CurveChart.viewControls()}
-                    <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <p>Os ajustes automáticos são decididos pela ECU. Pausar o aprendizado interrompe a coleta. Recomeçar o aprendizado da gasolina ou do GNV apaga só o que a ECU aprendeu daquele combustível. Para zerar a Curva K, use a aba Curva K (em Avançado).</p>
-                    </section>
-                  </div>
-                </details>
+                <button type="button" data-autocal-toggle class="btn-primary" data-loading="true" disabled>Lendo estado…</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
+                <span class="autocal-point-actions" hidden role="group" aria-label="Pontos marcados para a ECU medir de novo">
+                  <button type="button" class="btn-primary" data-autocal-reacquire-selected>Reaprender 1 ponto</button>
+                  <button type="button" data-autocal-clear-point-selection>Cancelar</button>
+                </span>
               </div>
-              <div class="ar-buttons autocal-point-actions" hidden role="group" aria-label="Pontos marcados para a ECU medir de novo">
-                <button type="button" class="btn-primary" data-autocal-reacquire-selected>Reaprender 1 ponto</button>
-                <button type="button" data-autocal-clear-point-selection>Cancelar</button>
-              </div>
-              <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
-              <small id="autocalAutoCleanLine" class="autocal-autoclean-line" data-level="neutral" hidden></small>
             </div>
 
           </section>`;
@@ -918,41 +861,13 @@
 
     bind() {
       ns.CurveChart.bindView(this.panel, this, () => this.renderReferenceChart(this.snapshot || {}));
-      const options = this.panel?.querySelector('.ar-more');
-      const syncOptions = () => {
-        const open = options?.hasAttribute('open') === true;
-        const summary = options?.querySelector('summary');
-        if (summary) {
-          summary.setAttribute('aria-expanded', String(open));
-          summary.setAttribute('aria-controls', 'autocalOptionsPanel');
-          summary.textContent = open ? 'Fechar opções ▴' : 'Mais opções ▾';
-        }
-      };
-      options?.addEventListener('toggle', syncOptions);
-      this.panel?.querySelector('[data-autocal-close-options]')?.addEventListener('click', () => {
-        options?.removeAttribute('open');
-        syncOptions();
-      });
-      syncOptions();
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
         if (action) this.runOperational(action);
       });
+      // Revisto (W2): um toque, sem confirmação, nos dois botões de reler.
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
-        button.addEventListener('click', () => {
-          button.closest('.autocal-reset-menu')?.removeAttribute('open');
-          syncOptions();
-          this.prepare(button.dataset.autocalAction);
-        });
-      });
-      this.panel?.querySelector('[data-autocal-history]')?.addEventListener('click', () => {
-        if (!this.previousReferencePoints.length) return;
-        this.chartHistoryVisible = !this.chartHistoryVisible;
-        this.renderHistoryControl();
-        this.renderReferenceChart(this.snapshot);
-      });
-      this.panel?.querySelector('[data-autocal-sessions]')?.addEventListener('click', event => {
-        this.app?.router?.open('sessions');
+        button.addEventListener('click', () => this.prepare(button.dataset.autocalAction));
       });
       this.panel?.addEventListener('click', event => {
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
@@ -1292,7 +1207,6 @@
         button.disabled = waiting;
       });
 
-      this.renderHistoryControl();
 
       this.renderReferenceChart(snapshot);
       this.renderActionState();
@@ -1339,6 +1253,15 @@
       const sentence = this.sentenceFor(human, acquisitionName, live ? AutoCalUxModel.liveFuelState(live.fuel).kind : 'unknown');
       if (node.textContent !== sentence.text) node.textContent = sentence.text;
       if (node.dataset.level !== sentence.level) node.dataset.level = sentence.level;
+      this.setAlertStrip(sentence.level === 'error' ? sentence.text : '');
+    }
+
+    /** Faixa fina sobre o gráfico, só quando há erro (Revisto (W2): nunca um bloco permanente). */
+    setAlertStrip(text) {
+      const strip = document.getElementById('autocalAlertStrip');
+      if (!strip) return;
+      if (strip.textContent !== text) strip.textContent = text;
+      strip.hidden = !text;
     }
 
     /** Contador do AutoMatch no topo, ao lado de MAP, Injeção, RPM e Zona. Desconhecido = "—", nunca 0. */
@@ -1484,6 +1407,12 @@
         }
       }
       if (!scale || !layer) return;
+      // Revisto (W2): se o cursor encosta no limite direito, a escala cresce para contê-lo (só cresce; teto de 22 ms).
+      const liveMs = finite(live.petrolMs);
+      if (liveMs !== null && liveMs > 0 && liveMs <= 22 && liveMs > scale.xMax - Math.max(0.2, (scale.xMax - scale.xMin) * 0.03)) {
+        const wanted = Math.ceil(liveMs * 2) / 2;
+        if (wanted > (this.liveExtentMs || 0)) { this.liveExtentMs = wanted; this.renderReferenceChart(this.snapshot || {}); return; }
+      }
       const projected = AutoCalUxModel.projectLive(live, scale);
       if (!projected) return;
       D.removeAttrIfPresent(layer, 'display');
@@ -1758,7 +1687,7 @@
       const store = chart.evidence;
       const signature = chart.evidenceSignature({
         snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId, history,
-        extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}|${chart.viewKey(this.chartView)}`,
+        extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}|${chart.viewKey(this.chartView)}|lx${Math.round((this.liveExtentMs || 0) * 2)}`,
       });
       const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.nodeFor('ecu18')) !== false;
       if (alreadyShown) {
@@ -1766,7 +1695,7 @@
         this.renderLiveCursor();
         return;
       }
-      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history, mode: 'ecu18', view: this.chartView };
+      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history, mode: 'ecu18', view: this.chartView, liveMs: this.liveExtentMs || null };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
         if (!model || !model.domain) {
@@ -1804,16 +1733,6 @@
       this.renderLiveCursor();
       this.renderedChartHost = host;
       this.chartSignature = signature;
-    }
-
-    renderHistoryControl() {
-      const history = this.panel?.querySelector('[data-autocal-history]');
-      if (!history) return;
-      history.disabled = this.previousReferencePoints.length === 0 || !this.referenceUsable;
-      history.hidden = history.disabled;
-      history.textContent = this.chartHistoryVisible ? 'Ocultar anterior' : 'Leitura anterior';
-      history.setAttribute('aria-pressed', String(this.chartHistoryVisible));
-      history.setAttribute('aria-label', this.chartHistoryVisible ? 'Ocultar leitura anterior' : 'Mostrar leitura anterior');
     }
 
     renderResetComparison(points) {
@@ -2029,6 +1948,7 @@
       this.text('autocalHumanAction', 'AutoCal indisponível. Reconecte a ECU e tente de novo.');
       const sentence = document.getElementById('autocalHumanAction');
       if (sentence) sentence.dataset.level = 'error';
+      this.setAlertStrip('AutoCal indisponível. Reconecte a ECU e tente de novo.');
       this.text('autocalZoneSummary', '—');
       this.text('autocalReferenceCount', '—');
       const host = document.getElementById('autocalReferenceChart');

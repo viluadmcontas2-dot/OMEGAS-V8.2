@@ -23,7 +23,14 @@
     const node = document.getElementById(id);
     if (!node) return;
     const next = value == null ? '—' : String(value);
-    if (node.textContent !== next) node.textContent = next;
+    if (node.textContent !== next) {
+      node.textContent = next;
+      // Aviso breve (Revisto (W2)): o status da Curva K aparece sobre o gráfico e some sozinho.
+      if (id === 'curveBackupStatus') {
+        // Sem timer: o CSS apaga o aviso em 5 s; alternar a/b reinicia a animação a cada texto novo.
+        node.dataset.seq = node.dataset.seq === 'a' ? 'b' : 'a';
+      }
+    }
   }
   class CurveScreen {
     constructor(store, api) {
@@ -176,7 +183,7 @@
       // A foto escolhida e a prévia do Desfazer sobrevivem a uma releitura da lista (ex.: voltar do segundo plano).
       if (keep && rows.some(item => item.fileName === keep)) select.value = keep;
       this.syncRestoreButton();
-      if (this.restoreContext) text('curveBackupStatus', 'Pronto: confira antes→depois e toque em Desfazer');
+      if (this.restoreContext) text('curveBackupStatus', 'Pronto: toque em Desfazer para voltar a esta foto');
       else if (rows.length) text('curveBackupStatus', `${D.plural(rows.length, 'foto salva', 'fotos salvas')} · escolha uma para ver o que volta`);
       else text('curveBackupStatus', 'Nenhuma foto salva');
     }
@@ -440,7 +447,7 @@
           }));
           this.renderProposalList();
           this.syncRestoreButton();
-          text('curveBackupStatus', 'Pronto: confira antes→depois e toque em Desfazer');
+          text('curveBackupStatus', 'Pronto: toque em Desfazer para voltar a esta foto');
           return;
         }
       }

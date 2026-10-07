@@ -1,3 +1,4 @@
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (3).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -12,7 +13,9 @@ const provider = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/p
 const manager = fs.readFileSync(path.join(root, 'app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt'), 'utf8');
 
 assert.equal(cockpit.includes('ar-chart-card'), true);
-assert.equal(cockpit.includes('ar-status'), true);
+// Revisto (W2): asserções sobre blocos podados do AutoCal (cabeçalho, Detalhes, Histórico, popover de opções) foram removidas.
+// Revisto (W2): o cabeçalho ar-status saiu do AutoCal (o gráfico ocupa a área toda).
+assert.equal(cockpit.includes('class="ar-status"'), false);
 assert.equal(cockpit.includes('data-autocal-read'), false);
 assert.equal(cockpit.includes('data-autocal-chart-action="zoom-in"'), false);
 assert.equal(cockpit.includes('data-autocal-chart-action="zoom-out"'), false);
@@ -20,7 +23,7 @@ assert.equal(cockpit.includes('data-autocal-chart-action="fit"'), false);
 assert.equal(cockpit.includes('chartTransform()'), false);
 assert.equal(cockpit.includes('bindChartGestures('), false);
 assert.equal(cockpit.includes('Injeção (ms)'), true);
-assert.equal(cockpit.includes('id="autocalLiveFuel"'), true);
+// Revisto (W2): o chip de combustível (autocalLiveFuel) saiu do AutoCal junto com o cabeçalho.
 assert.equal(cockpit.includes("fuelChip.dataset.fuelState = fuelState.kind"), true);
 assert.equal(cockpitCss.includes('.autocal-fuel-chip[data-fuel-state="gas"]'), true);
 assert.equal(chart.includes('MAP (bar)'), true);
@@ -33,7 +36,6 @@ assert.equal(cockpitCss.includes('touch-action: pan-y'), true);
 assert.equal(cockpit.includes('autocal-now-card'), false);
 assert.equal(cockpit.includes('autocal-read-card'), false);
 assert.equal(arCss.includes('.ar-chart-card'), true);
-assert.equal(cockpitCss.includes('.autocal-secondary-stack'), true);
 assert.equal(cockpit.indexOf('autocal-chart-workspace') < cockpit.indexOf('autocalReferenceChart'), true);
 assert.equal(cockpit.indexOf('autocalReferenceChart') < cockpit.indexOf('autocalChartInspector'), true);
 assert.equal(cockpit.includes("addHook('status'"), true);
@@ -58,17 +60,18 @@ assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOCAL\""), false,
 assert.equal(cockpit.includes("class=\"autocal-finish-action\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOMATCH\""), false);
 assert.equal(cockpitCss.includes('.autocal-finish-action'), false);
-assert.equal(cockpit.includes('Os ajustes automáticos são decididos pela ECU.'), true);
+// Revisto (W2): sem textos fixos, sem "Mais opções" e sem popover: barra única Pausar / Reler GNV / Reler gasolina.
+assert.equal(cockpit.includes('Os ajustes automáticos são decididos pela ECU.'), false);
+assert.equal(cockpit.includes('Mais opções'), false);
+assert.equal(cockpit.includes('>Reler GNV<'), true);
+assert.equal(cockpit.includes('>Reler gasolina<'), true);
 assert.equal(cockpit.includes('Nada aqui roda automaticamente.'), false);
 assert.equal(cockpit.includes('autoMatchQuotaReached'), true);
 assert.equal(cockpit.includes('AutoMatch automático '), true);
 assert.equal(cockpit.includes('· limite atingido'), true);
-assert.equal(cockpit.includes('A leitura continua ativa e pode preencher novas zonas'), true);
 assert.equal(cockpit.includes('<summary>Corrigir aquisição</summary>'), false);
-assert.equal(cockpit.includes('<summary>Mais opções</summary>'), true);
 assert.equal(cockpit.includes('autocal-reacquire-action'), true);
 assert.equal(cockpit.indexOf('data-autocal-toggle') < cockpit.indexOf('data-autocal-action="RESET_GAS"'), true);
-assert.equal(cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('class="autocal-reset-menu ar-more"'), true);
 assert.equal(cockpitCss.includes('.autocal-reacquire-action'), true);
 assert.equal(cockpitCss.includes('.autocal-reset-advanced'), false);
 assert.equal(cockpit.includes('MANUAL_AUTOMATCH'), false);
@@ -85,8 +88,6 @@ assert.equal(cockpit.includes('Conferindo na ECU'), true);
 assert.equal(cockpit.includes('VERIFYING_FINISH'), true);
 assert.equal(cockpit.includes('RESETTING_K'), true);
 assert.equal(cockpit.includes("querySelectorAll('[data-autocal-action]')"), true);
-assert.equal(cockpit.includes('autocal-secondary-stack'), true);
-assert.equal(cockpit.includes('id="autocalAutoMatchEvidence"'), true);
 assert.equal(cockpit.includes('FACTOR_CHANGE_CONFIRMED'), true);
 assert.equal(cockpit.includes('NO_FACTOR_CHANGE_OBSERVED'), true);
 assert.equal(cockpit.includes('sem par antes/depois'), true);
@@ -95,11 +96,8 @@ assert.equal(cockpit.includes('recovery?.nextAction'), true);
 assert.equal(cockpit.includes('Próximo passo: '), true);
 assert.equal(cockpit.includes('dataset.reasonCode'), true);
 assert.equal(cockpit.includes('K mudou '), true);
-assert.equal(cockpitCss.includes('.autocal-automatch-evidence[data-state="FACTOR_CHANGE_CONFIRMED"]'), true);
 assert.equal(cockpit.includes('Consultar ECU'), false);
-assert.equal(cockpit.includes('ar-secondary'), true);
 assert.equal(cockpit.includes('autocal-secondary-rail'), false);
-assert.equal(arCss.includes('.ar-secondary'), true);
 assert.equal(api.includes('prepareNativeAction'), true);
 assert.equal(api.includes('executeNativeAction'), true);
 assert.equal(api.includes('preparePointDelete'), true);

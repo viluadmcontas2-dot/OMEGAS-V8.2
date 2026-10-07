@@ -180,7 +180,7 @@ test('P1-6: o laço de quadros para quando todos chegam no alvo (devolvem false)
   assert.equal(frames.length, 1, 'sem pedido duplicado');
 });
 
-test('P2: "Reiniciar medições GNV" é irreversível e pede confirmação antes de apagar', () => {
+test('P2 (Revisto (W2): agora "Apagar medições do app (GNV)"): é irreversível e pede confirmação antes de apagar', () => {
   const app = refinoApp();
   try {
     const mark = app.world.mark();

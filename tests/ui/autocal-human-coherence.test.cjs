@@ -43,25 +43,17 @@ test('desconexão e zonas desconhecidas não instruem dirigir para zonas inventa
  assert.match(pending.text,/Aguardando.*zonas/i);assert.doesNotMatch(pending.text,/Falta Z1/);
 });
 const L=require('./wiring/lib.cjs');
-test('zonas ficam na superfície principal e opções abertas têm estado e fechamento explícitos',()=>{
- const app=L.boot();try{app.go('autocal');app.settle(3);
-  assert.equal(app.byId('autocalZoneMeter').closest('details'),null);
-  const menu=app.$('.ar-more'),summary=menu.querySelector('summary');
-  assert.equal(summary.getAttribute('aria-expanded'),'false');
-  menu.setAttribute('open','');menu.dispatchEvent(new app.win.Event('toggle'));
-  assert.equal(summary.getAttribute('aria-expanded'),'true');assert.match(summary.textContent,/Fechar/);
-  app.$('[data-autocal-close-options]').click();assert.equal(menu.hasAttribute('open'),false);
-  assert.equal(summary.getAttribute('aria-expanded'),'false');L.assertClean(app,'opções');
- }finally{app.destroy();}
-});
+// Revisto (W2): o AutoCal não tem mais faixa de zonas nem menu de opções; o gráfico ocupa a área e a barra é única.
 test('AGORA se move durante reaquisição sem atualizar snapshot ou referência',()=>{
  const app=L.boot();try{app.go('autocal');app.settle(3);const screen=app.win.OmegasApp.autoCalCockpit;
   const point={index:0,petrolMs:4,mapBar:.4,counter:2,progress:.2,acquisitionState:'COLLECTING'};
+  // Revisto (W2): o eixo agora cresce para conter o cursor; um 2º ponto em 10 ms fixa o eixo e o cursor (4→5 ms) fica dentro dele.
+  const far={...point,index:1,petrolMs:10,mapBar:.9};
   const epoch={comparisonAllowed:false,petrolPending:false,petrolReferencePending:true,gasReferencePending:true};
-  screen.renderAcquisitionEpochChart([point],[],epoch,app.byId('autocalReferenceChart'));
+  screen.renderAcquisitionEpochChart([point,far],[],epoch,app.byId('autocalReferenceChart'));
   const snapshot=screen.snapshot;assert.ok(screen.chartScale);const layer=app.$('.autocal-live-layer');assert.ok(layer);
   const svg=app.$('#autocalReferenceChart svg');
-  screen.renderAcquisitionEpochChart([{...point}],[],{...epoch},app.byId('autocalReferenceChart'));
+  screen.renderAcquisitionEpochChart([{...point},{...far}],[],{...epoch},app.byId('autocalReferenceChart'));
   assert.equal(app.$('#autocalReferenceChart svg'),svg,'dados iguais preservam o SVG durante reaquisição');
   assert.equal(app.$('.autocal-live-layer'),layer,'a camada viva não é recriada');
   const setLive=ms=>{const t=screen.store.get().telemetry;screen.store.patch({telemetry:{...t,valid:true,ageMs:0,telemetryAgeMs:0,live:{...t.live,petrol_ms:ms,load_bar:.4,rpm:1200,fuel:'GASOLINA'}}});screen.renderLiveCursor();for(let i=0;i<25;i++)screen.animateCursor(i*20);};
@@ -77,7 +69,6 @@ test('normal → gasolina reiniciada → curva nova restaura o gráfico sem refe
   for(const snap of [reset.snapshot,reset.nativeSnapshot]) for(const f of snap.fields||[]) if(['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF','MNFLD_PRESS_BUF','NUM_BUF_UPD_PETR','ACQUIRED_ZONES_PETROL'].includes(f.key)){f.status='STALE_EPOCH';f.rawValues=[];f.physicalValues=[];}
   let current=reset;screen.api={...screen.api,projection:()=>current,actionStatus:()=>({action:'RESET_PETROL',state:'CONFIRMED',busy:false})};screen.refresh();
   assert.equal(app.$('#autocalReferenceChart .autocal-reference-line.petrol'),null);
-  assert.equal(app.$('[data-autocal-zone-petrol="0"]').dataset.state,'unknown');
   assert.match(app.byId('autocalChartInspector').textContent,/gasolina/i);
   current=original;screen.refresh();assert.ok(app.$('#autocalReferenceChart [data-chart-live]'));
   assert.equal(screen.referenceUsable,true);L.assertClean(app,'transição gasolina');
@@ -94,8 +85,9 @@ test('curva pendente não afirma aquisição ativa com leitura pausada ou descon
 
 test('comandos operacionais ficam fora dos painéis de detalhes',()=>{
  const app=L.boot();try{app.go('autocal');app.settle(3);
-  for(const selector of ['[data-autocal-action="RESET_GAS"]','[data-autocal-action="RESET_PETROL"]','[data-autocal-sessions]']) assert.equal(app.$(selector).closest('details'),null,selector);
-  app.$('[data-autocal-sessions]').click();assert.equal(app.$('.screen.active').dataset.screen,'sessions');
+  for(const selector of ['[data-autocal-action="RESET_GAS"]','[data-autocal-action="RESET_PETROL"]']) assert.equal(app.$(selector).closest('details'),null,selector);
+  // Revisto (W2): sem atalho "Ver sessões" no AutoCal (há a aba Sessões).
+  assert.equal(app.$('[data-autocal-sessions]'),null);
   app.go('refino');app.settle(3);
   for(const selector of ['[data-refino-reset-gas]','[data-refino-acquisition]']) assert.equal(app.$(selector).closest('details'),null,selector);
   app.$('[data-refino-acquisition]').click();assert.equal(app.$('.screen.active').dataset.screen,'autocal');

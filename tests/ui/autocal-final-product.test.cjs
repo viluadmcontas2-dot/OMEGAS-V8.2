@@ -1,4 +1,5 @@
 'use strict';
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (2).
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -44,8 +45,6 @@ assert.match(cockpit, /route === ['"]autocal['"]/,
   'cockpit deve acompanhar a rota AutoCal');
 assert.equal(cockpit.includes('data-autocal-read'), false,
   'cockpit operacional não deve expor consulta manual da ECU');
-assert.match(cockpit, /ar-secondary/,
-  'informações secundárias devem ficar recolhidas fora da superfície principal');
 assert.match(cockpit, /this\.api\.projection/,
   'cockpit deve consumir a projeção Kotlin unificada');
 assert.equal(bridge.includes('telemetryStore.liveJson()'), false,
@@ -78,8 +77,6 @@ assert.match(cockpit, /Injeção \(ms\)/,
   'eixo X deve declarar a unidade física');
 assert.match(chart, /MAP \(bar\)/,
   'eixo Y deve declarar a unidade física');
-assert.match(cockpit, /data-autocal-history/,
-  'leitura anterior continua sendo a comparação gráfica permitida');
 
 assert.equal(cockpit.includes("'<span>B' +"), false,
   'Bxx não pode ser rótulo primário das regiões');
