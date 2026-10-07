@@ -193,6 +193,7 @@
               <select id="mapAdjustmentMode" hidden aria-label="Como ajustar"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select>
               <div class="value-field"><input id="mapAdjustmentValue" class="input-lg" type="number" inputmode="decimal" step="1" value="0" aria-label="Valor do ajuste"><span id="mapAdjustmentUnit" class="map-adjust-unit">% sobre o K</span></div>
               <div class="nudge-row step-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
+              <button id="mapReadButton" type="button" class="secondary" hidden>Reler ECU</button>
               <button id="mapReviewButton" title="Gravar é um toque: o app guarda a foto antes e confere na ECU. Desfazer volta à foto." type="button" class="primary btn-primary wide" disabled>Selecione células</button>
             </div>
           </div>
@@ -254,7 +255,8 @@
                   <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
                 </div>
               </details>
-              <button id="curveSaveButton" type="button" class="secondary" title="Salva a Curva K em Downloads/Omegas">Salvar</button>
+              <button id="curveReadButton" type="button" class="secondary" hidden>Reler ECU</button>
+            <button id="curveSaveButton" type="button" class="secondary" title="Salva a Curva K em Downloads/Omegas">Salvar</button>
           </div>
 
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Gravando na ECU…</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence" id="curveOperationSteps"><span>Foto antes</span><span>Gravando</span><span>Conferindo na ECU</span></div></div></div>

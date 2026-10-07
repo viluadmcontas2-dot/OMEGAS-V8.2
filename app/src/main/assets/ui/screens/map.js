@@ -8,7 +8,11 @@
   const { finite, fmt } = root.OmegasUi.DisplayRules;
   const D = () => root.OmegasUi.DisplayRules;
   const signed = value => (value > 0 ? '+' : value < 0 ? '−' : '') + Math.abs(value);
-  function text(id, value) { const node = document.getElementById(id); if (node) node.textContent = value == null ? '—' : String(value); }
+  function text(id, value) {
+    const node = document.getElementById(id); if (node) node.textContent = value == null ? '—' : String(value);
+    // Reler ECU só aparece quando a leitura não foi confirmada (a leitura normal é automática).
+    if (id === 'mapSourceStatus') { const b = document.getElementById('mapReadButton'); if (b) b.hidden = !/não confirmad/i.test(String(value)); }
+  }
 
   class MapScreen {
     constructor(store, api, router) {

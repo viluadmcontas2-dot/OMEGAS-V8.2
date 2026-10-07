@@ -376,7 +376,7 @@ html body .ts-advanced > summary { min-height:48px; display:flex; align-items:ce
 html body :is(.ar-refino,.ar-autocal) .ar-act { display:flex; flex-direction:column; align-items:stretch; gap:6px; min-height:0; }
 html body :is(.ar-refino,.ar-autocal) .refino-statusline { display:flex; align-items:baseline; gap:6px 18px; flex-wrap:wrap; min-width:0; }
 html body :is(.ar-refino,.ar-autocal) .refino-statusline .ar-sentence { margin:0; font-size:22px; font-weight:700; min-width:0; }
-html body :is(.ar-refino,.ar-autocal) .refino-statusline .ar-reason { margin:0; color:var(--warn,#ffd23f); font-size:20px; font-weight:700; }
+html body :is(.ar-refino,.ar-autocal) .refino-statusline .ar-reason { margin:0; color:var(--warn); font-size:20px; font-weight:700; }
 html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons { display:flex; flex-wrap:nowrap; align-items:stretch; justify-content:flex-start; gap:8px; width:100%; }
 html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > :is(button,.instrument-details,.autocal-point-actions,.refino-undo):not([hidden]) { flex:0 0 auto; width:auto; min-width:0; margin:0; }
 html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > button, html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > .instrument-details > summary, html body .ar-refino .ar-act > .ar-buttons > .refino-undo > button { height:58px; min-height:58px; display:flex; align-items:center; justify-content:center; white-space:nowrap; padding:0 18px; }
@@ -405,7 +405,7 @@ html body .btn-bar .nudge-row button { min-width:58px; }
 html body .app-shell .map-screen .map-workspace { display:flex; flex-direction:column; gap:8px; grid-template-columns:none; }
 html body .map-screen .map-surface { flex:1 1 auto; min-height:0; }
 html body .map-screen .map-head { display:flex; align-items:center; gap:14px; min-height:0; height:30px; padding:0 4px; }
-html body .map-screen .map-head .source-status { margin:0; font-size:16px; font-weight:700; color:var(--ok,#3ddc84); }
+html body .map-screen .map-head .source-status { margin:0; font-size:16px; font-weight:700; color:var(--ok); }
 html body .map-screen .map-head .map-live-condition { margin-left:auto; display:flex; align-items:baseline; gap:8px; }
 html body .map-screen .map-bar { flex:0 0 auto; }
 html body .map-screen .map-bar .map-bar-sel { display:flex; flex-direction:column; justify-content:center; min-width:130px; }
@@ -446,7 +446,7 @@ html body .curve-screen .curve-foot .curve-edit-only .value-field input { width:
 html body .curve-screen .curve-foot .curve-photos { position:relative; }
 html body .curve-screen .curve-foot .curve-photos-menu { top:auto; bottom:calc(100% + 6px); right:auto; left:0; }
 html body .curve-screen:has([data-curve-panel="overview"].active) .curve-foot .curve-edit-only { display:none; }
-html body .curve-screen .source-status { margin:0 12px 0 0; font-size:15px; font-weight:700; color:var(--ok,#3ddc84); }
+html body .curve-screen .source-status { margin:0 12px 0 0; font-size:15px; font-weight:700; color:var(--ok); }
 html body .curve-screen .curve-foot .view-switch { display:flex; gap:0; padding:0; height:58px; align-items:stretch; border-radius:14px; overflow:hidden; box-sizing:border-box; }
 html body .curve-screen .curve-foot .view-switch button { height:58px; min-height:58px; padding:0 16px; border-radius:0; }
 html body .curve-screen .curve-foot .curve-photos > summary, html body .curve-screen .curve-foot > button, html body .curve-screen .curve-foot .curve-edit-only button { height:58px; min-height:58px; box-sizing:border-box; }

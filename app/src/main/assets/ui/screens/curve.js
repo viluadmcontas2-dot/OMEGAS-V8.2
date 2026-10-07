@@ -23,6 +23,7 @@
     const node = document.getElementById(id);
     if (!node) return;
     const next = value == null ? '—' : String(value);
+    if (id === 'curveSourceStatus') { const b = document.getElementById('curveReadButton'); if (b) b.hidden = !/não confirmad/i.test(next); }
     if (node.textContent !== next) {
       node.textContent = next;
       // Aviso breve (Revisto (W2)): o status da Curva K aparece sobre o gráfico e some sozinho.
@@ -56,6 +57,7 @@
     }
 
     bind() {
+      document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('curveSaveButton')?.addEventListener('click', () => document.getElementById('curveBackupSave')?.click());
       document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
       document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
