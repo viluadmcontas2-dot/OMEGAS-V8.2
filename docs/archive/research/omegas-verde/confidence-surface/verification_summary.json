@@ -1,0 +1,25 @@
+{
+  "preholdout_replay": "PASS: every output hash matches; only freeze audit timestamp differs",
+  "external_replay": "PASS: five output CSV hashes match; raw ZIP not reopened",
+  "synthetic_tests": 10,
+  "synthetic_tests_result": "PASS",
+  "single_execution_guards": "PASS: second freeze and normal evaluation rejected",
+  "target_oracle_invariance": "PASS: unused target S/residual fields do not change features, S_carry or predictions",
+  "sensitivity": {
+    "holdout": {
+      "combinations": 25,
+      "strict_T_P_W": 0,
+      "T_greater_W": 25
+    },
+    "preholdout": {
+      "combinations": 25,
+      "strict_T_P_W": 25,
+      "T_greater_W": 25
+    }
+  },
+  "frozen_gate_sha256": "4dcd64dc1681e34841b01c54f050b002efd7702ae68d693886496e1a414f4a76",
+  "review": "Primary self-review under Codex Engineering Guardrails and Superpowers; no independent human or agent review claimed",
+  "scientific_verdict": "FAIL",
+  "hypothesis": "Session-local interpolated sign consensus transfers direction reliably to an external session",
+  "minimum_next_experiment": "Collect one new independent gasoline session with repeated stable visits near 1631 rpm / MAP .207, and matched real historical observations there; test the already-frozen negative sign before any new score selection."
+}
