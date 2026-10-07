@@ -167,7 +167,7 @@ def zone(index):
 
 
 def reference_points(snapshot):
-    """Pontos de gasolina que a ECU deu como adquiridos, limpos como o livro limpa a curva da ECU.
+    """Pontos de gasolina maduros da ECU (zona marcada OU contador no limiar), limpos como o livro limpa a curva da ECU.
     [] se imatura (< 6 pontos ou faixa < 0,20 bar). Retorna [(map, ms, maturidade)]."""
     times = snapshot_raw(snapshot, "PETR_INJ_TBUF") or []
     maps = snapshot_raw(snapshot, "MNFLD_PRESS_BUF") or []
@@ -175,6 +175,16 @@ def reference_points(snapshot):
     zones = snapshot_raw(snapshot, "ACQUIRED_ZONES_PETROL") or []
     if counts is None:
         return []
+    # Limiares como AutoCalAcquisition (lidos sem exigir status, como lá): lenta = VECT_AUTOCAL_U8_1[0]; resto = CALIBRATION_VAL_1[2].
+    def any_raw(key):
+        for f in snapshot.get("fields", []):
+            if f.get("key") == key:
+                return list(f.get("rawValues") or [])
+        return []
+    idle = any_raw("VECT_AUTOCAL_U8_1")
+    calibration = any_raw("CALIBRATION_VAL_1")
+    idle_thd = idle[0] if idle else None
+    normal_thd = calibration[2] if len(calibration) > 2 else None
     raw = []
     for i in range(18):
         if i >= len(times) or i >= len(maps) or i >= len(counts):
@@ -182,7 +192,10 @@ def reference_points(snapshot):
         t_raw, m_raw, c = times[i], maps[i], counts[i]
         active = t_raw != 0 or m_raw != 0 or c > 0
         z = zones[zone(i)] if zone(i) < len(zones) else None
-        if not (active and z == 1):
+        # Critério único (EcuPetrolReference.isMaturePetrolPoint): zona marcada OU contador no limiar da própria ECU.
+        threshold = idle_thd if i <= 5 else normal_thd
+        mature = threshold is not None and threshold > 0 and c >= threshold
+        if not ((active and z == 1) or mature):
             continue
         ms, bar = t_raw / 512.0, m_raw / 1024.0
         if ms > 0 and bar > 0:
