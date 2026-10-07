@@ -20,7 +20,7 @@ Scripts: tools/autocal_refine/teia_stage.py, teia_dedup.py, teia_census.py.
 - 41% dos snapshots têm ≥1 banda exatamente em 24576 (1,50); 21% dos pontos 0–18 estão ≥1,45.
 - Mas 1,4% dos pontos 0–18 passam de 1,50 (máx. observado 1,70, ponto 18). A premissa "teto = 24576" da missão está **refutada** como limite absoluto; pode ser limite só do aprendizado automático (valores acima poderiam vir de gravação manual/Curva K — não verificado).
 - Saturação não cresce dentro da sessão (dentre 41 sessões com ≥3 snapshots, bandas no teto: 6 desceram, 1 subiu) — sugere reset/regravação entre sessões; n pequeno.
-- Implicação para o app: bandas com 1,50 sustentado = ECU pedindo mais combustível que o mapa permite → candidato a alerta "mapa K/regulagem insuficiente nessa faixa".
+- (Retirado por decisão do dono: o teto é da ECU; o app não alerta.)
 
 ## Lacunas dos dados (honesto)
 Não existem nestes 79 sessões: `engine_stall`, `refinement_phase/verdict`. Só 4 epochs de automatch e 4 de calibração. Stalls terão de ser inferidos da telemetria (rpm→0 sem session_stopped).
@@ -87,8 +87,21 @@ Erro de equivalência = mediana |GNV/gasolina − 1| nas bandas GNV com contador
 - 20:31 Mapa K gravado → GNV reaprende de 8 para 13 bandas e o erro cai **9,6% → 2,5%** em 9 min. Melhor estado: **~1,5% com 6–7 bandas** após a 2ª Curva K (20:52–20:55).
 - **Cada automatch da ECU zera os buffers de GNV** (bandas maduras → 0) e o GNV reaprende do zero; foram 6 automatches em 30 min (20:43, 20:46, 20:49, 21:02, 21:08, 21:13). Logo após cada um, o erro se apoia em 1–3 bandas e oscila.
 - **Último automatch (21:13:51) piorou:** erro +16% → +6,5% (viés positivo, GNV acima da gasolina) e 4 dos 7 "quase apagou" da sessão vieram nos 10 min seguintes (21:15, 21:17, 21:21, 21:23; MAP 0,20–0,38). O app registrou "um trecho piorou, restaure só esse trecho" às 21:14:19.
-- Esse automatch deixou **11/20 pontos do MUL_ACT no teto 1,50** — o maior número dos 14 automatches registrados (os outros: 0–9). Hipótese: teto saturado impede a equivalência e empurra o viés. NÃO provado (n=1).
+- Esse automatch deixou **11/20 pontos do MUL_ACT no teto 1,50** — o maior número dos 14 automatches registrados (os outros: 0–9). (Descrição apenas; o teto é decisão da ECU — sem recomendação para o app.)
 
 ## F10 — o que cada automatch nativo faz no MUL_ACT (14 épocas, 6 dias)  [classe 3, dado cru]
 - Muda 12–20 dos 20 pontos úteis por época; mudança média −10,6% … +2,2%.
 - Maior mudança por ponto **sempre em valores redondos: 4,9–7,5%, 12,0%, 12,9–13,6%, 17,1%, 25,0%**; em 3 épocas o máximo é exatamente 6,0%, 12,0% ou 25,0% (vários pontos iguais) → sugere passo máximo/quantização da ECU por época. Útil para prever o próximo automatch. Mecanismo não confirmado.
+
+## Decisão do dono (2026-10-06): o teto 1,50 do MUL_ACT é da ECU
+O app NÃO alerta nem age sobre pontos em 1,50. As observações de teto em F3/F9/F10 ficam só como descrição do dado, sem recomendação.
+
+## F11 — aquisição em marcha lenta infla o ponto do GNV em +11% a +26%  [classe 3; forte]
+Método cru (sem rótulos de correlação do app): para cada incremento de NUM_BUF_UPD entre dois snapshots consecutivos (≤2 min, sem reset no meio), telemetria daquela janela no combustível certo e |MAP − MAP da banda| < 0,03. "Lenta" = ≥80% dessas leituras com rpm<1000; "andando" = ≤20%.
+- 920 incrementos, 860 com telemetria, 43 sessões.
+- GNV, bandas 2–9 (MAP 0,33–0,67): **16–43% das aquisições acontecem em marcha lenta.** Bandas 0–1 e 10–15: ~0%.
+- ms aprendido lenta/andando (IC95 bootstrap por sessão): b2 1,11 [0,99; 1,17] · b3 1,12 [0,96; 1,25] · b4 1,20 [1,00; 1,35] · b5 1,17 [1,06; 1,45] · b6 1,17 [1,03; 1,32] · **b7 1,26 [1,10; 1,40]** · b8 1,18 [1,07; 1,30] · b9 1,21 [1,10; 1,54].
+- **Direção sempre para CIMA** no GNV (a lenta nunca puxou para baixo nestes dados).
+- Coerente com F6: na GASOLINA estacionária, mesma MAP em rpm<1200 também dá +20–30% de ms → é física real do regime, não "erro". O problema não é a lenta: é **misturar regimes** (banda da gasolina aprendida andando × banda do GNV aprendida na lenta → falsa diferença de equivalência).
+- **Gasolina quase não aprende nestes dados:** só 3 incrementos de NUM_BUF_UPD_PETR em 43 sessões. A base (gasolina) está praticamente congelada; o regime em que foi aprendida é desconhecido aqui.
+- Explica F5: b7 (o ponto mais apagado à mão, +16% vs vizinhos) é a banda com maior inflação de lenta (1,26). Apagar parado = readquirir na lenta = mesmo ponto.
