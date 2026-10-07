@@ -25,6 +25,8 @@ class AutoIdleCleanupCoordinatorTest {
     private val evidences = mutableListOf<JSONObject>()
     private val records = mutableListOf<Pair<String, JSONObject>>()
     private var nextResult: JSONObject = JSONObject().put("ok", true).put("started", true)
+    /** Identidade da última operação enfileirada (o gerenciador real devolve `preparationId` ao enfileirar). */
+    private var lastPreparationId = ""
     private var enabled: Int? = 1
     private var sessionAge = 60_000L
     private var actBlock: String? = null
@@ -36,7 +38,11 @@ class AutoIdleCleanupCoordinatorTest {
             override fun recentTelemetryFrames(fromElapsedMs: Long, toElapsedMs: Long) =
                 frames.filter { it.elapsedMs in fromElapsedMs..toElapsedMs }
         },
-        executeDelete = { targets, evidence -> calls += targets; evidences += evidence; nextResult },
+        executeDelete = { targets, evidence ->
+            calls += targets; evidences += evidence
+            lastPreparationId = "ACA-AUTO-${calls.size}"
+            JSONObject(nextResult.toString()).also { if (it.optBoolean("ok")) it.put("preparationId", lastPreparationId) }
+        },
         autoCalEnabled = { enabled },
         sessionAgeMs = { sessionAge },
         canAct = { actBlock },
@@ -148,7 +154,7 @@ class AutoIdleCleanupCoordinatorTest {
     }
 
     @Test
-    fun `falhas pausam e desarmam; rearmar limpa a pausa mas nao o bloqueio de mutacao incerta`() {
+    fun `falhas pausam e desarmam e rearmar limpa a pausa mas nao o bloqueio de mutacao incerta`() {
         outlier(Fuel.GAS, 6)
         drive("GNV")
         coordinator.evaluate()
@@ -189,7 +195,7 @@ class AutoIdleCleanupCoordinatorTest {
     // ---- duas leituras distintas ----
 
     @Test
-    fun `uma leitura nao basta; a mesma leitura com tempo novo confirma; o mesmo tempo repetido nunca conta`() {
+    fun `uma leitura nao basta e a mesma leitura com tempo novo confirma mas o mesmo tempo repetido nunca conta`() {
         buffers(Fuel.GAS, outlierBand = 6, outlierCounter = 5)
         drive("GNV")
         coordinator.evaluate()
@@ -728,6 +734,107 @@ class AutoIdleCleanupCoordinatorTest {
 
     // ---- apoio ----
 
+    // ---- identidade do recibo (revisão 2026-10-07 #5) ----
+
+    @Test
+    fun `recibo da sessao USB antiga nao conclui nem desarma a operacao da sessao nova`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        val oldPreparation = lastPreparationId
+        liveSession = 2L
+        coordinator.onSessionChanged(2L)
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        outlier(Fuel.PETROL, 9, session = 2L)
+        drive("GASOLINA")
+        coordinator.evaluate()
+        assertEquals(2, calls.size)
+        assertEquals("PETROL", coordinator.json().getString("inFlightFuel"))
+        records.clear()
+        coordinator.onActionFailed(failed(mutation = true, session = 1L, preparationId = oldPreparation))
+        coordinator.onActionConfirmed(confirmed(Fuel.GAS, 6, session = 1L, preparationId = oldPreparation))
+        assertTrue("o voo da sessão nova continua", coordinator.json().getBoolean("inFlight"))
+        assertTrue("recibo velho não desarma", coordinator.uiSummary().armed)
+        assertFalse("recibo velho não bloqueia", coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        assertEquals(0, coordinator.uiSummary().relearnedThisSession)
+        assertEquals(2, records.count { it.first == "autocal_auto_idle_receipt_ignored" })
+        coordinator.onActionConfirmed(confirmed(Fuel.PETROL, 9, session = 2L))
+        assertFalse(coordinator.json().getBoolean("inFlight"))
+        assertEquals("o recibo certo conclui normalmente", 1, coordinator.uiSummary().relearnedThisSession)
+        assertEquals(Fuel.PETROL, coordinator.uiSummary().recentDeletes.single().fuel)
+    }
+
+    @Test
+    fun `recibo sem identidade ou de outra preparacao e ignorado e o voo segue`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        val noIdentity = confirmed(Fuel.GAS, 6).also { it.remove("preparationId"); it.remove("sessionId") }
+        coordinator.onActionConfirmed(noIdentity)
+        coordinator.onActionFailed(failed(mutation = false, preparationId = "ACA-AUTO-OUTRA"))
+        assertTrue(coordinator.json().getBoolean("inFlight"))
+        assertTrue(coordinator.uiSummary().armed)
+        assertEquals(0, coordinator.uiSummary().relearnedThisSession)
+        coordinator.onActionConfirmed(confirmed(Fuel.GAS, 6))
+        assertFalse(coordinator.json().getBoolean("inFlight"))
+        assertEquals(1, coordinator.uiSummary().relearnedThisSession)
+    }
+
+    @Test
+    fun `recibo atrasado de um voo que caiu no timeout nao apaga o bloqueio nem o voo seguinte`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        val timedOut = lastPreparationId
+        now += AutoIdleCleanupCoordinator.IN_FLIGHT_TIMEOUT_MS + 1
+        drive("GNV")
+        coordinator.evaluate()
+        assertFalse(coordinator.uiSummary().armed)
+        assertTrue(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        // Recibo atrasado do voo perdido: o resultado já virou incerto; não libera a releitura nem rearma.
+        coordinator.onActionConfirmed(confirmed(Fuel.GAS, 6, preparationId = timedOut))
+        assertTrue(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        assertFalse(coordinator.uiSummary().armed)
+        assertEquals(0, coordinator.uiSummary().relearnedThisSession)
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        now += 11_000
+        outlier(Fuel.GAS, 6, counters = 20 to 21)
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals(2, calls.size)
+        assertTrue(coordinator.json().getBoolean("inFlight"))
+        coordinator.onActionFailed(failed(mutation = true, preparationId = timedOut))
+        assertTrue("falha atrasada do voo antigo não derruba o voo novo", coordinator.json().getBoolean("inFlight"))
+        assertTrue(coordinator.uiSummary().armed)
+        coordinator.onActionConfirmed(confirmed(Fuel.GAS, 6))
+        assertFalse(coordinator.json().getBoolean("inFlight"))
+        assertEquals(1, coordinator.uiSummary().relearnedThisSession)
+    }
+
+    @Test
+    fun `invalidacao de round ou confirmacao manual nao libera a releitura obrigatoria nem o bloqueio`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        coordinator.onActionFailed(failed(mutation = true))
+        coordinator.onRoundInvalidated()
+        coordinator.onManualMutation(JSONObject().put("action", "RESET_PETROL").put("outcome", "CONFIRMED"))
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        val policy = coordinator.json().getJSONObject("policy")
+        assertTrue("invalidação de round não é leitura do alvo", policy.getBoolean("needsReread"))
+        assertTrue(policy.getLong("blockedUntilElapsedMs") > now)
+        now += 11_000
+        outlier(Fuel.PETROL, 9)
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals("sem releitura completa do GNV: nada sai", 1, calls.size)
+        outlier(Fuel.GAS, 6, counters = 20 to 21) // leitura completa, nova e posterior do alvo
+        drive("GNV")
+        coordinator.evaluate()
+        assertFalse(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        assertEquals(2, calls.size)
+    }
+
     private fun mapRaw(band: Int) = 300 + 40 * band
     private fun timeRaw(band: Int, base: Double = 1.5) = ((base + 0.25 * band) * 512).toInt()
 
@@ -779,13 +886,29 @@ class AutoIdleCleanupCoordinatorTest {
         frames += NativeAnchorTelemetryWindow.Frame(frames.size + 1L, now, rpm, 0.7, 5.0, fuel)
     }
 
-    private fun confirmed(fuel: Fuel, band: Int, otherAbnormal: Boolean = false) = confirmed(fuel, listOf(band), otherAbnormal)
+    private fun confirmed(
+        fuel: Fuel,
+        band: Int,
+        otherAbnormal: Boolean = false,
+        session: Long = 1L,
+        preparationId: String = lastPreparationId,
+    ) = confirmed(fuel, listOf(band), otherAbnormal, session, preparationId)
 
-    private fun confirmed(fuel: Fuel, bands: List<Int>, otherAbnormal: Boolean = false) = JSONObject()
+    /** Recibo real do gerenciador: sempre com `sessionId` (geração USB) e `preparationId` da operação. */
+    private fun confirmed(
+        fuel: Fuel,
+        bands: List<Int>,
+        otherAbnormal: Boolean = false,
+        session: Long = 1L,
+        preparationId: String = lastPreparationId,
+    ) = JSONObject()
+        .put("id", "RECEIPT-$preparationId")
         .put("outcome", "CONFIRMED")
         .put("action", "DELETE_POINT")
         .put("automatic", true)
         .put("humanConfirmed", false)
+        .put("sessionId", session)
+        .put("preparationId", preparationId)
         .put(
             "details",
             JSONObject()
@@ -795,10 +918,18 @@ class AutoIdleCleanupCoordinatorTest {
                 .put("otherFuelGuard", JSONObject().put("abnormal", otherAbnormal).put("changed", otherAbnormal)),
         )
 
-    private fun failed(mutation: Boolean, effective: Boolean = true) = JSONObject()
+    private fun failed(
+        mutation: Boolean,
+        effective: Boolean = true,
+        session: Long = 1L,
+        preparationId: String = lastPreparationId,
+    ) = JSONObject()
+        .put("id", "RECEIPT-$preparationId")
         .put("outcome", "FAILED")
         .put("action", "DELETE_POINT")
         .put("automatic", true)
+        .put("sessionId", session)
+        .put("preparationId", preparationId)
         .put("mutationMayHaveStarted", mutation)
         .put("pointDelete", JSONObject().put("fuel", "GAS").put("index", 6))
         .also { if (!effective) it.put("effective", false) }

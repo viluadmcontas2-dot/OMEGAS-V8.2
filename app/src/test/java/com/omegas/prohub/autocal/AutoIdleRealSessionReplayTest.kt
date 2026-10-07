@@ -29,6 +29,8 @@ class AutoIdleRealSessionReplayTest {
         val targets: List<Target>,
         val telemetryFuel: String?,
         val evidence: JSONObject,
+        /** Identidade devolvida pelo "gerenciador" ao enfileirar (o recibo real a carrega). */
+        val preparationId: String,
     )
 
     @Test
@@ -62,10 +64,10 @@ class AutoIdleRealSessionReplayTest {
                     frames.filter { it.elapsedMs in fromElapsedMs..toElapsedMs }
             },
             executeDelete = { targets, evidence ->
-                val deletion = Delete(now, targets.toList(), frames.lastOrNull()?.fuel, evidence)
+                val deletion = Delete(now, targets.toList(), frames.lastOrNull()?.fuel, evidence, "ACA-AUTO-${deletes.size + 1}")
                 deletes += deletion
                 pending += deletion
-                JSONObject().put("ok", true).put("started", true)
+                JSONObject().put("ok", true).put("started", true).put("preparationId", deletion.preparationId)
             },
             autoCalEnabled = { enabled },
             sessionAgeMs = { now - sessionStart },
@@ -81,6 +83,8 @@ class AutoIdleRealSessionReplayTest {
                         .put("outcome", "CONFIRMED")
                         .put("automatic", true)
                         .put("humanConfirmed", false)
+                        .put("sessionId", sessionId)
+                        .put("preparationId", deletion.preparationId)
                         .put("finishedAtMs", origin + now)
                         .put("details", JSONObject()
                             .put("fuel", deletion.targets.first().fuel.wireName)

@@ -448,22 +448,48 @@ class TelemetryForegroundService : Service() {
                     workClass = workClass,
                 )
             },
+            // Recibos: primeiro o que muda estado (cada passo no seu try), só depois a gravação da sessão (disco cheio
+            // não pode impedir a entrega ao coordenador; o gerenciador engole exceções do callback). Recibo de uma
+            // geração USB antiga (chegou depois de reconectar) só é gravado: não invalida round nem armamento novo.
             onConfirmed = { receipt ->
-                sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
-                nativeAutoCal.onManualActionConfirmed(receipt)
-                autoIdleCleanup.onActionConfirmed(receipt)
-                // Reset/ação manual do dono desarma a limpeza automática; a confirmação do próprio automático não.
-                if (!receipt.optBoolean("automatic", false)) autoIdleCleanup.onManualMutation(receipt)
-                try { link.markDataChanged("ação AutoCal nativa confirmada") } catch (_: Exception) {}
+                val stale = receipt.optLong("sessionId", -1L) != actionSerial.currentSessionId()
+                val steps: List<Pair<String, () -> Unit>> = if (stale) emptyList() else listOf(
+                    "autocal.manualAction" to { nativeAutoCal.onManualActionConfirmed(receipt) },
+                    "limpeza.confirmado" to { autoIdleCleanup.onActionConfirmed(receipt) },
+                    // Reset/ação manual do dono desarma a limpeza automática; a confirmação do próprio automático não.
+                    "limpeza.manual" to {
+                        if (!receipt.optBoolean("automatic", false)) autoIdleCleanup.onManualMutation(receipt)
+                    },
+                    "link" to { link.markDataChanged("ação AutoCal nativa confirmada") },
+                )
+                EvidenceInvalidation.run(
+                    invalidate = steps,
+                    record = {
+                        if (stale) log.add("WARN", "AUTOCAL", "Recibo de sessão USB antiga (${receipt.optString("id")}): só gravado")
+                        sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
+                    },
+                    warn = { log.add("WARN", "AUTOCAL", it) },
+                )
             },
             onFailed = { receipt ->
-                sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
-                // A escrita pode ter chegado à ECU: nada lido antes dela vale mais (M2).
-                if (receipt.optBoolean("mutationMayHaveStarted", false)) nativeAutoCal.invalidateRound()
-                autoIdleCleanup.onActionFailed(receipt)
-                if (!receipt.optBoolean("automatic", false) && receipt.optBoolean("mutationMayHaveStarted", false)) {
-                    autoIdleCleanup.onManualMutation(receipt)
-                }
+                val stale = receipt.optLong("sessionId", -1L) != actionSerial.currentSessionId()
+                val mutation = receipt.optBoolean("mutationMayHaveStarted", false)
+                val steps: List<Pair<String, () -> Unit>> = if (stale) emptyList() else listOf(
+                    // A escrita pode ter chegado à ECU: nada lido antes dela vale mais (M2).
+                    "autocal.round" to { if (mutation) nativeAutoCal.invalidateRound() },
+                    "limpeza.falha" to { autoIdleCleanup.onActionFailed(receipt) },
+                    "limpeza.manual" to {
+                        if (!receipt.optBoolean("automatic", false) && mutation) autoIdleCleanup.onManualMutation(receipt)
+                    },
+                )
+                EvidenceInvalidation.run(
+                    invalidate = steps,
+                    record = {
+                        if (stale) log.add("WARN", "AUTOCAL", "Recibo de sessão USB antiga (${receipt.optString("id")}): só gravado")
+                        sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
+                    },
+                    warn = { log.add("WARN", "AUTOCAL", it) },
+                )
             },
             onStateChanged = {
                 publishRevision(RuntimeSnapshotBus.Kind.TABLES)

@@ -86,8 +86,14 @@ class AutoIdleCleanupCoordinator(
         Fuel.GAS to IdleAcquisitionTracker(fuelNames = IdleAcquisitionTracker.GNV_NAMES),
         Fuel.PETROL to IdleAcquisitionTracker(fuelNames = PETROL_NAMES),
     )
-    /** Apagamento automático em voo: o que foi pedido e quando (o recibo/timeout usam isto, não o recibo parseado). */
-    private class InFlight(val fuel: Fuel, val bands: List<Int>, val sinceMs: Long)
+    /**
+     * Apagamento automático em voo: o que foi pedido, quando e QUAL operação (geração USB + preparação do gerenciador).
+     * Só o recibo com essa identidade conclui o voo; recibo de USB antiga, de outra preparação ou sem identidade é
+     * ignorado e registrado (revisão 2026-10-07 #5): nunca consome, desarma nem libera o bloqueio de outra operação.
+     */
+    private class InFlight(val fuel: Fuel, val bands: List<Int>, val sinceMs: Long, val sessionId: Long) {
+        var preparationId: String? = null
+    }
 
     private val cleaner = AutoIdlePointCleaner()
     private var sessionId = 0L
@@ -192,20 +198,23 @@ class AutoIdleCleanupCoordinator(
 
     fun onSessionChanged(newSessionId: Long) = submit { resetSessionLocked(newSessionId) }
 
-    /** invalidateRound / ação manual confirmada: leituras anteriores não valem; intervalo e desligamento seguem. */
+    /**
+     * invalidateRound / ação manual confirmada: leituras anteriores não valem (o ponto volta a exigir duas leituras).
+     * Não é leitura completa do alvo: intervalo, bloqueio de falha, releitura obrigatória e pausa seguem no cleaner;
+     * só [onSessionChanged] ou uma leitura completa, nova e posterior do combustível alvo liberam a releitura.
+     */
     fun onRoundInvalidated() = submit {
         outliers.reset()
         regimes.values.forEach { it.reset() }
-        cleaner.reset()
         publish()
     }
 
     fun onActionConfirmed(receipt: JSONObject) = submit {
         if (!receipt.optBoolean("automatic", false) || receipt.optString("action") != "DELETE_POINT") return@submit
-        val flight = inFlight
+        val flight = flightFor(receipt) ?: return@submit
         inFlight = null
         val details = receipt.optJSONObject("details") ?: JSONObject()
-        val fuel = flight?.fuel ?: receiptFuel(receipt) ?: Fuel.GAS
+        val fuel = flight.fuel
         val ambiguousBands = bandsWithResult(details, "AMBIGUOUS")
         // Readback ambíguo: consome o intervalo e espera releitura completa do alvo; nunca desliga a sessão.
         cleaner.onSucceeded(clock(), rereadRequired = details.optBoolean("readbackAmbiguous", false), fuels = setOf(fuel))
@@ -228,15 +237,15 @@ class AutoIdleCleanupCoordinator(
 
     fun onActionFailed(receipt: JSONObject) = submit {
         if (!receipt.optBoolean("automatic", false) || receipt.optString("action") != "DELETE_POINT") return@submit
-        val flight = inFlight
+        val flight = flightFor(receipt) ?: return@submit
         inFlight = null
-        // Combustível/alvos da operação em voo (autoridade), não do recibo parseado; sem voo conhecido, o recibo.
-        val fuel = flight?.fuel ?: receiptFuel(receipt)
+        // Combustível/alvos da operação em voo (autoridade), não do recibo parseado.
+        val fuel = flight.fuel
         val mutation = receipt.optBoolean("mutationMayHaveStarted", false)
         val emptyBands = intList(receipt.optJSONArray("emptyBands"))
         val skippedChanged = intList(receipt.optJSONArray("skippedChanged"))
         // Ponto já vazio ou readquirido desde a marca: sai dos candidatos até a próxima leitura.
-        if (fuel != null) outliers.forget(fuel, emptyBands + skippedChanged)
+        outliers.forget(fuel, emptyBands + skippedChanged)
         val ineffective = receipt.has("effective") && !receipt.optBoolean("effective", true)
         // Nada enviado e nada falhou na ECU (ponto já vazio / readquirido): não é falha real, não desarma.
         val benign = !mutation && !ineffective && (emptyBands.isNotEmpty() || skippedChanged.isNotEmpty())
@@ -245,7 +254,7 @@ class AutoIdleCleanupCoordinator(
         } else {
             // Toda falha consome tempo; N seguidas desligam a sessão.
             val wasEnabled = cleaner.disabledReason() == null
-            cleaner.onFailed(clock(), mutation, fuels = setOfNotNull(fuel))
+            cleaner.onFailed(clock(), mutation, fuels = setOf(fuel))
             val reason = cleaner.disabledReason()
             if (wasEnabled && reason != null) {
                 pauseCode = PauseCode.REPEATED_FAILURES
@@ -350,7 +359,8 @@ class AutoIdleCleanupCoordinator(
             .put("minIntervalMs", AutoIdlePointCleaner.MIN_INTERVAL_MS)
         val targets = decision.bands.map { AutoCalPointDeleteProtocol.Target(decision.fuel, it) }
         outliers.onDeleteStarted(decision.fuel)
-        inFlight = InFlight(decision.fuel, decision.bands, now)
+        val flight = InFlight(decision.fuel, decision.bands, now, sessionId)
+        inFlight = flight
         val result = try {
             executeDelete(targets, evidence)
         } catch (error: Exception) {
@@ -361,8 +371,46 @@ class AutoIdleCleanupCoordinator(
             inFlight = null
             // Colisão (porta, guarda, preparação manual): tenta de novo; não consome o intervalo.
             cleaner.onRetryLater()
+        } else {
+            // Identidade da operação (o gerenciador a devolve ao enfileirar). O recibo chega pela mesma trava, logo
+            // sempre depois desta atribuição. Sem identidade, nenhum recibo casa e o voo cai no timeout (incerto).
+            flight.preparationId = result.optString("preparationId").ifBlank { null }
         }
         publish()
+    }
+
+    /**
+     * O voo a que este recibo pertence, ou nulo quando o recibo não é dele: sem identidade (sessão/preparação),
+     * de geração USB diferente da atual, sem voo aberto (ex.: já caiu no timeout) ou de outra preparação.
+     * Recibo ignorado é registrado; nenhum estado muda.
+     */
+    private fun flightFor(receipt: JSONObject): InFlight? {
+        val flight = inFlight
+        val receiptSession = receipt.optLong("sessionId", -1L)
+        val preparationId = receipt.optString("preparationId")
+        val reason = when {
+            receiptSession <= 0L || preparationId.isBlank() -> "recibo sem identidade de sessão/preparação"
+            receiptSession != sessionId -> "recibo de sessão USB antiga"
+            flight == null -> "nenhum apagamento automático em voo (recibo atrasado)"
+            flight.sessionId != receiptSession || flight.preparationId != preparationId -> "recibo de outra operação"
+            else -> null
+        } ?: return flight
+        try {
+            record(
+                "autocal_auto_idle_receipt_ignored",
+                JSONObject()
+                    .put("reason", reason)
+                    .put("sessionId", sessionId)
+                    .put("receiptSessionId", receiptSession)
+                    .put("receiptId", receipt.optString("id"))
+                    .put("preparationId", preparationId)
+                    .put("inFlightPreparationId", flight?.preparationId ?: JSONObject.NULL)
+                    .put("outcome", receipt.optString("outcome"))
+                    .put("automatic", true)
+                    .put("scope", "DELETE_OUTLIER_POINTS"),
+            )
+        } catch (_: Exception) {}
+        return null
     }
 
     private fun resetSessionLocked(newSessionId: Long) {
@@ -417,20 +465,6 @@ class AutoIdleCleanupCoordinator(
                     .put("scope", "DELETE_OUTLIER_POINTS"),
             )
         } catch (_: Exception) {}
-    }
-
-    /** Combustível do recibo: `details.fuel`, ou o dos alvos (`pointDelete`/`details.targets`). */
-    private fun receiptFuel(receipt: JSONObject): Fuel? {
-        val details = receipt.optJSONObject("details")
-        val candidates = listOfNotNull(
-            details?.optString("fuel"),
-            receipt.optJSONObject("pointDelete")?.optString("fuel"),
-            receipt.optJSONObject("pointDelete")?.optJSONArray("targets")?.optJSONObject(0)?.optString("fuel"),
-            details?.optJSONArray("targets")?.optJSONObject(0)?.optString("fuel"),
-        )
-        return candidates.firstNotNullOfOrNull { name ->
-            name.takeIf { it.isNotBlank() }?.let { runCatching { Fuel.parse(it) }.getOrNull() }
-        }
     }
 
     private fun intList(array: JSONArray?): List<Int> =

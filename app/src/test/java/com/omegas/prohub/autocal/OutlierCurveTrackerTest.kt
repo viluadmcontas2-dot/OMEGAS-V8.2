@@ -44,7 +44,7 @@ class OutlierCurveTrackerTest {
     }
 
     @Test
-    fun `o mesmo instante repetido nao e leitura nova; conteudo igual em instante novo confirma`() {
+    fun `o mesmo instante repetido nao e leitura nova e conteudo igual em instante novo confirma`() {
         tracker.observe(Fuel.GAS, reading(outlierBand = 6))
         val same = reading(outlierBand = 6)
         at -= 2_000

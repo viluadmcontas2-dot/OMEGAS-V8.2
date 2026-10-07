@@ -766,7 +766,7 @@ class AutoCalNativeActionManager(
         val targetDetails = pointTargetsJson(targets)
         val actionLabel = if (targets.size == 1) targets.single().toLabel() else "${targets.size} pontos selecionados"
         // Automático: o contexto da decisão (combustível, rpm, armado, USB) é revalidado AGORA, antes de qualquer
-        // máscara; ainda em READING_BEFORE, logo a falha não afirma mutação.
+        // máscara; nada foi enviado ainda, logo a falha não afirma mutação.
         if (prepared.automatic) requireAutomaticContext(targetFuel)
         update("SENDING_ACTION", "Readquirindo $actionLabel", 8, effective, targetDetails)
         maskFrames.forEachIndexed { step, request ->

@@ -179,14 +179,10 @@ class AutoIdlePointCleaner(
     }
 
     /**
-     * invalidateRound / ação manual: zera só a espera por releitura; mantém intervalo, o bloqueio de falha com
-     * mutação possível ([blockedUntilMs]) e o desligamento da sessão.
+     * Sessão USB nova ou encerrada: tudo volta ao início. É, com [onReread] (leitura completa, nova e posterior do
+     * combustível alvo), a única saída da releitura obrigatória: invalidação de round ou confirmação manual não
+     * leem o alvo e não liberam nada.
      */
-    fun reset() {
-        rereadPendingSince.clear()
-    }
-
-    /** Sessão USB nova ou encerrada: tudo volta ao início. */
     fun resetSession() {
         lastSuccessAtMs = null
         blockedUntilMs = 0L

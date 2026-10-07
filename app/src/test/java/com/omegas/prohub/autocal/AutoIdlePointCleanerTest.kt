@@ -172,24 +172,9 @@ class AutoIdlePointCleanerTest {
     fun `desligado na sessao nao age ate sessao nova`() {
         cleaner.disable("gasolina mudou")
         assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4))), "desligado")
-        cleaner.reset() // invalidateRound/ação manual: continua desligado e o intervalo continua valendo
         assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4))), "desligado")
         cleaner.resetSession()
         assertTrue(cleaner.decide(input(now = 20_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
-    }
-
-    @Test
-    fun `reset preserva o intervalo de 5 s do ultimo apagamento`() {
-        cleaner.onSucceeded(20_000)
-        cleaner.reset()
-        assertWait(cleaner.decide(input(now = 22_000, marks = listOf(4))), "Intervalo")
-    }
-
-    @Test
-    fun `reset nao libera o bloqueio de falha com mutacao possivel`() {
-        cleaner.onFailed(20_000, mutationMayHaveStarted = true)
-        cleaner.reset()
-        assertWait(cleaner.decide(input(now = 21_000, marks = listOf(4))), "bloqueado")
     }
 
     @Test
