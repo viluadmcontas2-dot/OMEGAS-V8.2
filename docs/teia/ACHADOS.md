@@ -24,3 +24,12 @@ Scripts: tools/autocal_refine/teia_stage.py, teia_dedup.py, teia_census.py.
 
 ## Lacunas dos dados (honesto)
 Não existem nestes 79 sessões: `engine_stall`, `refinement_phase/verdict`. Só 4 epochs de automatch e 4 de calibração. Stalls terão de ser inferidos da telemetria (rpm→0 sem session_stopped).
+
+## F4 — pontos fora da curva na gasolina nativa (PETR_INJ_TBUF × MNFLD_PRESS_BUF)  [classe 3, causa NÃO provada]
+- Base: último snapshot de cada uma das 71 sessões com buffer (n=898 pontos internos), 16 bandas úteis (as 2 últimas vêm 0).
+- Teste local (vizinhos, sem modelo global): piso de ruído MAD ≈ 2,9%. >6% do esperado: 17,1%; >10%: 7,3%; >15%: 1,3%.
+- **Assimétrico:** 12,0% abaixo do esperado vs 5,1% acima → ponto "baixo" é o modo de falha dominante (hipótese: aquisição em desaceleração/transiente; NÃO testada ainda).
+- Modelo-livre: 7,4% dos pares consecutivos têm ms DECRESCENDO com a MAP subindo (74/1006).
+- **Medida descartada:** ajuste de parábola global ms×MAP marcou 53% como anomalia; é erro de modelo (bandas 8–11 e 14–15 com 76–96%), não de dados. Não usar.
+- Limites: interpolação linear com bandas de espaçamento irregular; mistura de builds; não separa efeito real de rpm de contaminação. Falta cruzar com telemetria no instante da atualização do contador.
+- Dado útil p/ algoritmo: NUM_BUF_UPD_* satura em 10; *_PREV guarda o valor anterior da banda (permite ver o que mudou em cada atualização).
