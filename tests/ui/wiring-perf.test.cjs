@@ -104,3 +104,25 @@ test('P1-8: erro repetido numa tela vira aviso tocável; extensão que não carr
     assert.match(api, /console\.warn\(`\[OMEGAS AutoCalApi\] \$\{name\} falhou:`/);
   } finally { app.destroy(); }
 });
+
+test('P2 navegação: "Avançado" abre a lista com Mapa K, Curva K, AutoCal e Ferramentas e fecha ao escolher', () => {
+  const app = boot();
+  try {
+    app.settle(2);
+    const nav = app.$('.side-nav');
+    const toggle = app.$('[data-nav-advanced]');
+    assert.equal(nav.dataset.advancedOpen, 'false');
+    toggle.click(); app.flush();
+    assert.equal(nav.dataset.advancedOpen, 'true');
+    assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+    const items = app.$$('.side-nav .nav-advanced-item').map(b => b.dataset.route);
+    assert.deepEqual(items, ['map', 'curve', 'autocal', 'tools']);
+    app.$('.side-nav [data-route="autocal"]').click(); app.settle(2);
+    assert.equal(app.route(), 'autocal');
+    assert.equal(nav.dataset.advancedOpen, 'false', 'escolher fecha a lista');
+    assert.equal(toggle.classList.contains('active'), true, 'rota avançada acende o Avançado');
+    app.$('.side-nav [data-route="refino"]').click(); app.settle(2);
+    assert.equal(toggle.classList.contains('active'), false);
+    assert.equal(app.$('.side-nav [data-route="refino"]').textContent.trim(), 'Ajuste GNV');
+  } finally { app.destroy(); }
+});

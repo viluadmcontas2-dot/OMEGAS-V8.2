@@ -181,7 +181,7 @@
     return { photoFile: photo, available, ageText: at === null ? '—' : ageText(at, now === undefined ? Date.now() : now), changedByEcu };
   }
 
-  const ROUTE_NAMES = { map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Refino', sessions: 'Sessões', tools: 'Ferramentas' };
+  const ROUTE_NAMES = { map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Ajuste GNV', sessions: 'Sessões', tools: 'Ferramentas' };
   /**
    * Índice de equivalência: o Kotlin manda `index` como NÚMERO escalar 0..1 (percentual = ×100), com `coverage` e
    * `provisional` irmãos planos (EquivalenceJson.result). Sem número válido: null (nunca 0%).

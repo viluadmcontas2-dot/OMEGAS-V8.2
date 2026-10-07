@@ -71,7 +71,7 @@
             </section>
             <section class="now-intention" aria-label="Estado e próximo passo">
               <div><h3 id="dashState">Aguardando dados da ECU</h3><p id="dashNext">Aguardando medição da ECU.</p></div>
-              <button type="button" class="primary" data-dash-refino>Abrir Refino</button>
+              <button type="button" class="primary" data-dash-refino>Abrir Ajuste GNV</button>
             </section>
             <section class="now-coverage" aria-label="Equivalência com a gasolina">
               <div class="now-equivalence"><b id="dashEquivalence">—</b><p id="dashEquivalenceNote">Aguardando medição</p>
@@ -126,7 +126,7 @@
           progress.hidden = model.percent === null;
         }
         const button = this.root.querySelector("[data-dash-refino]");
-        const names = { dashboard: 'Agora', map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Refino', sessions: 'Sessões', tools: 'Ferramentas', diagnostico: 'Diagnóstico' };
+        const names = { dashboard: 'Agora', map: 'Mapa K', curve: 'Curva K', autocal: 'AutoCal', refino: 'Ajuste GNV', sessions: 'Sessões', tools: 'Ferramentas', diagnostico: 'Diagnóstico' };
         this.nextRoute = model.route === 'dashboard' ? 'refino' : model.route;
         if (button) button.textContent = 'Abrir ' + names[this.nextRoute];
         const bands = document.getElementById('dashBands');

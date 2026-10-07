@@ -348,3 +348,13 @@ html body .refino-confirm { display:flex; flex-wrap:wrap; align-items:center; ga
 html body .refino-confirm[hidden] { display:none; }
 html body .refino-confirm p { flex:1 1 320px; margin:0; font-size:20px; }
 html body .refino-confirm button { min-height:58px; font-size:20px; }
+/* Navegação: à vista só Agora, Ajuste GNV, Diagnóstico e Sessões; o resto abre em "Avançado" (lista sobre a barra). */
+html body .side-nav { position:relative; grid-template-columns:repeat(5,minmax(0,1fr)); }
+html body .side-nav [data-route="dashboard"] { order:1; }
+html body .side-nav [data-route="refino"] { order:2; }
+html body .side-nav [data-route="diagnostico"] { order:3; }
+html body .side-nav [data-route="sessions"] { order:4; }
+html body .side-nav .nav-advanced-toggle { order:5; }
+html body .side-nav .nav-advanced-item { display:none; }
+html body .side-nav[data-advanced-open="true"] .nav-advanced-item { display:flex; position:absolute; z-index:40; right:0; bottom:calc(100% + 8px + var(--slot) * 72px); width:300px; height:68px; flex-direction:row; justify-content:flex-start; gap:14px; padding:0 20px; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:var(--shadow-2); }
+html body .side-nav .nav-advanced-toggle[aria-expanded="true"] { color:var(--text); background:var(--surface-2); }

@@ -85,6 +85,7 @@ test('Diamante: Diagnóstico apresenta jerkPct como percentual e aceita o nome g
 test('Diamante: ícones de navegação são SVG incorporado, sem máscaras externas incompatíveis com file:// no WebView',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const html=fs.readFileSync(path.join(__dirname,'../../app/src/main/assets/ui/index.html'),'utf8');
- assert.equal((html.match(/<svg class="nav-icon"/g)||[]).length,8);
+ // Revisto (P2 navegação): 8 rotas + o botão "Avançado", todos com SVG incorporado.
+ assert.equal((html.match(/<svg class="nav-icon"/g)||[]).length,9);
  assert.doesNotMatch(html,/--nav-icon:url/);
 });
