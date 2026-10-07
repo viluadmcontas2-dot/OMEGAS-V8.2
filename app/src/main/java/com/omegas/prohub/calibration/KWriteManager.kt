@@ -62,6 +62,8 @@ class KWriteManager(
     private val safetyFile = File(paths.runtimeRoot, "k_write_safety.json")
     private val kBackupDir = File(paths.runtimeRoot, "k_map_backups").apply { mkdirs() }
     private val statusLock = Any()
+    /** Eixos lidos da ECU na última leitura completa desta sessão USB; null = ainda não lidos (eixos fixos). */
+    @Volatile private var liveAxes: KMapEcuAxes.Resolved? = null
     private val insertionStateUnknown = AtomicBoolean(loadInsertionSafetyLock(safetyFile))
     @Volatile private var status = JSONObject()
         .put("state", "IDLE")
@@ -73,6 +75,7 @@ class KWriteManager(
 
     @Synchronized
     fun beginUsbSession(sessionId: Long) {
+        liveAxes = null
         try {
             val cache = loadCache()
             cache.put("sessionConfirmed", false)
@@ -208,7 +211,9 @@ class KWriteManager(
             val extraRow = JSONArray(allRows.getJSONArray(EXTRA_ROW).toString())
             val hash = canonicalFullMapHash(visibleRows, extraRow)
             val now = System.currentTimeMillis()
-            val axes = KMapPhysicalAxes.json()
+            val resolvedAxes = readEcuAxes(expectedSessionId)
+            liveAxes = resolvedAxes
+            val axes = resolvedAxes.toJson()
             val cache = JSONObject()
                 .put("schema", 4)
                 .put("updatedAt", now)
@@ -571,8 +576,8 @@ class KWriteManager(
                             .put("row", row).put("column", column)
                             .put("axisSchema", KMapPhysicalAxes.SCHEMA)
                             .put("axisLockSha256", KMapPhysicalAxes.LOCK_SHA256)
-                            .put("petrolMs", KMapPhysicalAxes.petrolBins()[row])
-                            .put("rpm", KMapPhysicalAxes.rpmBins()[column])
+                            .put("petrolMs", petrolBinAt(row))
+                            .put("rpm", rpmBinAt(column))
                             .put("before", expected).put("after", target)
                             .put("reason", reason)
                             .put("acknowledged", true)
@@ -640,7 +645,7 @@ class KWriteManager(
                 .put("sessionConfirmed", true)
                 .put("sessionId", expectedSessionId)
                 .put("hash", finalHash)
-                .put("axes", KMapPhysicalAxes.json())
+                .put("axes", axesJson())
                 .put("rows", workingRows)
                 .put("extraRow", extraRow)
                 .put("allRows", allRows)
@@ -652,7 +657,7 @@ class KWriteManager(
                 .put("adjustmentId", adjustmentId)
                 .put("oldHash", initialHash)
                 .put("newHash", finalHash)
-                .put("axes", KMapPhysicalAxes.json())
+                .put("axes", axesJson())
                 .put("rows", workingRows)
                 .put("extraRow", extraRow)
                 .put("verifiedRows", JSONArray(affectedRows.toList()))
@@ -791,6 +796,36 @@ class KWriteManager(
             synchronized(statusLock) { status.put("busy", false) }
         }
     }
+
+    /**
+     * Lê os eixos do Mapa K na ECU (somente leitura: `29 3D 00` RPM e `29 37 00` tempo, como o ProgBase).
+     * Qualquer falha ou resposta inválida volta ao eixo fixo daquele eixo e fica no registro do sistema
+     * (Detalhes técnicos). Nunca derruba a leitura do mapa e nunca escreve.
+     */
+    private fun readEcuAxes(expectedSessionId: Long): KMapEcuAxes.Resolved {
+        fun attempt(request: ByteArray, reason: String): KMapEcuAxes.Attempt = try {
+            val reply = transaction(request, reason, 800, expectedSessionId, Mp48WorkClass.READ_ONLY)
+            KMapEcuAxes.Attempt(
+                reply.status,
+                reply.payload,
+                if (reply.ok) "" else reply.error.ifBlank { "ECU não confirmou a leitura" },
+            )
+        } catch (error: Exception) {
+            KMapEcuAxes.Attempt.failed(error.message ?: error.javaClass.simpleName)
+        }
+        val rpm = attempt(KMapEcuAxes.READ_RPM, "eixo RPM do mapa K (29 3D 00)")
+        val time = attempt(KMapEcuAxes.READ_TIME, "eixo tempo do mapa K (29 37 00)")
+        val resolved = KMapEcuAxes.resolve(rpm, time)
+        log.add(if (resolved.source == KMapEcuAxes.SOURCE_ECU) "INFO" else "WARN", "K-WRITE", resolved.summary())
+        return resolved
+    }
+
+    /** Eixos em vigor nesta sessão: os da ECU se lidos, senão o contrato fixo. */
+    private fun axesJson(): JSONObject = (liveAxes ?: KMapEcuAxes.fixed()).toJson()
+
+    private fun petrolBinAt(row: Int): Double = (liveAxes?.petrolBins ?: KMapPhysicalAxes.petrolBins())[row]
+
+    private fun rpmBinAt(column: Int): Int = (liveAxes?.rpmBins ?: KMapPhysicalAxes.rpmBins())[column]
 
     private fun readRow(row: Int, reason: String, expectedSessionId: Long): ByteArray {
         require(row in 0 until TOTAL_ROW_COUNT) { "Linha K inválida: $row" }
