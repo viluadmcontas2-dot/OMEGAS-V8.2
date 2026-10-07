@@ -455,8 +455,6 @@ class EquivalencePhases(
                 }
                 val worse = experienceWorse(proof.roughBefore, point.roughnessRatio) ||
                     experienceWorse(proof.nearBefore, point.nearStallRatio)
-                val before = proof.mixtureBefore
-                val improved = before != null && abs(mixture) < abs(before)
                 when {
                     abs(mixture) <= point.tolerance && !worse -> {
                         proof.verdict = PointState.CONFIRMADO
@@ -464,7 +462,9 @@ class EquivalencePhases(
                         attemptsByPoint.remove(proof.index)
                         changed = true
                     }
-                    improved && worse -> {
+                    // A suavidade piorou depois do ajuste: CONTESTADO (oferece desfazer), tenha a mistura melhorado ou
+                    // piorado. Antes "mistura piorou E suavidade piorou" caía em INCONCLUSIVO e o ajuste ruim ficava.
+                    worse -> {
                         proof.verdict = PointState.CONTESTADO
                         states[proof.index] = PointState.CONTESTADO
                         changed = true
