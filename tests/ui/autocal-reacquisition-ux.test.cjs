@@ -8,10 +8,12 @@ const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/
 
 assert.doesNotMatch(cockpit, /<summary>Corrigir aquisição<\/summary>/,
   'reaquisição de combustível não deve ficar escondida em menu para uso na multimídia');
-assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV<\/button>/,
-  'Reset Gas deve aparecer como intenção humana de readquirir GNV');
-assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina<\/button>/,
-  'Reset Petrol deve aparecer como intenção humana de readquirir gasolina');
+// Revisto (P2 clareza): "Reler GNV/gasolina" virou "Recomeçar aprendizado…" com uma linha que explica o efeito.
+assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Recomeçar aprendizado do GNV<\/button>/,
+  'Reset Gas deve aparecer como intenção humana de reaprender o GNV');
+assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Recomeçar aprendizado da gasolina<\/button>/,
+  'Reset Petrol deve aparecer como intenção humana de reaprender a gasolina');
+assert.match(cockpit, /A ECU esquece o que aprendeu e aprende de novo enquanto você dirige\./);
 assert.ok(
   cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Mais opções</summary>'),
   'reaquisição diária deve aparecer antes do reset pesado'
@@ -25,10 +27,10 @@ assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOCAL"/,
   'Finish AutoCal original nasce desabilitado e não deve virar etapa diária');
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOMATCH"/,
   'Finish AutoMatch pertence ao PanelDbg oculto do ProgBase e não deve aparecer na superfície diária');
-assert.match(cockpit, /O AutoMatch é automático e decidido pela ECU\./,
-  'a UX deve explicar que o AutoMatch normal é ECU-owned, separado do AutoMatch manual');
-assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000<\/button>/,
-  'Reset K deve usar a semântica provada do ProgBase/MUL_ACT');
+assert.match(cockpit, /Os ajustes automáticos são decididos pela ECU\./,
+  'a UX deve explicar que o AutoMatch normal é decidido pela ECU, sem jargão');
+assert.doesNotMatch(cockpit, /data-autocal-action="RESET_K_FACTOR"/,
+  'zerar a Curva K fica só na aba Curva K');
 assert.doesNotMatch(cockpit, /data-autocal-action="RESET_ALL"/);
 assert.match(cockpit, /Salvar uma foto antes é opcional/i,
   'backup deve ser opcional e manual, nunca um gate do reset');
@@ -37,8 +39,8 @@ assert.ok(
   cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Mais opções</summary>'),
   'a interface deve manter a readquisição diária fora do menu avançado'
 );
-assert.match(cockpit, /RESET_GAS:\s*'Reler GNV'/);
-assert.match(cockpit, /RESET_PETROL:\s*'Reler gasolina'/);
+assert.match(cockpit, /RESET_GAS:\s*'Recomeçar aprendizado do GNV'/);
+assert.match(cockpit, /RESET_PETROL:\s*'Recomeçar aprendizado da gasolina'/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
 assert.doesNotMatch(cockpit, />Reset gasolina<\/button>/);
 assert.match(cockpit, /Salvar uma foto antes é opcional/);

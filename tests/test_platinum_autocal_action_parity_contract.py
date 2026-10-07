@@ -55,10 +55,11 @@ def test_finish_is_not_misrepresented_as_acquisition_stop():
     assert "PanelDbg oculto do ProgBase" in MANAGER
     assert 'data-autocal-action="FINISH_AUTOCAL"' not in COCKPIT
     assert 'data-autocal-action="FINISH_AUTOMATCH"' not in COCKPIT
-    assert "O AutoMatch é automático e decidido pela ECU." in COCKPIT
+    # Revisto (P2 clareza): mesmas garantias, em português simples para o motorista.
+    assert "Os ajustes automáticos são decididos pela ECU." in COCKPIT
     assert "A leitura continua ativa e pode preencher novas zonas" in COCKPIT
-    assert "Pausar interrompe a aquisição." in COCKPIT
-    assert "Reler gasolina ou GNV reinicia somente os dados daquele combustível." in COCKPIT
+    assert "Pausar o aprendizado interrompe a coleta." in COCKPIT
+    assert "Recomeçar o aprendizado da gasolina ou do GNV apaga só o que a ECU aprendeu daquele combustível." in COCKPIT
     assert "setEnabled(false)" in MANAGER
 
 

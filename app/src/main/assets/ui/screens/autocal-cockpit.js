@@ -23,13 +23,12 @@
   }
   function actionLabel(action) {
     return ({
-      ENABLE_AUTO_CAL: 'Iniciar a leitura da ECU',
-      DISABLE_AUTO_CAL: 'Pausar a leitura da ECU',
+      ENABLE_AUTO_CAL: 'Retomar aprendizado',
+      DISABLE_AUTO_CAL: 'Pausar aprendizado da ECU',
       FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
       FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
-      RESET_PETROL: 'Reler gasolina',
-      RESET_GAS: 'Reler GNV',
-      RESET_K_FACTOR: 'Resetar Curva K para 1,000',
+      RESET_PETROL: 'Recomeçar aprendizado da gasolina',
+      RESET_GAS: 'Recomeçar aprendizado do GNV',
       RESET_ALL: 'Nova leitura completa',
     })[action] || action;
   }
@@ -735,11 +734,10 @@
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
             <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
               <h2 class="instrument-title">AutoCal</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
-              <div class="ar-tile"><small>MAP</small><b><span id="autocalLiveMap">—</span><em>bar</em></b></div>
-              <div class="ar-tile"><small>Injeção</small><b><span id="autocalLivePetrol">—</span><em>ms</em></b></div>
+              <div class="ar-tile ar-load"><small>Carga do motor</small><b id="autocalLiveLoad">—</b></div>
               <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
-              <div class="ar-tile ar-zone"><small>Zona</small><b id="autocalLiveZone">—</b></div>
-              <div class="ar-tile ar-automatch" id="autocalAutoMatchTile" data-state="unknown"><small>AutoMatch</small><b id="autocalAutoMatchCount">—</b></div>
+              <div class="ar-tile ar-zone" title="Zona = quanto o motor está carregado: zona 1 = lenta … zona 4 = acelerando forte"><small>Zona de carga</small><b id="autocalLiveZone">—</b></div>
+              <div class="ar-tile ar-automatch" id="autocalAutoMatchTile" data-state="unknown"><small>Ajustes automáticos da ECU</small><b id="autocalAutoMatchCount">—</b></div>
               <div class="autocal-reading-controls"><button type="button" class="ar-ghost" data-autocal-history hidden aria-label="Mostrar leitura anterior">Leitura anterior</button><button type="button" data-autocal-toggle class="btn-primary btn-compact" data-loading="true" disabled>Lendo estado…</button></div>
               <span id="autocalLiveTitle" hidden>Aguardando telemetria</span>
               <p id="autocalLiveNarrative" class="ar-sr" hidden></p>
@@ -751,6 +749,7 @@
                   <div class="petrol"><span class="autocal-zone-fuel">Gasolina</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-petrol="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-petrol="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
                   <div class="gas"><span class="autocal-zone-fuel">GNV</span><div class="autocal-zone-cells" role="list"><span class="autocal-zone-cell" data-autocal-zone-gas="0" data-state="unknown" data-current="false" role="listitem"><b>Z1</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="1" data-state="unknown" data-current="false" role="listitem"><b>Z2</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="2" data-state="unknown" data-current="false" role="listitem"><b>Z3</b><small>—</small></span><span class="autocal-zone-cell" data-autocal-zone-gas="3" data-state="unknown" data-current="false" role="listitem"><b>Z4</b><small>—</small></span></div></div>
                 </div>
+                <small class="autocal-zone-legend">Zona 1 = lenta · 2 = rodando leve · 3 = acelerando · 4 = acelerando forte</small>
                 <span id="autocalZoneSummary" class="ar-sr">—</span>
               </section>
 
@@ -768,6 +767,11 @@
               <div class="ar-buttons autocal-main-actions">
                 <details class="instrument-details"><summary>Histórico e detalhes</summary><div class="ar-secondary autocal-secondary-stack" role="region" aria-label="Mais sobre o AutoCal">
 
+
+              <section class="ar-card autocal-live-tech">
+                <h4>Detalhes técnicos</h4>
+                <span>MAP <span id="autocalLiveMap">—</span> bar · Injeção <span id="autocalLivePetrol">—</span> ms</span>
+              </section>
 
               <section id="autocalAutoMatchEvidence" class="ar-card autocal-automatch-evidence" data-state="WAITING" aria-live="polite">
                 <h4>O que o AutoMatch mudou</h4>
@@ -789,16 +793,16 @@
 
             </details>
                 <button type="button" data-autocal-sessions>Ver sessões</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
-                <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1,000</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Recomeçar aprendizado do GNV</button>
+                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Recomeçar aprendizado da gasolina</button>
+                <small class="autocal-reacquire-note">A ECU esquece o que aprendeu e aprende de novo enquanto você dirige.</small>
                 <details class="autocal-reset-menu ar-more">
                   <summary>Mais opções</summary>
                   <div class="autocal-reset-popover" id="autocalOptionsPanel" aria-label="Mais opções do AutoCal">
                     <button type="button" class="autocal-options-close" data-autocal-close-options>Fechar opções ×</button>
                     ${ns.CurveChart.viewControls()}
                     <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <p>O AutoMatch é automático e decidido pela ECU. Resetar volta a Curva K inteira para 1,000: dá para desfazer em um toque. Pausar interrompe a aquisição. Reler gasolina ou GNV reinicia somente os dados daquele combustível.</p>
+                      <p>Os ajustes automáticos são decididos pela ECU. Pausar o aprendizado interrompe a coleta. Recomeçar o aprendizado da gasolina ou do GNV apaga só o que a ECU aprendeu daquele combustível. Para zerar a Curva K, use a aba Curva K (em Avançado).</p>
                     </section>
                   </div>
                 </details>
@@ -1056,28 +1060,21 @@
       const result = this.api.setAcquisitionEnabled?.(enable) || { ok: false, error: 'Ação operacional indisponível.' };
       if (result?.ok !== true) {
         this.operationalPending = false;
-        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível alterar a leitura do AutoCal.' } });
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível mudar o aprendizado da ECU.' } });
       } else {
         // O botão só volta quando a ECU confirmar o novo estado (ou em 10 s): uma resposta "ok" do envio não é a conferência.
         this.toggleWaiting = { target: enable ? 1 : 0, since: Date.now() };
         this.store.patch({ alert: { level: 'ok', message: enable
-          ? 'Início enviado. Conferindo na ECU…'
-          : 'Pausa enviada. Conferindo na ECU…' } });
+          ? 'Pedido para retomar o aprendizado enviado. Conferindo na ECU…'
+          : 'Pedido de pausa enviado. Conferindo na ECU…' } });
       }
       this.refresh();
     }
 
-    /** Um toque: abre a Curva K, que tira a foto e só então zera. Sem a tela Curva K cai no fluxo antigo. */
-    resetViaCurve() {
-      const router = this.app?.router || root.OmegasApp?.router;
-      if (!router || typeof router.open !== 'function') return false;
-      return router.open('curve', 'editor', { resetNow: true }) === true;
-    }
-
     prepare(action) {
       if (!action || !this.api?.available?.()) return;
-      // Resetar a Curva K tem UM caminho: o da aba Curva K (foto antes, zera, conferência, Desfazer).
-      if (action === 'RESET_K_FACTOR' && this.resetViaCurve()) return;
+      // Zerar a Curva K tem UM caminho: o botão da aba Curva K (foto antes, zera, conferência, Desfazer).
+      if (action === 'RESET_K_FACTOR') return;
       const result = this.api.prepare(action);
       if (!result?.ok || !result?.prepared) {
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'A ação AutoCal não pôde ser preparada.' } });
@@ -1157,7 +1154,7 @@
       if (this.toggleWaiting && String(this.actionState?.state || '').toUpperCase() === 'FAILED') {
         // A ECU não confirmou (readback diferente, sem ACK): o botão volta e o dono fica sabendo; nada mudou na ECU.
         this.toggleWaiting = null;
-        this.store.patch({ alert: { level: 'warning', message: 'A ECU não confirmou a mudança da leitura: ' + String(this.actionState.message || 'tente de novo') + '.' } });
+        this.store.patch({ alert: { level: 'warning', message: 'A ECU não confirmou a mudança do aprendizado: ' + String(this.actionState.message || 'tente de novo') + '.' } });
       }
       if (this.toggleWaiting && (human.enabled === this.toggleWaiting.target || Date.now() - this.toggleWaiting.since > 10000)) this.toggleWaiting = null;
       const waiting = this.operationalPending || Boolean(this.toggleWaiting);
@@ -1174,8 +1171,8 @@
         toggle.textContent = waiting
           ? 'Confirmando ECU…'
           : action === 'DISABLE_AUTO_CAL'
-            ? 'Pausar leitura'
-            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar leitura' : action === 'REREAD_STATE' ? 'Estado não chegou · reler' : 'Lendo estado…';
+            ? 'Pausar aprendizado da ECU'
+            : action === 'ENABLE_AUTO_CAL' ? 'Retomar aprendizado' : action === 'REREAD_STATE' ? 'Estado não chegou · ler de novo' : 'Lendo estado…';
         toggle.dataset.loading = action || waiting ? 'false' : 'true';
       }
 
@@ -1197,27 +1194,30 @@
     /** UMA frase humana de estado (nada de jargão): o que a ECU está fazendo e o que falta. */
     /** [fuelKind] = combustível de AGORA pela telemetria ('petrol', 'gas', …): a frase nunca manda "dirigir no GNV" com o carro na gasolina. */
     sentenceFor(human, acquisitionName, fuelKind) {
-      const zones = list => list.map(zone => 'Z' + zone).join(', ');
+      // "zona 2" · "zonas 1 e 3" · "zonas 1, 2 e 4"
+      const zones = list => list.length === 1 ? 'a zona ' + list[0]
+        : 'as zonas ' + list.slice(0, -1).join(', ') + ' e ' + list[list.length - 1];
+      const missing = list => (list.length === 1 ? 'falta ' : 'faltam ') + zones(list);
       if (['UNAVAILABLE', 'PROBE_FAILED', 'FAILED', 'DISCONNECTED', 'STALE_SESSION'].includes(acquisitionName)) {
         return { level: 'error', text: 'Sem leitura da ECU. Confira o cabo: o app tenta de novo sozinho.' };
       }
       const action = this.actionState || {};
       if (action.busy === true && ['RESET_PETROL', 'RESET_GAS'].includes(action.action)) {
-        const fuel = action.action === 'RESET_PETROL' ? 'gasolina' : 'GNV';
-        return { level: 'neutral', text: 'Reler ' + fuel + ': conferindo o reinício na ECU…' };
+        const fuel = action.action === 'RESET_PETROL' ? 'da gasolina' : 'do GNV';
+        return { level: 'neutral', text: 'Recomeçando o aprendizado ' + fuel + ': conferindo na ECU…' };
       }
-      if (acquisitionName === 'WAITING_TELEMETRY_SETTLE') return { level: 'neutral', text: 'Conectando à leitura da ECU…' };
-      if (human.enabled === 0) return { level: 'warn', text: 'Leitura pausada. Toque em Iniciar leitura para continuar aprendendo.' };
+      if (acquisitionName === 'WAITING_TELEMETRY_SETTLE') return { level: 'neutral', text: 'Conectando à ECU…' };
+      if (human.enabled === 0) return { level: 'warn', text: 'Aprendizado pausado. Toque em Retomar aprendizado para continuar.' };
       if (human.enabled === 1) {
         const petrol = human.petrolMissingZones;
         const gas = human.gasMissingZones;
-        if (fuelKind === 'petrol' && petrol.length) return { level: 'neutral', text: 'Adquirindo gasolina · falta ' + zones(petrol) + '.' };
-        if (fuelKind === 'gas' && gas.length) return { level: 'neutral', text: 'Adquirindo GNV · falta ' + zones(gas) + '.' };
-        if (petrol.length) return { level: 'neutral', text: 'Gasolina pendente · falta ' + zones(petrol) + '. Aguarda uso na gasolina.' };
-        if (gas.length) return { level: 'neutral', text: 'GNV pendente · falta ' + zones(gas) + '. Aguarda uso no GNV.' };
+        if (fuelKind === 'petrol' && petrol.length) return { level: 'neutral', text: 'A ECU está aprendendo a gasolina · ' + missing(petrol) + '.' };
+        if (fuelKind === 'gas' && gas.length) return { level: 'neutral', text: 'A ECU está aprendendo o GNV · ' + missing(gas) + '.' };
+        if (petrol.length) return { level: 'neutral', text: 'Falta aprender a gasolina n' + zones(petrol) + '. Dirija um pouco na gasolina.' };
+        if (gas.length) return { level: 'neutral', text: 'Falta aprender o GNV n' + zones(gas) + '. Dirija um pouco no GNV.' };
         if (human.petrolZones === null || human.gasZones === null) return { level: 'neutral', text: 'Aguardando a ECU confirmar as zonas de gasolina e GNV.' };
         if (human.gasZones === 4 && human.petrolZones === 4) return { level: 'ok', text: 'Gasolina e GNV aprendidos.' };
-        return { level: 'neutral', text: 'Leitura ativa. Aguardando a ECU publicar as zonas.' };
+        return { level: 'neutral', text: 'Aprendizado ativo. Aguardando a ECU confirmar as zonas.' };
       }
       return { level: 'neutral', text: 'Lendo o estado da ECU…' };
     }
@@ -1235,7 +1235,7 @@
     renderAutoMatchTile(human) {
       const count = human.autoMatchCount;
       const max = human.maxAutoMatch;
-      const text = count === null ? '—' : Math.round(count) + (max !== null && max > 0 ? '/' + Math.round(max) : '');
+      const text = count === null ? '—' : Math.round(count) + (max !== null && max > 0 ? ' de ' + Math.round(max) : '');
       this.text('autocalAutoMatchCount', text);
       const tile = document.getElementById('autocalAutoMatchTile');
       if (tile) D.setDataIfChanged(tile, 'state', count === null ? 'unknown' : human.autoMatchQuotaReached ? 'full' : 'running');
@@ -1284,6 +1284,7 @@
         this.text('autocalLiveRpm', '—');
         this.text('autocalLivePetrol', '—');
         this.text('autocalLiveMap', '—');
+        this.text('autocalLiveLoad', '—');
         this.text('autocalLiveZone', '—');
         this.text('autocalLiveNarrative', stale
           ? 'Leitura atrasada há ' + Math.round(ageMs / 1000) + ' s: a última leitura passou da janela curta. AGORA foi ocultado até chegar uma leitura nova; a referência da ECU não foi alterada.'
@@ -1300,11 +1301,13 @@
       this.text('autocalLivePetrol', D.ms(live.petrolMs));
       this.text('autocalLiveMap', D.bar(live.mapBar));
       const region = AutoCalUxModel.liveRegion(this.snapshot || {}, live);
-      this.text('autocalLiveZone', region.kind === 'idle' ? 'Lenta' : region.zone === null ? '—' : 'Z' + region.zone);
+      this.text('autocalLiveZone', region.kind === 'idle' ? 'Marcha lenta' : region.zone === null ? '—' : 'Zona ' + region.zone + ' de 4');
+      // Carga em palavras (a pressão em bar fica nos Detalhes técnicos).
+      this.text('autocalLiveLoad', live.mapBar < 0.45 ? 'leve' : live.mapBar <= 0.75 ? 'média' : 'forte');
       const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}, this.projection).enabled;
       const acquisitionCopy = enabled === 1
-        ? 'Leitura da ECU ativa. Se a condição estabilizar, a ECU pode fortalecer esta região.'
-        : enabled === 0 ? 'Leitura da ECU pausada. O ponto AGORA é só leitura ao vivo.' : 'Estado da leitura da ECU ainda não confirmado.';
+        ? 'Aprendizado da ECU ativo. Se a condição estabilizar, a ECU pode aprender mais nesta região.'
+        : enabled === 0 ? 'Aprendizado da ECU pausado. O ponto AGORA só mostra onde o motor está.' : 'Estado do aprendizado da ECU ainda não confirmado.';
       const delayCopy = live.grey ? ' Leitura atrasada há ' + Math.max(1, Math.round(live.ageMs / 1000)) + ' s: o cursor está em cinza.' : '';
       this.text('autocalLiveNarrative', rpmLabel + ' · ' + D.msUnit(live.petrolMs) + ' · ' + D.barUnit(live.mapBar) + '. ' + acquisitionCopy + delayCopy);
     }
@@ -1614,14 +1617,13 @@
           const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
           const limitLabel = timingLimitMs === null ? 'limite nativo' : 'limite ' + Math.round(timingLimitMs) + ' ms';
           this.text('autocalReferenceCount', D.plural(points.length, 'ponto', 'pontos') + ' · fora da janela');
-          host.innerHTML = '<div class="chart-empty"><b>REFERÊNCIA FORA DA JANELA</b><span>Os vetores físicos foram lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '. Aguarde a próxima atualização automática da ECU. O AGORA continua vivo sem virar referência.</span></div>';
-          this.readout( 'Referência física temporalmente incoerente. Aguarde a próxima atualização automática da ECU; o cursor AGORA continua somente como telemetria.');
+          host.innerHTML = '<div class="chart-empty"><b>Aguarde alguns segundos</b><span>A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.</span>' +
+            '<details class="instrument-details"><summary>Detalhes técnicos</summary><span>Vetores lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '.</span></details></div>';
+          this.readout('A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
-          host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não publicou uma referência física utilizável. O AGORA continua nos valores ao lado, sem inventar escala.</span></div>';
-          this.readout( live
-            ? 'AGORA: ' + D.msUnit(live.petrolMs) + ' · ' + D.barUnit(live.mapBar) + '. Referência da ECU indisponível.'
-            : 'Aguardando Injeção e MAP nativos.');
+          host.innerHTML = '<div class="chart-empty"><b>Curva da gasolina ainda não chegou</b><span>Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.</span></div>';
+          this.readout('Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.');
         }
         this.renderLiveNarrative();
         return;

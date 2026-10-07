@@ -47,8 +47,9 @@ assert.equal(cockpit.includes("data-autocal-action=\"ENABLE_AUTO_CAL\""), false)
 assert.equal(cockpit.includes("data-autocal-action=\"DISABLE_AUTO_CAL\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_PETROL\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_GAS\""), true);
-assert.equal(cockpit.includes("data-autocal-action=\"RESET_K_FACTOR\""), true);
-assert.equal(cockpit.includes("Resetar Curva K para 1,000"), true);
+// Revisto (P2): zerar a Curva K só existe na própria aba Curva K; o AutoCal não repete o botão.
+assert.equal(cockpit.includes("data-autocal-action=\"RESET_K_FACTOR\""), false);
+assert.equal(cockpit.includes("Resetar Curva K para 1,000"), false);
 assert.equal(cockpit.includes("data-autocal-action=\"NEUTRALIZE_LIVE_K\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"MANUAL_AUTOMATCH\""), false);
@@ -57,7 +58,7 @@ assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOCAL\""), false,
 assert.equal(cockpit.includes("class=\"autocal-finish-action\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOMATCH\""), false);
 assert.equal(cockpitCss.includes('.autocal-finish-action'), false);
-assert.equal(cockpit.includes('O AutoMatch é automático e decidido pela ECU.'), true);
+assert.equal(cockpit.includes('Os ajustes automáticos são decididos pela ECU.'), true);
 assert.equal(cockpit.includes('Nada aqui roda automaticamente.'), false);
 assert.equal(cockpit.includes('autoMatchQuotaReached'), true);
 assert.equal(cockpit.includes('AutoMatch automático '), true);

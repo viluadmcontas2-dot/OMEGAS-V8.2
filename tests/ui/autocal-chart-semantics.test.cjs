@@ -19,12 +19,13 @@ assert.match(chartSource, /Injeção de gasolina \(ms\)/);
 assert.match(chartSource, /MAP \(bar\)/);
 assert.match(chartSource, /autocal-axis-tick-x/);
 assert.match(chartSource, /autocal-axis-tick-y/);
-assert.match(source, />SEM REFERÊNCIA</);
-assert.match(source, /REFERÊNCIA FORA DA JANELA/);
+// Revisto (P2 clareza): sem jargão na frente; os números técnicos ficam em "Detalhes técnicos".
+assert.match(source, /Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva\./);
+assert.match(source, /A ECU mandou dados fora de sincronia\. Aguarde alguns segundos; o app tenta de novo sozinho\./);
 assert.match(source, /referenceTimingSpanMs/);
 assert.match(source, /referenceTimingLimitMs/);
 assert.doesNotMatch(source, /Consulte a ECU novamente/i, 'AutoCal não deve instruir refresh manual da ECU');
-assert.match(source, /Aguarde a próxima atualização automática da ECU/i);
+assert.match(source, /o app tenta de novo sozinho/i);
 assert.match(source, /'limite ' \+ Math\.round\(timingLimitMs\) \+ ' ms'/);
 assert.equal(/\.concat\(live \? \[live\.mapBar\]/.test(source), false, 'AGORA não pode participar do domínio');
 

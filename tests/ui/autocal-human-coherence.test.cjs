@@ -15,14 +15,14 @@ test('zonas não recebidas não viram quatro zonas faltantes',()=>{
 test('gasolina em aquisição é descrita antes de GNV pendente',()=>{
  const h=model.humanState({},status,projection([false,true,false,true],[false,false,false,false]));
  const sentence=proto.sentenceFor.call({projection:{},actionState:{}},h,'ACQUIRING','petrol');
- assert.match(sentence.text,/Adquirindo gasolina/i);assert.match(sentence.text,/Z1, Z3/);
+ assert.match(sentence.text,/aprendendo a gasolina/i);assert.match(sentence.text,/zonas 1 e 3/);
  assert.doesNotMatch(sentence.text,/dirija.*GNV|GNV completo/i);
  assert.match(h.progress,/Gasolina 2\/4/);assert.match(h.progress,/GNV 0\/4/);
 });
 test('GNV em aquisição não esconde a cobertura da gasolina',()=>{
  const h=model.humanState({},status,projection([false,false,false,false],[true,true,false,false]));
  const sentence=proto.sentenceFor.call({projection:{},actionState:{}},h,'ACQUIRING','gas');
- assert.match(sentence.text,/Adquirindo GNV/i);assert.match(sentence.text,/Z3, Z4/);
+ assert.match(sentence.text,/aprendendo o GNV/i);assert.match(sentence.text,/zonas 3 e 4/);
  assert.equal(h.petrolMissingZones.length,4);
 });
 test('releitura de gasolina enquanto ECU confere não anuncia aquisição concluída',()=>{
@@ -87,14 +87,14 @@ test('curva pendente não afirma aquisição ativa com leitura pausada ou descon
  for(const enabled of [0,null]){
   const h=model.humanState({}, {state:'ACQUIRING',autoCalEnabled:enabled},projection([],[]));
   const sentence=proto.sentenceFor.call({projection:{},actionState:{}},h,'ACQUIRING','petrol');
-  if(enabled===0)assert.match(sentence.text,/pausada/i);
+  if(enabled===0)assert.match(sentence.text,/pausado/i);
   for(const epoch of [{petrolReferencePending:true},{gasReferencePending:true}])assert.doesNotMatch(model.epochNarrative(epoch),/em aquisição|adquirindo/i);
  }
 });
 
 test('comandos operacionais ficam fora dos painéis de detalhes',()=>{
  const app=L.boot();try{app.go('autocal');app.settle(3);
-  for(const selector of ['[data-autocal-action="RESET_GAS"]','[data-autocal-action="RESET_PETROL"]','[data-autocal-action="RESET_K_FACTOR"]','[data-autocal-sessions]']) assert.equal(app.$(selector).closest('details'),null,selector);
+  for(const selector of ['[data-autocal-action="RESET_GAS"]','[data-autocal-action="RESET_PETROL"]','[data-autocal-sessions]']) assert.equal(app.$(selector).closest('details'),null,selector);
   app.$('[data-autocal-sessions]').click();assert.equal(app.$('.screen.active').dataset.screen,'sessions');
   app.go('refino');app.settle(3);
   for(const selector of ['[data-refino-reset-gas]','[data-refino-acquisition]']) assert.equal(app.$(selector).closest('details'),null,selector);
