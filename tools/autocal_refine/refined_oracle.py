@@ -89,6 +89,7 @@ def pass_gain(passes):
     return PASS_GAIN[min(max(int(passes), 0), len(PASS_GAIN) - 1)]
 # Plausibilidade: a razão mediana GNV/gasolina de uma faixa fora disto não é equivalência, é erro de
 # medida (outra curva, outro combustível, transiente): a faixa inteira é descartada como outlier.
+LOW_GUARD_MS = 5.0           # trava da baixa (lenta real ~4,5 ms): = AutoMatchRefinedEngine.LOW_GUARD_MS
 TELEMETRY_RATIO_MIN = 0.80   # ECU: razão GNV/gasolina mediana 1,013, IQR [0,975; 1,062]
 TELEMETRY_RATIO_MAX = 1.25
 LEDGER_BANDS = [(3.0, 4.5), (4.5, 6.0), (6.0, 7.5), (7.5, 9.0), (9.0, 12.0)]  # = EquivalenceLedger.BANDS
@@ -763,13 +764,16 @@ def fine_covers(bins, valid):
     return covered >= TELEMETRY_ONLY_MIN_BANDS
 
 
-def proposal_box(x0, gain):
-    """Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20]. Ponto que não alcança a faixa
+def proposal_box(x0, gain, axis_ms=None):
+    """Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20] e, abaixo de LOW_GUARD_MS, nunca abaixo do K atual
+    (trava da baixa como limite, antes da coerência). Ponto que não alcança a faixa
     (K atual fora dela e fora do alcance do passo) ou K atual fora dela sem evidência fica fixo em x0."""
     lo_rng, hi_rng = math.log(MIN_FACTOR), math.log(MAX_FACTOR)
     box = []
     for j, x in enumerate(x0):
         lo, hi = max(x - MAX_STEP_LOG, lo_rng), min(x + MAX_STEP_LOG, hi_rng)
+        if axis_ms is not None and axis_ms[j] < LOW_GUARD_MS:
+            lo = max(lo, x)
         outside = x < lo_rng - 1e-12 or x > hi_rng + 1e-12
         if lo > hi + 1e-12 or (outside and gain[j] <= 0.0):
             lo = hi = x
@@ -888,7 +892,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
             fitted = [x0[j] + point_gain_scale[j] * (fitted[j] - x0[j]) for j in range(POINT_COUNT)]
         fixed = dead_band_nodes(observations, evidence, axis_ms, k_old)
         dead_band = len(fixed)
-        box = [(x0[j], x0[j]) if j in fixed else b for j, b in enumerate(proposal_box(x0, gain))]
+        box = [(x0[j], x0[j]) if j in fixed else b for j, b in enumerate(proposal_box(x0, gain, axis_ms))]
         e_eff = effective_elasticity(box, u)
         final = enforce_coherence(fitted, box, u, e_eff)
         # Histerese: ponto cujo passo proposto fica abaixo do limiar é ruído; fica exatamente como está,
@@ -897,7 +901,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
             box, final = hold_small_steps(fitted, box, x0, final, u, e_eff, hold_log)
     else:
         # Sem evidência suficiente NÃO existe proposta: a curva fica exatamente como está.
-        box = proposal_box(x0, gain)
+        box = proposal_box(x0, gain, axis_ms)
         final = x0[:]
         gain = [0.0] * POINT_COUNT
 

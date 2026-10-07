@@ -238,8 +238,8 @@ object AutoMatchSnapshotAnalysis {
         }
     }
 
-    /** Abaixo disso (ms de Petrol Inj.) o refino não reduz K: protege contra o motor apagar. */
-    const val LOW_GUARD_MS = 3.5
+    /** Abaixo disso (ms de Petrol Inj.) o refino não reduz K: protege contra o motor apagar. Fonte: [AutoMatchRefinedEngine.LOW_GUARD_MS]. */
+    const val LOW_GUARD_MS = AutoMatchRefinedEngine.LOW_GUARD_MS
 
     const val SNAPSHOT_INCOHERENT_REASON = "SNAPSHOT_INCOERENTE_NO_TEMPO"
 
@@ -248,8 +248,8 @@ object AutoMatchSnapshotAnalysis {
         result.refinedRaw.forEachIndexed { index, engineRaw ->
             val currentRaw = result.currentRaw[index]
             // Trava da baixa: marcha lenta, desaceleração e embreagem (Petrol Inj. < LOW_GUARD_MS)
-            // é onde o motor apaga no GNV quando a curva fica pobre. O refino nunca empobrece
-            // essa região; só mantém ou enriquece.
+            // é onde o motor apaga no GNV quando a curva fica pobre. O motor já aplica a trava como limite da
+            // caixa ANTES da coerência (sem degrau); isto é só a rede de segurança e não deve disparar.
             val lowGuard = result.axisMs[index] < LOW_GUARD_MS && engineRaw < currentRaw
             val refinedRaw = if (lowGuard) currentRaw else engineRaw
             points.put(JSONObject()

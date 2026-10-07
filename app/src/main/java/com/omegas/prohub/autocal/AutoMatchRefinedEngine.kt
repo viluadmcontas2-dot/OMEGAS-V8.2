@@ -68,6 +68,13 @@ object AutoMatchRefinedEngine {
     const val PRIOR_UNSUPPORTED = 1.0
     const val EVIDENCE_REF = 0.5
     val MAX_STEP_LOG = ln(1.15)
+    /**
+     * Trava da baixa (ms de Petrol Inj.): abaixo disto a proposta nunca empobrece (K só mantém ou sobe). Marcha lenta,
+     * desaceleração e embreagem vivem aqui e é onde o motor apaga no GNV; a lenta real medida fica em ~4,5 ms (85 sessões),
+     * então o limiar antigo de 3,5 ms deixava a própria lenta empobrecer. Entra como limite INFERIOR da caixa de cada
+     * nó ([proposalBox]) ANTES da trava de coerência: a curva final respeita a trava e continua sem degrau.
+     */
+    const val LOW_GUARD_MS = 5.0
     const val E_MAX = 0.35
     const val IRLS_ITERATIONS = 6
     const val TUKEY_C = 4.685
@@ -345,7 +352,7 @@ object AutoMatchRefinedEngine {
             val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
             val fixedNodes = deadBandNodes(observations, evidence, axisMs, kOld)
             deadBand = fixedNodes.size
-            val initialBox = proposalBox(x0, gain).mapIndexed { j, b -> if (j in fixedNodes) x0[j] to x0[j] else b }
+            val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b -> if (j in fixedNodes) x0[j] to x0[j] else b }
             eEff = effectiveElasticity(initialBox, u)
             val enforced = enforceCoherence(scaled, initialBox, u, eEff)
             // Histerese: ponto cujo passo proposto é ruído fica exatamente como está, desde que a curva continue
@@ -357,7 +364,7 @@ object AutoMatchRefinedEngine {
             final = finalCurve
         } else {
             // Sem evidência suficiente NÃO existe proposta: a curva fica exatamente como está.
-            box = proposalBox(x0, gain)
+            box = proposalBox(x0, gain, axisMs)
             final = x0
             gain = List(POINT_COUNT) { 0.0 }
         }
@@ -611,15 +618,17 @@ object AutoMatchRefinedEngine {
     }
 
     /**
-     * Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20]. Ponto que não alcança a faixa
-     * (K atual fora dela e fora do alcance do passo) ou K atual fora dela sem evidência fica fixo em x0.
+     * Limites ln K por ponto: passo ≤ ±15% ∩ [ln 0,75; ln 1,20] e, abaixo de [LOW_GUARD_MS] (com [axisMs]), nunca abaixo
+     * do K atual (trava da baixa como limite, antes da coerência). Ponto que não alcança a faixa (K atual fora dela e
+     * fora do alcance do passo) ou K atual fora dela sem evidência fica fixo em x0.
      */
-    internal fun proposalBox(x0: List<Double>, gain: List<Double>): List<Pair<Double, Double>> {
+    internal fun proposalBox(x0: List<Double>, gain: List<Double>, axisMs: List<Double>? = null): List<Pair<Double, Double>> {
         val loRange = ln(MIN_FACTOR)
         val hiRange = ln(MAX_FACTOR)
         return x0.mapIndexed { j, x ->
             var lo = max(x - MAX_STEP_LOG, loRange)
             var hi = min(x + MAX_STEP_LOG, hiRange)
+            if (axisMs != null && axisMs[j] < LOW_GUARD_MS) lo = max(lo, x)
             val outside = x < loRange - 1e-12 || x > hiRange + 1e-12
             if (lo > hi + 1e-12 || (outside && gain[j] <= 0.0)) { lo = x; hi = x }
             lo to hi
