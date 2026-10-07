@@ -7,10 +7,13 @@ import com.omegas.prohub.usb.UsbSerialManager
 import com.omegas.prohub.util.RingLog
 import org.json.JSONObject
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -38,10 +41,7 @@ class ResponseDrivenEcuEngine(
     }
     private val running = AtomicBoolean(false)
     private val stopRequested = AtomicBoolean(false)
-    private val queueSequence = AtomicLong(0L)
-    private val queue = PriorityBlockingQueue<QueuedSerialWork>(11, compareBy<QueuedSerialWork>
-        { it.workClass.priority }
-        .thenBy { it.sequence })
+    private val queue = Mp48SerialWorkQueue()
     private val analyzer = MotorSampleAnalyzer()
     private val nativeTelemetryWindow = NativeAnchorTelemetryWindow()
     private val stateLock = Any()
@@ -77,14 +77,12 @@ class ResponseDrivenEcuEngine(
         lastValidTelemetryAtMs = 0L
         analyzer.reset()
         nativeTelemetryWindow.reset()
-        queue.forEach { it.fail(IllegalStateException("Nova sessão USB")) }
-        queue.clear()
+        queue.failAll(IllegalStateException("Nova sessão USB"))
     }
 
     @Synchronized
     fun endUsbSession() {
-        queue.forEach { it.fail(IllegalStateException("Sessão USB encerrada")) }
-        queue.clear()
+        queue.failAll(IllegalStateException("Sessão USB encerrada"))
         physicalSessionId = 0L
         sessionReady = false
         hadOnlineSession = false
@@ -103,19 +101,22 @@ class ResponseDrivenEcuEngine(
     }
 
     fun stop(graceful: Boolean = true) {
-        if (!running.get()) return
-        if (graceful) {
-            stopRequested.set(true)
-        } else {
-            running.set(false)
-            stopRequested.set(false)
+        if (running.get()) {
+            if (graceful) {
+                stopRequested.set(true)
+            } else {
+                running.set(false)
+                stopRequested.set(false)
+            }
         }
+        // O loop confere o pedido de parada antes de tirar trabalho da fila: nada pendente roda mais.
+        // Quem espera (escrita, SerialWriteGuard, lane de backpressure) é liberado agora, não nunca.
+        queue.failAll(IllegalStateException("Engine MP48 parando; operação não iniciada"))
     }
 
     fun close() {
         stop(graceful = false)
-        queue.forEach { it.fail(IllegalStateException("Engine encerrada")) }
-        queue.clear()
+        queue.failAll(IllegalStateException("Engine encerrada"))
         executor.shutdownNow()
     }
 
@@ -157,6 +158,8 @@ class ResponseDrivenEcuEngine(
             ) { serial ->
                 serial.transaction(request.copyOf(), reason, timeoutMs, purgeBefore)
             }
+        } catch (e: Mp48CriticalWorkTimeoutException) {
+            UsbProtocolReply(false, error = e.message ?: "Resultado desconhecido no scheduler MP48", request = request)
         } catch (e: java.util.concurrent.TimeoutException) {
             UsbProtocolReply(false, error = "Timeout no scheduler MP48: ${e.message}", request = request)
         } catch (e: InterruptedException) {
@@ -178,59 +181,10 @@ class ResponseDrivenEcuEngine(
         require(running.get()) { "Engine MP48 não está em execução" }
         val pinnedSession = expectedSessionId.takeIf { it > 0L } ?: physicalSessionId
         require(pinnedSession > 0L) { "Sessão USB inválida" }
-        val future = CompletableFuture<T>()
-        enqueue(
-            reason = reason,
-            expectedSessionId = pinnedSession,
-            workClass = workClass,
-            telemetryAfter = telemetryAfter,
-            future = future,
-            block = block,
-        )
-        return try {
-            if (workClass == Mp48WorkClass.READ_ONLY) {
-                future.get(waitTimeoutMs.coerceAtLeast(250L), TimeUnit.MILLISECONDS)
-            } else {
-                // Escrita/safety nunca retornam "timeout" enquanto a unidade ainda
-                // pode executar. As transações internas possuem timeouts próprios e
-                // precisam terminar em ACK/readback ou falha real da sessão.
-                future.get()
-            }
-        } catch (e: java.util.concurrent.TimeoutException) {
-            // Leitura que estourou a espera do chamador: a unidade ainda na fila não deve rodar depois (o slot
-            // do árbitro já acabou). Só marca; nada do que a unidade faz muda.
-            future.cancel(false)
-            throw e
-        } catch (e: java.util.concurrent.ExecutionException) {
-            val cause = e.cause
-            if (cause is RuntimeException) throw cause
-            throw IllegalStateException(cause?.message ?: e.message ?: "Falha no scheduler MP48", cause ?: e)
-        }
-    }
-
-    private fun <T> enqueue(
-        reason: String,
-        expectedSessionId: Long,
-        workClass: Mp48WorkClass,
-        telemetryAfter: Boolean,
-        future: CompletableFuture<T>,
-        block: (Mp48SerialUnit) -> T,
-    ) {
-        if (!running.get()) {
-            future.completeExceptionally(IllegalStateException("Engine MP48 não está em execução"))
-            return
-        }
-        queue.offer(
-            QueuedSerialWork(
-                sequence = queueSequence.incrementAndGet(),
-                reason = reason,
-                expectedSessionId = expectedSessionId,
-                workClass = workClass,
-                telemetryAfter = telemetryAfter,
-                executeBlock = { unit -> if (!future.isDone) future.complete(block(unit)) },
-                failureBlock = future::completeExceptionally,
-            ),
-        )
+        val pending = queue.submit(reason, pinnedSession, workClass, telemetryAfter, block)
+        // Corrida com o fim do loop: o finally já drenou a fila; este item não pode ficar órfão.
+        if (!running.get()) pending.work.fail(IllegalStateException("Engine MP48 não está em execução"))
+        return pending.await(waitTimeoutMs)
     }
 
     fun statusJson(): JSONObject = synchronized(stateLock) {
@@ -274,11 +228,13 @@ class ResponseDrivenEcuEngine(
                     recoveringExistingSession = false
                     handshakeNonRetryable = false
                     analyzer.reset()
+                    queue.failAll(IllegalStateException("USB desconectado; operação não iniciada"))
                     updateState(EngineState.WAITING_USB, "Aguardando adaptador USB")
                     Thread.sleep(250L)
                     continue
                 }
                 if (handshakeNonRetryable) {
+                    queue.failAll(IllegalStateException("ECU recusou a sessão (non-retryable); operação não iniciada"))
                     updateState(
                         EngineState.RECOVERING_HARD,
                         "ECU respondeu com status não-retryable; reconecte a interface para abrir uma nova sessão segura",
@@ -317,6 +273,8 @@ class ResponseDrivenEcuEngine(
             analyzer.reset()
             running.set(false)
             stopRequested.set(false)
+            // Sem loop ninguém mais tira trabalho da fila: falha tudo, senão quem espera fica preso para sempre.
+            queue.failAll(IllegalStateException("Engine MP48 parada; operação não iniciada"))
             updateState(EngineState.STOPPED, lastError)
         }
     }
@@ -658,19 +616,6 @@ class ResponseDrivenEcuEngine(
         if (message.isNotBlank() && newState == EngineState.ERROR) lastError = message
         if (changed) onStateChanged(statusJson().put("message", message))
     }
-
-    private data class QueuedSerialWork(
-        val sequence: Long,
-        val reason: String,
-        val expectedSessionId: Long,
-        val workClass: Mp48WorkClass,
-        val telemetryAfter: Boolean,
-        val executeBlock: (Mp48SerialUnit) -> Unit,
-        val failureBlock: (Throwable) -> Unit,
-    ) {
-        fun run(unit: Mp48SerialUnit) = executeBlock(unit)
-        fun fail(error: Throwable) = failureBlock(error)
-    }
 }
 
 enum class EngineState {
@@ -702,4 +647,178 @@ data class EngineMetrics(
         .put("queued_transactions", queuedTransactions)
         .put("consecutive_failures", consecutiveFailures)
         .put("handshake_failures", handshakeFailures)
+}
+
+/**
+ * Escrita/safety cujo resultado não chegou dentro da espera crítica.
+ *
+ * [mutationMayHaveStarted] = false: a unidade nunca começou e foi cancelada (a ECU não foi tocada).
+ * [mutationMayHaveStarted] = true: a unidade já estava executando; o estado da ECU é desconhecido e
+ * precisa de releitura antes de qualquer conclusão.
+ */
+class Mp48CriticalWorkTimeoutException(
+    message: String,
+    val mutationMayHaveStarted: Boolean,
+    cause: Throwable? = null,
+) : IllegalStateException(message, cause)
+
+/**
+ * Fila priorizada da autoridade serial MP48 (pura, sem Android).
+ *
+ * Cada item tem estado próprio (na fila → executando → concluído | cancelado), então um item
+ * falhado ou expirado nunca roda depois, e [failAll] libera todos que esperam quando o loop acaba.
+ */
+internal class Mp48SerialWorkQueue(
+    private val criticalWaitMs: Long = CRITICAL_RESULT_WAIT_MS,
+) {
+    companion object {
+        /** Piso de espera de MANUAL_WRITE/SAFETY: longo, mas finito (antes era `get()` sem prazo). */
+        const val CRITICAL_RESULT_WAIT_MS = 15_000L
+    }
+
+    private val sequence = AtomicLong(0L)
+    private val queue = PriorityBlockingQueue<QueuedSerialWork>(11, compareBy<QueuedSerialWork>
+        { it.workClass.priority }
+        .thenBy { it.sequence })
+
+    val size: Int get() = queue.size
+
+    fun <T> submit(
+        reason: String,
+        expectedSessionId: Long,
+        workClass: Mp48WorkClass,
+        telemetryAfter: Boolean,
+        block: (Mp48SerialUnit) -> T,
+    ): PendingSerialWork<T> {
+        val future = CompletableFuture<T>()
+        val work = QueuedSerialWork(
+            sequence = sequence.incrementAndGet(),
+            reason = reason,
+            expectedSessionId = expectedSessionId,
+            workClass = workClass,
+            telemetryAfter = telemetryAfter,
+            executeBlock = { unit -> if (!future.isDone) future.complete(block(unit)) },
+            failureBlock = { error -> future.completeExceptionally(error) },
+        )
+        queue.offer(work)
+        return PendingSerialWork(work, future, criticalWaitMs)
+    }
+
+    fun poll(): QueuedSerialWork? = queue.poll()
+
+    /** Falha (e descarta) todo item ainda não iniciado. Retorna quantos foram liberados. */
+    fun failAll(error: Throwable): Int {
+        var failed = 0
+        while (true) {
+            val work = queue.poll() ?: break
+            if (work.fail(error)) failed += 1
+        }
+        return failed
+    }
+}
+
+internal class PendingSerialWork<T>(
+    val work: QueuedSerialWork,
+    private val future: CompletableFuture<T>,
+    private val criticalWaitMs: Long,
+) {
+    fun await(waitTimeoutMs: Long): T {
+        val workClass = work.workClass
+        return try {
+            if (workClass == Mp48WorkClass.READ_ONLY) {
+                future.get(waitTimeoutMs.coerceAtLeast(250L), TimeUnit.MILLISECONDS)
+            } else {
+                awaitCritical(maxOf(waitTimeoutMs, criticalWaitMs))
+            }
+        } catch (e: TimeoutException) {
+            // Leitura que estourou a espera do chamador: a unidade ainda na fila não deve rodar depois (o slot
+            // do árbitro já acabou). Só marca; nada do que a unidade faz muda.
+            work.cancelIfQueued()
+            future.cancel(false)
+            throw e
+        } catch (e: ExecutionException) {
+            val cause = e.cause
+            if (cause is RuntimeException) throw cause
+            throw IllegalStateException(cause?.message ?: e.message ?: "Falha no scheduler MP48", cause ?: e)
+        }
+    }
+
+    /**
+     * Escrita/safety nunca devolvem "timeout" genérico: ou o resultado real, ou a falha real da unidade, ou
+     * [Mp48CriticalWorkTimeoutException] dizendo se a mutação pode ter começado. O prazo da execução conta
+     * a partir do início dela, para uma escrita longa (mapa inteiro) não ser cortada pelo tempo de fila.
+     */
+    private fun awaitCritical(limitMs: Long): T {
+        try {
+            return future.get(limitMs, TimeUnit.MILLISECONDS)
+        } catch (_: TimeoutException) {
+            if (work.cancelIfQueued()) {
+                future.cancel(false)
+                throw Mp48CriticalWorkTimeoutException(
+                    "${work.reason}: não iniciada em ${limitMs} ms; nada foi enviado à ECU",
+                    mutationMayHaveStarted = false,
+                )
+            }
+        }
+        val startedAt = work.startedAtNanos
+        val remainingNanos = if (startedAt == 0L) 0L
+        else startedAt + TimeUnit.MILLISECONDS.toNanos(limitMs) - System.nanoTime()
+        if (remainingNanos > 0L) {
+            try {
+                return future.get(remainingNanos, TimeUnit.NANOSECONDS)
+            } catch (_: TimeoutException) {
+            }
+        } else if (future.isDone) {
+            return future.get()
+        }
+        throw Mp48CriticalWorkTimeoutException(
+            "${work.reason}: sem resultado em ${limitMs} ms após iniciar; resultado desconhecido, releia a ECU",
+            mutationMayHaveStarted = true,
+        )
+    }
+}
+
+internal class QueuedSerialWork(
+    val sequence: Long,
+    val reason: String,
+    val expectedSessionId: Long,
+    val workClass: Mp48WorkClass,
+    val telemetryAfter: Boolean,
+    private val executeBlock: (Mp48SerialUnit) -> Unit,
+    private val failureBlock: (Throwable) -> Unit,
+) {
+    private companion object {
+        const val QUEUED = 0
+        const val RUNNING = 1
+        const val DONE = 2
+        const val CANCELLED = 3
+    }
+
+    private val state = AtomicInteger(QUEUED)
+
+    @Volatile var startedAtNanos: Long = 0L
+        private set
+
+    /** Executa só se ainda estiver na fila; falha do bloco vai para quem espera. */
+    fun run(unit: Mp48SerialUnit): Boolean {
+        startedAtNanos = System.nanoTime()
+        if (!state.compareAndSet(QUEUED, RUNNING)) return false
+        try {
+            executeBlock(unit)
+        } catch (error: Throwable) {
+            failureBlock(error)
+        } finally {
+            state.set(DONE)
+        }
+        return true
+    }
+
+    /** Falha um item ainda não iniciado; item já iniciado/concluído não muda. */
+    fun fail(error: Throwable): Boolean {
+        if (!state.compareAndSet(QUEUED, CANCELLED)) return false
+        failureBlock(error)
+        return true
+    }
+
+    fun cancelIfQueued(): Boolean = state.compareAndSet(QUEUED, CANCELLED)
 }
