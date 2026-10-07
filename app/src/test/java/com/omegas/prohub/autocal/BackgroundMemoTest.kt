@@ -48,9 +48,9 @@ class BackgroundMemoTest {
     }
 
     /**
-     * ECU#2 (travada na troca de zona): a chamada da tela nunca espera o cálculo depois da primeira vez.
-     * Valor velho (ou invalidado) volta na hora e o recálculo vai para o segundo plano, uma vez só.
-     * Antes o valor velho era recalculado dentro da chamada — e o JavaScript ficava bloqueado.
+     * ECU#2 (travada na troca de zona): valor só VELHO volta na hora e o recálculo vai para o segundo
+     * plano, uma vez só. Revisão 2026-10-07: valor INVALIDADO (depois de gravar/resetar) não volta — a
+     * próxima leitura calcula na hora, para a tela nunca mostrar o estado de antes da ação.
      */
     @Test
     fun `valor velho volta na hora e o recalculo vai para o segundo plano`() {
@@ -63,9 +63,22 @@ class BackgroundMemoTest {
         runQueued()
         assertEquals("v2", memo.get())
         memo.invalidate()
-        assertEquals("invalidado: ainda devolve o último, sem travar", "v2", memo.get())
-        runQueued()
-        assertEquals("depois de gravar a leitura seguinte é fresca", "v3", memo.get())
+        assertEquals("invalidado: calcula na hora", "v3", memo.get())
+        assertTrue(queued.isEmpty())
+    }
+
+    @Test
+    fun `calculo que comecou antes do invalidate nao fica marcado como valido`() {
+        lateinit var memo: BackgroundMemo
+        var invalidateDuring = true
+        memo = BackgroundMemo(1_000L, 3_000L, 15_000L, { now }, background = { queued += it }) {
+            runs++
+            if (invalidateDuring) { invalidateDuring = false; memo.invalidate() } // gravação no meio do cálculo
+            "v$runs"
+        }
+        assertEquals("v1", memo.get())
+        assertEquals("o resultado de antes da gravação não vale: recalcula", "v2", memo.get())
+        assertEquals("v2", memo.get())
     }
 
     @Test

@@ -10,9 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger
  * travando). Aqui o resultado é recalculado em segundo plano, só enquanto alguém está olhando
  * ([watchMs]), e a chamada da tela devolve o último valor na hora.
  *
- * - [get]: devolve o valor guardado na hora. Velho ([staleMs]) ou invalidado: agenda UM recálculo em
- *   segundo plano ([background]) e devolve o último valor mesmo assim. Só a primeira chamada (sem valor
- *   algum) calcula dentro da chamada (ECU#2: a troca de zona não trava mais o JavaScript).
+ * - [get]: devolve o valor guardado na hora. Só velho ([staleMs]): agenda UM recálculo em segundo plano
+ *   ([background]) e devolve o último valor (ECU#2: a troca de zona não trava o JavaScript). Sem valor ou
+ *   invalidado (depois de gravar/resetar): calcula dentro da chamada; um cálculo iniciado antes do
+ *   [invalidate] não vira válido (contador de geração).
  * - [getFresh]: calcula dentro da chamada (pedido explícito de leitura fresca, depois de gravar/restaurar).
  * - [refreshIfWatched]: chamado pelo relógio de segundo plano; recalcula a cada [refreshMs] só se
  *   a tela pediu o valor nos últimos [watchMs].
@@ -36,6 +37,8 @@ class BackgroundMemo(
     @Volatile private var valid = false
     @Volatile private var computedAt = 0L
     @Volatile private var requestedAt = -1L
+    /** Sobe a cada [invalidate]: um cálculo que começou antes dele não vira valor válido. */
+    private val generation = java.util.concurrent.atomic.AtomicLong(0L)
     private val computations = AtomicInteger(0)
 
     /** Quantas vezes o cálculo pesado rodou (para provar que a chamada da tela não o dispara). */
@@ -46,13 +49,16 @@ class BackgroundMemo(
         requestedAt = now
         val cached = value
         if (valid && cached != null && now - computedAt <= staleMs) return cached
-        if (cached != null) {
+        if (valid && cached != null) {
+            // Só velho: devolve já e recalcula em segundo plano (ECU#2).
             scheduleRefresh()
             return cached
         }
         synchronized(computeLock) {
-            // Primeira chamada: outra thread pode ter acabado de calcular enquanto esta esperava o cadeado.
-            value?.let { return it }
+            // Primeira chamada ou valor invalidado (depois de gravar): calcula na hora. Outra thread pode ter
+            // acabado de recalcular enquanto esta esperava o cadeado.
+            val again = value
+            if (valid && again != null) return again
             return runCompute()
         }
     }
@@ -81,6 +87,7 @@ class BackgroundMemo(
     }
 
     fun invalidate() {
+        generation.incrementAndGet()
         valid = false
     }
 
@@ -105,6 +112,7 @@ class BackgroundMemo(
     }
 
     private fun runCompute(): String {
+        val startedGeneration = generation.get()
         val result = try {
             compute()
         } catch (error: Exception) {
@@ -112,7 +120,7 @@ class BackgroundMemo(
         }
         value = result
         computedAt = clock()
-        valid = true
+        valid = generation.get() == startedGeneration
         computations.incrementAndGet()
         return result
     }
