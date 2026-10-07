@@ -91,23 +91,6 @@ object ContinuousLearningMath {
             .map { it.copy(weight = it.weight.coerceIn(0.0, 1.0)) }
     }
 
-    /**
-     * Interpolação contínua 3D de valores (RPM x Petrol Inj x MAP) em uma superfície sem descontinuidades.
-     */
-    fun interpolate3D(
-        rpm: Double,
-        petrolMs: Double,
-        mapBar: Double,
-        getValue: (row: Int, col: Int, mapIdx: Int) -> Double,
-        mapBins: DoubleArray = defaultMapBins,
-    ): Double {
-        val weights = trilinearWeights(rpm, petrolMs, mapBar, mapBins)
-        if (weights.isEmpty()) return 0.0
-        val totalWeight = weights.sumOf { it.weight }
-        if (totalWeight <= 0.0) return 0.0
-        return weights.sumOf { getValue(it.row, it.column, it.mapIndex) * it.weight } / totalWeight
-    }
-
     /** Peso de uma permanência: cresce no início e satura para evitar sobre-voto. */
     fun dwellWeight(durationMs: Long, timeConstantMs: Long = 2_000L): Double {
         if (durationMs <= 0L) return 0.0
@@ -125,23 +108,6 @@ object ContinuousLearningMath {
         val valid = values.filter { it.second > 0.0 && it.first.isFinite() }.toList()
         val total = valid.sumOf { it.second }
         return if (total <= 0.0) null else valid.sumOf { it.first * it.second } / total
-    }
-
-    /**
-     * Kernel Gaussiano para propagação espacial do aprendizado.
-     * Permite que uma correção em (row, column) espalhe para vizinhos.
-     */
-    fun gaussianSpatialKernel(
-        centerRow: Int,
-        centerColumn: Int,
-        targetRow: Int,
-        targetColumn: Int,
-        sigmaCells: Double = 1.0
-    ): Double {
-        val rowDist = (targetRow - centerRow).toDouble()
-        val colDist = (targetColumn - centerColumn).toDouble()
-        val squaredDist = rowDist * rowDist + colDist * colDist
-        return exp(-squaredDist / (2.0 * sigmaCells * sigmaCells))
     }
 }
 

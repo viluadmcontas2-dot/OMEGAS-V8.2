@@ -171,22 +171,6 @@ class NativeRuntimeManager(
 
     fun fullSnapshotJson(): String = snapshotJson()
 
-    fun metricsJson(): String = statusJson().toString()
-
-    fun protocolJson(): String = JSONObject()
-        .put("ok", true)
-        .put("native", true)
-        .put("mode", "response-driven")
-        .put("baud", 9_600)
-        .put("format", "8N1")
-        .put("telemetry", hex(Mp48Protocol.CMD_TELEMETRY))
-        .put("telemetryScaleSchema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)
-        .put("disconnect", hex(Mp48Protocol.CMD_DISCONNECT))
-        .put("mapRows", Mp48Protocol.MAP_ROWS)
-        .put("mapColumns", Mp48Protocol.MAP_COLUMNS)
-        .put("status", statusJson())
-        .toString()
-
     fun selfTestJson(): String {
         val telemetryChecksum = Mp48Protocol.checksum(byteArrayOf(0x48, 0x01))
         val disconnectChecksum = Mp48Protocol.checksum(byteArrayOf(0x00, 0x01))
