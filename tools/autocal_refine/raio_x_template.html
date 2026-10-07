@@ -1,0 +1,250 @@
+<title>Raio-X do AutoCal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: painel de oficina escuro — gráfico primeiro, uma frase por bloco, abas por "ângulo" de olhar os dados */
+:root{
+  --bg:#0d1114; --panel:#141a1f; --line:#25303a; --fg:#e8edf1; --muted:#8e9ba7;
+  --gas:#4cc3ff; --pet:#ffb547; --good:#3ddc97; --warn:#ffcc4d; --bad:#ff5d6c; --accent:#4cc3ff;
+  --display:"Archivo",system-ui,sans-serif; --body:"Inter Tight",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:20px 48px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;margin-bottom:6px}
+h1{font:800 clamp(26px,4vw,40px)/1.05 var(--display);letter-spacing:-.01em;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 18px;max-width:70ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.chip{font:600 12px var(--mono);letter-spacing:.04em;padding:6px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+.chip b{color:var(--fg)}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:8px;z-index:2}
+nav button{font:600 14px var(--body);color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-height:44px;cursor:pointer}
+nav button[aria-selected="true"]{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+nav button:focus-visible,.cell:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+section.tab{display:grid;gap:16px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.box h2{font:700 18px var(--display);margin:0 0 4px}
+.lead{margin:0 0 12px;color:var(--fg)}
+.lead em{font-style:normal;color:var(--warn)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.scroll{overflow-x:auto}
+table.hm{border-collapse:separate;border-spacing:3px;font:500 12px var(--mono);font-variant-numeric:tabular-nums}
+table.hm th{color:var(--muted);font-weight:600;padding:2px 6px;white-space:nowrap}
+.cell{min-width:64px;height:30px;border-radius:6px;text-align:center;cursor:pointer;color:#0d1114;font-weight:600}
+.cell.empty{background:transparent;border:1px dashed var(--line);color:var(--muted);cursor:default}
+.legend{display:flex;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:12px;margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+.detail{margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:#0f1519;border-radius:6px;min-height:44px}
+svg text{fill:var(--muted);font:500 11px var(--mono)}
+.list{display:grid;gap:8px}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.pill{font:600 11px var(--mono);padding:3px 8px;border-radius:999px}
+.p-bad{background:color-mix(in srgb,var(--bad) 22%,transparent);color:var(--bad)}
+.p-warn{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
+.p-good{background:color-mix(in srgb,var(--good) 22%,transparent);color:var(--good)}
+.p-gas{background:color-mix(in srgb,var(--gas) 22%,transparent);color:var(--gas)}
+.p-pet{background:color-mix(in srgb,var(--pet) 22%,transparent);color:var(--pet)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.algo{display:grid;gap:10px;counter-reset:s}
+.step{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}
+.step::before{counter-increment:s;content:counter(s);font:800 18px var(--display);color:var(--bg);background:var(--accent);border-radius:8px;height:34px;display:grid;place-items:center}
+.step b{display:block}
+.mind{background:#0f1519;border-radius:10px;padding:8px}
+@media (prefers-reduced-motion:no-preference){.cell{transition:transform .12s}.cell:hover{transform:scale(1.06)}}
+</style>
+
+<div class="wrap">
+<header><h1>Raio-X do AutoCal</h1><span class="chip" id="period"></span></header>
+<p class="sub">Todas as sessões gravadas pelo OMEGAS, olhadas de vários ângulos. Toque num ângulo, depois toque nas células e pontos para ver o porquê.</p>
+<div class="chips" id="totals"></div>
+<nav role="tablist" aria-label="Ângulos">
+  <button role="tab" data-t="mapa" aria-selected="true">Mapa mental</button>
+  <button role="tab" data-t="giro">Giro × MAP</button>
+  <button role="tab" data-t="automatch">AutoMatch</button>
+  <button role="tab" data-t="curva">Bolinhas fora</button>
+  <button role="tab" data-t="refino">Refino</button>
+  <button role="tab" data-t="apagao">Quase apagou</button>
+  <button role="tab" data-t="algo">Algoritmo</button>
+</nav>
+
+<section class="tab" id="t-mapa">
+  <div class="box"><h2>Teia de investigação</h2><p class="lead" id="mapLead"></p>
+    <div class="mind scroll"><pre class="mermaid" id="mm"></pre></div></div>
+</section>
+
+<section class="tab" id="t-giro" hidden>
+  <div class="grid2">
+    <div class="box"><h2>Gasolina pura: quanto injeta</h2><p class="lead">No mesmo MAP, a lenta injeta <em id="veGap"></em> do que andando. É física do motor, não erro.</p>
+      <div class="scroll"><table class="hm" id="hmVe"></table></div><div class="detail" id="dVe">Toque numa célula.</div></div>
+    <div class="box"><h2>GNV × gasolina no mesmo giro e MAP</h2><p class="lead">Verde = GNV igual à gasolina. Azul = GNV pede mais (pobre). Vermelho = GNV pede menos (rico).</p>
+      <div class="scroll"><table class="hm" id="hmRatio"></table></div><div class="detail" id="dRatio">Toque numa célula.</div>
+      <div class="legend"><span><i style="background:var(--bad)"></i>−8% rico</span><span><i style="background:var(--good)"></i>±2%</span><span><i style="background:var(--gas)"></i>+8% pobre</span></div></div>
+  </div>
+</section>
+
+<section class="tab" id="t-automatch" hidden>
+  <div class="box"><h2>O que cada AutoMatch fez no multiplicador</h2><p class="lead" id="amLead"></p>
+    <div class="scroll"><svg id="amSvg" viewBox="0 0 900 300" style="width:100%;min-width:620px;height:auto"></svg></div>
+    <div class="legend"><span><i style="background:var(--muted)"></i>antes</span><span><i style="background:var(--accent)"></i>depois</span><span><i style="background:var(--bad)"></i>teto da ECU</span></div>
+    <div class="chips" id="amPick" style="margin-top:10px"></div></div>
+</section>
+
+<section class="tab" id="t-curva" hidden>
+  <div class="grid2">
+    <div class="box"><h2>Em que giro a ECU aprendeu cada bolinha</h2><p class="lead">Barra mostra a faixa de giro dos aprendizados. Bolinha aprendida parada <em>e</em> andando mistura dois motores diferentes.</p><div class="list" id="regList"></div></div>
+    <div class="box"><h2>Bolinhas fora da curva</h2><p class="lead" id="anLead"></p><div class="list" id="anList"></div></div>
+  </div>
+</section>
+
+<section class="tab" id="t-refino" hidden>
+  <div class="box"><h2>Efeito do Refino</h2><p class="lead" id="rfLead"></p>
+    <div class="scroll"><svg id="rfSvg" viewBox="0 0 900 260" style="width:100%;min-width:620px;height:auto"></svg></div>
+    <div class="list" id="rfList" style="margin-top:12px"></div></div>
+</section>
+
+<section class="tab" id="t-apagao" hidden>
+  <div class="box"><h2>Onde o motor quase apagou</h2><p class="lead" id="stLead"></p>
+    <div class="scroll"><svg id="stSvg" viewBox="0 0 900 320" style="width:100%;min-width:620px;height:auto"></svg></div>
+    <div class="detail" id="dSt">Toque num ponto.</div></div>
+</section>
+
+<section class="tab" id="t-algo" hidden>
+  <div class="grid2">
+  <div class="box"><h2>Guarda contra anomalias</h2><p class="lead">O que o app faz sozinho, em ordem, sem você tocar. A ECU continua dona do AutoMatch.</p>
+    <div class="algo">
+      <div class="step"><div><b>Medir no mesmo giro e MAP</b><span class="muted">Compara GNV com gasolina na mesma célula giro × MAP, nunca pela bolinha. A bolinha mistura regimes.</span></div></div>
+      <div class="step"><div><b>Etiquetar cada bolinha nativa</b><span class="muted">Cada aprendizado da ECU recebe o giro em que nasceu. Parada + andando na mesma banda = contaminada.</span></div></div>
+      <div class="step"><div><b>Separar curva, giro e ruído</b><span class="muted">Desvio igual em todo giro fica para a curva da ECU. Desvio só num giro vai para a coluna do Mapa K. O resto é ruído e não mexe em nada.</span></div></div>
+      <div class="step"><div><b>Corrigir o Mapa K na célula</b><span class="muted">Até 4% por vez, foto antes, confirmação da ECU, Desfazer de um toque. Prioridade: células onde o motor quase apagou.</span></div></div>
+      <div class="step"><div><b>Não brigar com o AutoMatch</b><span class="muted">Nada é gravado na janela em que a ECU fez AutoMatch. Na simulação, os dois juntos levaram o erro a 15%.</span></div></div>
+      <div class="step"><div><b>Readquirir só bolinha contaminada, andando</b><span class="muted">Apagar parado é inútil: ela renasce igual. Apaga quando o carro está no regime certo daquela banda.</span></div></div>
+      <div class="step"><div><b>Avisar do teto</b><span class="muted">Ponto do multiplicador travado no teto não aprende mais. O app mostra e puxa a diferença para a Curva K.</span></div></div>
+    </div></div>
+  <div class="box"><h2>Simulação com trajeto real</h2><p class="lead">Erro do GNV depois de 8 voltas, com um erro conhecido plantado.</p>
+    <div class="list" id="simList"></div>
+    <p class="muted" style="margin-top:12px">O que a simulação não prova: o erro foi plantado por nós. Só o carro confirma os números reais.</p></div>
+  </div>
+</section>
+</div>
+
+<script>
+const D = __DATA__;
+const $ = s => document.querySelector(s);
+const pct = v => (v>0?'+':'')+v.toFixed(1)+'%';
+// abas
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section.tab').forEach(s=>s.hidden = s.id!=='t-'+b.dataset.t);
+  try{localStorage.setItem('rx-tab',b.dataset.t)}catch(e){}
+});
+try{const t=localStorage.getItem('rx-tab'); if(t) document.querySelector(`nav button[data-t="${t}"]`)?.click()}catch(e){}
+
+// totais
+const S=D.sessions, tot=k=>S.reduce((a,s)=>a+s[k],0);
+const dates=S.map(s=>s.s.slice(0,10)).sort();
+$('#period').textContent = dates.length? dates[0].split('-').reverse().slice(0,2).join('/')+' → '+dates.at(-1).split('-').reverse().slice(0,2).join('/') : '';
+$('#totals').innerHTML = [
+  ['sessões',S.length],['leituras',tot('frames').toLocaleString('pt-BR')],['em lenta',tot('idle').toLocaleString('pt-BR')],
+  ['AutoMatch',D.epochs.length],['gravações K',tot('kwrites')],['quase apagou',D.stalls.length]
+].map(([k,v])=>`<span class="chip"><b>${v}</b> ${k}</span>`).join('');
+
+// cores
+function mix(a,b,t){return a.map((x,i)=>Math.round(x+(b[i]-x)*t))}
+const C={bad:[255,93,108],good:[61,220,151],gas:[76,195,255]};
+function ratioColor(r){const d=(r-1)*100; if(Math.abs(d)<=2) return `rgb(${C.good})`;
+  const t=Math.min(1,(Math.abs(d)-2)/6); return `rgb(${mix(C.good,d>0?C.gas:C.bad,t)})`;}
+function veColor(v,lo,hi){const t=(v-lo)/(hi-lo||1); return `rgb(${mix([60,70,80],[255,181,71],t)})`;}
+
+// heatmaps
+function heat(id,rows,fmt,color,onPick){
+  const t=$(id); let h='<tr><th>MAP</th>'+D.rpmBands.map(b=>`<th>${b}</th>`).join('')+'</tr>';
+  D.maps.forEach((m,i)=>{ if(!rows[i].some(v=>v!=null)) return;
+    h+=`<tr><th>${m.toFixed(2)}</th>`+rows[i].map((v,j)=> v==null?'<td class="cell empty">·</td>':
+      `<td class="cell" tabindex="0" data-i="${i}" data-j="${j}" style="background:${color(v)}">${fmt(v)}</td>`).join('')+'</tr>';});
+  t.innerHTML=h; t.querySelectorAll('.cell[data-i]').forEach(c=>{const f=()=>onPick(+c.dataset.i,+c.dataset.j); c.onclick=f; c.onkeydown=e=>{if(e.key==='Enter')f()}});
+}
+const veVals=D.ve.flat().filter(v=>v!=null), veLo=Math.min(...veVals), veHi=Math.max(...veVals);
+heat('#hmVe',D.ve,v=>v.toFixed(2),v=>veColor(v,veLo,veHi),(i,j)=>{
+  const v=D.ve[i][j], ref=D.ve[i][3]; $('#dVe').innerHTML=`MAP ${D.maps[i].toFixed(2)} bar, ${D.rpmBands[j]} rpm: gasolina injeta <b class="mono">${v.toFixed(2)} ms</b>`+
+  (ref&&j!==3?` — <b class="mono">${pct((v/ref-1)*100)}</b> em relação a 2000–2600 rpm no mesmo MAP.`:'.');});
+const gaps=D.ve.map(r=>r[0]&&r[3]?(r[0]/r[3]-1)*100:null).filter(v=>v!=null);
+$('#veGap').textContent = gaps.length? `${Math.round(Math.min(...gaps))} a ${Math.round(Math.max(...gaps))}% mais` : 'mais';
+heat('#hmRatio',D.ratio.map(r=>r.map(c=>c?c[0]:null)),v=>pct((v-1)*100),ratioColor,(i,j)=>{
+  const [r,n]=D.ratio[i][j], d=(r-1)*100;
+  $('#dRatio').innerHTML=`MAP ${D.maps[i].toFixed(2)}, ${D.rpmBands[j]} rpm: GNV pede <b class="mono">${pct(d)}</b> (${n} leituras de cada combustível). `+
+   (Math.abs(d)<=2?'Bom: nada a fazer.': d>0?'GNV pobre aqui: candidato a subir o Mapa K nesta célula.':'GNV rico aqui: candidato a baixar o Mapa K nesta célula.');});
+
+// AutoMatch
+const E=D.epochs; let amI=0;
+function drawAM(){const e=E[amI]; if(!e){$('#amLead').textContent='Nenhum AutoMatch registrado.';return}
+  const W=900,H=300,L=46,R=12,T=14,B=30, all=[...e.before,...e.after,24576], lo=Math.min(...all)*0.97, hi=24576*1.02;
+  const x=i=>L+i*(W-L-R)/(e.n-1), y=v=>T+(hi-v)*(H-T-B)/(hi-lo);
+  let s=''; for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4; s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="4" y="${y(v)+4}">${(v/16384).toFixed(2)}</text>`}
+  s+=`<line x1="${L}" x2="${W-R}" y1="${y(24576)}" y2="${y(24576)}" stroke="var(--bad)" stroke-dasharray="6 4"/><text x="${W-R-90}" y="${y(24576)-6}" style="fill:var(--bad)">teto 1,50</text>`;
+  const path=a=>a.map((v,i)=>(i?'L':'M')+x(i)+' '+y(v)).join(' ');
+  s+=`<path d="${path(e.before)}" fill="none" stroke="var(--muted)" stroke-width="2"/>`;
+  s+=`<path d="${path(e.after)}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+  e.after.forEach((v,i)=>{s+=`<circle cx="${x(i)}" cy="${y(v)}" r="${v>=24576?5:3}" fill="${v>=24576?'var(--bad)':'var(--accent)'}"/>`});
+  [0,10,20,29].forEach(i=>s+=`<text x="${x(i)-8}" y="${H-8}">P${i+1}</text>`);
+  $('#amSvg').innerHTML=s;
+  const satAll=E.reduce((a,e)=>a+e.sat,0), nAll=E.reduce((a,e)=>a+e.n,0);
+  $('#amLead').innerHTML=`Neste AutoMatch (${e.s.slice(5,16).replace('_',' ')}) <em>${e.sat} de ${e.n}</em> pontos terminaram no teto. Em todos os ${E.length} AutoMatch, <em>${Math.round(100*satAll/nAll)}%</em> dos pontos ficaram travados: a ECU quis corrigir mais e não pôde.`;
+  document.querySelectorAll('#amPick .chip').forEach((c,k)=>c.style.borderColor=k===amI?'var(--accent)':'');
+}
+$('#amPick').innerHTML=E.map((e,k)=>`<button class="chip" style="cursor:pointer;background:none" data-k="${k}">${e.s.slice(5,16).replace('_',' ')} · ${e.sat}/${e.n} no teto</button>`).join('');
+document.querySelectorAll('#amPick button').forEach(b=>b.onclick=()=>{amI=+b.dataset.k;drawAM()}); drawAM();
+
+// regimes
+const RG=Object.entries(D.regimes).sort((a,b)=>(+a[0].split(':')[1])-(+b[0].split(':')[1]));
+$('#regList').innerHTML = RG.length? RG.map(([k,v])=>{const [f,b]=k.split(':'); const mixd=v.lo<1100&&v.hi>1500;
+  const sc=r=>Math.max(0,Math.min(100,(r-600)/(3200-600)*100));
+  return `<div class="row"><span class="pill ${f==='GNV'?'p-gas':'p-pet'}">${f} ${b}</span>
+   <svg viewBox="0 0 200 14" style="width:100%;height:14px"><rect x="0" y="5" width="200" height="4" rx="2" fill="var(--line)"/>
+   <rect x="${sc(v.lo)*2}" y="3" width="${Math.max(3,(sc(v.hi)-sc(v.lo))*2)}" height="8" rx="4" fill="${mixd?'var(--bad)':'var(--good)'}"/>
+   <rect x="${sc(1100)*2}" y="0" width="1" height="14" fill="var(--muted)"/></svg>
+   <span class="mono muted">${v.lo}–${v.hi}</span></div>`}).join('') : '<p class="muted">Sem eventos de aprendizado com giro registrado.</p>';
+// anomalias
+const A=D.anomalies;
+$('#anLead').innerHTML=`${A.length} bolinhas destoam mais de 6% das vizinhas. <em>${A.filter(a=>a.fuel==='GASOLINA').length}</em> delas são da gasolina, que não tem erro de GNV: prova de que a bolinha sozinha não é régua.`;
+$('#anList').innerHTML=A.slice().sort((a,b)=>Math.abs(b.dev)-Math.abs(a.dev)).slice(0,14).map(a=>
+ `<div class="row"><span class="pill ${a.fuel==='GNV'?'p-gas':'p-pet'}">${a.fuel} ${a.band}</span><span class="mono">MAP ${a.map.toFixed(2)} · ${a.ms} ms (vizinhas ${a.expected})</span><span class="pill ${Math.abs(a.dev)>15?'p-bad':'p-warn'}">${pct(a.dev)}</span></div>`).join('');
+
+// refino
+const V=D.verdicts.filter(v=>v.before&&v.after);
+const vc=k=>D.verdicts.filter(v=>v.status===k).length;
+const better=V.filter(v=>Math.abs(v.after-1)<Math.abs(v.before-1)).length;
+$('#rfLead').innerHTML=`${D.verdicts.length} veredictos. Em <em>${better} de ${V.length}</em> com antes e depois, a razão GNV/gasolina chegou mais perto de 1,000.`;
+(function(){const W=900,H=260,L=60,R=12,T=14,B=26; if(!V.length){return}
+  const vals=V.flatMap(v=>[v.before,v.after]), lo=Math.min(0.94,...vals), hi=Math.max(1.06,...vals);
+  const y=v=>T+(hi-v)*(H-T-B)/(hi-lo), x=i=>L+(i+0.5)*(W-L-R)/V.length;
+  let s=`<rect x="${L}" y="${y(1.02)}" width="${W-L-R}" height="${y(0.98)-y(1.02)}" fill="color-mix(in srgb,var(--good) 14%,transparent)"/>`;
+  [lo,1,hi].forEach(v=>s+=`<text x="4" y="${y(v)+4}">${v.toFixed(3)}</text>`);
+  V.forEach((v,i)=>{const ok=Math.abs(v.after-1)<Math.abs(v.before-1);
+    s+=`<line x1="${x(i)}" x2="${x(i)}" y1="${y(v.before)}" y2="${y(v.after)}" stroke="${ok?'var(--good)':'var(--bad)'}" stroke-width="3"/>
+    <circle cx="${x(i)}" cy="${y(v.before)}" r="5" fill="var(--muted)"/><circle cx="${x(i)}" cy="${y(v.after)}" r="6" fill="${ok?'var(--good)':'var(--bad)'}"/>`});
+  $('#rfSvg').innerHTML=s;})();
+const ST={CONFIRMADO:'p-good',CONFIRMADA:'p-good',PIOROU:'p-bad',PIOROU_EM_PARTE:'p-bad',INTERROMPIDO:'p-warn',SEM_BASE:'p-warn'};
+$('#rfList').innerHTML=Object.entries(D.verdicts.reduce((a,v)=>(a[v.status]=(a[v.status]||0)+1,a),{})).map(([k,n])=>
+  `<div class="row"><span class="pill ${ST[k]||'p-warn'}">${k.replace(/_/g,' ').toLowerCase()}</span><span></span><span class="mono">${n}</span></div>`).join('');
+
+// quase apagou
+const SP=D.stalls.filter(s=>s.rpm&&s.map);
+$('#stLead').innerHTML=`${D.stalls.length} eventos. <em>${SP.filter(s=>s.fuel==='GNV').length}</em> no GNV, ${SP.filter(s=>s.decel).length} desacelerando para a lenta. Cada ponto é onde o motor estava logo antes.`;
+(function(){const W=900,H=320,L=50,R=14,T=14,B=34, x=r=>L+(r-600)*(W-L-R)/(3000-600), y=m=>T+(1.0-m)*(H-T-B)/(1.0-0.1);
+  let s=''; [800,1100,1500,2000,2600].forEach(r=>s+=`<line x1="${x(r)}" x2="${x(r)}" y1="${T}" y2="${H-B}" stroke="var(--line)"/><text x="${x(r)-14}" y="${H-12}">${r}</text>`);
+  [0.2,0.4,0.6,0.8].forEach(m=>s+=`<line x1="${L}" x2="${W-R}" y1="${y(m)}" y2="${y(m)}" stroke="var(--line)"/><text x="6" y="${y(m)+4}">${m.toFixed(1)}</text>`);
+  s+=`<rect x="${x(1100)}" y="${T}" width="${x(1500)-x(1100)}" height="${H-T-B}" fill="color-mix(in srgb,var(--gas) 10%,transparent)"/>`;
+  s+=`<text x="${x(1110)}" y="${T+14}" style="fill:var(--gas)">1100–1500: GNV pobre</text>`;
+  SP.forEach((p,i)=>s+=`<circle class="st" data-i="${i}" tabindex="0" cx="${x(Math.min(2990,Math.max(610,p.rpm)))}" cy="${y(Math.min(0.99,Math.max(0.11,p.map)))}" r="7" fill="${p.kind==='APAGOU'?'var(--bad)':'var(--warn)'}" stroke="var(--bg)" stroke-width="2" style="cursor:pointer"/>`);
+  s+=`<text x="${W-R-60}" y="${H-12}">rpm →</text><text x="6" y="${T+4}">MAP</text>`;
+  $('#stSvg').innerHTML=s;
+  document.querySelectorAll('#stSvg .st').forEach(c=>{const f=()=>{const p=SP[+c.dataset.i]; $('#dSt').innerHTML=`<span class="pill ${p.kind==='APAGOU'?'p-bad':'p-warn'}">${(p.kind||'').replace('_',' ').toLowerCase()}</span> ${p.s.slice(5,16).replace('_',' ')} · ${p.fuel} · ${p.rpm} rpm · MAP ${p.map.toFixed(2)} · ${p.ms} ms ${p.decel?'· desacelerando':''}`}; c.onclick=f; c.onkeydown=e=>{if(e.key==='Enter')f()}});})();
+
+// simulação
+$('#simList').innerHTML=D.sim.map(s=>`<div class="row"><span class="pill ${s.best?'p-good':'p-warn'}">${s.best?'melhor':'—'}</span><span>${s.name}</span><span class="mono">${s.idle}% parado · ${s.drive}% andando</span></div>`).join('');
+
+// mapa mental
+$('#mapLead').textContent=D.mindLead;
+$('#mm').textContent=D.mind;
+</script>
