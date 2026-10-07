@@ -2,6 +2,13 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
+  /** Falha de um gancho: console com o nome e, 3 seguidas na mesma tela, o aviso de recarregar (core/store.js). */
+  function report(where, error) {
+    const errors = ns.ScreenErrors;
+    if (errors && typeof errors.note === 'function') errors.note(where, error);
+    else console.error(`[OMEGAS ${where}]`, error);
+  }
+
   class Scheduler {
     constructor(options) {
       const opts = options || {};
@@ -19,6 +26,7 @@
       this.frameHooks = new Set();
       this.frameHandle = null;
       this.tick = 0;
+      this.failed = 0;
       this.running = false;
     }
     addHook(cadence, listener) {
@@ -44,7 +52,7 @@
         this.frameHandle = null;
         let busy = false;
         this.frameHooks.forEach(listener => {
-          try { if (listener(timestamp) !== false) busy = true; } catch (error) { console.error('[OMEGAS scheduler frame hook]', error); }
+          try { if (listener(timestamp) !== false) busy = true; } catch (error) { report('scheduler frame hook', error); }
         });
         if (busy) this.armFrame();
       });
@@ -88,25 +96,28 @@
       const set = this.hooks[cadence];
       if (!set) return;
       set.forEach(listener => {
-        try { listener(this.tick); } catch (error) { console.error(`[OMEGAS scheduler ${cadence} hook]`, error); }
+        try { listener(this.tick); } catch (error) { this.failed += 1; report(`scheduler ${cadence} hook`, error); }
       });
     }
     run() {
       this.tick += 1;
-      try { if (typeof this.onFast === 'function') this.onFast(this.tick); } catch (error) { console.error('[OMEGAS scheduler fast]', error); }
+      this.failed = 0;
+      try { if (typeof this.onFast === 'function') this.onFast(this.tick); } catch (error) { this.failed += 1; report('scheduler fast', error); }
       this.emitHooks('fast');
       this.statusElapsedMs += this.intervalMs;
       this.contextElapsedMs += this.intervalMs;
       if (this.tick === 1 || this.statusElapsedMs >= this.statusIntervalMs) {
         this.statusElapsedMs = 0;
-        try { if (typeof this.onStatus === 'function') this.onStatus(this.tick); } catch (error) { console.error('[OMEGAS scheduler status]', error); }
+        try { if (typeof this.onStatus === 'function') this.onStatus(this.tick); } catch (error) { this.failed += 1; report('scheduler status', error); }
         this.emitHooks('status');
       }
       if (this.tick === 1 || this.contextElapsedMs >= this.contextIntervalMs) {
         this.contextElapsedMs = 0;
-        try { if (typeof this.onContext === 'function') this.onContext(this.tick); } catch (error) { console.error('[OMEGAS scheduler context]', error); }
+        try { if (typeof this.onContext === 'function') this.onContext(this.tick); } catch (error) { this.failed += 1; report('scheduler context', error); }
         this.emitHooks('context');
       }
+      // Um ciclo inteiro sem erro: as falhas deixam de ser "seguidas".
+      if (!this.failed && ns.ScreenErrors) ns.ScreenErrors.clear();
     }
   }
 

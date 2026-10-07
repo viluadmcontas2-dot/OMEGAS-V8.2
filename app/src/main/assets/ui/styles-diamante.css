@@ -332,3 +332,6 @@ html body .curve-backup-toolbar { display:flex; align-items:center; gap:8px; fle
 html body .curve-backup-toolbar :is(button,select) { min-height:58px; font-size:22px; }
 html body .curve-backup-toolbar select { flex:1; min-width:0; }
 html body .curve-backup-status { flex:none; font-size:20px; line-height:1.25; }
+/* Falhas de tela: aviso tocável (3 erros seguidos) e tela que não carregou. */
+html body .screen-error-banner { position:fixed; left:50%; top:76px; transform:translateX(-50%); z-index:60; min-height:58px; padding:0 24px; border:1px solid var(--warn); border-radius:12px; background:var(--warn-soft); color:var(--text); font-size:22px; }
+html body .screen-load-failure { margin:24px; font-size:22px; color:var(--warn); }

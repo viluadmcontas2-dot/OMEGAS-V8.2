@@ -2,6 +2,37 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
+  /**
+   * Erros de tela: cada falha vai para o console COM o nome de onde veio; 3 falhas seguidas na mesma tela mostram
+   * um aviso tocável ("Algo falhou nesta tela; toque para recarregar"). Um ciclo do scheduler sem erro zera a conta.
+   */
+  const ScreenErrors = {
+    LIMIT: 3,
+    count: 0,
+    route: null,
+    note(where, error) {
+      console.error(`[OMEGAS ${where}]`, error);
+      const route = typeof document !== 'undefined' && document.body && document.body.dataset ? document.body.dataset.omegasRoute || '' : '';
+      if (route !== this.route) { this.route = route; this.count = 0; }
+      this.count += 1;
+      if (this.count >= this.LIMIT) this.show();
+    },
+    clear() { this.count = 0; },
+    show() {
+      if (typeof document === 'undefined' || !document.body || typeof document.createElement !== 'function') return;
+      if (document.getElementById('screenErrorBanner')) return;
+      const banner = document.createElement('button');
+      banner.type = 'button';
+      banner.id = 'screenErrorBanner';
+      banner.className = 'screen-error-banner';
+      banner.setAttribute('role', 'alert');
+      banner.textContent = 'Algo falhou nesta tela; toque para recarregar';
+      banner.addEventListener('click', () => { try { root.location.reload(); } catch (_) { banner.remove(); } });
+      document.body.appendChild(banner);
+    },
+  };
+  ns.ScreenErrors = ScreenErrors;
+
   class Store {
     constructor(initial) {
       this.state = Object.freeze({ ...(initial || {}) });
@@ -30,7 +61,7 @@
     }
     emit() {
       this.listeners.forEach(listener => {
-        try { listener(this.state); } catch (error) { console.error('[OMEGAS store]', error); }
+        try { listener(this.state); } catch (error) { ScreenErrors.note('store', error); }
       });
     }
   }

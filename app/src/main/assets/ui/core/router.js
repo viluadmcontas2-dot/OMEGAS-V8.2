@@ -9,6 +9,28 @@
   // Subpáginas (tablist) por rota: o Agora leva o dono já posicionado, sem executar nada.
   const SUBPAGES = { curve: ['overview', 'editor'] };
 
+  // Telas que dependem de cada extensão: se ela não carrega, a tela diz isso em vez de ficar vazia.
+  const SCREENS_OF = {
+    'core/autocal-api.js': ['autocal', 'refino'],
+    'components/curve-chart.js': ['autocal', 'refino'],
+    'screens/autocal-cockpit.js': ['autocal', 'refino'],
+    'screens/refino.js': ['refino'],
+  };
+  const LOAD_FAILURE_TEXT = 'Esta tela não abriu. Feche e abra o app.';
+  function showLoadFailure(src) {
+    if (typeof document === 'undefined') return;
+    for (const route of SCREENS_OF[src] || []) {
+      const screen = document.querySelector(`[data-screen="${route}"]`);
+      if (!screen || screen.querySelector('[data-load-failure]')) continue;
+      const note = document.createElement('p');
+      note.className = 'empty-copy screen-load-failure';
+      note.setAttribute('role', 'alert');
+      note.setAttribute('data-load-failure', src);
+      note.textContent = LOAD_FAILURE_TEXT;
+      screen.insertBefore(note, screen.firstChild);
+    }
+  }
+
   function loadOptionalScript(src, onload) {
     if (typeof document === 'undefined') return;
     if (document.querySelector(`script[data-omegas-extension="${src}"]`)) return;
@@ -16,7 +38,10 @@
     script.src = src;
     script.dataset.omegasExtension = src;
     script.onload = typeof onload === 'function' ? onload : null;
-    script.onerror = () => console.error('[OMEGAS router] extensão não carregada:', src);
+    script.onerror = () => {
+      console.error('[OMEGAS router] extensão não carregada:', src);
+      showLoadFailure(src);
+    };
     document.head.appendChild(script);
   }
 

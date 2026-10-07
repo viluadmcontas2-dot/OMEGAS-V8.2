@@ -84,3 +84,23 @@ test('P1-7: Ferramentas e Sessões não se refazem só porque o relógio andou; 
     assert.ok(reads <= 1, `Agora: no máximo uma leitura da equivalência em 10 s sem evidência nova (leu ${reads})`);
   } finally { app.destroy(); }
 });
+
+test('P1-8: erro repetido numa tela vira aviso tocável; extensão que não carrega avisa na tela', () => {
+  const app = boot();
+  try {
+    app.go('dashboard'); app.settle(2);
+    const scheduler = app.App.scheduler;
+    const quiet = app.win.console.error; app.win.console.error = () => {};
+    const off = scheduler.addHook('fast', () => { throw new Error('quebrado'); });
+    app.settle(6);
+    app.win.console.error = quiet;
+    off();
+    const banner = app.byId('screenErrorBanner');
+    assert.ok(banner, 'aviso aparece depois de 3 falhas seguidas');
+    assert.equal(banner.textContent, 'Algo falhou nesta tela; toque para recarregar');
+    const router = fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/core/router.js'), 'utf8');
+    assert.match(router, /Esta tela não abriu\. Feche e abra o app\./);
+    const api = fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/core/autocal-api.js'), 'utf8');
+    assert.match(api, /console\.warn\(`\[OMEGAS AutoCalApi\] \$\{name\} falhou:`/);
+  } finally { app.destroy(); }
+});

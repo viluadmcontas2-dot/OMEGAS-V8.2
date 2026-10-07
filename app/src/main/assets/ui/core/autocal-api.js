@@ -13,7 +13,11 @@
     const fn = bridge && bridge[name];
     if (typeof fn !== 'function') return fallback;
     try { return parse(fn.apply(bridge, args || []), fallback); }
-    catch (error) { return { ok: false, error: error?.message || String(error), automatic: false, manualOnly: true }; }
+    catch (error) {
+      // Nunca engolir calado: o console diz QUAL chamada da ponte falhou.
+      console.warn(`[OMEGAS AutoCalApi] ${name} falhou:`, error);
+      return { ok: false, error: error?.message || String(error), automatic: false, manualOnly: true };
+    }
   }
 
   ns.AutoCalApi = {
