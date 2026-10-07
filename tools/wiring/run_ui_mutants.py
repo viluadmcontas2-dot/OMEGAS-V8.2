@@ -108,7 +108,7 @@ MUTANTS = [
            "      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n      document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());\n", [M5],
            note="EQUIVALENTE desde a guarda de ocupado de writePrepared (DEFECT-14): o ouvinte duplicado chama duas vezes e a segunda é ignorada"),
     mutant("sessions-no-escape-html", "escapeHtml esquecido", f"{UI}/screens/sessions.js",
-           "' · ' + escapeHtml(row.title)", "' · ' + row.title", [M7], ci=True),
+           " · ${escapeHtml(rows[0].title)}</span>", " · ${rows[0].title}</span>", [M7], ci=True),
     mutant("curve-learning-chart-empty-array", "gráfico com lista vazia", f"{UI}/screens/curve.js",
            "const minFactor = factorValues.length ? Math.min(...factorValues) - 0.05 : 0.8;", "const minFactor = true ? Math.min(...factorValues) - 0.05 : 0.8;", [M5],
            note="EQUIVALENTE: sem fatores nenhum caminho/ponto é desenhado, então o mínimo infinito não aparece na tela"),
