@@ -76,3 +76,19 @@ Cópias da mesma sessão em pastas diferentes (21-06-38_ae619822): a menor é pr
 - **Cruzeiro é raro nos dados:** fração mediana 4,5%. A maioria das sessões é cidade/parado. Falta poder estatístico, não necessariamente efeito.
 - Limite: a curva final carrega aprendizado de sessões anteriores (buffers persistem entre sessões).
 **O que provaria:** sessões com autocal dedicado em pista/cruzeiro (o dono descreve isso); hoje não há o bastante delas para separar.
+
+## ERRATA (2026-10-06, 3ª rodada) — F7 e F8 recalculados com as 85 sessões
+O `snaps.pkl` usado em F7/F8 tinha sido gerado ANTES de entrarem as sessões dos zips (inclusive as de pista de 06/10). Refeito com `teia_snaps.py` (691 registros, 78 sessões com buffer).
+- **F7 (refeito):** n=2876 pares, 68 sessões: razão GNV/gasolina mediana 1,013, IQR [0,975; 1,062]. Faixa 1–2,5 ms: **0,894** (pior que antes: 0,94); 3,5–5 ms: 1,042; demais ≈1,00. Conclusão mantida.
+- **F8 nível sessão (refeito):** n=39: ρ(cruzeiro, erro)=−0,14, p=0,39 → **sem efeito detectável** (antes −0,32, p=0,054). Pista (2 sessões julgáveis de 06/10) terminou com erro MAIOR (7,9% vs 4,2%), mas o "erro no fim" é medida ruim para sessão com refino em andamento — ver F9.
+
+## F9 — o ciclo autocal→automatch→refino visto por dentro (sessão de pista 2026-10-06 20:30, 53 min)  [classe 3; n=1 sessão]
+Erro de equivalência = mediana |GNV/gasolina − 1| nas bandas GNV com contador ≥5 (série completa: teia_h3_ciclos.py):
+- 20:31 Mapa K gravado → GNV reaprende de 8 para 13 bandas e o erro cai **9,6% → 2,5%** em 9 min. Melhor estado: **~1,5% com 6–7 bandas** após a 2ª Curva K (20:52–20:55).
+- **Cada automatch da ECU zera os buffers de GNV** (bandas maduras → 0) e o GNV reaprende do zero; foram 6 automatches em 30 min (20:43, 20:46, 20:49, 21:02, 21:08, 21:13). Logo após cada um, o erro se apoia em 1–3 bandas e oscila.
+- **Último automatch (21:13:51) piorou:** erro +16% → +6,5% (viés positivo, GNV acima da gasolina) e 4 dos 7 "quase apagou" da sessão vieram nos 10 min seguintes (21:15, 21:17, 21:21, 21:23; MAP 0,20–0,38). O app registrou "um trecho piorou, restaure só esse trecho" às 21:14:19.
+- Esse automatch deixou **11/20 pontos do MUL_ACT no teto 1,50** — o maior número dos 14 automatches registrados (os outros: 0–9). Hipótese: teto saturado impede a equivalência e empurra o viés. NÃO provado (n=1).
+
+## F10 — o que cada automatch nativo faz no MUL_ACT (14 épocas, 6 dias)  [classe 3, dado cru]
+- Muda 12–20 dos 20 pontos úteis por época; mudança média −10,6% … +2,2%.
+- Maior mudança por ponto **sempre em valores redondos: 4,9–7,5%, 12,0%, 12,9–13,6%, 17,1%, 25,0%**; em 3 épocas o máximo é exatamente 6,0%, 12,0% ou 25,0% (vários pontos iguais) → sugere passo máximo/quantização da ECU por época. Útil para prever o próximo automatch. Mecanismo não confirmado.

@@ -1,6 +1,6 @@
 import pickle,numpy as np,polars as pl,collections
 from scipy.stats import spearmanr
-R=pickle.load(open('snaps.pkl','rb'))
+R=[r for r in pickle.load(open('snaps.pkl','rb')) if min(len(r['pm']),len(r['pt']),len(r['gm']),len(r['gt']),len(r['nug']),len(r['nup']))>=16]
 tel=pl.read_parquet('telemetry.parquet').sort(['session','t']).with_columns([
   (pl.col('t').diff().over('session')).alias('dt'),pl.col('load_bar').diff().over('session').abs().alias('dm'),pl.col('rpm').diff().over('session').abs().alias('dr')])
 T={s:d for (s,),d in tel.group_by(['session'])}

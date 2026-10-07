@@ -1,6 +1,6 @@
 import pickle,numpy as np,polars as pl,collections
 from scipy.stats import spearmanr
-R=pickle.load(open('snaps.pkl','rb'))
+R=[r for r in pickle.load(open('snaps.pkl','rb')) if min(len(r['pm']),len(r['pt']),len(r['gm']),len(r['gt']),len(r['nug']),len(r['nup']))>=16]
 tel=pl.read_parquet('telemetry.parquet').sort(['session','t'])
 w=3
 tel=tel.with_columns([pl.col('load_bar').rolling_std(w).over('session').alias('sm'),pl.col('rpm').rolling_std(w).over('session').alias('sr'),pl.col('t').diff().over('session').alias('dt')])
@@ -23,3 +23,17 @@ E=np.array([r[1] for r in rows]); C=np.array([r[2] for r in rows]); N=np.array([
 print('sessoes',len(rows),'| erro equiv mediano',np.median(E).round(3),'| cruzeiro frac mediana',np.median(C).round(3))
 print('spearman(cruzeiro, erro)',round(spearmanr(C,E).statistic,3),'p',round(spearmanr(C,E).pvalue,3),'| spearman(duracao, erro)',round(spearmanr(N,E).statistic,3))
 q=np.quantile(C,[1/3,2/3]); print('erro mediano por tercil de cruzeiro:',[f'{np.median(E[(C>=a)&(C<b)]):.1%}' for a,b in ((-1,q[0]),(q[0],q[1]),(q[1],9))],'| tercis',q.round(3))
+print('--- pista (2026-10-06) vs demais')
+pista=[r for r in rows if r[0].startswith('session_2026-10-06')]; resto=[r for r in rows if not r[0].startswith('session_2026-10-06')]
+for nm,g in (('PISTA',pista),('DEMAIS',resto)):
+    print(nm,'sessoes',len(g),'erro equiv mediano',f"{np.median([r[1] for r in g]):.1%}" if g else '-','cruzeiro frac mediana',f"{np.median([r[2] for r in g]):.1%}" if g else '-')
+for r in sorted(pista): print('  ',r[0][8:30],f'erro={r[1]:.1%} cruzeiro={r[2]:.1%} leituras={r[3]} snaps={r[4]}')
+from scipy.stats import mannwhitneyu
+if len(pista)>=2: print('Mann-Whitney erro pista<demais p=',round(mannwhitneyu([r[1] for r in pista],[r[1] for r in resto],alternative='less').pvalue,3))
+# todas as sessoes 10-06: cruzeiro mesmo sem curva julgavel
+for s in sorted(tel['session'].unique()):
+    if s.startswith('session_2026-10-06'):
+        d=tel.filter((pl.col('session')==s)&(pl.col('dt')<1000)&(pl.col('rpm')>600))
+        if d.height: print('  todas',s[8:30],'leituras',d.height,'GNV%',round((d['fuel']=='GNV').mean()*100),'cruzeiro% (qualquer comb.)',round(d.filter((pl.col('rpm')>1500)&(pl.col('rpm')<3000)&(pl.col('sm')<0.01)&(pl.col('sr')<40)).height/d.height*100,1),'rpm mediano',int(d['rpm'].median()))
+d=tel.filter(pl.col('dt')<1000).filter(pl.col('rpm')>600).filter(~pl.col('session').str.starts_with('session_2026-10-06'))
+print('  DEMAIS juntas: cruzeiro%',round(d.filter((pl.col('rpm')>1500)&(pl.col('rpm')<3000)&(pl.col('sm')<0.01)&(pl.col('sr')<40)).height/d.height*100,1),'rpm mediano',int(d['rpm'].median()))

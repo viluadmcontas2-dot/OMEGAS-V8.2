@@ -1,9 +1,10 @@
 import pickle,json,struct,numpy as np,collections
-R=pickle.load(open('snaps.pkl','rb'))
+R=[r for r in pickle.load(open('snaps.pkl','rb')) if min(len(r['pm']),len(r['pt']),len(r['gm']),len(r['gt']),len(r['nug']),len(r['nup']))>=16]
 # MUL_ACT hex por (sessao,t) do npy
 A=np.load('mulact.npy'); idx=json.load(open('mulact_idx.json')); mul={(s,t):A[i] for i,(s,t) in enumerate(idx)}
 AX=[256*i for i in range(1,21)]+[5632,6144,6656,7168,7680,8192,8704,9216,10240,11264]; AXms=np.array(AX)/512
 def P(m,t): 
+    if len(m)<16 or len(t)<16: return np.zeros((0,2))
     p=sorted([(m[i]/1024,t[i]/512) for i in range(16) if m[i]>0 and t[i]>0]); return np.array(p)
 rows=[]
 for r in R:
