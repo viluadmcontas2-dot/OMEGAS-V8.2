@@ -64,3 +64,15 @@ Cópias da mesma sessão em pastas diferentes (21-06-38_ae619822): a menor é pr
 - MUL_ACT (decodificado do hex) vai de 1,00 a 1,43 e NÃO acompanha a razão (corr −0,23). Inferência: o buffer `*_GAS` já está no domínio equivalente à gasolina; MUL_ACT é o fator de conversão, não o resíduo. **Semântica não confirmada** — validar com o código da ECU/Portmon.
 - Eixo do MUL_ACT (dos backups MANUAL): 20 pontos em ms de gasolina 0,5…10,0 (passo 0,5) + 10 pontos de 11 a 22 ms (a cauda repetida de F2 é região não treinada).
 - Uso: erro de equivalência por banda `e_b = razão − 1` com ruído ≈ ±3%; a faixa <2,5 ms (marcha lenta/desaceleração) é a pior e é onde ocorrem os "quase apagou".
+
+## F8 — "coleta estável/cruzeiro → curva melhor" (hipótese do dono)  [classe 3; NÃO provada, direção a favor]
+**Nível banda** (banda cujo valor mudou dentro da sessão; qualidade = |desvio vs vizinhos| no fim; estabilidade = fração de leituras perto da MAP da banda com |ΔMAP|<0,01 e |Δrpm|<50):
+- GNV, n=231 bandas, 39 sessões: bruto ρ=−0,19, IC95 por sessão [−0,31; −0,06]; mediana 3,5% (instável) vs 1,6% (estável).
+- **Contra-teste derrubou:** controlando banda + nº de amostras, ρ=+0,07 [−0,03; +0,17]. O efeito bruto era confusão: bandas baixas são mais "estáveis" (ρ=−0,41) e bandas com mais amostras têm menos desvio (ρ=−0,26).
+- Quantidade de coleta na banda, controlando a banda: ρ=−0,09 [−0,21; +0,02] — marginal. Bruto por tercil de amostras: 3,5% → 2,4% → 1,5%.
+- Gasolina: só 34 bandas/7 sessões aprendidas na sessão — inconclusivo.
+**Nível sessão** (n=36 sessões GNV com curva final julgável): fração de cruzeiro (1500–3000 rpm, desvio-padrão MAP<0,01 e rpm<40 em 3 amostras) vs erro de equivalência mediano final (|razão GNV/gasolina − 1|, bandas com contador ≥5):
+- ρ=−0,32, p=0,054. Erro por tercil de cruzeiro: 4,7% → 3,9% → 3,6%. Duração da sessão: ρ=−0,18 (mais fraco que cruzeiro).
+- **Cruzeiro é raro nos dados:** fração mediana 4,5%. A maioria das sessões é cidade/parado. Falta poder estatístico, não necessariamente efeito.
+- Limite: a curva final carrega aprendizado de sessões anteriores (buffers persistem entre sessões).
+**O que provaria:** sessões com autocal dedicado em pista/cruzeiro (o dono descreve isso); hoje não há o bastante delas para separar.
