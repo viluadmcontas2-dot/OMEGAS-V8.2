@@ -591,7 +591,7 @@ class RefinoRenderTest {
             // Sem telemetria recente a tela não pode afirmar que o carro está no GNV.
             assertEquals("Medindo", dom.getString("chip"))
             assertTrue(dom.getString("headline"), dom.getString("headline").contains("aprendendo seu motor"))
-            assertTrue(dom.getString("ourPoints"), dom.getString("ourPoints").contains("intervalos medidos"))
+            assertTrue(dom.getString("ourPoints"), dom.getString("ourPoints").contains("regiões medidas"))
         } finally { scenario.close() }
     }
 

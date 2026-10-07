@@ -289,3 +289,30 @@ html body .sessions-host [data-sessions-truncated] { margin: 0; color: var(--mut
 
 /* Contexto da leitura: rótulos 18 px e frases/valores críticos 24 px (a um braço de distância). */
 
+/* Restaurado na revisão do W2: classes ainda usadas por JS/HTML (autocal-session-strip, quiet-button, refino-undo, source-status) e regras exigidas por tests/ui/lote-f-gate.test.cjs (caixa de marcar >= 58 px; botão primário usa o accent). */
+.refino-cockpit .autocal-focus-actions .autocal-primary-action { min-width: 0; padding: 0 20px; font-size: var(--text-critical); }
+.refino-actions-row .refino-undo { flex: 0 0 auto; }
+html body .refino-actions-row .refino-undo button:not(.quiet-button) { min-height: var(--touch-min); padding: 0 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--text); font-size: var(--text-critical); font-weight: 700; }
+.refino-actions-row .refino-undo button.quiet-button { background: transparent; color: var(--muted); font-weight: 600; }
+.refino-actions-row .refino-undo[hidden],
+.refino-actions-row .refino-stalls[hidden] { display: none; }
+.autocal-primary-action[data-kind="review"] { background: var(--accent); border-color: var(--accent); color: var(--text); }
+.refino-cockpit .autocal-focus-actions .autocal-primary-action { width: auto; }
+.primary,
+.autocal-primary-action:not(:disabled):not([data-kind="waiting"]):not([data-kind="stable"]):not([data-kind="restore"]),
+.refino-cockpit .autocal-primary-action[data-kind="review"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.map-source-row .source-status { flex: 1 1 auto; min-width: 0; min-height: 0; padding: 4px 8px; font-size: 16px; line-height: 1.15; white-space: normal; }
+.curve-screen .inline-actions .source-status { display: none; }
+html body .diagnostic-settings-grid .check-setting input[type="checkbox"] {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; background: none;
+}
+.autocal-primary-action[data-loading="true"]::before {
+  content: ""; display: inline-block; width: 18px; height: 18px; margin-right: 10px; vertical-align: -3px;
+  border: 3px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: omegas-spin .9s linear infinite;
+}
+html body .autocal-secondary-stack > .autocal-session-strip  { order: 5; grid-column: 1 / -1; }
+html body .autocal-primary-action[data-action="REREAD_STATE"] { border-color: var(--warn); }

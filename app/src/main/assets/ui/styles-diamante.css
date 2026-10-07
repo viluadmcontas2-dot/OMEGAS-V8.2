@@ -355,8 +355,7 @@ html body .curve-screen .curve-backup-status[data-seq="b"] { animation:w2-status
 @keyframes w2-status-a { 0%,85% { opacity:1; } 100% { opacity:0; visibility:hidden; } }
 @keyframes w2-status-b { 0%,85% { opacity:1; } 100% { opacity:0; visibility:hidden; } }
 
-/* Revisto (W2) Mapa K: linhas de 34 px e o botão de gravar fixo no rodapé do painel (não rola nem corta). */
-html body .map-screen .map-surface .map-k-grid-with-axes { grid-template-rows:34px repeat(12,34px); }
+/* Mapa K: botão de gravar fixo no rodapé do painel (não rola nem corta). As células mantêm 44 px: piso de toque do projeto (tests/ui/lote-f-gate.test.cjs). */
 html body .map-screen .map-editor-panel { display:flex; flex-direction:column; overflow-y:auto; }
 html body .map-screen .map-editor-panel #mapReviewButton { position:sticky; bottom:0; z-index:5; flex:0 0 auto; min-height:58px; box-shadow:0 -8px 12px var(--bg); }
 html body .map-screen .map-editor-panel .write-reason { display:inline-block; margin-left:6px; }
