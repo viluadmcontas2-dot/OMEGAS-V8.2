@@ -127,6 +127,13 @@ object AutoCalProtocol {
     val GAS_MNFLD_PRESS_RV = Field("GAS_MNFLD_PRESS_RV", 0x018E, Encoding.S16_LE, Shape.VECTOR, 30, "BAR")
 
     /**
+     * Campos que a ECU pode recusar com `CA 01 10 DB` ("não existe"): o ProgBase pediu `29 64 01` 3 vezes
+     * no PortmonLOGNOVO e a ECU recusou 3/3. Ficam FORA da varredura completa para ela não sair "parcial"
+     * por causa deles; a leitura continua disponível por [read] se alguém precisar tentar.
+     */
+    val OPTIONAL_FIELDS: List<Field> = listOf(VECT_AUTOCAL_EE)
+
+    /**
      * Leitura observacional. MODULE_VERSION continua sendo registrado como dado
      * da ECU, mas não decide a dimensão dos vetores de referência/K.
      */
@@ -152,7 +159,6 @@ object AutoCalProtocol {
         LIMIT_PRESSURE_MAX,
         PETR_INJ_TBUF,
         MNFLD_PRESS_BUF,
-        VECT_AUTOCAL_EE,
         CALIBRATION_VAL_1,
         ACQUIRED_ZONES_PETROL,
         ACQUIRED_ZONES_GAS,

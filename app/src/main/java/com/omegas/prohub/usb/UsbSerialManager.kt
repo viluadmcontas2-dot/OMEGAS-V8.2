@@ -38,6 +38,8 @@ class UsbSerialManager(
     private val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
     private val rxQueue = ConcurrentLinkedQueue<Byte>()
     private val rxSize = AtomicInteger(0)
+    /** Purge antes de toda transação (como o ProgBase); ver [SerialPurgePolicy]. */
+    private val purgePolicy = SerialPurgePolicy()
     private val sessionCounter = AtomicLong(0L)
     private val ioExecutor = Executors.newSingleThreadExecutor()
     private val reconnectExecutor = Executors.newSingleThreadScheduledExecutor()
@@ -218,6 +220,7 @@ class UsbSerialManager(
             val selected = driver.ports.firstOrNull() ?: error("Driver sem porta serial")
             configurePort(selected, connection)
             port = selected
+            purgePolicy.reset()
             purge("nova conexão USB OMEGAS", selected)
             ioManager = SerialInputOutputManager(selected, this).also { ioExecutor.submit(it) }
             activeDeviceName = device.deviceName
@@ -364,7 +367,7 @@ class UsbSerialManager(
         if (!connected) return@withLock UsbProtocolReply(false, error = "USB desconectado", request = request)
         transactionActive = true
         try {
-            if (purgeBefore) purge("$reason • pré-transação")
+            if (purgeBefore) purge("$reason • pré-transação") else preTransactionPurge(current, reason)
             current.write(request, timeoutMs)
             onRawIo("TX", request.copyOf())
             val echo = readExact(request.size, minOf(timeoutMs, 900))
@@ -405,6 +408,31 @@ class UsbSerialManager(
         } finally {
             transactionActive = false
         }
+    }
+
+    /**
+     * Limpa TX/RX antes de escrever o pedido (o ProgBase faz isso antes de todas as trocas). Roda sob o
+     * transactionLock e antes da escrita: não existe resposta válida da transação em curso para perder,
+     * só sobra de resposta atrasada que viraria "Eco divergente". O prazo de leitura só começa depois da
+     * escrita, então o purge não consome o timeout de telemetria. Silencioso (sem log por transação).
+     */
+    private fun preTransactionPurge(target: UsbSerialPort, reason: String) {
+        val stale = rxSize.get()
+        clearReceiveBuffer()
+        if (purgePolicy.recordStale(stale)) {
+            log.add("WARN", "USB", "Purge pré-transação descartou $stale byte(s) de resposta atrasada • $reason")
+        }
+        if (!purgePolicy.hardwareEnabled) return
+        val started = android.os.SystemClock.elapsedRealtime()
+        val ok = try {
+            target.purgeHwBuffers(true, true)
+            true
+        } catch (_: Exception) {
+            false
+        }
+        clearReceiveBuffer()
+        val message = purgePolicy.recordHardware(android.os.SystemClock.elapsedRealtime() - started, ok)
+        if (message != null) log.add("WARN", "USB", message)
     }
 
     private fun readExact(count: Int, timeoutMs: Int): ByteArray {
@@ -514,6 +542,7 @@ class UsbSerialManager(
             val selected = driver.ports.firstOrNull() ?: error("Driver sem porta serial")
             configurePort(selected, connection)
             port = selected
+            purgePolicy.reset()
             purge("recuperação transitória OMEGAS", selected)
             ioManager = SerialInputOutputManager(selected, this).also { ioExecutor.submit(it) }
             deviceLabel = "${device.vendorId}:${device.productId} • ${driver.javaClass.simpleName}"
