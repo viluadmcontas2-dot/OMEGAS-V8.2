@@ -26,7 +26,7 @@ CELL_BAR = 0.02
 GRID_MIN = 0.10
 GRID_CELLS = 50
 PRIOR_N0 = 3.0
-DRIVING_MIN_RPM = 1000.0
+DRIVING_MIN_RPM = 1200.0     # lenta da ECU abaixo disso (85 sessões: +20–30% de ms no mesmo MAP)
 MIN_TOL = 0.04
 MAX_TOL = 0.05               # teto da tolerância: nunca mais largo que ±5%
 MIN_JUDGED_USAGE = 0.5       # o índice só é número quando >= 50% do uso está em pontos julgados
@@ -320,7 +320,9 @@ def build_pairs(petrol_obs, gas_obs, ecu_ref):
     """Espelho de EvidencePairs.build: um par (petrolRef, gas, rpm, ecuRef, map, t, episódio) por leitura de GNV."""
     raw = []
     for g in gas_obs:
-        matches = sorted(p[2] for p in petrol_obs if abs(p[0] - g[0]) <= MATCH_RPM and abs(p[1] - g[1]) <= MATCH_MAP)
+        # Mesmo regime (EvidencePairs.sameRegime): nunca gasolina em lenta × GNV andando, nem o contrário.
+        matches = sorted(p[2] for p in petrol_obs if abs(p[0] - g[0]) <= MATCH_RPM and abs(p[1] - g[1]) <= MATCH_MAP
+                         and (p[0] >= DRIVING_MIN_RPM) == (g[0] >= DRIVING_MIN_RPM))
         if len(matches) >= 2:
             raw.append({"tp": matches[len(matches) // 2], "tg": g[2], "rpm": g[0], "ecu": False, "map": g[1], "t": g[3]})
         else:

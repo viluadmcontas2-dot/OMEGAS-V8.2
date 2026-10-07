@@ -36,7 +36,7 @@ CONF_SAMPLES_FULL = 24.0
 CONF_DISPERSION_REF = 0.08
 CONF_EPISODES_UNKNOWN = 0.3
 DISPERSION_UNKNOWN = 0.10
-DRIVING_MIN_RPM = 1000.0
+DRIVING_MIN_RPM = 1200.0  # = EquivalenceLedger.DRIVING_MIN_RPM (fronteira lenta × condução)
 TELEMETRY_MIN_MS = 3.0
 
 
@@ -261,7 +261,8 @@ def ledger_pairs(telemetry, gas_from=None, until_ms=None, ecu_ref=None):
     gas = blind.cap_cells(blind.tag_episodes(blind.stable_frames(gas_tel, "GNV", until_ms)))
     out = []
     for g in gas:
-        matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= MATCH_RPM and abs(p["map"] - g["map"]) <= MATCH_MAP)
+        matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= MATCH_RPM and abs(p["map"] - g["map"]) <= MATCH_MAP
+                         and (p["rpm"] >= DRIVING_MIN_RPM) == (g["rpm"] >= DRIVING_MIN_RPM))
         if len(matches) >= 2:
             tp, ecu = matches[len(matches) // 2], False
         else:

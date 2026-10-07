@@ -53,6 +53,7 @@ def stable_frames(telemetry, fuel, until_ms=None):
 
 
 CELL_CAP = 30
+REGIME_SPLIT_RPM = 1200.0  # = EvidencePairs.REGIME_SPLIT_RPM
 
 
 def cap_cells(obs, cell_cap=CELL_CAP):
@@ -109,7 +110,9 @@ def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL, 
     gas = cap_cells(tag_episodes(stable_frames(telemetry, "GNV", until_ms)))
     out, times = [], []
     for g in gas:
-        matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol)
+        # Mesmo regime (EvidencePairs.sameRegime, fronteira 1200 rpm): nunca lenta × condução.
+        matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol
+                         and (p["rpm"] >= REGIME_SPLIT_RPM) == (g["rpm"] >= REGIME_SPLIT_RPM))
         if len(matches) >= 2:
             out.append((matches[len(matches) // 2], g["t"]))
             times.append((matches[len(matches) // 2], g["at"]))

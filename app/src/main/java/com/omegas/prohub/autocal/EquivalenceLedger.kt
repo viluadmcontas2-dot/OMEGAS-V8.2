@@ -41,8 +41,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
         fun cellKey(rpm: Double, map: Double): Long = Math.floorDiv(rpm.toLong(), MATCH_RPM.toLong()) * 1_000_003L +
             Math.floorDiv((map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
-        /** Abaixo disso a ECU tem estratégia de lenta própria: fora do índice de condução. */
-        const val DRIVING_MIN_RPM = 1_000.0
+        /**
+         * Abaixo disso a ECU tem estratégia de lenta própria: fora do índice de condução. 1200 rpm vem das 85 sessões
+         * reais (rpm < 1200: mesmo MAP dá +20–30% de ms na gasolina). Também é a fronteira de regime do pareamento.
+         */
+        const val DRIVING_MIN_RPM = 1_200.0
         val BANDS = listOf(3.0 to 4.5, 4.5 to 6.0, 6.0 to 7.5, 7.5 to 9.0, 9.0 to 12.0)
         private const val SAVE_INTERVAL_MS = 60_000L
         /** O índice só é recalculado se algo mudou E passou ao menos isto desde o último cálculo (mudança estrutural fura). */
@@ -390,7 +393,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private fun computePairs(): List<EvidencePair> = EvidencePairs.build(petrol, gas, ecuPetrolRef)
 
     /**
-     * Índice de equivalência da condução (rpm ≥ 1000, ≥ 3 ms): razão mediana t_no_GNV / t_gasolina.
+     * Índice de equivalência da condução (rpm ≥ [DRIVING_MIN_RPM], ≥ 3 ms): razão mediana t_no_GNV / t_gasolina.
      * 1,00 = GNV pede exatamente o que a gasolina pede. >1 = GNV pobre (ECU compensa somando).
      */
     fun index(): JSONObject {
