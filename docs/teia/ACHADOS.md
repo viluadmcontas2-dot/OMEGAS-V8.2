@@ -33,3 +33,18 @@ Não existem nestes 79 sessões: `engine_stall`, `refinement_phase/verdict`. Só
 - **Medida descartada:** ajuste de parábola global ms×MAP marcou 53% como anomalia; é erro de modelo (bandas 8–11 e 14–15 com 76–96%), não de dados. Não usar.
 - Limites: interpolação linear com bandas de espaçamento irregular; mistura de builds; não separa efeito real de rpm de contaminação. Falta cruzar com telemetria no instante da atualização do contador.
 - Dado útil p/ algoritmo: NUM_BUF_UPD_* satura em 10; *_PREV guarda o valor anterior da banda (permite ver o que mudou em cada atualização).
+
+## Correção de escopo (2026-10-06, 2ª rodada)
+O censo inicial leu só as pastas `session_*` e ignorou o que veio em zip. Agora entram: Sessaoutil (5 sessões de 06/10), a sessão 2026-10-02_20-57-58 reconstruída de 106 partes e os Portmon. Base atual: **85 sessões, 190.592 leituras de telemetria**, 643 snapshots nativos, 48 ações nativas (**18 DELETE_POINT**, 15 na sessão 2026-10-06_19-21-14), 10 engine_stall, refinement_*/equivalence_result.
+- **Lacuna no Drive:** falta a parte 95 da sessão de 02/10 (partes 94→96). Perdidos ~0,6 MB de eventos; a junção tem uma falha de contiguidade e linhas cortadas na fronteira são ignoradas pelo parser.
+- Os números F2–F4 acima foram calculados com 79 sessões; serão recalculados com 85.
+
+## F5 — apagar ponto maduro e readquirir devolve o MESMO ponto  [classe 3 — mas 1 sessão]
+Sessão 2026-10-06_19-21-14, DELETE_POINT em GNV, snapshot antes vs primeiro snapshot depois com contador ≥3:
+- b7 (5 apagamentos): 4,98 → 5,03 ms (+1,0%); desvio vs vizinhos +16,8% → +16,2%. O desvio **não mudou**.
+- b5: 4,09 → 4,09 (0%); 4,00 → 4,01 (+0,25%); 3,95 → 3,99 (+1%). b4: 3,83 → 3,88 (+1,3%).
+- Pontos **maduros** (contador 9–10) voltaram em ≤1,3% do valor apagado; o limiar de "anomalia" do app é ≥5% → apagar não muda nada.
+- Único caso que "melhorou": b8 com contador 1 (imaturo): 5,45 → 5,25 (desvio +7,7% → +0,1%). Ponto imaturo converge sozinho, não precisa apagar.
+- **Leitura:** desvio reprodutível de uma banda (b7 ≈ +16% sempre) é FORMA real da curva (efeito rpm/regime na aquisição), não ruído. Detector que compara só com vizinhos vai marcar a mesma banda para sempre e o apagar-ponto repetiria o mesmo ponto.
+- Limites: n=1 sessão com repetição (5+ apagamentos nas mesmas 2–3 bandas); builds antigas não registram o alvo do DELETE_POINT. Efeito físico/regime NÃO provado.
+- **Implicação de projeto (decisão do dono: apagar sozinho, mas só com persistência):** critério precisa de (a) contador maduro, (b) desvio contra o formato típico da banda aprendido de TODAS as sessões (não só vizinhos), (c) desvio que NÃO se reproduz entre readquisições/sessões, (d) limite de tentativas por banda.
