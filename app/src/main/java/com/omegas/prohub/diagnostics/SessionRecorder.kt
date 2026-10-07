@@ -210,8 +210,10 @@ class SessionRecorder(
         }
         worker.execute {
             synchronized(this) {
-                if (!recording) return@synchronized
-                recordNow(type, source, copy)
+                // Chegou depois do stop() (que já esperou a fila): antes sumia sem contar.
+                if (!SessionEventDrops.writeOrCount(recording, droppedEvents) { recordNow(type, source, copy) }) {
+                    updateManifest()
+                }
             }
         }
     }
@@ -222,7 +224,12 @@ class SessionRecorder(
         worker.execute {
             val hex = copy.joinToString("") { "%02X".format(it.toInt() and 0xFF) }
             synchronized(this) {
-                if (!recording || !settings.sessionCaptureRawUsb) return@synchronized
+                if (!settings.sessionCaptureRawUsb) return@synchronized
+                if (!recording) {
+                    droppedEvents.incrementAndGet()
+                    updateManifest()
+                    return@synchronized
+                }
                 recordNow(
                     "usb_raw",
                     "usb",
@@ -475,7 +482,8 @@ class SessionRecorder(
     fun close() {
         awaitPendingWrites(2_000L)
         if (recording) stop("serviço encerrado")
-        worker.shutdownNow()
+        // O que ainda estava na fila não será gravado: entra em droppedEvents (antes sumia sem contar).
+        if (SessionEventDrops.shutdownCounting(worker, droppedEvents) > 0) synchronized(this) { updateManifest() }
         // Dá uma folga curta para o ZIP da sessão sair; se não der, a próxima abertura do app publica.
         publisher.shutdown()
         try { publisher.awaitTermination(3, TimeUnit.SECONDS) } catch (_: Exception) {}
@@ -983,4 +991,23 @@ Unidades: RPM em rpm; tempos em ms; MAP/pressões em bar; temperaturas em °C.
         val exportedThroughSequence: Long,
         val exportedThroughSegment: Int,
     )
+}
+/** Contabilidade de eventos que não chegam ao arquivo (puro, testável sem Android). */
+internal object SessionEventDrops {
+    /** Grava se a sessão ainda grava; senão conta em [dropped]. Retorna se gravou. */
+    inline fun writeOrCount(recording: Boolean, dropped: AtomicLong, write: () -> Unit): Boolean {
+        if (!recording) {
+            dropped.incrementAndGet()
+            return false
+        }
+        write()
+        return true
+    }
+
+    /** Encerra o worker e conta o que ficou na fila sem ser gravado. */
+    fun shutdownCounting(worker: java.util.concurrent.ExecutorService, dropped: AtomicLong): Int {
+        val discarded = worker.shutdownNow().size
+        if (discarded > 0) dropped.addAndGet(discarded.toLong())
+        return discarded
+    }
 }
