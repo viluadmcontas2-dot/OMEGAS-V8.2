@@ -103,6 +103,8 @@ class EquivalencePhases(
     private var nonAlertSince = 0L
     /** Faixas (pelo início, em ms) atualmente "fora": a histerese de ±3%/±2% precisa lembrar. */
     private val offLatch = HashSet<Double>()
+    /** Época do GNV do livro (gasEpochAt/motivo) com que o [offLatch] foi montado: GNV zerado = histerese recomeça. */
+    private var offLatchEpoch: String? = null
     /** Conclusão nativa da observação atual; ausente/ambígua não autoriza o refino. */
     private var ecuDoneLatch: String? = null
     private var dirty = false
@@ -215,6 +217,12 @@ class EquivalencePhases(
                 .put("automatic", false)
 
             val bands = index.optJSONArray("bands") ?: JSONArray()
+            // O GNV foi zerado (curva/mapa/AutoMatch/reinício): o "fora" medido com a curva anterior não vale para a nova.
+            val gasEpoch = if (index.has("gasEpochAt")) index.optLong("gasEpochAt").toString() + ":" + index.optString("gasEpochReason") else null
+            if (gasEpoch != null && gasEpoch != offLatchEpoch) {
+                if (offLatchEpoch != null) offLatch.clear()
+                offLatchEpoch = gasEpoch
+            }
             val measured = ArrayList<JSONObject>()
             var measuredOnEcuRef = 0
             val off = JSONArray()
