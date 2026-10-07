@@ -609,6 +609,11 @@
           reason: referenceTransition?.resetSelection === true ? 'REFERENCE_CHANGED' : 'IDLE',
         };
       }
+      if (actionState?.automatic === true) {
+        // A limpeza automática só começa com o escritor livre: a ação do dono já terminou e o estado dela foi
+        // sobrescrito. Sem saber o desfecho, a seleção sai sem marcar nada como apagado (o nativo recusa ponto vazio).
+        return { clear: true, preserve: false, restore: [], pending: [], reason: 'SUPERSEDED_BY_AUTOMATIC' };
+      }
       if (state === 'CONFIRMED') {
         return { clear: true, preserve: false, restore: [], pending: [], reason: 'CONFIRMED' };
       }
@@ -634,8 +639,83 @@
       };
     },
 
+    /** "o ponto 5" · "os pontos 3 e 5" (índices da ECU, 0..17 → pontos 1..18). */
+    pointsPhrase(indexes = []) {
+      const points = [...new Set((Array.isArray(indexes) ? indexes : []).map(Number).filter(Number.isInteger))]
+        .sort((a, b) => a - b).map(index => index + 1);
+      if (!points.length) return null;
+      if (points.length === 1) return 'o ponto ' + points[0];
+      return 'os pontos ' + points.slice(0, -1).join(', ') + ' e ' + points[points.length - 1];
+    },
+
+    /** Aviso do apagamento automático: o app (não o dono) pediu, e por quê, em palavras de leigo. */
+    autoDeleteSentence(indexes = []) {
+      const phrase = AutoCalUxModel.pointsPhrase(indexes);
+      if (!phrase) return 'O app pediu para a ECU reaprender um ponto do GNV andando — ele tinha sido aprendido com o carro parado.';
+      const many = phrase.startsWith('os ');
+      return 'O app pediu para a ECU reaprender ' + phrase + ' do GNV andando — ' +
+        (many ? 'eles tinham sido aprendidos' : 'ele tinha sido aprendido') + ' com o carro parado.';
+    },
+
+    /** Índices GNV de um estado da ação automática (evidência antes do envio, alvos durante, recibo no fim). */
+    autoActionIndexes(actionState = {}) {
+      const details = actionState?.details && typeof actionState.details === 'object' ? actionState.details : {};
+      const fromTargets = list => Array.isArray(list) ? list.map(t => Number(t?.index)).filter(Number.isInteger) : [];
+      const candidates = [
+        fromTargets(details.targets),
+        fromTargets(details.details?.targets),
+        Array.isArray(details.bands) ? details.bands.map(b => Number(b?.band)).filter(Number.isInteger) : [],
+        fromTargets(details.pointDelete?.targets),
+        Number.isInteger(details.pointDelete?.index) ? [details.pointDelete.index] : [],
+        Number.isInteger(details.index) ? [details.index] : [],
+      ];
+      return candidates.find(list => list.length) || [];
+    },
+
+    /** Recibo do apagamento automático no estado CONFIRMED da ação: só bandas cujo readback provou o apagamento. */
+    automaticDeleteReceipt(actionState = {}) {
+      if (actionState?.automatic !== true || String(actionState?.state || '').toUpperCase() !== 'CONFIRMED') return null;
+      if (String(actionState?.action || '') !== 'DELETE_POINT') return null;
+      const receipt = actionState.details && typeof actionState.details === 'object' ? actionState.details : {};
+      const id = String(receipt.id || '');
+      if (!id) return null;
+      const effect = Array.isArray(receipt.details?.effect) ? receipt.details.effect : [];
+      const ambiguous = new Set(effect.filter(row => row?.result === 'AMBIGUOUS').map(row => Number(row.index)));
+      const indexes = AutoCalUxModel.autoActionIndexes(actionState).filter(index => !ambiguous.has(index));
+      return { receiptId: id, indexes, atMs: finite(receipt.finishedAtMs) };
+    },
+
+    /** Motivo da pausa da limpeza automática em palavras simples (o código vem do app). */
+    autoCleanupPauseReason(code) {
+      switch (String(code || '')) {
+        case 'PETROL_GUARD': return 'a gasolina mudou de um jeito estranho durante a limpeza';
+        case 'REPEATED_FAILURES': return 'a ECU não respondeu bem várias vezes seguidas';
+        case 'READBACK_INEFFECTIVE': return 'a ECU não apagou o ponto quando o app pediu';
+        default: return 'o app encontrou algo inesperado';
+      }
+    },
+
+    /** Linha discreta: "Limpeza automática: ligada · N pontos reaprendidos nesta sessão" ou pausada com o que fazer. */
+    autoCleanupLine(status = {}) {
+      if (status?.ok !== true || status.active !== true) return { hidden: true, text: '', level: 'neutral' };
+      if (status.enabled !== true) {
+        return {
+          hidden: false,
+          level: 'warn',
+          text: 'Limpeza automática pausada nesta conexão: ' + AutoCalUxModel.autoCleanupPauseReason(status.pauseCode) +
+            '. Reconecte o cabo para tentar de novo.',
+        };
+      }
+      const count = Math.max(0, Math.round(finite(status.relearnedThisSession) ?? 0));
+      const tally = count === 0 ? 'nenhum ponto reaprendido'
+        : count === 1 ? '1 ponto reaprendido' : count + ' pontos reaprendidos';
+      return { hidden: false, level: 'neutral', text: 'Limpeza automática: ligada · ' + tally + ' nesta sessão' };
+    },
 
   };
+
+  /** Apagamento automático mais velho que isto (a tela estava fechada) já foi coberto por leituras novas. */
+  const AUTO_DELETE_FRESH_MS = 60000;
 
   class AutoCalCockpit {
     constructor(app) {
@@ -672,6 +752,9 @@
       // Pontos que a ECU confirmou ter apagado: chave fuel:index → hora da confirmação. Ficam cinza e intocáveis
       // até chegar uma leitura da ECU mais nova que a confirmação (a leitura antiga ainda os mostra).
       this.recentlyDeleted = new Map();
+      // Limpeza automática do GNV: último estado e os recibos já absorvidos (cada um acinzenta e avisa uma vez).
+      this.autoCleanup = {};
+      this.seenAutoDeletes = new Set();
       this.inject();
       this.bind();
       // Releitura por revisão: evidência, tabelas e sessão só quando andaram (ou o vigia vence);
@@ -800,6 +883,7 @@
                 <button type="button" data-autocal-clear-point-selection>Cancelar</button>
               </div>
               <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
+              <small id="autocalAutoCleanLine" class="autocal-autoclean-line" data-level="neutral" hidden></small>
             </div>
 
           </section>`;
@@ -914,6 +998,7 @@
         this.referenceUsable = false;
         this.selectedAcquiredPoint = null;
         this.selectedAcquiredPoints?.clear?.();
+        this.autoCleanup = {};
         this.actionState = this.api.actionStatus() || {};
         this.operationalPending = this.actionState?.busy === true ||
           [
@@ -980,6 +1065,8 @@
       }
       this.pendingPointReacquisitionKeys = new Set(selectionTransition.pending);
       this.snapshot = nextSnapshot || {};
+      this.autoCleanup = this.api.autoCleanup?.() || {};
+      this.absorbAutomaticDeletes(this.autoCleanup, this.snapshot, nextActionState);
       this.expireRecentlyDeleted(this.snapshot);
       this.pruneSelection(this.snapshot);
       this.analysis = nextAnalysis;
@@ -998,6 +1085,35 @@
     deletedPoints() {
       if (!(this.recentlyDeleted instanceof Map)) this.recentlyDeleted = new Map();
       return this.recentlyDeleted;
+    }
+
+    /**
+     * O app apagou sozinho pontos do GNV aprendidos na lenta: eles entram no MESMO cinza do apagamento do dono
+     * (intocáveis até chegar leitura da ECU mais nova) e o aviso curto sai uma vez por recibo. Recibo velho
+     * (tela fechada na hora) só é registrado: as leituras seguintes já mostram a ECU como ela está.
+     */
+    absorbAutomaticDeletes(status, snapshot, actionState = {}) {
+      const items = status?.ok === true && Array.isArray(status.recentDeletes) ? status.recentDeletes.slice() : [];
+      // O recibo também chega no estado da ação (CONFIRMED) e pode vir antes do resumo: as duas vias, um aviso só.
+      const receipt = AutoCalUxModel.automaticDeleteReceipt(actionState);
+      if (receipt) items.push(receipt);
+      if (!(this.seenAutoDeletes instanceof Set)) this.seenAutoDeletes = new Set();
+      const now = Date.now();
+      const fresh = [];
+      items.forEach(item => {
+        const id = String(item?.receiptId || '');
+        if (!id || this.seenAutoDeletes.has(id)) return;
+        this.seenAutoDeletes.add(id);
+        const at = finite(item.atMs);
+        const indexes = Array.isArray(item.indexes) ? item.indexes.map(Number).filter(Number.isInteger) : [];
+        if (at === null || now - at > AUTO_DELETE_FRESH_MS || !indexes.length) return;
+        const seen = this.countersCapturedAt(snapshot, 'GAS');
+        indexes.forEach(index => this.deletedPoints().set('GAS:' + index, Math.max(at, seen ?? -Infinity)));
+        fresh.push(...indexes);
+      });
+      if (!fresh.length) return;
+      if (this.selectedAcquiredPoints instanceof Set) fresh.forEach(index => this.selectedAcquiredPoints.delete('GAS:' + index));
+      this.store.patch({ alert: { level: 'ok', message: AutoCalUxModel.autoDeleteSentence(fresh) } });
     }
 
     /** Hora da leitura dos contadores da ECU (campo NUM_BUF_UPD_*; senão a do snapshot). */
@@ -1105,6 +1221,7 @@
       this.renderSentence(human, acquisitionName);
       this.renderAutoMatchTile(human);
       this.renderRelearn();
+      this.renderAutoCleanLine();
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
       const autoMatchEvidence = document.getElementById('autocalAutoMatchEvidence');
@@ -1124,6 +1241,8 @@
       }
       if (this.toggleWaiting && (human.enabled === this.toggleWaiting.target || Date.now() - this.toggleWaiting.since > 10000)) this.toggleWaiting = null;
       const waiting = this.operationalPending || Boolean(this.toggleWaiting);
+      // Limpeza automática em curso: os botões esperam, mas o texto não finge que o dono pediu algo.
+      const automaticOnly = waiting && !this.toggleWaiting && this.actionState?.automatic === true;
       // "Lendo estado…" não pode ficar eterno: se o estado da ECU não chega em 6 s, o botão diz isso e deixa reler com um toque.
       if (human.enabled === null || human.enabled === undefined || toggleActionKnown(human.enabled) === null) {
         if (!this.stateUnknownSince) this.stateUnknownSince = Date.now();
@@ -1134,7 +1253,7 @@
         const action = AutoCalUxModel.toggleAction(human.enabled) || (stateStuck ? 'REREAD_STATE' : null);
         toggle.dataset.action = action || '';
         toggle.disabled = !action || waiting;
-        toggle.textContent = waiting
+        toggle.textContent = waiting && !automaticOnly
           ? 'Confirmando ECU…'
           : action === 'DISABLE_AUTO_CAL'
             ? 'Pausar aprendizado da ECU'
@@ -1219,6 +1338,16 @@
       if (strip) strip.dataset.sessionLevel = narrative.level;
 
 
+    }
+
+    /** Linha discreta da limpeza automática do GNV (ligada · N reaprendidos, ou pausada com o que fazer). */
+    renderAutoCleanLine() {
+      const node = document.getElementById('autocalAutoCleanLine');
+      if (!node) return;
+      const line = AutoCalUxModel.autoCleanupLine(this.autoCleanup || {});
+      if (node.hidden !== line.hidden) node.hidden = line.hidden;
+      if (node.textContent !== line.text) node.textContent = line.text;
+      if (node.dataset.level !== line.level) node.dataset.level = line.level;
     }
 
     /** Uma linha discreta, só quando o cérebro diz que a ECU reaprendeu (ecuDrift/relearnSuggested); senão nada. */
@@ -1835,6 +1964,20 @@
         'RESETTING_K', 'VERIFYING_K_RESET',
       ].includes(name);
       const failed = name === 'FAILED';
+      if (state.automatic === true && name !== 'IDLE') {
+        // Limpeza automática: o app agiu sozinho; nunca "Pronto"/"você confirmou", nunca jargão do protocolo.
+        const indexes = AutoCalUxModel.autoActionIndexes(state);
+        host.hidden = false;
+        host.dataset.level = name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
+        host.dataset.reasonCode = '';
+        host.dataset.mutationUncertain = 'false';
+        host.textContent = name === 'CONFIRMED'
+          ? AutoCalUxModel.autoDeleteSentence(indexes)
+          : failed ? 'A limpeza automática não conseguiu agora; o app tenta de novo sozinho.'
+          : 'O app está pedindo para a ECU reaprender ' + (AutoCalUxModel.pointsPhrase(indexes) || 'um ponto') +
+            ' do GNV, aprendido com o carro parado.';
+        return;
+      }
       const recovery = state?.recovery && typeof state.recovery === 'object' ? state.recovery : null;
       const recoveryNext = String(recovery?.nextAction || '').trim();
       const recoveryCode = String(recovery?.reasonCode || state?.reasonCode || '');
