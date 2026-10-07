@@ -429,7 +429,7 @@ class ResponseDrivenEcuEngine(
 
     private fun validTelemetryReply(reply: UsbProtocolReply): Boolean =
         reply.ok && reply.status == Mp48Protocol.STATUS_ACK &&
-            reply.payload.size >= Mp48Protocol.TELEMETRY_PAYLOAD_SIZE
+            reply.payload.size == Mp48Protocol.TELEMETRY_PAYLOAD_SIZE
 
     private fun acceptTelemetry(reply: UsbProtocolReply, responseMs: Long, plannedGap: Boolean) {
         val toleratedGap = consecutiveFailures in 1..LearningToleranceSettings.current.toleratedSerialFailures
@@ -469,7 +469,7 @@ class ResponseDrivenEcuEngine(
         telemetryFailures += 1
         consecutiveFailures += 1
         lastError = reply.error.ifBlank {
-            "Telemetria incompleta: ${reply.payload.size}/${Mp48Protocol.TELEMETRY_PAYLOAD_SIZE}"
+            "Telemetria com tamanho inválido: ${reply.payload.size}/${Mp48Protocol.TELEMETRY_PAYLOAD_SIZE}"
         }
         val now = SystemClock.elapsedRealtime()
         val silence = if (lastValidTelemetryAtMs > 0L) now - lastValidTelemetryAtMs else Long.MAX_VALUE
