@@ -459,3 +459,11 @@ html body .curve-screen .curve-foot .curve-edit-only .value-field input { width:
 html body .curve-screen .curve-foot .view-switch button { padding:0 12px; }
 html body .curve-screen .curve-foot .curve-photos > summary { padding:0 12px; }
 html body .curve-screen .curve-foot > button { padding:0 14px; }
+
+/* Telas com rodapé único (Mapa K e Curva K também): o aviso passageiro aparece no topo e nunca cobre o botão principal. */
+html body[data-omegas-route="map"] .alert-toast, html body[data-omegas-route="curve"] .alert-toast { top:76px; bottom:auto; }
+
+/* Sessões (rodada 2): a data nunca invade o resumo (coluna fixa de 150 px); o caminho da pasta aparece uma vez só, no aviso do topo. */
+html body .utility-screen .ss-item { grid-template-columns:150px minmax(0,1fr); column-gap:16px; }
+html body .utility-screen .ss-item .ss-when { min-width:0; }
+html body .utility-screen .ss-item .ss-when b { white-space:nowrap; }
