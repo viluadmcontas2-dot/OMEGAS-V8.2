@@ -103,21 +103,56 @@ test('comandos operacionais ficam fora dos painéis de detalhes',()=>{
  }finally{app.destroy();}
 });
 
-test('pontos têm comandos tocáveis na barra, seleção múltipla e conferência antes de limpar',()=>{
+// Revisto (P2 seleção): tocar no ponto marca/desmarca; a barra só tem "Reaprender N pontos" e "Cancelar".
+test('pontos: tocar marca/desmarca, dois botões na barra e conferência antes de limpar',()=>{
  const app=L.boot();try{app.go('autocal');app.settle(3);const screen=app.win.OmegasApp.autoCalCockpit;
   const points=screen.currentAcquiredPoints.slice(0,2);assert.equal(points.length,2);
   let status={};let targets=[];
   screen.api={...screen.api,actionStatus:()=>status,preparePointDeleteBatch:t=>{targets=t;return {ok:true,prepared:true,preparationId:'batch'};},execute:()=>{status={action:'DELETE_POINT',state:'READING_AFTER',busy:true};return {ok:true,started:true};}};
   const svg=app.$('#autocalReferenceChart svg');
-  for(const p of points){screen.inspectAcquiredPoint(p.fuel,p.index);app.$('[data-autocal-toggle-point-selection]').click();}
+  for(const p of points) screen.tapAcquiredPoint(p.fuel,p.index);
   assert.equal(screen.selectedAcquiredPoints.size,2);
+  const bar=app.$('.autocal-point-actions');assert.equal(bar.hidden,false);
+  assert.deepEqual(bar.querySelectorAll('button').map(b=>b.textContent),['Reaprender 2 pontos','Cancelar']);
+  screen.tapAcquiredPoint(points[1].fuel,points[1].index);assert.equal(screen.selectedAcquiredPoints.size,1,'tocar de novo desmarca');
+  screen.tapAcquiredPoint(points[1].fuel,points[1].index);
+  assert.match(app.$('#autocalChartInspector').textContent,/A ECU já passou aqui/);
   const button=app.$('[data-autocal-reacquire-selected]');assert.equal(button.closest('details'),null);assert.equal(button.closest('.ar-readout'),null);
-  assert.equal(app.$('#autocalChartInspector button'),null);assert.match(button.textContent,/\(2\)/);
+  assert.equal(app.$('#autocalChartInspector button'),null);
   assert.equal(app.$('#autocalReferenceChart svg'),svg,'selecionar não refaz o gráfico');
   button.click();assert.equal(targets.length,2);assert.equal(screen.selectedAcquiredPoints.size,2);assert.equal(button.disabled,true);
-  status={action:'DELETE_POINT',state:'FAILED',busy:false};screen.refresh();assert.equal(screen.selectedAcquiredPoints.size,2);assert.equal(button.disabled,false);
+  status={action:'DELETE_POINT',state:'FAILED',busy:false};screen.refresh();assert.equal(screen.selectedAcquiredPoints.size,2,'falha sem mexer na ECU: a intenção fica');assert.equal(button.disabled,false);
   button.click();
   status={action:'DELETE_POINT',state:'CONFIRMED',busy:false};screen.refresh();assert.equal(screen.selectedAcquiredPoints.size,0);assert.equal(app.$('.autocal-point-actions').hidden,true);
+  // Ponto já apagado: cinza e intocável até a ECU mandar leitura mais nova (nada de apagar de novo).
+  const key=points[0].fuel+':'+points[0].index;
+  assert.equal(screen.recentlyDeleted.has(key),true);
+  screen.tapAcquiredPoint(points[0].fuel,points[0].index);
+  assert.equal(screen.selectedAcquiredPoints.size,0,'ponto recém-apagado não pode ser marcado');
+  assert.ok(app.$(`#autocalReferenceChart [data-autocal-point-key="${key}"]`).classList.contains('recently-deleted'),'aparece cinza');
+  // Leitura da ECU mais nova que a confirmação: o ponto deixa de ser "recém-apagado".
+  const next=JSON.parse(JSON.stringify(app.world.projection));
+  const bump=f=>{if(f&&f.capturedAtMs)f.capturedAtMs+=10*60000;};
+  [next.snapshot,next.nativeSnapshot].filter(Boolean).forEach(snap=>{bump(snap);(snap.fields||[]).forEach(bump);});
+  app.world.projection=next;screen.refresh();
+  assert.equal(screen.recentlyDeleted.has(key),false,'leitura nova libera o ponto');
+  // Cancelar desmarca tudo.
+  const other=screen.currentAcquiredPoints.find(p=>!screen.recentlyDeleted.has(p.fuel+':'+p.index));
+  if(other){screen.tapAcquiredPoint(other.fuel,other.index);app.$('[data-autocal-clear-point-selection]').click();assert.equal(screen.selectedAcquiredPoints.size,0);}
   L.assertClean(app,'seleção e conferência');
+ }finally{app.destroy();}
+});
+
+test('pontos: falha com a ECU possivelmente alterada limpa a seleção; seleção só guarda pontos que existem',()=>{
+ const app=L.boot();try{app.go('autocal');app.settle(3);const screen=app.win.OmegasApp.autoCalCockpit;
+  const points=screen.currentAcquiredPoints.slice(0,2);
+  let status={};
+  screen.api={...screen.api,actionStatus:()=>status,preparePointDeleteBatch:()=>({ok:true,prepared:true,preparationId:'b'}),execute:()=>{status={state:'READING_AFTER',busy:true};return {ok:true};}};
+  for(const p of points) screen.tapAcquiredPoint(p.fuel,p.index);
+  app.$('[data-autocal-reacquire-selected]').click();
+  status={state:'FAILED',busy:false,mutationMayHaveStarted:true};screen.refresh();
+  assert.equal(screen.selectedAcquiredPoints.size,0,'estado incerto: a seleção velha não vale');
+  screen.selectedAcquiredPoints.add('GAS:99');screen.render();
+  assert.equal(screen.selectedAcquiredPoints.has('GAS:99'),false,'ponto que não existe sai da seleção antes do render');
  }finally{app.destroy();}
 });

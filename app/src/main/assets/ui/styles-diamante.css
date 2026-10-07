@@ -335,3 +335,8 @@ html body .curve-backup-status { flex:none; font-size:20px; line-height:1.25; }
 /* Falhas de tela: aviso tocável (3 erros seguidos) e tela que não carregou. */
 html body .screen-error-banner { position:fixed; left:50%; top:76px; transform:translateX(-50%); z-index:60; min-height:58px; padding:0 24px; border:1px solid var(--warn); border-radius:12px; background:var(--warn-soft); color:var(--text); font-size:22px; }
 html body .screen-load-failure { margin:24px; font-size:22px; color:var(--warn); }
+/* Pontos da ECU: recém-apagados ficam cinza e intocáveis até a próxima leitura; números técnicos sob demanda. */
+html body .curve-chart-shared .autocal-acquired-point.recently-deleted,html body .ar-chart-host .autocal-acquired-point.recently-deleted { fill:var(--dim); stroke:var(--line); fill-opacity:.45; }
+html body .ar-chart-host .autocal-acquired-hit.recently-deleted { pointer-events:none; }
+html body .ar-shell .ar-readout .autocal-point-tech { pointer-events:auto; margin-top:6px; font-size:18px; color:var(--muted); }
+html body .ar-shell .ar-readout .autocal-point-tech summary { min-height:44px; display:flex; align-items:center; cursor:pointer; }

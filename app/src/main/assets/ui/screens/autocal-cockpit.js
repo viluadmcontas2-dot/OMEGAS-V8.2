@@ -625,6 +625,10 @@
       if (state === 'CONFIRMED') {
         return { clear: true, preserve: false, restore: [], pending: [], reason: 'CONFIRMED' };
       }
+      if (state === 'FAILED' && actionState?.mutationMayHaveStarted === true) {
+        // A ECU pode ter apagado parte dos pontos: a seleção antiga não vale mais (evita apagar ponto já zerado).
+        return { clear: true, preserve: false, restore: [], pending: [], reason: 'FAILED_UNCERTAIN' };
+      }
       if (state === 'FAILED') {
         return {
           clear: false,
@@ -678,6 +682,9 @@
       this.selectedAcquiredPoint = null;
       this.selectedAcquiredPoints = new Set();
       this.pendingPointReacquisitionKeys = new Set();
+      // Pontos que a ECU confirmou ter apagado: chave fuel:index → hora da confirmação. Ficam cinza e intocáveis
+      // até chegar uma leitura da ECU mais nova que a confirmação (a leitura antiga ainda os mostra).
+      this.recentlyDeleted = new Map();
       this.selectedBandIndex = null;
       this.inject();
       this.bind();
@@ -796,12 +803,9 @@
                   </div>
                 </details>
               </div>
-              <div class="ar-buttons autocal-point-actions" hidden role="group" aria-label="Pontos da ECU selecionados">
-                <button type="button" data-autocal-reacquire-point>Apagar ponto</button>
-                <button type="button" data-autocal-toggle-point-selection>Selecionar ponto</button>
-                <button type="button" data-autocal-reacquire-selected>Apagar selecionados</button>
-                <button type="button" data-autocal-clear-point-selection>Limpar seleção</button>
-                <button type="button" data-autocal-done-points>Concluir seleção</button>
+              <div class="ar-buttons autocal-point-actions" hidden role="group" aria-label="Pontos marcados para a ECU medir de novo">
+                <button type="button" class="btn-primary" data-autocal-reacquire-selected>Reaprender 1 ponto</button>
+                <button type="button" data-autocal-clear-point-selection>Cancelar</button>
               </div>
               <small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small>
             </div>
@@ -854,39 +858,19 @@
         this.app?.router?.open('sessions');
       });
       this.panel?.addEventListener('click', event => {
-        if (event.target.closest('[data-autocal-done-points]')) {
-          this.selectedAcquiredPoint = null;
-          this.selectedAcquiredPoints.clear();
-          this.readout('');
-          this.renderPointActions();
-        }
         if (event.target.closest('[data-autocal-cancel]')) this.cancelPrepared();
         if (event.target.closest('[data-autocal-confirm]')) this.confirmPrepared();
         const band = event.target.closest('[data-autocal-band-index]');
         if (band) this.inspectBand(Number(band.dataset.autocalBandIndex));
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
         if (acquiredPoint) {
-          this.inspectAcquiredPoint(
+          this.tapAcquiredPoint(
             acquiredPoint.dataset.autocalAcquiredFuel,
             Number(acquiredPoint.dataset.autocalAcquiredIndex),
           );
         }
         const point = event.target.closest('[data-autocal-ref-index]');
         if (point) this.inspectReferencePoint(Number(point.dataset.autocalRefIndex));
-        const reacquire = event.target.closest('[data-autocal-reacquire-point]');
-        if (reacquire) {
-          this.requestPointReacquisition(
-            reacquire.dataset.autocalReacquireFuel,
-            Number(reacquire.dataset.autocalReacquireIndex),
-          );
-        }
-        const togglePoint = event.target.closest('[data-autocal-toggle-point-selection]');
-        if (togglePoint) {
-          this.toggleAcquiredPointSelection(
-            togglePoint.dataset.autocalReacquireFuel,
-            Number(togglePoint.dataset.autocalReacquireIndex),
-          );
-        }
         if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
         if (event.target.closest('[data-autocal-clear-point-selection]')) this.clearAcquiredPointSelection();
       });
@@ -995,12 +979,22 @@
         this.selectedReferenceIndex = null;
         this.selectedAcquiredPoint = null;
       }
+      if (selectionTransition.reason === 'CONFIRMED') {
+        // Marca = depois da confirmação E depois da leitura que estava na mão nesse instante (relógios podem diferir).
+        const confirmedAt = Date.now();
+        this.pendingPointReacquisitionKeys.forEach(key => {
+          const seen = this.countersCapturedAt(nextSnapshot, key.split(':')[0]);
+          this.deletedPoints().set(key, Math.max(confirmedAt, seen ?? -Infinity));
+        });
+      }
       if (selectionTransition.clear) this.selectedAcquiredPoints?.clear?.();
       if (selectionTransition.restore.length) {
         this.selectedAcquiredPoints = new Set(selectionTransition.restore);
       }
       this.pendingPointReacquisitionKeys = new Set(selectionTransition.pending);
       this.snapshot = nextSnapshot || {};
+      this.expireRecentlyDeleted(this.snapshot);
+      this.pruneSelection(this.snapshot);
       this.analysis = nextAnalysis;
       this.actionState = nextActionState;
       this.operationalPending = this.actionState?.busy === true ||
@@ -1011,6 +1005,46 @@
         ].includes(String(this.actionState?.state || ''));
       this.sessionState = this.api.sessionStatus?.() || {};
       this.render();
+    }
+
+    /** Mapa dos pontos recém-apagados (criado sob demanda). */
+    deletedPoints() {
+      if (!(this.recentlyDeleted instanceof Map)) this.recentlyDeleted = new Map();
+      return this.recentlyDeleted;
+    }
+
+    /** Hora da leitura dos contadores da ECU (campo NUM_BUF_UPD_*; senão a do snapshot). */
+    countersCapturedAt(snapshot, fuel) {
+      const key = fuel === 'PETROL' ? 'NUM_BUF_UPD_PETR' : 'NUM_BUF_UPD_GAS';
+      return finite(field(snapshot, key)?.capturedAtMs) ?? finite(snapshot?.capturedAtMs);
+    }
+
+    /** Um ponto apagado sai da lista quando chega leitura mais nova que a marca da confirmação (ou em 60 s sem hora conhecida). */
+    expireRecentlyDeleted(snapshot) {
+      const now = Date.now();
+      this.deletedPoints().forEach((mark, key) => {
+        const capturedAt = this.countersCapturedAt(snapshot, key.split(':')[0]);
+        if ((capturedAt !== null && capturedAt > mark) || (capturedAt === null && now - mark > 60000)) this.deletedPoints().delete(key);
+      });
+    }
+
+    /** Chaves dos pontos que existem AGORA na ECU (contador > 0) e não acabaram de ser apagados. */
+    livePointKeys(snapshot) {
+      const keys = new Set();
+      for (const fuel of ['petrol', 'gas']) {
+        AutoCalUxModel.acquiredPoints(snapshot || {}, fuel).forEach(p => keys.add(p.fuel + ':' + p.index));
+      }
+      this.deletedPoints().forEach((_, key) => keys.delete(key));
+      return keys;
+    }
+
+    /** A seleção só guarda pontos que existem agora: nada de "seleção fantasma" de ponto já zerado. */
+    pruneSelection(snapshot) {
+      if (this.pendingPointReacquisitionKeys?.size) return;
+      if (!(this.selectedAcquiredPoints instanceof Set)) return;
+      const live = this.livePointKeys(snapshot);
+      [...this.selectedAcquiredPoints].forEach(key => { if (!live.has(key)) this.selectedAcquiredPoints.delete(key); });
+      if (this.selectedAcquiredPoint && !live.has(this.selectedAcquiredPoint)) this.selectedAcquiredPoint = null;
     }
 
     runOperational(action) {
@@ -1086,6 +1120,7 @@
 
     render() {
       const snapshot = this.snapshot || {};
+      this.pruneSelection(snapshot);
       const state = this.state || {};
       const events = Array.isArray(this.projection?.correlation)
         ? this.projection.correlation
@@ -1693,6 +1728,7 @@
       host.innerHTML = html;
     }
 
+    /** Detalhe do ponto em português simples; os números técnicos ficam num "Detalhes técnicos". */
     inspectAcquiredPoint(fuel, index) {
       const point = this.currentAcquiredPoints.find(item =>
         String(item.fuel) === String(fuel) && Number(item.index) === Number(index));
@@ -1704,98 +1740,100 @@
       }
       this.selectedAcquiredPoint = point.fuel + ':' + point.index;
       this.selectedReferenceIndex = null;
-      const amostras = Math.round(point.counter);
-      const line = [point.fuelLabel, 'ponto ' + point.point, D.msUnit(point.petrolMs), D.barUnit(point.mapBar), 'Z' + point.zone,
-        amostras + (amostras === 1 ? ' amostra' : ' amostras'), point.acquisitionState === 'ACQUIRED' ? '' : 'ainda lendo'].filter(Boolean).join(' · ');
-      this.readout(line + ' · Apagar limpa este ponto; a ECU volta a adquiri-lo.');
+      const passes = Math.round(point.counter);
+      const fuelName = point.fuel === 'GAS' ? 'do GNV' : 'da gasolina';
+      const line = 'Ponto ' + point.point + ' ' + fuelName + ' (zona ' + point.zone + '). A ECU já passou aqui ' +
+        (passes === 1 ? '1 vez' : passes + ' vezes') + '. Reaprender faz a ECU medir este ponto de novo.';
+      const technical = [D.msUnit(point.petrolMs), D.barUnit(point.mapBar),
+        'contador ' + passes + (finite(point.threshold) === null ? '' : ' de ' + Math.round(point.threshold)),
+        point.acquisitionState === 'ACQUIRED' ? 'aprendido' : 'ainda aprendendo'].join(' · ');
+      this.readout(line, '<details class="autocal-point-tech"><summary>Detalhes técnicos</summary><span>' + escapeHtml(technical) + '</span></details>');
       this.renderPointActions();
-      document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => {
-        const nodeKey = String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex);
-        node.classList.toggle('selected', nodeKey === this.selectedAcquiredPoint);
-        node.classList.toggle('batch-selected', this.selectedAcquiredPoints.has(nodeKey));
-      });
-      document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => node.classList.remove('selected'));
     }
 
+    /** Tocar num ponto marca ou desmarca; ponto recém-apagado é intocável até a ECU mandar leitura nova. */
+    tapAcquiredPoint(fuel, index) {
+      if (!Number.isInteger(index)) return;
+      const key = String(fuel) + ':' + String(index);
+      if (this.deletedPoints().has(key)) {
+        this.readout('Este ponto acabou de ser apagado. Ele some do gráfico quando a ECU mandar a próxima leitura.');
+        return;
+      }
+      if (this.refreshBusy()) return;
+      if (this.selectedAcquiredPoints.has(key)) {
+        this.selectedAcquiredPoints.delete(key);
+        if (this.selectedAcquiredPoint === key) this.selectedAcquiredPoint = null;
+        if (this.selectedAcquiredPoints.size) {
+          const [lastFuel, lastIndex] = [...this.selectedAcquiredPoints].pop().split(':');
+          this.inspectAcquiredPoint(lastFuel, Number(lastIndex));
+        } else this.readout('');
+      } else {
+        if (!this.livePointKeys(this.snapshot).has(key)) return;
+        this.selectedAcquiredPoints.add(key);
+        this.inspectAcquiredPoint(fuel, index);
+      }
+      this.renderPointActions();
+    }
+
+    /** Classes da seleção e dos recém-apagados direto no gráfico do AutoCal (sem redesenhar). */
+    paintSelection() {
+      const host = document.getElementById('autocalReferenceChart');
+      if (!host || typeof host.querySelectorAll !== 'function') return;
+      host.querySelectorAll('[data-autocal-acquired-index]').forEach(node => {
+        const key = node.dataset.autocalAcquiredFuel + ':' + node.dataset.autocalAcquiredIndex;
+        const deleted = this.deletedPoints().has(key);
+        node.classList.toggle('selected', !deleted && key === this.selectedAcquiredPoint);
+        node.classList.toggle('batch-selected', !deleted && this.selectedAcquiredPoints.has(key));
+        node.classList.toggle('recently-deleted', deleted);
+        if (deleted) node.setAttribute('aria-disabled', 'true'); else node.removeAttribute('aria-disabled');
+      });
+      host.querySelectorAll('[data-autocal-point-key]').forEach(node => {
+        node.classList.toggle('recently-deleted', this.deletedPoints().has(node.getAttribute('data-autocal-point-key')));
+      });
+    }
+
+    /** Só dois botões: "Reaprender N pontos" e "Cancelar". Aparecem com pontos marcados (ou enquanto a ECU confere). */
     renderPointActions() {
-      const point = this.currentAcquiredPoints.find(p => p.fuel + ':' + p.index === this.selectedAcquiredPoint);
       const count = this.selectedAcquiredPoints.size;
-      const editing = Boolean(point || count);
+      const busy = this.refreshBusy();
+      const pending = this.pendingPointReacquisitionKeys.size > 0;
+      const editing = count > 0 || pending;
       const bar = this.panel?.querySelector('.autocal-point-actions');
       const main = this.panel?.querySelector('.autocal-main-actions');
       if (!bar || !main) return;
       bar.hidden = !editing; main.hidden = editing;
-      const busy = this.refreshBusy();
-      const one = bar.querySelector('[data-autocal-reacquire-point]');
-      const select = bar.querySelector('[data-autocal-toggle-point-selection]');
-      [one, select].forEach(button => {
-        button.disabled = busy || !point;
-        button.dataset.autocalReacquireFuel = point?.fuel || '';
-        button.dataset.autocalReacquireIndex = String(point?.index ?? '');
-      });
-      select.textContent = point && this.selectedAcquiredPoints.has(point.fuel + ':' + point.index) ? 'Retirar da seleção' : 'Selecionar ponto';
       const batch = bar.querySelector('[data-autocal-reacquire-selected]');
       batch.disabled = busy || !count;
-      batch.textContent = busy ? 'Conferindo ECU…' : 'Apagar selecionados' + (count ? ' (' + count + ')' : '');
-      bar.querySelector('[data-autocal-clear-point-selection]').disabled = busy || !count;
-      bar.querySelector('[data-autocal-done-points]').disabled = busy;
-      this.panel.querySelectorAll('[data-autocal-acquired-index]').forEach(node => {
-        const key = node.dataset.autocalAcquiredFuel + ':' + node.dataset.autocalAcquiredIndex;
-        node.classList.toggle('selected', key === this.selectedAcquiredPoint);
-        node.classList.toggle('batch-selected', this.selectedAcquiredPoints.has(key));
-      });
+      batch.textContent = busy && pending ? 'Conferindo na ECU…' : 'Reaprender ' + D.plural(Math.max(count, 1), 'ponto', 'pontos');
+      bar.querySelector('[data-autocal-clear-point-selection]').disabled = busy;
+      this.paintSelection();
     }
 
-    requestPointReacquisition(fuel, index) {
-      if (!this.api?.available?.() || !Number.isInteger(index)) return;
-      const prepared = this.api.preparePointDelete?.(fuel, index) || { ok: false, error: 'Readquisição pontual indisponível.' };
-      if (!prepared?.ok || !prepared?.prepared) {
-        this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar este ponto.' } });
-        return;
-      }
-      const result = this.api.execute(prepared.preparationId);
-      if (result?.ok !== true) {
-        this.api?.cancelPreparation?.();
-        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível abrir a confirmação do ponto.' } });
-        return;
-      }
-      this.pendingPointReacquisitionKeys = new Set([String(fuel) + ':' + index]);
-      this.renderPointActions();
-      this.store.patch({ alert: { level: 'working', message: 'Leitura nova enviada para a ECU. Aguarde a conferência deste ponto.' } });
-      this.refresh();
-    }
- 
-    toggleAcquiredPointSelection(fuel, index) {
-      if (!Number.isInteger(index)) return;
-      const key = String(fuel) + ':' + String(index);
-      if (this.selectedAcquiredPoints.has(key)) this.selectedAcquiredPoints.delete(key);
-      else this.selectedAcquiredPoints.add(key);
-      this.inspectAcquiredPoint(fuel, index);
-      this.renderReferenceChart(this.snapshot);
-    }
-
+    /** "Cancelar": desmarca tudo e volta aos botões normais. */
     clearAcquiredPointSelection() {
       this.selectedAcquiredPoints.clear();
-      const current = this.selectedAcquiredPoint?.split(':');
-      if (current?.length === 2) this.inspectAcquiredPoint(current[0], Number(current[1]));
-      this.renderReferenceChart(this.snapshot);
+      this.selectedAcquiredPoint = null;
+      this.readout('');
+      this.renderPointActions();
     }
 
     requestSelectedPointReacquisition() {
-      if (!this.api?.available?.() || this.selectedAcquiredPoints.size === 0) return;
+      // Antes de apagar: só pontos que existem agora (contador > 0) e não acabaram de ser apagados.
+      this.pruneSelection(this.snapshot);
+      if (!this.api?.available?.() || this.selectedAcquiredPoints.size === 0 || this.refreshBusy()) { this.renderPointActions(); return; }
       const targets = Array.from(this.selectedAcquiredPoints).map(key => {
         const [fuel, rawIndex] = key.split(':');
         return { fuel, index: Number(rawIndex) };
       }).filter(item => Number.isInteger(item.index));
-      const prepared = this.api.preparePointDeleteBatch?.(targets) || { ok: false, error: 'Readquisição múltipla indisponível.' };
+      const prepared = this.api.preparePointDeleteBatch?.(targets) || { ok: false, error: 'Reaprender pontos indisponível.' };
       if (!prepared?.ok || !prepared?.prepared) {
-        this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar os pontos selecionados.' } });
+        this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar os pontos marcados.' } });
         return;
       }
       const result = this.api.execute(prepared.preparationId);
       if (result?.ok !== true) {
         this.api?.cancelPreparation?.();
-        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível iniciar a readquisição selecionada.' } });
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível começar a reaprender os pontos.' } });
         return;
       }
       const count = targets.length;
@@ -1803,8 +1841,7 @@
       this.store.patch({
         alert: {
           level: 'working',
-          message: D.plural(count, 'ponto', 'pontos') +
-            ' sendo lidos de novo. A seleção só é limpa depois que a ECU confirmar.',
+          message: D.plural(count, 'ponto vai', 'pontos vão') + ' ser medidos de novo. A seleção só é limpa depois que a ECU confirmar.',
         },
       });
       this.refresh();
@@ -1819,7 +1856,7 @@
       this.renderPointActions();
       this.readout('Curva · ponto ' + (point.index + 1) + ' · ' + D.msUnit(point.petrolMs) + ' · gasolina ' + D.bar(point.petrolMapBar) + ' · GNV ' + D.barUnit(point.gasMapBar));
       ns.CurveChart?.applySelection({ ref: point.index, ecu: null, batch: this.selectedAcquiredPoints }, 'ecu18');
-      document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => node.classList.remove('selected'));
+      this.paintSelection();
     }
 
     renderBands(snapshot) {

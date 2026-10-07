@@ -49,10 +49,11 @@ for token in (
     "MNFLD_PRESS_BUF",
     "NUM_BUF_UPD_PETR",
     "data-autocal-acquired-index",
-    "Apagar ponto",
+    "Reaprender ",
 ):
     assert token in cockpit, token
-assert "data-autocal-reacquire-point" in cockpit
+# Revisto (P2 seleção): tocar no ponto marca/desmarca e um só botão "Reaprender N pontos" manda o lote.
+assert "data-autocal-reacquire-selected" in cockpit
 assert "preparePointDelete" in api
 assert "preparePointDeleteBatch" in api
 assert "fun preparePointDelete" in bridge
