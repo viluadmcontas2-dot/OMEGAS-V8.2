@@ -84,7 +84,33 @@ class OutlierCurveTrackerTest {
         tracker.observe(Fuel.GAS, reading(outlierBand = 6))
         tracker.observe(Fuel.GAS, reading(outlierBand = 6))
         at -= 10_000
-        tracker.observe(Fuel.GAS, reading())
+        assertEquals(false, tracker.observe(Fuel.GAS, reading()))
+        assertEquals(listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
+    }
+
+    @Test
+    fun `leitura velha nao conta como uma das duas leituras frescas`() {
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        at -= 10_000
+        assertEquals(false, tracker.observe(Fuel.GAS, reading(outlierBand = 6)))
+        assertTrue("uma fresca + uma velha: não confirma", tracker.candidates(Fuel.GAS).isEmpty())
+        at += 10_000
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        assertEquals(listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
+    }
+
+    @Test
+    fun `depois do nosso apagamento, leitura velha + uma fresca nao bastam`() {
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        tracker.onDeleteStarted(Fuel.GAS)
+        tracker.onDeleted(Fuel.GAS, 6)
+        at -= 10_000
+        assertEquals(false, tracker.observe(Fuel.GAS, reading(outlierBand = 6, outlierCounter = 1)))
+        at += 10_000
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6, outlierCounter = 1))
+        assertTrue("apagado: a velha não conta, só uma fresca ainda não basta", tracker.candidates(Fuel.GAS).isEmpty())
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6, outlierCounter = 1))
         assertEquals(listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
     }
 

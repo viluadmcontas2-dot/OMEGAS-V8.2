@@ -470,6 +470,11 @@ class TelemetryForegroundService : Service() {
                 try { autoCalActionUi.get()?.invoke() } catch (_: Exception) {}
             },
             lastKnownVector = { field -> nativeAutoCal.lastKnownVector(field) },
+            // Guarda de contexto do automático em voo (combustível, rpm, armado, USB): sem I/O, só memória.
+            automaticContextReason = { fuel ->
+                if (::autoIdleCleanup.isInitialized) autoIdleCleanup.automaticContextReason(fuel)
+                else "Limpeza automática ainda não disponível"
+            },
         )
         autoIdleCleanup = AutoIdleCleanupCoordinator(
             telemetry = actionSerial,

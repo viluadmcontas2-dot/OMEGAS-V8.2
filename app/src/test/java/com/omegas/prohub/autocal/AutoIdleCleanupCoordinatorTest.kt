@@ -154,6 +154,8 @@ class AutoIdleCleanupCoordinatorTest {
         coordinator.evaluate()
         repeat(4) {
             coordinator.onActionFailed(failed(mutation = false))
+            assertFalse("toda falha real desarma", coordinator.uiSummary().armed)
+            assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok")) // o dono rearma a cada falha
             now += 11_000
             outlier(Fuel.GAS, 6, counters = 30 + 2 * it to 31 + 2 * it)
             drive("GNV")
@@ -474,6 +476,7 @@ class AutoIdleCleanupCoordinatorTest {
         drive("GNV")
         coordinator.evaluate()
         coordinator.onActionFailed(failed(mutation = true))
+        assertTrue("rearme explícito do dono", coordinator.setArmed(true, "dono").getBoolean("ok"))
         now += 11_000
         drive("GNV")
         coordinator.evaluate()
@@ -484,15 +487,159 @@ class AutoIdleCleanupCoordinatorTest {
         assertEquals(2, calls.size)
     }
 
+    // ---- revisão 2026-10-07 (achados importantes): falha real desarma; releitura só do alvo, posterior e completa ----
+
+    @Test
+    fun `primeira falha real desarma ate novo toque e um tick fresco nao envia`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals(1, calls.size)
+        coordinator.onActionFailed(failed(mutation = false)) // primeira falha de transporte, nada enviado
+        val summary = coordinator.uiSummary()
+        assertFalse("primeira falha real desarma", summary.armed)
+        assertTrue("sem pausa: é desarme, não pausa", summary.enabled)
+        assertNull(summary.pauseCode)
+        assertTrue(summary.waitReason, summary.waitReason.contains("falha") && summary.waitReason.contains("Ativar limpeza automática"))
+        assertFalse(coordinator.json().getBoolean("inFlight"))
+        assertEquals("failure", records.last { it.first == "autocal_auto_cleanup_armed" }.second.getString("source").substringBefore(':'))
+        now += 11_000
+        outlier(Fuel.GAS, 6, counters = 20 to 21)
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals("desarmado: o tick fresco não envia", 1, calls.size)
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        assertEquals(AutoIdleCleanupCoordinator.ARMED_WAIT_REASON, coordinator.uiSummary().waitReason)
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals("só o rearme explícito libera", 2, calls.size)
+    }
+
+    @Test
+    fun `rearmar depois da falha preserva o intervalo de bloqueio e a releitura obrigatoria`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        coordinator.onActionFailed(failed(mutation = true))
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        now += 1_000
+        outlier(Fuel.GAS, 6, counters = 20 to 21) // releitura completa do alvo, posterior à falha
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals("bloqueio de 10 s preservado pelo rearme", 1, calls.size)
+        assertFalse(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        now += 10_000
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals(2, calls.size)
+    }
+
+    @Test
+    fun `falha benigna sem nada enviado (ponto ja vazio ou readquirido) nao desarma`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        coordinator.onActionFailed(failed(mutation = false).put("emptyBands", JSONArray().put(6)))
+        assertTrue("nada foi enviado e nada falhou na ECU: continua armada", coordinator.uiSummary().armed)
+        now += 6_000
+        buffers(Fuel.GAS, outlierBand = 9, outlierCounter = 7)
+        buffers(Fuel.GAS, outlierBand = 9, outlierCounter = 8)
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals(2, calls.size)
+    }
+
+    @Test
+    fun `recibo perdido (timeout) desarma, exige releitura do alvo e nao e esquecido pelo rearme`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        assertTrue(coordinator.json().getBoolean("inFlight"))
+        now += AutoIdleCleanupCoordinator.IN_FLIGHT_TIMEOUT_MS + 1
+        drive("GNV")
+        coordinator.evaluate()
+        val summary = coordinator.uiSummary()
+        assertFalse(coordinator.json().getBoolean("inFlight"))
+        assertFalse("resultado incerto não autoriza novo envio", summary.armed)
+        assertTrue(summary.waitReason, summary.waitReason.contains("não respondeu"))
+        assertTrue(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        assertTrue(records.any { it.first == "autocal_auto_idle_timeout" })
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        now += 11_000
+        outlier(Fuel.PETROL, 9) // outro combustível: não libera o GNV
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals("sem releitura do alvo: nada sai", 1, calls.size)
+        assertTrue(coordinator.json().getJSONObject("policy").getBoolean("needsReread"))
+        outlier(Fuel.GAS, 6, counters = 20 to 21)
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals(2, calls.size)
+    }
+
+    @Test
+    fun `releitura de outro combustivel, de instante velho ou igual, ou incompleta nao libera a releitura obrigatoria`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        coordinator.evaluate()
+        val failedAt = now
+        coordinator.onActionFailed(failed(mutation = true))
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        fun needsReread() = coordinator.json().getJSONObject("policy").getBoolean("needsReread")
+        assertTrue(needsReread())
+        buffers(Fuel.PETROL, outlierBand = 9)
+        assertTrue("outro combustível", needsReread())
+        buffers(Fuel.GAS, outlierBand = 6, outlierCounter = 20, instant = failedAt)
+        assertTrue("mesmo instante da falha (replay)", needsReread())
+        buffers(Fuel.GAS, outlierBand = 6, outlierCounter = 20, instant = failedAt - 50)
+        assertTrue("instante anterior à falha", needsReread())
+        now += 2_000
+        buffers(Fuel.GAS, outlierBand = 6, outlierCounter = 20, incomplete = true)
+        assertTrue("vetor incompleto (sem tempo/MAP)", needsReread())
+        buffers(Fuel.GAS, outlierBand = 6, outlierCounter = 20)
+        assertFalse("leitura completa, posterior e do alvo libera só a releitura", needsReread())
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals("o bloqueio de 10 s continua", 1, calls.size)
+        assertTrue(coordinator.uiSummary().waitReason, coordinator.uiSummary().waitReason.contains("depois de uma falha"))
+        now += 9_000
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals(2, calls.size)
+    }
+
+    @Test
+    fun `contexto do apagamento em voo e revalidado pelo coordenador sem I-O`() {
+        outlier(Fuel.GAS, 6)
+        drive("GNV")
+        assertNull(coordinator.automaticContextReason(Fuel.GAS))
+        assertTrue(coordinator.automaticContextReason(Fuel.PETROL)!!.contains("GNV"))
+        drive("GASOLINA")
+        assertTrue("combustível trocou", coordinator.automaticContextReason(Fuel.GAS)!!.contains("gasolina"))
+        now += 100
+        drive("GNV", rpm = 800)
+        assertTrue("rpm caiu", coordinator.automaticContextReason(Fuel.GAS)!!.contains("rodar"))
+        now += 100
+        drive("GNV")
+        assertNull(coordinator.automaticContextReason(Fuel.GAS))
+        coordinator.onManualIntent("RESET_GAS")
+        assertTrue("desarmado em voo", coordinator.automaticContextReason(Fuel.GAS)!!.contains("desligada"))
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
+        liveSession = 2L
+        assertTrue("USB mudou em voo", coordinator.automaticContextReason(Fuel.GAS)!!.contains("USB"))
+    }
+
     @Test
     fun `falha repetida na releitura de antes nao vira Delete a cada 500 ms e 5 seguidas pausam`() {
         outlier(Fuel.GAS, 6)
         drive("GNV")
         coordinator.evaluate()
         coordinator.onActionFailed(failed(mutation = false))
+        assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok")) // rearme explícito: o intervalo segue valendo
         repeat(8) { now += 500; drive("GNV"); coordinator.evaluate() }
         assertEquals(1, calls.size)
         repeat(4) {
+            assertTrue(coordinator.setArmed(true, "dono").getBoolean("ok"))
             now += 6_000
             drive("GNV")
             coordinator.evaluate()
@@ -606,8 +753,12 @@ class AutoIdleCleanupCoordinatorTest {
         factorCounter: Int = 5,
         /** ms da banda 0 (curva mais suave = menos resíduo de concavidade nos buracos). */
         timeBase: Double = 1.5,
+        /** Instante explícito da leitura (replay de leitura velha). */
+        instant: Long? = null,
+        /** Só contadores (sem tempo/MAP): leitura incompleta, não confirma nada. */
+        incomplete: Boolean = false,
     ) {
-        if (!sameInstant) at = maxOf(at + 1, now)
+        if (instant != null) at = instant else if (!sameInstant) at = maxOf(at + 1, now)
         val counters = IntArray(18) { if (it < 16) plainCounter else 0 }
         val time = IntArray(18) { if (it < 16) timeRaw(it, timeBase) else 0 }
         val map = IntArray(18) { if (it < 16) mapRaw(it) else 0 }
@@ -617,11 +768,15 @@ class AutoIdleCleanupCoordinatorTest {
             time[outlierBand] = (timeRaw(outlierBand) * 1.3).toInt() + outlierCounter // muda o buffer a cada leitura
             counters[outlierBand] = outlierCounter
         }
-        coordinator.onBuffers(AutoIdleCleanupCoordinator.Buffers(session, fuel, counters, time, map, at))
+        coordinator.onBuffers(
+            AutoIdleCleanupCoordinator.Buffers(
+                session, fuel, counters, if (incomplete) null else time, if (incomplete) null else map, at,
+            ),
+        )
     }
 
-    private fun drive(fuel: String) {
-        frames += NativeAnchorTelemetryWindow.Frame(frames.size + 1L, now, 2_300, 0.7, 5.0, fuel)
+    private fun drive(fuel: String, rpm: Int = 2_300) {
+        frames += NativeAnchorTelemetryWindow.Frame(frames.size + 1L, now, rpm, 0.7, 5.0, fuel)
     }
 
     private fun confirmed(fuel: Fuel, band: Int, otherAbnormal: Boolean = false) = confirmed(fuel, listOf(band), otherAbnormal)

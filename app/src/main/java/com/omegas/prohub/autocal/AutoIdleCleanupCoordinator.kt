@@ -27,8 +27,12 @@ import java.util.concurrent.Executor
  * apagamento automático NÃO desarma. Rearmar limpa a pausa, nunca o bloqueio de falha com mutação incerta.
  *
  * Revisão 2026-10-07: a INTENÇÃO manual do dono (reset/pausa/escrita K/Mapa/restauração) desarma na hora e de forma
- * síncrona ([onManualIntent]), antes de a escrita começar; a operação automática já em voo ainda conclui e seu
- * recibo é processado, mas nenhum disparo novo sai. Armar valida a geração USB atual ([currentSessionId]) contra a
+ * síncrona ([onManualIntent]), antes de a escrita começar; o recibo da operação automática já em voo ainda é
+ * processado, mas nenhum disparo novo sai. Achados importantes (mesmo dia): (1) toda falha REAL do automático,
+ * inclusive a primeira de transporte e o recibo perdido (timeout), desarma até novo toque, preservando bloqueio e
+ * releitura obrigatória; (2) o gerenciador revalida o contexto em voo via [automaticContextReason] antes das máscaras
+ * e antes do commit; (3) a releitura obrigatória só é liberada por leitura completa, nova e posterior do combustível
+ * alvo. Armar valida a geração USB atual ([currentSessionId]) contra a
  * sessão vista pelo coordenador, para não armar uma sessão velha enquanto o reset assíncrono está na fila. Toda
  * mudança de estado visível (inclusive as assíncronas) chama [onChanged], e só quando algo mudou.
  */
@@ -82,14 +86,19 @@ class AutoIdleCleanupCoordinator(
         Fuel.GAS to IdleAcquisitionTracker(fuelNames = IdleAcquisitionTracker.GNV_NAMES),
         Fuel.PETROL to IdleAcquisitionTracker(fuelNames = PETROL_NAMES),
     )
+    /** Apagamento automático em voo: o que foi pedido e quando (o recibo/timeout usam isto, não o recibo parseado). */
+    private class InFlight(val fuel: Fuel, val bands: List<Int>, val sinceMs: Long)
+
     private val cleaner = AutoIdlePointCleaner()
     private var sessionId = 0L
-    private var inFlightSinceMs: Long? = null
+    private var inFlight: InFlight? = null
     private var lastResult: JSONObject = JSONObject()
     @Volatile private var lastJson: JSONObject = JSONObject()
     @Volatile private var enabledNow = true
     @Volatile private var armed = false
     private var waitReason: String = DISARMED_REASON
+    /** Por que está desarmada agora (toque do dono, falha, recibo perdido): a tela mostra isto enquanto desarmada. */
+    private var disarmedReason: String = DISARMED_REASON
     private var pauseCode: PauseCode? = null
     private var relearned = 0
     private val recent = ArrayDeque<RecentDelete>()
@@ -118,6 +127,7 @@ class AutoIdleCleanupCoordinator(
                 pauseCode = null
             }
             if (!this.armed) waitReason = ARMED_WAIT_REASON
+            disarmedReason = DISARMED_REASON
         }
         setArmedLocked(armed, source)
         publish()
@@ -144,17 +154,37 @@ class AutoIdleCleanupCoordinator(
         if (buffers.sessionId != sessionId) resetSessionLocked(buffers.sessionId)
         val time = buffers.timeRaw
         val map = buffers.mapRaw
-        if (time != null && map != null) {
-            outliers.observe(
+        val complete = time != null && map != null &&
+            minOf(buffers.counters.size, time.size, map.size) >= IdleAcquisitionTracker.BAND_COUNT
+        if (complete) {
+            // Só uma leitura COMPLETA (contador+tempo+MAP), de instante NOVO para este combustível (não replay/cache)
+            // e posterior à falha libera a releitura obrigatória (revisão 2026-10-07 #3).
+            val fresh = outliers.observe(
                 buffers.fuel,
-                OutlierCurveTracker.Reading(buffers.counters, time, map, buffers.observedAtElapsedMs),
+                OutlierCurveTracker.Reading(buffers.counters, time!!, map!!, buffers.observedAtElapsedMs),
             )
+            if (fresh) cleaner.onReread(buffers.fuel, buffers.observedAtElapsedMs)
         }
         regimes.getValue(buffers.fuel).observe(
             IdleAcquisitionTracker.Reading(buffers.counters, time, map, buffers.observedAtElapsedMs),
         ) { from, to -> telemetry.recentTelemetryFrames(from, to) }
-        cleaner.onReread()
         evaluateLocked()
+    }
+
+    /**
+     * Guarda de contexto de um apagamento automático JÁ EM VOO (revisão 2026-10-07 #2), chamada pelo gerenciador
+     * antes das máscaras e antes do commit. Síncrona, sem I/O: lê só a janela de telemetria em memória e o estado
+     * publicado. Devolve o motivo humano para abortar, ou nulo para seguir. Não substitui o `ensureSession` do
+     * gerenciador (segurança conferida uma vez); soma a ele combustível, rpm, armamento e geração USB atuais.
+     */
+    fun automaticContextReason(fuel: Fuel): String? = synchronized(this) {
+        if (!armed) return disarmedReason
+        cleaner.disabledReason()?.let { return "Limpeza automática pausada: $it" }
+        val live = currentSessionId?.invoke() ?: sessionId
+        if (sessionId <= 0L || live != sessionId) return "A conexão USB mudou durante o apagamento"
+        val now = clock()
+        val latest = telemetry.recentTelemetryFrames(now - AutoIdlePointCleaner.FRAME_MAX_AGE_MS, now).lastOrNull()
+        cleaner.contextReason(fuel, latest, now)
     }
 
     /** Chamado periodicamente: o carro pode começar a rodar no combustível do ponto sem leitura nova. */
@@ -172,12 +202,13 @@ class AutoIdleCleanupCoordinator(
 
     fun onActionConfirmed(receipt: JSONObject) = submit {
         if (!receipt.optBoolean("automatic", false) || receipt.optString("action") != "DELETE_POINT") return@submit
-        inFlightSinceMs = null
+        val flight = inFlight
+        inFlight = null
         val details = receipt.optJSONObject("details") ?: JSONObject()
-        val fuel = receiptFuel(receipt) ?: Fuel.GAS
+        val fuel = flight?.fuel ?: receiptFuel(receipt) ?: Fuel.GAS
         val ambiguousBands = bandsWithResult(details, "AMBIGUOUS")
-        // Readback ambíguo: consome o intervalo e espera releitura; nunca desliga a sessão.
-        cleaner.onSucceeded(clock(), rereadRequired = details.optBoolean("readbackAmbiguous", false))
+        // Readback ambíguo: consome o intervalo e espera releitura completa do alvo; nunca desliga a sessão.
+        cleaner.onSucceeded(clock(), rereadRequired = details.optBoolean("readbackAmbiguous", false), fuels = setOf(fuel))
         val deleted = targetBands(details) - ambiguousBands.toSet()
         deleted.forEach { outliers.onDeleted(fuel, it) }
         regimes.getValue(fuel).markDeleted(deleted)
@@ -197,21 +228,34 @@ class AutoIdleCleanupCoordinator(
 
     fun onActionFailed(receipt: JSONObject) = submit {
         if (!receipt.optBoolean("automatic", false) || receipt.optString("action") != "DELETE_POINT") return@submit
-        inFlightSinceMs = null
-        val fuel = receiptFuel(receipt) ?: Fuel.GAS
+        val flight = inFlight
+        inFlight = null
+        // Combustível/alvos da operação em voo (autoridade), não do recibo parseado; sem voo conhecido, o recibo.
+        val fuel = flight?.fuel ?: receiptFuel(receipt)
+        val mutation = receipt.optBoolean("mutationMayHaveStarted", false)
+        val emptyBands = intList(receipt.optJSONArray("emptyBands"))
+        val skippedChanged = intList(receipt.optJSONArray("skippedChanged"))
         // Ponto já vazio ou readquirido desde a marca: sai dos candidatos até a próxima leitura.
-        outliers.forget(fuel, intList(receipt.optJSONArray("emptyBands")) + intList(receipt.optJSONArray("skippedChanged")))
-        if (receipt.has("effective") && !receipt.optBoolean("effective", true)) {
+        if (fuel != null) outliers.forget(fuel, emptyBands + skippedChanged)
+        val ineffective = receipt.has("effective") && !receipt.optBoolean("effective", true)
+        // Nada enviado e nada falhou na ECU (ponto já vazio / readquirido): não é falha real, não desarma.
+        val benign = !mutation && !ineffective && (emptyBands.isNotEmpty() || skippedChanged.isNotEmpty())
+        if (ineffective) {
             disableLocked("Readback mostrou que a ECU não apagou o ponto", receipt, PauseCode.READBACK_INEFFECTIVE)
         } else {
             // Toda falha consome tempo; N seguidas desligam a sessão.
             val wasEnabled = cleaner.disabledReason() == null
-            cleaner.onFailed(clock(), receipt.optBoolean("mutationMayHaveStarted", false))
+            cleaner.onFailed(clock(), mutation, fuels = setOfNotNull(fuel))
             val reason = cleaner.disabledReason()
             if (wasEnabled && reason != null) {
                 pauseCode = PauseCode.REPEATED_FAILURES
                 recordDisabled(reason, receipt)
                 if (armed) setArmedLocked(false, "pause:${PauseCode.REPEATED_FAILURES.name}")
+            } else if (!benign && armed) {
+                // Revisão 2026-10-07 #1: toda falha real (inclusive a primeira, de transporte) desarma até novo toque.
+                // Intervalo/bloqueio e releitura obrigatória ficam no cleaner: rearmar não os ignora.
+                disarmedReason = if (mutation) FAILURE_UNCERTAIN_DISARMED_REASON else FAILURE_DISARMED_REASON
+                setArmedLocked(false, "failure:" + receipt.optString("reasonCode").ifBlank { "?" })
             }
         }
         publish()
@@ -227,12 +271,31 @@ class AutoIdleCleanupCoordinator(
 
     private fun evaluateLocked() {
         val now = clock()
-        inFlightSinceMs?.let { since ->
-            if (now - since < IN_FLIGHT_TIMEOUT_MS) return publish()
-            inFlightSinceMs = null // callback perdido: não trava o automático para sempre
+        inFlight?.let { flight ->
+            if (now - flight.sinceMs < IN_FLIGHT_TIMEOUT_MS) return publish()
+            // Recibo perdido: resultado INCERTO. Não autoriza novo envio: bloqueia, exige releitura completa do alvo e
+            // desarma até novo toque (revisão 2026-10-07 #1); rearmar não apaga o bloqueio nem a releitura.
+            inFlight = null
+            cleaner.onFailed(now, mutationMayHaveStarted = true, fuels = setOf(flight.fuel))
+            disarmedReason = TIMEOUT_DISARMED_REASON
+            lastResult = JSONObject().put("ok", false).put("retryLater", false).put("error", TIMEOUT_DISARMED_REASON)
+            try {
+                record(
+                    "autocal_auto_idle_timeout",
+                    JSONObject()
+                        .put("fuel", flight.fuel.wireName)
+                        .put("bands", JSONArray(flight.bands))
+                        .put("sinceElapsedMs", flight.sinceMs)
+                        .put("nowElapsedMs", now)
+                        .put("sessionId", sessionId)
+                        .put("automatic", true)
+                        .put("scope", "DELETE_OUTLIER_POINTS"),
+                )
+            } catch (_: Exception) {}
+            if (armed) setArmedLocked(false, "timeout")
         }
         if (!armed) {
-            waitReason = DISARMED_REASON
+            waitReason = disarmedReason
             return publish()
         }
         val latest = telemetry.recentTelemetryFrames(now - AutoIdlePointCleaner.FRAME_MAX_AGE_MS, now).lastOrNull()
@@ -287,7 +350,7 @@ class AutoIdleCleanupCoordinator(
             .put("minIntervalMs", AutoIdlePointCleaner.MIN_INTERVAL_MS)
         val targets = decision.bands.map { AutoCalPointDeleteProtocol.Target(decision.fuel, it) }
         outliers.onDeleteStarted(decision.fuel)
-        inFlightSinceMs = now
+        inFlight = InFlight(decision.fuel, decision.bands, now)
         val result = try {
             executeDelete(targets, evidence)
         } catch (error: Exception) {
@@ -295,7 +358,7 @@ class AutoIdleCleanupCoordinator(
         }
         lastResult = JSONObject(result.toString())
         if (!result.optBoolean("ok", false)) {
-            inFlightSinceMs = null
+            inFlight = null
             // Colisão (porta, guarda, preparação manual): tenta de novo; não consome o intervalo.
             cleaner.onRetryLater()
         }
@@ -308,7 +371,8 @@ class AutoIdleCleanupCoordinator(
         outliers.reset()
         regimes.values.forEach { it.reset() }
         cleaner.resetSession()
-        inFlightSinceMs = null
+        inFlight = null
+        disarmedReason = DISARMED_REASON
         lastResult = JSONObject()
         pauseCode = null
         relearned = 0
@@ -388,15 +452,16 @@ class AutoIdleCleanupCoordinator(
 
     private fun publish() {
         enabledNow = cleaner.disabledReason() == null
-        val waitForUi = if (!armed) DISARMED_REASON else waitReason
+        val waitForUi = if (!armed) disarmedReason else waitReason
         lastJson = JSONObject()
             .put("sessionId", sessionId)
             .put("automatic", true)
             .put("scope", "DELETE_OUTLIER_POINTS")
             .put("fuels", JSONArray().put("GAS").put("PETROL"))
             .put("armed", armed)
-            .put("waitReason", waitReason)
-            .put("inFlight", inFlightSinceMs != null)
+            .put("waitReason", waitForUi)
+            .put("inFlight", inFlight != null)
+            .put("inFlightFuel", inFlight?.fuel?.wireName ?: JSONObject.NULL)
             .put("outliers", outliers.json())
             .put("policy", cleaner.json())
             .put("lastResult", lastResult)
@@ -446,5 +511,11 @@ class AutoIdleCleanupCoordinator(
         val PETROL_NAMES = setOf("GASOLINA", "PETROL")
         const val DISARMED_REASON = "Limpeza automática desligada: toque em Ativar limpeza automática"
         const val ARMED_WAIT_REASON = "Aguardando a próxima leitura da ECU"
+        const val FAILURE_DISARMED_REASON =
+            "Limpeza automática desligada depois de uma falha no apagamento: toque em Ativar limpeza automática para continuar"
+        const val FAILURE_UNCERTAIN_DISARMED_REASON =
+            "Limpeza automática desligada depois de uma falha com resultado incerto; aguarde a leitura nova da ECU e toque em Ativar limpeza automática"
+        const val TIMEOUT_DISARMED_REASON =
+            "A ECU não respondeu ao apagamento automático; limpeza desligada até a leitura nova da ECU e um novo toque em Ativar limpeza automática"
     }
 }
