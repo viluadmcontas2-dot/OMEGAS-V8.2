@@ -57,7 +57,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
 
     @JavascriptInterface
-    fun getUiProjection(): String = projectionMemo.get()
+    fun getUiProjection(): String = projectionMemo.getNonBlocking(
+        """{"ok":false,"source":"NONE","referenceUsable":false,"snapshot":{"available":false},"error":"Atualizando projeção AutoCal"}""",
+    )
 
     private fun computeUiProjection(): String = try {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")

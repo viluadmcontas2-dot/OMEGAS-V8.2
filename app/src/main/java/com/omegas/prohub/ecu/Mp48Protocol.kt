@@ -14,7 +14,6 @@ object Mp48Protocol {
     val CMD_INIT_2 = byteArrayOf(0x01, 0x00, 0x3A, 0x3B)
     val CMD_IDENTIFY = byteArrayOf(0x00, 0x25, 0x25)
     val CMD_TELEMETRY = byteArrayOf(0x48, 0x01, 0x49)
-    val CMD_SECONDARY_STATUS = byteArrayOf(0x48, 0x08, 0x50)
     val CMD_DISCONNECT = byteArrayOf(0x00, 0x01, 0x01)
 
     const val STATUS_ACK = 0x53
@@ -96,7 +95,7 @@ object Mp48Protocol {
         val mapBar = Mp48TelemetryScale.mapBar(mapRaw)
         val pressureDiffBar = gasPressureAbsBar - mapBar
 
-        val physicalCutoff = rpm >= 1_200 && petrolMs < 0.70 && gasRaw == 0 && mapBar < 0.35
+        val physicalCutoff = PhysicalCutoff.isCutoff(rpm, petrolMs, gasRaw, mapBar)
         val fuel = when {
             rpm <= 0 || fuelByte == 0x00 -> Mp48Fuel.ENGINE_OFF
             physicalCutoff -> Mp48Fuel.CUTOFF
@@ -246,4 +245,18 @@ data class Mp48Telemetry(
         .put("base_plausible", basePlausible)
         .put("cng_pressure_plausible", cngPressurePlausible)
         .put("plausibility_reasons", org.json.JSONArray(plausibilityReasons))
+}
+
+/**
+ * Fonte única do corte de combustível (desaceleração): rpm de condução, injeção de gasolina quase nula, sem pulso de gás
+ * e MAP baixo. Usada pelo decodificador ([Mp48Protocol.decodeTelemetry]) e pelo [MotorSampleAnalyzer]; antes havia uma cópia
+ * fixa aqui e outra configurável na política, que divergiriam se a política mudasse.
+ */
+object PhysicalCutoff {
+    const val MIN_RPM = 1_200
+    const val MAX_PETROL_MS = 0.70
+    const val MAX_MAP_BAR = 0.35
+
+    fun isCutoff(rpm: Int, petrolMs: Double, gasRaw: Int, mapBar: Double): Boolean =
+        rpm >= MIN_RPM && petrolMs < MAX_PETROL_MS && gasRaw == 0 && mapBar < MAX_MAP_BAR
 }

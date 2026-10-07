@@ -14,6 +14,33 @@ import org.json.JSONObject
 import java.security.MessageDigest
 
 /**
+ * Chave do memo de aquisição (autoMatchProgressJson). Só os campos que [AutoCalUiProjection.maskedAcquisition]
+ * e a escolha bloqueado/liberado leem: sessão USB, contador, gerações e pendências por combustível.
+ * `petrolSamples`, `gasSamples` e `reason` ficam de fora de propósito: mudam a cada amostra/texto e não
+ * alteram a máscara; incluí-los só invalidaria o memo a cada tique sem ganho de correção.
+ */
+internal object NativeAutoCalAcquisitionMemoKey {
+    private val keys = listOf(
+        "usbSessionId",
+        "nativeAutoMatchCount",
+        "petrolGeneration",
+        "gasGeneration",
+        "petrolPending",
+        "gasPending",
+        "referencePending",
+        "petrolReferencePending",
+        "gasReferencePending",
+        "comparisonAllowed",
+    )
+
+    fun from(epoch: JSONObject): String =
+        keys.joinToString("|") { key ->
+            val value = if (epoch.has(key)) epoch.opt(key) else "<missing>"
+            "$key=$value"
+        }
+}
+
+/**
  * Observa a Auto Calibration nativa sem possuir timer, thread serial ou writer.
  *
  * O serviço chama [tick] em cadência curta (~100 ms); o monitor não possui
@@ -704,7 +731,7 @@ class NativeAutoCalMonitor(
     fun tablesRevision(): Long = tablesRevisionValue
 
     private var acquisitionMemo: Pair<JSONObject, JSONObject>? = null
-    private var acquisitionMemoBlocked = false
+    private var acquisitionMemoEpochKey = ""
 
     /**
      * Leve, para o piloto do refino (a cada tick do serviço): contador vivo de AutoMatch,
@@ -728,10 +755,14 @@ class NativeAutoCalMonitor(
         // projeção; o Refino/piloto lia o snapshot cru e contava zonas velhas. Mesma máscara aqui (B4, 2026-10-05).
         val epoch = acquisitionEpochJson()
         val blocked = !epoch.optBoolean("comparisonAllowed", false)
+        val epochKey = NativeAutoCalAcquisitionMemoKey.from(epoch)
         val acquisition = if (snapshot.has("fields")) {
             val source = if (blocked) AutoCalUiProjection.maskedAcquisition(snapshot, epoch, false) else snapshot
-            acquisitionMemo?.takeIf { it.first === snapshot && acquisitionMemoBlocked == blocked }?.second
-                ?: AutoCalAcquisition.fromSnapshot(source).also { acquisitionMemo = snapshot to it; acquisitionMemoBlocked = blocked }
+            acquisitionMemo?.takeIf { it.first === snapshot && acquisitionMemoEpochKey == epochKey }?.second
+                ?: AutoCalAcquisition.fromSnapshot(source).also {
+                    acquisitionMemo = snapshot to it
+                    acquisitionMemoEpochKey = epochKey
+                }
         } else null
         JSONObject()
             .put("autoMatchCount", count ?: JSONObject.NULL)

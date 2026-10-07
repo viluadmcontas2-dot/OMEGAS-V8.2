@@ -267,13 +267,6 @@ class UsbSerialManager(
     }
 
     @Synchronized
-    fun reconfigure(): Boolean {
-        val selected = activeDeviceName.takeIf { it.isNotBlank() }
-        disconnectInternal(scheduleReconnect = false)
-        return connect(selected)
-    }
-
-    @Synchronized
     private fun hardDisconnect(scheduleReconnect: Boolean, reason: String) {
         recoveryTask?.cancel(false)
         recoveryTask = null

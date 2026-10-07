@@ -142,8 +142,6 @@ class OmegasLinkManager(
             .toString()
     }
 
-    fun hasConnectedPeer(): Boolean = running.get() && bestPeer() != null
-
     /** Chamado quando MP48/OBD muda de estado. O papel acompanha o hardware físico. */
     fun onLocalCapabilitiesChanged() {
         val nowUsb = usbConnected()

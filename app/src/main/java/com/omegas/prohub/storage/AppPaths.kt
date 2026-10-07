@@ -28,10 +28,5 @@ class AppPaths(context: Context) {
             exportsRoot, logsRoot, sessionLogsRoot,
         ).forEach { it.mkdirs() }
     }
-
-    fun clearTemp() {
-        tempRoot.listFiles()?.forEach { it.deleteRecursively() }
-        stagingRoot.listFiles()?.forEach { it.deleteRecursively() }
-    }
 }
 

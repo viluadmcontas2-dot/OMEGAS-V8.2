@@ -1,6 +1,7 @@
 package com.omegas.prohub.autocal
 
 import com.omegas.prohub.equivalence.JsonFiles
+import com.omegas.prohub.equivalence.EquivalenceEngine
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -264,7 +265,18 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                     "PASSOU" -> "ERROR_SIGN_REVERSED"
                     else -> "REMAINING_ERROR_SAME_DIRECTION"
                 }
+                // O veredito continua legível em dados antigos; aprender ganho exige confiança ANTES e DEPOIS.
+                val learningReason = when {
+                    !solidBefore || !solidAfter || !touched -> "BAND_NOT_JUDGED"
+                    !confidentForLearning(b) -> "UNCERTAIN_BEFORE"
+                    !confidentForLearning(a) -> "UNCERTAIN_AFTER"
+                    else -> "CONFIDENT_BEFORE_AND_AFTER"
+                }
                 verdict.put("reasonCode", code).put("decision", JSONObject()
+                    .put("learningAllowed", learningReason == "CONFIDENT_BEFORE_AND_AFTER")
+                    .put("learningReasonCode", learningReason)
+                    .put("evidenceBefore", b.optJSONObject("evidenceStats") ?: JSONObject.NULL)
+                    .put("evidenceAfter", a.optJSONObject("evidenceStats") ?: JSONObject.NULL)
                     .put("errorBeforeLog", if (rb.isFinite() && rb > 0) ln(rb) else JSONObject.NULL)
                     .put("errorAfterLog", if (ra.isFinite() && ra > 0) ln(ra) else JSONObject.NULL)
                     .put("worseMarginLog", WORSE_MARGIN_LOG).put("okAfterLog", OK_AFTER_LOG)
@@ -338,11 +350,13 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
      * Ganho por faixa para a próxima proposta: passou → mais suave; piorou → bem mais suave; curta E melhorou → um pouco
      * mais firme (curta que NÃO melhorou não firma ganho). Antes de aplicar o veredito o ganho aprendido volta uma fração
      * do caminho até 1,0 em TODAS as faixas ([LEARN_DECAY]): o aprendizado esquece, não se acumula para sempre.
+     * Novo aprendizado só com confiança estatística antes/depois; legado e ruído apenas esquecem, nunca ensinam.
      */
     private fun learn(verdicts: JSONArray) {
         for (i in 0 until min(verdicts.length(), bandScale.size)) {
             bandScale[i] = 1.0 + (bandScale[i] - 1.0) * LEARN_DECAY
             val v = verdicts.optJSONObject(i)
+            if (v?.optJSONObject("decision")?.optBoolean("learningAllowed", false) != true) continue
             val improved = v?.optJSONObject("decision")?.let { d ->
                 val e0 = d.optDouble("errorBeforeLog", Double.NaN)
                 val e1 = d.optDouble("errorAfterLog", Double.NaN)
@@ -356,6 +370,19 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 else -> bandScale[i]
             }
         }
+    }
+
+    /** Dados ausentes/antigos não inventam independência. A regra de precisão é a do cérebro único. */
+    private fun confidentForLearning(band: JSONObject): Boolean {
+        val stats = band.optJSONObject("evidenceStats") ?: return false
+        if (stats.optString("model") != EvidencePairs.CONFIDENCE_MODEL) return false
+        val samples = band.optInt("samples", 0)
+        val nEff = stats.optDouble("effectiveSamples", Double.NaN)
+        val dispersion = stats.optDouble("dispersionLog", Double.NaN)
+        val ratio = band.optDouble("ratio", Double.NaN)
+        return samples >= MIN_BAND_SAMPLES && ratio.isFinite() && ratio > 0.0 &&
+            nEff.isFinite() && nEff <= samples && dispersion.isFinite() && dispersion >= 0.0 &&
+            EquivalenceEngine.isJudgeable(samples, nEff, dispersion)
     }
 
     /** Escala de ganho por ponto do eixo (1,0 fora das faixas de condução). */

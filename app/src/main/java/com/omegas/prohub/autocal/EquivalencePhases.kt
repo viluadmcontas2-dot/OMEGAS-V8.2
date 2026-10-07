@@ -49,9 +49,6 @@ class EquivalencePhases(
         val TOLERANCE_LOG_ECU_REF = ln(1.0 + EquivalenceTolerances.MAX)
         /** Legado de diagnóstico; silêncio não é prova de conclusão nativa. */
         const val QUIET_MS = 10 * 60_000L
-        /** Legado de diagnóstico; prazos operacionais vêm de PHASE_BUDGET_MS. */
-        const val QUIET_PARTIAL_MS = 25 * 60_000L
-        const val PARTIAL_MIN_ZONES = 3
         /** ±4%: a margem do dono (GNV equivalente à gasolina); é o mesmo piso do cérebro ([EquivalenceTolerances.MIN]). */
         val TOLERANCE_LOG = ln(1.0 + EquivalenceTolerances.MIN)
         /** Histerese: a faixa entra em "fora" além de ±4% (±5% na referência da ECU) e só sai abaixo de ±3% (±4%). */

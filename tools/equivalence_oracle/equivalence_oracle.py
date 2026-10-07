@@ -13,7 +13,7 @@ NÃO é puxado para a gasolina (sem prior); o índice só é número quando os p
 Convenções que o Kotlin repete bit a bit:
   * mediana verdadeira (média dos dois do meio com n par);
   * célula da Curva Própria = 0,02 bar, grade [0,10; 1,10) → 50 células;
-  * leituras de condução: rpm >= 1000.
+  * leituras de condução: rpm >= 1200 (= RegimeThresholds.DRIVING_RPM).
 Uso: python3 equivalence_oracle.py <fixture.json.gz> [refSeq curveSeq]   (imprime JSON)
 """
 import gzip
@@ -41,6 +41,10 @@ EPISODE_BAND_FACTOR = 100000
 STABLE_MS_SPREAD = 0.10      # janela com ms que pula > 10% não é leitura estável
 MATCH_RPM = 150.0
 MATCH_MAP = 0.02
+# Achado F14 (79 sessões reais): gas_ms/petrol_ms em GNV sobe 22% com a água (1,96 a 35–40 °C → 2,39 a 75–80 °C, estável
+# a partir de ~65–70 °C) e 87% do tempo registrado é água < 70 °C: par só vale com |água_GNV − água_gasolina| <= 8 °C
+# (= EvidencePairs.MAX_WATER_DELTA_C). Água desconhecida (None/NaN) não reprova o par.
+MAX_WATER_DELTA_C = 8.0
 LEDGER_BANDS = [(3.0, 4.5), (4.5, 6.0), (6.0, 7.5), (7.5, 9.0), (9.0, 12.0)]
 Z95 = 1.96
 MAX_FRAME_DT_MS = 1000
@@ -243,15 +247,35 @@ def center(j):
     return GRID_MIN + (j + 0.5) * CELL_BAR
 
 
+def _water(f):
+    w = f.get("water_c")
+    return float(w) if w is not None and math.isfinite(w) else math.nan
+
+
+def _obs_water(o):
+    return o[4] if len(o) > 4 else math.nan
+
+
+def same_water(a, b):
+    """Espelho de EvidencePairs.sameWater."""
+    return not math.isfinite(a) or not math.isfinite(b) or abs(a - b) <= MAX_WATER_DELTA_C
+
+
 def ledger_obs(frames):
-    """Espelho de EquivalenceLedger.accept: janela de 3 quadros do mesmo combustível, ≤ 1,2 s,
-    rpm ±150, map ±0,03, ms ±10% (máx−mín sobre a média); leitura = média dos 3 (+ instante do quadro do meio);
-    cada região RPM×MAP guarda as 30 mais recentes. Obs = (rpm, map, ms, t)."""
+    """Espelho de EquivalenceLedger.accept: janela de 3 quadros do mesmo combustível, ≤ 1,2 s (relógio de captura
+    "cap" quando os 3 quadros o trazem, senão "t"), rpm ±150, map ±0,03, ms ±10% (máx−mín sobre a média);
+    quadro cujo combustível contradiz o raw19 ("dyn": 0 na gasolina, > 0 no GNV) é descartado;
+    leitura = média dos 3 (+ instante do quadro do meio e água média, NaN se algum quadro não a traz);
+    cada região RPM×MAP guarda as 30 mais recentes. Obs = (rpm, map, ms, t, água)."""
     window = []
     lanes = {"GASOLINA": {}, "GNV": {}}
     seq = 0
     for f in frames:
         if f["fuel"] not in ("GASOLINA", "GNV") or f["rpm"] <= 0 or f["map"] <= 0 or f["petrol_ms"] < 1.0:
+            window = []
+            continue
+        dyn = f.get("dyn")
+        if dyn is not None and dyn >= 0 and ((f["fuel"] == "GASOLINA" and dyn != 0) or (f["fuel"] == "GNV" and dyn == 0)):
             window = []
             continue
         if window and window[-1]["fuel"] != f["fuel"]:
@@ -261,7 +285,11 @@ def ledger_obs(frames):
         if len(window) < 3:
             continue
         a, c = window[0], window[-1]
-        if c["t"] - a["t"] > 1200:
+        if all((w.get("cap") if w.get("cap") is not None else -1) >= 0 for w in window):
+            span = c["cap"] - a["cap"]
+        else:
+            span = c["t"] - a["t"]
+        if span > 1200:
             continue
         if max(w["rpm"] for w in window) - min(w["rpm"] for w in window) > 150:
             continue
@@ -270,7 +298,8 @@ def ledger_obs(frames):
         mean_ms = sum(w["petrol_ms"] for w in window) / 3.0
         if max(w["petrol_ms"] for w in window) - min(w["petrol_ms"] for w in window) > STABLE_MS_SPREAD * mean_ms:
             continue
-        o = (sum(w["rpm"] for w in window) / 3.0, sum(w["map"] for w in window) / 3.0, mean_ms, window[1]["t"])
+        o = (sum(w["rpm"] for w in window) / 3.0, sum(w["map"] for w in window) / 3.0, mean_ms, window[1]["t"],
+             sum(_water(w) for w in window) / 3.0 if all(math.isfinite(_water(w)) for w in window) else math.nan)
         key = (math.floor(int(o[0]) / 150), math.floor(int(o[1] * 1000) / 20))
         q = lanes[f["fuel"]].setdefault(key, [])
         q.append((seq, o))
@@ -335,7 +364,7 @@ def build_pairs(petrol_obs, gas_obs, ecu_ref):
     for g in gas_obs:
         # Mesmo regime (EvidencePairs.sameRegime): nunca gasolina em lenta × GNV andando, nem o contrário.
         matches = sorted(p[2] for p in petrol_obs if abs(p[0] - g[0]) <= MATCH_RPM and abs(p[1] - g[1]) <= MATCH_MAP
-                         and (p[0] >= DRIVING_MIN_RPM) == (g[0] >= DRIVING_MIN_RPM))
+                         and (p[0] >= DRIVING_MIN_RPM) == (g[0] >= DRIVING_MIN_RPM) and same_water(_obs_water(p), _obs_water(g)))
         if len(matches) >= 2:
             raw.append({"tp": matches[len(matches) // 2], "tg": g[2], "rpm": g[0], "ecu": False, "map": g[1], "t": g[3]})
         else:
@@ -609,7 +638,9 @@ def default_seqs(data):
 
 def replay(data, ref_seq, k_seq):
     frames = [{"t": f["t"], "fuel": f.get("fuel") or "", "rpm": f.get("rpm") or 0.0,
-               "map": f.get("load_bar") or 0.0, "petrol_ms": f.get("petrol_ms") or 0.0} for f in data["telemetry"]]
+               "map": f.get("load_bar") or 0.0, "petrol_ms": f.get("petrol_ms") or 0.0,
+               "water_c": f.get("water_c"), "dyn": f.get("dynamic_correction"),
+               "cap": f.get("captured_elapsed_ms")} for f in data["telemetry"]]
     ref = reference_points(snapshot_by_seq(data, ref_seq)) if ref_seq is not None else []
     snap = snapshot_by_seq(data, k_seq)
     petrol, gas = ledger_obs(frames)

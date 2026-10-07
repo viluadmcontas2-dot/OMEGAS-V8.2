@@ -185,5 +185,38 @@ class EquivalenceOracle(unittest.TestCase):
         self.assertEqual(30, len(out["points"]))
 
 
+class WaterRaw19AndCaptureClock(unittest.TestCase):
+    """Espelho de ThermalFuelGateTest.kt: água comparável (F14), raw19 valida combustível, relógio de captura."""
+
+    @staticmethod
+    def fr(t, fuel, water=None, dyn=None, cap=None, ms=5.0):
+        return {"t": t, "fuel": fuel, "rpm": 2000.0, "map": 0.6, "petrol_ms": ms, "water_c": water, "dyn": dyn, "cap": cap}
+
+    def test_pairs_need_comparable_water(self):
+        petrol = [(2000.0, 0.6, 5.0, 1000, 40.0), (2000.0, 0.6, 5.0, 2000, 42.0)]
+        self.assertEqual([], oracle.build_pairs(petrol, [(2000.0, 0.6, 6.0, 3000, 78.0)], []))
+        petrol = [(2000.0, 0.6, 5.0, 1000, 70.0), (2000.0, 0.6, 5.0, 2000, 70.0)]
+        self.assertEqual(1, len(oracle.build_pairs(petrol, [(2000.0, 0.6, 6.0, 3000, 78.0)], [])))
+        self.assertEqual([], oracle.build_pairs(petrol, [(2000.0, 0.6, 6.0, 3000, 78.1)], []))
+        self.assertEqual(1, len(oracle.build_pairs(petrol, [(2000.0, 0.6, 6.0, 3000)], [])))
+
+    def test_ledger_obs_water_mean_and_raw19(self):
+        petrol, _ = oracle.ledger_obs([self.fr(i * 280, "GASOLINA", water=60.0 + 2 * i) for i in range(3)])
+        self.assertAlmostEqual(62.0, petrol[0][4])
+        petrol, _ = oracle.ledger_obs([self.fr(i * 280, "GASOLINA", dyn=223) for i in range(6)])
+        self.assertEqual([], petrol)
+        _, gas = oracle.ledger_obs([self.fr(i * 280, "GNV", dyn=0) for i in range(6)])
+        self.assertEqual([], gas)
+        _, gas = oracle.ledger_obs([self.fr(i * 280, "GNV", dyn=220) for i in range(3)])
+        self.assertEqual(1, len(gas))
+
+    def test_capture_clock_wins_over_delivery_clock(self):
+        burst = [self.fr(i * 13, "GASOLINA", cap=10000 + i * 700) for i in range(3)]
+        self.assertEqual([], oracle.ledger_obs(burst)[0])
+        spread = [self.fr(i * 700, "GASOLINA", cap=10000 + i * 280) for i in range(3)]
+        self.assertEqual(1, len(oracle.ledger_obs(spread)[0]))
+        self.assertEqual([], oracle.ledger_obs([self.fr(i * 700, "GASOLINA") for i in range(3)])[0])
+
+
 if __name__ == "__main__":
     unittest.main()

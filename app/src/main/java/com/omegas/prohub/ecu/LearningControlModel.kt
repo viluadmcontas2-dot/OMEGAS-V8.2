@@ -47,7 +47,6 @@ object LearningControlModel {
         val pressureMultiplier = multipliers[pressureLevel]
 
         val frames = intArrayOf(18, 14, defaults.requiredFrames, 8, 6)[collectionLevel]
-        val stride = intArrayOf(5, 4, defaults.evaluationStride, 2, 1)[collectionLevel]
         // O orçamento precisa comportar a cadência física observada (p95 perto
         // de 350 ms). Ele é um timeout auditável, não uma tesoura que remove
         // silenciosamente o início da janela.
@@ -55,7 +54,6 @@ object LearningControlModel {
 
         val policy = base.copy(
             requiredFrames = frames,
-            evaluationStride = stride,
             maximumAttemptMs = maximumAttempt,
             rpmCenterMinimum = defaults.rpmCenterMinimum * rpmMultiplier,
             rpmCenterPercent = defaults.rpmCenterPercent * rpmMultiplier,

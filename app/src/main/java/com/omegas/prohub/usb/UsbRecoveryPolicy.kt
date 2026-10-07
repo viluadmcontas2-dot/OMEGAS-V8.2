@@ -32,8 +32,6 @@ object UsbRecoveryPolicy {
     ): UsbRecoveryDecision {
         @Suppress("UNUSED_VARIABLE")
         val context = Triple(devicePresent, autoReconnect, manualDisconnect)
-        @Suppress("UNUSED_VARIABLE")
-        val ignoredAttempt = attempt
         return UsbRecoveryDecision(UsbRecoveryAction.HARD_DISCONNECT, 0L)
     }
 }

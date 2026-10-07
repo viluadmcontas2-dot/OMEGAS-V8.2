@@ -121,7 +121,6 @@ object EquivalenceTolerances {
     const val MIN = 0.04
     /** Teto da tolerância: até ±5% é aceito; nunca mais largo (dispersão alta não alarga o critério, tira o ponto do julgamento). */
     const val MAX = 0.05
-    const val LIGHT = 0.08
     const val DIVERGENCE_ALARM = 0.08
     const val WORSE_DELTA = 0.04
     const val WORSE_ERROR = 0.05
@@ -144,9 +143,7 @@ data class ProofOutcome(
     companion object {
         val NONE = ProofOutcome(emptyMap(), null)
         const val REASON_NO_CONVERGENCE = "NAO_CONVERGIU"
-        const val REASON_TIMEBOX = "SEM_LEITURA_NO_PRAZO"
         const val REASON_EXHAUSTED = "TENTATIVAS_ESGOTADAS"
-        const val REASON_UNJUDGED = "SEM_EVIDENCIA_INDEPENDENTE"
         /** Tentativas de ajuste (gravar → provar) por ponto antes de parar de propor. */
         const val MAX_ATTEMPTS = 2
     }

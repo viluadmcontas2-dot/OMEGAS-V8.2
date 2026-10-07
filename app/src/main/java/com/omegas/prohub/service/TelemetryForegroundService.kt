@@ -708,9 +708,7 @@ class TelemetryForegroundService : Service() {
         return root.toString()
     }
 
-    fun engineMetricsJson(): String = runtime.metricsJson()
     fun engineSelfTestJson(): String = runtime.selfTestJson()
-    fun protocolLabJson(): String = runtime.protocolJson()
 
     @Synchronized fun readKCell(row: Int, column: Int): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readCell(row, column).toString()
@@ -734,12 +732,10 @@ class TelemetryForegroundService : Service() {
         return kWriter.recoverInsertionState().toString()
     }
     fun kWriteStatusJson(): String = kWriter.statusJson()
-    fun kWriteHistoryJson(): String = kWriter.historyJson()
 
     @Synchronized fun readKFactorCurve(): String =
         if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.readCurve().toString()
     fun kFactorStatusJson(): String = kFactor.statusJson()
-    fun kFactorHistoryJson(): String = kFactor.historyJson()
 
     @Synchronized fun saveKFactorBackup(label: String): String =
         if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.saveCurrentBackup(label).toString()
@@ -1009,17 +1005,6 @@ class TelemetryForegroundService : Service() {
     fun nativeAutoCalSnapshotJson(): String =
         if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson().toString() else "{}"
 
-    fun linkStatusJson(): String {
-        val raw = try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() }
-        return raw.put("connected", raw.optBoolean("peerConnected", false))
-            .put(
-                "message",
-                raw.optString("lastError").ifBlank {
-                    if (raw.optBoolean("peerConnected")) "Outro aparelho conectado" else "Aguardando aparelho na rede local"
-                },
-            )
-            .toString()
-    }
     fun configureOmegasLink(enabled: Boolean, pairCode: String): String {
         val normalizedCode = pairCode.filter(Char::isDigit)
         if (normalizedCode.isNotBlank() && normalizedCode.length != 6) {
@@ -1618,6 +1603,9 @@ class TelemetryForegroundService : Service() {
                 map = live.optDouble("load_bar", 0.0),
                 petrolMs = live.optDouble("petrol_ms", 0.0),
                 gasMs = live.optDouble("gas_ms_diagnostic", 0.0),
+                waterC = if (live.has("water_c") && !live.isNull("water_c")) live.optDouble("water_c", Double.NaN) else Double.NaN,
+                dynamicCorrection = if (live.has("dynamic_correction") && !live.isNull("dynamic_correction")) live.optInt("dynamic_correction", -1) else -1,
+                capturedMs = live.optLong("captured_elapsed_ms", -1L),
             ),
         )
         try {

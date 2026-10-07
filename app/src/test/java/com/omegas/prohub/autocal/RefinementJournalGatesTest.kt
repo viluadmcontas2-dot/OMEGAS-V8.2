@@ -16,6 +16,9 @@ class RefinementJournalGatesTest {
         JSONArray(bands.mapIndexed { i, (ratio, n, episodes) ->
             JSONObject().put("fromMs", EquivalenceLedger.BANDS[i].first).put("toMs", EquivalenceLedger.BANDS[i].second)
                 .put("samples", n).put("ratio", ratio ?: JSONObject.NULL).put("episodes", episodes ?: JSONObject.NULL)
+                // A fixture de ganho declara precisão; os novos testes cobrem ausência e baixa confiança.
+                .put("evidenceStats", JSONObject().put("model", "overlap-lag1-mad-v1")
+                    .put("effectiveSamples", n.toDouble()).put("dispersionLog", 0.002))
         }))
 
     private val same = { r: Double?, n: Int, e: Int? -> Triple(r, n, e) }
