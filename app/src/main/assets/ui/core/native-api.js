@@ -230,10 +230,6 @@
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhuma escrita é enviada à ECU.' };
       return invoke(this.calibration, 'startCurveRestoreWrite', [JSON.stringify(points || []), String(fileName || '')], { ok: false, error: 'Restauração da Curva K indisponível' });
     }
-    mapBackups() {
-      if (this.demo) return [];
-      return invoke(this.calibration, 'listMapBackups', [], []);
-    }
     /** Desfazer do Mapa K, passo 1: relê o mapa (somente leitura) e lista o que voltaria. */
     prepareMapRestore(adjustmentId) {
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Restauração real exige ECU conectada.' };
@@ -275,8 +271,6 @@
       if (this.demo) return { ok: true, settings: s, demo: true };
       return invoke(this.native, 'setSessionRecorderSettings', [Number(s.telemetryEveryMs) || 250, Number(s.maxSessionMb) || 256, Math.max(20, Number(s.keepSessions) || 20), s.autoStartOnUsb !== false, s.captureRawUsb === true], { ok: false });
     }
-    startSession(reason) { return this.demo ? { ok: true, recording: true, demo: true } : invoke(this.native, 'startSessionRecording', [reason || 'manual'], { ok: false }); }
-    stopSession(reason) { return this.demo ? { ok: true, recording: false, demo: true } : invoke(this.native, 'stopSessionRecording', [reason || 'manual'], { ok: false }); }
     exportSession(sessionId) { return this.demo ? false : invoke(this.native, 'exportSession', [sessionId || ''], false); }
     logs() { return this.demo ? [] : invoke(this.native, 'getLogs', [], []); }
 

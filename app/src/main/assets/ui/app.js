@@ -80,10 +80,6 @@
   function isLiveRoute(route) {
     return ((root.OmegasUi || ui).LIVE_ROUTES || ['dashboard', 'map', 'autocal', 'refino']).includes(route);
   }
-  function liveFrom(state) {
-    const telemetry = state.telemetry || {};
-    return telemetry.live || telemetry.data || telemetry;
-  }
   /** Depois de um quadro pintado, sem timer: dois requestAnimationFrame seguidos. */
   function afterPaint(task) {
     if (typeof root.requestAnimationFrame === 'function') {

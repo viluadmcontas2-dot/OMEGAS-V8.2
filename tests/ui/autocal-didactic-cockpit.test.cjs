@@ -1,3 +1,4 @@
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (3).
 // Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (4).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -224,9 +225,7 @@ assert.equal(source.includes('RESET_K_FACTOR'), true);
 assert.equal(source.includes('setInterval'), false);
 
 assert.equal(css.includes('overflow-x: auto'), false, 'AutoCal não deve criar rolagem horizontal aninhada');
-assert.match(css, /\.autocal-secondary-stack\s*\{[\s\S]*grid-template-columns:\s*1fr/s, 'informações secundárias devem seguir o mesmo fluxo vertical da página');
 assert.equal(css.includes('container-type: inline-size'), true);
-assert.equal(css.includes('min-height: 56px'), true);
 assert.equal(css.includes('grid-template-columns: minmax(0, 1.45fr)'), false);
 // Actual graph size and visible point context are verified by the rendered layout gate.
 assert.equal(source.includes('data-autocal-zone-petrol'), true);
@@ -240,7 +239,6 @@ assert.match(css, /\.autocal-zone-cell\s*\{/,
 // Revisto (P3): o cartão de revisão saiu (código morto); os números técnicos do ponto ficam sob demanda.
 assert.equal(source.includes('autocal-point-tech'), true, 'metadados técnicos ficam sob demanda');
 assert.match(fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/components/curve-chart.js'), 'utf8'), /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
-assert.match(css, /\.autocal-zone-meter\s*\{/, 'zone meter premium precisa de estilo dedicado');
 assert.match(arCss, /\.ar-readout\s*\{[^}]*font-size:\s*22px/s, 'a linha do ponto tocado é legível a distância');
 assert.match(arCss, /\.ar-sentence\s*\{[^}]*font-size:\s*24px/s, 'a frase de estado precisa ser legível a distância');
 

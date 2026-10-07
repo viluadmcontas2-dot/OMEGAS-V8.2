@@ -23,7 +23,14 @@
     const node = document.getElementById(id);
     if (!node) return;
     const next = value == null ? '—' : String(value);
-    if (node.textContent !== next) node.textContent = next;
+    if (node.textContent !== next) {
+      node.textContent = next;
+      // Aviso breve (Revisto (W2)): o status da Curva K aparece sobre o gráfico e some sozinho.
+      if (id === 'curveBackupStatus') {
+        // Sem timer: o CSS apaga o aviso em 5 s; alternar a/b reinicia a animação a cada texto novo.
+        node.dataset.seq = node.dataset.seq === 'a' ? 'b' : 'a';
+      }
+    }
   }
   class CurveScreen {
     constructor(store, api) {
@@ -81,16 +88,6 @@
         this.renderChart(); this.renderProposalList();
       });
       document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
-      // Aviso breve (Revisto (W2)): o texto de status aparece sobre o gráfico e some sozinho depois de alguns segundos.
-      const statusNode = document.getElementById('curveBackupStatus');
-      if (statusNode && typeof root.MutationObserver === 'function') {
-        let hideTimer = null;
-        new root.MutationObserver(() => {
-          statusNode.dataset.fresh = 'true';
-          if (hideTimer) clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => { statusNode.dataset.fresh = 'false'; }, 5000);
-        }).observe(statusNode, { childList: true, characterData: true, subtree: true });
-      }
       document.getElementById('curveDismissResult')?.addEventListener('click', () => this.dismissResult());
       document.getElementById('curveUndoButton')?.addEventListener('click', () => this.undoLast());
     }

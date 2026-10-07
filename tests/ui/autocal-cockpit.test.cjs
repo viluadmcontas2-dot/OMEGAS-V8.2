@@ -1,3 +1,4 @@
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (3).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -35,7 +36,6 @@ assert.equal(cockpitCss.includes('touch-action: pan-y'), true);
 assert.equal(cockpit.includes('autocal-now-card'), false);
 assert.equal(cockpit.includes('autocal-read-card'), false);
 assert.equal(arCss.includes('.ar-chart-card'), true);
-assert.equal(cockpitCss.includes('.autocal-secondary-stack'), true);
 assert.equal(cockpit.indexOf('autocal-chart-workspace') < cockpit.indexOf('autocalReferenceChart'), true);
 assert.equal(cockpit.indexOf('autocalReferenceChart') < cockpit.indexOf('autocalChartInspector'), true);
 assert.equal(cockpit.includes("addHook('status'"), true);
@@ -96,10 +96,8 @@ assert.equal(cockpit.includes('recovery?.nextAction'), true);
 assert.equal(cockpit.includes('Próximo passo: '), true);
 assert.equal(cockpit.includes('dataset.reasonCode'), true);
 assert.equal(cockpit.includes('K mudou '), true);
-assert.equal(cockpitCss.includes('.autocal-automatch-evidence[data-state="FACTOR_CHANGE_CONFIRMED"]'), true);
 assert.equal(cockpit.includes('Consultar ECU'), false);
 assert.equal(cockpit.includes('autocal-secondary-rail'), false);
-assert.equal(arCss.includes('.ar-secondary'), true);
 assert.equal(api.includes('prepareNativeAction'), true);
 assert.equal(api.includes('executeNativeAction'), true);
 assert.equal(api.includes('preparePointDelete'), true);

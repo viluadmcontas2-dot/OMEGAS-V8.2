@@ -1,4 +1,5 @@
 'use strict';
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (1).
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -44,7 +45,6 @@ assert.equal(cockpit.includes('updateChartView'), false, 'transformação visual
 assert.ok(cockpit.includes('Injeção (ms)'), 'eixo X físico precisa permanecer explícito');
 assert.ok(chart.includes('MAP (bar)'), 'eixo Y físico precisa permanecer explícito no construtor compartilhado');
 assert.ok(cockpit.includes('ns.CurveChart.buildSvg(model'), 'reaquisição deve usar os mesmos eixos');
-assert.ok(cockpit.includes('data-autocal-history'), 'histórico de leitura continua sendo o controle gráfico permitido');
 
 assert.ok(index.includes('data-route="autocal"'), 'rota AutoCal ausente');
 assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="refino"'), 'AutoCal deve preceder o Refino');

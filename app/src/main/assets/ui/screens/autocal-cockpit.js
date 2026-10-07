@@ -42,9 +42,6 @@
     return Array.from({ length: 4 }, (_, index) => (finite(values[index]) ?? 0) > 0);
   }
 
-  function nativeZoneCount(snapshot, key) {
-    return nativeZoneFlags(snapshot, key).filter(Boolean).length;
-  }
 
   function projectedZoneFlags(projection, fuel) {
     const zones = projection?.ok === true && projection?.acquisitionZones && typeof projection.acquisitionZones === 'object'

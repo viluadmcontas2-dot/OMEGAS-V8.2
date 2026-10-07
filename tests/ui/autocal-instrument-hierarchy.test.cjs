@@ -1,4 +1,5 @@
 'use strict';
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (3).
 // Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (6).
 
 const assert = require('node:assert/strict');
@@ -14,14 +15,11 @@ test('AutoCal uses graph-first premium hierarchy', () => {
   assert.match(js, /id="autocalReferenceChart"/);
   assert.doesNotMatch(js, /autocalLiveLevel/);
   assert.match(css, /\.ar-status\s*\{/);
-  assert.match(css, /\.ar-secondary\s*\{[\s\S]*grid-template-columns:\s*1fr/);
 // Actual graph size and visible point context are verified by the rendered layout gate.
 });
 
 test('secondary state stays below the graph in one vertical flow', () => {
   assert.match(css, /\.screen\.autocal-route-screen\s*\{[\s\S]*overflow-y:\s*auto/);
-  assert.match(css, /\.ar-secondary\s*\{[\s\S]*position:\s*static/);
-  assert.match(css, /\.ar-card\s*\{[\s\S]*width:\s*100%/);
   assert.match(css, /\.ar-readout\s*\{[\s\S]*position:\s*static/);
   assert.match(css, /\.ar-legend\s*\{[\s\S]*position:\s*static/);
 });

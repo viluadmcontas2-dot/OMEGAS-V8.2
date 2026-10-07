@@ -34,29 +34,10 @@
 /* Sugestões: fila operacional persistente. */
 
 /* Dashboard: RPM dominante, card representa condição e não um único número. */
-.hero-reading.refined-now{padding:20px 26px}
+
 
 /* Ferramentas: usa os controles existentes, mas com alvos grandes e toggles reais. */
-.diagnostic-settings-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
-.diagnostic-settings-grid>label{min-width:0}
-.diagnostic-settings-grid select,.diagnostic-settings-grid input[type="number"],.log-filters select{
-  border:1px solid var(--line)!important;border-radius:8px!important;
-  background:var(--surface)!important;padding:0 10px!important;color:var(--text)!important;
-}
-.diagnostic-settings-grid input[type="number"]{width:100%;font-variant-numeric:tabular-nums}
-.diagnostic-settings-grid .check-setting{
-  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;
-  min-height:48px;border:1px solid var(--line-soft);border-radius:8px;padding:8px 10px!important;background:var(--surface)
-}
-.diagnostic-settings-grid .check-setting input[type="checkbox"]{
-  appearance:none;width:40px;height:23px;border:0;border-radius:999px;background:var(--tone-25313d);position:relative;flex:0 0 auto;margin:0;order:2
-}
-.diagnostic-settings-grid .check-setting input[type="checkbox"]::after{
-  content:"";position:absolute;width:17px;height:17px;border-radius:50%;background:var(--tone-d9e2ec);left:3px;top:3px;transition:transform .12s ease
-}
-.diagnostic-settings-grid .check-setting input[type="checkbox"]:checked{background:var(--accent)}
-.diagnostic-settings-grid .check-setting input[type="checkbox"]:checked::after{transform:translateX(17px);background:var(--tone-ffffff)}
-.log-filters{gap:7px!important}.log-filters select{min-width:150px}
+
 .diagnostic-settings>summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 .diagnostic-settings [data-session-settings]{min-height:42px}
 
@@ -76,20 +57,7 @@
 /* HMI automotiva — controles de coleta tocáveis sem precisão fina. */
 
 /* HMI automotiva — diagnóstico e gravação sem toque de precisão. */
-.recorder-actions button,
-.diagnostic-settings > button,
-.recorded-session-list button {
+
+.diagnostic-settings > button{
   padding: 0 10px;
-}
-
-.recorded-session-list article {
-  min-height: 52px;
-}
-
-.recorded-session-list b {
-  font-size: 11px;
-}
-
-.recorded-session-list span {
-  font-size: 10px;
 }

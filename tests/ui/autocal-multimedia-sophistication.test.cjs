@@ -1,5 +1,6 @@
 'use strict';
 // Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (1).
+// Revisto (W2): AutoCal sem cabeçalho/Detalhes/Histórico/Opções; asserções sobre esses blocos foram removidas (1).
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -19,8 +20,6 @@ assert.ok(cockpit.includes('liveLabelAnchor(projected'),
 assert.ok(cockpit.includes('liveFuelState('),
   'AutoCal must normalize MP48 fuel/state explicitly instead of guessing fuel in render code');
 // Actual graph size and visible point context are verified by the rendered layout gate.
-assert.match(css, /\.autocal-reset-comparison[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/,
-  'before/after comparison must be compact, glanceable and not a new heavy panel');
 const arCss = require('fs').readFileSync(require('path').join(__dirname, '../../app/src/main/assets/ui/styles-autocal-refino.css'), 'utf8');
 for (const selector of ['html body .ar-shell .ar-legend', 'html body .ar-shell .ar-readout']) {
   const blocks = [...arCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)]

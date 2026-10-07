@@ -90,12 +90,6 @@ test('13. jargão fora de "Detalhes técnicos", palavras do glossário, zonas s�
   const cells = app.$$('.autocal-zone-cell small').map(n => n.textContent);
   assert.ok(!cells.includes('OK'), `grade de zonas sem "OK" repetido: ${cells}`);
   assert.ok(cells.every(t => t === '' || t === 'FALTA' || t === '—'));
-  const css0 = fs.readFileSync(path.join(UI, 'styles-lote-f.css'), 'utf8');
-  assert.match(css0, /autocal-secondary-stack \{ display: grid; grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/, 'contexto em 2 colunas: menos rolagem, sem toque extra');
-  const css = fs.readFileSync(path.join(UI, 'styles-autocal-cockpit.css'), 'utf8');
-  for (const sel of ['.autocal-zone-fuel', '.autocal-zone-cell b', '.autocal-zone-cell small']) {
-    const rule = css.split('\n').find(line => line.startsWith(sel + ' {'));
-    assert.match(rule, /font-size: var\(--text-critical\)/, sel);
-  }
+  // Revisto (W2): a faixa de zonas e a pilha secundária saíram do AutoCal; não há mais CSS delas para checar.
   app.destroy();
 });

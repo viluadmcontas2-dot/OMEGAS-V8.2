@@ -31,9 +31,6 @@
       // Deliberadamente não altera Store/Router/seleção/operação. Resize só reorganiza CSS.
     }
 
-    destroy() {
-      root.removeEventListener('resize', this.onResize);
-    }
   }
 
   function boot() {

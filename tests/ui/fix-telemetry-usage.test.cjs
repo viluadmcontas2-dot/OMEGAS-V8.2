@@ -102,7 +102,7 @@ test('6. USB com permissão negada: "USB bloqueado" com botão que pede de novo 
   const allow = app.byId('globalUsbAllow');
   assert.equal(allow.hasAttribute('hidden'), false);
   assert.match(allow.textContent, /USB bloqueado/);
-  assert.match(allow.textContent, /toque para permitir/);
+  assert.match(allow.textContent, /USB bloqueado: toque/); // Revisto (W2): chip no cabeçalho, texto curto
   const mark = app.world.mark();
   allow.click(); app.flush();
   assert.equal(app.world.since(mark).filter(c => c.method === 'connectUsb').length, 1, 'o toque chama connectUsb');

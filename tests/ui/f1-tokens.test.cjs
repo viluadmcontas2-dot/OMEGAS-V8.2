@@ -49,7 +49,7 @@ test('rolagem: a rota ativa rola na vertical; gráficos têm min-height generoso
   assert.match(tokens, /--chart-min-h:\s*clamp\(\s*(\d+)px\s*,\s*50vh\s*,\s*(\d+)px\s*\)/);
   const [, lo] = tokens.match(/--chart-min-h:\s*clamp\(\s*(\d+)px/);
   assert.ok(Number(lo) >= 280);
-  for (const sel of ['.curve-chart', '.chart-surface', '.autocal-chart-host', '.map-surface']) {
+  for (const sel of ['.curve-chart', '.map-surface'] /* Revisto (W2): .chart-surface e .autocal-chart-host saíram (CSS podado) */) {
     assert.match(premium, new RegExp(sel.replace('.', '\\.') + '[^{]*\\{[^}]*min-height:\\s*var\\(--chart-min-h\\)'), sel);
   }
   assert.match(premium, /\.screen\.active > \*\s*\{\s*flex-shrink:\s*0/);

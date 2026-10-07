@@ -22,7 +22,7 @@
     SEM_BASE: 'As faixas alteradas não tinham medição de antes; a de agora virou a base.',
     INCONCLUSIVO: 'Poucas leituras nas faixas alteradas. O Refino segue medindo do zero.',
     INTERROMPIDO: 'A ECU mudou a curva por fora durante a medição; o resultado perdeu a validade.',
-    FALHA_PARCIAL: 'A gravação falhou no meio e a ECU pode ter sido alterada em parte. Desfazer no Refino volta à foto de antes.',
+    FALHA_PARCIAL: 'A gravação falhou no meio e a ECU pode ter sido alterada em parte. O Desfazer fica no Ajuste GNV e volta à foto de antes.',
   };
 
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
@@ -172,7 +172,7 @@
       const sel = list.find(r => r.id === this.selected);
       const sub = !eq || eq.ok === false || !eq.stalls ? 'Sem dados ainda' : list.length ? `${plural(list.reduce((a, r) => a + r.count, 0), 'engasgo', 'engasgos')} em ${plural(list.length, 'região', 'regiões')}` : 'Nenhum engasgo';
       const touchLine = sel ? regionLine(sel) : list.length ? 'Toque numa região do gráfico para ver o que aconteceu ali.' : '';
-      const act = st.proposal ? '<button type="button" class="btn btn-primary" data-diag-go-refino>Ver a proposta no Refino</button>' : '';
+      const act = st.proposal ? '<button type="button" class="btn btn-primary" data-diag-go-refino>Ver a proposta no Ajuste GNV</button>' : '';
       {
         this.host.innerHTML = `
         <section class="dg-card dg-chart" aria-label="Onde o motor engasga">
@@ -182,10 +182,10 @@
         </section>
         <section class="dg-state" data-kind="${st.kind}"><p>${escapeHtml(st.text)}</p>${act}</section>
         ${fluidityCard(fluidityOf(eq))}
-        <div class="dg-stack">
+        <details class="dg-more"><summary>Detalhes</summary><div class="dg-stack">
         ${this.journal(eq)}
         ${this.undo(eq)}
-        ${this.tech(eq, list)}</div>`;
+        ${this.tech(eq, list)}</div></details>`;
       }
       [...this.host.querySelectorAll('details')].forEach((d, i) => { if (open[i]) d.open = true; });
     }
@@ -207,7 +207,7 @@
         const ratio = finite(h.ratioBefore) === null ? '' : ` · ${D.gapPercent(h.ratioBefore)}${finite(h.ratioAfter) === null ? '' : ' → ' + D.gapPercent(h.ratioAfter)}`;
         return `<li data-status="${escapeHtml(h.status)}"><b>${escapeHtml(when)}</b><span>${escapeHtml(STATUS[h.status] || 'Resultado desconhecido')}${escapeHtml(ratio)}</span></li>`;
       }).join('');
-      return `<section class="dg-card" aria-label="Histórico de gravações e Desfazer"><header class="dg-head"><div><small>GRAVAÇÕES E DESFAZER</small><h3>${hist.length ? plural(hist.length, 'gravação feita pelo Refino', 'gravações feitas pelo Refino') : 'Nenhuma gravação para desfazer'}</h3></div>${hist.length ? '<button type="button" class="btn btn-secondary btn-compact" data-diag-go-refino>Desfazer no Refino</button>' : ''}</header>${items ? `<ol class="dg-history">${items}</ol>` : '<p class="dg-note">Quando o Refino gravar, cada gravação aparece aqui com a foto de antes guardada.</p>'}</section>`;
+      return `<section class="dg-card" aria-label="Histórico de gravações e Desfazer"><header class="dg-head"><div><small>GRAVAÇÕES E DESFAZER</small><h3>${hist.length ? plural(hist.length, 'gravação feita pelo Refino', 'gravações feitas pelo Refino') : 'Nenhuma gravação para desfazer'}</h3></div>${hist.length ? '<button type="button" class="btn btn-secondary btn-compact" data-diag-go-refino>Abrir Ajuste GNV</button>' : ''}</header>${items ? `<ol class="dg-history">${items}</ol>` : '<p class="dg-note">Quando o Refino gravar, cada gravação aparece aqui com a foto de antes guardada.</p>'}</section>`;
     }
     tech(eq, regions) {
       const pilot = (eq && eq.autopilot) || {};
