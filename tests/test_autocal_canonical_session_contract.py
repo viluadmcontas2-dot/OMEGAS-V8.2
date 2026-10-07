@@ -16,7 +16,10 @@ for event in (
     assert event in SERVICE or event in BRIDGE, event
 assert 'sessionRecorder.record("autocal_native_snapshot"' in SERVICE
 assert 'service.sessionRecorder.record("autocal_manual_snapshot"' in BRIDGE
-assert 'service.sessionRecorder.record("autocal_native_action"' in BRIDGE
+# 2026-10-07 (spec autocal-apagar-lenta): o manager de ações nativas mora no serviço (o apagamento
+# automático GNV roda com a tela fechada); o recibo continua indo para o gravador canônico, agora pelo serviço.
+assert 'sessionRecorder.record("autocal_native_action"' in SERVICE
+assert 'service.nativeActions' in BRIDGE
 
 # AutoCal session APIs are aliases to the canonical session authority, not a second recorder.
 assert 'fun getSessionLedgerStatus(): String = activityRef.get()?.serviceOrNull()?.sessionRecorderStatusJson()' in BRIDGE

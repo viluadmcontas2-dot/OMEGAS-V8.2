@@ -456,9 +456,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     }
 
     /**
-     * O manager de ações nativas é do serviço (dono: [TelemetryForegroundService.nativeActions]). Recibos
-     * (`service.sessionRecorder.record("autocal_native_action", ...)`), invalidação do round e trava de
-     * segurança `CalibrationWriteSafetyPolicy.unsafeReason(service.status())` ficam na fiação do serviço.
+     * O manager de ações nativas é do serviço (dono: [TelemetryForegroundService.nativeActions]). Recibos na
+     * sessão, invalidação do round e a política de segurança de escrita ficam na fiação do serviço.
      */
     private fun currentNativeManager(): AutoCalNativeActionManager? {
         val activity = activityRef.get() ?: return null
