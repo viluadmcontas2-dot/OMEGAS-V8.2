@@ -114,6 +114,8 @@ async function audit(page,route,height,name){
     await page.locator(summary).click();
     assert.equal(await page.locator('.screen.active [data-refino-reset-gas]').evaluate(button => { const r=button.getBoundingClientRect(); return button.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)); }),true,'detalhes não podem cobrir o comando principal');
     await page.locator('.screen.active [data-refino-reset-gas]').click();
+    // Revisto: apagar as medições do GNV não tem volta e pede confirmação (decisão do dono no #161).
+    await page.locator('.screen.active [data-refino-reset-confirm]').click();
     await page.waitForTimeout(200);
     assert.equal(await page.evaluate(()=>window.OmegasUi.AutoCalApi.equivalence().gasObservations),0);
     assert.equal(await page.locator('.screen.active .chart-between.gas').count(),0);

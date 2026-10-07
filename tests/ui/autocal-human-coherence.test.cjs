@@ -47,11 +47,13 @@ const L=require('./wiring/lib.cjs');
 test('AGORA se move durante reaquisição sem atualizar snapshot ou referência',()=>{
  const app=L.boot();try{app.go('autocal');app.settle(3);const screen=app.win.OmegasApp.autoCalCockpit;
   const point={index:0,petrolMs:4,mapBar:.4,counter:2,progress:.2,acquisitionState:'COLLECTING'};
+  // Revisto (W2): o eixo agora cresce para conter o cursor; um 2º ponto em 10 ms fixa o eixo e o cursor (4→5 ms) fica dentro dele.
+  const far={...point,index:1,petrolMs:10,mapBar:.9};
   const epoch={comparisonAllowed:false,petrolPending:false,petrolReferencePending:true,gasReferencePending:true};
-  screen.renderAcquisitionEpochChart([point],[],epoch,app.byId('autocalReferenceChart'));
+  screen.renderAcquisitionEpochChart([point,far],[],epoch,app.byId('autocalReferenceChart'));
   const snapshot=screen.snapshot;assert.ok(screen.chartScale);const layer=app.$('.autocal-live-layer');assert.ok(layer);
   const svg=app.$('#autocalReferenceChart svg');
-  screen.renderAcquisitionEpochChart([{...point}],[],{...epoch},app.byId('autocalReferenceChart'));
+  screen.renderAcquisitionEpochChart([{...point},{...far}],[],{...epoch},app.byId('autocalReferenceChart'));
   assert.equal(app.$('#autocalReferenceChart svg'),svg,'dados iguais preservam o SVG durante reaquisição');
   assert.equal(app.$('.autocal-live-layer'),layer,'a camada viva não é recriada');
   const setLive=ms=>{const t=screen.store.get().telemetry;screen.store.patch({telemetry:{...t,valid:true,ageMs:0,telemetryAgeMs:0,live:{...t.live,petrol_ms:ms,load_bar:.4,rpm:1200,fuel:'GASOLINA'}}});screen.renderLiveCursor();for(let i=0;i<25;i++)screen.animateCursor(i*20);};
