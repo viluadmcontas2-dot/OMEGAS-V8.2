@@ -176,13 +176,30 @@ class TelemetryForegroundService : Service() {
     /** Detecção + política + execução do apagamento automático (spec 2026-10-07-autocal-apagar-lenta). */
     lateinit var autoIdleCleanup: AutoIdleCleanupCoordinator
         private set
-    @Volatile private var autoCalActionUiListener: (() -> Unit)? = null
-
-    /** A tela registra (e limpa com null) quem recarrega a WebView quando o estado da ação AutoCal muda. */
-    fun setAutoCalActionUiListener(listener: (() -> Unit)?) { autoCalActionUiListener = listener }
+    /** Quem recarrega a WebView quando o estado da ação AutoCal muda (a ponte da Activity atual). */
+    private val autoCalActionUi = com.omegas.prohub.autocal.OwnedSlot<() -> Unit>()
     /** A leitura AutoCal manual mora na ponte; ela informa aqui se está lendo, para nenhuma ação cruzar a leitura. */
-    @Volatile private var manualAutoCalReadBusy: () -> Boolean = { false }
-    fun setManualAutoCalReadBusy(provider: () -> Boolean) { manualAutoCalReadBusy = provider }
+    private val manualAutoCalRead = com.omegas.prohub.autocal.OwnedSlot<() -> Boolean>()
+
+    /** A ponte da tela atual se registra como dona do listener de UI e do "lendo" manual. */
+    fun bindAutoCalUi(owner: Any, refreshUi: () -> Unit, manualReadBusy: () -> Boolean) {
+        autoCalActionUi.set(owner, refreshUi)
+        manualAutoCalRead.set(owner, manualReadBusy)
+    }
+
+    /**
+     * Solta o registro só se [owner] ainda for o dono: o destroy de uma Activity antiga não desarma a ponte da
+     * nova (revisão 2026-10-07 #5). Devolve se era o dono.
+     */
+    fun releaseAutoCalUi(owner: Any): Boolean {
+        val wasOwner = autoCalActionUi.clearIf(owner)
+        manualAutoCalRead.clearIf(owner)
+        return wasOwner
+    }
+
+    fun isAutoCalUiOwner(owner: Any): Boolean = autoCalActionUi.isOwner(owner)
+
+    private fun manualAutoCalReadBusy(): Boolean = try { manualAutoCalRead.get()?.invoke() == true } catch (_: Exception) { false }
     lateinit var link: OmegasLinkManager
         private set
     lateinit var overlay: TelemetryOverlayController
@@ -425,7 +442,7 @@ class TelemetryForegroundService : Service() {
             },
             onStateChanged = {
                 publishRevision(RuntimeSnapshotBus.Kind.TABLES)
-                try { autoCalActionUiListener?.invoke() } catch (_: Exception) {}
+                try { autoCalActionUi.get()?.invoke() } catch (_: Exception) {}
             },
             lastKnownVector = { field -> nativeAutoCal.lastKnownVector(field) },
         )

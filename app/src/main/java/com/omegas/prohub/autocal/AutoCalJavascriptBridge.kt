@@ -410,12 +410,12 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun destroy() {
         warmer.shutdownNow()
         synchronized(managerLock) {
-            // As ações nativas são do serviço (o automático segue com a tela fechada); só a preparação
-            // manual pendente desta tela é descartada.
+            // As ações nativas são do serviço (o automático segue com a tela fechada). Só se esta ponte ainda for
+            // a registrada: a Activity nova pode já ter assumido, e o destroy da antiga não pode desarmá-la.
             managerService?.let { service ->
-                try { service.nativeActions.clearPreparation() } catch (_: Exception) {}
-                service.setAutoCalActionUiListener(null)
-                service.setManualAutoCalReadBusy { false }
+                if (service.releaseAutoCalUi(this)) {
+                    try { service.nativeActions.clearPreparation() } catch (_: Exception) {}
+                }
             }
             manager?.close()
             manager = null
@@ -464,10 +464,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     private fun currentNativeManager(): AutoCalNativeActionManager? {
         val activity = activityRef.get() ?: return null
         val service = activity.serviceOrNull() ?: return null
-        synchronized(managerLock) {
-            bindService(service)
-            service.setAutoCalActionUiListener(activity::refreshWebUi)
-        }
+        synchronized(managerLock) { bindService(service) }
         return service.nativeActions
     }
 
@@ -477,7 +474,13 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             manager = null
             managerService = service
         }
-        service.setManualAutoCalReadBusy { manager?.isBusy() == true }
+        if (!service.isAutoCalUiOwner(this)) {
+            service.bindAutoCalUi(
+                owner = this,
+                refreshUi = { activityRef.get()?.refreshWebUi() },
+                manualReadBusy = { manager?.isBusy() == true },
+            )
+        }
     }
 
     private fun localFailure(message: String): String = JSONObject()
