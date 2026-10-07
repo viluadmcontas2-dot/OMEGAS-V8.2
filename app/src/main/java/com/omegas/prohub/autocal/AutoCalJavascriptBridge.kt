@@ -249,7 +249,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
         .put("nativeAndroidConfirmation", false)
-        .put("appAutomaticWrite", false)
+        // Única escrita automática do app: apagar pontos GNV aprendidos na lenta (spec 2026-10-07).
+        .put("appAutomaticWrite", activityRef.get()?.serviceOrNull()?.autoIdleCleanup?.automaticEnabled() == true)
+        .put("appAutomaticWriteScope", "DELETE_GNV_IDLE_POINTS")
         .put("nativeAutoMatchInsideEcu", true)
         .put("manualAutoMatchExposed", false)
         .put("obdIndependent", true)
