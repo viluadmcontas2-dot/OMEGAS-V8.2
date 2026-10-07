@@ -175,7 +175,7 @@ object AutoCalProtocol {
     fun requireExpectedShape(decoded: Decoded, moduleVersion: Int?) {
         val expected = expectedElements(decoded.field, moduleVersion) ?: return
         require(decoded.elementCount == expected) {
-            "${decoded.field.key}: ${decoded.elementCount} elementos; esperado $expected para MODULE_VERSION ${moduleVersion ?: "desconhecida"}"
+            "${decoded.field.key}: ${decoded.elementCount} elementos; esperado $expected (forma fixa do campo)"
         }
     }
 
@@ -343,8 +343,12 @@ object AutoCalProtocol {
      * TAebVector double setter with 1.0 for every element. The native factor is
      * Q14, therefore 1.0 == 0x4000. We mirror the per-index SetNumber writes.
      */
-    fun resetKFactorMulActFrames(pointCount: Int = 30): List<ByteArray> {
-        require(pointCount > 0)
+    fun resetKFactorMulActFrames(pointCount: Int = MUL_ACT.expectedElementsHint ?: 30): List<ByteArray> {
+        val vectorSize = MUL_ACT.expectedElementsHint ?: 30
+        // Confere o tamanho ANTES de montar qualquer escrita: nunca grava índice fora do vetor real.
+        require(pointCount in 1..vectorSize) {
+            "MUL_ACT tem $vectorSize elementos; reset pedido para $pointCount"
+        }
         return List(pointCount) { index ->
             writeIndexedU16(MUL_ACT.address, index, 0x4000)
         }
