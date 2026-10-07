@@ -59,7 +59,38 @@
   }
 
   const AutoCalUxModel = {
+    effectiveEpoch(epoch = {}, actionState = {}) {
+      const next = { ...(epoch || {}) };
+      const action = String(actionState?.action || '').toUpperCase();
+      const state = String(actionState?.state || '').toUpperCase();
+      const working = actionState?.busy === true || [
+        'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER',
+        'READING_FINISH_SOURCE', 'SENDING_FINISH_COMMIT', 'VERIFYING_FINISH',
+      ].includes(state);
+      const uncertain = state === 'FAILED' && actionState?.mutationMayHaveStarted === true;
+      if ((!working && !uncertain) || !['RESET_PETROL', 'RESET_GAS'].includes(action)) return next;
+
+      next.intentPending = true;
+      next.intentAction = action;
+      next.comparisonAllowed = false;
+      if (action === 'RESET_PETROL') {
+        next.petrolPending = true;
+        next.petrolReferencePending = true;
+      } else {
+        next.gasPending = true;
+        next.gasReferencePending = true;
+      }
+      if (uncertain) next.intentUncertain = true;
+      return next;
+    },
+
     epochNarrative(epoch = {}) {
+      if (epoch.intentPending === true) {
+        const fuel = epoch.intentAction === 'RESET_PETROL' ? 'gasolina' : 'GNV';
+        return epoch.intentUncertain === true
+          ? 'Estado da releitura de ' + fuel + ' incerto: aguardando uma leitura nova da ECU'
+          : 'Releitura de ' + fuel + ' solicitada: aguardando confirmação da ECU';
+      }
       const petrol = epoch.petrolPending === true || epoch.petrolReferencePending === true;
       const gas = epoch.gasPending === true || epoch.gasReferencePending === true;
       if (petrol && gas) return 'Aguardando curvas atuais de gasolina e GNV da ECU';
@@ -798,6 +829,12 @@
           this.unsubscribeFrame = this.scheduler.addFrameHook(timestamp => this.animateCursor(timestamp));
         }
         if (this.firstRefreshPending) { this.firstRefreshPending = false; this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
+        else if (this.projectionWarming) {
+          // A bridge é deliberadamente não bloqueante. Enquanto o warmer produz a primeira
+          // projeção autoritativa, relê a 5 Hz sem esperar o watchdog longo.
+          this.refresh();
+          this.dataGate.mark();
+        }
         else if (this.dataDirty) { this.dataDirty = false; this.refresh(); this.dataGate.mark(); }
         this.renderLiveCursor();
       });
@@ -913,6 +950,7 @@
       const authoritative = projection?.ok === true;
       const previousProjection = this.projection || {};
       this.projection = projection;
+      this.projectionWarming = !authoritative;
 
       if (!authoritative) {
         const message = String(projection?.error || 'O AutoCal da ECU não respondeu com estado confiável.');
@@ -1211,8 +1249,15 @@
       this.renderReferenceChart(snapshot);
       this.renderActionState();
       this.renderPointActions();
-      const rejected = this.referenceUsable === true && Array.isArray(this.analysis?.rejectedBands) ? this.analysis.rejectedBands.length : 0;
-      this.text('autocalNoiseSummary', rejected ? D.plural(rejected, 'ponto incoerente ignorado', 'pontos incoerentes ignorados') + ' no cálculo do Refino' : '');
+      const rejectedNative = this.referenceUsable === true && Array.isArray(this.analysis?.rejectedBands) ? this.analysis.rejectedBands.length : 0;
+      const rejectedTelemetry = Math.max(0, Number(this.analysis?.telemetryOutlierPairs) || 0);
+      const rejectedEvidence = rejectedNative + rejectedTelemetry;
+      this.text(
+        'autocalNoiseSummary',
+        rejectedEvidence
+          ? D.plural(rejectedEvidence, 'evidência incoerente ignorada', 'evidências incoerentes ignoradas') + ' só no cálculo do Refino'
+          : '',
+      );
     }
 
     /** UMA frase humana de estado (nada de jargão): o que a ECU está fazendo e o que falta. */
@@ -1637,8 +1682,16 @@
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
       const points = AutoCalUxModel.referencePoints(snapshot, this.analysis || {});
-      const acquiredPetrol = AutoCalUxModel.acquiredPoints(snapshot, 'petrol');
-      const acquiredGas = AutoCalUxModel.acquiredPoints(snapshot, 'gas');
+      const liveEpoch = AutoCalUxModel.effectiveEpoch(
+        this.projection?.liveAcquisitionEpoch || {},
+        this.actionState || {},
+      );
+      const rawAcquiredPetrol = AutoCalUxModel.acquiredPoints(snapshot, 'petrol');
+      const rawAcquiredGas = AutoCalUxModel.acquiredPoints(snapshot, 'gas');
+      // A intenção aparece imediatamente, mas não inventa sucesso: enquanto RESET_* está
+      // pendente/incerto, o combustível alvo antigo deixa de ser apresentado como aquisição atual.
+      const acquiredPetrol = liveEpoch.petrolPending === true ? [] : rawAcquiredPetrol;
+      const acquiredGas = liveEpoch.gasPending === true ? [] : rawAcquiredGas;
       const acquiredPoints = [...acquiredPetrol, ...acquiredGas];
       const live = AutoCalUxModel.livePoint(this.store.get().telemetry || {});
       this.currentReferencePoints = points;
@@ -1649,8 +1702,7 @@
       const timingLimitMs = finite(this.projection?.referenceTimingLimitMs);
       const timingProblem = timingKnown && !timingCoherent;
 
-      if (!points.length || this.referenceUsable === false) {
-        const liveEpoch = this.projection?.liveAcquisitionEpoch || {};
+      if (liveEpoch.intentPending === true || !points.length || this.referenceUsable === false) {
         if (liveEpoch.comparisonAllowed === false) {
           this.renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, liveEpoch, host);
           return;
