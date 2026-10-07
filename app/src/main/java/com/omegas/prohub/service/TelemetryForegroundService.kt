@@ -420,9 +420,10 @@ class TelemetryForegroundService : Service() {
             onBuffersConfirmed = { buffers ->
                 if (::autoIdleCleanup.isInitialized) autoIdleCleanup.onBuffers(buffers)
             },
-            onAcquisitionReset = { sessionChanged, sessionId ->
+            onAcquisitionReset = { sessionChanged, sessionId, ownAutomaticDelete ->
                 if (::autoIdleCleanup.isInitialized) {
-                    if (sessionChanged) autoIdleCleanup.onSessionChanged(sessionId) else autoIdleCleanup.onRoundInvalidated()
+                    if (sessionChanged) autoIdleCleanup.onSessionChanged(sessionId)
+                    else autoIdleCleanup.onRoundInvalidated(ownAutomaticDelete)
                 }
             },
             appAutomaticWriteEnabled = { ::autoIdleCleanup.isInitialized && autoIdleCleanup.automaticEnabled() },

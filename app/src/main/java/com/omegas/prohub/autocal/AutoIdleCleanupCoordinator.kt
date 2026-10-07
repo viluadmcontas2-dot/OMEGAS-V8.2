@@ -202,9 +202,11 @@ class AutoIdleCleanupCoordinator(
      * invalidateRound / ação manual confirmada: leituras anteriores não valem (o ponto volta a exigir duas leituras).
      * Não é leitura completa do alvo: intervalo, bloqueio de falha, releitura obrigatória e pausa seguem no cleaner;
      * só [onSessionChanged] ou uma leitura completa, nova e posterior do combustível alvo liberam a releitura.
+     * [ownAutomaticDelete]: a invalidação é do recibo do próprio apagamento automático (chega antes de
+     * [onActionConfirmed]); só a base coerente do cleaner sobrevive, para os buracos que o app abriu.
      */
-    fun onRoundInvalidated() = submit {
-        outliers.reset()
+    fun onRoundInvalidated(ownAutomaticDelete: Boolean = false) = submit {
+        outliers.reset(ownAutomaticDelete)
         regimes.values.forEach { it.reset() }
         publish()
     }

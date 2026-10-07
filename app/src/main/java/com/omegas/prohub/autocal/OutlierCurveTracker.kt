@@ -141,14 +141,22 @@ class OutlierCurveTracker {
         previouslyDetected[fuel] = previouslyDetected[fuel].orEmpty() - bands.toSet()
     }
 
-    /** invalidateRound / ação manual / sessão nova: as leituras anteriores não valem mais. */
-    fun reset() {
+    /**
+     * invalidateRound / ação manual / sessão nova: as leituras anteriores não valem mais.
+     * [ownAutomaticDelete] = a invalidação veio do recibo do PRÓPRIO apagamento automático (monitor → serviço →
+     * coordenador, antes de [onDeleted]): leituras, candidatos e confirmações caem do mesmo jeito (nada velho vira
+     * aquisição atual), mas a base congelada na decisão e a preservada ficam, senão o buraco que o app abriu
+     * transformaria um ponto bom marginal em "fora da curva" novo. Reset/escrita K manual/USB nova apagam tudo.
+     */
+    fun reset(ownAutomaticDelete: Boolean = false) {
         last.clear()
         outliers.clear()
         previouslyDetected.clear()
         lastAccepted.clear()
-        decidedBase.clear()
-        preserved.clear()
+        if (!ownAutomaticDelete) {
+            decidedBase.clear()
+            preserved.clear()
+        }
     }
 
     fun json(): JSONObject = JSONObject().also { root ->

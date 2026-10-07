@@ -480,7 +480,7 @@ class AutoCalAutomaticPointDeleteTest {
     // ---- revisão 2026-10-07 (achados importantes): contexto revalidado antes das máscaras e antes do commit ----
 
     @Test
-    fun `contexto muda durante a releitura de antes: nenhuma mascara sai e a falha nao afirma mutacao`() {
+    fun `contexto muda durante a releitura de antes entao nenhuma mascara sai e a falha nao afirma mutacao`() {
         val ecu = FakeEcu()
         ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3)
         val checks = CopyOnWriteArrayList<Fuel>()
@@ -498,7 +498,7 @@ class AutoCalAutomaticPointDeleteTest {
     }
 
     @Test
-    fun `contexto muda entre as mascaras e o commit: commit nao sai e a mutacao possivel fica registrada`() {
+    fun `contexto muda entre as mascaras e o commit entao commit nao sai e a mutacao possivel fica registrada`() {
         val ecu = FakeEcu()
         ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3)
         val checks = CopyOnWriteArrayList<Fuel>()
@@ -523,7 +523,7 @@ class AutoCalAutomaticPointDeleteTest {
     }
 
     @Test
-    fun `contexto estavel: conferido duas vezes e os bytes do automatico nao mudam`() {
+    fun `contexto estavel conferido duas vezes e os bytes do automatico nao mudam`() {
         val ecu = FakeEcu()
         ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3, phase = "before")
         val checks = CopyOnWriteArrayList<Fuel>()

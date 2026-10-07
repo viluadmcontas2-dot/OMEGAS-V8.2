@@ -2,7 +2,11 @@ package com.omegas.prohub.autocal
 
 import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol
 import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Fuel
+import com.omegas.prohub.ecu.Mp48SerialScheduler
+import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48TelemetryWindowSource
+import com.omegas.prohub.ecu.Mp48WorkClass
+import com.omegas.prohub.usb.UsbProtocolReply
 import com.omegas.prohub.ecu.NativeAnchorTelemetryWindow
 import org.json.JSONArray
 import org.json.JSONObject
@@ -270,6 +274,80 @@ class AutoIdleCleanupCoordinatorTest {
         drive("GNV")
         coordinator.evaluate()
         assertEquals(listOf(AutoCalPointDeleteProtocol.Target(Fuel.GAS, 12)), calls[1])
+    }
+
+    /**
+     * Monitor nativo real ligado ao coordenador exatamente como o serviço liga (`onAcquisitionReset`), sem ECU: o
+     * recibo passa primeiro por `nativeAutoCal.onManualActionConfirmed` (invalida o round) e só depois por
+     * `autoIdleCleanup.onActionConfirmed`, na ordem de `EvidenceInvalidation` do serviço.
+     */
+    private fun monitorWiredLikeService(): NativeAutoCalMonitor {
+        val serial = object : Mp48SerialScheduler {
+            override fun isConnected() = false
+            override fun currentSessionId() = 1L
+            override fun transaction(
+                request: ByteArray, reason: String, timeoutMs: Int, purgeBefore: Boolean,
+                expectedSessionId: Long, workClass: Mp48WorkClass, telemetryAfter: Boolean,
+            ): UsbProtocolReply = error("sem ECU neste teste")
+            override fun <T> unit(
+                reason: String, expectedSessionId: Long, workClass: Mp48WorkClass, telemetryAfter: Boolean,
+                waitTimeoutMs: Long, block: (Mp48SerialUnit) -> T,
+            ): T = error("sem ECU neste teste")
+        }
+        return NativeAutoCalMonitor(
+            serial = serial,
+            calibrationBusy = { false },
+            clockMs = { now },
+            onAcquisitionReset = { sessionChanged, sessionId, ownAutomaticDelete ->
+                if (sessionChanged) coordinator.onSessionChanged(sessionId)
+                else coordinator.onRoundInvalidated(ownAutomaticDelete)
+            },
+        )
+    }
+
+    private fun preservedBase(fuel: Fuel) =
+        intList(coordinator.json().getJSONObject("outliers").getJSONObject(fuel.wireName).optJSONArray("preservedBase"))
+
+    @Test
+    fun `caminho real servico monitor coordenador mantem a base congelada do proprio apagamento automatico`() {
+        val monitor = monitorWiredLikeService()
+        val wild = mapOf(6 to 1.3, 7 to 1.3, 8 to 1.3, 12 to 1.07)
+        buffers(Fuel.GAS, factors = wild, timeBase = 5.0)
+        buffers(Fuel.GAS, factors = wild, timeBase = 5.0)
+        drive("GNV")
+        coordinator.evaluate()
+        assertEquals(listOf(6, 7, 8), calls.single().map { it.index })
+        val receipt = confirmed(Fuel.GAS, listOf(6, 7, 8))
+        // Ordem do serviço: o monitor invalida o round (callback -> coordenador) ANTES de o coordenador ver o recibo.
+        monitor.onManualActionConfirmed(receipt)
+        coordinator.onActionConfirmed(receipt)
+        assertEquals("base congelada sobrevive à invalidação do próprio apagamento", listOf(6, 7, 8), preservedBase(Fuel.GAS))
+        now += 6_000
+        val shrunk = mapOf(12 to 1.07)
+        repeat(3) {
+            buffers(Fuel.GAS, factors = shrunk, timeBase = 5.0, emptyBands = listOf(6, 7, 8))
+            drive("GNV")
+            coordinator.evaluate()
+        }
+        assertEquals("ponto bom marginal (12) e vizinho (5) não viram alvo pela base menor", 1, calls.size)
+        assertEquals(listOf(6, 7, 8), preservedBase(Fuel.GAS))
+        // Reset manual do dono pelo mesmo caminho: a base preservada cai como antes.
+        monitor.onManualActionConfirmed(
+            JSONObject().put("action", "RESET_PETROL").put("outcome", "CONFIRMED").put("sessionId", 1L),
+        )
+        assertEquals(emptyList<Int>(), preservedBase(Fuel.GAS))
+    }
+
+    @Test
+    fun `invalidacao do proprio apagamento automatico nao carrega candidatos velhos para a aquisicao atual`() {
+        val monitor = monitorWiredLikeService()
+        outlier(Fuel.GAS, 9)
+        assertEquals(listOf(9), intList(coordinator.json().getJSONObject("outliers").getJSONObject("GAS").optJSONArray("confirmed")))
+        monitor.onManualActionConfirmed(confirmed(Fuel.GAS, 6, preparationId = "outra"))
+        assertEquals(emptyList<Int>(), intList(coordinator.json().getJSONObject("outliers").getJSONObject("GAS").optJSONArray("confirmed")))
+        drive("GNV")
+        coordinator.evaluate()
+        assertTrue("sem duas leituras novas nada sai", calls.isEmpty())
     }
 
     @Test

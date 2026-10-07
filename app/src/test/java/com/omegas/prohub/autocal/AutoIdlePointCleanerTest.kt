@@ -122,7 +122,7 @@ class AutoIdlePointCleanerTest {
     }
 
     @Test
-    fun `contexto do apagamento em voo: mesmo combustivel, rpm, quadro fresco e plausivel`() {
+    fun `contexto do apagamento em voo exige mesmo combustivel rpm quadro fresco e plausivel`() {
         val frame = { fuel: String, rpm: Int, at: Long, plausible: Boolean ->
             NativeAnchorTelemetryWindow.Frame(1L, at, rpm, 0.7, 5.0, fuel, plausible = plausible)
         }
