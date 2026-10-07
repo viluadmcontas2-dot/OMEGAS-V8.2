@@ -149,7 +149,7 @@
       if (operation && operation.busy && this.releaseTicks < 600) { this.releaseTicks += 1; return; }
       this.releasing = false;
       if (operation && operation.ok === true && operation.recovered === true) {
-        if (this.host) this.host.innerHTML = '<div class="map-empty-state"><b>Mapa K liberado</b><span>A ECU confirmou a saída. Toque em Reler ECU para ler o mapa desta sessão.</span></div>';
+        if (this.host) this.host.innerHTML = '<div class="map-empty-state"><b>Mapa K liberado</b><span>A ECU confirmou a saída. O app lê a ECU sozinho; aguarde a leitura.</span></div>';
         text('mapSourceStatus', 'Mapa K liberado · releia a ECU');
       } else {
         this.alert(failureText(operation, 'A ECU não confirmou a saída. O Mapa K continua bloqueado.'));

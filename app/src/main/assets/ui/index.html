@@ -176,14 +176,15 @@
           <div class="map-workspace">
             <section class="map-surface">
               <header class="map-head">
-                <div class="map-head-copy"><h2 id="mapTitle">Mapa K</h2><p id="mapSourceStatus" class="source-status">Mapa não lido</p></div>
+                <h2 id="mapTitle" class="sr-only">Mapa K</h2>
+                <p id="mapSourceStatus" class="source-status">Mapa não lido</p>
                 <div class="map-live-condition"><small>CÉLULA AGORA</small><b id="mapLiveLabel">—</b><span id="mapLiveCell" class="sr-only">célula —</span></div>
-                <button id="mapReadButton" type="button" class="secondary">Reler ECU</button>
               </header>
               <div id="mapGrid" class="map-grid-host"><div class="empty-state"><b>Mapa K</b><span>A leitura começa ao abrir esta área.</span></div></div>
             </section>
-            <aside class="inspector-panel map-editor-panel">
-              <div class="editor-heading"><div><small id="mapActiveCell">Toque em uma célula</small><h3 id="mapSelectionCount">0 selecionadas</h3></div><div class="map-pick"><button id="mapSelectAll" type="button" class="quiet-button">Todas</button><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button></div></div>
+            <div class="map-bar btn-bar" aria-label="Ajustar o K das células">
+              <div class="map-bar-sel"><small id="mapActiveCell">Toque em uma célula</small><b id="mapSelectionCount">0 selecionadas</b></div>
+              <button id="mapSelectAll" type="button" class="quiet-button">Todas</button><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button>
               <div class="segmented map-mode-switch" id="mapModeSwitch" role="radiogroup" aria-label="Como ajustar o K das células">
                 <button type="button" role="radio" data-map-mode="delta" aria-checked="false">Somar</button>
                 <button type="button" role="radio" data-map-mode="target" aria-checked="false">Definir</button>
@@ -192,9 +193,8 @@
               <select id="mapAdjustmentMode" hidden aria-label="Como ajustar"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select>
               <div class="value-field"><input id="mapAdjustmentValue" class="input-lg" type="number" inputmode="decimal" step="1" value="0" aria-label="Valor do ajuste"><span id="mapAdjustmentUnit" class="map-adjust-unit">% sobre o K</span></div>
               <div class="nudge-row step-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
-              <p class="map-safety-line">Gravar é um toque: o app guarda a foto antes e confere na ECU. Desfazer volta à foto.</p>
-              <button id="mapReviewButton" type="button" class="primary btn-primary wide" disabled>Selecione células</button>
-            </aside>
+              <button id="mapReviewButton" title="Gravar é um toque: o app guarda a foto antes e confere na ECU. Desfazer volta à foto." type="button" class="primary btn-primary wide" disabled>Selecione células</button>
+            </div>
           </div>
 
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Gravando na ECU…</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence" id="mapOperationSteps"><span>Foto antes</span><span>Gravando</span><span>Conferindo na ECU</span></div></div></div>
@@ -204,7 +204,7 @@
         <section class="screen curve-screen" data-screen="curve" aria-labelledby="curveTitle">
           <div class="page-intro action-intro curve-head">
             <div class="curve-title"><h2 id="curveTitle">Curva K</h2><p id="curveSourceStatus" class="source-status">Curva não lida</p></div>
-            <div class="route-actions-stack">
+            <div class="route-actions-stack btn-bar">
               <div class="view-switch" id="curveViewSwitch" role="tablist" aria-label="Visão da Curva K">
                 <button type="button" data-curve-view="overview">Visão geral</button>
                 <button type="button" data-curve-view="editor" class="active">Editar pontos</button>
@@ -217,7 +217,7 @@
                   <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
                 </div>
               </details>
-              <button id="curveReadButton" type="button" class="secondary">Reler ECU</button>
+              <button id="curveSaveButton" type="button" class="secondary" title="Salva a Curva K em Downloads/Omegas">Salvar curva</button>
             </div>
           </div>
 
@@ -242,7 +242,7 @@
                     <span class="curve-keys"><span><i class="line actual"></i>Atual</span><span><i class="line proposal"></i>Proposta</span><span class="curve-axis">Eixo: injeção (ms) →</span></span>
                   </div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
-                  <div class="curve-action-bar" aria-label="Ajustar o ponto escolhido">
+                  <div class="curve-action-bar btn-bar" aria-label="Ajustar o ponto escolhido">
                     <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button></div>
                     <div class="value-field"><input id="curveTargetFactor" class="input-lg" type="text" inputmode="decimal" autocomplete="off" placeholder="K" aria-label="K desejado"></div>
                     <div class="curve-nudge-row step-row"><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>

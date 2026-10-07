@@ -56,7 +56,7 @@
     }
 
     bind() {
-      document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
+      document.getElementById('curveSaveButton')?.addEventListener('click', () => document.getElementById('curveBackupSave')?.click());
       document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
       document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
       document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.undoCurve());
