@@ -90,7 +90,8 @@ assert.equal(cockpit.includes('FACTOR_CHANGE_CONFIRMED'), true);
 assert.equal(cockpit.includes('NO_FACTOR_CHANGE_OBSERVED'), true);
 assert.equal(cockpit.includes('sem par antes/depois'), true);
 assert.equal(cockpit.includes('recovery?.nextAction'), true);
-assert.equal(cockpit.includes('Próximo: '), true);
+// Revisto (P2 clareza): "Próximo:" virou "Próximo passo:".
+assert.equal(cockpit.includes('Próximo passo: '), true);
 assert.equal(cockpit.includes('dataset.reasonCode'), true);
 assert.equal(cockpit.includes('K mudou '), true);
 assert.equal(cockpitCss.includes('.autocal-automatch-evidence[data-state="FACTOR_CHANGE_CONFIRMED"]'), true);

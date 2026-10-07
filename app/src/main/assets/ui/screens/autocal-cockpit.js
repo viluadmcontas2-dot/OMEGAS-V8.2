@@ -733,7 +733,7 @@
         panel.innerHTML = `
           <section class="autocal-cockpit ar-shell ar-autocal" aria-label="AutoCal da ECU">
             <header class="ar-status" aria-label="AutoCal · Gasolina e GNV" aria-live="polite">
-              <h2 class="instrument-title">AutoCal</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
+              <h2 class="instrument-title">Aprendizado da ECU</h2><p id="autocalHumanAction" class="ar-sentence" data-level="neutral">Lendo o estado da ECU…</p><p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p><span id="autocalLiveFuel" class="ar-fuel autocal-fuel-chip" data-fuel-state="unknown">—</span>
               <div class="ar-tile ar-load"><small>Carga do motor</small><b id="autocalLiveLoad">—</b></div>
               <div class="ar-tile"><small>RPM</small><b id="autocalLiveRpm">—</b></div>
               <div class="ar-tile ar-zone" title="Zona = quanto o motor está carregado: zona 1 = lenta … zona 4 = acelerando forte"><small>Zona de carga</small><b id="autocalLiveZone">—</b></div>
@@ -1941,16 +1941,16 @@
       const recoveryCode = String(recovery?.reasonCode || state?.reasonCode || '');
       const mutationMayHaveStarted = state?.mutationMayHaveStarted === true;
       const uncertainty = failed && mutationMayHaveStarted
-        ? ' · Estado incerto: a ECU pode ter mudado. Releia antes de repetir.'
+        ? ' · A ECU pode ter mudado em parte: a seleção foi limpa; espere a próxima leitura antes de tentar de novo.'
         : '';
       host.hidden = name === 'IDLE';
       host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
       host.dataset.reasonCode = recoveryCode;
       host.dataset.mutationUncertain = mutationMayHaveStarted ? 'true' : 'false';
       host.textContent = name === 'IDLE' ? message
-        : name === 'CONFIRMED' ? 'Concluído · ' + message
-        : failed ? 'Não concluído · ' + message + uncertainty + (recoveryNext ? ' · Próximo: ' + recoveryNext : '')
-        : 'Executando · ' + message;
+        : name === 'CONFIRMED' ? 'Pronto · ' + message
+        : failed ? 'Não deu certo · ' + message + uncertainty + (recoveryNext ? ' · Próximo passo: ' + recoveryNext : '')
+        : 'Fazendo agora · ' + message;
     }
 
     renderReview() {
