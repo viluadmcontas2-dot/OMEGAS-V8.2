@@ -16,7 +16,7 @@ import kotlin.math.abs
  *   em 10) e o tempo ou a MAP da banda mudou. Contador caiu = rebaseline (reset/apagamento), não aquisição.
  * - Banda com contador 0 ou MAP raw 0 é ignorada; só bandas 0..15.
  * - Classificação: quadros GNV plausíveis com |MAP − MAP_banda| < 0,03 bar; precisa de >= 3.
- *   >= 80% com rpm < 1000 → LENTA (marca); <= 20% → ANDANDO; entre os dois → INDEFINIDO.
+ *   >= 80% com rpm < 1200 ([RegimeThresholds.DRIVING_RPM]) → LENTA (marca); <= 20% → ANDANDO; entre os dois → INDEFINIDO.
  *   Qualquer aquisição que não seja LENTA tira a marca: a regra olha só a última aquisição.
  *
  * Não é thread-safe: o coordenador o usa a partir de um único executor.
@@ -188,7 +188,7 @@ class IdleAcquisitionTracker(
     }
 
     companion object {
-        const val IDLE_RPM = 1_000
+        const val IDLE_RPM = RegimeThresholds.DRIVING_RPM.toInt()
         const val MAP_TOLERANCE_BAR = 0.03
         const val MIN_FRAMES = 3
         const val IDLE_FRACTION_TO_MARK = 0.80

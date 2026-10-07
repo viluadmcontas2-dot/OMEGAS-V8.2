@@ -18,9 +18,22 @@ import refined_oracle as oracle
 REAL = Path(__file__).resolve().parents[2] / "fixtures/autocal/real"
 RPM_TOL = 150
 STABLE_MS_SPREAD = 0.10
+# Achado F14: gas_ms/petrol_ms em GNV sobe 22% com a água (1,96 a 35–40 °C → 2,39 a 75–80 °C): par só vale com
+# |água_GNV − água_gasolina| <= 8 °C (= EvidencePairs.MAX_WATER_DELTA_C); água ausente não reprova (fixtures antigas).
+MAX_WATER_DELTA_C = 8.0
 VISIT_GAP_MS = 3000    # = EvidencePairs.VISIT_GAP_MS (bloco de janelas sobrepostas)
 EPISODE_BAND_FACTOR = 100000
 MAP_TOL = 0.02
+
+
+def _finite(v):
+    return isinstance(v, (int, float)) and v == v and abs(v) != float("inf")
+
+
+def _dyn_contradicts(f, fuel):
+    """raw19 (dynamic_correction): 0 na gasolina, > 0 no GNV; contradição com o combustível invalida o quadro."""
+    dyn = f.get("dynamic_correction")
+    return dyn is not None and dyn >= 0 and ((fuel == "GASOLINA" and dyn != 0) or (fuel == "GNV" and dyn == 0))
 
 
 def stable_frames(telemetry, fuel, until_ms=None):
@@ -32,7 +45,11 @@ def stable_frames(telemetry, fuel, until_ms=None):
             continue
         if any(not f["petrol_ms"] or f["petrol_ms"] < 1.0 or not f["load_bar"] or not f["rpm"] for f in (prev, cur, nxt)):
             continue
-        if nxt["t"] - prev["t"] > 1200:
+        if any(_dyn_contradicts(f, fuel) for f in (prev, cur, nxt)):
+            continue
+        caps = [f.get("captured_elapsed_ms") for f in (prev, cur, nxt)]
+        span = caps[2] - caps[0] if all(c is not None and c >= 0 for c in caps) else nxt["t"] - prev["t"]
+        if span > 1200:
             continue
         if max(f["rpm"] for f in (prev, cur, nxt)) - min(f["rpm"] for f in (prev, cur, nxt)) > 150:
             continue
@@ -48,6 +65,8 @@ def stable_frames(telemetry, fuel, until_ms=None):
             "map": sum(f["load_bar"] for f in (prev, cur, nxt)) / 3,
             "t": sum(f["petrol_ms"] for f in (prev, cur, nxt)) / 3,
             "at": cur["t"],
+            "water": (sum(f["water_c"] for f in (prev, cur, nxt)) / 3
+                      if all(_finite(f.get("water_c")) for f in (prev, cur, nxt)) else float("nan")),
         })
     return out
 
@@ -103,6 +122,10 @@ def visit_ids(items):
     return ids
 
 
+def _same_water(a, b):
+    return not _finite(a) or not _finite(b) or abs(a - b) <= MAX_WATER_DELTA_C
+
+
 def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL, with_episodes=False, petrol_until=False):
     """Pares (t_gasolina mediano no mesmo RPM×MAP, t_no_GNV) de leituras estáveis.
     Com with_episodes devolve também o id de episódio de cada par (paralelo)."""
@@ -112,7 +135,8 @@ def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL, 
     for g in gas:
         # Mesmo regime (EvidencePairs.sameRegime, fronteira 1200 rpm): nunca lenta × condução.
         matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol
-                         and (p["rpm"] >= REGIME_SPLIT_RPM) == (g["rpm"] >= REGIME_SPLIT_RPM))
+                         and (p["rpm"] >= REGIME_SPLIT_RPM) == (g["rpm"] >= REGIME_SPLIT_RPM)
+                         and _same_water(p["water"], g["water"]))
         if len(matches) >= 2:
             out.append((matches[len(matches) // 2], g["t"]))
             times.append((matches[len(matches) // 2], g["at"]))

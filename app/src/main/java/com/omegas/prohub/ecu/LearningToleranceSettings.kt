@@ -6,7 +6,6 @@ import org.json.JSONObject
 /** Parâmetros da única lógica de aprendizado V6. */
 data class LearningTolerancePolicy(
     val requiredFrames: Int = 10,
-    val evaluationStride: Int = 3,
     val maximumAttemptMs: Long = 3_000L,
     val warningGapMs: Long = 300L,
     val breakingGapMs: Long = 900L,
@@ -33,37 +32,15 @@ data class LearningTolerancePolicy(
     val pressureCenterBar: Double = 0.035,
     /** Relaxado de 0.040→0.055 bar. */
     val pressureOscillationBar: Double = 0.055,
-    val cutoffMinimumRpm: Int = 1_200,
-    val cutoffMaximumPetrolMs: Double = 0.70,
-    val cutoffMaximumMapBar: Double = 0.35,
-    val physicalExitFrames: Int = 3,
-    val historicalRpmMinimum: Double = 40.0,
-    val historicalRpmPercent: Double = 2.5,
-    val historicalMapBar: Double = 0.030,
-    val historicalTemperatureC: Double = 6.0,
-    val referenceMaximumSpreadMs: Double = 0.35,
-    val directionConsensusMinimum: Double = 0.75,
-    val comparisonMaximumMadMs: Double = 0.25,
-    val comparisonMaximumGasTempSpanC: Double = 15.0,
-    val comparisonMaximumPressureSpanBar: Double = 0.08,
-    val equivalenceDeadbandMs: Double = 0.12,
-    val equivalenceDeadbandPercent: Double = 2.5,
-    val confidenceSampleTarget: Int = 6,
-    val provisionalVisits: Int = 2,
-    val acceptedVisits: Int = 4,
-    val confirmedVisits: Int = 6,
 ) {
     fun normalized(): LearningTolerancePolicy {
         val frames = requiredFrames.coerceIn(6, 30)
         val warning = warningGapMs.coerceIn(80L, 2_000L)
         val breaking = breakingGapMs.coerceIn(warning + 10L, 5_000L)
         val tolerated = toleratedSerialFailures.coerceIn(0, 12)
-        val provisional = provisionalVisits.coerceIn(1, 20)
-        val accepted = acceptedVisits.coerceIn(provisional, 40)
         val petrolOscillation = petrolOscillationPercent.coerceIn(2.0, 50.0)
         return copy(
             requiredFrames = frames,
-            evaluationStride = evaluationStride.coerceIn(1, minOf(12, frames)),
             maximumAttemptMs = maximumAttemptMs.coerceIn(maxOf(400L, breaking), 10_000L),
             warningGapMs = warning,
             breakingGapMs = breaking,
@@ -82,31 +59,11 @@ data class LearningTolerancePolicy(
             strongPetrolOscillationPercent = strongPetrolOscillationPercent.coerceIn(1.0, petrolOscillation),
             pressureCenterBar = pressureCenterBar.coerceIn(0.005, 0.30),
             pressureOscillationBar = pressureOscillationBar.coerceIn(0.010, 0.60),
-            cutoffMinimumRpm = cutoffMinimumRpm.coerceIn(800, 2_500),
-            cutoffMaximumPetrolMs = cutoffMaximumPetrolMs.coerceIn(0.10, 1.20),
-            cutoffMaximumMapBar = cutoffMaximumMapBar.coerceIn(0.15, 0.50),
-            physicalExitFrames = physicalExitFrames.coerceIn(2, 12),
-            historicalRpmMinimum = historicalRpmMinimum.coerceIn(20.0, 1_000.0),
-            historicalRpmPercent = historicalRpmPercent.coerceIn(1.0, 35.0),
-            historicalMapBar = historicalMapBar.coerceIn(0.010, 0.50),
-            historicalTemperatureC = historicalTemperatureC.coerceIn(1.0, 40.0),
-            referenceMaximumSpreadMs = referenceMaximumSpreadMs.coerceIn(0.05, 1.50),
-            directionConsensusMinimum = directionConsensusMinimum.coerceIn(0.50, 1.0),
-            comparisonMaximumMadMs = comparisonMaximumMadMs.coerceIn(0.03, 1.0),
-            comparisonMaximumGasTempSpanC = comparisonMaximumGasTempSpanC.coerceIn(3.0, 50.0),
-            comparisonMaximumPressureSpanBar = comparisonMaximumPressureSpanBar.coerceIn(0.03, 0.80),
-            equivalenceDeadbandMs = equivalenceDeadbandMs.coerceIn(0.01, 0.50),
-            equivalenceDeadbandPercent = equivalenceDeadbandPercent.coerceIn(0.2, 10.0),
-            confidenceSampleTarget = confidenceSampleTarget.coerceIn(2, 100),
-            provisionalVisits = provisional,
-            acceptedVisits = accepted,
-            confirmedVisits = confirmedVisits.coerceIn(accepted, 80),
         )
     }
 
     fun toJson(): JSONObject = JSONObject()
         .put("requiredFrames", requiredFrames)
-        .put("evaluationStride", evaluationStride)
         .put("maximumAttemptMs", maximumAttemptMs)
         .put("warningGapMs", warningGapMs)
         .put("breakingGapMs", breakingGapMs)
@@ -125,32 +82,12 @@ data class LearningTolerancePolicy(
         .put("strongPetrolOscillationPercent", strongPetrolOscillationPercent)
         .put("pressureCenterBar", pressureCenterBar)
         .put("pressureOscillationBar", pressureOscillationBar)
-        .put("cutoffMinimumRpm", cutoffMinimumRpm)
-        .put("cutoffMaximumPetrolMs", cutoffMaximumPetrolMs)
-        .put("cutoffMaximumMapBar", cutoffMaximumMapBar)
-        .put("physicalExitFrames", physicalExitFrames)
-        .put("historicalRpmMinimum", historicalRpmMinimum)
-        .put("historicalRpmPercent", historicalRpmPercent)
-        .put("historicalMapBar", historicalMapBar)
-        .put("historicalTemperatureC", historicalTemperatureC)
-        .put("referenceMaximumSpreadMs", referenceMaximumSpreadMs)
-        .put("directionConsensusMinimum", directionConsensusMinimum)
-        .put("comparisonMaximumMadMs", comparisonMaximumMadMs)
-        .put("comparisonMaximumGasTempSpanC", comparisonMaximumGasTempSpanC)
-        .put("comparisonMaximumPressureSpanBar", comparisonMaximumPressureSpanBar)
-        .put("equivalenceDeadbandMs", equivalenceDeadbandMs)
-        .put("equivalenceDeadbandPercent", equivalenceDeadbandPercent)
-        .put("confidenceSampleTarget", confidenceSampleTarget)
-        .put("provisionalVisits", provisionalVisits)
-        .put("acceptedVisits", acceptedVisits)
-        .put("confirmedVisits", confirmedVisits)
         .put("minimumWaterC", LearningTemperatureSettings.currentMinimumWaterC)
 
     companion object {
         fun fromJson(raw: JSONObject, fallback: LearningTolerancePolicy = LearningTolerancePolicy()): LearningTolerancePolicy =
             LearningTolerancePolicy(
                 requiredFrames = raw.optInt("requiredFrames", fallback.requiredFrames),
-                evaluationStride = raw.optInt("evaluationStride", fallback.evaluationStride),
                 maximumAttemptMs = raw.optLong("maximumAttemptMs", fallback.maximumAttemptMs),
                 warningGapMs = raw.optLong("warningGapMs", fallback.warningGapMs),
                 breakingGapMs = raw.optLong("breakingGapMs", fallback.breakingGapMs),
@@ -169,25 +106,6 @@ data class LearningTolerancePolicy(
                 strongPetrolOscillationPercent = raw.optDouble("strongPetrolOscillationPercent", fallback.strongPetrolOscillationPercent),
                 pressureCenterBar = raw.optDouble("pressureCenterBar", fallback.pressureCenterBar),
                 pressureOscillationBar = raw.optDouble("pressureOscillationBar", fallback.pressureOscillationBar),
-                cutoffMinimumRpm = raw.optInt("cutoffMinimumRpm", fallback.cutoffMinimumRpm),
-                cutoffMaximumPetrolMs = raw.optDouble("cutoffMaximumPetrolMs", fallback.cutoffMaximumPetrolMs),
-                cutoffMaximumMapBar = raw.optDouble("cutoffMaximumMapBar", fallback.cutoffMaximumMapBar),
-                physicalExitFrames = raw.optInt("physicalExitFrames", fallback.physicalExitFrames),
-                historicalRpmMinimum = raw.optDouble("historicalRpmMinimum", fallback.historicalRpmMinimum),
-                historicalRpmPercent = raw.optDouble("historicalRpmPercent", fallback.historicalRpmPercent),
-                historicalMapBar = raw.optDouble("historicalMapBar", fallback.historicalMapBar),
-                historicalTemperatureC = raw.optDouble("historicalTemperatureC", fallback.historicalTemperatureC),
-                referenceMaximumSpreadMs = raw.optDouble("referenceMaximumSpreadMs", fallback.referenceMaximumSpreadMs),
-                directionConsensusMinimum = raw.optDouble("directionConsensusMinimum", fallback.directionConsensusMinimum),
-                comparisonMaximumMadMs = raw.optDouble("comparisonMaximumMadMs", fallback.comparisonMaximumMadMs),
-                comparisonMaximumGasTempSpanC = raw.optDouble("comparisonMaximumGasTempSpanC", fallback.comparisonMaximumGasTempSpanC),
-                comparisonMaximumPressureSpanBar = raw.optDouble("comparisonMaximumPressureSpanBar", fallback.comparisonMaximumPressureSpanBar),
-                equivalenceDeadbandMs = raw.optDouble("equivalenceDeadbandMs", fallback.equivalenceDeadbandMs),
-                equivalenceDeadbandPercent = raw.optDouble("equivalenceDeadbandPercent", fallback.equivalenceDeadbandPercent),
-                confidenceSampleTarget = raw.optInt("confidenceSampleTarget", fallback.confidenceSampleTarget),
-                provisionalVisits = raw.optInt("provisionalVisits", fallback.provisionalVisits),
-                acceptedVisits = raw.optInt("acceptedVisits", fallback.acceptedVisits),
-                confirmedVisits = raw.optInt("confirmedVisits", fallback.confirmedVisits),
             ).normalized()
     }
 }

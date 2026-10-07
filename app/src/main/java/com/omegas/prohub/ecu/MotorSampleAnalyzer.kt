@@ -578,12 +578,8 @@ class MotorSampleAnalyzer(
         )
     }
 
-    private fun isPhysicalCutoff(frame: Mp48Telemetry): Boolean = policy.let { active ->
-        frame.rpm >= active.cutoffMinimumRpm &&
-            frame.petrolMs < active.cutoffMaximumPetrolMs &&
-            frame.gasRaw == 0 &&
-            frame.mapBar < active.cutoffMaximumMapBar
-    }
+    private fun isPhysicalCutoff(frame: Mp48Telemetry): Boolean =
+        PhysicalCutoff.isCutoff(frame.rpm, frame.petrolMs, frame.gasRaw, frame.mapBar)
 
     /** Depois do mínimo, cada quadro novo provoca uma nova avaliação. */
     private fun evaluationDue(): Boolean =
@@ -668,13 +664,14 @@ class MotorSampleAnalyzer(
     }
 
     private fun SampleDecision.withCell(frame: Mp48Telemetry): SampleDecision {
-        val cell = com.omegas.prohub.calibration.LiveCellProjection.cellFor(frame.rpm.toDouble(), frame.petrolMs)
+        // Só linha/coluna: o JSON completo (pesos bilineares e trilineares) era montado por quadro e descartado.
+        val (row, column) = com.omegas.prohub.calibration.LiveCellProjection.cellIndex(frame.rpm.toDouble(), frame.petrolMs)
         return copy(
             minimumFrames = this@MotorSampleAnalyzer.minimumFrames,
             desiredFrames = this@MotorSampleAnalyzer.desiredFrames,
-            cellKey = cell.optString("key"),
-            cellRow = cell.optInt("row"),
-            cellColumn = cell.optInt("column"),
+            cellKey = "$row:$column",
+            cellRow = row,
+            cellColumn = column,
             tolerancePolicy = policySignature,
             windowAgeMs = if (windowAgeMs > 0L) windowAgeMs else durationMs,
             windowBudgetMs = if (windowBudgetMs > 0L) windowBudgetMs else effectiveWindowBudgetMs(),

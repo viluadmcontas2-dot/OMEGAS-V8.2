@@ -45,7 +45,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
          * Abaixo disso a ECU tem estratégia de lenta própria: fora do índice de condução. 1200 rpm vem das 85 sessões
          * reais (rpm < 1200: mesmo MAP dá +20–30% de ms na gasolina). Também é a fronteira de regime do pareamento.
          */
-        const val DRIVING_MIN_RPM = 1_200.0
+        const val DRIVING_MIN_RPM = RegimeThresholds.DRIVING_RPM
         val BANDS = listOf(3.0 to 4.5, 4.5 to 6.0, 6.0 to 7.5, 7.5 to 9.0, 9.0 to 12.0)
         private const val SAVE_INTERVAL_MS = 60_000L
         /** O índice só é recalculado se algo mudou E passou ao menos isto desde o último cálculo (mudança estrutural fura). */
@@ -76,9 +76,23 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         const val LIVE_FUEL_MAX_AGE_MS = 5_000L
     }
 
-    data class Frame(val t: Long, val fuel: String, val rpm: Double, val map: Double, val petrolMs: Double, val gasMs: Double = 0.0)
-    /** [episode] = trecho de condução em GNV (leituras estáveis separadas por no máximo [EPISODE_GAP_MS]); -1 = desconhecido. */
-    data class Obs(val t: Long, val rpm: Double, val map: Double, val petrolMs: Double, val episode: Int = -1)
+    /**
+     * [waterC] = temperatura da água (NaN = desconhecida). [dynamicCorrection] = raw19 da MP48: 0 na gasolina e > 0 no GNV,
+     * serve só para validar o combustível (-1 = desconhecido). [capturedMs] = relógio monotônico da captura do quadro
+     * (`captured_elapsed_ms`; -1 = desconhecido): a janela estável o usa no lugar de [t], que é a hora de ENTREGA e
+     * se agrupa atrás da fila latest-only.
+     */
+    data class Frame(
+        val t: Long, val fuel: String, val rpm: Double, val map: Double, val petrolMs: Double, val gasMs: Double = 0.0,
+        val waterC: Double = Double.NaN, val dynamicCorrection: Int = -1, val capturedMs: Long = -1L,
+    )
+    /**
+     * [episode] = trecho de condução em GNV (leituras estáveis separadas por no máximo [EPISODE_GAP_MS]); -1 = desconhecido.
+     * [waterC] = média da água nos 3 quadros (NaN = desconhecida, como nas leituras gravadas antes deste campo).
+     */
+    data class Obs(
+        val t: Long, val rpm: Double, val map: Double, val petrolMs: Double, val episode: Int = -1, val waterC: Double = Double.NaN,
+    )
     /** [ecuRef] = a referência de gasolina veio da curva de gasolina da ECU (MAP), não de leituras próprias. */
     data class EvidencePair(
         val petrolRefMs: Double,
@@ -210,6 +224,13 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                 window.clear()
                 return
             }
+            // raw19 só existe no modo gás (0 na gasolina, > 0 no GNV): quadro cujo combustível contradiz o raw19 não é confiável.
+            if (frame.dynamicCorrection >= 0 &&
+                (frame.fuel == "GASOLINA" && frame.dynamicCorrection != 0 || frame.fuel == "GNV" && frame.dynamicCorrection == 0)
+            ) {
+                window.clear()
+                return
+            }
             if (frame.fuel == "GNV" && frame.rpm >= DRIVING_MIN_RPM && frame.gasMs.isFinite() && frame.gasMs > 0.0) {
                 gasUsefulRpmMs += (frame.gasMs - GAS_DEAD_TIME_MS).coerceAtLeast(0.0) * frame.rpm
                 airRpmBar += frame.map * frame.rpm
@@ -236,7 +257,10 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         if (window.size < 3) return null
         val a = window.first()
         val c = window.last()
-        if (c.t - a.t > STABLE_WINDOW_MS) return null
+        // Relógio de captura quando os 3 quadros o trazem (a entrega em rajada atrás da fila latest-only enganaria o de parede).
+        val captured = window.all { it.capturedMs >= 0L }
+        val span = if (captured) c.capturedMs - a.capturedMs else c.t - a.t
+        if (span > STABLE_WINDOW_MS) return null
         val rpmSpread = window.maxOf { it.rpm } - window.minOf { it.rpm }
         val mapSpread = window.maxOf { it.map } - window.minOf { it.map }
         if (rpmSpread > STABLE_RPM_SPREAD || mapSpread > STABLE_MAP_SPREAD) return null
@@ -244,7 +268,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         // O ms que pula (8↔9 ms) não é estado estável: a média de 3 esconderia o salto, então a janela é recusada.
         if (window.maxOf { it.petrolMs } - window.minOf { it.petrolMs } > STABLE_MS_SPREAD * meanMs) return null
         val middle = window.elementAt(1)
-        return Obs(middle.t, window.sumOf { it.rpm } / 3.0, window.sumOf { it.map } / 3.0, meanMs)
+        val water = if (window.all { it.waterC.isFinite() }) window.sumOf { it.waterC } / 3.0 else Double.NaN
+        return Obs(middle.t, window.sumOf { it.rpm } / 3.0, window.sumOf { it.map } / 3.0, meanMs, waterC = water)
     }
 
     /** A curva/mapa mudou: o GNV medido com a curva antiga deixa de valer. A gasolina fica. */
@@ -619,6 +644,13 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         builder.append("],\"ep\":[")
         first = true
         values.forEach { if (!first) builder.append(','); builder.append(it.episode); first = false }
+        builder.append("],\"wc\":[")
+        first = true
+        values.forEach {
+            if (!first) builder.append(',')
+            if (it.waterC.isFinite()) num(builder, it.waterC, 10.0) else builder.append("null")
+            first = false
+        }
         builder.append("]}")
     }
 
@@ -674,9 +706,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                     val ms = flat.optJSONArray("ms") ?: return
                     val n = minOf(t.length(), rpm.length(), map.length(), ms.length())
                     val ep = flat.optJSONArray("ep")?.takeIf { it.length() >= n }
+                    val wc = flat.optJSONArray("wc")?.takeIf { it.length() >= n }
                     for (i in 0 until n) {
                         if (t.isNull(i) || rpm.isNull(i) || map.isNull(i) || ms.isNull(i)) continue
-                        val o = Obs(t.optLong(i), rpm.optDouble(i), map.optDouble(i), ms.optDouble(i), ep?.optInt(i, -1) ?: -1)
+                        val o = Obs(t.optLong(i), rpm.optDouble(i), map.optDouble(i), ms.optDouble(i), ep?.optInt(i, -1) ?: -1,
+                            if (wc == null || wc.isNull(i)) Double.NaN else wc.optDouble(i, Double.NaN))
                         if (o.rpm.isFinite() && o.map.isFinite() && o.petrolMs.isFinite()) into.add(o)
                     }
                     return
