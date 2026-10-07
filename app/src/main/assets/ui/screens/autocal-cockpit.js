@@ -649,15 +649,36 @@
     },
 
     /** Aviso do apagamento automático: o app (não o dono) pediu, e por quê, em palavras de leigo. */
-    autoDeleteSentence(indexes = []) {
+    autoDeleteSentence(indexes = [], fuel = 'GAS') {
       const phrase = AutoCalUxModel.pointsPhrase(indexes);
-      if (!phrase) return 'O app pediu para a ECU reaprender um ponto do GNV andando — ele tinha sido aprendido com o carro parado.';
+      const of = AutoCalUxModel.autoFuelOf(fuel);
+      if (!phrase) return 'O app pediu para a ECU reaprender um ponto ' + of + ' — ele estava fora da curva.';
       const many = phrase.startsWith('os ');
-      return 'O app pediu para a ECU reaprender ' + phrase + ' do GNV andando — ' +
-        (many ? 'eles tinham sido aprendidos' : 'ele tinha sido aprendido') + ' com o carro parado.';
+      return 'O app pediu para a ECU reaprender ' + phrase + ' ' + of + ' — ' +
+        (many ? 'eles estavam' : 'ele estava') + ' fora da curva.';
     },
 
-    /** Índices GNV de um estado da ação automática (evidência antes do envio, alvos durante, recibo no fim). */
+    /** "do GNV" / "da gasolina" para o combustível do apagamento automático (GAS ou PETROL). */
+    autoFuelOf(fuel) {
+      return String(fuel || '').toUpperCase() === 'PETROL' ? 'da gasolina' : 'do GNV';
+    },
+
+    /** Combustível (GAS/PETROL) de um estado da ação automática; GNV quando o estado não diz. */
+    autoActionFuel(actionState = {}) {
+      const details = actionState?.details && typeof actionState.details === 'object' ? actionState.details : {};
+      const firstFuel = list => Array.isArray(list) && list.length ? list[0]?.fuel : null;
+      const found = [
+        details.fuel,
+        details.details?.fuel,
+        firstFuel(details.targets),
+        firstFuel(details.details?.targets),
+        details.pointDelete?.fuel,
+        firstFuel(details.pointDelete?.targets),
+      ].map(value => String(value || '').toUpperCase()).find(value => value === 'GAS' || value === 'PETROL');
+      return found || 'GAS';
+    },
+
+    /** Índices de um estado da ação automática (evidência antes do envio, alvos durante, recibo no fim). */
     autoActionIndexes(actionState = {}) {
       const details = actionState?.details && typeof actionState.details === 'object' ? actionState.details : {};
       const fromTargets = list => Array.isArray(list) ? list.map(t => Number(t?.index)).filter(Number.isInteger) : [];
@@ -682,13 +703,14 @@
       const effect = Array.isArray(receipt.details?.effect) ? receipt.details.effect : [];
       const ambiguous = new Set(effect.filter(row => row?.result === 'AMBIGUOUS').map(row => Number(row.index)));
       const indexes = AutoCalUxModel.autoActionIndexes(actionState).filter(index => !ambiguous.has(index));
-      return { receiptId: id, indexes, atMs: finite(receipt.finishedAtMs) };
+      return { receiptId: id, fuel: AutoCalUxModel.autoActionFuel(actionState), indexes, atMs: finite(receipt.finishedAtMs) };
     },
 
     /** Motivo da pausa da limpeza automática em palavras simples (o código vem do app). */
     autoCleanupPauseReason(code) {
       switch (String(code || '')) {
-        case 'PETROL_GUARD': return 'a gasolina mudou de um jeito estranho durante a limpeza';
+        case 'OTHER_FUEL_GUARD':
+        case 'PETROL_GUARD': return 'o outro combustível mudou de um jeito estranho durante a limpeza';
         case 'REPEATED_FAILURES': return 'a ECU não respondeu bem várias vezes seguidas';
         case 'READBACK_INEFFECTIVE': return 'a ECU não apagou o ponto quando o app pediu';
         default: return 'o app encontrou algo inesperado';
@@ -1088,7 +1110,7 @@
     }
 
     /**
-     * O app apagou sozinho pontos do GNV aprendidos na lenta: eles entram no MESMO cinza do apagamento do dono
+     * O app apagou sozinho pontos fora da curva (GNV ou gasolina): eles entram no MESMO cinza do apagamento do dono
      * (intocáveis até chegar leitura da ECU mais nova) e o aviso curto sai uma vez por recibo. Recibo velho
      * (tela fechada na hora) só é registrado: as leituras seguintes já mostram a ECU como ela está.
      */
@@ -1099,21 +1121,26 @@
       if (receipt) items.push(receipt);
       if (!(this.seenAutoDeletes instanceof Set)) this.seenAutoDeletes = new Set();
       const now = Date.now();
-      const fresh = [];
+      const fresh = { GAS: [], PETROL: [] };
       items.forEach(item => {
         const id = String(item?.receiptId || '');
         if (!id || this.seenAutoDeletes.has(id)) return;
         this.seenAutoDeletes.add(id);
         const at = finite(item.atMs);
+        const fuel = String(item?.fuel || 'GAS').toUpperCase() === 'PETROL' ? 'PETROL' : 'GAS';
         const indexes = Array.isArray(item.indexes) ? item.indexes.map(Number).filter(Number.isInteger) : [];
         if (at === null || now - at > AUTO_DELETE_FRESH_MS || !indexes.length) return;
-        const seen = this.countersCapturedAt(snapshot, 'GAS');
-        indexes.forEach(index => this.deletedPoints().set('GAS:' + index, Math.max(at, seen ?? -Infinity)));
-        fresh.push(...indexes);
+        const seen = this.countersCapturedAt(snapshot, fuel);
+        indexes.forEach(index => this.deletedPoints().set(fuel + ':' + index, Math.max(at, seen ?? -Infinity)));
+        fresh[fuel].push(...indexes);
       });
-      if (!fresh.length) return;
-      if (this.selectedAcquiredPoints instanceof Set) fresh.forEach(index => this.selectedAcquiredPoints.delete('GAS:' + index));
-      this.store.patch({ alert: { level: 'ok', message: AutoCalUxModel.autoDeleteSentence(fresh) } });
+      const fuels = Object.keys(fresh).filter(fuel => fresh[fuel].length);
+      if (!fuels.length) return;
+      if (this.selectedAcquiredPoints instanceof Set) {
+        fuels.forEach(fuel => fresh[fuel].forEach(index => this.selectedAcquiredPoints.delete(fuel + ':' + index)));
+      }
+      const message = fuels.map(fuel => AutoCalUxModel.autoDeleteSentence(fresh[fuel], fuel)).join(' ');
+      this.store.patch({ alert: { level: 'ok', message } });
     }
 
     /** Hora da leitura dos contadores da ECU (campo NUM_BUF_UPD_*; senão a do snapshot). */
@@ -1967,15 +1994,16 @@
       if (state.automatic === true && name !== 'IDLE') {
         // Limpeza automática: o app agiu sozinho; nunca "Pronto"/"você confirmou", nunca jargão do protocolo.
         const indexes = AutoCalUxModel.autoActionIndexes(state);
+        const fuel = AutoCalUxModel.autoActionFuel(state);
         host.hidden = false;
         host.dataset.level = name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
         host.dataset.reasonCode = '';
         host.dataset.mutationUncertain = 'false';
         host.textContent = name === 'CONFIRMED'
-          ? AutoCalUxModel.autoDeleteSentence(indexes)
+          ? AutoCalUxModel.autoDeleteSentence(indexes, fuel)
           : failed ? 'A limpeza automática não conseguiu agora; o app tenta de novo sozinho.'
           : 'O app está pedindo para a ECU reaprender ' + (AutoCalUxModel.pointsPhrase(indexes) || 'um ponto') +
-            ' do GNV, aprendido com o carro parado.';
+            ' ' + AutoCalUxModel.autoFuelOf(fuel) + ', que estava fora da curva.';
         return;
       }
       const recovery = state?.recovery && typeof state.recovery === 'object' ? state.recovery : null;

@@ -1,11 +1,11 @@
 'use strict';
-// Costura P1 (apagamento automático do GNV aprendido na lenta) × P3 (UI): o ponto que o app apagou sozinho fica
+// Costura P1 rev2 (apagamento automático de ponto fora da curva, GNV e gasolina) × P3 (UI): o ponto que o app apagou sozinho fica
 // cinza e intocável como o apagado pelo dono, nunca aparece como "você confirmou", e a linha discreta diz em
 // português simples se a limpeza está ligada, quantos pontos reaprendeu e por que pausou.
 const test = require('node:test'), assert = require('node:assert/strict');
 const L = require('./wiring/lib.cjs');
 
-const TECH = /readback|ECU_|DELETE_POINT|GNV_IDLE|PETROL_GUARD|REPEATED|READBACK|automatic|mask|band[as]?\b/i;
+const TECH = /readback|ECU_|DELETE_POINT|GNV_IDLE|OUTLIER|PETROL_GUARD|OTHER_FUEL|REPEATED|READBACK|automatic|mask|band[as]?\b/i;
 
 function gasPoint(screen) {
   return screen.currentAcquiredPoints.find(p => p.fuel === 'GAS');
@@ -41,7 +41,7 @@ test('pausada: motivo simples e o que fazer, sem jargão', () => {
     const screen = app.win.OmegasApp.autoCalCockpit;
     const line = app.byId('autocalAutoCleanLine');
     const cases = {
-      PETROL_GUARD: /gasolina/i,
+      OTHER_FUEL_GUARD: /outro combustível/i,
       REPEATED_FAILURES: /várias vezes/i,
       READBACK_INEFFECTIVE: /não apagou/i,
       ALGO_NOVO: /inesperado/i,
@@ -71,12 +71,12 @@ test('apagamento automático: ponto cinza, intocável, aviso curto uma vez e lib
     screen.store.patch = value => { if (value && value.alert) alerts.push(value.alert); return patch(value); };
     app.world.autocalAutoCleanup = {
       ok: true, active: true, enabled: true, pauseCode: null, relearnedThisSession: 1,
-      recentDeletes: [{ receiptId: 'R-auto-1', indexes: [point.index], atMs: app.win.Date.now() }],
+      recentDeletes: [{ receiptId: 'R-auto-1', fuel: 'GAS', indexes: [point.index], atMs: app.win.Date.now() }],
     };
     screen.refresh();
     assert.equal(screen.recentlyDeleted.has(key), true, 'o automático alimenta o mesmo cinza do manual');
     assert.equal(alerts.length, 1);
-    assert.equal(alerts[0].message, `O app pediu para a ECU reaprender o ponto ${point.index + 1} do GNV andando — ele tinha sido aprendido com o carro parado.`);
+    assert.equal(alerts[0].message, `O app pediu para a ECU reaprender o ponto ${point.index + 1} do GNV — ele estava fora da curva.`);
     assert.doesNotMatch(alerts[0].message, /você|confirm/i);
     screen.tapAcquiredPoint('GAS', point.index);
     assert.equal(screen.selectedAcquiredPoints.size, 0, 'ponto apagado sozinho não pode ser marcado');
@@ -90,6 +90,52 @@ test('apagamento automático: ponto cinza, intocável, aviso curto uma vez e lib
     app.world.projection = next; screen.refresh();
     assert.equal(screen.recentlyDeleted.has(key), false, 'leitura nova libera o ponto');
     L.assertClean(app, 'apagamento automático');
+  } finally { app.destroy(); }
+});
+
+test('gasolina e GNV: cada apagamento acinzenta o ponto do seu combustível e o aviso diz qual', () => {
+  const app = L.boot(); try {
+    app.go('autocal'); app.settle(3);
+    const screen = app.win.OmegasApp.autoCalCockpit;
+    const gas = gasPoint(screen);
+    const petrol = screen.currentAcquiredPoints.find(p => p.fuel === 'PETROL');
+    assert.ok(gas && petrol, 'a fixture tem pontos dos dois combustíveis');
+    const alerts = [];
+    const patch = screen.store.patch.bind(screen.store);
+    screen.store.patch = value => { if (value && value.alert) alerts.push(value.alert); return patch(value); };
+    const now = app.win.Date.now();
+    app.world.autocalAutoCleanup = {
+      ok: true, active: true, enabled: true, pauseCode: null, relearnedThisSession: 2,
+      recentDeletes: [
+        { receiptId: 'R-gnv', fuel: 'GAS', indexes: [gas.index], atMs: now },
+        { receiptId: 'R-gas', fuel: 'PETROL', indexes: [petrol.index], atMs: now },
+      ],
+    };
+    screen.refresh();
+    assert.equal(screen.recentlyDeleted.has('GAS:' + gas.index), true);
+    assert.equal(screen.recentlyDeleted.has('PETROL:' + petrol.index), true, 'recentlyDeleted vale para a gasolina');
+    assert.equal(screen.recentlyDeleted.has('PETROL:' + gas.index) && gas.index !== petrol.index, false);
+    assert.equal(alerts.length, 1);
+    assert.match(alerts[0].message, new RegExp(`o ponto ${gas.index + 1} do GNV — ele estava fora da curva\\.`));
+    assert.match(alerts[0].message, new RegExp(`o ponto ${petrol.index + 1} da gasolina — ele estava fora da curva\\.`));
+    assert.equal(app.byId('autocalAutoCleanLine').textContent, 'Limpeza automática: ligada · 2 pontos reaprendidos nesta sessão');
+    L.assertClean(app, 'apagamento automático nos dois combustíveis');
+  } finally { app.destroy(); }
+});
+
+test('estado da ação automática da gasolina fala da gasolina', () => {
+  const app = L.boot(); try {
+    app.go('autocal'); app.settle(3);
+    const screen = app.win.OmegasApp.autoCalCockpit;
+    const host = app.byId('autocalActionStatus');
+    app.world.autocalActionStatus = {
+      state: 'CONFIRMED', busy: false, action: 'DELETE_POINT', automatic: true, humanConfirmed: false,
+      message: 'gasolina: 1 ponto(s) fora da curva liberado(s) automaticamente; readback confirmado',
+      details: { pointDelete: { fuel: 'PETROL', index: 2 }, details: { fuel: 'PETROL', targets: [{ fuel: 'PETROL', index: 2 }] } },
+    };
+    screen.refresh();
+    assert.equal(host.textContent, 'O app pediu para a ECU reaprender o ponto 3 da gasolina — ele estava fora da curva.');
+    assert.doesNotMatch(host.textContent, TECH);
   } finally { app.destroy(); }
 });
 
@@ -151,17 +197,17 @@ test('estado da ação automática nunca vira "você confirmou" nem mostra jarg�
       message: 'Relendo GNV e gasolina antes de apagar', details: { bands: [{ band: 4, point: 5 }] },
     };
     screen.refresh();
-    assert.match(host.textContent, /O app está pedindo para a ECU reaprender o ponto 5 do GNV/);
+    assert.match(host.textContent, /O app está pedindo para a ECU reaprender o ponto 5 do GNV, que estava fora da curva/);
     assert.doesNotMatch(host.textContent, TECH);
     assert.notEqual(app.$('[data-autocal-toggle]').textContent, 'Confirmando ECU…', 'a limpeza não finge que o dono pediu algo');
     assert.equal(app.$('[data-autocal-toggle]').textContent, toggleBefore);
     app.world.autocalActionStatus = {
       state: 'CONFIRMED', busy: false, action: 'DELETE_POINT', automatic: true, humanConfirmed: false,
-      message: 'GNV: 1 ponto(s) aprendido(s) na lenta liberado(s) automaticamente; readback confirmado',
+      message: 'GNV: 1 ponto(s) fora da curva liberado(s) automaticamente; readback confirmado',
       details: { pointDelete: { fuel: 'GAS', index: 4 }, details: { targets: [{ fuel: 'GAS', index: 4 }] } },
     };
     screen.refresh();
-    assert.equal(host.textContent, 'O app pediu para a ECU reaprender o ponto 5 do GNV andando — ele tinha sido aprendido com o carro parado.');
+    assert.equal(host.textContent, 'O app pediu para a ECU reaprender o ponto 5 do GNV — ele estava fora da curva.');
     assert.doesNotMatch(host.textContent, /Pronto|você|confirm|readback/i);
     app.world.autocalActionStatus = {
       state: 'FAILED', busy: false, action: 'DELETE_POINT', automatic: true, humanConfirmed: false,

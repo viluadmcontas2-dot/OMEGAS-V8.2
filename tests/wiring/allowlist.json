@@ -159,7 +159,7 @@
     "readFailure": "autopilot.readFailure: falha de leitura do AutoCal (monitor -> fases -> RefinoState/headline), lida pelo Kotlin; a tela recebe a frase humana, nao a chave",
     "countStale": "autoMatchProgressJson.countStale: contador de AutoMatch da ultima leitura boa durante um probe falho (so diagnostico/sessao)",
     "ecuLinkMessage": "getStatus.ecuLinkMessage: frase da engine para diagnostico/sessao; a tela usa ecuLinkState traduzido por connectionState",
-    "appAutomaticWriteScope": "auditoria do status nativo: diz que a unica escrita automatica do app e o apagamento de pontos GNV aprendidos na lenta (spec 2026-10-07); vai para o log de sessao, nao para a tela"
+    "appAutomaticWriteScope": "auditoria do status nativo: diz que a unica escrita automatica do app e o apagamento de pontos fora da curva do GNV e da gasolina, DELETE_OUTLIER_POINTS (spec 2026-10-07 rev2); vai para o log de sessao, nao para a tela"
   },
   "defects": {
     "usbDevice": "DEFECT-1: getStatus.usbDevice nunca e lido; a tela nao diz qual cabo/dispositivo (M1)",
