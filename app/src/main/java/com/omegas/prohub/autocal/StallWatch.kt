@@ -35,7 +35,7 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
         const val RUNNING_RPM = 600.0
         const val DEAD_RPM = 300.0
         /** Condução de verdade (acima da lenta) nos 2 s anteriores a uma queda brusca. */
-        const val DRIVING_RPM = 1_000.0
+        const val DRIVING_RPM = RegimeThresholds.DRIVING_RPM
         /** RPM < DEAD_RPM por este tempo, com telemetria chegando = apagou (não foi ruído). */
         const val CONFIRM_MS = 800L
         /** Janela antes da queda onde o motor tem que estar girando no GNV. */

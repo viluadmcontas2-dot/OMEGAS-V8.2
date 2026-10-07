@@ -62,9 +62,10 @@ class StallLocalFixGatesTest {
         }
         val driving = watch(1_400.0).json().getJSONArray("regions").getJSONObject(0)
         assertEquals(3, driving.getJSONArray("drivingAts").length())
-        val idle = watch(1_100.0).json().getJSONArray("regions").getJSONObject(0)
-        assertEquals(3, idle.getInt("count"))
-        assertEquals(0, idle.getJSONArray("drivingAts").length())
+        // Limiar único de 1200 rpm: dip que parte de 1100 rpm (lenta alta) nem chega a ser registrado como quase apagão.
+        val idle = watch(1_100.0).json()
+        assertEquals(0, idle.getInt("nearCount"))
+        assertEquals(0, idle.getJSONArray("regions").length())
     }
 
     @Test

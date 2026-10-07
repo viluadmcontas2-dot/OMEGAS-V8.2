@@ -45,7 +45,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
          * Abaixo disso a ECU tem estratégia de lenta própria: fora do índice de condução. 1200 rpm vem das 85 sessões
          * reais (rpm < 1200: mesmo MAP dá +20–30% de ms na gasolina). Também é a fronteira de regime do pareamento.
          */
-        const val DRIVING_MIN_RPM = 1_200.0
+        const val DRIVING_MIN_RPM = RegimeThresholds.DRIVING_RPM
         val BANDS = listOf(3.0 to 4.5, 4.5 to 6.0, 6.0 to 7.5, 7.5 to 9.0, 9.0 to 12.0)
         private const val SAVE_INTERVAL_MS = 60_000L
         /** O índice só é recalculado se algo mudou E passou ao menos isto desde o último cálculo (mudança estrutural fura). */
