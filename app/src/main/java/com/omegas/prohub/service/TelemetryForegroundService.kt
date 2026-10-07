@@ -105,7 +105,7 @@ class TelemetryForegroundService : Service() {
         Thread(runnable, "omegas-autocal-tick").apply { isDaemon = true }
     }
     /**
-     * Thread própria do apagamento automático de pontos GNV aprendidos na lenta: decide fora do autoCalTick
+     * Thread própria do apagamento automático de pontos fora da curva (GNV e gasolina): decide fora do autoCalTick
      * (que só entrega leituras) e reavalia a cada 500 ms, porque o carro pode começar a andar sem leitura nova.
      */
     private val autoIdleExecutor = Executors.newSingleThreadScheduledExecutor { runnable ->
@@ -169,7 +169,7 @@ class TelemetryForegroundService : Service() {
     lateinit var nativeAutoCal: NativeAutoCalMonitor
         private set
     /**
-     * Ações AutoCal nativas (manuais e o apagamento automático GNV na lenta). Mora no serviço, não na tela:
+     * Ações AutoCal nativas (manuais e o apagamento automático de pontos fora da curva). Mora no serviço, não na tela:
      * o automático funciona com a WebView fechada e a ponte só usa esta instância.
      */
     lateinit var nativeActions: AutoCalNativeActionManager
@@ -403,8 +403,8 @@ class TelemetryForegroundService : Service() {
             // Overlay/notificação nunca rodam na thread do autoCalTick: vão para a faixa de análise (coalescente).
             onStateChanged = { analysisLane.submit { stateChanged() } },
             onTablesChanged = { publishRevision(RuntimeSnapshotBus.Kind.TABLES) },
-            onGasBuffersConfirmed = { buffers ->
-                if (::autoIdleCleanup.isInitialized) autoIdleCleanup.onGasBuffers(buffers)
+            onBuffersConfirmed = { buffers ->
+                if (::autoIdleCleanup.isInitialized) autoIdleCleanup.onBuffers(buffers)
             },
             onAcquisitionReset = { sessionChanged, sessionId ->
                 if (::autoIdleCleanup.isInitialized) {
@@ -475,9 +475,9 @@ class TelemetryForegroundService : Service() {
                 JSONObject()
                     .put("schema", "landi-autocal-18x30-v2")
                     .put("source", "ECU_NATIVE")
-                    // Única escrita automática: apagar pontos GNV aprendidos na lenta (spec 2026-10-07).
+                    // Única escrita automática: apagar pontos fora da curva do GNV e da gasolina (spec 2026-10-07 rev2).
                     .put("automaticCalibration", autoIdleCleanup.automaticEnabled())
-                    .put("automaticScope", "DELETE_GNV_IDLE_POINTS")
+                    .put("automaticScope", "DELETE_OUTLIER_POINTS")
                     .put("manualOnly", false)
             },
             mergeAutoCalContext = { payload ->

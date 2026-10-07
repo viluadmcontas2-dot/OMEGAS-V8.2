@@ -28,6 +28,8 @@ class IdleAcquisitionTracker(
     private val idleFractionToMark: Double = IDLE_FRACTION_TO_MARK,
     private val drivingFractionToClear: Double = DRIVING_FRACTION_MAX_IDLE,
     private val bandCount: Int = BAND_COUNT,
+    /** Combustível dos quadros que contam (GNV por padrão; a gasolina usa o seu na revisão 2). */
+    private val fuelNames: Set<String> = GNV_NAMES,
 ) {
     enum class Regime { LENTA, ANDANDO, INDEFINIDO }
 
@@ -73,6 +75,10 @@ class IdleAcquisitionTracker(
 
     private var previous: Reading? = null
     private val marks = linkedMapOf<Int, Evidence>()
+    private val latest = HashMap<Int, Acquisition>()
+
+    /** Regime da última aquisição observada da banda (evidência do recibo na revisão 2), ou nulo. */
+    fun lastAcquisition(band: Int): Acquisition? = latest[band]
 
     /** Bandas marcadas como "última aquisição na lenta", com a evidência. */
     fun idleBands(): Map<Int, Evidence> = LinkedHashMap(marks)
@@ -122,7 +128,7 @@ class IdleAcquisitionTracker(
             val mapRaw = reading.mapRaw?.getOrNull(band) ?: 0
             val mapBar = AutoCalScale.mapBar(mapRaw)
             val matching = window.filter { frame ->
-                frame.plausible && frame.fuel.uppercase() in GNV_NAMES && abs(frame.mapBar - mapBar) < mapToleranceBar
+                frame.plausible && frame.fuel.uppercase() in fuelNames && abs(frame.mapBar - mapBar) < mapToleranceBar
             }
             val idle = matching.count { it.rpm < idleRpm }
             val fraction = if (matching.isEmpty()) 0.0 else idle.toDouble() / matching.size
@@ -147,7 +153,7 @@ class IdleAcquisitionTracker(
                 toElapsedMs = reading.observedAtElapsedMs,
             )
             if (regime == Regime.LENTA) marks[band] = evidence else marks.remove(band)
-            Acquisition(band, regime, evidence)
+            Acquisition(band, regime, evidence).also { latest[band] = it }
         }
     }
 
@@ -168,6 +174,7 @@ class IdleAcquisitionTracker(
     fun reset() {
         previous = null
         marks.clear()
+        latest.clear()
     }
 
     fun json(): JSONObject = JSONObject()

@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
  * do OMEGAS não substitui comandos/estados nativos. Projeção, leitura manual e monitor nativo permanecem separados. As ações nativas
  * ficam numa superfície separada: são preparadas, revisadas no OMEGAS e então
  * executadas diretamente pelo manager canônico com ACK/readback. O manager mora no serviço
- * ([TelemetryForegroundService.nativeActions]): o apagamento automático de pontos GNV aprendidos na lenta
+ * ([TelemetryForegroundService.nativeActions]): o apagamento automático de pontos fora da curva
  * (spec 2026-10-07) funciona com a tela fechada, e esta ponte só usa a mesma instância.
  */
 class AutoCalJavascriptBridge(activity: MainActivity) {
@@ -102,7 +102,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         currentNativeManager()?.statusJson()?.toString() ?: unavailable()
 
     /**
-     * Limpeza automática do GNV (pontos aprendidos na lenta), para a linha discreta do AutoCal: ligada ou pausada,
+     * Limpeza automática (pontos fora da curva do GNV e da gasolina), para a linha discreta do AutoCal: ligada ou pausada,
      * o motivo (código; a tela traduz), quantos pontos o app pediu para reaprender nesta conexão e os apagamentos
      * recentes (a tela acinzenta esses pontos até a próxima leitura da ECU, como no apagamento pelo dono).
      */
@@ -123,6 +123,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                         array.put(
                             JSONObject()
                                 .put("receiptId", item.receiptId)
+                                .put("fuel", item.fuel.wireName)
                                 .put("indexes", JSONArray(item.indexes))
                                 .put("atMs", item.atMs),
                         )
@@ -282,9 +283,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("nativeActionsManual", true)
         .put("nativeActionsMutateEcu", true)
         .put("nativeAndroidConfirmation", false)
-        // Única escrita automática do app: apagar pontos GNV aprendidos na lenta (spec 2026-10-07).
+        // Única escrita automática do app: apagar pontos fora da curva do GNV e da gasolina (spec 2026-10-07 rev2).
         .put("appAutomaticWrite", activityRef.get()?.serviceOrNull()?.autoIdleCleanup?.automaticEnabled() == true)
-        .put("appAutomaticWriteScope", "DELETE_GNV_IDLE_POINTS")
+        .put("appAutomaticWriteScope", "DELETE_OUTLIER_POINTS")
         .put("nativeAutoMatchInsideEcu", true)
         .put("manualAutoMatchExposed", false)
         .put("obdIndependent", true)

@@ -1,21 +1,23 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Fuel
 import com.omegas.prohub.ecu.NativeAnchorTelemetryWindow
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Política pura do apagamento automático (spec 2026-10-07-autocal-apagar-lenta):
- * "banda do GNV cuja última aquisição foi na lenta → quando o carro estiver andando, apaga".
+ * Política pura do apagamento automático (spec 2026-10-07-autocal-apagar-lenta, revisão 2):
+ * "banda fora da curva → apaga com o carro rodando no combustível dela".
  *
- * Dispara quando: há banda marcada pelo [IdleAcquisitionTracker] com contador > 0 na última
- * leitura; o quadro de telemetria mais recente (fresco) é GNV com rpm >= 1000; AUTO_CAL_ENABLE == 1;
- * a sessão USB já passou do tempo de estabilização; e passaram >= 5 s do último apagamento
- * BEM-SUCEDIDO. Não há teto por sessão nem por ponto; não há guarda de AutoMatch (apagar antes do
- * AutoMatch é intencional). "Tentar depois" (porta ocupada, preparação manual) não consome o intervalo.
+ * Dispara quando: há banda fora da curva ([OutlierCurveTracker]) com contador > 0 na última leitura de um
+ * combustível; o quadro de telemetria mais recente (fresco) é desse MESMO combustível com rpm >= 1000 (GNV
+ * fora da curva com o carro em GNV; gasolina fora da curva com o carro em gasolina); AUTO_CAL_ENABLE == 1; a
+ * sessão USB já passou do tempo de estabilização; e passaram >= 5 s do último apagamento (intervalo global,
+ * um combustível por comando). Não há teto por ponto nem "forma real": o ponto contaminado volta no mesmo
+ * lugar e é apagado de novo. "Tentar depois" (porta ocupada, preparação manual) não consome o intervalo.
  *
- * Falha com mutação possível: bloqueia [failureBlockMs] e exige uma releitura nova dos buffers GNV.
- * Readback ineficaz ou gasolina alterada de forma anormal: [disable] até a próxima sessão USB.
+ * Toda falha consome tempo; com mutação possível, bloqueia [failureBlockMs] e exige releitura. Readback
+ * ineficaz, guarda do outro combustível ou 5 falhas seguidas: [disable] até a próxima sessão USB.
  *
  * Não é thread-safe: o coordenador o usa a partir de um único executor.
  */
@@ -28,8 +30,8 @@ class AutoIdlePointCleaner(
 ) {
     class Input(
         val nowElapsedMs: Long,
-        val idleBands: Map<Int, IdleAcquisitionTracker.Evidence>,
-        val lastCounters: IntArray?,
+        /** Bandas fora da curva por combustível (as com contador 0 são ignoradas). */
+        val candidates: Map<Fuel, List<OutlierCurveTracker.Outlier>>,
         val latestFrame: NativeAnchorTelemetryWindow.Frame?,
         val autoCalEnabled: Int?,
         val sessionAgeMs: Long,
@@ -37,8 +39,9 @@ class AutoIdlePointCleaner(
 
     sealed class Decision {
         data class Delete(
+            val fuel: Fuel,
             val bands: List<Int>,
-            val evidence: List<IdleAcquisitionTracker.Evidence>,
+            val outliers: List<OutlierCurveTracker.Outlier>,
             val frame: NativeAnchorTelemetryWindow.Frame,
         ) : Decision()
 
@@ -58,26 +61,33 @@ class AutoIdlePointCleaner(
         disabledReason?.let { return Decision.Wait("Apagamento automático desligado nesta sessão: $it") }
         if (input.autoCalEnabled != 1) return Decision.Wait("AUTO_CAL_ENABLE não está em 1")
         if (input.sessionAgeMs < settleMs) return Decision.Wait("Sessão USB ainda estabilizando")
-        if (needsReread) return Decision.Wait("Aguardando releitura dos buffers GNV depois de falha")
+        if (needsReread) return Decision.Wait("Aguardando releitura dos buffers depois de falha")
         if (input.nowElapsedMs < blockedUntilMs) return Decision.Wait("Automático bloqueado depois de falha")
         lastSuccessAtMs?.let { last ->
             if (input.nowElapsedMs - last < minIntervalMs) return Decision.Wait("Intervalo mínimo entre apagamentos")
         }
-        if (input.idleBands.isEmpty()) return Decision.Wait("Nenhuma banda GNV marcada como lenta")
-        val counters = input.lastCounters
-        val targets = input.idleBands.keys
-            .filter { band -> band in 0 until IdleAcquisitionTracker.BAND_COUNT }
-            .filter { band -> (counters?.getOrNull(band) ?: 0) > 0 }
-            .sorted()
-        if (targets.isEmpty()) return Decision.Wait("Bandas marcadas já estão vazias na última leitura")
+        val usable = input.candidates.mapValues { (_, list) ->
+            list.filter { it.counter > 0 && it.band in 0 until IdleAcquisitionTracker.BAND_COUNT }.sortedBy { it.band }
+        }.filterValues { it.isNotEmpty() }
+        if (usable.isEmpty()) return Decision.Wait("Nenhum ponto fora da curva")
         val frame = input.latestFrame
-        val moving = frame != null &&
+        val running = frame != null &&
             frame.plausible &&
-            frame.fuel.uppercase() in IdleAcquisitionTracker.GNV_NAMES &&
             frame.rpm >= drivingRpm &&
             input.nowElapsedMs - frame.elapsedMs in 0..frameMaxAgeMs
-        if (!moving) return Decision.Wait("Aguardando o carro andando no GNV (rpm >= $drivingRpm)")
-        return Decision.Delete(targets, targets.mapNotNull { input.idleBands[it] }, frame!!)
+        val frameFuel = frame?.let { fuelOf(it.fuel) }
+        val outliers = if (running && frameFuel != null) usable[frameFuel] else null
+        if (outliers == null) {
+            val waiting = usable.keys.joinToString(" e ") { if (it == Fuel.GAS) "no GNV" else "na gasolina" }
+            return Decision.Wait("Aguardando o carro rodando $waiting (rpm >= $drivingRpm)")
+        }
+        return Decision.Delete(frameFuel!!, outliers.map { it.band }, outliers, frame!!)
+    }
+
+    private fun fuelOf(wire: String): Fuel? = when (wire.uppercase()) {
+        in IdleAcquisitionTracker.GNV_NAMES -> Fuel.GAS
+        "GASOLINA", "PETROL" -> Fuel.PETROL
+        else -> null
     }
 
     /**

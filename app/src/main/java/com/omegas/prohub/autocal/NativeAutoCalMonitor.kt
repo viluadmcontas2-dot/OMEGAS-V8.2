@@ -1,6 +1,7 @@
 package com.omegas.prohub.autocal
 
 import android.os.SystemClock
+import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Fuel
 import com.omegas.prohub.ecu.AutoCalProtocol
 import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
@@ -41,13 +42,14 @@ class NativeAutoCalMonitor(
     private val onTablesChanged: () -> Unit = {},
     private val clockMs: () -> Long = { SystemClock.elapsedRealtime() },
     /**
-     * Leitura confirmada dos buffers GNV (grupo G4 aceito pela época, ou snapshot completo), entregue ao
-     * apagamento automático de pontos aprendidos na lenta. Deve só enfileirar: roda na thread do autoCalTick.
+     * Leitura confirmada dos buffers de um combustível (G2 gasolina / G4 GNV aceitos pela época, ou snapshot
+     * completo), entregue ao apagamento automático de pontos fora da curva. Deve só enfileirar: roda na thread
+     * do autoCalTick.
      */
-    private val onGasBuffersConfirmed: (AutoIdleCleanupCoordinator.GasBuffers) -> Unit = {},
+    private val onBuffersConfirmed: (AutoIdleCleanupCoordinator.Buffers) -> Unit = {},
     /** As leituras anteriores deixaram de valer: `sessionChanged`=true para sessão USB nova/encerrada. */
     private val onAcquisitionReset: (sessionChanged: Boolean, sessionId: Long) -> Unit = { _, _ -> },
-    /** Verdade sobre escrita automática do app (só o apagamento de pontos GNV na lenta, quando ligado). */
+    /** Verdade sobre escrita automática do app (só o apagamento de pontos fora da curva, quando ligado). */
     private val appAutomaticWriteEnabled: () -> Boolean = { false },
 ) {
     private data class PendingMaturity(
@@ -590,11 +592,14 @@ class NativeAutoCalMonitor(
                 slice = group.label,
             )
             when (group) {
-                NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS -> synchronized(lock) {
-                    scratch.petrolCounters = vector(read.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR)
+                NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS -> {
+                    synchronized(lock) {
+                        scratch.petrolCounters = vector(read.snapshot, AutoCalProtocol.NUM_BUF_UPD_PETR)
+                    }
+                    publishBuffers(Fuel.PETROL, currentSession, read.snapshot, read.observedAtElapsedMs)
                 }
                 NativeAutoCalRefreshPlanner.Group.G4_GAS -> {
-                    publishGasBuffers(currentSession, read.snapshot, read.observedAtElapsedMs)
+                    publishBuffers(Fuel.GAS, currentSession, read.snapshot, read.observedAtElapsedMs)
                     val thresholds = synchronized(lock) { Triple(gasLowThreshold, gasNormalThreshold, autoCalEnabled) }
                     synchronized(lock) {
                         acquisitionEpoch.acquisitionGroup(
@@ -672,18 +677,22 @@ class NativeAutoCalMonitor(
             .put("slotArbiter", arbiter.json())
             .put("roundRemaining", JSONArray().also { array -> refreshPlanner.roundRemaining().forEach { array.put(it.label) } })
             .put("appAutomaticWrite", appAutomaticWriteEnabled())
-            .put("appAutomaticWriteScope", if (appAutomaticWriteEnabled()) "DELETE_GNV_IDLE_POINTS" else "NONE")
+            .put("appAutomaticWriteScope", if (appAutomaticWriteEnabled()) "DELETE_OUTLIER_POINTS" else "NONE")
             .put("manualAutoMatchExposed", false)
     }
 
-    /** Entrega uma leitura confirmada dos três buffers GNV ao apagamento automático (só enfileira). */
-    private fun publishGasBuffers(currentSession: Long, snapshot: AutoCalSnapshot, observedAtElapsedMs: Long) {
-        val counters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS) ?: return
-        val time = vector(snapshot, AutoCalProtocol.PETR_INJ_TBUF_GAS) ?: return
-        val map = vector(snapshot, AutoCalProtocol.MNFLD_PRESS_BUF_GAS) ?: return
+    /** Entrega uma leitura confirmada dos três buffers de [fuel] ao apagamento automático (só enfileira). */
+    private fun publishBuffers(fuel: Fuel, currentSession: Long, snapshot: AutoCalSnapshot, observedAtElapsedMs: Long) {
+        val (counterField, timeField, mapField) = when (fuel) {
+            Fuel.GAS -> Triple(AutoCalProtocol.NUM_BUF_UPD_GAS, AutoCalProtocol.PETR_INJ_TBUF_GAS, AutoCalProtocol.MNFLD_PRESS_BUF_GAS)
+            Fuel.PETROL -> Triple(AutoCalProtocol.NUM_BUF_UPD_PETR, AutoCalProtocol.PETR_INJ_TBUF, AutoCalProtocol.MNFLD_PRESS_BUF)
+        }
+        val counters = vector(snapshot, counterField) ?: return
+        val time = vector(snapshot, timeField) ?: return
+        val map = vector(snapshot, mapField) ?: return
         try {
-            onGasBuffersConfirmed(
-                AutoIdleCleanupCoordinator.GasBuffers(currentSession, counters, time, map, observedAtElapsedMs),
+            onBuffersConfirmed(
+                AutoIdleCleanupCoordinator.Buffers(currentSession, fuel, counters, time, map, observedAtElapsedMs),
             )
         } catch (_: Exception) {}
     }
@@ -1160,6 +1169,7 @@ class NativeAutoCalMonitor(
         // Quando o NUM_BUF_UPD_GAS desta varredura foi lido (elapsed): é o instante da leitura GNV que vai para o
         // apagamento automático, não o fim do snapshot (revisão 2026-10-07 #8).
         var gasCountersReadAtElapsedMs = 0L
+        var petrolCountersReadAtElapsedMs = 0L
         var sliceOpen = false
         var sliceOwned = false
         try {
@@ -1179,6 +1189,7 @@ class NativeAutoCalMonitor(
                     workClass = Mp48WorkClass.READ_ONLY,
                 )
                 if (field == AutoCalProtocol.NUM_BUF_UPD_GAS) gasCountersReadAtElapsedMs = SystemClock.elapsedRealtime()
+                if (field == AutoCalProtocol.NUM_BUF_UPD_PETR) petrolCountersReadAtElapsedMs = SystemClock.elapsedRealtime()
                 observations += AutoCalReadObservation(
                     field = field,
                     status = reply.status.takeIf { it >= 0 },
@@ -1475,10 +1486,17 @@ class NativeAutoCalMonitor(
         if (tablesChangedByFullSnapshot) {
             try { onTablesChanged() } catch (_: Exception) {}
         }
-        publishGasBuffers(
+        publishBuffers(
+            Fuel.GAS,
             expectedSessionId,
             snapshot,
             gasCountersReadAtElapsedMs.takeIf { it > 0L } ?: afterMulActCapturedAtElapsedMs,
+        )
+        publishBuffers(
+            Fuel.PETROL,
+            expectedSessionId,
+            snapshot,
+            petrolCountersReadAtElapsedMs.takeIf { it > 0L } ?: afterMulActCapturedAtElapsedMs,
         )
         if (enabled == 1) {
             try { onFreshSnapshot(decorated) } catch (_: Exception) {}

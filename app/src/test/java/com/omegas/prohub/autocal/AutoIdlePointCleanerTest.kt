@@ -1,41 +1,64 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Fuel
 import com.omegas.prohub.ecu.NativeAnchorTelemetryWindow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Classe 1: política pura do apagamento automático de pontos GNV aprendidos na lenta. */
+/** Classe 1: política pura do apagamento automático de pontos fora da curva, GNV e gasolina (spec rev2). */
 class AutoIdlePointCleanerTest {
     private val cleaner = AutoIdlePointCleaner()
     private val settled = AutoIdlePointCleaner.SESSION_SETTLE_MS + 1
 
     @Test
-    fun `lenta depois andou apaga todas as bandas marcadas com contador`() {
-        val decision = cleaner.decide(input(now = 20_000, marks = listOf(4, 6), counters = counters(4 to 3, 6 to 2)))
+    fun `GNV fora da curva com carro rodando em GNV apaga as bandas do GNV`() {
+        val decision = cleaner.decide(input(now = 20_000, marks = listOf(4, 6)))
         assertTrue(decision is AutoIdlePointCleaner.Decision.Delete)
-        assertEquals(listOf(4, 6), (decision as AutoIdlePointCleaner.Decision.Delete).bands)
+        decision as AutoIdlePointCleaner.Decision.Delete
+        assertEquals(Fuel.GAS, decision.fuel)
+        assertEquals(listOf(4, 6), decision.bands)
     }
 
     @Test
-    fun `carro parado na lenta nao apaga`() {
-        val decision = cleaner.decide(input(now = 20_000, marks = listOf(4), rpm = 850))
-        assertWait(decision, "andando")
+    fun `carro parado em marcha lenta nao apaga`() {
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), rpm = 850)), "rodando")
     }
 
     @Test
-    fun `sem banda marcada nao apaga mesmo andando`() {
-        assertWait(cleaner.decide(input(now = 20_000, marks = emptyList())), "Nenhuma")
+    fun `sem ponto fora da curva nao apaga`() {
+        assertWait(cleaner.decide(input(now = 20_000, marks = emptyList())), "Nenhum")
     }
 
     @Test
-    fun `combustivel gasolina nao apaga`() {
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), fuel = "GASOLINA")), "andando")
+    fun `GNV fora da curva com carro em gasolina espera`() {
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), fuel = "GASOLINA")), "rodando")
+    }
+
+    @Test
+    fun `gasolina fora da curva com carro em GNV espera`() {
+        assertWait(cleaner.decide(input(now = 20_000, marks = emptyList(), petrol = listOf(5), fuel = "GNV")), "gasolina")
+    }
+
+    @Test
+    fun `gasolina fora da curva com carro em gasolina apaga so a gasolina`() {
+        val decision = cleaner.decide(input(now = 20_000, marks = listOf(4), petrol = listOf(5), fuel = "GASOLINA"))
+        decision as AutoIdlePointCleaner.Decision.Delete
+        assertEquals(Fuel.PETROL, decision.fuel)
+        assertEquals(listOf(5), decision.bands)
+    }
+
+    @Test
+    fun `os dois fora da curva com carro em GNV apaga so o GNV`() {
+        val decision = cleaner.decide(input(now = 20_000, marks = listOf(4), petrol = listOf(5), fuel = "GNV"))
+        decision as AutoIdlePointCleaner.Decision.Delete
+        assertEquals(Fuel.GAS, decision.fuel)
+        assertEquals(listOf(4), decision.bands)
     }
 
     @Test
     fun `quadro velho de telemetria nao conta como andando`() {
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), frameAt = 17_000)), "andando")
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), frameAt = 17_000)), "rodando")
     }
 
     @Test
@@ -63,8 +86,8 @@ class AutoIdlePointCleanerTest {
     }
 
     @Test
-    fun `banda marcada mas ja vazia na ultima leitura nao vira alvo`() {
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), counters = counters(4 to 0))), "vazia")
+    fun `banda fora da curva mas ja vazia na ultima leitura nao vira alvo`() {
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), counters = counters(4 to 0))), "Nenhum")
     }
 
     @Test
@@ -144,6 +167,7 @@ class AutoIdlePointCleanerTest {
     private fun input(
         now: Long,
         marks: List<Int>,
+        petrol: List<Int> = emptyList(),
         counters: IntArray = IntArray(18) { 3 },
         rpm: Int = 2_000,
         fuel: String = "GNV",
@@ -152,15 +176,15 @@ class AutoIdlePointCleanerTest {
         sessionAge: Long = settled,
     ) = AutoIdlePointCleaner.Input(
         nowElapsedMs = now,
-        idleBands = marks.associateWith { evidence(it) },
-        lastCounters = counters,
+        candidates = mapOf(
+            Fuel.GAS to marks.map { outlier(Fuel.GAS, it, counters[it]) },
+            Fuel.PETROL to petrol.map { outlier(Fuel.PETROL, it, counters[it]) },
+        ),
         latestFrame = NativeAnchorTelemetryWindow.Frame(1, frameAt, rpm, 0.6, 4.0, fuel),
         autoCalEnabled = enabled,
         sessionAgeMs = sessionAge,
     )
 
-    private fun evidence(band: Int) = IdleAcquisitionTracker.Evidence(
-        band = band, frames = 5, idleFrames = 5, idleFraction = 1.0, mapBar = 0.4, mapRaw = 410,
-        counterBefore = 1, counterAfter = 2, valueChangedAtSameCounter = false, fromElapsedMs = 0, toElapsedMs = 1,
-    )
+    private fun outlier(fuel: Fuel, band: Int, counter: Int) =
+        OutlierCurveTracker.Outlier(fuel, band, counter, 1_500, 410, 1_500 / 512.0, 410 / 1024.0)
 }

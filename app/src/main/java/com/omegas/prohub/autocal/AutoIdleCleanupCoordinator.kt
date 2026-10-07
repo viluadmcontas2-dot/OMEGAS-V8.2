@@ -1,20 +1,25 @@
 package com.omegas.prohub.autocal
 
 import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol
+import com.omegas.prohub.ecu.AutoCalPointDeleteProtocol.Fuel
 import com.omegas.prohub.ecu.Mp48TelemetryWindowSource
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.Executor
 
 /**
- * Apagamento automático de pontos do GNV aprendidos na marcha lenta (spec 2026-10-07-autocal-apagar-lenta).
+ * Apagamento automático de pontos FORA DA CURVA do GNV e da gasolina (spec 2026-10-07-autocal-apagar-lenta,
+ * revisão 2): banda fora da curva é apagada toda vez que estiver fora, com o carro rodando no combustível dela
+ * (rpm >= 1000), um combustível por comando e 5 s entre apagamentos.
  *
- * Liga o [IdleAcquisitionTracker] (detecção), o [AutoIdlePointCleaner] (política) e o
- * [AutoCalNativeActionManager.executeAutomaticPointDelete] (execução). Mora no serviço: funciona com a
- * tela fechada. Toda decisão roda no [executor] próprio, nunca na thread do autoCalTick — o monitor só
- * entrega as leituras confirmadas dos buffers GNV ([onGasBuffers]) e volta.
+ * Liga o [OutlierCurveTracker] (detecção), o [AutoIdlePointCleaner] (política) e o
+ * [AutoCalNativeActionManager.executeAutomaticPointDelete] (execução). O [IdleAcquisitionTracker] continua só
+ * como evidência no recibo (fração de quadros com rpm < 1000 na última aquisição da banda). Mora no serviço:
+ * funciona com a tela fechada. Toda decisão roda no [executor] próprio, nunca na thread do autoCalTick — o
+ * monitor só entrega as leituras confirmadas dos buffers ([onBuffers]) e volta.
  *
- * Exceção à regra "nada muda sozinho": só GNV, com readback e registro. Gasolina e Curva K continuam só com o dono.
+ * Exceção à regra "nada muda sozinho": GNV e gasolina, com readback, guarda do outro combustível e registro.
+ * Curva K continua só com o dono.
  */
 class AutoIdleCleanupCoordinator(
     private val telemetry: Mp48TelemetryWindowSource,
@@ -27,9 +32,10 @@ class AutoIdleCleanupCoordinator(
     private val clock: () -> Long,
     private val executor: Executor,
 ) {
-    /** Leitura confirmada dos três buffers GNV (grupo G4 ou snapshot completo), no relógio elapsed. */
-    class GasBuffers(
+    /** Leitura confirmada dos três buffers de um combustível (G2/G4 ou snapshot completo), no relógio elapsed. */
+    class Buffers(
         val sessionId: Long,
+        val fuel: Fuel,
         val counters: IntArray,
         val timeRaw: IntArray?,
         val mapRaw: IntArray?,
@@ -37,10 +43,10 @@ class AutoIdleCleanupCoordinator(
     )
 
     /** Por que o automático pausou nesta sessão; a tela traduz em português simples. */
-    enum class PauseCode { PETROL_GUARD, REPEATED_FAILURES, READBACK_INEFFECTIVE }
+    enum class PauseCode { OTHER_FUEL_GUARD, REPEATED_FAILURES, READBACK_INEFFECTIVE }
 
     /** Apagamento automático confirmado pela ECU (só as bandas com readback que provou o apagamento). */
-    class RecentDelete(val receiptId: String, val indexes: List<Int>, val atMs: Long)
+    class RecentDelete(val receiptId: String, val fuel: Fuel, val indexes: List<Int>, val atMs: Long)
 
     /** O que a tela do AutoCal mostra: ligado/pausado, motivo e quantos pontos o app pediu para reaprender. */
     class UiSummary(
@@ -51,7 +57,11 @@ class AutoIdleCleanupCoordinator(
         val recentDeletes: List<RecentDelete>,
     )
 
-    private val tracker = IdleAcquisitionTracker()
+    private val outliers = OutlierCurveTracker()
+    private val regimes = mapOf(
+        Fuel.GAS to IdleAcquisitionTracker(fuelNames = IdleAcquisitionTracker.GNV_NAMES),
+        Fuel.PETROL to IdleAcquisitionTracker(fuelNames = PETROL_NAMES),
+    )
     private val cleaner = AutoIdlePointCleaner()
     private var sessionId = 0L
     private var inFlightSinceMs: Long? = null
@@ -63,23 +73,32 @@ class AutoIdleCleanupCoordinator(
     private val recent = ArrayDeque<RecentDelete>()
     @Volatile private var summary = UiSummary(false, true, null, 0, emptyList())
 
-    fun onGasBuffers(buffers: GasBuffers) = submit {
+    fun onBuffers(buffers: Buffers) = submit {
         if (buffers.sessionId != sessionId) resetSessionLocked(buffers.sessionId)
-        tracker.observe(
-            IdleAcquisitionTracker.Reading(buffers.counters, buffers.timeRaw, buffers.mapRaw, buffers.observedAtElapsedMs),
+        val time = buffers.timeRaw
+        val map = buffers.mapRaw
+        if (time != null && map != null) {
+            outliers.observe(
+                buffers.fuel,
+                OutlierCurveTracker.Reading(buffers.counters, time, map, buffers.observedAtElapsedMs),
+            )
+        }
+        regimes.getValue(buffers.fuel).observe(
+            IdleAcquisitionTracker.Reading(buffers.counters, time, map, buffers.observedAtElapsedMs),
         ) { from, to -> telemetry.recentTelemetryFrames(from, to) }
         cleaner.onReread()
         evaluateLocked()
     }
 
-    /** Chamado periodicamente: o carro pode começar a andar sem leitura nova dos buffers. */
+    /** Chamado periodicamente: o carro pode começar a rodar no combustível do ponto sem leitura nova. */
     fun evaluate() = submit { evaluateLocked() }
 
     fun onSessionChanged(newSessionId: Long) = submit { resetSessionLocked(newSessionId) }
 
     /** invalidateRound / ação manual confirmada: leituras anteriores não valem; intervalo e desligamento seguem. */
     fun onRoundInvalidated() = submit {
-        tracker.reset()
+        outliers.reset()
+        regimes.values.forEach { it.reset() }
         cleaner.reset()
         publish()
     }
@@ -88,20 +107,23 @@ class AutoIdleCleanupCoordinator(
         if (!receipt.optBoolean("automatic", false) || receipt.optString("action") != "DELETE_POINT") return@submit
         inFlightSinceMs = null
         val details = receipt.optJSONObject("details") ?: JSONObject()
+        val fuel = receiptFuel(receipt) ?: Fuel.GAS
         val ambiguousBands = bandsWithResult(details, "AMBIGUOUS")
-        // Readback ambíguo (revisão #1): consome o intervalo e espera releitura; nunca desliga a sessão.
+        // Readback ambíguo: consome o intervalo e espera releitura; nunca desliga a sessão.
         cleaner.onSucceeded(clock(), rereadRequired = details.optBoolean("readbackAmbiguous", false))
         val deleted = targetBands(details) - ambiguousBands.toSet()
-        tracker.markDeleted(deleted)
-        tracker.forget(ambiguousBands + intList(details.optJSONArray("skippedChanged")))
+        deleted.forEach { outliers.onDeleted(fuel, it) }
+        regimes.getValue(fuel).markDeleted(deleted)
+        outliers.forget(fuel, ambiguousBands + intList(details.optJSONArray("skippedChanged")))
         if (deleted.isNotEmpty()) {
             relearned += deleted.size
-            recent.addLast(RecentDelete(receipt.optString("id"), deleted.sorted(), receipt.optLong("finishedAtMs", 0L)))
+            recent.addLast(RecentDelete(receipt.optString("id"), fuel, deleted.sorted(), receipt.optLong("finishedAtMs", 0L)))
             while (recent.size > MAX_RECENT) recent.removeFirst()
         }
-        val petrol = details.optJSONObject("petrolGuard")
-        if (petrol?.optBoolean("abnormal", false) == true) {
-            disableLocked("Gasolina mudou de forma anormal durante o apagamento automático", receipt, PauseCode.PETROL_GUARD)
+        val guard = details.optJSONObject("otherFuelGuard")
+        if (guard?.optBoolean("abnormal", false) == true) {
+            val other = if (fuel == Fuel.GAS) "A gasolina" else "O GNV"
+            disableLocked("$other mudou de forma anormal durante o apagamento automático", receipt, PauseCode.OTHER_FUEL_GUARD)
         }
         publish()
     }
@@ -109,13 +131,13 @@ class AutoIdleCleanupCoordinator(
     fun onActionFailed(receipt: JSONObject) = submit {
         if (!receipt.optBoolean("automatic", false) || receipt.optString("action") != "DELETE_POINT") return@submit
         inFlightSinceMs = null
-        receipt.optJSONArray("emptyBands")?.let { array -> tracker.markDeleted(intList(array)) }
-        // A banda readquiriu andando entre a marca e o disparo (revisão #3): a marca sai.
-        tracker.forget(intList(receipt.optJSONArray("skippedChanged")))
+        val fuel = receiptFuel(receipt) ?: Fuel.GAS
+        // Ponto já vazio ou readquirido desde a marca: sai dos candidatos até a próxima leitura.
+        outliers.forget(fuel, intList(receipt.optJSONArray("emptyBands")) + intList(receipt.optJSONArray("skippedChanged")))
         if (receipt.has("effective") && !receipt.optBoolean("effective", true)) {
             disableLocked("Readback mostrou que a ECU não apagou o ponto", receipt, PauseCode.READBACK_INEFFECTIVE)
         } else {
-            // Toda falha consome tempo (revisão #2); N seguidas desligam a sessão.
+            // Toda falha consome tempo; N seguidas desligam a sessão.
             val wasEnabled = cleaner.disabledReason() == null
             cleaner.onFailed(clock(), receipt.optBoolean("mutationMayHaveStarted", false))
             val reason = cleaner.disabledReason()
@@ -127,22 +149,12 @@ class AutoIdleCleanupCoordinator(
         publish()
     }
 
-    private fun intList(array: JSONArray?): List<Int> =
-        if (array == null) emptyList() else List(array.length()) { array.optInt(it, -1) }.filter { it >= 0 }
-
-    private fun bandsWithResult(details: JSONObject, result: String): List<Int> {
-        val rows = details.optJSONArray("effect") ?: return emptyList()
-        return List(rows.length()) { rows.optJSONObject(it) }
-            .filter { it?.optString("result") == result }
-            .mapNotNull { it?.optInt("index", -1)?.takeIf { index -> index >= 0 } }
-    }
-
     fun json(): JSONObject = JSONObject(lastJson.toString())
 
     /** Resumo para a tela (leitura sem trava: publicado a cada mudança). */
     fun uiSummary(): UiSummary = summary
 
-    /** O apagamento automático está ligado nesta sessão (não foi desligado por readback ineficaz/gasolina). */
+    /** O apagamento automático está ligado nesta sessão (não foi pausado por readback/guarda/falhas). */
     fun automaticEnabled(): Boolean = enabledNow
 
     private fun evaluateLocked() {
@@ -155,8 +167,7 @@ class AutoIdleCleanupCoordinator(
         val decision = cleaner.decide(
             AutoIdlePointCleaner.Input(
                 nowElapsedMs = now,
-                idleBands = tracker.idleBands(),
-                lastCounters = tracker.lastCounters(),
+                candidates = Fuel.entries.associateWith { outliers.candidates(it) },
                 latestFrame = latest,
                 autoCalEnabled = autoCalEnabled(),
                 sessionAgeMs = sessionAgeMs(),
@@ -167,11 +178,26 @@ class AutoIdleCleanupCoordinator(
             lastResult = JSONObject().put("ok", false).put("retryLater", true).put("error", reason)
             return publish()
         }
+        val regime = regimes.getValue(decision.fuel)
         val evidence = JSONObject()
-            .put("reason", "lenta")
-            .put("rule", "banda GNV cuja última aquisição foi na lenta, apagada com o carro andando")
-            .put("spec", "2026-10-07-autocal-apagar-lenta")
-            .put("bands", JSONArray().also { array -> decision.evidence.forEach { array.put(it.toJson()) } })
+            .put("reason", "fora_da_curva")
+            .put("fuel", decision.fuel.wireName)
+            .put("rule", "banda fora da curva ms x MAP (ajuste robusto do Refino), apagada com o carro rodando no combustível dela")
+            .put("spec", "2026-10-07-autocal-apagar-lenta rev2")
+            .put(
+                "bands",
+                JSONArray().also { array ->
+                    decision.outliers.forEach { outlier ->
+                        val json = outlier.toJson()
+                        regime.lastAcquisition(outlier.band)?.let { acquisition ->
+                            json.put("lastAcquisitionRegime", acquisition.regime.name)
+                                .put("frames", acquisition.evidence.frames)
+                                .put("idleFraction", acquisition.evidence.idleFraction)
+                        }
+                        array.put(json)
+                    }
+                },
+            )
             .put(
                 "trigger",
                 JSONObject()
@@ -182,7 +208,7 @@ class AutoIdleCleanupCoordinator(
                     .put("decidedAtElapsedMs", now),
             )
             .put("minIntervalMs", AutoIdlePointCleaner.MIN_INTERVAL_MS)
-        val targets = decision.bands.map { AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, it) }
+        val targets = decision.bands.map { AutoCalPointDeleteProtocol.Target(decision.fuel, it) }
         inFlightSinceMs = now
         val result = try {
             executeDelete(targets, evidence)
@@ -200,7 +226,8 @@ class AutoIdleCleanupCoordinator(
 
     private fun resetSessionLocked(newSessionId: Long) {
         sessionId = newSessionId
-        tracker.reset()
+        outliers.reset()
+        regimes.values.forEach { it.reset() }
         cleaner.resetSession()
         inFlightSinceMs = null
         lastResult = JSONObject()
@@ -226,9 +253,33 @@ class AutoIdleCleanupCoordinator(
                     .put("receiptId", receipt.optString("id"))
                     .put("receipt", JSONObject(receipt.toString()))
                     .put("automatic", true)
-                    .put("scope", "GNV"),
+                    .put("scope", "DELETE_OUTLIER_POINTS"),
             )
         } catch (_: Exception) {}
+    }
+
+    /** Combustível do recibo: `details.fuel`, ou o dos alvos (`pointDelete`/`details.targets`). */
+    private fun receiptFuel(receipt: JSONObject): Fuel? {
+        val details = receipt.optJSONObject("details")
+        val candidates = listOfNotNull(
+            details?.optString("fuel"),
+            receipt.optJSONObject("pointDelete")?.optString("fuel"),
+            receipt.optJSONObject("pointDelete")?.optJSONArray("targets")?.optJSONObject(0)?.optString("fuel"),
+            details?.optJSONArray("targets")?.optJSONObject(0)?.optString("fuel"),
+        )
+        return candidates.firstNotNullOfOrNull { name ->
+            name.takeIf { it.isNotBlank() }?.let { runCatching { Fuel.parse(it) }.getOrNull() }
+        }
+    }
+
+    private fun intList(array: JSONArray?): List<Int> =
+        if (array == null) emptyList() else List(array.length()) { array.optInt(it, -1) }.filter { it >= 0 }
+
+    private fun bandsWithResult(details: JSONObject, result: String): List<Int> {
+        val rows = details.optJSONArray("effect") ?: return emptyList()
+        return List(rows.length()) { rows.optJSONObject(it) }
+            .filter { it?.optString("result") == result }
+            .mapNotNull { it?.optInt("index", -1)?.takeIf { index -> index >= 0 } }
     }
 
     private fun targetBands(details: JSONObject): List<Int> {
@@ -243,9 +294,10 @@ class AutoIdleCleanupCoordinator(
         lastJson = JSONObject()
             .put("sessionId", sessionId)
             .put("automatic", true)
-            .put("scope", "GNV")
+            .put("scope", "DELETE_OUTLIER_POINTS")
+            .put("fuels", JSONArray().put("GAS").put("PETROL"))
             .put("inFlight", inFlightSinceMs != null)
-            .put("tracker", tracker.json())
+            .put("outliers", outliers.json())
             .put("policy", cleaner.json())
             .put("lastResult", lastResult)
         summary = UiSummary(
@@ -272,5 +324,6 @@ class AutoIdleCleanupCoordinator(
         const val IN_FLIGHT_TIMEOUT_MS = 30_000L
         /** A tela só precisa dos últimos apagamentos para acinzentar os pontos até a próxima leitura. */
         const val MAX_RECENT = 5
+        val PETROL_NAMES = setOf("GASOLINA", "PETROL")
     }
 }
