@@ -460,48 +460,71 @@
     return items.map(item => `<span class="${item.key}" data-legend="${item.key}">${esc(item.label)}</span>`).join('');
   }
 
-  // ------------------------------------------------------------------ nó compartilhado (uma instância, vários quadros)
+  // ------------------------------------------------------------------ um nó por modo (AutoCal = ecu18, Refino = between)
+  // Cada modo guarda o próprio nó e a própria assinatura: trocar de aba só move/mostra o nó já pronto, sem refazer o SVG.
+  // `shared` aponta para o último nó montado (compatibilidade: telas e testes leem shared.node/scale/model).
+  const cache = new Map();
   const shared = { mode: 'ecu18', signature: '', html: '', node: null, scale: null, renders: 0, mounts: 0, bins: [], model: null };
+  function entryFor(mode) {
+    const key = mode || 'ecu18';
+    if (!cache.has(key)) cache.set(key, { mode: key, signature: '', html: '', node: null, scale: null, bins: [], model: null });
+    return cache.get(key);
+  }
+  function expose(entry) {
+    shared.mode = entry.mode; shared.signature = entry.signature; shared.html = entry.html; shared.node = entry.node;
+    shared.scale = entry.scale; shared.bins = entry.bins; shared.model = entry.model;
+  }
   /**
-   * Garante que `host` mostre o gráfico da assinatura dada. Redesenha SÓ se a assinatura mudou; fora isso apenas
-   * move o mesmo nó para o quadro pedido. `build()` devolve { svg, scale, bins } (ou { empty, html }).
+   * Garante que `host` mostre o gráfico da assinatura dada. Redesenha SÓ se a assinatura DESTE modo mudou; fora isso
+   * apenas recoloca o mesmo nó no quadro pedido. `build()` devolve { svg, scale, bins } (ou { empty, html }).
    */
   function mount(host, signature, build, mode) {
     if (!host) return null;
-    shared.mode = mode || 'ecu18';
-    if (shared.signature !== signature || !shared.html) {
+    const entry = entryFor(mode);
+    if (entry.signature !== signature || !entry.html) {
       const built = build() || {};
-      shared.signature = signature;
+      entry.signature = signature;
       shared.renders += 1;
-      shared.html = built.svg || built.html || '';
-      shared.scale = built.scale || null;
-      shared.bins = built.bins || [];
-      shared.model = built.model || null;
-      if (shared.node) shared.node.innerHTML = shared.html;
+      entry.html = built.svg || built.html || '';
+      entry.scale = built.scale || null;
+      entry.bins = built.bins || [];
+      entry.model = built.model || null;
+      if (entry.node) entry.node.innerHTML = entry.html;
     }
     const canMove = typeof host.appendChild === 'function' && typeof document !== 'undefined' && typeof document.createElement === 'function';
     if (!canMove) {
-      if (host.__chartSignature !== signature) { host.__chartSignature = signature; host.innerHTML = shared.html; }
+      if (host.__chartSignature !== entry.mode + signature) { host.__chartSignature = entry.mode + signature; host.innerHTML = entry.html; }
+      expose(entry);
       return shared;
     }
-    if (!shared.node) { shared.node = document.createElement('div'); shared.node.className = 'curve-chart-shared'; shared.node.innerHTML = shared.html; }
-    if (shared.node.parentNode !== host) {
+    if (!entry.node) { entry.node = document.createElement('div'); entry.node.className = 'curve-chart-shared'; entry.node.innerHTML = entry.html; }
+    if (entry.node.parentNode !== host) {
       host.innerHTML = '';
-      host.appendChild(shared.node);
+      host.appendChild(entry.node);
       shared.mounts += 1;
     }
-    shared.node.setAttribute('data-mode', shared.mode);
+    entry.node.setAttribute('data-mode', entry.mode);
+    expose(entry);
     return shared;
   }
   /** Outra coisa ocupou o quadro (vazio, época): a próxima montagem recoloca o nó. */
   function release(host) {
     if (host) host.__chartSignature = '';
   }
-  function reset() { shared.signature = ''; shared.html = ''; shared.scale = null; shared.bins = []; shared.model = null; }
+  /** Esquece os desenhos (todos os modos, ou só um): o próximo mount redesenha. */
+  function reset(mode) {
+    for (const entry of cache.values()) {
+      if (mode && entry.mode !== mode) continue;
+      entry.signature = ''; entry.html = ''; entry.scale = null; entry.bins = []; entry.model = null;
+    }
+    if (!mode || shared.mode === mode) { shared.signature = ''; shared.html = ''; shared.scale = null; shared.bins = []; shared.model = null; }
+  }
+  /** Nó do modo pedido (ou o último montado). */
+  function nodeFor(mode) { return mode ? (cache.get(mode) || {}).node || null : shared.node; }
 
   /** Seleção é estado de tela, não evidência: só troca classes, nunca redesenha. */
-  function applySelection(selected) {
-    const node = shared.node;
+  function applySelection(selected, mode) {
+    const node = nodeFor(mode);
     if (!node || typeof node.querySelectorAll !== 'function') return;
     const sel = selected || {};
     node.querySelectorAll('.autocal-reference-point[data-ref-marker]').forEach(marker => {
@@ -605,6 +628,6 @@
   ns.CurveChart = {
     LEGEND, STALL_LEGEND, BETWEEN_LEGEND, normalizeBetween, betweenFromMarkers, describeBetween, ECU_BAND_COUNT, TABLE_KEYS, bandSlots,
     evidenceSignature, tableSignature, aggregateEvidence, curveAt, focusDomain, buildSvg, legendHtml,
-    viewKey, viewControls, bindView, mount, release, reset, applySelection, shared, buildModel, deriveState, evidence, updateEvidence, setEvidence, WATCHDOG_MS,
+    viewKey, viewControls, bindView, mount, release, reset, applySelection, nodeFor, shared, buildModel, deriveState, evidence, updateEvidence, setEvidence, WATCHDOG_MS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

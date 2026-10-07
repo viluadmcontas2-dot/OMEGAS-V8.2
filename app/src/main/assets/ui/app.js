@@ -350,15 +350,16 @@
     }
     if (route === 'autocal') {
       resetPresentCursor();
+      // Um refresh só ao entrar: enter() não toca a ponte; a leitura vem depois do primeiro quadro pintado.
       root.OmegasApp?.autoCalCockpit?.enter?.();
       afterPaint(() => {
         refreshFast();
-        root.OmegasApp?.autoCalCockpit?.refresh?.();
+        root.OmegasApp?.autoCalCockpit?.refreshNow?.();
       });
       return;
     }
     if (route === 'refino') {
-      afterPaint(() => root.OmegasApp?.refino?.refresh?.(true));
+      afterPaint(() => root.OmegasApp?.refino?.refreshNow?.());
       return;
     }
     if (route === 'sessions') {

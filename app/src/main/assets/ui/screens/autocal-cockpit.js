@@ -892,8 +892,16 @@
       });
     }
 
+    /** Entrar na aba é barato: nada de ponte aqui (o gráfico deste modo continua montado). A leitura vem em refreshNow(). */
     enter() {
       this.active = true;
+      this.firstRefreshPending = false;
+    }
+
+    /** UMA releitura ao entrar (o app chama depois do primeiro quadro pintado). */
+    refreshNow() {
+      this.firstRefreshPending = false;
+      this.dataDirty = false;
       this.refresh();
       this.dataGate.mark();
     }
@@ -1592,7 +1600,7 @@
         snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId, history,
         extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}|${chart.viewKey(this.chartView)}`,
       });
-      const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.shared.node) !== false;
+      const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.nodeFor('ecu18')) !== false;
       if (alreadyShown) {
         this.renderLiveCursor();
         return;
@@ -1621,7 +1629,7 @@
         this.legendKey = legendKey;
         legend.innerHTML = chart.legendHtml({ mode: 'ecu18' }) + (history.length ? '<span class="previous" data-legend="previous">Leitura anterior</span>' : '');
       }
-      chart.applySelection({ ref: this.selectedReferenceIndex, ecu: this.selectedAcquiredPoint, batch: this.selectedAcquiredPoints });
+      chart.applySelection({ ref: this.selectedReferenceIndex, ecu: this.selectedAcquiredPoint, batch: this.selectedAcquiredPoints }, 'ecu18');
       if (this.selectedAcquiredPoint) {
         const [fuel, rawIndex] = this.selectedAcquiredPoint.split(':');
         this.inspectAcquiredPoint(fuel, Number(rawIndex));
@@ -1801,7 +1809,7 @@
       this.selectedAcquiredPoint = null;
       this.renderPointActions();
       this.readout('Curva · ponto ' + (point.index + 1) + ' · ' + D.msUnit(point.petrolMs) + ' · gasolina ' + D.bar(point.petrolMapBar) + ' · GNV ' + D.barUnit(point.gasMapBar));
-      ns.CurveChart?.applySelection({ ref: point.index, ecu: null, batch: this.selectedAcquiredPoints });
+      ns.CurveChart?.applySelection({ ref: point.index, ecu: null, batch: this.selectedAcquiredPoints }, 'ecu18');
       document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => node.classList.remove('selected'));
     }
 

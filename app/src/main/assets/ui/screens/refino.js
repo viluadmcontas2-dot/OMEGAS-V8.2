@@ -301,11 +301,13 @@
       // O cursor AGORA anda no quadro de animação (rAF do scheduler), sem redesenhar o gráfico; só enquanto a aba está aberta.
       this.unsubscribeFrame = null;
       // Ao entrar na aba, desenha na hora (sem esperar o próximo tick).
+      // A releitura ao entrar vem do app (refreshNow, uma vez só); aqui só quando a tela nasce já aberta.
       let lastRoute = null;
+      this.enterRefreshPending = this.store.get().route === 'refino';
       this.store.subscribe(state => {
         if (state.route === lastRoute) return;
         lastRoute = state.route;
-        if (state.route === 'refino') { this.enterRefreshPending = true; this.ensureFrame(); } else this.releaseFrame();
+        if (state.route === 'refino') this.ensureFrame(); else this.releaseFrame();
       }, true);
     }
 
@@ -355,6 +357,14 @@
       this.render(force === true);
     }
 
+    /** UMA releitura ao entrar na aba (o app chama depois do primeiro quadro pintado). */
+    refreshNow() {
+      this.enterRefreshPending = false;
+      this.dataDirty = false;
+      this.refresh(true);
+      this.dataGate.mark();
+    }
+
     onClick(event) {
       if (event.target.closest('[data-refino-reset-gas]')) { this.resetGasEvidence(); return; }
       if (event.target.closest('[data-refino-acquisition]')) { this.app.router?.open('autocal'); return; }
@@ -386,7 +396,7 @@
 
     select(sel) {
       this.selected = sel || {};
-      ns.CurveChart?.applySelection(this.selected);
+      ns.CurveChart?.applySelection(this.selected, 'between');
     }
 
     /** Congelar a Referência: não escreve na ECU. Um toque; o resultado fica à vista e o Desfazer volta à anterior. */
@@ -740,6 +750,7 @@
       const shown = chart.shared;
       this.chartScale = shown.scale;
       this.model = shown.model;
+      this.chartSignature = signature;
       const legend = document.getElementById('refinoLegend');
       const flags = { mode: 'between', proposal: false, stall: !!(this.model && this.model.stalls.length), missing: !!(this.model && this.model.betweenPoints.some(b => b.state === 'missing')) };
       const legendKey = `between|${flags.stall}|${flags.missing}`;
@@ -789,7 +800,7 @@
     animateLive(timestamp) {
       if (this.store.get().route !== 'refino') { this.cursor.frameAt = null; return; }
       const telemetry = this.store.get().telemetry || {};
-      const key = `${telemetry.sequence}|${Math.round((telemetry.telemetryAgeMs || 0) / 500)}|${ns.CurveChart?.shared.signature}`;
+      const key = `${telemetry.sequence}|${Math.round((telemetry.telemetryAgeMs || 0) / 500)}|${this.chartSignature}`;
       if (key !== this.liveKey) { this.liveKey = key; this.renderLive(); }
       this.cursor.frame(timestamp);
     }

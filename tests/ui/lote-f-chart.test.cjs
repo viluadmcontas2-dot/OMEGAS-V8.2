@@ -137,7 +137,10 @@ test('F2: nenhuma tela serializa pontos nem repinta curva por relógio (sem JSON
 });
 
 // ------------------------------------------------------------------ F4: um gráfico, dois quadros, um desenho
-test('F4: AutoCal e Refino montam o MESMO nó: uma renderização por evidência, dois quadros', () => {
+// Revisto (P0-3, travada ao trocar AutoCal↔Refino): na prática as assinaturas dos dois modos nunca são iguais
+// (extra 'ecu18|…' × 'between|…'), então o nó único era refeito a CADA troca de aba. Agora há um nó por modo:
+// cada modo desenha uma vez e trocar de aba não redesenha nada.
+test('F4: AutoCal e Refino têm um nó por modo: trocar de aba não redesenha', () => {
   const { chart, document } = load();
   const autocal = document.makeNode();
   const refino = document.makeNode();
@@ -145,12 +148,18 @@ test('F4: AutoCal e Refino montam o MESMO nó: uma renderização por evidência
   let builds = 0;
   const build = () => { builds += 1; return { svg: '<svg data-shared></svg>', scale: {}, model: {} }; };
   const start = chart.shared.renders;
-  chart.mount(autocal, signature, build, 'ecu18');
-  chart.mount(refino, signature, build, 'between');
-  chart.mount(autocal, signature, build, 'ecu18');
-  assert.equal(builds, 1, 'um desenho só para as duas telas');
-  assert.equal(chart.shared.renders - start, 1);
-  assert.equal(chart.shared.mounts >= 3, true, 'o nó foi movido entre os quadros');
+  chart.mount(autocal, signature + 'ecu18', build, 'ecu18');
+  chart.mount(refino, signature + 'between', build, 'between');
+  const autocalNode = chart.nodeFor('ecu18');
+  for (let i = 0; i < 5; i += 1) {
+    chart.mount(autocal, signature + 'ecu18', build, 'ecu18');
+    chart.mount(refino, signature + 'between', build, 'between');
+  }
+  assert.equal(builds, 2, 'um desenho por modo, nenhum a mais ao trocar de aba');
+  assert.equal(chart.shared.renders - start, 2);
+  chart.mount(autocal, signature + 'ecu18', build, 'ecu18');
+  assert.equal(chart.shared.node, autocalNode, 'o nó do AutoCal é o mesmo de antes');
+  assert.notEqual(chart.nodeFor('between'), autocalNode, 'cada modo tem o seu nó');
   assert.equal(chart.shared.node.attrs['data-mode'], 'ecu18');
 });
 
