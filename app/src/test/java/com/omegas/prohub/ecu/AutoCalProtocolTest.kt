@@ -2,6 +2,7 @@ package com.omegas.prohub.ecu
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -353,6 +354,40 @@ class AutoCalProtocolTest {
             assertTrue((request[0].toInt() and 0xFF) in setOf(0x09, 0x0A, 0x29))
             assertEquals(Mp48Protocol.checksum(request.copyOfRange(0, request.lastIndex)), request.last().toInt() and 0xFF)
         }
+    }
+
+    @Test
+    fun `vect autocal ee fica fora da varredura completa porque a ecu recusa 29 64 01`() {
+        // PortmonLOGNOVO: o ProgBase pediu 29 64 01 8E tres vezes e a ECU recusou 3/3 com CA 01 10 DB.
+        assertFalse(AutoCalProtocol.READ_ONLY_FIELDS.contains(AutoCalProtocol.VECT_AUTOCAL_EE))
+        assertEquals(listOf(AutoCalProtocol.VECT_AUTOCAL_EE), AutoCalProtocol.OPTIONAL_FIELDS)
+        // A leitura continua disponivel (mesmos bytes), so nao e pedida a cada varredura.
+        assertArrayEquals(hex("29 64 01 8E"), AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_EE))
+        // Nenhuma outra forma de leitura mudou: 09 65 01 / 09 73 01 seguem como funcionam no carro.
+        assertArrayEquals(hex("09 65 01 6F"), AutoCalProtocol.read(AutoCalProtocol.VECT_AUTOCAL_U8_0))
+        assertArrayEquals(hex("09 73 01 7D"), AutoCalProtocol.read(AutoCalProtocol.MODULE_VERSION))
+    }
+
+    @Test
+    fun `varredura completa sem o campo recusado nao fica parcial`() {
+        val observations = AutoCalProtocol.READ_ONLY_FIELDS.mapIndexed { index, field ->
+            val size = when (field.encoding) {
+                AutoCalProtocol.Encoding.U8_OR_U16_LE -> 1
+                else -> field.expectedElementsHint!! * field.encoding.bytesPerElement
+            }
+            com.omegas.prohub.autocal.AutoCalReadObservation(
+                field = field,
+                status = Mp48Protocol.STATUS_ACK,
+                payload = ByteArray(size),
+                capturedAtMs = 100L + index,
+            )
+        }
+        val snapshot = com.omegas.prohub.autocal.AutoCalSnapshotBuilder.build(
+            observations = observations,
+            sessionId = "sem-ee",
+        )
+        assertFalse(snapshot.warnings.toString(), snapshot.partial)
+        assertEquals(AutoCalProtocol.READ_ONLY_FIELDS.distinctBy { it.identity }.size, snapshot.validFieldCount)
     }
 
     private fun hex(value: String): ByteArray = value.split(' ')
