@@ -67,6 +67,24 @@ class BackgroundMemoTest {
         assertTrue(queued.isEmpty())
     }
 
+    /**
+     * Revisão 2026-10-07 (gráfico do reset): a ponte não bloqueante devolvia a projeção VELHA depois de invalidate
+     * e esperava o relógio de fundo (até 1 s) para recalcular. Agora devolve o velho (nunca bloqueia a WebView)
+     * mas agenda UM recálculo imediato; a chamada seguinte, depois dele, já traz a projeção nova.
+     */
+    @Test
+    fun `nao bloqueante depois de invalidate devolve o velho e agenda um recalculo imediato`() {
+        val memo = memo()
+        assertEquals("v1", memo.get())
+        memo.invalidate()
+        assertEquals("v1", memo.getNonBlocking("fallback"))
+        assertEquals("v1", memo.getNonBlocking("fallback"))
+        assertEquals("um único recálculo agendado", 1, queued.size)
+        runQueued()
+        assertEquals("v2", memo.getNonBlocking("fallback"))
+        assertTrue(queued.isEmpty())
+    }
+
     @Test
     fun `calculo que comecou antes do invalidate nao fica marcado como valido`() {
         lateinit var memo: BackgroundMemo

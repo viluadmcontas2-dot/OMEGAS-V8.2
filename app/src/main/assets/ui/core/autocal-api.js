@@ -34,6 +34,8 @@
     actionStatus: () => invoke('getNativeActionStatus', [], {}),
     // Limpeza automática do GNV (pontos aprendidos na lenta): ligada/pausada, motivo e apagamentos recentes.
     autoCleanup: () => invoke('getAutoCleanupStatus', [], { ok: false }),
+    // Toque do dono no rodapé: arma/desarma a limpeza automática (começa desarmada em toda sessão USB).
+    setAutoCleanupArmed: armed => invoke('setAutoCleanupArmed', [!!armed], { ok: false }),
     startRead: () => invoke('startRead', [], {}),
     cancelRead: () => invoke('cancelRead', [], {}),
     setAcquisitionEnabled: enabled => invoke('setAcquisitionEnabled', [!!enabled], {}),

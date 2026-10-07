@@ -106,6 +106,8 @@ class AutoIdleRealSessionReplayTest {
                     enabled = null
                     frames.clear()
                     coordinator.onSessionChanged(++sessionId)
+                    // Desenho 2026-10-07: toda sessão começa desarmada; aqui o dono "toca" em Ativar logo na conexão.
+                    assertTrue("armar com sessão válida", coordinator.setArmed(true, "replay").getBoolean("ok"))
                 }
                 "telemetry" -> frames += NativeAnchorTelemetryWindow.Frame(
                     sequence = sequence.toLong(),
@@ -144,7 +146,12 @@ class AutoIdleRealSessionReplayTest {
                                 }
                             }
                         }
-                        if (data.optString("outcome") == "CONFIRMED") coordinator.onRoundInvalidated()
+                        if (data.optString("outcome") == "CONFIRMED") {
+                            coordinator.onRoundInvalidated()
+                            // Ação manual do dono desarma; no replay o dono rearma em seguida para seguir observando.
+                            coordinator.onManualMutation(data)
+                            coordinator.setArmed(true, "replay")
+                        }
                     }
                 }
                 "session_stopped" -> {

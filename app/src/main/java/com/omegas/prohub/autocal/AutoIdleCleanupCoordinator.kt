@@ -20,6 +20,17 @@ import java.util.concurrent.Executor
  *
  * Exceção à regra "nada muda sozinho": GNV e gasolina, com readback, guarda do outro combustível e registro.
  * Curva K continua só com o dono.
+ *
+ * Desenho aprovado (dono, 2026-10-07): a limpeza começa DESARMADA em toda sessão USB; só um toque do dono arma
+ * ([setArmed]); o toque não apaga nada por si. Desarmam: outro toque, sessão USB nova, reset/ação manual do dono
+ * ([onManualMutation]) e qualquer pausa por falha/guarda (que exige novo toque). A confirmação do próprio
+ * apagamento automático NÃO desarma. Rearmar limpa a pausa, nunca o bloqueio de falha com mutação incerta.
+ *
+ * Revisão 2026-10-07: a INTENÇÃO manual do dono (reset/pausa/escrita K/Mapa/restauração) desarma na hora e de forma
+ * síncrona ([onManualIntent]), antes de a escrita começar; a operação automática já em voo ainda conclui e seu
+ * recibo é processado, mas nenhum disparo novo sai. Armar valida a geração USB atual ([currentSessionId]) contra a
+ * sessão vista pelo coordenador, para não armar uma sessão velha enquanto o reset assíncrono está na fila. Toda
+ * mudança de estado visível (inclusive as assíncronas) chama [onChanged], e só quando algo mudou.
  */
 class AutoIdleCleanupCoordinator(
     private val telemetry: Mp48TelemetryWindowSource,
@@ -31,6 +42,10 @@ class AutoIdleCleanupCoordinator(
     private val record: (String, JSONObject) -> Unit = { _, _ -> },
     private val clock: () -> Long,
     private val executor: Executor,
+    /** Geração USB atual (a mesma que o gerente de ações usa); nula = confiar na sessão vista. */
+    private val currentSessionId: (() -> Long)? = null,
+    /** Chamado (sob a trava, após a mudança) quando o estado publicado mudou: o serviço publica a revisão. */
+    private val onChanged: () -> Unit = {},
 ) {
     /** Leitura confirmada dos três buffers de um combustível (G2/G4 ou snapshot completo), no relógio elapsed. */
     class Buffers(
@@ -51,10 +66,15 @@ class AutoIdleCleanupCoordinator(
     /** O que a tela do AutoCal mostra: ligado/pausado, motivo e quantos pontos o app pediu para reaprender. */
     class UiSummary(
         val active: Boolean,
+        /** O dono tocou em "Ativar limpeza automática" nesta sessão USB (e nada a desarmou desde então). */
+        val armed: Boolean,
+        /** Não está pausada por falha/guarda (distinto de armada). */
         val enabled: Boolean,
         val pauseCode: PauseCode?,
         val relearnedThisSession: Int,
         val recentDeletes: List<RecentDelete>,
+        /** O que a limpeza está esperando agora, em português simples (vazio = apagamento em voo). */
+        val waitReason: String = "",
     )
 
     private val outliers = OutlierCurveTracker()
@@ -68,10 +88,57 @@ class AutoIdleCleanupCoordinator(
     private var lastResult: JSONObject = JSONObject()
     @Volatile private var lastJson: JSONObject = JSONObject()
     @Volatile private var enabledNow = true
+    @Volatile private var armed = false
+    private var waitReason: String = DISARMED_REASON
     private var pauseCode: PauseCode? = null
     private var relearned = 0
     private val recent = ArrayDeque<RecentDelete>()
-    @Volatile private var summary = UiSummary(false, true, null, 0, emptyList())
+    @Volatile private var summary = UiSummary(false, false, true, null, 0, emptyList(), DISARMED_REASON)
+    private var publishedKey: String = ""
+
+    /**
+     * Toque do dono. Armar exige sessão USB válida e não apaga nada dentro do toque (a próxima avaliação decide).
+     * Depois de uma pausa, armar limpa a pausa; o bloqueio de falha com mutação incerta continua até a releitura.
+     * Síncrono (a ponte devolve o estado novo na hora), sob a mesma trava das decisões.
+     */
+    fun setArmed(armed: Boolean, source: String): JSONObject = synchronized(this) {
+        if (armed) {
+            val live = currentSessionId?.invoke() ?: sessionId
+            val error = when {
+                sessionId <= 0L || live <= 0L -> "Sem conexão USB com a ECU"
+                live != sessionId -> "A conexão USB mudou; aguarde a leitura nova da ECU e toque de novo"
+                else -> null
+            }
+            if (error != null) {
+                return JSONObject().put("ok", false).put("armed", false).put("enabled", enabledNow)
+                    .put("pauseCode", pauseCode?.name ?: JSONObject.NULL).put("error", error)
+            }
+            if (cleaner.disabledReason() != null) {
+                cleaner.rearm()
+                pauseCode = null
+            }
+            if (!this.armed) waitReason = ARMED_WAIT_REASON
+        }
+        setArmedLocked(armed, source)
+        publish()
+        JSONObject().put("ok", true).put("armed", this.armed).put("enabled", enabledNow)
+            .put("pauseCode", pauseCode?.name ?: JSONObject.NULL)
+    }
+
+    /** Reset/ação manual confirmada do dono (ou falha manual com mutação possível): desarma; ele rearma se quiser. */
+    fun onManualMutation(receipt: JSONObject) = submit {
+        setArmedLocked(false, "manual:" + receipt.optString("action", "?"))
+        publish()
+    }
+
+    /**
+     * Intenção manual do dono (toque em reset/pausa/escrita K/Mapa/restauração): desarma ANTES de a escrita
+     * começar, de forma síncrona. Não toca na operação automática já em voo (o recibo dela ainda é processado).
+     */
+    fun onManualIntent(action: String): Unit = synchronized(this) {
+        setArmedLocked(false, "manual:" + action.ifBlank { "?" })
+        publish()
+    }
 
     fun onBuffers(buffers: Buffers) = submit {
         if (buffers.sessionId != sessionId) resetSessionLocked(buffers.sessionId)
@@ -144,6 +211,7 @@ class AutoIdleCleanupCoordinator(
             if (wasEnabled && reason != null) {
                 pauseCode = PauseCode.REPEATED_FAILURES
                 recordDisabled(reason, receipt)
+                if (armed) setArmedLocked(false, "pause:${PauseCode.REPEATED_FAILURES.name}")
             }
         }
         publish()
@@ -154,14 +222,18 @@ class AutoIdleCleanupCoordinator(
     /** Resumo para a tela (leitura sem trava: publicado a cada mudança). */
     fun uiSummary(): UiSummary = summary
 
-    /** O apagamento automático está ligado nesta sessão (não foi pausado por readback/guarda/falhas). */
-    fun automaticEnabled(): Boolean = enabledNow
+    /** O apagamento automático pode agir nesta sessão: armado pelo dono E não pausado por readback/guarda/falhas. */
+    fun automaticEnabled(): Boolean = armed && enabledNow
 
     private fun evaluateLocked() {
         val now = clock()
         inFlightSinceMs?.let { since ->
             if (now - since < IN_FLIGHT_TIMEOUT_MS) return publish()
             inFlightSinceMs = null // callback perdido: não trava o automático para sempre
+        }
+        if (!armed) {
+            waitReason = DISARMED_REASON
+            return publish()
         }
         val latest = telemetry.recentTelemetryFrames(now - AutoIdlePointCleaner.FRAME_MAX_AGE_MS, now).lastOrNull()
         val decision = cleaner.decide(
@@ -173,11 +245,16 @@ class AutoIdleCleanupCoordinator(
                 sessionAgeMs = sessionAgeMs(),
             ),
         )
-        if (decision !is AutoIdlePointCleaner.Decision.Delete) return publish()
+        if (decision !is AutoIdlePointCleaner.Decision.Delete) {
+            waitReason = (decision as AutoIdlePointCleaner.Decision.Wait).reason
+            return publish()
+        }
         canAct()?.let { reason ->
+            waitReason = reason
             lastResult = JSONObject().put("ok", false).put("retryLater", true).put("error", reason)
             return publish()
         }
+        waitReason = ""
         val regime = regimes.getValue(decision.fuel)
         val evidence = JSONObject()
             .put("reason", "fora_da_curva")
@@ -209,6 +286,7 @@ class AutoIdleCleanupCoordinator(
             )
             .put("minIntervalMs", AutoIdlePointCleaner.MIN_INTERVAL_MS)
         val targets = decision.bands.map { AutoCalPointDeleteProtocol.Target(decision.fuel, it) }
+        outliers.onDeleteStarted(decision.fuel)
         inFlightSinceMs = now
         val result = try {
             executeDelete(targets, evidence)
@@ -225,6 +303,7 @@ class AutoIdleCleanupCoordinator(
     }
 
     private fun resetSessionLocked(newSessionId: Long) {
+        if (armed) setArmedLocked(false, "session")
         sessionId = newSessionId
         outliers.reset()
         regimes.values.forEach { it.reset() }
@@ -241,6 +320,24 @@ class AutoIdleCleanupCoordinator(
         if (cleaner.disabledReason() == null) pauseCode = code
         cleaner.disable(reason)
         recordDisabled(reason, receipt)
+        // Pausa exige novo toque do dono.
+        if (armed) setArmedLocked(false, "pause:${code.name}")
+    }
+
+    private fun setArmedLocked(armed: Boolean, source: String) {
+        if (this.armed == armed && source != "dono") return
+        this.armed = armed
+        try {
+            record(
+                "autocal_auto_cleanup_armed",
+                JSONObject()
+                    .put("armed", armed)
+                    .put("source", source)
+                    .put("sessionId", sessionId)
+                    .put("automatic", true)
+                    .put("scope", "DELETE_OUTLIER_POINTS"),
+            )
+        } catch (_: Exception) {}
     }
 
     private fun recordDisabled(reason: String, receipt: JSONObject) {
@@ -291,22 +388,33 @@ class AutoIdleCleanupCoordinator(
 
     private fun publish() {
         enabledNow = cleaner.disabledReason() == null
+        val waitForUi = if (!armed) DISARMED_REASON else waitReason
         lastJson = JSONObject()
             .put("sessionId", sessionId)
             .put("automatic", true)
             .put("scope", "DELETE_OUTLIER_POINTS")
             .put("fuels", JSONArray().put("GAS").put("PETROL"))
+            .put("armed", armed)
+            .put("waitReason", waitReason)
             .put("inFlight", inFlightSinceMs != null)
             .put("outliers", outliers.json())
             .put("policy", cleaner.json())
             .put("lastResult", lastResult)
         summary = UiSummary(
             active = sessionId > 0L,
+            armed = armed,
             enabled = enabledNow,
             pauseCode = if (enabledNow) null else pauseCode,
             relearnedThisSession = relearned,
             recentDeletes = recent.toList(),
+            waitReason = waitForUi,
         )
+        // Revisão só quando algo visível mudou: o tick de 500 ms com o mesmo estado não publica nada.
+        val key = lastJson.toString()
+        if (key != publishedKey) {
+            publishedKey = key
+            try { onChanged() } catch (_: Exception) {}
+        }
     }
 
     private fun submit(block: () -> Unit) {
@@ -336,5 +444,7 @@ class AutoIdleCleanupCoordinator(
         /** A tela só precisa dos últimos apagamentos para acinzentar os pontos até a próxima leitura. */
         const val MAX_RECENT = 5
         val PETROL_NAMES = setOf("GASOLINA", "PETROL")
+        const val DISARMED_REASON = "Limpeza automática desligada: toque em Ativar limpeza automática"
+        const val ARMED_WAIT_REASON = "Aguardando a próxima leitura da ECU"
     }
 }

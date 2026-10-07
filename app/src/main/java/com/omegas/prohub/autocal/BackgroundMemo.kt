@@ -73,11 +73,15 @@ class BackgroundMemo(
      * Leitura para superfícies síncronas (addJavascriptInterface): nunca executa [compute] na thread
      * chamadora. Marca o memo como observado (o relógio de fundo passa a recalculá-lo) e devolve o último
      * valor, mesmo vencido ou invalidado; sem valor anterior devolve [fallback]. Só lê [value], ignora [valid].
+     * Valor invalidado (depois de gravar/resetar): agenda UM recálculo em segundo plano já, em vez de esperar o
+     * relógio de fundo, para a projeção nova chegar à tela o quanto antes (a tela segura a intenção até lá).
      * Quando a correção exige valor recalculado na hora (depois de gravar), usar [getFresh].
      */
     fun getNonBlocking(fallback: String): String {
         requestedAt = clock()
-        return value ?: fallback
+        val cached = value ?: return fallback
+        if (!valid) scheduleRefresh()
+        return cached
     }
 
     private fun scheduleRefresh() {

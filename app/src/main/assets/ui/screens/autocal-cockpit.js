@@ -59,16 +59,24 @@
   }
 
   const AutoCalUxModel = {
-    effectiveEpoch(epoch = {}, actionState = {}) {
+    /**
+     * Época vista pela tela: a da ECU, mais a intenção do dono. `intent` é o reset que ele tocou e ainda não foi
+     * coberto por evidência posterior correspondente (revisão nova + ECU marcou/avançou aquele combustível): fecha a
+     * janela entre busy=false e a projeção nova, em que a leitura antiga voltaria a parecer aquisição atual.
+     */
+    effectiveEpoch(epoch = {}, actionState = {}, intent = null) {
       const next = { ...(epoch || {}) };
-      const action = String(actionState?.action || '').toUpperCase();
+      let action = String(actionState?.action || '').toUpperCase();
       const state = String(actionState?.state || '').toUpperCase();
       const working = actionState?.busy === true || [
         'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER',
         'READING_FINISH_SOURCE', 'SENDING_FINISH_COMMIT', 'VERIFYING_FINISH',
       ].includes(state);
       const uncertain = state === 'FAILED' && actionState?.mutationMayHaveStarted === true;
-      if ((!working && !uncertain) || !['RESET_PETROL', 'RESET_GAS'].includes(action)) return next;
+      const intentAction = String(intent?.action || '').toUpperCase();
+      const held = ['RESET_PETROL', 'RESET_GAS'].includes(intentAction);
+      if (((!working && !uncertain) || !['RESET_PETROL', 'RESET_GAS'].includes(action)) && !held) return next;
+      if (!((working || uncertain) && ['RESET_PETROL', 'RESET_GAS'].includes(action))) action = intentAction;
 
       next.intentPending = true;
       next.intentAction = action;
@@ -82,6 +90,56 @@
       }
       if (uncertain) next.intentUncertain = true;
       return next;
+    },
+
+    /** Intenção de reset guardada no toque: a projeção daquele instante (revisão, sessão, gerações da época). */
+    resetIntentFor(action, projection = {}, actionState = {}) {
+      const epoch = projection?.liveAcquisitionEpoch || {};
+      return {
+        action: String(action || '').toUpperCase(),
+        revision: String(projection?.revision ?? ''),
+        sessionId: String(projection?.sessionId ?? ''),
+        petrolGeneration: finite(epoch.petrolGeneration),
+        gasGeneration: finite(epoch.gasGeneration),
+        // Falha ANTIGA ainda visível no toque (do pedido anterior): não é a falha deste pedido.
+        staleFailure: AutoCalUxModel.failureFingerprint(actionState),
+      };
+    },
+
+    /** Impressão digital de um estado FAILED (para distinguir a falha deste pedido da falha anterior). */
+    failureFingerprint(actionState = {}) {
+      if (String(actionState?.state || '').toUpperCase() !== 'FAILED') return '';
+      const details = actionState?.details || {};
+      return JSON.stringify([String(actionState.action || ''), String(actionState.message || actionState.error || ''),
+        details.id ?? actionState.id ?? null, details.finishedAtMs ?? actionState.finishedAtMs ?? null]);
+    },
+
+    /** FAILED sem mutação deste pedido (não a falha antiga vista no toque): a intenção deixa de valer. */
+    resetIntentFailedWithoutMutation(intent, actionState = {}) {
+      if (!intent) return false;
+      if (String(actionState?.state || '').toUpperCase() !== 'FAILED') return false;
+      if (String(actionState?.action || '').toUpperCase() !== String(intent.action || '').toUpperCase()) return false;
+      if (actionState?.mutationMayHaveStarted === true) return false;
+      const fingerprint = AutoCalUxModel.failureFingerprint(actionState);
+      return !intent.staleFailure || fingerprint !== intent.staleFailure;
+    },
+
+    /**
+     * A intenção só é liberada por evidência AUTORITATIVA posterior e correspondente: sessão nova (tudo limpa) ou
+     * revisão diferente da do toque E a ECU já marcou aquele combustível como pendente ou avançou a geração dele.
+     * A mesma revisão antiga nunca libera; evidência do outro combustível também não.
+     */
+    resetIntentReleased(intent, projection = {}) {
+      if (!intent) return true;
+      if (String(projection?.sessionId ?? '') !== String(intent.sessionId ?? '')) return true;
+      const revision = String(projection?.revision ?? '');
+      if (!revision || revision === String(intent.revision ?? '')) return false;
+      const epoch = projection?.liveAcquisitionEpoch || {};
+      const petrol = String(intent.action || '').toUpperCase() === 'RESET_PETROL';
+      if ((petrol ? epoch.petrolPending : epoch.gasPending) === true) return true;
+      const generation = finite(petrol ? epoch.petrolGeneration : epoch.gasGeneration);
+      const before = finite(petrol ? intent.petrolGeneration : intent.gasGeneration);
+      return generation !== null && generation !== before;
     },
 
     epochNarrative(epoch = {}) {
@@ -752,20 +810,26 @@
         return {
           hidden: false,
           level: 'warn',
-          text: 'Limpeza automática pausada nesta conexão: ' + AutoCalUxModel.autoCleanupPauseReason(status.pauseCode) +
-            '. Reconecte o cabo para tentar de novo.',
+          text: 'Limpeza automática pausada: ' + AutoCalUxModel.autoCleanupPauseReason(status.pauseCode) +
+            '. Toque em Ativar limpeza automática para tentar de novo.',
         };
       }
+      if (status.armed !== true) return { hidden: false, level: 'neutral', text: 'Limpeza automática: desligada · o app não apaga nada sozinho' };
       const count = Math.max(0, Math.round(finite(status.relearnedThisSession) ?? 0));
       const tally = count === 0 ? 'nenhum ponto reaprendido'
         : count === 1 ? '1 ponto reaprendido' : count + ' pontos reaprendidos';
-      return { hidden: false, level: 'neutral', text: 'Limpeza automática: ligada · ' + tally + ' nesta sessão' };
+      // Motivo de espera do serviço (frase humana, ex.: "aguardando o carro rodar na gasolina"); vazio = em voo.
+      const reason = String(status.waitReason || '').trim();
+      const waiting = reason ? ' · ' + reason.charAt(0).toLowerCase() + reason.slice(1) : '';
+      return { hidden: false, level: 'neutral', text: 'Limpeza automática: ligada · ' + tally + ' nesta sessão' + waiting };
     },
 
   };
 
   /** Apagamento automático mais velho que isto (a tela estava fechada) já foi coberto por leituras novas. */
   const AUTO_DELETE_FRESH_MS = 60000;
+  /** Rótulo da referência de antes do reset, enquanto a ECU reaprende (só para olhar; nunca entra em cálculo). */
+  const AUTO_CAL_PREVIOUS_CURVE_LABEL = 'Curva anterior — aguardando a ECU reaprender';
 
   class AutoCalCockpit {
     constructor(app) {
@@ -805,6 +869,8 @@
       // Limpeza automática do GNV: último estado e os recibos já absorvidos (cada um acinzenta e avisa uma vez).
       this.autoCleanup = {};
       this.seenAutoDeletes = new Set();
+      // Reset tocado pelo dono e ainda não coberto por evidência posterior da ECU (ver effectiveEpoch/resetIntentReleased).
+      this.resetIntent = null;
       this.inject();
       this.bind();
       // Releitura por revisão: evidência, tabelas e sessão só quando andaram (ou o vigia vence);
@@ -883,6 +949,7 @@
                 <button type="button" data-autocal-toggle class="btn-primary" data-loading="true" disabled>Lendo estado…</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reler gasolina</button>
+                <button type="button" class="autocal-cleanup-toggle" data-autocal-cleanup-toggle disabled>Ativar limpeza automática</button>
                 <span class="autocal-point-actions" hidden role="group" aria-label="Pontos marcados para a ECU medir de novo">
                   <button type="button" class="btn-primary" data-autocal-reacquire-selected>Reaprender 1 ponto</button>
                   <button type="button" data-autocal-clear-point-selection>Cancelar</button>
@@ -908,6 +975,7 @@
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
         button.addEventListener('click', () => this.prepare(button.dataset.autocalAction));
       });
+      this.panel?.querySelector('[data-autocal-cleanup-toggle]')?.addEventListener('click', () => this.toggleAutoCleanup());
       this.panel?.addEventListener('click', event => {
         const acquiredPoint = event.target.closest('[data-autocal-acquired-index]');
         if (acquiredPoint) {
@@ -1017,10 +1085,16 @@
         nextActionState,
         referenceTransition,
       );
+      if (this.resetIntent) {
+        // Falha sem mutação: nada mudou na ECU, a intenção não pode ficar pendente para sempre.
+        if (AutoCalUxModel.resetIntentFailedWithoutMutation(this.resetIntent, nextActionState) ||
+            AutoCalUxModel.resetIntentReleased(this.resetIntent, projection)) this.resetIntent = null;
+      }
       if (referenceTransition.clearHistory) {
         this.previousReferencePoints = [];
         this.comparisonPinned = false;
         this.chartHistoryVisible = false;
+        this.resetIntent = null;
       } else if (referenceTransition.referenceChanged && !this.comparisonPinned) {
         this.previousReferencePoints = referenceTransition.previousPoints;
       }
@@ -1180,6 +1254,9 @@
         this.comparisonPinned = this.previousReferencePoints.length > 0;
         this.chartHistoryVisible = this.comparisonPinned;
       }
+      if (['RESET_PETROL', 'RESET_GAS'].includes(String(prepared.action || '').toUpperCase())) {
+        this.resetIntent = AutoCalUxModel.resetIntentFor(prepared.action, this.projection, this.actionState);
+      }
       this.prepared = null;
       this.store.patch({ alert: { level: 'working', message: 'Comando enviado para a ECU. Aguarde a conferência.' } });
       this.refresh();
@@ -1204,6 +1281,7 @@
       this.renderAutoMatchTile(human);
       this.renderRelearn();
       this.renderAutoCleanLine();
+      this.renderAutoCleanupToggle();
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
       const autoMatchEvidence = document.getElementById('autocalAutoMatchEvidence');
@@ -1337,7 +1415,39 @@
 
     }
 
-    /** Linha discreta da limpeza automática do GNV (ligada · N reaprendidos, ou pausada com o que fazer). */
+    /** Um toque: arma ou desarma a limpeza automática pela ponte; a ECU não recebe nada neste toque. */
+    toggleAutoCleanup() {
+      const status = this.autoCleanup || {};
+      if (status.ok !== true || status.active !== true || !this.api?.available?.()) return;
+      const target = status.armed !== true;
+      const result = this.api.setAutoCleanupArmed?.(target) || { ok: false };
+      if (result?.ok !== true) {
+        this.store.patch({ alert: { level: 'warning', message: target
+          ? 'Não foi possível ativar a limpeza automática. Confira a conexão com a ECU e toque de novo.'
+          : 'Não foi possível desativar a limpeza. Confira a conexão com a ECU e toque de novo.' } });
+        return;
+      }
+      this.autoCleanup = { ...status, armed: result.armed === true, enabled: result.enabled !== false, pauseCode: result.pauseCode ?? null };
+      this.store.patch({ alert: { level: 'ok', message: result.armed === true
+        ? 'Limpeza automática ativada: o app apaga sozinho pontos fora da curva, com o carro rodando no combustível do ponto.'
+        : 'Limpeza automática desativada.' } });
+      this.refresh();
+    }
+
+    /** Botão do rodapé: "Ativar limpeza automática" / "Desativar limpeza"; vivo só com sessão USB válida. */
+    renderAutoCleanupToggle() {
+      const button = this.panel?.querySelector('[data-autocal-cleanup-toggle]');
+      if (!button) return;
+      const status = this.autoCleanup || {};
+      const alive = status.ok === true && status.active === true;
+      const text = status.armed === true ? 'Desativar limpeza' : 'Ativar limpeza automática';
+      if (button.textContent !== text) button.textContent = text;
+      if (button.disabled !== !alive) button.disabled = !alive;
+      const state = !alive ? 'off' : status.enabled !== true ? 'paused' : status.armed === true ? 'armed' : 'disarmed';
+      if (button.dataset.state !== state) button.dataset.state = state;
+    }
+
+    /** Linha discreta da limpeza automática (desligada, ligada · N reaprendidos, ou pausada com o que fazer). */
     renderAutoCleanLine() {
       const node = document.getElementById('autocalAutoCleanLine');
       if (!node) return;
@@ -1536,7 +1646,7 @@
       });
     }
 
-    renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host) {
+    renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host, history = []) {
       if (this.chartScale) {
         const { xMin, xMax, yMin, yMax } = this.chartScale;
         this.epochDomain = { xMin, xMax, yMin, yMax };
@@ -1550,7 +1660,10 @@
       // o cursor quando só eles mudam; invalide por dados ou máscara da época.
       // Pontos entram só pela geometria: o contador (progresso) é atualizado por atributo, sem refazer o SVG.
       const geometry = list => list.map(p => [p.index, p.petrolMs, p.mapBar]);
-      const key = JSON.stringify([geometry(acquiredPetrol), geometry(acquiredGas), epoch,
+      const historyCurve = (Array.isArray(history) ? history : [])
+        .map(p => ({ petrolMs: finite(p?.petrolMs), mapBar: finite(p?.petrolMapBar) }))
+        .filter(p => p.petrolMs !== null && p.mapBar !== null);
+      const key = JSON.stringify([geometry(acquiredPetrol), geometry(acquiredGas), epoch, historyCurve,
         snapshot.source, this.state?.maxAutomatch ?? snapshot.maxAutomatch,
         axisAt !== null && rvAt !== null && limit !== null && Math.abs(axisAt - rvAt) <= limit,
         ['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF_GAS_PREV','MNFLD_PRESS_BUF_GAS_PREV','MNFLD_PRESS_THD','ACQUIRED_ZONES_PETROL','ACQUIRED_ZONES_GAS','MUL_ACT']
@@ -1641,7 +1754,11 @@
       const previous = visible.gas === false ? [] : previousGas;
       const ecu = [...petrol.map(p => ({ ...p, fuel: 'PETROL' })), ...gas.map(p => ({ ...p, fuel: 'GAS' }))];
       const previousDomain = this.epochDomain;
-      const domain = ns.CurveChart.focusDomain(reference, ecu, previous, { fullRange: visible.fullRange === true }) || previousDomain;
+      // Reset tocado pelo dono / curva anterior ainda à vista: a escala de antes fica (curva anterior e pontos novos
+      // no mesmo quadro) durante toda a readquisição.
+      const domain = ((epoch.intentPending === true || historyCurve.length > 0) && previousDomain)
+        ? previousDomain
+        : ns.CurveChart.focusDomain(reference, ecu, previous, { fullRange: visible.fullRange === true }) || previousDomain;
       let chart = '';
       if (domain) {
         this.epochDomain = { ...domain };
@@ -1662,13 +1779,27 @@
         };
         const historical = previous.filter(within).map(p => '<circle class="autocal-previous-gas-point" cx="' +
           x(p.petrolMs).toFixed(1) + '" cy="' + y(p.mapBar).toFixed(1) + '" r="4.5"></circle>').join('');
+        // Curva anterior (referência de antes do reset): esmaecida, sem pontos tocáveis, só para olhar.
+        const previousCurve = (() => {
+          const ordered = historyCurve.filter(within).slice().sort((a, b) => a.petrolMs - b.petrolMs);
+          if (ordered.length < 2) return '';
+          const d = ordered.map((p, i) => (i ? 'L' : 'M') + ' ' + x(p.petrolMs).toFixed(1) + ' ' + y(p.mapBar).toFixed(1)).join(' ');
+          return '<path class="autocal-reference-line petrol previous autocal-history-curve" data-autocal-previous-curve="reset" d="' + d + '"><title>' + AUTO_CAL_PREVIOUS_CURVE_LABEL + '</title></path>';
+        })();
         chart = built.svg
           .replace('class="autocal-reference-line petrol"', 'class="autocal-reference-line petrol epoch-anchor"')
-          .replace('<g class="autocal-live-layer"', line(petrol, 'petrol') + line(gas, 'gas') + historical + '<g class="autocal-live-layer"')
+          .replace('<g class="autocal-live-layer"', previousCurve + line(petrol, 'petrol') + line(gas, 'gas') + historical + '<g class="autocal-live-layer"')
           .replace('</svg>', '<title>CURVAS DA ECU · aquisição atual, sem equivalência durante reinício</title></svg>');
       }
       host.innerHTML = chart ? '<div class="curve-chart-shared" data-mode="ecu18">' + chart + '</div>' : '<div class="chart-empty"><b>CURVAS DA ECU</b><span>' +
         escapeHtml(stage) + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.</span></div>';
+      const legend = document.getElementById('autocalLegend');
+      const legendKey = 'epoch|' + (historyCurve.length > 0);
+      if (legend && this.legendKey !== legendKey) {
+        this.legendKey = legendKey;
+        legend.innerHTML = (ns.CurveChart?.legendHtml?.({ mode: 'ecu18' }) || '') +
+          (historyCurve.length ? '<span class="previous" data-legend="previous">' + AUTO_CAL_PREVIOUS_CURVE_LABEL + '</span>' : '');
+      }
       this.epochChartHost = host;
       this.epochChartKey = key;
       this.epochChartNode = host.firstElementChild;
@@ -1687,6 +1818,7 @@
       const liveEpoch = AutoCalUxModel.effectiveEpoch(
         this.projection?.liveAcquisitionEpoch || {},
         this.actionState || {},
+        this.resetIntent,
       );
       const rawAcquiredPetrol = AutoCalUxModel.acquiredPoints(snapshot, 'petrol');
       const rawAcquiredGas = AutoCalUxModel.acquiredPoints(snapshot, 'gas');
@@ -1706,7 +1838,12 @@
 
       if (liveEpoch.intentPending === true || !points.length || this.referenceUsable === false) {
         if (liveEpoch.comparisonAllowed === false) {
-          this.renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, liveEpoch, host);
+          // Histórico só para olhar: fora de currentReferencePoints (seleção/cálculo) e fora dos pontos tocáveis.
+          // Fica durante TODA a readquisição (intenção, ACK confirmado, bandas incompletas), até a referência nova
+          // ser utilizável; sessão USB nova o limpa (referenceTransition.clearHistory).
+          this.currentReferencePoints = [];
+          const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
+          this.renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, liveEpoch, host, history);
           return;
         }
         this.chartRenderKey = null;

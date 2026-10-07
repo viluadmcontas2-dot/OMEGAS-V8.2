@@ -58,11 +58,11 @@ class AutoIdlePointCleaner(
     fun decide(input: Input): Decision = decideInternal(input).also { lastDecision = it.toString().take(200) }
 
     private fun decideInternal(input: Input): Decision {
-        disabledReason?.let { return Decision.Wait("Apagamento automático desligado nesta sessão: $it") }
-        if (input.autoCalEnabled != 1) return Decision.Wait("AUTO_CAL_ENABLE não está em 1")
-        if (input.sessionAgeMs < settleMs) return Decision.Wait("Sessão USB ainda estabilizando")
-        if (needsReread) return Decision.Wait("Aguardando releitura dos buffers depois de falha")
-        if (input.nowElapsedMs < blockedUntilMs) return Decision.Wait("Automático bloqueado depois de falha")
+        disabledReason?.let { return Decision.Wait("Limpeza automática pausada: $it") }
+        if (input.autoCalEnabled != 1) return Decision.Wait("O aprendizado da ECU está pausado ou ainda não foi lido")
+        if (input.sessionAgeMs < settleMs) return Decision.Wait("Conexão USB ainda estabilizando")
+        if (needsReread) return Decision.Wait("Aguardando uma leitura nova da ECU depois de uma falha")
+        if (input.nowElapsedMs < blockedUntilMs) return Decision.Wait("Aguardando um pouco depois de uma falha")
         lastSuccessAtMs?.let { last ->
             if (input.nowElapsedMs - last < minIntervalMs) return Decision.Wait("Intervalo mínimo entre apagamentos")
         }
@@ -78,8 +78,9 @@ class AutoIdlePointCleaner(
         val frameFuel = frame?.let { fuelOf(it.fuel) }
         val outliers = if (running && frameFuel != null) usable[frameFuel] else null
         if (outliers == null) {
-            val waiting = usable.keys.joinToString(" e ") { if (it == Fuel.GAS) "no GNV" else "na gasolina" }
-            return Decision.Wait("Aguardando o carro rodando $waiting (rpm >= $drivingRpm)")
+            // Frase para a tela (regra 6): sem rpm nem código; o número vai em "Detalhes técnicos" (json).
+            val waiting = usable.keys.sorted().joinToString(" ou ") { if (it == Fuel.GAS) "no GNV" else "na gasolina" }
+            return Decision.Wait("Aguardando o carro rodar $waiting")
         }
         return Decision.Delete(frameFuel!!, outliers.map { it.band }, outliers, frame!!)
     }
@@ -134,6 +135,15 @@ class AutoIdlePointCleaner(
     fun disabledReason(): String? = disabledReason
 
     /**
+     * Novo toque do dono depois de uma pausa: limpa a pausa e a contagem de falhas seguidas, mas NÃO o bloqueio
+     * de falha com mutação incerta ([blockedUntilMs]/[needsReread]): rearmar não pode ignorar o que ainda não foi relido.
+     */
+    fun rearm() {
+        disabledReason = null
+        consecutiveFailures = 0
+    }
+
+    /**
      * invalidateRound / ação manual: zera só a espera por releitura; mantém intervalo, o bloqueio de falha com
      * mutação possível ([blockedUntilMs]) e o desligamento da sessão.
      */
@@ -159,7 +169,8 @@ class AutoIdlePointCleaner(
         .put("needsReread", needsReread)
         .put("lastDecision", lastDecision)
         .put("minIntervalMs", minIntervalMs)
-        .put("scope", JSONArray().put("GNV"))
+        .put("drivingRpm", drivingRpm)
+        .put("scope", JSONArray().put(Fuel.GAS.wireName).put(Fuel.PETROL.wireName))
 
     companion object {
         /** ACK/readback (~1,2 s) + um snapshot nativo (mediana ~3 s). */

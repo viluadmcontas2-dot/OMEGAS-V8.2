@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { open, go, playwright } = require('./render/lib.js');
 const pw = playwright();
-const skip = !pw || !fs.existsSync(pw.chromium.executablePath()) ? 'Chromium indisponível' : false;
+const skip = !pw || !!!require("./render/lib.js").chromiumPath(pw.chromium) ? 'Chromium indisponível' : false;
 test('Diamante: telemetria persistente, navegação inferior e gráfico dominante nas duas aquisições', { skip }, async () => {
   const { browser, page, errors } = await open(pw.chromium, 'connected');
   try {
