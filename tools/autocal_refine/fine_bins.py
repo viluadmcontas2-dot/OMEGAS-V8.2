@@ -61,7 +61,7 @@ def aggregate(pairs):
     counts = [0] * FINE_COUNT
     for tp, tg, episode, ecu in pairs:
         idx = fine_index(tp)
-        if idx is None or tg <= 0 or tp <= 0:
+        if idx is None or not math.isfinite(tg) or not math.isfinite(tp) or tg <= 0 or tp <= 0:
             continue
         counts[idx] += 1
         reservoirs[idx].append((math.log(tg / tp), tp, episode, bool(ecu)))

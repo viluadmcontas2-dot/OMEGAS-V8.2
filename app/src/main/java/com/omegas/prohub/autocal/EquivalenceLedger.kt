@@ -203,11 +203,14 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val obs: Obs?
         if (frame.fuel.isNotBlank()) { liveFuelName = frame.fuel; liveFuelAt = frame.t }
         synchronized(lock) {
-            if (frame.fuel != "GASOLINA" && frame.fuel != "GNV" || frame.rpm <= 0 || frame.map <= 0 || frame.petrolMs < MIN_PETROL_MS) {
+            // NaN passa por qualquer comparação (<=, <): sem isFinite um quadro corrompido virava leitura e envenenava medianas.
+            if (frame.fuel != "GASOLINA" && frame.fuel != "GNV" || !frame.rpm.isFinite() || !frame.map.isFinite() ||
+                !frame.petrolMs.isFinite() || frame.rpm <= 0 || frame.map <= 0 || frame.petrolMs < MIN_PETROL_MS
+            ) {
                 window.clear()
                 return
             }
-            if (frame.fuel == "GNV" && frame.rpm >= DRIVING_MIN_RPM && frame.gasMs > 0.0) {
+            if (frame.fuel == "GNV" && frame.rpm >= DRIVING_MIN_RPM && frame.gasMs.isFinite() && frame.gasMs > 0.0) {
                 gasUsefulRpmMs += (frame.gasMs - GAS_DEAD_TIME_MS).coerceAtLeast(0.0) * frame.rpm
                 airRpmBar += frame.map * frame.rpm
             }
