@@ -25,11 +25,6 @@
 .autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-background { fill: rgba(var(--rgb-58-208-149),.085); }
 .autocal-zone-surface[data-gas-state="missing"] .autocal-zone-background { fill: rgba(var(--rgb-242-177-79),.10); }
 .autocal-zone-surface[data-current="true"] .autocal-zone-background { stroke: var(--tone-f4f9ff); stroke-width: 2; fill-opacity: 1; }
-.autocal-zone-petrol-edge { fill: rgba(var(--rgb-120-183-255),.24); }
-.autocal-zone-surface[data-petrol-state="acquired"] .autocal-zone-petrol-edge { fill: var(--tone-78b7ff); }
-.autocal-zone-gas-edge { fill: rgba(var(--rgb-177-191-199),.25); }
-.autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-gas-edge { fill: var(--tone-5dd39e); }
-.autocal-zone-surface[data-gas-state="missing"] .autocal-zone-gas-edge { fill: var(--tone-f0b65e); }
 .autocal-zone-label { fill: var(--tone-dbe7f2); font-size: 12px; font-weight: 750; paint-order: stroke; stroke: var(--tone-07101a); stroke-width: 3px; }
 .autocal-zone-surface[data-current="true"] .autocal-zone-label { fill: var(--tone-ffffff); font-weight: 900; }
 .autocal-current-band-layer { fill: rgba(var(--rgb-79-163-255),.10); stroke: rgba(var(--rgb-120-183-255),.38); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }

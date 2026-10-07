@@ -17,6 +17,7 @@
 8. Comandos de leitura/escrita da ECU não mudam (`UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager`, `AutoCalNativeActionManager`). Exceção: o OMEGAS apaga sozinho pontos fora da curva do GNV e da gasolina (spec 2026-10-07-autocal-apagar-lenta rev2), com o carro rodando no combustível do ponto, readback e registro; Curva K continua só com o dono. O automático reusa os bytes do apagamento manual (máscaras 0x016D/0x016E + `01 24 05`), um combustível por comando, com a máscara do outro toda preservada.
 9. Todo teste roda no GitHub Actions; nada é compilado ou testado na sessão.
 10. Uma direção visual: tokens, cor com semântica, normalidade compacta.
+11. Navegação inferior = 8 abas de primeiro nível, nesta ordem: Agora, Mapa K, Curva K, AutoCal, Ajuste GNV, Sessões, Ferramentas, Diagnóstico. O AutoCal é aba independente e não pode ser removido, escondido nem agrupado (nada de menu "Avançado"). Mudar isso exige pedido explícito do dono.
 
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 

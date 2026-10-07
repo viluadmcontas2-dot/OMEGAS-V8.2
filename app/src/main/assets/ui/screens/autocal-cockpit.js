@@ -1407,6 +1407,12 @@
         }
       }
       if (!scale || !layer) return;
+      // Revisto (W2): se o cursor encosta no limite direito, a escala cresce para contê-lo (só cresce; teto de 22 ms).
+      const liveMs = finite(live.petrolMs);
+      if (liveMs !== null && liveMs > 0 && liveMs <= 22 && liveMs > scale.xMax - Math.max(0.2, (scale.xMax - scale.xMin) * 0.03)) {
+        const wanted = Math.ceil(liveMs * 2) / 2;
+        if (wanted > (this.liveExtentMs || 0)) { this.liveExtentMs = wanted; this.renderReferenceChart(this.snapshot || {}); return; }
+      }
       const projected = AutoCalUxModel.projectLive(live, scale);
       if (!projected) return;
       D.removeAttrIfPresent(layer, 'display');
@@ -1681,7 +1687,7 @@
       const store = chart.evidence;
       const signature = chart.evidenceSignature({
         snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId, history,
-        extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}|${chart.viewKey(this.chartView)}`,
+        extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}|${chart.viewKey(this.chartView)}|lx${Math.round((this.liveExtentMs || 0) * 2)}`,
       });
       const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.nodeFor('ecu18')) !== false;
       if (alreadyShown) {
@@ -1689,7 +1695,7 @@
         this.renderLiveCursor();
         return;
       }
-      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history, mode: 'ecu18', view: this.chartView };
+      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history, mode: 'ecu18', view: this.chartView, liveMs: this.liveExtentMs || null };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
         if (!model || !model.domain) {
