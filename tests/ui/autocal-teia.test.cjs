@@ -62,6 +62,9 @@ function probeFn() {
     xt: txt('.autocal-axis-tick-x'), yt: txt('.autocal-axis-tick-y'), titles: txt('.autocal-axis-title'), grid: host.querySelectorAll('.autocal-grid-line').length,
     zones: txt('[data-autocal-zone-label]'), pts, paths, btns, allBtns: all, hasLive: !!host.querySelector('.autocal-live-layer'), emptyWords: over ? over.textContent.trim() : '',
     sentence: t('autocalHumanAction'), status: t('autocalActionStatus'), readout: t('autocalChartInspector'), count: t('autocalReferenceCount') || (document.getElementById('autocalReferenceCount') || {}).textContent || '',
+    chip: (() => { const c = document.getElementById('autocalAutoMatchTile'); if (!c) return null; const q = c.getBoundingClientRect(); return { text: c.textContent.trim().replace(/\s+/g, ' '), w: q.width, h: q.height, t: q.top, b: q.bottom, l: q.left, r: q.right }; })(),
+    legendBox: (() => { const q = (document.querySelector('.ar-legend-row') || document.body).getBoundingClientRect(); return { l: q.left, r: q.right, t: q.top, b: q.bottom }; })(),
+    toast: (() => { const e = document.getElementById('alertToast'); if (!e || !e.classList.contains('show')) return null; const q = e.getBoundingClientRect(); return { l: q.left, r: q.right, t: q.top, b: q.bottom, txt: e.textContent.trim() }; })(),
     clean: t('autocalAutoCleanLine'), alert: alertText.trim().slice(0, 160), hits,
     hscroll: sc.scrollWidth > sc.clientWidth + 1 || document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     barBox: bar ? (() => { const q = bar.getBoundingClientRect(); return { b: q.bottom, t: q.top }; })() : null, hostBox: { b: hrect.bottom },
@@ -102,6 +105,16 @@ async function cap(o, group, id, title, opt = {}) {
   for (const p of st.paths) {
     let last = null;
     for (const m of p.d.matchAll(/([ML]) ([\d.-]+) ([\d.-]+)/g)) { const x = +m[2]; if (m[1] === 'M') last = x; else { F(x >= last - 0.05, `linha ${p.cls} volta atras em x (epocas misturadas)`); last = x; } }
+  }
+  // contador AutoMatch na legenda: visivel, dentro da tela, "N de M" / "N" ou "—" (desconhecido NUNCA vira 0)
+  F(st.chip && st.chip.w > 40 && st.chip.h > 10 && st.chip.r <= 1280, 'contador AutoMatch nao esta visivel na legenda');
+  if (st.chip) { F(/^AutoMatch (—|\d+( de \d+)?)$/.test(st.chip.text), `contador AutoMatch com texto estranho: "${st.chip.text}"`); if (opt.autoUnknown) F(st.chip.text === 'AutoMatch —', 'AutoMatch desconhecido deveria mostrar "—", nunca 0'); }
+  // aviso de comando (toast) nunca cobre legenda, grafico util nem botoes
+  if (st.toast) {
+    const hit = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
+    F(!hit(st.toast, st.legendBox), 'o aviso de comando cobre a legenda');
+    F(!hit(st.toast, { l: st.host.x, r: st.host.x + st.host.w, t: st.host.y, b: st.host.y + st.host.h }), 'o aviso de comando cobre o grafico');
+    st.btns.forEach(b => F(!hit(st.toast, { l: b.l, r: b.r, t: b.t, b: b.t + b.h }), `o aviso de comando cobre o botao "${b.txt}"`));
   }
   // escala so cresce: nenhum ponto/faixa/reset/AutoMatch encolhe ou troca os eixos (regra de coerencia do dono)
   const num = t => parseFloat(String(t).replace(',', '.'));
@@ -229,20 +242,23 @@ test('teia 3 · botoes individuais (todos os do DOM) · ponte registrada vs tabe
       covered.add(label);
       await step(`3-0${on ? 5 : 6}-limpeza-${on ? 'on' : 'off'}`, `${label}: so arma/desarma no app (nenhum byte para a ECU)`, '[data-autocal-cleanup-toggle]', ['setAutoCleanupArmed'], null, { wait: 900, extra: (st, s, c, F) => F(c[0].args[0] === on, 'armou/desarmou ao contrario') });
     }
-    // selecionar ponto -> botoes de ponto aparecem
+    // Platina: tocar OLHA o ponto; no rodape aparecem Reaprender, Selecionar junto e Cancelar
     await sync(o); await o.page.evaluate(() => { window.__step = '3-07-selecionar'; document.querySelector('[data-autocal-acquired-fuel="PETROL"][data-autocal-acquired-index="5"]').dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    const rs = await cap(o, '3-botoes', '3-07-selecionar-ponto', 'tocar o ponto 6 da gasolina: aparecem Reaprender/Cancelar', { extra: (st, s, c, F) => { F(st.btns.some(b => /Reaprender/.test(b.txt)), 'Reaprender nao apareceu'); F(st.btns.some(b => b.txt === 'Cancelar'), 'Cancelar nao apareceu'); } }); expectCmds(rs, [], null); mine.push(rs);
-    covered.add('Cancelar'); await step('3-08-cancelar', 'Cancelar a selecao (nenhuma chamada)', '[data-autocal-clear-point-selection]', [], null, { extra: (st, s, c, F) => F(!st.btns.some(b => b.txt === 'Cancelar'), 'Cancelar continua visivel') });
+    const rs = await cap(o, '3-botoes', '3-07-olhar-ponto', 'tocar o ponto 6 da gasolina: so olha; rodape mostra Reaprender 1 ponto, Selecionar junto, Cancelar', { extra: (st, s, c, F) => { F(st.btns.map(b => b.txt).join('|') === 'Reaprender 1 ponto|Selecionar junto|Cancelar', 'rodape do ponto deveria ser Reaprender 1 ponto|Selecionar junto|Cancelar, veio ' + st.btns.map(b => b.txt).join('|')); } }); expectCmds(rs, [], null); mine.push(rs);
+    covered.add('Selecionar junto'); await step('3-08-selecionar-junto', 'Selecionar junto: marca o ponto olhado (so no app, nenhuma chamada)', '[data-autocal-select-together]', [], null, { extra: (st, s, c, F) => { F(st.btns.some(b => b.txt === 'Remover da seleção'), 'o botao deveria virar Remover da seleção'); F(o.selCount === undefined || true, ''); } });
+    await o.page.evaluate(() => { document.querySelector('[data-autocal-acquired-fuel="GAS"][data-autocal-acquired-index="9"]').dispatchEvent(new MouseEvent('click', { bubbles: true })); }); await settle(o, 400);
+    covered.add('Remover da seleção'); await step('3-09-juntar-segundo', 'tocar o ponto 10 do GNV e Selecionar junto: 2 marcados', '[data-autocal-select-together]', [], null, { extra: (st, s, c, F) => F(st.btns.some(b => /Reaprender 2 pontos/.test(b.txt)), 'deveria dizer Reaprender 2 pontos') });
+    covered.add('Cancelar'); await step('3-10-cancelar', 'Cancelar a selecao (nenhuma chamada)', '[data-autocal-clear-point-selection]', [], null, { extra: (st, s, c, F) => F(!st.btns.some(b => b.txt === 'Cancelar'), 'Cancelar continua visivel') });
     await o.page.evaluate(() => { document.querySelector('[data-autocal-acquired-fuel="PETROL"][data-autocal-acquired-index="5"]').dispatchEvent(new MouseEvent('click', { bubbles: true })); }); await settle(o, 600);
-    covered.add('Reaprender 1 ponto'); const rr = await step('3-09-reaprender', 'Reaprender 1 ponto (apagar o ponto da gasolina)', '[data-autocal-reacquire-selected]', ['preparePointDeleteBatch', 'executeNativeAction'], null, { wait: 2200, extra: (st, s, c, F) => { F(s.p[5] === 0 && s.p.filter(v => v > 0).length === 17, 'so o ponto 6 deveria sumir'); F(s.g.every(v => v > 0), 'apagar ponto da gasolina tocou o GNV'); } });
+    covered.add('Reaprender 1 ponto'); const rr = await step('3-11-reaprender', 'Reaprender 1 ponto (apagar o ponto olhado da gasolina)', '[data-autocal-reacquire-selected]', ['preparePointDeleteBatch', 'executeNativeAction'], null, { wait: 2200, extra: (st, s, c, F) => { F(s.p[5] === 0 && s.p.filter(v => v > 0).length === 17, 'so o ponto 6 deveria sumir'); F(s.g.every(v => v > 0), 'apagar ponto da gasolina tocou o GNV'); } });
     if (!/PETROL/.test(JSON.stringify(rr.cmds[0].args))) rr.fail.push('apagar mandou combustivel errado');
     // Curva K (outra aba): Resetar Curva K
     covered.add('Resetar Curva K');
     await go(o.page, 'curve'); await sleep(o.page, 2500);
-    await o.page.evaluate(() => { window.__step = '3-10-curva-k'; document.getElementById('curveResetButton').click(); }); await sleep(o.page, 3200);
-    const ck = await o.page.evaluate(() => window.__cmds.filter(c => c.step === '3-10-curva-k').map(c => c.fn));
+    await o.page.evaluate(() => { window.__step = '3-12-curva-k'; document.getElementById('curveResetButton').click(); }); await sleep(o.page, 3200);
+    const ck = await o.page.evaluate(() => window.__cmds.filter(c => c.step === '3-12-curva-k').map(c => c.fn));
     await o.page.screenshot({ path: path.join(SHOTS, '3-10-curva-k.png') });
-    const rk = { id: '3-10-curva-k', group: '3-botoes', title: 'Resetar Curva K (aba Curva K): 30 escritas MUL_ACT=0x4000', cmds: (await o.page.evaluate(() => window.__cmds.filter(c => c.step === '3-10-curva-k'))), fail: [], state: {}, pixel: {}, summary: 'chamadas: ' + ck.join(', ') };
+    const rk = { id: '3-12-curva-k', group: '3-botoes', title: 'Resetar Curva K (aba Curva K): 30 escritas MUL_ACT=0x4000', cmds: (await o.page.evaluate(() => window.__cmds.filter(c => c.step === '3-12-curva-k'))), fail: [], state: {}, pixel: {}, summary: 'chamadas: ' + ck.join(', ') };
     if (!ck.includes('startCurveReset')) rk.fail.push('Resetar Curva K nao chamou startCurveReset'); if (ck.some(f => /RESET_(PETROL|GAS)/.test(f))) rk.fail.push('Curva K disparou reset de aquisicao');
     rk.cmds.forEach(c => { if (c.fn === 'startCurveReset') c.bytes = '30x MUL_ACT=0x4000 (documentado em AutoCalNativeActionManager.RESET_K_FACTOR)'; });
     REC.push(rk); mine.push(rk);
@@ -259,7 +275,7 @@ test('teia 4 · sequencias (pares/trincas, ECU ocupada, falha de transporte)', {
   const all18 = Array.from({ length: 18 }, (_, i) => i);
   // A: reler gasolina -> adquirir -> reler GNV -> adquirir
   { const o = await session(); try {
-    await full(o); mine.push(await cap(o, '4-sequencias', '4A-0-inicio', 'A: gasolina e GNV adquiridos', { baseline: 'seq-inicio' }));
+    await full(o); await sim(o, 'autoUnknown', true); mine.push(await cap(o, '4-sequencias', '4A-00-automatch-desconhecido', 'A: contador AutoMatch desconhecido mostra "—" (nunca 0)', { autoUnknown: true })); await sim(o, 'autoUnknown', false); mine.push(await cap(o, '4-sequencias', '4A-0-inicio', 'A: gasolina e GNV adquiridos; AutoMatch 1 de 3', { baseline: 'seq-inicio' }));
     await act(o, '4A-1-reler-gasolina', 'A: reler gasolina', '[data-autocal-action="RESET_PETROL"]', ['prepareNativeAction', 'executeNativeAction'], BYTES.RESET_PETROL, { extra: (st, s, c, F) => F(st.pts.filter(p => p.key.startsWith('GAS')).length === 18, 'GNV sumiu') });
     await sim(o, 'acquire', 'petrol', [3, 4, 5, 6], 10); mine.push(await cap(o, '4-sequencias', '4A-2-adquirindo-gasolina', 'A: gasolina readquirindo 4 faixas'));
     await act(o, '4A-3-reler-gnv', 'A: reler GNV', '[data-autocal-action="RESET_GAS"]', ['prepareNativeAction', 'executeNativeAction'], BYTES.RESET_GAS, { extra: (st, s, c, F) => F(s.p.filter(v => v > 0).length === 4, 'RESET_GAS apagou a gasolina nova') });
@@ -307,7 +323,7 @@ test('teia 4 · sequencias (pares/trincas, ECU ocupada, falha de transporte)', {
   // G: selecionar 2 pontos (gasolina e GNV) -> reaprender
   { const o = await session(); try {
     await full(o); await sync(o);
-    await o.page.evaluate(() => { for (const [f, i] of [['PETROL', 4], ['GAS', 9]]) document.querySelector(`[data-autocal-acquired-fuel="${f}"][data-autocal-acquired-index="${i}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    for (const [f, i] of [['PETROL', 4], ['GAS', 9]]) { await o.page.evaluate(([f, i]) => { document.querySelector(`[data-autocal-acquired-fuel="${f}"][data-autocal-acquired-index="${i}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true })); }, [f, i]); await settle(o, 400); await click(o, '[data-autocal-select-together]'); await settle(o, 400); }
     mine.push(await cap(o, '4-sequencias', '4G-1-dois-pontos', 'G: dois pontos marcados (gasolina 5, GNV 10)', { extra: (st, s, c, F) => F(st.btns.some(b => /Reaprender 2/.test(b.txt)), 'botao deveria dizer Reaprender 2 pontos') }));
     await act(o, '4G-2-reaprender-2', 'G: reaprender os 2 pontos', '[data-autocal-reacquire-selected]', ['preparePointDeleteBatch', 'executeNativeAction'], null, { extra: (st, s, c, F) => { F(s.p[4] === 0 && s.g[9] === 0 && s.p.filter(v => v > 0).length === 17 && s.g.filter(v => v > 0).length === 17, 'so os 2 pontos marcados deviam sumir'); } });
   } finally { await o.browser.close(); } }

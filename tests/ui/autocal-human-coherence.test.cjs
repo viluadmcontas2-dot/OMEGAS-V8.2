@@ -95,19 +95,21 @@ test('comandos operacionais ficam fora dos painéis de detalhes',()=>{
  }finally{app.destroy();}
 });
 
-// Revisto (P2 seleção): tocar no ponto marca/desmarca; a barra só tem "Reaprender N pontos" e "Cancelar".
+// Platina restaurada (dono, 2026-10-08): tocar OLHA o ponto; "Selecionar junto" (rodapé) marca/desmarca; barra: Reaprender N, Selecionar junto, Cancelar.
 test('pontos: tocar marca/desmarca, dois botões na barra e conferência antes de limpar',()=>{
  const app=L.boot();try{app.go('autocal');app.settle(3);const screen=app.win.OmegasApp.autoCalCockpit;
   const points=screen.currentAcquiredPoints.slice(0,2);assert.equal(points.length,2);
   let status={};let targets=[];
   screen.api={...screen.api,actionStatus:()=>status,preparePointDeleteBatch:t=>{targets=t;return {ok:true,prepared:true,preparationId:'batch'};},execute:()=>{status={action:'DELETE_POINT',state:'READING_AFTER',busy:true};return {ok:true,started:true};}};
   const svg=app.$('#autocalReferenceChart svg');
-  for(const p of points) screen.tapAcquiredPoint(p.fuel,p.index);
+  const pick=p=>{screen.tapAcquiredPoint(p.fuel,p.index);screen.toggleBatchSelection();};
+  screen.tapAcquiredPoint(points[0].fuel,points[0].index);assert.equal(screen.selectedAcquiredPoints.size,0,'tocar só olha o ponto');assert.deepEqual(app.$('.autocal-point-actions').querySelectorAll('button').map(b=>b.textContent),['Reaprender 1 ponto','Selecionar junto','Cancelar']);screen.tapAcquiredPoint(points[0].fuel,points[0].index);
+  for(const p of points) pick(p);
   assert.equal(screen.selectedAcquiredPoints.size,2);
   const bar=app.$('.autocal-point-actions');assert.equal(bar.hidden,false);
-  assert.deepEqual(bar.querySelectorAll('button').map(b=>b.textContent),['Reaprender 2 pontos','Cancelar']);
-  screen.tapAcquiredPoint(points[1].fuel,points[1].index);assert.equal(screen.selectedAcquiredPoints.size,1,'tocar de novo desmarca');
-  screen.tapAcquiredPoint(points[1].fuel,points[1].index);
+  assert.deepEqual(bar.querySelectorAll('button').map(b=>b.textContent),['Reaprender 2 pontos','Remover da seleção','Cancelar']);
+  screen.toggleBatchSelection();assert.equal(screen.selectedAcquiredPoints.size,1,'Remover da seleção desmarca');
+  screen.toggleBatchSelection();assert.equal(screen.selectedAcquiredPoints.size,2);
   assert.match(app.$('#autocalChartInspector').textContent,/A ECU já passou aqui/);
   const button=app.$('[data-autocal-reacquire-selected]');assert.equal(button.closest('details'),null);assert.equal(button.closest('.ar-readout'),null);
   assert.equal(app.$('#autocalChartInspector button'),null);
@@ -140,7 +142,7 @@ test('pontos: falha com a ECU possivelmente alterada limpa a seleção; seleçã
   const points=screen.currentAcquiredPoints.slice(0,2);
   let status={};
   screen.api={...screen.api,actionStatus:()=>status,preparePointDeleteBatch:()=>({ok:true,prepared:true,preparationId:'b'}),execute:()=>{status={state:'READING_AFTER',busy:true};return {ok:true};}};
-  for(const p of points) screen.tapAcquiredPoint(p.fuel,p.index);
+  for(const p of points){screen.tapAcquiredPoint(p.fuel,p.index);screen.toggleBatchSelection();}
   app.$('[data-autocal-reacquire-selected]').click();
   status={state:'FAILED',busy:false,mutationMayHaveStarted:true};screen.refresh();
   assert.equal(screen.selectedAcquiredPoints.size,0,'estado incerto: a seleção velha não vale');

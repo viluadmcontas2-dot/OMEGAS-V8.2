@@ -905,6 +905,7 @@
                 <button type="button" class="autocal-cleanup-toggle" data-autocal-cleanup-toggle disabled>Ativar limpeza automática</button>
                 <span class="autocal-point-actions" hidden role="group" aria-label="Pontos marcados para a ECU medir de novo">
                   <button type="button" class="btn-primary" data-autocal-reacquire-selected>Reaprender 1 ponto</button>
+                  <button type="button" data-autocal-select-together>Selecionar junto</button>
                   <button type="button" data-autocal-clear-point-selection>Cancelar</button>
                 </span>
               </div>
@@ -940,6 +941,7 @@
         const point = event.target.closest('[data-autocal-ref-index]');
         if (point) this.inspectReferencePoint(Number(point.dataset.autocalRefIndex));
         if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
+        if (event.target.closest('[data-autocal-select-together]')) this.toggleBatchSelection();
         if (event.target.closest('[data-autocal-clear-point-selection]')) this.clearAcquiredPointSelection();
       });
     }
@@ -1951,18 +1953,23 @@
         return;
       }
       if (this.refreshBusy()) return;
-      if (this.selectedAcquiredPoints.has(key)) {
-        this.selectedAcquiredPoints.delete(key);
-        if (this.selectedAcquiredPoint === key) this.selectedAcquiredPoint = null;
-        if (this.selectedAcquiredPoints.size) {
-          const [lastFuel, lastIndex] = [...this.selectedAcquiredPoints].pop().split(':');
-          this.inspectAcquiredPoint(lastFuel, Number(lastIndex));
-        } else this.readout('');
+      if (this.selectedAcquiredPoint === key) {
+        this.selectedAcquiredPoint = null;
+        this.readout('');
       } else {
+        // Como na Platina: tocar OLHA o ponto; "Selecionar junto" (rodapé) junta pontos para reaprender de uma vez.
         if (!this.livePointKeys(this.snapshot).has(key)) return;
-        this.selectedAcquiredPoints.add(key);
         this.inspectAcquiredPoint(fuel, index);
       }
+      this.renderPointActions();
+    }
+
+    /** "Selecionar junto" / "Remover da seleção": junta o ponto olhado aos já marcados para reaprender todos de uma vez. */
+    toggleBatchSelection() {
+      const key = this.selectedAcquiredPoint;
+      if (!key || this.refreshBusy()) return;
+      if (this.selectedAcquiredPoints.has(key)) this.selectedAcquiredPoints.delete(key);
+      else if (this.livePointKeys(this.snapshot).has(key)) this.selectedAcquiredPoints.add(key);
       this.renderPointActions();
     }
 
@@ -1988,14 +1995,24 @@
       const count = this.selectedAcquiredPoints.size;
       const busy = this.refreshBusy();
       const pending = this.pendingPointReacquisitionKeys.size > 0;
-      const editing = count > 0 || pending;
+      const inspected = this.selectedAcquiredPoint;
+      const editing = count > 0 || pending || Boolean(inspected);
       const bar = this.panel?.querySelector('.autocal-point-actions');
       const main = this.panel?.querySelector('.autocal-main-actions');
       if (!bar || !main) return;
-      bar.hidden = !editing; main.hidden = editing;
+      // Os botões normais saem do rodapé enquanto há ponto olhado/marcado (o CSS do rodapé ignora [hidden] no contêiner, então cada botão).
+      bar.hidden = !editing; main.hidden = false;
+      main.querySelectorAll(':scope > button').forEach(button => { button.hidden = editing; });
       const batch = bar.querySelector('[data-autocal-reacquire-selected]');
-      batch.disabled = busy || !count;
-      batch.textContent = busy && pending ? 'Conferindo na ECU…' : 'Reaprender ' + D.plural(Math.max(count, 1), 'ponto', 'pontos');
+      const wanted = count || (inspected ? 1 : 0);
+      batch.disabled = busy || !wanted;
+      batch.textContent = busy && pending ? 'Conferindo na ECU…' : 'Reaprender ' + D.plural(Math.max(wanted, 1), 'ponto', 'pontos');
+      const together = bar.querySelector('[data-autocal-select-together]');
+      if (together) {
+        together.disabled = busy || !inspected;
+        together.textContent = inspected && this.selectedAcquiredPoints.has(inspected) ? 'Remover da seleção' : 'Selecionar junto';
+        together.setAttribute('aria-pressed', inspected && this.selectedAcquiredPoints.has(inspected) ? 'true' : 'false');
+      }
       bar.querySelector('[data-autocal-clear-point-selection]').disabled = busy;
       this.paintSelection();
     }
@@ -2011,8 +2028,9 @@
     requestSelectedPointReacquisition() {
       // Antes de apagar: só pontos que existem agora (contador > 0) e não acabaram de ser apagados.
       this.pruneSelection(this.snapshot);
-      if (!this.api?.available?.() || this.selectedAcquiredPoints.size === 0 || this.refreshBusy()) { this.renderPointActions(); return; }
-      const targets = Array.from(this.selectedAcquiredPoints).map(key => {
+      const keys = this.selectedAcquiredPoints.size ? Array.from(this.selectedAcquiredPoints) : (this.selectedAcquiredPoint ? [this.selectedAcquiredPoint] : []);
+      if (!this.api?.available?.() || keys.length === 0 || this.refreshBusy()) { this.renderPointActions(); return; }
+      const targets = keys.map(key => {
         const [fuel, rawIndex] = key.split(':');
         return { fuel, index: Number(rawIndex) };
       }).filter(item => Number.isInteger(item.index));

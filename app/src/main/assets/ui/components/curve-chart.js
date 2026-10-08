@@ -393,7 +393,7 @@
       const zoneHeight = Math.abs(yFor(lower) - yFor(upper));
       const label = state => state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
       // Revisto (W2): sem barras laterais sem legenda; o rótulo da zona diz o estado do GNV em palavras.
-      const zoneText = `Z${zone.zone}` + (zone.petrolState === 'missing' ? ' · gasolina falta medir' : '') + (zone.gasState === 'acquired' ? ' · GNV ok' : zone.gasState === 'missing' ? ' · GNV falta' : '');
+      const zoneText = `Z${zone.zone}` + (zone.petrolState === 'missing' ? ' · gasolina: falta' : '') + (zone.gasState === 'acquired' ? ' · GNV: ok' : zone.gasState === 'missing' ? ' · GNV: falta' : '');
       const caption = `Z${zone.zone} · Gasolina ${label(zone.petrolState)} · GNV ${label(zone.gasState)}`;
       return `<g class="autocal-zone-surface" data-autocal-zone-surface="${zone.zone}" data-gas-state="${zone.gasState}" data-petrol-state="${zone.petrolState}" data-current="false" aria-label="${caption}">` +
         `<rect class="autocal-zone-background" x="${padLeft}" y="${top.toFixed(1)}" width="${width - padLeft - padRight}" height="${zoneHeight.toFixed(1)}"></rect>` +

@@ -133,3 +133,7 @@ html body .ar-autocal .autocal-chart-overlay #autocalActionStatus { margin: 0; p
 .autocal-automatch-chip { margin-left: auto; padding: 2px 10px; border: 1px solid var(--line); border-radius: 14px; font-size: 16px; color: var(--muted); white-space: nowrap; }
 .autocal-automatch-chip b { color: var(--text); font-weight: 700; }
 .autocal-automatch-chip[data-state="full"] b { color: var(--warn); }
+
+/* Aviso de comando: fica ao lado direito da barra de botões; nunca cobre legenda, gráfico nem botões (dono, 2026-10-08). */
+html body[data-omegas-route="autocal"] #alertToast.alert-toast { top: auto; bottom: 86px; left: auto; right: 12px; width: 340px; max-height: 58px; padding: 4px 10px; overflow: hidden; }
+html body[data-omegas-route="autocal"] #alertToast.alert-toast b { font-size: 18px; line-height: 1.15; }
