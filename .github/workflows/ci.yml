@@ -36,6 +36,11 @@ jobs:
           python3 -B tests/test_curva_salvamento_so_manual.py
           python3 -B tools/wiring/run_ui_mutants.py --ci --only curva-autosave,curva-backup-ao-gravar,curva-backup-ao-desfazer,curva-nome-generico,curva-pasta-errada,curva-lote-publica-arquivo,curva-prewrite-vira-manual --min-kill 1.0
           ./gradlew testDebugUnitTest --tests '*KFactorCurveFileNameTest'
+      - name: Trava apagar-manual-mantem-limpeza (regra 17, nao remover)
+        run: |
+          node --test tests/ui/autocal-apagar-manual-mantem-limpeza.test.cjs
+          python3 -B tools/wiring/run_ui_mutants.py --ci --only apagar-manual-desarma-limpeza --min-kill 1.0
+          ./gradlew testDebugUnitTest --tests '*AutoCalManualDeleteKeepsAutoCleanupTest'
       - name: JVM unit tests
         run: ./gradlew testDebugUnitTest
       - name: Relatorio do replay do apagamento automatico

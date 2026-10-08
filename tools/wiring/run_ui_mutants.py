@@ -182,6 +182,11 @@ MUTANTS = [
            "legend.innerHTML = chart.legendHtml({ mode: 'ecu18' });",
            "legend.innerHTML = chart.legendHtml({ mode: 'ecu18' }) + '<span class=\"previous\" data-legend=\"previous\">Leitura anterior</span>';",
            ["tests/ui/autocal-sem-leitura-anterior.test.cjs"], ci=True),
+    # ---- TRAVA apagar-manual-mantem-limpeza (regra 17): apagar ponto manual que desarma a limpeza tem de deixar o teste VERMELHO
+    mutant("apagar-manual-desarma-limpeza", "Reaprender desarma a limpeza automática", f"{UI}/screens/autocal-cockpit.js",
+           "      const count = targets.length;\n      this.pendingPointReacquisitionKeys",
+           "      this.api.setAutoCleanupArmed?.(false);\n      const count = targets.length;\n      this.pendingPointReacquisitionKeys",
+           ["tests/ui/autocal-apagar-manual-mantem-limpeza.test.cjs"], ci=True),
 ]
 
 

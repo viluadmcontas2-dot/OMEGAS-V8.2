@@ -270,7 +270,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         // Mesma regra de qualquer escrita K: sem o controle principal do MP48 (Link), nenhuma ação sai deste aparelho.
         noLocalControlFailure()?.let { return it }
         // Intenção manual do dono: desarma a limpeza automática ANTES de a escrita começar.
-        activityRef.get()?.serviceOrNull()?.onManualAutoCalIntent(actionName)
+        // Exceção (regra 17): apagar ponto manualmente nunca desarma nem pausa a limpeza automática.
+        if (action != AutoCalNativeActionManager.Action.DELETE_POINT) {
+            activityRef.get()?.serviceOrNull()?.onManualAutoCalIntent(actionName)
+        }
         val result = actionManager.execute(preparationId)
         invalidateAnalysis()
         if (!result.optBoolean("ok", false)) actionManager.clearPreparation()

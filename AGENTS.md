@@ -29,6 +29,8 @@
 
 16. O AutoCal nunca mostra leitura anterior (dono, 2026-10-08): nem curva esmaecida, nem legenda "Leitura anterior", nem botão, nem função que a guarde; no reset ficam só eixos, grade, escala e a camada AGORA, sem pontos/curva velhos e com aviso em palavras. Protegem: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py` (nome da trava: `autocal-sem-leitura-anterior`) e o mutante `autocal-leitura-anterior-volta`. Não remover nem enfraquecer.
 
+17. Apagar ponto manualmente nunca desarma a limpeza automática (dono, 2026-10-08): "Reaprender N pontos" não muda o armamento (armada continua, desarmada pelo dono continua) e a guarda "outro combustível mudou" ignora o que o apagamento manual causou. Protegem: `AutoCalManualDeleteKeepsAutoCleanupTest.kt` + `tests/ui/autocal-apagar-manual-mantem-limpeza.test.cjs` e o mutante `apagar-manual-desarma-limpeza`. Não remover nem enfraquecer.
+
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 
 ## As 8 abas
