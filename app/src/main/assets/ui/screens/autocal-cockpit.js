@@ -1077,7 +1077,18 @@
         nextSnapshot,
         this.analysis,
       );
-      const nextActionState = this.api.actionStatus() || {};
+      let nextActionState = this.api.actionStatus() || {};
+      // Falha com a ECU talvez mudada (RESET_*): a incerteza dura só até a PRÓXIMA leitura nova da ECU. Depois dela a tela
+      // mostra o que a ECU diz (antes, os pontos do combustível ficavam escondidos para sempre; achado da teia, 2026-10-08).
+      const uncertainFp = nextActionState.mutationMayHaveStarted === true ? AutoCalUxModel.failureFingerprint(nextActionState) : '';
+      if (uncertainFp) {
+        const rev = String(projection?.revision ?? '');
+        if (this.uncertainFp !== uncertainFp) { this.uncertainFp = uncertainFp; this.uncertainRev = rev; }
+        else if (rev !== this.uncertainRev) {
+          nextActionState = { ...nextActionState, mutationMayHaveStarted: false, uncertainResolved: true };
+          this.resetIntent = null;
+        }
+      }
       const selectionTransition = AutoCalUxModel.pointSelectionTransition(
         Array.from(this.pendingPointReacquisitionKeys || []),
         nextActionState,
@@ -1704,7 +1715,7 @@
           for (let i = 0; i < 30; i += 1) {
             const x = finite(xs[i]), y = finite(ys[i]);
             if (x !== null && x >= 0 && y !== null) {
-              petrolCurve.push({ petrolMs: x, petrolMapBar: y });
+              petrolCurve.push({ index: i, petrolMs: x, petrolMapBar: y });
             }
           }
         }
@@ -1735,7 +1746,11 @@
       // Reset tocado pelo dono / curva anterior ainda à vista: a escala de antes fica (curva anterior e pontos novos
       // no mesmo quadro) durante toda a readquisição.
       // A ESCALA de antes fica (eixos e grade não mudam no reset); a leitura anterior nunca é desenhada (dono, 2026-10-08).
-      const domain = this.keepScale(ns.CurveChart.focusDomain(reference, ecu, [], { fullRange: visible.fullRange === true })) || previousDomain;
+      // Com escala já conhecida (a de antes do reset) ela fica como está; só pontos novos fora dela a ampliam.
+      const knownScale = this.keepScale(null);
+      const domain = (knownScale
+        ? this.keepScale(ecu.length ? ns.CurveChart.focusDomain([], ecu, [], { fullRange: visible.fullRange === true }) : null) || knownScale
+        : this.keepScale(ns.CurveChart.focusDomain(reference, ecu, [], { fullRange: visible.fullRange === true }))) || previousDomain;
       let chart = '';
       if (domain) {
         this.epochDomain = { ...domain };

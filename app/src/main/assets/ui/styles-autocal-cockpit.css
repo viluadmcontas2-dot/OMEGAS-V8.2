@@ -127,4 +127,4 @@ html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > b, html body 
 
 /* O gráfico do AutoCal nunca muda de tamanho: a linha de estado reserva o lugar mesmo vazia (achado da teia: ao aparecer
    "Fazendo agora · …" o gráfico encolhia 34 px, 2026-10-08). */
-html body .ar-autocal .refino-statusline { min-height: 28px; }
+html body .ar-autocal .refino-statusline { min-height: 56px; max-height: 56px; overflow: hidden; }

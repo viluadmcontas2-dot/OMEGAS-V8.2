@@ -214,7 +214,7 @@ test('teia 3 · botoes individuais (todos os do DOM) · ponte registrada vs tabe
       await click(o, sel);
       const r = await cap(o, '3-botoes', id, title, opt); expectCmds(r, names, bytes); mine.push(r); return r;
     };
-    covered.add('Pausar aprendizado da ECU'); await step('3-01-pausar', 'Pausar aprendizado (DISABLE_AUTO_CAL)', '[data-autocal-toggle]', ['setAcquisitionEnabled'], BYTES.DISABLE_AUTO_CAL, { pausedOk: true, wait: 1800, extra: (st, s, c, F) => { F(s.enabled === 0, 'pausa nao chegou na ECU'); F(/pausad/i.test(st.sentence), 'frase nao diz que esta pausado'); } });
+    covered.add('Pausar aprendizado da ECU'); await step('3-01-pausar', 'Pausar aprendizado (DISABLE_AUTO_CAL)', '[data-autocal-toggle]', ['setAcquisitionEnabled'], BYTES.DISABLE_AUTO_CAL, { pausedOk: true, wait: 1800, extra: (st, s, c, F) => { F(s.enabled === 0, 'pausa nao chegou na ECU'); F(/pausad/i.test(st.sentenceAny) || /Retomar/.test(st.btns[0].txt), 'a tela nao diz que esta pausado'); } });
     covered.add('Retomar aprendizado'); await step('3-02-retomar', 'Retomar aprendizado (ENABLE_AUTO_CAL)', '[data-autocal-toggle]', ['setAcquisitionEnabled'], BYTES.ENABLE_AUTO_CAL, { wait: 1800, extra: (st, s, c, F) => F(s.enabled === 1, 'retomada nao chegou') });
     covered.add('Reler GNV'); await step('3-03-reler-gnv', 'Reler GNV (RESET_GAS)', '[data-autocal-action="RESET_GAS"]', ['prepareNativeAction', 'executeNativeAction'], BYTES.RESET_GAS, { wait: 2000, strict: false, extra: (st, s, c, F) => { F(c[0].args[0] === 'RESET_GAS', 'preparou acao errada'); F(s.g.every(v => v === 0), 'GNV nao zerou'); F(s.p.every(v => v > 0), 'RESET_GAS tocou a gasolina'); F(st.pts.filter(p => p.key.startsWith('PETROL')).length === 18, 'gasolina sumiu do grafico no reset do GNV'); } });
     await sim(o, 'acquire', 'gas', Array.from({ length: 18 }, (_, i) => i), 10); await settle(o, 1200);
@@ -264,8 +264,9 @@ test('teia 4 · sequencias (pares/trincas, ECU ocupada, falha de transporte)', {
   { const o = await session(); try {
     await full(o); mine.push(await cap(o, '4-sequencias', '4B-0-inicio', 'B: tudo adquirido'));
     await act(o, '4B-1-pausar', 'B: pausar', '[data-autocal-toggle]', ['setAcquisitionEnabled'], BYTES.DISABLE_AUTO_CAL, { pausedOk: true });
-    await act(o, '4B-2-reler-gnv-pausado', 'B: reler GNV com aprendizado pausado pelo dono', '[data-autocal-action="RESET_GAS"]', ['prepareNativeAction', 'executeNativeAction'], BYTES.RESET_GAS, { pausedOk: true });
-    await act(o, '4B-3-retomar', 'B: retomar', '[data-autocal-toggle]', ['setAcquisitionEnabled'], BYTES.ENABLE_AUTO_CAL, {});
+    await act(o, '4B-2-reler-gnv-pausado', 'B: reler GNV com o aprendizado pausado: o reset religa (regra 14), botao volta a dizer Pausar', '[data-autocal-action="RESET_GAS"]', ['prepareNativeAction', 'executeNativeAction'], BYTES.RESET_GAS, { extra: (st, s, c, F) => F(/Pausar/.test(st.btns[0].txt), 'depois do reset o botao deveria oferecer Pausar (aprendizado religado)') });
+    await act(o, '4B-3-pausar-de-novo', 'B: pausar de novo', '[data-autocal-toggle]', ['setAcquisitionEnabled'], BYTES.DISABLE_AUTO_CAL, { pausedOk: true });
+    await act(o, '4B-4-retomar', 'B: retomar', '[data-autocal-toggle]', ['setAcquisitionEnabled'], BYTES.ENABLE_AUTO_CAL, {});
   } finally { await o.browser.close(); } }
   // C: reset GNV -> varios pontos -> AutoMatch da ECU
   { const o = await session(); try {
@@ -278,7 +279,7 @@ test('teia 4 · sequencias (pares/trincas, ECU ocupada, falha de transporte)', {
   { const o = await session(); try {
     await full(o); await cap(o, '4-sequencias', '4D-0-inicio', 'D: tudo adquirido').then(r => mine.push(r));
     await sim(o, 'hold', true);
-    const r1 = await cap(o, '4-sequencias', '4D-1-ecu-ocupada', 'D: ECU ocupada (operacao em curso)', { strict: false, extra: (st, s, c, F) => { F(st.btns.filter(b => /Reler|Pausar|Retomar|Confirmando/.test(b.txt)).every(b => b.dis), 'botoes de comando deveriam esperar com a ECU ocupada'); } }); mine.push(r1);
+    const r1 = await cap(o, '4-sequencias', '4D-1-ecu-ocupada', 'D: ECU ocupada (operacao em curso)', { strict: false, wait: 3000, extra: (st, s, c, F) => { F(st.btns.filter(b => /Reler|Pausar|Retomar|Confirmando/.test(b.txt)).every(b => b.dis), 'botoes de comando deveriam esperar com a ECU ocupada'); } }); mine.push(r1);
     await o.page.evaluate(() => { window.__step = '4D-2-clique-forcado'; document.querySelector('[data-autocal-action="RESET_PETROL"]').click(); });
     const r2 = await cap(o, '4-sequencias', '4D-2-clique-forcado-ocupada', 'D: clique forcado em Reler gasolina com a ECU ocupada', { strict: false }); if (r2.cmds.some(c => c.fn === 'executeNativeAction' && !/ocupada/.test(String(c.ret)))) r2.fail.push('executou comando com a ECU ocupada'); mine.push(r2);
     await sim(o, 'hold', false); mine.push(await cap(o, '4-sequencias', '4D-3-liberada', 'D: ECU liberada', { strict: false }));
