@@ -528,6 +528,33 @@ class AutoCalNativeActionManager(
         startedAt: Long,
         before: AutoCalSnapshot?,
     ) {
+        val isReset = prepared.action in LEARNING_PRESERVING_RESETS
+        // Reset de gasolina/GNV/tudo NUNCA pode deixar o aprendizado pausado (regra 14): aconteça o que
+        // acontecer depois do comando (NAK, timeout, USB), o AUTO_CAL_ENABLE é conferido e religado.
+        val reply = if (isReset) {
+            try {
+                sendFixedAction(prepared).also { Thread.sleep(HOST_MODE_SETTLE_MS) }
+            } catch (error: Exception) {
+                throw learningRestoreAfterFailure(prepared, error)
+            }
+        } else {
+            sendFixedAction(prepared)
+        }
+        if (isReset) {
+            update("KEEPING_LEARNING", "Conferindo que o aprendizado continua ligado", 60, prepared)
+            keepLearningEnabled(prepared)
+        }
+        ensureSession(prepared)
+        update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
+        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
+        validateActionReadback(prepared, after)
+        confirm(
+            prepared, reply, after, startedAt, before = before,
+            details = if (isReset) JSONObject().put("autoCalEnabledReadback", 1) else JSONObject(),
+        )
+    }
+
+    private fun sendFixedAction(prepared: Preparation): UsbProtocolReply {
         ensureSession(prepared)
         update("SENDING_ACTION", prepared.action.label, 18, prepared)
         val reply = transaction(
@@ -537,17 +564,56 @@ class AutoCalNativeActionManager(
             prepared.sessionId,
         )
         requireAck(reply, "A ECU não confirmou ${prepared.action.label}")
-        if (prepared.action in setOf(
-                Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL,
-            )
-        ) {
-            Thread.sleep(HOST_MODE_SETTLE_MS)
+        return reply
+    }
+
+    /**
+     * Lê AUTO_CAL_ENABLE; se não for 1 (ou a leitura falhar), reescreve `12 4A 01 01` e relê. Termina só com
+     * readback =1; senão lança. Erro de transporte (sem resposta) ≠ valor da ECU: ambos tentam de novo.
+     */
+    private fun keepLearningEnabled(prepared: Preparation) {
+        repeat(LEARNING_RESTORE_ATTEMPTS) {
+            ensureSession(prepared)
+            if (readAutoCalEnable(prepared) == 1) return
+            ensureSession(prepared)
+            try {
+                transaction(
+                    AutoCalProtocol.setEnabled(true),
+                    "AutoCal religar aprendizado após ${prepared.action.name}",
+                    1_500,
+                    prepared.sessionId,
+                )
+            } catch (_: Exception) {
+                // sem resposta: a próxima releitura decide
+            }
+            Thread.sleep(LEARNING_RESTORE_SETTLE_MS)
+            if (readAutoCalEnable(prepared) == 1) return
         }
-        ensureSession(prepared)
-        update("READING_AFTER", "Atualizando estado da ECU", 72, prepared)
-        val after = readSnapshot(prepared, AutoCalSnapshotSource.ECU_READ, actionReadbackWitnesses(prepared))
-        validateActionReadback(prepared, after)
-        confirm(prepared, reply, after, startedAt, before = before)
+        throw IllegalStateException(
+            "O reset foi enviado, mas o aprendizado (AUTO_CAL_ENABLE) não voltou para 1 na releitura. Toque em Iniciar aprendizado.",
+        )
+    }
+
+    private fun readAutoCalEnable(prepared: Preparation): Int? = try {
+        val reply = transaction(
+            AutoCalProtocol.read(AutoCalProtocol.AUTO_CAL_ENABLE),
+            "AutoCal AUTO_CAL_ENABLE após ${prepared.action.name}",
+            1_200,
+            prepared.sessionId,
+        )
+        if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) null
+        else AutoCalProtocol.decode(AutoCalProtocol.AUTO_CAL_ENABLE, reply.status, reply.payload).rawValues.singleOrNull()
+    } catch (_: Exception) {
+        null
+    }
+
+    private fun learningRestoreAfterFailure(prepared: Preparation, error: Exception): Exception {
+        val restored = try { keepLearningEnabled(prepared); true } catch (_: Exception) { false }
+        return if (restored) error else IllegalStateException(
+            (error.message ?: "Reset interrompido") +
+                " · Confira o aprendizado: se aparecer Pausado, toque em Iniciar aprendizado.",
+            error,
+        )
     }
 
     private fun executeFinish(prepared: Preparation, startedAt: Long) {
@@ -1412,6 +1478,10 @@ class AutoCalNativeActionManager(
     companion object {
         private const val PREPARATION_TTL_MS = 120_000L
         private const val HOST_MODE_SETTLE_MS = 1_000L
+        private const val LEARNING_RESTORE_ATTEMPTS = 3
+        private const val LEARNING_RESTORE_SETTLE_MS = 150L
+        /** Resets de aquisição cujo fim exige AUTO_CAL_ENABLE=1 (regra 14 do AGENTS.md). */
+        private val LEARNING_PRESERVING_RESETS = setOf(Action.RESET_PETROL, Action.RESET_GAS, Action.RESET_ALL)
         private const val POINT_DELETE_SETTLE_MS = 500L
         private const val MAX_RECEIPTS = 200
 
@@ -1435,6 +1505,7 @@ class AutoCalNativeActionManager(
         }
         private val MUTATION_MAY_HAVE_STARTED_STATES = setOf(
             "SENDING_ACTION",
+            "KEEPING_LEARNING",
             "READING_AFTER",
             "SENDING_FINISH_COMMIT",
             "VERIFYING_FINISH",

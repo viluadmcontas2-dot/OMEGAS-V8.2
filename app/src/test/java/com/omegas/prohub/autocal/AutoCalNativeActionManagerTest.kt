@@ -177,7 +177,8 @@ class AutoCalNativeActionManagerTest {
         assertEquals("CONFIRMED", manager.statusJson().getString("state"))
         assertTrue(confirmed.get())
         assertEquals("RESET_GAS", calls.first())
-        assertEquals(witnesses.size, calls.drop(1).count { it == "READBACK" })
+        // testemunhas + a conferência do AUTO_CAL_ENABLE (regra 14)
+        assertEquals(witnesses.size + 1, calls.drop(1).count { it == "READBACK" })
 
         val receipt = manager.receiptsJson().getJSONObject(0)
         assertEquals("CONFIRMED", receipt.getString("outcome"))
@@ -638,7 +639,9 @@ class AutoCalNativeActionManagerTest {
     }
 
     private fun validReadPayload(request: ByteArray, fields: List<AutoCalProtocol.Field>): ByteArray =
-        requireNotNull(validReadPayloadOrNull(request, fields)) {
+        // Reset confere AUTO_CAL_ENABLE=1 depois do comando (regra 14): aprendendo.
+        if (AutoCalProtocol.read(AutoCalProtocol.AUTO_CAL_ENABLE).contentEquals(request)) byteArrayOf(1)
+        else requireNotNull(validReadPayloadOrNull(request, fields)) {
             "Leitura inesperada: " + request.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
         }
 
