@@ -150,6 +150,14 @@ MUTANTS = [
            "fun getLiveTelemetry()", "fun getLiveTelemetri()", ["tests/test_wiring_graph.py"], kind="graph"),
     mutant("kotlin-producer-removed", "produtor sem consumidor", f"{KT}/web/HubJavascriptBridge.kt",
            'telemetryValid = root.optBoolean("valid", false),\n        )\n        root.put("ok", true)\n            .put("telemetryAgeMs", root.optLong("ageMs", -1L))', 'telemetryValid = root.optBoolean("valid", false),\n        )\n        root.put("ok", true)\n            .put("telemetryAgeMsX", root.optLong("ageMs", -1L))', ["tests/test_wiring_graph.py"], kind="graph"),
+    # ---- TRAVA reset-nunca-pausa-aprendizado (regra 14): sem o religar, o contrato tem de ficar VERMELHO
+    mutant("reset-sem-religar", "reset deixa o aprendizado pausado", f"{KT}/autocal/AutoCalNativeActionManager.kt",
+           "            keepLearningEnabled(prepared)\n        }\n        ensureSession(prepared)\n        update(\"READING_AFTER\"",
+           "        }\n        ensureSession(prepared)\n        update(\"READING_AFTER\"",
+           ["tests/test_reset_nunca_pausa_aprendizado.py"], kind="contract", ci=True),
+    mutant("reset-sem-religar-na-falha", "reset deixa o aprendizado pausado", f"{KT}/autocal/AutoCalNativeActionManager.kt",
+           "throw learningRestoreAfterFailure(prepared, error)", "throw error",
+           ["tests/test_reset_nunca_pausa_aprendizado.py"], kind="contract", ci=True),
 ]
 
 
@@ -177,7 +185,10 @@ def make_tree(tmp, need_kotlin):
 
 def run_suite(m, tree, full):
     env = dict(os.environ)
-    if m["kind"] == "node":
+    if m["kind"] == "contract":
+        env["RESET_ROOT"] = str(tree)
+        cmd = [sys.executable, "-B"] + m["tests"]
+    elif m["kind"] == "node":
         env["UI_ROOT"] = str(tree / UI)
         tests = ALL_NODE_TESTS if full else m["tests"]
         cmd = ["node", "--test"] + tests
@@ -217,7 +228,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="omegas-mutants-") as tmp:
         tmp_path = pathlib.Path(tmp)
         # base verde: os testes alvo passam na cópia sem mutação (senão "morto" não prova nada)
-        base_tree = make_tree(tmp_path / "base", need_kotlin=any(m["kind"] == "graph" for m in chosen))
+        base_tree = make_tree(tmp_path / "base", need_kotlin=any(m["kind"] in ("graph", "contract") for m in chosen))
         checked = set()
         for m in chosen:
             key = (m["kind"], tuple(m["tests"]), full)
@@ -229,7 +240,7 @@ def main():
                 print(f"BASE VERMELHA para {m['tests']}:\n{out[-1500:]}")
                 return 2
         for m in chosen:
-            tree = make_tree(tmp_path / m["id"], need_kotlin=m["kind"] == "graph")
+            tree = make_tree(tmp_path / m["id"], need_kotlin=m["kind"] in ("graph", "contract"))
             target = tree / m["path"]
             text = target.read_text("utf-8")
             if m["old"] not in text:

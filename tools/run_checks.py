@@ -15,6 +15,11 @@ full = "--full" in args
 python_tests = sorted((ROOT / "tests").glob("test_*.py"))
 ui_tests = sorted((ROOT / "tests" / "ui").glob("*.test.cjs"))
 
+# TRAVA PERMANENTE (regra 14, dono 2026-10-08): reset-nunca-pausa-aprendizado. Não remover.
+PERMANENT_LOCK = ROOT / "tests" / "test_reset_nunca_pausa_aprendizado.py"
+if PERMANENT_LOCK not in python_tests:
+    raise SystemExit("QUALITY_GATE_LOCK_MISSING: reset-nunca-pausa-aprendizado (AGENTS.md regra 14)")
+
 if not python_tests:
     raise SystemExit("QUALITY_GATE_DISCOVERY_ERROR: no Python contracts found")
 if not ui_tests:

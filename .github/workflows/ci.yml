@@ -27,6 +27,10 @@ jobs:
       - run: chmod +x gradlew
       - name: Fast contracts
         run: python3 -B tools/run_checks.py
+      - name: Trava reset-nunca-pausa-aprendizado (regra 14, nao remover)
+        run: |
+          python3 -B tests/test_reset_nunca_pausa_aprendizado.py
+          ./gradlew testDebugUnitTest --tests '*ResetNuncaPausaAprendizadoTest'
       - name: JVM unit tests
         run: ./gradlew testDebugUnitTest
       - name: Relatorio do replay do apagamento automatico

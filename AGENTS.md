@@ -23,6 +23,8 @@
 
 13. Telas travadas (dono, 2026-10-07): Curva K, Ajuste GNV, AutoCal e Mapa K estão aprovadas. A estrutura delas (sem cabeçalho, gráfico/grade grandes, rodapé único em ordem) é protegida por `tests/ui/layout-lock.test.cjs`; mudar exige pedido explícito do dono. Cartões continuam válidos em telas de informação (ex.: Diagnóstico); o critério é coerência, não "tudo vira rodapé".
 
+14. Reset de gasolina/GNV nunca pausa o aprendizado (dono, 2026-10-08): `AUTO_CAL_ENABLE` termina em 1 após qualquer reset (RESET_PETROL/GAS/ALL), conferido por readback, mesmo em falha parcial/timeout (erro de transporte ≠ erro da ECU). Protegem: `tests/test_reset_nunca_pausa_aprendizado.py` + `ResetNuncaPausaAprendizadoTest.kt` (nome da trava: `reset-nunca-pausa-aprendizado`), no `tools/run_checks.py` e no `ci.yml`, mais o mutante `reset-sem-religar`. Não remover nem enfraquecer.
+
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 
 ## As 8 abas
