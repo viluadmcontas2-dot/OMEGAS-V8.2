@@ -348,7 +348,7 @@ object EquivalenceEngine {
         // regressão) decide o que mudar; não exige ponto já julgado "fora" quando a própria proposta muda a curva.
         if (proposal != null && guarded != null && changed.isNotEmpty()) {
             val head = if (off.isEmpty()) {
-                "${changed.size} ${plural(changed.size, "ponto", "pontos")} para suavizar a curva"
+                "${changed.size} ponto${if (changed.size == 1) "" else "s"} para suavizar a curva"
             } else when {
                 poor.isNotEmpty() && rich.isNotEmpty() ->
                     "${poor.size} ${plural(poor.size, "ponto pobre", "pontos pobres")} e ${rich.size} ${plural(rich.size, "rico", "ricos")}"
