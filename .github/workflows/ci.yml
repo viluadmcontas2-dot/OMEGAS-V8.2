@@ -36,5 +36,12 @@ jobs:
           name: replay-apagamento-automatico
           path: app/build/test-results/testDebugUnitTest/TEST-com.omegas.prohub.autocal.AutoIdleRealSessionReplayTest.xml
           if-no-files-found: ignore
+      - name: Relatorio do replay do Refino (qual guarda bloqueia a proposta)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: replay-refino-proposta
+          path: app/build/test-results/testDebugUnitTest/TEST-com.omegas.prohub.equivalence.ProposalReplayReportTest.xml
+          if-no-files-found: ignore
       - name: Android lint
         run: ./gradlew lintDebug
