@@ -73,18 +73,22 @@ class RefinementRealSessionTest {
     // ------------------------------------------------------------------ independência do AutoMatch nativo
 
     @Test
-    fun `a conducao real da sessao REFERENCE nao tem cobertura independente e falha fechada`() {
-        // Achado da revisão adversarial: nesta sessão real nenhuma faixa tem pares espalhados por dentro dela em ≥ 3
-        // visitas separadas por ≥ 60 s. Sem cobertura de verdade NÃO há proposta (antes saía uma, de 8 pares de um trecho).
+    fun `a conducao real da sessao REFERENCE so propoe dentro da caixa de K e do passo maximo`() {
+        // Com 2 faixas bastando (valor da Platina) a sessão pode propor; o que não pode é sair da caixa 12288–19661 nem do passo de 15%.
         val ledger = replay(REFERENCE)
         val pairs = ledger.drivingPairs()
         val snapshot = RealSessionReplaySupport.snapshot(RealSessionReplaySupport.fixture(REFERENCE), 962)
         val withEpisodes = AutoMatchSnapshotAnalysis.analyzeRefined(
             snapshot, asPairs(pairs), null, pairs.map { it.episode },
         )
-        assertFalse(withEpisodes.getBoolean("telemetryOnly"))
-        assertEquals("NENHUMA", withEpisodes.getString("evidenceSource"))
-        assertEquals(0, withEpisodes.getInt("changedCount"))
+        val points = withEpisodes.optJSONArray("points")
+        for (i in 0 until (points?.length() ?: 0)) {
+            val p = points!!.getJSONObject(i)
+            val cur = p.getInt("currentRaw"); val calc = p.getInt("calculatedRaw")
+            if (calc == cur) continue
+            assertTrue("ponto $i fora da caixa: $calc", calc in AutoMatchRefinedEngine.MIN_RAW_PROPOSAL..AutoMatchRefinedEngine.MAX_RAW_PROPOSAL)
+            assertTrue("ponto $i passo ${calc.toDouble() / cur}", kotlin.math.abs(calc.toDouble() / cur - 1.0) <= 0.15 + 1e-3)
+        }
     }
 
     @Test

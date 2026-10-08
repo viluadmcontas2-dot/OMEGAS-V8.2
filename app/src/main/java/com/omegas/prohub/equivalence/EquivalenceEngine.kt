@@ -346,7 +346,8 @@ object EquivalenceEngine {
         }.orEmpty()
         // Refino = suavizar a curva da ECU com os pontos nossos: o motor refinado (histerese 3,5%, passo máx. 15%, caixa de K,
         // regressão) decide o que mudar; não exige ponto já julgado "fora" quando a própria proposta muda a curva.
-        if (proposal != null && guarded != null && changed.isNotEmpty()) {
+        // Sem pontos fora, só suaviza quando ainda não dá para afirmar a equivalência (índice nulo); com índice "Equivalente" fica quieto.
+        if (proposal != null && guarded != null && changed.isNotEmpty() && (off.isNotEmpty() || index == null)) {
             val head = if (off.isEmpty()) {
                 "${changed.size} ponto${if (changed.size == 1) "" else "s"} para suavizar a curva"
             } else when {
