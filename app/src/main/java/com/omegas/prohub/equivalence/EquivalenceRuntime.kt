@@ -97,8 +97,15 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
         val reference = references.current()
         val provisional = if (reference == null) references.provisional(acquisition) else null
         val scale = gainScale(axisRaw.map { it / com.omegas.prohub.autocal.AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS })
+        val native = NativeBands.fromSnapshot(snapshot)
+        // As faixas nativas entram na chave: RESET da gasolina/GNV ou o AutoCal aprendendo mudam a proposta SEM mudar o livro
+        // (carro parado = nenhum quadro novo). Sem isto a proposta velha ficava na tela depois do RESET.
+        val nativeKey = native?.let {
+            listOf(it.petrolTimeRaw, it.petrolMapRaw, it.petrolCounts, it.gasTimeRaw, it.gasMapRaw, it.gasCounts)
+                .joinToString("|") { a -> a.contentHashCode().toString() }
+        }
         val key = listOf(
-            ledger.revision(), reference?.id, provisional?.ecuAcquisitionFingerprint, EquivalenceLedger.fingerprint(mulActRaw),
+            nativeKey, ledger.revision(), reference?.id, provisional?.ecuAcquisitionFingerprint, EquivalenceLedger.fingerprint(mulActRaw),
             EquivalenceLedger.fingerprint(axisRaw), usage.revision(), experience.revision(),
             scale?.joinToString(",") { "%.3f".format(it) },
         ).joinToString("|")
@@ -111,7 +118,7 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
                 axisRaw, mulActRaw, reference, provisional, ledger.petrolObservations(), ledger.gasObservations(),
                 experience.reading(), usage.reading(), null, scale,
                 com.omegas.prohub.autocal.AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG,
-                NativeBands.fromSnapshot(snapshot),
+                native,
             ),
         ) { points -> phases.judgePoints(points, ecuOnline) }
         synchronized(lock) {

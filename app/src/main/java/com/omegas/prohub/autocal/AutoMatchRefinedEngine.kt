@@ -107,12 +107,6 @@ object AutoMatchRefinedEngine {
     const val TELEMETRY_BAND_WEIGHT_CAP = BAND_FULL_COUNT * TELEMETRY_WEIGHT
     /** A telemetria não move um ponto que a evidência nativa madura já cobre (ganho nativo ≥ isto). */
     const val NATIVE_COVERED_GAIN = 0.5
-    /**
-     * Erro de evidência abaixo disto num ponto = já está bom: o ponto não se move (= EquivalenceTolerances.MIN, ±4%).
-     * Só vale com evidência de pelo menos [DEAD_BAND_MIN_EVIDENCE] no nó.
-     */
-    val DEAD_BAND_LOG = ln(1.04)
-    const val DEAD_BAND_MIN_EVIDENCE = 0.1
     /** Tolerância numérica para "a proposta piorou o critério do próprio motor". */
     const val REGRESSION_EPS = 1e-4
     /**
@@ -236,8 +230,6 @@ object AutoMatchRefinedEngine {
         val telemetryPairsUsed: Int = 0,
         /** Alvos da telemetria descartados porque a evidência nativa madura já cobre o ponto. */
         val telemetryDroppedByNative: Int = 0,
-        /** Nós que ficaram parados porque a evidência já os mostra dentro da tolerância. */
-        val deadBandPoints: Int = 0,
         /** A proposta calculada piorava o critério do motor: nada é proposto (a curva fica como está). */
         val regressionBlocked: Boolean = false,
         /** Pontos com K atual fora de [MIN_FACTOR, MAX_FACTOR] (mantidos se não entram na faixa). */
@@ -353,18 +345,17 @@ object AutoMatchRefinedEngine {
         val lnHi = ln(MAX_FACTOR)
         val outOfRange = x0.count { it < lnLo - 1e-12 || it > lnHi + 1e-12 }
         var eEff = E_MAX
-        var deadBand = 0
         var box: List<Pair<Double, Double>> = emptyList()
         val final: List<Double>
         if (equivalence) {
             val priorWeights = gain.map { g -> PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g }
-            val (fitted, robust) = whittaker(u, observations, x0, priorWeights, LAMBDA)
+            // Uma passada só, sem Tukey: com o piso de escala de 1% o Tukey zerava todo erro > 4,7% (justo a faixa errada
+            // isolada entre vizinhas boas, que é o que o Refino existe para corrigir). Outlier já sai antes (plausibleIndices/monotoneFit).
+            val (fitted, robust) = whittaker(u, observations, x0, priorWeights, LAMBDA, iterations = 1)
             targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
             val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
             val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
-            val fixedNodes = deadBandNodes(observations, evidence, axisMs, kOld)
-            deadBand = fixedNodes.size
-            val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b -> if (j in fixedNodes) x0[j] to x0[j] else b }
+            val initialBox = proposalBox(x0, gain, axisMs)
             eEff = effectiveElasticity(initialBox, u)
             val enforced = enforceCoherence(scaled, initialBox, u, eEff)
             // Histerese: ponto cujo passo proposto é ruído fica exatamente como está, desde que a curva continue
@@ -437,7 +428,6 @@ object AutoMatchRefinedEngine {
             telemetryOutlierPairs = outlierPairs,
             telemetryPairsUsed = if (equivalence) usedCount else 0,
             telemetryDroppedByNative = droppedByNative,
-            deadBandPoints = deadBand,
             regressionBlocked = regression,
             outOfRangePoints = outOfRange,
         )
@@ -453,27 +443,6 @@ object AutoMatchRefinedEngine {
             if (j < POINT_COUNT - 1) spread += 0.25 * evidence[j + 1]
             min(1.0, spread / EVIDENCE_REF)
         }
-    }
-
-    /**
-     * Nós cujo erro de evidência já está dentro da tolerância ([DEAD_BAND_LOG]): média ponderada (peso × participação
-     * no nó) da diferença ln K(ms) − ln K_alvo dos alvos que o tocam. Esses nós não se movem, desde que o K atual seja
-     * coerente com os vizinhos (|Δ ln K/Δ ln t| ≤ [E_MAX]): K incoerente continua podendo ser reparado.
-     */
-    internal fun deadBandNodes(observations: List<Observation>, evidence: DoubleArray, axisMs: List<Double>, kOld: List<Double>): Set<Int> {
-        val num = DoubleArray(POINT_COUNT)
-        val den = DoubleArray(POINT_COUNT)
-        val coherent = BooleanArray(POINT_COUNT) { true }
-        for (j in 0 until POINT_COUNT - 1) {
-            if (abs(ln(kOld[j + 1]) - ln(kOld[j])) > E_MAX * (ln(axisMs[j + 1]) - ln(axisMs[j])) + 1e-9) { coherent[j] = false; coherent[j + 1] = false }
-        }
-        // O ms de cada observação é recuperado do próprio vetor de participação: ponto médio ponderado dos nós.
-        observations.forEach { o ->
-            val ms = o.a.sumOf { (j, a) -> a * axisMs[j] }
-            val diff = ln(interp(ms, axisMs, kOld)) - o.y
-            o.a.forEach { (j, a) -> num[j] += o.w * a * diff; den[j] += o.w * a }
-        }
-        return (0 until POINT_COUNT).filter { j -> coherent[j] && evidence[j] >= DEAD_BAND_MIN_EVIDENCE && den[j] > 0.0 && abs(num[j] / den[j]) <= DEAD_BAND_LOG }.toSet()
     }
 
     /** Peso relativo de cada par por episódio: um (faixa, episódio) vale no máximo [EPISODE_PAIR_CAP] pares. Sem episódios = 1. */
@@ -882,13 +851,14 @@ object AutoMatchRefinedEngine {
         prior: List<Double>,
         priorWeights: List<Double>,
         lambda: Double,
+        iterations: Int = IRLS_ITERATIONS,
     ): Pair<List<Double>, List<Double>> {
         val n = u.size
         val d2 = secondDifferenceRows(u)
         var obsRobust = List(observations.size) { 1.0 }
         var priorRobust = List(n) { 1.0 }
         var x = prior
-        repeat(IRLS_ITERATIONS) {
+        repeat(iterations) {
             val m = Array(n) { DoubleArray(n) }
             val v = DoubleArray(n)
             d2.forEach { row ->

@@ -71,8 +71,6 @@ MIN_BAND_EPISODES = 1        # sem portão por contagem de trechos; episódio = 
 EPISODE_PAIR_CAP = 4         # um (faixa, episódio) vale no máximo 4 pares
 TELEMETRY_BAND_WEIGHT_CAP = BAND_FULL_COUNT * TELEMETRY_WEIGHT   # teto de peso da telemetria por faixa do livro
 NATIVE_COVERED_GAIN = 0.5    # a telemetria não move ponto que a nativa madura já cobre
-DEAD_BAND_LOG = math.log(1.04)   # erro de evidência abaixo disto: o nó não se move (= EquivalenceTolerances.MIN)
-DEAD_BAND_MIN_EVIDENCE = 0.1
 REGRESSION_EPS = 1e-4        # proposta que piora o critério do motor nunca sai
 INTERIOR_SLICES = 3          # faixa grossa precisa de pares em >= 2 de 3 terços internos, >= 2 pares cada
 INTERIOR_MIN_SLICES = 2
@@ -657,27 +655,6 @@ def gain_of(observations):
     return out
 
 
-def dead_band_nodes(observations, evidence, axis_ms, k_old):
-    """Nós cujo erro de evidência (média ponderada de ln K(ms) − ln K_alvo dos alvos que o tocam) já cabe em DEAD_BAND_LOG
-    E cujo K atual é coerente com os vizinhos (|Δ ln K/Δ ln t| <= E_MAX): K incoerente continua podendo ser reparado."""
-    u = [math.log(t) for t in axis_ms]
-    x = [math.log(k) for k in k_old]
-    coherent = [True] * POINT_COUNT
-    for j in range(POINT_COUNT - 1):
-        if abs(x[j + 1] - x[j]) > E_MAX * (u[j + 1] - u[j]) + 1e-9:
-            coherent[j] = coherent[j + 1] = False
-    num = [0.0] * POINT_COUNT
-    den = [0.0] * POINT_COUNT
-    for o in observations:
-        ms = sum(a * axis_ms[j] for j, a in o["a"])
-        diff = math.log(interp(ms, axis_ms, k_old)) - o["y"]
-        for j, a in o["a"]:
-            num[j] += o["w"] * a * diff
-            den[j] += o["w"] * a
-    return {j for j in range(POINT_COUNT)
-            if coherent[j] and evidence[j] >= DEAD_BAND_MIN_EVIDENCE and den[j] > 0.0 and abs(num[j] / den[j]) <= DEAD_BAND_LOG}
-
-
 def telemetry_covers(pairs):
     """Cobertura mínima da condução para propor sem faixas nativas maduras (espelho do Kotlin):
     TELEMETRY_ONLY_MIN_BANDS faixas distintas de Petrol Inj., cada uma com TELEMETRY_ONLY_BAND_PAIRS pares válidos."""
@@ -907,7 +884,6 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
     gain = [min(1.0, s / EVIDENCE_REF) for s in spread]
     out_of_range = sum(1 for x in x0 if x < math.log(MIN_FACTOR) - 1e-12 or x > math.log(MAX_FACTOR) + 1e-12)
     e_eff = E_MAX
-    dead_band = 0
     if equivalence_available:
         # Peso do K atual cai continuamente com a evidência: o ganho proporcional
         # nasce do próprio balanço evidência × K atual, sem degraus entre nós.
@@ -917,9 +893,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
             t["robustWeight"] = round(r, 4)
         if point_gain_scale is not None and len(point_gain_scale) == POINT_COUNT:
             fitted = [x0[j] + point_gain_scale[j] * (fitted[j] - x0[j]) for j in range(POINT_COUNT)]
-        fixed = dead_band_nodes(observations, evidence, axis_ms, k_old)
-        dead_band = len(fixed)
-        box = [(x0[j], x0[j]) if j in fixed else b for j, b in enumerate(proposal_box(x0, gain, axis_ms))]
+        box = proposal_box(x0, gain, axis_ms)
         e_eff = effective_elasticity(box, u)
         final = enforce_coherence(fitted, box, u, e_eff)
         # Histerese: ponto cujo passo proposto fica abaixo do limiar é ruído; fica exatamente como está,
@@ -983,7 +957,6 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         "telemetryOutlierPairs": telemetry_outlier_pairs,
         "telemetryPairsUsed": len(usable) if equivalence_available else 0,
         "telemetryDroppedByNative": dropped_native,
-        "deadBandPoints": dead_band,
         "regressionBlocked": regression,
         "outOfRangePoints": out_of_range,
         "axisMs": axis_ms,

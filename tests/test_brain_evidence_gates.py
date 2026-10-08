@@ -202,14 +202,13 @@ class P2MeasuredProposalNeverWorsensTheEngineCriterion(unittest.TestCase):
         self.assertLessEqual(out["evidenceErrorAfter"], out["evidenceErrorBefore"] + refined.REGRESSION_EPS)
         self.assertEqual(out["currentRaw"], out["refinedRaw"])           # antes: 20 pontos mexidos, erro 0% -> 1,4%
 
-    def test_points_whose_evidence_error_is_inside_the_tolerance_are_not_moved(self):
+    def test_error_inside_the_tolerance_is_held_by_hysteresis_and_above_it_the_curve_moves(self):
+        # Sem zona morta por nó (a média diluía faixa isolada errada): quem segura o ruído é a histerese hold_log.
+        hold = math.log(1.035)
         pairs = [(t, t * 1.02) for b in (1, 2, 3, 4) for t in interior(b, 12)]       # GNV 2% pobre: dentro de ±4%
-        out = refined.refine(snapshot(), pairs)
-        self.assertGreater(out["deadBandPoints"], 10)
+        out = refined.refine(snapshot(), pairs, hold_log=hold)
         self.assertLessEqual(sum(1 for a, b in zip(out["currentRaw"], out["refinedRaw"]) if a != b), 6)
-        # 4,5% de erro passa da tolerância: a curva se move de verdade
-        far = refined.refine(snapshot(), [(t, t * 1.045) for b in (1, 2, 3, 4) for t in interior(b, 12)])
-        self.assertEqual(0, far["deadBandPoints"])
+        far = refined.refine(snapshot(), [(t, t * 1.045) for b in (1, 2, 3, 4) for t in interior(b, 12)], hold_log=hold)
         self.assertGreater(sum(1 for a, b in zip(far["currentRaw"], far["refinedRaw"]) if a != b), 10)
 
     def test_a_proposal_that_worsens_the_criterion_is_never_emitted(self):

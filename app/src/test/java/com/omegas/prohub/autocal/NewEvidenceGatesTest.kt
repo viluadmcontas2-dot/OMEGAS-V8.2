@@ -36,9 +36,9 @@ class NewEvidenceGatesTest {
     private fun flatK(raw: Int = 16384) = IntArray(30) { raw }
 
     private fun refine(
-        pairs: List<Pair<Double, Double>>, episodes: List<Int> = emptyList(), k: IntArray = flatK(),
+        pairs: List<Pair<Double, Double>>, episodes: List<Int> = emptyList(), k: IntArray = flatK(), hold: Double = 0.0,
     ) = AutoMatchRefinedEngine.refine(
-        AutoMatchRefinedEngine.Input(axisRaw, k, null, null, null, null, null, null, pairs, null, episodes, 0.0),
+        AutoMatchRefinedEngine.Input(axisRaw, k, null, null, null, null, null, null, pairs, null, episodes, hold),
     )
 
     // ------------------------------------------------------------------ P2-1: episódios = visitas ≥ 60 s
@@ -149,12 +149,11 @@ class NewEvidenceGatesTest {
     }
 
     @Test
-    fun `nos dentro da tolerancia nao se movem e acima dela a curva se move`() {
-        val within = refine((1..4).flatMap { b -> interior(b, 12).map { it to it * 1.02 } })
-        assertTrue(within.deadBandPoints > 10)
+    fun `erro dentro da tolerancia nao move a curva (histerese) e acima dela a curva se move`() {
+        // Sem "zona morta" por nó (a média diluía faixa isolada errada): quem segura o ruído é a histerese HOLD_MIN_STEP_LOG.
+        val within = refine((1..4).flatMap { b -> interior(b, 12).map { it to it * 1.02 } }, hold = AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG)
         assertTrue(within.refinedRaw.indices.count { within.refinedRaw[it] != within.currentRaw[it] } <= 6)
-        val far = refine((1..4).flatMap { b -> interior(b, 12).map { it to it * 1.045 } })
-        assertEquals(0, far.deadBandPoints)
+        val far = refine((1..4).flatMap { b -> interior(b, 12).map { it to it * 1.045 } }, hold = AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG)
         assertTrue(far.refinedRaw.indices.count { far.refinedRaw[it] != far.currentRaw[it] } > 10)
     }
 
@@ -256,7 +255,7 @@ class NewEvidenceGatesTest {
 
     private fun evaluate(gas: List<EquivalenceLedger.Obs>, petrol: List<EquivalenceLedger.Obs> = obs({ 1.0 }, 20), usage: UsageMeter.Reading = uniformUsage()) =
         EquivalenceEngine.evaluate(
-            EquivalenceInput(EquivalenceReplaySupport.curve(REFERENCE, 95).first, flat, reference, null, petrol, gas, ExperienceMeter(null).reading(), usage),
+            EquivalenceInput(EquivalenceReplaySupport.curve(REFERENCE, 95).first, flat, reference, null, petrol, gas, ExperienceMeter(null).reading(), usage, holdMinStepLog = AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG),
         )
 
     @Test

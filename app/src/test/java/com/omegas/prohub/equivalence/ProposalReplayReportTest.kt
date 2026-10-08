@@ -113,7 +113,7 @@ class ProposalReplayReportTest {
                     val judged = result.points.count { it.state != PointState.SEM_DADOS && it.state != PointState.APRENDENDO }
                     val line = "$name snap#$snapIndex refCongelada=${runtime.references.current() != null} nextAction=${result.nextAction.kind} proposal.mode=${p?.mode} " +
                         "proposal.reason=${p?.reason} telemetryOnly=${p?.telemetryOnly} regBlocked=${p?.regressionBlocked} " +
-                        "deadBand=${p?.deadBandPoints} used=${p?.telemetryPairsUsed} " +
+                        "used=${p?.telemetryPairsUsed} " +
                         "reasonCode(sem contador)=${real.optString("reasonCode")} ecuDone(sem contador)=${real.optBoolean("ecuDone")} " +
                         "reasonCode(ECU concluida assumida)=${done.optString("reasonCode")} " +
                         "interiorCovered=$interior/${bands.length()} pontosJulgados=$judged | ${guards(ledger, runtime, acquisition)}"

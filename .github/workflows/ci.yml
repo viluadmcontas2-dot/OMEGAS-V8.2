@@ -47,5 +47,12 @@ jobs:
           name: replay-refino-proposta
           path: app/build/test-results/testDebugUnitTest/TEST-com.omegas.prohub.equivalence.ProposalReplayReportTest.xml
           if-no-files-found: ignore
+      - name: Sessao ficticia (JSON dos 5 momentos para a prova visual)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sessao-ficticia
+          path: app/build/sessao-ficticia
+          if-no-files-found: ignore
       - name: Android lint
         run: ./gradlew lintDebug
