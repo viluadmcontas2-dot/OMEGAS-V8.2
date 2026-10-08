@@ -80,7 +80,7 @@ object AutoMatchRefinedEngine {
      * nó ([proposalBox]) ANTES da trava de coerência: a curva final respeita a trava e continua sem degrau.
      */
     const val LOW_GUARD_MS = 5.0
-    const val E_MAX = 0.7
+    const val E_MAX = 0.35
     const val IRLS_ITERATIONS = 6
     const val TUKEY_C = 4.685
     const val SMOOTH_TOLERANCE_LOG = 0.0025
@@ -97,16 +97,12 @@ object AutoMatchRefinedEngine {
     const val TELEMETRY_ONLY_BAND_PAIRS = 8
     const val TELEMETRY_ONLY_MIN_BANDS = 2
     /**
-     * Uma faixa só puxa proposta com pares de ao menos este número de episódios = visitas à faixa separadas por
-     * ≥ 60 s de condução ([EvidencePairs.VISIT_GAP_MS]); leituras estáveis seguidas NÃO são episódios distintos.
+     * Uma faixa só puxa proposta com pares de ao menos este número de episódios = blocos de leituras não sobrepostas;
+     * não exige permanência nem retorno após um minuto.
      */
     const val MIN_BAND_EPISODES = EvidencePairs.MIN_VISITS
     /** Peso por episódio: um episódio de uma faixa vale no máximo este número de pares (o resto é a mesma leitura repetida). */
     const val EPISODE_PAIR_CAP = 4
-    /** Teto de peso da telemetria por faixa do livro (= uma faixa nativa plena: [BAND_FULL_COUNT] pares × [TELEMETRY_WEIGHT]). */
-    const val TELEMETRY_BAND_WEIGHT_CAP = 50 * TELEMETRY_WEIGHT
-    /** A telemetria não move um ponto que a evidência nativa madura já cobre (ganho nativo ≥ isto). */
-    const val NATIVE_COVERED_GAIN = 0.5
     /** Tolerância numérica para "a proposta piorou o critério do próprio motor". */
     const val REGRESSION_EPS = 1e-4
     /**
@@ -228,7 +224,7 @@ object AutoMatchRefinedEngine {
         /** Pares locais rejeitados por desvio robusto dos vizinhos da mesma faixa. */
         val telemetryOutlierPairs: Int = 0,
         val telemetryPairsUsed: Int = 0,
-        /** Alvos da telemetria descartados porque a evidência nativa madura já cobre o ponto. */
+        /** Compatibilidade do JSON: agora a cobertura nativa não descarta pontos próprios (sempre 0). */
         val telemetryDroppedByNative: Int = 0,
         /** A proposta calculada piorava o critério do motor: nada é proposto (a curva fica como está). */
         val regressionBlocked: Boolean = false,
@@ -307,17 +303,16 @@ object AutoMatchRefinedEngine {
         // A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
         val telemetryOnly = !nativeEquivalence && (if (fine != null) fineCovers(fine, fineValid!!) else telemetryCovers(usablePairs))
         val equivalence = nativeEquivalence || telemetryOnly
+        val nativeTargets = targets
         val bandTargetCount = targets.size
         if (telemetryOnly) targets = emptyList() // faixas nativas imaturas não entram: só a medição própria
-        var droppedByNative = 0
         if (equivalence && usedCount > 0) {
             if (fine != null) {
                 targets = targets + fineTargets(fine, fineValid!!, axisMs, kOld)
             } else {
-                var telemetry = usablePairs.mapIndexed { i, (tp, tg) ->
+                val telemetry = usablePairs.mapIndexed { i, (tp, tg) ->
                     Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT * usableWeights[i], tg / tp, ln(interp(tg, axisMs, kOld) * tg / tp))
                 }
-                // Teto de peso por faixa do livro: a telemetria é muita leitura repetida, a nativa é a ECU medindo.
                 // Peso por episódio já limita quadros repetidos; novas visitas acrescentam evidência.
                 targets = targets + telemetry
             }
@@ -340,7 +335,17 @@ object AutoMatchRefinedEngine {
             val priorWeights = gain.map { g -> PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g }
             // Uma passada só, sem Tukey: com o piso de escala de 1% o Tukey zerava todo erro > 4,7% (justo a faixa errada
             // isolada entre vizinhas boas, que é o que o Refino existe para corrigir). Outlier já sai antes (plausibleIndices/monotoneFit).
-            val (fitted, robust) = whittaker(u, observations, x0, priorWeights, LAMBDA, iterations = 1)
+            val base = if (nativeEquivalence) axisMs.mapIndexed { j, ms ->
+                if (ms < nativeTargets.first().petrolMs || ms > nativeTargets.last().petrolMs) x0[j]
+                else interp(ms, nativeTargets.map { it.petrolMs }, nativeTargets.map { it.logTarget })
+            } else x0
+            val residuals = observations.map { o -> Observation(o.a, o.y - o.a.sumOf { (j, a) -> a * base[j] }, o.w) }
+            val (delta, robust) = whittaker(u, residuals, List(POINT_COUNT) { 0.0 }, priorWeights, LAMBDA, iterations = 1)
+            val ownMin = usablePairs.minOfOrNull { it.first }
+            val ownMax = usablePairs.maxOfOrNull { it.first }
+            val fitted = base.indices.map {
+                base[it] + if (nativeEquivalence && ownMin != null && (axisMs[it] < ownMin || axisMs[it] > ownMax!!)) 0.0 else delta[it]
+            }
             targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
             val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
             val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
@@ -420,7 +425,7 @@ object AutoMatchRefinedEngine {
             telemetryOutlierBands = outlierBands,
             telemetryOutlierPairs = outlierPairs,
             telemetryPairsUsed = if (equivalence) usedCount else 0,
-            telemetryDroppedByNative = droppedByNative,
+            telemetryDroppedByNative = 0,
             regressionBlocked = regression,
             outOfRangePoints = outOfRange,
         )
@@ -444,17 +449,6 @@ object AutoMatchRefinedEngine {
         val counts = HashMap<kotlin.Pair<Int, Int>, Int>()
         pairs.forEachIndexed { i, p -> counts.merge(ledgerBand(p.first)!! to episodes[i], 1, Int::plus) }
         return pairs.mapIndexed { i, p -> min(1.0, EPISODE_PAIR_CAP.toDouble() / counts[ledgerBand(p.first)!! to episodes[i]]!!) }
-    }
-
-    /** Teto de peso total da telemetria por faixa do livro: acima dele os alvos da faixa são reduzidos na mesma proporção. */
-    internal fun capBandWeight(targets: List<Target>): List<Target> {
-        val sums = HashMap<Int, Double>()
-        targets.forEach { t -> ledgerBand(t.petrolMs)?.let { sums.merge(it, t.weight, Double::plus) } }
-        return targets.map { t ->
-            val band = ledgerBand(t.petrolMs)
-            val sum = band?.let { sums[it] } ?: 0.0
-            if (sum > TELEMETRY_BAND_WEIGHT_CAP) t.copy(weight = t.weight * TELEMETRY_BAND_WEIGHT_CAP / sum) else t
-        }
     }
 
     /** Contadores da leitura das faixas nativas (evidência inválida/fina nunca é silenciosa). */

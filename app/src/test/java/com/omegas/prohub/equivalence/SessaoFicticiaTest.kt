@@ -276,10 +276,12 @@ class SessaoFicticiaTest {
         val rnd = Random(42)
         val sim = Sim()
         val moments = JSONObject()
+        val proposals = mutableMapOf<String, Proposal>()
         fun take(name: String, enable: Int, pc: Int, gc: Int) {
             val (r, ui) = sim.snap(snapshot(sim.now, curve, enable, pc, gc, Random(5)), enable)
             val p = proposalOf(Outcome(r, ui, sim))
             moments.put(name, ui)
+            proposals[name] = p
             println("SESSAO_FICTICIA MOMENTO $name apply=${p.applies} petrolObs=${sim.ledger.petrolObservations().size} gasObs=${sim.ledger.gasObservations().size} ${describe(Outcome(r, ui, sim))}")
             File(out, "$name.json").writeText(ui.toString())
         }
@@ -296,7 +298,10 @@ class SessaoFicticiaTest {
         take("6-repovoado", 1, 10, 10)
         // (5) RESET gasolina: a proposta ancorada na nativa some (nada velho em cache) e volta ao repovoar, igual à anterior.
         val m = { n: String -> moments.getJSONObject(n).getJSONObject("equivalence") }
-        fun src(n: String) = m(n).optJSONObject("proposal")?.optString("source") ?: m(n).toString().length.toString()
+        assertTrue("(5) antes do reset há proposta", proposals.getValue("3-proposta-pronta").applies)
+        assertTrue("(5) depois do reset a proposta some", !proposals.getValue("4-depois-do-reset-gasolina").applies)
+        assertTrue("(5) repovoado volta a proposta", proposals.getValue("6-repovoado").applies)
+        assertTrue("(5) repovoado volta aos mesmos K", proposals.getValue("3-proposta-pronta").raw.contentEquals(proposals.getValue("6-repovoado").raw))
         assertTrue("(5) depois do reset a proposta mudou (nao ficou a velha em cache)", m("4-depois-do-reset-gasolina").toString() != m("3-proposta-pronta").toString())
         assertEquals("(5) repovoado volta a proposta da nativa", m("3-proposta-pronta").toString().length / 50, m("6-repovoado").toString().length / 50)
         File(out, "momentos.json").writeText(moments.toString())
