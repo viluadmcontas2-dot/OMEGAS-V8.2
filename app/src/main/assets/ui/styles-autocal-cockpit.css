@@ -106,7 +106,6 @@
 .autocal-epoch-acquisition-line { fill: none; stroke-width: 2.1; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; stroke-linecap: round; opacity: .72; }
 .autocal-epoch-acquisition-line.petrol { stroke: var(--tone-78b7ff); }
 .autocal-epoch-acquisition-line.gas { stroke: var(--tone-5dd39e); }
-.autocal-previous-gas-point { fill: none; stroke: var(--tone-5dd39e); stroke-width: 1.8; stroke-dasharray: 2.5 2.5; opacity: .42; pointer-events: none; vector-effect: non-scaling-stroke; }
 /* ── Refino OMEGAS: mesma linguagem do AutoCal, só o que é novo ── */
 .autocal-fuel-chip[data-fuel-state="collecting"] { border-color: var(--tint-120-183-255-42); color: var(--tone-d6eaff); background: var(--tint-37-82-128-32); }
 .autocal-fuel-chip[data-fuel-state="ready"] { border-color: rgba(var(--rgb-226-178-76),.5); color: var(--tone-ffefbd); background: var(--tint-104-78-26-32); }
@@ -123,7 +122,7 @@
 
 /* Quadro vazio com eixos: a frase fica por cima, sem apagar grade/escala/AGORA (dono, 2026-10-08). */
 html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over { position: absolute; inset: 0; height: auto; pointer-events: none; background: transparent; }
-html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > b, html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > span { background: color-mix(in srgb, var(--chart-bg, #0b1118) 82%, transparent); justify-self: center; padding: 2px 10px; border-radius: 6px; }
+html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > b, html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > span { background: color-mix(in srgb, var(--chart-bg) 82%, transparent); justify-self: center; padding: 2px 10px; border-radius: 6px; }
 
 /* O gráfico do AutoCal nunca muda de tamanho: a linha de estado reserva o lugar mesmo vazia (achado da teia: ao aparecer
    "Fazendo agora · …" o gráfico encolhia 34 px, 2026-10-08). */
