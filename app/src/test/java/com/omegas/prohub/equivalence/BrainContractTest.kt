@@ -33,7 +33,10 @@ class BrainContractTest {
         JSONObject(EquivalenceJson.result(result, reference, null, null, true, nowMs = 5_000L).toString())
 
     private fun evaluate(gasReadings: Int) = EquivalenceEngine.evaluate(
-        EquivalenceInput(axisRaw, flatK, reference, null, obs(20), obs(gasReadings), ExperienceMeter(null).reading(), usage()),
+        EquivalenceInput(axisRaw, flatK, reference, null, obs(20), obs(gasReadings).mapIndexed { i, o ->
+            // Leituras independentes com ruído pequeno; MAP normalizado já não fabrica dispersão.
+            o.copy(petrolMs = o.petrolMs * (1.0 + 0.006 * kotlin.math.sin(i * 1.7)))
+        }, ExperienceMeter(null).reading(), usage()),
     )
 
     private fun assertShape(json: JSONObject) {

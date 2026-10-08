@@ -202,7 +202,7 @@ object EvidencePairs {
             val m0 = mapCell(g.map)
             for (dr in -1L..1L) for (dm in -1L..1L) {
                 grid[(r0 + dr) * 1_000_003L + (m0 + dm)]?.forEach {
-                    if (abs(it.rpm - g.rpm) <= mr && abs(it.map - g.map) <= mm && sameRegime(it.rpm, g.rpm) &&
+                    if (abs(it.rpm - g.rpm) <= mr && abs(it.map - g.map) <= mm + 1e-9 && sameRegime(it.rpm, g.rpm) &&
                     sameWater(it.waterC, g.waterC)) {
                         // A curva nativa transporta a leitura própria até o MAP do GNV. Comparar ms crus
                         // em MAPs vizinhos confundia a inclinação normal da gasolina com erro de mistura.

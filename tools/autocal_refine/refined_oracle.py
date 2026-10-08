@@ -879,7 +879,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         if point_gain_scale is not None and len(point_gain_scale) == POINT_COUNT:
             fitted = [x0[j] + point_gain_scale[j] * (fitted[j] - x0[j]) for j in range(POINT_COUNT)]
         measured_lo, measured_hi = min(t["tp"] for t in targets), max(t["tp"] for t in targets)
-        box = [(x0[j], x0[j]) if not measured_lo <= axis_ms[j] <= measured_hi else bounds
+        box = [(x0[j], x0[j]) if telemetry_only and fine_bins is None and not measured_lo <= axis_ms[j] <= measured_hi else bounds
                for j, bounds in enumerate(proposal_box(x0, gain, axis_ms))]
         e_eff = effective_elasticity(box, u)
         final = enforce_coherence(fitted, box, u, e_eff)

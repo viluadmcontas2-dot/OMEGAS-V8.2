@@ -322,8 +322,6 @@ object AutoMatchRefinedEngine {
             targets.map { Observation(axisWeights(it.petrolMs, axisMs), it.logTarget, it.weight) }
         } else emptyList()
 
-        val evidence = DoubleArray(POINT_COUNT)
-        observations.forEach { o -> o.a.forEach { (j, a) -> evidence[j] += o.w * a } }
         var gain = gainOf(observations)
         val lnLo = ln(MIN_FACTOR)
         val lnHi = ln(MAX_FACTOR)
@@ -352,7 +350,7 @@ object AutoMatchRefinedEngine {
             val minMeasured = targets.minOf { it.petrolMs }
             val maxMeasured = targets.maxOf { it.petrolMs }
             val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b ->
-                if (axisMs[j] < minMeasured || axisMs[j] > maxMeasured) x0[j] to x0[j] else b
+                if (telemetryOnly && fine == null && (axisMs[j] < minMeasured || axisMs[j] > maxMeasured)) x0[j] to x0[j] else b
             }
             eEff = effectiveElasticity(initialBox, u)
             val enforced = enforceCoherence(scaled, initialBox, u, eEff)
