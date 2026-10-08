@@ -132,7 +132,6 @@ const sameSessionTransition = model.referenceTransition(
 assert.equal(sameSessionTransition.sessionChanged, false);
 assert.equal(sameSessionTransition.referenceChanged, true);
 assert.equal(sameSessionTransition.resetSelection, true, 'nova referência deve invalidar a seleção antiga');
-assert.equal(sameSessionTransition.previousPoints.length, 2, 'mesma sessão pode preservar a leitura imediatamente anterior');
 
 const reconnectTransition = model.referenceTransition(
   previousProjection,
@@ -143,8 +142,7 @@ const reconnectTransition = model.referenceTransition(
 );
 assert.equal(reconnectTransition.sessionChanged, true);
 assert.equal(reconnectTransition.resetSelection, true, 'reconnect deve invalidar seleção da sessão anterior');
-assert.equal(reconnectTransition.clearHistory, true, 'reconnect deve fechar Leitura anterior');
-assert.equal(reconnectTransition.previousPoints.length, 0, 'Leitura anterior não pode atravessar sessão USB');
+assert.equal('previousPoints' in reconnectTransition, false, 'a leitura anterior não existe mais (dono, 2026-10-08)');
 
 const referenceLostTransition = model.referenceTransition(
   { sessionId: 101, referenceUsable: true },
@@ -155,8 +153,6 @@ const referenceLostTransition = model.referenceTransition(
 );
 assert.equal(referenceLostTransition.resetSelection, true,
   'perda da referência precisa invalidar seleção antiga mesmo sem novo hash');
-assert.equal(referenceLostTransition.clearHistory, false,
-  'histórico permanece na mesma sessão; referência indisponível não é exibida como atual');
 
 const referenceRegainedTransition = model.referenceTransition(
   { sessionId: 101, referenceUsable: false },
@@ -167,8 +163,6 @@ const referenceRegainedTransition = model.referenceTransition(
 );
 assert.equal(referenceRegainedTransition.resetSelection, true,
   'referência recuperada precisa começar sem seleção herdada do estado indisponível');
-assert.equal(referenceRegainedTransition.previousPoints.length, 0,
-  'referência recuperada após gap não pode inventar Leitura anterior');
 
 console.log('AUTOCAL_CHART_SEMANTICS=PASS');
 

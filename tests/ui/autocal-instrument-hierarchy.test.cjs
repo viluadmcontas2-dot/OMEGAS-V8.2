@@ -31,8 +31,8 @@ test('AGORA is visually distinct but remains telemetry', () => {
 });
 
 test('overlapping petrol and GNV curves remain distinguishable without geometric offset', () => {
-  assert.match(css, /\.autocal-reference-line\.petrol:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*4/);
-  assert.match(css, /\.autocal-reference-line\.gas:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*2\.5/);
+  assert.match(css, /\.autocal-reference-line\.petrol\s*\{[\s\S]*stroke-width:\s*4/);
+  assert.match(css, /\.autocal-reference-line\.gas\s*\{[\s\S]*stroke-width:\s*2\.5/);
   assert.match(css, /\.autocal-reference-point\.petrol\s*\{[\s\S]*fill:\s*var\(--tone-07101a\)[\s\S]*stroke:\s*var\(--tone-78b7ff\)/);
   assert.match(js, /gasolina ' \+ D\.bar/);
 });

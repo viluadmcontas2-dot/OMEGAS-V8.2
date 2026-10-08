@@ -39,11 +39,13 @@ test('trava · AutoCal: mesma estrutura do Ajuste GNV, rodapé único em ordem',
     const s = document.querySelector('.screen.active');
     const bar = s.querySelector('.ar-act > .ar-buttons');
     const labels = [...bar.querySelectorAll('button')].filter(e => e.getBoundingClientRect().width > 0 && !e.closest('[hidden]')).map(e => e.textContent.trim());
-    return { header: !!s.querySelector('.ar-status'), statusline: !!s.querySelector('.ar-act .refino-statusline'), chartH: s.querySelector('#autocalReferenceChart').getBoundingClientRect().height, labels };
+    return { header: !!s.querySelector('.ar-status'), statusline: !!s.querySelector('.ar-act .refino-statusline'), gap: bar.getBoundingClientRect().top - s.querySelector('#autocalReferenceChart').getBoundingClientRect().bottom, chartH: s.querySelector('#autocalReferenceChart').getBoundingClientRect().height, labels };
   });
   assert.equal(r.header, false, 'cabeçalho do AutoCal voltou');
-  assert.ok(r.statusline, 'AutoCal precisa da mesma linha de estado do Ajuste GNV');
-  assert.ok(r.chartH >= 380, `gráfico do AutoCal encolheu: ${Math.round(r.chartH)} px`);
+  // Dono, 2026-10-08: sem linha de estado reservada; o gráfico vai até o rodapé (.btn-bar) e o estado fica sobre o quadro.
+  assert.equal(r.statusline, false, 'a linha de estado reservada do AutoCal voltou');
+  assert.ok(r.gap <= 24, `faixa vazia de ${Math.round(r.gap)} px entre o gráfico e os botões`);
+  assert.ok(r.chartH >= 440, `gráfico do AutoCal encolheu: ${Math.round(r.chartH)} px`);
   inOrder(r.labels, ['Pausar aprendizado da ECU', 'Reler GNV', 'Reler gasolina'], 'AutoCal');
 });
 

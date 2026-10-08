@@ -99,7 +99,6 @@ html body .refino-cockpit > .ar-chart-card { order:1 !important; flex:1 1 0; }
 html body .curve-chart-shared .autocal-acquired-point.petrol { fill:var(--petrol); }
 html body .curve-chart-shared .autocal-acquired-point.gas { fill:var(--cng); }
 html body .ar-shell .chart-between { stroke-width:2; }
-html body .ar-shell .ar-legend-row [data-autocal-history] { min-height:58px; font-size:18px; }
 html body .workspace-head .vehicle-status-strip em { font-size:16px; font-style:normal; color:var(--muted); font-weight:400; }
 html body .workspace-head .vehicle-status-strip [data-state="unknown"] em { display:none; }
 html body .workspace-head .vehicle-status-strip [data-stale="true"] b { color:var(--muted); }
