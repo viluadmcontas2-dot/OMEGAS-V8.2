@@ -47,10 +47,13 @@ class AutoMatchProposalSafetyTest {
     }
 
     @Test
-    fun `conducao exige tres faixas distintas com oito pares plausiveis cada`() {
-        assertNoProposal(refine(pairsIn(1.1, 40, listOf(3, 4))))            // só 2 faixas, mesmo com 80 pares
+    fun `conducao exige duas faixas distintas com oito pares plausiveis cada`() {
+        assertNoProposal(refine(pairsIn(1.1, 80, listOf(4))))               // só 1 faixa, mesmo com 80 pares
         assertNoProposal(refine(pairsIn(1.1, 7, listOf(2, 3, 4))))          // 3 faixas, mas 7 pares cada
         assertNoProposal(refine(pairsIn(1.1, 2, listOf(0, 1, 2, 3, 4))))    // faixas finas (2 pares) não são evidência
+        val two = refine(pairsIn(1.1, 8, listOf(3, 4)))                    // 2 faixas bastam (valor da Platina)
+        assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, two.mode)
+        assertEquals(16, two.telemetryPairsUsed)
         val ok = refine(pairsIn(1.1, 8, listOf(2, 3, 4)))
         assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, ok.mode)
         assertTrue(ok.telemetryOnly)
