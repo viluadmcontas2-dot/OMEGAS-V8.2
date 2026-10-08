@@ -80,7 +80,7 @@ object AutoMatchRefinedEngine {
      * nó ([proposalBox]) ANTES da trava de coerência: a curva final respeita a trava e continua sem degrau.
      */
     const val LOW_GUARD_MS = 5.0
-    const val E_MAX = 0.35
+    const val E_MAX = 0.7
     const val IRLS_ITERATIONS = 6
     const val TUKEY_C = 4.685
     const val SMOOTH_TOLERANCE_LOG = 0.0025
@@ -318,7 +318,7 @@ object AutoMatchRefinedEngine {
                     Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT * usableWeights[i], tg / tp, ln(interp(tg, axisMs, kOld) * tg / tp))
                 }
                 // Teto de peso por faixa do livro: a telemetria é muita leitura repetida, a nativa é a ECU medindo.
-                telemetry = capBandWeight(telemetry)
+                // Peso por episódio já limita quadros repetidos; novas visitas acrescentam evidência.
                 targets = targets + telemetry
             }
         }
@@ -500,9 +500,16 @@ object AutoMatchRefinedEngine {
                 rejectedPairs += group.size
                 return@forEach
             }
-            val mad = weightedMedian(logRatios.map { abs(it - center) }, unitWeights) * 1.4826
-            val limit = max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad)
-            val coherent = group.filterIndexed { local, _ -> abs(logRatios[local] - center) <= limit }
+            // Une faixa larga pode conter um desvio real localizado. Compara cada ponto só aos
+            // vizinhos de injeção; excluir absurdos antes impede que contaminem centro e dispersão.
+            val plausible = group.filter { pairs[it].second / pairs[it].first in TELEMETRY_RATIO_MIN..TELEMETRY_RATIO_MAX }
+            val coherent = plausible.filter { i ->
+                val local = plausible.filter { abs(pairs[it].first - pairs[i].first) <= 0.35 }
+                    .map { ln(pairs[it].second / pairs[it].first) }.sorted()
+                val mid = local[local.size / 2]
+                val mad = local.map { abs(it - mid) }.sorted()[local.size / 2] * 1.4826
+                abs(ln(pairs[i].second / pairs[i].first) - mid) <= max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad)
+            }
             rejectedPairs += group.size - coherent.size
 
             if (gated && coherent.map { episodes!![it] }.toSet().size < MIN_BAND_EPISODES) return@forEach
