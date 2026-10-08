@@ -95,7 +95,7 @@ object AutoMatchRefinedEngine {
      * pares cada. Sem isso falha fechado (POLISH, nada muda).
      */
     const val TELEMETRY_ONLY_BAND_PAIRS = 8
-    const val TELEMETRY_ONLY_MIN_BANDS = 3
+    const val TELEMETRY_ONLY_MIN_BANDS = 2
     /**
      * Uma faixa só puxa proposta com pares de ao menos este número de episódios = visitas à faixa separadas por
      * ≥ 60 s de condução ([EvidencePairs.VISIT_GAP_MS]); leituras estáveis seguidas NÃO são episódios distintos.

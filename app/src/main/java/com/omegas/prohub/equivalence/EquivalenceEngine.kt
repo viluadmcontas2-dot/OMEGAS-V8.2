@@ -30,7 +30,54 @@ data class EquivalenceInput(
     val pointGainScale: DoubleArray? = null,
     /** Histerese da proposta (0 = sem); a produção passa [AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG]. */
     val holdMinStepLog: Double = 0.0,
+    /** Faixas nativas da ECU (a curva dela é a BASE do refino); nulo quando a leitura não as trouxe ou não são coerentes. */
+    val native: NativeBands? = null,
 )
+
+/** Buffers de aquisição da ECU (18 faixas por combustível) lidos do snapshot; o motor refinado os usa como base. */
+class NativeBands(
+    val petrolTimeRaw: IntArray, val petrolMapRaw: IntArray, val petrolCounts: IntArray,
+    val gasTimeRaw: IntArray, val gasMapRaw: IntArray, val gasCounts: IntArray,
+    val pressureThresholdsRaw: IntArray?,
+) {
+    companion object {
+        /** Extrai os buffers do snapshot como AutoMatchSnapshotAnalysis (grupo de aquisição coerente; época do GNV). */
+        fun fromSnapshot(
+            snapshot: JSONObject?,
+            epoch: com.omegas.prohub.autocal.NativeGasEvidenceEpoch = com.omegas.prohub.autocal.NativeGasEvidenceEpoch.shared,
+        ): NativeBands? {
+            if (snapshot == null) return null
+            if (snapshot.has("temporalCoherent") && !snapshot.optBoolean("temporalCoherent", true)) return null
+            val groups = snapshot.optJSONArray("coherenceGroups")
+            val group = (0 until (groups?.length() ?: 0)).mapNotNull { groups?.optJSONObject(it) }
+                .firstOrNull { it.optString("key") == "ACQUISITION_CURRENT" }
+            if (group != null && !group.optBoolean("coherent", false)) return null
+            val fields = snapshot.optJSONArray("fields") ?: return null
+            fun raw(key: String, size: Int): IntArray? {
+                for (i in 0 until fields.length()) {
+                    val f = fields.optJSONObject(i) ?: continue
+                    if (f.optString("key") != key) continue
+                    if (f.optString("status") != "VALID") return null
+                    val a = f.optJSONArray("rawValues") ?: return null
+                    return if (a.length() == size) IntArray(size) { a.optInt(it) } else null
+                }
+                return null
+            }
+            val n = AutoMatchRefinedEngine.BAND_COUNT
+            val pt = raw("PETR_INJ_TBUF", n) ?: return null
+            val pm = raw("MNFLD_PRESS_BUF", n) ?: return null
+            val pc = raw("NUM_BUF_UPD_PETR", n) ?: return null
+            val gt = raw("PETR_INJ_TBUF_GAS", n) ?: return null
+            val gm = raw("MNFLD_PRESS_BUF_GAS", n) ?: return null
+            val gcRaw = raw("NUM_BUF_UPD_GAS", n) ?: return null
+            fun time(key: String): Long = (0 until fields.length()).mapNotNull { fields.optJSONObject(it) }
+                .firstOrNull { it.optString("key") == key }?.optLong("capturedAtMs", 0L)?.takeIf { it > 0L }
+                ?: snapshot.optLong("capturedAtMs", 0L)
+            val gc = epoch.effectiveGasCounts(gcRaw, time("NUM_BUF_UPD_GAS"), time("MUL_ACT"))
+            return NativeBands(pt, pm, pc, gt, gm, gc, raw("MNFLD_PRESS_THD", n))
+        }
+    }
+}
 
 /**
  * O cérebro: do ms de cada ponto da Curva K (eixo PETR_INJ_TBP) ao MAP em que a gasolina o pede (Curva
@@ -237,8 +284,10 @@ object EquivalenceEngine {
             AutoMatchRefinedEngine.refine(
                 AutoMatchRefinedEngine.Input(
                     axisRaw = input.axisRaw, mulActRaw = input.mulActRaw,
-                    petrolTimeRaw = null, petrolMapRaw = null, petrolCounts = null,
-                    gasTimeRaw = null, gasMapRaw = null, gasCounts = null,
+                    petrolTimeRaw = input.native?.petrolTimeRaw, petrolMapRaw = input.native?.petrolMapRaw,
+                    petrolCounts = input.native?.petrolCounts, gasTimeRaw = input.native?.gasTimeRaw,
+                    gasMapRaw = input.native?.gasMapRaw, gasCounts = input.native?.gasCounts,
+                    pressureThresholdsRaw = input.native?.pressureThresholdsRaw,
                     telemetryPairs = pairs.map { it.petrolRefMs to it.gasPetrolMs }, pointGainScale = input.pointGainScale,
                     telemetryEpisodes = pairs.map { it.episode }, holdMinStepLog = input.holdMinStepLog,
                 ),
@@ -295,17 +344,25 @@ object EquivalenceEngine {
         val changed = guarded?.let { refined ->
             points.indices.filter { proposal!!.origins[it] != AutoMatchRefinedEngine.Origin.HELD && refined[it] != proposal.currentRaw[it] }
         }.orEmpty()
-        if (off.isNotEmpty() && proposal != null && guarded != null && changed.isNotEmpty()) {
-            val head = when {
+        // Refino = suavizar a curva da ECU com os pontos nossos: o motor refinado (histerese 3,5%, passo máx. 15%, caixa de K,
+        // regressão) decide o que mudar; não exige ponto já julgado "fora" quando a própria proposta muda a curva.
+        if (proposal != null && guarded != null && changed.isNotEmpty()) {
+            val head = if (off.isEmpty()) {
+                "${changed.size} ${plural(changed.size, "ponto", "pontos")} para suavizar a curva"
+            } else when {
                 poor.isNotEmpty() && rich.isNotEmpty() ->
                     "${poor.size} ${plural(poor.size, "ponto pobre", "pontos pobres")} e ${rich.size} ${plural(rich.size, "rico", "ricos")}"
                 poor.isNotEmpty() -> "${poor.size} ${plural(poor.size, "ponto pobre", "pontos pobres")}"
                 else -> "${rich.size} ${plural(rich.size, "ponto rico", "pontos ricos")}"
             }
-            val lo = (off.minOf { abs(it.mixture!!) } * 100.0).roundToInt()
-            val hi = (off.maxOf { abs(it.mixture!!) } * 100.0).roundToInt()
             val suffix = if (input.reference == null) " · sem referência da ECU" else ""
-            val text = "$head entre ${f1(off.minOf { it.axisMs })} e ${f1(off.maxOf { it.axisMs })} ms ($lo–$hi%) · Aplicar ajuste$suffix"
+            val text = if (off.isEmpty()) {
+                "$head entre ${f1(changed.minOf { points[it].axisMs })} e ${f1(changed.maxOf { points[it].axisMs })} ms · Aplicar ajuste$suffix"
+            } else {
+                val lo = (off.minOf { abs(it.mixture!!) } * 100.0).roundToInt()
+                val hi = (off.maxOf { abs(it.mixture!!) } * 100.0).roundToInt()
+                "$head entre ${f1(off.minOf { it.axisMs })} e ${f1(off.maxOf { it.axisMs })} ms ($lo–$hi%) · Aplicar ajuste$suffix"
+            }
             return NextAction(
                 NextActionKind.APPLY, text, "refino", null, changed.sortedByDescending { points[it].usage },
                 proposal.currentRaw, guarded,
