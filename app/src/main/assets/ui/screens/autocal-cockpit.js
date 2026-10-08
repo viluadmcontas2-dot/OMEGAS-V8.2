@@ -928,10 +928,13 @@
               <div class="ar-legend-row">
                 <div class="ar-legend" id="autocalLegend" aria-label="Legenda do gráfico"></div>
                 <span id="autocalNoiseSummary" class="autocal-noise-summary" aria-live="polite"></span>
+                <span id="autocalAutoMatchTile" class="autocal-automatch-chip" data-state="unknown" title="Ajustes automáticos que a própria ECU já fez, de quantos ela pode fazer">AutoMatch <b id="autocalAutoMatchCount">—</b></span>
                 <span id="autocalReferenceCount" class="ar-sr" hidden>—</span>
               </div>
               <div class="autocal-chart-overlay" aria-live="polite">
                 <p id="autocalAlertStrip" class="autocal-alert-strip" role="alert" hidden></p>
+                <p id="autocalHumanAction" class="ar-sentence" data-level="neutral" hidden>Lendo o estado da ECU…</p>
+                <p id="autocalActionStatus" class="ar-reason" data-level="neutral" aria-live="polite" hidden></p>
                 <div class="autocal-chip-row"><small id="autocalAutoCleanLine" class="autocal-autoclean-line" data-level="neutral" hidden></small><small id="autocalRelearnNote" class="autocal-relearn-note" hidden>A ECU reaprendeu desde a última referência.</small></div>
               </div>
               <div id="autocalReferenceChart" class="ar-chart-host"><div class="chart-empty">Aguardando as curvas da ECU.</div></div>
@@ -939,10 +942,6 @@
             </section>
 
             <div class="ar-act">
-              <div class="refino-statusline" aria-live="polite">
-                <p id="autocalHumanAction" class="ar-sentence" data-level="neutral" hidden>Lendo o estado da ECU…</p>
-                <p id="autocalActionStatus" class="ar-reason" data-level="neutral" hidden></p>
-              </div>
               <div class="ar-buttons autocal-main-actions">
                 <button type="button" data-autocal-toggle class="btn-primary" data-loading="true" disabled>Lendo estado…</button>
                 <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reler GNV</button>
@@ -1750,14 +1749,16 @@
       const knownScale = this.keepScale(null);
       const domain = (knownScale
         ? this.keepScale(ecu.length ? ns.CurveChart.focusDomain([], ecu, [], { fullRange: visible.fullRange === true }) : null) || knownScale
-        : this.keepScale(ns.CurveChart.focusDomain(reference, ecu, [], { fullRange: visible.fullRange === true }))) || previousDomain;
+        : this.keepScale(ns.CurveChart.focusDomain(visible.fullRange === true ? reference
+          : ecu.length ? reference.filter(p => p.petrolMs <= Math.max(...ecu.map(q => q.petrolMs)) * 1.04 + 0.25)
+            : reference.filter(p => p.petrolMapBar <= AUTO_CAL_OPERATIONAL_MAP_MAX_BAR), ecu, [], { fullRange: visible.fullRange === true }))) || previousDomain;
       let chart = '';
       if (domain) {
         this.epochDomain = { ...domain };
         const width = Math.round(host.clientWidth) || 1000;
         const height = Math.round(host.clientHeight) || 400;
         const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
-        const model = { domain, reference, ecu, zones: AutoCalUxModel.zoneSurface(snapshot, human), history: [] };
+        const model = { domain, reference, ecu, zones: AutoCalUxModel.zoneSurface(snapshot, human), history: [], missing: this.missingBands(snapshot, acquiredPetrol, acquiredGas) };
         const built = ns.CurveChart.buildSvg(model, { width, height });
         this.chartScale = built.scale;
         const { xFor: x, yFor: y } = built.scale;
@@ -1875,6 +1876,7 @@
           return { html: '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>', scale: null, model: null };
         }
         model.domain = this.keepScale(model.domain);
+        model.missing = this.missingBands(snapshot, acquiredPetrol, acquiredGas);
         return { ...chart.buildSvg(model, { width, height }), model };
       }, 'ecu18');
       const shown = chart.shared;
@@ -1908,6 +1910,31 @@
       this.renderLiveCursor();
       this.renderedChartHost = host;
       this.chartSignature = signature;
+    }
+
+    /** Faixas da ECU (18) sem leitura de cada combustível: onde cada uma ficaria na curva da gasolina. */
+    missingBands(snapshot, acquiredPetrol, acquiredGas) {
+      const thd = physicalVector(snapshot, 'MNFLD_PRESS_THD');
+      const xs = physicalVector(snapshot, 'PETR_INJ_TBP');
+      const ys = physicalVector(snapshot, 'PETR_MNFLD_PRESS_RV');
+      if (thd.length !== 18 || xs.length !== 30 || ys.length !== 30) return [];
+      const msAt = bar => {
+        for (let i = 1; i < ys.length; i += 1) {
+          if (ys[i - 1] <= bar && bar <= ys[i] && ys[i] > ys[i - 1]) return xs[i - 1] + (bar - ys[i - 1]) / (ys[i] - ys[i - 1]) * (xs[i] - xs[i - 1]);
+        }
+        return null;
+      };
+      const view = this.chartView || {};
+      const has = (list, i) => list.some(p => p.index === i);
+      const out = [];
+      for (let i = 0; i < 18; i += 1) {
+        const bar = i < 17 ? (thd[i] + thd[i + 1]) / 2 : thd[17] + 0.03;
+        const ms = msAt(bar);
+        if (ms === null || !(ms > 0)) continue;
+        if (view.petrol !== false && !has(acquiredPetrol, i)) out.push({ fuel: 'PETROL', index: i, petrolMs: ms, mapBar: bar });
+        if (view.gas !== false && !has(acquiredGas, i)) out.push({ fuel: 'GAS', index: i, petrolMs: ms, mapBar: bar });
+      }
+      return out;
     }
 
     /** A escala só CRESCE dentro da sessão: adquirir 1 ponto, uma faixa, resetar ou o AutoMatch nunca encolhem nem trocam

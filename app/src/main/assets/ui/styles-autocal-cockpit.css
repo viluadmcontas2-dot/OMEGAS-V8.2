@@ -124,6 +124,13 @@
 html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over { position: absolute; inset: 0; height: auto; pointer-events: none; background: transparent; }
 html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > b, html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > span { background: color-mix(in srgb, var(--chart-bg) 82%, transparent); justify-self: center; padding: 2px 10px; border-radius: 6px; }
 
-/* O gráfico do AutoCal nunca muda de tamanho: a linha de estado reserva o lugar mesmo vazia (achado da teia: ao aparecer
-   "Fazendo agora · …" o gráfico encolhia 34 px, 2026-10-08). */
-html body .ar-autocal .refino-statusline { min-height: 56px; max-height: 56px; overflow: hidden; }
+/* Faixas sem leitura: círculo tracejado "falta medir" (dono, 2026-10-08). */
+.autocal-missing-point { fill: none; stroke-width: 2.2; stroke-dasharray: 3 3; opacity: .8; pointer-events: none; vector-effect: non-scaling-stroke; }
+.autocal-missing-point.petrol { stroke: var(--tone-78b7ff); }
+.autocal-missing-point.gas { stroke: var(--tone-5dd39e); }
+html body .ar-autocal .autocal-chart-overlay #autocalActionStatus { margin: 0; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--overlay); font-size: 18px; align-self: flex-start; }
+
+/* Contador pequeno "AutoMatch N de M" na linha da legenda (dono, 2026-10-08): sem bloco novo, sem tirar área do gráfico. */
+.autocal-automatch-chip { margin-left: auto; padding: 2px 10px; border: 1px solid var(--line); border-radius: 14px; font-size: 16px; color: var(--muted); white-space: nowrap; }
+.autocal-automatch-chip b { color: var(--text); font-weight: 700; }
+.autocal-automatch-chip[data-state="full"] b { color: var(--warn); }

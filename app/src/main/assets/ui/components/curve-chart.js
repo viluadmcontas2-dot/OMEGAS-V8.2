@@ -394,7 +394,7 @@
       const zoneHeight = Math.abs(yFor(lower) - yFor(upper));
       const label = state => state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
       // Revisto (W2): sem barras laterais sem legenda; o rótulo da zona diz o estado do GNV em palavras.
-      const zoneText = `Z${zone.zone}` + (zone.gasState === 'acquired' ? ' · GNV ok' : zone.gasState === 'missing' ? ' · GNV falta' : '');
+      const zoneText = `Z${zone.zone}` + (zone.petrolState === 'missing' ? ' · gasolina falta medir' : '') + (zone.gasState === 'acquired' ? ' · GNV ok' : zone.gasState === 'missing' ? ' · GNV falta' : '');
       const caption = `Z${zone.zone} · Gasolina ${label(zone.petrolState)} · GNV ${label(zone.gasState)}`;
       return `<g class="autocal-zone-surface" data-autocal-zone-surface="${zone.zone}" data-gas-state="${zone.gasState}" data-petrol-state="${zone.petrolState}" data-current="false" aria-label="${caption}">` +
         `<rect class="autocal-zone-background" x="${padLeft}" y="${top.toFixed(1)}" width="${width - padLeft - padRight}" height="${zoneHeight.toFixed(1)}"></rect>` +
@@ -420,6 +420,12 @@
       const done = p.acquisitionState === 'ACQUIRED';
       return `<circle class="autocal-acquired-hit${sel.ecu === key ? ' selected' : ''}${sel.batch && sel.batch.has(key) ? ' batch-selected' : ''}" data-autocal-acquired-fuel="${p.fuel}" data-autocal-acquired-index="${p.index}" data-refino-dot="ecu:${i}" cx="${x}" cy="${y}" r="22"></circle>` +
         `<circle class="autocal-acquired-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'} ${done ? 'acquired' : 'collecting'}" data-autocal-point-key="${key}" data-acquisition-state="${p.acquisitionState}" data-acquisition-progress="${(progress ?? 0).toFixed(3)}" cx="${x}" cy="${y}" r="6"${done || progress === null ? '' : ` fill-opacity="${(0.35 + 0.65 * progress).toFixed(2)}"`}></circle>`;
+    }).join('');
+
+    // Faixas ainda sem leitura: círculo tracejado "falta medir" (como no Ajuste GNV), sem toque.
+    const missMarkup = between ? '' : (model.missing || []).map(m => {
+      if (m.mapBar < yMin || m.mapBar > yMax || m.petrolMs < xMin || m.petrolMs > xMax) return '';
+      return `<circle class="autocal-missing-point ${m.fuel === 'GAS' ? 'gas' : 'petrol'}" data-autocal-missing="${m.fuel}:${m.index}" cx="${xFor(m.petrolMs).toFixed(1)}" cy="${yFor(m.mapBar).toFixed(1)}" r="${m.fuel === 'GAS' ? 9 : 6.5}"></circle>`;
     }).join('');
 
     // Refino: pontos do OMEGAS são BOLINHAS do tamanho das da ECU, entre elas. AutoCal não mostra pontos do OMEGAS.
@@ -453,7 +459,7 @@
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${previous}${equivalencePath}` +
       `${hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +
-      `${refMarkup}${oursMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
+      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
     return { svg, scale };
   }
 
@@ -614,7 +620,8 @@
       ...relevant.map(p => ({ x: p.tpetMs ?? p.petrolMs, y: p.mapBar }))].filter(p => Number.isFinite(p.x) && p.x > 0 && Number.isFinite(p.y) && p.y > 0);
     const lastMeasured = anchors.length ? Math.max(...anchors.map(p => p.x)) : null;
     const limit = lastMeasured === null ? Infinity : lastMeasured + Math.max(.25, lastMeasured * .04);
-    const reference = visible.fullRange || !anchors.length ? allReference : allReference.filter(p => p.petrolMs <= limit);
+    // Sem ponto medido ainda: enquadra só a faixa de trabalho (MAP até 1,15 bar), não os 23 ms da régua inteira da ECU.
+    const reference = visible.fullRange ? allReference : !anchors.length ? allReference.filter(p => !(Math.max(p.petrolMapBar, p.gasMapBar) > 1.15)) : allReference.filter(p => p.petrolMs <= limit);
     const domain = focusDomain([...reference, ...history], ecu, relevant, { fullRange: visible.fullRange, equivalent: c.mode === 'between' && visible.gas !== false, liveMs: Number(c.liveMs) });
     const thresholds = (() => {
       const f = (Array.isArray(snapshot.fields) ? snapshot.fields : []).find(x => x && x.key === 'MNFLD_PRESS_THD' && x.status === 'VALID');

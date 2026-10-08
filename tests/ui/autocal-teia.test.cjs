@@ -134,6 +134,11 @@ async function cap(o, group, id, title, opt = {}) {
   bs.forEach(b => { F(Math.abs(b.h - 58) <= 1.5, `botao "${b.txt}" com ${Math.round(b.h)} px (esperado 58)`); F(b.w < 420, `botao "${b.txt}" esticado (${Math.round(b.w)} px)`); });
   for (let i = 1; i < bs.length; i++) { if (Math.abs(bs[i].t - bs[i - 1].t) < 4) F(Math.abs(bs[i].l - bs[i - 1].r - 8) <= 2, `espaco ${Math.round(bs[i].l - bs[i - 1].r)} px entre "${bs[i - 1].txt}" e "${bs[i].txt}" (esperado 8)`); }
   F(!st.hscroll, 'rolagem lateral/overflow horizontal');
+  // ordem do dono (2026-10-08): o grafico ocupa tudo ate o rodape; sem faixa reservada entre o eixo X e os botoes
+  const share = (st.host.w * st.host.h) / (1280 * 720);
+  F(share >= 0.38, `grafico com so ${(share * 100).toFixed(0)}% da tela (minimo 38%)`);
+  F(!st.barBox || st.barBox.t - (st.host.y + st.host.h) <= 24, `faixa vazia de ${st.barBox && Math.round(st.barBox.t - (st.host.y + st.host.h))} px entre o grafico e os botoes`);
+  F(!st.btns.length || Math.abs(st.btns[0].t - (st.host.y + st.host.h)) <= 24, 'rodape nao comeca logo abaixo do eixo X');
   F(!st.barBox || st.barBox.t >= st.hostBox.b - 1, 'barra de botoes sobrepoe o grafico');
   // botao desabilitado precisa de motivo escrito
   if (st.btns.some(b => b.dis)) F((st.sentence + st.status).length > 8, 'botao desabilitado sem motivo escrito');
