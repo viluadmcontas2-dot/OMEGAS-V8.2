@@ -80,3 +80,10 @@ test('trava · Curva K: sem cabeçalho, gráfico grande, rodapé único (editar,
   assert.equal(r.readVisible, false, 'Reler ECU só aparece quando a leitura falha');
   inOrder(r.order, ['curveTargetFactor', 'curveReviewButton', 'curveViewSwitch', 'curve-photos', 'curveSaveButton'], 'Curva K');
 });
+
+// TRAVA (dono, 2026-10-08): "Selecionar junto" fica no rodape do AutoCal (junta pontos para reaprender de uma vez). Nao remover.
+test('trava · AutoCal: botão "Selecionar junto" existe no rodapé de pontos', () => {
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+  assert.match(src, /data-autocal-select-together>Selecionar junto</, 'Selecionar junto sumiu do rodapé do AutoCal');
+  assert.match(src, /toggleBatchSelection\(\)/, 'a função Selecionar junto sumiu');
+});

@@ -30,6 +30,7 @@ module.exports.SIM_SCRIPT = `(function () {
     S.zp = zf(S.p); S.zg = zf(S.g);
     set('ACQUIRED_ZONES_PETROL', S.zp.slice()); set('ACQUIRED_ZONES_GAS', S.zg.slice());
     set('AUTO_CAL_ENABLE', [S.enabled]); set('NUM_AUTOMATCH_EXECUTED', [S.auto]);
+    if (S.autoUnknown) snap.fields = snap.fields.filter(x => x.key !== 'NUM_AUTOMATCH_EXECUTED' && x.key !== 'MAX_AUTOMATCH');
     snap.sequence = S.rev; snap.capturedAtMs = Date.now();
     return snap;
   }
@@ -58,7 +59,7 @@ module.exports.SIM_SCRIPT = `(function () {
     acquire(fuel, bands, count) { const a = fuel === 'gas' ? S.g : S.p; bands.forEach(b => { a[b] = count == null ? 10 : count; }); if (fuel === 'gas') S.gPend = false; else S.pPend = false; bump(); },
     clear() { S.p.fill(0); S.g.fill(0); S.pPend = S.gPend = false; bump(); },
     hold(on) { S.act = on ? { ok: true, action: 'RESET_GAS', state: 'READING_AFTER', busy: true } : {}; bump(); },
-    failNext(on) { S.fail = on; }, automatch() { S.g.fill(0); S.gGen++; S.gPend = true; S.auto++; bump(); },
+    failNext(on) { S.fail = on; }, autoUnknown(on) { S.autoUnknown = on; bump(); }, automatch() { S.g.fill(0); S.gGen++; S.gPend = true; S.auto++; bump(); },
     state() { return JSON.parse(J({ p: S.p, g: S.g, enabled: S.enabled, pGen: S.pGen, gGen: S.gGen, auto: S.auto })); },
     zoneOf: ZONE, mapC,
   };
