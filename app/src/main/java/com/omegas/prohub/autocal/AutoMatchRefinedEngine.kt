@@ -344,7 +344,11 @@ object AutoMatchRefinedEngine {
             targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
             val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
             val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
-            val initialBox = proposalBox(x0, gain, axisMs)
+            val minMeasured = targets.minOf { it.petrolMs }
+            val maxMeasured = targets.maxOf { it.petrolMs }
+            val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b ->
+                if (axisMs[j] < minMeasured || axisMs[j] > maxMeasured) x0[j] to x0[j] else b
+            }
             eEff = effectiveElasticity(initialBox, u)
             val enforced = enforceCoherence(scaled, initialBox, u, eEff)
             // Histerese: ponto cujo passo proposto é ruído fica exatamente como está, desde que a curva continue
