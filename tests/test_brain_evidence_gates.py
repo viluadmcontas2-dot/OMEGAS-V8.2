@@ -102,7 +102,9 @@ class P1EvidenceBeforePercentage(unittest.TestCase):
         self.assertLess(out["judgedUsage"], brain.MIN_JUDGED_USAGE)
         self.assertIsNone(out["index"])
         # com GNV em todo o uso o índice aparece
-        full = self.evaluate(synthetic_obs(lambda c: 1.0, lambda i, j: 1.0, 20))
+        # Após normalizar MAP, a série perfeita é constante: não inventa independência estatística.
+        # Ruído determinístico independente representa leituras distintas no caso positivo.
+        full = self.evaluate(synthetic_obs(lambda c: 1.0, lambda i, j: 1.0 + 0.006 * math.sin(i * 1.7 + j), 20))
         self.assertGreaterEqual(full["judgedUsage"], brain.MIN_JUDGED_USAGE)
         self.assertIsNotNone(full["index"])
 
@@ -170,23 +172,15 @@ class P2EvidenceIndependenceAndNativePriority(unittest.TestCase):
         self.assertEqual("EQUIVALENCE", out["mode"])
         self.assertEqual(len(pairs) - 1, out["telemetryPairsUsed"])
 
-    def test_telemetry_does_not_move_points_the_mature_native_evidence_covers(self):
+    def test_own_points_refine_native_covered_regions(self):
         base = refined.refine(REF95)
-        # 1,2 (e não 1,3): dentro do portão de plausibilidade [0,80; 1,25]; o teste é sobre a prioridade da nativa.
         pairs = [(t, t * 1.2) for b in range(5) for t in interior(b, 12)]
         mixed = refined.refine(REF95, pairs)
-        self.assertGreater(mixed["telemetryDroppedByNative"], 0)
-        axis = base["axisMs"]
+        self.assertEqual(mixed["telemetryDroppedByNative"], 0)
         telemetry = [t for t in mixed["targets"] if t["map"] is None]
         self.assertTrue(telemetry)
-        for t in telemetry:
-            dominant = max(refined.axis_weights(t["tp"], axis), key=lambda na: (na[1], -na[0]))[0]
-            self.assertLess(base["gain"][dominant], refined.NATIVE_COVERED_GAIN, f"alvo em {t['tp']:.2f} ms cai num ponto coberto")
-
-    def test_telemetry_weight_per_band_is_capped(self):
-        pairs = [(t, t * 1.1) for t in interior(2, 300)]
-        targets = refined.cap_band_weight(refined.telemetry_targets(pairs, [float(i + 1) for i in range(30)], [1.0] * 30))
-        self.assertAlmostEqual(refined.TELEMETRY_BAND_WEIGHT_CAP, sum(t["w"] for t in targets), places=9)
+        self.assertTrue(any(base["gain"][max(refined.axis_weights(t["tp"], base["axisMs"]), key=lambda na: (na[1], -na[0]))[0]] >= 0.5 for t in telemetry))
+        self.assertTrue(any(t["map"] is not None for t in mixed["targets"]))
 
 
 class P2MeasuredProposalNeverWorsensTheEngineCriterion(unittest.TestCase):

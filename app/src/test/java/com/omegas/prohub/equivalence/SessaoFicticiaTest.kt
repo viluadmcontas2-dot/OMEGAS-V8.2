@@ -257,6 +257,7 @@ class SessaoFicticiaTest {
     @Test
     fun `comparacao dos motores e erro nao crescente a cada aumento de pontos`() {
         val curve = curveRaw()
+        val table = StringBuilder("native\tn\tplatina\tdiamante\n")
         for (native in listOf(true, false)) {
             val errors = listOf(10, 25, 50).map { n ->
                 val outcomes = listOf(42L, 43L, 44L).map { scenario(n, native, true, true, it) }
@@ -266,10 +267,53 @@ class SessaoFicticiaTest {
                     plantedErr(r.refinedRaw.toIntArray(), curve)
                 }.average()
                 println("COMPARACAO_REFINO native=$native n=$n platina=$legacy diamante=$current")
+                table.append("$native\t$n\t$legacy\t$current\n")
                 current
             }
             for (i in 1 until errors.size) assertTrue("native=$native erro deve cair 10→25→50: $errors", errors[i] <= errors[i - 1])
         }
+        File("build/sessao-ficticia/comparacao.tsv").also { it.parentFile.mkdirs() }.writeText(table.toString())
+    }
+
+    @Test
+    fun `mesmos criterios de seguranca e contaminacao para a Platina`() {
+        val clean = scenario(50, true, false, false)
+        val parked = scenario(50, true, true, false)
+        val dirty = scenario(50, true, true, true)
+        fun legacy(o: Outcome) = com.omegas.prohub.equivalence.comparison.MotorComparison.platina(o.ui.getJSONObject("snapshot"), o.sim.ledger, o.sim.runtime).refinedRaw.toIntArray()
+        val raw = legacy(clean)
+        val curve = curveRaw()
+        val changed = raw.indices.filter { raw[it] != curve[it] }
+        val outside = changed.count { raw[it] !in 12288..19661 }
+        val step = changed.count { abs(raw[it].toDouble() / curve[it] - 1) > 0.151 }
+        val wrongWay = changed.count { abs(errAt(axisRaw[it] / 512.0) - 1) > .04 && ((errAt(axisRaw[it] / 512.0) > 1) != (raw[it] < curve[it])) }
+        val unnecessary = changed.count { i ->
+            val ms = axisRaw[i] / 512.0
+            abs(errAt(ms) - 1) <= .035 && plantedBands.all { abs(ms - nodeMs[it]) > 1.5 }
+        }
+        println("ORACULO_PLATINA altered=${changed.size} outside=$outside step=$step wrongWay=$wrongWay unnecessary=$unnecessary parkedInvariant=${raw.contentEquals(legacy(parked))} outlierInvariant=${raw.contentEquals(legacy(dirty))}")
+        // A cópia histórica é avaliada, não 'consertada' para passar; os critérios da produção estão no teste completo.
+        assertTrue("comparação produziu 30 K", raw.size == 30)
+    }
+
+    @Test
+    fun `pontos proprios corrigem uma base nativa ainda enviesada`() {
+        val curve = IntArray(30) { 16384 }
+        val snap = snapshot(1L, curve, 1, 10, 10, Random(1))
+        val n = NativeBands.fromSnapshot(snap)!!
+        // A nativa estima +8%; condução independente pede +10%, com verdade constante conhecida.
+        val input = AutoMatchRefinedEngine.Input(axisRaw, curve, n.petrolTimeRaw, n.petrolMapRaw, n.petrolCounts,
+            IntArray(18) { Math.round(n.petrolTimeRaw[it] * 1.08).toInt() }, n.petrolMapRaw, n.gasCounts,
+            holdMinStepLog = AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG)
+        fun error(r: AutoMatchRefinedEngine.Result) = (9..17).map { abs(ln(r.refinedRaw[it] / (16384.0 * 1.1))) }.average()
+        val baseline = error(AutoMatchRefinedEngine.refine(input))
+        val errors = listOf(10, 25, 50).map { count ->
+            val pairs = List(count) { i -> val tp = 4.5 + 4.5 * i / (count - 1.0); tp to tp * 1.1 }
+            val r = AutoMatchRefinedEngine.refine(input.copy(telemetryPairs = pairs, telemetryEpisodes = pairs.indices.toList()))
+            error(r).also { println("BASE_NATIVA_ENVIESADA n=$count error=$it baseline=$baseline") }
+        }
+        assertTrue("50 pontos próprios melhoram a base", errors.last() < baseline)
+        for (i in 1 until errors.size) assertTrue("10→25→50 pontos totais: $errors", errors[i] <= errors[i - 1])
     }
 
     private fun timeline(out: File, curve: IntArray) {

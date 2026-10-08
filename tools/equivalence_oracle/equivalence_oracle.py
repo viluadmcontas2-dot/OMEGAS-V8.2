@@ -363,7 +363,11 @@ def build_pairs(petrol_obs, gas_obs, ecu_ref):
     raw = []
     for g in gas_obs:
         # Mesmo regime (EvidencePairs.sameRegime): nunca gasolina em lenta × GNV andando, nem o contrário.
-        matches = sorted(p[2] for p in petrol_obs if abs(p[0] - g[0]) <= MATCH_RPM and abs(p[1] - g[1]) <= MATCH_MAP
+        gas_ref = reference_at(g[1], ecu_ref)
+        def at_gas_map(p):
+            petrol_ref = reference_at(p[1], ecu_ref)
+            return p[2] * gas_ref / petrol_ref if gas_ref is not None and petrol_ref is not None else p[2]
+        matches = sorted(at_gas_map(p) for p in petrol_obs if abs(p[0] - g[0]) <= MATCH_RPM and abs(p[1] - g[1]) <= MATCH_MAP
                          and (p[0] >= DRIVING_MIN_RPM) == (g[0] >= DRIVING_MIN_RPM) and same_water(_obs_water(p), _obs_water(g)))
         if len(matches) >= 2:
             raw.append({"tp": matches[len(matches) // 2], "tg": g[2], "rpm": g[0], "ecu": False, "map": g[1], "t": g[3]})

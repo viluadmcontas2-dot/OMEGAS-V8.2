@@ -80,6 +80,11 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
      * Reavalia. Nulo sem Curva K lida. Com prova aberta sempre reavalia (o relógio dela anda); senão devolve o
      * último resultado enquanto livro, Referência, curva, uso e experiência não mudarem.
      */
+    // Uma aquisição já vista que volta vazia foi zerada: os pares antigos não podem substituir
+    // silenciosamente essa base. A proposta volta quando a ECU começa a repovoar o combustível.
+    private var hadNativePetrol = false
+    private var hadNativeGas = false
+
     fun evaluate(
         ledger: EquivalenceLedger,
         phases: EquivalencePhases,
@@ -98,6 +103,14 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
         val provisional = if (reference == null) references.provisional(acquisition) else null
         val scale = gainScale(axisRaw.map { it / com.omegas.prohub.autocal.AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS })
         val native = NativeBands.fromSnapshot(snapshot)
+        val resetPending = native?.let {
+            val petrolPresent = it.petrolCounts.any { n -> n > 0 }
+            val gasPresent = it.gasCounts.any { n -> n > 0 }
+            val reset = (hadNativePetrol && !petrolPresent) || (hadNativeGas && !gasPresent)
+            hadNativePetrol = hadNativePetrol || petrolPresent
+            hadNativeGas = hadNativeGas || gasPresent
+            reset
+        } ?: false
         // As faixas nativas entram na chave: RESET da gasolina/GNV ou o AutoCal aprendendo mudam a proposta SEM mudar o livro
         // (carro parado = nenhum quadro novo). Sem isto a proposta velha ficava na tela depois do RESET.
         val nativeKey = native?.let {
@@ -105,7 +118,7 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
                 .joinToString("|") { a -> a.contentHashCode().toString() }
         }
         val key = listOf(
-            nativeKey, ledger.revision(), reference?.id, provisional?.ecuAcquisitionFingerprint, EquivalenceLedger.fingerprint(mulActRaw),
+            nativeKey, resetPending, ledger.revision(), reference?.id, provisional?.ecuAcquisitionFingerprint, EquivalenceLedger.fingerprint(mulActRaw),
             EquivalenceLedger.fingerprint(axisRaw), usage.revision(), experience.revision(),
             scale?.joinToString(",") { "%.3f".format(it) },
         ).joinToString("|")
@@ -115,7 +128,8 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
         }
         val result = EquivalenceEngine.evaluate(
             EquivalenceInput(
-                axisRaw, mulActRaw, reference, provisional, ledger.petrolObservations(), ledger.gasObservations(),
+                axisRaw, mulActRaw, reference, provisional, ledger.petrolObservations(),
+                if (resetPending) emptyList() else ledger.gasObservations(),
                 experience.reading(), usage.reading(), null, scale,
                 com.omegas.prohub.autocal.AutoMatchRefinedEngine.HOLD_MIN_STEP_LOG,
                 native,

@@ -75,6 +75,8 @@ class ProposalReplayReportTest {
         val snaps = events.filter { it.getString("type") == "autocal_native_snapshot" }
         val sample = snaps.indices.filter { it % 10 == 9 || it == snaps.lastIndex }.toSet()
         val rows = ArrayList<Row>()
+        var legacyChanged = 0
+        var legacyUnsafe = 0
         var snapIndex = -1
         var fuelNow: String? = null
         for (event in events) {
@@ -108,6 +110,9 @@ class ProposalReplayReportTest {
                     val real = phasesReal.observe(true, monitorReal, acquisition, index, JSONObject(), 0, fuelNow)
                     val done = phasesDone.observe(true, monitorDone, acquisition, index, JSONObject(), 0, fuelNow)
                     val legacy = com.omegas.prohub.equivalence.comparison.MotorComparison.platina(snapshot, ledger, runtime)
+                    if (legacy.refinedRaw != legacy.currentRaw) legacyChanged++
+                    legacyUnsafe += legacy.refinedRaw.indices.count { i -> legacy.refinedRaw[i] != legacy.currentRaw[i] &&
+                        (legacy.refinedRaw[i] !in 12288..19661 || kotlin.math.abs(legacy.refinedRaw[i].toDouble() / legacy.currentRaw[i] - 1) > .151) }
                     println("REPLAY_PLATINA $name snap#$snapIndex mode=${legacy.mode} changed=${legacy.refinedRaw.zip(legacy.currentRaw).count { it.first != it.second }} errorBefore=${legacy.evidenceErrorBefore} errorAfter=${legacy.evidenceErrorAfter}")
                     val p = result.proposal
                     val bands = index.optJSONArray("bands") ?: JSONArray()
@@ -137,6 +142,7 @@ class ProposalReplayReportTest {
                 }
             }
         }
+        println("REPLAY_PLATINA_RESUMO $name amostras=${rows.size} curvasAlteradas=$legacyChanged pontosInseguros=$legacyUnsafe")
         return rows
     }
 
