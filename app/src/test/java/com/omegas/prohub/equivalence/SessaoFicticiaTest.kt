@@ -57,6 +57,8 @@ class SessaoFicticiaTest {
     // ---------------- simulador (mesmo caminho do replay) ----------------
     private class Sim {
         var now = 1_800_000_000_000L
+        val journal = com.omegas.prohub.autocal.RefinementJournal(null) { now }
+        val stalls = com.omegas.prohub.autocal.StallWatch(null) { now }
         val ledger = EquivalenceLedger(null) { now }
         val runtime = EquivalenceRuntime(null) { now }
         val phases = EquivalencePhases(null, { now }, { now })
@@ -74,6 +76,8 @@ class SessaoFicticiaTest {
             val monitor = JSONObject().put("autoCalEnabled", enable).put("autoMatchCount", autoMatch).put("maxAutomatch", 3)
             val obs = phases.observe(true, monitor, acquisition, ledger.index(), JSONObject(), 0, fuel)
             val ui = JSONObject().put("snapshot", snapshot).put("equivalence", runtime.json(acquisition)).put("phases", obs)
+                // exatamente o que a ponte devolve em getEquivalence (mesma montagem da produção)
+                .put("bridge", com.omegas.prohub.autocal.EquivalenceView.build(ledger, journal, phases, stalls, runtime.json(acquisition)))
             return result to ui
         }
     }

@@ -376,6 +376,7 @@ html body .ts-advanced > summary { min-height:48px; display:flex; align-items:ce
 html body :is(.ar-refino,.ar-autocal) .ar-act { display:flex; flex-direction:column; align-items:stretch; gap:6px; min-height:0; }
 html body :is(.ar-refino,.ar-autocal) .refino-statusline { display:flex; align-items:baseline; gap:6px 18px; flex-wrap:wrap; min-width:0; }
 html body :is(.ar-refino,.ar-autocal) .refino-statusline .ar-sentence { margin:0; font-size:22px; font-weight:700; min-width:0; }
+html body :is(.ar-refino,.ar-autocal) .refino-statusline { min-height: 60px; } /* 2 linhas reservadas: a frase mudar de 1 para 2 linhas nao encolhe o grafico (sessao ficticia, dono 2026-10-08) */
 html body :is(.ar-refino,.ar-autocal) .refino-statusline .ar-reason { margin:0; color:var(--warn); font-size:20px; font-weight:700; }
 html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons { display:flex; flex-wrap:nowrap; align-items:stretch; justify-content:flex-start; gap:8px; width:100%; }
 html body :is(.ar-refino,.ar-autocal) .ar-act > .ar-buttons > :is(button,.instrument-details,.autocal-point-actions,.refino-undo):not([hidden]) { flex:0 0 auto; width:auto; min-width:0; margin:0; }
