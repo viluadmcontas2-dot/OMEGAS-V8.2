@@ -107,6 +107,8 @@ class ProposalReplayReportTest {
                     val monitorDone = JSONObject().put("autoCalEnabled", enabled).put("autoMatchCount", 3).put("maxAutomatch", 3)
                     val real = phasesReal.observe(true, monitorReal, acquisition, index, JSONObject(), 0, fuelNow)
                     val done = phasesDone.observe(true, monitorDone, acquisition, index, JSONObject(), 0, fuelNow)
+                    val legacy = com.omegas.prohub.equivalence.comparison.MotorComparison.platina(snapshot, ledger, runtime)
+                    println("REPLAY_PLATINA $name snap#$snapIndex mode=${legacy.mode} changed=${legacy.refinedRaw.zip(legacy.currentRaw).count { it.first != it.second }} errorBefore=${legacy.evidenceErrorBefore} errorAfter=${legacy.evidenceErrorAfter}")
                     val p = result.proposal
                     val bands = index.optJSONArray("bands") ?: JSONArray()
                     val interior = (0 until bands.length()).count { bands.optJSONObject(it)?.optBoolean("interiorCovered", false) == true }

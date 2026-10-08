@@ -254,6 +254,24 @@ class SessaoFicticiaTest {
         timeline(out, curve)
     }
 
+    @Test
+    fun `comparacao dos motores e erro nao crescente a cada aumento de pontos`() {
+        val curve = curveRaw()
+        for (native in listOf(true, false)) {
+            val errors = listOf(10, 25, 50).map { n ->
+                val outcomes = listOf(42L, 43L, 44L).map { scenario(n, native, true, true, it) }
+                val current = outcomes.map { plantedErr(proposalOf(it).raw, curve) }.average()
+                val legacy = outcomes.map {
+                    val r = com.omegas.prohub.equivalence.comparison.MotorComparison.platina(it.ui.getJSONObject("snapshot"), it.sim.ledger, it.sim.runtime)
+                    plantedErr(r.refinedRaw.toIntArray(), curve)
+                }.average()
+                println("COMPARACAO_REFINO native=$native n=$n platina=$legacy diamante=$current")
+                current
+            }
+            for (i in 1 until errors.size) assertTrue("native=$native erro deve cair 10→25→50: $errors", errors[i] <= errors[i - 1])
+        }
+    }
+
     private fun timeline(out: File, curve: IntArray) {
         val rnd = Random(42)
         val sim = Sim()

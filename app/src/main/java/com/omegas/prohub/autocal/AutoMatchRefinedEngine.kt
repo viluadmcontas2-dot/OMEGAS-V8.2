@@ -104,7 +104,7 @@ object AutoMatchRefinedEngine {
     /** Peso por episódio: um episódio de uma faixa vale no máximo este número de pares (o resto é a mesma leitura repetida). */
     const val EPISODE_PAIR_CAP = 4
     /** Teto de peso da telemetria por faixa do livro (= uma faixa nativa plena: [BAND_FULL_COUNT] pares × [TELEMETRY_WEIGHT]). */
-    const val TELEMETRY_BAND_WEIGHT_CAP = BAND_FULL_COUNT * TELEMETRY_WEIGHT
+    const val TELEMETRY_BAND_WEIGHT_CAP = 50 * TELEMETRY_WEIGHT
     /** A telemetria não move um ponto que a evidência nativa madura já cobre (ganho nativo ≥ isto). */
     const val NATIVE_COVERED_GAIN = 0.5
     /** Tolerância numérica para "a proposta piorou o critério do próprio motor". */
@@ -319,17 +319,6 @@ object AutoMatchRefinedEngine {
                 }
                 // Teto de peso por faixa do livro: a telemetria é muita leitura repetida, a nativa é a ECU medindo.
                 telemetry = capBandWeight(telemetry)
-                // A nativa madura cobre o ponto: a telemetria não o move (só preenche o que a nativa não cobre).
-                if (nativeEquivalence && targets.isNotEmpty()) {
-                    val nativeGain = gainOf(targets.map { Observation(axisWeights(it.petrolMs, axisMs), it.logTarget, it.weight) })
-                    val before = telemetry.size
-                    telemetry = telemetry.filter { t ->
-                        val nodes = axisWeights(t.petrolMs, axisMs)
-                        val dominant = nodes.maxByOrNull { it.second }!!.first
-                        nativeGain[dominant] < NATIVE_COVERED_GAIN
-                    }
-                    droppedByNative = before - telemetry.size
-                }
                 targets = targets + telemetry
             }
         }
