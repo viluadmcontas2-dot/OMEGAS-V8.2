@@ -90,10 +90,14 @@ class ProposalReplayReportTest {
                 "autocal_native_snapshot" -> {
                     snapIndex++
                     val snapshot = fixSnapshot(data)
+                    val acquisition = AutoCalAcquisition.fromSnapshot(snapshot)
                     // Como no serviço: toda leitura alinha o livro à Curva K (curva nova = GNV antigo sai do livro).
                     EquivalenceEngine.curveFromSnapshot(snapshot)?.let { runtime.alignCurve(ledger, phasesReal, it.second, now) }
+                    // O dono salva a gasolina da ECU como referência (sem isso o cérebro só pede "Salvar a referência").
+                    if (runtime.references.current() == null && ReferenceStore.pointsFrom(acquisition).isNotEmpty()) {
+                        runtime.freeze(acquisition, phasesReal)
+                    }
                     if (snapIndex !in sample) continue
-                    val acquisition = AutoCalAcquisition.fromSnapshot(snapshot)
                     val enabled = EquivalenceReplaySupportHex.first(data, "AUTO_CAL_ENABLE") ?: 1
                     val result = runtime.evaluate(ledger, phasesReal, snapshot, acquisition, true) { null } ?: continue
                     val index = ledger.index()
@@ -105,7 +109,7 @@ class ProposalReplayReportTest {
                     val bands = index.optJSONArray("bands") ?: JSONArray()
                     val interior = (0 until bands.length()).count { bands.optJSONObject(it)?.optBoolean("interiorCovered", false) == true }
                     val judged = result.points.count { it.state != PointState.SEM_DADOS && it.state != PointState.APRENDENDO }
-                    val line = "$name snap#$snapIndex nextAction=${result.nextAction.kind} proposal.mode=${p?.mode} " +
+                    val line = "$name snap#$snapIndex refCongelada=${runtime.references.current() != null} nextAction=${result.nextAction.kind} proposal.mode=${p?.mode} " +
                         "proposal.reason=${p?.reason} telemetryOnly=${p?.telemetryOnly} regBlocked=${p?.regressionBlocked} " +
                         "deadBand=${p?.deadBandPoints} used=${p?.telemetryPairsUsed} " +
                         "reasonCode(sem contador)=${real.optString("reasonCode")} ecuDone(sem contador)=${real.optBoolean("ecuDone")} " +
