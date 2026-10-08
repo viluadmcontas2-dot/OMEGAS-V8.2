@@ -316,6 +316,22 @@ class SessaoFicticiaTest {
         for (i in 1 until errors.size) assertTrue("10→25→50 pontos totais: $errors", errors[i] <= errors[i - 1])
     }
 
+    @Test
+    fun `reset de qualquer combustivel retira a proposta ate repovoar`() {
+        for ((pc, gc) in listOf(0 to 10, 10 to 0, 0 to 0)) {
+            val o = scenario(50, true, false, false)
+            val before = proposalOf(o)
+            assertTrue(before.applies)
+            repeat(2) {
+                val (r, _) = o.sim.snap(snapshot(o.sim.now, curveRaw(), 1, pc, gc, Random(42)), 1)
+                assertTrue("reset $pc/$gc não usa pares velhos", r?.nextAction?.kind != NextActionKind.APPLY)
+            }
+            val (restored, _) = o.sim.snap(snapshot(o.sim.now, curveRaw(), 1, 10, 10, Random(42)), 1)
+            assertEquals(NextActionKind.APPLY, restored?.nextAction?.kind)
+            assertTrue(before.raw.contentEquals(restored!!.nextAction.refinedRaw!!.toIntArray()))
+        }
+    }
+
     private fun timeline(out: File, curve: IntArray) {
         val rnd = Random(42)
         val sim = Sim()

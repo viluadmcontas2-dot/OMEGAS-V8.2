@@ -866,11 +866,12 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         # Peso do K atual cai continuamente com a evidência: o ganho proporcional
         # nasce do próprio balanço evidência × K atual, sem degraus entre nós.
         prior_w = [PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g for g in gain]
+        has_own = fine_bins is None and bool(usable)
         base = [interp(ms, [t["tp"] for t in native_targets], [t["y"] for t in native_targets])
-                if native_equivalence and native_targets[0]["tp"] <= ms <= native_targets[-1]["tp"] else x0[j]
+                if native_equivalence and fine_bins is None and usable and native_targets[0]["tp"] <= ms <= native_targets[-1]["tp"] else (x0[j] if has_own else 0.0)
                 for j, ms in enumerate(axis_ms)]
         residuals = [dict(o, y=o["y"] - sum(a * base[j] for j, a in o["a"])) for o in observations]
-        delta, robust = whittaker(u, residuals, [0.0] * POINT_COUNT, prior_w, LAMBDA, iterations=1)
+        delta, robust = whittaker(u, residuals, [0.0] * POINT_COUNT if has_own else x0, prior_w, LAMBDA, iterations=1)
         own_range = (min(p[0] for p in usable), max(p[0] for p in usable)) if fine_bins is None and usable else None
         fitted = [base[j] + (0.0 if native_equivalence and own_range and not own_range[0] <= ms <= own_range[1] else delta[j])
                   for j, ms in enumerate(axis_ms)]

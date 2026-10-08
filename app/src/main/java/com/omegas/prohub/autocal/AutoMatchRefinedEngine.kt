@@ -333,12 +333,18 @@ object AutoMatchRefinedEngine {
             val priorWeights = gain.map { g -> PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g }
             // Uma passada só, sem Tukey: com o piso de escala de 1% o Tukey zerava todo erro > 4,7% (justo a faixa errada
             // isolada entre vizinhas boas, que é o que o Refino existe para corrigir). Outlier já sai antes (plausibleIndices/monotoneFit).
-            val base = if (nativeEquivalence) axisMs.mapIndexed { j, ms ->
+            // A nativa é a base geométrica. Suaviza o desvio próprio ao redor dela, não uma
+            // mistura de curvas absolutas que deixa muitos pares apagarem uma faixa nativa.
+            val nativeMs = nativeTargets.map { it.petrolMs }
+            val nativeLogK = nativeTargets.map { it.logTarget }
+            val base = if (nativeEquivalence && usablePairs.isNotEmpty()) axisMs.mapIndexed { j, ms ->
                 if (ms < nativeTargets.first().petrolMs || ms > nativeTargets.last().petrolMs) x0[j]
-                else interp(ms, nativeTargets.map { it.petrolMs }, nativeTargets.map { it.logTarget })
-            } else x0
+                else interp(ms, nativeMs, nativeLogK)
+            } else if (usablePairs.isNotEmpty()) x0 else List(POINT_COUNT) { 0.0 }
+            val prior = if (usablePairs.isEmpty()) x0 else List(POINT_COUNT) { 0.0 }
             val residuals = observations.map { o -> Observation(o.a, o.y - o.a.sumOf { (j, a) -> a * base[j] }, o.w) }
-            val (delta, robust) = whittaker(u, residuals, List(POINT_COUNT) { 0.0 }, priorWeights, LAMBDA, iterations = 1)
+            val (delta, robust) = whittaker(u, residuals, prior, priorWeights, LAMBDA, iterations = 1)
+            // Sem pontos próprios naquele intervalo, conserva a base: não extrapola o residual.
             val ownMin = usablePairs.minOfOrNull { it.first }
             val ownMax = usablePairs.maxOfOrNull { it.first }
             val fitted = base.indices.map {
@@ -347,6 +353,7 @@ object AutoMatchRefinedEngine {
             targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
             val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
             val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
+            // Sem aquisição nativa, a curva fora do intervalo medido não é evidência de correção.
             val minMeasured = targets.minOf { it.petrolMs }
             val maxMeasured = targets.maxOf { it.petrolMs }
             val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b ->
