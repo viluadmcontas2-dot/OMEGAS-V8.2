@@ -47,5 +47,12 @@ jobs:
           name: replay-refino-proposta
           path: app/build/test-results/testDebugUnitTest/TEST-com.omegas.prohub.equivalence.ProposalReplayReportTest.xml
           if-no-files-found: ignore
+      - name: Teia do AutoCal (folha de contato, log de comandos, capturas)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: teia-autocal
+          path: tests/ui/__teia__/out
+          if-no-files-found: ignore
       - name: Android lint
         run: ./gradlew lintDebug

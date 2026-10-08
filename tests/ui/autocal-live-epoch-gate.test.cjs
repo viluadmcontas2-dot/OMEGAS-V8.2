@@ -69,8 +69,8 @@ assert.doesNotMatch(host.innerHTML, /autocal-acquired-point gas/);
 assert.match(labels.autocalReferenceCount, /GNV 0\/18 faixas com amostra/);
 assert.match(host.innerHTML, /autocal-reference-line petrol epoch-anchor/,
   'a referência gasolina deve sobreviver ao RESET_GAS da ECU');
-assert.match(host.innerHTML, /autocal-previous-gas-point/,
-  'GNV_PREV permanece só como contexto, sem contador de aquisição atual');
+assert.doesNotMatch(host.innerHTML, /autocal-previous-gas-point/,
+  'leitura anterior (GNV_PREV) nunca é desenhada (dono, 2026-10-08)');
 assert.doesNotMatch(host.innerHTML, /autocal-epoch-acquisition-line gas/);
 assert.match(labels.autocalChartInspector, /GNV|Aguardando|Coleta/, 'frase humana curta sobre a leitura recomeçada');
 assert.doesNotMatch(labels.autocalChartInspector, /Curva K|RV30|ACK/);

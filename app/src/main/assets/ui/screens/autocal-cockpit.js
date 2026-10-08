@@ -828,8 +828,6 @@
 
   /** Apagamento automático mais velho que isto (a tela estava fechada) já foi coberto por leituras novas. */
   const AUTO_DELETE_FRESH_MS = 60000;
-  /** Rótulo da referência de antes do reset, enquanto a ECU reaprende (só para olhar; nunca entra em cálculo). */
-  const AUTO_CAL_PREVIOUS_CURVE_LABEL = 'Curva anterior — aguardando a ECU reaprender';
 
   class AutoCalCockpit {
     constructor(app) {
@@ -1646,7 +1644,7 @@
       });
     }
 
-    renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host, history = []) {
+    renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host) {
       if (this.chartScale) {
         const { xMin, xMax, yMin, yMax } = this.chartScale;
         this.epochDomain = { xMin, xMax, yMin, yMax };
@@ -1660,10 +1658,7 @@
       // o cursor quando só eles mudam; invalide por dados ou máscara da época.
       // Pontos entram só pela geometria: o contador (progresso) é atualizado por atributo, sem refazer o SVG.
       const geometry = list => list.map(p => [p.index, p.petrolMs, p.mapBar]);
-      const historyCurve = (Array.isArray(history) ? history : [])
-        .map(p => ({ petrolMs: finite(p?.petrolMs), mapBar: finite(p?.petrolMapBar) }))
-        .filter(p => p.petrolMs !== null && p.mapBar !== null);
-      const key = JSON.stringify([geometry(acquiredPetrol), geometry(acquiredGas), epoch, historyCurve,
+      const key = JSON.stringify([geometry(acquiredPetrol), geometry(acquiredGas), epoch,
         snapshot.source, this.state?.maxAutomatch ?? snapshot.maxAutomatch,
         axisAt !== null && rvAt !== null && limit !== null && Math.abs(axisAt - rvAt) <= limit,
         ['PETR_INJ_TBP','PETR_MNFLD_PRESS_RV','PETR_INJ_TBUF_GAS_PREV','MNFLD_PRESS_BUF_GAS_PREV','MNFLD_PRESS_THD','ACQUIRED_ZONES_PETROL','ACQUIRED_ZONES_GAS','MUL_ACT']
@@ -1715,20 +1710,6 @@
         }
       }
 
-      // GAS_PREV has its own native buffer pair but NO native counter. Present
-      // only as a subdued historical layer; never count it as current GNV.
-      const previousGas = [];
-      if (finite(epoch.gasGeneration) > 0 && !restartBoth) {
-        const xs = physicalVector(snapshot, 'PETR_INJ_TBUF_GAS_PREV');
-        const ys = physicalVector(snapshot, 'MNFLD_PRESS_BUF_GAS_PREV');
-        for (let i = 0; i < Math.min(18, xs.length, ys.length); i += 1) {
-          const x = finite(xs[i]), y = finite(ys[i]);
-          if (x !== null && x > 0 && y !== null && y > 0) {
-            previousGas.push({ petrolMs: x, mapBar: y });
-          }
-        }
-      }
-
       // Durante o reset de um combustível o 0 é medida (recomeçou); sem reset e sem resposta da ECU é desconhecido.
       const petrolKnown = epoch.petrolPending === true || vector(snapshot, 'NUM_BUF_UPD_PETR').length > 0;
       const gasKnown = epoch.gasPending === true || vector(snapshot, 'NUM_BUF_UPD_GAS').length > 0;
@@ -1741,8 +1722,6 @@
       const sourceNarrative = petrolCurve.length
         ? 'Linha contínua = referência gasolina da ECU preservada. '
         : 'Sem curva gasolina temporalmente válida nesta etapa. ';
-      const previousNarrative = previousGas.length
-        ? 'Círculos esmaecidos = GNV anterior sem contador atual. ' : '';
       const quotaNarrative = automatch !== null && quota !== null && automatch >= quota
         ? ' Cota de AutoMatch atingida; a leitura NÃO terminou.' : '';
       this.readout(stage + '.' + (automatch !== null && quota !== null && automatch >= quota ? ' AutoMatch ' + step + ': a leitura continua.' : ''));
@@ -1751,14 +1730,12 @@
       const petrol = visible.petrol === false ? [] : acquiredPetrol;
       const gas = visible.gas === false ? [] : acquiredGas;
       const reference = visible.petrol === false ? [] : petrolCurve;
-      const previous = visible.gas === false ? [] : previousGas;
       const ecu = [...petrol.map(p => ({ ...p, fuel: 'PETROL' })), ...gas.map(p => ({ ...p, fuel: 'GAS' }))];
       const previousDomain = this.epochDomain;
       // Reset tocado pelo dono / curva anterior ainda à vista: a escala de antes fica (curva anterior e pontos novos
       // no mesmo quadro) durante toda a readquisição.
-      const domain = ((epoch.intentPending === true || historyCurve.length > 0) && previousDomain)
-        ? previousDomain
-        : ns.CurveChart.focusDomain(reference, ecu, previous, { fullRange: visible.fullRange === true }) || previousDomain;
+      // A ESCALA de antes fica (eixos e grade não mudam no reset); a leitura anterior nunca é desenhada (dono, 2026-10-08).
+      const domain = this.keepScale(ns.CurveChart.focusDomain(reference, ecu, [], { fullRange: visible.fullRange === true })) || previousDomain;
       let chart = '';
       if (domain) {
         this.epochDomain = { ...domain };
@@ -1777,28 +1754,19 @@
           const d = ordered.map((p, i) => (i ? 'L' : 'M') + ' ' + x(p.petrolMs).toFixed(1) + ' ' + y(p.mapBar).toFixed(1)).join(' ');
           return '<path class="autocal-epoch-acquisition-line ' + fuel + '" d="' + d + '"></path>';
         };
-        const historical = previous.filter(within).map(p => '<circle class="autocal-previous-gas-point" cx="' +
-          x(p.petrolMs).toFixed(1) + '" cy="' + y(p.mapBar).toFixed(1) + '" r="4.5"></circle>').join('');
-        // Curva anterior (referência de antes do reset): esmaecida, sem pontos tocáveis, só para olhar.
-        const previousCurve = (() => {
-          const ordered = historyCurve.filter(within).slice().sort((a, b) => a.petrolMs - b.petrolMs);
-          if (ordered.length < 2) return '';
-          const d = ordered.map((p, i) => (i ? 'L' : 'M') + ' ' + x(p.petrolMs).toFixed(1) + ' ' + y(p.mapBar).toFixed(1)).join(' ');
-          return '<path class="autocal-reference-line petrol previous autocal-history-curve" data-autocal-previous-curve="reset" d="' + d + '"><title>' + AUTO_CAL_PREVIOUS_CURVE_LABEL + '</title></path>';
-        })();
         chart = built.svg
           .replace('class="autocal-reference-line petrol"', 'class="autocal-reference-line petrol epoch-anchor"')
-          .replace('<g class="autocal-live-layer"', previousCurve + line(petrol, 'petrol') + line(gas, 'gas') + historical + '<g class="autocal-live-layer"')
+          .replace('<g class="autocal-live-layer"', line(petrol, 'petrol') + line(gas, 'gas') + '<g class="autocal-live-layer"')
           .replace('</svg>', '<title>CURVAS DA ECU · aquisição atual, sem equivalência durante reinício</title></svg>');
       }
-      host.innerHTML = chart ? '<div class="curve-chart-shared" data-mode="ecu18">' + chart + '</div>' : '<div class="chart-empty"><b>CURVAS DA ECU</b><span>' +
-        escapeHtml(stage) + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.</span></div>';
+      if (chart) host.innerHTML = '<div class="curve-chart-shared" data-mode="ecu18">' + chart + '</div>';
+      else this.renderEmptyFrame(host, '<b>CURVAS DA ECU</b><span>' +
+        escapeHtml(stage) + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.</span>');
       const legend = document.getElementById('autocalLegend');
-      const legendKey = 'epoch|' + (historyCurve.length > 0);
+      const legendKey = 'epoch';
       if (legend && this.legendKey !== legendKey) {
         this.legendKey = legendKey;
-        legend.innerHTML = (ns.CurveChart?.legendHtml?.({ mode: 'ecu18' }) || '') +
-          (historyCurve.length ? '<span class="previous" data-legend="previous">' + AUTO_CAL_PREVIOUS_CURVE_LABEL + '</span>' : '');
+        legend.innerHTML = (ns.CurveChart?.legendHtml?.({ mode: 'ecu18' }) || '');
       }
       this.epochChartHost = host;
       this.epochChartKey = key;
@@ -1842,8 +1810,7 @@
           // Fica durante TODA a readquisição (intenção, ACK confirmado, bandas incompletas), até a referência nova
           // ser utilizável; sessão USB nova o limpa (referenceTransition.clearHistory).
           this.currentReferencePoints = [];
-          const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
-          this.renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, liveEpoch, host, history);
+          this.renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, liveEpoch, host);
           return;
         }
         this.chartRenderKey = null;
@@ -1855,12 +1822,12 @@
           const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
           const limitLabel = timingLimitMs === null ? 'limite nativo' : 'limite ' + Math.round(timingLimitMs) + ' ms';
           this.text('autocalReferenceCount', D.plural(points.length, 'ponto', 'pontos') + ' · fora da janela');
-          host.innerHTML = '<div class="chart-empty"><b>Aguarde alguns segundos</b><span>A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.</span>' +
-            '<details class="instrument-details"><summary>Detalhes técnicos</summary><span>Vetores lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '.</span></details></div>';
+          this.renderEmptyFrame(host, '<b>Aguarde alguns segundos</b><span>A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.</span>' +
+            '<details class="instrument-details"><summary>Detalhes técnicos</summary><span>Vetores lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '.</span></details>');
           this.readout('A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
-          host.innerHTML = '<div class="chart-empty"><b>Curva da gasolina ainda não chegou</b><span>Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.</span></div>';
+          this.renderEmptyFrame(host, '<b>Curva da gasolina ainda não chegou</b><span>Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.</span>');
           this.readout('Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.');
         }
         this.renderLiveNarrative();
@@ -1870,7 +1837,7 @@
       this.text('autocalReferenceCount', D.plural(points.length, 'ponto lido', 'pontos lidos'));
 
       const chart = ns.CurveChart;
-      const history = this.chartHistoryVisible ? this.previousReferencePoints : [];
+      const history = []; // leitura anterior nunca é mostrada (dono, 2026-10-08)
       // Armazém único da evidência: busca eq/análise só quando a tabela da ECU muda ou no vigia de 5 s.
       chart.updateEvidence(this.api, this.projection, Date.now(), false);
       const width = Math.round(host.clientWidth) || 1000;
@@ -1892,6 +1859,7 @@
         if (!model || !model.domain) {
           return { html: '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>', scale: null, model: null };
         }
+        model.domain = this.keepScale(model.domain);
         return { ...chart.buildSvg(model, { width, height }), model };
       }, 'ecu18');
       const shown = chart.shared;
@@ -1903,15 +1871,16 @@
         return;
       }
       this.currentReferencePoints = model.reference;
+      this.lastChartDomain = { ...model.domain };
       // Contadores de agora (o modelo pode vir do cache deste modo), só dos pontos visíveis no desenho.
       this.currentAcquiredPoints = acquiredPoints.filter(p => model.ecu.some(m => m.fuel === p.fuel && m.index === p.index));
       // O desenho pode ter vindo do cache deste modo: o progresso de agora entra por atributo.
       chart.updatePoints(chart.nodeFor('ecu18'), acquiredPoints);
       const legend = document.getElementById('autocalLegend');
-      const legendKey = `ecu18|${history.length > 0}`;
+      const legendKey = 'ecu18';
       if (legend && this.legendKey !== legendKey) {
         this.legendKey = legendKey;
-        legend.innerHTML = chart.legendHtml({ mode: 'ecu18' }) + (history.length ? '<span class="previous" data-legend="previous">Leitura anterior</span>' : '');
+        legend.innerHTML = chart.legendHtml({ mode: 'ecu18' });
       }
       chart.applySelection({ ref: this.selectedReferenceIndex, ecu: this.selectedAcquiredPoint, batch: this.selectedAcquiredPoints }, 'ecu18');
       if (this.selectedAcquiredPoint) {
@@ -1924,6 +1893,33 @@
       this.renderLiveCursor();
       this.renderedChartHost = host;
       this.chartSignature = signature;
+    }
+
+    /** A escala só CRESCE dentro da sessão: adquirir 1 ponto, uma faixa, resetar ou o AutoMatch nunca encolhem nem trocam
+     *  eixos/grade (dono, 2026-10-08). "Faixa inteira" liga/desliga a vista de propósito e recomeça a memória. */
+    keepScale(domain) {
+      const key = String(this.projection?.sessionId ?? '') + '|' + ((this.chartView || {}).fullRange === true);
+      const prev = this.scaleMemo;
+      if (!domain) return prev && prev.key === key ? { ...prev.domain } : null;
+      let next = { ...domain };
+      if (prev && prev.key === key) {
+        next = { xMin: Math.min(prev.domain.xMin, domain.xMin), xMax: Math.max(prev.domain.xMax, domain.xMax), yMin: Math.min(prev.domain.yMin, domain.yMin), yMax: Math.max(prev.domain.yMax, domain.yMax) };
+      }
+      this.scaleMemo = { key, domain: next };
+      return next;
+    }
+
+    /** Quadro vazio COM eixos, grade, zonas e camada AGORA: o gráfico nunca some nem muda de escala por falta de curva.
+     *  Usa o domínio anterior (ou um padrão típico); a frase em palavras vai por cima, sem esconder os eixos. */
+    renderEmptyFrame(host, html) {
+      const domain = this.keepScale(null) || this.epochDomain || this.lastChartDomain || { xMin: 0, xMax: 12, yMin: 0, yMax: 1.1 };
+      const width = Math.round(host.clientWidth) || 1000;
+      const height = Math.round(host.clientHeight) || 400;
+      let zones = [];
+      try { zones = AutoCalUxModel.zoneSurface(this.snapshot || {}, AutoCalUxModel.humanState(this.snapshot || {}, this.state || {}, this.projection)) || []; } catch (_) { zones = []; }
+      const built = ns.CurveChart.buildSvg({ domain, reference: [], ecu: [], zones, history: [] }, { width, height });
+      this.chartScale = built.scale;
+      host.innerHTML = '<div class="curve-chart-shared" data-mode="ecu18" data-empty-frame="true">' + built.svg + '</div><div class="chart-empty chart-empty-over">' + html + '</div>';
     }
 
     renderResetComparison(points) {

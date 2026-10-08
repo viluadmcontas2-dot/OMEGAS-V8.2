@@ -120,3 +120,11 @@
 .refino-route-screen { position: relative; }
 /* Refino: inspector explica o ponto (de quem, quando, por que conta) e histórico em palavras */
 /* O texto de contexto do ponto nunca empurra o inspector para fora da tela 1280x720: passa a rolar dentro da própria caixa (nada é cortado, só deixa de crescer a página). */
+
+/* Quadro vazio com eixos: a frase fica por cima, sem apagar grade/escala/AGORA (dono, 2026-10-08). */
+html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over { position: absolute; inset: 0; height: auto; pointer-events: none; background: transparent; }
+html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > b, html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > span { background: color-mix(in srgb, var(--chart-bg, #0b1118) 82%, transparent); justify-self: center; padding: 2px 10px; border-radius: 6px; }
+
+/* O gráfico do AutoCal nunca muda de tamanho: a linha de estado reserva o lugar mesmo vazia (achado da teia: ao aparecer
+   "Fazendo agora · …" o gráfico encolhia 34 px, 2026-10-08). */
+html body .ar-autocal .refino-statusline { min-height: 28px; }
