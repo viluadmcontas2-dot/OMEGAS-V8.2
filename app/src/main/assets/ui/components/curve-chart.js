@@ -444,6 +444,29 @@
     return { svg, scale };
   }
 
+  /**
+   * Quadro sem pontos (reset, AutoMatch da ECU, curva ainda não lida): o gráfico NUNCA some. Continuam os eixos, a escala
+   * de antes (ou a de uma condução típica, se nunca houve ponto), a camada do AGORA e, por cima, o aviso em palavras.
+   * Devolve { svg, scale, domain }; `svg` já inclui o aviso (o quadro pai posiciona o aviso por CSS).
+   */
+  const EMPTY_DOMAIN = Object.freeze({ xMin: 0, xMax: 12, yMin: 0.1, yMax: 1.1 });
+  function usableDomain(d) {
+    return !!d && [d.xMin, d.xMax, d.yMin, d.yMax].every(v => Number.isFinite(v)) && d.xMax > d.xMin && d.yMax > d.yMin;
+  }
+  function emptyFrame(opts) {
+    const o = opts || {};
+    const base = usableDomain(o.domain) ? o.domain : EMPTY_DOMAIN;
+    const domain = { xMin: base.xMin, xMax: base.xMax, yMin: base.yMin, yMax: base.yMax };
+    const built = buildSvg({ domain, reference: [], ecu: [], zones: [], history: [] }, { width: o.width, height: o.height });
+    const title = o.title ? `<b>${esc(o.title)}</b>` : '';
+    const text = o.text ? `<span>${esc(o.text)}</span>` : '';
+    return {
+      svg: `${built.svg}<div class="chart-empty chart-empty-overlay" role="status">${title}${text}${o.detailsHtml || ''}</div>`,
+      scale: built.scale,
+      domain,
+    };
+  }
+
   function legendHtml(flags) {
     const f = flags || {};
     const base = LEGEND.filter(item => item.key !== 'proposal' || f.proposal === true);
@@ -645,7 +668,7 @@
 
   ns.CurveChart = {
     LEGEND, STALL_LEGEND, BETWEEN_LEGEND, normalizeBetween, betweenFromMarkers, describeBetween, ECU_BAND_COUNT, TABLE_KEYS, bandSlots,
-    evidenceSignature, tableSignature, aggregateEvidence, curveAt, focusDomain, buildSvg, legendHtml,
+    evidenceSignature, tableSignature, aggregateEvidence, curveAt, focusDomain, buildSvg, emptyFrame, legendHtml,
     viewKey, viewControls, bindView, mount, release, reset, applySelection, nodeFor, updatePoints, shared, buildModel, deriveState, evidence, updateEvidence, setEvidence, WATCHDOG_MS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -67,6 +67,14 @@ object AutoMatchRefinedEngine {
     const val MIN_COMMON_MATURE = 4
     const val OUTLIER_MIN_LOG = 0.05
     const val OUTLIER_MAD_K = 3.0
+    /**
+     * "Dobra" natural da curva (platô de pulso mínimo e depois subida): a corda entre os vizinhos fica ACIMA de um ponto
+     * legítimo, então o leave-one-out sai negativo sem a banda ser anomalia (sessão real de 08/10: gasolina 2,00 ms em
+     * 0,29 bar, 1,98 ms em 0,31 bar, 2,91 ms em 0,42 bar → 7,5 % "abaixo" e a banda boa era apagada). Quem apaga ponto
+     * na ECU ([OutlierCurveTracker]) só trata como fora da curva um ponto ABAIXO da corda se ele também quebrar a
+     * ordem monótona de verdade: resíduo do ajuste monótono ≥ este valor (ln). Acima da corda a regra não muda.
+     */
+    const val OUTLIER_KNEE_TOLERANCE_LOG = 0.02
     /** Rigidez escolhida por validação cruzada nas sessões reais (prever faixa omitida), não por estética. */
     const val LAMBDA = 0.3
     const val PRIOR_SUPPORTED = 0.05
@@ -787,7 +795,14 @@ object AutoMatchRefinedEngine {
         return out
     }
 
-    internal fun monotoneFit(points: List<BandPoint>): Pair<List<BandPoint>, List<BandPoint>> {
+    /**
+     * [belowChordMinViolationLog] = 0 mantém a regra de sempre (Refino/AutoMatch). > 0: ponto abaixo da corda dos
+     * vizinhos só é rejeitado se o resíduo do ajuste monótono também for pelo menos esse valor (ver [OUTLIER_KNEE_TOLERANCE_LOG]).
+     */
+    internal fun monotoneFit(
+        points: List<BandPoint>,
+        belowChordMinViolationLog: Double = 0.0,
+    ): Pair<List<BandPoint>, List<BandPoint>> {
         val accepted = points.toMutableList()
         val rejected = mutableListOf<BandPoint>()
         repeat(3) {
@@ -806,7 +821,10 @@ object AutoMatchRefinedEngine {
             val mad = weightedMedian(loo.map { abs(it) }, accepted.map { it.weight }) * 1.4826
             val limit = max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad)
             val worst = accepted.indices
-                .filter { abs(loo[it]) > limit && abs(residuals[it]) > 1e-9 }
+                .filter {
+                    abs(loo[it]) > limit && abs(residuals[it]) > 1e-9 &&
+                        !(loo[it] < 0.0 && abs(residuals[it]) < belowChordMinViolationLog)
+                }
                 .maxByOrNull { abs(loo[it]) }
                 ?: return finishFit(accepted, rejected)
             rejected += accepted.removeAt(worst)

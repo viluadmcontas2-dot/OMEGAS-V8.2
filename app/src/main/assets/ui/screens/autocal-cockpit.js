@@ -1646,6 +1646,23 @@
       });
     }
 
+    /**
+     * O gráfico nunca some (relato do dono, sessão de 08/10: após Reler a gasolina e após o AutoMatch da ECU o quadro
+     * virava "SEM REFERÊNCIA"): sem pontos, o quadro continua com eixos, a escala de antes, o AGORA e um aviso em palavras.
+     */
+    emptyChartFrameHtml(host, title, text, detailsHtml) {
+      const frame = ns.CurveChart.emptyFrame({
+        domain: this.lastChartDomain || this.epochDomain || null,
+        width: Math.round(host.clientWidth) || 1000,
+        height: Math.round(host.clientHeight) || 400,
+        title, text, detailsHtml,
+      });
+      this.chartScale = frame.scale;
+      this.lastChartDomain = { ...frame.domain };
+      this.epochDomain = { ...frame.domain };
+      return '<div class="curve-chart-shared curve-chart-empty-frame" data-mode="ecu18" data-empty="true">' + frame.svg + '</div>';
+    }
+
     renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, epoch, host, history = []) {
       if (this.chartScale) {
         const { xMin, xMax, yMin, yMax } = this.chartScale;
@@ -1791,8 +1808,9 @@
           .replace('<g class="autocal-live-layer"', previousCurve + line(petrol, 'petrol') + line(gas, 'gas') + historical + '<g class="autocal-live-layer"')
           .replace('</svg>', '<title>CURVAS DA ECU · aquisição atual, sem equivalência durante reinício</title></svg>');
       }
-      host.innerHTML = chart ? '<div class="curve-chart-shared" data-mode="ecu18">' + chart + '</div>' : '<div class="chart-empty"><b>CURVAS DA ECU</b><span>' +
-        escapeHtml(stage) + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.</span></div>';
+      host.innerHTML = chart ? '<div class="curve-chart-shared" data-mode="ecu18">' + chart + '</div>'
+        : this.emptyChartFrameHtml(host, 'CURVAS DA ECU', stage + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.');
+      if (chart && this.epochDomain) this.lastChartDomain = { ...this.epochDomain };
       const legend = document.getElementById('autocalLegend');
       const legendKey = 'epoch|' + (historyCurve.length > 0);
       if (legend && this.legendKey !== legendKey) {
@@ -1850,20 +1868,22 @@
         this.chartSignature = null;
         ns.CurveChart?.release(host);
         this.renderResetComparison([]);
-        this.chartScale = null;
         if (timingProblem) {
           const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
           const limitLabel = timingLimitMs === null ? 'limite nativo' : 'limite ' + Math.round(timingLimitMs) + ' ms';
           this.text('autocalReferenceCount', D.plural(points.length, 'ponto', 'pontos') + ' · fora da janela');
-          host.innerHTML = '<div class="chart-empty"><b>Aguarde alguns segundos</b><span>A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.</span>' +
-            '<details class="instrument-details"><summary>Detalhes técnicos</summary><span>Vetores lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '.</span></details></div>';
+          host.innerHTML = this.emptyChartFrameHtml(host, 'Aguarde alguns segundos',
+            'A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.',
+            '<details class="instrument-details"><summary>Detalhes técnicos</summary><span>Vetores lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '.</span></details>');
           this.readout('A ECU mandou dados fora de sincronia. Aguarde alguns segundos; o app tenta de novo sozinho.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
-          host.innerHTML = '<div class="chart-empty"><b>Curva da gasolina ainda não chegou</b><span>Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.</span></div>';
+          host.innerHTML = this.emptyChartFrameHtml(host, 'Curva da gasolina ainda não chegou',
+            'Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.');
           this.readout('Dirija um pouco na gasolina: a ECU precisa disso para desenhar a curva.');
         }
         this.renderLiveNarrative();
+        this.renderLiveCursor();
         return;
       }
 
@@ -1890,7 +1910,11 @@
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
         if (!model || !model.domain) {
-          return { html: '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>Os vetores recebidos não formam um domínio físico válido.</span></div>', scale: null, model: null };
+          const frame = chart.emptyFrame({
+            domain: this.lastChartDomain || this.epochDomain || null, width, height, title: 'Ainda sem pontos',
+            text: 'Dirija um pouco: o gráfico enche sozinho conforme a ECU aprende.',
+          });
+          return { svg: frame.svg, scale: frame.scale, model: null, emptyDomain: frame.domain };
         }
         return { ...chart.buildSvg(model, { width, height }), model };
       }, 'ecu18');
@@ -1900,8 +1924,11 @@
       if (!model || !shown.scale) {
         this.renderedChartHost = null;
         this.chartSignature = null;
+        this.currentReferencePoints = [];
+        this.renderLiveCursor();
         return;
       }
+      this.lastChartDomain = { xMin: shown.scale.xMin, xMax: shown.scale.xMax, yMin: shown.scale.yMin, yMax: shown.scale.yMax };
       this.currentReferencePoints = model.reference;
       // Contadores de agora (o modelo pode vir do cache deste modo), só dos pontos visíveis no desenho.
       this.currentAcquiredPoints = acquiredPoints.filter(p => model.ecu.some(m => m.fuel === p.fuel && m.index === p.index));

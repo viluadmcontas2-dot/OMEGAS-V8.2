@@ -10,6 +10,9 @@ import org.json.JSONObject
  * Refino ([AutoMatchRefinedEngine.monotoneFit]: resíduo leave-one-out em ln ms, limiar max(5%, 3·MAD)); banda
  * rejeitada = fora da curva. Só recalcula quando o buffer daquele combustível muda.
  *
+ * Dobra da curva (revisão 2026-10-08): ponto ABAIXO da corda dos vizinhos só conta se também quebrar a ordem monótona
+ * ([AutoMatchRefinedEngine.OUTLIER_KNEE_TOLERANCE_LOG]); o platô de pulso mínimo da gasolina não é anomalia.
+ *
  * Sem "forma real" (decisão do dono, 2026-10-07): parado o carro injeta mais, então o ponto contaminado volta
  * sempre no mesmo lugar; repetição não prova nada. Banda fora da curva é candidata toda vez que estiver fora.
  *
@@ -89,7 +92,9 @@ class OutlierCurveTracker {
             reading.mapRaw.size < AutoMatchRefinedEngine.USEFUL_BAND_COUNT
         ) return emptyList()
         val points = AutoMatchRefinedEngine.bandPoints(reading.timeRaw, reading.mapRaw, reading.counters)
-        val (accepted, fitRejected) = AutoMatchRefinedEngine.monotoneFit(points)
+        val (accepted, fitRejected) = AutoMatchRefinedEngine.monotoneFit(
+            points, belowChordMinViolationLog = AutoMatchRefinedEngine.OUTLIER_KNEE_TOLERANCE_LOG,
+        )
         lastAccepted[fuel] = accepted.associate { it.band to (reading.timeRaw[it.band] to reading.mapRaw[it.band]) }
         val base = preserved[fuel]
         val rejected = if (base == null) fitRejected else fitRejected.filter { point ->
