@@ -70,9 +70,6 @@ MUTANTS = [
     mutant("map-undo-no-guard", "guarda de ocupado removida", f"{UI}/screens/map.js",
            "if (!this.undoId || this.reading || this.store.get().map?.state === 'writing') return;", "if (!this.undoId) return;", [M6]),
     # ---- protocolo de escrita
-    mutant("reset-skips-photo", "pula a foto antes de gravar", f"{UI}/screens/curve.js",
-           "      const photo = this.api.startCurveBackup('Antes do reset');\n      if (!photo?.ok || !photo?.started) {\n        this.alert(photo?.error || 'Não foi possível salvar a foto da Curva K; nada foi zerado.');\n        return;\n      }\n      this.backupTask = 'reset-photo';\n      text('curveBackupStatus', 'Salvando a foto da curva antes de zerar…');\n",
-           "      this.startResetWrite();\n", [M5, M3]),
     mutant("curve-no-reread-after-write", "pula a conferência", f"{UI}/screens/curve.js",
            "            this.refreshBackups();\n            this.startRead(true);\n", "            this.refreshBackups();\n", [M5]),
     mutant("map-no-reread-after-write", "pula a conferência", f"{UI}/screens/map.js",
@@ -158,6 +155,28 @@ MUTANTS = [
     mutant("reset-sem-religar-na-falha", "reset deixa o aprendizado pausado", f"{KT}/autocal/AutoCalNativeActionManager.kt",
            "throw learningRestoreAfterFailure(prepared, error)", "throw error",
            ["tests/test_reset_nunca_pausa_aprendizado.py"], kind="contract", ci=True),
+    # ---- TRAVA curva-salvamento-so-manual (regra 15): arquivo da Curva K só no botão Salvar
+    mutant("curva-autosave", "salva a curva sozinha (timer)", f"{UI}/screens/curve.js",
+           "    onEnter(context) {\n", "    onEnter(context) {\n      setInterval(() => this.saveBackup(), 60000);\n",
+           ["tests/test_curva_salvamento_so_manual.py"], kind="contract", ci=True),
+    mutant("curva-backup-ao-gravar", "backup visível ao Resetar/Gravar", f"{UI}/screens/curve.js",
+           "      this.resetPhotoFile = '';\n      this.startResetWrite();\n", "      this.resetPhotoFile = '';\n      this.api.startCurveBackup('Antes do reset');\n      this.startResetWrite();\n",
+           ["tests/test_curva_salvamento_so_manual.py"], kind="contract", ci=True),
+    mutant("curva-backup-ao-desfazer", "backup visível ao Desfazer", f"{UI}/screens/curve.js",
+           "    undoCurve() {\n", "    undoCurve() {\n      this.saveBackup();\n",
+           ["tests/test_curva_salvamento_so_manual.py"], kind="contract", ci=True),
+    mutant("curva-nome-generico", "nome genérico", f"{KT}/calibration/KFactorCurveFileName.kt",
+           'return "Curva K - ', 'return "backup - ',
+           ["tests/test_curva_salvamento_so_manual.py"], kind="contract", ci=True),
+    mutant("curva-pasta-errada", "pasta fora de Curva", f"{KT}/calibration/KFactorCurveFileName.kt",
+           'PUBLIC_SUBFOLDER = "Curva"', 'PUBLIC_SUBFOLDER = "Backups"',
+           ["tests/test_curva_salvamento_so_manual.py"], kind="contract", ci=True),
+    mutant("curva-lote-publica-arquivo", "gravação em lote publica arquivo", f"{KT}/calibration/KFactorManager.kt",
+           '                photoFile = photo.fileName\n', '                photoFile = photo.fileName\n                publishManualBackup(File(backupDir, photoFile))\n',
+           ["tests/test_curva_salvamento_so_manual.py"], kind="contract", ci=True),
+    mutant("curva-prewrite-vira-manual", "foto privada vira arquivo do dono", f"{KT}/calibration/KFactorManager.kt",
+           'val namePrefix = if (preWrite) "PREWRITE" else "MANUAL"', 'val namePrefix = "MANUAL"',
+           ["tests/test_curva_salvamento_so_manual.py"], kind="contract", ci=True),
 ]
 
 
@@ -187,6 +206,7 @@ def run_suite(m, tree, full):
     env = dict(os.environ)
     if m["kind"] == "contract":
         env["RESET_ROOT"] = str(tree)
+        env["CURVA_ROOT"] = str(tree)
         cmd = [sys.executable, "-B"] + m["tests"]
     elif m["kind"] == "node":
         env["UI_ROOT"] = str(tree / UI)

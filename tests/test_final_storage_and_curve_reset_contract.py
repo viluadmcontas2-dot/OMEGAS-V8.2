@@ -41,7 +41,8 @@ assert "Resetar a Curva K para 1,000" in curve
 # Reset da Curva K: foto antes (leitura salva em disco) e só então zera; escrita comum não cria backup automático.
 assert "createBackup(adjustmentId" not in manager
 assert '.put("automaticBackup", false)' in manager
-assert "startCurveBackup('Antes do reset')" in curve and "startResetWrite" in curve and "reset-photo" in curve
+# (regra 15) o reset NÃO cria arquivo visível: a foto do Desfazer é a PREWRITE privada do escritor.
+assert "startCurveBackup('Antes do reset')" not in curve and "startResetWrite" in curve and "reset-photo" not in curve
 assert 'saveInternalCheckpoint("Antes de resetar Curva K' not in service
 assert 'saveInternalCheckpoint("Antes de ajustar K factor' not in service
 

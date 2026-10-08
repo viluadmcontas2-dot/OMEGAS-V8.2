@@ -158,37 +158,31 @@ test('M5 salvar foto: UMA chamada, lista de backups atualizada; falha vira alert
   assert.equal(bad.$$('circle[data-curve-index]').length, 30, 'a curva continua na tela');
 });
 
-test('M5 RESET: foto antes, só depois zera; a ECU fica em 1.0; Desfazer volta à curva de antes', () => {
+test('M5 RESET: um toque, sem arquivo visível; a ECU fica em 1.0; Desfazer volta à curva de antes', () => {
   const app = curveApp();
   const original = raws(app);
   const mark = app.world.mark();
-  app.byId('curveResetButton').click(); app.flush();
-  assert.deepEqual(L.actionCalls(app, mark), ['startCurveBackup'], 'no toque só a foto; nada zerado ainda');
-  assert.ok(same(raws(app), original));
-  app.settle(5);
+  app.byId('curveResetButton').click(); app.settle(5);
   const order = L.actionCalls(app, mark);
-  assert.equal(order.indexOf('startCurveBackup'), 0);
-  assert.ok(order.indexOf('startCurveReset') > 0, `reset só depois da foto: ${order}`);
+  assert.ok(!order.includes('startCurveBackup'), `Resetar não cria arquivo da curva (regra 15): ${order}`);
   assert.equal(order.filter(m => m === 'startCurveReset').length, 1);
   assert.ok(raws(app).every(v => v === W.Q), 'ECU em 1.0');
   assert.match(result(app).title, /^Gravado/);
   assert.ok(result(app).undoVisible);
   app.byId('curveUndoButton').click(); app.settle(3);
-  assert.match(app.world.callsOf('startCurveRestorePrepare').pop().args[0], /^curva-/, 'o Desfazer do reset restaura a FOTO tirada antes dele');
+  assert.match(app.world.callsOf('startCurveRestorePrepare').pop().args[0], /^foto-/, 'o Desfazer do reset restaura a foto privada tirada antes dele');
   app.byId('curveBackupRestore').click(); app.settle(4);
   assert.ok(same(raws(app), original), 'depois do Desfazer a curva é a de antes do reset');
 });
 
-test('M5 RESET com falha na foto: NADA é zerado e o dono é avisado', () => {
+test('M5 RESET com falha de salvar: Resetar nem tenta salvar arquivo; falha do reset avisa o dono', () => {
   const app = curveApp({ outcome: { curveBackup: 'transport' } });
-  const original = raws(app);
   app.byId('curveResetButton').click(); app.settle(5);
-  assert.equal(app.world.callsOf('startCurveReset').length, 0, 'zerou sem foto');
-  assert.ok(same(raws(app), original));
-  assert.ok(app.state().alert && /foto|nada foi zerado|Cabo/i.test(app.state().alert.message), 'sem aviso ao dono');
+  assert.equal(app.world.callsOf('startCurveBackup').length, 0, 'sem toque em Salvar não há arquivo');
+  assert.equal(app.world.callsOf('startCurveReset').length, 1);
 });
 
-test('M5 RESET com a curva já em 1.0: não faz foto nem zera (diz que não há o que zerar)', () => {
+test('M5 RESET com a curva já em 1.0: não salva nem zera (diz que não há o que zerar)', () => {
   const app = curveApp({ raws: W.neutralRaws() });
   const mark = app.world.mark();
   app.byId('curveResetButton').click(); app.settle(3);
@@ -229,7 +223,7 @@ test('M5 restaurar backup da lista: prévia, botão só ativa depois, uma grava�
 // ---------------------------------------------------------------- toque duplo
 for (const [name, act, call] of [
   ['Gravar', app => { editPoint(app, 9); app.byId('curveReviewButton').click(); app.byId('curveReviewButton').click(); }, 'startCurveBatchWrite'],
-  ['Resetar', app => { app.byId('curveResetButton').click(); app.byId('curveResetButton').click(); app.advance(300); app.advance(300); }, 'startCurveBackup'],
+  ['Resetar', app => { app.byId('curveResetButton').click(); app.byId('curveResetButton').click(); app.advance(300); app.advance(300); }, 'startCurveReset'],
   ['Salvar foto', app => { app.byId('curveBackupSave').click(); app.byId('curveBackupSave').click(); }, 'startCurveBackup'],
   ['Reler ECU', app => { app.byId('curveReadButton').click(); app.byId('curveReadButton').click(); }, 'startCurveRead'],
 ]) {
@@ -370,7 +364,7 @@ test('M5 Aprendizado global sem curva lida: gráfico vazio, sem coordenadas NaN'
 
 test('M5 o aviso de falha aparece na tela (toast), não só no estado interno', () => {
   const app = curveApp({ outcome: { curveBackup: 'transport' } });
-  app.byId('curveResetButton').click(); app.settle(5);
+  app.byId('curveBackupSave').click(); app.settle(5);
   const toast = app.byId('alertToast');
   assert.ok(toast._classes().has('show'), 'o aviso não foi mostrado ao dono');
   assert.match(toast.querySelector('b').textContent, /foto|zerado|Cabo/i);
