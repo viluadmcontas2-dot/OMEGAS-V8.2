@@ -34,3 +34,10 @@ MotorComparison.kt (prova da comparação; não entram no APK). Apagar depois qu
   Causa provável: na nativa o ganho já satura; ajuste fino do peso dos próprios pontos precisa de nova rodada de CI.
 - Nenhum K ideal medido no replay: ele prova limites e oportunidade de proposta, não melhora física.
 - Só o carro (classe 5) valida. Sem emulador/APK nesta sessão.
+
+## Rodada final: peso dos pontos próprios (PENDENTE, nada aplicado)
+Causa da planície 0,0212: o peso não limita; limitam LAMBDA (0,3), a histerese (3,5%) e a coerência E_MAX (0,35).
+Ensaio local (kotlinc, 3 s): LAMBDA 0,05 dá 0,0228/0,0209/0,0200 (queda estrita só com nativa); +histerese 2% e E_MAX 0,6
+dão ~0,0096 (n=10/25/50, queda de 1e-6) mas 1 teste existente falha e o replay real não foi medido. LAMBDA foi
+validado por validação cruzada em sessões reais: mexer sem CI/replay é meia-solução. Revertido ao commit 325a908.
+Próximo passo: CI em branch com LAMBDA 0,05 e E_MAX/histerese, checando replay (propostas fora da caixa) e o teste que falha.
