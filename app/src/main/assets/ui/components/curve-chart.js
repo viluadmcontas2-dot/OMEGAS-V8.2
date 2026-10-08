@@ -358,9 +358,22 @@
     const yFor = v => height - padBottom - ((v - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
     const scale = { xMin, xMax, yMin, yMax, xFor, yFor, width, height };
     const inY = v => v >= yMin && v <= yMax;
-    const pathFor = (items, yKey, xKey) => items
-      .filter(p => finite(p[xKey || 'petrolMs']) !== null && finite(p[yKey]) !== null && p[yKey] > 0 && inY(p[yKey]) && p[xKey || 'petrolMs'] <= xMax)
-      .map((p, i) => `${i ? 'L' : 'M'} ${xFor(p[xKey || 'petrolMs']).toFixed(1)} ${yFor(p[yKey]).toFixed(1)}`).join(' ');
+    // Uma linha só liga pontos VÁLIDOS e vizinhos: ponto zerado/ausente/fora da escala, ou x que volta atrás
+    // (leitura de outra época misturada na mesma tabela depois de um reset), QUEBRA o traço em vez de ser ligado.
+    const pathFor = (items, yKey, xKey) => {
+      const xk = xKey || 'petrolMs';
+      let d = '';
+      let lastX = null;
+      for (const p of items) {
+        const x = finite(p[xk]); const y = finite(p[yKey]);
+        const valid = x !== null && y !== null && y > 0 && inY(y) && x <= xMax;
+        if (!valid) { lastX = null; continue; }
+        const move = lastX === null || x < lastX;
+        d += `${d ? ' ' : ''}${move ? 'M' : 'L'} ${xFor(x).toFixed(1)} ${yFor(y).toFixed(1)}`;
+        lastX = x;
+      }
+      return d;
+    };
     const sel = o.selected || {};
     const hasPetrol = reference.some(p => finite(p.petrolMapBar) > 0);
     const hasGas = reference.some(p => finite(p.gasMapBar) > 0);
