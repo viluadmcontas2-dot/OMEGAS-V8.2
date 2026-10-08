@@ -7,7 +7,6 @@
 .autocal-reference-line { fill: none; stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
 .autocal-reference-line.petrol { stroke: var(--tone-78b7ff); }
 .autocal-reference-line.gas { stroke: var(--tone-5dd39e); }
-.autocal-reference-line.previous { opacity: .26; stroke-dasharray: 7 6; }
 .autocal-equivalence-line { display: none; fill: none; stroke: rgba(var(--rgb-240-196-92),.78); stroke-width: 2; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
 .autocal-reference-point { opacity: 0; stroke: var(--tone-081018); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; transition: opacity 120ms ease; }
 .autocal-reference-hit.selected + .autocal-reference-point { opacity: 1; }
@@ -57,8 +56,8 @@
 .autocal-live-label { fill: var(--tone-49e7fb); stroke: var(--tone-061019); }
 .autocal-session-strip  { padding: 8px 11px; border-radius: 11px; }
 /* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
-.autocal-reference-line.petrol:not(.previous) { stroke-width: 4; opacity: .62; }
-.autocal-reference-line.gas:not(.previous) { stroke-width: 2.5; }
+.autocal-reference-line.petrol { stroke-width: 4; opacity: .62; }
+.autocal-reference-line.gas { stroke-width: 2.5; }
 .autocal-reference-point.petrol { fill: var(--tone-07101a); stroke: var(--tone-78b7ff); stroke-width: 2.6; }
 .autocal-reference-point.gas { fill: var(--tone-5dd39e); stroke: var(--tone-d9fff0); stroke-width: 1.2; }
 /* AutoCal operator zone map: preserve ECU Z1..Z4 identity instead of only N/4. */

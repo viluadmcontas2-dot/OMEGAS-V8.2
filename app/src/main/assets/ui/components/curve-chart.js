@@ -84,7 +84,6 @@
     let h = mixString(2166136261, tableSignature(ctx.snapshot));
     h = mixString(h, ctx.sessionId);
     h = mixString(h, ctx.size);
-    h = mixNumber(h, ctx.history ? ctx.history.length : 0);
     h = mixNumber(h, ctx.usable === false ? 0 : 1);
     h = listSignature(h, dense.petrol, ['mapBar', 'tpetMs', 'samples']);
     h = listSignature(h, dense.gas, ['mapBar', 'tpetMs', 'samples']);
@@ -340,7 +339,7 @@
 
   // ------------------------------------------------------------------ desenho
   /**
-   * model: { reference, history, zones, ecu, ours(bins agregados), proposal:[index], stalls:[{petrolMs,mapBar}], live? }
+   * model: { reference, zones, ecu, ours(bins agregados), proposal:[index], stalls:[{petrolMs,mapBar}], live? }
    * opts:  { width, height, selected:{ref, ecu, batch:Set}, hit:{} }
    * Devolve { svg, scale } ou { empty: true }.
    */
@@ -401,9 +400,6 @@
         (zoneHeight >= 24 ? `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="${zoneText}" x="${width - padRight - 10}" y="${(top + zoneHeight / 2 + 5).toFixed(1)}" text-anchor="end">${zoneText}</text>` : '') + '</g>';
     }).join('');
 
-    const history = between ? [] : (model.history || []);
-    const previous = history.length
-      ? `<path class="autocal-reference-line previous petrol" d="${pathFor(history, 'petrolMapBar')}"></path><path class="autocal-reference-line previous gas" d="${pathFor(history, 'gasMapBar')}"></path>` : '';
     const refMarkup = reference.map(p => {
       if (p.petrolMs > xMax) return '';
       const x = xFor(p.petrolMs).toFixed(1);
@@ -457,7 +453,7 @@
     const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>` +
       `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção de gasolina (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
-      `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${previous}${equivalencePath}` +
+      `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${equivalencePath}` +
       `${hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +
       `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
     return { svg, scale };
@@ -595,7 +591,6 @@
     const visible = c.view || {};
     const project = p => ({ ...p, petrolMapBar: visible.petrol === false ? null : p.petrolMapBar, gasMapBar: visible.gas === false ? null : p.gasMapBar, gasEquivalentMs: visible.gas === false ? null : p.gasEquivalentMs });
     const allReference = UX.referencePoints(snapshot, projection.analysis || {}).map(project);
-    const history = (c.history || []).map(project);
     const ecu = [...(visible.petrol === false ? [] : UX.acquiredPoints(snapshot, 'petrol')), ...(visible.gas === false ? [] : UX.acquiredPoints(snapshot, 'gas'))];
     const eq = c.eq || {};
     const dense = eq.denseBands || {};
@@ -622,7 +617,7 @@
     const limit = lastMeasured === null ? Infinity : lastMeasured + Math.max(.25, lastMeasured * .04);
     // Sem ponto medido ainda: enquadra só a faixa de trabalho (MAP até 1,15 bar), não os 23 ms da régua inteira da ECU.
     const reference = visible.fullRange ? allReference : !anchors.length ? allReference.filter(p => !(Math.max(p.petrolMapBar, p.gasMapBar) > 1.15)) : allReference.filter(p => p.petrolMs <= limit);
-    const domain = focusDomain([...reference, ...history], ecu, relevant, { fullRange: visible.fullRange, equivalent: c.mode === 'between' && visible.gas !== false, liveMs: Number(c.liveMs) });
+    const domain = focusDomain(reference, ecu, relevant, { fullRange: visible.fullRange, equivalent: c.mode === 'between' && visible.gas !== false, liveMs: Number(c.liveMs) });
     const thresholds = (() => {
       const f = (Array.isArray(snapshot.fields) ? snapshot.fields : []).find(x => x && x.key === 'MNFLD_PRESS_THD' && x.status === 'VALID');
       return f && Array.isArray(f.physicalValues) ? f.physicalValues : null;
@@ -636,7 +631,7 @@
     const edges = thresholds ? thresholds.map(Number).filter(Number.isFinite) : [];
     const refined = c.analysis && Array.isArray(c.analysis.points) ? c.analysis.points : [];
     const proposal = refined.filter(p => p && p.origin !== 'HELD' && finite(p.calculatedRaw) !== null && Number(p.calculatedRaw) !== Number(p.currentRaw)).map(p => Number(p.index));
-    return { reference, history, zones: UX.zoneSurface(snapshot, human), ecu, ours: evidence.markers, bands18: evidence.bands, between: between.markers, betweenPoints, betweenGiven: given.length > 0, betweenBands: between.bands, edges, evidence, domain, proposal, stalls, human, rawItems: items };
+    return { reference, zones: UX.zoneSurface(snapshot, human), ecu, ours: evidence.markers, bands18: evidence.bands, between: between.markers, betweenPoints, betweenGiven: given.length > 0, betweenBands: between.bands, edges, evidence, domain, proposal, stalls, human, rawItems: items };
   }
 
   /**

@@ -468,13 +468,13 @@
       return points;
     },
 
-    referenceDomain(points = [], history = [], zoneSurface = [], acquiredPoints = []) {
+    referenceDomain(points = [], context = [], zoneSurface = [], acquiredPoints = []) {
       const physicalFloor = Array.isArray(zoneSurface) && zoneSurface.length
         ? Math.max(0, finite(zoneSurface[0]?.lower) ?? 0)
         : 0;
       const yMin = Math.min(physicalFloor, AUTO_CAL_OPERATIONAL_MAP_MAX_BAR - 0.05);
       const yMax = AUTO_CAL_OPERATIONAL_MAP_MAX_BAR;
-      const all = [...points, ...history, ...acquiredPoints].filter(point =>
+      const all = [...points, ...context, ...acquiredPoints].filter(point =>
         [finite(point?.petrolMapBar), finite(point?.gasMapBar), finite(point?.mapBar)]
           .some(value => value !== null && value >= yMin && value <= yMax));
       if (!all.length) return null;
@@ -530,43 +530,6 @@
       };
     },
 
-    referenceComparison(previousPoints = [], currentPoints = []) {
-      const previousByIndex = new Map((Array.isArray(previousPoints) ? previousPoints : [])
-        .map(point => [Number(point?.index), point]));
-      const rows = (Array.isArray(currentPoints) ? currentPoints : [])
-        .map(point => {
-          const previous = previousByIndex.get(Number(point?.index));
-          if (!previous) return null;
-          const mapDelta = finite(point.petrolMapBar) !== null && finite(previous.petrolMapBar) !== null
-            ? Number((point.petrolMapBar - previous.petrolMapBar).toFixed(3))
-            : null;
-          const gasDelta = finite(point.gasMapBar) !== null && finite(previous.gasMapBar) !== null
-            ? Number((point.gasMapBar - previous.gasMapBar).toFixed(3))
-            : null;
-          if (mapDelta === null && gasDelta === null) return null;
-          return { index: point.index, petrolMs: point.petrolMs, mapDelta, gasDelta };
-        })
-        .filter(Boolean);
-      if (!rows.length) {
-        return { available: false, count: 0, mapDeltaAvgBar: null, gasDeltaAvgBar: null, changedPoints: [] };
-      }
-      const avg = key => {
-        const values = rows.map(row => finite(row[key])).filter(value => value !== null);
-        if (!values.length) return null;
-        return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(3));
-      };
-      return {
-        available: true,
-        count: rows.length,
-        mapDeltaAvgBar: avg('mapDelta'),
-        gasDeltaAvgBar: avg('gasDelta'),
-        changedPoints: rows
-          .slice()
-          .sort((a, b) => Math.abs(finite(b.gasDelta) ?? 0) - Math.abs(finite(a.gasDelta) ?? 0))
-          .slice(0, 3),
-      };
-    },
-
     referenceFingerprint(snapshot = {}, analysis = {}) {
       const points = this.referencePoints(snapshot, analysis);
       if (!points.length) return '';
@@ -597,10 +560,6 @@
         referenceLost,
         referenceRegained,
         resetSelection: sessionChanged || referenceChanged || referenceLost || referenceRegained,
-        clearHistory: sessionChanged,
-        previousPoints: !sessionChanged && referenceChanged
-          ? this.referencePoints(previousSnapshot, previousAnalysis)
-          : [],
       };
     },
 
@@ -852,11 +811,8 @@
       this.sessions = [];
       this.chartScale = null;
       this.cursor = new ns.LiveStore.EaseCursor(() => this.chartPart('.autocal-live-layer'));
-      this.previousReferencePoints = [];
-      this.comparisonPinned = false;
       this.currentReferencePoints = [];
       this.currentAcquiredPoints = [];
-      this.chartHistoryVisible = false;
       this.selectedReferenceIndex = null;
       this.selectedAcquiredPoint = null;
       this.selectedAcquiredPoints = new Set();
@@ -1098,14 +1054,7 @@
         if (AutoCalUxModel.resetIntentFailedWithoutMutation(this.resetIntent, nextActionState) ||
             AutoCalUxModel.resetIntentReleased(this.resetIntent, projection)) this.resetIntent = null;
       }
-      if (referenceTransition.clearHistory) {
-        this.previousReferencePoints = [];
-        this.comparisonPinned = false;
-        this.chartHistoryVisible = false;
-        this.resetIntent = null;
-      } else if (referenceTransition.referenceChanged && !this.comparisonPinned) {
-        this.previousReferencePoints = referenceTransition.previousPoints;
-      }
+      if (referenceTransition.sessionChanged) this.resetIntent = null;
       if (referenceTransition.resetSelection || selectionTransition.clear) {
         this.selectedReferenceIndex = null;
         this.selectedAcquiredPoint = null;
@@ -1256,11 +1205,6 @@
       if (result?.ok !== true) {
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'A ação AutoCal não pôde ser executada.' } });
         return;
-      }
-      if (this.referenceUsable && String(prepared.action || '').startsWith('RESET_')) {
-        this.previousReferencePoints = AutoCalUxModel.referencePoints(this.snapshot, this.analysis);
-        this.comparisonPinned = this.previousReferencePoints.length > 0;
-        this.chartHistoryVisible = this.comparisonPinned;
       }
       if (['RESET_PETROL', 'RESET_GAS'].includes(String(prepared.action || '').toUpperCase())) {
         this.resetIntent = AutoCalUxModel.resetIntentFor(prepared.action, this.projection, this.actionState);
@@ -1742,9 +1686,7 @@
       const reference = visible.petrol === false ? [] : petrolCurve;
       const ecu = [...petrol.map(p => ({ ...p, fuel: 'PETROL' })), ...gas.map(p => ({ ...p, fuel: 'GAS' }))];
       const previousDomain = this.epochDomain;
-      // Reset tocado pelo dono / curva anterior ainda à vista: a escala de antes fica (curva anterior e pontos novos
-      // no mesmo quadro) durante toda a readquisição.
-      // A ESCALA de antes fica (eixos e grade não mudam no reset); a leitura anterior nunca é desenhada (dono, 2026-10-08).
+      // A ESCALA de antes do reset fica (eixos e grade não mudam durante a readquisição); só a escala, nenhum dado antigo.
       // Com escala já conhecida (a de antes do reset) ela fica como está; só pontos novos fora dela a ampliam.
       const knownScale = this.keepScale(null);
       const domain = (knownScale
@@ -1758,7 +1700,7 @@
         const width = Math.round(host.clientWidth) || 1000;
         const height = Math.round(host.clientHeight) || 400;
         const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
-        const model = { domain, reference, ecu, zones: AutoCalUxModel.zoneSurface(snapshot, human), history: [], missing: this.missingBands(snapshot, acquiredPetrol, acquiredGas) };
+        const model = { domain, reference, ecu, zones: AutoCalUxModel.zoneSurface(snapshot, human), missing: this.missingBands(snapshot, acquiredPetrol, acquiredGas) };
         const built = ns.CurveChart.buildSvg(model, { width, height });
         this.chartScale = built.scale;
         const { xFor: x, yFor: y } = built.scale;
@@ -1824,7 +1766,7 @@
         if (liveEpoch.comparisonAllowed === false) {
           // Histórico só para olhar: fora de currentReferencePoints (seleção/cálculo) e fora dos pontos tocáveis.
           // Fica durante TODA a readquisição (intenção, ACK confirmado, bandas incompletas), até a referência nova
-          // ser utilizável; sessão USB nova o limpa (referenceTransition.clearHistory).
+          // ser utilizável; sessão USB nova o limpa (referenceTransition.sessionChanged).
           this.currentReferencePoints = [];
           this.renderAcquisitionEpochChart(acquiredPetrol, acquiredGas, liveEpoch, host);
           return;
@@ -1832,7 +1774,6 @@
         this.chartRenderKey = null;
         this.chartSignature = null;
         ns.CurveChart?.release(host);
-        this.renderResetComparison([]);
         this.chartScale = null;
         if (timingProblem) {
           const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
@@ -1853,14 +1794,13 @@
       this.text('autocalReferenceCount', D.plural(points.length, 'ponto lido', 'pontos lidos'));
 
       const chart = ns.CurveChart;
-      const history = []; // leitura anterior nunca é mostrada (dono, 2026-10-08)
       // Armazém único da evidência: busca eq/análise só quando a tabela da ECU muda ou no vigia de 5 s.
       chart.updateEvidence(this.api, this.projection, Date.now(), false);
       const width = Math.round(host.clientWidth) || 1000;
       const height = Math.round(host.clientHeight) || 400;
       const store = chart.evidence;
       const signature = chart.evidenceSignature({
-        snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId, history,
+        snapshot, eq: store.eq, analysis: store.analysis, sessionId: this.projection?.sessionId,
         extra: `ecu18|${Math.round(width / 16)}x${Math.round(height / 16)}|${chart.viewKey(this.chartView)}|lx${Math.round((this.liveExtentMs || 0) * 2)}`,
       });
       const alreadyShown = this.renderedChartHost === host && this.chartSignature === signature && host.contains?.(chart.nodeFor('ecu18')) !== false;
@@ -1869,7 +1809,7 @@
         this.renderLiveCursor();
         return;
       }
-      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, history, mode: 'ecu18', view: this.chartView, liveMs: this.liveExtentMs || null };
+      const input = { snapshot, projection: this.projection, eq: store.eq, analysis: store.analysis, mode: 'ecu18', view: this.chartView, liveMs: this.liveExtentMs || null };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
         if (!model || !model.domain) {
@@ -1906,7 +1846,6 @@
       } else if (Number.isInteger(this.selectedReferenceIndex)) {
         this.inspectReferencePoint(this.selectedReferenceIndex);
       } else this.readout('');
-      this.renderResetComparison(model.reference);
       this.renderLiveCursor();
       this.renderedChartHost = host;
       this.chartSignature = signature;
@@ -1959,25 +1898,9 @@
       const height = Math.round(host.clientHeight) || 400;
       let zones = [];
       try { zones = AutoCalUxModel.zoneSurface(this.snapshot || {}, AutoCalUxModel.humanState(this.snapshot || {}, this.state || {}, this.projection)) || []; } catch (_) { zones = []; }
-      const built = ns.CurveChart.buildSvg({ domain, reference: [], ecu: [], zones, history: [] }, { width, height });
+      const built = ns.CurveChart.buildSvg({ domain, reference: [], ecu: [], zones }, { width, height });
       this.chartScale = built.scale;
       host.innerHTML = '<div class="curve-chart-shared" data-mode="ecu18" data-empty-frame="true">' + built.svg + '</div><div class="chart-empty chart-empty-over">' + html + '</div>';
-    }
-
-    renderResetComparison(points) {
-      const host = document.getElementById('autocalResetComparison');
-      if (!host) return;
-      const comparison = AutoCalUxModel.referenceComparison(this.previousReferencePoints, points);
-      if (!comparison.available) {
-        host.hidden = true;
-        host.innerHTML = '';
-        return;
-      }
-      const formatDelta = value => value === null ? '—' : (value > 0 ? '+' : '') + D.barUnit(value);
-      host.hidden = false;
-      host.innerHTML = '<div><small>ANTES × DEPOIS</small><b>' + D.plural(comparison.count, 'ponto', 'pontos') + '</b><span>Comparando a referência anterior com a nova leitura.</span></div>' +
-        '<div><small>GASOLINA</small><b>' + formatDelta(comparison.mapDeltaAvgBar) + '</b><span>variação média de MAP</span></div>' +
-        '<div><small>GNV</small><b>' + formatDelta(comparison.gasDeltaAvgBar) + '</b><span>variação média de MAP</span></div>';
     }
 
     /** Uma linha curta e humana ao lado do gráfico. Sem card que rola, sem código; só com dados coerentes. */

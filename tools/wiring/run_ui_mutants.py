@@ -29,7 +29,7 @@ import time
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 UI = "app/src/main/assets/ui"
 KT = "app/src/main/java/com/omegas/prohub"
-ALL_NODE_TESTS = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "tests/ui").glob("wiring-*.test.cjs"))
+ALL_NODE_TESTS = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "tests/ui").glob("wiring-*.test.cjs")) + ["tests/ui/autocal-sem-leitura-anterior.test.cjs"]
 
 M1, M2, M3, M4, M5, M6, M7, M8 = (f"tests/ui/wiring-{n}.test.cjs" for n in (
     "m1-connection", "m2-fuel", "m3-autocal", "m4-refino", "m5-curve", "m6-map", "m7-sessions", "m8-tools"))
@@ -158,6 +158,11 @@ MUTANTS = [
     mutant("reset-sem-religar-na-falha", "reset deixa o aprendizado pausado", f"{KT}/autocal/AutoCalNativeActionManager.kt",
            "throw learningRestoreAfterFailure(prepared, error)", "throw error",
            ["tests/test_reset_nunca_pausa_aprendizado.py"], kind="contract", ci=True),
+    # ---- TRAVA autocal-sem-leitura-anterior (regra 16): reintroduzir a legenda "Leitura anterior" tem de deixar o teste VERMELHO
+    mutant("autocal-leitura-anterior-volta", "leitura anterior reaparece", f"{UI}/screens/autocal-cockpit.js",
+           "legend.innerHTML = chart.legendHtml({ mode: 'ecu18' });",
+           "legend.innerHTML = chart.legendHtml({ mode: 'ecu18' }) + '<span class=\"previous\" data-legend=\"previous\">Leitura anterior</span>';",
+           ["tests/ui/autocal-sem-leitura-anterior.test.cjs"], ci=True),
 ]
 
 

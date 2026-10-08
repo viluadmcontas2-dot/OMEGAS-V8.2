@@ -25,6 +25,8 @@
 
 14. Reset de gasolina/GNV nunca pausa o aprendizado (dono, 2026-10-08): `AUTO_CAL_ENABLE` termina em 1 após qualquer reset (RESET_PETROL/GAS/ALL), conferido por readback, mesmo em falha parcial/timeout (erro de transporte ≠ erro da ECU). Protegem: `tests/test_reset_nunca_pausa_aprendizado.py` + `ResetNuncaPausaAprendizadoTest.kt` (nome da trava: `reset-nunca-pausa-aprendizado`), no `tools/run_checks.py` e no `ci.yml`, mais o mutante `reset-sem-religar`. Não remover nem enfraquecer.
 
+16. O AutoCal nunca mostra leitura anterior (dono, 2026-10-08): nem curva esmaecida, nem legenda "Leitura anterior", nem botão, nem função que a guarde; no reset ficam só eixos, grade, escala e a camada AGORA, sem pontos/curva velhos e com aviso em palavras. Protegem: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py` (nome da trava: `autocal-sem-leitura-anterior`) e o mutante `autocal-leitura-anterior-volta`. Não remover nem enfraquecer.
+
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 
 ## As 8 abas
