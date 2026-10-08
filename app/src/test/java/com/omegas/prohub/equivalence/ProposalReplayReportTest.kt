@@ -9,6 +9,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.zip.GZIPInputStream
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -115,6 +117,20 @@ class ProposalReplayReportTest {
                         "reasonCode(sem contador)=${real.optString("reasonCode")} ecuDone(sem contador)=${real.optBoolean("ecuDone")} " +
                         "reasonCode(ECU concluida assumida)=${done.optString("reasonCode")} " +
                         "interiorCovered=$interior/${bands.length()} pontosJulgados=$judged | ${guards(ledger, runtime, acquisition)}"
+                    result.nextAction.takeIf { it.kind == NextActionKind.APPLY }?.let { a ->
+                        // Proposta nunca sai da caixa de K nem passa do passo máximo de 15% por ponto.
+                        val cur = a.currentRaw!!; val ref = a.refinedRaw!!
+                        for (i in cur.indices) if (ref[i] != cur[i]) {
+                            assertTrue("$name snap#$snapIndex ponto $i fora da caixa: ${ref[i]}",
+                                ref[i] in AutoMatchRefinedEngine.MIN_RAW_PROPOSAL..AutoMatchRefinedEngine.MAX_RAW_PROPOSAL)
+                            assertTrue("$name snap#$snapIndex ponto $i passo ${ref[i].toDouble() / cur[i]}",
+                                kotlin.math.abs(ref[i].toDouble() / cur[i] - 1.0) <= 0.15 + 1e-3)
+                        }
+                    }
+                    if (name.startsWith("util")) {
+                        // Carro quase todo parado (marcha lenta): nenhum ponto desses vira evidência nem proposta.
+                        assertEquals("$name snap#$snapIndex", 0, p?.telemetryPairsUsed ?: 0)
+                    }
                     rows += Row(name, snapIndex, result.nextAction.kind == NextActionKind.APPLY, line)
                 }
             }
@@ -128,6 +144,8 @@ class ProposalReplayReportTest {
             val rows = replay(name)
             rows.forEach { println("REPLAY_REFINO ${it.line}") }
             println("REPLAY_REFINO_RESUMO $name amostras=${rows.size} comProposta(APPLY)=${rows.count { it.apply }}")
+            if (name.startsWith("pista")) assertTrue("sessão real da pista deve gerar >= 1 proposta", rows.any { it.apply })
+            if (name.startsWith("util")) assertEquals("sessão parada não propõe", 0, rows.count { it.apply })
         }
     }
 }

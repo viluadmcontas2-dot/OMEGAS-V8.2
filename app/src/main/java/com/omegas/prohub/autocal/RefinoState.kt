@@ -118,6 +118,7 @@ object RefinoState {
                 phase = "A ECU está no automático"; label = "ECU no automático"
                 whatNow = truth?.optString("summary").orEmpty().ifBlank { "A ECU está calibrando; só observo." }
                 next = "Aguardar a ECU"
+                why = "A ECU ainda está aprendendo; só observo e não proponho nada por cima."
             }
             code == "ESTAVEL" || (kind == "NOTHING" && index != null && actionPoints == 0) -> {
                 phase = "Estável"; label = phase
@@ -140,7 +141,7 @@ object RefinoState {
                 whatNow = "O carro está na gasolina. Estou medindo a referência da gasolina; comparo com o GNV quando o carro trocar."
                 next = keepDriving
                 why = when {
-                    missing > 0 -> "Ainda sem leituras em $missing ${if (missing == 1) "intervalo" else "intervalos"}."
+                    missing > 0 -> "Faltam leituras em $missing ${if (missing == 1) "faixa" else "faixas"}."
                     index == null -> "Ainda aprendendo seu motor para afirmar a diferença."
                     else -> null
                 }
@@ -151,9 +152,9 @@ object RefinoState {
                 whatNow = "Estou aprendendo seu motor entre as faixas da ECU."
                 next = keepDriving
                 why = when {
-                    missing > 0 -> "Ainda sem leituras em $missing ${if (missing == 1) "intervalo" else "intervalos"}."
+                    missing > 0 -> "Faltam leituras em $missing ${if (missing == 1) "faixa" else "faixas"}."
                     index == null -> "Ainda aprendendo seu motor para afirmar a diferença."
-                    else -> null
+                    else -> "Sem ajuste a sugerir agora: a curva está dentro da margem nas faixas medidas."
                 }
             }
         }

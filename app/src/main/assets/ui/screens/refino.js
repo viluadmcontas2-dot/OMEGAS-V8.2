@@ -635,7 +635,7 @@
       const proposals = document.getElementById('refinoProposals');
       if (proposals) {
         const points = this.actionModel().kind === 'review' ? readyPoints(eq, this.analysis) : [];
-        proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'trecho', 'trechos')} da curva · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>${escapeHtml(this.stretchLabel(p.index))}</dt><dd>${escapeHtml(this.changeLabel(p))}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : '<p>Ainda sem proposta. O app continua medindo.</p>';
+        proposals.innerHTML = points.length ? `<p>${D.plural(points.length, 'trecho', 'trechos')} da curva · confira o efeito antes de aplicar.</p><dl>${points.map(p => `<div><dt>${escapeHtml(this.stretchLabel(p.index))}</dt><dd>${escapeHtml(this.changeLabel(p))}</dd></div>`).join('')}</dl><p>Aplicar guarda a cópia anterior e confere a gravação na ECU. Desfazer restaura essa cópia.</p>` : `<p>${escapeHtml(rs?.whyNoProposal || 'Ainda sem proposta. O app continua medindo.')}</p>`;
       }
       const resetGas = document.querySelector('[data-refino-reset-gas]');
       if (resetGas) resetGas.disabled = op.phase === 'reading' || op.phase === 'writing' || this.store.get()?.status?.usbConnected !== true;
