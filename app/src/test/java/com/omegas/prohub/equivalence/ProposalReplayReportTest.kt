@@ -12,7 +12,7 @@ import java.util.zip.GZIPInputStream
 import org.junit.Test
 
 /**
- * Classe 3: replay das sessões reais de 06/10 (fixtures/autocal/real/*.jsonl.gz) pelo MESMO caminho da produção
+ * Classe 3: replay das sessões reais de 06/10 (as jsonl.gz em fixtures/autocal/real) pelo MESMO caminho da produção
  * (EquivalenceRuntime.evaluate + EquivalencePhases.observe). Imprime, por snapshot amostrado, qual guarda do Refino
  * bloqueia a proposta. Análise pura: nada aqui toca a ECU. O relatório vai para o artefato do CI.
  */
