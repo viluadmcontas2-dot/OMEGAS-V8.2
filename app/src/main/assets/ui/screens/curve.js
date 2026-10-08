@@ -6,7 +6,7 @@
   function wording() { return root.OmegasUi.DisplayRules.OPERATION_WORDING; }
   function failureText(operation, fallback) { return root.OmegasUi.DisplayRules.failureText(operation, fallback); }
   const NEUTRAL_RAW = 16384; // 1.0 em Q14
-  const RESET_NOTE = 'Resetar a Curva K para 1,000. A foto da curva atual foi salva antes; use Desfazer para voltar.';
+  const RESET_NOTE = 'Resetar a Curva K para 1,000. O app guardou a curva atual antes de gravar; use Desfazer para voltar.';
   const D = root.OmegasUi.DisplayRules;
   const finite = D.finite;
   const fmt = D.fmt;
@@ -107,15 +107,8 @@
     }
 
     onEnter(context) {
-      if (this.backupTask === 'reset-photo') {
-        // Voltou à aba com um reset pendente: o toque já passou, não zera. O dono toca de novo se ainda quiser.
-        this.backupTask = null;
-        this.resetPhotoFile = '';
-        text('curveBackupStatus', 'Reset cancelado: a foto não foi confirmada. Toque em Resetar de novo.');
-        this.root?.classList.remove('is-writing');
-      }
       if (context && context.subpage) this.setView(context.subpage);
-      // Vindo do AutoCal: o toque lá já foi o do dono. O reset roda aqui (foto antes, depois zera) assim que a
+      // Vindo do AutoCal: o toque lá já foi o do dono. O reset roda aqui (o escritor guarda a foto privada antes e zera) assim que a
       // curva estiver lida; só uma vez. Qualquer outra entrada na aba apaga o pedido: nunca zera sem toque novo.
       this.pendingReset = Boolean(context && context.resetNow === true);
       if (this.rereadOnEnter) {
@@ -173,21 +166,22 @@
       const keep = this.restoreContext ? String(this.restoreContext.fileName || '') : String(select.value || '');
       const backups = this.api.curveBackups();
       const rows = Array.isArray(backups) ? backups : [];
+      const manual = rows.filter(item => item && item.type === 'MANUAL_SNAPSHOT');
       const now = Date.now();
       select.innerHTML = rows.length
-        ? '<option value="">Escolha uma foto…</option>' + rows.map(item => {
+        ? '<option value="">Escolha uma curva…</option>' + rows.map(item => {
             const at = finite(item.createdAt);
             const when = at !== null && at > 0 ? D.ageText(at, now) : 'data desconhecida';
-            const kind = item.type === 'MANUAL_SNAPSHOT' ? 'salva' : 'automática';
+            const kind = item.type === 'MANUAL_SNAPSHOT' ? 'salva por você' : 'para o Desfazer';
             return `<option value="${escapeHtml(item.fileName)}">${escapeHtml(item.label || 'Curva K')} · ${escapeHtml(when)} · ${kind}</option>`;
           }).join('')
-        : '<option value="">Nenhuma foto salva</option>';
+        : '<option value="">Nenhuma curva salva</option>';
       // A foto escolhida e a prévia do Desfazer sobrevivem a uma releitura da lista (ex.: voltar do segundo plano).
       if (keep && rows.some(item => item.fileName === keep)) select.value = keep;
       this.syncRestoreButton();
       if (this.restoreContext) text('curveBackupStatus', 'Pronto: toque em Desfazer para voltar a esta foto');
-      else if (rows.length) text('curveBackupStatus', `${D.plural(rows.length, 'foto salva', 'fotos salvas')} · escolha uma para ver o que volta`);
-      else text('curveBackupStatus', 'Nenhuma foto salva');
+      else if (manual.length) text('curveBackupStatus', `${D.plural(manual.length, 'curva salva por você', 'curvas salvas por você')} · escolha uma para ver o que volta`);
+      else text('curveBackupStatus', 'Nenhuma curva salva por você');
     }
 
     /** Desfazer só aparece quando há o que desfazer: uma foto escolhida e conferida com diferenças. */
@@ -229,7 +223,7 @@
       text('curveBackupStatus', 'Salvando curva atual…');
     }
 
-    /** Um toque, sem diálogo. Foto antes: salva a curva atual (só leitura) e só então zera; se a foto falhar, nada é zerado. */
+    /** Um toque, sem diálogo. A foto privada do Desfazer é feita pelo escritor antes do primeiro ACK; se ela falhar, nada é zerado. */
     resetCurve() {
       if (this.reading || this.writing || this.backupTask) return;
       // Curva já neutra: não há o que zerar e uma foto dela sobrescreveria o ponto de Desfazer útil.
@@ -237,22 +231,10 @@
         text('curveBackupStatus', 'A Curva K já está em 1,000 · nada a zerar.');
         return;
       }
+      // Proteção = foto em memória/armazenamento privado que o escritor guarda ANTES do primeiro ACK (photoFile) + Desfazer.
+      // Nenhum arquivo visível é criado aqui: arquivo em Downloads só pelo botão Salvar (regra 15).
       this.resetPhotoFile = '';
-      const photo = this.api.startCurveBackup('Antes do reset');
-      if (!photo?.ok || !photo?.started) {
-        this.alert(photo?.error || 'Não foi possível salvar a foto da Curva K; nada foi zerado.');
-        return;
-      }
-      this.backupTask = 'reset-photo';
-      this.updateControls();
-      text('curveBackupStatus', 'Salvando a foto da curva antes de zerar…');
-      // A foto antes aparece como etapa do cartão de operação, não como linha de status miúda.
-      this.root?.classList.remove('has-result');
-      this.root?.classList.add('is-writing');
-      text('curveOperationTitle', 'Foto antes · salvando a Curva K atual');
-      this.setStep(0);
-      const photoBar = document.getElementById('curveOperationProgress');
-      if (photoBar) photoBar.style.width = '8%';
+      this.startResetWrite();
     }
 
     /** Os 30 pontos lidos já valem 1.0 (raw 16384): nada a zerar. */
@@ -261,7 +243,7 @@
       return points.length === 30 && points.every(item => Number(item.factorRaw) === NEUTRAL_RAW);
     }
 
-    /** Segunda etapa do reset: só roda depois que a foto foi gravada em disco. */
+    /** Reset: o escritor guarda a foto privada do Desfazer antes do primeiro ACK. */
     startResetWrite() {
       this.cancelRestorePreview('');
       this.proposals.clear();
@@ -388,21 +370,6 @@
           text('curveBackupStatus', 'Foto indisponível');
           this.root?.classList.remove('is-writing');
           this.alert(failureText(operation, 'O app não conseguiu salvar ou ler a foto da Curva K.'));
-          return;
-        }
-        if (task === 'reset-photo') {
-          // Só a operação de foto devolve hash e caminho; uma leitura qualquer não autoriza o reset.
-          if (!operation.hash || !operation.publicPath || !operation.fileName) {
-            // A regra "foto antes" não se enfraquece: sem a foto salva em Download/Omegas, nada é zerado.
-            text('curveBackupStatus', 'Nada foi zerado: a foto não foi salva. Libere espaço no celular e toque em Resetar Curva K de novo.');
-            this.root?.classList.remove('is-writing');
-            this.alert('Nada foi zerado: a foto de antes não foi salva. Libere espaço no celular e toque em Resetar Curva K de novo.');
-            return;
-          }
-          // O Desfazer deste reset restaura EXATAMENTE esta foto (um segundo reset não a substitui).
-          this.resetPhotoFile = String(operation.fileName);
-          this.refreshBackups();
-          this.startResetWrite();
           return;
         }
         if (task === 'save') {

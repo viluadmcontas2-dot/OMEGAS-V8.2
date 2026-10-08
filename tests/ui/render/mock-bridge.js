@@ -78,7 +78,7 @@
     startCurveRead: curveRead,
     getLastOperation: () => J(op),
     listCurveBackups: () => J([{ fileName: 'curve_antes_do_reset.json', label: 'Antes do reset', createdAt: Date.now() - 600000 }]),
-    startCurveBackup: label => { op = { ok: true, state: 'BACKUP', busy: true }; later(400, () => { op = { ok: true, state: 'COMPLETED', busy: false, hash: 'h123', publicPath: '/sdcard/omegas/curve_antes_do_reset.json', fileName: 'curve_antes_do_reset.json', curve: { points: curPts() } }; }); return J({ ok: true, started: true }); },
+    startCurveBackup: label => { op = { ok: true, state: 'BACKUP', busy: true }; later(400, () => { op = { ok: true, state: 'COMPLETED', busy: false, hash: 'h123', publicPath: 'Download/Omegas/Curva/Curva K - 08-10-2026 19h42m07s - 30 pontos - salva manualmente.json', fileName: 'MANUAL-1-h123.json', curve: { points: curPts() } }; }); return J({ ok: true, started: true }); },
     startCurveReset: () => {
       op = { ok: true, state: 'BATCH_WRITING', busy: true, progress: 40, message: 'Escrita 12 de 30 · ACK' };
       const finish = () => { S.curveNeutral = true; op = { ok: true, state: 'BATCH_CONFIRMED', busy: false, readbackValid: true, progress: 100, photoFile: 'curve_antes_do_reset.json', details: { changedPoints: 30 } }; };

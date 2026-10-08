@@ -140,21 +140,17 @@ test('9. pedido de reset do AutoCal nunca vira reset sem toque novo (falha de le
   app = curveApp();
   app.win.OmegasApp.screens.curve.onEnter({ resetNow: true });
   app.settle(6);
-  assert.equal(app.world.callsOf('startCurveBackup').length, 1, 'foto antes');
-  assert.equal(app.world.callsOf('startCurveReset').length, 1, 'depois zera');
+  assert.equal(app.world.callsOf('startCurveBackup').length, 0, 'nenhum arquivo da curva sem o botão Salvar');
+  assert.equal(app.world.callsOf('startCurveReset').length, 1, 'zera');
   app.destroy();
 });
 
-test('10. reset sem a foto confirmada (sem caminho público) segue bloqueado, com mensagem e ação clara', () => {
-  const app = curveApp();
-  app.world.mutateResponse = (bridge, method, obj) => { if (method === 'getLastOperation' && obj.hash === 'abcdef123456') delete obj.publicPath; return obj; };
+test('10. reset não depende de arquivo visível: nenhum startCurveBackup, e falha de salvar não bloqueia nem aparece', () => {
+  const app = curveApp({ outcome: { curveBackup: 'transport' } });
   app.byId('curveResetButton').click(); app.settle(4);
-  assert.equal(app.world.callsOf('startCurveReset').length, 0, 'sem foto nada é zerado');
-  const status = app.byId('curveBackupStatus').textContent;
-  assert.match(status, /Nada foi zerado/);
-  assert.match(status, /toque em Resetar Curva K de novo/);
-  assert.match(app.byId('alertToast').textContent, /Nada foi zerado/);
-  assert.equal(app.byId('curveResetButton').hasAttribute('disabled'), false, 'dá para tentar de novo');
+  assert.equal(app.world.callsOf('startCurveBackup').length, 0, 'sem toque em Salvar não há arquivo');
+  assert.equal(app.world.callsOf('startCurveReset').length, 1);
+  assert.doesNotMatch(app.byId('curveBackupStatus').textContent, /foto salva|backup/i);
   app.destroy();
 });
 

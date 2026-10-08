@@ -237,13 +237,18 @@ class KFactorManager(
             val curveHash = photo.hash
             val createdAt = photo.createdAt
             val backupFile = File(backupDir, fileName)
+            val publicName = KFactorCurveFileName.of(createdAt, KFactorProtocol.POINT_COUNT)
             val publicCopy = try {
-                publishManualBackup(backupFile)
+                // Cópia com o nome didático numa pasta privada; é ela que vai para Download/Omegas/Curva.
+                val staging = File(paths.runtimeRoot, "k_factor_publish").apply { mkdirs() }
+                val staged = File(staging, publicName)
+                backupFile.copyTo(staged, overwrite = true)
+                try { publishManualBackup(staged) } finally { staged.delete() }
             } catch (error: Exception) {
                 JSONObject().put("ok", false).put("error", error.message ?: "Falha ao publicar backup")
             }
             if (!publicCopy.optBoolean("ok", false)) {
-                return error("Backup interno validado, mas não foi possível salvar em Download/Omegas")
+                return error("Curva validada, mas não foi possível salvar em Download/Omegas/Curva")
                     .put("internalSaved", true)
                     .put("fileName", fileName)
                     .put("hash", curveHash)
@@ -253,7 +258,8 @@ class KFactorManager(
             JSONObject()
                 .put("ok", true)
                 .put("fileName", fileName)
-                .put("publicPath", publicCopy.optString("path", "Download/Omegas/$fileName"))
+                .put("publicPath", publicCopy.optString("path", "Download/Omegas/${KFactorCurveFileName.PUBLIC_SUBFOLDER}/$publicName"))
+                .put("publicName", publicName)
                 .put("publicCopy", publicCopy)
                 .put("createdAt", createdAt)
                 .put("hash", curveHash)
