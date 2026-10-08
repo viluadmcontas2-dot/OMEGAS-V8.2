@@ -124,6 +124,20 @@ class TelemetryForegroundService : Service() {
         revisionSlot.set(listener)
     }
 
+    /** Toque do dono em "Ativar limpeza automática"/"Desativar limpeza": arma/desarma (o coordenador publica a revisão). */
+    fun setAutoCleanupArmed(armed: Boolean): JSONObject {
+        if (!::autoIdleCleanup.isInitialized) return JSONObject().put("ok", false).put("armed", false).put("error", "Serviço indisponível")
+        return autoIdleCleanup.setArmed(armed, "dono")
+    }
+
+    /**
+     * Intenção manual do dono (reset/pausa do AutoCal, escrita K/Mapa, restauração): desarma a limpeza automática
+     * ANTES de a escrita começar. Síncrono; a operação automática já em voo conclui e seu recibo é processado.
+     */
+    fun onManualAutoCalIntent(action: String) {
+        if (::autoIdleCleanup.isInitialized) try { autoIdleCleanup.onManualIntent(action) } catch (_: Exception) {}
+    }
+
     private fun publishRevision(kind: RuntimeSnapshotBus.Kind) {
         val revision = revisions.bump(kind)
         revisionSlot.publish(kind, revision)
@@ -406,9 +420,10 @@ class TelemetryForegroundService : Service() {
             onBuffersConfirmed = { buffers ->
                 if (::autoIdleCleanup.isInitialized) autoIdleCleanup.onBuffers(buffers)
             },
-            onAcquisitionReset = { sessionChanged, sessionId ->
+            onAcquisitionReset = { sessionChanged, sessionId, ownAutomaticDelete ->
                 if (::autoIdleCleanup.isInitialized) {
-                    if (sessionChanged) autoIdleCleanup.onSessionChanged(sessionId) else autoIdleCleanup.onRoundInvalidated()
+                    if (sessionChanged) autoIdleCleanup.onSessionChanged(sessionId)
+                    else autoIdleCleanup.onRoundInvalidated(ownAutomaticDelete)
                 }
             },
             appAutomaticWriteEnabled = { ::autoIdleCleanup.isInitialized && autoIdleCleanup.automaticEnabled() },
@@ -434,23 +449,59 @@ class TelemetryForegroundService : Service() {
                     workClass = workClass,
                 )
             },
+            // Recibos: primeiro o que muda estado (cada passo no seu try), só depois a gravação da sessão (disco cheio
+            // não pode impedir a entrega ao coordenador; o gerenciador engole exceções do callback). Recibo de uma
+            // geração USB antiga (chegou depois de reconectar) só é gravado: não invalida round nem armamento novo.
             onConfirmed = { receipt ->
-                sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
-                nativeAutoCal.onManualActionConfirmed(receipt)
-                autoIdleCleanup.onActionConfirmed(receipt)
-                try { link.markDataChanged("ação AutoCal nativa confirmada") } catch (_: Exception) {}
+                val stale = receipt.optLong("sessionId", -1L) != actionSerial.currentSessionId()
+                val steps: List<Pair<String, () -> Unit>> = if (stale) emptyList() else listOf(
+                    "autocal.manualAction" to { nativeAutoCal.onManualActionConfirmed(receipt) },
+                    "limpeza.confirmado" to { autoIdleCleanup.onActionConfirmed(receipt) },
+                    // Reset/ação manual do dono desarma a limpeza automática; a confirmação do próprio automático não.
+                    "limpeza.manual" to {
+                        if (!receipt.optBoolean("automatic", false)) autoIdleCleanup.onManualMutation(receipt)
+                    },
+                    "link" to { link.markDataChanged("ação AutoCal nativa confirmada") },
+                )
+                EvidenceInvalidation.run(
+                    invalidate = steps,
+                    record = {
+                        if (stale) log.add("WARN", "AUTOCAL", "Recibo de sessão USB antiga (${receipt.optString("id")}): só gravado")
+                        sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
+                    },
+                    warn = { log.add("WARN", "AUTOCAL", it) },
+                )
             },
             onFailed = { receipt ->
-                sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
-                // A escrita pode ter chegado à ECU: nada lido antes dela vale mais (M2).
-                if (receipt.optBoolean("mutationMayHaveStarted", false)) nativeAutoCal.invalidateRound()
-                autoIdleCleanup.onActionFailed(receipt)
+                val stale = receipt.optLong("sessionId", -1L) != actionSerial.currentSessionId()
+                val mutation = receipt.optBoolean("mutationMayHaveStarted", false)
+                val steps: List<Pair<String, () -> Unit>> = if (stale) emptyList() else listOf(
+                    // A escrita pode ter chegado à ECU: nada lido antes dela vale mais (M2).
+                    "autocal.round" to { if (mutation) nativeAutoCal.invalidateRound() },
+                    "limpeza.falha" to { autoIdleCleanup.onActionFailed(receipt) },
+                    "limpeza.manual" to {
+                        if (!receipt.optBoolean("automatic", false) && mutation) autoIdleCleanup.onManualMutation(receipt)
+                    },
+                )
+                EvidenceInvalidation.run(
+                    invalidate = steps,
+                    record = {
+                        if (stale) log.add("WARN", "AUTOCAL", "Recibo de sessão USB antiga (${receipt.optString("id")}): só gravado")
+                        sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
+                    },
+                    warn = { log.add("WARN", "AUTOCAL", it) },
+                )
             },
             onStateChanged = {
                 publishRevision(RuntimeSnapshotBus.Kind.TABLES)
                 try { autoCalActionUi.get()?.invoke() } catch (_: Exception) {}
             },
             lastKnownVector = { field -> nativeAutoCal.lastKnownVector(field) },
+            // Guarda de contexto do automático em voo (combustível, rpm, armado, USB): sem I/O, só memória.
+            automaticContextReason = { fuel ->
+                if (::autoIdleCleanup.isInitialized) autoIdleCleanup.automaticContextReason(fuel)
+                else "Limpeza automática ainda não disponível"
+            },
         )
         autoIdleCleanup = AutoIdleCleanupCoordinator(
             telemetry = actionSerial,
@@ -462,6 +513,9 @@ class TelemetryForegroundService : Service() {
             record = { type, payload -> sessionRecorder.record(type, "autocal", payload, force = true) },
             clock = SystemClock::elapsedRealtime,
             executor = autoIdleExecutor,
+            currentSessionId = actionSerial::currentSessionId,
+            // Falhas, desarmes e esperas assíncronas também viram revisão: a tela orientada a evento nunca fica velha.
+            onChanged = { publishRevision(RuntimeSnapshotBus.Kind.TABLES) },
         )
         link = OmegasLinkManager(
             settings = settings,
@@ -763,6 +817,7 @@ class TelemetryForegroundService : Service() {
                 .put("error", "Este aparelho não possui o controle principal do MP48")
                 .toString()
         }
+        onManualAutoCalIntent("K_MAP_WRITE")
         return kWriter.startWrite(row, column, current, target, maxStep, pauseMs).toString()
     }
 
@@ -782,6 +837,7 @@ class TelemetryForegroundService : Service() {
                 .put("error", "Este aparelho não possui o controle principal do MP48")
                 .toString()
         }
+        onManualAutoCalIntent("K_MAP_BATCH_WRITE")
         return try {
             kWriter.startBatchWrite(JSONArray(cellsJson), maxStep, pauseMs, reason).toString()
         } catch (error: Exception) {
@@ -806,6 +862,7 @@ class TelemetryForegroundService : Service() {
                 .put("error", "Este aparelho não possui o controle principal do MP48")
                 .toString()
         }
+        onManualAutoCalIntent("K_MAP_RESTORE")
         return try {
             kWriter.startRestoreWrite(JSONArray(cellsJson), adjustmentId, reason).toString()
         } catch (error: Exception) {
@@ -827,6 +884,7 @@ class TelemetryForegroundService : Service() {
         CalibrationWriteSafetyPolicy.unsafeReason(status())?.let { reason ->
             return JSONObject().put("ok", false).put("error", reason).toString()
         }
+        onManualAutoCalIntent("K_FACTOR_RESET")
         return try {
             kFactor.startResetToNeutral("Reset Curva K · ProgBase MUL_ACT=1.0").toString()
         } catch (error: Exception) {
@@ -849,6 +907,7 @@ class TelemetryForegroundService : Service() {
                 .put("error", "Este aparelho não possui o controle principal do MP48")
                 .toString()
         }
+        onManualAutoCalIntent(if (restoreFile.isNotBlank()) "K_FACTOR_RESTORE" else "K_FACTOR_WRITE")
         return try {
             val points = JSONArray(pointsJson)
             if (restoreFile.isNotBlank()) kFactor.startRestoreWrite(points, restoreFile, reason).toString()

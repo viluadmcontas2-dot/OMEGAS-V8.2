@@ -8,7 +8,7 @@ const { open, go, playwright } = require('./render/lib.js');
 
 const pw = playwright();
 let browserOk = false;
-if (pw) { try { browserOk = fs.existsSync(pw.chromium.executablePath()); } catch (_) { browserOk = false; } }
+if (pw) { try { browserOk = !!require("./render/lib.js").chromiumPath(pw.chromium); } catch (_) { browserOk = false; } }
 const skip = browserOk ? false : 'Chromium/Playwright indisponível neste ambiente';
 
 const rect = (page, sel) => page.evaluate(s => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom, fs: parseFloat(getComputedStyle(e).fontSize), vis: getComputedStyle(e).display !== 'none' }; }, sel);

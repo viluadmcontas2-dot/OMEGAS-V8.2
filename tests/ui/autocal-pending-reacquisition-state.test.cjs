@@ -48,4 +48,21 @@ assert.equal(confirmed.gasPending, false);
 assert.equal(confirmed.comparisonAllowed, true);
 assert.equal(confirmed.intentPending, undefined);
 
+// Janela entre busy=false e projeção nova (2026-10-07): a intenção do dono continua pendente enquanto a projeção
+// for a mesma revisão de quando ele tocou; só evidência posterior correspondente libera.
+const intent = { action: 'RESET_PETROL', revision: 'r1', petrolGeneration: 2, gasGeneration: 3, sessionId: 'S' };
+const held = model.effectiveEpoch(base, { busy: false, action: 'RESET_PETROL', state: 'CONFIRMED' }, intent);
+assert.equal(held.intentPending, true);
+assert.equal(held.petrolPending, true);
+assert.equal(held.petrolReferencePending, true);
+assert.equal(held.gasPending, false);
+assert.equal(held.comparisonAllowed, false);
+
+assert.equal(model.resetIntentReleased(intent, { sessionId: 'S', revision: 'r1', liveAcquisitionEpoch: { ...base, petrolPending: true } }), false, 'mesma revisão antiga não libera');
+assert.equal(model.resetIntentReleased(intent, { sessionId: 'S', revision: 'r2', liveAcquisitionEpoch: { ...base } }), false, 'revisão nova sem evidência da gasolina não libera');
+assert.equal(model.resetIntentReleased(intent, { sessionId: 'S', revision: 'r2', liveAcquisitionEpoch: { ...base, petrolPending: true } }), true, 'ECU já marcou a gasolina como pendente');
+assert.equal(model.resetIntentReleased(intent, { sessionId: 'S', revision: 'r2', liveAcquisitionEpoch: { ...base, petrolGeneration: 3 } }), true, 'geração da gasolina andou');
+assert.equal(model.resetIntentReleased(intent, { sessionId: 'S2', revision: 'r1', liveAcquisitionEpoch: { ...base } }), true, 'sessão nova limpa tudo');
+assert.equal(model.resetIntentReleased(intent, { sessionId: 'S', revision: 'r2', liveAcquisitionEpoch: { ...base, gasPending: true } }), false, 'evidência do outro combustível não corresponde');
+
 console.log('AUTOCAL_PENDING_REACQUISITION_STATE=PASS');

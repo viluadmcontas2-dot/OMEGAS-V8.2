@@ -8,7 +8,7 @@ const { open, go, playwright } = require('./render/lib.js');
 
 const pw = playwright();
 let ok = false;
-if (pw) { try { ok = fs.existsSync(pw.chromium.executablePath()); } catch (_) { ok = false; } }
+if (pw) { try { ok = !!require("./render/lib.js").chromiumPath(pw.chromium); } catch (_) { ok = false; } }
 const skip = ok ? false : 'Chromium/Playwright indisponível neste ambiente';
 const TABS = ['dashboard', 'map', 'curve', 'autocal', 'refino', 'sessions', 'tools', 'diagnostico'];
 const MUST_HAVE = ['map', 'curve', 'autocal', 'refino'];

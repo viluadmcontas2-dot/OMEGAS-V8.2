@@ -169,8 +169,11 @@
   const autocal = {
     getIdentity: () => J({}), getStatus: () => J({ ok: true, state: 'IDLE' }), getSnapshot: () => J({ available: false }), getNativeMonitorStatus: () => J(projection().nativeStatus), getNativeMonitorSnapshot: () => J(snap),
     getUiProjection: () => J(projection()), getSessionLedgerStatus: () => J({}), listAutoCalSessions: () => '[]', getNativeActionStatus: () => J(window.__pointAction || {}),
+    getAutoCleanupStatus: () => J({ ok: true, active: true, armed: !!window.__cleanupArmed, enabled: true, pauseCode: null, waitReason: window.__cleanupArmed ? 'Aguardando o carro rodar no GNV' : '', relearnedThisSession: 0, recentDeletes: [] }),
+    setAutoCleanupArmed: armed => { window.__cleanupArmed = armed === true || armed === 'true'; return J({ ok: true, armed: window.__cleanupArmed, enabled: true, pauseCode: null }); },
     preparePointDelete: (fuel,index) => { window.__pointTargets=[{fuel,index}]; return J({ok:true,prepared:true,preparationId:'point-single'}); },
     preparePointDeleteBatch: targets => { window.__pointTargets=JSON.parse(targets); return J({ok:true,prepared:true,preparationId:'point-batch'}); },
+    prepareNativeAction: action => J({ ok: true, prepared: true, preparationId: 'prep-render', action, label: action, description: 'Prévia', commandHex: '00', sessionId: 's' }),
     executeNativeAction: id => { window.__pointAction={action:'DELETE_POINT',state:'READING_AFTER',busy:true}; return J({ok:true,started:true}); },
     clearNativeActionPreparation: () => J({ok:true}),
     resetGasEvidence: () => { S.gasReset = true; S.phase = 'COLETANDO_NOSSOS'; return J({ ok: true, message: 'Aprendizado GNV reiniciado. A gasolina continua como referência.' }); },

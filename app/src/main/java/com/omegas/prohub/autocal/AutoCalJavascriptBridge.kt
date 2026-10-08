@@ -115,8 +115,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         JSONObject()
             .put("ok", true)
             .put("active", summary.active)
+            .put("armed", summary.armed)
             .put("enabled", summary.enabled)
             .put("pauseCode", summary.pauseCode?.name ?: JSONObject.NULL)
+            .put("waitReason", summary.waitReason)
             .put("relearnedThisSession", summary.relearnedThisSession)
             .put(
                 "recentDeletes",
@@ -135,6 +137,18 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             .toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Limpeza automática indisponível")
+    }
+
+    /**
+     * Toque do dono no rodapé do AutoCal: arma ("Ativar limpeza automática") ou desarma ("Desativar limpeza").
+     * Armar exige sessão USB válida e não apaga nada no toque; o serviço publica a revisão para a tela.
+     */
+    @JavascriptInterface
+    fun setAutoCleanupArmed(armed: Boolean): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        service.setAutoCleanupArmed(armed).toString()
+    } catch (error: Exception) {
+        JSONObject().put("ok", false).put("armed", false).put("error", error.message ?: "Limpeza automática indisponível").toString()
     }
 
     @JavascriptInterface
@@ -207,6 +221,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             actionManager.clearPreparation()
             return localFailure("Ação operacional foi classificada incorretamente como crítica")
         }
+        // Intenção manual do dono: desarma a limpeza automática ANTES de a escrita começar.
+        activityRef.get()?.serviceOrNull()?.onManualAutoCalIntent(action.name)
         val executed = actionManager.execute(prepared.getString("preparationId"))
             .put("operationalOneTouch", true)
             .put("requestedEnabled", enabled)
@@ -253,6 +269,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
         // Mesma regra de qualquer escrita K: sem o controle principal do MP48 (Link), nenhuma ação sai deste aparelho.
         noLocalControlFailure()?.let { return it }
+        // Intenção manual do dono: desarma a limpeza automática ANTES de a escrita começar.
+        activityRef.get()?.serviceOrNull()?.onManualAutoCalIntent(actionName)
         val result = actionManager.execute(preparationId)
         invalidateAnalysis()
         if (!result.optBoolean("ok", false)) actionManager.clearPreparation()

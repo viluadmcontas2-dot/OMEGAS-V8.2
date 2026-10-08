@@ -74,8 +74,12 @@ class NativeAutoCalMonitor(
      * do autoCalTick.
      */
     private val onBuffersConfirmed: (AutoIdleCleanupCoordinator.Buffers) -> Unit = {},
-    /** As leituras anteriores deixaram de valer: `sessionChanged`=true para sessão USB nova/encerrada. */
-    private val onAcquisitionReset: (sessionChanged: Boolean, sessionId: Long) -> Unit = { _, _ -> },
+    /**
+     * As leituras anteriores deixaram de valer: `sessionChanged`=true para sessão USB nova/encerrada;
+     * `ownAutomaticDelete`=true só quando a origem é o recibo do próprio apagamento automático de pontos.
+     */
+    private val onAcquisitionReset: (sessionChanged: Boolean, sessionId: Long, ownAutomaticDelete: Boolean) -> Unit =
+        { _, _, _ -> },
     /** Verdade sobre escrita automática do app (só o apagamento de pontos fora da curva, quando ligado). */
     private val appAutomaticWriteEnabled: () -> Boolean = { false },
 ) {
@@ -186,7 +190,7 @@ class NativeAutoCalMonitor(
                 .put("sessionId", newSessionId)
                 .put("settleMs", SESSION_SETTLE_MS)
         }
-        try { onAcquisitionReset(true, newSessionId) } catch (_: Exception) {}
+        try { onAcquisitionReset(true, newSessionId, false) } catch (_: Exception) {}
         onStateChanged()
     }
 
@@ -214,7 +218,7 @@ class NativeAutoCalMonitor(
             latestSnapshot = JSONObject().put("available", false)
             state = baseState("DISCONNECTED", "USB desconectado")
         }
-        try { onAcquisitionReset(true, 0L) } catch (_: Exception) {}
+        try { onAcquisitionReset(true, 0L, false) } catch (_: Exception) {}
         onStateChanged()
     }
 
@@ -263,18 +267,22 @@ class NativeAutoCalMonitor(
     /**
      * Uma gravação K / ação AutoCal foi confirmada: tudo que o round tinha lido ANTES dela deixa de valer
      * (grupo pendente, G5/G7 retidos, contadores de gasolina, round do planejador). A referência é relida já.
-     * Só zera estado de leitura; não envia nada à ECU.
+     * Só zera estado de leitura; não envia nada à ECU. [ownAutomaticDelete] (origem explícita, padrão falso) marca
+     * a invalidação causada pelo recibo do próprio apagamento automático: scratch, round e projeção caem igual;
+     * só o coordenador da limpeza distingue (preserva a base coerente dos buracos que ele mesmo abriu).
      */
-    fun invalidateRound() {
+    fun invalidateRound(ownAutomaticDelete: Boolean = false) {
         writeFence.bump()
         synchronized(lock) { scratch.invalidate() }
         refreshPlanner.abandonRound()
         refreshPlanner.requestReferenceNow()
-        try { onAcquisitionReset(false, sessionId) } catch (_: Exception) {}
+        try { onAcquisitionReset(false, sessionId, ownAutomaticDelete) } catch (_: Exception) {}
     }
 
     fun onManualActionConfirmed(receipt: JSONObject) {
-        invalidateRound()
+        invalidateRound(
+            ownAutomaticDelete = receipt.optBoolean("automatic", false) && receipt.optString("action") == "DELETE_POINT",
+        )
         synchronized(lock) {
             val receiptSessionId = receipt.optLong("sessionId", sessionId)
             if (receiptSessionId == sessionId) {

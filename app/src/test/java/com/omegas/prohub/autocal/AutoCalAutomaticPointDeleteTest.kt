@@ -477,6 +477,90 @@ class AutoCalAutomaticPointDeleteTest {
         assertTrue(receipt.has("before"))
     }
 
+    // ---- revisão 2026-10-07 (achados importantes): contexto revalidado antes das máscaras e antes do commit ----
+
+    @Test
+    fun `contexto muda durante a releitura de antes entao nenhuma mascara sai e a falha nao afirma mutacao`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3)
+        val checks = CopyOnWriteArrayList<Fuel>()
+        val manager = manager(ecu, automaticContextReason = { fuel -> checks += fuel; "O carro passou para a gasolina" })
+        assertTrue(manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence()).getBoolean("ok"))
+        awaitIdle(manager)
+        assertTrue("nenhum byte de escrita", ecu.writes().isEmpty())
+        assertEquals(listOf(Fuel.GAS), checks)
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("FAILED", receipt.getString("outcome"))
+        assertFalse(receipt.getBoolean("mutationMayHaveStarted"))
+        assertTrue(receipt.getString("failureMessage"), receipt.getString("failureMessage").contains("gasolina"))
+        assertEquals(1, failures.size)
+        assertFalse(failures.single().getBoolean("mutationMayHaveStarted"))
+    }
+
+    @Test
+    fun `contexto muda entre as mascaras e o commit entao commit nao sai e a mutacao possivel fica registrada`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3)
+        val checks = CopyOnWriteArrayList<Fuel>()
+        val manager = manager(ecu, automaticContextReason = { fuel ->
+            checks += fuel
+            if (ecu.writes().size >= 2) "O carro parou de rodar" else null
+        })
+        manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence())
+        awaitIdle(manager)
+        val writes = ecu.writes()
+        assertEquals("as duas máscaras saíram, o commit não", 2, writes.size)
+        assertFalse(writes.any { it.contentEquals(AutoCalPointDeleteProtocol.commit()) })
+        assertEquals("uma conferência antes das máscaras e uma antes do commit", 2, checks.size)
+        val receipt = manager.receiptsJson().getJSONObject(0)
+        assertEquals("FAILED", receipt.getString("outcome"))
+        assertTrue(receipt.getBoolean("automatic"))
+        assertTrue("máscaras na ECU sem commit: mutação possível", receipt.getBoolean("mutationMayHaveStarted"))
+        assertEquals("SENDING_ACTION", receipt.getString("failedFromState"))
+        assertEquals(1, failures.size)
+        assertTrue(failures.single().getBoolean("mutationMayHaveStarted"))
+        assertTrue(receipts.isEmpty())
+    }
+
+    @Test
+    fun `contexto estavel conferido duas vezes e os bytes do automatico nao mudam`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3, phase = "before")
+        val checks = CopyOnWriteArrayList<Fuel>()
+        val manager = manager(ecu, automaticContextReason = { fuel -> checks += fuel; null })
+        manager.executeAutomaticPointDelete(listOf(Target(Fuel.GAS, 4)), evidence())
+        awaitIdle(manager)
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        assertEquals(listOf(Fuel.GAS, Fuel.GAS), checks)
+        val writes = ecu.writes()
+        assertEquals(3, writes.size)
+        assertArrayEquals(
+            AutoCalProtocol.writeVectorU8(AutoCalPointDeleteProtocol.GAS_DELETE_ADDRESS, IntArray(18) { if (it == 4) 0 else 1 }),
+            writes[0],
+        )
+        assertArrayEquals(AutoCalProtocol.writeVectorU8(AutoCalPointDeleteProtocol.PETROL_DELETE_ADDRESS, IntArray(18) { 1 }), writes[1])
+        assertArrayEquals(AutoCalPointDeleteProtocol.commit(), writes[2])
+    }
+
+    @Test
+    fun `caminho manual nao consulta o contexto automatizado e segue inalterado`() {
+        val ecu = FakeEcu()
+        ecu.set(AutoCalProtocol.NUM_BUF_UPD_GAS, 4 to 3, phase = "before")
+        ecu.set(AutoCalProtocol.PETR_INJ_TBUF_GAS, 4 to 1_500, phase = "before")
+        val checks = CopyOnWriteArrayList<Fuel>()
+        val manager = manager(ecu, automaticContextReason = { fuel -> checks += fuel; "nunca deveria ser consultado" })
+        val prepared = manager.preparePointDelete("GAS", 4)
+        assertTrue(prepared.getBoolean("prepared"))
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals(manager.statusJson().toString(), "CONFIRMED", manager.statusJson().getString("state"))
+        assertTrue("o manual é do dono: sem guarda de contexto automatizado", checks.isEmpty())
+        val expected = AutoCalPointDeleteProtocol.singlePointPlan(Target(Fuel.GAS, 4))
+        val writes = ecu.writes()
+        assertEquals(expected.size, writes.size)
+        expected.forEachIndexed { index, frame -> assertArrayEquals(frame, writes[index]) }
+    }
+
     // ---- apoio ----
 
     private fun evidence() = JSONObject()
@@ -489,6 +573,7 @@ class AutoCalAutomaticPointDeleteTest {
         otherBusy: () -> Boolean = { false },
         lastKnown: (AutoCalProtocol.Field) -> IntArray? = { null },
         clock: () -> Long = System::currentTimeMillis,
+        automaticContextReason: (Fuel) -> String? = { null },
     ) = AutoCalNativeActionManager(
         receiptFile = temporaryFile(),
         isConnected = { true },
@@ -500,6 +585,7 @@ class AutoCalAutomaticPointDeleteTest {
         guard = guard,
         lastKnownVector = lastKnown,
         wallClock = clock,
+        automaticContextReason = automaticContextReason,
     )
 
     private fun temporaryFile(): File = Files.createTempDirectory("autocal-auto-delete").resolve("receipts.json").toFile()

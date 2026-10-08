@@ -162,7 +162,8 @@ class World {
     this.refined = refinedAnalysis(false, this.curve);
     this.projection = realProjection('ref_', 0);
     this.autocalActionStatus = { busy: false, state: 'IDLE' };
-    this.autocalAutoCleanup = { ok: true, active: true, enabled: true, pauseCode: null, relearnedThisSession: 0, recentDeletes: [] };
+    // Desenho 2026-10-07: a limpeza começa DESARMADA em toda sessão USB; só o toque do dono arma.
+    this.autocalAutoCleanup = { ok: true, active: true, armed: false, enabled: true, pauseCode: null, waitReason: '', relearnedThisSession: 0, recentDeletes: [] };
     this.autocalAvailable = true;
     this.overlay = { ok: true, supported: true, permissionGranted: true, requestedEnabled: false, visible: false, observationalOnly: true };
     this.battery = { supported: true, ignoringOptimizations: false };
@@ -373,6 +374,11 @@ class World {
       exportAutoCalSession: () => true,
       getNativeActionStatus: () => w.autocalActionStatus,
       getAutoCleanupStatus: () => w.autocalAutoCleanup,
+      setAutoCleanupArmed: armed => {
+        if (w.autocalAutoCleanup.active !== true) return { ok: false, armed: false, error: 'Sem conexão USB com a ECU' };
+        w.autocalAutoCleanup = { ...w.autocalAutoCleanup, armed: !!armed, enabled: true, pauseCode: null };
+        return { ok: true, armed: !!armed, enabled: true, pauseCode: null };
+      },
       startRead: () => ({ ok: true, started: true }),
       cancelRead: () => ({ ok: true }),
       setAcquisitionEnabled: enabled => ({ ok: true, enabled }),

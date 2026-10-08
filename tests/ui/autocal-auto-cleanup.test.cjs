@@ -18,6 +18,9 @@ test('linha discreta: ligada, contagem da sessão e some sem conexão', () => {
     assert.ok(line, 'a linha existe');
     assert.equal(line.closest('details'), null, 'fica à vista, fora dos detalhes');
     assert.equal(line.hidden, false);
+    assert.equal(line.textContent, 'Limpeza automática: desligada · o app não apaga nada sozinho', 'toda sessão começa desarmada');
+    app.world.autocalAutoCleanup = { ...app.world.autocalAutoCleanup, armed: true };
+    app.win.OmegasApp.autoCalCockpit.refresh();
     assert.equal(line.textContent, 'Limpeza automática: ligada · nenhum ponto reaprendido nesta sessão');
     app.world.autocalAutoCleanup = { ...app.world.autocalAutoCleanup, relearnedThisSession: 1 };
     app.win.OmegasApp.autoCalCockpit.refresh();
@@ -47,11 +50,12 @@ test('pausada: motivo simples e o que fazer, sem jargão', () => {
       ALGO_NOVO: /inesperado/i,
     };
     for (const [code, reason] of Object.entries(cases)) {
-      app.world.autocalAutoCleanup = { ok: true, active: true, enabled: false, pauseCode: code, relearnedThisSession: 2, recentDeletes: [] };
+      app.world.autocalAutoCleanup = { ok: true, active: true, armed: false, enabled: false, pauseCode: code, relearnedThisSession: 2, recentDeletes: [] };
       screen.refresh();
-      assert.match(line.textContent, /^Limpeza automática pausada nesta conexão: /, code);
+      assert.match(line.textContent, /^Limpeza automática pausada: /, code);
       assert.match(line.textContent, reason, code);
-      assert.match(line.textContent, /Reconecte o cabo para tentar de novo\.$/, code);
+      assert.match(line.textContent, /Toque em Ativar limpeza automática para tentar de novo\.$/, code);
+      assert.equal(app.$('[data-autocal-cleanup-toggle]').textContent, 'Ativar limpeza automática', code);
       assert.doesNotMatch(line.textContent, TECH, code);
       assert.equal(line.dataset.level, 'warn');
     }
@@ -70,7 +74,7 @@ test('apagamento automático: ponto cinza, intocável, aviso curto uma vez e lib
     const patch = screen.store.patch.bind(screen.store);
     screen.store.patch = value => { if (value && value.alert) alerts.push(value.alert); return patch(value); };
     app.world.autocalAutoCleanup = {
-      ok: true, active: true, enabled: true, pauseCode: null, relearnedThisSession: 1,
+      ok: true, active: true, armed: true, enabled: true, pauseCode: null, relearnedThisSession: 1,
       recentDeletes: [{ receiptId: 'R-auto-1', fuel: 'GAS', indexes: [point.index], atMs: app.win.Date.now() }],
     };
     screen.refresh();
@@ -105,7 +109,7 @@ test('gasolina e GNV: cada apagamento acinzenta o ponto do seu combustível e o 
     screen.store.patch = value => { if (value && value.alert) alerts.push(value.alert); return patch(value); };
     const now = app.win.Date.now();
     app.world.autocalAutoCleanup = {
-      ok: true, active: true, enabled: true, pauseCode: null, relearnedThisSession: 2,
+      ok: true, active: true, armed: true, enabled: true, pauseCode: null, relearnedThisSession: 2,
       recentDeletes: [
         { receiptId: 'R-gnv', fuel: 'GAS', indexes: [gas.index], atMs: now },
         { receiptId: 'R-gas', fuel: 'PETROL', indexes: [petrol.index], atMs: now },
@@ -177,7 +181,7 @@ test('apagamento automático antigo (tela estava fechada) não acinzenta nem avi
     const patch = screen.store.patch.bind(screen.store);
     screen.store.patch = value => { if (value && value.alert) alerts.push(value.alert); return patch(value); };
     app.world.autocalAutoCleanup = {
-      ok: true, active: true, enabled: true, pauseCode: null, relearnedThisSession: 1,
+      ok: true, active: true, armed: true, enabled: true, pauseCode: null, relearnedThisSession: 1,
       recentDeletes: [{ receiptId: 'R-old', indexes: [point.index], atMs: app.win.Date.now() - 5 * 60000 }],
     };
     screen.refresh();

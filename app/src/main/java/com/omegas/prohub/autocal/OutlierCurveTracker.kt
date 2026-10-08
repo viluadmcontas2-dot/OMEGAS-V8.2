@@ -13,6 +13,16 @@ import org.json.JSONObject
  * Sem "forma real" (decisão do dono, 2026-10-07): parado o carro injeta mais, então o ponto contaminado volta
  * sempre no mesmo lugar; repetição não prova nada. Banda fora da curva é candidata toda vez que estiver fora.
  *
+ * Estabilidade (desenho aprovado, 2026-10-07): uma banda só vira candidata depois de DUAS leituras confirmadas e
+ * consecutivas do mesmo combustível, em INSTANTES distintos. Conteúdo idêntico num poll novo conta (anomalia
+ * estática continua anomalia); o mesmo instante repetido (cache/poll duplicado) nunca conta.
+ *
+ * Anti-cascata (revisão 2026-10-07): depois de um apagamento do próprio app, enquanto alguma banda apagada ainda
+ * está vazia, a base coerente anterior (bandas ACEITAS no último ajuste antes do apagamento, com seus dados) é
+ * preservada: uma banda aceita cujo dado não mudou não vira fora da curva só porque a base encolheu. Dado novo da
+ * ECU (tempo/MAP diferentes) é julgado pelo dado atual e pode ser anomalia. Banda apagada readquirida (contador > 0)
+ * substitui o dado atual; quando todas foram readquiridas, a base preservada é esquecida.
+ *
  * Sem I/O; não é thread-safe (o coordenador o usa a partir de um único executor).
  */
 class OutlierCurveTracker {
@@ -44,21 +54,31 @@ class OutlierCurveTracker {
             .put("mapBar", mapBar)
     }
 
+    /** Base coerente de antes do apagamento nosso: banda aceita → (timeRaw, mapRaw) naquele ajuste. */
+    private class PreservedBase(val accepted: Map<Int, Pair<Int, Int>>, val emptyBands: MutableSet<Int>)
+
     private val last = HashMap<Fuel, Reading>()
     private val outliers = HashMap<Fuel, List<Outlier>>()
+    /** Bandas fora da curva na leitura ANTERIOR, de instante distinto (a confirmação exige presença nas duas). */
+    private val previouslyDetected = HashMap<Fuel, Set<Int>>()
+    /** Bandas aceitas no último ajuste de cada combustível (vira a base preservada quando o app apaga). */
+    private val lastAccepted = HashMap<Fuel, Map<Int, Pair<Int, Int>>>()
+    /** Base aceita no instante da decisão de apagar (leituras durante o voo não a substituem). */
+    private val decidedBase = HashMap<Fuel, Map<Int, Pair<Int, Int>>>()
+    private val preserved = HashMap<Fuel, PreservedBase>()
 
-    /** Registra uma leitura confirmada dos buffers de [fuel]; devolve true se o buffer mudou (e reavaliou). */
+    /** Registra uma leitura confirmada dos buffers de [fuel]; devolve true se foi leitura nova (instante novo). */
     fun observe(fuel: Fuel, reading: Reading): Boolean {
         val previous = last[fuel]
         if (previous != null && reading.observedAtElapsedMs <= previous.observedAtElapsedMs) return false
         last[fuel] = Reading(
             reading.counters.copyOf(), reading.timeRaw.copyOf(), reading.mapRaw.copyOf(), reading.observedAtElapsedMs,
         )
-        val changed = previous == null ||
-            !previous.counters.contentEquals(reading.counters) ||
-            !previous.timeRaw.contentEquals(reading.timeRaw) ||
-            !previous.mapRaw.contentEquals(reading.mapRaw)
-        if (!changed) return false
+        preserved[fuel]?.let { base ->
+            base.emptyBands.removeAll { band -> band in reading.counters.indices && reading.counters[band] > 0 }
+            if (base.emptyBands.isEmpty()) preserved.remove(fuel)
+        }
+        previouslyDetected[fuel] = outliers[fuel].orEmpty().map { it.band }.toSet()
         outliers[fuel] = detect(fuel, reading)
         return true
     }
@@ -69,7 +89,13 @@ class OutlierCurveTracker {
             reading.mapRaw.size < AutoMatchRefinedEngine.USEFUL_BAND_COUNT
         ) return emptyList()
         val points = AutoMatchRefinedEngine.bandPoints(reading.timeRaw, reading.mapRaw, reading.counters)
-        val rejected = AutoMatchRefinedEngine.monotoneFit(points).second
+        val (accepted, fitRejected) = AutoMatchRefinedEngine.monotoneFit(points)
+        lastAccepted[fuel] = accepted.associate { it.band to (reading.timeRaw[it.band] to reading.mapRaw[it.band]) }
+        val base = preserved[fuel]
+        val rejected = if (base == null) fitRejected else fitRejected.filter { point ->
+            // Aceita na base coerente e com o MESMO dado: só a base encolheu; não é anomalia nova.
+            base.accepted[point.band] != (reading.timeRaw[point.band] to reading.mapRaw[point.band])
+        }
         return rejected.map { point ->
             Outlier(
                 fuel = fuel,
@@ -83,26 +109,54 @@ class OutlierCurveTracker {
         }.sortedBy { it.band }
     }
 
-    /** Bandas fora da curva com contador > 0 na última leitura. */
-    fun candidates(fuel: Fuel): List<Outlier> = outliers[fuel].orEmpty().filter { it.counter > 0 }
+    /** Bandas fora da curva com contador > 0 na última leitura E na leitura anterior de instante distinto. */
+    fun candidates(fuel: Fuel): List<Outlier> {
+        val confirmedBefore = previouslyDetected[fuel].orEmpty()
+        return outliers[fuel].orEmpty().filter { it.counter > 0 && it.band in confirmedBefore }
+    }
 
     fun lastCounters(fuel: Fuel): IntArray? = last[fuel]?.counters?.copyOf()
 
-    /** O app apagou [band] de [fuel] (readback confirmou): sai dos candidatos até a próxima leitura. */
+    /**
+     * O app apagou [band] de [fuel] (readback confirmou): sai dos candidatos até a próxima leitura e a base coerente
+     * de antes fica preservada enquanto a banda estiver vazia (ver cabeçalho).
+     */
     fun onDeleted(fuel: Fuel, band: Int) {
         outliers[fuel] = outliers[fuel].orEmpty().filter { it.band != band }
+        previouslyDetected[fuel] = previouslyDetected[fuel].orEmpty() - band
         last[fuel]?.counters?.let { if (band in it.indices) it[band] = 0 }
+        val base = preserved[fuel]
+            ?: PreservedBase(decidedBase[fuel] ?: lastAccepted[fuel].orEmpty(), HashSet()).also { preserved[fuel] = it }
+        base.emptyBands += band
+    }
+
+    /** O coordenador vai apagar bandas de [fuel]: congela a base aceita desta decisão para [onDeleted]. */
+    fun onDeleteStarted(fuel: Fuel) {
+        if (preserved[fuel] == null) decidedBase[fuel] = lastAccepted[fuel].orEmpty()
     }
 
     /** A banda mudou desde a marca (ou o readback foi ambíguo): sai dos candidatos até o próximo cálculo. */
     fun forget(fuel: Fuel, bands: Collection<Int>) {
         outliers[fuel] = outliers[fuel].orEmpty().filter { it.band !in bands }
+        previouslyDetected[fuel] = previouslyDetected[fuel].orEmpty() - bands.toSet()
     }
 
-    /** invalidateRound / ação manual / sessão nova: as leituras anteriores não valem mais. */
-    fun reset() {
+    /**
+     * invalidateRound / ação manual / sessão nova: as leituras anteriores não valem mais.
+     * [ownAutomaticDelete] = a invalidação veio do recibo do PRÓPRIO apagamento automático (monitor → serviço →
+     * coordenador, antes de [onDeleted]): leituras, candidatos e confirmações caem do mesmo jeito (nada velho vira
+     * aquisição atual), mas a base congelada na decisão e a preservada ficam, senão o buraco que o app abriu
+     * transformaria um ponto bom marginal em "fora da curva" novo. Reset/escrita K manual/USB nova apagam tudo.
+     */
+    fun reset(ownAutomaticDelete: Boolean = false) {
         last.clear()
         outliers.clear()
+        previouslyDetected.clear()
+        lastAccepted.clear()
+        if (!ownAutomaticDelete) {
+            decidedBase.clear()
+            preserved.clear()
+        }
     }
 
     fun json(): JSONObject = JSONObject().also { root ->
@@ -111,10 +165,11 @@ class OutlierCurveTracker {
                 fuel.wireName,
                 JSONObject()
                     .put("baseline", last[fuel] != null)
-                    .put("outliers", JSONArray().also { array -> outliers[fuel].orEmpty().forEach { array.put(it.toJson()) } }),
+                    .put("outliers", JSONArray().also { array -> outliers[fuel].orEmpty().forEach { array.put(it.toJson()) } })
+                    .put("confirmed", JSONArray(candidates(fuel).map { it.band }))
+                    .put("preservedBase", JSONArray(preserved[fuel]?.emptyBands?.sorted().orEmpty()))
+                    .put("readingsRequired", 2),
             )
         }
     }
-
-
 }

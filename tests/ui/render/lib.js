@@ -7,7 +7,8 @@ const path = require('node:path');
 const cp = require('node:child_process');
 
 const ROOT = path.resolve(__dirname, '../../..');
-const UI = 'file://' + path.join(ROOT, 'app/src/main/assets/ui/index.html');
+// OMEGAS_UI_URL: ambientes em que o Chromium bloqueia file:// (política) servem a pasta ui por HTTP local.
+const UI = process.env.OMEGAS_UI_URL || ('file://' + path.join(ROOT, 'app/src/main/assets/ui/index.html'));
 const MOCK = fs.readFileSync(path.join(__dirname, 'mock-bridge.js'), 'utf8');
 
 function dataFile() {
@@ -20,8 +21,16 @@ function playwright() {
   try { return require('playwright'); } catch (_) { return null; }
 }
 
+// OMEGAS_CHROMIUM: Chromium já instalado (ex.: /usr/bin/chromium) quando o do Playwright não foi baixado.
+function chromiumPath(chromium) {
+  const env = process.env.OMEGAS_CHROMIUM;
+  if (env && fs.existsSync(env)) return env;
+  try { const p = chromium.executablePath(); return fs.existsSync(p) ? p : null; } catch (_) { return null; }
+}
+
 async function open(chromium, mode, opts = {}) {
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  const executablePath = chromiumPath(chromium) || undefined;
+  const browser = await chromium.launch({ args: ['--no-sandbox'], executablePath });
   const ctx = await browser.newContext({ viewport: opts.viewport || { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors = [];
@@ -36,4 +45,4 @@ async function go(page, route) {
   await page.evaluate(r => { document.querySelector(`[data-route="${r}"]`).click(); }, route);
 }
 
-module.exports = { open, go, playwright, ROOT };
+module.exports = { open, go, playwright, chromiumPath, ROOT };

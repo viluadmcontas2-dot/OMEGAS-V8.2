@@ -51,6 +51,12 @@ class AutoCalNativeActionManager(
     private val lastKnownVector: (AutoCalProtocol.Field) -> IntArray? = { null },
     /** Relógio de parede das preparações (validade de 120 s); injetável nos testes. */
     private val wallClock: () -> Long = System::currentTimeMillis,
+    /**
+     * Guarda de contexto do apagamento AUTOMÁTICO em voo (revisão 2026-10-07 #2): motivo humano para abortar
+     * (combustível trocou, rpm caiu, desarmado, USB mudou) ou nulo. Consultada antes das máscaras e antes do
+     * commit; sem I/O. O caminho manual (do dono) nunca a consulta. Não muda nenhum byte dos comandos.
+     */
+    private val automaticContextReason: (AutoCalPointDeleteProtocol.Fuel) -> String? = { null },
 ) {
     /** Readback mostrou que a ECU aceitou o comando mas não apagou o ponto. */
     private class IneffectiveReadbackException(message: String, val details: JSONObject) : IllegalStateException(message)
@@ -759,6 +765,9 @@ class AutoCalNativeActionManager(
         val maskFrames = plan.dropLast(1)
         val targetDetails = pointTargetsJson(targets)
         val actionLabel = if (targets.size == 1) targets.single().toLabel() else "${targets.size} pontos selecionados"
+        // Automático: o contexto da decisão (combustível, rpm, armado, USB) é revalidado AGORA, antes de qualquer
+        // máscara; nada foi enviado ainda, logo a falha não afirma mutação.
+        if (prepared.automatic) requireAutomaticContext(targetFuel)
         update("SENDING_ACTION", "Readquirindo $actionLabel", 8, effective, targetDetails)
         maskFrames.forEachIndexed { step, request ->
             ensureSession(effective)
@@ -778,6 +787,9 @@ class AutoCalNativeActionManager(
             )
         }
         ensureSession(effective)
+        // Automático: revalida de novo antes do commit (máscaras já na ECU: a falha registra mutação possível e o
+        // coordenador exige releitura; o commit nunca é reenviado).
+        if (prepared.automatic) requireAutomaticContext(targetFuel)
         val commitReply = transaction(
             plan.last(),
             "AutoCal point delete commit",
@@ -1304,6 +1316,13 @@ class AutoCalNativeActionManager(
             "Readback AUTO_CAL_ENABLE divergente: esperado $expected, ECU ${actual ?: "sem dado"}"
         }
     }
+    private fun requireAutomaticContext(fuel: AutoCalPointDeleteProtocol.Fuel) {
+        val reason = try { automaticContextReason(fuel) } catch (error: Exception) {
+            "Contexto do apagamento automático indisponível: ${error.message ?: "falha"}"
+        }
+        if (reason != null) throw IllegalStateException(reason)
+    }
+
     private fun ensureSession(prepared: Preparation) {
         require(isConnected()) { "USB desconectado durante a ação AutoCal" }
         require(currentSessionId() == prepared.sessionId) { "Sessão USB mudou durante a ação AutoCal" }

@@ -5,7 +5,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Classe 1: detecção pura de "ponto fora da curva" por combustível (spec 2026-10-07 rev2). */
+/**
+ * Classe 1: detecção pura de "ponto fora da curva" por combustível (spec 2026-10-07 rev2). Candidato = fora da curva em
+ * DUAS leituras de instantes distintos (conteúdo igual conta; o mesmo instante repetido não).
+ */
 class OutlierCurveTrackerTest {
     private val tracker = OutlierCurveTracker()
     private var at = 1_000L
@@ -21,6 +24,9 @@ class OutlierCurveTrackerTest {
     @Test
     fun `banda rejeitada pelo ajuste robusto do Refino e fora da curva por combustivel`() {
         tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        assertTrue("uma leitura só não basta", tracker.candidates(Fuel.GAS).isEmpty())
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        tracker.observe(Fuel.PETROL, reading())
         tracker.observe(Fuel.PETROL, reading())
         val gas = tracker.candidates(Fuel.GAS)
         assertEquals(listOf(6), gas.map { it.band })
@@ -33,17 +39,33 @@ class OutlierCurveTrackerTest {
         val r = reading(outlierBand = 6)
         r.counters[6] = 0
         tracker.observe(Fuel.GAS, r)
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6).also { it.counters[6] = 0 })
         assertTrue(tracker.candidates(Fuel.GAS).isEmpty())
+    }
+
+    @Test
+    fun `o mesmo instante repetido nao e leitura nova e conteudo igual em instante novo confirma`() {
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        val same = reading(outlierBand = 6)
+        at -= 2_000
+        assertEquals(false, tracker.observe(Fuel.GAS, OutlierCurveTracker.Reading(same.counters, same.timeRaw, same.mapRaw, at)))
+        assertTrue("mesmo instante: não confirma", tracker.candidates(Fuel.GAS).isEmpty())
+        assertEquals(true, tracker.observe(Fuel.GAS, reading(outlierBand = 6)))
+        assertEquals(listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
     }
 
     @Test
     fun `mesmo ponto fora da curva voltando igual tres vezes continua candidato as tres vezes`() {
         // Decisão do dono: repetição não é forma real (parado o carro injeta mais e o ponto volta no mesmo lugar).
         tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
         repeat(3) { cycle ->
             assertEquals("ciclo $cycle", listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
+            tracker.onDeleteStarted(Fuel.GAS)
             tracker.onDeleted(Fuel.GAS, 6)
             assertTrue("apagado: sai até a próxima leitura", tracker.candidates(Fuel.GAS).isEmpty())
+            tracker.observe(Fuel.GAS, reading(outlierBand = 6, outlierCounter = 1))
+            assertTrue("readquirida: ainda falta a segunda leitura", tracker.candidates(Fuel.GAS).isEmpty())
             tracker.observe(Fuel.GAS, reading(outlierBand = 6, outlierCounter = 1))
         }
         assertEquals(listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
@@ -60,8 +82,35 @@ class OutlierCurveTrackerTest {
     @Test
     fun `leitura fora de ordem e ignorada`() {
         tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
         at -= 10_000
-        tracker.observe(Fuel.GAS, reading())
+        assertEquals(false, tracker.observe(Fuel.GAS, reading()))
+        assertEquals(listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
+    }
+
+    @Test
+    fun `leitura velha nao conta como uma das duas leituras frescas`() {
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        at -= 10_000
+        assertEquals(false, tracker.observe(Fuel.GAS, reading(outlierBand = 6)))
+        assertTrue("uma fresca + uma velha: não confirma", tracker.candidates(Fuel.GAS).isEmpty())
+        at += 10_000
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        assertEquals(listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
+    }
+
+    @Test
+    fun `depois do nosso apagamento, leitura velha + uma fresca nao bastam`() {
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6))
+        tracker.onDeleteStarted(Fuel.GAS)
+        tracker.onDeleted(Fuel.GAS, 6)
+        at -= 10_000
+        assertEquals(false, tracker.observe(Fuel.GAS, reading(outlierBand = 6, outlierCounter = 1)))
+        at += 10_000
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6, outlierCounter = 1))
+        assertTrue("apagado: a velha não conta, só uma fresca ainda não basta", tracker.candidates(Fuel.GAS).isEmpty())
+        tracker.observe(Fuel.GAS, reading(outlierBand = 6, outlierCounter = 1))
         assertEquals(listOf(6), tracker.candidates(Fuel.GAS).map { it.band })
     }
 

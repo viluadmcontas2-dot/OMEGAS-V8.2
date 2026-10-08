@@ -50,7 +50,12 @@ class AutoIdlePointCleaner(
 
     private var lastSuccessAtMs: Long? = null
     private var blockedUntilMs = 0L
-    private var needsReread = false
+    /**
+     * Releitura obrigatória por combustível: instante (elapsed) da falha/ambiguidade. Só uma leitura COMPLETA e
+     * confirmada daquele combustível, observada DEPOIS desse instante, libera (revisão 2026-10-07 #3).
+     */
+    private val rereadPendingSince = HashMap<Fuel, Long>()
+    private val needsReread: Boolean get() = rereadPendingSince.isNotEmpty()
     private var disabledReason: String? = null
     private var consecutiveFailures = 0
     private var lastDecision: String = ""
@@ -58,11 +63,11 @@ class AutoIdlePointCleaner(
     fun decide(input: Input): Decision = decideInternal(input).also { lastDecision = it.toString().take(200) }
 
     private fun decideInternal(input: Input): Decision {
-        disabledReason?.let { return Decision.Wait("Apagamento automático desligado nesta sessão: $it") }
-        if (input.autoCalEnabled != 1) return Decision.Wait("AUTO_CAL_ENABLE não está em 1")
-        if (input.sessionAgeMs < settleMs) return Decision.Wait("Sessão USB ainda estabilizando")
-        if (needsReread) return Decision.Wait("Aguardando releitura dos buffers depois de falha")
-        if (input.nowElapsedMs < blockedUntilMs) return Decision.Wait("Automático bloqueado depois de falha")
+        disabledReason?.let { return Decision.Wait("Limpeza automática pausada: $it") }
+        if (input.autoCalEnabled != 1) return Decision.Wait("O aprendizado da ECU está pausado ou ainda não foi lido")
+        if (input.sessionAgeMs < settleMs) return Decision.Wait("Conexão USB ainda estabilizando")
+        if (needsReread) return Decision.Wait("Aguardando uma leitura nova da ECU depois de uma falha")
+        if (input.nowElapsedMs < blockedUntilMs) return Decision.Wait("Aguardando um pouco depois de uma falha")
         lastSuccessAtMs?.let { last ->
             if (input.nowElapsedMs - last < minIntervalMs) return Decision.Wait("Intervalo mínimo entre apagamentos")
         }
@@ -78,10 +83,29 @@ class AutoIdlePointCleaner(
         val frameFuel = frame?.let { fuelOf(it.fuel) }
         val outliers = if (running && frameFuel != null) usable[frameFuel] else null
         if (outliers == null) {
-            val waiting = usable.keys.joinToString(" e ") { if (it == Fuel.GAS) "no GNV" else "na gasolina" }
-            return Decision.Wait("Aguardando o carro rodando $waiting (rpm >= $drivingRpm)")
+            // Frase para a tela (regra 6): sem rpm nem código; o número vai em "Detalhes técnicos" (json).
+            val waiting = usable.keys.sorted().joinToString(" ou ") { if (it == Fuel.GAS) "no GNV" else "na gasolina" }
+            return Decision.Wait("Aguardando o carro rodar $waiting")
         }
         return Decision.Delete(frameFuel!!, outliers.map { it.band }, outliers, frame!!)
+    }
+
+    /**
+     * Contexto de um apagamento automático JÁ EM VOO (revisão 2026-10-07 #2): o combustível e o rpm podem mudar
+     * entre a decisão e o envio. Devolve o motivo humano para NÃO enviar máscaras/commit agora, ou nulo se o quadro
+     * mais recente é fresco, plausível, do MESMO combustível do alvo e com o carro rodando. Puro: sem I/O.
+     */
+    fun contextReason(fuel: Fuel, latestFrame: NativeAnchorTelemetryWindow.Frame?, nowElapsedMs: Long): String? {
+        if (latestFrame == null || !latestFrame.plausible || nowElapsedMs - latestFrame.elapsedMs !in 0..frameMaxAgeMs) {
+            return "Sem telemetria fresca do carro durante o apagamento"
+        }
+        val frameFuel = fuelOf(latestFrame.fuel)
+        if (frameFuel != fuel) {
+            return if (fuel == Fuel.GAS) "O carro passou para a gasolina durante o apagamento do GNV"
+            else "O carro passou para o GNV durante o apagamento da gasolina"
+        }
+        if (latestFrame.rpm < drivingRpm) return "O carro parou de rodar durante o apagamento"
+        return null
     }
 
     private fun fuelOf(wire: String): Fuel? = when (wire.uppercase()) {
@@ -92,11 +116,11 @@ class AutoIdlePointCleaner(
 
     /**
      * Apagamento confirmado. `rereadRequired`: o readback foi ambíguo (não prova nem desprova o apagamento):
-     * consome o intervalo e espera uma releitura dos buffers GNV; nunca desliga a sessão.
+     * consome o intervalo e espera uma releitura completa dos buffers de [fuels]; nunca desliga a sessão.
      */
-    fun onSucceeded(nowElapsedMs: Long, rereadRequired: Boolean = false) {
+    fun onSucceeded(nowElapsedMs: Long, rereadRequired: Boolean = false, fuels: Set<Fuel> = Fuel.entries.toSet()) {
         lastSuccessAtMs = nowElapsedMs
-        needsReread = rereadRequired
+        if (rereadRequired) requireReread(fuels, nowElapsedMs) else rereadPendingSince.clear()
         blockedUntilMs = 0L
         consecutiveFailures = 0
     }
@@ -106,14 +130,15 @@ class AutoIdlePointCleaner(
 
     /**
      * Toda falha da ação automática (já aberta) consome tempo: sem mutação, o intervalo mínimo; com mutação
-     * possível, [failureBlockMs] + releitura. [MAX_CONSECUTIVE_FAILURES] seguidas (ex.: NAK persistente)
-     * desligam o automático na sessão. Colisão de porta/guarda antes de abrir a ação é [onRetryLater].
+     * possível, [failureBlockMs] + releitura completa de [fuels] (sem combustível conhecido: dos dois).
+     * [MAX_CONSECUTIVE_FAILURES] seguidas (ex.: NAK persistente) desligam o automático na sessão. Colisão de
+     * porta/guarda antes de abrir a ação é [onRetryLater]. Desarmar é decisão do coordenador.
      */
-    fun onFailed(nowElapsedMs: Long, mutationMayHaveStarted: Boolean) {
+    fun onFailed(nowElapsedMs: Long, mutationMayHaveStarted: Boolean, fuels: Set<Fuel> = Fuel.entries.toSet()) {
         consecutiveFailures += 1
         if (mutationMayHaveStarted) {
             blockedUntilMs = maxOf(blockedUntilMs, nowElapsedMs + failureBlockMs)
-            needsReread = true
+            requireReread(fuels, nowElapsedMs)
         } else {
             blockedUntilMs = maxOf(blockedUntilMs, nowElapsedMs + minIntervalMs)
         }
@@ -122,9 +147,20 @@ class AutoIdlePointCleaner(
         }
     }
 
-    /** Chegou uma leitura nova e confirmada dos buffers GNV. */
-    fun onReread() {
-        needsReread = false
+    private fun requireReread(fuels: Set<Fuel>, sinceElapsedMs: Long) {
+        (fuels.ifEmpty { Fuel.entries.toSet() }).forEach { fuel ->
+            rereadPendingSince[fuel] = maxOf(rereadPendingSince[fuel] ?: Long.MIN_VALUE, sinceElapsedMs)
+        }
+    }
+
+    /**
+     * Chegou uma leitura COMPLETA e confirmada dos buffers de [fuel] (o coordenador só chama com os três vetores).
+     * Libera a releitura obrigatória desse combustível apenas se foi observada DEPOIS da falha; leitura do outro
+     * combustível, de instante igual/anterior (replay, cache) não libera nada.
+     */
+    fun onReread(fuel: Fuel, observedAtElapsedMs: Long) {
+        val since = rereadPendingSince[fuel] ?: return
+        if (observedAtElapsedMs > since) rereadPendingSince.remove(fuel)
     }
 
     fun disable(reason: String) {
@@ -134,18 +170,23 @@ class AutoIdlePointCleaner(
     fun disabledReason(): String? = disabledReason
 
     /**
-     * invalidateRound / ação manual: zera só a espera por releitura; mantém intervalo, o bloqueio de falha com
-     * mutação possível ([blockedUntilMs]) e o desligamento da sessão.
+     * Novo toque do dono depois de uma pausa: limpa a pausa e a contagem de falhas seguidas, mas NÃO o bloqueio
+     * de falha com mutação incerta ([blockedUntilMs]/[needsReread]): rearmar não pode ignorar o que ainda não foi relido.
      */
-    fun reset() {
-        needsReread = false
+    fun rearm() {
+        disabledReason = null
+        consecutiveFailures = 0
     }
 
-    /** Sessão USB nova ou encerrada: tudo volta ao início. */
+    /**
+     * Sessão USB nova ou encerrada: tudo volta ao início. É, com [onReread] (leitura completa, nova e posterior do
+     * combustível alvo), a única saída da releitura obrigatória: invalidação de round ou confirmação manual não
+     * leem o alvo e não liberam nada.
+     */
     fun resetSession() {
         lastSuccessAtMs = null
         blockedUntilMs = 0L
-        needsReread = false
+        rereadPendingSince.clear()
         disabledReason = null
         consecutiveFailures = 0
         lastDecision = ""
@@ -157,9 +198,11 @@ class AutoIdlePointCleaner(
         .put("lastSuccessAtElapsedMs", lastSuccessAtMs ?: JSONObject.NULL)
         .put("blockedUntilElapsedMs", blockedUntilMs)
         .put("needsReread", needsReread)
+        .put("rereadPendingFuels", JSONArray(rereadPendingSince.keys.map { it.wireName }.sorted()))
         .put("lastDecision", lastDecision)
         .put("minIntervalMs", minIntervalMs)
-        .put("scope", JSONArray().put("GNV"))
+        .put("drivingRpm", drivingRpm)
+        .put("scope", JSONArray().put(Fuel.GAS.wireName).put(Fuel.PETROL.wireName))
 
     companion object {
         /** ACK/readback (~1,2 s) + um snapshot nativo (mediana ~3 s). */

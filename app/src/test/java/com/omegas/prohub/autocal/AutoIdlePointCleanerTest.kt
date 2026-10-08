@@ -22,7 +22,7 @@ class AutoIdlePointCleanerTest {
 
     @Test
     fun `carro parado em marcha lenta nao apaga`() {
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), rpm = 850)), "rodando")
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), rpm = 850)), "rodar")
     }
 
     @Test
@@ -32,7 +32,7 @@ class AutoIdlePointCleanerTest {
 
     @Test
     fun `GNV fora da curva com carro em gasolina espera`() {
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), fuel = "GASOLINA")), "rodando")
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), fuel = "GASOLINA")), "rodar")
     }
 
     @Test
@@ -58,7 +58,7 @@ class AutoIdlePointCleanerTest {
 
     @Test
     fun `quadro velho de telemetria nao conta como andando`() {
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), frameAt = 17_000)), "rodando")
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), frameAt = 17_000)), "rodar")
     }
 
     @Test
@@ -76,8 +76,8 @@ class AutoIdlePointCleanerTest {
 
     @Test
     fun `AUTO_CAL_ENABLE diferente de 1 nao age`() {
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), enabled = 0)), "AUTO_CAL_ENABLE")
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), enabled = null)), "AUTO_CAL_ENABLE")
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), enabled = 0)), "aprendizado")
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4), enabled = null)), "aprendizado")
     }
 
     @Test
@@ -92,18 +92,54 @@ class AutoIdlePointCleanerTest {
 
     @Test
     fun `falha com mutacao possivel bloqueia 10 s e exige releitura`() {
-        cleaner.onFailed(20_000, mutationMayHaveStarted = true)
-        assertWait(cleaner.decide(input(now = 31_000, marks = listOf(4))), "releitura")
-        cleaner.onReread()
-        assertWait(cleaner.decide(input(now = 29_000, marks = listOf(4))), "bloqueado")
+        cleaner.onFailed(20_000, mutationMayHaveStarted = true, fuels = setOf(Fuel.GAS))
+        assertWait(cleaner.decide(input(now = 31_000, marks = listOf(4))), "leitura nova")
+        cleaner.onReread(Fuel.GAS, observedAtElapsedMs = 21_000)
+        assertWait(cleaner.decide(input(now = 29_000, marks = listOf(4))), "depois de uma falha")
         assertTrue(cleaner.decide(input(now = 31_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
+    }
+
+    @Test
+    fun `releitura so libera com o combustivel do alvo e instante posterior a falha`() {
+        cleaner.onFailed(20_000, mutationMayHaveStarted = true, fuels = setOf(Fuel.GAS))
+        cleaner.onReread(Fuel.PETROL, observedAtElapsedMs = 25_000)
+        assertWait(cleaner.decide(input(now = 31_000, marks = listOf(4))), "leitura nova")
+        cleaner.onReread(Fuel.GAS, observedAtElapsedMs = 20_000) // mesmo instante da falha: pode ser replay
+        assertWait(cleaner.decide(input(now = 31_000, marks = listOf(4))), "leitura nova")
+        cleaner.onReread(Fuel.GAS, observedAtElapsedMs = 19_000) // leitura de antes da falha
+        assertWait(cleaner.decide(input(now = 31_000, marks = listOf(4))), "leitura nova")
+        cleaner.onReread(Fuel.GAS, observedAtElapsedMs = 20_001)
+        assertTrue(cleaner.decide(input(now = 31_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
+    }
+
+    @Test
+    fun `falha sem combustivel conhecido exige releitura dos dois combustiveis`() {
+        cleaner.onFailed(20_000, mutationMayHaveStarted = true)
+        cleaner.onReread(Fuel.GAS, observedAtElapsedMs = 21_000)
+        assertWait(cleaner.decide(input(now = 31_000, marks = listOf(4))), "leitura nova")
+        cleaner.onReread(Fuel.PETROL, observedAtElapsedMs = 21_000)
+        assertTrue(cleaner.decide(input(now = 31_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
+    }
+
+    @Test
+    fun `contexto do apagamento em voo exige mesmo combustivel rpm quadro fresco e plausivel`() {
+        val frame = { fuel: String, rpm: Int, at: Long, plausible: Boolean ->
+            NativeAnchorTelemetryWindow.Frame(1L, at, rpm, 0.7, 5.0, fuel, plausible = plausible)
+        }
+        assertEquals(null, cleaner.contextReason(Fuel.GAS, frame("GNV", 2_000, 9_800, true), nowElapsedMs = 10_000))
+        assertTrue(cleaner.contextReason(Fuel.GAS, frame("GASOLINA", 2_000, 9_800, true), 10_000)!!.contains("gasolina"))
+        assertTrue(cleaner.contextReason(Fuel.PETROL, frame("GNV", 2_000, 9_800, true), 10_000)!!.contains("GNV"))
+        assertTrue(cleaner.contextReason(Fuel.GAS, frame("GNV", 900, 9_800, true), 10_000)!!.contains("rodar"))
+        assertTrue(cleaner.contextReason(Fuel.GAS, frame("GNV", 2_000, 8_000, true), 10_000)!!.contains("telemetria"))
+        assertTrue(cleaner.contextReason(Fuel.GAS, frame("GNV", 2_000, 9_800, false), 10_000)!!.contains("telemetria"))
+        assertTrue(cleaner.contextReason(Fuel.GAS, null, 10_000)!!.contains("telemetria"))
     }
 
     @Test
     fun `falha sem mutacao tambem consome o intervalo minimo`() {
         // Revisão 2026-10-07: falha na releitura de antes não pode virar Delete a cada 500 ms para sempre.
         cleaner.onFailed(20_000, mutationMayHaveStarted = false)
-        assertWait(cleaner.decide(input(now = 20_500, marks = listOf(4))), "bloqueado")
+        assertWait(cleaner.decide(input(now = 20_500, marks = listOf(4))), "depois de uma falha")
         assertTrue(cleaner.decide(input(now = 25_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
     }
 
@@ -125,9 +161,9 @@ class AutoIdlePointCleanerTest {
 
     @Test
     fun `readback ambiguo consome o intervalo e exige releitura sem desligar`() {
-        cleaner.onSucceeded(20_000, rereadRequired = true)
-        assertWait(cleaner.decide(input(now = 30_000, marks = listOf(4))), "releitura")
-        cleaner.onReread()
+        cleaner.onSucceeded(20_000, rereadRequired = true, fuels = setOf(Fuel.GAS))
+        assertWait(cleaner.decide(input(now = 30_000, marks = listOf(4))), "leitura nova")
+        cleaner.onReread(Fuel.GAS, observedAtElapsedMs = 20_001)
         assertTrue(cleaner.decide(input(now = 30_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
         assertEquals(null, cleaner.disabledReason())
     }
@@ -135,26 +171,10 @@ class AutoIdlePointCleanerTest {
     @Test
     fun `desligado na sessao nao age ate sessao nova`() {
         cleaner.disable("gasolina mudou")
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4))), "desligado")
-        cleaner.reset() // invalidateRound/ação manual: continua desligado e o intervalo continua valendo
-        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4))), "desligado")
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4))), "pausada")
+        assertWait(cleaner.decide(input(now = 20_000, marks = listOf(4))), "pausada")
         cleaner.resetSession()
         assertTrue(cleaner.decide(input(now = 20_000, marks = listOf(4))) is AutoIdlePointCleaner.Decision.Delete)
-    }
-
-    @Test
-    fun `reset preserva o intervalo de 5 s do ultimo apagamento`() {
-        cleaner.onSucceeded(20_000)
-        cleaner.reset()
-        assertWait(cleaner.decide(input(now = 22_000, marks = listOf(4))), "Intervalo")
-    }
-
-    @Test
-    fun `reset nao libera o bloqueio de falha com mutacao possivel`() {
-        cleaner.onFailed(20_000, mutationMayHaveStarted = true)
-        cleaner.reset()
-        cleaner.onReread()
-        assertWait(cleaner.decide(input(now = 21_000, marks = listOf(4))), "bloqueado")
     }
 
     @Test
