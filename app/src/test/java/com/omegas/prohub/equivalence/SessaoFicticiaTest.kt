@@ -363,14 +363,20 @@ class SessaoFicticiaTest {
         // repovoando: a gasolina volta a aprender (contador sobe)
         take("5-repovoando", 1, 6, 10)
         take("6-repovoado", 1, 10, 10)
-        // (5) RESET gasolina: a proposta ancorada na nativa some (nada velho em cache) e volta ao repovoar, igual à anterior.
-        val m = { n: String -> moments.getJSONObject(n).getJSONObject("equivalence") }
-        assertTrue("(5) antes do reset há proposta", proposals.getValue("3-proposta-pronta").applies)
-        assertTrue("(5) depois do reset a proposta some", !proposals.getValue("4-depois-do-reset-gasolina").applies)
-        assertTrue("(5) repovoado volta a proposta", proposals.getValue("6-repovoado").applies)
-        assertTrue("(5) repovoado volta aos mesmos K", proposals.getValue("3-proposta-pronta").raw.contentEquals(proposals.getValue("6-repovoado").raw))
-        assertTrue("(5) depois do reset a proposta mudou (nao ficou a velha em cache)", m("4-depois-do-reset-gasolina").toString() != m("3-proposta-pronta").toString())
-        assertEquals("(5) repovoado volta a proposta da nativa", m("3-proposta-pronta").toString().length / 50, m("6-repovoado").toString().length / 50)
+        // (5) Reset apenas dos BUFFERS NATIVOS não apaga pares próprios; curva K não mudou.
+        val ready = proposals.getValue("3-proposta-pronta")
+        val nativeReset = proposals.getValue("4-depois-do-reset-gasolina")
+        val reloaded = proposals.getValue("6-repovoado")
+        assertTrue("(5) havia proposta própria", ready.applies)
+        assertTrue("(5) reset nativo não apaga aprendizado próprio", nativeReset.applies)
+        assertTrue("(5) repovoamento mantém proposta", reloaded.applies)
+        assertTrue("(5) reset nativo conserva exatamente a proposta da Curva K",
+            ready.raw.contentEquals(nativeReset.raw))
+        assertTrue("(5) repovoamento não fabrica novos valores de K",
+            ready.raw.contentEquals(reloaded.raw))
+        val beforeNative = moments.getJSONObject("3-proposta-pronta").getJSONObject("snapshot").toString()
+        val afterNative = moments.getJSONObject("4-depois-do-reset-gasolina").getJSONObject("snapshot").toString()
+        assertTrue("(5) reset nativo realmente alterou a aquisição lida", beforeNative != afterNative)
         File(out, "momentos.json").writeText(moments.toString())
     }
 }
