@@ -147,12 +147,20 @@ html body .ar-autocal .autocal-chart-overlay #autocalActionStatus { margin: 0; p
 html body[data-omegas-route="autocal"] #alertToast.alert-toast { top: auto; bottom: 86px; left: auto; right: 12px; width: 340px; max-height: 58px; padding: 4px 10px; overflow: hidden; }
 html body[data-omegas-route="autocal"] #alertToast.alert-toast b { font-size: 18px; line-height: 1.15; }
 
-/* Quatro zonas por combustível: painel persistente, sem depender do recorte físico em MAP. */
-.ar-autocal .autocal-zone-rail { pointer-events: none; }
-.ar-autocal .autocal-zone-pin-bg { fill: var(--chart-bg); stroke: var(--line); stroke-width: 1.4; opacity: .94; }
-.ar-autocal .autocal-zone-pinned[data-current="true"] .autocal-zone-pin-bg { stroke: var(--tone-5dd39e); stroke-width: 2.1; }
-.ar-autocal .autocal-zone-rail-state { font-size: 16px; font-weight: 800; fill: var(--muted); }
-.ar-autocal .autocal-zone-rail-state.petrol[data-state="acquired"] { fill: var(--warn); }
-.ar-autocal .autocal-zone-rail-state.gas[data-state="acquired"] { fill: var(--tone-5dd39e); }
-.ar-autocal .autocal-zone-rail-state[data-state="missing"] { fill: var(--danger); }
-.ar-autocal .autocal-zone-rail-state[data-state="unknown"] { fill: var(--muted); }
+
+/* Quatro zonas em HTML: nunca dependem de SVG, escala, pontos ou da etapa do AutoMatch. */
+.ar-autocal .autocal-zone-meter { display: flex; align-items: center; justify-content: center; flex-wrap: nowrap; gap: 5px; min-width: 0; flex: 0 1 auto; }
+.ar-autocal .autocal-zone-item { display: flex; align-items: center; justify-content: center; gap: 4px; height: 32px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 7px; background: var(--chart-bg); white-space: nowrap; font-size: 15px; line-height: 1; font-weight: 800; }
+.ar-autocal .autocal-zone-item > b { color: var(--text); }
+.ar-autocal .autocal-zone-cell { min-width: 26px; height: 22px; display: inline-flex; gap: 2px; align-items: center; justify-content: center; color: var(--muted); border: 1px solid transparent; border-radius: 5px; }
+.ar-autocal .autocal-zone-cell.petrol::before { content: 'P'; color: var(--warn); font-size: 12px; }
+.ar-autocal .autocal-zone-cell.gas::before { content: 'G'; color: var(--tone-5dd39e); font-size: 12px; }
+.ar-autocal .autocal-zone-cell small { font-size: 12px; font-weight: 900; }
+.ar-autocal .autocal-zone-cell[data-state="acquired"] { color: var(--tone-5dd39e); }
+.ar-autocal .autocal-zone-cell.petrol[data-state="acquired"] { color: var(--warn); }
+.ar-autocal .autocal-zone-cell[data-state="missing"] { color: var(--danger); }
+.ar-autocal .autocal-zone-cell[data-current="true"] { border-color: var(--tone-5dd39e); background: rgba(var(--rgb-58-208-149),.11); }
+@media (max-width: 1050px) {
+  .ar-autocal .autocal-zone-meter { gap: 3px; }
+  .ar-autocal .autocal-zone-item { gap: 2px; padding: 1px 3px; }
+}
