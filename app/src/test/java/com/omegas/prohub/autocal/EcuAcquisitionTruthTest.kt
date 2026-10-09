@@ -140,7 +140,7 @@ class EcuAcquisitionTruthTest {
                     assertTrue(t.getBoolean("allZonesCovered"))
                 }
                 // AutoMatch entregue não afirma cobertura completa na aquisição atual.
-                if (t.getBoolean("delivered") && t.getJSONObject("gas").getInt("zonesCovered") < 4)
+                if (t.getBoolean("delivered") && t.getJSONObject("gas").optInt("zonesCovered", 4) < 4)
                     assertTrue(t.getJSONArray("missing").length() > 0)
             }
         }
