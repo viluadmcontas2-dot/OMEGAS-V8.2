@@ -75,9 +75,8 @@ class EquivalencePhases(
          */
         val PHASE_BUDGET_MS = mapOf(
             "LENDO_ECU" to 30_000L,
-            "ECU_TRABALHANDO" to 40 * 60_000L,
-            "COLETANDO_NOSSOS" to 40 * 60_000L,
-            "PROPOSTA_PRONTA" to 30 * 60_000L,
+            // Refino e aquisição não têm relógio que "encerra tentativa".
+            // Sem limite de condução: o estado muda apenas por evidência e pelo ciclo nativo.
             "RESTAURAR_TRECHO" to 30 * 60_000L,
         )
         /** Fases que merecem avisar o motorista uma vez. */
@@ -183,8 +182,9 @@ class EquivalencePhases(
             val ecuRead = count != null
             val readFailure = liveMonitor?.optString("readFailure")?.takeIf { liveMonitor.has("readFailure") && !liveMonitor.isNull("readFailure") && it.isNotBlank() }
             val fresh = if (!ecuOnline) null else when {
-                enabled == 0 -> "AUTOCAL_DESLIGADO"
-                max != null && count != null && count >= max -> "MAX_AUTOMATCH"
+                // O único portão operacional do Refino: AutoCal executado e ainda habilitado.
+                // AutoCal desligado NÃO autoriza refinar/gravar só por estar parado.
+                enabled == 1 && max != null && count != null && count >= max -> "MAX_AUTOMATCH"
                 // Contador ausente neste tick: a conclusão NÃO sobrevive (falha fechada; RefinementLifecycleRegressionTest).
                 else -> null
             }
