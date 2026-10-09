@@ -79,7 +79,10 @@ class EquivalencePhasesTest {
     @Test
     fun `todas as faixas dentro de 3 por cento pode desconectar`() {
         val p = pilot()
-        val r = p.observe(true, monitor(0, enabled = 0), acquisition(0, 0), index(1.01 to 20, 0.99 to 20, 1.02 to 12, null to 0, null to 0), noJournal, 0)
+        val evidence = index(1.01 to 20, 0.99 to 20, 1.02 to 12, null to 0, null to 0)
+        val blocked = p.observe(true, monitor(0, enabled = 0), acquisition(0, 0), evidence, noJournal, 0)
+        assertFalse("AutoCal desligado nunca autoriza a desconexao como estavel", blocked.getBoolean("canDisconnect"))
+        val r = p.observe(true, monitor(3, enabled = 1), acquisition(0, 0), evidence, noJournal, 0)
         assertEquals("ESTAVEL", r.getString("phase"))
         assertTrue(r.getBoolean("canDisconnect"))
     }
