@@ -348,7 +348,7 @@
     const width = Math.max(320, Math.round(o.width || 1000));
     const height = Math.max(160, Math.round(o.height || 400));
     const between = o.mode === 'between';
-    const zones = between ? [] : (model.zones || []);
+    const zones = between ? [] : ((model.zones || []).length === 4 ? model.zones : Array.from({ length: 4 }, (_, i) => ({ zone: i + 1, lower: null, upper: null, petrolState: 'unknown', gasState: 'unknown' })));
     const padLeft = 88; const padRight = 32; const padTop = 12; const padBottom = 48;
     const reference = model.reference || [];
     const domain = model.domain;
@@ -386,28 +386,23 @@
     const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 5).toFixed(1)}" text-anchor="end">${tick(v, 3)}</text>`).join('') +
       xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - padBottom + 20}" text-anchor="middle">${tick(v, 1)}</text>`).join('');
 
+    // As bandas físicas podem sair da escala; o painel das 4 zonas não pode desaparecer.
     const zoneMarkup = zones.map(zone => {
-      const lower = Math.max(zone.lower, yMin);
-      const upper = Math.min(zone.upper, yMax);
+      if (!Number.isFinite(zone.lower) || !Number.isFinite(zone.upper)) return '';
+      const lower = Math.max(zone.lower, yMin), upper = Math.min(zone.upper, yMax);
       if (upper <= lower) return '';
-      const top = Math.min(yFor(lower), yFor(upper));
-      const zoneHeight = Math.abs(yFor(lower) - yFor(upper));
-      const label = state => state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
-      const caption = `Z${zone.zone} · Gasolina ${label(zone.petrolState)} · GNV ${label(zone.gasState)}`;
-      const right = width - padRight;
-      const cy = top + zoneHeight / 2;
-      const bothMissing = zone.petrolState === 'missing' && zone.gasState === 'missing';
-      const missing = bothMissing ? 'both' : zone.petrolState === 'missing' ? 'petrol' : zone.gasState === 'missing' ? 'gas' :
-        zone.petrolState === 'acquired' && zone.gasState === 'acquired' ? 'complete' : 'unknown';
-      const dot = bothMissing
-        ? `<g class="autocal-zone-dots" data-zone-missing="both"><circle class="autocal-zone-dot gas" cx="${right - 25}" cy="${cy.toFixed(1)}" r="6"></circle><circle class="autocal-zone-dot petrol" cx="${right - 9}" cy="${cy.toFixed(1)}" r="6"></circle></g>`
-        : `<circle class="autocal-zone-dot ${missing}" data-zone-missing="${missing}" cx="${right - 17}" cy="${cy.toFixed(1)}" r="6"></circle>`;
-      return `<g class="autocal-zone-surface" data-autocal-zone-surface="${zone.zone}" data-gas-state="${zone.gasState}" data-petrol-state="${zone.petrolState}" data-current="false" aria-label="${caption}">` +
-        `<rect class="autocal-zone-background" x="${padLeft}" y="${top.toFixed(1)}" width="${width - padLeft - padRight}" height="${zoneHeight.toFixed(1)}"></rect>` +
-        (zoneHeight >= 24 ? `<line class="autocal-zone-edge" x1="${right - 52}" y1="${cy.toFixed(1)}" x2="${right - 30}" y2="${cy.toFixed(1)}"></line>` +
-          `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="Z${zone.zone}" x="${right - 58}" y="${(cy + 5).toFixed(1)}" text-anchor="end">Z${zone.zone}</text>${dot}` : '') + '</g>';
+      const top = Math.min(yFor(lower), yFor(upper)), h = Math.abs(yFor(lower) - yFor(upper));
+      return `<rect class="autocal-zone-background" data-autocal-zone-surface="${zone.zone}" x="${padLeft}" y="${top.toFixed(1)}" width="${width - padLeft - padRight}" height="${h.toFixed(1)}"></rect>`;
     }).join('');
-
+    const rail = between ? '' : zones.map((zone, i) => {
+      const x = width - padRight - 166, y = padTop + 16 + i * 32;
+      const word = state => state === 'acquired' ? '✓' : state === 'missing' ? 'F' : '?';
+      return `<g class="autocal-zone-pinned" data-autocal-zone-rail="${zone.zone}" data-current="false" aria-label="Zona ${zone.zone}; gasolina ${zone.petrolState}; GNV ${zone.gasState}">` +
+        `<rect class="autocal-zone-pin-bg" x="${x}" y="${y - 14}" width="164" height="29" rx="6"></rect>` +
+        `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="Z${zone.zone}" x="${x + 8}" y="${y + 5}">Z${zone.zone}</text>` +
+        `<text class="autocal-zone-rail-state petrol" data-state="${zone.petrolState}" x="${x + 51}" y="${y + 5}">P:${word(zone.petrolState)}</text>` +
+        `<text class="autocal-zone-rail-state gas" data-state="${zone.gasState}" x="${x + 105}" y="${y + 5}">G:${word(zone.gasState)}</text></g>`;
+    }).join('');
     const refMarkup = reference.map(p => {
       if (p.petrolMs > xMax) return '';
       const x = xFor(p.petrolMs).toFixed(1);
@@ -458,7 +453,7 @@
     const equivalent = reference.filter(p => finite(p.gasEquivalentMs) !== null);
     const equivalencePath = between && equivalent.length > 1 ? `<path class="autocal-equivalence-line" d="${pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs')}"></path>` : '';
 
-    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>` +
+    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g><g class="autocal-zone-rail">${rail}</g>` +
       `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção de gasolina (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${equivalencePath}` +
