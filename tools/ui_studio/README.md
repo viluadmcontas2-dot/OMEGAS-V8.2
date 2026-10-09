@@ -45,3 +45,10 @@ Ao executar o `ci.yml` por `workflow_dispatch`, a mesma prova visual é executad
 - Mudar de cenário recarrega o aplicativo, mantendo a lista de mudanças; alguns seletores dinâmicos podem não existir em todos os estados.
 - O desenho é uma anotação, não um componente de produção. Uma marca não remove funcionalidade automaticamente.
 - O JSON exportado não inclui dump original nem registros sensíveis do veículo.
+
+
+## Inspector e AutoCal dinâmico
+
+Os rascunhos são isolados por elemento, aba e cenário. Largura e altura são editáveis em pixels; a prévia mede o resultado real e permite Comparar original, Desfazer e exportar registros `resize`.
+
+No cenário em aquisição, `simulator.js` simula o ciclo de escrita e readback dos botões reais de releitura. Limpa apenas o combustível solicitado e mantém aprendizado ligado. Os pontos reaparecem gradualmente (4 segundos por ponto no ritmo normal). Combustível e ritmo são controlados na oficina. A telemetria é suavizada; a aquisição e a confirmação são sintéticas e não reproduzem critérios físicos da ECU nem provam calibração. Os outros cenários preservam suas fixtures.

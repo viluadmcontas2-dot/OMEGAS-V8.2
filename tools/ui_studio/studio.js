@@ -9,7 +9,7 @@ const drafts=new Map(), originalSizes=new Map();
 let noteKey=null;
 function syncNote(){
  const key=st.selected?st.route+'|'+st.scenario+'|'+st.selected.selector:null;
- if(key!==noteKey){if(noteKey)drafts.set(noteKey,$('note-input').value);noteKey=key;$('note-input').value=key?(drafts.get(key)||''):'';}
+ if(key!==noteKey){if(noteKey)drafts.set(noteKey,$('note-input').value);noteKey=key;$('size-feedback').textContent='';$('note-input').value=key?(drafts.get(key)||''):'';}
  $('note-input').disabled=!key;$('note-save').disabled=!key;
 }
 const TOOL_TIPS={
@@ -19,7 +19,7 @@ const TOOL_TIPS={
  interact:'Os botões reais funcionam com uma ECU simulada. Nenhuma gravação física.'
 };
 const SCENARIOS={
- learning:{scn:{autoMatch:0,zonesGas:[0,0,0,0],zonesPetrol:[1,1,1,1]}},
+ learning:{scn:{workshopDynamic:true,autoMatch:0,zonesGas:[0,0,0,0],zonesPetrol:[1,1,1,1]}},
  gasmissing:{scn:{autoMatch:1,zonesGas:[1,0,0,1],zonesPetrol:[1,1,1,1]}},
  petrolmissing:{scn:{autoMatch:1,zonesGas:[1,1,1,1],zonesPetrol:[1,0,0,1]}},
  all:{scn:{autoMatch:3,zonesGas:[1,1,1,1],zonesPetrol:[1,1,1,1]}},
@@ -268,25 +268,28 @@ function scenarioChanged(name){
  refreshFrame();
 }
 async function loadSource(){
- const [html,mock,data]=await Promise.all([
+ const [html,mock,data,simulator]=await Promise.all([
    fetch(APP).then(r=>{if(!r.ok)throw Error('index.html do app não encontrado');return r.text()}),
    fetch(MOCK).then(r=>{if(!r.ok)throw Error('Bridge de teste ausente');return r.text()}),
-   fetch(API).then(r=>{if(!r.ok)throw Error('Fixture real indisponível');return r.json()})
+   fetch(API).then(r=>{if(!r.ok)throw Error('Fixture real indisponível');return r.json()}),
+   fetch('/tools/ui_studio/simulator.js').then(r=>{if(!r.ok)throw Error('Simulador ausente');return r.text()})
  ]);
  if(!data.snapshot||!Array.isArray(data.frames)||data.frames.length<2)throw Error('Fixture inválida');
- return {html,mock,data};
+ return {html,mock,data,simulator};
 }
 let source=null;
 function injectSrcdoc(){
  const setup=SCENARIOS[st.scenario]||SCENARIOS.learning;
  const inject='window.__DATA='+JSON.stringify(source.data).replace(/</g,'\\u003c')+';'+
-   'window.__MODE='+JSON.stringify(setup.mode||'connected')+';window.__SPEED=3;'+
+   'window.__MODE='+JSON.stringify(setup.mode||'connected')+';window.__SPEED=0.65;'+
    'window.__SCN='+JSON.stringify(setup.scn||{})+';';
  const scripts='<script>'+inject.replace(/<\/script/gi,'<\\/script')+'<\/script>'+
-  '<script>'+source.mock.replace(/<\/script/gi,'<\\/script')+'<\/script>';
+  '<script>'+source.mock.replace(/<\/script/gi,'<\\/script')+'<\/script>'+
+  '<script>'+source.simulator.replace(/<\/script/gi,'<\\/script')+'<\/script>';
  return source.html.replace(/<head[^>]*>/i, '$&<base href="/app/src/main/assets/ui/">')
    .replace('</head>',scripts+'</head>');
 }
+function configureSimulation(){const simulator=frameWindow()?.__workshopSimulator;if(simulator){simulator.setFuel($('sim-fuel').value);simulator.setSpeed($('sim-speed').value);}}
 function refreshFrame(){
  st.selected=null;updateSelection();
  st.ready=false;status('Recarregando dados da ECU simulada...');
@@ -305,7 +308,7 @@ function refreshFrame(){
          status('Ativo · '+st.route+' · ECU simulada');
          setTimeout(refreshApplied,130);
        },true);
-       navigate(st.route);
+       configureSimulation();navigate(st.route);
        st.ready=true;status('Ativo · '+st.route+' · '+$('scenario').selectedOptions[0].textContent);
        refreshApplied();
        setTimeout(refreshApplied,500);
@@ -331,6 +334,7 @@ function setup(){
  document.querySelectorAll('[data-studio-route]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.studioRoute)));
  $('all-routes').addEventListener('change',e=>{if(e.target.value)navigate(e.target.value)});
  $('scenario').addEventListener('change',e=>scenarioChanged(e.target.value));
+ $('sim-fuel').addEventListener('change',configureSimulation);$('sim-speed').addEventListener('change',configureSimulation);
  $('restart').addEventListener('click',refreshFrame);
  $('undo').addEventListener('click',undo);
  $('compare').addEventListener('click',()=>compare(!st.compare));

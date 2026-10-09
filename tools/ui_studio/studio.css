@@ -57,3 +57,5 @@ select:hover{border-color:#83ccb6}.field-label{display:block;font-size:12px;colo
 
 
 .size-controls {display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 0}.size-controls label {font-size:12px;color:var(--muted,#a9b8ca)}.size-controls input {display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:10px;background:#101a22;color:#eef6f6;border:1px solid #38525e;border-radius:8px;font:inherit}.size-controls input:disabled{opacity:.45}#size-feedback{font-size:12px;line-height:1.4;color:#a1e8ca}
+
+.simulation-controls{display:grid;gap:8px;margin:18px 0;font-size:12px}.simulation-controls select{width:100%;padding:10px;background:#101a22;color:#eef6f6;border:1px solid #38525e;border-radius:8px}.simulation-controls p{color:#a9b8ca;line-height:1.4;margin:0}
