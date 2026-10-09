@@ -254,6 +254,7 @@
       return {
         index: pick(b, ['index']) ?? i,
         kind: String(b.kind || 'gap'),
+        regime: String(b.regime || ''),
         state: collected ? 'collected' : 'missing',
         centerMs: pick(b, ['centerMs']),
         centerMapBar: pick(b, ['centerMapBar']),
@@ -280,7 +281,7 @@
     const fuels = [b.gas ? ['GNV', b.gas] : null, b.petrol ? ['Gasolina', b.petrol] : null].filter(Boolean);
     const first = fuels[0];
     parts.push(first ? first[0] : 'Falta medir');
-    parts.push(b.kind === 'local' ? 'região própria do OMEGAS' : `entre os pontos ${Number(b.index) + 1} e ${Number(b.index) + 2} da ECU`);
+    parts.push(b.kind === 'local' ? 'região própria do OMEGAS' + (b.regime === 'LENTA' ? ' · marcha lenta' : b.regime === 'CONDUCAO' ? ' · condução' : '') : `entre os pontos ${Number(b.index) + 1} e ${Number(b.index) + 2} da ECU`);
     const ms = first ? first[1].ms : b.centerMs;
     if (finite(ms) !== null) parts.push(`${number(ms, 2)} ms`);
     parts.push(first ? 'já medido' : 'ainda sem medida');
@@ -435,7 +436,7 @@
       const place = (side, cls) => {
         if (!side || side.mapBar < yMin || side.mapBar > yMax || side.ms > xMax) return;
         const x = xFor(side.ms); const y = yFor(side.mapBar);
-        shapes.push(`<circle class="autocal-acquired-hit${o.selected && o.selected.our === `b:${i}` ? ' selected' : ''}" ${token} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="22"></circle>` + dot(`${cls} ${b.state === 'collected' ? 'collected' : 'learning'}`, x, y));
+        shapes.push(`<circle class="autocal-acquired-hit${o.selected && o.selected.our === `b:${i}` ? ' selected' : ''}" ${token} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="22"></circle>` + dot(`${cls} ${b.state === 'collected' ? 'collected' : 'learning'}`, x, y, b.regime === 'LENTA' ? ' data-regime="LENTA"' : ''));
       };
       place(b.gas, 'gas'); place(b.petrol, 'petrol');
       if (!shapes.length && b.state === 'missing' && finite(b.centerMs) !== null && finite(b.centerMapBar) !== null && inY(b.centerMapBar) && b.centerMs <= xMax) {
