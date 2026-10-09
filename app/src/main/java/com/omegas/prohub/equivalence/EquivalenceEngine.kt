@@ -203,8 +203,9 @@ object EquivalenceEngine {
         val x = k.map { ln(it) }
         val usage = input.usage.byPoint(axis, ownP)
         // Fonte única: o mesmo casamento por RPM×MAP do livro (gasolina própria, ou a curva da ECU onde não há) para veredito e proposta.
-        val ecuRef = prior?.let { EvidencePairs.cleanReference(it.points.map { p -> p.mapBar to p.petrolMs }) } ?: emptyList()
-        val pairs = EvidencePairs.build(input.petrolObs, input.gasObs, ecuRef)
+        // Refino próprio só compara gasolina e GNV aprendidos pelo OMEGAS; AutoCal nativo
+        // é condição de liberação operacional, não fabrica pares nem fundamenta proposta.
+        val pairs = EvidencePairs.build(input.petrolObs, input.gasObs, emptyList())
             .filter { it.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS }
         val pairU = DoubleArray(pairs.size) { ln(pairs[it].petrolRefMs) }
         val pairLn = DoubleArray(pairs.size) {
@@ -284,10 +285,9 @@ object EquivalenceEngine {
             AutoMatchRefinedEngine.refine(
                 AutoMatchRefinedEngine.Input(
                     axisRaw = input.axisRaw, mulActRaw = input.mulActRaw,
-                    petrolTimeRaw = input.native?.petrolTimeRaw, petrolMapRaw = input.native?.petrolMapRaw,
-                    petrolCounts = input.native?.petrolCounts, gasTimeRaw = input.native?.gasTimeRaw,
-                    gasMapRaw = input.native?.gasMapRaw, gasCounts = input.native?.gasCounts,
-                    pressureThresholdsRaw = input.native?.pressureThresholdsRaw,
+                    petrolTimeRaw = null, petrolMapRaw = null, petrolCounts = null,
+                    gasTimeRaw = null, gasMapRaw = null, gasCounts = null,
+                    pressureThresholdsRaw = null,
                     telemetryPairs = pairs.map { it.petrolRefMs to it.gasPetrolMs }, pointGainScale = input.pointGainScale,
                     telemetryEpisodes = pairs.map { it.episode }, holdMinStepLog = input.holdMinStepLog,
                 ),
@@ -324,8 +324,10 @@ object EquivalenceEngine {
         index: Double?,
     ): NextAction {
         input.operation?.let { return NextAction(NextActionKind.OPERATION, it, null, null, emptyList()) }
-        if (input.reference == null && input.provisional != null) {
-            return NextAction(NextActionKind.FREEZE_REFERENCE, "Salvar a curva atual da ECU como referência", "refino", null, emptyList())
+        // Congelar a referência da ECU é opcional: jamais bloqueia medições próprias confiáveis.
+        val hasOwnEvidence = input.petrolObs.isNotEmpty() && input.gasObs.isNotEmpty()
+        if (!hasOwnEvidence && input.reference == null && input.provisional != null) {
+            return NextAction(NextActionKind.FREEZE_REFERENCE, "Salvar referência da ECU (opcional)", "refino", null, emptyList())
         }
         val contested = points.filter { it.state == PointState.CONTESTADO }
         if (contested.isNotEmpty()) {
@@ -347,7 +349,9 @@ object EquivalenceEngine {
         // Refino = suavizar a curva da ECU com os pontos nossos: o motor refinado (histerese 3,5%, passo máx. 15%, caixa de K,
         // regressão) decide o que mudar; não exige ponto já julgado "fora" quando a própria proposta muda a curva.
         // Sem pontos fora, só suaviza quando ainda não dá para afirmar a equivalência (índice nulo); com índice "Equivalente" fica quieto.
-        if (proposal != null && guarded != null && changed.isNotEmpty() && (off.isNotEmpty() || (index == null && points.none { it.state == PointState.EM_PROVA }))) {
+        val judgedLocally = points.any { it.state == PointState.POBRE || it.state == PointState.RICO || it.state == PointState.EQUIVALENTE }
+        if (proposal != null && guarded != null && changed.isNotEmpty() &&
+            (off.isNotEmpty() || (index == null && judgedLocally && points.none { it.state == PointState.EM_PROVA }))) {
             val head = if (off.isEmpty()) {
                 "${changed.size} ponto${if (changed.size == 1) "" else "s"} para suavizar a curva"
             } else when {
