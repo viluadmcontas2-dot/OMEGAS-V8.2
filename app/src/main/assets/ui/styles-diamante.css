@@ -49,9 +49,9 @@ html body .ar-shell .autocal-reacquire-action { border:1px solid var(--line); co
 html body .ar-shell .ar-chart-card { order:1; flex:1; display:flex; flex-direction:column; min-height:0; padding:0; border:0; background:none; box-shadow:none; border-radius:0; position:relative; gap:6px; }
 html body .ar-shell .ar-legend-row { min-height:26px; flex-shrink:0; }
 html body .ar-shell .ar-legend { font-size:16px; font-weight:400; gap:4px 20px; }
-html body .ar-shell .ar-legend [data-legend="petrol"]::before { background:none; border-top:2px dashed var(--petrol); height:0; }
+html body .ar-shell .ar-legend [data-legend="petrol"]::before { background:none; border-top:2px dashed var(--warn); height:0; }
 html body .ar-shell .ar-chart-host { flex:1; height:100%; min-height:0; border:0; border-radius:0; background:var(--plot); }
-html body .curve-chart-shared .autocal-reference-line.petrol { stroke:var(--petrol); stroke-width:2; stroke-dasharray:7 5; }
+html body .curve-chart-shared .autocal-reference-line.petrol { stroke:var(--warn); stroke-width:2; stroke-dasharray:7 5; }
 html body .curve-chart-shared .autocal-reference-line.gas { stroke:var(--cng); stroke-width:2.5; }
 html body .curve-chart-shared .autocal-grid-line { stroke:var(--line); stroke-opacity:.45; }
 html body .curve-chart-shared text { font-weight:400; }
@@ -96,7 +96,7 @@ html body .side-nav button span { font-size:18px !important; }
 html body .refino-cockpit > .ar-status { order:0 !important; }
 html body .refino-cockpit > .ar-act { order:2 !important; }
 html body .refino-cockpit > .ar-chart-card { order:1 !important; flex:1 1 0; }
-html body .curve-chart-shared .autocal-acquired-point.petrol { fill:var(--petrol); }
+html body .curve-chart-shared .autocal-acquired-point.petrol { fill:var(--warn); }
 html body .curve-chart-shared .autocal-acquired-point.gas { fill:var(--cng); }
 html body .ar-shell .chart-between { stroke-width:2; }
 html body .workspace-head .vehicle-status-strip em { font-size:16px; font-style:normal; color:var(--muted); font-weight:400; }

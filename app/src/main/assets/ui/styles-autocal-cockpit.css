@@ -5,12 +5,12 @@
 .autocal-axis-title { fill: var(--tone-cbd7e4); font-size: 12px; font-weight: 800; letter-spacing: .03em; pointer-events: none; }
 .autocal-grid-line.vertical { stroke: rgba(var(--rgb-255-255-255),.045); }
 .autocal-reference-line { fill: none; stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
-.autocal-reference-line.petrol { stroke: var(--tone-78b7ff); }
+.autocal-reference-line.petrol { stroke: var(--warn); }
 .autocal-reference-line.gas { stroke: var(--tone-5dd39e); }
 .autocal-equivalence-line { display: none; fill: none; stroke: rgba(var(--rgb-240-196-92),.78); stroke-width: 2; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
 .autocal-reference-point { opacity: 0; stroke: var(--tone-081018); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; transition: opacity 120ms ease; }
 .autocal-reference-hit.selected + .autocal-reference-point { opacity: 1; }
-.autocal-reference-point.petrol { fill: var(--tone-78b7ff); }
+.autocal-reference-point.petrol { fill: var(--warn); }
 .autocal-reference-point.gas { fill: var(--tone-5dd39e); }
 .autocal-reference-hit { fill: transparent; cursor: pointer; }
 .autocal-reference-hit.selected { fill: var(--veil-08); stroke: rgba(var(--rgb-255-255-255),.38); stroke-width: 1; vector-effect: non-scaling-stroke; }
@@ -67,7 +67,7 @@
 /* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
 .autocal-reference-line.petrol { stroke-width: 4; opacity: .62; }
 .autocal-reference-line.gas { stroke-width: 2.5; }
-.autocal-reference-point.petrol { fill: var(--tone-07101a); stroke: var(--tone-78b7ff); stroke-width: 2.6; }
+.autocal-reference-point.petrol { fill: var(--tone-07101a); stroke: var(--warn); stroke-width: 2.6; }
 .autocal-reference-point.gas { fill: var(--tone-5dd39e); stroke: var(--tone-d9fff0); stroke-width: 1.2; }
 /* AutoCal operator zone map: preserve ECU Z1..Z4 identity instead of only N/4. */
 
@@ -101,7 +101,7 @@
 /* ProgBase-parity: only current acquired dots expose point reacquisition. */
 .autocal-acquired-hit { fill: transparent; cursor: pointer; pointer-events: all; }
 .autocal-acquired-point { pointer-events: none; stroke: var(--tone-071018); stroke-width: 2.2; vector-effect: non-scaling-stroke; }
-.autocal-acquired-point.petrol { fill: var(--tone-78b7ff); }
+.autocal-acquired-point.petrol { fill: var(--warn); }
 .autocal-acquired-point.gas { fill: var(--tone-5dd39e); }
 .autocal-acquired-point.collecting { fill-opacity: .34; stroke-dasharray: 2.5 2.5; }
 .autocal-acquired-point.acquired { fill-opacity: 1; stroke-width: 2.6; }
@@ -110,9 +110,9 @@
 /* Platina P-002: causal AutoMatch evidence, deterministic and read-only. */
 
 /* DUMP/TAUTOCALUI: PetrolCurve != PetrolPoint/GasPoint != GasPointPrev. Estilos distintos, sem mudar o significado dos vetores originais da ECU. */
-.autocal-reference-line.petrol.epoch-anchor { stroke: var(--tone-78b7ff); stroke-width: 3.8; opacity: .85; }
+.autocal-reference-line.petrol.epoch-anchor { stroke: var(--warn); stroke-width: 3.8; opacity: .85; }
 .autocal-epoch-acquisition-line { fill: none; stroke-width: 2.1; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; stroke-linecap: round; opacity: .72; }
-.autocal-epoch-acquisition-line.petrol { stroke: var(--tone-78b7ff); }
+.autocal-epoch-acquisition-line.petrol { stroke: var(--warn); }
 .autocal-epoch-acquisition-line.gas { stroke: var(--tone-5dd39e); }
 /* ── Refino OMEGAS: mesma linguagem do AutoCal, só o que é novo ── */
 .autocal-fuel-chip[data-fuel-state="collecting"] { border-color: var(--tint-120-183-255-42); color: var(--tone-d6eaff); background: var(--tint-37-82-128-32); }
@@ -134,7 +134,7 @@ html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > b, html body 
 
 /* Faixas sem leitura: círculo tracejado "falta medir" (dono, 2026-10-08). */
 .autocal-missing-point { fill: none; stroke-width: 2.2; stroke-dasharray: 3 3; opacity: .8; pointer-events: none; vector-effect: non-scaling-stroke; }
-.autocal-missing-point.petrol { stroke: var(--tone-78b7ff); }
+.autocal-missing-point.petrol { stroke: var(--warn); }
 .autocal-missing-point.gas { stroke: var(--tone-5dd39e); }
 html body .ar-autocal .autocal-chart-overlay #autocalActionStatus { margin: 0; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--overlay); font-size: 18px; align-self: flex-start; }
 

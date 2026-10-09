@@ -251,6 +251,28 @@ test('F4: legenda em português com as cinco séries humanas, fora do desenho', 
   assert.doesNotMatch(chart.buildSvg({ reference: [], history: [], zones: [], ecu: [], ours: [], between: [], domain: { xMin: 0, xMax: 4, yMin: 0, yMax: 1 }, proposal: [], stalls: [] }, {}).svg, /Curva da gasolina/, 'a legenda não vai dentro do SVG');
 });
 
+test('AutoCal e Refino: gasolina usa o mesmo laranja da bolinha pendente', () => {
+  const cockpitCss = read('styles-autocal-cockpit.css');
+  const sharedCss = read('styles-autocal-refino.css');
+  const finalCss = read('styles-diamante.css');
+  assert.match(cockpitCss, /\.autocal-zone-dot\.petrol\s*\{[^}]*fill:\s*var\(--warn\)/s,
+    'a bolinha pendente da gasolina define a cor semântica laranja');
+  for (const selector of ['autocal-reference-line', 'autocal-reference-point', 'autocal-acquired-point', 'autocal-epoch-acquisition-line', 'autocal-missing-point']) {
+    assert.match(cockpitCss, new RegExp(`\\.${selector}\\.petrol\\s*\\{[^}]*?(?:fill|stroke):\\s*var\\(--warn\\)`, 's'),
+      `${selector} da gasolina acompanha a bolinha laranja`);
+  }
+  assert.match(sharedCss, /\[data-legend="petrol"\]::before\s*\{[^}]*background:\s*var\(--warn\)/s,
+    'a legenda da gasolina acompanha a bolinha laranja');
+  assert.match(sharedCss, /\.chart-between\.petrol\s*\{[^}]*stroke:\s*var\(--warn\)/s,
+    'os pontos próprios do Refino usam o laranja da gasolina');
+  assert.match(finalCss, /\[data-legend="petrol"\]::before\s*\{[^}]*border-top:[^;}]*var\(--warn\)/s,
+    'a legenda final não reverte a gasolina para branco');
+  assert.match(finalCss, /\.autocal-reference-line\.petrol\s*\{[^}]*stroke:\s*var\(--warn\)/s,
+    'a curva da gasolina permanece laranja no CSS final');
+  assert.match(finalCss, /\.autocal-acquired-point\.petrol\s*\{[^}]*fill:\s*var\(--warn\)/s,
+    'os pontos adquiridos da gasolina permanecem laranja no CSS final');
+});
+
 test('AutoCal: cada faixa mostra a zona e uma bolinha do combustível faltante, sem card', () => {
   const { chart } = load();
   const zones = [1, 2, 3, 4].map((zone, index) => ({

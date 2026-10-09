@@ -18,13 +18,13 @@ html body .ar-shell .ar-chart-card { display: grid; gap: var(--space-1); padding
 html body .ar-shell .ar-legend-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: 28px; }
 html body .ar-shell .ar-legend { display: flex; flex-wrap: wrap; gap: 2px var(--space-4); color: var(--muted); font-size: 18px; font-weight: 600; line-height: 1.3; }
 html body .ar-shell .ar-legend span::before { content: ''; display: inline-block; width: 16px; height: 4px; margin-right: 6px; border-radius: 99px; vertical-align: middle; background: var(--dim); }
-html body .ar-shell .ar-legend [data-legend="petrol"]::before { background: var(--petrol); }
+html body .ar-shell .ar-legend [data-legend="petrol"]::before { background: var(--warn); }
 html body .ar-shell .ar-legend [data-legend="gas"]::before { background: var(--cng); }
 html body .ar-shell .ar-legend [data-legend="live"]::before { background: var(--tone-19daf4); }
 html body .ar-shell .ar-legend [data-legend="proposal"]::before { width: 12px; height: 12px; border: 2px solid var(--accent); border-radius: 50%; background: transparent; }
 html body .ar-shell .ar-legend [data-legend="stall"]::before { content: '✕'; width: auto; height: auto; background: none; color: var(--danger); font-weight: 900; }
-html body .ar-shell .ar-legend [data-legend="ecudot"]::before { width: 12px; height: 12px; border-radius: 50%; background: var(--petrol); box-shadow: 8px 0 0 -1px var(--cng); margin-right: 16px; }
-html body .ar-shell .ar-legend [data-legend="ourdot"]::before { width: 10px; height: 10px; border: 2px solid var(--petrol); border-radius: 50%; background: var(--surface); box-shadow: 8px 0 0 -1px var(--cng); margin-right: 16px; }
+html body .ar-shell .ar-legend [data-legend="ecudot"]::before { width: 12px; height: 12px; border-radius: 50%; background: var(--warn); box-shadow: 8px 0 0 -1px var(--cng); margin-right: 16px; }
+html body .ar-shell .ar-legend [data-legend="ourdot"]::before { width: 10px; height: 10px; border: 2px solid var(--warn); border-radius: 50%; background: var(--surface); box-shadow: 8px 0 0 -1px var(--cng); margin-right: 16px; }
 html body .ar-shell .ar-legend [data-legend="ourmissing"]::before { width: 10px; height: 10px; border: 2px dashed var(--dim); border-radius: 50%; background: transparent; }
 html body .ar-shell .ar-chart-host { position: relative; width: 100%; height: clamp(300px, calc(100vh - 300px), 640px); overflow: hidden; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--chart-bg); }
 html body .ar-shell .ar-chart-host .curve-chart-shared, html body .ar-chart-host .autocal-reference-svg { display: block; width: 100%; height: 100%; }
@@ -33,7 +33,7 @@ html body .ar-shell .ar-chart-host .chart-empty b { color: var(--text); font-siz
 
 /* nossos pontos (Refino): bolinhas do mesmo tamanho das da ECU, nas cores de cada combustível */
 html body .ar-shell .chart-between { stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; }
-html body .ar-shell .chart-between.petrol { fill: var(--surface); stroke: var(--petrol); }
+html body .ar-shell .chart-between.petrol { fill: var(--surface); stroke: var(--warn); }
 html body .ar-shell .chart-between.gas { fill: var(--surface); stroke: var(--cng); }
 html body .ar-shell .chart-between.missing { fill: none; stroke: var(--dim); stroke-dasharray: 3 3; stroke-width: 2.5; }
 html body .ar-shell .autocal-acquired-hit.selected + .chart-between { stroke-width: 5; fill: var(--accent-soft); }
