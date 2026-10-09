@@ -62,7 +62,7 @@ test('Reler gasolina não desenha curva GNV falsa nem placeholders calculados co
         svg:count('svg.autocal-reference-svg'),
         stalePetrolCurve:count('path.autocal-reference-line.petrol'),
         stalePetrolAnchor:count('circle.autocal-reference-point.petrol'),
-        zoneText:[...host.querySelectorAll('[data-autocal-zone-label]')].map(n=>n.textContent.trim()),
+        zoneText:[...document.querySelectorAll('#autocalZoneMeter [data-autocal-zone-row]')].map(n=>n.textContent.trim()),
       };
     });
     await page.screenshot({path:path.join(OUT,'reread-gasolina.png')});
@@ -80,16 +80,13 @@ test('Reler gasolina não desenha curva GNV falsa nem placeholders calculados co
       const cockpit = window.OmegasApp.autoCalCockpit;
       const layer = document.querySelector('#autocalReferenceChart .autocal-live-layer');
       const label = layer.querySelector('[data-autocal-live-label]');
-      const zones = [...document.querySelectorAll('#autocalReferenceChart [data-autocal-zone-label]')];
+      const zones = [...document.querySelectorAll('#autocalZoneMeter [data-autocal-zone-row]')];
       const overlaps = (a,b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
-      return zones.flatMap(zone => {
-        const box = zone.getBBox();
-        cockpit.cursor.clear();
-        cockpit.cursor.setTarget(box.x + box.width / 2, box.y + box.height / 2, cockpit.chartScale, false);
-        cockpit.cursor.paint();
-        const liveBox = label.getBoundingClientRect();
-        return zones.filter(z => overlaps(liveBox,z.getBoundingClientRect())).map(z => z.textContent);
-      });
+      if (zones.length !== 4) throw new Error('As quatro zonas desapareceram depois da releitura');
+      return zones.filter(zone => {
+        const box = zone.getBoundingClientRect();
+        return box.width <= 0 || box.height <= 0 || overlaps(label.getBoundingClientRect(), box);
+      }).map(zone => zone.dataset.autocalZoneRow);
     });
     assert.deepEqual(collisions, [], 'AGORA precisa de espaço próprio em todas as zonas');
     assert.equal(errors.filter(s=>s.startsWith('pageerror:')).length,0);
