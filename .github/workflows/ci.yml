@@ -56,6 +56,8 @@ jobs:
           test -n "$OMEGAS_CHROMIUM" && test -x "$OMEGAS_CHROMIUM" || { echo "::error::Chromium ausente; teste de latencia NAO pode ser ignorado"; exit 1; }
           python3 tests/ui/render/prep.py /tmp/omegas-render-data.json
           node tools/ui_stress/autocal-transport-causality.cjs
+          export OMEGAS_PETROL_REREAD_OUT="$OMEGAS_REVISION_STRESS_OUT/petrol-reread"
+          node --test tests/ui/autocal-reread-petrol-visual.test.cjs
       - name: Capturas AutoCal revisoes (OMEGASCINZA)
         if: always() && github.ref == 'refs/heads/OMEGASCINZA'
         uses: actions/upload-artifact@v4

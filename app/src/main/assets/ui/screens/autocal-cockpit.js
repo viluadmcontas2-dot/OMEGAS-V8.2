@@ -1707,6 +1707,9 @@
       const sourceNarrative = petrolCurve.length
         ? 'Linha contínua = referência gasolina da ECU preservada. '
         : 'Sem curva gasolina temporalmente válida nesta etapa. ';
+      // Pontos previstos dependem da referência de gasolina desta época. Se ela
+      // foi zerada, não projetar círculos fantasmas a partir da curva antiga.
+      const petrolReferenceReady = epoch.petrolPending !== true && epoch.petrolReferencePending !== true;
       const quotaNarrative = automatch !== null && quota !== null && automatch >= quota
         ? ' Cota de AutoMatch atingida; a leitura NÃO terminou.' : '';
       this.readout(stage + '.' + (automatch !== null && quota !== null && automatch >= quota ? ' AutoMatch ' + step + ': a leitura continua.' : ''));
@@ -1731,13 +1734,19 @@
         const width = Math.round(host.clientWidth) || 1000;
         const height = Math.round(host.clientHeight) || 400;
         const human = AutoCalUxModel.humanState(snapshot, this.state || {}, this.projection);
-        const model = { domain, reference, ecu, zones: AutoCalUxModel.zoneSurface(snapshot, human), missing: this.missingBands(snapshot, acquiredPetrol, acquiredGas) };
+        const model = {
+          domain, reference, ecu, zones: AutoCalUxModel.zoneSurface(snapshot, human),
+          missing: petrolReferenceReady ? this.missingBands(snapshot, acquiredPetrol, acquiredGas) : [],
+        };
         const built = ns.CurveChart.buildSvg(model, { width, height });
         this.chartScale = built.scale;
         const { xFor: x, yFor: y } = built.scale;
         const within = p => p.petrolMs >= domain.xMin && p.petrolMs <= domain.xMax &&
           p.mapBar >= domain.yMin && p.mapBar <= domain.yMax;
         const line = (list, fuel) => {
+          // Sem referência atual de gasolina, 18 pontos GNV continuam observações,
+          // NÃO uma curva de equivalência. Ligá-los pelo x gera zigue-zagues falsos.
+          if (!petrolReferenceReady) return '';
           const ordered = list.filter(within).slice().sort((a, b) => a.petrolMs - b.petrolMs);
           if (ordered.length < 2) return '';
           const d = ordered.map((p, i) => (i ? 'L' : 'M') + ' ' + x(p.petrolMs).toFixed(1) + ' ' + y(p.mapBar).toFixed(1)).join(' ');
@@ -1779,6 +1788,11 @@
       );
       const rawAcquiredPetrol = AutoCalUxModel.acquiredPoints(snapshot, 'petrol');
       const rawAcquiredGas = AutoCalUxModel.acquiredPoints(snapshot, 'gas');
+      // O estado nativo de releitura tem prioridade sobre o cache da projeção.
+      // Enquanto a ECU ainda reaprende, não usar a referência antiga para desenhar.
+      const epochPending = liveEpoch.petrolPending === true || liveEpoch.gasPending === true ||
+        liveEpoch.petrolReferencePending === true || liveEpoch.gasReferencePending === true ||
+        liveEpoch.referencePending === true || liveEpoch.comparisonAllowed === false;
       // A intenção aparece imediatamente, mas não inventa sucesso: enquanto RESET_* está
       // pendente/incerto, o combustível alvo antigo deixa de ser apresentado como aquisição atual.
       const acquiredPetrol = liveEpoch.petrolPending === true ? [] : rawAcquiredPetrol;
@@ -1793,8 +1807,8 @@
       const timingLimitMs = finite(this.projection?.referenceTimingLimitMs);
       const timingProblem = timingKnown && !timingCoherent;
 
-      if (liveEpoch.intentPending === true || !points.length || this.referenceUsable === false) {
-        if (liveEpoch.comparisonAllowed === false) {
+      if (epochPending || liveEpoch.intentPending === true || !points.length || this.referenceUsable === false) {
+        if (epochPending || liveEpoch.intentPending === true) {
           // Histórico só para olhar: fora de currentReferencePoints (seleção/cálculo) e fora dos pontos tocáveis.
           // Fica durante TODA a readquisição (intenção, ACK confirmado, bandas incompletas), até a referência nova
           // ser utilizável; sessão USB nova o limpa (referenceTransition.sessionChanged).
