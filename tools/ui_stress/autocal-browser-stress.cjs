@@ -70,8 +70,8 @@ async function stage(o, name, eventCount, scenario) {
   const timeToConfirmedUiMs = Date.now() - finalEventAt;
   const ui = await page.evaluate(() => ({
     acquired: [...document.querySelectorAll('#autocalReferenceChart circle.autocal-acquired-point')].map(c => c.dataset.autocalPointKey),
-    petrolZones: [...document.querySelectorAll('#autocalReferenceChart [data-autocal-zone-surface]')].map(e => e.dataset.petrolState),
-    gasZones: [...document.querySelectorAll('#autocalReferenceChart [data-autocal-zone-surface]')].map(e => e.dataset.gasState),
+    petrolZones: [...document.querySelectorAll('#autocalZoneMeter [data-autocal-zone-petrol]')].map(e => e.dataset.state),
+    gasZones: [...document.querySelectorAll('#autocalZoneMeter [data-autocal-zone-gas]')].map(e => e.dataset.state),
     svgCount: document.querySelectorAll('#autocalReferenceChart svg.autocal-reference-svg').length,
     grid: document.querySelectorAll('#autocalReferenceChart .autocal-grid-line').length,
     visiblePrevious: [...document.querySelectorAll('#autocalScreenHost *')].some(e => e.children.length === 0 && /leitura anterior/i.test(e.textContent || '')),
