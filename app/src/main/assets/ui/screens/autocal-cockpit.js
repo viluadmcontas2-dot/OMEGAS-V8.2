@@ -387,6 +387,17 @@
       return this.liveRegion(snapshot, live).zone;
     },
 
+    // O cursor vivo indica onde o motor ESTÁ agora, nunca o instante de aquisição
+    // nativa de um ponto. Só ilumina a linha do combustível realmente ativo.
+    zoneCursorFlags(snapshot = {}, live = {}) {
+      const zone = this.currentZone(snapshot, live);
+      const fuel = this.liveFuelState(live.fuel).kind;
+      return {
+        petrolZone: fuel === 'petrol' ? zone : null,
+        gasZone: fuel === 'gas' ? zone : null,
+      };
+    },
+
     zoneSurface(snapshot = {}, human = {}) {
       const thresholds = physicalVector(snapshot, 'MNFLD_PRESS_THD');
       if (thresholds.length !== 18 || thresholds.some(value => finite(value) === null)) return [];
@@ -1586,11 +1597,14 @@
     }
 
     renderZoneCursor(live) {
-      const currentZone = live ? AutoCalUxModel.currentZone(this.snapshot || {}, live) : null;
+      const active = live ? AutoCalUxModel.zoneCursorFlags(this.snapshot || {}, live) : { petrolZone: null, gasZone: null };
+      const currentZone = active.petrolZone ?? active.gasZone;
       this.panel?.querySelectorAll('.autocal-zone-cell').forEach(node => {
-        const rawIndex = node.dataset.autocalZonePetrol ?? node.dataset.autocalZoneGas;
+        const petrol = node.dataset.autocalZonePetrol !== undefined;
+        const rawIndex = petrol ? node.dataset.autocalZonePetrol : node.dataset.autocalZoneGas;
         const zone = Number(rawIndex) + 1;
-        D.setDataIfChanged(node, 'current', currentZone !== null && zone === currentZone ? 'true' : 'false');
+        const selected = petrol ? active.petrolZone : active.gasZone;
+        D.setDataIfChanged(node, 'current', selected !== null && zone === selected ? 'true' : 'false');
       });
       this.panel?.querySelectorAll('[data-autocal-zone-surface]').forEach(node => {
         const current = currentZone !== null && Number(node.dataset.autocalZoneSurface) === currentZone;
