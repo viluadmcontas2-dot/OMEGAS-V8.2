@@ -61,7 +61,6 @@ object RefinoState {
         // obedecem à mesma tabela, então "Pronto para gravar" nunca aparece sem botão.
         val expiredFrom = autopilot.optString("expiredFrom")
         val pausedNoWrite = code == "TENTATIVA_ENCERRADA" && !local && expiredFrom != "PROPOSTA_PRONTA" && expiredFrom != "ECU_TRABALHANDO"
-        val stableNoWrite = code == "ESTAVEL" && !local
         val autoCalReady = autopilot.optBoolean("ecuDone", false) &&
             autopilot.optInt("autoCalEnabled", -1) == 1
         val canWriteProposal = autoCalReady && code !in setOf("SEM_ECU", "LENDO_ECU", "ECU_TRABALHANDO", "VERIFICANDO")
@@ -102,11 +101,6 @@ object RefinoState {
                 whatNow = "Já tenho ${points(pointsToWrite)} para gravar, mas a ECU ainda está no automático e pode sobrescrever a curva. Espero ela terminar."
                 next = "Aguardar a ECU"
                 why = truth?.optString("summary")?.takeIf { it.isNotBlank() }
-            }
-            kind == "APPLY" && pointsToWrite > 0 && stableNoWrite -> {
-                phase = "Estável"; label = phase
-                whatNow = "Nas faixas medidas o GNV está igual à gasolina. Guardo um ajuste fino de ${points(pointsToWrite)}; só proponho gravar se alguma faixa sair do lugar."
-                next = "Nada a fazer"
             }
             kind == "APPLY" && pointsToWrite > 0 && pausedNoWrite -> {
                 phase = "Pausado"; label = phase
