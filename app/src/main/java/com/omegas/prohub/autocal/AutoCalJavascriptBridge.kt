@@ -32,6 +32,10 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     // Resultados prontos para a WebView: o cálculo pesado roda em segundo plano enquanto a tela
     // está aberta e a chamada devolve o último valor na hora (a bridge bloqueia o JavaScript).
     private val projectionMemo = BackgroundMemo(refreshMs = 1_000L, staleMs = 2_500L) { computeUiProjection() }
+    // A telemetria rápida não recalcula AutoCal. Só revisão de tabelas/sessão invalida
+    // o cache pronto, sem bloquear addJavascriptInterface nem disparar leitura serial.
+    private val projectionRevisionLock = Any()
+    private var lastProjectionSourceToken: String? = null
     private val equivalenceMemo = BackgroundMemo(refreshMs = 2_000L, staleMs = 6_000L) { computeEquivalence() }
     private val refinedAnalysisMemo = BackgroundMemo(refreshMs = 2_000L, staleMs = 6_000L) { computeRefinedAnalysis() }
     private val warmer: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { runnable ->
@@ -57,14 +61,38 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun getNativeMonitorSnapshot(): String = activityRef.get()?.serviceOrNull()?.nativeAutoCalSnapshotJson() ?: unavailable()
 
     @JavascriptInterface
-    fun getUiProjection(): String = projectionMemo.getNonBlocking(
-        """{"ok":false,"source":"NONE","referenceUsable":false,"snapshot":{"available":false},"error":"Atualizando projeção AutoCal"}""",
-    )
+    fun getUiProjection(): String {
+        val service = activityRef.get()?.serviceOrNull()
+        if (service != null) {
+            val token = try {
+                val rev = service.revisionsObject().getJSONObject("revisions")
+                "${rev.optLong("session", 0L)}:${rev.optLong("tables", 0L)}"
+            } catch (_: Exception) { null }
+            if (token != null) synchronized(projectionRevisionLock) {
+                if (token != lastProjectionSourceToken) {
+                    lastProjectionSourceToken = token
+                    projectionMemo.invalidate()
+                }
+            }
+        } else synchronized(projectionRevisionLock) {
+            // Serviço anterior saiu: não reapresentar um snapshot de outra sessão.
+            if (lastProjectionSourceToken != null) {
+                lastProjectionSourceToken = null
+                projectionMemo.invalidate()
+            }
+        }
+        return projectionMemo.getNonBlocking(
+            """{"ok":false,"source":"NONE","referenceUsable":false,"snapshot":{"available":false},"error":"Atualizando projeção AutoCal"}""",
+        )
+    }
 
     private fun computeUiProjection(): String = try {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
         val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
         val manual = currentManager()
+        // Ler o token ANTES dos snapshots: se a ECU mudar enquanto calculamos, a
+        // projeção reporta revisão anterior e a UI continua aguardando a próxima.
+        val transport = service.revisionsObject().getJSONObject("revisions")
         val nativeStatus = JSONObject(service.nativeAutoCalStatusJson())
         val nativeSnapshot = JSONObject(service.nativeAutoCalSnapshotJson())
         val manualStatus = manual?.statusJson() ?: JSONObject()
@@ -74,7 +102,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             nativeSnapshot = nativeSnapshot,
             manualStatus = manualStatus,
             manualSnapshot = manualSnapshot,
-        ).toString()
+        ).put("transportTablesRevision", transport.optLong("tables", 0L))
+            .put("transportSessionRevision", transport.optLong("session", 0L))
+            .toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Projeção AutoCal indisponível")
     }

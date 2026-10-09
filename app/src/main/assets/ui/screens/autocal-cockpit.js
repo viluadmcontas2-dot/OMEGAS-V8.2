@@ -59,6 +59,18 @@
   }
 
   const AutoCalUxModel = {
+    /** A revisão da ECU já andou, mas a ponte ainda está devolvendo a projeção pronta anterior.
+     * Não marcar a releitura como concluída nesse caso: o ciclo rápido volta a pedir
+     * até o memorando de fundo alcançar a revisão. Ponte antiga sem marcador continua compatível.
+     */
+    projectionBehindRevisions(projection = {}, revisions = {}) {
+      return ['tables', 'session'].some(kind => {
+        const key = kind === 'tables' ? 'transportTablesRevision' : 'transportSessionRevision';
+        const seen = finite(projection?.[key]);
+        const target = finite(revisions?.[kind]);
+        return seen !== null && seen >= 0 && target !== null && target >= 0 && seen < target;
+      });
+    },
     /**
      * Época vista pela tela: a da ECU, mais a intenção do dono. `intent` é o reset que ele tocou e ainda não foi
      * coberto por evidência posterior correspondente (revisão nova + ECU marcou/avançou aquele combustível): fecha a
@@ -986,7 +998,9 @@
       const authoritative = projection?.ok === true;
       const previousProjection = this.projection || {};
       this.projection = projection;
-      this.projectionWarming = !authoritative;
+      this.projectionWarming = !authoritative || AutoCalUxModel.projectionBehindRevisions(
+        projection, ns.Revisions?.snapshot?.() || {},
+      );
 
       if (!authoritative) {
         const message = String(projection?.error || 'O AutoCal da ECU não respondeu com estado confiável.');
