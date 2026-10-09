@@ -413,16 +413,17 @@
 
     zoneSurface(snapshot = {}, human = {}) {
       const thresholds = physicalVector(snapshot, 'MNFLD_PRESS_THD');
-      if (thresholds.length !== 18 || thresholds.some(value => finite(value) === null)) return [];
-      if (thresholds.some((value, index) => index > 0 && !(value > thresholds[index - 1]))) return [];
-      // São 18 limiares físicos, portanto 17 intervalos; não inventar threshold[18].
+      // As 4 zonas da ECU existem mesmo quando a leitura dos limites físicos chega atrasada.
+      // Sem limiares não inventamos coordenadas: somente o estado individual do combustível.
+      const valid = thresholds.length === 18 && thresholds.every((value, index) =>
+        finite(value) !== null && (index === 0 || value > thresholds[index - 1]));
       const edges = [0, 6, 10, 14, 17];
       const state = (flags, index) => !Array.isArray(flags) || flags.length !== 4
         ? 'unknown' : flags[index] === true ? 'acquired' : 'missing';
       return Array.from({ length: 4 }, (_, index) => ({
         zone: index + 1,
-        lower: thresholds[edges[index]],
-        upper: thresholds[edges[index + 1]],
+        lower: valid ? thresholds[edges[index]] : null,
+        upper: valid ? thresholds[edges[index + 1]] : null,
         petrolState: state(human.petrolZoneFlags, index),
         gasState: state(human.gasZoneFlags, index),
       }));
