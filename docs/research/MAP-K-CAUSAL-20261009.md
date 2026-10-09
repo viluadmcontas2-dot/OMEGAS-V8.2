@@ -8,7 +8,7 @@
 - EquivalenceLedger.kt: gasolina comparada em RPM × MAP, mediana de amostras estáveis; marcha lenta (<1200 RPM) não contamina condução. Alterações de K/Mapa K invalidam a amostragem GNV antiga.
 - MapKManualPlanner.kt prepara revisão somente manual. KWriteManager.kt usa readback. Não alterar writer/protocolo.
 - docs/reference/progbase/FORMULAS.md confirma estrutura SC84 no ProgBase mas NÃO prova como afeta a injeção; não converter raw de Mapa K em fator físico sem medir.
-- Drive: https://drive.google.com/file/d/16mu0ywMhSDNyWscXd0AvLf3V0UazHS28/view (Sessaoutil.zip). Na sessão 20h30 de 06/10 ocorreu k_batch_confirmed seq. 206: 8 células, linhas 2–5 colunas 0–1, 160→171, readbackValid e humanConfirmed. Depois ocorreram alterações da Curva K seq. 1697 e 4252 e AutoMatch.
+- Fonte reservada: Drive privado/SESSOES OMEGAS/Sessaoutil.zip (não publicar IDs, logs brutos nem dados da sessão no GitHub). Na sessão 20h30 de 06/10 ocorreu k_batch_confirmed seq. 206: 8 células, linhas 2–5 colunas 0–1, 160→171, readbackValid e humanConfirmed. Depois ocorreram alterações da Curva K seq. 1697 e 4252 e AutoMatch.
 - Antes do ajuste MAP_K não há gasolina elegível em condução; os 52 pontos GNV aceitos são de lenta. Portanto, esta intervenção NÃO identifica o ganho causal do Mapa K.
 
 ## Fluxo conectado
