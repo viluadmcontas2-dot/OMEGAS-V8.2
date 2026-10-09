@@ -21,11 +21,20 @@
 .autocal-route-panel { min-width: 0; }
 .autocal-zone-surface { pointer-events: none; }
 .autocal-zone-background { fill: rgba(var(--rgb-123-146-167),.045); stroke: rgba(var(--rgb-154-180-203),.22); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-background { fill: rgba(var(--rgb-58-208-149),.085); }
-.autocal-zone-surface[data-gas-state="missing"] .autocal-zone-background { fill: rgba(var(--rgb-242-177-79),.10); }
-.autocal-zone-surface[data-current="true"] .autocal-zone-background { stroke: var(--tone-f4f9ff); stroke-width: 2; fill-opacity: 1; }
+.autocal-zone-surface[data-gas-state="acquired"] .autocal-zone-background { fill: rgba(var(--rgb-58-208-149),.055); }
+.autocal-zone-surface[data-gas-state="missing"] .autocal-zone-background { fill: rgba(var(--rgb-25-218-244),.035); }
+.autocal-zone-surface[data-petrol-state="missing"] .autocal-zone-background { fill: rgba(var(--rgb-242-177-79),.045); }
+.autocal-zone-surface[data-current="true"] .autocal-zone-background { stroke: var(--tone-19daf4); stroke-width: 2; fill: rgba(var(--rgb-25-218-244),.09); }
 .autocal-zone-label { fill: var(--tone-dbe7f2); font-size: 12px; font-weight: 750; paint-order: stroke; stroke: var(--tone-07101a); stroke-width: 3px; }
+.autocal-zone-edge { stroke: rgba(var(--rgb-174-190-205),.46); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.autocal-zone-dot { stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.autocal-zone-dot.petrol { fill: var(--warn); stroke: var(--tone-fff4cf); }
+.autocal-zone-dot.gas { fill: var(--cng); stroke: var(--tone-d9fff0); }
+.autocal-zone-dot.complete { fill: var(--ok); stroke: var(--tone-d9fff0); opacity: .65; }
+.autocal-zone-dot.unknown { fill: transparent; stroke: var(--tone-7f90a2); stroke-dasharray: 2 2; }
 .autocal-zone-surface[data-current="true"] .autocal-zone-label { fill: var(--tone-ffffff); font-weight: 900; }
+.autocal-zone-surface[data-current="true"] .autocal-zone-edge { stroke: var(--tone-49e7fb); stroke-width: 3; }
+.autocal-zone-surface[data-current="true"] .autocal-zone-dot { filter: none; stroke-width: 2.5; }
 .autocal-current-band-layer { fill: rgba(var(--rgb-79-163-255),.10); stroke: rgba(var(--rgb-120-183-255),.38); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
 .autocal-live-layer { pointer-events: none; }
 .autocal-live-layer[data-stale="true"] { opacity: .5; }

@@ -251,6 +251,25 @@ test('F4: legenda em português com as cinco séries humanas, fora do desenho', 
   assert.doesNotMatch(chart.buildSvg({ reference: [], history: [], zones: [], ecu: [], ours: [], between: [], domain: { xMin: 0, xMax: 4, yMin: 0, yMax: 1 }, proposal: [], stalls: [] }, {}).svg, /Curva da gasolina/, 'a legenda não vai dentro do SVG');
 });
 
+test('AutoCal: cada faixa mostra a zona e uma bolinha do combustível faltante, sem card', () => {
+  const { chart } = load();
+  const zones = [1, 2, 3, 4].map((zone, index) => ({
+    zone, lower: index * .25, upper: (index + 1) * .25,
+    gasState: index === 1 ? 'acquired' : 'missing',
+    petrolState: index === 1 ? 'missing' : 'acquired',
+  }));
+  const built = chart.buildSvg({ reference: [], zones, ecu: [], ours: [], domain: { xMin: 0, xMax: 10, yMin: 0, yMax: 1 }, proposal: [], stalls: [] }, { width: 1000, height: 400, mode: 'ecu18' });
+  assert.doesNotMatch(built.svg, /data-autocal-zone-card/);
+  assert.equal((built.svg.match(/data-autocal-zone-surface=/g) || []).length, 4);
+  assert.match(built.svg, /class="autocal-zone-dot petrol" data-zone-missing="petrol"/);
+  assert.match(built.svg, /class="autocal-zone-dot gas" data-zone-missing="gas"/);
+  assert.match(built.svg, /class="autocal-zone-edge"/);
+  assert.equal(built.scale.xFor(10), 968, 'sem card: a curva recupera toda a largura do gráfico');
+  const both = chart.buildSvg({ reference: [], zones: [{ zone: 1, lower: 0, upper: 1, gasState: 'missing', petrolState: 'missing' }], ecu: [], ours: [], domain: { xMin: 0, xMax: 10, yMin: 0, yMax: 1 }, proposal: [], stalls: [] }, { width: 1000, height: 400, mode: 'ecu18' }).svg;
+  assert.match(both, /class="autocal-zone-dots" data-zone-missing="both"/);
+  assert.equal((both.match(/class="autocal-zone-dot (gas|petrol)"/g) || []).length, 2, 'faltam os dois: duas bolinhas lado a lado');
+});
+
 test('F4: AutoCal e Refino não desenham gráfico próprio (um componente, sem duplicar o desenho)', () => {
   for (const file of ['screens/refino.js', 'screens/autocal-cockpit.js']) {
     const source = read(file);

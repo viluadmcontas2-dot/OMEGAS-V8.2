@@ -348,6 +348,7 @@
     const width = Math.max(320, Math.round(o.width || 1000));
     const height = Math.max(160, Math.round(o.height || 400));
     const between = o.mode === 'between';
+    const zones = between ? [] : (model.zones || []);
     const padLeft = 88; const padRight = 32; const padTop = 12; const padBottom = 48;
     const reference = model.reference || [];
     const domain = model.domain;
@@ -385,19 +386,26 @@
     const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 5).toFixed(1)}" text-anchor="end">${tick(v, 3)}</text>`).join('') +
       xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - padBottom + 20}" text-anchor="middle">${tick(v, 1)}</text>`).join('');
 
-    const zoneMarkup = between ? '' : (model.zones || []).map(zone => {
+    const zoneMarkup = zones.map(zone => {
       const lower = Math.max(zone.lower, yMin);
       const upper = Math.min(zone.upper, yMax);
       if (upper <= lower) return '';
       const top = Math.min(yFor(lower), yFor(upper));
       const zoneHeight = Math.abs(yFor(lower) - yFor(upper));
       const label = state => state === 'acquired' ? 'OK' : state === 'missing' ? 'FALTA' : '—';
-      // Revisto (W2): sem barras laterais sem legenda; o rótulo da zona diz o estado do GNV em palavras.
-      const zoneText = `Z${zone.zone}` + (zone.petrolState === 'missing' ? ' · gasolina: falta' : '') + (zone.gasState === 'acquired' ? ' · GNV: ok' : zone.gasState === 'missing' ? ' · GNV: falta' : '');
       const caption = `Z${zone.zone} · Gasolina ${label(zone.petrolState)} · GNV ${label(zone.gasState)}`;
+      const right = width - padRight;
+      const cy = top + zoneHeight / 2;
+      const bothMissing = zone.petrolState === 'missing' && zone.gasState === 'missing';
+      const missing = bothMissing ? 'both' : zone.petrolState === 'missing' ? 'petrol' : zone.gasState === 'missing' ? 'gas' :
+        zone.petrolState === 'acquired' && zone.gasState === 'acquired' ? 'complete' : 'unknown';
+      const dot = bothMissing
+        ? `<g class="autocal-zone-dots" data-zone-missing="both"><circle class="autocal-zone-dot gas" cx="${right - 25}" cy="${cy.toFixed(1)}" r="6"></circle><circle class="autocal-zone-dot petrol" cx="${right - 9}" cy="${cy.toFixed(1)}" r="6"></circle></g>`
+        : `<circle class="autocal-zone-dot ${missing}" data-zone-missing="${missing}" cx="${right - 17}" cy="${cy.toFixed(1)}" r="6"></circle>`;
       return `<g class="autocal-zone-surface" data-autocal-zone-surface="${zone.zone}" data-gas-state="${zone.gasState}" data-petrol-state="${zone.petrolState}" data-current="false" aria-label="${caption}">` +
         `<rect class="autocal-zone-background" x="${padLeft}" y="${top.toFixed(1)}" width="${width - padLeft - padRight}" height="${zoneHeight.toFixed(1)}"></rect>` +
-        (zoneHeight >= 24 ? `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="${zoneText}" x="${width - padRight - 10}" y="${(top + zoneHeight / 2 + 5).toFixed(1)}" text-anchor="end">${zoneText}</text>` : '') + '</g>';
+        (zoneHeight >= 24 ? `<line class="autocal-zone-edge" x1="${right - 52}" y1="${cy.toFixed(1)}" x2="${right - 30}" y2="${cy.toFixed(1)}"></line>` +
+          `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="Z${zone.zone}" x="${right - 58}" y="${(cy + 5).toFixed(1)}" text-anchor="end">Z${zone.zone}</text>${dot}` : '') + '</g>';
     }).join('');
 
     const refMarkup = reference.map(p => {
