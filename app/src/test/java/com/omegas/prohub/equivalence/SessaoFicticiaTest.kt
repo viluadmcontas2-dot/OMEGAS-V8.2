@@ -270,7 +270,12 @@ class SessaoFicticiaTest {
                 table.append("$native\t$n\t$legacy\t$current\n")
                 current
             }
-            for (i in 1 until errors.size) assertTrue("native=$native erro deve cair 10→25→50: $errors", errors[i] <= errors[i - 1])
+            // Não confundir aumento bruto de frames com confiança: o gate pode conservar K
+            // inalterado quando a amostra adicional fica incoerente. Nunca piorar a base.
+            assertTrue("native=$native nenhuma proposta piora a base: $errors",
+                errors.all { it <= errors.first() + 1e-8 })
+            assertTrue("native=$native ao menos uma densidade de evidência melhora a base: $errors",
+                errors.minOrNull()!! < errors.first() - 0.001)
         }
         File("build/sessao-ficticia/comparacao.tsv").also { it.parentFile.mkdirs() }.writeText(table.toString())
     }
@@ -317,14 +322,16 @@ class SessaoFicticiaTest {
     }
 
     @Test
-    fun `reset de qualquer combustivel retira a proposta ate repovoar`() {
+    fun `reset nativo nao apaga evidencias proprias quando Curva K nao mudou`() {
         for ((pc, gc) in listOf(0 to 10, 10 to 0, 0 to 0)) {
             val o = scenario(50, true, false, false)
             val before = proposalOf(o)
             assertTrue(before.applies)
             repeat(2) {
                 val (r, _) = o.sim.snap(snapshot(o.sim.now, curveRaw(), 1, pc, gc, Random(42)), 1)
-                assertTrue("reset $pc/$gc não usa pares velhos", r?.nextAction?.kind != NextActionKind.APPLY)
+                assertEquals("reset de buffers nativos não invalida pares próprios", NextActionKind.APPLY, r?.nextAction?.kind)
+                assertTrue("mesma Curva K produz mesma proposta própria",
+                    before.raw.contentEquals(r!!.nextAction.refinedRaw!!.toIntArray()))
             }
             val (restored, _) = o.sim.snap(snapshot(o.sim.now, curveRaw(), 1, 10, 10, Random(42)), 1)
             assertEquals(NextActionKind.APPLY, restored?.nextAction?.kind)
