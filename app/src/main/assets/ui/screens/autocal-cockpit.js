@@ -64,12 +64,13 @@
      * até o memorando de fundo alcançar a revisão. Ponte antiga sem marcador continua compatível.
      */
     projectionBehindRevisions(projection = {}, revisions = {}) {
-      return ['tables', 'session'].some(kind => {
-        const key = kind === 'tables' ? 'transportTablesRevision' : 'transportSessionRevision';
-        const seen = finite(projection?.[key]);
-        const target = finite(revisions?.[kind]);
+      // Campos explícitos: o contrato de wiring confere produtores Kotlin x leitores JS.
+      const lag = (seenRaw, targetRaw) => {
+        const seen = finite(seenRaw), target = finite(targetRaw);
         return seen !== null && seen >= 0 && target !== null && target >= 0 && seen < target;
-      });
+      };
+      return lag(projection?.transportTablesRevision, revisions?.tables) ||
+        lag(projection?.transportSessionRevision, revisions?.session);
     },
     /**
      * Época vista pela tela: a da ECU, mais a intenção do dono. `intent` é o reset que ele tocou e ainda não foi
