@@ -396,7 +396,7 @@
       const top = Math.min(yFor(lower), yFor(upper)), h = Math.abs(yFor(lower) - yFor(upper));
       return `<rect class="autocal-zone-background" data-autocal-zone-surface="${zone.zone}" x="${padLeft}" y="${top.toFixed(1)}" width="${width - padLeft - padRight}" height="${h.toFixed(1)}"></rect>`;
     }).join('');
-    const refMarkup = reference.map(p => {
+    const refMarkup = (between ? [] : reference).map(p => {
       if (p.petrolMs > xMax) return '';
       const x = xFor(p.petrolMs).toFixed(1);
       const hit = (cy) => `<circle class="autocal-reference-hit" data-autocal-ref-index="${p.index}" cx="${x}" cy="${cy}" r="22"></circle>`;
@@ -404,7 +404,7 @@
         (inY(p.gasMapBar) && p.gasMapBar > 0 ? `${hit(yFor(p.gasMapBar).toFixed(1))}<circle class="autocal-reference-point gas" data-ref-marker="${p.index}" cx="${x}" cy="${yFor(p.gasMapBar).toFixed(1)}" r="4"></circle>` : '');
     }).join('');
 
-    const ecuMarkup = (model.ecu || []).map((p, i) => {
+    const ecuMarkup = (between ? [] : (model.ecu || [])).map((p, i) => {
       if (p.mapBar < yMin || p.mapBar > yMax || p.petrolMs < xMin || p.petrolMs > xMax) return '';
       const x = xFor(p.petrolMs).toFixed(1); const y = yFor(p.mapBar).toFixed(1);
       const key = `${p.fuel}:${p.index}`;
@@ -428,7 +428,7 @@
         const index = Math.round(slot * (allBetween.length - 1) / 17);
         return { point: allBetween[index], index };
       }).filter((entry, index, list) => index === 0 || entry.index !== list[index - 1].index);
-    const oursMarkup = between ? `<g class="layer-between">${visualBetween.map(({ point: b, index: i }) => {
+    const oursMarkup = between && model.showIndividualMeasurements === true ? `<g class="layer-between">${visualBetween.map(({ point: b, index: i }) => {
       const token = `data-chart-our="b:${i}" data-refino-dot="ourb:${i}"`;
       const shapes = [];
       const place = (side, cls) => {
@@ -469,7 +469,7 @@
   function legendHtml(flags) {
     const f = flags || {};
     const base = LEGEND.filter(item => item.key !== 'proposal' || f.proposal === true);
-    const extra = f.mode === 'between' ? BETWEEN_LEGEND.filter(item => item.key !== 'ourmissing' || f.missing !== false) : [];
+    const extra = []; // O Refino apresenta curvas, não dezenas/centenas de amostras.
     const items = base.concat(extra, []);
     return items.map(item => `<span class="${item.key}" data-legend="${item.key}">${esc(item.label)}</span>`).join('');
   }
@@ -605,9 +605,10 @@
     const selectedCurves = brain.regimeCurves && brain.regimeCurves[regime] || {};
     const ownCurve = fuel => {
       const cells = selectedCurves[fuel] && Array.isArray(selectedCurves[fuel].cells) ? selectedCurves[fuel].cells : [];
-      return cells.map(cell => ({ petrolMs: finite(cell.petrolMs), mapBar: finite(cell.mapBar) }))
-        .filter(point => point.petrolMs !== null && point.petrolMs > 0 && point.mapBar !== null && point.mapBar > 0)
-        .sort((a, b) => a.petrolMs - b.petrolMs);
+      // Sem medições próprias, manter a lacuna: não ligar valores interpolados como evidência.
+      return cells.map(cell => ({ petrolMs: Number(cell.samples) > 0 ? finite(cell.petrolMs) : null,
+        mapBar: finite(cell.mapBar), samples: Number(cell.samples) || 0 }))
+        .sort((a, b) => a.mapBar - b.mapBar);
     };
     const ownCurves = { regime, petrol: visible.petrol === false ? [] : ownCurve('petrol'), gas: visible.gas === false ? [] : ownCurve('gas') };
     const dense = eq.denseBands || {};
