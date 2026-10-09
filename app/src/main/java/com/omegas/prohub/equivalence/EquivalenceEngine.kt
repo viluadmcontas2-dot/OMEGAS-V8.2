@@ -290,7 +290,8 @@ object EquivalenceEngine {
                     pressureThresholdsRaw = null,
                     independentRefino = true,
                     telemetryPairs = pairs.map { it.petrolRefMs to it.gasPetrolMs }, pointGainScale = input.pointGainScale,
-                    telemetryEpisodes = pairs.map { it.episode }, holdMinStepLog = input.holdMinStepLog,
+                    // Episódios próprios independentes do gate legado de >=3 ms, inclusive 1–3 ms.
+                    telemetryEpisodes = EvidencePairs.visitIndexes(pairs.map { it.t }).toList(), holdMinStepLog = input.holdMinStepLog,
                 ),
             )
         } catch (_: Exception) {
