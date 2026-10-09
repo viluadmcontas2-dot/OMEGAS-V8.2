@@ -9,6 +9,16 @@ import kotlin.math.max
  */
 enum class Fuel { GASOLINA, GNV }
 
+enum class OperatingRegime {
+    IDLE,
+    DRIVING;
+
+    fun accepts(rpm: Double): Boolean = when (this) {
+        IDLE -> rpm < com.omegas.prohub.autocal.EquivalenceLedger.DRIVING_MIN_RPM
+        DRIVING -> rpm >= com.omegas.prohub.autocal.EquivalenceLedger.DRIVING_MIN_RPM
+    }
+}
+
 /** Ponto da Referência: MAP (bar), Petrol Inj. (ms) e maturidade (contador da ECU). */
 data class RefPoint(val mapBar: Double, val petrolMs: Double, val maturity: Int)
 
@@ -63,6 +73,17 @@ class OwnCurve(val fuel: Fuel, val cells: List<OwnCell>) {
     }
 }
 
+data class RegimeCurves(val petrol: OwnCurve, val gas: OwnCurve)
+
+data class RegimeAssessment(
+    val regime: OperatingRegime,
+    val pairs: Int,
+    val effectiveSamples: Double,
+    val mixture: Double?,
+    val dispersion: Double?,
+    val judgeable: Boolean,
+)
+
 enum class PointState { SEM_DADOS, APRENDENDO, MEDIDO, EQUIVALENTE, POBRE, RICO, EM_PROVA, CONFIRMADO, CONTESTADO, INCONCLUSIVO }
 
 data class EquivalencePoint(
@@ -114,6 +135,8 @@ data class EquivalenceResult(
     val ownGas: OwnCurve,
     /** Fração 0..1 do uso da condução que caiu em pontos julgados (nem SEM_DADOS, APRENDENDO nem MEDIDO). */
     val judgedUsage: Double = 0.0,
+    val regimeCurves: Map<OperatingRegime, RegimeCurves> = emptyMap(),
+    val regimeAssessments: Map<OperatingRegime, RegimeAssessment> = emptyMap(),
 )
 
 object EquivalenceTolerances {

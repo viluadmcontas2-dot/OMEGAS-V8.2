@@ -178,14 +178,40 @@ object EquivalenceEngine {
 
     private fun visitIds(times: List<Long>): IntArray = EvidencePairs.visitIndexes(times)
 
+    private fun regimeAssessment(
+        regime: OperatingRegime,
+        pairs: List<EquivalenceLedger.EvidencePair>,
+        axis: List<Double>,
+        factors: List<Double>,
+    ): RegimeAssessment {
+        val selected = pairs.filter { regime.accepts(it.rpm) }.sortedBy { it.t }
+        if (selected.isEmpty()) return RegimeAssessment(regime, 0, 0.0, null, null, false)
+        val errors = selected.map { p ->
+            ln(AutoMatchRefinedEngine.interp(p.gasPetrolMs, axis, factors) * p.gasPetrolMs /
+                (p.petrolRefMs * AutoMatchRefinedEngine.interp(p.petrolRefMs, axis, factors)))
+        }
+        val center = median(errors)
+        val dispersion = if (errors.size >= 2) 1.4826 * median(errors.map { abs(it - center) }) else null
+        val effective = EvidencePairs.effectiveN(selected.map { it.t }, errors)
+        return RegimeAssessment(regime, selected.size, effective, exp(center) - 1.0, dispersion,
+            isJudgeable(selected.size, effective, dispersion))
+    }
+
     fun evaluate(
         input: EquivalenceInput,
         judge: (List<EquivalencePoint>) -> ProofOutcome = { ProofOutcome.NONE },
     ): EquivalenceResult {
         val prior = input.reference ?: input.provisional
-        val ownP = OwnCurveFitter.fit(input.petrolObs, Fuel.GASOLINA, null)
+        val ownP = OwnCurveFitter.fit(input.petrolObs, Fuel.GASOLINA, null, OperatingRegime.DRIVING)
         // O GNV medido NÃO é puxado para a gasolina: sem prior (a Referência é de gasolina; encolher o GNV para ela esconderia o desvio).
-        val ownG = OwnCurveFitter.fit(input.gasObs, Fuel.GNV, null)
+        val ownG = OwnCurveFitter.fit(input.gasObs, Fuel.GNV, null, OperatingRegime.DRIVING)
+        val regimeCurves = mapOf(
+            OperatingRegime.IDLE to RegimeCurves(
+                OwnCurveFitter.fit(input.petrolObs, Fuel.GASOLINA, null, OperatingRegime.IDLE),
+                OwnCurveFitter.fit(input.gasObs, Fuel.GNV, null, OperatingRegime.IDLE),
+            ),
+            OperatingRegime.DRIVING to RegimeCurves(ownP, ownG),
+        )
         val provisional = input.reference == null
         val n = AutoMatchRefinedEngine.POINT_COUNT
         val axis = input.axisRaw.map { it / AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS }
@@ -196,7 +222,7 @@ object EquivalenceEngine {
             return EquivalenceResult(
                 emptyList(), null, 0, provisional,
                 NextAction(NextActionKind.NOTHING, "Curva K indisponível.", null, null, emptyList()),
-                null, ownP, ownG,
+                null, ownP, ownG, regimeCurves = regimeCurves,
             )
         }
         val u = axis.map { ln(it) }
@@ -205,8 +231,13 @@ object EquivalenceEngine {
         // Fonte única: o mesmo casamento por RPM×MAP do livro (gasolina própria, ou a curva da ECU onde não há) para veredito e proposta.
         // Refino próprio só compara gasolina e GNV aprendidos pelo OMEGAS; AutoCal nativo
         // é condição de liberação operacional, não fabrica pares nem fundamenta proposta.
-        val pairs = EvidencePairs.build(input.petrolObs, input.gasObs, emptyList())
-            .filter { it.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && it.petrolRefMs >= EquivalenceLedger.MIN_PETROL_MS }
+        val allPairs = EvidencePairs.build(input.petrolObs, input.gasObs, emptyList())
+            .filter { EvidencePairs.isLearnable(it) }
+        // O veredito v1 continua sendo de CONDUÇÃO; lenta tem curva/veredito próprios abaixo e nunca é misturada na média.
+        val pairs = allPairs.filter { OperatingRegime.DRIVING.accepts(it.rpm) }
+        // Acima do último nó real da Curva K aprende e desenha, mas não fabrica extrapolação de escrita.
+        val proposalPairs = allPairs.filter { it.petrolRefMs <= axis.last() && it.gasPetrolMs <= axis.last() }
+        val regimeAssessments = OperatingRegime.entries.associateWith { regimeAssessment(it, proposalPairs, axis, k) }
         val pairU = DoubleArray(pairs.size) { ln(pairs[it].petrolRefMs) }
         val pairLn = DoubleArray(pairs.size) {
             val p = pairs[it]
@@ -256,9 +287,9 @@ object EquivalenceEngine {
         val outcome = judge(base)
         val points = base.map { p -> outcome.states[p.index]?.let { p.copy(state = it) } ?: p }
         val (index, coverage, judgedUsage) = indexOf(base)
-        val proposal = proposalOf(input, pairs)
+        val proposal = proposalOf(input, proposalPairs)
         val action = nextAction(input, points, maps, proposal, outcome, index)
-        return EquivalenceResult(points, index, coverage, provisional, action, proposal, ownP, ownG, judgedUsage)
+        return EquivalenceResult(points, index, coverage, provisional, action, proposal, ownP, ownG, judgedUsage, regimeCurves, regimeAssessments)
     }
 
     private fun isJudged(p: EquivalencePoint) =
@@ -282,7 +313,7 @@ object EquivalenceEngine {
     /** Os pares de condução (os mesmos do veredito). Sai só do motor refinado, com os portões dele. */
     private fun proposalOf(input: EquivalenceInput, pairs: List<EquivalenceLedger.EvidencePair>): AutoMatchRefinedEngine.Result? {
         return try {
-            AutoMatchRefinedEngine.refine(
+            val proposal = AutoMatchRefinedEngine.refine(
                 AutoMatchRefinedEngine.Input(
                     axisRaw = input.axisRaw, mulActRaw = input.mulActRaw,
                     petrolTimeRaw = null, petrolMapRaw = null, petrolCounts = null,
@@ -290,13 +321,48 @@ object EquivalenceEngine {
                     pressureThresholdsRaw = null,
                     independentRefino = true,
                     telemetryPairs = pairs.map { it.petrolRefMs to it.gasPetrolMs }, pointGainScale = input.pointGainScale,
-                    // Episódios próprios independentes do gate legado de >=3 ms, inclusive 1–3 ms.
-                    telemetryEpisodes = EvidencePairs.visitIndexes(pairs.map { it.t }).toList(), holdMinStepLog = input.holdMinStepLog,
+                    // IDs já separados por regime e região local, inclusive lenta e 1–3 ms.
+                    telemetryEpisodes = pairs.map { it.episode }, holdMinStepLog = input.holdMinStepLog,
                 ),
             )
+            if (proposal.mode != AutoMatchRefinedEngine.Mode.EQUIVALENCE) proposal else {
+                val candidate = guardedRefined(proposal).map { it / AutoMatchRefinedEngine.Q14 }
+                val current = proposal.currentRaw.map { it / AutoMatchRefinedEngine.Q14 }
+                if (proposalDoesNotWorsenMatureRegimes(pairs, proposal.axisMs, current, candidate)) proposal
+                else proposal.copy(
+                    mode = AutoMatchRefinedEngine.Mode.POLISH,
+                    reason = "REGRESSAO_DE_REGIME",
+                    refinedRaw = proposal.currentRaw,
+                    origins = List(proposal.currentRaw.size) { AutoMatchRefinedEngine.Origin.HELD },
+                    regressionBlocked = true,
+                    message = "proposta bloqueada: pioraria um regime já medido",
+                )
+            }
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun regimeError(pairs: List<EquivalenceLedger.EvidencePair>, axis: List<Double>, factors: List<Double>): Double? {
+        if (pairs.isEmpty()) return null
+        val squared = pairs.map { p ->
+            val d = ln(AutoMatchRefinedEngine.interp(p.gasPetrolMs, axis, factors) * p.gasPetrolMs /
+                (p.petrolRefMs * AutoMatchRefinedEngine.interp(p.petrolRefMs, axis, factors)))
+            d * d
+        }
+        return sqrt(squared.sum() / squared.size)
+    }
+
+    internal fun proposalDoesNotWorsenMatureRegimes(
+        pairs: List<EquivalenceLedger.EvidencePair>, axis: List<Double>,
+        current: List<Double>, candidate: List<Double>,
+    ): Boolean = OperatingRegime.entries.all { regime ->
+        val selected = pairs.filter { regime.accepts(it.rpm) }.sortedBy { it.t }
+        if (selected.isEmpty()) return@all true
+        if (!regimeAssessment(regime, selected, axis, current).judgeable) return@all true
+        val before = regimeError(selected, axis, current) ?: return@all true
+        val after = regimeError(selected, axis, candidate) ?: return@all false
+        after <= before + AutoMatchRefinedEngine.REGRESSION_EPS
     }
 
     /**

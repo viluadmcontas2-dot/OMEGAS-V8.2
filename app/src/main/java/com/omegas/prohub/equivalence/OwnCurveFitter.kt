@@ -18,7 +18,8 @@ import kotlin.math.max
  */
 object OwnCurveFitter {
     const val GRID_MIN_BAR = 0.10
-    const val GRID_CELLS = 50
+    /** 0,10..2,50 bar: todo o domínio físico aceito pelo livro, sem o antigo teto visual de 1,10 bar. */
+    const val GRID_CELLS = 120
     /** Pseudo-contagem do prior = faixa nativa madura do AutoMatch. */
     const val PRIOR_N0 = 3.0
 
@@ -55,11 +56,16 @@ object OwnCurveFitter {
         return if (n % 2 == 1) s[n / 2] else (s[n / 2 - 1] + s[n / 2]) / 2.0
     }
 
-    fun fit(observations: List<EquivalenceLedger.Obs>, fuel: Fuel, prior: Reference?): OwnCurve {
+    fun fit(
+        observations: List<EquivalenceLedger.Obs>,
+        fuel: Fuel,
+        prior: Reference?,
+        regime: OperatingRegime = OperatingRegime.DRIVING,
+    ): OwnCurve {
         val lns = Array(GRID_CELLS) { ArrayList<Double>() }
         for (o in observations) {
             val j = cellOf(o.map) ?: continue
-            if (o.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && o.petrolMs > 0.0) lns[j].add(ln(o.petrolMs))
+            if (regime.accepts(o.rpm) && o.petrolMs > 0.0) lns[j].add(ln(o.petrolMs))
         }
         val n = IntArray(GRID_CELLS) { lns[it].size }
         val med = DoubleArray(GRID_CELLS) { if (lns[it].isEmpty()) Double.NaN else median(lns[it]) }

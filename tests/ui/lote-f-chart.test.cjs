@@ -238,7 +238,8 @@ test('F4b: lê betweenPoints do Kotlin quando existe e trata a AUSÊNCIA sem que
   const absent = chart.buildModel({ snapshot: snapshot(), projection: { snapshot: snapshot() }, mode: 'between', eq: {} });
   assert.equal(absent.betweenGiven, false, 'contrato ausente: o desenho deriva dos marcadores, sem exceção');
   assert.equal(chart.normalizeBetween(null).length, 0, 'ausência = lista vazia');
-  assert.equal(chart.normalizeBetween(Array.from({ length: 50 }, (_, i) => ({ index: i }))).length, 36, 'no máximo 36 intervalos');
+  assert.equal(chart.normalizeBetween(Array.from({ length: 50 }, (_, i) => ({ index: i }))).length, 50,
+    'a inteligência mantém todas as regiões; só o desenho reduz os marcadores');
 });
 
 test('F4: legenda em português com as cinco séries humanas, fora do desenho', () => {
@@ -273,7 +274,7 @@ test('AutoCal e Refino: gasolina usa o mesmo laranja da bolinha pendente', () =>
     'os pontos adquiridos da gasolina permanecem laranja no CSS final');
 });
 
-test('AutoCal: cada faixa mostra a zona e uma bolinha do combustível faltante, sem card', () => {
+test('AutoCal: superfícies ficam no gráfico e os oito estados vivem no HTML permanente', () => {
   const { chart } = load();
   const zones = [1, 2, 3, 4].map((zone, index) => ({
     zone, lower: index * .25, upper: (index + 1) * .25,
@@ -283,13 +284,11 @@ test('AutoCal: cada faixa mostra a zona e uma bolinha do combustível faltante, 
   const built = chart.buildSvg({ reference: [], zones, ecu: [], ours: [], domain: { xMin: 0, xMax: 10, yMin: 0, yMax: 1 }, proposal: [], stalls: [] }, { width: 1000, height: 400, mode: 'ecu18' });
   assert.doesNotMatch(built.svg, /data-autocal-zone-card/);
   assert.equal((built.svg.match(/data-autocal-zone-surface=/g) || []).length, 4);
-  assert.match(built.svg, /class="autocal-zone-dot petrol" data-zone-missing="petrol"/);
-  assert.match(built.svg, /class="autocal-zone-dot gas" data-zone-missing="gas"/);
-  assert.match(built.svg, /class="autocal-zone-edge"/);
+  assert.doesNotMatch(built.svg, /autocal-zone-dot/, 'estado não some quando o SVG é reconstruído ou recortado');
+  const cockpit = read('screens/autocal-cockpit.js');
+  assert.equal((cockpit.match(/data-autocal-zone-petrol="[0-3]"/g) || []).length, 4);
+  assert.equal((cockpit.match(/data-autocal-zone-gas="[0-3]"/g) || []).length, 4);
   assert.equal(built.scale.xFor(10), 968, 'sem card: a curva recupera toda a largura do gráfico');
-  const both = chart.buildSvg({ reference: [], zones: [{ zone: 1, lower: 0, upper: 1, gasState: 'missing', petrolState: 'missing' }], ecu: [], ours: [], domain: { xMin: 0, xMax: 10, yMin: 0, yMax: 1 }, proposal: [], stalls: [] }, { width: 1000, height: 400, mode: 'ecu18' }).svg;
-  assert.match(both, /class="autocal-zone-dots" data-zone-missing="both"/);
-  assert.equal((both.match(/class="autocal-zone-dot (gas|petrol)"/g) || []).length, 2, 'faltam os dois: duas bolinhas lado a lado');
 });
 
 test('F4: AutoCal e Refino não desenham gráfico próprio (um componente, sem duplicar o desenho)', () => {

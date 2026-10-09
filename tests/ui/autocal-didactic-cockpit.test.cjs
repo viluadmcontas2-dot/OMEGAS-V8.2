@@ -99,12 +99,17 @@ assert.ok(Math.abs(surface[0].upper - 0.8) < 1e-9);
 assert.ok(Math.abs(surface[3].upper - 1.9) < 1e-9, 'zona 4 termina no último dos 18 limiares reais');
 assert.equal(surface.map(item => item.gasState).join(','), 'acquired,missing,acquired,missing');
 assert.equal(surface.map(item => item.petrolState).join(','), 'acquired,missing,missing,missing');
-assert.equal(model.zoneSurface({ fields: [] }, {}).length, 0, 'sem limiares não se inventam faixas');
+const unknownSurface = model.zoneSurface({ fields: [] }, {});
+assert.equal(unknownSurface.length, 4, 'Z1-Z4 existem mesmo antes de a ECU entregar limiares');
+assert.ok(unknownSurface.every(zone => zone.lower === null && zone.upper === null && zone.petrolState === 'unknown' && zone.gasState === 'unknown'),
+  'sem limiares o estado fica desconhecido, nunca adquirido');
 const brokenZones = { fields: [{
   key: 'MNFLD_PRESS_THD', status: 'VALID',
   physicalValues: Array.from({ length: 18 }, (_, i) => i === 8 ? 0.1 : 0.2 + i * 0.1),
 }] };
-assert.equal(model.zoneSurface(brokenZones, {}).length, 0, 'limiares não-monótonos falham fechado');
+assert.equal(model.zoneSurface(brokenZones, {}).length, 4, 'limiares incoerentes não fazem Z1-Z4 desaparecer');
+assert.ok(model.zoneSurface(brokenZones, {}).every(zone => zone.lower === null && zone.upper === null),
+  'limiares incoerentes falham fechado sem inventar limites');
 assert.match(source, /data-autocal-zone-surface/, 'zona precisa estar marcada sobre a malha');
 assert.match(source, /'AGORA'/, 'cursor curto: a zona fica na faixa de status, não no gráfico');
 assert.equal(model.currentZone(currentZoneSnapshot, { mapBar: 0.85 }), 2,

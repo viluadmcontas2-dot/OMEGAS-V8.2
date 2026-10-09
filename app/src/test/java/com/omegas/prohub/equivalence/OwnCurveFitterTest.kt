@@ -12,6 +12,31 @@ import kotlin.math.sqrt
 
 class OwnCurveFitterTest {
     @Test
+    fun `lenta e conducao formam curvas independentes sem descartar a lenta`() {
+        val map = 0.31
+        val idle = List(20) { i -> EquivalenceLedger.Obs(i * 70_000L, 850.0, map, 2.2 + (i % 2) * 0.01) }
+        val driving = List(20) { i -> EquivalenceLedger.Obs(i * 70_000L, 2100.0, map, 3.4 + (i % 2) * 0.01) }
+        val idleCurve = OwnCurveFitter.fit(idle + driving, Fuel.GASOLINA, null, OperatingRegime.IDLE)
+        val drivingCurve = OwnCurveFitter.fit(idle + driving, Fuel.GASOLINA, null, OperatingRegime.DRIVING)
+        val cell = OwnCurveFitter.cellOf(map)!!
+        assertEquals(20, idleCurve.cells[cell].samples)
+        assertEquals(20, drivingCurve.cells[cell].samples)
+        assertEquals(2.205, idleCurve.cells[cell].petrolMs!!, 0.01)
+        assertEquals(3.405, drivingCurve.cells[cell].petrolMs!!, 0.01)
+    }
+
+    @Test
+    fun `alta carga acima de um bar continua dentro da memoria propria`() {
+        val map = 2.30
+        val obs = List(20) { i -> EquivalenceLedger.Obs(i * 70_000L, 3200.0, map, 24.0 + (i % 2) * 0.02) }
+        val curve = OwnCurveFitter.fit(obs, Fuel.GNV, null, OperatingRegime.DRIVING)
+        val cell = OwnCurveFitter.cellOf(map)
+        assertNotNull(cell)
+        assertEquals(20, curve.cells[cell!!].samples)
+        assertEquals(24.01, curve.cells[cell].petrolMs!!, 0.02)
+    }
+
+    @Test
     fun `sem leitura a curva propria e o prior puro`() {
         val ref = EquivalenceReplaySupport.reference(REFERENCE, 95)
         val c = OwnCurveFitter.fit(emptyList(), Fuel.GASOLINA, ref)

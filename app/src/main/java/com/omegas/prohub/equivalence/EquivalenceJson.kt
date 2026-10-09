@@ -110,6 +110,19 @@ object EquivalenceJson {
             .put("points", points)
             .put("ownPetrol", curveJson(result.ownPetrol))
             .put("ownGas", curveJson(result.ownGas))
+            .put("regimeCurves", JSONObject().also { regimes ->
+                result.regimeCurves.forEach { (regime, curves) ->
+                    regimes.put(regime.name, JSONObject()
+                        .put("petrol", curveJson(curves.petrol)).put("gas", curveJson(curves.gas)))
+                }
+            })
+            .put("regimeAssessments", JSONObject().also { regimes ->
+                result.regimeAssessments.forEach { (regime, a) ->
+                    regimes.put(regime.name, JSONObject().put("pairs", a.pairs)
+                        .put("effectiveSamples", a.effectiveSamples).put("mixture", num(a.mixture))
+                        .put("dispersion", num(a.dispersion)).put("judgeable", a.judgeable))
+                }
+            })
             .put("proposal", proposalJson(result))
             .put("reference", ref)
             .put("automatic", false)

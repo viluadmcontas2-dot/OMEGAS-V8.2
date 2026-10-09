@@ -80,14 +80,14 @@
     const now = ctx?.now;
     if (kind === 'our') {
       const gas = point.fuel === 'GAS';
-      const idle = (finite(point.idleShare) ?? 0) >= 0.5 || (finite(point.rpmMedian) ?? Infinity) < 1000;
+      const idle = (finite(point.idleShare) ?? 0) >= 0.5 || (finite(point.rpmMedian) ?? Infinity) < 1200;
       const lines = [
         'De quem é: medido pelo OMEGAS na sua condução (leitura estável = 3 leituras seguidas).',
         `${D.barUnit(point.mapBar)} · ${D.msUnit(point.tpetMs)} · ${fmt(point.samples, 0)} leituras · RPM típico ${D.rpm(point.rpmMedian)}`,
         `Quando: última leitura ${ageText(point.lastAtMs, now)}.`,
       ];
       lines.push(idle
-        ? 'Por que conta: NÃO conta. É marcha lenta: aparece no gráfico, mas não corrige a curva (a ECU trata a lenta à parte).'
+        ? 'Por que conta: forma a curva própria da lenta e nunca é misturada com condução. Uma correção global só é liberada se não piorar este regime.'
         : gas
           ? 'Por que conta: forma par com a gasolina no mesmo RPM e MAP. Só vale para a curva atual: se a curva mudar, recomeça.'
           : 'Por que conta: é a referência da gasolina. O GNV é comparado com ela no mesmo RPM e MAP.');
@@ -98,7 +98,7 @@
           lines.splice(3, 0, `Dentro da faixa (${fine.length} medidas): ${fine.slice(0, 5).map(f => `${D.barUnit(f.mapBar)} · ${D.msUnit(f.tpetMs)}`).join(' | ')}${fine.length > 5 ? ' …' : ''}`);
         }
       }
-      return { title: `Medido pelo OMEGAS · ${gas ? 'GNV' : 'Gasolina'}`, lines, counts: !idle };
+      return { title: `Medido pelo OMEGAS · ${gas ? 'GNV' : 'Gasolina'}`, lines, counts: true };
     }
     const gas = point.fuel === 'GAS';
     const rejected = (ctx?.rejected || []).some(r => (r.fuel === 'GNV') === gas && Number(r.band) === Number(point.index));
@@ -631,7 +631,10 @@
       const currentEvidence = !['SEM_ECU', 'LENDO_ECU', 'TENTATIVA_ENCERRADA'].includes(phase);
       setText('refinoRatio', pct(currentEvidence ? eq.ratio : null));
       setText('refinoDetailCounts', rs?.counts ? `${rs.counts.regionsConfirmed ?? '—'} regiões próprias confirmadas · ${rs.counts.regionsLearning ?? '—'} ainda aprendendo · ${rs.counts.pointsToWrite ?? '—'} pontos da Curva K propostos` : 'Aguardando medição');
-      setText('refinoDetailReason', rs?.whyNoProposal || rs?.reason || '');
+      const regimeEvidence = eq.regimeAssessments?.[this.currentRegime()];
+      const regimeDetail = regimeEvidence ? `${this.currentRegime() === 'IDLE' ? 'Lenta' : 'Condução'}: ${regimeEvidence.pairs} pares · ` +
+        `${Math.round(regimeEvidence.effectiveSamples || 0)} independentes · ${regimeEvidence.judgeable ? 'evidência confirmada' : 'aprendendo'}` : '';
+      setText('refinoDetailReason', [rs?.whyNoProposal || rs?.reason || '', regimeDetail].filter(Boolean).join(' · '));
       const proposals = document.getElementById('refinoProposals');
       if (proposals) {
         const points = this.actionModel().kind === 'review' ? readyPoints(eq, this.analysis) : [];
@@ -749,7 +752,12 @@
       const host = document.getElementById('refinoChart');
       const w = host?.clientWidth || 0;
       const h = host?.clientHeight || 0;
-      return `between|${Math.round(w / 16)}x${Math.round(h / 16)}|${ns.CurveChart.viewKey(this.chartView)}`;
+      return `between|${Math.round(w / 16)}x${Math.round(h / 16)}|${this.currentRegime()}|${ns.CurveChart.viewKey(this.chartView)}`;
+    }
+
+    currentRegime() {
+      const rpm = ns.LiveStore.read(this.store.get()).rpm;
+      return rpm !== null && rpm < 1200 ? 'IDLE' : 'DRIVING';
     }
 
     /**
@@ -764,7 +772,7 @@
       const width = Math.round(host.clientWidth) || 1000;
       const height = Math.round(host.clientHeight) || 400;
       const signature = chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() });
-      const input = { snapshot: this.snapshot, projection: this.projection || {}, eq, analysis: this.analysis, mode: 'between', view: this.chartView };
+      const input = { snapshot: this.snapshot, projection: this.projection || {}, eq, analysis: this.analysis, mode: 'between', regime: this.currentRegime(), view: this.chartView };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
         if (!model || !model.domain || (!model.reference.length && !model.ecu.length && !model.betweenPoints.length)) {

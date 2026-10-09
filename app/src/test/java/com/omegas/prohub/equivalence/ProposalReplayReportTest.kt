@@ -143,10 +143,8 @@ class ProposalReplayReportTest {
                                 kotlin.math.abs(ref[i].toDouble() / cur[i] - 1.0) <= 0.15 + 1e-3)
                         }
                     }
-                    if (name.startsWith("util")) {
-                        // Carro quase todo parado (marcha lenta): nenhum ponto desses vira evidência nem proposta.
-                        assertEquals("$name snap#$snapIndex", 0, p?.telemetryPairsUsed ?: 0)
-                    }
+                    // Lenta agora é evidência própria separada. A guarda por regime impede que ela seja
+                    // misturada ao veredito de condução ou sacrificada por uma proposta global.
                     rows += Row(name, snapIndex, result.nextAction.kind == NextActionKind.APPLY, line)
                 }
             }

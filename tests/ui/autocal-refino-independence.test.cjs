@@ -17,7 +17,7 @@ test('AutoCal mostra Z1-Z4 por combustível sem depender do SVG ou dos limiares 
   assert.match(source,/lower: valid \? thresholds\[edges\[index\]\] : null/);
 });
 
-test('Refino não corta a representação depois de 17/36 regiões, nem acima de 13 ms', () => {
+test('Refino aprende 100 regiões mas desenha curvas próprias e poucos marcadores', () => {
   const chart = freshContext().OmegasUi.CurveChart;
   const list = Array.from({length:100}, (_,i) => ({
     kind:'local',index:i,fromMs:i*0.25,toMs:(i+1)*0.25,centerMs:i*0.25+0.125,
@@ -29,9 +29,13 @@ test('Refino não corta a representação depois de 17/36 regiões, nem acima de
   assert.equal(normalized.length,100);
   assert.equal(normalized[99].kind,'local');
   assert.equal(normalized[99].state,'missing');
-  const r=chart.buildSvg({domain:{xMin:0,xMax:26,yMin:0.2,yMax:0.9},reference:[],ecu:[],betweenPoints:normalized},
+  const own = Array.from({length:60},(_,i)=>({petrolMs:1+i*.4,mapBar:.25+i*.008}));
+  const r=chart.buildSvg({domain:{xMin:0,xMax:26,yMin:0.2,yMax:0.9},reference:[],ecu:[],betweenPoints:normalized,
+    ownCurves:{regime:'DRIVING',petrol:own,gas:own.map(p=>({petrolMs:p.petrolMs*1.04,mapBar:p.mapBar}))}},
     {width:1000,height:380,mode:'between'});
-  assert.match(r.svg,/data-chart-our="b:99"/);
+  assert.match(r.svg,/data-own-curve="petrol"/);
+  assert.match(r.svg,/data-own-curve="gas"/);
+  assert.ok((r.svg.match(/data-chart-our=/g)||[]).length<=36,'a inteligência não vira centenas de bolinhas');
   assert.match(r.svg,/learning/);
   assert.match(chart.describeBetween(normalized[99]),/região própria do OMEGAS/);
 });

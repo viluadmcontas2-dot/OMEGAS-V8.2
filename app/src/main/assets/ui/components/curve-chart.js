@@ -352,6 +352,7 @@
     const zones = between ? [] : ((model.zones || []).length === 4 ? model.zones : Array.from({ length: 4 }, (_, i) => ({ zone: i + 1, lower: null, upper: null, petrolState: 'unknown', gasState: 'unknown' })));
     const padLeft = 88; const padRight = 32; const padTop = 12; const padBottom = 48;
     const reference = model.reference || [];
+    const ownCurves = model.ownCurves || { petrol: [], gas: [] };
     const domain = model.domain;
     if (!domain) return { empty: true };
     const { xMin, xMax, yMin, yMax } = domain;
@@ -421,7 +422,13 @@
 
     // Refino: pontos do OMEGAS são BOLINHAS do tamanho das da ECU, entre elas. AutoCal não mostra pontos do OMEGAS.
     const dot = (cls, x, y, extra) => `<circle class="chart-between ${cls}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6"${extra || ''}></circle>`;
-    const oursMarkup = between ? `<g class="layer-between">${(model.betweenPoints || []).map((b, i) => {
+    const allBetween = model.betweenPoints || [];
+    const visualBetween = allBetween.length <= 18 ? allBetween.map((point, index) => ({ point, index })) :
+      Array.from({ length: 18 }, (_, slot) => {
+        const index = Math.round(slot * (allBetween.length - 1) / 17);
+        return { point: allBetween[index], index };
+      }).filter((entry, index, list) => index === 0 || entry.index !== list[index - 1].index);
+    const oursMarkup = between ? `<g class="layer-between">${visualBetween.map(({ point: b, index: i }) => {
       const token = `data-chart-our="b:${i}" data-refino-dot="ourb:${i}"`;
       const shapes = [];
       const place = (side, cls) => {
@@ -444,12 +451,17 @@
 
     const equivalent = reference.filter(p => finite(p.gasEquivalentMs) !== null);
     const equivalencePath = between && equivalent.length > 1 ? `<path class="autocal-equivalence-line" d="${pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs')}"></path>` : '';
+    const ownCurveMarkup = between ?
+      `<g class="layer-own-curves" data-refino-regime="${esc(ownCurves.regime || 'DRIVING')}">` +
+      `${ownCurves.petrol.length > 1 ? `<path class="autocal-reference-line petrol own" data-own-curve="petrol" d="${pathFor(ownCurves.petrol, 'mapBar')}" ></path>` : ''}` +
+      `${ownCurves.gas.length > 1 ? `<path class="autocal-reference-line gas own" data-own-curve="gas" d="${pathFor(ownCurves.gas, 'mapBar')}" ></path>` : ''}</g>` : '';
+    const hasOwnCurves = ownCurves.petrol.length > 1 || ownCurves.gas.length > 1;
 
     const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>` +
       `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção de gasolina (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${equivalencePath}` +
-      `${hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +
+      `${!hasOwnCurves && hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${!hasOwnCurves && hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${!hasOwnCurves && hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${ownCurveMarkup}` +
       `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
     return { svg, scale };
   }
@@ -588,6 +600,15 @@
     const allReference = UX.referencePoints(snapshot, projection.analysis || {}).map(project);
     const ecu = [...(visible.petrol === false ? [] : UX.acquiredPoints(snapshot, 'petrol')), ...(visible.gas === false ? [] : UX.acquiredPoints(snapshot, 'gas'))];
     const eq = c.eq || {};
+    const regime = c.regime === 'IDLE' ? 'IDLE' : 'DRIVING';
+    const selectedCurves = eq.regimeCurves && eq.regimeCurves[regime] || {};
+    const ownCurve = fuel => {
+      const cells = selectedCurves[fuel] && Array.isArray(selectedCurves[fuel].cells) ? selectedCurves[fuel].cells : [];
+      return cells.map(cell => ({ petrolMs: finite(cell.petrolMs), mapBar: finite(cell.mapBar) }))
+        .filter(point => point.petrolMs !== null && point.petrolMs > 0 && point.mapBar !== null && point.mapBar > 0)
+        .sort((a, b) => a.petrolMs - b.petrolMs);
+    };
+    const ownCurves = { regime, petrol: visible.petrol === false ? [] : ownCurve('petrol'), gas: visible.gas === false ? [] : ownCurve('gas') };
     const dense = eq.denseBands || {};
     const items = [
       ...(Array.isArray(dense.petrol) ? dense.petrol : []).map(p => ({ ...p, fuel: 'PETROL' })),
@@ -603,7 +624,10 @@
       ...(b.state === 'missing' ? [{ tpetMs: b.centerMs, mapBar: b.centerMapBar }] : []),
     ]);
     const stalls = Array.isArray(eq.stalls && eq.stalls.events) ? eq.stalls.events : [];
-    const relevant = c.mode === 'between' ? [...(given.length ? [] : items), ...intervalPoints, ...stalls.map(p => ({ tpetMs: p.petrolMs, mapBar: p.mapBar }))] : [];
+    const relevant = c.mode === 'between' ? [...(given.length ? [] : items), ...intervalPoints,
+      ...ownCurves.petrol.map(p => ({ tpetMs: p.petrolMs, mapBar: p.mapBar })),
+      ...ownCurves.gas.map(p => ({ tpetMs: p.petrolMs, mapBar: p.mapBar })),
+      ...stalls.map(p => ({ tpetMs: p.petrolMs, mapBar: p.mapBar }))] : [];
     // A tabela completa é uma régua, não aquisição. Vista normal acompanha a faixa
     // adquirida; Faixa inteira mantém toda a régua. Nenhum ponto adquirido é descartado.
     const anchors = [...ecu.map(p => ({ x: p.petrolMs, y: p.mapBar })),
@@ -626,7 +650,7 @@
     const edges = thresholds ? thresholds.map(Number).filter(Number.isFinite) : [];
     const refined = c.analysis && Array.isArray(c.analysis.points) ? c.analysis.points : [];
     const proposal = refined.filter(p => p && p.origin !== 'HELD' && finite(p.calculatedRaw) !== null && Number(p.calculatedRaw) !== Number(p.currentRaw)).map(p => Number(p.index));
-    return { reference, zones: UX.zoneSurface(snapshot, human), ecu, ours: evidence.markers, bands18: evidence.bands, between: between.markers, betweenPoints, betweenGiven: given.length > 0, betweenBands: between.bands, edges, evidence, domain, proposal, stalls, human, rawItems: items };
+    return { reference, ownCurves, zones: UX.zoneSurface(snapshot, human), ecu, ours: evidence.markers, bands18: evidence.bands, between: between.markers, betweenPoints, betweenGiven: given.length > 0, betweenBands: between.bands, edges, evidence, domain, proposal, stalls, human, rawItems: items };
   }
 
   /**

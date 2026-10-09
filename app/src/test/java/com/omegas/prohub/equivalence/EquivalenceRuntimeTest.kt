@@ -71,8 +71,8 @@ class EquivalenceRuntimeTest {
         assertTrue(reference.getString("id").startsWith("REF-"))
         assertTrue(reference.getDouble("ecuDrift") > 0.10)
         assertEquals(30, json.getJSONArray("points").length())
-        assertEquals(50, json.getJSONObject("ownPetrol").getJSONArray("cells").length())
-        assertEquals(50, json.getJSONObject("ownGas").getJSONArray("cells").length())
+        assertEquals(OwnCurveFitter.GRID_CELLS, json.getJSONObject("ownPetrol").getJSONArray("cells").length())
+        assertEquals(OwnCurveFitter.GRID_CELLS, json.getJSONObject("ownGas").getJSONArray("cells").length())
         assertTrue(json.getJSONObject("nextAction").getString("kind") in NextActionKind.values().map { it.name })
         val point = json.getJSONArray("points").getJSONObject(12)
         listOf("index", "axisMs", "state", "mixture", "usage", "samples", "sources").forEach { assertTrue(it, point.has(it)) }

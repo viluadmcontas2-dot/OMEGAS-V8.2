@@ -127,15 +127,16 @@ test('idade do dado: sem data conhecida é "—", nunca "há 0 s"', () => {
   assert.equal(m.ageText(now - 7_200_000, now), 'há 2 h');
 });
 
-test('ponto nosso na marcha lenta: aparece, mas o inspector diz que NÃO conta para a curva', () => {
+test('ponto nosso na marcha lenta conta apenas na curva propria da lenta', () => {
   const m = model();
   const now = 1_790_000_000_000;
   const idle = m.explainPoint('our', { fuel: 'GAS', mapBar: 0.54, tpetMs: 4.5, samples: 30, rpmMedian: 872, idleShare: 1, lastAtMs: now - 8_000 }, { now });
-  assert.equal(idle.counts, false);
+  assert.equal(idle.counts, true);
   assert.match(idle.title, /Medido pelo OMEGAS · GNV/);
   assert.match(idle.lines.join('\n'), /medido pelo OMEGAS na sua condução/);
   assert.match(idle.lines.join('\n'), /há 8 s/);
-  assert.match(idle.lines.join('\n'), /NÃO conta[\s\S]*marcha lenta/);
+  assert.match(idle.lines.join('\n'), /curva própria da lenta/);
+  assert.match(idle.lines.join('\n'), /nunca é misturada com condução/);
   const driving = m.explainPoint('our', { fuel: 'GAS', mapBar: 0.7, tpetMs: 8, samples: 12, rpmMedian: 2800, idleShare: 0, lastAtMs: now - 120_000 }, { now });
   assert.equal(driving.counts, true);
   assert.match(driving.lines.join('\n'), /forma par com a gasolina/);

@@ -24,7 +24,7 @@ import sys
 # ------------------------------------------------------------------ constantes
 CELL_BAR = 0.02
 GRID_MIN = 0.10
-GRID_CELLS = 50
+GRID_CELLS = 120  # 0,10..2,50 bar, mesmo domínio físico aceito pelo livro Kotlin
 PRIOR_N0 = 3.0
 DRIVING_MIN_RPM = 1200.0     # lenta da ECU abaixo disso (85 sessões: +20–30% de ms no mesmo MAP)
 MIN_TOL = 0.04

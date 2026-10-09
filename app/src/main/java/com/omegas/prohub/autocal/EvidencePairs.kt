@@ -228,13 +228,21 @@ object EvidencePairs {
     fun isDriving(p: EquivalenceLedger.EvidencePair): Boolean =
         p.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && p.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS
 
+    fun isLearnable(p: EquivalenceLedger.EvidencePair): Boolean =
+        p.petrolRefMs >= EquivalenceLedger.MIN_PETROL_MS && p.gasPetrolMs > 0.0 &&
+            p.petrolRefMs.isFinite() && p.gasPetrolMs.isFinite()
+
     /**
      * Troca o id de episódio de cada par de CONDUÇÃO pela visita da sua faixa (lacuna ≥ [VISIT_GAP_MS] entre pares da
      * mesma faixa). Marcha lenta não é condução: não abre nem une visitas, e fica com episódio -1.
      */
     fun withVisitIds(pairs: List<EquivalenceLedger.EvidencePair>): List<EquivalenceLedger.EvidencePair> {
         val byBand = HashMap<Int, MutableList<Int>>()
-        pairs.forEachIndexed { i, p -> if (isDriving(p)) byBand.getOrPut(bandOf(p.petrolRefMs)) { ArrayList() }.add(i) }
+        pairs.forEachIndexed { i, p -> if (isLearnable(p)) {
+            val regime = if (p.rpm >= REGIME_SPLIT_RPM) 1 else 0
+            val local = kotlin.math.floor(p.petrolRefMs / 0.25).toInt()
+            byBand.getOrPut(regime * 10_000 + local) { ArrayList() }.add(i)
+        } }
         val ids = IntArray(pairs.size) { -1 }
         for ((band, members) in byBand) {
             val visits = visitIndexes(members.map { pairs[it].t })

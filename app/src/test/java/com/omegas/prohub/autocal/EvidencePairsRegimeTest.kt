@@ -36,6 +36,19 @@ class EvidencePairsRegimeTest {
         val idleGas = listOf(obs(3_000, 1_050.0, 0.40, 5.1))
         assertEquals(1, EvidencePairs.build(idlePetrol, idleGas, emptyList()).size)
     }
+
+    @Test
+    fun `lenta valida recebe episodio proprio e nao e confundida com conducao`() {
+        val petrol = listOf(
+            obs(1_000, 850.0, 0.30, 2.0), obs(2_000, 860.0, 0.30, 2.0),
+            obs(1_000, 2_000.0, 0.30, 2.0), obs(2_000, 2_010.0, 0.30, 2.0),
+        )
+        val gas = listOf(obs(5_000, 850.0, 0.30, 2.1), obs(5_000, 2_000.0, 0.30, 2.1))
+        val pairs = EvidencePairs.build(petrol, gas, emptyList())
+        assertEquals(2, pairs.size)
+        assertTrue(pairs.all { it.episode >= 0 })
+        assertTrue(pairs[0].episode != pairs[1].episode)
+    }
     @Test
     fun `pontos proprios refinam a nativa na mesma pressao sem absorver a inclinacao`() {
         val reference = listOf(0.3 to 3.0, 0.6 to 6.0)

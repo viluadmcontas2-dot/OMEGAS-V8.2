@@ -42,6 +42,38 @@ class EquivalenceEngineTest {
     ) = EquivalenceInput(axisRaw, flatK, reference, provisional, petrol, gas, ExperienceMeter(null).reading(), usage, operation)
 
     @Test
+    fun `resultado preserva curvas e avaliacao independentes de lenta e conducao`() {
+        fun regimeObs(rpm: Double, factor: Double) = List(20) { i ->
+            EquivalenceLedger.Obs(i * 70_000L, rpm, 0.31, 2.2 * factor * if (i % 2 == 0) 1.005 else 0.995)
+        }
+        val petrolBoth = regimeObs(850.0, 1.0) + regimeObs(2100.0, 1.45)
+        val gasBoth = regimeObs(850.0, 1.08) + regimeObs(2100.0, 1.45)
+        val result = EquivalenceEngine.evaluate(EquivalenceInput(
+            axisRaw, flatK, reference, null, petrolBoth, gasBoth,
+            ExperienceMeter(null).reading(), UsageMeter(null).reading(),
+        ))
+        val cell = OwnCurveFitter.cellOf(0.31)!!
+        assertEquals(20, result.regimeCurves[OperatingRegime.IDLE]!!.petrol.cells[cell].samples)
+        assertEquals(20, result.regimeCurves[OperatingRegime.DRIVING]!!.petrol.cells[cell].samples)
+        assertTrue(result.regimeAssessments[OperatingRegime.IDLE]!!.pairs > 0)
+        assertTrue(result.regimeAssessments[OperatingRegime.DRIVING]!!.pairs > 0)
+        assertTrue(result.regimeAssessments[OperatingRegime.IDLE]!!.mixture!! > 0.04)
+        assertTrue(kotlin.math.abs(result.regimeAssessments[OperatingRegime.DRIVING]!!.mixture!!) < 0.03)
+    }
+
+    @Test
+    fun `proposta global e bloqueada quando melhora conducao mas piora lenta madura`() {
+        fun pairs(rpm: Double, tp: Double, tg: Double) = List(20) { i ->
+            EquivalenceLedger.EvidencePair(tp, tg * if (i % 2 == 0) 1.002 else 0.998, rpm, t = i * 70_000L)
+        }
+        val evidence = pairs(2100.0, 2.0, 2.2) + pairs(850.0, 3.0, 3.3)
+        val axis = listOf(1.0, 2.0, 3.0, 4.0)
+        val current = listOf(1.0, 1.0, 1.0, 1.0)
+        val hurtsIdle = listOf(1.2, 1.1, 1.0, 1.2)
+        assertEquals(false, EquivalenceEngine.proposalDoesNotWorsenMatureRegimes(evidence, axis, current, hurtsIdle))
+    }
+
+    @Test
     fun `GNV 6 por cento pobre em 6 a 7 ms vira POBRE e a proposta sobe K ali`() {
         val r = EquivalenceEngine.evaluate(input(gasWithRichPlateau(1.06)))
         assertEquals(PointState.POBRE, r.points[12].state)
