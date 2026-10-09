@@ -428,7 +428,7 @@
         const index = Math.round(slot * (allBetween.length - 1) / 17);
         return { point: allBetween[index], index };
       }).filter((entry, index, list) => index === 0 || entry.index !== list[index - 1].index);
-    const oursMarkup = between && model.showIndividualMeasurements === true ? `<g class="layer-between">${visualBetween.map(({ point: b, index: i }) => {
+    const oursMarkup = false ? `<g class="layer-between">${visualBetween.map(({ point: b, index: i }) => {
       const token = `data-chart-our="b:${i}" data-refino-dot="ourb:${i}"`;
       const shapes = [];
       const place = (side, cls) => {
