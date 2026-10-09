@@ -52,6 +52,7 @@ class WiringGraph(unittest.TestCase):
 
     def test_document_hit_test_is_not_an_ecu_field(self):
         self.assertIn("elementFromPoint", E.BUILTIN)
+        self.assertIn("getScreenCTM", E.BUILTIN, "matriz SVG é API DOM, não campo emitido pela ECU")
         data = dict(self.data)
         data["js_reads"] = dict(data["js_reads"], nonexistent_ecu_test_field=["screens/map.js"])
         self.assertIn("nonexistent_ecu_test_field", E.analyse(data, ALLOW)[0],

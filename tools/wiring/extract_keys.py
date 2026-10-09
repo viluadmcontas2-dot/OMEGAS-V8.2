@@ -43,6 +43,7 @@ assign freeze create from isArray stringify parse has get set add delete clear s
 call apply bind prototype constructor name message stack error warn info
 document body head documentElement window globalThis console localStorage sessionStorage navigator
 elementFromPoint querySelector querySelectorAll closest matches getElementById getAttribute setAttribute removeAttribute hasAttribute
+getScreenCTM
 classList toggle contains dataset style textContent innerHTML innerText outerHTML value checked disabled hidden open selected id className title href src rel type placeholder tabIndex
 appendChild append prepend insertBefore removeChild remove replaceChildren createElement createElementNS createTextNode cloneNode parentElement parentNode children childNodes firstChild lastChild
 firstElementChild nextElementSibling previousElementSibling
