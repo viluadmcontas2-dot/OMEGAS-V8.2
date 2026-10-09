@@ -62,6 +62,9 @@ object RefinoState {
         val expiredFrom = autopilot.optString("expiredFrom")
         val pausedNoWrite = code == "TENTATIVA_ENCERRADA" && !local && expiredFrom != "PROPOSTA_PRONTA" && expiredFrom != "ECU_TRABALHANDO"
         val stableNoWrite = code == "ESTAVEL" && !local
+        val autoCalReady = autopilot.optBoolean("ecuDone", false) &&
+            autopilot.optInt("autoCalEnabled", -1) == 1
+        val canWriteProposal = autoCalReady && code !in setOf("SEM_ECU", "LENDO_ECU", "ECU_TRABALHANDO", "VERIFICANDO")
 
         var phase: String
         var label: String
@@ -94,7 +97,7 @@ object RefinoState {
             }
             // Proposta pronta, mas a ECU ainda está no automático e pode sobrescrever a curva: a UI não grava, então aqui
             // não há botão. A frase diz a verdade (há proposta; espero a ECU) em vez de prometer "Gravar" sem botão.
-            kind == "APPLY" && pointsToWrite > 0 && code == "ECU_TRABALHANDO" -> {
+            kind == "APPLY" && pointsToWrite > 0 && !autoCalReady -> {
                 phase = "A ECU está no automático"; label = "ECU no automático"
                 whatNow = "Já tenho ${points(pointsToWrite)} para gravar, mas a ECU ainda está no automático e pode sobrescrever a curva. Espero ela terminar."
                 next = "Aguardar a ECU"
@@ -115,7 +118,7 @@ object RefinoState {
                 label = if (local) "Ajuste pronto" else "Curva pronta"
                 whatNow = action?.optString("text").orEmpty()
                 next = if (local) "Corrigir ${if (pointsToWrite == 1) "o ponto" else "os $pointsToWrite pontos"} da Curva K" else "Gravar ${points(pointsToWrite)} na Curva K"
-                canAct = true
+                canAct = canWriteProposal
             }
             kind == "FREEZE_REFERENCE" -> {
                 phase = "Pronto para salvar a referência"; label = "Referência pronta"
