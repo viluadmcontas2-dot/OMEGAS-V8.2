@@ -1657,6 +1657,10 @@
         const selected = petrol ? active.petrolZone : active.gasZone;
         D.setDataIfChanged(node, 'current', selected !== null && zone === selected ? 'true' : 'false');
       });
+      this.panel?.querySelectorAll('[data-autocal-zone-rail]').forEach(node => {
+        const zone = Number(node.dataset.autocalZoneRail);
+        D.setDataIfChanged(node, 'current', currentZone !== null && zone === currentZone ? 'true' : 'false');
+      });
       this.panel?.querySelectorAll('[data-autocal-zone-surface]').forEach(node => {
         const current = currentZone !== null && Number(node.dataset.autocalZoneSurface) === currentZone;
         D.setDataIfChanged(node, 'current', current ? 'true' : 'false');
