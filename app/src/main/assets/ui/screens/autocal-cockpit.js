@@ -911,6 +911,12 @@
               <div class="ar-legend-row">
                 <div class="ar-legend" id="autocalLegend" aria-label="Legenda do gráfico"></div>
                 <span id="autocalNoiseSummary" class="autocal-noise-summary" aria-live="polite"></span>
+                <div id="autocalZoneMeter" class="autocal-zone-meter" role="group" aria-label="Quatro zonas por combustível" aria-live="polite">
+                <span class="autocal-zone-item" data-autocal-zone-row="1"><b>Z1</b><span class="autocal-zone-cell petrol" data-autocal-zone-petrol="0" data-state="unknown"><small>—</small></span><span class="autocal-zone-cell gas" data-autocal-zone-gas="0" data-state="unknown"><small>—</small></span></span>
+                <span class="autocal-zone-item" data-autocal-zone-row="2"><b>Z2</b><span class="autocal-zone-cell petrol" data-autocal-zone-petrol="1" data-state="unknown"><small>—</small></span><span class="autocal-zone-cell gas" data-autocal-zone-gas="1" data-state="unknown"><small>—</small></span></span>
+                <span class="autocal-zone-item" data-autocal-zone-row="3"><b>Z3</b><span class="autocal-zone-cell petrol" data-autocal-zone-petrol="2" data-state="unknown"><small>—</small></span><span class="autocal-zone-cell gas" data-autocal-zone-gas="2" data-state="unknown"><small>—</small></span></span>
+                <span class="autocal-zone-item" data-autocal-zone-row="4"><b>Z4</b><span class="autocal-zone-cell petrol" data-autocal-zone-petrol="3" data-state="unknown"><small>—</small></span><span class="autocal-zone-cell gas" data-autocal-zone-gas="3" data-state="unknown"><small>—</small></span></span>
+                </div>
                 <span id="autocalAutoMatchTile" class="autocal-automatch-chip" data-state="unknown" title="Ajustes automáticos que a própria ECU já fez, de quantos ela pode fazer">AutoMatch <b id="autocalAutoMatchCount">—</b></span>
                 <span id="autocalReferenceCount" class="ar-sr" hidden>—</span>
               </div>
@@ -1657,10 +1663,6 @@
         const zone = Number(rawIndex) + 1;
         const selected = petrol ? active.petrolZone : active.gasZone;
         D.setDataIfChanged(node, 'current', selected !== null && zone === selected ? 'true' : 'false');
-      });
-      this.panel?.querySelectorAll('[data-autocal-zone-rail]').forEach(node => {
-        const zone = Number(node.dataset.autocalZoneRail);
-        D.setDataIfChanged(node, 'current', currentZone !== null && zone === currentZone ? 'true' : 'false');
       });
       this.panel?.querySelectorAll('[data-autocal-zone-surface]').forEach(node => {
         const current = currentZone !== null && Number(node.dataset.autocalZoneSurface) === currentZone;
