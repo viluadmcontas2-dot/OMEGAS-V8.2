@@ -107,33 +107,30 @@ class RefinementPolishTest {
     private val offIndex = index(Triple(1.08, 20, null), Triple(1.06, 20, null), Triple(1.0, 20, null), Triple(null, 0, null), Triple(null, 0, null))
 
     @Test
-    fun `proposta que expira continua valida com texto proprio e sem repetir o aviso`() {
+    fun `proposta nao expira por horario e nunca duplica o aviso`() {
         val p = EquivalencePhases(null) { now }
         assertEquals("PROPOSTA_PRONTA", p.observe(true, monitor(3), null, offIndex, noJournal, 0).getString("phase"))
         assertTrue(p.takeAlert() != null)
-        now += EquivalencePhases.PHASE_BUDGET_MS.getValue("PROPOSTA_PRONTA")
-        val expired = p.observe(true, monitor(3), null, offIndex, noJournal, 0)
-        assertEquals("TENTATIVA_ENCERRADA", expired.getString("phase"))
-        assertEquals("PROPOSTA_PRONTA", expired.getString("expiredFrom"))
-        assertTrue(expired.getString("headline"), expired.getString("headline").contains("Proposta ainda válida, grave quando quiser"))
-        assertFalse(expired.getString("headline").contains("suficientes"))
-        assertNull("o prazo não repete o aviso", p.takeAlert())
-        // Evidência nova abre outra tentativa; o aviso já dado não repete (debounce).
+        now += 4 * 60 * 60_000L
+        val later = p.observe(true, monitor(3), null, offIndex, noJournal, 0)
+        assertEquals("PROPOSTA_PRONTA", later.getString("phase"))
+        assertFalse(later.getBoolean("watchdogExpired"))
+        assertNull("aviso nao deve repetir sem evento novo", p.takeAlert())
         now += 3_000
-        val again = p.observe(true, monitor(3), null, offIndex.put("revision", 7), noJournal, 0)
-        assertEquals("PROPOSTA_PRONTA", again.getString("phase"))
-        assertNull(p.takeAlert())
+        val next = p.observe(true, monitor(3), null, offIndex.put("revision", 7), noJournal, 0)
+        assertEquals("PROPOSTA_PRONTA", next.getString("phase"))
+        assertFalse(next.getBoolean("watchdogExpired"))
     }
 
     @Test
-    fun `ECU trabalhando que nao termina no prazo marca de onde expirou para oferecer a revisao`() {
+    fun `AutoCal incompleto nunca finge conclusao por prazo`() {
         val p = EquivalencePhases(null) { now }
         assertEquals("ECU_TRABALHANDO", p.observe(true, monitor(1), null, offIndex, noJournal, 0).getString("phase"))
-        now += EquivalencePhases.PHASE_BUDGET_MS.getValue("ECU_TRABALHANDO")
-        val expired = p.observe(true, monitor(1), null, offIndex, noJournal, 0)
-        assertEquals("TENTATIVA_ENCERRADA", expired.getString("phase"))
-        assertEquals("ECU_TRABALHANDO", expired.getString("expiredFrom"))
-        assertTrue(expired.getString("headline").contains("revise e grave"))
+        now += 4 * 60 * 60_000L
+        val later = p.observe(true, monitor(1), null, offIndex, noJournal, 0)
+        assertEquals("ECU_TRABALHANDO", later.getString("phase"))
+        assertFalse(later.getBoolean("ecuDone"))
+        assertFalse(later.getBoolean("watchdogExpired"))
     }
 
     @Test
