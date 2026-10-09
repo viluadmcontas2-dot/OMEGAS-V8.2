@@ -169,7 +169,7 @@ class RefinementLifecycleRegressionTest {
         }
     }
 
-    @Test fun automaticWaitHasCeilingWithoutDeclaringEcuDone() {
+    @Test fun automaticWaitNeverFalselyDeclaresEcuDone() {
         val p = EquivalencePhases(null) { now }
         val working = JSONObject().put("autoMatchCount", 0).put("maxAutomatch", 3).put("autoCalEnabled", 1)
         p.observe(true, working, null, index(), noJournal, 0)
