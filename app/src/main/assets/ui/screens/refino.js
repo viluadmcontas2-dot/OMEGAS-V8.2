@@ -776,9 +776,9 @@
       const input = { snapshot: this.snapshot, projection: this.projection || {}, eq, analysis: this.analysis, mode: 'between', regime: this.currentRegime(), view: this.chartView };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
-        if (!model || !model.domain || !(model.ownCurves &&
-          (model.ownCurves.petrol.some(p => p.petrolMs !== null) ||
-           model.ownCurves.gas.some(p => p.petrolMs !== null)))) {
+        if (!model || !model.domain || (!model.reference.length && !model.ecu.length && !model.betweenPoints.length &&
+          !(model.ownCurves && (model.ownCurves.petrol.some(p => p.petrolMs !== null) ||
+            model.ownCurves.gas.some(p => p.petrolMs !== null))))) {
           return { html: '<div class="chart-empty"><b>SEM PONTOS AINDA</b><span>Siga medindo gasolina e GNV. A curva própria aparece quando há medições válidas.</span></div>', scale: null, model: null };
         }
         const built = chart.buildSvg(model, { width, height, mode: 'between', selected: this.selected });
