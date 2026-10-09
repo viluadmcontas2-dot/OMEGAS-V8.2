@@ -280,7 +280,7 @@
     const fuels = [b.gas ? ['GNV', b.gas] : null, b.petrol ? ['Gasolina', b.petrol] : null].filter(Boolean);
     const first = fuels[0];
     parts.push(first ? first[0] : 'Falta medir');
-    parts.push(`entre os pontos ${Number(b.index) + 1} e ${Number(b.index) + 2} da ECU`);
+    parts.push(b.kind === 'local' ? 'região própria do OMEGAS' : `entre os pontos ${Number(b.index) + 1} e ${Number(b.index) + 2} da ECU`);
     const ms = first ? first[1].ms : b.centerMs;
     if (finite(ms) !== null) parts.push(`${number(ms, 2)} ms`);
     parts.push(first ? 'já medido' : 'ainda sem medida');
@@ -453,12 +453,12 @@
     const equivalent = reference.filter(p => finite(p.gasEquivalentMs) !== null);
     const equivalencePath = between && equivalent.length > 1 ? `<path class="autocal-equivalence-line" d="${pathFor(equivalent, 'petrolMapBar', 'gasEquivalentMs')}"></path>` : '';
 
-    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g><g class="autocal-zone-rail">${rail}</g>` +
+    const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>` +
       `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção de gasolina (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${equivalencePath}` +
       `${hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +
-      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
+      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g><g class="autocal-zone-rail">${rail}</g></svg>`;
     return { svg, scale };
   }
 
