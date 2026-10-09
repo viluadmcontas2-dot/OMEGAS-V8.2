@@ -9,7 +9,8 @@ import org.junit.Test
 /** Motivo humano quando o Refino não sugere (sem regra interna no texto do dono). */
 class RefinoWhyNoProposalTest {
     private fun gaps(total: Int, collected: Int) = JSONArray((0 until total).map {
-        JSONObject().put("kind", "gap").put("state", if (it < collected) "coletado" else "falta")
+        JSONObject().put("kind", "local").put("fromMs", it.toDouble()).put("toMs", it + 0.25)
+            .put("samples", it + 1).put("state", if (it < collected) "coletado" else "aprendendo")
     })
 
     private fun equivalence(index: Double?) = JSONObject().put("available", true)
@@ -22,13 +23,13 @@ class RefinoWhyNoProposalTest {
     }
 
     @Test
-    fun `faltam leituras em 2 faixas`() {
-        assertEquals("Faltam leituras em 2 faixas.", why("COLETANDO_NOSSOS", gaps(5, 3), null))
+    fun `regiao especifica informa o que falta sem condicionar vizinhos`() {
+        assertEquals("Estou medindo em 4,00–4,25 ms; falta confiança somente nesse trecho.", why("COLETANDO_NOSSOS", gaps(5, 3), null))
     }
 
     @Test
-    fun `uma faixa so usa o singular`() {
-        assertEquals("Faltam leituras em 1 faixa.", why("COLETANDO_NOSSOS", gaps(5, 4), 0.9))
+    fun `mais dados nao exigem duas outras faixas`() {
+        assertEquals("Estou medindo em 4,00–4,25 ms; falta confiança somente nesse trecho.", why("COLETANDO_NOSSOS", gaps(5, 4), 0.9))
     }
 
     @Test
@@ -39,7 +40,7 @@ class RefinoWhyNoProposalTest {
     @Test
     fun `ECU ainda aprendendo explica por que nao propoe`() {
         val text = why("ECU_TRABALHANDO", gaps(5, 1), null)
-        assertTrue(text, text != null && text.contains("ECU ainda está aprendendo"))
+        assertTrue(text, text != null && text.contains("AutoCal nativo"))
     }
 
     @Test
