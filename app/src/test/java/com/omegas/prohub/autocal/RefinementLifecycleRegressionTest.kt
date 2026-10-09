@@ -133,7 +133,7 @@ class RefinementLifecycleRegressionTest {
     }
 
     @Test fun everyWaitingPhaseHasAnIndependentExitAndRecoversOnNewEvidence() {
-        val cases = listOf("COLETANDO_NOSSOS", "PROPOSTA_PRONTA", "RESTAURAR_TRECHO") // VERIFICANDO: sem teto (fecha só por evidência)
+        val cases = listOf("RESTAURAR_TRECHO") // Refino em COLETANDO/PROPOSTA nunca expira por relógio
         for (phase in cases) {
             now = 1_000L
             val p = EquivalencePhases(null) { now }
@@ -156,14 +156,27 @@ class RefinementLifecycleRegressionTest {
         }
     }
 
+    @Test fun coletaEPropostaNaoExpiramPorTempoEnquantoHouverEvidencia() {
+        for (phase in listOf("COLETANDO_NOSSOS", "PROPOSTA_PRONTA")) {
+            now = 1_000L
+            val p = EquivalencePhases(null) { now }
+            val idx = if (phase == "COLETANDO_NOSSOS") JSONObject().put("samples", 0).put("bands", JSONArray()) else index(1.12)
+            assertEquals(phase, p.observe(true, done(), null, idx, noJournal, 0).getString("phase"))
+            now += 12 * 60 * 60_000L
+            val later = p.observe(true, done(), null, idx, noJournal, 0)
+            assertEquals(phase, later.getString("phase"))
+            assertFalse(later.getBoolean("watchdogExpired"))
+        }
+    }
+
     @Test fun automaticWaitHasCeilingWithoutDeclaringEcuDone() {
         val p = EquivalencePhases(null) { now }
         val working = JSONObject().put("autoMatchCount", 0).put("maxAutomatch", 3).put("autoCalEnabled", 1)
         p.observe(true, working, null, index(), noJournal, 0)
         var out = JSONObject()
         repeat(800) { now += 3_000; out = p.observe(true, working, null, index(), noJournal, 0) }
-        assertEquals("TENTATIVA_ENCERRADA", out.getString("phase"))
-        assertEquals("ECU_PROGRESS_TIMEOUT", out.getString("reasonCode"))
+        assertEquals("ECU_TRABALHANDO", out.getString("phase"))
+        assertFalse(out.getBoolean("watchdogExpired"))
         assertFalse(out.getBoolean("ecuDone"))
         assertFalse(out.getBoolean("canDisconnect"))
     }
