@@ -59,7 +59,10 @@ const pointsFn=()=>[...document.querySelectorAll('#autocalReferenceChart circle.
       reads:window.__bridgeFake.reads,staleReads:window.__bridgeFake.staleReads,
       simulatedRevision:window.__ss.rev,projectionRevision:window.OmegasApp?.autoCalCockpit?.projection?.transportTablesRevision,
       points:[...document.querySelectorAll('#autocalReferenceChart circle.autocal-acquired-point')].map(x=>x.dataset.autocalPointKey),
-      zones:[...document.querySelectorAll('#autocalReferenceChart [data-autocal-zone-surface]')].map(x=>({petrol:x.dataset.petrolState,gas:x.dataset.gasState})),
+      zones:[...document.querySelectorAll('#autocalZoneMeter [data-autocal-zone-row]')].map(row=>({
+        petrol:row.querySelector('[data-autocal-zone-petrol]')?.dataset.state,
+        gas:row.querySelector('[data-autocal-zone-gas]')?.dataset.state
+      })),
     }));
     const elapsed=Date.now()-since;
     result.steps.push({name,elapsedMs:elapsed,...metrics});
