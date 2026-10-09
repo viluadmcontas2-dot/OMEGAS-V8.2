@@ -45,8 +45,8 @@ object RefinoState {
         val nextRange = nextMeasuredRegion?.let {
             "%.2f–%.2f ms".format(java.util.Locale.forLanguageTag("pt-BR"), it.optDouble("fromMs"), it.optDouble("toMs"))
         }
-        val perPointReason = nextRange?.let { "Estou medindo em $it; falta confiança somente nesse trecho." }
-            ?: "Estou medindo cada região onde houver leituras; nenhuma outra faixa é obrigatória."
+        val perPointReason = nextRange?.let { "Estou medindo em $it; faltam leituras para confirmar essa região." }
+            ?: "Estou aprendendo cada região percorrida, sem exigir outras regiões."
         val available = equivalence?.optBoolean("available", false) == true
         val action = equivalence?.optJSONObject("nextAction")
         val kind = action?.optString("kind").orEmpty()
