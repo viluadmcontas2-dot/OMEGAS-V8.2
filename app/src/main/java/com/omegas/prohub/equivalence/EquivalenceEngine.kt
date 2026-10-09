@@ -236,8 +236,11 @@ object EquivalenceEngine {
         // O veredito v1 continua sendo de CONDUÇÃO; lenta tem curva/veredito próprios abaixo e nunca é misturada na média.
         val pairs = allPairs.filter { OperatingRegime.DRIVING.accepts(it.rpm) }
         // Acima do último nó real da Curva K aprende e desenha, mas não fabrica extrapolação de escrita.
-        val proposalPairs = allPairs.filter { it.petrolRefMs <= axis.last() && it.gasPetrolMs <= axis.last() }
-        val regimeAssessments = OperatingRegime.entries.associateWith { regimeAssessment(it, proposalPairs, axis, k) }
+        val supportedPairs = allPairs.filter { it.petrolRefMs <= axis.last() && it.gasPetrolMs <= axis.last() }
+        // Uma curva K global só usa evidências de condução; a lenta segue aprendida/julgada
+        // separadamente e NÃO contamina um ajuste global com regimes incompatíveis.
+        val proposalPairs = supportedPairs.filter { OperatingRegime.DRIVING.accepts(it.rpm) }
+        val regimeAssessments = OperatingRegime.entries.associateWith { regimeAssessment(it, supportedPairs, axis, k) }
         val pairU = DoubleArray(pairs.size) { ln(pairs[it].petrolRefMs) }
         val pairLn = DoubleArray(pairs.size) {
             val p = pairs[it]
