@@ -43,6 +43,31 @@ jobs:
           ./gradlew testDebugUnitTest --tests '*AutoCalManualDeleteKeepsAutoCleanupTest'
       - name: JVM unit tests
         run: ./gradlew testDebugUnitTest
+      - name: Simulacao intensa do AutoCal em Chromium (despacho manual)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          OMEGAS_TEIA_OUT: tests/ui/__teia__/out
+          OMEGAS_STRESS_OUT: tests/ui/__teia__/out-stress
+          OMEGAS_STRESS_EVENTS: '4000'
+          OMEGAS_STRESS_DELAY_MS: '7'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/omegas-pw" playwright@1.64.0 --ignore-scripts --no-save --no-package-lock --no-audit --no-fund
+          export NODE_PATH="$RUNNER_TEMP/omegas-pw/node_modules"
+          export OMEGAS_CHROMIUM="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$OMEGAS_CHROMIUM" && test -x "$OMEGAS_CHROMIUM" || { echo "::error::Chromium ausente: NAO ignorar testes visuais"; exit 1; }
+          node -e "const l=require('./tests/ui/render/lib.js'); const p=l.playwright(); if(!p||!l.chromiumPath(p.chromium)) {console.error('Playwright/Chromium nao encontrado'); process.exit(3)}"
+          python3 tests/ui/render/prep.py /tmp/omegas-render-data.json
+          node --test tests/ui/autocal-teia.test.cjs
+          node tools/ui_stress/autocal-browser-stress.cjs
+      - name: Evidencias da simulacao visual intensa (manual)
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: autocal-estresse-4000
+          path: tests/ui/__teia__/out-stress
+          if-no-files-found: error
       - name: Relatorio do replay do apagamento automatico
         if: always()
         uses: actions/upload-artifact@v4
