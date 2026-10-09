@@ -395,12 +395,17 @@ object AutoMatchRefinedEngine {
             outRaw += if (origin == Origin.HELD) kRaw[j]
             else (exp(final[j]) * Q14).roundToInt().coerceIn(MIN_RAW_PROPOSAL, MAX_RAW_PROPOSAL)
         }
-        // Uma proposta que piora o critério do próprio motor (erro ponderado contra TODOS os alvos usados) nunca sai.
+        // A melhora no conjunto total não pode esconder piora nas faixas maduras que julgam a equivalência.
+        // Confere ambos os critérios, com a mesma tolerância numérica, antes de liberar a proposta.
         var regression = false
         if (equivalence && targets.isNotEmpty()) {
-            val errBefore = evidenceError(targets, axisMs, kOld)
-            val errAfter = evidenceError(targets, axisMs, outRaw.map { it / Q14 })
-            if (errBefore != null && errAfter != null && errAfter > errBefore + REGRESSION_EPS) {
+            val proposed = outRaw.map { it / Q14 }
+            val criteria = listOf(targets, judgedTargets(equivalence, telemetryOnly, targets, matureWeight))
+            if (criteria.any { criterion ->
+                    val before = evidenceError(criterion, axisMs, kOld)
+                    val after = evidenceError(criterion, axisMs, proposed)
+                    before != null && after != null && after > before + REGRESSION_EPS
+                }) {
                 regression = true
                 for (j in 0 until POINT_COUNT) { outRaw[j] = kRaw[j]; origins[j] = Origin.HELD }
             }

@@ -65,7 +65,7 @@ class ProposalReplayReportTest {
             "foraRazao=${plausible.outliers} parRejeitado=${plausible.rejectedPairs}"
     }
 
-    private fun replay(name: String): List<Row> {
+    private fun replay(name: String, checkMatureRegression: Boolean = false): List<Row> {
         val events = load(name)
         var now = events.first().getLong("t")
         val ledger = EquivalenceLedger(null) { now }
@@ -101,9 +101,18 @@ class ProposalReplayReportTest {
                     if (runtime.references.current() == null && ReferenceStore.pointsFrom(acquisition).isNotEmpty()) {
                         runtime.freeze(acquisition, phasesReal)
                     }
-                    if (snapIndex !in sample) continue
+                    if (snapIndex !in sample && !checkMatureRegression) continue
                     val enabled = EquivalenceReplaySupportHex.first(data, "AUTO_CAL_ENABLE") ?: 1
                     val result = runtime.evaluate(ledger, phasesReal, snapshot, acquisition, true) { null } ?: continue
+                    if (checkMatureRegression && result.nextAction.kind == NextActionKind.APPLY) {
+                        val before = result.proposal?.evidenceErrorBefore
+                        val after = result.proposal?.evidenceErrorAfter
+                        if (before != null && after != null) {
+                            assertTrue("$name snap#$snapIndex: erro maduro piorou $before -> $after",
+                                after <= before + AutoMatchRefinedEngine.REGRESSION_EPS)
+                        }
+                    }
+                    if (snapIndex !in sample) continue
                     val index = ledger.index()
                     val monitorReal = JSONObject().put("autoCalEnabled", enabled)
                     val monitorDone = JSONObject().put("autoCalEnabled", enabled).put("autoMatchCount", 3).put("maxAutomatch", 3)
@@ -144,6 +153,13 @@ class ProposalReplayReportTest {
         }
         println("REPLAY_PLATINA_RESUMO $name amostras=${rows.size} curvasAlteradas=$legacyChanged pontosInseguros=$legacyUnsafe")
         return rows
+    }
+
+    @Test
+    fun `proposta nao piora a evidencia madura em nenhum snapshot real`() {
+        val pista = replay("pista_2026-10-06_2030", checkMatureRegression = true)
+        assertTrue("a guarda de regressão não deve impedir todas as propostas reais", pista.any { it.apply })
+        replay("util_2026-10-06_1921", checkMatureRegression = true)
     }
 
     @Test
