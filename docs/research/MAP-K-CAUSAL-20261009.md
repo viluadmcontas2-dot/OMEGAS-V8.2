@@ -41,16 +41,16 @@ flowchart TD
 
 e = mediana robusta de ln(T_petrol_no_GNV / T_petrol_na_gasolina), em mesmo regime, RPM, MAP, temperatura comparável.
 s = d ln(erro) / d ln(raw_MAP_K), desconhecido até experimento causal.
-SE s medido e replicado: delta_ln_MAP_K = -alpha × e / s (alpha <= 0,5).
+No protótipo, s é estimado por diferença-em-diferenças: (mudança no erro da região modificada - deriva da região-controle não modificada) / mudança em ln(raw_MAP_K). Exige quatro sessões distintas, passos positivos e negativos e leave-one-session-out. Só com s validado: delta_ln_MAP_K = -alpha × e / s (alpha <= 0,5).
 Teto experimental do protótipo = ±5%; não é recomendação de escrita. Sem s, ABSTER-SE.
-O construtor controlled_gain() do protótipo serve exclusivamente para hipóteses sintéticas; não certifica ganho real.
+O construtor controlled_gain() serve exclusivamente a hipóteses sintéticas. estimate_controlled_gain() usa os ensaios controlados fornecidos, mas matched e estabilidade precisam de prova externa dos logs; o protótipo não é um certificado de ganho físico.
 
 ## Prova antes de integrar
 
-1. Pelo menos três intervenções independentes com gasolina e GNV antes/depois, condições equivalentes e Curva K/AutoMatch imutáveis durante a janela. Controlar pressão, temperatura, cutoff, marcha lenta e drift de sessão.
+1. Pelo menos quatro intervenções independentes (três para estimar, uma para validar), com gasolina e GNV antes/depois, condições equivalentes, controles não alterados e Curva K/AutoMatch imutáveis; intervenções positivas e negativas. Controlar pressão, temperatura, cutoff, marcha lenta e drift de sessão.
 2. Identificar o sinal e incerteza de s por célula, testar sensibilidade a outliers, efeito de regiões vizinhas e falsos positivos.
 3. Exigir ganho em sessões não utilizadas no ajuste (holdout), sem piorar locais antes estáveis. Não assumir que uma curva lisa significa melhor motor.
 4. Só então ligar o cálculo à revisão manual existente. Nenhum botão adicional, nenhuma alteração de bytes, nenhum salvamento automático.
 5. Caso não haja contrafactual: reportar SEM_CONTROLE_CAUSAL_INDEPENDENTE e parar.
 
-**Entregas desta etapa:** tools/map_k/map_k_probe.py (só offline), tests/test_map_k_causal_gate.py (TDD) e este desenho. Fonte de verdade da integração: CI do GitHub verde no SHA. Não foi provada a redução de trancos em carro.
+**Entregas desta etapa:** tools/map_k/map_k_probe.py (só offline), tests/test_map_k_causal_gate.py, tests/test_map_k_identify_gain.py (TDD) e este desenho. Fonte de verdade da integração: CI do GitHub verde no SHA. Não foi provada a redução de trancos em carro.

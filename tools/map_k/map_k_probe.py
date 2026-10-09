@@ -53,6 +53,77 @@ def proportional_target_percent(ratio, gain: ControlledGain | None, *,
         max(-1.0, min(1.0, delta_log)))))
 
 
+@dataclass(frozen=True)
+class ControlledTrial:
+    """Uma intervenção manual confirmada com região CONTROLE não alterada.
+
+    Todos os pares vêm de situações equivalentes ANTES/DEPOIS nos dois
+    combustíveis. matched/stable/episodes DEVEM ser aferidos do log original.
+    """
+    session_id: str
+    target_before_ratio: float
+    target_after_ratio: float
+    control_before_ratio: float
+    control_after_ratio: float
+    map_raw_before: int
+    map_raw_after: int
+    matched: bool = True
+    curve_stable: bool = True
+    automatch_stable: bool = True
+    independent_episodes: int = 2
+
+
+def estimate_controlled_gain(trials: list[ControlledTrial]) -> ControlledGain | None:
+    """Diferenças-em-diferenças em ln, mediana robusta e holdout leave-one-out.
+
+    São necessários >=4 ensaios independentes e mudanças MAP_K em ambas
+    direções. Não extrapola para regiões não ensaiadas. Modelo OFFLINE.
+    """
+    from statistics import median
+
+    if len(trials) < 4 or len({t.session_id for t in trials}) != len(trials):
+        return None
+    effects = []
+    signs = set()
+    for t in trials:
+        vals = (t.target_before_ratio, t.target_after_ratio,
+                t.control_before_ratio, t.control_after_ratio)
+        if (not t.matched or not t.curve_stable or not t.automatch_stable
+            or t.independent_episodes < 2 or
+            any(not math.isfinite(v) or v <= 0 for v in vals)
+            or not 1 <= t.map_raw_before <= 255 or not 1 <= t.map_raw_after <= 255
+            or t.map_raw_before == t.map_raw_after):
+            return None
+        x = math.log(t.map_raw_after / t.map_raw_before)
+        # Subtrai a deriva comum de uma região não tocada da MESMA sessão.
+        y = (math.log(t.target_after_ratio / t.target_before_ratio)
+             - math.log(t.control_after_ratio / t.control_before_ratio))
+        beta_i = y / x
+        if not math.isfinite(beta_i) or abs(beta_i) < 0.05:
+            return None
+        signs.add(1 if x > 0 else -1)
+        effects.append((x, y, beta_i))
+    if len(signs) < 2:
+        return None
+    betas = [b for _, _, b in effects]
+    beta = median(betas)
+    if abs(beta) < 0.05 or any(b * beta <= 0 for b in betas):
+        return None
+    # Cada sessão precisa ser prevista pelo conjunto das OUTRAS sessões.
+    prediction_errors = []
+    baseline_errors = []
+    for i, (x, y, _) in enumerate(effects):
+        fitted = median([b for j, (_, _, b) in enumerate(effects) if j != i])
+        err = abs(y - fitted * x)
+        if err > max(0.01, 0.35 * abs(y)):
+            return None
+        prediction_errors.append(err)
+        baseline_errors.append(abs(y))
+    if sum(prediction_errors) >= 0.5 * sum(baseline_errors):
+        return None
+    return ControlledGain(beta, len(trials))
+
+
 def _eligible(event):
     if event.get("type") != "telemetry":
         return None
