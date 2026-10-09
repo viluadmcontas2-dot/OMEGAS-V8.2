@@ -244,7 +244,7 @@
     }
     const restore = Array.isArray(eq?.restorePoints) ? eq.restorePoints.length : 0;
     if (phase === 'RESTAURAR_TRECHO' && restore) return { kind: 'restore', label: `Desfazer o trecho que piorou (${D.plural(restore, 'ponto', 'pontos')})` };
-    if (phase === 'ESTAVEL') return { kind: 'stable', label: '✓ Estável · pode desconectar' };
+    if (phase === 'ESTAVEL' && !(proposal && eq?.refinoState?.canAct === true)) return { kind: 'stable', label: '✓ Estável · pode desconectar' };
     // Enquanto a ECU faz o automático ela pode sobrescrever qualquer curva: o refino calcula e
     // mostra, mas a gravação só libera quando a ECU terminar.
     if (phase === 'SEM_ECU' || phase === 'LENDO_ECU' || phase === 'ECU_TRABALHANDO') {
