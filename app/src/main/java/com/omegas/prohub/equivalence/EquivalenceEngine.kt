@@ -183,7 +183,7 @@ object EquivalenceEngine {
         judge: (List<EquivalencePoint>) -> ProofOutcome = { ProofOutcome.NONE },
     ): EquivalenceResult {
         val prior = input.reference ?: input.provisional
-        val ownP = OwnCurveFitter.fit(input.petrolObs, Fuel.GASOLINA, prior)
+        val ownP = OwnCurveFitter.fit(input.petrolObs, Fuel.GASOLINA, null)
         // O GNV medido NÃO é puxado para a gasolina: sem prior (a Referência é de gasolina; encolher o GNV para ela esconderia o desvio).
         val ownG = OwnCurveFitter.fit(input.gasObs, Fuel.GNV, null)
         val provisional = input.reference == null
