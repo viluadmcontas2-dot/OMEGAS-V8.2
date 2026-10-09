@@ -60,7 +60,7 @@ function probeFn() {
     host: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) },
     svg: svg ? { vb: svg.getAttribute('viewBox'), w: svg.getBoundingClientRect().width, h: svg.getBoundingClientRect().height } : null,
     xt: txt('.autocal-axis-tick-x'), yt: txt('.autocal-axis-tick-y'), titles: txt('.autocal-axis-title'), grid: host.querySelectorAll('.autocal-grid-line').length,
-    zones: txt('[data-autocal-zone-row]'), pts, paths, btns, allBtns: all, hasLive: !!host.querySelector('.autocal-live-layer'), emptyWords: over ? over.textContent.trim() : '',
+    zones: [...document.querySelectorAll('#autocalZoneMeter [data-autocal-zone-row]')].map(e => e.textContent.trim()), pts, paths, btns, allBtns: all, hasLive: !!host.querySelector('.autocal-live-layer'), emptyWords: over ? over.textContent.trim() : '',
     sentence: t('autocalHumanAction'), status: t('autocalActionStatus'), readout: t('autocalChartInspector'), count: t('autocalReferenceCount') || (document.getElementById('autocalReferenceCount') || {}).textContent || '',
     chip: (() => { const c = document.getElementById('autocalAutoMatchTile'); if (!c) return null; const q = c.getBoundingClientRect(); return { text: c.textContent.trim().replace(/\s+/g, ' '), w: q.width, h: q.height, t: q.top, b: q.bottom, l: q.left, r: q.right }; })(),
     legendBox: (() => { const q = (document.querySelector('.ar-legend-row') || document.body).getBoundingClientRect(); return { l: q.left, r: q.right, t: q.top, b: q.bottom }; })(),
