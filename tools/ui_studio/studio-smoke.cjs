@@ -41,6 +41,32 @@ const ROOT=path.resolve(__dirname,'../..'),PORT=18765;
    assert.match(await page.locator('#change-list').innerText(),/Ocultar/);
    await page.locator('#undo').click();
    assert.doesNotMatch(await page.locator('#change-list').innerText(),/Ocultar/);
+   // Drafts follow the selected element; resizing must change measured geometry.
+   const selector=await page.locator('#selected-selector').innerText();
+   await page.locator('#note-input').fill('Rascunho deste elemento');
+   const originalWidth=Number(await page.locator('#size-width').inputValue());
+   const originalHeight=Number(await page.locator('#size-height').inputValue());
+   await page.locator('#size-width').fill('900');
+   await page.locator('#size-width').press('Tab');
+   await page.waitForTimeout(200);
+   assert.equal(await frame.locator(selector).first().evaluate(e=>Math.round(e.getBoundingClientRect().width)),900);
+   await page.locator('#size-height').fill('350');
+   await page.locator('#size-height').press('Tab');
+   await page.waitForTimeout(200);
+   assert.equal(await frame.locator(selector).first().evaluate(e=>Math.round(e.getBoundingClientRect().height)),350);
+   assert.ok((await page.evaluate(()=>window.__studio.exportSession())).changes.some(x=>x.kind==='resize'&&x.width===900));
+   await page.locator('#compare').click();
+   assert.equal(await frame.locator(selector).first().evaluate(e=>Math.round(e.getBoundingClientRect().width)),originalWidth);
+   await page.locator('#compare').click();
+   assert.equal(await frame.locator(selector).first().evaluate(e=>Math.round(e.getBoundingClientRect().width)),900);
+   await page.locator('#undo').click();
+   await page.locator('#undo').click();
+   assert.equal(await frame.locator(selector).first().evaluate(e=>Math.round(e.getBoundingClientRect().width)),originalWidth);
+   assert.equal(await frame.locator(selector).first().evaluate(e=>Math.round(e.getBoundingClientRect().height)),originalHeight);
+   await page.locator('#studio-stage-overlay').click({position:{x:700,y:30}});
+   assert.equal(await page.locator('#note-input').inputValue(),'');
+   await page.locator('#studio-stage-overlay').click({position:{x:500,y:250}});
+   assert.equal(await page.locator('#note-input').inputValue(),'Rascunho deste elemento');
    await page.locator('#tool-draw').click();
    await page.locator('#studio-stage-overlay').dragTo(page.locator('#studio-stage-overlay'),{sourcePosition:{x:240,y:210},targetPosition:{x:435,y:280}});
    assert.ok(await page.locator('#markup-layer polyline').count()>0,'annotations visible');
@@ -57,3 +83,4 @@ const ROOT=path.resolve(__dirname,'../..'),PORT=18765;
    console.log('OMEGASCINZA_STUDIO_E2E_PASS '+JSON.stringify({routes:8,changes:data.changes.length,errors:errors.length}));
  } finally {if(browser)await browser.close();server.kill();}
 })().catch(e=>{console.error('OMEGASCINZA_STUDIO_E2E_FAIL',e.stack||e);process.exitCode=1;});
+
