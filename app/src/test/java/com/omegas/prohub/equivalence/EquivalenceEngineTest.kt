@@ -152,12 +152,13 @@ class EquivalenceEngineTest {
     }
 
     @Test
-    fun `referencia provisoria pede para congelar antes de qualquer ajuste`() {
+    fun `referencia provisoria nao impede proposta de pares proprios maduros`() {
         val r = EquivalenceEngine.evaluate(input(gasWithRichPlateau(1.06), reference = null, provisional = reference))
         assertTrue(r.provisional)
-        assertEquals(NextActionKind.FREEZE_REFERENCE, r.nextAction.kind)
+        assertEquals(NextActionKind.APPLY, r.nextAction.kind)
         assertEquals("refino", r.nextAction.route)
-        assertEquals(null, r.nextAction.subpage)
+        assertTrue(r.nextAction.pointIndexes.isNotEmpty())
+        assertTrue(r.nextAction.text.endsWith(" · sem referência da ECU"))
     }
 
     @Test
