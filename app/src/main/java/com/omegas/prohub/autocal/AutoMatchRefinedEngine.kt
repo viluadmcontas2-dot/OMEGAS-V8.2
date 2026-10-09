@@ -87,7 +87,7 @@ object AutoMatchRefinedEngine {
     /** Peso de cada par GNV×gasolina da telemetria (validado em metade escondida da volta). */
     const val TELEMETRY_WEIGHT = 0.4
     /** Abaixo disso a telemetria é dominada por transiente/corte (erro ~15%). */
-    const val TELEMETRY_MIN_MS = 1.0
+    const val TELEMETRY_MIN_MS = 3.0
     /**
      * A ECU pode não ter faixas maduras (AutoMatch acabou de zerar os buffers, ou o motorista
      * não passa por elas). Então a condução sozinha pode propor, mas só com cobertura de verdade:
@@ -95,7 +95,7 @@ object AutoMatchRefinedEngine {
      * pares cada. Sem isso falha fechado (POLISH, nada muda).
      */
     const val TELEMETRY_ONLY_BAND_PAIRS = 8
-    const val TELEMETRY_ONLY_MIN_BANDS = 1
+    const val TELEMETRY_ONLY_MIN_BANDS = 2
     /**
      * Uma faixa só puxa proposta com pares de ao menos este número de episódios = blocos de leituras não sobrepostas;
      * não exige permanência nem retorno após um minuto.
@@ -157,6 +157,8 @@ object AutoMatchRefinedEngine {
         val fineBins: List<FineBins.Bin>? = null,
         /** MNFLD_PRESS_THD (18): com ele, banda cujo MAP de buffer cai fora de [THD[b]; THD[b+1]] é evidência inválida. */
         val pressureThresholdsRaw: IntArray? = null,
+        /** Refino proprio: celulas locais, sem exigir cobertura das faixas nativas. */
+        val independentRefino: Boolean = false,
     )
 
     enum class Mode { EQUIVALENCE, POLISH, UNAVAILABLE }
@@ -289,19 +291,20 @@ object AutoMatchRefinedEngine {
             val episodesKnown = input.telemetryEpisodes.size == input.telemetryPairs.size
             val keptPairs = input.telemetryPairs.indices.filter { i ->
                 val (tp, tg) = input.telemetryPairs[i]
-                tp >= TELEMETRY_MIN_MS && tg > 0.0 && tp <= axisMs.last()
+                tp >= (if (input.independentRefino) EquivalenceLedger.MIN_PETROL_MS else TELEMETRY_MIN_MS) &&
+                    tg > 0.0 && tp <= axisMs.last()
             }
             val candidates = keptPairs.map { input.telemetryPairs[it] }
             val episodeIds = if (episodesKnown) keptPairs.map { input.telemetryEpisodes[it] } else null
-            val plausible = plausibleIndices(candidates, episodeIds)
+            val plausible = plausibleIndices(candidates, episodeIds, input.independentRefino)
             usablePairs = plausible.kept.map { candidates[it] }
-            usableWeights = pairWeights(usablePairs, episodeIds?.let { ids -> plausible.kept.map { ids[it] } })
+            usableWeights = pairWeights(usablePairs, episodeIds?.let { ids -> plausible.kept.map { ids[it] } }, input.independentRefino)
             outlierBands = plausible.outliers
             outlierPairs = plausible.rejectedPairs
             usedCount = usablePairs.size
         }
         // A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
-        val telemetryOnly = !nativeEquivalence && (if (fine != null) fineCovers(fine, fineValid!!) else telemetryCovers(usablePairs))
+        val telemetryOnly = !nativeEquivalence && (if (fine != null) fineCovers(fine, fineValid!!) else telemetryCovers(usablePairs, input.independentRefino))
         val equivalence = nativeEquivalence || telemetryOnly
         val nativeTargets = targets
         val bandTargetCount = targets.size
@@ -363,7 +366,9 @@ object AutoMatchRefinedEngine {
                 axisWeights(target.petrolMs, axisMs).forEach { (j, _) -> supported[j] = true }
             }
             val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b ->
-                if (telemetryOnly && fine == null && !supported[j]) x0[j] to x0[j] else b
+                if (telemetryOnly && fine == null &&
+                    (if (input.independentRefino) !supported[j]
+                     else axisMs[j] < minMeasured || axisMs[j] > maxMeasured)) x0[j] to x0[j] else b
             }
             eEff = effectiveElasticity(initialBox, u)
             val enforced = enforceCoherence(scaled, initialBox, u, eEff)
@@ -460,11 +465,11 @@ object AutoMatchRefinedEngine {
     }
 
     /** Peso relativo de cada par por episódio: um (faixa, episódio) vale no máximo [EPISODE_PAIR_CAP] pares. Sem episódios = 1. */
-    internal fun pairWeights(pairs: List<kotlin.Pair<Double, Double>>, episodes: List<Int>?): List<Double> {
+    internal fun pairWeights(pairs: List<kotlin.Pair<Double, Double>>, episodes: List<Int>?, independent: Boolean = false): List<Double> {
         if (episodes == null || episodes.size != pairs.size) return List(pairs.size) { 1.0 }
         val counts = HashMap<kotlin.Pair<Int, Int>, Int>()
-        pairs.forEachIndexed { i, p -> counts.merge(ledgerBand(p.first)!! to episodes[i], 1, Int::plus) }
-        return pairs.mapIndexed { i, p -> min(1.0, EPISODE_PAIR_CAP.toDouble() / counts[ledgerBand(p.first)!! to episodes[i]]!!) }
+        pairs.forEachIndexed { i, p -> counts.merge(ledgerBand(p.first, independent)!! to episodes[i], 1, Int::plus) }
+        return pairs.mapIndexed { i, p -> min(1.0, EPISODE_PAIR_CAP.toDouble() / counts[ledgerBand(p.first, independent)!! to episodes[i]]!!) }
     }
 
     /** Contadores da leitura das faixas nativas (evidência inválida/fina nunca é silenciosa). */
@@ -473,9 +478,13 @@ object AutoMatchRefinedEngine {
     /** MAP bruto S16 com bit 0x8000 (ou negativo) não é pressão: é evidência inválida. */
     internal fun mapRawInvalid(value: Int): Boolean = value < 0 || (value and 0x8000) != 0
 
-    /** Célula temporal local de 0,5 ms, sem teto de 12/13/22 ms nem exigência de outras faixas. */
-    private fun ledgerBand(tp: Double): Int? =
-        if (!tp.isFinite() || tp < TELEMETRY_MIN_MS) null else kotlin.math.floor(tp / 0.5).toInt()
+    /** As bandas originais continuam intactas; o Refino proprio usa celulas de 0,5 ms. */
+    private fun ledgerBand(tp: Double, independent: Boolean = false): Int? {
+        if (independent) return if (tp.isFinite() && tp >= EquivalenceLedger.MIN_PETROL_MS)
+            kotlin.math.floor(tp / 0.5).toInt() else null
+        EquivalenceLedger.BANDS.forEachIndexed { i, (lo, hi) -> if (tp >= lo && tp < hi) return i }
+        return if (tp >= EquivalenceLedger.BANDS.last().second) EquivalenceLedger.BANDS.size else null
+    }
 
     internal class Plausible(val kept: List<Int>, val outliers: Int, val rejectedPairs: Int = 0)
 
@@ -490,11 +499,11 @@ object AutoMatchRefinedEngine {
      *
      * Isto rejeita SOMENTE evidência do cálculo. Não apaga ponto e não escreve na ECU.
      */
-    internal fun plausibleIndices(pairs: List<kotlin.Pair<Double, Double>>, episodes: List<Int>? = null): Plausible {
+    internal fun plausibleIndices(pairs: List<kotlin.Pair<Double, Double>>, episodes: List<Int>? = null, independent: Boolean = false): Plausible {
         val gated = episodes != null && episodes.size == pairs.size
         val groups = sortedMapOf<Int, MutableList<Int>>()
         pairs.forEachIndexed { i, pair ->
-            val band = ledgerBand(pair.first) ?: return@forEachIndexed
+            val band = ledgerBand(pair.first, independent) ?: return@forEachIndexed
             if (gated && episodes!![i] < 0) return@forEachIndexed
             groups.getOrPut(band) { ArrayList() }.add(i)
         }
@@ -527,7 +536,8 @@ object AutoMatchRefinedEngine {
             if (gated && coherent.map { episodes!![it] }.toSet().size < MIN_BAND_EPISODES) return@forEach
             // Medidas estáveis concentradas em uma região têm valor mesmo sem varrer a largura toda.
             // A autorização de escrever continua dependente de evidência julgável no EquivalenceEngine.
-            if (coherent.size >= BAND_MATURE_COUNT) kept += coherent
+            if (coherent.size >= BAND_MATURE_COUNT &&
+                (independent || interiorOk(band, coherent.map { pairs[it].first }))) kept += coherent
         }
         return Plausible(kept.sorted(), outliers, rejectedPairs)
     }
@@ -676,11 +686,15 @@ object AutoMatchRefinedEngine {
         else -> targets.filter { it.weight >= matureWeight }
     }
 
-    /** Basta uma região local com evidência estável; outras regiões vazias não vetam o ponto medido. */
-    private fun telemetryCovers(pairs: List<kotlin.Pair<Double, Double>>): Boolean =
-        pairs.groupBy { ledgerBand(it.first) }.any { (band, members) ->
-            band != null && members.size >= TELEMETRY_ONLY_BAND_PAIRS
+    /** Modo independente: um trecho local. Modo legado: duas faixas completas. */
+    private fun telemetryCovers(pairs: List<kotlin.Pair<Double, Double>>, independent: Boolean = false): Boolean {
+        if (independent) return pairs.groupBy { ledgerBand(it.first, true) }
+            .any { (band, members) -> band != null && members.size >= TELEMETRY_ONLY_BAND_PAIRS }
+        val covered = EquivalenceLedger.BANDS.count { (lo, hi) ->
+            pairs.count { (tp, _) -> tp >= lo && tp < hi } >= TELEMETRY_ONLY_BAND_PAIRS
         }
+        return covered >= TELEMETRY_ONLY_MIN_BANDS
+    }
 
     private fun evidenceError(targets: List<Target>, axisMs: List<Double>, factors: List<Double>): Double? {
         if (targets.isEmpty()) return null
