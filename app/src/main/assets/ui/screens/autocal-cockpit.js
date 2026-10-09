@@ -1584,7 +1584,7 @@
       const topOffset = measured.y - Number(label.getAttribute('y'));
       const obstacles = [...(document.getElementById('autocalReferenceChart')?.querySelectorAll('[data-autocal-zone-label]') || [])]
         .map(node => node.getBBox());
-      const inverse = layer.closest('svg').getScreenCTM()?.inverse();
+      const inverse = layer.closest('svg')?.getScreenCTM?.()?.inverse();
       if (inverse) this.panel?.querySelectorAll('.autocal-chart-overlay small, #autocalActionStatus, #autocalAlertStrip').forEach(node => {
         const rect = node.getBoundingClientRect();
         if (!rect.width || !rect.height) return;
