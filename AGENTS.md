@@ -31,6 +31,8 @@
 
 17. Apagar ponto manualmente nunca desarma a limpeza automática (dono, 2026-10-08): "Reaprender N pontos" não muda o armamento (armada continua, desarmada pelo dono continua) e a guarda "outro combustível mudou" ignora o que o apagamento manual causou. Protegem: `AutoCalManualDeleteKeepsAutoCleanupTest.kt` + `tests/ui/autocal-apagar-manual-mantem-limpeza.test.cjs` e o mutante `apagar-manual-desarma-limpeza`. Não remover nem enfraquecer.
 
+18. Contrato AutoCal/Refino (dono, 2026-10-09, OMEGASCINZA): as Z1–Z4 por **gasolina e GNV** devem existir sempre no HTML, mesmo com SVG vazio, escala MAP recortada, limiares ausentes ou AutoMatch 1/3–3/3; cada estado vem da leitura real, desconhecido não vira adquirido. AutoMatch histórico e cobertura da **aquisição atual** são variáveis separadas. O Refino coleta pares próprios gasolina × GNV, separados por regime, em regiões locais de 0,25 ms, sem limitar a 17/36 pontos ou 3–12 ms, sem impor preenchimento de regiões vizinhas. 0 ms é corte, não medição de equivalência. A aquisição nativa não é evidência nem prior do Refino. **Único portão externo para liberar a proposta da Curva K:** AutoCal concluído (contador confirmado ≥ máximo) e `AUTO_CAL_ENABLE=1` fresco; a Curva K atual ainda deve ser lida para propor e gravar. Escrita só manual com foto/readback, regressão e trava da baixa. Protegem: `tests/ui/autocal-refino-independence.test.cjs`, `RefinoIndependenteRegressoesTest.kt`, `EcuAcquisitionTruthTest.kt`. Não enfraquecer testes legados de protocolo e do AutoMatch.
+
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 
 ## As 8 abas
