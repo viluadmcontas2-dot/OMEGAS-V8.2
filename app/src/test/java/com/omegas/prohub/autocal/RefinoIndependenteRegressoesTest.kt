@@ -13,8 +13,7 @@ class RefinoIndependenteRegressoesTest {
     @Test fun `aprendizado local aceita regioes antes de 3 e alem de 22 ms`() {
         val ledger = EquivalenceLedger()
         var t = 10_000L
-        for ((ms, rpm, map) in listOf(1.5 to 1400.0 to 0.42, 13.5 to 1800.0 to 0.63, 22.5 to 2300.0 to 0.89)
-            .map { Triple(it.first.first, it.first.second, it.second) }) {
+        for ((ms, rpm, map) in listOf(Triple(1.5, 1400.0, 0.42), Triple(13.5, 1800.0, 0.63), Triple(22.5, 2300.0, 0.89))) {
             for (fuel in listOf("GASOLINA", "GNV")) {
                 repeat(15) {
                     ledger.accept(EquivalenceLedger.Frame(
@@ -69,7 +68,8 @@ class RefinoIndependenteRegressoesTest {
             axisRaw = axis, mulActRaw = IntArray(30) { 16384 },
             petrolTimeRaw = null, petrolMapRaw = null, petrolCounts = null,
             gasTimeRaw = null, gasMapRaw = null, gasCounts = null,
-            telemetryPairs = List(12) { (13.23 + it * 0.007) to (13.23 + it * 0.007) * 1.07 }
+            telemetryPairs = List(12) { (13.23 + it * 0.007) to (13.23 + it * 0.007) * 1.07 },
+            independentRefino = true
         ))
         assertEquals(AutoMatchRefinedEngine.Mode.EQUIVALENCE, result.mode)
         assertTrue(result.telemetryOnly)
