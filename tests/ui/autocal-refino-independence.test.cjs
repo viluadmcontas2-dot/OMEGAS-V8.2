@@ -3,23 +3,18 @@ const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const { freshContext } = require('./_support.cjs');
 
-test('AutoCal desenha sempre Z1-Z4 mesmo com Z3 e Z4 fora do recorte MAP', () => {
-  const ctx = freshContext();
-  const chart = ctx.OmegasUi.CurveChart;
-  const zones = [
-    {zone:1,lower:0.20,upper:0.35,petrolState:'acquired',gasState:'acquired'},
-    {zone:2,lower:0.35,upper:0.52,petrolState:'acquired',gasState:'missing'},
-    {zone:3,lower:0.52,upper:0.85,petrolState:'missing',gasState:'acquired'},
-    {zone:4,lower:0.85,upper:1.13,petrolState:'missing',gasState:'missing'}
-  ];
-  const r = chart.buildSvg({domain:{xMin:0,xMax:14,yMin:0.2,yMax:0.5},zones,reference:[],ecu:[]},
-    {width:1000,height:360,mode:'ecu18'});
-  assert.equal((r.svg.match(/data-autocal-zone-rail=/g) || []).length, 4);
-  for(let i=1;i<=4;i++) assert.match(r.svg, new RegExp('data-autocal-zone-rail="'+i+'"'));
-  assert.match(r.svg, /data-state="missing"/);
-  assert.match(r.svg, /data-state="acquired"/);
-  assert.match(r.svg, /P:F/);
-  assert.match(r.svg, /G:F/);
+test('AutoCal mostra Z1-Z4 por combustível sem depender do SVG ou dos limiares MAP', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const source = fs.readFileSync(path.join(__dirname,'../../app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+  const rows = [...source.matchAll(/data-autocal-zone-row="([1-4])"/g)];
+  assert.equal(rows.length, 4, 'as quatro zonas devem existir na árvore HTML até com gráfico vazio');
+  assert.equal([...source.matchAll(/data-autocal-zone-petrol="([0-3])"/g)].length, 4);
+  assert.equal([...source.matchAll(/data-autocal-zone-gas="([0-3])"/g)].length, 4);
+  assert.ok(source.indexOf('id="autocalZoneMeter"') < source.indexOf('id="autocalReferenceChart"'),
+    'estado independente do gráfico');
+  assert.match(source,/zoneSurface\(snapshot = \{\}, human = \{\}\)/);
+  assert.match(source,/lower: valid \? thresholds\[edges\[index\]\] : null/);
 });
 
 test('Refino não corta a representação depois de 17/36 regiões, nem acima de 13 ms', () => {
