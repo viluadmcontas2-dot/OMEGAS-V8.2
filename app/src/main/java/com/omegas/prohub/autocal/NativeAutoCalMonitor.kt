@@ -164,7 +164,7 @@ class NativeAutoCalMonitor(
     fun beginUsbSession(newSessionId: Long) {
         synchronized(lock) {
             sessionId = newSessionId
-            sessionStartedAtElapsedMs = if (newSessionId > 0L) SystemClock.elapsedRealtime() else 0L
+            sessionStartedAtElapsedMs = if (newSessionId > 0L) clockMs() else 0L
             lastProbe = null
             lastMulActHash = ""
             lastStableMulAct = null
@@ -228,7 +228,7 @@ class NativeAutoCalMonitor(
     /** Idade da sessão USB atual no relógio elapsed; 0 sem sessão. */
     fun sessionAgeMs(): Long {
         val startedAt = synchronized(lock) { sessionStartedAtElapsedMs }
-        return if (startedAt > 0L) (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L) else 0L
+        return if (startedAt > 0L) (clockMs() - startedAt).coerceAtLeast(0L) else 0L
     }
 
     /** Último vetor VALID de um campo no snapshot do monitor (cópia), ou nulo. Só leitura de cache. */
@@ -351,7 +351,7 @@ class NativeAutoCalMonitor(
         if (calibrationBusy()) return
 
         val startedAt = synchronized(lock) { sessionStartedAtElapsedMs }
-        val ageMs = if (startedAt > 0L) (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0L) else Long.MAX_VALUE
+        val ageMs = if (startedAt > 0L) (clockMs() - startedAt).coerceAtLeast(0L) else Long.MAX_VALUE
         if (ageMs < SESSION_SETTLE_MS) {
             synchronized(lock) {
                 state = baseState("WAITING_TELEMETRY_SETTLE", "Aguardando telemetria estabilizar antes do AutoCal")
@@ -448,7 +448,7 @@ class NativeAutoCalMonitor(
     /** Registra um probe: contador nativo, época de aquisição e "mudou?" frente ao probe anterior. */
     private fun observeProbe(currentSession: Long, probe: AutoCalProtocol.NativeStatus): ProbeObservation {
         val previousProbe = synchronized(lock) { lastProbe }
-        val observedAt = SystemClock.elapsedRealtime()
+        val observedAt = clockMs()
         val counterEvent = autoMatchCounterTracker.observe(
             currentSessionId = currentSession,
             count = probe.autoMatchCount,
@@ -918,7 +918,7 @@ class NativeAutoCalMonitor(
             MaturityProbe(
                 counters = decoded.rawValues.copyOf(),
                 payloadHex = reply.payload.toHex(),
-                observedAtElapsedMs = SystemClock.elapsedRealtime(),
+                observedAtElapsedMs = clockMs(),
                 status = reply.status,
                 payload = reply.payload.copyOf(),
             )
@@ -1026,7 +1026,7 @@ class NativeAutoCalMonitor(
                 gasProbe = MaturityProbe(
                     counters = decoded.rawValues.copyOf(),
                     payloadHex = reply.payload.toHex(),
-                    observedAtElapsedMs = SystemClock.elapsedRealtime(),
+                    observedAtElapsedMs = clockMs(),
                     status = reply.status,
                     payload = reply.payload.copyOf(),
                 )
@@ -1048,7 +1048,7 @@ class NativeAutoCalMonitor(
             group = group,
             snapshot = snapshot,
             gasProbe = gasProbe,
-            observedAtElapsedMs = SystemClock.elapsedRealtime(),
+            observedAtElapsedMs = clockMs(),
         )
     }
 
@@ -1180,7 +1180,7 @@ class NativeAutoCalMonitor(
 
     /** Pedido pendente e fora do recuo. Chamar sob [lock]. */
     private fun snapshotDue(): Boolean =
-        snapshotRequested && SystemClock.elapsedRealtime() >= snapshotBackoffUntilElapsedMs
+        snapshotRequested && clockMs() >= snapshotBackoffUntilElapsedMs
 
     /** Guarda a evidência de AutoMatch de uma tentativa abortada para a próxima. */
     private fun carryEvidence(event: NativeAutoMatchCounterTracker.Event?, countIncreased: Boolean) {
@@ -1192,7 +1192,7 @@ class NativeAutoCalMonitor(
         synchronized(lock) {
             snapshotFailures = (snapshotFailures + 1).coerceAtMost(SNAPSHOT_BACKOFF_MAX_EXPONENT)
             val delayMs = (SNAPSHOT_BACKOFF_BASE_MS shl (snapshotFailures - 1)).coerceAtMost(SNAPSHOT_BACKOFF_CAP_MS)
-            snapshotBackoffUntilElapsedMs = SystemClock.elapsedRealtime() + delayMs
+            snapshotBackoffUntilElapsedMs = clockMs() + delayMs
         }
     }
 
@@ -1231,8 +1231,8 @@ class NativeAutoCalMonitor(
                     expectedSessionId = expectedSessionId,
                     workClass = Mp48WorkClass.READ_ONLY,
                 )
-                if (field == AutoCalProtocol.NUM_BUF_UPD_GAS) gasCountersReadAtElapsedMs = SystemClock.elapsedRealtime()
-                if (field == AutoCalProtocol.NUM_BUF_UPD_PETR) petrolCountersReadAtElapsedMs = SystemClock.elapsedRealtime()
+                if (field == AutoCalProtocol.NUM_BUF_UPD_GAS) gasCountersReadAtElapsedMs = clockMs()
+                if (field == AutoCalProtocol.NUM_BUF_UPD_PETR) petrolCountersReadAtElapsedMs = clockMs()
                 observations += AutoCalReadObservation(
                     field = field,
                     status = reply.status.takeIf { it >= 0 },
@@ -1287,7 +1287,7 @@ class NativeAutoCalMonitor(
             synchronized(lock) {
                 snapshotRequested = true
                 snapshotReason = "EPOCH_CHANGED_DURING_SNAPSHOT"
-                snapshotBackoffUntilElapsedMs = SystemClock.elapsedRealtime() + EPOCH_RETRY_MS
+                snapshotBackoffUntilElapsedMs = clockMs() + EPOCH_RETRY_MS
             }
             onStateChanged()
             return
@@ -1312,7 +1312,7 @@ class NativeAutoCalMonitor(
         val mulActField = snapshot.field(AutoCalProtocol.MUL_ACT)
             ?.takeIf { it.status == AutoCalFieldStatus.VALID }
         val afterMulActRaw = mulActField?.rawValues?.copyOf()
-        val afterMulActCapturedAtElapsedMs = SystemClock.elapsedRealtime()
+        val afterMulActCapturedAtElapsedMs = clockMs()
         val beforeStableMulAct = synchronized(lock) { lastStableMulAct }
         val autoMatchEvidence = autoMatchCounterEvent?.let { event ->
             NativeAutoMatchEvidenceBracket.evaluate(
@@ -1458,7 +1458,7 @@ class NativeAutoCalMonitor(
             currentCounters?.let {
                 maturityTracker.baseline(
                     counters = it,
-                    observedAtElapsedMs = SystemClock.elapsedRealtime(),
+                    observedAtElapsedMs = clockMs(),
                     gasLowThreshold = newGasLowThreshold,
                     gasNormalThreshold = newGasNormalThreshold,
                     enabled = enabled == 1,
@@ -1499,7 +1499,7 @@ class NativeAutoCalMonitor(
             scratch.petrolCounters = null
             scratch.hold.clear()
             scratch.pending = null
-            refreshPlanner.markFullSnapshot(SystemClock.elapsedRealtime())
+            refreshPlanner.markFullSnapshot(clockMs())
             if (mulActHash.isNotBlank()) lastMulActHash = mulActHash
             if (stableAfter != null) lastStableMulAct = stableAfter
             // ECU#5: limiar/flag não lidos (snapshot parcial) mantêm o valor anterior; maturidade pendente só
