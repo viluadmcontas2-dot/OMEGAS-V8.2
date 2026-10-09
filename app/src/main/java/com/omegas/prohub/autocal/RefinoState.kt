@@ -6,7 +6,7 @@ import org.json.JSONObject
 /**
  * O que a aba Refino diz sobre o estado, em português simples, em uma só leitura (`refinoState`).
  *
- *  - `phase`: a fase humana ("Lendo a ECU", "Coletando entre as faixas da ECU: 14 de 17 intervalos", "Pronto para gravar 5 pontos",
+ *  - `phase`: a fase humana ("Lendo a ECU", "Medindo 12 regiões próprias", "Pronto para gravar 5 pontos",
  *    "Verificando", "Estável", ...);
  *  - `label`: a mesma fase em duas ou três palavras, para o chip e para a aba Agora ("Medindo o GNV", "Medindo a gasolina",
  *    "Curva pronta", "ECU no automático"); diz o combustível que o motor está queimando AGORA, nunca o que ele "deveria" estar;
