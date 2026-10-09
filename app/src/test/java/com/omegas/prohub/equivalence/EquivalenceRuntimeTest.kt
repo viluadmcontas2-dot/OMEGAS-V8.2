@@ -31,7 +31,7 @@ class EquivalenceRuntimeTest {
         val snap2183 = EquivalenceReplaySupport.snapshot(REFERENCE, 2183)
         val acq95 = EquivalenceReplaySupport.acquisition(REFERENCE, 95)
         val acq2183 = EquivalenceReplaySupport.acquisition(REFERENCE, 2183)
-        rt.freeze(acq95, phases)
+        val firstReference = rt.freeze(acq95, phases)
         val r1 = rt.evaluate(ledger, phases, snap2183, acq2183, true, none)!!
         val before = EquivalenceReplaySupport.curve(REFERENCE, 2183).second
         // ponto 0 (0,5 ms) nunca tem leitura de condução: a prova dele fica aberta durante o teste
@@ -45,7 +45,9 @@ class EquivalenceRuntimeTest {
         assertEquals(r1.ownPetrol.cells.map { it.samples }, r2.ownPetrol.cells.map { it.samples })
         assertEquals(PointState.EM_PROVA, r2.points[0].state)
         assertEquals(0L, phases.json().getJSONArray("proofs").getJSONObject(0).getLong("onlineMs"))
-        assertNotEquals(r1.ownPetrol.cells.map { it.divergence }, r2.ownPetrol.cells.map { it.divergence })
+        // Independência do Refino: trocar a referência nativa não reescreve a curva própria.
+        assertEquals(r1.ownPetrol.cells.map { it.divergence }, r2.ownPetrol.cells.map { it.divergence })
+        assertNotEquals(firstReference.id, rt.references.current()?.id)
     }
 
     @Test
