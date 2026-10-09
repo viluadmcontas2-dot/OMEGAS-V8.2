@@ -52,3 +52,36 @@ test('as zonas nativas chegam antes do grupo histórico G3', () => {
   assert.ok(q.indexOf('G6_ZONES') < q.indexOf('G3_GAS_PREV'));
   assert.match(planner, /ACQUISITION_INTERVAL_MS = 2_000L/);
 });
+
+test('zona Z4 confirmada continua Z4 mesmo quando o cursor já foi para Z1', () => {
+  const thresholds = { fields: [{ key: 'MNFLD_PRESS_THD', status: 'VALID', physicalValues: [
+    0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,
+    0.65,0.70,0.75,0.80,0.85,0.90,0.95]}] };
+  const makeNode = (fuel, zone) => ({
+    dataset: fuel === 'petrol' ? {autocalZonePetrol:String(zone)} : {autocalZoneGas:String(zone)},
+    small: {textContent:''},
+    querySelector(selector) { return selector === 'small' ? this.small : null; },
+    setAttribute(key, value) { this[key] = value; },
+  });
+  const gas = Array.from({length:4}, (_,i) => makeNode('gas',i));
+  const petrol = Array.from({length:4}, (_,i) => makeNode('petrol',i));
+  const meter = { setAttribute(key,value) { this[key] = value; } };
+  context.document = { getElementById(id) { return id === 'autocalZoneMeter' ? meter : null; } };
+  const panel = {querySelectorAll(selector) {
+    if (selector === '[data-autocal-zone-gas]') return gas;
+    if (selector === '[data-autocal-zone-petrol]') return petrol;
+    if (selector === '.autocal-zone-cell') return [...gas, ...petrol];
+    return [];
+  }};
+  const fake = { panel, snapshot: thresholds };
+  const view = context.OmegasUi.AutoCalCockpit.prototype;
+  view.renderZoneMeter.call(fake, {
+    petrolZoneFlags:[false,false,false,false], gasZoneFlags:[false,false,false,true],
+    petrolZones:0, gasZones:1, petrolMissingZones:[1,2,3,4], gasMissingZones:[1,2,3],
+  });
+  view.renderZoneCursor.call(fake, {fuel:'GNV', mapBar:0.16});
+  assert.equal(gas[3].small.textContent, '✓', 'Z4 é fato de uma leitura ECU, independente do cursor atual');
+  assert.equal(gas[3].dataset.current, 'false');
+  assert.equal(gas[0].dataset.current, 'true', 'AGORA já está em Z1, mas isso não apaga Z4');
+  assert.equal(petrol[0].dataset.current, 'false', 'no GNV a linha gasolina não acende');
+});
