@@ -63,11 +63,16 @@ class EcuAcquisitionTruthTest {
     }
 
     @Test
-    fun `AutoMatch ja entregue pela ECU nao e falta de aquisicao`() {
-        val t = EcuAcquisitionTruth.fromAcquisition(acq(all, listOf(false, false, false, true), 0, 0), 2, 3, 1)
-        assertTrue(t.getBoolean("delivered"))
-        assertEquals(0, t.getJSONArray("missing").length())
-        assertFalse(t.getString("summary").lowercase().contains("falta"))
+    fun `AutoMatch anterior nao oculta zonas faltantes da aquisicao atual`() {
+        for (round in 1..3) {
+            val t = EcuAcquisitionTruth.fromAcquisition(acq(all, listOf(false, false, false, true), 0, 0), round, 3, 1)
+            assertTrue(t.getBoolean("delivered"))
+            assertEquals(1, t.getJSONArray("missing").length())
+            val missing = t.getJSONArray("missing").getJSONObject(0)
+            assertEquals("GNV", missing.getString("fuel"))
+            assertEquals(listOf(1, 2, 3), (0 until 3).map { missing.getJSONArray("zones").getInt(it) })
+            assertTrue(t.getString("summary").contains("AutoMatch da ECU: $round de 3"))
+        }
     }
 
     @Test
@@ -134,8 +139,9 @@ class EcuAcquisitionTruthTest {
                     assertEquals(0, t.getJSONArray("missing").length())
                     assertTrue(t.getBoolean("allZonesCovered"))
                 }
-                // delivered => nada "falta"
-                if (t.getBoolean("delivered")) assertEquals(0, t.getJSONArray("missing").length())
+                // AutoMatch entregue não afirma cobertura completa na aquisição atual.
+                if (t.getBoolean("delivered") && t.getJSONObject("gas").getInt("zonesCovered") < 4)
+                    assertTrue(t.getJSONArray("missing").length() > 0)
             }
         }
         assertTrue(checked > 20)
