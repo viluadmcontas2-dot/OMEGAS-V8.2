@@ -1,1 +1,153 @@
-sed: can't read app/src/main/assets/ui/styles-autocal-cockpit.css: No such file or directory
+.autocal-cockpit-view { min-width: 0; max-width: 100%; overflow-y: auto; overscroll-behavior: contain; container-type: inline-size; }
+.autocal-cockpit { display: grid; gap: 8px; min-width: 0; max-width: 100%; overflow-x: hidden; padding-bottom: 10px; }
+.autocal-reference-svg { width: 100%; height: 100%; display: block; touch-action: pan-y; user-select: none; }
+.autocal-grid-line { stroke: var(--veil-07); stroke-width: 1; vector-effect: non-scaling-stroke; } .autocal-axis-tick-x, .autocal-axis-tick-y { fill: var(--tone-8fa0b3); font-size: 11px; pointer-events: none; }
+.autocal-axis-title { fill: var(--tone-cbd7e4); font-size: 12px; font-weight: 800; letter-spacing: .03em; pointer-events: none; }
+.autocal-grid-line.vertical { stroke: rgba(var(--rgb-255-255-255),.045); }
+.autocal-reference-line { fill: none; stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+.autocal-reference-line.petrol { stroke: var(--warn); }
+.autocal-reference-line.gas { stroke: var(--tone-5dd39e); }
+.autocal-equivalence-line { display: none; fill: none; stroke: rgba(var(--rgb-240-196-92),.78); stroke-width: 2; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
+.autocal-reference-point { opacity: 0; stroke: var(--tone-081018); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; transition: opacity 120ms ease; }
+.autocal-reference-hit.selected + .autocal-reference-point { opacity: 1; }
+.autocal-reference-point.petrol { fill: var(--warn); }
+.autocal-reference-point.gas { fill: var(--tone-5dd39e); }
+.autocal-reference-hit { fill: transparent; cursor: pointer; }
+.autocal-reference-hit.selected { fill: var(--veil-08); stroke: rgba(var(--rgb-255-255-255),.38); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart-empty { min-height: 100%; display: grid; place-content: center; gap: 4px; text-align: center; color: var(--tone-8190a2); font-size: 11px; }
+.chart-empty b { color: var(--tone-d6e0ea); font-size: 13px; }
+.autocal-cockpit button:focus-visible, .autocal-cockpit summary:focus-visible { outline: 3px solid rgba(var(--rgb-120-183-255),.7); outline-offset: 2px; }
+.autocal-route-screen { min-width: 0; min-height: 0; overflow: hidden; }
+.autocal-route-panel { min-width: 0; }
+.autocal-zone-background { fill: rgba(var(--rgb-123-146-167),.045); stroke: rgba(var(--rgb-154-180-203),.22); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
+.autocal-zone-background[data-current="true"] { fill: rgba(var(--rgb-25-218-244),.09); stroke: var(--tone-19daf4); stroke-width: 2; }
+.autocal-current-band-layer { fill: rgba(var(--rgb-79-163-255),.10); stroke: rgba(var(--rgb-120-183-255),.38); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
+.autocal-live-layer { pointer-events: none; }
+.autocal-live-layer[data-stale="true"] { opacity: .5; }
+.autocal-live-layer[data-stale="true"] .autocal-live-point { fill: var(--tone-8fa0b3); }
+.autocal-live-layer[data-out-of-range="true"] .autocal-live-halo { stroke: var(--tone-f0c45c); stroke-dasharray: 3 2; }
+.autocal-live-layer[data-out-of-range="true"] .autocal-live-label { fill: var(--tone-f0c45c); }
+.autocal-live-halo { fill: var(--veil-08); stroke: rgba(var(--rgb-255-255-255),.55); stroke-width: 2; }
+.autocal-live-point { fill: var(--tone-ffffff); stroke: var(--tone-071018); stroke-width: 2; }
+.autocal-live-label { fill: var(--tone-ffffff); font-size: 12px; font-weight: 900; letter-spacing: .08em; paint-order: stroke; stroke: var(--tone-071018); stroke-width: 4px; }
+.source-status[data-level="working"]{ border-color: rgba(var(--rgb-120-183-255),.4); }
+.source-status[data-level="error"]{ border-color: rgba(var(--rgb-255-119-119),.5); }
+/* Sessão: contexto operacional compacto, sem competir com a curva. */
+.autocal-session-strip  { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 12px; border: 1px solid var(--veil-08); border-radius: 14px; background: var(--veil-018); }
+.autocal-session-strip[data-session-level="warning"]  { border-color: rgba(var(--rgb-255-190-92),.5); }
+@container (max-width: 760px) {
+  .autocal-session-strip { grid-template-columns: 1fr; }
+}
+/* HMI automotiva: texto operacional legível a aproximadamente um braço de distância. */
+
+.chart-empty { font-size: 13px; }
+.chart-empty b { font-size: 15px; }
+.autocal-live-label { font-size: 13px; }
+/* 2026-09-21 — hierarchy refinement: curve is the dominant instrument surface. */
+.autocal-cockpit { gap: 7px; }
+.autocal-session-strip  { order: 3; }
+.autocal-live-halo { fill: rgba(var(--rgb-23-218-246),.14); stroke: rgba(var(--rgb-23-218-246),.55); stroke-width: 2; }
+.autocal-live-point { fill: var(--tone-19daf4); stroke: var(--tone-dffcff); stroke-width: 1.5; }
+.autocal-live-label { fill: var(--tone-49e7fb); stroke: var(--tone-061019); }
+.autocal-session-strip  { padding: 8px 11px; border-radius: 11px; }
+/* Overlap-safe curve semantics: preserve exact geometry without synthetic offsets. */
+.autocal-reference-line.petrol { stroke-width: 4; opacity: .62; }
+.autocal-reference-line.gas { stroke-width: 2.5; }
+.autocal-reference-point.petrol { fill: var(--tone-07101a); stroke: var(--warn); stroke-width: 2.6; }
+.autocal-reference-point.gas { fill: var(--tone-5dd39e); stroke: var(--tone-d9fff0); stroke-width: 1.2; }
+/* AutoCal operator zone map: preserve ECU Z1..Z4 identity instead of only N/4. */
+
+.autocal-zone-cell { position: relative; display: grid; grid-template-rows: auto auto; place-items: center; min-width: 76px; min-height: 64px; padding: 4px 6px; border: 1px solid rgba(var(--rgb-255-255-255),.10); border-radius: 7px; background: var(--veil-025); }
+.autocal-zone-cell b { color: var(--tone-dbe5ef); font-size: var(--text-critical); line-height: 1; }
+.autocal-zone-cell small { margin-top: 2px; color: var(--tone-7f90a2); font-size: var(--text-critical); font-weight: 900; letter-spacing: .04em; line-height: 1; }
+.autocal-zone-cell[data-state="missing"] { border-color: rgba(var(--rgb-240-196-92),.42); border-style: dashed; background: rgba(var(--rgb-240-196-92),.06); }
+.autocal-zone-cell[data-state="missing"] small { color: var(--tone-f0c45c); }
+.autocal-zone-cell[data-current="true"] { outline: 2px solid var(--tone-19daf4); outline-offset: 1px; box-shadow: 0 0 0 3px rgba(var(--rgb-25-218-244),.10); }
+.autocal-zone-cell[data-current="true"]::after { content: 'AGORA'; position: absolute; top: -8px; right: -3px; padding: 1px 3px; border-radius: 4px; background: var(--tone-19daf4); color: var(--tone-061019); font-size: var(--text-critical); font-weight: 950; letter-spacing: .04em; }
+/* Preserve the 300px dominant plot while keeping AGORA visible at 1280x720. */
+@container (max-width: 980px) {
+  .autocal-zone-fuel { display: none; }
+}
+/* Custom-ROM/1280x720 focus: use reclaimed chrome for the acquisition geometry. */
+/* WebView-safe disclosure: engineering regions never leak into the driving surface. */
+/* 2026-09-23 — owner physical envelope: the vehicle does not use MAP above 1.15 bar. No expanded-scale mode: spend the surface on Z1–Z4 and the live cursor. */
+
+/* 2026-09-24 — Premium cockpit final direction. Primary surface = graph. Secondary context stays below it in one vertical flow. */
+.screen.autocal-route-screen { overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; contain: layout style; }
+.autocal-cockpit-view { overflow: visible; }
+.autocal-cockpit { position: relative; display: grid; grid-template-rows: auto auto auto; gap: 8px; min-height: 0; overflow: visible; padding-bottom: 12px; }
+.autocal-fuel-chip { flex: 0 0 auto; min-width: 62px; padding: 5px 9px; border: 1px solid rgba(var(--rgb-151-169-185),.26); border-radius: 999px; color: var(--tone-b7c6d2); background: var(--tint-35-47-58-45); font-size: 10px; font-weight: 900; text-align: center; }
+.autocal-fuel-chip[data-fuel-state="gas"] { border-color: rgba(var(--rgb-93-211-158),.42); color: var(--tone-c9f7e3); background: var(--tint-30-103-75-32); }
+.autocal-fuel-chip[data-fuel-state="petrol"] { border-color: var(--tint-120-183-255-42); color: var(--tone-d6eaff); background: var(--tint-37-82-128-32); }
+.autocal-fuel-chip[data-fuel-state="transition"] { border-color: rgba(var(--rgb-226-178-76),.42); color: var(--tone-ffefbd); background: var(--tint-104-78-26-28); } .autocal-reacquire-action{ min-height: 50px; padding: 0 12px; font-size: 12px; }
+.autocal-reacquire-action { border-color: rgba(var(--rgb-226-178-76),.32); color: var(--tone-f7e7b7); background: rgba(var(--rgb-104-78-26),.24); font-weight: 800; }
+.autocal-session-strip.autocal-secondary-card  { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; padding: 10px 12px; }
+@container (max-width: 980px) {
+}
+/* ProgBase-parity: only current acquired dots expose point reacquisition. */
+.autocal-acquired-hit { fill: transparent; cursor: pointer; pointer-events: all; }
+.autocal-acquired-point { pointer-events: none; stroke: var(--tone-071018); stroke-width: 2.2; vector-effect: non-scaling-stroke; }
+.autocal-acquired-point.petrol { fill: var(--warn); }
+.autocal-acquired-point.gas { fill: var(--tone-5dd39e); }
+.autocal-acquired-point.collecting { fill-opacity: .34; stroke-dasharray: 2.5 2.5; }
+.autocal-acquired-point.acquired { fill-opacity: 1; stroke-width: 2.6; }
+.autocal-acquired-hit.selected + .autocal-acquired-point { stroke: var(--tone-fff4cf); stroke-width: 3.4; }
+.autocal-acquired-hit.batch-selected + .autocal-acquired-point { stroke: var(--tone-f0c45c); stroke-width: 3.6; }
+/* Platina P-002: causal AutoMatch evidence, deterministic and read-only. */
+
+/* DUMP/TAUTOCALUI: PetrolCurve != PetrolPoint/GasPoint != GasPointPrev. Estilos distintos, sem mudar o significado dos vetores originais da ECU. */
+.autocal-reference-line.petrol.epoch-anchor { stroke: var(--warn); stroke-width: 3.8; opacity: .85; }
+.autocal-epoch-acquisition-line { fill: none; stroke-width: 2.1; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; stroke-linecap: round; opacity: .72; }
+.autocal-epoch-acquisition-line.petrol { stroke: var(--warn); }
+.autocal-epoch-acquisition-line.gas { stroke: var(--tone-5dd39e); }
+/* ── Refino OMEGAS: mesma linguagem do AutoCal, só o que é novo ── */
+.autocal-fuel-chip[data-fuel-state="collecting"] { border-color: var(--tint-120-183-255-42); color: var(--tone-d6eaff); background: var(--tint-37-82-128-32); }
+.autocal-fuel-chip[data-fuel-state="ready"] { border-color: rgba(var(--rgb-226-178-76),.5); color: var(--tone-ffefbd); background: var(--tint-104-78-26-32); }
+.autocal-fuel-chip[data-fuel-state="ok"] { border-color: var(--tint-93-211-158-5); color: var(--tone-c9f7e3); background: var(--tint-30-103-75-32); }
+.autocal-fuel-chip[data-fuel-state="problem"] { border-color: var(--tint-226-94-94-55); color: var(--tone-ffd2d2); background: rgba(var(--rgb-110-32-38),.4); }
+.refino-stall-mark { stroke: var(--danger); stroke-width: 3; stroke-linecap: round; fill: none; }
+.refino-stalls { display: grid; gap: 2px; margin: 0 0 8px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(var(--rgb-226-94-94),.45); background: rgba(var(--rgb-110-32-38),.32); }
+.refino-stalls[hidden] { display: none; }
+.refino-stalls b { color: var(--tone-ffd2d2); font-size: 13px; }
+.refino-stalls span { color: var(--tone-f1c7c7); font-size: 12px; }
+.refino-route-screen { position: relative; }
+/* Refino: inspector explica o ponto (de quem, quando, por que conta) e histórico em palavras */
+/* O texto de contexto do ponto nunca empurra o inspector para fora da tela 1280x720: passa a rolar dentro da própria caixa (nada é cortado, só deixa de crescer a página). */
+
+/* Quadro vazio com eixos: a frase fica por cima, sem apagar grade/escala/AGORA (dono, 2026-10-08). */
+html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over { position: absolute; inset: 0; height: auto; pointer-events: none; background: transparent; }
+html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > b, html body .ar-shell .ar-chart-host .chart-empty.chart-empty-over > span { background: color-mix(in srgb, var(--chart-bg) 82%, transparent); justify-self: center; padding: 2px 10px; border-radius: 6px; }
+
+/* Faixas sem leitura: círculo tracejado "falta medir" (dono, 2026-10-08). */
+.autocal-missing-point { fill: none; stroke-width: 2.2; stroke-dasharray: 3 3; opacity: .8; pointer-events: none; vector-effect: non-scaling-stroke; }
+.autocal-missing-point.petrol { stroke: var(--warn); }
+.autocal-missing-point.gas { stroke: var(--tone-5dd39e); }
+html body .ar-autocal .autocal-chart-overlay #autocalActionStatus { margin: 0; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--overlay); font-size: 18px; align-self: flex-start; }
+
+/* Contador pequeno "AutoMatch N de M" na linha da legenda (dono, 2026-10-08): sem bloco novo, sem tirar área do gráfico. */
+.autocal-automatch-chip { margin-left: auto; padding: 2px 10px; border: 1px solid var(--line); border-radius: 14px; font-size: 16px; color: var(--muted); white-space: nowrap; }
+.autocal-automatch-chip b { color: var(--text); font-weight: 700; }
+.autocal-automatch-chip[data-state="full"] b { color: var(--warn); }
+
+/* Aviso de comando: fica ao lado direito da barra de botões; nunca cobre legenda, gráfico nem botões (dono, 2026-10-08). */
+html body[data-omegas-route="autocal"] #alertToast.alert-toast { top: auto; bottom: 86px; left: auto; right: 12px; width: 340px; max-height: 58px; padding: 4px 10px; overflow: hidden; }
+html body[data-omegas-route="autocal"] #alertToast.alert-toast b { font-size: 18px; line-height: 1.15; }
+
+
+/* Quatro zonas em HTML: nunca dependem de SVG, escala, pontos ou da etapa do AutoMatch. */
+.ar-autocal .autocal-zone-meter { display: flex; align-items: center; justify-content: center; flex-wrap: nowrap; gap: 5px; min-width: 0; flex: 0 1 auto; }
+.ar-autocal .autocal-zone-item { display: flex; align-items: center; justify-content: center; gap: 4px; height: 32px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 7px; background: var(--chart-bg); white-space: nowrap; font-size: 15px; line-height: 1; font-weight: 800; }
+.ar-autocal .autocal-zone-item > b { color: var(--text); }
+.ar-autocal .autocal-zone-cell { min-width: 26px; height: 22px; display: inline-flex; gap: 2px; align-items: center; justify-content: center; color: var(--muted); border: 1px solid transparent; border-radius: 5px; }
+.ar-autocal .autocal-zone-cell.petrol::before, .ar-autocal .autocal-zone-cell.gas::before { content: ''; width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+.ar-autocal .autocal-zone-cell.petrol::before { background: var(--warn); }
+.ar-autocal .autocal-zone-cell.gas::before { background: var(--cng); }
+.ar-autocal .autocal-zone-cell small { font-size: 12px; font-weight: 900; }
+.ar-autocal .autocal-zone-cell[data-state="acquired"] { color: var(--tone-5dd39e); }
+.ar-autocal .autocal-zone-cell.petrol[data-state="acquired"] { color: var(--warn); }
+.ar-autocal .autocal-zone-cell[data-state="missing"] { color: var(--danger); }
+.ar-autocal .autocal-zone-cell[data-current="true"] { border-color: var(--tone-5dd39e); background: rgba(var(--rgb-58-208-149),.11); }
+@media (max-width: 1050px) {
+  .ar-autocal .autocal-zone-meter { gap: 3px; }
+  .ar-autocal .autocal-zone-item { gap: 2px; padding: 1px 3px; }
+}
