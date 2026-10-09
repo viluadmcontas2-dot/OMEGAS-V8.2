@@ -601,7 +601,8 @@
     const ecu = [...(visible.petrol === false ? [] : UX.acquiredPoints(snapshot, 'petrol')), ...(visible.gas === false ? [] : UX.acquiredPoints(snapshot, 'gas'))];
     const eq = c.eq || {};
     const regime = c.regime === 'IDLE' ? 'IDLE' : 'DRIVING';
-    const selectedCurves = eq.regimeCurves && eq.regimeCurves[regime] || {};
+    const brain = eq.equivalence && eq.equivalence.available ? eq.equivalence : eq;
+    const selectedCurves = brain.regimeCurves && brain.regimeCurves[regime] || {};
     const ownCurve = fuel => {
       const cells = selectedCurves[fuel] && Array.isArray(selectedCurves[fuel].cells) ? selectedCurves[fuel].cells : [];
       return cells.map(cell => ({ petrolMs: finite(cell.petrolMs), mapBar: finite(cell.mapBar) }))
