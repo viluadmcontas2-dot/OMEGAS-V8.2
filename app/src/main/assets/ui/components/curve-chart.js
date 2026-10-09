@@ -395,15 +395,6 @@
       const top = Math.min(yFor(lower), yFor(upper)), h = Math.abs(yFor(lower) - yFor(upper));
       return `<rect class="autocal-zone-background" data-autocal-zone-surface="${zone.zone}" x="${padLeft}" y="${top.toFixed(1)}" width="${width - padLeft - padRight}" height="${h.toFixed(1)}"></rect>`;
     }).join('');
-    const rail = between ? '' : zones.map((zone, i) => {
-      const x = width - padRight - 166, y = padTop + 16 + i * 32;
-      const word = state => state === 'acquired' ? '✓' : state === 'missing' ? 'F' : '?';
-      return `<g class="autocal-zone-pinned" data-autocal-zone-rail="${zone.zone}" data-current="false" aria-label="Zona ${zone.zone}; gasolina ${zone.petrolState}; GNV ${zone.gasState}">` +
-        `<rect class="autocal-zone-pin-bg" x="${x}" y="${y - 14}" width="164" height="29" rx="6"></rect>` +
-        `<text class="autocal-zone-label" data-autocal-zone-label data-base-label="Z${zone.zone}" x="${x + 8}" y="${y + 5}">Z${zone.zone}</text>` +
-        `<text class="autocal-zone-rail-state petrol" data-state="${zone.petrolState}" x="${x + 51}" y="${y + 5}">P:${word(zone.petrolState)}</text>` +
-        `<text class="autocal-zone-rail-state gas" data-state="${zone.gasState}" x="${x + 105}" y="${y + 5}">G:${word(zone.gasState)}</text></g>`;
-    }).join('');
     const refMarkup = reference.map(p => {
       if (p.petrolMs > xMax) return '';
       const x = xFor(p.petrolMs).toFixed(1);
@@ -459,7 +450,7 @@
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${equivalencePath}` +
       `${hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}` +
-      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g><g class="autocal-zone-rail">${rail}</g></svg>`;
+      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
     return { svg, scale };
   }
 
