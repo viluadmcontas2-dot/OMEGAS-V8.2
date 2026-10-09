@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>OMEGASCINZA · Oficina visual</title>
+  <link rel="stylesheet" href="/tools/ui_studio/studio.css">
+  <script src="/tools/ui_studio/studio.js" defer></script>
+</head>
+<body>
+  <div class="studio">
+    <header class="top">
+      <div class="wordmark"><span class="glyph">Ω</span><span><b>OMEGAS<em>CINZA</em></b><small>OFICINA DE INTERFACE</small></span></div>
+      <div class="top-center"><span class="pulsedot"></span><b>Prévia real</b><span class="separator">/</span><span>ECU simulada</span><span class="separator">/</span><span>1280 × 720</span></div>
+      <div class="top-end">
+        <button class="quiet" id="compare" type="button" aria-pressed="false" title="Alternar original x alterações">Comparar original</button>
+        <button id="undo" class="quiet" type="button" title="Desfazer última edição">↶ Desfazer</button>
+        <button id="export" class="primary" type="button">Exportar mudanças ↗</button>
+      </div>
+    </header>
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <p class="eyebrow">01 / TELA</p>
+        <h2>Onde vamos trabalhar?</h2>
+        <button id="route-autocal" data-studio-route="autocal" class="route active" type="button"><span class="route-icon">⌁</span><span><b>AutoCal</b><small>Curvas e aquisição</small></span><span class="chev">›</span></button>
+        <button id="route-refino" data-studio-route="refino" class="route" type="button"><span class="route-icon">∿</span><span><b>Ajuste GNV</b><small>Refino e propostas</small></span><span class="chev">›</span></button>
+        <button id="route-curve" data-studio-route="curve" class="route" type="button"><span class="route-icon">↗</span><span><b>Curva K</b><small>Comparação global</small></span><span class="chev">›</span></button>
+        <button id="route-map" data-studio-route="map" class="route" type="button"><span class="route-icon">▦</span><span><b>Mapa K</b><small>Correção local</small></span><span class="chev">›</span></button>
+        <select id="all-routes" aria-label="Outras abas">
+          <option value="">Mais telas (8 rotas preservadas)</option>
+          <option value="dashboard">Agora</option><option value="sessions">Sessões</option>
+          <option value="tools">Ferramentas</option><option value="diagnostico">Diagnóstico</option>
+        </select>
+      </div>
+      <div class="sidebar-section">
+        <p class="eyebrow">02 / SITUAÇÃO</p>
+        <label class="field-label" for="scenario">Qual estado vamos observar?</label>
+        <select id="scenario">
+          <option value="learning">AutoCal em aquisição</option>
+          <option value="gasmissing">GNV com zonas faltantes</option>
+          <option value="petrolmissing">Gasolina incompleta</option>
+          <option value="all">Ambos aprendidos · AutoMatch 3</option>
+          <option value="refineready">Refino · proposta pronta</option>
+          <option value="disconnected">Sem ECU</option>
+        </select>
+        <button class="subtle" id="restart" type="button">↻ Reiniciar simulação</button>
+        <p class="hint">Telemetria do corpus de testes do OMEGAS; estados e ações simulados. Nenhuma comunicação física com a ECU.</p>
+      </div>
+      <div class="sidebar-section tools">
+        <p class="eyebrow">03 / FERRAMENTAS</p>
+        <div class="mode-list" role="group" aria-label="Ferramenta visual">
+          <button id="tool-inspect" class="mode active" data-mode="inspect" aria-pressed="true" type="button"><span>◎</span> Selecionar elemento <kbd>1</kbd></button>
+          <button id="tool-draw" class="mode" data-mode="draw" aria-pressed="false" type="button"><span>✎</span> Riscar / anotar <kbd>2</kbd></button>
+          <button id="tool-move" class="mode" data-mode="move" aria-pressed="false" type="button"><span>✥</span> Reposicionar <kbd>3</kbd></button>
+          <button id="tool-interact" class="mode" data-mode="interact" aria-pressed="false" type="button"><span>↗</span> Usar o aplicativo <kbd>4</kbd></button>
+        </div>
+        <p class="hint" id="tool-help">Clique em um componente dentro da prévia para inspecioná-lo.</p>
+      </div>
+      <div class="sidebar-bottom"><span class="tiny-led"></span> Ambiente isolado do APK. Mudanças são apenas de prévia.</div>
+    </aside>
+    <main class="workarea">
+      <div class="preview-head">
+        <div><span class="eyebrow">PALCO DE TESTE</span><h1>Interface em funcionamento<span class="mini-bolt">◆</span></h1></div>
+        <div class="viewport-controls"><button class="quiet" id="zoom-out" type="button" aria-label="Diminuir zoom">−</button><span id="zoom-label">Ajustar</span><button class="quiet" id="zoom-in" type="button" aria-label="Aumentar zoom">+</button><button class="quiet" id="fit" type="button">Encaixar</button></div>
+      </div>
+      <div id="stage-well" class="stage-well">
+        <div id="stage-slot">
+          <div id="stage-scale">
+            <iframe id="omegas-frame" title="Interface real OMEGAS" width="1280" height="720"></iframe>
+            <div id="studio-stage-overlay" tabindex="0" role="application" aria-label="Camada interativa de inspeção">
+              <div id="selection-outline" hidden><span id="selection-tag"></span></div>
+              <svg id="markup-layer" width="1280" height="720" viewBox="0 0 1280 720" aria-hidden="true"></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="preview-foot"><span id="status"><i class="status-led"></i> Preparando interface real...</span><span>Aspecto físico preservado • sem redesenho fictício</span></div>
+    </main>
+    <aside class="inspector">
+      <p class="eyebrow">INSPECTOR / AO VIVO</p>
+      <h2>Do seu jeito.</h2><p class="lede">Escolha algo na interface, faça a mudança na prévia, depois envie o conjunto para eu transformar em código definitivo.</p>
+      <div class="inspect-panel">
+        <div class="inspect-head"><span>ELEMENTO SELECIONADO</span><span class="target">⌖</span></div>
+        <strong id="selected-selector">Nenhum elemento</strong>
+        <p id="selected-description">Use “Selecionar elemento” e toque na tela.</p>
+        <dl class="metrics"><div><dt>Largura</dt><dd id="measure-w">—</dd></div><div><dt>Altura</dt><dd id="measure-h">—</dd></div><div><dt>Posição</dt><dd id="measure-pos">—</dd></div></dl>
+        <div class="inspect-actions"><button id="selected-hide" type="button" disabled>Ocultar na prévia</button><button id="selected-restore" type="button" disabled>Restaurar</button></div>
+      </div>
+      <div class="comment-panel"><label for="note-input">O que você quer mudar?</label><textarea id="note-input" rows="4" placeholder="Ex.: isso pode sair; quero o gráfico ocupando esse espaço; esse botão deve ir para o rodapé..."></textarea><button class="primary" id="note-save" type="button">Adicionar à revisão <span>+</span></button></div>
+      <div class="history"><div class="history-head"><h3>Lista de alterações</h3><span id="change-count">0</span></div><div id="change-list" aria-live="polite"><p class="empty-history">Suas marcações aparecerão aqui. Nada será perdido ao exportar.</p></div></div>
+      <p class="disclaimer">Nenhuma gravação na ECU. A exportação contém apenas seletores, deslocamentos, desenhos e observações. O código do app não é editado automaticamente.</p>
+    </aside>
+  </div>
+</body>
+</html>
