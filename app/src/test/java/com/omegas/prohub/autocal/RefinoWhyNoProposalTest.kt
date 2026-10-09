@@ -24,12 +24,12 @@ class RefinoWhyNoProposalTest {
 
     @Test
     fun `regiao especifica informa o que falta sem condicionar vizinhos`() {
-        assertEquals("Estou medindo em 4,00–4,25 ms; falta confiança somente nesse trecho.", why("COLETANDO_NOSSOS", gaps(5, 3), null))
+        assertEquals("Estou medindo em 4,00–4,25 ms; faltam leituras para confirmar essa região.", why("COLETANDO_NOSSOS", gaps(5, 3), null))
     }
 
     @Test
     fun `mais dados nao exigem duas outras faixas`() {
-        assertEquals("Estou medindo em 4,00–4,25 ms; falta confiança somente nesse trecho.", why("COLETANDO_NOSSOS", gaps(5, 4), 0.9))
+        assertEquals("Estou medindo em 4,00–4,25 ms; faltam leituras para confirmar essa região.", why("COLETANDO_NOSSOS", gaps(5, 4), 0.9))
     }
 
     @Test
