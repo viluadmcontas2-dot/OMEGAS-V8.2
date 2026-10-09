@@ -35,10 +35,18 @@ object RefinoState {
     fun build(autopilot: JSONObject, equivalence: JSONObject?, between: JSONArray, stalls: JSONObject?, fuel: String? = null): JSONObject {
         val code = autopilot.optString("phase", "SEM_ECU")
         val truth = autopilot.optJSONObject("ecuTruth")
-        val gaps = (0 until between.length()).mapNotNull { between.optJSONObject(it) }.filter { it.optString("kind") == "gap" }
-        val total = gaps.size
-        val collected = gaps.count { it.optString("state") == "coletado" }
+        // Apenas regiões próprias com pares reais. Não existe obrigação de cobrir 17 faixas da ECU.
+        val regions = (0 until between.length()).mapNotNull { between.optJSONObject(it) }
+        val total = regions.size
+        val collected = regions.count { it.optString("state") == "coletado" }
         val missing = total - collected
+        val nextMeasuredRegion = regions.filter { it.optString("state") != "coletado" }
+            .maxByOrNull { it.optInt("samples") }
+        val nextRange = nextMeasuredRegion?.let {
+            "%.2f–%.2f ms".format(java.util.Locale.forLanguageTag("pt-BR"), it.optDouble("fromMs"), it.optDouble("toMs"))
+        }
+        val perPointReason = nextRange?.let { "Estou medindo em $it; falta confiança somente nesse trecho." }
+            ?: "Estou medindo cada região onde houver leituras; nenhuma outra faixa é obrigatória."
         val available = equivalence?.optBoolean("available", false) == true
         val action = equivalence?.optJSONObject("nextAction")
         val kind = action?.optString("kind").orEmpty()
@@ -116,9 +124,9 @@ object RefinoState {
             }
             code == "ECU_TRABALHANDO" -> {
                 phase = "A ECU está no automático"; label = "ECU no automático"
-                whatNow = truth?.optString("summary").orEmpty().ifBlank { "A ECU está calibrando; só observo." }
-                next = "Aguardar a ECU"
-                why = "A ECU ainda está aprendendo; só observo e não proponho nada por cima."
+                whatNow = "O Refino continua coletando pontos próprios enquanto a ECU completa o AutoCal."
+                next = "Seguir medindo"
+                why = "Aguardando apenas a conclusão do AutoCal nativo antes de autorizar gravação."
             }
             code == "ESTAVEL" || (kind == "NOTHING" && index != null && actionPoints == 0) -> {
                 phase = "Estável"; label = phase
@@ -141,18 +149,18 @@ object RefinoState {
                 whatNow = "O carro está na gasolina. Estou medindo a referência da gasolina; comparo com o GNV quando o carro trocar."
                 next = keepDriving
                 why = when {
-                    missing > 0 -> "Faltam leituras em $missing ${if (missing == 1) "faixa" else "faixas"}."
+                    missing > 0 -> perPointReason
                     index == null -> "Ainda aprendendo seu motor para afirmar a diferença."
                     else -> null
                 }
             }
             else -> {
-                phase = if (total > 0) "Coletando entre as faixas da ECU: $collected de $total intervalos" else "Coletando"
+                phase = if (total > 0) "Medindo $total regiões próprias" else "Coletando"
                 label = if (onGas) "Medindo o GNV" else "Medindo"
-                whatNow = "Estou aprendendo seu motor entre as faixas da ECU."
+                whatNow = "Cada região confiável conta sozinha, sem esperar outras faixas da ECU."
                 next = keepDriving
                 why = when {
-                    missing > 0 -> "Faltam leituras em $missing ${if (missing == 1) "faixa" else "faixas"}."
+                    missing > 0 -> perPointReason
                     index == null -> "Ainda aprendendo seu motor para afirmar a diferença."
                     else -> "Sem ajuste a sugerir agora: a curva está dentro da margem nas faixas medidas."
                 }
@@ -168,6 +176,7 @@ object RefinoState {
 
         val counts = JSONObject()
             .put("intervalsTotal", total).put("intervalsCollected", collected).put("intervalsMissing", missing)
+            .put("regionsObserved", total).put("regionsConfirmed", collected).put("regionsLearning", missing)
             .put("ecuAutoMatchCount", autopilot.opt("autoMatchCount") ?: JSONObject.NULL)
             .put("ecuAutoMatchMax", autopilot.opt("maxAutomatch") ?: JSONObject.NULL)
             .put("ecuZonesPetrol", autopilot.opt("petrolZones") ?: JSONObject.NULL)
