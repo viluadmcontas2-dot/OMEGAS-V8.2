@@ -382,10 +382,16 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val pairs = synchronized(lock) { EvidencePairs.build(petrol.toList(), gas.toList(), emptyList()) }
             .filter { it.petrolRefMs.isFinite() && it.petrolRefMs > 0.0 &&
                 it.gasPetrolMs.isFinite() && it.gasPetrolMs > 0.0 && it.rpm > 0.0 }
-        val grouped = pairs.groupBy { kotlin.math.floor(it.petrolRefMs / 0.25).toInt() }.toSortedMap()
+        // Uma mesma faixa de ms em lenta e condução não é a mesma região do motor.
+        val grouped = pairs.groupBy {
+            kotlin.math.floor(it.petrolRefMs / 0.25).toInt() to
+                (if (it.rpm < DRIVING_MIN_RPM) "LENTA" else "CONDUCAO")
+        }
+        val keys = grouped.keys.sortedWith(compareBy<Pair<Int, String>> { it.first }.thenBy { it.second })
         fun median(values: List<Double>): Double = values.sorted()[values.size / 2]
         val out = JSONArray()
-        for ((bucket, members) in grouped) {
+        for ((bucket, regime) in keys) {
+            val members = grouped.getValue(bucket to regime)
             val lo = bucket * 0.25
             val hi = lo + 0.25
             val petrolMs = median(members.map { it.petrolRefMs })
@@ -399,7 +405,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                 kotlin.math.sqrt(confidence.effectiveSamples) <= 0.04
             val visits = members.map { it.episode }.filter { it >= 0 }.toSet().size
             out.put(JSONObject()
-                .put("index", bucket).put("kind", "local")
+                .put("index", bucket).put("kind", "local").put("regime", regime)
                 .put("fromMs", lo).put("toMs", hi).put("centerMs", petrolMs)
                 .put("petrolMs", petrolMs).put("gnvMs", gnvMs).put("mapBar", mapBar)
                 .put("centerMapBar", mapBar).put("rpmMedian", rpm)
