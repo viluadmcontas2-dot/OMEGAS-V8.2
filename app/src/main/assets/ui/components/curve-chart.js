@@ -246,7 +246,7 @@
       if (ms === null || map === null || !(ms > 0)) return null;
       return { ms, mapBar: map, n: pick(o, ['n']) ?? 0 };
     };
-    return list.filter(b => b && typeof b === 'object').slice(0, 36).map((b, i) => {
+    return list.filter(b => b && typeof b === 'object').map((b, i) => {
       const gas = side(b, 'gas');
       const petrol = side(b, 'petrol');
       const state = String(b.state || '').toLowerCase();
@@ -435,7 +435,7 @@
       const place = (side, cls) => {
         if (!side || side.mapBar < yMin || side.mapBar > yMax || side.ms > xMax) return;
         const x = xFor(side.ms); const y = yFor(side.mapBar);
-        shapes.push(`<circle class="autocal-acquired-hit${o.selected && o.selected.our === `b:${i}` ? ' selected' : ''}" ${token} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="22"></circle>` + dot(`${cls} collected`, x, y));
+        shapes.push(`<circle class="autocal-acquired-hit${o.selected && o.selected.our === `b:${i}` ? ' selected' : ''}" ${token} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="22"></circle>` + dot(`${cls} ${b.state === 'collected' ? 'collected' : 'learning'}`, x, y));
       };
       place(b.gas, 'gas'); place(b.petrol, 'petrol');
       if (!shapes.length && b.state === 'missing' && finite(b.centerMs) !== null && finite(b.centerMapBar) !== null && inY(b.centerMapBar) && b.centerMs <= xMax) {
@@ -603,7 +603,7 @@
     ].filter(p => finite(p.tpetMs) !== null && finite(p.mapBar) !== null && (p.fuel === 'GAS' ? visible.gas !== false : visible.petrol !== false));
     const human = UX.humanState(snapshot, deriveState(projection), projection);
     // AutoCal não desenha pontos nossos: a escala vem só da ECU e das curvas.
-    const given = normalizeBetween(eq.betweenPoints || (c.analysis && c.analysis.betweenPoints)).filter(b => b.kind === 'gap' || (b.kind !== 'open-low' && b.kind !== 'open-high' && b.index >= 0 && b.index < 17)).map(b => ({
+    const given = normalizeBetween(eq.betweenPoints || (c.analysis && c.analysis.betweenPoints)).filter(b => b.kind === 'local' || b.kind === 'gap' || (b.kind !== 'open-low' && b.kind !== 'open-high' && b.index >= 0 && b.index < 17)).map(b => ({
       ...b, gas: visible.gas === false ? null : b.gas, petrol: visible.petrol === false ? null : b.petrol,
     }));
     const intervalPoints = given.flatMap(b => [
