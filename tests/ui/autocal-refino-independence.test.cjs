@@ -35,7 +35,7 @@ test('Refino aprende 100 regiões mas desenha curvas próprias e poucos marcador
     {width:1000,height:380,mode:'between'});
   assert.match(r.svg,/data-own-curve="petrol"/);
   assert.match(r.svg,/data-own-curve="gas"/);
-  assert.ok((r.svg.match(/data-chart-our=/g)||[]).length<=36,'a inteligência não vira centenas de bolinhas');
-  assert.match(r.svg,/acquiring/);
+  assert.equal((r.svg.match(/data-chart-our=/g)||[]).length,0,'amostras ficam no motor, não no SVG');
+  assert.equal((r.svg.match(/data-own-curve=/g)||[]).length,2,'somente curvas gasolina e GNV');
   assert.match(chart.describeBetween(normalized[99]),/região própria do OMEGAS/);
 });
