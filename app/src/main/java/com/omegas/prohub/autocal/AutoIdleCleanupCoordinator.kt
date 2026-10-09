@@ -106,6 +106,7 @@ class AutoIdleCleanupCoordinator(
     /** Por que está desarmada agora (toque do dono, falha, recibo perdido): a tela mostra isto enquanto desarmada. */
     private var disarmedReason: String = DISARMED_REASON
     private var pauseCode: PauseCode? = null
+    private var manualDeleteAtMs = Long.MIN_VALUE
     private var relearned = 0
     private val recent = ArrayDeque<RecentDelete>()
     @Volatile private var summary = UiSummary(false, false, true, null, 0, emptyList(), DISARMED_REASON)
@@ -152,6 +153,12 @@ class AutoIdleCleanupCoordinator(
 
     /** Reset/ação manual confirmada do dono (ou falha manual com mutação possível): desarma; ele rearma se quiser. */
     fun onManualMutation(receipt: JSONObject) = submit {
+        if (receipt.optString("action") == MANUAL_POINT_DELETE) {
+            // Regra 17: apagar ponto manualmente NUNCA muda o armamento. Só lembra o instante, para a guarda do
+            // outro combustível não culpar o apagamento do dono (mesma janela/readback).
+            manualDeleteAtMs = clock()
+            return@submit
+        }
         setArmedLocked(false, "manual:" + receipt.optString("action", "?"))
         publish()
     }
@@ -161,6 +168,7 @@ class AutoIdleCleanupCoordinator(
      * começar, de forma síncrona. Não toca na operação automática já em voo (o recibo dela ainda é processado).
      */
     fun onManualIntent(action: String): Unit = synchronized(this) {
+        if (action == MANUAL_POINT_DELETE) return@synchronized // regra 17: apagar ponto manual não desarma
         setArmedLocked(false, "manual:" + action.ifBlank { "?" })
         publish()
     }
@@ -239,7 +247,7 @@ class AutoIdleCleanupCoordinator(
             while (recent.size > MAX_RECENT) recent.removeFirst()
         }
         val guard = details.optJSONObject("otherFuelGuard")
-        if (guard?.optBoolean("abnormal", false) == true) {
+        if (guard?.optBoolean("abnormal", false) == true && manualDeleteAtMs < flight.sinceMs) {
             val other = if (fuel == Fuel.GAS) "A gasolina" else "O GNV"
             disableLocked("$other mudou de forma anormal durante o apagamento automático", receipt, PauseCode.OTHER_FUEL_GUARD)
         }
@@ -554,6 +562,7 @@ class AutoIdleCleanupCoordinator(
         /** A tela só precisa dos últimos apagamentos para acinzentar os pontos até a próxima leitura. */
         const val MAX_RECENT = 5
         val PETROL_NAMES = setOf("GASOLINA", "PETROL")
+        const val MANUAL_POINT_DELETE = "DELETE_POINT"
         const val DISARMED_REASON = "Limpeza automática desligada: toque em Ativar limpeza automática"
         const val ARMED_WAIT_REASON = "Aguardando a próxima leitura da ECU"
         const val FAILURE_DISARMED_REASON =

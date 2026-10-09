@@ -102,7 +102,9 @@ class P1EvidenceBeforePercentage(unittest.TestCase):
         self.assertLess(out["judgedUsage"], brain.MIN_JUDGED_USAGE)
         self.assertIsNone(out["index"])
         # com GNV em todo o uso o índice aparece
-        full = self.evaluate(synthetic_obs(lambda c: 1.0, lambda i, j: 1.0, 20))
+        # Após normalizar MAP, a série perfeita é constante: não inventa independência estatística.
+        # Ruído determinístico independente representa leituras distintas no caso positivo.
+        full = self.evaluate(synthetic_obs(lambda c: 1.0, lambda i, j: 1.0 + 0.006 * math.sin(i * 1.7 + j), 20))
         self.assertGreaterEqual(full["judgedUsage"], brain.MIN_JUDGED_USAGE)
         self.assertIsNotNone(full["index"])
 
@@ -170,23 +172,15 @@ class P2EvidenceIndependenceAndNativePriority(unittest.TestCase):
         self.assertEqual("EQUIVALENCE", out["mode"])
         self.assertEqual(len(pairs) - 1, out["telemetryPairsUsed"])
 
-    def test_telemetry_does_not_move_points_the_mature_native_evidence_covers(self):
+    def test_own_points_refine_native_covered_regions(self):
         base = refined.refine(REF95)
-        # 1,2 (e não 1,3): dentro do portão de plausibilidade [0,80; 1,25]; o teste é sobre a prioridade da nativa.
         pairs = [(t, t * 1.2) for b in range(5) for t in interior(b, 12)]
         mixed = refined.refine(REF95, pairs)
-        self.assertGreater(mixed["telemetryDroppedByNative"], 0)
-        axis = base["axisMs"]
+        self.assertEqual(mixed["telemetryDroppedByNative"], 0)
         telemetry = [t for t in mixed["targets"] if t["map"] is None]
         self.assertTrue(telemetry)
-        for t in telemetry:
-            dominant = max(refined.axis_weights(t["tp"], axis), key=lambda na: (na[1], -na[0]))[0]
-            self.assertLess(base["gain"][dominant], refined.NATIVE_COVERED_GAIN, f"alvo em {t['tp']:.2f} ms cai num ponto coberto")
-
-    def test_telemetry_weight_per_band_is_capped(self):
-        pairs = [(t, t * 1.1) for t in interior(2, 300)]
-        targets = refined.cap_band_weight(refined.telemetry_targets(pairs, [float(i + 1) for i in range(30)], [1.0] * 30))
-        self.assertAlmostEqual(refined.TELEMETRY_BAND_WEIGHT_CAP, sum(t["w"] for t in targets), places=9)
+        self.assertTrue(any(base["gain"][max(refined.axis_weights(t["tp"], base["axisMs"]), key=lambda na: (na[1], -na[0]))[0]] >= 0.5 for t in telemetry))
+        self.assertTrue(any(t["map"] is not None for t in mixed["targets"]))
 
 
 class P2MeasuredProposalNeverWorsensTheEngineCriterion(unittest.TestCase):
@@ -202,14 +196,13 @@ class P2MeasuredProposalNeverWorsensTheEngineCriterion(unittest.TestCase):
         self.assertLessEqual(out["evidenceErrorAfter"], out["evidenceErrorBefore"] + refined.REGRESSION_EPS)
         self.assertEqual(out["currentRaw"], out["refinedRaw"])           # antes: 20 pontos mexidos, erro 0% -> 1,4%
 
-    def test_points_whose_evidence_error_is_inside_the_tolerance_are_not_moved(self):
+    def test_error_inside_the_tolerance_is_held_by_hysteresis_and_above_it_the_curve_moves(self):
+        # Sem zona morta por nó (a média diluía faixa isolada errada): quem segura o ruído é a histerese hold_log.
+        hold = math.log(1.035)
         pairs = [(t, t * 1.02) for b in (1, 2, 3, 4) for t in interior(b, 12)]       # GNV 2% pobre: dentro de ±4%
-        out = refined.refine(snapshot(), pairs)
-        self.assertGreater(out["deadBandPoints"], 10)
+        out = refined.refine(snapshot(), pairs, hold_log=hold)
         self.assertLessEqual(sum(1 for a, b in zip(out["currentRaw"], out["refinedRaw"]) if a != b), 6)
-        # 4,5% de erro passa da tolerância: a curva se move de verdade
-        far = refined.refine(snapshot(), [(t, t * 1.045) for b in (1, 2, 3, 4) for t in interior(b, 12)])
-        self.assertEqual(0, far["deadBandPoints"])
+        far = refined.refine(snapshot(), [(t, t * 1.045) for b in (1, 2, 3, 4) for t in interior(b, 12)], hold_log=hold)
         self.assertGreater(sum(1 for a, b in zip(far["currentRaw"], far["refinedRaw"]) if a != b), 10)
 
     def test_a_proposal_that_worsens_the_criterion_is_never_emitted(self):

@@ -112,7 +112,10 @@ class NativeAutoCalRefreshPlanner {
             if (!acquisition && !reference) return null
             if (acquisition) {
                 lastAcquisitionAtElapsedMs = nowElapsedMs
-                Group.values().filter { it.family == Family.ACQUISITION }.forEach(roundQueue::addLast)
+                // A zona confirmada e os buffers atuais vêm antes da leitura histórica G3.
+                // São exatamente os mesmos campos/bytes; somente a prioridade muda.
+                listOf(Group.G2_PETROL_BUFFERS, Group.G4_GAS, Group.G6_ZONES, Group.G3_GAS_PREV)
+                    .forEach(roundQueue::addLast)
             }
             if (reference) {
                 lastReferenceAtElapsedMs = nowElapsedMs

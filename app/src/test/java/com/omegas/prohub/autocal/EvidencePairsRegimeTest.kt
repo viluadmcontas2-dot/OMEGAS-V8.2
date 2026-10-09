@@ -36,4 +36,15 @@ class EvidencePairsRegimeTest {
         val idleGas = listOf(obs(3_000, 1_050.0, 0.40, 5.1))
         assertEquals(1, EvidencePairs.build(idlePetrol, idleGas, emptyList()).size)
     }
+    @Test
+    fun `pontos proprios refinam a nativa na mesma pressao sem absorver a inclinacao`() {
+        val reference = listOf(0.3 to 3.0, 0.6 to 6.0)
+        val petrol = listOf(obs(1_000, 2_000.0, 0.39, 3.9 * 1.02), obs(2_000, 2_000.0, 0.39, 3.9 * 1.02))
+        val gas = listOf(obs(3_000, 2_000.0, 0.40, 4.4))
+        val pair = EvidencePairs.build(petrol, gas, reference).single()
+        // A correção própria de 2% permanece; a diferença de MAP não vira erro de mistura.
+        assertEquals(4.0 * 1.02, pair.petrolRefMs, 1e-9)
+        assertEquals(false, pair.ecuRef)
+        assertEquals(4.4, pair.gasPetrolMs, 0.0)
+    }
 }

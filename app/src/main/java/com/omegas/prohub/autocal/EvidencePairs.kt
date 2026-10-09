@@ -197,12 +197,19 @@ object EvidencePairs {
         val raw = ArrayList<EquivalenceLedger.EvidencePair>()
         for (g in gas) {
             matches.clear()
+            val gasReference = referenceAt(g.map, ecuRef)
             val r0 = rpmCell(g.rpm)
             val m0 = mapCell(g.map)
             for (dr in -1L..1L) for (dm in -1L..1L) {
                 grid[(r0 + dr) * 1_000_003L + (m0 + dm)]?.forEach {
-                    if (abs(it.rpm - g.rpm) <= mr && abs(it.map - g.map) <= mm && sameRegime(it.rpm, g.rpm) &&
-                    sameWater(it.waterC, g.waterC)) matches += it.petrolMs
+                    if (abs(it.rpm - g.rpm) <= mr && abs(it.map - g.map) <= mm + 1e-9 && sameRegime(it.rpm, g.rpm) &&
+                    sameWater(it.waterC, g.waterC)) {
+                        // A curva nativa transporta a leitura própria até o MAP do GNV. Comparar ms crus
+                        // em MAPs vizinhos confundia a inclinação normal da gasolina com erro de mistura.
+                        val petrolReference = referenceAt(it.map, ecuRef)
+                        matches += if (gasReference != null && petrolReference != null)
+                            it.petrolMs * gasReference / petrolReference else it.petrolMs
+                    }
                 }
             }
             if (matches.size >= 2) {

@@ -105,10 +105,12 @@ class NativeAutoCalRefreshPlannerTest {
         // Enquanto não confirmado, devolve sempre o mesmo grupo (nenhum grupo é pulado).
         assertEquals(first, planner.nextGroup(12_300L, acquisitionEnabled = true))
         planner.groupDone(first!!)
-        assertEquals(NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV, planner.nextGroup(12_400L, acquisitionEnabled = true))
-        planner.groupDone(NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV)
+        assertEquals(NativeAutoCalRefreshPlanner.Group.G4_GAS, planner.nextGroup(12_400L, acquisitionEnabled = true))
         planner.groupDone(NativeAutoCalRefreshPlanner.Group.G4_GAS)
+        assertEquals(NativeAutoCalRefreshPlanner.Group.G6_ZONES, planner.nextGroup(12_500L, acquisitionEnabled = true))
         planner.groupDone(NativeAutoCalRefreshPlanner.Group.G6_ZONES)
+        assertEquals(NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV, planner.nextGroup(12_600L, acquisitionEnabled = true))
+        planner.groupDone(NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV)
         assertFalse(planner.roundInProgress())
         // Rodada de 2 s medida de início a início.
         assertNull(planner.nextGroup(13_999L, acquisitionEnabled = true))
@@ -123,8 +125,8 @@ class NativeAutoCalRefreshPlannerTest {
         val remaining = planner.roundRemaining()
         assertEquals(
             listOf(
-                NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS, NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV,
-                NativeAutoCalRefreshPlanner.Group.G4_GAS, NativeAutoCalRefreshPlanner.Group.G6_ZONES,
+                NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS, NativeAutoCalRefreshPlanner.Group.G4_GAS,
+                NativeAutoCalRefreshPlanner.Group.G6_ZONES, NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV,
                 NativeAutoCalRefreshPlanner.Group.G5_MUL_ACT, NativeAutoCalRefreshPlanner.Group.G7_PETROL_RV,
                 NativeAutoCalRefreshPlanner.Group.G8_GAS_RV,
             ),
@@ -143,15 +145,15 @@ class NativeAutoCalRefreshPlannerTest {
         planner.markFullSnapshot(10_000L)
         planner.nextGroup(12_000L, acquisitionEnabled = true)
         planner.groupDone(NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS)
-        planner.groupFailed(NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV, 12_500L)
+        planner.groupFailed(NativeAutoCalRefreshPlanner.Group.G4_GAS, 12_500L)
         assertFalse("resto da aquisição descartado", planner.roundInProgress())
         assertFalse("1ª falha: aquisição só volta depois de 4 s", planner.due(16_499L).acquisition)
         assertTrue(planner.due(16_500L).acquisition)
         assertEquals(NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS, planner.nextGroup(16_500L, acquisitionEnabled = true))
         // Ao fechar a rodada com sucesso o recuo zera (a referência vencida acompanhou a rodada).
         listOf(
-            NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS, NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV,
-            NativeAutoCalRefreshPlanner.Group.G4_GAS, NativeAutoCalRefreshPlanner.Group.G6_ZONES,
+            NativeAutoCalRefreshPlanner.Group.G2_PETROL_BUFFERS, NativeAutoCalRefreshPlanner.Group.G4_GAS,
+            NativeAutoCalRefreshPlanner.Group.G6_ZONES, NativeAutoCalRefreshPlanner.Group.G3_GAS_PREV,
             NativeAutoCalRefreshPlanner.Group.G5_MUL_ACT, NativeAutoCalRefreshPlanner.Group.G7_PETROL_RV,
             NativeAutoCalRefreshPlanner.Group.G8_GAS_RV,
         ).forEach { planner.groupDone(it) }

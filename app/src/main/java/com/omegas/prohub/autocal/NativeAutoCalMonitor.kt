@@ -295,6 +295,10 @@ class NativeAutoCalMonitor(
         val readBack = enabledFromSnapshotJson(receipt.optJSONObject("after"))
         when {
             readBack != null -> { enabledCheckedAtMs = clockMs(); applyOptimisticEnabled(readBack) }
+            // Reset de gasolina/GNV/tudo: o gerenciador só confirma depois de AUTO_CAL_ENABLE=1 relido (regra 14).
+            receipt.optJSONObject("details")?.optInt("autoCalEnabledReadback", -1) == 1 -> {
+                enabledCheckedAtMs = clockMs(); applyOptimisticEnabled(1)
+            }
             receipt.optString("action") == "ENABLE_AUTO_CAL" -> applyOptimisticEnabled(1)
             receipt.optString("action") == "DISABLE_AUTO_CAL" -> applyOptimisticEnabled(0)
         }

@@ -95,24 +95,14 @@ object AutoMatchRefinedEngine {
      * pares cada. Sem isso falha fechado (POLISH, nada muda).
      */
     const val TELEMETRY_ONLY_BAND_PAIRS = 8
-    const val TELEMETRY_ONLY_MIN_BANDS = 3
+    const val TELEMETRY_ONLY_MIN_BANDS = 2
     /**
-     * Uma faixa só puxa proposta com pares de ao menos este número de episódios = visitas à faixa separadas por
-     * ≥ 60 s de condução ([EvidencePairs.VISIT_GAP_MS]); leituras estáveis seguidas NÃO são episódios distintos.
+     * Uma faixa só puxa proposta com pares de ao menos este número de episódios = blocos de leituras não sobrepostas;
+     * não exige permanência nem retorno após um minuto.
      */
     const val MIN_BAND_EPISODES = EvidencePairs.MIN_VISITS
     /** Peso por episódio: um episódio de uma faixa vale no máximo este número de pares (o resto é a mesma leitura repetida). */
     const val EPISODE_PAIR_CAP = 4
-    /** Teto de peso da telemetria por faixa do livro (= uma faixa nativa plena: [BAND_FULL_COUNT] pares × [TELEMETRY_WEIGHT]). */
-    const val TELEMETRY_BAND_WEIGHT_CAP = BAND_FULL_COUNT * TELEMETRY_WEIGHT
-    /** A telemetria não move um ponto que a evidência nativa madura já cobre (ganho nativo ≥ isto). */
-    const val NATIVE_COVERED_GAIN = 0.5
-    /**
-     * Erro de evidência abaixo disto num ponto = já está bom: o ponto não se move (= EquivalenceTolerances.MIN, ±4%).
-     * Só vale com evidência de pelo menos [DEAD_BAND_MIN_EVIDENCE] no nó.
-     */
-    val DEAD_BAND_LOG = ln(1.04)
-    const val DEAD_BAND_MIN_EVIDENCE = 0.1
     /** Tolerância numérica para "a proposta piorou o critério do próprio motor". */
     const val REGRESSION_EPS = 1e-4
     /**
@@ -234,10 +224,8 @@ object AutoMatchRefinedEngine {
         /** Pares locais rejeitados por desvio robusto dos vizinhos da mesma faixa. */
         val telemetryOutlierPairs: Int = 0,
         val telemetryPairsUsed: Int = 0,
-        /** Alvos da telemetria descartados porque a evidência nativa madura já cobre o ponto. */
+        /** Compatibilidade do JSON: agora a cobertura nativa não descarta pontos próprios (sempre 0). */
         val telemetryDroppedByNative: Int = 0,
-        /** Nós que ficaram parados porque a evidência já os mostra dentro da tolerância. */
-        val deadBandPoints: Int = 0,
         /** A proposta calculada piorava o critério do motor: nada é proposto (a curva fica como está). */
         val regressionBlocked: Boolean = false,
         /** Pontos com K atual fora de [MIN_FACTOR, MAX_FACTOR] (mantidos se não entram na faixa). */
@@ -315,29 +303,17 @@ object AutoMatchRefinedEngine {
         // A condução sozinha só habilita a equivalência com cobertura real em ≥ 3 faixas distintas.
         val telemetryOnly = !nativeEquivalence && (if (fine != null) fineCovers(fine, fineValid!!) else telemetryCovers(usablePairs))
         val equivalence = nativeEquivalence || telemetryOnly
+        val nativeTargets = targets
         val bandTargetCount = targets.size
         if (telemetryOnly) targets = emptyList() // faixas nativas imaturas não entram: só a medição própria
-        var droppedByNative = 0
         if (equivalence && usedCount > 0) {
             if (fine != null) {
                 targets = targets + fineTargets(fine, fineValid!!, axisMs, kOld)
             } else {
-                var telemetry = usablePairs.mapIndexed { i, (tp, tg) ->
+                val telemetry = usablePairs.mapIndexed { i, (tp, tg) ->
                     Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT * usableWeights[i], tg / tp, ln(interp(tg, axisMs, kOld) * tg / tp))
                 }
-                // Teto de peso por faixa do livro: a telemetria é muita leitura repetida, a nativa é a ECU medindo.
-                telemetry = capBandWeight(telemetry)
-                // A nativa madura cobre o ponto: a telemetria não o move (só preenche o que a nativa não cobre).
-                if (nativeEquivalence && targets.isNotEmpty()) {
-                    val nativeGain = gainOf(targets.map { Observation(axisWeights(it.petrolMs, axisMs), it.logTarget, it.weight) })
-                    val before = telemetry.size
-                    telemetry = telemetry.filter { t ->
-                        val nodes = axisWeights(t.petrolMs, axisMs)
-                        val dominant = nodes.maxByOrNull { it.second }!!.first
-                        nativeGain[dominant] < NATIVE_COVERED_GAIN
-                    }
-                    droppedByNative = before - telemetry.size
-                }
+                // Peso por episódio já limita quadros repetidos; novas visitas acrescentam evidência.
                 targets = targets + telemetry
             }
         }
@@ -346,25 +322,43 @@ object AutoMatchRefinedEngine {
             targets.map { Observation(axisWeights(it.petrolMs, axisMs), it.logTarget, it.weight) }
         } else emptyList()
 
-        val evidence = DoubleArray(POINT_COUNT)
-        observations.forEach { o -> o.a.forEach { (j, a) -> evidence[j] += o.w * a } }
         var gain = gainOf(observations)
         val lnLo = ln(MIN_FACTOR)
         val lnHi = ln(MAX_FACTOR)
         val outOfRange = x0.count { it < lnLo - 1e-12 || it > lnHi + 1e-12 }
         var eEff = E_MAX
-        var deadBand = 0
         var box: List<Pair<Double, Double>> = emptyList()
         val final: List<Double>
         if (equivalence) {
             val priorWeights = gain.map { g -> PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g }
-            val (fitted, robust) = whittaker(u, observations, x0, priorWeights, LAMBDA)
+            // Uma passada só, sem Tukey: com o piso de escala de 1% o Tukey zerava todo erro > 4,7% (justo a faixa errada
+            // isolada entre vizinhas boas, que é o que o Refino existe para corrigir). Outlier já sai antes (plausibleIndices/monotoneFit).
+            // A nativa é a base geométrica. Suaviza o desvio próprio ao redor dela, não uma
+            // mistura de curvas absolutas que deixa muitos pares apagarem uma faixa nativa.
+            val nativeMs = nativeTargets.map { it.petrolMs }
+            val nativeLogK = nativeTargets.map { it.logTarget }
+            val base = if (nativeEquivalence && usablePairs.isNotEmpty()) axisMs.mapIndexed { j, ms ->
+                if (ms < nativeTargets.first().petrolMs || ms > nativeTargets.last().petrolMs) x0[j]
+                else interp(ms, nativeMs, nativeLogK)
+            } else if (usablePairs.isNotEmpty()) x0 else List(POINT_COUNT) { 0.0 }
+            val prior = if (usablePairs.isEmpty()) x0 else List(POINT_COUNT) { 0.0 }
+            val residuals = observations.map { o -> Observation(o.a, o.y - o.a.sumOf { (j, a) -> a * base[j] }, o.w) }
+            val (delta, robust) = whittaker(u, residuals, prior, priorWeights, LAMBDA, iterations = 1)
+            // Sem pontos próprios naquele intervalo, conserva a base: não extrapola o residual.
+            val ownMin = usablePairs.minOfOrNull { it.first }
+            val ownMax = usablePairs.maxOfOrNull { it.first }
+            val fitted = base.indices.map {
+                base[it] + if (nativeEquivalence && ownMin != null && (axisMs[it] < ownMin || axisMs[it] > ownMax!!)) 0.0 else delta[it]
+            }
             targets = targets.mapIndexed { i, t -> t.copy(robustWeight = robust[i]) }
             val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
             val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
-            val fixedNodes = deadBandNodes(observations, evidence, axisMs, kOld)
-            deadBand = fixedNodes.size
-            val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b -> if (j in fixedNodes) x0[j] to x0[j] else b }
+            // Sem aquisição nativa, a curva fora do intervalo medido não é evidência de correção.
+            val minMeasured = targets.minOf { it.petrolMs }
+            val maxMeasured = targets.maxOf { it.petrolMs }
+            val initialBox = proposalBox(x0, gain, axisMs).mapIndexed { j, b ->
+                if (telemetryOnly && fine == null && (axisMs[j] < minMeasured || axisMs[j] > maxMeasured)) x0[j] to x0[j] else b
+            }
             eEff = effectiveElasticity(initialBox, u)
             val enforced = enforceCoherence(scaled, initialBox, u, eEff)
             // Histerese: ponto cujo passo proposto é ruído fica exatamente como está, desde que a curva continue
@@ -436,8 +430,7 @@ object AutoMatchRefinedEngine {
             telemetryOutlierBands = outlierBands,
             telemetryOutlierPairs = outlierPairs,
             telemetryPairsUsed = if (equivalence) usedCount else 0,
-            telemetryDroppedByNative = droppedByNative,
-            deadBandPoints = deadBand,
+            telemetryDroppedByNative = 0,
             regressionBlocked = regression,
             outOfRangePoints = outOfRange,
         )
@@ -455,44 +448,12 @@ object AutoMatchRefinedEngine {
         }
     }
 
-    /**
-     * Nós cujo erro de evidência já está dentro da tolerância ([DEAD_BAND_LOG]): média ponderada (peso × participação
-     * no nó) da diferença ln K(ms) − ln K_alvo dos alvos que o tocam. Esses nós não se movem, desde que o K atual seja
-     * coerente com os vizinhos (|Δ ln K/Δ ln t| ≤ [E_MAX]): K incoerente continua podendo ser reparado.
-     */
-    internal fun deadBandNodes(observations: List<Observation>, evidence: DoubleArray, axisMs: List<Double>, kOld: List<Double>): Set<Int> {
-        val num = DoubleArray(POINT_COUNT)
-        val den = DoubleArray(POINT_COUNT)
-        val coherent = BooleanArray(POINT_COUNT) { true }
-        for (j in 0 until POINT_COUNT - 1) {
-            if (abs(ln(kOld[j + 1]) - ln(kOld[j])) > E_MAX * (ln(axisMs[j + 1]) - ln(axisMs[j])) + 1e-9) { coherent[j] = false; coherent[j + 1] = false }
-        }
-        // O ms de cada observação é recuperado do próprio vetor de participação: ponto médio ponderado dos nós.
-        observations.forEach { o ->
-            val ms = o.a.sumOf { (j, a) -> a * axisMs[j] }
-            val diff = ln(interp(ms, axisMs, kOld)) - o.y
-            o.a.forEach { (j, a) -> num[j] += o.w * a * diff; den[j] += o.w * a }
-        }
-        return (0 until POINT_COUNT).filter { j -> coherent[j] && evidence[j] >= DEAD_BAND_MIN_EVIDENCE && den[j] > 0.0 && abs(num[j] / den[j]) <= DEAD_BAND_LOG }.toSet()
-    }
-
     /** Peso relativo de cada par por episódio: um (faixa, episódio) vale no máximo [EPISODE_PAIR_CAP] pares. Sem episódios = 1. */
     internal fun pairWeights(pairs: List<kotlin.Pair<Double, Double>>, episodes: List<Int>?): List<Double> {
         if (episodes == null || episodes.size != pairs.size) return List(pairs.size) { 1.0 }
         val counts = HashMap<kotlin.Pair<Int, Int>, Int>()
         pairs.forEachIndexed { i, p -> counts.merge(ledgerBand(p.first)!! to episodes[i], 1, Int::plus) }
         return pairs.mapIndexed { i, p -> min(1.0, EPISODE_PAIR_CAP.toDouble() / counts[ledgerBand(p.first)!! to episodes[i]]!!) }
-    }
-
-    /** Teto de peso total da telemetria por faixa do livro: acima dele os alvos da faixa são reduzidos na mesma proporção. */
-    internal fun capBandWeight(targets: List<Target>): List<Target> {
-        val sums = HashMap<Int, Double>()
-        targets.forEach { t -> ledgerBand(t.petrolMs)?.let { sums.merge(it, t.weight, Double::plus) } }
-        return targets.map { t ->
-            val band = ledgerBand(t.petrolMs)
-            val sum = band?.let { sums[it] } ?: 0.0
-            if (sum > TELEMETRY_BAND_WEIGHT_CAP) t.copy(weight = t.weight * TELEMETRY_BAND_WEIGHT_CAP / sum) else t
-        }
     }
 
     /** Contadores da leitura das faixas nativas (evidência inválida/fina nunca é silenciosa). */
@@ -542,9 +503,16 @@ object AutoMatchRefinedEngine {
                 rejectedPairs += group.size
                 return@forEach
             }
-            val mad = weightedMedian(logRatios.map { abs(it - center) }, unitWeights) * 1.4826
-            val limit = max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad)
-            val coherent = group.filterIndexed { local, _ -> abs(logRatios[local] - center) <= limit }
+            // Une faixa larga pode conter um desvio real localizado. Compara cada ponto só aos
+            // vizinhos de injeção; excluir absurdos antes impede que contaminem centro e dispersão.
+            val plausible = group.filter { pairs[it].second / pairs[it].first in TELEMETRY_RATIO_MIN..TELEMETRY_RATIO_MAX }
+            val coherent = plausible.filter { i ->
+                val local = plausible.filter { abs(pairs[it].first - pairs[i].first) <= 0.35 }
+                    .map { ln(pairs[it].second / pairs[it].first) }.sorted()
+                val mid = local[local.size / 2]
+                val mad = local.map { abs(it - mid) }.sorted()[local.size / 2] * 1.4826
+                abs(ln(pairs[i].second / pairs[i].first) - mid) <= max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad)
+            }
             rejectedPairs += group.size - coherent.size
 
             if (gated && coherent.map { episodes!![it] }.toSet().size < MIN_BAND_EPISODES) return@forEach
@@ -882,13 +850,14 @@ object AutoMatchRefinedEngine {
         prior: List<Double>,
         priorWeights: List<Double>,
         lambda: Double,
+        iterations: Int = IRLS_ITERATIONS,
     ): Pair<List<Double>, List<Double>> {
         val n = u.size
         val d2 = secondDifferenceRows(u)
         var obsRobust = List(observations.size) { 1.0 }
         var priorRobust = List(n) { 1.0 }
         var x = prior
-        repeat(IRLS_ITERATIONS) {
+        repeat(iterations) {
             val m = Array(n) { DoubleArray(n) }
             val v = DoubleArray(n)
             d2.forEach { row ->

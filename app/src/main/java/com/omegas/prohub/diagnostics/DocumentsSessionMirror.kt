@@ -161,7 +161,10 @@ class DocumentsSessionMirror(private val context: Context) {
     }
 
     @Synchronized
-    fun publishRootFile(source: File): JSONObject {
+    fun publishRootFile(source: File, subFolder: String = ""): JSONObject {
+        val folder = subFolder.trim('/')
+        require(!folder.contains("..")) { "Pasta inválida" }
+        val publicDir = if (folder.isEmpty()) PUBLIC_ROOT else "$PUBLIC_ROOT/$folder"
         if (!source.isFile) return JSONObject().put("ok", false).put("error", "Arquivo local não encontrado")
         if (!isAvailable()) {
             return JSONObject()
@@ -174,19 +177,19 @@ class DocumentsSessionMirror(private val context: Context) {
         }
         return try {
             require(File(source.name).name == source.name && !source.name.contains("..")) { "Nome de arquivo inválido" }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) syncScopedAt(source, "$PUBLIC_ROOT/")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) syncScopedAt(source, "$publicDir/")
             else syncLegacyAt(
                 source,
                 File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "Omegas",
+                    if (folder.isEmpty()) "Omegas" else "Omegas/$folder",
                 ).apply { mkdirs() },
             )
             JSONObject()
                 .put("ok", true)
                 .put("published", true)
-                .put("path", "$PUBLIC_ROOT/${source.name}")
-                .put("relativeRoot", PUBLIC_ROOT)
+                .put("path", "$publicDir/${source.name}")
+                .put("relativeRoot", publicDir)
                 .put("survivesAppDataClear", true)
         } catch (error: Exception) {
             JSONObject()

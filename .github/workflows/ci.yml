@@ -27,14 +27,73 @@ jobs:
       - run: chmod +x gradlew
       - name: Fast contracts
         run: python3 -B tools/run_checks.py
+      - name: Trava reset-nunca-pausa-aprendizado (regra 14, nao remover)
+        run: |
+          python3 -B tests/test_reset_nunca_pausa_aprendizado.py
+          ./gradlew testDebugUnitTest --tests '*ResetNuncaPausaAprendizadoTest'
+      - name: Trava curva-salvamento-so-manual (regra 15, nao remover)
+        run: |
+          python3 -B tests/test_curva_salvamento_so_manual.py
+          python3 -B tools/wiring/run_ui_mutants.py --ci --only curva-autosave,curva-backup-ao-gravar,curva-backup-ao-desfazer,curva-nome-generico,curva-pasta-errada,curva-lote-publica-arquivo,curva-prewrite-vira-manual --min-kill 1.0
+          ./gradlew testDebugUnitTest --tests '*KFactorCurveFileNameTest'
+      - name: Trava apagar-manual-mantem-limpeza (regra 17, nao remover)
+        run: |
+          node --test tests/ui/autocal-apagar-manual-mantem-limpeza.test.cjs
+          python3 -B tools/wiring/run_ui_mutants.py --ci --only apagar-manual-desarma-limpeza --min-kill 1.0
+          ./gradlew testDebugUnitTest --tests '*AutoCalManualDeleteKeepsAutoCleanupTest'
       - name: JVM unit tests
         run: ./gradlew testDebugUnitTest
+      - name: Simulacao intensa do AutoCal em Chromium (despacho manual)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          OMEGAS_TEIA_OUT: tests/ui/__teia__/out
+          OMEGAS_STRESS_OUT: tests/ui/__teia__/out-stress
+          OMEGAS_STRESS_EVENTS: '4000'
+          OMEGAS_STRESS_DELAY_MS: '7'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/omegas-pw" playwright@1.64.0 --ignore-scripts --no-save --no-package-lock --no-audit --no-fund
+          export NODE_PATH="$RUNNER_TEMP/omegas-pw/node_modules"
+          export OMEGAS_CHROMIUM="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$OMEGAS_CHROMIUM" && test -x "$OMEGAS_CHROMIUM" || { echo "::error::Chromium ausente: NAO ignorar testes visuais"; exit 1; }
+          node -e "const l=require('./tests/ui/render/lib.js'); const p=l.playwright(); if(!p||!l.chromiumPath(p.chromium)) {console.error('Playwright/Chromium nao encontrado'); process.exit(3)}"
+          python3 tests/ui/render/prep.py /tmp/omegas-render-data.json
+          node --test tests/ui/autocal-teia.test.cjs
+          node tools/ui_stress/autocal-browser-stress.cjs
+      - name: Evidencias da simulacao visual intensa (manual)
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: autocal-estresse-4000
+          path: tests/ui/__teia__/out-stress
+          if-no-files-found: error
       - name: Relatorio do replay do apagamento automatico
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: replay-apagamento-automatico
           path: app/build/test-results/testDebugUnitTest/TEST-com.omegas.prohub.autocal.AutoIdleRealSessionReplayTest.xml
+          if-no-files-found: ignore
+      - name: Relatorio do replay do Refino (qual guarda bloqueia a proposta)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: replay-refino-proposta
+          path: app/build/test-results/testDebugUnitTest/TEST-com.omegas.prohub.equivalence.ProposalReplayReportTest.xml
+          if-no-files-found: ignore
+      - name: Sessao ficticia (JSON dos 5 momentos para a prova visual)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sessao-ficticia
+          path: app/build/sessao-ficticia
+      - name: Teia do AutoCal (folha de contato, log de comandos, capturas)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: teia-autocal
+          path: tests/ui/__teia__/out
           if-no-files-found: ignore
       - name: Android lint
         run: ./gradlew lintDebug

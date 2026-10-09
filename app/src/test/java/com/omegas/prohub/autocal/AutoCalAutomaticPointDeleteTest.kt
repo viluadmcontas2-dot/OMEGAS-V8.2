@@ -48,13 +48,18 @@ class AutoCalAutomaticPointDeleteTest {
                 return UsbProtocolReply(ok = false, status = -1, request = request, error = "sem resposta")
             }
             if (request.contentEquals(AutoCalPointDeleteProtocol.commit())) committed = true
+            // Reset confere AUTO_CAL_ENABLE=1 depois do comando (regra 14): a ECU falsa já está aprendendo.
+            if (request.contentEquals(AutoCalProtocol.read(AutoCalProtocol.AUTO_CAL_ENABLE))) return ack(request, byteArrayOf(1))
             val field = ALL_FIELDS.firstOrNull { AutoCalProtocol.read(it).contentEquals(request) }
                 ?: return ack(request, byteArrayOf())
             val values = (if (committed) after else before).getValue(field.key)
             return ack(request, encode(field, values))
         }
 
-        fun writes(): List<ByteArray> = requests.filter { req -> ALL_FIELDS.none { AutoCalProtocol.read(it).contentEquals(req) } }
+        fun writes(): List<ByteArray> = requests.filter { req ->
+            ALL_FIELDS.none { AutoCalProtocol.read(it).contentEquals(req) } &&
+                !req.contentEquals(AutoCalProtocol.read(AutoCalProtocol.AUTO_CAL_ENABLE))
+        }
 
         private fun ack(request: ByteArray, payload: ByteArray) =
             UsbProtocolReply(true, Mp48Protocol.STATUS_ACK, payload, request, request)

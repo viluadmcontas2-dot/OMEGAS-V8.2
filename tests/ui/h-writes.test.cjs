@@ -123,9 +123,9 @@ test('sem photoFile (Kotlin antigo) não há Desfazer: nunca restaura uma foto q
   screen.undoLast();
 });
 
-test('reset em curva já neutra: sem foto e sem reset; curva torta: foto → reset; Desfazer = foto do reset', () => {
+test('reset em curva já neutra: nada; curva torta: zera sem arquivo visível; Desfazer = foto privada do escritor', () => {
   const calls = { photo: 0, reset: 0, prepared: [] };
-  let operation = { busy: false, state: 'COMPLETED', ok: true, hash: 'h', publicPath: 'Download/Omegas/x', fileName: 'MANUAL-5-bbbb2222.json' };
+  let operation = { busy: false, state: 'COMPLETED', ok: true };
   const api = {
     startCurveBackup: () => { calls.photo += 1; return { ok: true, started: true }; },
     resetCurve: () => { calls.reset += 1; return { ok: true, started: true }; },
@@ -143,35 +143,34 @@ test('reset em curva já neutra: sem foto e sem reset; curva torta: foto → res
 
   screen.data = { points: bentPoints() };
   screen.resetCurve();
-  assert.equal(calls.photo, 1);
-  assert.equal(screen.backupTask, 'reset-photo');
-  screen.poll(); // foto confirmada → só então zera
-  assert.equal(screen.resetPhotoFile, 'MANUAL-5-bbbb2222.json');
+  assert.equal(calls.photo, 0, 'Resetar nunca cria arquivo da curva (regra 15)');
   assert.equal(calls.reset, 1);
   assert.equal(screen.writing, true);
 
-  // o Kotlin também fotografa a curva no escritor; mesmo assim o Desfazer do reset é a foto do reset
-  operation = { busy: false, state: 'BATCH_CONFIRMED', readbackValid: true, photoFile: 'MANUAL-6-cccc3333.json' };
+  operation = { busy: false, state: 'BATCH_CONFIRMED', readbackValid: true, photoFile: 'PREWRITE-6-cccc3333.json' };
   screen.poll();
-  assert.equal(screen.undoFile, 'MANUAL-5-bbbb2222.json');
+  assert.equal(screen.undoFile, 'PREWRITE-6-cccc3333.json');
   screen.reading = false;
   screen.undoLast();
-  assert.deepEqual(calls.prepared, ['MANUAL-5-bbbb2222.json']);
+  assert.deepEqual(calls.prepared, ['PREWRITE-6-cccc3333.json']);
+  assert.equal(calls.photo, 0);
 });
 
-test('reset sem fileName na foto não zera nada', () => {
+test('reset sem foto privada devolvida: grava, mas não oferece Desfazer', () => {
   const calls = { reset: 0 };
   const api = {
-    startCurveBackup: () => ({ ok: true, started: true }),
+    startCurveBackup: () => { throw new Error('não pode criar arquivo'); },
     resetCurve: () => { calls.reset += 1; return { ok: true, started: true }; },
-    curveOperation: () => ({ busy: false, state: 'COMPLETED', ok: true, hash: 'h', publicPath: 'p' }),
+    curveOperation: () => ({ busy: false, state: 'BATCH_CONFIRMED', readbackValid: true }),
     curveBackups: () => [],
+    startCurveRead: () => ({ ok: true, started: true }),
   };
   const { screen } = curveHarness(api);
   screen.data = { points: bentPoints() };
   screen.resetCurve();
   screen.poll();
-  assert.equal(calls.reset, 0);
+  assert.equal(calls.reset, 1);
+  assert.equal(screen.undoFile, '');
 });
 
 test('falha parcial mostra Desfazer (foto de antes) e o texto distingue cabo × ECU', () => {
@@ -215,18 +214,20 @@ test('restauração grava pelo caminho que confere a foto (restoreCurve), não p
 
 // Revisto (P2): o AutoCal não tem mais o botão de zerar a Curva K (fica só na aba Curva K); o fluxo resetNow da
 // Curva K continua garantido aqui.
-test('Curva K com resetNow: foto antes, um toque, e só zera depois da leitura; o AutoCal não repete o reset', () => {
+test('Curva K com resetNow: um toque zera (sem arquivo visível) depois da leitura; o AutoCal não repete o reset', () => {
   const cockpit = read('screens/autocal-cockpit.js');
   assert.doesNotMatch(cockpit, /data-autocal-action="RESET_K_FACTOR"/);
-  const calls = { photo: 0 };
+  const calls = { photo: 0, reset: 0 };
   const api = {
     startCurveBackup: () => { calls.photo += 1; return { ok: true, started: true }; },
+    resetCurve: () => { calls.reset += 1; return { ok: true, started: true }; },
     curveBackups: () => [],
   };
   const { screen } = curveHarness(api);
   screen.data = { points: bentPoints() };
   screen.onEnter({ resetNow: true, subpage: 'editor' });
-  assert.equal(calls.photo, 1, 'a foto é o primeiro passo, no mesmo toque');
+  assert.equal(calls.photo, 0, 'sem arquivo visível');
+  assert.equal(calls.reset, 1, 'um toque zera');
   assert.equal(screen.pendingReset, false);
 });
 

@@ -23,6 +23,14 @@
 
 13. Telas travadas (dono, 2026-10-07): Curva K, Ajuste GNV, AutoCal e Mapa K estão aprovadas. A estrutura delas (sem cabeçalho, gráfico/grade grandes, rodapé único em ordem) é protegida por `tests/ui/layout-lock.test.cjs`; mudar exige pedido explícito do dono. Cartões continuam válidos em telas de informação (ex.: Diagnóstico); o critério é coerência, não "tudo vira rodapé".
 
+14. Reset de gasolina/GNV nunca pausa o aprendizado (dono, 2026-10-08): `AUTO_CAL_ENABLE` termina em 1 após qualquer reset (RESET_PETROL/GAS/ALL), conferido por readback, mesmo em falha parcial/timeout (erro de transporte ≠ erro da ECU). Protegem: `tests/test_reset_nunca_pausa_aprendizado.py` + `ResetNuncaPausaAprendizadoTest.kt` (nome da trava: `reset-nunca-pausa-aprendizado`), no `tools/run_checks.py` e no `ci.yml`, mais o mutante `reset-sem-religar`. Não remover nem enfraquecer.
+
+15. Salvar a Curva K é SEMPRE manual (dono, 2026-10-08): arquivo só quando o dono toca em Salvar (`curveSaveButton` -> `saveBackup`), em `Download/Omegas/Curva/`, nome didático `Curva K - dd-MM-aaaa HHhMMmSSs - N pontos - salva manualmente.json`. Nada de autosave, timer, foto ou aviso de "backup salvo" ao Gravar/Resetar/Desfazer/entrar na aba; a proteção do Desfazer é a foto PREWRITE privada do app (sem arquivo visível). Protegem: `tests/test_curva_salvamento_so_manual.py` + `KFactorCurveFileNameTest.kt` (nome da trava: `curva-salvamento-so-manual`), no `tools/run_checks.py` e no `ci.yml`, mais os mutantes `curva-*`. Não remover nem enfraquecer.
+
+16. O AutoCal nunca mostra leitura anterior (dono, 2026-10-08): nem curva esmaecida, nem legenda "Leitura anterior", nem botão, nem função que a guarde; no reset ficam só eixos, grade, escala e a camada AGORA, sem pontos/curva velhos e com aviso em palavras. Protegem: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py` (nome da trava: `autocal-sem-leitura-anterior`) e o mutante `autocal-leitura-anterior-volta`. Não remover nem enfraquecer.
+
+17. Apagar ponto manualmente nunca desarma a limpeza automática (dono, 2026-10-08): "Reaprender N pontos" não muda o armamento (armada continua, desarmada pelo dono continua) e a guarda "outro combustível mudou" ignora o que o apagamento manual causou. Protegem: `AutoCalManualDeleteKeepsAutoCleanupTest.kt` + `tests/ui/autocal-apagar-manual-mantem-limpeza.test.cjs` e o mutante `apagar-manual-desarma-limpeza`. Não remover nem enfraquecer.
+
 Também: `applicationId` continua `com.omegas.v7.test`. Validação física (classe 5) só com o dono no carro. SIL/CIU é independente: não portar nem copiar código SIL/CIU sem autorização explícita do dono.
 
 ## As 8 abas

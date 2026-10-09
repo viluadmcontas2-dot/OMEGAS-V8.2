@@ -69,10 +69,6 @@ TELEMETRY_ONLY_MIN_BANDS = 3
 # de pelo menos MIN_BAND_EPISODES episódios distintos (8 pares de um único trecho são um só acaso).
 MIN_BAND_EPISODES = 1        # sem portão por contagem de trechos; episódio = bloco de janelas sobrepostas (VISIT_GAP_MS = 3 s)
 EPISODE_PAIR_CAP = 4         # um (faixa, episódio) vale no máximo 4 pares
-TELEMETRY_BAND_WEIGHT_CAP = BAND_FULL_COUNT * TELEMETRY_WEIGHT   # teto de peso da telemetria por faixa do livro
-NATIVE_COVERED_GAIN = 0.5    # a telemetria não move ponto que a nativa madura já cobre
-DEAD_BAND_LOG = math.log(1.04)   # erro de evidência abaixo disto: o nó não se move (= EquivalenceTolerances.MIN)
-DEAD_BAND_MIN_EVIDENCE = 0.1
 REGRESSION_EPS = 1e-4        # proposta que piora o critério do motor nunca sai
 INTERIOR_SLICES = 3          # faixa grossa precisa de pares em >= 2 de 3 terços internos, >= 2 pares cada
 INTERIOR_MIN_SLICES = 2
@@ -346,14 +342,14 @@ def second_difference_rows(u):
     return rows
 
 
-def whittaker(u, observations, prior, prior_weights, lam):
+def whittaker(u, observations, prior, prior_weights, lam, iterations=IRLS_ITERATIONS):
     """Minimiza Σ w(a·x−y)² + Σ μ(x−x0)² + λ Σ (D2 x)² com IRLS de Tukey."""
     n = len(u)
     d2 = second_difference_rows(u)
     obs_robust = [1.0] * len(observations)
     prior_robust = [1.0] * n
     x = prior[:]
-    for _ in range(IRLS_ITERATIONS):
+    for _ in range(iterations):
         m = [[0.0] * n for _ in range(n)]
         v = [0.0] * n
         for row in d2:
@@ -599,9 +595,14 @@ def plausible_indices(pairs, episodes=None):
             outliers += 1
             rejected_pairs += len(group)
             continue
-        mad = weighted_median([abs(x - center) for x in logs], weights) * 1.4826
-        limit = max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad)
-        coherent = [idx for idx, log_ratio in zip(group, logs) if abs(log_ratio - center) <= limit]
+        plausible = [i for i in group if TELEMETRY_RATIO_MIN <= pairs[i][1] / pairs[i][0] <= TELEMETRY_RATIO_MAX]
+        coherent = []
+        for i in plausible:
+            local = sorted(math.log(pairs[k][1] / pairs[k][0]) for k in plausible if abs(pairs[k][0] - pairs[i][0]) <= 0.35)
+            mid = local[len(local) // 2]
+            mad = sorted(abs(x - mid) for x in local)[len(local) // 2] * 1.4826
+            if abs(math.log(pairs[i][1] / pairs[i][0]) - mid) <= max(OUTLIER_MIN_LOG, OUTLIER_MAD_K * mad):
+                coherent.append(i)
         rejected_pairs += len(group) - len(coherent)
         if gated and len({episodes[i] for i in coherent}) < MIN_BAND_EPISODES:
             continue
@@ -626,21 +627,6 @@ def pair_weights(pairs, episodes):
     return [min(1.0, EPISODE_PAIR_CAP / counts[(ledger_band(tp), e)]) for (tp, _tg), e in zip(pairs, episodes)]
 
 
-def cap_band_weight(targets):
-    """Teto de peso total da telemetria por faixa do livro (reduz na mesma proporção)."""
-    sums = {}
-    for t in targets:
-        b = ledger_band(t["tp"])
-        if b is not None:
-            sums[b] = sums.get(b, 0.0) + t["w"]
-    out = []
-    for t in targets:
-        b = ledger_band(t["tp"])
-        total = sums.get(b, 0.0) if b is not None else 0.0
-        out.append(dict(t, w=t["w"] * TELEMETRY_BAND_WEIGHT_CAP / total) if total > TELEMETRY_BAND_WEIGHT_CAP else t)
-    return out
-
-
 def gain_of(observations):
     """Ganho por nó (0..1): massa espalhada 0,25/0,5/0,25 sobre EVIDENCE_REF."""
     evidence = [0.0] * POINT_COUNT
@@ -655,27 +641,6 @@ def gain_of(observations):
                 sp += kern * evidence[k]
         out.append(min(1.0, sp / EVIDENCE_REF))
     return out
-
-
-def dead_band_nodes(observations, evidence, axis_ms, k_old):
-    """Nós cujo erro de evidência (média ponderada de ln K(ms) − ln K_alvo dos alvos que o tocam) já cabe em DEAD_BAND_LOG
-    E cujo K atual é coerente com os vizinhos (|Δ ln K/Δ ln t| <= E_MAX): K incoerente continua podendo ser reparado."""
-    u = [math.log(t) for t in axis_ms]
-    x = [math.log(k) for k in k_old]
-    coherent = [True] * POINT_COUNT
-    for j in range(POINT_COUNT - 1):
-        if abs(x[j + 1] - x[j]) > E_MAX * (u[j + 1] - u[j]) + 1e-9:
-            coherent[j] = coherent[j + 1] = False
-    num = [0.0] * POINT_COUNT
-    den = [0.0] * POINT_COUNT
-    for o in observations:
-        ms = sum(a * axis_ms[j] for j, a in o["a"])
-        diff = math.log(interp(ms, axis_ms, k_old)) - o["y"]
-        for j, a in o["a"]:
-            num[j] += o["w"] * a * diff
-            den[j] += o["w"] * a
-    return {j for j in range(POINT_COUNT)
-            if coherent[j] and evidence[j] >= DEAD_BAND_MIN_EVIDENCE and den[j] > 0.0 and abs(num[j] / den[j]) <= DEAD_BAND_LOG}
 
 
 def telemetry_covers(pairs):
@@ -850,6 +815,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         if len(petrol) >= 2 and len(gas) >= 2:
             targets = equivalence_targets(petrol, gas, axis_ms, k_old)
     mature = [t for t in targets if t["w"] >= BAND_MATURE_COUNT / float(BAND_FULL_COUNT)]
+    native_targets = targets[:]
     native_equivalence = len(mature) >= MIN_COMMON_MATURE
     if fine_bins is not None:
         # Lote H: a evidência da condução vem dos bins finos (mediana robusta por bin, perfil suavizado).
@@ -876,18 +842,7 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         if telemetry_only:
             targets = []  # faixas nativas imaturas não entram: só a medição própria
         if equivalence_available and usable:
-            telemetry = cap_band_weight(telemetry_targets(usable, axis_ms, k_old, usable_w))
-            # A nativa madura cobre o ponto: a telemetria não o move.
-            if native_equivalence and targets:
-                native_gain = gain_of([{"a": axis_weights(t["tp"], axis_ms), "y": t["y"], "w": t["w"]} for t in targets])
-                kept_tel = []
-                for t in telemetry:
-                    nodes = axis_weights(t["tp"], axis_ms)
-                    dominant = max(nodes, key=lambda na: (na[1], -na[0]))[0]
-                    if native_gain[dominant] < NATIVE_COVERED_GAIN:
-                        kept_tel.append(t)
-                dropped_native = len(telemetry) - len(kept_tel)
-                telemetry = kept_tel
+            telemetry = telemetry_targets(usable, axis_ms, k_old, usable_w)
             targets = targets + telemetry
 
     observations = []
@@ -907,19 +862,26 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
     gain = [min(1.0, s / EVIDENCE_REF) for s in spread]
     out_of_range = sum(1 for x in x0 if x < math.log(MIN_FACTOR) - 1e-12 or x > math.log(MAX_FACTOR) + 1e-12)
     e_eff = E_MAX
-    dead_band = 0
     if equivalence_available:
         # Peso do K atual cai continuamente com a evidência: o ganho proporcional
         # nasce do próprio balanço evidência × K atual, sem degraus entre nós.
         prior_w = [PRIOR_UNSUPPORTED * (1.0 - g) + PRIOR_SUPPORTED * g for g in gain]
-        fitted, robust = whittaker(u, observations, x0, prior_w, LAMBDA)
+        has_own = fine_bins is None and bool(usable)
+        base = [interp(ms, [t["tp"] for t in native_targets], [t["y"] for t in native_targets])
+                if native_equivalence and fine_bins is None and usable and native_targets[0]["tp"] <= ms <= native_targets[-1]["tp"] else (x0[j] if has_own else 0.0)
+                for j, ms in enumerate(axis_ms)]
+        residuals = [dict(o, y=o["y"] - sum(a * base[j] for j, a in o["a"])) for o in observations]
+        delta, robust = whittaker(u, residuals, [0.0] * POINT_COUNT if has_own else x0, prior_w, LAMBDA, iterations=1)
+        own_range = (min(p[0] for p in usable), max(p[0] for p in usable)) if fine_bins is None and usable else None
+        fitted = [base[j] + (0.0 if native_equivalence and own_range and not own_range[0] <= ms <= own_range[1] else delta[j])
+                  for j, ms in enumerate(axis_ms)]
         for t, r in zip(targets, robust):
             t["robustWeight"] = round(r, 4)
         if point_gain_scale is not None and len(point_gain_scale) == POINT_COUNT:
             fitted = [x0[j] + point_gain_scale[j] * (fitted[j] - x0[j]) for j in range(POINT_COUNT)]
-        fixed = dead_band_nodes(observations, evidence, axis_ms, k_old)
-        dead_band = len(fixed)
-        box = [(x0[j], x0[j]) if j in fixed else b for j, b in enumerate(proposal_box(x0, gain, axis_ms))]
+        measured_lo, measured_hi = min(t["tp"] for t in targets), max(t["tp"] for t in targets)
+        box = [(x0[j], x0[j]) if telemetry_only and fine_bins is None and not measured_lo <= axis_ms[j] <= measured_hi else bounds
+               for j, bounds in enumerate(proposal_box(x0, gain, axis_ms))]
         e_eff = effective_elasticity(box, u)
         final = enforce_coherence(fitted, box, u, e_eff)
         # Histerese: ponto cujo passo proposto fica abaixo do limiar é ruído; fica exatamente como está,
@@ -983,7 +945,6 @@ def refine(snapshot, telemetry_pairs=None, point_gain_scale=None, telemetry_epis
         "telemetryOutlierPairs": telemetry_outlier_pairs,
         "telemetryPairsUsed": len(usable) if equivalence_available else 0,
         "telemetryDroppedByNative": dropped_native,
-        "deadBandPoints": dead_band,
         "regressionBlocked": regression,
         "outOfRangePoints": out_of_range,
         "axisMs": axis_ms,

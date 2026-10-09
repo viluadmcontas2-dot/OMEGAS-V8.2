@@ -288,27 +288,24 @@ test('operação na ECU: mesma fala (etapa → resultado → Desfazer/Voltar) e 
   assert.doesNotMatch(read('screens/refino.js'), /commitReview|data-refino-confirm|REVISÃO ANTES DA ECU/, 'Refino grava em um toque, sem modal');
 });
 
-test('reset da Curva K salva a foto antes e só zera depois dela', () => {
+test('reset da Curva K: um toque, sem arquivo visível (regra 15); a foto do Desfazer é a privada do escritor', () => {
   const fs = require('node:fs');
   const path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../../app/src/main/assets/ui/screens/curve.js'), 'utf8');
   const reset = src.slice(src.indexOf('    resetCurve() {'), src.indexOf('    startResetWrite() {'));
-  assert.ok(reset.includes("startCurveBackup('Antes do reset')"), 'foto antes do reset');
-  assert.ok(!reset.includes('api.resetCurve()'), 'o primeiro toque não zera direto');
+  assert.ok(!reset.includes('startCurveBackup'), 'reset não cria arquivo da curva');
+  assert.ok(reset.includes('this.startResetWrite()'), 'o toque zera direto');
   const write = src.slice(src.indexOf('    startResetWrite() {'), src.indexOf('    prepareRestore('));
-  assert.ok(write.includes('api.resetCurve()'), 'a segunda etapa zera');
-  assert.ok(src.includes("task === 'reset-photo'") && src.includes('this.startResetWrite()'), 'zera só após a foto concluir');
+  assert.ok(write.includes('api.resetCurve()'), 'a escrita zera');
+  assert.ok(!src.includes("'reset-photo'"), 'sem etapa de foto visível');
   assert.ok(!src.includes('confirm('), 'sem diálogo de confirmação');
 });
 
-test('reset: a foto precisa ser confirmada, o poll acompanha a foto e voltar à aba cancela o reset pendente', () => {
+test('reset: o poll acompanha a escrita e voltar à aba não cria arquivo nem zera sozinho', () => {
   const root = path.join(__dirname, '../../app/src/main/assets/ui');
   const curve = fs.readFileSync(path.join(root, 'screens/curve.js'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-  assert.ok(app.includes('instances.curve.backupTask'), 'o poll roda enquanto a foto está pendente');
-  assert.ok(curve.includes('!operation.hash || !operation.publicPath'), 'só a operação de foto autoriza o reset');
   const enter = curve.slice(curve.indexOf('    onEnter(context) {'), curve.indexOf('    refreshBackups() {'));
-  assert.ok(enter.includes("this.backupTask === 'reset-photo'") && !enter.slice(0, 400).includes('startResetWrite'), 'voltar à aba não zera');
+  assert.ok(!enter.slice(0, 400).includes('startResetWrite') && !enter.includes('startCurveBackup'), 'voltar à aba não zera nem salva');
   const read = curve.slice(curve.indexOf('    startRead() {'), curve.indexOf('    startRead() {') + 260);
-  assert.ok(read.includes('if (this.backupTask || this.reading || this.writing)'), 'leitura não rouba a foto');
+  assert.ok(read.includes('if (this.backupTask || this.reading || this.writing)'), 'leitura não rouba a operação');
 });

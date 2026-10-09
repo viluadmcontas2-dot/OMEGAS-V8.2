@@ -24,6 +24,7 @@ import androidx.core.app.ServiceCompat
 import com.omegas.prohub.BuildConfig
 import com.omegas.prohub.calibration.CalibrationWriteSafetyPolicy
 import com.omegas.prohub.calibration.FailureKind
+import com.omegas.prohub.calibration.KFactorCurveFileName
 import com.omegas.prohub.calibration.KFactorManager
 import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.calibration.SerialWriteGuard
@@ -373,7 +374,7 @@ class TelemetryForegroundService : Service() {
                 link.markDataChanged("escrita K factor confirmada")
             },
             onFailedBatch = { payload -> recordFailedCurveWrite(payload) },
-            publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
+            publishManualBackup = { file -> documentsMirror.publishRootFile(file, KFactorCurveFileName.PUBLIC_SUBFOLDER) },
         )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = runtime.serialScheduler(),
