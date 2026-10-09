@@ -108,7 +108,7 @@ async function cap(o, group, id, title, opt = {}) {
   }
   // contador AutoMatch na legenda: visivel, dentro da tela, "N de M" / "N" ou "—" (desconhecido NUNCA vira 0)
   F(st.chip && st.chip.w > 40 && st.chip.h > 10 && st.chip.r <= 1280, 'contador AutoMatch nao esta visivel na legenda');
-  if (st.chip) { F(/^AutoMatch (—|\d+( de \d+)?)$/.test(st.chip.text), `contador AutoMatch com texto estranho: "${st.chip.text}"`); if (opt.autoUnknown) F(st.chip.text === 'AutoMatch —', 'AutoMatch desconhecido deveria mostrar "—", nunca 0'); }
+  if (st.chip) { F(/^AutoMatch (—|\d+(\/\d+)?)$/.test(st.chip.text), `contador AutoMatch com texto estranho: "${st.chip.text}"`); if (opt.autoUnknown) F(st.chip.text === 'AutoMatch —', 'AutoMatch desconhecido deveria mostrar "—", nunca 0'); }
   // aviso de comando (toast) nunca cobre legenda, grafico util nem botoes
   if (st.toast) {
     const hit = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;

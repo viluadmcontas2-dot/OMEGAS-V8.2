@@ -835,6 +835,8 @@
       this.sessions = [];
       this.chartScale = null;
       this.cursor = new ns.LiveStore.EaseCursor(() => this.chartPart('.autocal-live-layer'));
+      // Só o AutoCal tem os estados de zona sobre o gráfico; Refino mantém seu cursor.
+      this.cursor.placeLabel = (layer, pos, scale) => this.placeLiveLabel(layer, pos, scale);
       this.currentReferencePoints = [];
       this.currentAcquiredPoints = [];
       this.selectedReferenceIndex = null;
@@ -1373,7 +1375,7 @@
     renderAutoMatchTile(human) {
       const count = human.autoMatchCount;
       const max = human.maxAutoMatch;
-      const text = count === null ? '—' : Math.round(count) + (max !== null && max > 0 ? ' de ' + Math.round(max) : '');
+      const text = count === null ? '—' : Math.round(count) + (max !== null && max > 0 ? '/' + Math.round(max) : '');
       this.text('autocalAutoMatchCount', text);
       const tile = document.getElementById('autocalAutoMatchTile');
       if (tile) D.setDataIfChanged(tile, 'state', count === null ? 'unknown' : human.autoMatchQuotaReached ? 'full' : 'running');
@@ -1572,6 +1574,39 @@
     chartPart(selector) {
       const host = document.getElementById('autocalReferenceChart');
       return host && typeof host.querySelector === 'function' ? host.querySelector(selector) : null;
+    }
+
+    /** Reserva espaço para AGORA sem cobrir os estados de aquisição das zonas. */
+    placeLiveLabel(layer, pos, scale) {
+      const label = layer.querySelector('[data-autocal-live-label]');
+      if (!label || !scale) return;
+      const measured = label.getBBox();
+      const topOffset = measured.y - Number(label.getAttribute('y'));
+      const obstacles = [...(document.getElementById('autocalReferenceChart')?.querySelectorAll('[data-autocal-zone-label]') || [])]
+        .map(node => node.getBBox());
+      const inverse = layer.closest('svg').getScreenCTM()?.inverse();
+      if (inverse) this.panel?.querySelectorAll('.autocal-chart-overlay small, #autocalActionStatus, #autocalAlertStrip').forEach(node => {
+        const rect = node.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const start = new DOMPoint(rect.left, rect.top).matrixTransform(inverse);
+        const end = new DOMPoint(rect.right, rect.bottom).matrixTransform(inverse);
+        obstacles.push({ x: start.x, y: start.y, width: end.x - start.x, height: end.y - start.y });
+      });
+      const left = pos.x > scale.xFor(scale.xMax) - measured.width - 24;
+      const x = left ? -12 : 12;
+      const boxX = pos.x + x - (left ? measured.width : 0);
+      const preferred = pos.y < scale.yFor(scale.yMax) + 36 ? 36 : -24;
+      const candidates = [preferred, preferred === 36 ? -24 : 36, -48, 60, -72, 84];
+      const y = candidates.find(offset => {
+        const top = pos.y + offset + topOffset;
+        const bottom = top + measured.height;
+        return top >= scale.yFor(scale.yMax) && bottom <= scale.yFor(scale.yMin) &&
+          obstacles.every(box => boxX + measured.width + 4 <= box.x || boxX >= box.x + box.width + 4 ||
+            bottom + 4 <= box.y || top >= box.y + box.height + 4);
+      }) ?? preferred;
+      D.setAttrIfChanged(label, 'x', String(x));
+      D.setAttrIfChanged(label, 'y', String(y));
+      D.setAttrIfChanged(label, 'text-anchor', left ? 'end' : 'start');
     }
 
     /** Quadro de animação (rAF do scheduler): o cursor compartilhado só move a camada com CSS transform. */

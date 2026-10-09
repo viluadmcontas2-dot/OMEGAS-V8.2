@@ -76,7 +76,50 @@ test('Reler gasolina não desenha curva GNV falsa nem placeholders calculados co
     assert.equal(state.petrolConnectedLines,0,'sem curva fictícia gasolina');
     assert.equal(state.petrolGhostPlaceholders,0,'referência gasolina antiga não gera pontos fantasmas');
     assert.equal(state.allGhostPlaceholders,0,'pontos previstos dependem da referência gasolina atual');
+    const collisions = await page.evaluate(() => {
+      const cockpit = window.OmegasApp.autoCalCockpit;
+      const layer = document.querySelector('#autocalReferenceChart .autocal-live-layer');
+      const label = layer.querySelector('[data-autocal-live-label]');
+      const zones = [...document.querySelectorAll('#autocalReferenceChart [data-autocal-zone-label]')];
+      const overlaps = (a,b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+      return zones.flatMap(zone => {
+        const box = zone.getBBox();
+        cockpit.cursor.clear();
+        cockpit.cursor.setTarget(box.x + box.width / 2, box.y + box.height / 2, cockpit.chartScale, false);
+        cockpit.cursor.paint();
+        const liveBox = label.getBoundingClientRect();
+        return zones.filter(z => overlaps(liveBox,z.getBoundingClientRect())).map(z => z.textContent);
+      });
+    });
+    assert.deepEqual(collisions, [], 'AGORA precisa de espaço próprio em todas as zonas');
     assert.equal(errors.filter(s=>s.startsWith('pageerror:')).length,0);
     console.log('PETROL_REREAD_VISUAL=PASS '+JSON.stringify(state));
   } finally {await browser.close();}
+});
+
+test('AutoMatch X/3 acompanha cada revisão da ECU sem depender do cursor', { skip }, async () => {
+  const { browser, page, errors } = await open(pw.chromium,'connected',{viewport:{width:1280,height:720}});
+  try {
+    await go(page,'autocal');
+    await page.waitForTimeout(750);
+    await page.evaluate(SIM_SCRIPT);
+    await page.evaluate(() => {
+      const original = window.OmegasAutoCal.getUiProjection;
+      window.OmegasAutoCal.getUiProjection = () => {
+        const projection = JSON.parse(original());
+        projection.transportTablesRevision = window.__ss.rev;
+        return JSON.stringify(projection);
+      };
+      window.__ss.auto=0; window.__sim.clear(); window.OmegasOnRevision('tables',window.__ss.rev);
+    });
+    for (let count=0; count<=3; count++) {
+      if (count) await page.evaluate(() => { window.__sim.automatch(); window.OmegasOnRevision('tables',window.__ss.rev); });
+      await page.waitForFunction(n => document.getElementById('autocalAutoMatchCount').textContent === n+'/3',count,{timeout:1800});
+      const box = await page.locator('#autocalAutoMatchTile').boundingBox();
+      assert.ok(box && box.x>=0 && box.y>=0 && box.x+box.width<=1280 && box.y+box.height<=720,'contador visível no viewport');
+    }
+    await page.evaluate(() => { window.__sim.autoUnknown(true); window.OmegasOnRevision('tables',window.__ss.rev); });
+    await page.waitForFunction(() => document.getElementById('autocalAutoMatchCount').textContent==='—',null,{timeout:1800});
+    assert.equal(errors.filter(s=>s.startsWith('pageerror:')).length,0);
+  } finally { await browser.close(); }
 });
