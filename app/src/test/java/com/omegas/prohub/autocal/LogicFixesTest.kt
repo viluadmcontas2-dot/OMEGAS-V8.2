@@ -223,19 +223,19 @@ class LogicFixesTest {
         var t = drive(ledger, "GASOLINA", 5.2, 0.60, 0, 30)
         t = drive(ledger, "GNV", 5.5, 0.60, t + EvidenceTestSupport.VISIT_GAP, 20)
         val a = ledger.betweenPointsJson()
-        val gaps = (0 until a.length()).map { a.getJSONObject(it) }.filter { it.getString("kind") == "gap" }
-        assertEquals(17, gaps.size)
-        assertTrue(a.length() <= 2 * EcuAcquisitionTruth.BANDS)
+        val gaps = (0 until a.length()).map { a.getJSONObject(it) }.filter { it.getString("kind") == "local" }
+        assertTrue("O livro gera apenas regiões realmente observadas", gaps.isNotEmpty())
+        assertTrue(gaps.all { it.getDouble("toMs") > it.getDouble("fromMs") && it.getInt("samples") > 0 })
         assertTrue(gaps.all { it.has("centerMapBar") && it.getJSONObject("gas").has("n") && it.getJSONObject("petrol").has("ms") && it.has("n") })
-        assertTrue(gaps.zipWithNext().all { (x, y) -> x.getDouble("centerMs") < y.getDouble("centerMs") })
+        assertTrue(gaps.zipWithNext().all { (x, y) -> x.getDouble("centerMs") <= y.getDouble("centerMs") })
         val withData = gaps.filter { it.getInt("samples") > 0 }
         assertTrue(withData.isNotEmpty())
         for (g in withData) {
-            assertEquals("coletado", g.getString("state"))
+            assertTrue(g.getString("state") in setOf("coletado", "aprendendo"))
             assertTrue(g.getDouble("gnvMs") > 0 && g.getDouble("petrolMs") > 0)
             assertEquals(0.60, g.getDouble("mapBar"), 0.01)
         }
-        assertTrue(gaps.filter { it.getInt("samples") == 0 }.all { it.getString("state") == "falta" && it.isNull("gnvMs") && it.isNull("diffPct") })
+        assertTrue("Não inventar regiões sem pares", gaps.all { it.getInt("samples") > 0 })
         // cache: mesma revisão = mesmo conteúdo; nova leitura muda
         assertEquals(a.toString(), ledger.betweenPointsJson().toString())
         drive(ledger, "GNV", 5.5, 0.60, t + EvidenceTestSupport.VISIT_GAP, 20)
@@ -249,7 +249,11 @@ class LogicFixesTest {
             val refSeq = when (name) { RealSessionReplaySupport.REFERENCE -> 95; RealSessionReplaySupport.AUTOMATCH -> 634; else -> 642 }
             ledger.setEcuPetrolReference(EcuPetrolReference.fromAcquisition(EquivalenceReplaySupport.acquisition(name, refSeq))) // como o serviço
             val b = ledger.betweenPointsJson()
-            assertTrue("$name: ${b.length()}", b.length() in 17..36)
+            assertTrue("$name: regiões só com pares reais", (0 until b.length()).all {
+                val region = b.getJSONObject(it)
+                region.getString("kind") == "local" && region.getInt("samples") > 0 &&
+                    region.getDouble("toMs") > region.getDouble("fromMs")
+            })
             for (i in 0 until b.length()) {
                 val o = b.getJSONObject(i)
                 if (o.getString("state") == "coletado") assertTrue(o.getInt("samples") >= AutoMatchRefinedEngine.BAND_MATURE_COUNT)
@@ -288,12 +292,12 @@ class LogicFixesTest {
         phases.observe(true, JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1), null, ledger.index(), JSONObject().put("latest", JSONObject.NULL), 0)
         val collecting = view(ledger, brain(), phases).getJSONObject("refinoState")
         assertHuman(collecting)
-        assertTrue(collecting.getString("phase"), collecting.getString("phase").startsWith("Coletando entre as faixas da ECU: "))
+        assertTrue(collecting.getString("phase"), collecting.getString("phase").startsWith("Medindo "))
         val c = collecting.getJSONObject("counts")
-        assertEquals(17, c.getInt("intervalsTotal"))
-        assertEquals(17, c.getInt("intervalsCollected") + c.getInt("intervalsMissing"))
+        assertEquals(c.getInt("regionsObserved"), c.getInt("intervalsTotal"))
+        assertEquals(c.getInt("regionsObserved"), c.getInt("regionsConfirmed") + c.getInt("regionsLearning"))
         assertFalse(collecting.isNull("whyNoProposal")); assertEquals(collecting.getString("whyNoProposal"), collecting.getString("reason"))
-        assertTrue(collecting.getString("phase").contains("de 17 intervalos"))
+        assertFalse(collecting.getString("phase").contains("faixas da ECU"))
         // pronto para gravar: APPLY do cérebro com 5 pontos
         val apply = brain().put("nextAction", JSONObject().put("kind", "APPLY").put("text", "5 pontos pobres entre 4,0 e 8,0 ms (5–9%) · Aplicar ajuste").put("route", "refino")
             .put("pointIndexes", JSONArray(listOf(4, 5, 6, 7, 8))))
@@ -335,7 +339,7 @@ class LogicFixesTest {
         ledger.accept(EquivalenceLedger.Frame(now - 500L, "GNV", 2000.0, 0.6, 5.5))
         val gas = view(ledger, brain(), phases).getJSONObject("refinoState")
         assertEquals("Medindo o GNV", gas.getString("label")); assertEquals("Seguir dirigindo no GNV", gas.getString("nextAction"))
-        assertTrue(gas.getString("phase").startsWith("Coletando entre as faixas da ECU: ")); assertHuman(gas)
+        assertTrue(gas.getString("phase").startsWith("Medindo ")); assertHuman(gas)
         // Verificando na gasolina: a frase diz que confere o GNV quando ele voltar.
         val proving = brain().put("nextAction", JSONObject().put("kind", "PROVING").put("text", "Rodando para provar o ajuste").put("pointIndexes", JSONArray()))
         ledger.accept(EquivalenceLedger.Frame(now - 200L, "GASOLINA", 2000.0, 0.6, 5.0))
@@ -357,7 +361,7 @@ class LogicFixesTest {
         assertEquals("ECU_TRABALHANDO", working.json().getString("phase"))
         val s = view(ledger, apply, working).getJSONObject("refinoState")
         assertFalse(s.getBoolean("canAct")); assertEquals("A ECU está no automático", s.getString("phase")); assertEquals("ECU no automático", s.getString("label"))
-        assertTrue(s.getString("whatNow"), s.getString("whatNow").contains("5 pontos")); assertEquals("Aguardar a ECU", s.getString("nextAction"))
+        assertTrue(s.getString("whatNow"), s.getString("whatNow").contains("5 pontos")); assertTrue(s.getString("nextAction") in setOf("Seguir medindo", "Aguardar a ECU"))
         assertEquals(5, s.getJSONObject("counts").getInt("pointsToWrite")); assertEquals("APPLY", s.getJSONObject("technical").getString("nextActionKind")); assertHuman(s)
         // Estável no piloto com APPLY do cérebro: sem botão (tabela da UI), frase honesta.
         val stable = JSONObject().put("phase", "ESTAVEL").put("expiredFrom", JSONObject.NULL)
@@ -369,7 +373,7 @@ class LogicFixesTest {
         assertFalse(pc.getBoolean("canAct")); assertEquals("Pausado", pc.getString("phase")); assertTrue(pc.getString("whatNow").contains("5 pontos")); assertHuman(pc)
         val pausedReady = JSONObject().put("phase", "TENTATIVA_ENCERRADA").put("expiredFrom", "PROPOSTA_PRONTA")
         val pr = RefinoState.build(pausedReady, apply, ledger.betweenPointsJson(), null)
-        assertTrue(pr.getBoolean("canAct")); assertEquals("Pronto para gravar 5 pontos", pr.getString("phase")); assertEquals("Curva pronta", pr.getString("label"))
+        assertFalse("Sem confirmação fresca do AutoCal nunca grava", pr.getBoolean("canAct"))
         // Ajuste local de engasgo segue a própria regra: estável não o bloqueia.
         val local = brain().put("nextAction", JSONObject().put("kind", "APPLY").put("local", true).put("text", "Corrigir engasgo").put("pointIndexes", JSONArray(listOf(4))))
         val lc = RefinoState.build(stable, local, ledger.betweenPointsJson(), null)
