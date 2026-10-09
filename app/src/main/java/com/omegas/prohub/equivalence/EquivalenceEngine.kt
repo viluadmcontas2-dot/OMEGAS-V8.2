@@ -206,7 +206,7 @@ object EquivalenceEngine {
         // Refino próprio só compara gasolina e GNV aprendidos pelo OMEGAS; AutoCal nativo
         // é condição de liberação operacional, não fabrica pares nem fundamenta proposta.
         val pairs = EvidencePairs.build(input.petrolObs, input.gasObs, emptyList())
-            .filter { it.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS }
+            .filter { it.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && it.petrolRefMs >= EquivalenceLedger.MIN_PETROL_MS }
         val pairU = DoubleArray(pairs.size) { ln(pairs[it].petrolRefMs) }
         val pairLn = DoubleArray(pairs.size) {
             val p = pairs[it]
@@ -228,7 +228,7 @@ object EquivalenceEngine {
             val mixture = if (judged) evidence.mixture else mapMixture
             val kTarget = if (judged) k[i] * (1.0 + evidence.mixture!!) else mapMixture?.let { k[i] * (1.0 + it) }
             val state = when {
-                tp < AutoMatchRefinedEngine.TELEMETRY_MIN_MS || evidence.pairs == 0 -> PointState.SEM_DADOS
+                tp < EquivalenceLedger.MIN_PETROL_MS || evidence.pairs == 0 -> PointState.SEM_DADOS
                 !judged -> PointState.APRENDENDO
                 abs(mixture!!) <= tolerance -> PointState.EQUIVALENTE
                 mixture > tolerance -> PointState.POBRE
@@ -288,6 +288,7 @@ object EquivalenceEngine {
                     petrolTimeRaw = null, petrolMapRaw = null, petrolCounts = null,
                     gasTimeRaw = null, gasMapRaw = null, gasCounts = null,
                     pressureThresholdsRaw = null,
+                    independentRefino = true,
                     telemetryPairs = pairs.map { it.petrolRefMs to it.gasPetrolMs }, pointGainScale = input.pointGainScale,
                     telemetryEpisodes = pairs.map { it.episode }, holdMinStepLog = input.holdMinStepLog,
                 ),
