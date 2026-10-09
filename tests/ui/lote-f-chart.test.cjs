@@ -202,19 +202,22 @@ test('F4b (Refino): UM marcador por intervalo ENTRE limiares consecutivos da ECU
   const below = chart.aggregateEvidence([{ fuel: 'GAS', mapBar: 0.5, tpetMs: 1, samples: 5 }], { thresholds: thd, yMin: 0, yMax: 40, kind: 'between' });
   assert.equal(below.markers.length, 1);
   assert.equal(below.markers[0].kind, 'below', 'a ponta aberta ganha marcador só quando carrega evidência');
-  // Refino: nossos pontos são BOLINHAS (mesmo tamanho das da ECU), uma por combustível medido em cada intervalo.
+  // Refino: amostras ficam no motor, SVG desenha apenas curvas próprias com suporte.
   const betweenPoints = chart.normalizeBetween([
     { index: 0, centerMs: 3, centerMapBar: 2, state: 'coletado', gas: { ms: 3, mapBar: 2, n: 20 }, petrol: { ms: 2.9, mapBar: 2, n: 8 } },
     { index: 1, centerMs: 5, centerMapBar: 4, state: 'falta' },
   ]);
-  const model = { reference: [], history: [], zones: [], ecu: [], ours: [], between: result.markers, betweenPoints, edges: thd, domain: { xMin: 0, xMax: 12, yMin: 0, yMax: 40 }, proposal: [], stalls: [] };
+  const own = [{petrolMs:2.9,mapBar:1.9},{petrolMs:3.2,mapBar:2.1}];
+  const model = { reference: [], history: [], zones: [], ecu: [], ours: [], between: result.markers,
+    betweenPoints, ownCurves:{regime:'DRIVING',petrol:own,gas:own.map(p=>({...p,petrolMs:p.petrolMs*1.08}))},
+    edges: thd, domain: { xMin: 0, xMax: 12, yMin: 0, yMax: 40 }, proposal: [], stalls: [] };
   const svg = chart.buildSvg(model, { width: 800, height: 400, mode: 'between' }).svg;
-  assert.match(svg, /class="layer-between"/);
-  assert.equal((svg.match(/class="chart-between (gas|petrol) collected"/g) || []).length, 2, 'uma bolinha por combustível medido');
-  assert.equal((svg.match(/class="chart-between missing"/g) || []).length, 1, 'intervalo sem medida: anel tracejado no centro');
-  assert.doesNotMatch(svg, /<rect class="chart-ours/, 'nada de triângulos/losangos: só bolinhas');
+  assert.match(svg,/data-own-curve="petrol"/);
+  assert.match(svg,/data-own-curve="gas"/);
+  assert.equal((svg.match(/class="chart-between/g) || []).length, 0, 'sem bolinhas por região no desenho normal');
+  assert.doesNotMatch(svg, /class="layer-between"/, 'não duplicar centenas de pontos');
   assert.doesNotMatch(chart.buildSvg(model, { width: 800, height: 400, mode: 'ecu18' }).svg, /chart-between/, 'AutoCal não mostra pontos nossos');
-  assert.match(chart.legendHtml({ mode: 'between' }), /Pontos da ECU/);
+  assert.match(chart.legendHtml({ mode: 'between' }), /Curva da gasolina/);
   assert.doesNotMatch(chart.legendHtml({ mode: 'ecu18' }), /Pontos da ECU|Pontos do OMEGAS/);
 });
 
