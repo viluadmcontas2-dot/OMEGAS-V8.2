@@ -772,12 +772,14 @@
       const eq = this.eq || {};
       const width = Math.round(host.clientWidth) || 1000;
       const height = Math.round(host.clientHeight) || 400;
-      const signature = chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() });
+      const signature = chart.evidenceSignature({ snapshot: this.snapshot, eq, analysis: this.analysis, sessionId: this.projection?.sessionId, extra: this.sizeKey() + '|' + this.currentRegime() });
       const input = { snapshot: this.snapshot, projection: this.projection || {}, eq, analysis: this.analysis, mode: 'between', regime: this.currentRegime(), view: this.chartView };
       chart.mount(host, signature, () => {
         const model = chart.buildModel(input);
-        if (!model || !model.domain || (!model.reference.length && !model.ecu.length && !model.betweenPoints.length)) {
-          return { html: '<div class="chart-empty"><b>SEM PONTOS AINDA</b><span>Rode na gasolina e no GNV com a ECU conectada. Os pontos da ECU e os nossos aparecem aqui.</span></div>', scale: null, model: null };
+        if (!model || !model.domain || !(model.ownCurves &&
+          (model.ownCurves.petrol.some(p => p.petrolMs !== null) ||
+           model.ownCurves.gas.some(p => p.petrolMs !== null)))) {
+          return { html: '<div class="chart-empty"><b>SEM PONTOS AINDA</b><span>Siga medindo gasolina e GNV. A curva própria aparece quando há medições válidas.</span></div>', scale: null, model: null };
         }
         const built = chart.buildSvg(model, { width, height, mode: 'between', selected: this.selected });
         return built.empty ? { html: '<div class="chart-empty"><b>SEM PONTOS AINDA</b></div>', scale: null, model: null } : { ...built, model };
