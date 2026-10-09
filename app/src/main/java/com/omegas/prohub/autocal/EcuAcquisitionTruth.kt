@@ -16,9 +16,9 @@ import org.json.JSONObject
  *  - Zona **coberta** = a ECU marcou a zona (flag 1) ou a maioria das bandas da zona (≥ metade, arredondado para cima)
  *    está madura. A flag da ECU é zerada a cada AutoMatch executado e a leitura das bandas continua válida: as
  *    bandas lidas valem tanto quanto a flag. Nunca se inventa zona: sem leitura da ECU tudo é desconhecido (`null`).
- *  - Só **falta** o que a ECU ainda não tem: zona nem marcada nem coberta pelas bandas. E, se a ECU já entregou
- *    AutoMatch (contador ≥ 1) ou as 4 zonas dos dois combustíveis, nada "falta adquirir": o que sobra é o ciclo
- *    seguinte dela, que a ECU decide sozinha.
+ *  - O contador AutoMatch registra execuções históricas (1/3, 2/3, 3/3), não completude
+ *    da aquisição atual. Uma nova rodada mostra exatamente quais zonas faltam por combustível,
+ *    mesmo que a ECU já tenha executado o AutoMatch em rodada anterior.
  */
 object EcuAcquisitionTruth {
     const val ZONES = 4
