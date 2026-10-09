@@ -14,7 +14,21 @@ const MOCK = fs.readFileSync(path.join(__dirname, 'mock-bridge.js'), 'utf8');
 function dataFile() {
   const out = path.join(os.tmpdir(), 'omegas-render-data.json');
   if (!fs.existsSync(out)) cp.execFileSync('python3', [path.join(__dirname, 'prep.py'), out], { stdio: 'ignore' });
-  return JSON.parse(fs.readFileSync(out, 'utf8'));
+  const base = JSON.parse(fs.readFileSync(out, 'utf8'));
+  const realPath = process.env.OMEGAS_LOGNOVO_REPLAY_JSON;
+  if (!realPath) return base;
+  const real = JSON.parse(fs.readFileSync(realPath, 'utf8'));
+  if (real.schema !== 'omegas.lognovo.real-live.v1' ||
+      real.source?.rawSha256 !== '43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64' ||
+      real.timebase?.kind !== 'SYNTHETIC_FIXED_CADENCE' ||
+      !Array.isArray(real.frames) || real.frames.length < 2) {
+    throw new Error('LOGNOVO: replay sem proveniência, carimbo sintético ou quadros válidos');
+  }
+  // Snapshot é da fixture AutoCal separada: híbrido para testar UI, NÃO
+  // um pareamento nativo temporal com o LOGNOVO.
+  return { ...base, frames: real.frames,
+    label_tel: 'LOGNOVO original (relógio sintético; snapshot de outra sessão)',
+    lognovoReplay: { source: real.source, frames: real.frames.length, timebase: real.timebase } };
 }
 
 function playwright() {
