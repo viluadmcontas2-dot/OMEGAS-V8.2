@@ -14,6 +14,8 @@ const ROOT=path.resolve(__dirname,'../..'),PORT=18765;
    let ready=false;
    for(let i=0;i<50;i++){try {const r=await fetch('http://127.0.0.1:'+PORT+'/__studio/health');if(r.ok){ready=true;break;}}catch(_){}await delay(200);}
    assert.ok(ready,'HTTP server is ready');
+   const traversal=await fetch('http://127.0.0.1:'+PORT+'/tools/ui_studio/..%2f..%2fAGENTS.md');
+   assert.equal(traversal.status,403,'preview must not expose files outside UI and Studio');
    browser=await chromium.launch({headless:true,executablePath:process.env.OMEGAS_CHROMIUM||undefined,args:['--no-sandbox']});
    const page=await browser.newPage({viewport:{width:1800,height:1030}});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));

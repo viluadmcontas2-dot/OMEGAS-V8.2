@@ -53,11 +53,19 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(404, "Fora do ambiente de prévia")
             return
         resolved = (ROOT / relative).resolve()
-        if not resolved.is_relative_to(ROOT) or ".git" in resolved.parts:
+        allowed = (
+            resolved.is_relative_to(ROOT / "tools/ui_studio")
+            or resolved.is_relative_to(ROOT / "app/src/main/assets/ui")
+            or resolved == ROOT / "tests/ui/render/mock-bridge.js"
+        )
+        if not allowed or ".git" in resolved.parts:
             self.send_error(403, "Caminho indisponível")
             return
         self.path = "/" + relative
         super().do_GET()
+
+    def do_HEAD(self):
+        self.send_error(405, "Use GET dentro das rotas permitidas")
 
     def _json(self, body: bytes):
         self.send_response(200)
