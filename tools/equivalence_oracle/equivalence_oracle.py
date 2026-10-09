@@ -51,7 +51,7 @@ MAX_FRAME_DT_MS = 1000
 MAX_AGE_SESSIONS = 10
 CONF_MAX = MIN_TOL
 MATURE_SAMPLES = 3
-AXIS_MIN_MS = 3.0            # abaixo disso a telemetria é dominada por transiente/corte
+AXIS_MIN_MS = 1.0            # abaixo de 1 ms não há injeção estável julgável; motor aplica gates de estabilidade
 REF_MIN_POINTS = 6
 REF_MIN_SPAN = 0.20
 REF_MARGIN = 0.03
@@ -576,11 +576,11 @@ def tolerance_of(dispersion):
 def evaluate(axis_raw, k_raw, ref, petrol_obs, gas_obs, cell_ms):
     axis = [a / 512.0 for a in axis_raw]
     k = [v / 16384.0 for v in k_raw]
-    own_p = own_curve(petrol_obs, ref)
+    own_p = own_curve(petrol_obs, None)     # curva própria gasolina independente de prior nativo
     own_g = own_curve(gas_obs, None)          # o GNV medido não é puxado para a gasolina
     usage = usage_by_point(cell_ms, axis, own_p)
     u = [math.log(a) for a in axis]
-    ecu_ref = clean_reference([(p[0], p[1]) for p in ref]) if ref else []
+    ecu_ref = []                           # AutoCal só libera operação; não fabrica par para o Refino
     pairs = [p for p in build_pairs(petrol_obs, gas_obs, ecu_ref) if p["rpm"] >= DRIVING_MIN_RPM and p["tp"] >= AXIS_MIN_MS]
     pair_u = [math.log(p["tp"]) for p in pairs]
     pair_ln = [math.log(interp(p["tg"], axis, k) * p["tg"] / (p["tp"] * interp(p["tp"], axis, k))) for p in pairs]
