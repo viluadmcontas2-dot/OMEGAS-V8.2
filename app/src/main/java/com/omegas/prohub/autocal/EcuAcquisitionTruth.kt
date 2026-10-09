@@ -114,13 +114,12 @@ object EcuAcquisitionTruth {
         val bothComplete = if (petrol.complete == null || gas.complete == null) null else petrol.complete == true && gas.complete == true
         val delivered = (autoMatchCount != null && autoMatchCount >= 1) || bothComplete == true
         val missing = JSONArray()
-        // Só falta o que a ECU realmente não tem, e só enquanto ela ainda não entregou o AutoMatch.
-        if (!delivered) {
-            for ((name, f) in listOf("GASOLINA" to petrol, "GNV" to gas)) {
-                if (f.missingZones.isNotEmpty()) {
-                    missing.put(JSONObject().put("fuel", name).put("zones", JSONArray(f.missingZones))
-                        .put("text", "${if (name == "GNV") "GNV" else "Gasolina"}: ${zonesText(f.missingZones)}"))
-                }
+        // Contador AutoMatch (1/3, 2/3...) não descreve a cobertura da rodada atual.
+        // Zonas faltantes continuam individuais depois de qualquer execução do AutoMatch.
+        for ((name, f) in listOf("GASOLINA" to petrol, "GNV" to gas)) {
+            if (f.missingZones.isNotEmpty()) {
+                missing.put(JSONObject().put("fuel", name).put("zones", JSONArray(f.missingZones))
+                    .put("text", "${if (name == "GNV") "GNV" else "Gasolina"}: ${zonesText(f.missingZones)}"))
             }
         }
         val out = JSONObject()
@@ -150,9 +149,9 @@ object EcuAcquisitionTruth {
         return when {
             missing.length() > 0 -> {
                 val list = (0 until missing.length()).joinToString("; ") { missing.getJSONObject(it).getString("text") }
-                "${auto}Zonas lidas da ECU: $zones A ECU ainda não marcou: $list."
+                "${auto}Aquisição atual: $zones Sem confirmação neste ciclo: $list."
             }
-            delivered -> "${auto}A ECU já entregou: $zones Ela decide sozinha o próximo AutoMatch."
+            delivered -> "${auto}AutoMatch executado. Aquisição atual: $zones"
             else -> "${auto}$zones"
         }
     }
