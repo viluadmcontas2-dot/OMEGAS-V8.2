@@ -194,6 +194,32 @@ class EquivalenceEngineTest {
     }
 
     @Test
+    fun `AutoCal 3 de 3 permite comparar GNV real com gasolina madura da ECU mesmo sem gasolina propria`() {
+        val gas = gasWithRichPlateau(1.06)
+        val result = EquivalenceEngine.evaluate(EquivalenceInput(
+            axisRaw, flatK, reference, null, emptyList(), gas,
+            ExperienceMeter(null).reading(), UsageMeter(null).reading(),
+        ))
+        assertEquals("uma referência madura não é um bloqueio", NextActionKind.APPLY, result.nextAction.kind)
+        assertTrue("GNV real deve produzir pares sem leituras de gasolina próprias", result.points.any { it.samples > 0 })
+        assertTrue("fonte nativa identificada, nunca simulada como gasolina própria",
+            result.points.any { "ECU_REF" in it.sources })
+        assertTrue(result.nextAction.pointIndexes.isNotEmpty())
+        assertTrue(result.ownPetrol.cells.all { it.samples == 0 })
+    }
+
+    @Test
+    fun `sem gasolina propria nem curva nativa continua apenas coletando`() {
+        val result = EquivalenceEngine.evaluate(EquivalenceInput(
+            axisRaw, flatK, null, null, emptyList(), gasWithRichPlateau(1.06),
+            ExperienceMeter(null).reading(), UsageMeter(null).reading(),
+        ))
+        assertTrue("não fabricar pares quando nenhum combustível de referência existe",
+            result.points.all { it.samples == 0 })
+        assertTrue(result.nextAction.kind != NextActionKind.APPLY)
+    }
+
+    @Test
     fun `curva K invalida devolve resultado vazio sem lancar`() {
         val r = EquivalenceEngine.evaluate(EquivalenceInput(IntArray(3), IntArray(3), reference, null, emptyList(), emptyList(),
             ExperienceMeter(null).reading(), UsageMeter(null).reading()))
