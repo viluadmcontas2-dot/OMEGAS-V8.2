@@ -480,7 +480,7 @@
       `${petrolLearned ? `<path class="autocal-reference-line petrol own" data-own-curve="petrol" data-curve-origin="omegas" d="${pathFor(ownCurves.petrol, 'mapBar')}"></path>` : ''}` +
       `${gasLearned ? `<path class="autocal-reference-line gas own" data-own-curve="gas" data-curve-origin="omegas" d="${pathFor(ownCurves.gas, 'mapBar')}"></path>` : ''}</g>` : '';
     const ecuCurveMarkup =
-      `${!between || !petrolLearned ? (hasPetrol ? `<path class="autocal-reference-line petrol ecu" data-curve-origin="ecu" d="${pathFor(reference, 'petrolMapBar')}"></path>` : '') : ''}` +
+      `${!between || !petrolLearned ? (hasPetrol ? `<path class="autocal-reference-line petrol ${between ? 'ecu' : 'epoch-anchor'}" data-curve-origin="ecu" d="${pathFor(reference, 'petrolMapBar')}"></path>` : '') : ''}` +
       `${!between || !gasLearned ? (hasGas ? `<path class="autocal-reference-line gas ecu" data-curve-origin="ecu" d="${pathFor(reference, 'gasMapBar')}"></path>` : '') : ''}`;
     // Sem dados nativos, ainda não inventar uma curva: eixos e AGORA permanecem.
     const hasOwnCurves = petrolLearned || gasLearned;
