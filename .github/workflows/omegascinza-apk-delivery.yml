@@ -4,6 +4,7 @@
 # Revisao final de bancada: faixa Z1-Z4 1280x720 sem deslocamento do grafico.
 # CSS de chips consolidado: conflito antigo Diamante removido, captura Chromium 1280x720 conferida.
 # 2026-10-10: restaura proposta por referencia gasolina ECU madura e zonas no grafico, com paridade.
+# Replay de densidades: ganho vs Curva K original com limite de oscilacao devido ao ruido.
 # Só a alteração deste próprio arquivo na OMEGASCINZA dispara o build.
 name: OMEGASCINZA VERIFIED APK DELIVERY
 
