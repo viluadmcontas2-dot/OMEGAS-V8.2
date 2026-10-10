@@ -137,7 +137,7 @@ html body[data-omegas-route="autocal"] #alertToast.alert-toast b { font-size: 18
 .ar-autocal .autocal-zone-meter { display: flex; align-items: center; justify-content: center; flex-wrap: nowrap; gap: 5px; min-width: 0; flex: 0 1 auto; }
 .ar-autocal .autocal-zone-item { display: flex; align-items: center; justify-content: center; gap: 4px; height: 32px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 7px; background: var(--chart-bg); white-space: nowrap; font-size: 15px; line-height: 1; font-weight: 800; }
 .ar-autocal .autocal-zone-item > b { color: var(--text); }
-.ar-autocal .autocal-zone-cell { min-width: 26px; height: 22px; display: inline-flex; gap: 2px; align-items: center; justify-content: center; color: var(--muted); border: 1px solid transparent; border-radius: 5px; }
+.ar-autocal .autocal-zone-cell { flex: 0 0 auto; min-width: 0; min-height: 0; box-sizing: border-box; height: 22px; padding: 0 2px; display: inline-flex; gap: 2px; align-items: center; justify-content: center; white-space: nowrap; color: var(--muted); border: 1px solid transparent; border-radius: 5px; }
 .ar-autocal .autocal-zone-cell.petrol::before, .ar-autocal .autocal-zone-cell.gas::before { content: ''; width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
 .ar-autocal .autocal-zone-cell.petrol::before { background: var(--warn); }
 .ar-autocal .autocal-zone-cell.gas::before { background: var(--cng); }
