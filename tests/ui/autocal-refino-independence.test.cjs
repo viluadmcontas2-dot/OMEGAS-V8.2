@@ -39,3 +39,31 @@ test('Refino aprende 100 regiões mas desenha curvas próprias e poucos marcador
   assert.equal((r.svg.match(/data-own-curve=/g)||[]).length,2,'somente curvas gasolina e GNV');
   assert.match(chart.describeBetween(normalized[99]),/região própria do OMEGAS/);
 });
+
+test('Refino não desenha a curva nativa quando faltam curvas próprias, e eixo segue região observada', () => {
+  const chart = freshContext().OmegasUi.CurveChart;
+  const native = [
+    {index:0, petrolMs:2.5, petrolMapBar:0.35, gasMapBar:0.38, gasEquivalentMs:2.7},
+    {index:1, petrolMs:22, petrolMapBar:1.05, gasMapBar:1.08, gasEquivalentMs:23},
+  ];
+  const model = {
+    reference:native, ecu:[], betweenPoints:[], proposal:[], stalls:[],
+    ownCurves:{regime:'DRIVING',petrol:[],gas:[]},
+    domain:{xMin:0,xMax:24,yMin:0.2,yMax:1.15},
+  };
+  const svg = chart.buildSvg(model,{width:1280,height:400,mode:'between'}).svg;
+  assert.doesNotMatch(svg, /class="autocal-reference-line (?:gas|petrol)(?: "|')/);
+  assert.doesNotMatch(svg, /class="autocal-equivalence-line"/);
+  assert.doesNotMatch(svg, /data-own-curve=/);
+  assert.match(svg, /data-chart-live/, 'cursor continua na árvore com curva própria vazia');
+  const measured = chart.focusDomain([], [], [
+    {tpetMs:2.5,mapBar:0.3},{tpetMs:13.4,mapBar:0.9},
+  ], {fullRange:false});
+  assert.equal(measured.xMin, 0);
+  assert.ok(measured.xMax > 13.4 && measured.xMax < 15,
+    'eixo acompanha 13,4 ms medidos, não estica sozinho até 22 ms');
+  const upper = chart.focusDomain([], [], [
+    {tpetMs:2.5,mapBar:0.3},{tpetMs:22.7,mapBar:0.9},
+  ], {fullRange:false});
+  assert.ok(upper.xMax > 22.7, 'medições reais acima de 22 ms continuam visíveis');
+});
