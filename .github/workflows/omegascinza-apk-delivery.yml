@@ -1,5 +1,6 @@
 # Build de entrega isolado do CI. Acionado pelo pedido do proprietário.
 # Validado no replay e UI: pares proprios, AutoCal gate, linhas sem falsa referencia.
+# Mutacao de watchdog validada contra teste de leitura sem resposta (sem prazo artificial para AutoCal).
 # Só a alteração deste próprio arquivo na OMEGASCINZA dispara o build.
 name: OMEGASCINZA VERIFIED APK DELIVERY
 
