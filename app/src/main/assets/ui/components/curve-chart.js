@@ -459,6 +459,7 @@
 
     const live = '<g class="autocal-live-layer" data-refino-live data-chart-live display="none" aria-label="Posição atual do motor"><circle class="autocal-live-halo" data-autocal-live-point r="13" cx="0" cy="0"></circle><circle class="autocal-live-point" data-autocal-live-point r="6" cx="0" cy="0"></circle><text class="autocal-live-label" data-autocal-live-label text-anchor="start" x="0" y="0">AGORA</text></g>';
 
+    const equivalencePath = ''; // Não usar terceira curva falsa no Refino.
     // Há duas fontes de curvas, claramente identificadas: ECU ao vivo e aprendizado OMEGAS.
     // Uma célula sem observações não é uma curva: para evitar a tela vazia em AutoMatch 3/3,
     // mostrar a referência nativa válida até a série própria realmente formar segmentos.
