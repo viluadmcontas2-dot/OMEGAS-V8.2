@@ -258,7 +258,10 @@ class LogicFixesTest {
                 val o = b.getJSONObject(i)
                 if (o.getString("state") == "coletado") assertTrue(o.getInt("samples") >= AutoMatchRefinedEngine.BAND_MATURE_COUNT)
             }
-            if (name == RealSessionReplaySupport.GNV_ONLY) assertTrue((0 until b.length()).any { b.getJSONObject(it).getString("state") == "coletado" })
+            if (name == RealSessionReplaySupport.GNV_ONLY) {
+                assertTrue("sem gasolina própria o replay só-GNV não inventa pares maduros",
+                    (0 until b.length()).none { b.getJSONObject(it).getString("state") == "coletado" })
+            }
         }
     }
 
@@ -366,18 +369,24 @@ class LogicFixesTest {
         // Estável no piloto com APPLY do cérebro: sem botão (tabela da UI), frase honesta.
         val stable = JSONObject().put("phase", "ESTAVEL").put("expiredFrom", JSONObject.NULL)
         val st = RefinoState.build(stable, apply, ledger.betweenPointsJson(), null)
-        assertFalse(st.getBoolean("canAct")); assertEquals("Estável", st.getString("phase")); assertTrue(st.getString("whatNow").contains("5 pontos")); assertHuman(st)
+        assertFalse(st.getBoolean("canAct")); assertEquals("A ECU está no automático", st.getString("phase"))
+        assertTrue(st.getString("whatNow").contains("5 pontos")); assertHuman(st)
         // Pausado vindo de coleta: sem botão; vindo de proposta pronta: botão (a proposta continua válida).
         val pausedCollect = JSONObject().put("phase", "TENTATIVA_ENCERRADA").put("expiredFrom", "COLETANDO_NOSSOS").put("headline", "x").put("next", "y")
         val pc = RefinoState.build(pausedCollect, apply, ledger.betweenPointsJson(), null)
-        assertFalse(pc.getBoolean("canAct")); assertEquals("Pausado", pc.getString("phase")); assertTrue(pc.getString("whatNow").contains("5 pontos")); assertHuman(pc)
+        assertFalse(pc.getBoolean("canAct")); assertEquals("A ECU está no automático", pc.getString("phase"))
+        assertTrue(pc.getString("whatNow").contains("5 pontos")); assertHuman(pc)
         val pausedReady = JSONObject().put("phase", "TENTATIVA_ENCERRADA").put("expiredFrom", "PROPOSTA_PRONTA")
         val pr = RefinoState.build(pausedReady, apply, ledger.betweenPointsJson(), null)
         assertFalse("Sem confirmação fresca do AutoCal nunca grava", pr.getBoolean("canAct"))
         // Ajuste local de engasgo segue a própria regra: estável não o bloqueia.
         val local = brain().put("nextAction", JSONObject().put("kind", "APPLY").put("local", true).put("text", "Corrigir engasgo").put("pointIndexes", JSONArray(listOf(4))))
         val lc = RefinoState.build(stable, local, ledger.betweenPointsJson(), null)
-        assertTrue(lc.getBoolean("canAct")); assertEquals("Pronto para corrigir um engasgo", lc.getString("phase")); assertEquals("Ajuste pronto", lc.getString("label"))
+        assertFalse("Ajuste local também exige AutoCal completo/ativo", lc.getBoolean("canAct"))
+        val stableDone = JSONObject(stable.toString()).put("ecuDone", true).put("autoCalEnabled", 1)
+        val localReady = RefinoState.build(stableDone, local, ledger.betweenPointsJson(), null)
+        assertTrue(localReady.getBoolean("canAct")); assertEquals("Pronto para corrigir um engasgo", localReady.getString("phase"))
+        assertEquals("Ajuste pronto", localReady.getString("label"))
         // NOTHING com pontos (prova esgotada) não vira "Estável".
         val exhausted = brain().put("index", 0.9).put("nextAction", JSONObject().put("kind", "NOTHING").put("text", "Ajuste em 4,0–6,0 ms não fechou · sem nova proposta ali; revise a curva nessa faixa").put("pointIndexes", JSONArray(listOf(3, 4))))
         val ex = RefinoState.build(JSONObject().put("phase", "COLETANDO_NOSSOS"), exhausted, ledger.betweenPointsJson(), null)
