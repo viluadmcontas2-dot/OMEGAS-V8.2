@@ -270,12 +270,17 @@ class SessaoFicticiaTest {
                 table.append("$native\t$n\t$legacy\t$current\n")
                 current
             }
-            // Não confundir aumento bruto de frames com confiança: o gate pode conservar K
-            // inalterado quando a amostra adicional fica incoerente. Nunca piorar a base.
-            assertTrue("native=$native nenhuma proposta piora a base: $errors",
-                errors.all { it <= errors.first() + 1e-8 })
-            assertTrue("native=$native ao menos uma densidade de evidência melhora a base: $errors",
-                errors.minOrNull()!! < errors.first() - 0.001)
+            // A base física é a Curva K original, NÃO a primeira sugestão com 10 amostras.
+            // Ruído pode produzir oscilação entre propostas (mais observações não garantem
+            // erro monotônico por realização). Jamais aceitar algo que piore a curva original,
+            // exigir ganho significativo e limitar o desvio com 50 versus 10 amostras.
+            val baseline = plantedErr(curve, curve)
+            assertTrue("native=$native todas as propostas melhoram a curva original: $errors, baseline=$baseline",
+                errors.all { it < baseline - 0.005 })
+            assertTrue("native=$native 50 medições não podem degradar materialmente 10: $errors",
+                errors[2] <= errors[0] + 0.002)
+            assertTrue("native=$native mesmo no pior conjunto há ganho verificado: $errors",
+                errors.maxOrNull()!! < baseline - 0.005)
         }
         File("build/sessao-ficticia/comparacao.tsv").also { it.parentFile.mkdirs() }.writeText(table.toString())
     }
