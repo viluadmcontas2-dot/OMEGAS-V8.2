@@ -222,7 +222,7 @@ html body .ar-autocal .ar-chart-card { position: relative; }
 html body .ar-autocal #autocalZoneMeter {
   position: absolute;
   right: 10px;
-  top: 70px;
+  top: 140px;
   z-index: 5;
   box-sizing: border-box;
   width: 108px;
