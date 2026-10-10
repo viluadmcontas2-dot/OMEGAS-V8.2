@@ -150,3 +150,68 @@ html body[data-omegas-route="autocal"] #alertToast.alert-toast b { font-size: 18
   .ar-autocal .autocal-zone-meter { gap: 3px; }
   .ar-autocal .autocal-zone-item { gap: 2px; padding: 1px 3px; }
 }
+
+/* 1280×720: a legenda e as quatro zonas nunca crescem ou pulam quando "—" vira "FALTA"/"✓".
+   Supera o tamanho de 22px/min-height 40px herdado de styles-diamante.css, destinado à outra tela. */
+@media (min-width: 1100px) {
+  html body .ar-autocal .ar-legend-row {
+    flex-wrap: nowrap;
+    height: 36px;
+    min-height: 36px;
+    flex: 0 0 36px;
+    gap: 8px;
+  }
+  html body .ar-autocal .ar-legend {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    align-items: center;
+    gap: 7px;
+    font-size: 14px;
+    line-height: 1;
+  }
+  html body .ar-autocal .autocal-zone-meter {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    gap: 3px;
+    min-width: 0;
+    align-items: center;
+  }
+  html body .ar-autocal .autocal-zone-item {
+    flex: 0 0 auto;
+    min-width: 0;
+    height: 30px;
+    padding: 1px 3px;
+    gap: 2px;
+    white-space: nowrap;
+    font-size: 13px;
+    line-height: 1;
+  }
+  html body .ar-autocal .autocal-zone-cell {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 22px;
+    width: auto;
+    height: 22px;
+    padding: 0 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+  }
+  html body .ar-autocal .autocal-zone-cell small {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  html body .ar-autocal .autocal-automatch-chip {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font-size: 14px;
+    padding: 2px 7px;
+  }
+}
