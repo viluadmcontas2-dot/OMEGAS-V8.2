@@ -40,7 +40,7 @@ test('Refino aprende 100 regiões mas desenha curvas próprias e poucos marcador
   assert.match(chart.describeBetween(normalized[99]),/região própria do OMEGAS/);
 });
 
-test('Refino não desenha a curva nativa quando faltam curvas próprias, e eixo segue região observada', () => {
+test('Refino preserva curvas nativas da ECU até o OMEGAS aprender, sem inventar curvas próprias', () => {
   const chart = freshContext().OmegasUi.CurveChart;
   const native = [
     {index:0, petrolMs:2.5, petrolMapBar:0.35, gasMapBar:0.38, gasEquivalentMs:2.7},
@@ -52,9 +52,10 @@ test('Refino não desenha a curva nativa quando faltam curvas próprias, e eixo 
     domain:{xMin:0,xMax:24,yMin:0.2,yMax:1.15},
   };
   const svg = chart.buildSvg(model,{width:1280,height:400,mode:'between'}).svg;
-  assert.doesNotMatch(svg, /class="autocal-reference-line (?:gas|petrol)(?: "|')/);
+  assert.match(svg, /data-curve-origin="ecu"/, 'curva nativa já adquirida pela ECU fica visível');
+  assert.equal((svg.match(/data-curve-origin="ecu"/g) || []).length, 2);
   assert.doesNotMatch(svg, /class="autocal-equivalence-line"/);
-  assert.doesNotMatch(svg, /data-own-curve=/);
+  assert.doesNotMatch(svg, /data-own-curve=/, 'não transformar referência ECU em aprendizado próprio');
   assert.match(svg, /data-chart-live/, 'cursor continua na árvore com curva própria vazia');
   const measured = chart.focusDomain([], [], [
     {tpetMs:2.5,mapBar:0.3},{tpetMs:13.4,mapBar:0.9},
@@ -66,4 +67,27 @@ test('Refino não desenha a curva nativa quando faltam curvas próprias, e eixo 
     {tpetMs:2.5,mapBar:0.3},{tpetMs:22.7,mapBar:0.9},
   ], {fullRange:false});
   assert.ok(upper.xMax > 22.7, 'medições reais acima de 22 ms continuam visíveis');
+});
+
+test('Refino substitui somente a curva nativa do combustível que já aprendeu, sem misturar fontes', () => {
+  const chart = freshContext().OmegasUi.CurveChart;
+  const native = [
+    {petrolMs:2.5,petrolMapBar:0.35,gasMapBar:0.38},
+    {petrolMs:4.0,petrolMapBar:0.45,gasMapBar:0.48},
+    {petrolMs:5.5,petrolMapBar:0.55,gasMapBar:0.58},
+  ];
+  const petrol = [
+    {petrolMs:2.5,mapBar:0.35}, {petrolMs:4.0,mapBar:0.45},
+    {petrolMs:null,mapBar:0.50}, {petrolMs:5.5,mapBar:0.55},
+  ];
+  const svg = chart.buildSvg({
+    reference:native, ecu:[], betweenPoints:[],
+    ownCurves:{regime:'DRIVING',petrol,gas:[]},
+    domain:{xMin:0,xMax:8,yMin:0.2,yMax:0.8},
+  },{width:1000,height:400,mode:'between'}).svg;
+  assert.equal((svg.match(/data-curve-origin="omegas"/g)||[]).length,1);
+  assert.equal((svg.match(/data-curve-origin="ecu"/g)||[]).length,1,
+    'GNV permanece com curva ECU quando gasolina própria está madura');
+  assert.match(svg,/data-own-curve="petrol"/);
+  assert.doesNotMatch(svg,/data-own-curve="gas"/);
 });
