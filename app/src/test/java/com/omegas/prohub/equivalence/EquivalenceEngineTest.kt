@@ -206,6 +206,24 @@ class EquivalenceEngineTest {
             result.points.any { "ECU_REF" in it.sources })
         assertTrue(result.nextAction.pointIndexes.isNotEmpty())
         assertTrue(result.ownPetrol.cells.all { it.samples == 0 })
+        // O AutoMatch concluído e ativo é o único portão nativo de gravação.
+        // Não exigir 17 faixas próprias já preenchidas quando um trecho real é julgável.
+        fun screen(count: Int): org.json.JSONObject {
+            val phases = com.omegas.prohub.autocal.EquivalencePhases(null) { 0L }
+            phases.observe(true, org.json.JSONObject().put("autoMatchCount", count)
+                .put("maxAutomatch", 3).put("autoCalEnabled", 1),
+                org.json.JSONObject().put("points", org.json.JSONArray()),
+                org.json.JSONObject().put("samples", 0).put("revision", 1)
+                    .put("bands", org.json.JSONArray()),
+                org.json.JSONObject().put("latest", org.json.JSONObject.NULL), 0)
+            return com.omegas.prohub.autocal.EquivalenceView.build(
+                EquivalenceLedger(null), com.omegas.prohub.autocal.RefinementJournal(null),
+                phases, com.omegas.prohub.autocal.StallWatch(null),
+                EquivalenceJson.result(result, reference, null, null),
+            ).getJSONObject("refinoState")
+        }
+        assertEquals(false, screen(2).getBoolean("canAct"))
+        assertTrue("AutoMatch 3/3 ativo libera a revisão da proposta local", screen(3).getBoolean("canAct"))
     }
 
     @Test
