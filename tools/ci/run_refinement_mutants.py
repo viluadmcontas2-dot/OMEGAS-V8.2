@@ -34,8 +34,9 @@ MUTANTS = [
      "confirmedWritesHaveDistinctIdentityEvenWhenClockIsFrozen"),
     ("elapsed-time-is-visible-change", JOURNAL, 'it.optJSONObject("decision")?.remove("onlineMs")',
      'it.optJSONObject("decision")?.remove("notAnOperand")', "elapsedTimeAloneDoesNotRepublishVisibleDecision"),
+    # Watchdog da LEITURA sem resposta continua com prazo; aprender/AutoCal nao ganham falso "fim" por silencio.
     ("no-phase-ceiling", PILOT, "val budget = PHASE_BUDGET_MS[candidate]", "val budget: Long? = null",
-     "automaticWaitHasCeilingWithoutDeclaringEcuDone"),
+     "readingWithoutAnyEcuResponseExpiresInThirtySeconds"),
     ("false-offline-stable", PILOT, '!ecuOnline -> "SEM_ECU"', '!ecuOnline -> "ESTAVEL"',
      "offlineNeverPresentsLastStableStateAsCurrent"),
     ("stale-gas-acquisition", PILOT, 'activeCount(liveAcquisition, "GNV")', 'activeCount(acquisition, "GNV")',
