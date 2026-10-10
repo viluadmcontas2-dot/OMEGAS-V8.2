@@ -215,3 +215,93 @@ html body[data-omegas-route="autocal"] #alertToast.alert-toast b { font-size: 18
     padding: 2px 7px;
   }
 }
+
+/* Z1–Z4 dentro do gráfico, lado direito. Não rouba altura nem substitui estados da ECU.
+   A barra horizontal foi rejeitada em teste de campo: a aquisição se lê de cima a baixo. */
+html body .ar-autocal .ar-chart-card { position: relative; }
+html body .ar-autocal #autocalZoneMeter {
+  position: absolute;
+  right: 10px;
+  top: 70px;
+  z-index: 5;
+  box-sizing: border-box;
+  width: 108px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: stretch;
+  padding: 3px 2px;
+  background: rgba(var(--rgb-8-16-24),.84);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  pointer-events: none;
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-item {
+  display: flex;
+  flex: 0 0 32px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 4px;
+  height: 32px;
+  min-height: 32px;
+  min-width: 0;
+  border-radius: 6px;
+  background: var(--chart-bg);
+  font-size: 15px;
+  gap: 2px;
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-item > b {
+  font-size: 16px;
+  font-weight: 900;
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-cell {
+  position: relative;
+  display: flex;
+  flex: 0 0 31px;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 22px;
+  width: 31px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-cell::before {
+  font-size: 11px;
+  line-height: 1;
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-cell small {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  box-sizing: border-box;
+  font-size: 0;
+  color: transparent;
+  background: transparent;
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-cell[data-state="missing"] small {
+  border-style: dashed;
+  border-color: var(--warn);
+  background: transparent;
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-cell.petrol[data-state="acquired"] small {
+  border-color: var(--warn);
+  background: var(--warn);
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-cell.gas[data-state="acquired"] small {
+  border-color: var(--tone-5dd39e);
+  background: var(--tone-5dd39e);
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-cell[data-current="true"] {
+  outline: 2px solid var(--tone-19daf4);
+  outline-offset: 1px;
+  box-shadow: 0 0 5px var(--tone-19daf4);
+}
+html body .ar-autocal #autocalZoneMeter .autocal-zone-cell[data-current="true"]::after { display: none; }
