@@ -280,9 +280,8 @@ html body .instrument-details > :is(.ar-secondary,.instrument-detail-content) { 
 
 /* AutoCal: coverage is operational information, not a hidden history detail. */
 
-html body .ar-autocal .autocal-zone-cell { flex:1; min-height:40px; padding:4px 6px; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:6px; }
-html body .ar-autocal .autocal-zone-cell b { font-size:22px; }
-html body .ar-autocal .autocal-zone-cell small { font-size:22px; }
+/* A cobertura AutoCal usa chips compactos fixos na legenda (styles-autocal-cockpit.css).
+   O layout antigo de cartões 40px/22px fazia Z1–Z4 sobrepor e deslocar o gráfico. */
 html body .ar-autocal .autocal-zone-cell[data-current="true"]::after { display:none; }
 html body .ar-autocal #autocalActionStatus { grid-column:1 / -1; margin:0; font-size:20px; line-height:1.2; }
 html body :is(.ar-more,.instrument-details)[open] > summary { color:var(--accent); border-color:var(--accent); background:var(--surface-3,var(--surface-2)); box-shadow:inset 0 -3px 0 var(--accent); }
