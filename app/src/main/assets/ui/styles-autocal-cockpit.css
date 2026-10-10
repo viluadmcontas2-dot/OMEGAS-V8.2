@@ -7,7 +7,6 @@
 .autocal-reference-line { fill: none; stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
 .autocal-reference-line.petrol { stroke: var(--warn); }
 .autocal-reference-line.gas { stroke: var(--tone-5dd39e); }
-.autocal-equivalence-line { display: none; fill: none; stroke: rgba(var(--rgb-240-196-92),.78); stroke-width: 2; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
 .autocal-reference-point { opacity: 0; stroke: var(--tone-081018); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; transition: opacity 120ms ease; }
 .autocal-reference-hit.selected + .autocal-reference-point { opacity: 1; }
 .autocal-reference-point.petrol { fill: var(--warn); }
