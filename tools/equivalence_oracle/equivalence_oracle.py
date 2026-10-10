@@ -580,7 +580,9 @@ def evaluate(axis_raw, k_raw, ref, petrol_obs, gas_obs, cell_ms):
     own_g = own_curve(gas_obs, None)          # o GNV medido não é puxado para a gasolina
     usage = usage_by_point(cell_ms, axis, own_p)
     u = [math.log(a) for a in axis]
-    ecu_ref = []                           # AutoCal só libera operação; não fabrica par para o Refino
+    # Gasolina nativa madura é REFERÊNCIA para um GNV real se faltar par próprio comparável.
+    # Nunca cria leitura GNV, não entra em own_p e não preenche região não medida.
+    ecu_ref = clean_reference([(m, t) for m, t, *_ in ref]) if ref else []
     pairs = [p for p in build_pairs(petrol_obs, gas_obs, ecu_ref) if p["rpm"] >= DRIVING_MIN_RPM and p["tp"] >= AXIS_MIN_MS]
     pair_u = [math.log(p["tp"]) for p in pairs]
     pair_ln = [math.log(interp(p["tg"], axis, k) * p["tg"] / (p["tp"] * interp(p["tp"], axis, k))) for p in pairs]
