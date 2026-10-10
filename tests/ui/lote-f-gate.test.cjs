@@ -54,7 +54,7 @@ test('formatos: nenhum número visível sai de toFixed solto (só coordenadas de
 test('utilitários únicos: finite, escapeHtml, fmt e clamp são definidos só em core/display-rules.js', () => {
   const definition = /(?:function\s+(finite|escapeHtml|fmt|clamp)\s*\(|(?:const|let|var)\s+(finite|escapeHtml|fmt|clamp)\s*=\s*(?:\(|[a-zA-Z_]+\s*=>|function))/;
   for (const file of js) {
-    if (rel(file) === path.join('core', 'display-rules.js')) continue;
+    if (rel(file) === 'core/display-rules.js') continue;
     const hit = stripComments(fs.readFileSync(file, 'utf8')).match(definition);
     assert.equal(hit, null, `${rel(file)} redefine ${hit && (hit[1] || hit[2])}`);
   }
