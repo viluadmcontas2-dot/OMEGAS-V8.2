@@ -76,7 +76,7 @@ test('plural e fração: "12 alterações", nunca "alteraçãoões"; índice 0,0
 test('nomes antigos fora da UI: learning/Aprendizado, suggestion, V7 e comentários de gate', () => {
   for (const file of js) {
     const source = stripComments(fs.readFileSync(file, 'utf8'));
-    if (rel(file) !== path.join('core', 'native-api.js')) assert.doesNotMatch(source, /[Ll]earning(?!_)|Suggestion|suggestion/, rel(file));
+    if (rel(file) !== 'core/native-api.js') assert.doesNotMatch(source, /[Ll]earning(?!_)|Suggestion|suggestion/, rel(file));
     assert.doesNotMatch(source, /generation:\s*'V7'/, rel(file));
     assert.doesNotMatch(fs.readFileSync(file, 'utf8'), /FINAL_PRE_APK|CURVE_K_RETENTION_FINAL_GATE/, rel(file));
   }
