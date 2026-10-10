@@ -464,12 +464,12 @@
     // Uma célula sem observações não é uma curva: para evitar a tela vazia em AutoMatch 3/3,
     // mostrar a referência nativa válida até a série própria realmente formar segmentos.
     const ownSegment = points => {
-      let previous = null;
+      let lastOwnX = null;
       return (points || []).some(point => {
         const valid = finite(point.petrolMs) !== null && finite(point.mapBar) !== null &&
           point.petrolMs > 0 && point.mapBar > 0 && inY(point.mapBar) && point.petrolMs <= xMax;
-        const linked = valid && previous !== null && point.petrolMs >= previous;
-        previous = valid ? point.petrolMs : null;
+        const linked = valid && lastOwnX !== null && point.petrolMs >= lastOwnX;
+        lastOwnX = valid ? point.petrolMs : null;
         return linked;
       });
     };
