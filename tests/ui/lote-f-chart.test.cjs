@@ -293,7 +293,13 @@ test('AutoCal: superfícies ficam no gráfico e os oito estados vivem no HTML pe
   const cockpit = read('screens/autocal-cockpit.js');
   assert.equal((cockpit.match(/data-autocal-zone-petrol="[0-3]"/g) || []).length, 4);
   assert.equal((cockpit.match(/data-autocal-zone-gas="[0-3]"/g) || []).length, 4);
-  assert.equal(built.scale.xFor(10), 968, 'sem card: a curva recupera toda a largura do gráfico');
+  assert.equal(built.scale.xFor(10), 888,
+    '80 px a direita reservados às quatro zonas: o gráfico não fica escondido atrás das bolinhas');
+  const css = read('styles-autocal-cockpit.css');
+  assert.match(css, /#autocalZoneMeter[^\{]*\{[^}]*position:\s*absolute;/,
+    'indicadores de aquisição ficam na lateral do gráfico, não acima dele');
+  assert.match(css, /#autocalZoneMeter[^\{]*\{[^}]*flex-direction:\s*column;/,
+    'Z1–Z4 ficam empilhadas como no layout aprovado');
 });
 
 test('F4: AutoCal e Refino não desenham gráfico próprio (um componente, sem duplicar o desenho)', () => {
