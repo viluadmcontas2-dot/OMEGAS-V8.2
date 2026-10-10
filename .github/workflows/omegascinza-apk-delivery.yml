@@ -1,0 +1,21 @@
+# Build de entrega isolado do CI. Acionado pelo pedido do proprietário.
+# Só a alteração deste próprio arquivo na OMEGASCINZA dispara o build.
+name: OMEGASCINZA VERIFIED APK DELIVERY
+
+on:
+  push:
+    branches: [OMEGASCINZA]
+    paths:
+      - '.github/workflows/omegascinza-apk-delivery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate-build-apk:
+    uses: ./.github/workflows/verde-apk-now.yml
+    with:
+      build_apk: true
+      source_sha: ${{ github.sha }}
