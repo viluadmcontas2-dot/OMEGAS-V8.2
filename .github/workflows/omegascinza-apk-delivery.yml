@@ -2,6 +2,7 @@
 # Validado no replay e UI: pares proprios, AutoCal gate, linhas sem falsa referencia.
 # Mutacao de watchdog validada contra teste de leitura sem resposta (sem prazo artificial para AutoCal).
 # Revisao final de bancada: faixa Z1-Z4 1280x720 sem deslocamento do grafico.
+# CSS de chips consolidado: conflito antigo Diamante removido, captura Chromium 1280x720 conferida.
 # Só a alteração deste próprio arquivo na OMEGASCINZA dispara o build.
 name: OMEGASCINZA VERIFIED APK DELIVERY
 
