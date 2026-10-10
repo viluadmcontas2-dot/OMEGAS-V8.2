@@ -20,7 +20,7 @@ const walk = (dir, out = []) => {
 const files = walk(UI);
 const js = files.filter(f => f.endsWith('.js'));
 const css = files.filter(f => f.endsWith('.css'));
-const rel = f => path.relative(UI, f);
+const rel = f => path.relative(UI, f).split(path.sep).join('/'); // portável: Windows e runners Linux usam a mesma chave
 const stripComments = source => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/[^\n]*/g, '$1');
 
 /** Texto que o motorista lê: literais de texto (com espaço) dos .js e o HTML visível do index. */
