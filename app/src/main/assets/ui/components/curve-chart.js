@@ -483,21 +483,13 @@
       `${!between || !gasLearned ? (hasGas ? `<path class="autocal-reference-line gas ecu" data-curve-origin="ecu" d="${pathFor(reference, 'gasMapBar')}"></path>` : '') : ''}`;
     // Sem dados nativos, ainda não inventar uma curva: eixos e AGORA permanecem.
     const hasOwnCurves = petrolLearned || gasLearned;
-    const zoneRail = between ? '' : `<g class="autocal-zone-rail" aria-label="Zonas de aquisição da ECU">${zones.map((z, i) => {
-      const y = padTop + 30 + i * 46;
-      const x = width - 102;
-      const dot = (state, dx, label) =>
-        `<circle class="zone-rail-dot" data-zone-state="${state}" data-zone-fuel="${label}" cx="${x + dx}" cy="${y}" r="7"></circle>`;
-      return `<g class="zone-rail-item" data-zone-rail="${z.zone}" data-petrol-state="${z.petrolState}" data-gas-state="${z.gasState}">` +
-        `<text class="zone-rail-name" x="${x}" y="${y + 5}">Z${z.zone}</text>` +
-        dot(z.petrolState, 42, 'petrol') + dot(z.gasState, 64, 'gas') + `</g>`;
-    }).join('')}</g>`;
+
     const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>` +
       `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção de gasolina (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${equivalencePath}` +
       `${ecuCurveMarkup}${ownCurveMarkup}` +
-      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g>${zoneRail}</svg>`;
+      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
     return { svg, scale };
   }
 
