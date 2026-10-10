@@ -228,10 +228,14 @@ object EquivalenceEngine {
         val u = axis.map { ln(it) }
         val x = k.map { ln(it) }
         val usage = input.usage.byPoint(axis, ownP)
-        // Fonte única: o mesmo casamento por RPM×MAP do livro (gasolina própria, ou a curva da ECU onde não há) para veredito e proposta.
-        // Refino próprio só compara gasolina e GNV aprendidos pelo OMEGAS; AutoCal nativo
-        // é condição de liberação operacional, não fabrica pares nem fundamenta proposta.
-        val allPairs = EvidencePairs.build(input.petrolObs, input.gasObs, emptyList())
+        // A ECU entrega uma curva de gasolina com pontos MADUROS. Ela é referência nativa
+        // válida para comparação quando não existem duas leituras próprias comparáveis em
+        // RPM/MAP/água. Pares próprios têm prioridade: a ECU nunca fabrica telemetria GNV.
+        // Cada par de fallback continua exigindo leitura GNV real, MAP coberto e confiança.
+        val ecuPetrol = EvidencePairs.cleanReference(
+            prior?.points?.map { it.mapBar to it.petrolMs } ?: emptyList()
+        )
+        val allPairs = EvidencePairs.build(input.petrolObs, input.gasObs, ecuPetrol)
             .filter { EvidencePairs.isLearnable(it) }
         // O veredito v1 continua sendo de CONDUÇÃO; lenta tem curva/veredito próprios abaixo e nunca é misturada na média.
         val pairs = allPairs.filter { OperatingRegime.DRIVING.accepts(it.rpm) }
@@ -397,7 +401,7 @@ object EquivalenceEngine {
         input.operation?.let { return NextAction(NextActionKind.OPERATION, it, null, null, emptyList()) }
         // Congelar a referência da ECU é opcional: jamais bloqueia medições próprias confiáveis.
         val hasOwnEvidence = input.petrolObs.isNotEmpty() && input.gasObs.isNotEmpty()
-        if (!hasOwnEvidence && input.reference == null && input.provisional != null) {
+        if (!hasOwnEvidence && input.gasObs.isEmpty() && input.reference == null && input.provisional != null) {
             return NextAction(NextActionKind.FREEZE_REFERENCE, "Salvar referência da ECU (opcional)", "refino", null, emptyList())
         }
         val contested = points.filter { it.state == PointState.CONTESTADO }
