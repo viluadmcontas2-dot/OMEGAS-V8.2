@@ -359,7 +359,8 @@
     const height = Math.max(160, Math.round(o.height || 400));
     const between = o.mode === 'between';
     const zones = between ? [] : ((model.zones || []).length === 4 ? model.zones : Array.from({ length: 4 }, (_, i) => ({ zone: i + 1, lower: null, upper: null, petrolState: 'unknown', gasState: 'unknown' })));
-    const padLeft = 88; const padRight = 32; const padTop = 12; const padBottom = 48;
+    // AutoCal reserva o trilho de zonas à direita do gráfico, sem roubar altura.
+    const padLeft = 88; const padRight = between ? 32 : 112; const padTop = 12; const padBottom = 48;
     const reference = model.reference || [];
     const ownCurves = model.ownCurves || { petrol: [], gas: [] };
     const domain = model.domain;
@@ -458,21 +459,45 @@
 
     const live = '<g class="autocal-live-layer" data-refino-live data-chart-live display="none" aria-label="Posição atual do motor"><circle class="autocal-live-halo" data-autocal-live-point r="13" cx="0" cy="0"></circle><circle class="autocal-live-point" data-autocal-live-point r="6" cx="0" cy="0"></circle><text class="autocal-live-label" data-autocal-live-label text-anchor="start" x="0" y="0">AGORA</text></g>';
 
-    const equivalent = reference.filter(p => finite(p.gasEquivalentMs) !== null);
-    // O Refino não usa a referência nativa como terceira curva: somente aprendizado próprio.
-    const equivalencePath = '';
+    // Há duas fontes de curvas, claramente identificadas: ECU ao vivo e aprendizado OMEGAS.
+    // Uma célula sem observações não é uma curva: para evitar a tela vazia em AutoMatch 3/3,
+    // mostrar a referência nativa válida até a série própria realmente formar segmentos.
+    const ownSegment = points => {
+      let previous = null;
+      return (points || []).some(point => {
+        const valid = finite(point.petrolMs) !== null && finite(point.mapBar) !== null &&
+          point.petrolMs > 0 && point.mapBar > 0 && inY(point.mapBar) && point.petrolMs <= xMax;
+        const linked = valid && previous !== null && point.petrolMs >= previous;
+        previous = valid ? point.petrolMs : null;
+        return linked;
+      });
+    };
+    const petrolLearned = between && ownSegment(ownCurves.petrol);
+    const gasLearned = between && ownSegment(ownCurves.gas);
     const ownCurveMarkup = between ?
       `<g class="layer-own-curves" data-refino-regime="${esc(ownCurves.regime || 'DRIVING')}">` +
-      `${ownCurves.petrol.length > 1 ? `<path class="autocal-reference-line petrol own" data-own-curve="petrol" d="${pathFor(ownCurves.petrol, 'mapBar')}" ></path>` : ''}` +
-      `${ownCurves.gas.length > 1 ? `<path class="autocal-reference-line gas own" data-own-curve="gas" d="${pathFor(ownCurves.gas, 'mapBar')}" ></path>` : ''}</g>` : '';
-    const hasOwnCurves = ownCurves.petrol.length > 1 || ownCurves.gas.length > 1;
-
+      `${petrolLearned ? `<path class="autocal-reference-line petrol own" data-own-curve="petrol" data-curve-origin="omegas" d="${pathFor(ownCurves.petrol, 'mapBar')}"></path>` : ''}` +
+      `${gasLearned ? `<path class="autocal-reference-line gas own" data-own-curve="gas" data-curve-origin="omegas" d="${pathFor(ownCurves.gas, 'mapBar')}"></path>` : ''}</g>` : '';
+    const ecuCurveMarkup =
+      `${!between || !petrolLearned ? (hasPetrol ? `<path class="autocal-reference-line petrol ecu" data-curve-origin="ecu" d="${pathFor(reference, 'petrolMapBar')}"></path>` : '') : ''}` +
+      `${!between || !gasLearned ? (hasGas ? `<path class="autocal-reference-line gas ecu" data-curve-origin="ecu" d="${pathFor(reference, 'gasMapBar')}"></path>` : '') : ''}`;
+    // Sem dados nativos, ainda não inventar uma curva: eixos e AGORA permanecem.
+    const hasOwnCurves = petrolLearned || gasLearned;
+    const zoneRail = between ? '' : `<g class="autocal-zone-rail" aria-label="Zonas de aquisição da ECU">${zones.map((z, i) => {
+      const y = padTop + 30 + i * 46;
+      const x = width - 102;
+      const dot = (state, dx, label) =>
+        `<circle class="zone-rail-dot" data-zone-state="${state}" data-zone-fuel="${label}" cx="${x + dx}" cy="${y}" r="7"></circle>`;
+      return `<g class="zone-rail-item" data-zone-rail="${z.zone}" data-petrol-state="${z.petrolState}" data-gas-state="${z.gasState}">` +
+        `<text class="zone-rail-name" x="${x}" y="${y + 5}">Z${z.zone}</text>` +
+        dot(z.petrolState, 42, 'petrol') + dot(z.gasState, 64, 'gas') + `</g>`;
+    }).join('')}</g>`;
     const svg = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${between ? 'Refino: curva da gasolina e do GNV, pontos da ECU e pontos do OMEGAS entre eles' : 'AutoCal: curva da gasolina e do GNV, pontos lidos pela ECU e posição Agora'}">${grid}<g class="layer-zones">${zoneMarkup}</g>` +
       `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 6}" text-anchor="middle">Injeção de gasolina (ms)</text>` +
       `<text class="autocal-axis-title y" x="16" y="${(height - padBottom) / 2}" text-anchor="middle" transform="rotate(-90 16 ${(height - padBottom) / 2})">MAP (bar)</text>` +
       `<g><rect class="autocal-current-band-layer" data-autocal-current-band display="none" x="0" y="0" width="0" height="0"></rect>${equivalencePath}` +
-      `${!between && !hasOwnCurves && hasGas ? `<path class="autocal-reference-depth" aria-hidden="true" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${!between && !hasOwnCurves && hasPetrol ? `<path class="autocal-reference-line petrol" d="${pathFor(reference, 'petrolMapBar')}"></path>` : ''}${!between && !hasOwnCurves && hasGas ? `<path class="autocal-reference-line gas" d="${pathFor(reference, 'gasMapBar')}"></path>` : ''}${ownCurveMarkup}` +
-      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g></svg>`;
+      `${ecuCurveMarkup}${ownCurveMarkup}` +
+      `${refMarkup}${oursMarkup}${missMarkup}${ecuMarkup}${stallMarkup}${live}</g>${zoneRail}</svg>`;
     return { svg, scale };
   }
 
@@ -652,7 +677,7 @@
     // Sem dados próprios, preserva os eixos para a camada AGORA continuar operacional.
     const hasOwnEvidence = [...ownCurves.petrol, ...ownCurves.gas].some(p => p.petrolMs !== null);
     const ownOnlyScale = c.mode === 'between' && hasOwnEvidence;
-    const domain = focusDomain(ownOnlyScale ? [] : reference, ownOnlyScale ? [] : ecu, relevant, {
+    const domain = focusDomain(reference, ownOnlyScale ? [] : ecu, relevant, {
       fullRange: visible.fullRange, equivalent: false, liveMs: Number(c.liveMs),
     });
     const thresholds = (() => {
