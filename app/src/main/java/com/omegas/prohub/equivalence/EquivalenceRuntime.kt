@@ -101,7 +101,13 @@ class EquivalenceRuntime(root: File?, private val clock: () -> Long = System::cu
         // do AutoCal não apagam nem invalidam pares próprios de gasolina/GNV.
         val key = listOf(
             ledger.revision(), EquivalenceLedger.fingerprint(mulActRaw),
-            EquivalenceLedger.fingerprint(axisRaw), usage.revision(), experience.revision(),
+            EquivalenceLedger.fingerprint(axisRaw),
+            // Uma referência nativa recém-adquirida deve disparar nova avaliação mesmo
+            // antes de mudar o contador de frames. Sem isso a curva já existe mas o
+            // Refino fica preso em resultado antigo (sem proposta).
+            reference?.id, reference?.ecuAcquisitionFingerprint,
+            provisional?.ecuAcquisitionFingerprint,
+            usage.revision(), experience.revision(),
             scale?.joinToString(",") { "%.3f".format(it) },
         ).joinToString("|")
         synchronized(lock) {
