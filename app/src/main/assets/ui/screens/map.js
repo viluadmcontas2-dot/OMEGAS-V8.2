@@ -412,6 +412,31 @@
       const suggestion = context.suggestion;
       const changes = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges : [];
       try {
+        // Ajuste local do Refino (dono, 2026-10-11: a curva aprende tudo e sabe onde ajustar o quê): só o percentual por
+        // célula. O alvo sai da prévia Kotlin (MapKManualPlanner), o mesmo caminho do ajuste percentual manual, sobre o
+        // valor lido da ECU — a conta do Mapa K não é feita no JS.
+        const percentOnly = changes.length > 0 && changes.every(c => c && c.after == null && c.target == null && finite(c.deltaPercent) !== null);
+        if (percentOnly) {
+          const groups = new Map();
+          changes.forEach(c => {
+            const delta = finite(c.deltaPercent);
+            if (!groups.has(delta)) groups.set(delta, []);
+            groups.get(delta).push({ row: Number(c.row), column: Number(c.column) });
+          });
+          const targets = [];
+          for (const [delta, cells] of groups) {
+            this.editor.clearSelection();
+            cells.forEach(cell => this.editor.toggle(cell.row, cell.column));
+            const preview = this.api.previewMapAdjustment(this.editor.selectedCells(), 'percent', delta);
+            if (!preview?.ok || !Array.isArray(preview.items)) throw new Error(preview?.error || 'Prévia do Mapa K indisponível.');
+            preview.items.forEach(item => targets.push({ row: Number(item.row), column: Number(item.column), after: Number(item.target) }));
+          }
+          this.editor.setTargetOverrides(targets);
+          const first = targets[0] || changes[0];
+          this.renderGrid();
+          this.renderEditor(Number(first.row), Number(first.column));
+          return;
+        }
         if (changes.length) {
           this.editor.setTargetOverrides(changes);
           const first = changes[0];

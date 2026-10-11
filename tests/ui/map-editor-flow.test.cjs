@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
-const { MapEditor, MAX_SELECTION, MIN_K, MAX_K } = require(path.resolve('app/src/main/assets/ui/map-editor.js'));
+const { MapEditor, MAX_SELECTION } = require(path.resolve('app/src/main/assets/ui/map-editor.js'));
 
 function loadedEditor() {
   const editor = new MapEditor();
@@ -92,27 +92,6 @@ test('sugestões persistentes podem preparar alvos exatos distintos numa única 
   ]);
 });
 
-// Dono, 2026-10-11 (a curva aprende tudo e sabe onde ajustar o quê): o Refino abre o Mapa K com o ajuste local em %
-// por célula; o alvo sai do valor lido da ECU e nunca sai de [MIN_K, MAX_K].
-test('ajuste local do Refino em percentual vira alvo exato sobre o mapa lido, dentro de [MIN_K, MAX_K]', () => {
-  const editor = loadedEditor();
-  assert.equal(editor.setTargetOverrides([
-    { row: 3, column: 0, deltaPercent: 15 },
-    { row: 4, column: 0, deltaPercent: -50 },
-    { row: 5, column: 0, deltaPercent: 200 },
-    { row: 6, column: 0, deltaPercent: 4.6 },
-  ]), 4);
-  const review = editor.buildReview();
-  assert.deepEqual(review.items.map(item => [item.row, item.column, item.current, item.target]), [
-    [3, 0, 120, 138],
-    [4, 0, 120, MIN_K],
-    [5, 0, 120, MAX_K],
-    [6, 0, 120, 126],
-  ]);
-  // Alvo exato ("after") continua valendo como antes; percentual desconhecido é recusado, nunca vira 0%.
-  assert.equal(editor.setTargetOverrides([{ row: 1, column: 2, after: 127 }]), 1);
-  assert.throws(() => editor.setTargetOverrides([{ row: 1, column: 2, deltaPercent: null }]), /fora do intervalo|desconhecid/i);
-});
 
 test('prévia nativa incompleta é recusada', () => {
   const editor = loadedEditor();

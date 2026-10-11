@@ -264,17 +264,7 @@
       this.selected.clear();
       this.targetOverrides.clear();
       (Array.isArray(changes) ? changes : []).forEach(item => {
-        const row = Number(item.row);
-        const column = Number(item.column);
-        // Ajuste local do Refino (dono, 2026-10-11): só o percentual; o alvo sai do valor lido da ECU, dentro de [MIN_K, MAX_K].
-        const delta = item.after == null && item.target == null && item.deltaPercent !== undefined ? finite(item.deltaPercent) : undefined;
-        if (delta !== undefined) {
-          this.assertCell(row, column);
-          if (delta === null) throw new Error(`Ajuste local desconhecido na célula [${row},${column}].`);
-          this.setTargetOverride(row, column, clamp(Math.round(this.rows[row][column] * (1 + delta / 100)), MIN_K, MAX_K));
-          return;
-        }
-        this.setTargetOverride(row, column, Number(item.after ?? item.target));
+        this.setTargetOverride(Number(item.row), Number(item.column), Number(item.after ?? item.target));
       });
       return this.selectionCount();
     }
