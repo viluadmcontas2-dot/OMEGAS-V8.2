@@ -44,6 +44,7 @@ Viewport automotivo canônico: `1280x720`.
 - nenhuma escrita automática de Map K/Curve K;
 - escrita manual exige intenção explícita + ACK + readback;
 - `RESET_ALL` não é ação operacional exposta; somente Reset gas point 0x04, observado com efeito amplo, pode ser solicitado manualmente como reinício de aquisição, em um toque (dono, 2026-10-11: sem dupla confirmação), com backup completo pré-mutação e readback da ECU;
+- reset de gasolina/GNV/tudo nunca pausa o aprendizado (dono, 2026-10-08): depois do comando, AUTO_CAL_ENABLE é conferido e religado com o mesmo comando de aquisição até readback = 1, mesmo em timeout/NAK (erro de transporte ≠ erro da ECU); sem readback = 1 o reset não é dado como concluído. Trava `reset-nunca-pausa-aprendizado`: `ResetNuncaPausaAprendizadoTest.kt` + `tests/test_reset_nunca_pausa_aprendizado.py`;
 - o AutoCal não mostra leitura anterior (dono, 2026-10-11): nem curva esmaecida, nem legenda, nem botão, nem comparação antes × depois; tudo em tempo real. Trava `autocal-sem-leitura-anterior`: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py`;
 - ciência/protocolo críticos permanecem Kotlin/native;
 - AGORA deve permanecer no mesmo contexto da referência AutoCal;

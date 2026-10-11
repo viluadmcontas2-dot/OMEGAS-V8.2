@@ -959,7 +959,7 @@
         this.actionState = reading.actionState;
         this.operationalPending = this.actionState?.busy === true ||
           [
-          'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER',
+          'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'KEEPING_LEARNING', 'READING_AFTER',
           'READING_FINISH_SOURCE', 'SENDING_FINISH_COMMIT', 'VERIFYING_FINISH',
           'RESETTING_K', 'VERIFYING_K_RESET',
         ].includes(String(this.actionState?.state || ''));
@@ -1011,7 +1011,7 @@
       this.actionState = nextActionState;
       this.operationalPending = this.actionState?.busy === true ||
         [
-          'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER',
+          'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'KEEPING_LEARNING', 'READING_AFTER',
           'READING_FINISH_SOURCE', 'SENDING_FINISH_COMMIT', 'VERIFYING_FINISH',
           'RESETTING_K', 'VERIFYING_K_RESET',
         ].includes(String(this.actionState?.state || ''));
@@ -1879,7 +1879,7 @@
       const name = String(state.state || 'IDLE').toUpperCase();
       const message = String(state.message || 'Nenhuma ação preparada.');
       const working = [
-        'PREPARED', 'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'READING_AFTER',
+        'PREPARED', 'QUEUED', 'READING_BEFORE', 'SENDING_ACTION', 'KEEPING_LEARNING', 'READING_AFTER',
         'READING_FINISH_SOURCE', 'SENDING_FINISH_COMMIT', 'VERIFYING_FINISH',
         'RESETTING_K', 'VERIFYING_K_RESET',
       ].includes(name);
