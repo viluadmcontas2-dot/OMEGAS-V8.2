@@ -477,7 +477,11 @@
       ].filter(v => Number.isFinite(v) && v > 0);
       const yMin = Math.max(0, Math.floor(Math.min(...ys) * 20) / 20 - 0.05);
       const yMax = Math.ceil(Math.max(...ys) * 20) / 20 + 0.05;
-      const width = 1000; const height = 400; const padLeft = 64; const padRight = 28; const padTop = 22; const padBottom = 48;
+      // Ocupa toda a área (dono, 2026-10-11): largura do desenho na proporção da tela, altura fixa em 400 unidades.
+      const box = typeof host.getBoundingClientRect === 'function' ? host.getBoundingClientRect() : null;
+      const height = 400;
+      const width = box && box.width > 0 && box.height > 0 ? Math.max(1000, Math.round(height * box.width / box.height)) : 1000;
+      const padLeft = 64; const padRight = 28; const padTop = 22; const padBottom = 48;
       const xFor = v => padLeft + ((v - xMin) / (xMax - xMin)) * (width - padLeft - padRight);
       const yFor = v => height - padBottom - ((v - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
       const xTicks = Array.from({ length: 6 }, (_, i) => xMin + i * (xMax - xMin) / 5);

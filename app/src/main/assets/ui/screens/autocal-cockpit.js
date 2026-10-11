@@ -58,6 +58,15 @@
       return value;
     });
   }
+  /**
+   * O gráfico ocupa toda a área (dono, 2026-10-11: "usar o máximo de espaço"): a largura do desenho segue a
+   * proporção da área na tela; a altura fica em 400 unidades, então texto e bolinhas mantêm o tamanho.
+   */
+  function chartWidthFor(host, height) {
+    const box = host && typeof host.getBoundingClientRect === 'function' ? host.getBoundingClientRect() : null;
+    if (!box || !(box.width > 0) || !(box.height > 0)) return 1000;
+    return Math.max(1000, Math.round(height * box.width / box.height));
+  }
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
@@ -1436,7 +1445,7 @@
       const domain = AutoCalUxModel.referenceDomain([], [], current);
       let chart = '';
       if (domain) {
-        const width = 1000, height = 400, left = 64, right = 28, top = 22, bottom = 48;
+        const height = 400, width = chartWidthFor(host, height), left = 64, right = 28, top = 22, bottom = 48;
         const x = value => left + (value - domain.xMin) / (domain.xMax - domain.xMin) * (width - left - right);
         const y = value => height - bottom -
           (value - domain.yMin) / (domain.yMax - domain.yMin) * (height - top - bottom);
@@ -1471,13 +1480,13 @@
             '<text class="autocal-live-label" x="' + (x(live.petrolMs) + 10).toFixed(1) +
             '" y="' + (y(live.mapBar) - 8).toFixed(1) + '">AGORA</text>' : '';
 
-        chart = '<svg class="autocal-reference-svg" viewBox="0 0 1000 400" role="img" ' +
+        chart = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" ' +
           'aria-label="Aquisição atual da ECU; referência gasolina independente; sem equivalência durante reset">' +
           '<title>AQUISIÇÃO EM TEMPO REAL · gasolina e GNV por época nativa</title>' +
-          '<path d="M64 22 V352 H972" fill="none" stroke="currentColor" opacity=".2"></path>' +
+          '<path d="M' + left + ' ' + top + ' V' + (height - bottom) + ' H' + (width - right) + '" fill="none" stroke="currentColor" opacity=".2"></path>' +
           reference +
           acquisition(acquiredPetrol, 'petrol') + acquisition(acquiredGas, 'gas') + liveMarkup +
-          '<text class="autocal-axis-title x" x="518" y="395" text-anchor="middle">' +
+          '<text class="autocal-axis-title x" x="' + ((left + width - right) / 2).toFixed(1) + '" y="395" text-anchor="middle">' +
           AUTO_CAL_X_AXIS_LABEL + '</text>' +
           '<text class="autocal-axis-title y" x="14" y="200" text-anchor="middle" ' +
           'transform="rotate(-90 14 200)">MAP (bar)</text></svg>';
@@ -1539,8 +1548,8 @@
 
       this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
 
-      const width = 1000;
       const height = 400;
+      const width = chartWidthFor(host, height);
       const padLeft = 64;
       const padRight = 28;
       const padTop = 22;
@@ -1549,7 +1558,7 @@
       const zoneSurface = AutoCalUxModel.zoneSurface(snapshot, human);
       const chartRenderKey = JSON.stringify([
         this.projection?.sessionId, points, acquiredPoints, zoneSurface, !!live,
-        this.selectedReferenceIndex, this.selectedAcquiredPoint,
+        this.selectedReferenceIndex, this.selectedAcquiredPoint, width,
       ]);
       if (this.renderedChartHost === host && this.chartRenderKey === chartRenderKey) {
         this.renderLiveCursor();
@@ -1683,7 +1692,7 @@
       this.renderedChartHost = host;
       this.chartRenderKey = JSON.stringify([
         this.projection?.sessionId, points, acquiredPoints, zoneSurface, !!live,
-        this.selectedReferenceIndex, this.selectedAcquiredPoint,
+        this.selectedReferenceIndex, this.selectedAcquiredPoint, width,
       ]);
     }
 

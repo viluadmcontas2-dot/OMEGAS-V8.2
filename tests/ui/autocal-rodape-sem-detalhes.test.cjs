@@ -36,6 +36,13 @@ assert.equal(typeof context.OmegasUi.AutoCalCockpit.prototype.toggleDetails, 'un
 const refino = fs.readFileSync(path.join(ui, 'screens/refino.js'), 'utf8');
 assert.doesNotMatch(refino, /data-refino-details|data-refino-panel="details"|toggleDetails/, 'Refino sem Detalhes (dono, 2026-10-11)');
 
+// Gráfico ocupa toda a largura (dono, 2026-10-11): o desenho segue a proporção da área, sem faixas vazias dos lados.
+assert.match(cockpit, /function chartWidthFor\(host, height\)[\s\S]*?Math\.round\(height \* box\.width \/ box\.height\)/);
+assert.match(cockpit, /const width = chartWidthFor\(host, height\);/, 'gráfico principal usa a largura da tela');
+assert.match(cockpit, /width = chartWidthFor\(host, height\), left = 64/, 'gráfico da reaquisição usa a largura da tela');
+assert.doesNotMatch(cockpit, /viewBox="0 0 1000 400"/, 'nada de proporção fixa que deixa faixas vazias');
+assert.match(refino, /Math\.round\(height \* box\.width \/ box\.height\)/, 'Refino também ocupa a largura toda');
+
 // Nenhuma tela esconde a navegação nem tem botão "Abas".
 const sources = ['index.html', 'app.js', ...fs.readdirSync(path.join(ui, 'screens')).map(f => 'screens/' + f)];
 for (const file of sources) {
