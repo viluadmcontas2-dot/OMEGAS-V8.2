@@ -342,8 +342,16 @@
     }
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};
-      patch.sessions = api.sessions() || [];
       patch.logs = api.logs() || [];
+      // Listar as gravações lê o disco (manifesto e tamanho de cada uma): não a cada 2 s. Só ao entrar na aba, quando
+      // a gravação começa/para, a cada 30 s ou quando algo pede atualização (omegas-refresh).
+      const sessionsKey = `${patch.sessionStatus.recording === true}:${patch.sessionStatus.sessionId ?? ''}`;
+      const now = Date.now();
+      if (!Array.isArray(state.sessions) || sessionsKey !== toolsSessionsKey || now - toolsSessionsAt > 30000) {
+        patch.sessions = api.sessions() || [];
+        toolsSessionsKey = sessionsKey;
+        toolsSessionsAt = now;
+      }
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
@@ -388,6 +396,8 @@
     setText('suggestionCount', actionable + (refinement ? 1 : 0));
   }
 
+  let toolsSessionsKey = '';
+  let toolsSessionsAt = 0;
   let lastSuggestionSignature = '';
   /** Curva refinada pronta no Refino entra na fila de decisões (só leitura do piloto). */
   function refinementSuggestion() {
@@ -522,6 +532,7 @@
       return;
     }
     if (route === 'suggestions' || route === 'tools') {
+      if (route === 'tools') toolsSessionsAt = 0; // entrar na aba relista as gravações
       if (route === 'suggestions') renderPersistentSuggestions(store.get());
       if (route === 'tools' && !toolsEditing()) utilities?.render(store.get());
       afterPaint(refreshContext);
@@ -559,6 +570,7 @@
     });
 
     root.addEventListener('omegas-refresh', () => {
+      toolsSessionsAt = 0; // algo mudou (gravação apagada, exportada…): relista ao atualizar
       afterPaint(() => {
         refreshStatus();
         refreshContext();

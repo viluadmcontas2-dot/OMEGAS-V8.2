@@ -41,7 +41,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         val activity = activityRef.get() ?: throw IllegalStateException("Tela indisponível")
         val service = activity.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
         val manual = currentManager()
-        val nativeStatus = JSONObject(service.nativeAutoCalStatusJson())
+        // O status do monitor embute a mesma leitura que já vai como nativeSnapshot: a cópia extra saía a cada 1 s
+        // pela ponte (a leitura viajava 3 vezes no pacote). A projeção não usa essa cópia.
+        val nativeStatus = JSONObject(service.nativeAutoCalStatusJson()).apply { remove("latestSnapshot") }
         val nativeSnapshot = JSONObject(service.nativeAutoCalSnapshotJson())
         val manualStatus = manual?.statusJson() ?: JSONObject()
         val manualSnapshot = manual?.latestSnapshotJson() ?: JSONObject().put("available", false)

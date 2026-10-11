@@ -128,3 +128,23 @@ test('sem quadro novo, a idade continua andando depois de 10 s (uma atualizaçã
   const beforeTen = seen.filter(value => value < 10_000);
   assert.deepEqual(beforeTen, [9000, 9500], 'antes de 10 s continua de meio em meio segundo');
 });
+
+test('Ferramentas não relê o disco das gravações a cada ciclo (só ao entrar, ao começar/parar ou a cada 30 s)', () => {
+  let sessionsCalls = 0;
+  let recording = false;
+  const { app } = bootApp({
+    scienceSnapshotSince: () => ({ ok: true, changed: false, revision: 1, refreshing: false }),
+    sessionStatus: () => ({ recording, sessionId: recording ? 's2' : 's1' }),
+    sessions: () => { sessionsCalls += 1; return [{ id: 's1' }]; },
+    logs: () => [],
+  });
+  app.router.navigate('tools');
+  app.scheduler.onContext();
+  const afterEnter = sessionsCalls;
+  assert.ok(afterEnter >= 1, 'entrar na aba lista as gravações');
+  for (let i = 0; i < 5; i += 1) app.scheduler.onContext();
+  assert.equal(sessionsCalls, afterEnter, 'parado na aba: nenhuma leitura de disco nova');
+  recording = true;
+  app.scheduler.onContext();
+  assert.equal(sessionsCalls, afterEnter + 1, 'começou a gravar: relista uma vez');
+});
