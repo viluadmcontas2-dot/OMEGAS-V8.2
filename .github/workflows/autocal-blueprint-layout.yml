@@ -7,6 +7,8 @@ on:
       - 'app/src/main/assets/ui/styles-autocal-cockpit.css'
       - 'app/src/main/assets/ui/screens/autocal-cockpit.js'
       - 'tools/ci/autocal_blueprint_layout.cjs'
+      - 'tools/ci/sem_rolagem_8_abas.cjs'
+      - 'app/src/main/assets/ui/**'
       - '.github/workflows/autocal-blueprint-layout.yml'
   workflow_dispatch:
 permissions:
@@ -36,6 +38,11 @@ jobs:
         env:
           NODE_PATH: /tmp/omegas-ui-test/node_modules
         run: node tools/ci/autocal_blueprint_layout.cjs
+      # Trava do dono (2026-10-11): nenhuma das 8 abas rola, nada cortado, nav sempre visível, sem "Abas".
+      - name: Verify no tab scrolls (8 tabs, 1280x672 and 1280x720)
+        env:
+          NODE_PATH: /tmp/omegas-ui-test/node_modules
+        run: node tools/ci/sem_rolagem_8_abas.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
