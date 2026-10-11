@@ -15,7 +15,11 @@ assert.ok(header, 'cabeçalho do AutoCal existe');
 assert.equal(header.includes('autocal-focus-actions'), false, 'botões não ficam no cabeçalho');
 assert.ok(cockpit.indexOf('class="autocal-focus-actions"') > cockpit.indexOf('id="autocalReferenceChart"'), 'botões ficam depois do gráfico');
 assert.match(cockpit, /<p id="autocalHeadline" class="autocal-headline">/, 'frase de estado sob o título');
-assert.match(cockpit, /this\.text\('autocalHeadline', human\.title \+ ' · ' \+ human\.progress \+ autoMatchShort\);/, 'a frase acompanha o estado da ECU (zonas e AutoMatch)');
+assert.match(cockpit, /this\.text\('autocalHeadline', human\.title \+ ' · ' \+ human\.progress\);/, 'a frase acompanha o estado da ECU');
+// AutoMatch X/Y sempre à vista no topo (dono, 2026-10-11), "—" quando a ECU não informou.
+const header2 = cockpit.match(/<header class="autocal-focus-toolbar"[\s\S]*?<\/header>/)?.[0] || '';
+assert.match(header2, /<small>AutoMatch<\/small>\s*<b id="autocalAutoMatchCount">/, 'cartão AutoMatch no topo');
+assert.match(cockpit, /this\.text\('autocalAutoMatchCount', autoMatchFraction\(human\.autoMatchCount, human\.maxAutoMatch\)\);/);
 assert.doesNotMatch(cockpit, /data-autocal-details|toggleDetails/, 'sem botão Detalhes (dono, 2026-10-11)');
 
 // CSS: sem rolagem, botões à esquerda, Detalhes no lugar do gráfico.
@@ -31,6 +35,12 @@ context.globalThis = context;
 context.window = context;
 vm.runInNewContext(cockpit, context);
 assert.equal(typeof context.OmegasUi.AutoCalCockpit.prototype.toggleDetails, 'undefined');
+const frac = context.OmegasUi.AutoCalUxModel.autoMatchFraction;
+assert.equal(frac(2, 3), '2/3');
+assert.equal(frac(0, 3), '0/3', 'zero informado pela ECU é zero');
+assert.equal(frac(null, 3), '—/3', 'contador desconhecido nunca vira 0');
+assert.equal(frac(null, null), '—');
+assert.equal(frac(1, null), '1/—');
 
 // Refino sem Detalhes: só os botões de ação.
 const refino = fs.readFileSync(path.join(ui, 'screens/refino.js'), 'utf8');

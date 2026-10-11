@@ -67,6 +67,13 @@
     if (!box || !(box.width > 0) || !(box.height > 0)) return 1000;
     return Math.max(1000, Math.round(height * box.width / box.height));
   }
+  /** "X/Y" do AutoMatch da ECU (feitos / máximo); desconhecido = "—". */
+  function autoMatchFraction(count, max) {
+    const done = finite(count);
+    const limit = finite(max);
+    if (done === null && (limit === null || limit <= 0)) return '—';
+    return (done === null ? '—' : String(Math.round(done))) + '/' + (limit !== null && limit > 0 ? String(Math.round(limit)) : '—');
+  }
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
@@ -697,6 +704,10 @@
                   <small>RPM</small>
                   <b id="autocalLiveRpm">—</b>
                 </div>
+                <div class="autocal-focus-metric autocal-focus-automatch">
+                  <small>AutoMatch</small>
+                  <b id="autocalAutoMatchCount">—</b>
+                </div>
                 <div class="autocal-focus-zone">
                   <small>Zona</small>
                   <b id="autocalLiveZone">—</b>
@@ -1087,10 +1098,10 @@
       this.text('autocalHumanTitle', human.title);
       this.text('autocalHumanProgress', human.progress);
       this.text('autocalHumanAction', human.nextAction);
-      // Frase única do estado (dono, 2026-10-11: sem Detalhes): zonas e AutoMatch, o que o leigo acompanha.
-      const autoMatchShort = human.autoMatchCount === null || human.autoMatchCount === undefined || String(human.title).includes('AutoMatch')
-        ? '' : ' · AutoMatch ' + Math.round(human.autoMatchCount) + (human.maxAutoMatch > 0 ? '/' + Math.round(human.maxAutoMatch) : '');
-      this.text('autocalHeadline', human.title + ' · ' + human.progress + autoMatchShort);
+      // Frase única do estado (dono, 2026-10-11: sem Detalhes) e o contador AutoMatch X/Y sempre à vista no topo;
+      // o que a ECU não informou fica "—", nunca 0.
+      this.text('autocalHeadline', human.title + ' · ' + human.progress);
+      this.text('autocalAutoMatchCount', autoMatchFraction(human.autoMatchCount, human.maxAutoMatch));
       this.text('autocalHumanAutoMatch', human.autoMatch);
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
@@ -1926,6 +1937,7 @@
     app.autoCalCockpit = new AutoCalCockpit(app);
   }
 
+  AutoCalUxModel.autoMatchFraction = autoMatchFraction;
   ns.AutoCalUxModel = AutoCalUxModel;
   ns.AutoCalCockpit = AutoCalCockpit;
   boot();

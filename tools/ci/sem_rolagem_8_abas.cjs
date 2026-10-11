@@ -26,7 +26,7 @@ function fakeBridge() {
     f('NUM_BUF_UPD_GAS', buf.map((_, i) => (i < 11 ? 12 : i < 14 ? 5 : 0))),
     f('CALIBRATION_VAL_1', [0, 0, 10, 0, 0, 8, 0, 0, 10]), f('VECT_AUTOCAL_U8_1', [8]),
     f('MNFLD_PRESS_THD', Array.from({ length: 18 }, (_, i) => +(0.15 + i * 0.055).toFixed(3))),
-    f('ACQUIRED_ZONES_GAS', [1, 1, 1, 0]), f('ACQUIRED_ZONES_PETROL', [1, 1, 1, 1]), f('AUTO_CAL_ENABLE', [1]),
+    f('ACQUIRED_ZONES_GAS', [1, 1, 1, 0]), f('ACQUIRED_ZONES_PETROL', [1, 1, 1, 1]), f('AUTO_CAL_ENABLE', [1]), f('NUM_AUTOMATCH_EXECUTED', [2]), f('MAX_AUTOMATCH', [3]),
   ];
   const snapshot = { available: true, snapshotHash: 'ci-1', fields };
   const projection = { ok: true, source: 'NATIVE', sessionId: 1, referenceUsable: true, snapshot, analysis: {}, nativeStatus: { ok: true, state: 'RUNNING', autoCalEnabled: 1 }, nativeSnapshot: snapshot };
