@@ -1,4 +1,4 @@
-# Checkpoint — Obsidian enxuto (2026-10-11 16:20 UTC)
+# Checkpoint — Obsidian enxuto (2026-10-11 17:40 UTC)
 
 Registro canônico para retomar sem reconstruir a história. Branch `work/platina-obsidian-enxuto`.
 
@@ -11,7 +11,7 @@ Registro canônico para retomar sem reconstruir a história. Branch `work/platin
 - Bytes de comando da ECU não mudam (UsbSerialManager, ResponseDrivenEcuEngine, AutoCalProtocol, KFactorManager, KWriteManager, AutoCalNativeActionManager — exceção: trava reset-nunca-pausa, decisão do dono 2026-10-08). Erro de transporte ≠ erro da ECU. Desconhecido = "—", nunca 0.
 - Um APK só, no fim (`verde-apk-now.yml`, `build_apk=true`), com SHA-256. Validação física só com o dono no carro.
 
-## Estado verificado (remoto = HEAD `b714edb0`)
+## Estado verificado (remoto = HEAD `3953de6e`)
 
 | Commit | Fatia |
 |---|---|
@@ -31,23 +31,27 @@ Registro canônico para retomar sem reconstruir a história. Branch `work/platin
 | `310ac875` | ponte leve `getPresentSnapshotIfChanged` (como na cinza) |
 | `27f8d770` | Aprender e Ferramentas sem rolagem, sem "Detalhes" e sem código cru |
 | `b714edb0` | enxugar: 9 arquivos de interface mortos apagados + contrato que impede a volta |
+| `ef347b19` | refino rodada 2: sem falso "piorou", sem laço Desfazer/Restaurar, margem 4%/5%, curva só ≥ 1350 rpm |
+| `a6703aa8` | dados: resultado do AutoCal visível; desconhecido nunca vira 0; Mapa K sem resultado da Curva K |
+| `63f58a81` | UX: fila de sugestões congelada fora da tela; Tolerâncias honestas (só água mínima); textos do Aprender/Sugestões/Ferramentas |
+| `5b798567` | perf: AutoCal sem leitura repetida no pacote de 1 s; Ferramentas não relê o disco a cada 2 s |
+| `3953de6e` | ponte: gravadores diretos e leituras síncronas sem tela fora do JS; faixa oculta não redesenha |
 
-Provas: CI remota verde em `27f8d770` (`OMEGAS PLATINA CI` run 38154080587; `AutoCal Platina layout regression` run 38154082559, inclui a trava "nenhuma aba rola"). Locais em `b714edb0`: node UI 161/161, unittest Python 171 OK, `run_checks` PASS, `sem_rolagem_8_abas` PASS, blueprint AutoCal PASS. JVM 585/585 em `310ac875`.
+Provas: CI remota verde em `ef347b19` (`OMEGAS PLATINA CI` run 38155536387; `AutoCal Platina layout regression` run 38155537889). Locais em `3953de6e`: JVM 610/610 + lint 0 erros, node UI 174/174, unittest Python OK, `run_checks` PASS, `sem_rolagem_8_abas` PASS, blueprint AutoCal PASS.
 
-## Em andamento (worktrees locais em scratchpad, nada publicado)
+## Em andamento (worktree local em scratchpad, nada publicado)
 
-1. Refino rodada 2 — corrigir a revisão adversarial (`scratchpad/audit/revisao-refino.md`): CRÍTICO 1 referência trocando entre antes/depois (falso "piorou"); ALTO 2 diário legado; ALTO 3 alinhamento da curva no serviço; ALTO 4 restaurar contra a ECU; ALTO 5 SEM_BASE re-propõe; MÉDIO 6–19; margem 5%/4%; curva aprende só ≥ 1350 rpm. Worktree `wt-refino2` (base `748aa9ba`).
-2. Auditorias só leitura relançadas em `b714edb0`: fluxo de dados (`scratchpad/audit/fluxo-dados.md`) e jornada do leigo (`scratchpad/audit/jornada-leigo.md`). Já pronta: refino global × resíduo local (`refino-global-local.md`) — conclusão: o corpus não mostra resíduo local separável na lenta; o Refino basta para o global; sem planejador local de Mapa K agora.
+1. Textos para leigo e ajustes pequenos (auditoria da jornada, `scratchpad/audit/jornada-leigo.md`) em Agora, AutoCal, Mapa K, Curva K e Refino; Reset da Curva K em um toque com cópia antes. Worktree `wt-textos` (base `a6703aa8`).
+
+Decisões tomadas e registradas: telemetria fora da thread da ECU (F4b) descartada por medição (~43 µs/quadro na JVM; entrega já é latest-only fora da thread). Fila V7 de sugestões não exibida (sem alimentador desde a base; o Refino propõe a curva).
 
 ## Próximos passos, em ordem
 
-1. Integrar o refino rodada 2: validar isolado (JVM+lint, node UI, run_checks, sondas da revisão), commitar, push, `git ls-remote`.
-2. Corrigir em fatias pequenas os achados das duas auditorias que valem agora.
-3. F4b: JSON da telemetria fora da thread da ECU (`TelemetryForegroundService`) — depois do refino rodada 2.
-4. CI remota no SHA final (`ci.yml` e `autocal-blueprint-layout.yml` via `workflow_dispatch` no branch).
-5. Um APK (`verde-apk-now.yml`, `build_apk=true`) com SHA-256; teste no carro com o dono (classe 5).
-6. Decisões a levar ao dono: limiar de 1350 rpm para a curva aprender; gasolina própria primeiro × referência da ECU.
+1. Integrar `wt-textos`: validar isolado (node UI, unittest, run_checks, sem_rolagem com o estado novo do ponto do AutoCal, blueprint), commitar, push.
+2. CI remota no SHA final (`ci.yml` e `autocal-blueprint-layout.yml` via `workflow_dispatch` no branch).
+3. Um APK (`verde-apk-now.yml`, `build_apk=true`) com SHA-256; teste no carro com o dono (classe 5).
+4. Decisões a levar ao dono: limiar de 1350 rpm para a curva aprender; gasolina própria primeiro × referência da ECU; religar ou não a fila de sugestões do Mapa K no futuro; botões do AutoCal/Mapa K desabilitados sem ECU.
 
 ## Primeiro item ainda não provado
 
-Refino rodada 2 integrada e testada; depois CI remota verde no SHA.
+Textos da jornada integrados e testados; depois CI remota verde no SHA final.
