@@ -1,4 +1,4 @@
-# Checkpoint — Obsidian enxuto (2026-10-11 17:40 UTC)
+# Checkpoint — Obsidian enxuto (2026-10-11 17:45 UTC)
 
 Registro canônico para retomar sem reconstruir a história. Branch `work/platina-obsidian-enxuto`.
 
@@ -11,7 +11,7 @@ Registro canônico para retomar sem reconstruir a história. Branch `work/platin
 - Bytes de comando da ECU não mudam (UsbSerialManager, ResponseDrivenEcuEngine, AutoCalProtocol, KFactorManager, KWriteManager, AutoCalNativeActionManager — exceção: trava reset-nunca-pausa, decisão do dono 2026-10-08). Erro de transporte ≠ erro da ECU. Desconhecido = "—", nunca 0.
 - Um APK só, no fim (`verde-apk-now.yml`, `build_apk=true`), com SHA-256. Validação física só com o dono no carro.
 
-## Estado verificado (remoto = HEAD `3953de6e`)
+## Estado verificado (remoto = HEAD `131a7153`)
 
 | Commit | Fatia |
 |---|---|
@@ -36,22 +36,27 @@ Registro canônico para retomar sem reconstruir a história. Branch `work/platin
 | `63f58a81` | UX: fila de sugestões congelada fora da tela; Tolerâncias honestas (só água mínima); textos do Aprender/Sugestões/Ferramentas |
 | `5b798567` | perf: AutoCal sem leitura repetida no pacote de 1 s; Ferramentas não relê o disco a cada 2 s |
 | `3953de6e` | ponte: gravadores diretos e leituras síncronas sem tela fora do JS; faixa oculta não redesenha |
+| `36a3aa6c` | textos para leigo (Agora, AutoCal, Mapa K, Curva K, Refino); Curva K em 1,0 em um toque com cópia antes |
+| `7aae7e77` | aviso à direita acima da barra (não cobre os botões da esquerda) |
+| `f4eee9a8` | refino: a curva aprende tudo (lenta incluída) e sabe onde ajustar o quê (local separável → Mapa K) |
+| `131a7153` | ajuste local do Mapa K pela prévia Kotlin (sem conta no JS) |
 
-Provas: CI remota verde em `ef347b19` (`OMEGAS PLATINA CI` run 38155536387; `AutoCal Platina layout regression` run 38155537889). Locais em `3953de6e`: JVM 610/610 + lint 0 erros, node UI 174/174, unittest Python OK, `run_checks` PASS, `sem_rolagem_8_abas` PASS, blueprint AutoCal PASS.
+Provas locais em `131a7153`: JVM 619/619 + lint 0 erros, node UI 194/194, unittest Python OK, `run_checks` PASS, `sem_rolagem_8_abas` PASS (22 estados), blueprint AutoCal PASS. Replay real: REF E0 — 51 pares de lenta entram, 0 ações locais, teste cego 4,01% (atual 6,69%); AUTOMATCH E2 — lenta +20% não separável vai para a curva (3,5–4,5 ms sobem).
 
-## Em andamento (worktree local em scratchpad, nada publicado)
+## Decisões do dono registradas (2026-10-11)
 
-1. Textos para leigo e ajustes pequenos (auditoria da jornada, `scratchpad/audit/jornada-leigo.md`) em Agora, AutoCal, Mapa K, Curva K e Refino; Reset da Curva K em um toque com cópia antes. Worktree `wt-textos` (base `a6703aa8`).
-
-Decisões tomadas e registradas: telemetria fora da thread da ECU (F4b) descartada por medição (~43 µs/quadro na JVM; entrega já é latest-only fora da thread). Fila V7 de sugestões não exibida (sem alimentador desde a base; o Refino propõe a curva).
+- "A curva deve aprender tudo e saber onde ajustar o quê": sem piso de RPM; diferença só vira local (Mapa K) quando separável (≥ 8 pares, ≥ 3 visitas, outras colunas no mesmo t) e > 5% (sai em 4%).
+- Botões do AutoCal e do Mapa K sem ECU: não desabilitar.
+- Telemetria fora da thread da ECU (F4b): descartada por medição (~43 µs/quadro na JVM).
+- Fila V7 de sugestões não exibida (sem alimentador desde a base); o Refino propõe curva e ajuste local.
 
 ## Próximos passos, em ordem
 
-1. Integrar `wt-textos`: validar isolado (node UI, unittest, run_checks, sem_rolagem com o estado novo do ponto do AutoCal, blueprint), commitar, push.
-2. CI remota no SHA final (`ci.yml` e `autocal-blueprint-layout.yml` via `workflow_dispatch` no branch).
-3. Um APK (`verde-apk-now.yml`, `build_apk=true`) com SHA-256; teste no carro com o dono (classe 5).
-4. Decisões a levar ao dono: limiar de 1350 rpm para a curva aprender; gasolina própria primeiro × referência da ECU; religar ou não a fila de sugestões do Mapa K no futuro; botões do AutoCal/Mapa K desabilitados sem ECU.
+1. CI remota verde em `131a7153` (`ci.yml` e `autocal-blueprint-layout.yml`).
+2. Um APK (`verde-apk-now.yml`, `build_apk=true`) desse SHA, com SHA-256.
+3. Teste no carro com o dono (classe 5): lenta e cruzeiro no GNV, Refino propõe curva/ajuste local, gravação com readback, Desfazer.
+4. Ainda em aberto para decidir com dado do carro: gasolina própria primeiro × referência da ECU; semântica do Mapa K (multiplicativo? neutro 100 ou 128? interpola?).
 
 ## Primeiro item ainda não provado
 
-Textos da jornada integrados e testados; depois CI remota verde no SHA final.
+CI remota verde em `131a7153` e APK com SHA-256; depois validação física no carro.
