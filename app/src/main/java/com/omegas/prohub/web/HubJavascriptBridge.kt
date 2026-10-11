@@ -37,6 +37,7 @@ class HubJavascriptBridge(activity: MainActivity) {
     private val mapReadBusy = AtomicBoolean(false)
     private val scienceRefreshBusy = AtomicBoolean(false)
     private val uiSnapshots = RuntimeSnapshotBus()
+    private val presentGate = PresentSnapshotGate()
     @Volatile private var publishedScienceSignature = ""
 
     fun destroy() {
@@ -86,22 +87,39 @@ class HubJavascriptBridge(activity: MainActivity) {
      */
     @JavascriptInterface
     fun getPresentSnapshot(): String = activity?.serviceOrNull()?.let { service ->
+        presentEnvelope(service).toString()
+    } ?: unavailable()
+
+    /**
+     * Igual a [getPresentSnapshot], mas a UI informa a sequência do último quadro que recebeu. Sem quadro novo
+     * (nem runtime/GPS/sessão), devolve só `{ok, changed:false, revision, sequence, telemetryAgeMs}`, sem copiar
+     * nem serializar o estado; senão, o quadro completo com `changed:true`.
+     */
+    @JavascriptInterface
+    fun getPresentSnapshotIfChanged(lastSequence: Long): String {
+        val service = activity?.serviceOrNull() ?: return unavailable()
+        val store = try { service.telemetryStore } catch (_: Exception) { return unavailable() }
+        return presentGate.respond(store, lastSequence) { presentEnvelope(service) }
+    }
+
+    /** Quadro completo `{ok, revision, data}`: cópia latest-only do store + interpolação da célula atual. */
+    private fun presentEnvelope(service: TelemetryForegroundService): JSONObject {
         val root = try { JSONObject(service.telemetryStore.liveJson()) } catch (_: Exception) { JSONObject() }
         val live = root.optJSONObject("live") ?: JSONObject()
-        val interpolation = LearningGridProjection.liveInterpolationJson(
+        val interpolation = presentGate.interpolation(
             rpm = live.optDouble("rpm", 0.0),
             petrolMs = live.optDouble("petrol_ms", live.optDouble("petrolMs", 0.0)),
             mapBar = live.optDouble("load_bar", live.optDouble("map_bar", 0.0)),
+            valid = root.optBoolean("valid", false),
             sequence = root.optLong("sequence", 0L),
             updatedAt = root.optLong("updatedAt", 0L),
-            telemetryValid = root.optBoolean("valid", false),
         )
         root.put("ok", true)
             .put("telemetryAgeMs", root.optLong("ageMs", -1L))
             .put("interpolation", interpolation)
         uiSnapshots.publishPresent(root)
-        uiSnapshots.presentJson().toString()
-    } ?: unavailable()
+        return uiSnapshots.presentJson()
+    }
 
     /**
      * ScienceSnapshot nunca reconstrói ciência na thread da WebView. A chamada

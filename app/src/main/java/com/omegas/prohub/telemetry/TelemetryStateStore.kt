@@ -147,6 +147,9 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
     fun telemetryCopy(): JSONObject = synchronized(lock) {
         if (valid) JSONObject(telemetry.toString()) else JSONObject()
     }
+
+    /** Sequência atual sem copiar nada: toda mudança de estado (quadro, runtime, GPS, sessão) a incrementa. */
+    fun sequenceNow(): Long = sequence.get()
     fun sessionId(): Long = synchronized(lock) { sessionId }
     fun isValid(): Boolean = synchronized(lock) { valid }
     fun ageMs(): Long = synchronized(lock) {

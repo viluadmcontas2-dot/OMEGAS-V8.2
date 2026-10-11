@@ -21,6 +21,25 @@
     catch (error) { return { ok: false, error: error && error.message ? error.message : String(error) }; }
   }
 
+  function finiteNumber(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  /**
+   * Último quadro guardado, com a idade de agora: a do Kotlin (resposta leve) ou, se não vier, a guardada mais o
+   * tempo passado no relógio JS. Idade desconhecida (-1/ausente) continua desconhecida. Objetos novos a cada
+   * chamada, para quem compara referência ver a idade mudar.
+   */
+  function cachedPresent(cache, reply) {
+    const nativeAge = finiteNumber(reply.telemetryAgeMs);
+    const ageMs = nativeAge !== null ? nativeAge
+      : cache.ageMs !== null && cache.ageMs >= 0 ? cache.ageMs + Math.max(0, Date.now() - cache.at) : cache.ageMs;
+    const data = cache.envelope.data;
+    return { ...cache.envelope, changed: false, data: ageMs === null ? { ...data } : { ...data, ageMs, telemetryAgeMs: ageMs } };
+  }
+
   function demoTelemetry() {
     const phase = (Date.now() / 1000) % 12;
     const rpm = Math.round(1700 + Math.sin(phase) * 620);
@@ -173,6 +192,7 @@
       this.demoMapState = demoMap();
       this.demoCurveState = demoCurve();
       this.demoScienceRevision = 0;
+      this.presentCache = null;
     }
 
     isDemo() { return this.demo; }
@@ -186,9 +206,35 @@
       };
       return invoke(this.native, 'getStatus', [], {});
     }
+    /**
+     * Quadro ao vivo. Com a ponte que conhece `getPresentSnapshotIfChanged`, informa a sequência do último quadro
+     * recebido: sem quadro novo o Kotlin responde só `{changed:false, telemetryAgeMs}` (não monta nem serializa o
+     * estado) e aqui volta o último quadro guardado com a idade andando. Quadro novo, erro ou ponte antiga: como antes.
+     */
     presentSnapshot() {
       if (this.demo) return { ok: true, revision: Date.now(), data: demoTelemetry(), demo: true };
-      return invoke(this.native, 'getPresentSnapshot', [], { ok: false, revision: 0, data: {} });
+      if (!this.native || typeof this.native.getPresentSnapshotIfChanged !== 'function') {
+        return invoke(this.native, 'getPresentSnapshot', [], { ok: false, revision: 0, data: {} });
+      }
+      const cache = this.presentCache;
+      const reply = invoke(this.native, 'getPresentSnapshotIfChanged', [cache ? cache.sequence : -1], { ok: false, revision: 0, data: {} });
+      if (!reply || reply.ok === false) {
+        this.presentCache = null;
+        return reply;
+      }
+      if (reply.changed === false) {
+        if (cache) return cachedPresent(cache, reply);
+        return this.rememberPresent(invoke(this.native, 'getPresentSnapshot', [], { ok: false, revision: 0, data: {} }));
+      }
+      return this.rememberPresent(reply);
+    }
+    rememberPresent(envelope) {
+      const data = envelope && envelope.ok !== false && envelope.data && typeof envelope.data === 'object' ? envelope.data : null;
+      const sequence = data ? finiteNumber(data.sequence) : null;
+      this.presentCache = sequence !== null && sequence >= 0
+        ? { envelope, sequence, ageMs: finiteNumber(data.telemetryAgeMs ?? data.ageMs), at: Date.now() }
+        : null;
+      return envelope;
     }
     scienceSnapshotSince(revision) {
       if (this.demo) {
