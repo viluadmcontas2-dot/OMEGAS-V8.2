@@ -28,7 +28,9 @@ assert.match(css, /\.primary,[^{]+\{[^}]*min-height:44px/s, 'controles operacion
 assert.match(css, /\.nudge-row button\s*\{[^}]*min-height:44px/s);
 assert.match(css, /\.field-label>span\s*\{[^}]*font-size:11px/s);
 assert.match(css, /\.surface-toolbar\s*\{[^}]*font-size:11px/s);
-assert.match(css, /\.side-nav button span\s*\{[^}]*font-size:14px/s);
+// Navegação inferior aprovada pelo dono (2026-10-11): rótulo das abas em 15px, alvo de 64px.
+assert.match(css, /\.side-nav button span\s*\{[^}]*font-size:15px/s);
+assert.match(css, /\.side-nav button\s*\{[^}]*height:64px/s);
 assert.match(css, /\.source-status\s*\{[^}]*min-height:40px[^}]*font-size:11px/s);
 
 assert.match(obd, /\.curve-learning-axis\s*\{[^}]*font-size:11px/s);

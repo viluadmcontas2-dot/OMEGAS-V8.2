@@ -124,6 +124,7 @@
       renderedRoute = state.route;
       const meta = routeMeta[state.route] || routeMeta.dashboard;
       document.getElementById('app')?.classList.toggle('autocal-focus', state.route === 'autocal' || state.route === 'refino');
+      document.getElementById('app')?.classList.toggle('now-focus', state.route === 'dashboard');
       setText('routeEyebrow', meta[0]);
       setText('routeTitle', meta[1]);
       routeButtons.forEach(button => {

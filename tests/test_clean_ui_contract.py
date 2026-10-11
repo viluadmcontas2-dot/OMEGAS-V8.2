@@ -67,8 +67,9 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('store.patch({ telemetry, tick })', self.app)
 
     def test_low_end_1280x720_design_budget(self):
-        self.assertIn('--rail-width:202px', self.css)
-        self.assertIn('grid-template-columns:var(--rail-width) minmax(0,1fr)', self.css)
+        # Navegação inferior aprovada pelo dono (2026-10-11): uma linha de 84 px embaixo.
+        self.assertIn('--nav-height:84px', self.css)
+        self.assertIn('grid-template-rows:minmax(0,1fr) var(--nav-height)', self.css)
         self.assertIn('contain:layout paint style', self.css)
         combined_css = self.css + self.obd_css + self.calibration_obd_css + self.refine_css
         for forbidden in ('backdrop-filter', '@keyframes', 'filter:brightness', 'linear-gradient', 'radial-gradient'):
