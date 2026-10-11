@@ -109,7 +109,7 @@ test('Aprender: Decisões em aba própria; sem Detalhes, sem Diagnóstico técni
   screen.historyPane = { innerHTML: '' };
   screen.decisionHistory = [{ time: '10:00:00', level: 'accepted', label: 'Evidência aceita', reason: 'Amostra forte', code: 'SAMPLE_ACCEPTED', fuel: 'Gasolina', cell: '2×2' }];
   screen.renderCollection({ learningDecision: { state: 'FORMING_SAMPLE', reason: 'Formando', frame_count: 7, desired_frames: 10 }, telemetry: { live: { rpm: 2500 } } });
-  assert.match(screen.collectionPane.innerHTML, /DECISÃO DO NÚCLEO[\s\S]*CONDIÇÃO AGORA/);
+  assert.match(screen.collectionPane.innerHTML, /MEDIÇÃO AGORA[\s\S]*CONDIÇÃO AGORA/);
   assert.doesNotMatch(screen.collectionPane.innerHTML, /ÚLTIMAS DECISÕES|FORMING_SAMPLE|OBSERVING_ENGINE/, 'Coleta sem histórico e sem código cru');
   assert.match(screen.historyPane.innerHTML, /ÚLTIMAS DECISÕES OBSERVADAS[\s\S]*Amostra forte/);
   assert.doesNotMatch(screen.historyPane.innerHTML, /SAMPLE_ACCEPTED/, 'Decisões sem código cru');
@@ -120,7 +120,9 @@ test('Aprender: Decisões em aba própria; sem Detalhes, sem Diagnóstico técni
   tolerance.renderTolerances({ learningTolerance: { policy: { mapOscillationBar: 0.035 }, controlModel: { minimumWaterC: 60, levels: ['A', 'B'], controls: [{ id: 'rpm', title: 'Rotação', description: 'Quanto varia', selected: 1 }] } } });
   const pane = tolerance.tolerancePane.innerHTML;
   assert.doesNotMatch(pane, />Detalhes<|LIMITES CONFIGURADOS/, 'Tolerâncias só com os ajustes');
-  assert.match(pane, /class="tolerance-actions"><button type="button" class="primary" data-apply-tolerances>Aplicar tolerâncias<\/button><button type="button" class="quiet-button" data-reset-tolerances>Restaurar padrão<\/button><\/div>/, 'botões que gravam intactos');
+  // Tolerâncias fixas no Kotlin (o "Aplicar tolerâncias" antigo fingia): só a água mínima, que muda de verdade (dono, 2026-10-11).
+  assert.match(pane, /class="tolerance-actions"><button type="button" class="primary" data-apply-water>Aplicar temperatura<\/button><\/div>/);
+  assert.doesNotMatch(pane, /data-apply-tolerances|data-reset-tolerances|data-tolerance-profile/, 'sem controles que não aplicam nada');
   assert.match(pane, /Nada aqui escreve na ECU\./);
 
   const cell = Object.create(proto);
@@ -128,7 +130,7 @@ test('Aprender: Decisões em aba própria; sem Detalhes, sem Diagnóstico técni
   cell.cellPane = { innerHTML: '', dataset: {}, querySelector: () => ({ addEventListener: () => {} }) };
   cell.renderDetail({ learning: {} }, 0, 0);
   assert.doesNotMatch(cell.cellPane.innerHTML, /Diagnóstico técnico|<details/);
-  assert.match(cell.cellPane.innerHTML, /Abrir o editor não escreve na ECU\. Revisão, confirmação, ACK e readback continuam obrigatórios\./);
+  assert.match(cell.cellPane.innerHTML, /Abrir o Mapa K não grava nada\./); // (dono, 2026-10-11: texto para leigo)
 });
 
 function toolsHarness(open) {
@@ -159,7 +161,7 @@ test('Ferramentas: cartões + disclosures que abrem no lugar; log em páginas de
   drawers.renderTools(state);
   const out = host.innerHTML;
   for (const card of ['background-health-card', 'diagnostic-recorder-card', 'learning-portability-card']) assert.match(out, new RegExp('<section class="' + card + '"'));
-  assert.match(out, /<details class="tool-sessions" open>[\s\S]*Sessões gravadas \(9\)[\s\S]*class="recorded-session-list"/, 'lista de sessões dentro do disclosure, estado aberto preservado');
+  assert.match(out, /<details class="tool-sessions" open>[\s\S]*Gravações \(9\)[\s\S]*class="recorded-session-list"/, 'lista de sessões dentro do disclosure, estado aberto preservado');
   assert.equal((out.match(/data-export-session=/g) || []).length, 8, 'até 8 sessões, como antes');
   assert.match(out, /<details class="diagnostic-settings" >/);
   assert.match(out, /<details class="tool-logs live-log-console" >/);

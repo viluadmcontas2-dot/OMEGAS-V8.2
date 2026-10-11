@@ -65,7 +65,7 @@
   }
   function differenceText(error, deadband) {
     const value = finite(error);
-    if (value === null) return 'sem par equivalente válido';
+    if (value === null) return 'sem comparação ainda';
     const sign = value > 0 ? '+' : '';
     if (Math.abs(value) <= deadband) return `${sign}${fmt(value, 1)}% · equivalente`;
     return `${sign}${fmt(value, 1)}% · precisa ${value > 0 ? 'mais' : 'menos'} GNV`;
@@ -92,11 +92,14 @@
     if (state === 'FUEL_VERIFYING') return 'Confirmando combustível';
     if (state === 'FUEL_STABLE') return 'Combustível confirmado';
     if (state === 'ENGINE_WARMING') return 'Aguardando temperatura';
-    if (state === 'SAMPLE_REJECTED') return 'Janela recusada';
-    if (state === 'WINDOW_TIMEOUT') return 'Janela reiniciada';
-    if (state === 'TELEMETRY_GAP') return 'Telemetria interrompida';
+    if (state === 'SAMPLE_REJECTED') return 'Medição recusada';
+    if (state === 'WINDOW_TIMEOUT') return 'Medição reiniciada';
+    if (state === 'TELEMETRY_GAP') return 'ECU sem dados';
     if (state === 'CUTOFF') return 'Aprendizado pausado';
-    return state.replaceAll('_', ' ').toLowerCase().replace(/^./, char => char.toUpperCase());
+    if (state === 'ENGINE_OFF') return 'Motor desligado';
+    if (state === 'FUEL_TRANSITION') return 'Trocando de combustível';
+    // Sem código cru nem inglês na tela (dono, 2026-10-11): o resto, inclusive OBSERVING_ENGINE, é observar o motor.
+    return 'Observando o motor';
   }
 
   class LearningScreen {
@@ -209,13 +212,13 @@
       this.grid.setAxes?.(axes.rpmBins || [], axes.petrolBins || []);
       const model = this.buildEvidenceModel(maps);
       const evidence = evidenceIndex(model);
-      const layer = state.learningLayer || 'comparison';
+      // A camada "Sugestão" saiu: a fila que a alimentava está congelada desde a base (ver app.js, withoutFrozenQueue).
+      const layer = ['petrol', 'cng', 'comparison'].includes(state.learningLayer) ? state.learningLayer : 'comparison';
       this.root.querySelectorAll('[data-learning-layer]').forEach(button => button.classList.toggle('active', button.dataset.learningLayer === layer));
 
       const comparisons = indexByCell(maps.comparisons);
       const stability = indexByCell(state.calibrationState?.learningStability?.map || []);
       const mapSuggestions = persistentMapSuggestions(state);
-      const persistentItems = Array.isArray(state.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
 
       this.grid.cells.forEach((cell, cellKey) => {
         const learned = evidence.get(cellKey);
@@ -286,12 +289,6 @@
         const cngCount = model.counts.cng + model.counts.comparable;
         coverage.textContent = `${petrolCount} gasolina · ${cngCount} GNV atual · ${model.counts.ready} comparáveis`;
       }
-      const suggestionSummary = document.getElementById('learningSuggestionSummary');
-      if (suggestionSummary) {
-        const globalCount = persistentItems.filter(item => item.lifecycle === 'PENDING' && item.target === 'CURVE_K' && item.actionable === true).length;
-        const localCount = persistentItems.filter(item => item.lifecycle === 'PENDING' && item.target === 'MAP_K' && item.actionable === true).length;
-        suggestionSummary.textContent = `${globalCount} global · ${localCount} local`;
-      }
 
       this.renderCollection(state);
       this.renderTolerances(state);
@@ -314,7 +311,7 @@
       const fuel = fuelLabel(decision.fuel_confirmed || live.fuel);
       const reason = restoring
         ? (learningStatus.reason || 'Restaurando conhecimento persistido em segundo plano.')
-        : (decision.reason || live.sample_reason || 'Aguardando decisão do núcleo.');
+        : (decision.reason || live.sample_reason || 'Aguardando a próxima medição.');
       const quality = finite(decision.quality);
       const row = finite(decision.cell_row ?? cell.row);
       const column = finite(decision.cell_column ?? cell.column);
@@ -331,20 +328,20 @@
 
       this.collectionPane.innerHTML = `
         <section class="learning-decision-card" data-eligible="${eligible ? 'true' : 'false'}">
-          <div class="decision-top"><div><small>DECISÃO DO NÚCLEO</small><h3>${restoring ? 'Learning restaurando' : escapeHtml(stateLabel(decision))}</h3></div><span>${restoring ? 'EM SEGUNDO PLANO' : (eligible ? 'CONTA' : 'NÃO CONTA AINDA')}</span></div>
+          <div class="decision-top"><div><small>MEDIÇÃO AGORA</small><h3>${restoring ? 'Recuperando o aprendizado' : escapeHtml(stateLabel(decision))}</h3></div><span>${restoring ? 'EM SEGUNDO PLANO' : (eligible ? 'CONTA' : 'AINDA NÃO CONTA')}</span></div>
           <p>${escapeHtml(reason)}</p>
           <div class="collection-progress"><i style="width:${progress.toFixed(1)}%"></i></div>
           <div class="collection-facts"><span><b>${count}/${desired || '—'}</b> leituras</span><span>mínimo ${minimum || '—'}</span><span>${fuel}</span><span>${quality === null ? 'qualidade —' : `qualidade ${Math.round(quality * 100)}%`}</span></div>
         </section>
         <section class="learning-current-condition">
-          <header><div><small>CONDIÇÃO AGORA</small><h3>O que o núcleo está observando</h3></div>${row !== null && column !== null && row >= 0 && column >= 0 ? `<span>Célula ${row + 1}×${column + 1}</span>` : ''}</header>
+          <header><div><small>CONDIÇÃO AGORA</small><h3>O que o app está medindo</h3></div>${row !== null && column !== null && row >= 0 && column >= 0 ? `<span>Célula ${row + 1}×${column + 1}</span>` : ''}</header>
           <div class="condition-grid">
             <div><small>RPM</small><b>${rpm === null ? '—' : Math.round(rpm).toLocaleString('pt-BR')}</b></div>
-            <div><small>Petrol Inj.</small><b>${fmt(petrolMs, 2)} ms</b></div>
-            <div><small>MAP</small><b>${fmt(mapBar, 3)} bar</b></div>
-            <div><small>Pressão GNV</small><b>${fmt(pressure, 3)} bar</b></div>
+            <div><small>Injeção</small><b>${petrolMs === null ? '—' : `${fmt(petrolMs, 2)} ms`}</b></div>
+            <div><small>MAP</small><b>${mapBar === null ? '—' : `${fmt(mapBar, 3)} bar`}</b></div>
+            <div><small>Pressão GNV</small><b>${pressure === null ? '—' : `${fmt(pressure, 3)} bar`}</b></div>
             <div><small>Água</small><b>${water === null ? '—' : `${fmt(water, 0)} °C`}</b></div>
-            <div><small>Janela</small><b>${age === null ? '—' : `${fmt(age / 1000, 1)} s`}${timeout ? ` / ${fmt(timeout / 1000, 1)} s` : ''}</b></div>
+            <div><small>Tempo da medição</small><b>${age === null ? '—' : `${fmt(age / 1000, 1)} s`}${timeout ? ` / ${fmt(timeout / 1000, 1)} s` : ''}</b></div>
           </div>
         </section>
       `;
@@ -354,7 +351,7 @@
           <section class="learning-decision-history">
             <header><div><small>ÚLTIMAS DECISÕES OBSERVADAS</small><h3>O que acabou de acontecer com a coleta</h3></div><span>${this.decisionHistory.length}/6</span></header>
             <div class="decision-history-list">${historyRows}</div>
-            <p>O registro persistente completo continua no SessionRecorder em Ferramentas.</p>
+            <p>O histórico completo fica em Ferramentas.</p>
           </section>
         `;
       }
@@ -364,61 +361,43 @@
       if (!this.tolerancePane) return;
       const settings = state.learningTolerance || {};
       const model = settings.controlModel || {};
-      const policy = settings.policy || settings.applied || {};
-      const levels = Array.isArray(model.levels) ? model.levels : [];
-      const controls = Array.isArray(model.controls) ? model.controls : [];
-      const signature = JSON.stringify({ levels, controls, minimumWaterC: model.minimumWaterC, ok: settings.ok, policy });
+      const water = finite(model.minimumWaterC);
+      const signature = JSON.stringify({ water, ok: settings.ok });
       if (signature === this.toleranceSignature) return;
       this.toleranceSignature = signature;
-      if (!controls.length || !levels.length) {
-        this.tolerancePane.innerHTML = '<div class="detail-empty"><b>Tolerâncias indisponíveis</b><span>Aparecem aqui quando o serviço estiver disponível.</span></div>';
+      if (settings.ok === false || water === null) {
+        this.tolerancePane.innerHTML = '<div class="detail-empty"><b>Ajustes indisponíveis</b><span>Aparecem aqui quando o serviço estiver disponível.</span></div>';
         return;
       }
-      // Sem "Detalhes" (dono, 2026-10-11: não preciso da lógica por trás): só os ajustes e os botões.
+      // As regras de estabilidade são fixas no Kotlin (o "Aplicar" antigo dizia "atualizadas" sem mudar nada).
+      // Só a água mínima muda de verdade (dono, 2026-10-11: só o que funciona, sem fingir).
       this.tolerancePane.innerHTML = `
-        <div class="tolerance-heading"><div><small>COLETA</small><h3>Quão rigoroso o aprendizado deve ser</h3></div></div>
-        <div class="tolerance-profiles"><button type="button" data-tolerance-profile="1">Rigoroso</button><button type="button" data-tolerance-profile="2" class="active">Equilibrado</button><button type="button" data-tolerance-profile="3">Flexível</button></div>
+        <div class="tolerance-heading"><div><small>COLETA</small><h3>Quando o aprendizado conta</h3></div></div>
+        <div class="editor-rule"><b>Regras de estabilidade fixas.</b><span>Rotação, injeção e MAP precisam ficar estáveis para a medição contar; isso não muda aqui.</span></div>
         <div class="tolerance-controls">
-          ${controls.map(control => `<label><span><b>${escapeHtml(control.title)}</b><small>${escapeHtml(control.description)}</small></span><select data-tolerance-control="${escapeHtml(control.id)}">${levels.map((label, index) => `<option value="${index}" ${Number(control.selected) === index ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>`).join('')}
-          <label><span><b>Temperatura mínima da água</b><small>Abaixo disso o núcleo aguarda aquecimento antes de aceitar evidência.</small></span><input id="learningMinimumWaterInput" type="number" min="20" max="100" step="1" value="${Number(model.minimumWaterC) || 60}"></label>
+          <label><span><b>Temperatura mínima da água</b><small>Abaixo disso o app espera o motor aquecer antes de aprender.</small></span><input id="learningMinimumWaterInput" type="number" min="20" max="100" step="1" value="${water}"></label>
         </div>
-        <div class="tolerance-actions"><button type="button" class="primary" data-apply-tolerances>Aplicar tolerâncias</button><button type="button" class="quiet-button" data-reset-tolerances>Restaurar padrão</button></div>
-        <div class="editor-rule"><b>Nada aqui escreve na ECU.</b><span>Alterar tolerância reinicia a janela atual, mas nunca inicia escrita em Mapa K ou Curva K.</span></div>
+        <div class="tolerance-actions"><button type="button" class="primary" data-apply-water>Aplicar temperatura</button></div>
+        <div class="editor-rule"><b>Nada aqui escreve na ECU.</b><span>Muda só quando o app começa a aprender.</span></div>
       `;
-      this.tolerancePane.querySelectorAll('[data-tolerance-profile]').forEach(button => {
-        button.addEventListener('click', () => {
-          const level = Number(button.dataset.toleranceProfile);
-          this.tolerancePane.querySelectorAll('[data-tolerance-control]').forEach(select => { select.value = String(level); });
-          this.tolerancePane.querySelectorAll('[data-tolerance-profile]').forEach(item => item.classList.toggle('active', item === button));
-        });
+      this.tolerancePane.querySelector('[data-apply-water]')?.addEventListener('click', () => this.applyMinimumWater());
+    }
+
+    applyMinimumWater() {
+      if (!this.api?.setLearningMinimumWaterC) return;
+      const value = Number(document.getElementById('learningMinimumWaterInput')?.value);
+      const result = this.api.setLearningMinimumWaterC(value);
+      if (!result || result.ok === false) {
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível aplicar a temperatura.' } });
+        return;
+      }
+      const applied = finite(result.applied ?? result.minimumWaterC);
+      this.toleranceSignature = '';
+      const current = this.store.get().learningTolerance || {};
+      this.store.patch({
+        learningTolerance: { ...current, controlModel: { ...(current.controlModel || {}), minimumWaterC: applied } },
+        alert: { level: 'ok', message: applied === null ? 'Temperatura aplicada.' : `Aprende a partir de ${applied} °C.` },
       });
-      this.tolerancePane.querySelector('[data-apply-tolerances]')?.addEventListener('click', () => this.applyTolerances());
-      this.tolerancePane.querySelector('[data-reset-tolerances]')?.addEventListener('click', () => this.resetTolerances());
-    }
-
-    applyTolerances() {
-      if (!this.api) return;
-      const controls = {};
-      this.tolerancePane?.querySelectorAll('[data-tolerance-control]').forEach(select => { controls[select.dataset.toleranceControl] = Number(select.value); });
-      controls.minimumWaterC = Number(document.getElementById('learningMinimumWaterInput')?.value || 60);
-      const result = this.api.setLearningToleranceControls(controls);
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível aplicar as tolerâncias.' } });
-        return;
-      }
-      this.toleranceSignature = '';
-      this.store.patch({ learningTolerance: result || {}, alert: { level: 'ok', message: 'Tolerâncias de coleta atualizadas.' } });
-    }
-
-    resetTolerances() {
-      if (!this.api) return;
-      const result = this.api.resetLearningToleranceSettings();
-      if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não foi possível restaurar as tolerâncias.' } });
-        return;
-      }
-      this.toleranceSignature = '';
-      this.store.patch({ learningTolerance: result || {}, alert: { level: 'ok', message: 'Tolerâncias restauradas para o padrão.' } });
     }
 
     renderDetail(state, row, column) {
@@ -457,7 +436,7 @@
       if (agora.includes('TRANSITION')) agora = 'Transição';
       else if (agora.includes('PETROL') || agora.includes('GASOLINA')) agora = 'Gasolina';
       else if (agora.includes('CNG') || agora.includes('GNV') || agora === 'GAS') agora = 'GNV';
-      else if (agora === 'UNKNOWN' || agora === 'DESCONHECIDO' || !agora) agora = 'Sem telemetria';
+      else if (agora === 'UNKNOWN' || agora === 'DESCONHECIDO' || !agora) agora = 'Sem dados da ECU';
 
       const mapVal = cngMap !== null ? cngMap : (petrolMap !== null ? petrolMap : null);
       const condicao = `${rpmLabel === null ? 'RPM —' : `${Math.round(rpmLabel).toLocaleString('pt-BR')} RPM`} · ${mapVal === null ? 'MAP —' : `MAP ${fmt(mapVal, 3)} bar`}`;
@@ -494,7 +473,15 @@
       const mapAddress = mapAddressMs !== null && mapAddressRpm !== null
         ? `${fmt(mapAddressMs, 1)} ms · ${Math.round(mapAddressRpm).toLocaleString('pt-BR')} RPM · condição GNV observada`
         : 'aguardando endereço físico confiável';
-      // Só o que a célula diz em português (dono, 2026-10-11: sem lista técnica; só usar e validar).
+      // Só o que a célula diz em português (dono, 2026-10-11: sem lista técnica; só usar e validar). Linhas da fila de
+      // sugestões (estável, tendência, endereço, valor K) só aparecem quando há dado: hoje a fila não é alimentada.
+      const row4 = (label, value) => `<div><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`;
+      const queueRows = [
+        stability ? row4('Diferença estável', differenceStable) : '',
+        stability ? row4('Tendência recente', differenceTrend) : '',
+        suggestion ? row4('Endereço Mapa K', mapAddress) : '',
+        suggestion ? row4('Novo valor K sugerido', targetK) : '',
+      ].join('');
       this.cellPane.innerHTML = `
         <div class="detail-eyebrow">CÉLULA ${row + 1} × ${column + 1}</div>
         <dl class="detail-list enhanced-detail-list">
@@ -503,19 +490,15 @@
           <div><dt>Gasolina esperada</dt><dd>${escapeHtml(gasolinaEsperada)}</dd></div>
           <div><dt>No GNV agora</dt><dd>${escapeHtml(noGnvAgora)}</dd></div>
           <div><dt>Diferença agora</dt><dd>${escapeHtml(differenceNow)}</dd></div>
-          <div><dt>Diferença estável</dt><dd>${escapeHtml(differenceStable)}</dd></div>
-          <div><dt>Tendência recente</dt><dd>${escapeHtml(differenceTrend)}</dd></div>
-          <div><dt>Endereço Mapa K</dt><dd>${escapeHtml(mapAddress)}</dd></div>
-          <div><dt>Novo valor K sugerido</dt><dd>${escapeHtml(targetK)}</dd></div>
+          ${queueRows}
           <div><dt>Confiança</dt><dd>${escapeHtml(confianca)}</dd></div>
         </dl>
-        <small class="map-address-contract">A gasolina esperada é a referência da diferença; o Mapa K é endereçado pela condição GNV observada (RPM × Petrol Inj. no GNV).</small>
         <div class="learning-cell-actions">
-          <button class="primary" type="button" data-edit-learning-cell ${suggestion?.actionable ? '' : 'disabled'}>
-            ${suggestion?.actionable ? 'Revisar no Mapa K' : 'Sem sugestão segura'}
+          <button class="primary" type="button" data-edit-learning-cell>
+            ${suggestion?.actionable ? 'Revisar no Mapa K' : 'Abrir esta célula no Mapa K'}
           </button>
         </div>
-        <small class="manual-edit-contract">Abrir o editor não escreve na ECU. Revisão, confirmação, ACK e readback continuam obrigatórios.</small>
+        <small class="manual-edit-contract">Abrir o Mapa K não grava nada.</small>
       `;
       this.cellPane.querySelector('[data-edit-learning-cell]')?.addEventListener('click', () => {
         this.router.navigate('map', {

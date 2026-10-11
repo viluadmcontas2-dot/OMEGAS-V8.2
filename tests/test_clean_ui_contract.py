@@ -107,7 +107,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('data-edit-learning-cell', self.learning_screen)
         self.assertIn("this.router.navigate('map'", self.learning_screen)
         self.assertIn("origin: 'learning'", self.learning_screen)
-        self.assertIn('Abrir o editor não escreve na ECU', self.learning_screen)
+        self.assertIn('Abrir o Mapa K não grava nada', self.learning_screen)  # (dono, 2026-10-11: texto para leigo)
         for forbidden in ('writeMap(', 'startKBatchWrite(', 'writeCurve('):
             self.assertNotIn(forbidden, self.learning_screen)
 
@@ -124,8 +124,10 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('dashGas', self.dashboard)
 
     def test_learning_map_curve_and_obd_have_expected_contracts(self):
-        for layer in ('petrol', 'cng', 'comparison', 'suggestion'):
+        for layer in ('petrol', 'cng', 'comparison'):
             self.assertIn(f'data-learning-layer="{layer}"', self.html)
+        # Camada "Sugestão" saiu (dono, 2026-10-11): a fila que a alimentava está congelada desde a base.
+        self.assertNotIn('data-learning-layer="suggestion"', self.html)
         self.assertIn('id="mapSelectAll"', self.html)
         self.assertIn('id="curveChart"', self.html)
 
@@ -199,7 +201,7 @@ class CleanUiContract(unittest.TestCase):
 
     def test_suggestions_route_is_review_navigation_not_auto_apply(self):
         self.assertIn('data-screen="suggestions"', self.html)
-        self.assertIn('Abrir nunca escreve.', self.html)
+        self.assertIn('Abrir não grava nada.', self.html)  # (dono, 2026-10-11: texto para leigo)
         for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite(', 'autoApply', 'protocolTransaction'):
             self.assertNotIn(forbidden, self.suggestion_model)
 

@@ -333,29 +333,17 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getLearningToleranceSettings(): String = learningTolerances.toJson().toString()
 
+    /**
+     * As tolerâncias de estabilidade são fixas pelo sistema (LearningToleranceSettings ignora o payload): a ponte diz
+     * isso em vez de registrar "atualizadas" no log e na sessão sem ter mudado nada. A água mínima tem ajuste próprio.
+     */
     @JavascriptInterface
-    fun setLearningToleranceSettings(payload: String): String = try {
-        val applied = learningTolerances.update(JSONObject(payload))
-        activity?.serviceOrNull()?.let { service ->
-            service.log.add("INFO", "LEARNING-NATIVE", "Tolerâncias de aprendizado atualizadas")
-            service.sessionRecorder.record(
-                "settings_changed",
-                "learning_tolerances",
-                JSONObject().put("policy", applied.toJson()),
-                force = true,
-            )
-        }
-        learningTolerances.toJson().put("applied", applied.toJson()).toString()
-    } catch (error: Exception) {
-        JSONObject().put("ok", false).put("error", error.message ?: "Política inválida").toString()
-    }
+    fun setLearningToleranceSettings(payload: String): String = learningTolerances.toJson()
+        .put("ok", false).put("fixed", true).put("error", "Tolerâncias fixas pelo sistema").toString()
 
     @JavascriptInterface
-    fun resetLearningToleranceSettings(): String {
-        val applied = learningTolerances.reset()
-        activity?.serviceOrNull()?.log?.add("INFO", "LEARNING-NATIVE", "Tolerâncias restauradas para o padrão seguro")
-        return learningTolerances.toJson().put("applied", applied.toJson()).toString()
-    }
+    fun resetLearningToleranceSettings(): String = learningTolerances.toJson()
+        .put("ok", false).put("fixed", true).put("error", "Tolerâncias fixas pelo sistema").toString()
 
     @JavascriptInterface fun restartEngine(): Boolean = activity?.serviceOrNull()?.restartEngine() ?: false
     @JavascriptInterface fun connectUsb(deviceName: String): Boolean =

@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, '../..');
 const source = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/learning.js'), 'utf8');
 
 for (const label of [
-  'DECISÃO DO NÚCLEO',
+  'MEDIÇÃO AGORA', // antes "DECISÃO DO NÚCLEO" (dono, 2026-10-11: texto para leigo)
   'CONDIÇÃO AGORA',
   'ÚLTIMAS DECISÕES OBSERVADAS',
   'COLETA',
@@ -21,8 +21,8 @@ for (const label of [
 }
 // Sem lista técnica na célula (dono, 2026-10-11: só usar e validar).
 for (const removed of ['Diagnóstico técnico', 'Histórico GNV', 'LIMITES CONFIGURADOS']) assert.equal(source.includes(removed), false, `não deve voltar: ${removed}`);
-assert.equal(source.includes('sem par equivalente válido'), true);
+assert.equal(source.includes('sem comparação ainda'), true);
 assert.equal(source.includes('Nada aqui escreve na ECU'), true);
-assert.equal(source.includes('Abrir o editor não escreve na ECU'), true);
+assert.equal(source.includes('Abrir o Mapa K não grava nada'), true);
 assert.equal(source.includes("router.navigate('map'"), true);
 console.log('LEARNING_UNDERSTANDING_CONTRACT=PASS');

@@ -107,7 +107,7 @@ test('restore do Learning é explícito sem esconder a telemetria ao vivo', () =
     },
   });
 
-  assert.match(screen.collectionPane.innerHTML, /Learning restaurando/);
+  assert.match(screen.collectionPane.innerHTML, /Recuperando o aprendizado/);
   assert.match(screen.collectionPane.innerHTML, /EM SEGUNDO PLANO/);
   // Sem código cru na tela (dono, 2026-10-11): o estado aparece em português.
   assert.doesNotMatch(screen.collectionPane.innerHTML, /LEARNING_RESTORE_PENDING|OBSERVING_ENGINE/);
@@ -141,7 +141,7 @@ test('payload de sugestão mostra tempos em ms e o novo valor K sem confundir as
   assert.match(screen.cellPane.innerHTML, /Diferença.*\+8,1%/);
   assert.match(screen.cellPane.innerHTML, /Novo valor K sugerido.*108/);
   assert.doesNotMatch(screen.cellPane.innerHTML, /GNV Alvo/);
-  assert.match(screen.cellPane.innerHTML, /Abrir o editor não escreve na ECU/);
+  assert.match(screen.cellPane.innerHTML, /Abrir o Mapa K não grava nada/);
 });
 
 test('endereço do Mapa K deixa explícito que segue a condição GNV observada, não a gasolina alvo', () => {
@@ -175,7 +175,7 @@ test('endereço do Mapa K deixa explícito que segue a condição GNV observada,
   assert.match(screen.cellPane.innerHTML, /No GNV agora.*6,00 ms/s);
   assert.match(screen.cellPane.innerHTML, /Endereço Mapa K.*6,0 ms.*2\.500 RPM/s);
   assert.match(screen.cellPane.innerHTML, /condição GNV observada/i);
-  assert.match(screen.cellPane.innerHTML, /gasolina esperada.*referência/i);
+  // A nota técnica sobre endereçamento saiu (dono, 2026-10-11: texto para leigo); o endereço continua acima.
 });
 
 test('Diferença separa último par, consolidado e tendência sem apagar estabilidade', () => {
@@ -203,7 +203,8 @@ test('Diferença separa último par, consolidado e tendência sem apagar estabil
   assert.match(screen.cellPane.innerHTML, /Diferença agora.*\+12,0%/s);
   assert.match(screen.cellPane.innerHTML, /Diferença estável.*\+8,1%/s);
   assert.match(screen.cellPane.innerHTML, /Tendência recente.*\+3,0%.*revalidando/s);
-  assert.match(screen.cellPane.innerHTML, /Sem sugestão segura/);
+  // Sem beco sem saída (dono, 2026-10-11): sem sugestão pronta, o botão abre a região no Mapa K (abrir não grava).
+  assert.match(screen.cellPane.innerHTML, /Abrir esta célula no Mapa K/);
 });
 
 test('Live Tracing temporal é limitado, reutiliza setTrace e não cria timer', () => {

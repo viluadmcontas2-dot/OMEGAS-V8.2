@@ -48,12 +48,14 @@ assert "LIMITES CONFIGURADOS" not in learning
 assert ">Referência<" in index
 assert ">No GNV<" in index
 assert ">Diferença<" in index
-assert ">Sugestão<" in index
+# A camada "Sugestão" saiu (dono, 2026-10-11): a fila que a alimentava está congelada desde a base.
+assert ">Sugestão<" not in index
 assert "Gasolina esperada" in learning
 assert "No GNV agora" in learning
 assert "<dt>Diferença agora</dt>" in learning
-assert "<dt>Diferença estável</dt>" in learning
-assert "<dt>Tendência recente</dt>" in learning
+# Estável/tendência só aparecem quando a fila tem dado (dono, 2026-10-11): o rótulo continua no código.
+assert "'Diferença estável'" in learning
+assert "'Tendência recente'" in learning
 assert "comparisonTargetMs" in learning
 assert "comparisonObservedMs" in learning
 assert "source.petrolMs" in learning
@@ -94,7 +96,7 @@ assert ".physical-grid-with-axes" in refine_styles
 assert "data-edit-learning-cell" in learning
 assert "this.router.navigate('map'" in learning
 assert "origin: 'learning'" in learning
-assert "Abrir o editor não escreve na ECU" in learning
+assert "Abrir o Mapa K não grava nada" in learning  # (dono, 2026-10-11: texto para leigo)
 
 # OBD removido do produto (decisão do dono): a API não expõe mais OBD.
 assert "connectObd" not in api

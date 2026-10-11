@@ -72,16 +72,16 @@
 
         <section class="screen" data-screen="learning" aria-labelledby="learningTitle">
           <div class="page-intro learning-intro">
-            <div><small>APRENDER</small><h2 id="learningTitle">Evidência por condição física</h2></div>
-            <div class="live-condition"><small>AGORA</small><b id="learningLiveLabel">Aguardando condição válida</b><span>marcação visual leve · não altera o aprendizado</span></div>
+            <div><small>APRENDER</small><h2 id="learningTitle">Gasolina × GNV por região</h2></div>
+            <div class="live-condition"><small>AGORA</small><b id="learningLiveLabel">Aguardando condição válida</b></div>
           </div>
 
           <div class="learning-workspace">
             <section class="learning-map-surface">
               <div class="axis-top">RPM →</div>
               <div id="learningGrid" class="physical-grid-host" aria-label="Mapa de aprendizado"></div>
-              <div class="axis-side">PETROL INJ. ↓</div>
-              <div class="trace-note"><span class="trace-sample nearest"></span>célula atual <span class="trace-sample contributor"></span>até 4 contribuintes · sem trilha/fade</div>
+              <div class="axis-side">INJEÇÃO (ms) ↓</div>
+              <div class="trace-note"><span class="trace-sample nearest"></span>onde o motor está agora <span class="trace-sample contributor"></span>regiões vizinhas</div>
             </section>
             <aside id="learningCellDetail" class="inspector-panel">
               <div class="detail-empty"><b>Coleta em andamento</b><span>Toque em uma célula para ver evidência, equivalência e próximo passo.</span></div>
@@ -94,9 +94,8 @@
               <button type="button" data-learning-layer="petrol">Referência</button>
               <button type="button" data-learning-layer="cng">No GNV</button>
               <button type="button" data-learning-layer="comparison" class="active">Diferença</button>
-              <button type="button" data-learning-layer="suggestion">Sugestão</button>
             </div>
-            <div class="coverage-copy"><span id="learningCoverageSummary">0 gasolina · 0 GNV · 0 prontas</span><span id="learningSuggestionSummary">0 global · 0 local</span></div>
+            <div class="coverage-copy"><span id="learningCoverageSummary">— gasolina · — GNV · — prontas</span><span class="coverage-legend">Diferença: + GNV pede mais · − GNV pede menos</span></div>
           </div>
         </section>
 
@@ -194,7 +193,7 @@
         </section>
 
         <section id="suggestionDrawer" class="screen utility-screen" data-screen="suggestions" aria-labelledby="suggestionsTitle">
-          <div class="page-intro"><div><small>SUGESTÕES</small><h2 id="suggestionsTitle">Decisões prontas para revisar</h2></div><p>Global vai para Curva K. Local vai para Mapa K. Abrir nunca escreve.</p></div>
+          <div class="page-intro"><div><small>SUGESTÕES</small><h2 id="suggestionsTitle">Sugestões para revisar</h2></div><p>Abrir não grava nada.</p></div>
           <div id="suggestionList" class="suggestion-list"><div class="detail-empty"><b>Nenhuma sugestão pronta</b><span>O aprendizado continua coletando evidência.</span></div></div>
         </section>
 

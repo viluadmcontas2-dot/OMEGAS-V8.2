@@ -25,6 +25,7 @@ assert.match(screen.cellPane.innerHTML, /5,00 ms/);
 assert.match(screen.cellPane.innerHTML, /5,40 ms/);
 assert.match(screen.cellPane.innerHTML, /Diferença/);
 assert.match(screen.cellPane.innerHTML, /Confiança/);
-assert.match(screen.cellPane.innerHTML, /Novo valor K sugerido/);
-assert.match(screen.cellPane.innerHTML, /Abrir o editor não escreve na ECU/);
+// Linhas da fila de sugestões só aparecem quando a fila tem dado (hoje ela não é alimentada) (dono, 2026-10-11: texto para leigo).
+assert.doesNotMatch(screen.cellPane.innerHTML, /Novo valor K sugerido/);
+assert.match(screen.cellPane.innerHTML, /Abrir o Mapa K não grava nada/);
 console.log('JVM_TO_JS_PAYLOAD=PASS');

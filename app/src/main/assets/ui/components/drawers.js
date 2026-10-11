@@ -18,17 +18,19 @@
     return `${Math.round(n)} B`;
   }
   function durationLabel(ms) {
-    const value = Math.max(0, finite(ms) || 0);
+    if (finite(ms) === null) return '—'; // desconhecido não vira "0m 0s"
+    const value = Math.max(0, finite(ms));
     const minutes = Math.floor(value / 60000);
     const seconds = Math.floor((value % 60000) / 1000);
     if (minutes >= 60) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
     return `${minutes}m ${seconds}s`;
   }
+  /** Dados da ECU em palavras (dono, 2026-10-11: sem "Telemetria 42 ms"). */
   function ageLabel(ms) {
     const value = finite(ms);
-    if (value === null || value < 0) return 'sem telemetria';
-    if (value < 1000) return `${Math.round(value)} ms`;
-    return `${fmt(value / 1000, 1)} s`;
+    if (value === null || value < 0) return 'sem dados';
+    if (value <= 2500) return 'chegando';
+    return `sem dados há ${Math.round(value / 1000)} s`;
   }
 
   class Drawers {
@@ -278,11 +280,11 @@
       const disclosureTitle = text => `<span>${text}</span><em class="tool-disclosure-back">Voltar</em>`;
       host.innerHTML = `
         <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
-          <header><div><small>SAÚDE DO APP</small><h3>${serviceHealthy ? 'Funcionando em segundo plano' : appStatus.serviceRunning ? 'Comunicação com a ECU exige atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div><span>${serviceHealthy ? 'OK' : 'ATENÇÃO'}</span></header>
+          <header><div><small>SAÚDE DO APP</small><h3>${serviceHealthy ? 'Funcionando em segundo plano' : appStatus.serviceRunning ? 'Comunicação com a ECU exige atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div><span>${serviceHealthy ? (appStatus.usbConnected ? 'OK' : 'APP OK · SEM ECU') : 'ATENÇÃO'}</span></header>
           <div class="background-health-grid">
             <span>ECU <b>${appStatus.usbConnected ? 'conectada' : 'desconectada'}</b></span>
             <span>Leitura <b>${appStatus.engineRunning ? 'ativa' : 'parada'}</b></span>
-            <span>Telemetria <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
+            <span>Dados da ECU <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
           </div>
           <div class="tool-power-rows">
             <div class="tool-power-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'O Android pode pausar o app'}</b><span>Permita para sessões longas com a tela apagada.</span></div>${batteryAction}</div>
@@ -317,20 +319,20 @@
         </section>
 
         <section class="diagnostic-recorder-card" data-recording="${recording ? 'true' : 'false'}">
-          <header><div><small>SESSÕES</small><h3>${recording ? 'Gravando esta sessão' : 'Gravação parada'}</h3></div><span>${recording ? 'GRAVANDO' : 'PARADA'}</span></header>
+          <header><div><small>GRAVAÇÃO DE DIAGNÓSTICO</small><h3>${recording ? 'Gravando diagnóstico' : 'Gravação parada'}</h3></div><span>${recording ? 'GRAVANDO' : 'PARADA'}</span></header>
           <div class="recorder-metrics">
             <span><b>${durationLabel(status.durationMs)}</b> duração</span>
-            <span><b>${fmt(mb, 1)} MB</b> usados</span>
-            <span><b>${status.events || 0}</b> eventos</span>
+            <span><b>${finite(status.megabytes) === null ? '—' : `${fmt(mb, 1)} MB`}</b> usados</span>
+            <span><b>${finite(status.events) === null ? '—' : Math.round(finite(status.events))}</b> eventos</span>
           </div>
           <div class="recorder-space"><i style="width:${fullness.toFixed(1)}%"></i></div>
           <div class="recorder-actions">
-            <button type="button" class="${recording ? 'quiet-button' : 'primary'}" data-session-start ${recording ? 'disabled' : ''}>Iniciar sessão</button>
-            <button type="button" class="${recording ? 'secondary' : 'quiet-button'}" data-session-stop ${recording ? '' : 'disabled'}>Encerrar</button>
+            <button type="button" class="${recording ? 'quiet-button' : 'primary'}" data-session-start ${recording ? 'disabled' : ''}>Gravar diagnóstico</button>
+            <button type="button" class="${recording ? 'secondary' : 'quiet-button'}" data-session-stop ${recording ? '' : 'disabled'}>Parar</button>
           </div>
           <div class="tool-disclosures">
             <details class="tool-sessions" ${sessionsOpenBeforeRender ? 'open' : ''}>
-              <summary>${disclosureTitle(`Sessões gravadas (${sessions.length})`)}</summary>
+              <summary>${disclosureTitle(`Gravações (${sessions.length})`)}</summary>
               <div class="tool-disclosure-body">
                 <div class="recorded-session-list">
                   ${sessions.length ? sessions.slice(0, 8).map(item => {

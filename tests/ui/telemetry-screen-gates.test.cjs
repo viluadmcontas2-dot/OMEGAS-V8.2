@@ -98,13 +98,16 @@ test('ciência sem mudança (changed:false) não grava no store nem redesenha', 
 });
 
 test('ciência nova (changed:true) e recálculo em curso continuam chegando ao store', () => {
-  let answer = { ok: true, changed: true, revision: 8, refreshing: false, data: { calibrationState: { suggestionPending: 2 } } };
+  // Marcador neutro: a fila V7 congelada (sugestões/estabilidade) é zerada na entrada do app (withoutFrozenQueue).
+  let answer = { ok: true, changed: true, revision: 8, refreshing: false, data: { calibrationState: { curveRevision: 2, suggestionPending: 5, suggestionItems: [{ id: 'velha' }] } } };
   const { app, patches } = bootApp({ scienceSnapshotSince: () => answer });
   app.router.navigate('map');
   patches.length = 0;
   app.scheduler.onContext();
   assert.equal(patches.length, 1);
-  assert.equal(app.store.get().calibrationState.suggestionPending, 2);
+  assert.equal(app.store.get().calibrationState.curveRevision, 2);
+  assert.equal(app.store.get().calibrationState.suggestionPending, 0, 'fila congelada não chega à tela');
+  assert.equal(app.store.get().calibrationState.suggestionItems.length, 0, 'fila congelada não chega à tela');
   answer = { ok: true, changed: false, revision: 8, refreshing: true };
   app.scheduler.onContext();
   assert.equal(app.store.get().scienceRefreshing, true, 'mudança do recálculo ainda é gravada');

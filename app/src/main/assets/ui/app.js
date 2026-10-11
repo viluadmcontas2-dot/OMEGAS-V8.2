@@ -73,6 +73,16 @@
     if (value.includes('DESCONHEC') || value === '--') return '—';
     return value || '—';
   }
+  /**
+   * A fila V7 (sugestões de Mapa K/Curva K e a "estabilidade" por região) não tem alimentador desde a base: o que vem é
+   * um arquivo antigo do aparelho, às vezes com o sinal oposto ao que o editor gravaria. Não mostrar dado congelado como
+   * vivo; quem propõe a curva é o Refino (dono, 2026-10-11: "se o refino bastar, use só o refino").
+   */
+  function withoutFrozenQueue(calibration) {
+    const { suggestionItems, learningStability, suggestionPending, ...rest } = calibration || {};
+    return { ...rest, suggestionItems: [], learningStability: { map: [] }, suggestionPending: 0 };
+  }
+
   /** Abas que recebem o quadro rápido (PresentSnapshot); nas outras o quadro guardado é velho. */
   function isTelemetryRoute(route) {
     return route === 'dashboard' || route === 'learning' || route === 'map' || route === 'autocal';
@@ -316,7 +326,7 @@
         scienceRevision = nextRevision;
         const data = science.data;
         if (data.learning) patch.learning = data.learning;
-        if (data.calibrationState) patch.calibrationState = data.calibrationState;
+        if (data.calibrationState) patch.calibrationState = withoutFrozenQueue(data.calibrationState);
         const predictor = data.predictor || data.calibrationState?.predictor;
         if (predictor) {
           patch.predictor = { ...(state.predictor || {}), state: predictor.ok === false ? 'error' : 'ready', data: predictor };
@@ -399,7 +409,7 @@
     if (signature === lastSuggestionSignature && host.childElementCount) return;
     lastSuggestionSignature = signature;
     if (!items.length && !refinement) {
-      host.innerHTML = '<div class="drawer-empty"><b>Nenhuma decisão pendente</b><span>Quando houver curva refinada ou ajuste pronto para revisar, aparece aqui.</span></div>';
+      host.innerHTML = '<div class="detail-empty"><b>Nada para revisar agora</b><span>Quando o Refino tiver uma curva pronta, ela aparece aqui.</span></div>';
       return;
     }
     const current = items.filter(item => ['PENDING', 'OBSERVING'].includes(String(item.lifecycle || '')));
@@ -413,7 +423,7 @@
     const pendingRows = list => list.map(item => `
       <label class="suggestion-row" data-lifecycle="PENDING">
         <input type="checkbox" data-suggestion-select="${escapeHtml(item.id)}" ${selectedSuggestionIds.has(item.id) ? 'checked' : ''}>
-        <span class="suggestion-row-main"><b>${escapeHtml(suggestionTargetLabel(item))}</b><span>${escapeHtml(item.rationale || 'Sugestão pronta para revisão humana.')}</span></span>
+        <span class="suggestion-row-main"><b>${escapeHtml(suggestionTargetLabel(item))}</b><span>${escapeHtml(item.rationale || 'Pronta para você revisar.')}</span></span>
         <span class="suggestion-row-meta"><b>${escapeHtml(suggestionMagnitude(item))}</b><small>${Math.round(Number(item.confidence || 0) * 100)}% confiança</small></span>
       </label>`).join('');
     const passiveRows = list => list.map(item => `
@@ -431,8 +441,8 @@
       </div>
       ${pendingMap.length ? `<section class="suggestion-group" data-suggestion-group="MAP_K"><header><div><small>AJUSTE LOCAL</small><h3>Mapa K · ${pendingMap.length} prontas</h3></div><div class="suggestion-group-actions"><button type="button" class="quiet-button" data-select-ready="MAP_K">Selecionar prontas</button><button type="button" class="primary" data-review-selected="MAP_K">Revisar selecionadas</button></div></header>${pendingRows(pendingMap)}</section>` : ''}
       ${pendingCurve.length ? `<section class="suggestion-group" data-suggestion-group="CURVE_K"><header><div><small>AJUSTE GLOBAL</small><h3>Curva K · ${pendingCurve.length} pronta${pendingCurve.length === 1 ? '' : 's'}</h3></div><div class="suggestion-group-actions"><button type="button" class="quiet-button" data-select-ready="CURVE_K">Selecionar prontas</button><button type="button" class="primary" data-review-selected="CURVE_K">Revisar selecionadas</button></div></header>${pendingRows(pendingCurve)}</section>` : ''}
-      ${observing.length ? `<section class="suggestion-group"><header><div><small>OBSERVANDO</small><h3>Persistem sem valor antigo aplicável</h3></div></header>${passiveRows(observing)}</section>` : ''}
-      ${applied.length ? `<section class="suggestion-group"><header><div><small>HISTÓRICO</small><h3>Aplicadas após readback</h3></div></header>${passiveRows(applied)}</section>` : ''}
+      ${observing.length ? `<section class="suggestion-group"><header><div><small>OBSERVANDO</small><h3>Ainda observando</h3></div></header>${passiveRows(observing)}</section>` : ''}
+      ${applied.length ? `<section class="suggestion-group"><header><div><small>HISTÓRICO</small><h3>Já gravadas e conferidas</h3></div></header>${passiveRows(applied)}</section>` : ''}
     `;
 
     host.querySelector('[data-open-refino]')?.addEventListener('click', () => router.navigate('refino'));

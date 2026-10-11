@@ -293,6 +293,13 @@
       return invoke(this.native, 'setLearningToleranceSettings', [JSON.stringify({ semanticControls: semanticControls || {} })], { ok: false });
     }
     resetLearningToleranceSettings() { return this.demo ? demoToleranceSettings() : invoke(this.native, 'resetLearningToleranceSettings', [], { ok: false }); }
+    /** Água mínima para aprender: o único ajuste de coleta que o Kotlin aplica de verdade. */
+    setLearningMinimumWaterC(value) {
+      const celsius = Math.round(Number(value));
+      if (!Number.isFinite(celsius)) return { ok: false, error: 'Informe a temperatura em °C.' };
+      if (this.demo) return { ok: true, minimumWaterC: celsius, applied: celsius, demo: true };
+      return invoke(this.native, 'setLearningMinimumWaterC', [celsius], { ok: false, error: 'Ponte indisponível' });
+    }
 
     batteryOptimizationStatus() {
       return this.demo
