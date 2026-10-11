@@ -11,7 +11,7 @@ import kotlin.math.min
 /**
  * Ciclo fechado da Curva K: cada gravação confirmada vira um experimento.
  *
- * Antes: o índice de equivalência por faixa (t_no_GNV / t_gasolina, condução ≥1350 rpm)
+ * Antes: o índice de equivalência por faixa (t_no_GNV / t_gasolina, todas as rotações menos os grupos locais)
  * medido com a curva antiga. Depois: o mesmo índice medido só com o GNV lido depois da
  * gravação. Por faixa o resultado é CONFIRMADA (chegou perto da gasolina), PASSOU
  * (inverteu o sinal além do ruído), CURTA (mesmo sinal, pouca melhora) ou PIOROU
@@ -24,7 +24,7 @@ import kotlin.math.min
  *    se ela trocou no meio, a faixa continua medindo, sem veredito, sem ensinar e sem oferecer restaurar;
  *  - a verificação nunca é eterna: fecha com tudo julgado, sem base (SEM_BASE, só depois de medir a faixa
  *    com a curva nova ou do prazo), com o que deu para julgar depois de [VERIFY_PARTIAL_ONLINE_MS] rodando,
- *    ou INCONCLUSIVO; parado ou em marcha lenta o prazo não anda (o índice só tem condução);
+ *    ou INCONCLUSIVO; parado o prazo não anda (lenta no GNV anda: dono, 2026-10-11, a curva aprende tudo);
  *  - margem do dono: alvo ±4% ("chegou"), até 5% aceito; "piorou" só mais de 4% pior E erro acima de 5%;
  *  - só gravação de proposta/ajuste ensina o ganho por faixa; restaurar, desfazer, reset da curva,
  *    backup restaurado e o diário de versões antigas não;
@@ -58,7 +58,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         /** Um ponto age na faixa até meia unidade de ms além das bordas (K interpolado entre pontos vizinhos). */
         const val BAND_MARGIN_MS = 0.5
         /**
-         * Tempo rodando (ECU online, GNV, RPM de condução) depois da gravação. Passado isso a verificação fecha com
+         * Tempo com o motor funcionando no GNV (ECU online, qualquer rotação) depois da gravação. Passado isso fecha com
          * o que já deu para julgar: faixa que o motorista não visita não pode segurar o refino para sempre.
          */
         const val VERIFY_PARTIAL_ONLINE_MS = 15 * 60_000L
@@ -336,8 +336,8 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
 
     /**
      * Avalia cada gravação aberta nas faixas que são dela. [indexNow] = índice atual; [indexSince] dá o índice
-     * só com o GNV medido a partir de um instante (o "depois" de cada gravação). [driving] = ECU online,
-     * no GNV e rodando (RPM de condução): só então o prazo anda. Retorna true se algum veredito mudou ou fechou.
+     * só com o GNV medido a partir de um instante (o "depois" de cada gravação). [driving] = ECU online e motor
+     * funcionando no GNV (lenta incluída): só então o prazo anda. Retorna true se algum veredito mudou ou fechou.
      */
     fun evaluate(indexNow: JSONObject, driving: Boolean = true, indexSince: ((Long) -> JSONObject)? = null): Boolean {
         var visible = false

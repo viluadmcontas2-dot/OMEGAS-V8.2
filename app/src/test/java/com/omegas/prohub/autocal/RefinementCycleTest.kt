@@ -191,11 +191,13 @@ class RefinementCycleTest {
         assertTrue(journal.measuringBands().isEmpty())
     }
 
+    // Ajustado (dono, 2026-10-11: a curva aprende tudo): a lenta agora conta no prazo (RefinementCycle.driving);
+    // só parado (motor desligado, ECU fora ou na gasolina) não conta.
     @Test
-    fun `prazo da verificacao so anda rodando e parado ou em lenta nao conta`() {
+    fun `prazo da verificacao so anda com o motor no GNV e parado nao conta`() {
         val journal = RefinementJournal(null, clock)
         journal.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 }, axisRaw, index(1.05 to 20, 1.05 to 20, 1.05 to 20, 1.05 to 20, 1.05 to 20), "KF")
-        repeat(1200) { now += 3_000; journal.evaluate(empty, driving = false) } // 1 h parado/lenta
+        repeat(1200) { now += 3_000; journal.evaluate(empty, driving = false) } // 1 h parado
         assertEquals(RefinementJournal.STATUS_VERIFYING, journal.json().getJSONObject("latest").getString("status"))
         assertEquals(0L, journal.json().getJSONObject("verifying").getLong("drivingMs"))
         repeat(310) { now += 3_000; journal.evaluate(empty, driving = true) } // ~15,5 min rodando
@@ -636,48 +638,112 @@ class RefinementCycleTest {
         assertEquals(proposal.getString("signature"), decided.getJSONObject("proposal").getString("signature"))
     }
 
+    /** Replay pelo acumulador real até [until]; cada (de, até) em [cuts] descarta a janela incerta e recomeça o GNV em "até". */
+    private fun replay(root: JSONObject, until: Long = Long.MAX_VALUE, cuts: List<Pair<Long, Long>> = emptyList()): EquivalenceLedger {
+        val ledger = EquivalenceLedger(null, clock)
+        var next = 0
+        for (f in RealSessionReplaySupport.telemetry(root)) {
+            if (f.t >= until) break
+            while (next < cuts.size && f.t >= cuts[next].second) { ledger.resetGas("EPOCA_DO_REPLAY"); next++ }
+            if (next < cuts.size && f.t >= cuts[next].first) continue
+            ledger.accept(RealSessionReplaySupport.ledgerFrame(f))
+        }
+        return ledger
+    }
+
+    private fun curveOf(analysis: JSONObject, key: String): Pair<List<Double>, List<Double>> {
+        val points = analysis.getJSONArray("points").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.sortedBy { it.getInt("index") }
+        return points.map { it.getDouble("referenceTimeMs") } to points.map { it.optInt(key, it.getInt("currentRaw")) / 16384.0 }
+    }
+
+    /** Teste cego: erro RMS (ln) da curva [key] contra o K que cada par pede (K_atual(t_GNV)·t_GNV/t_gasolina). */
+    private fun blindRms(pairs: List<EquivalenceLedger.EvidencePair>, analysis: JSONObject, key: String): Double {
+        val (ms, current) = curveOf(analysis, "currentRaw")
+        val (_, curve) = curveOf(analysis, key)
+        val errors = pairs.filter { it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS && it.petrolRefMs <= ms.last() }.map {
+            val target = AutoMatchRefinedEngine.interp(it.gasPetrolMs, ms, current) * it.gasPetrolMs / it.petrolRefMs
+            kotlin.math.ln(AutoMatchRefinedEngine.interp(it.petrolRefMs, ms, curve) / target)
+        }
+        return kotlin.math.sqrt(errors.sumOf { it * it } / errors.size)
+    }
+
+    private fun median(values: List<Double>) = values.sorted().let { it[it.size / 2] }
+
     /**
-     * Pedido do líder (rodada 2): replay da sessão de referência pelo caminho do serviço (acumulador real, cola real,
-     * motor real) não propõe nada por causa da lenta. Uma hora a mais de lenta (gasolina e GNV, GNV 20% rico, o
-     * cenário do "dente de serra") não muda um par nem um ponto da proposta.
+     * Substitui "replay da sessão de referência não propõe nada por causa da lenta" (dono, 2026-10-11: a curva
+     * aprende tudo). Sessão de referência, época E0 (curva do dono, antes da gravação do app): a lenta entra na
+     * curva, nenhum grupo vira ajuste local (lenta ≈ −0,1%, igual ao cruzeiro no mesmo t) e a proposta da curva
+     * não piora no teste cego por incluir a lenta.
      */
     @Test
-    fun `replay da sessao de referencia nao propoe nada por causa da lenta`() {
-        val session = referenceSession()
-        val telemetry = session.getJSONArray("telemetry")
-        val snapshot = session.getJSONArray("snapshots").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getInt("sequence") == 95 }
-        fun replay(extraIdle: Boolean): Pair<List<EquivalenceLedger.EvidencePair>, JSONObject> {
-            val ledger = EquivalenceLedger(null, clock)
-            val cycle = RefinementCycle(ledger, RefinementJournal(null, clock), RefinementAutopilot(null, clock), monotonicMs = { now })
-            var last = 0L
-            for (i in 0 until telemetry.length()) {
-                val f = telemetry.getJSONObject(i)
-                last = f.getLong("t")
-                ledger.accept(EquivalenceLedger.Frame(last, f.optString("fuel").uppercase(), f.optDouble("rpm", 0.0).takeIf { it.isFinite() } ?: 0.0,
-                    f.optDouble("load_bar", 0.0).takeIf { it.isFinite() } ?: 0.0, f.optDouble("petrol_ms", 0.0).takeIf { it.isFinite() } ?: 0.0))
-            }
-            if (extraIdle) {
-                var t = last + 60_000
-                repeat(6_000) { k -> // ~28 min de cada combustível em lenta (850–1300 rpm)
-                    val rpm = 850.0 + (k % 10) * 50
-                    ledger.accept(EquivalenceLedger.Frame(t, "GASOLINA", rpm, 0.40, 3.8)); t += 280
-                }
-                t += 5_000
-                repeat(6_000) { k ->
-                    val rpm = 850.0 + (k % 10) * 50
-                    ledger.accept(EquivalenceLedger.Frame(t, "GNV", rpm, 0.40, 3.8 * 1.20)); t += 280
-                }
-            }
-            now = last + 10_000_000
-            return ledger.pairs() to cycle.proposal(snapshot, ledger.index())
-        }
-        val (pairs, proposal) = replay(extraIdle = false)
-        val (idlePairs, idleProposal) = replay(extraIdle = true)
-        assertTrue(pairs.isNotEmpty())
-        assertTrue("par abaixo de ${EquivalenceLedger.DRIVING_MIN_RPM} rpm", pairs.all { it.rpm >= EquivalenceLedger.DRIVING_MIN_RPM })
-        assertEquals("a lenta mudou os pares da curva", pairs, idlePairs)
-        assertTrue(proposal.getBoolean("known"))
-        assertEquals("a lenta mudou a proposta", proposal.getJSONArray("points").toString(), idleProposal.getJSONArray("points").toString())
+    fun `replay da sessao de referencia a lenta entra na curva e nada vira ajuste local`() {
+        val root = RealSessionReplaySupport.fixture(RealSessionReplaySupport.REFERENCE)
+        val ledger = replay(root, until = RealSessionReplaySupport.appWrites(root).first())
+        val pairs = ledger.pairs()
+        val idle = pairs.filter { it.rpm < 1_000.0 }
+        assertTrue("a lenta entra na curva (${idle.size} pares)", idle.size >= 40)
+        val idleError = kotlin.math.exp(median(idle.map { kotlin.math.ln(it.gasPetrolMs / it.petrolRefMs) })) - 1.0
+        println("REF E0: pares=${pairs.size} lenta=${idle.size} erro da lenta=${"%.1f".format(idleError * 100)}% grupos locais=${ledger.index().getJSONArray("localGroups")}")
+        assertTrue("a lenta entra na curva", idle.size >= 40)
+        assertTrue("lenta equivalente na curva do dono", kotlin.math.abs(idleError) < 0.02)
+        assertEquals("nenhum grupo local", 0, ledger.index().getJSONArray("localGroups").length())
+        val snapshot = RealSessionReplaySupport.snapshot(root, 95)
+        val cycle = RefinementCycle(ledger, RefinementJournal(null, clock), RefinementAutopilot(null, clock), monotonicMs = { now })
+        val decided = cycle.observe(true, true, monitorDone, snapshot)
+        val secondary = decided.getJSONArray("secondary")
+        assertTrue("nenhuma ação local", (0 until secondary.length()).none { secondary.getJSONObject(it).getString("kind") == "local" })
+        // Proposta global com a lenta × sem a lenta (regra antiga): no teste cego contra TODOS os pares da época
+        // (lenta incluída), incluir a lenta não piora a curva.
+        val withIdle = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, pairs.map { it.petrolRefMs to it.gasPetrolMs })
+        val withoutIdle = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, pairs.filter { it.rpm >= 1_350.0 }.map { it.petrolRefMs to it.gasPetrolMs })
+        val evidence = ledger.allPairs()
+        val rmsWith = blindRms(evidence, withIdle, "calculatedRaw")
+        val rmsWithout = blindRms(evidence, withoutIdle, "calculatedRaw")
+        val changed = (0 until 30).count { withIdle.getJSONArray("points").getJSONObject(it).optInt("calculatedRaw") != withoutIdle.getJSONArray("points").getJSONObject(it).optInt("calculatedRaw") }
+        println("REF E0: RMS cego com a lenta=${"%.2f".format(rmsWith * 100)}% sem a lenta=${"%.2f".format(rmsWithout * 100)}% atual=${"%.2f".format(blindRms(evidence, withIdle, "currentRaw") * 100)}% pontos diferentes=$changed")
+        assertTrue("incluir a lenta não piora a curva", rmsWith <= rmsWithout + 0.002)
+    }
+
+    /**
+     * Sessão do AutoMatch nativo, época E2 (depois do "dente de serra" que baixou K 14–31% em 3,5–4,5 ms): lenta
+     * +20% sem nenhum par de condução no mesmo t. Não separável: fica na curva (global), que aprende a lenta.
+     */
+    @Test
+    fun `replay do AutoMatch nativo a lenta sem conducao no mesmo t vai para a curva`() {
+        val root = RealSessionReplaySupport.fixture(RealSessionReplaySupport.AUTOMATCH)
+        val write = RealSessionReplaySupport.appWrites(root).first()
+        val before = RealSessionReplaySupport.snapshot(root, 1401).getLong("capturedAtMs")
+        val after = RealSessionReplaySupport.snapshot(root, 1716).getLong("capturedAtMs")
+        val ledger = replay(root, cuts = listOf(write to write, before to after))
+        val pairs = ledger.pairs()
+        val idle = pairs.filter { it.rpm < 1_000.0 }
+        assertTrue("a lenta entra na curva (${idle.size} pares)", idle.size >= 15)
+        val idleError = kotlin.math.exp(median(idle.map { kotlin.math.ln(it.gasPetrolMs / it.petrolRefMs) })) - 1.0
+        val band0 = ledger.index().getJSONArray("bands").getJSONObject(0)
+        println("AUTOMATCH E2: pares=${pairs.size} lenta=${idle.size} erro da lenta=${"%.1f".format(idleError * 100)}% faixa 3–4,5=${band0} grupos locais=${ledger.index().getJSONArray("localGroups")}")
+        assertTrue("a lenta entra na curva", idle.size >= 15)
+        assertTrue(idleError > 0.10)
+        assertEquals("não separável: nenhum grupo local", 0, ledger.index().getJSONArray("localGroups").length())
+        assertTrue(band0.getInt("samples") >= 15 && band0.getDouble("ratio") > 1.10)
+        // Última leitura da ECU na época E2 (mesma curva nativa do seq 1716; a primeira com faixas nativas maduras para
+        // o motor usar a telemetria: sem elas o motor só suaviza e não aprende de nenhum par).
+        val snapshot = RealSessionReplaySupport.snapshot(root, 2262)
+        fun mulAct(seq: Int) = RealSessionReplaySupport.snapshot(root, seq).getJSONArray("fields").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+            .first { it.getString("key") == "MUL_ACT" }.getJSONArray("rawValues").toString()
+        assertEquals("mesma curva nativa da época E2", mulAct(1716), mulAct(2262))
+        val withIdle = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, pairs.map { it.petrolRefMs to it.gasPetrolMs })
+        val withoutIdle = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, pairs.filter { it.rpm >= 1_350.0 }.map { it.petrolRefMs to it.gasPetrolMs })
+        val window = (0 until 30).map { withIdle.getJSONArray("points").getJSONObject(it) to withoutIdle.getJSONArray("points").getJSONObject(it) }
+            .filter { (p, _) -> p.getDouble("referenceTimeMs") in 3.5..4.5 }
+        println("AUTOMATCH E2: modo=${withIdle.optString("refinementMode")} 3,5–4,5 ms com a lenta=${window.map { it.first.optInt("calculatedRaw") }} sem=${window.map { it.second.optInt("calculatedRaw") }} atual=${window.map { it.first.getInt("currentRaw") }}")
+        assertTrue(window.isNotEmpty())
+        // A curva sobe na faixa da lenta e a lenta empurra além do que as faixas nativas pedem, até o teto de +15% por
+        // gravação (onde o teto já segura, com e sem a lenta dão o mesmo valor).
+        val cap = { p: JSONObject -> (p.getInt("currentRaw") * kotlin.math.exp(AutoMatchRefinedEngine.MAX_STEP_LOG)).toInt() }
+        assertTrue("a curva sobe", window.all { (w, _) -> w.optInt("calculatedRaw") > w.getInt("currentRaw") })
+        assertTrue("com a lenta nunca abaixo de sem", window.all { (w, o) -> w.optInt("calculatedRaw") >= o.optInt("calculatedRaw") })
+        assertTrue("a curva aprende a lenta", window.all { (w, o) -> w.optInt("calculatedRaw") > o.optInt("calculatedRaw") || w.optInt("calculatedRaw") >= cap(w) })
+        assertTrue(window.any { (w, o) -> w.optInt("calculatedRaw") > o.optInt("calculatedRaw") })
     }
 
     @Test

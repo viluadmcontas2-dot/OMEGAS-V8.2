@@ -741,7 +741,7 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    /** ECU online, no GNV e em condução (RPM ≥ 1350, injeção acima de 1 ms): só então a medição do refino anda. */
+    /** ECU online e motor funcionando no GNV em qualquer rotação (injeção acima de 1 ms): só então a medição do refino anda. */
     private fun refinementDriving(): Boolean {
         if (!usb.connected || !runtime.ready || !telemetryStore.isValid()) return false
         val now = status()
@@ -795,7 +795,7 @@ class TelemetryForegroundService : Service() {
     private fun healthTick() {
         if (stopping) return
         try {
-            // "Depois" de cada gravação = só o GNV medido a partir dela; o prazo só anda rodando (parado/lenta não).
+            // "Depois" de cada gravação = só o GNV medido a partir dela; o prazo anda com o motor no GNV (lenta inclusive).
             if (refinement.evaluate(refinementDriving())) stateChanged()
             observeRefinement()
             handleUsbTransition()

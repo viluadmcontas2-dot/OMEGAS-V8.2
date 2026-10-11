@@ -21,11 +21,11 @@ class RefinementCycle(
         const val ANALYSIS_MIN_INTERVAL_MS = 15_000L
 
         /**
-         * Condução que conta para o prazo da verificação: no GNV (rodar na gasolina não mede o GNV), RPM de
-         * condução ([EquivalenceLedger.DRIVING_MIN_RPM]) e injeção acima de 1 ms.
+         * O que conta para o prazo da verificação: motor funcionando no GNV em qualquer rotação, lenta incluída
+         * (dono, 2026-10-11: a curva aprende tudo; rodar na gasolina não mede o GNV) e injeção acima de 1 ms.
          */
         fun driving(rpm: Double, petrolMs: Double, fuel: String?): Boolean =
-            fuel?.trim()?.uppercase() == "GNV" && rpm >= EquivalenceLedger.DRIVING_MIN_RPM && petrolMs >= EquivalenceLedger.MIN_PETROL_MS
+            fuel?.trim()?.uppercase() == "GNV" && rpm > 0.0 && petrolMs >= EquivalenceLedger.MIN_PETROL_MS
 
         private fun field(snapshot: JSONObject?, key: String): JSONObject? {
             val fields = snapshot?.optJSONArray("fields") ?: return null
@@ -192,12 +192,12 @@ class RefinementCycle(
         journal.proposalFrom(analysis, index) { since -> equivalence.index(since) }
     }
 
-    /** Avalia as gravações abertas. [driving] = ECU online, no GNV e em condução (só então o prazo anda). */
+    /** Avalia as gravações abertas. [driving] = ECU online e motor funcionando no GNV (só então o prazo anda). */
     fun evaluate(driving: Boolean): Boolean = synchronized(lock) {
         journal.evaluate(equivalence.index(), driving) { since -> equivalence.index(since) }
     }
 
-    /** Um tick do piloto: referência da ECU, proposta e fase. */
+    /** Um tick do piloto: referência da ECU, proposta da curva, ajuste local candidato (Mapa K) e fase. */
     fun observe(ecuOnline: Boolean, usbConnected: Boolean, progress: JSONObject?, snapshot: JSONObject?): JSONObject = synchronized(lock) {
         observeEcu(progress, usbConnected)
         val proposal = try { proposal(snapshot, equivalence.index()) } catch (error: Exception) {
@@ -211,6 +211,7 @@ class RefinementCycle(
             journal = journal.json(),
             restoreCount = journal.restorePoints().length(),
             proposal = proposal,
+            local = LocalMapPlanner.plan(equivalence.attribution()),
         )
     }
 

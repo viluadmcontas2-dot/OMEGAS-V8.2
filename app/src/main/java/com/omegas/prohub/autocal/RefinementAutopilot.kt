@@ -26,6 +26,10 @@ import kotlin.math.ln
  *      propor para chegar ao alvo de ±4%: pode desconectar.
  *    - COLETANDO_NOSSOS: faltam leituras GNV/gasolina no mesmo RPM×MAP.
  *    "Desfazer última gravação" vale para a última proposta gravada até a próxima gravação.
+ *    Ajuste local (dono, 2026-10-11: a curva aprende tudo e sabe onde ajustar o quê): grupo coluna do Mapa K × faixa
+ *    de t que [EquivalenceAttribution] separou como local vira a ação secundária "Revisar ajuste local no Mapa K
+ *    (N células)", só com a ECU fora do automático e sem proposta/verificação da curva tocando aquela faixa. Ela só
+ *    abre o Mapa K com as células preenchidas; a gravação é a manual (revisão, ACK e readback).
  *
  * Margem do dono com histerese: a faixa entra "fora" só acima de 5% e sai em 4% ou menos (de 4,1 a 5% nada
  * acontece); faixa medida pela curva de gasolina da ECU (mais grossa) usa ±6% (Platina 00f6fd02). O estado
@@ -98,6 +102,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         journal: JSONObject,
         restoreCount: Int,
         proposal: JSONObject? = null,
+        /** LocalMapPlanner.plan: grupos locais candidatos (sem ele, nenhum ajuste local). */
+        local: JSONObject? = null,
     ): JSONObject {
         val result = synchronized(lock) {
             val now = clock()
@@ -240,6 +246,24 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             if (latest?.optBoolean("undoable", false) == true && ecuReason != null) {
                 secondary.put(JSONObject().put("kind", "undo").put("enabled", ecuOnline).put("label", "Desfazer última gravação").put("experimentId", latestId))
             }
+            // Ajuste local no Mapa K: só com a ECU fora do automático e com a curva quieta naquela faixa (proposta da
+            // curva ou verificação tocando o mesmo t esperam: primeiro a curva, depois o local).
+            val localGroups = local?.optJSONArray("groups") ?: JSONArray()
+            val curveBands = HashSet<Int>()
+            if (proposalCount > 0) heldProposal?.optJSONArray("points")?.let { a ->
+                for (k in 0 until a.length()) a.optJSONObject(k)?.optDouble("referenceTimeMs", Double.NaN)?.takeIf { it.isFinite() }
+                    ?.let { curveBands += RefinementJournal.touchedBands(it) }
+            }
+            journal.optJSONArray("measuringBands")?.let { a -> for (k in 0 until a.length()) curveBands += a.optInt(k, -1) }
+            val localKept = (0 until localGroups.length()).mapNotNull { localGroups.optJSONObject(it) }
+                .filter { it.optInt("band", -1) !in curveBands }
+            val localCells = if (ecuReason != null) LocalMapPlanner.cells(localKept) else JSONArray()
+            val localCount = localCells.length()
+            if (localCount > 0) {
+                secondary.put(JSONObject().put("kind", "local").put("enabled", ecuOnline).put("count", localCount)
+                    .put("label", "Revisar ajuste local no Mapa K ($localCount ${plural(localCount, "célula", "células")})")
+                    .put("cells", localCells).put("groups", JSONArray(localKept)).put("automatic", false))
+            }
             val open = journal.optJSONObject("verifying")
             val verification = if (verifying && open != null) JSONObject()
                 .put("bandsLeft", open.optInt("bandsLeft", 0))
@@ -248,8 +272,14 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("giveUpMinutes", open.optLong("giveUpMs", RefinementJournal.VERIFY_GIVE_UP_ONLINE_MS) / 60_000.0)
             else null
             out.put("phase", phase)
-                .put("canDisconnect", phase == "ESTAVEL")
-                .put("action", action)
+                .put("canDisconnect", phase == "ESTAVEL" && localCount == 0)
+                .put("action", if (phase == "ESTAVEL" && localCount > 0) JSONObject().put("kind", "stable").put("enabled", false).put("label", "✓ Curva estável") else action)
+                .put("local", JSONObject().put("groups", localGroups.length()).put("cells", localCount)
+                    .put("waiting", if (localGroups.length() == 0) JSONObject.NULL else when {
+                        ecuReason == null -> "ECU_NO_AUTOMATICO"
+                        localKept.size < localGroups.length() -> "CURVA_PRIMEIRO"
+                        else -> JSONObject.NULL
+                    }))
                 .put("secondary", secondary)
                 .put("proposal", heldProposal?.takeIf { proposalCount > 0 }?.let { JSONObject(it.toString()) } ?: JSONObject()
                     .put("known", proposal?.optBoolean("known", false) ?: false).put("count", 0).put("points", JSONArray())
@@ -261,8 +291,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("result", JSONObject().put("improved", improved).put("worse", worse).put("measuring", measuring)
                     .put("id", resultJson?.optString("id") ?: JSONObject.NULL))
                 .put("headline", headline(phase, count, max, measured.size, off.length(), proposalCount, restoreCount,
-                    improved, worse, measuring, verification, out))
-                .put("next", nextStep(phase, missing, index, proposalCount, measuring, verifying))
+                    improved, worse, measuring, verification, out, localCount))
+                .put("next", nextStep(phase, missing, index, proposalCount, measuring, verifying, localCount))
             if (verification != null) out.put("verification", verification)
             if (latest != null) out.put("journalStatus", latestStatus)
             last = out
@@ -319,7 +349,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     private fun plural(n: Int, one: String, many: String) = if (n == 1) one else many
 
     /**
-     * "faltam 2 faixas · 6 de 15 min rodando" (parado ou em marcha lenta o tempo não anda). Passado o prazo
+     * "faltam 2 faixas · 6 de 15 min rodando" (parado o tempo não anda; lenta no GNV conta). Passado o prazo
      * sem nenhuma faixa medida: diz em quanto tempo rodando o resultado fecha sozinho.
      */
     private fun progress(v: JSONObject): String {
@@ -336,7 +366,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
     private fun headline(
         phase: String, count: Int?, max: Int?, measured: Int, off: Int, proposal: Int, restore: Int,
-        improved: Int, worse: Int, measuring: Int, verification: JSONObject?, out: JSONObject,
+        improved: Int, worse: Int, measuring: Int, verification: JSONObject?, out: JSONObject, local: Int = 0,
     ): String = when (phase) {
         "SEM_ECU" -> "Conecte a ECU para acompanhar a calibração."
         "ECU_TRABALHANDO" -> "A ECU está no automático" +
@@ -351,11 +381,12 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             (if (improved + worse > 0) ". Até agora $improved ${plural(improved, "melhorou", "melhoraram")} e $worse ${plural(worse, "piorou", "pioraram")}." else ".")
         "RESTAURAR_TRECHO" -> "$restore ${plural(restore, "ponto piorou", "pontos pioraram")} com a última gravação. " +
             "Restaure só ${plural(restore, "esse ponto", "esses pontos")}; os que melhoraram ficam."
-        "ESTAVEL" -> "GNV equivalente à gasolina em $measured faixas (dentro de 5%). Pode desconectar."
+        "ESTAVEL" -> if (local > 0) "Curva equivalente à gasolina em $measured faixas (dentro de 5%). Falta um ajuste local no Mapa K."
+            else "GNV equivalente à gasolina em $measured faixas (dentro de 5%). Pode desconectar."
         else -> ""
     }
 
-    private fun nextStep(phase: String, missing: JSONArray, index: JSONObject, proposal: Int, measuring: Int, verifying: Boolean): String = when (phase) {
+    private fun nextStep(phase: String, missing: JSONArray, index: JSONObject, proposal: Int, measuring: Int, verifying: Boolean, local: Int = 0): String = when (phase) {
         "SEM_ECU" -> "Ligue o cabo e o motor."
         "ECU_TRABALHANDO" -> "Dirija normalmente nos dois combustíveis. A gravação libera quando a ECU terminar o automático."
         "COLETANDO_NOSSOS", "VERIFICANDO" -> {
@@ -372,7 +403,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         "PROPOSTA_PRONTA" -> "Toque em Revisar e gravar. Nada é gravado sem você confirmar; a ECU confere por readback."
         "RESTAURAR_TRECHO" -> "Restaurar volta só esses pontos ao valor anterior, com readback. Sem restaurar, o OMEGAS segue medindo e a oferta some se a faixa voltar para dentro da margem." +
             (if (proposal > 0) " Os outros $proposal ${plural(proposal, "ponto", "pontos")} podem ser revisados e gravados agora." else "")
-        "ESTAVEL" -> "Nenhuma ação. O OMEGAS continua medindo e avisa se algo mudar."
+        "ESTAVEL" -> if (local > 0) "Toque em Revisar ajuste local: abre o Mapa K com as células preenchidas. Nada é gravado sem você confirmar."
+            else "Nenhuma ação. O OMEGAS continua medindo e avisa se algo mudar."
         else -> ""
     }
 

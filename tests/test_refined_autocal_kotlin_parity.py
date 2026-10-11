@@ -20,6 +20,7 @@ import refined_oracle as oracle  # noqa: E402
 
 ENGINE = ROOT / "app/src/main/java/com/omegas/prohub/autocal/AutoMatchRefinedEngine.kt"
 LEDGER = ROOT / "app/src/main/java/com/omegas/prohub/autocal/EquivalenceLedger.kt"
+AXES = ROOT / "app/src/main/java/com/omegas/prohub/calibration/KMapPhysicalAxes.kt"
 JSON_JAR = os.environ.get("ORG_JSON_JAR", "")
 REAL = ROOT / "fixtures/autocal/real"
 KEYS = ("PETR_INJ_TBP", "MUL_ACT", "PETR_INJ_TBUF", "MNFLD_PRESS_BUF", "NUM_BUF_UPD_PETR",
@@ -55,8 +56,36 @@ fun main(args: Array<String>) {
     }
     println("ALLPAIRS|" + ledger.allPairs().joinToString(" ") { "%.5f,%.5f".format(java.util.Locale.ROOT, it.petrolRefMs, it.gasPetrolMs) })
     println("PAIRS|" + ledger.pairs().joinToString(" ") { "%.5f,%.5f".format(java.util.Locale.ROOT, it.petrolRefMs, it.gasPetrolMs) })
+    // Cenário sintético com grupo local (lenta +20% em 3 visitas, cruzeiro igual no mesmo t).
+    val synthetic = EquivalenceLedger(null)
+    File(args[2]).readLines().filter { it.isNotBlank() }.forEach { line ->
+        val p = line.split(" ")
+        synthetic.accept(EquivalenceLedger.Frame(p[0].toLong(), p[1], p[2].toDouble(), p[3].toDouble(), p[4].toDouble()))
+    }
+    println("SYNTH_ALLPAIRS|" + synthetic.allPairs().joinToString(" ") { "%.5f,%.5f".format(java.util.Locale.ROOT, it.petrolRefMs, it.gasPetrolMs) })
+    println("SYNTH_PAIRS|" + synthetic.pairs().joinToString(" ") { "%.5f,%.5f".format(java.util.Locale.ROOT, it.petrolRefMs, it.gasPetrolMs) })
+    println("SYNTH_LOCAL|" + synthetic.attribution().filter { it.local }.joinToString(" ") { "${it.key.column},${it.key.band}" })
 }
 """
+
+def synthetic_local_session():
+    """Gasolina madura na lenta (860 rpm) e no cruzeiro (2000 rpm) no mesmo t (3,9 ms); 3 visitas no GNV com a lenta
+    20% acima e o cruzeiro igual (dono, 2026-10-11: a curva aprende tudo e sabe onde ajustar o quê)."""
+    frames, t = [], 1_000_000
+    def block(fuel, rpm, load, ms, n):
+        nonlocal t
+        t += 2_000
+        for _ in range(n):
+            frames.append({"t": t, "fuel": fuel, "rpm": rpm, "load_bar": load, "petrol_ms": ms})
+            t += 280
+    block("GASOLINA", 860.0, 0.44, 3.9, 10)
+    block("GASOLINA", 2000.0, 0.40, 3.9, 10)
+    for _ in range(3):
+        block("GNV", 860.0, 0.44, 3.9 * 1.2, 8)
+        block("GNV", 2000.0, 0.40, 3.9, 8)
+        t += 120_000
+    return frames
+
 
 def kotlinc():
     return os.environ.get("KOTLINC") or shutil.which("kotlinc")
@@ -94,15 +123,19 @@ class RefinedEngineKotlinParity(unittest.TestCase):
             (tmp / "frames.txt").write_text("\n".join(
                 f"{f['t']} {f['fuel']} {f['rpm'] or 0} {f['load_bar'] or 0} {f['petrol_ms'] or 0}" for f in telemetry
             ) + "\n", "utf-8")
+            (tmp / "synthetic.txt").write_text("\n".join(
+                f"{f['t']} {f['fuel']} {f['rpm']} {f['load_bar']} {f['petrol_ms']}" for f in synthetic_local_session()
+            ) + "\n", "utf-8")
             (tmp / "Main.kt").write_text(HARNESS, "utf-8")
             jar = tmp / "parity.jar"
-            sources = [str(ENGINE), str(LEDGER), str(LEDGER.with_name("PresentationMedian.kt")), str(LEDGER.with_name("TypicalInjectionBands.kt")), str(tmp / "Main.kt")]
+            sources = [str(ENGINE), str(LEDGER), str(LEDGER.with_name("PresentationMedian.kt")), str(LEDGER.with_name("TypicalInjectionBands.kt")),
+                       str(LEDGER.with_name("EquivalenceAttribution.kt")), str(AXES), str(tmp / "Main.kt")]
             subprocess.run([kotlinc(), *sources, "-cp", JSON_JAR, "-include-runtime", "-d", str(jar)],
                            check=True, capture_output=True, text=True, timeout=900)
-            out = subprocess.run(["java", "-cp", f"{jar}:{JSON_JAR}", "MainKt", str(tmp / "input.txt"), str(tmp / "frames.txt")],
+            out = subprocess.run(["java", "-cp", f"{jar}:{JSON_JAR}", "MainKt", str(tmp / "input.txt"), str(tmp / "frames.txt"), str(tmp / "synthetic.txt")],
                                  check=True, capture_output=True, text=True, timeout=300).stdout
         lines = out.strip().splitlines()
-        kotlin = {line.split("|")[0]: line.split("|")[1:] for line in lines if not line.startswith(("PAIRS|", "ALLPAIRS|"))}
+        kotlin = {line.split("|")[0]: line.split("|")[1:] for line in lines if not line.startswith(("PAIRS|", "ALLPAIRS|", "SYNTH_"))}
         self.assertEqual(len(kotlin), len(cases))
         for case_id, snap, pairs, scale in cases:
             expected = oracle.refine(snap, pairs, scale)
@@ -117,11 +150,19 @@ class RefinedEngineKotlinParity(unittest.TestCase):
         # Acumulador Kotlin == pares do script validado com as regras de produção. Ajustado na rodada 2
         # (revisão, item 20): o teste comparava pairs() com todos os casamentos (sem lenta fora nem gasolina
         # congelada) e falharia (107 × 165); confere o caminho de produção, pairs(), e também allPairs().
+        # Ajustado de novo (dono, 2026-10-11: a curva aprende tudo): pairs() = todas as rotações menos os grupos
+        # locais (EquivalenceAttribution), allPairs() = todos os casamentos.
         def parse(prefix):
             line = next(l for l in lines if l.startswith(prefix))
             return [tuple(float(x) for x in p.split(",")) for p in line.split("|", 1)[1].split()]
+        synthetic = synthetic_local_session()
+        local = sorted(k for k, g in blind.attribution(blind.own_pairs(synthetic)).items() if g["local"])
+        self.assertEqual(local, [(0, 0)], "oráculo: a lenta é o grupo local")
+        self.assertEqual(next(l for l in lines if l.startswith("SYNTH_LOCAL|")), "SYNTH_LOCAL|0,0")
         for prefix, python_pairs in (("PAIRS|", blind.production_pairs(telemetry)),
-                                     ("ALLPAIRS|", blind.production_pairs(telemetry, driving_only=False))):
+                                     ("ALLPAIRS|", blind.production_pairs(telemetry, global_only=False)),
+                                     ("SYNTH_PAIRS|", blind.production_pairs(synthetic)),
+                                     ("SYNTH_ALLPAIRS|", blind.production_pairs(synthetic, global_only=False))):
             kotlin_pairs = parse(prefix)
             self.assertGreater(len(python_pairs), 0, prefix)
             self.assertEqual(len(kotlin_pairs), len(python_pairs), prefix)

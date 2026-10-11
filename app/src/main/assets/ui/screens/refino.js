@@ -105,6 +105,20 @@
       .map(s => ({ kind: s.kind, label: String(s.label || (s.kind === 'undo' ? 'Desfazer última gravação' : 'Revisar e gravar')), enabled: s.enabled !== false }));
   }
 
+  /**
+   * Ajuste local no Mapa K decidido no Kotlin (piloto: grupo separável e diferente das outras colunas no mesmo t).
+   * Sem a ação do Kotlin, ou sem células com número, nenhum botão. A tela só leva as células ao Mapa K.
+   */
+  function localAction(eq) {
+    const list = Array.isArray(eq?.autopilot?.secondary) ? eq.autopilot.secondary : [];
+    const item = list.find(s => s && s.kind === 'local');
+    const cells = (Array.isArray(item?.cells) ? item.cells : [])
+      .filter(c => c && Number.isInteger(Number(c.row)) && Number.isInteger(Number(c.column)) && finite(c.deltaPercent) !== null)
+      .map(c => ({ row: Number(c.row), column: Number(c.column), deltaPercent: Number(c.deltaPercent) }));
+    if (!item || !cells.length) return { kind: 'none', label: '', enabled: false, cells: [] };
+    return { kind: 'local', label: String(item.label || 'Revisar ajuste local no Mapa K'), enabled: item.enabled !== false, cells };
+  }
+
   /** Lista que a revisão mostra e grava: sempre a do Kotlin naquele instante, com assinatura. */
   function reviewList(eq, kind) {
     if (kind === 'apply') {
@@ -255,6 +269,7 @@
             <button type="button" class="autocal-primary-action" data-refino-primary hidden></button>
             <button type="button" class="autocal-primary-action" data-kind="review" data-refino-review hidden>Revisar e gravar</button>
             <button type="button" class="secondary autocal-primary-action" data-kind="undo" data-refino-undo hidden>Desfazer última gravação</button>
+            <button type="button" class="secondary autocal-primary-action" data-kind="local" data-refino-local hidden></button>
           </div>
           <div id="refinoReview" class="autocal-review" hidden></div>
         </section>`;
@@ -278,6 +293,7 @@
       if (event.target.closest('[data-refino-confirm]')) { this.confirm(); return; }
       if (event.target.closest('[data-refino-review]')) { this.openReview('apply'); return; }
       if (event.target.closest('[data-refino-undo]')) { this.openReview('undo'); return; }
+      if (event.target.closest('[data-refino-local]')) { this.openLocal(); return; }
       const dot = event.target.closest('[data-refino-dot]');
       if (dot) this.inspect(dot.dataset.refinoDot);
     }
@@ -287,6 +303,13 @@
       if (!action.enabled) return;
       if (action.kind === 'review') this.openReview('apply');
       if (action.kind === 'restore') this.openReview('restore');
+    }
+
+    /** Ajuste local: abre o Mapa K com as células preenchidas (lá a revisão, a gravação, o ACK e o readback). */
+    openLocal() {
+      const local = localAction(this.eq);
+      if (!local.enabled) return;
+      this.app?.router?.navigate('map', { origin: 'refino', suggestion: { mapChanges: local.cells } });
     }
 
     openReview(kind) {
@@ -466,6 +489,13 @@
         node.disabled = !item || !item.enabled;
         if (item) node.textContent = item.label;
       });
+      const localNode = document.querySelector('[data-refino-local]');
+      if (localNode) {
+        const local = localAction(eq);
+        localNode.hidden = busy || local.kind === 'none';
+        localNode.disabled = !local.enabled;
+        if (local.kind !== 'none') localNode.textContent = local.label;
+      }
       this.renderChart();
     }
 
@@ -589,7 +619,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, secondaryActions, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
+  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);

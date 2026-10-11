@@ -40,18 +40,19 @@ class EquivalenceLedgerTest {
         assertEquals(0, ledger.index().getInt("petrolObservations"))
     }
 
-    // Ajustado em 2026-10-11 (pedido do dono: "uma hora parado puxa a curva para baixo"): antes os pares de
-    // marcha lenta saíam em pairs() e iam para o motor do refino pela ponte; agora só ficam no diagnóstico
-    // (allPairs) e no gráfico. Índice e motor só recebem condução.
+    // Substitui "marcha lenta fica fora do índice de condução e de todos os pares do motor" (dono, 2026-10-11: a
+    // curva aprende tudo): a lenta entra nos pares, no índice por faixas e na gasolina de referência. Sem
+    // condução no mesmo t não há como separar: fica na curva.
     @Test
-    fun `marcha lenta fica fora do indice de conducao e de todos os pares do motor`() {
+    fun `marcha lenta entra nos pares e no indice quando nao ha como separar`() {
         val ledger = EquivalenceLedger(null)
-        var t = drive(ledger, "GASOLINA", 870.0, 0.35, 4.0, 0, 10)
+        val t = drive(ledger, "GASOLINA", 870.0, 0.35, 4.0, 0, 10)
         drive(ledger, "GNV", 870.0, 0.35, 4.6, t + 1_000, 10)
-        assertTrue(ledger.allPairs().isNotEmpty())
-        assertTrue(ledger.pairs().isEmpty())
-        assertEquals(0, ledger.index().getInt("samples"))
-        assertTrue(ledger.index().isNull("ratio"))
+        assertEquals(8, ledger.allPairs().size)
+        assertEquals(8, ledger.pairs().size)
+        assertEquals(8, ledger.index().getInt("samples"))
+        assertEquals(1.15, ledger.index().getDouble("ratio"), 1e-9)
+        assertEquals(0, ledger.index().getJSONArray("localGroups").length())
         // Continua no gráfico (pontos densos), marcada como lenta.
         assertTrue(ledger.denseBandsJson(0.025, 1).getJSONArray("gas").getJSONObject(0).getDouble("idleShare") > 0.99)
     }
@@ -99,7 +100,8 @@ class EquivalenceLedgerTest {
 
     // Ajustado na rodada 2 (revisão, item 20): o teste tinha passado a conferir allPairs(); volta a conferir o
     // caminho de produção, pairs(), contra a busca exaustiva com as mesmas regras (gasolina congelada em 8
-    // leituras por região, condução ≥ DRIVING_MIN_RPM dos dois lados).
+    // leituras por região). Ajustado de novo (dono, 2026-10-11: a curva aprende tudo): todas as rotações dos dois
+    // lados; sem grupo local (dado aleatório sem coluna separável), pairs() = allPairs() = busca exaustiva.
     @Test
     fun `busca em grade da o mesmo resultado da busca exaustiva`() {
         val ledger = EquivalenceLedger(null)
@@ -125,14 +127,15 @@ class EquivalenceLedgerTest {
             gas += doubleArrayOf(rpm, map, ms)
             t += 5_000
         }
-        fun exhaustive(drivingOnly: Boolean) = gas.filter { !drivingOnly || it[0] >= EquivalenceLedger.DRIVING_MIN_RPM }.mapNotNull { g ->
-            val m = petrol.filter { (!drivingOnly || it[0] >= EquivalenceLedger.DRIVING_MIN_RPM) && abs(it[0] - g[0]) <= 150.0 && abs(it[1] - g[1]) <= 0.02 }
+        val exhaustive = gas.mapNotNull { g ->
+            val m = petrol.filter { abs(it[0] - g[0]) <= 150.0 && abs(it[1] - g[1]) <= 0.02 }
                 .map { it[2] }.sorted()
             if (m.size < 2) null else m[m.size / 2] to g[2]
         }
+        assertEquals(0, ledger.index().getJSONArray("localGroups").length())
         for ((expected, actual) in listOf(
-            exhaustive(drivingOnly = true) to ledger.pairs().map { it.petrolRefMs to it.gasPetrolMs },
-            exhaustive(drivingOnly = false) to ledger.allPairs().map { it.petrolRefMs to it.gasPetrolMs },
+            exhaustive to ledger.pairs().map { it.petrolRefMs to it.gasPetrolMs },
+            exhaustive to ledger.allPairs().map { it.petrolRefMs to it.gasPetrolMs },
         )) {
             assertTrue(expected.size > 50)
             assertEquals(expected.size, actual.size)
@@ -157,14 +160,15 @@ class EquivalenceLedgerTest {
 
     // ------------------------------------------------------------------ refino (2026-10-11)
 
+    // Substitui "gasolina de referência em lenta não entra nem para casar com GNV de condução" (dono, 2026-10-11:
+    // a curva aprende tudo): a gasolina própria de qualquer rotação é referência no mesmo RPM±150/MAP±0,02.
     @Test
-    fun `gasolina de referencia em lenta nao entra nem para casar com GNV de conducao`() {
+    fun `gasolina de qualquer rotacao casa com o GNV no mesmo RPM e MAP`() {
         val ledger = EquivalenceLedger(null)
-        // Gasolina só em 1250 rpm (abaixo da 2ª coluna do Mapa K) e GNV em 1400 rpm na mesma região: casariam (±150 rpm).
-        var t = drive(ledger, "GASOLINA", 1250.0, 0.40, 4.2, 0, 10)
+        val t = drive(ledger, "GASOLINA", 1250.0, 0.40, 4.2, 0, 10)
         drive(ledger, "GNV", 1400.0, 0.40, 4.6, t + 1_000, 10)
-        assertTrue(ledger.allPairs().isNotEmpty())
-        assertTrue(ledger.pairs().isEmpty())
+        assertEquals(8, ledger.allPairs().size)
+        assertEquals(ledger.allPairs(), ledger.pairs())
     }
 
     @Test

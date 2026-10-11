@@ -37,6 +37,7 @@ def stable_frames(telemetry, fuel, until_ms=None):
             continue
         # média de 3 leituras: remove o zigue-zague que existe também na gasolina
         out.append({
+            "ts": cur["t"],  # instante da leitura (quadro do meio), como o EquivalenceLedger.Obs
             "rpm": sum(f["rpm"] for f in (prev, cur, nxt)) / 3,
             "map": sum(f["load_bar"] for f in (prev, cur, nxt)) / 3,
             "t": sum(f["petrol_ms"] for f in (prev, cur, nxt)) / 3,
@@ -75,18 +76,111 @@ def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
 
 
 # Regras de produção do EquivalenceLedger.pairs() (o que chega ao motor do refino).
-DRIVING_MIN_RPM = 1350  # 2ª coluna do Mapa K: a curva global só aprende a partir daqui
+# Dono, 2026-10-11: "a curva deve aprender tudo e saber onde ajustar o quê": todas as rotações (lenta incluída);
+# só os grupos coluna do Mapa K × faixa de t separados como LOCAIS saem da curva (EquivalenceAttribution.kt).
 PETROL_FREEZE_SAMPLES = 8  # a gasolina própria de cada região RPM×MAP congela madura
+RPM_BINS = [850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500]  # KMapPhysicalAxes.rpmBins()
+BANDS = [(3.0, 4.5), (4.5, 6.0), (6.0, 7.5), (7.5, 9.0), (9.0, 12.0)]  # EquivalenceLedger.BANDS
+ENTER_LOG = math.log(1.05)
+EXIT_LOG = math.log(1.04)
+MIN_PAIRS = 8
+MIN_VISITS = 3
+VISIT_SPREAD_LOG = math.log(1.03)
+MIN_OTHER_PAIRS = 8
+SAME_T_MS = 0.5
+VISIT_GAP_MS = 30_000
 
 
 def _cell(o):
     return (math.floor(int(o["rpm"]) / 150), math.floor(int(o["map"] * 1000) / 20))
 
 
-def production_pairs(telemetry, driving_only=True, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
-    """Pares como o EquivalenceLedger produz: gasolina congelada em PETROL_FREEZE_SAMPLES leituras por região
-    (na ordem de chegada, lenta incluída), GNV com o teto por região; com driving_only (= pairs()), condução
-    a partir de DRIVING_MIN_RPM dos dois lados; sem (= allPairs()), todos os casamentos."""
+def _upper_median(values):
+    values = sorted(values)
+    return values[len(values) // 2] if values else None
+
+
+def kmap_column(rpm):
+    """Coluna do Mapa K mais próxima (empate fica com a de menor RPM)."""
+    best = 0
+    for i in range(1, len(RPM_BINS)):
+        if abs(rpm - RPM_BINS[i]) < abs(rpm - RPM_BINS[best]):
+            best = i
+    return best
+
+
+def band_of(petrol_ms):
+    for i, (lo, hi) in enumerate(BANDS):
+        if lo <= petrol_ms < hi:
+            return i
+    return -1
+
+
+def attribution(pairs, latched=frozenset()):
+    """Oráculo de EquivalenceAttribution.classify: pairs = [{tp, tg, rpm, ts}] com gasolina própria.
+    Devolve {(coluna, faixa): {"local": bool, "reason": str, "pairs": n, "visits": v, "residual": r|None}}."""
+    members = []
+    for p in pairs:
+        if p["tp"] <= 0 or p["tg"] <= 0:
+            continue
+        b = band_of(p["tp"])
+        col = kmap_column(p["rpm"])
+        members.append({**p, "col": col, "key": (col, b) if b >= 0 else None, "err": math.log(p["tg"] / p["tp"])})
+    by_key = {}
+    for m in members:
+        if m["key"] is not None:
+            by_key.setdefault(m["key"], []).append(m)
+    stats = []
+    for key, group in by_key.items():
+        visits, last = [], None
+        for m in sorted(group, key=lambda x: x["ts"]):
+            if last is None or m["ts"] - last > VISIT_GAP_MS:
+                visits.append([])
+            visits[-1].append(m["err"])
+            last = m["ts"]
+        stats.append({"key": key, "n": len(group), "tp": _upper_median([m["tp"] for m in group]),
+                      "err": _upper_median([m["err"] for m in group]), "visits": [_upper_median(v) for v in visits]})
+
+    def others_of(st, excluded):
+        return [m["err"] for m in members if m["col"] != st["key"][0] and abs(m["tp"] - st["tp"]) <= SAME_T_MS
+                and (m["key"] is None or m["key"] not in excluded)]
+
+    initial = {}
+    for st in stats:
+        ref = _upper_median(others_of(st, set()))
+        initial[st["key"]] = abs(st["err"] - ref) if ref is not None else -1.0
+    ordered = sorted(stats, key=lambda st: (0 if st["key"] in latched else 1, -initial[st["key"]], st["key"][0], st["key"][1]))
+    excluded, out = set(), {}
+    for st in ordered:
+        others = others_of(st, excluded)
+        ref = _upper_median(others)
+        residual = None if ref is None else st["err"] - ref
+        vis = [] if ref is None else [v - ref for v in st["visits"]]
+        centre = _upper_median(vis)
+        stable = centre is not None and (all(v > 0 for v in vis) or all(v < 0 for v in vis)) and \
+            _upper_median([abs(v - centre) for v in vis]) <= VISIT_SPREAD_LOG
+        threshold = EXIT_LOG if st["key"] in latched else ENTER_LOG
+        if st["n"] < MIN_PAIRS:
+            reason = "POUCOS_PARES"
+        elif len(st["visits"]) < MIN_VISITS:
+            reason = "POUCAS_VISITAS"
+        elif len(others) < MIN_OTHER_PAIRS or residual is None:
+            reason = "SEM_OUTRA_COLUNA_NO_MESMO_T"
+        elif not stable:
+            reason = "VISITAS_INSTAVEIS"
+        elif abs(residual) <= threshold:
+            reason = "IGUAL_AS_OUTRAS_COLUNAS"
+        else:
+            reason = "LOCAL"
+        if reason == "LOCAL" or (residual is not None and abs(residual) > threshold):
+            excluded.add(st["key"])
+        out[st["key"]] = {"local": reason == "LOCAL", "reason": reason, "pairs": st["n"], "visits": len(st["visits"]), "residual": residual}
+    return out
+
+
+def own_pairs(telemetry, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
+    """Todos os casamentos com gasolina própria (= allPairs()): gasolina congelada em PETROL_FREEZE_SAMPLES leituras
+    por região (na ordem de chegada), GNV com o teto por região, todas as rotações."""
     counts = {}
     petrol = []
     for o in stable_frames(telemetry, "GASOLINA"):
@@ -95,16 +189,22 @@ def production_pairs(telemetry, driving_only=True, rpm_tol=RPM_TOL, map_tol=MAP_
             continue
         counts[key] = counts.get(key, 0) + 1
         petrol.append(o)
-    gas = cap_cells(stable_frames(telemetry, "GNV"))
-    if driving_only:
-        petrol = [p for p in petrol if p["rpm"] >= DRIVING_MIN_RPM]
-        gas = [g for g in gas if g["rpm"] >= DRIVING_MIN_RPM]
     out = []
-    for g in gas:
+    for g in cap_cells(stable_frames(telemetry, "GNV")):
         matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol)
         if len(matches) >= 2:
-            out.append((matches[len(matches) // 2], g["t"]))
+            out.append({"tp": matches[len(matches) // 2], "tg": g["t"], "rpm": g["rpm"], "ts": g["ts"]})
     return out
+
+
+def production_pairs(telemetry, global_only=True, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
+    """Pares como o EquivalenceLedger produz: com global_only (= pairs(), sem referência da ECU), todas as rotações
+    menos os grupos locais; sem (= allPairs()), todos os casamentos."""
+    pairs = own_pairs(telemetry, rpm_tol, map_tol)
+    if global_only:
+        local = {key for key, g in attribution(pairs).items() if g["local"]}
+        pairs = [p for p in pairs if not (band_of(p["tp"]) >= 0 and (kmap_column(p["rpm"]), band_of(p["tp"])) in local)]
+    return [(p["tp"], p["tg"]) for p in pairs]
 
 
 def blind_targets(fixture, sequence):

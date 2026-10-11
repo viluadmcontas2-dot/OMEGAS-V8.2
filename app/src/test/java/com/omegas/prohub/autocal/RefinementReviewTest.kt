@@ -296,10 +296,12 @@ class RefinementReviewTest {
     }
 
     @Test
-    fun `8 prazo da verificacao so anda rodando no GNV`() {
+    fun `8 prazo da verificacao so anda com o motor no GNV`() {
         assertFalse(RefinementCycle.driving(2000.0, 5.0, "GASOLINA"))
         assertTrue(RefinementCycle.driving(2000.0, 5.0, "GNV"))
-        assertFalse(RefinementCycle.driving(800.0, 5.0, "GNV"))
+        // Ajustado (dono, 2026-10-11: a curva aprende tudo): a lenta no GNV também conta; parado não.
+        assertTrue(RefinementCycle.driving(800.0, 5.0, "GNV"))
+        assertFalse(RefinementCycle.driving(0.0, 5.0, "GNV"))
     }
 
     @Test

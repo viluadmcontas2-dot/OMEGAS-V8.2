@@ -15,10 +15,15 @@ import kotlin.math.exp
  * até na gasolina. A gasolina vira a referência por RPM×MAP (independe da Curva K e
  * persiste); o GNV vale só para a curva vigente e é descartado quando a curva ou o
  * mapa mudam. Um par (t_gasolina mediano no mesmo RPM±150/MAP±0,02, t_no_GNV) diz
- * qual K a condução real pede: K_alvo(t_gas) = K(t_gnv)·t_gnv/t_gas.
+ * qual K o motor pede: K_alvo(t_gas) = K(t_gnv)·t_gnv/t_gas.
+ *
+ * Dono, 2026-10-11: "a curva deve aprender tudo e saber onde ajustar o quê". Todas as rotações (lenta incluída)
+ * entram nos pares, no índice, na gasolina de referência e no veredito/ganho do diário; só os grupos que
+ * [EquivalenceAttribution] separa como LOCAIS (coluna do Mapa K × faixa de t, diferentes das outras colunas no
+ * mesmo t) saem da evidência da curva e viram proposta de ajuste local no Mapa K.
  *
  * Paridade com tools/autocal_refine/blind_telemetry_test.py (stable_frames; production_pairs = pairs(),
- * telemetry_pairs = todos os casamentos). Puro: não fala com a ECU; persiste num arquivo JSON.
+ * production_pairs(global_only=False) = allPairs()). Puro: não fala com a ECU; persiste num arquivo JSON.
  */
 class EquivalenceLedger(private val file: File? = null, private val clock: () -> Long = System::currentTimeMillis) {
     companion object {
@@ -38,11 +43,10 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         fun cellKey(rpm: Double, map: Double): Long = Math.floorDiv(rpm.toLong(), MATCH_RPM.toLong()) * 1_000_003L +
             Math.floorDiv((map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
         /**
-         * A curva global só aprende a partir da 2ª coluna do Mapa K (KMapPhysicalAxes.rpmBins()[1] = 1350 rpm):
-         * a coluna 850 é da lenta e, se a ECU interpola em RPM, vaza até ~1350. Vale para pares, gasolina de
-         * referência, veredito e ganho (no corpus real não há nenhum par entre 1000 e 1350 rpm).
+         * SÓ DIAGNÓSTICO (gás por ar e fração de lenta dos pontos do gráfico): abaixo disso é "lenta". Não filtra
+         * pares, índice, gasolina de referência, veredito nem ganho (dono, 2026-10-11: a curva aprende tudo).
          */
-        const val DRIVING_MIN_RPM = 1_350.0
+        const val IDLE_DIAGNOSTIC_RPM = 1_350.0
         val BANDS = listOf(3.0 to 4.5, 4.5 to 6.0, 6.0 to 7.5, 7.5 to 9.0, 9.0 to 12.0)
         private const val SAVE_INTERVAL_MS = 60_000L
 
@@ -134,7 +138,10 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private var cachedDense: Triple<Double, Int, JSONObject>? = null
     /** Sobe a cada mudança nas leituras: os pares só são recalculados quando algo mudou. */
     private var revision = 0L
-    private var cachedPairs: Pair<Long, List<EvidencePair>>? = null
+    /** Pares da curva (sem os grupos locais) e a atribuição, por revisão. */
+    private var cachedEvidence: Triple<Long, List<EvidencePair>, List<EquivalenceAttribution.Group>>? = null
+    /** Grupos que já eram locais (histerese 5% entra / 4% sai). Persistido. */
+    private var localLatch: Set<EquivalenceAttribution.Key> = emptySet()
     /** Curva que estava na ECU antes da última gravação do app: leitura velha dela não é "mudou por fora". */
     private var adoptedFrom: String? = null
     /** Última invalidação parcial (só os pontos que a gravação mudou), para a tela explicar. */
@@ -257,7 +264,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                 window.clear()
                 return
             }
-            if (frame.fuel == "GNV" && frame.rpm >= DRIVING_MIN_RPM && frame.gasMs > 0.0) {
+            if (frame.fuel == "GNV" && frame.rpm >= IDLE_DIAGNOSTIC_RPM && frame.gasMs > 0.0) {
                 gasUsefulRpmMs += (frame.gasMs - GAS_DEAD_TIME_MS).coerceAtLeast(0.0) * frame.rpm
                 airRpmBar += frame.map * frame.rpm
             }
@@ -374,31 +381,42 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     }
 
     /**
-     * Pares (t_gasolina de referência, t_no_GNV) da condução para a curva vigente: a única evidência de
-     * telemetria que chega ao motor. Abaixo de [DRIVING_MIN_RPM] fica fora dos DOIS lados (GNV e gasolina de
-     * referência): parado nunca puxa a curva (continua só no gráfico). A referência é a gasolina própria de
-     * condução (congelada) no mesmo RPM×MAP; a curva de gasolina da ECU só completa onde não há própria
-     * (Platina 00f6fd02: na lenta a gasolina pede ~17% a mais que na condução no mesmo MAP).
-     * Recalcula só quando as leituras mudam.
+     * Pares (t_gasolina de referência, t_no_GNV) para a curva vigente: a única evidência de telemetria que chega
+     * ao motor. Todas as rotações, lenta incluída (dono, 2026-10-11: a curva aprende tudo), menos os pares dos
+     * grupos que [EquivalenceAttribution] separou como locais (esses vão para o Mapa K, não para a curva). A
+     * referência é a gasolina própria (congelada) no mesmo RPM×MAP; a curva de gasolina da ECU só completa onde não
+     * há própria (Platina 00f6fd02). Recalcula só quando as leituras mudam.
      */
-    fun pairs(): List<EvidencePair> = synchronized(lock) {
-        cachedPairs?.takeIf { it.first == revision }?.let { return@synchronized it.second }
-        computePairs(drivingOnly = true, ecuRef = ecuPetrolRef).also { cachedPairs = revision to it }
+    fun pairs(): List<EvidencePair> = evidence().second
+
+    /** Grupos coluna do Mapa K × faixa de t com o motivo (local ou na curva). */
+    fun attribution(): List<EquivalenceAttribution.Group> = evidence().third
+
+    fun localGroupsJson(): JSONArray = EquivalenceAttribution.json(attribution().filter { it.local })
+
+    private fun evidence(): Triple<Long, List<EvidencePair>, List<EquivalenceAttribution.Group>> = synchronized(lock) {
+        cachedEvidence?.takeIf { it.first == revision }?.let { return@synchronized it }
+        val all = computePairs(ecuRef = ecuPetrolRef)
+        // Separar exige gasolina própria no mesmo RPM×MAP: a curva de gasolina da ECU não tem RPM.
+        val groups = EquivalenceAttribution.classify(all.filter { !it.ecuRef }, localLatch)
+        val local = groups.filter { it.local }.map { it.key }.toSet()
+        if (local != localLatch) { localLatch = local; dirty = true }
+        val global = if (local.isEmpty()) all else all.filter { EquivalenceAttribution.keyOf(it.rpm, it.petrolRefMs) !in local }
+        Triple(revision, global, groups).also { cachedEvidence = it }
     }
 
-    /** Todos os casamentos com gasolina própria, inclusive marcha lenta (diagnóstico; nunca vai ao motor). */
-    fun allPairs(): List<EvidencePair> = synchronized(lock) { computePairs(drivingOnly = false, ecuRef = emptyList()) }
+    /** Todos os casamentos com gasolina própria, grupos locais incluídos (diagnóstico e evidência do ajuste local). */
+    fun allPairs(): List<EvidencePair> = synchronized(lock) { computePairs(ecuRef = emptyList()) }
 
-    private fun computePairs(drivingOnly: Boolean, ecuRef: List<Pair<Double, Double>>): List<EvidencePair> {
+    private fun computePairs(ecuRef: List<Pair<Double, Double>>): List<EvidencePair> {
         // Grade RPM×MAP com célula = janela de casamento: só as 3×3 células vizinhas podem casar.
         // Mesmo resultado da busca exaustiva, sem 4000×1500 comparações por recálculo na multimídia.
         fun cell(rpm: Double, map: Double) = Math.floorDiv(rpm.toLong(), MATCH_RPM.toLong()) * 1_000_003L +
             Math.floorDiv((map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
         val grid = HashMap<Long, MutableList<Obs>>()
-        petrol.forEach { if (!drivingOnly || it.rpm >= DRIVING_MIN_RPM) grid.getOrPut(cell(it.rpm, it.map)) { ArrayList() }.add(it) }
+        petrol.forEach { grid.getOrPut(cell(it.rpm, it.map)) { ArrayList() }.add(it) }
         val matches = ArrayList<Double>()
         return gas.mapNotNull { g ->
-            if (drivingOnly && g.rpm < DRIVING_MIN_RPM) return@mapNotNull null
             matches.clear()
             val r0 = Math.floorDiv(g.rpm.toLong(), MATCH_RPM.toLong())
             val m0 = Math.floorDiv((g.map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
@@ -413,7 +431,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     }
 
     /**
-     * Índice de equivalência da condução (rpm ≥ 1000, ≥ 3 ms): razão mediana t_no_GNV / t_gasolina.
+     * Índice de equivalência (todas as rotações, ≥ 3 ms, sem os grupos locais): razão mediana t_no_GNV / t_gasolina.
      * 1,00 = GNV pede exatamente o que a gasolina pede. >1 = GNV pobre (ECU compensa somando).
      * Com [sinceMs] > 0 só conta GNV medido a partir desse instante (o "depois" de uma gravação).
      */
@@ -423,7 +441,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             else if (sinceCacheRevision == revision) sinceCache[sinceMs]?.let { return JSONObject(it.toString()) }
             revision
         }
-        val all = pairs().filter { it.rpm >= DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS && it.t >= sinceMs }
+        val all = pairs().filter { it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS && it.t >= sinceMs }
+        val localGroups = localGroupsJson()
         fun median(values: List<Double>): Double? = values.sorted().let { if (it.isEmpty()) null else it[it.size / 2] }
         val bands = JSONArray()
         BANDS.forEach { (lo, hi) ->
@@ -478,7 +497,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             .put("ecuReference", ecuToken)
             .put("petrolEpoch", epoch)
             .put("petrolFreezeSamples", PETROL_FREEZE_SAMPLES)
-            .put("drivingMinRpm", DRIVING_MIN_RPM)
+            // Grupos coluna do Mapa K × faixa de t separados como ajuste local (fora deste índice e da curva).
+            .put("localGroups", localGroups)
             // Gás útil (tempo de gás − tempo morto) por unidade de ar admitido (MAP×RPM), condução em GNV:
             // independe do trânsito; compara calibrações no mesmo carro. Unidade relativa.
             .put("gasPerAir", gasPerAir() ?: JSONObject.NULL)
@@ -527,7 +547,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                     .put("tpetMs", PresentationMedian.of(values.map { it.petrolMs }))
                     .put("samples", values.size)
                     .put("rpmMedian", PresentationMedian.of(values.map { it.rpm }))
-                    .put("idleShare", values.count { it.rpm < DRIVING_MIN_RPM }.toDouble() / values.size)) }
+                    .put("idleShare", values.count { it.rpm < IDLE_DIAGNOSTIC_RPM }.toDouble() / values.size)) }
             }
         }
         val result = JSONObject().put("petrol", lane(petrol)).put("gas", lane(gas))
@@ -576,6 +596,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             .put("petrolGenerationSession", petrolGenerationSession)
             .put("petrolGeneration", petrolGeneration)
             .put("petrolEpoch", petrolEpoch)
+            .put("localLatch", JSONArray(localLatch.map { JSONArray().put(it.column).put(it.band) }))
     }
 
     private fun load() {
@@ -605,6 +626,9 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             petrolGenerationSession = root.optLong("petrolGenerationSession", 0L)
             petrolGeneration = root.optInt("petrolGeneration", -1)
             petrolEpoch = root.optInt("petrolEpoch", 0)
+            localLatch = root.optJSONArray("localLatch")?.let { a ->
+                (0 until a.length()).mapNotNull { i -> a.optJSONArray(i)?.takeIf { it.length() == 2 }?.let { EquivalenceAttribution.Key(it.optInt(0), it.optInt(1)) } }.toSet()
+            } ?: emptySet()
         } catch (_: Exception) {
             petrol.clear()
             gas.clear()

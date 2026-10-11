@@ -216,9 +216,10 @@ test('motivos da gravação do Refino batem com a classificação do Kotlin (pro
 test('barra única embaixo: botão do estado, Revisar e Desfazer; sem Detalhes, Abas nem Entendi; frase sob o título', () => {
   const bar = SOURCE.match(/<div class="refino-action-bar"[\s\S]*?<\/div>/)?.[0] || '';
   assert.ok(bar, 'a tela monta a barra de ações');
-  const order = ['data-refino-primary', 'data-refino-review', 'data-refino-undo'].map(attr => bar.indexOf(attr));
+  // Ajustado (dono, 2026-10-11: a curva aprende tudo e sabe onde ajustar o quê): + botão do ajuste local no Mapa K.
+  const order = ['data-refino-primary', 'data-refino-review', 'data-refino-undo', 'data-refino-local'].map(attr => bar.indexOf(attr));
   assert.ok(order.every(i => i >= 0), 'todos os botões estão na barra');
-  assert.equal(JSON.stringify([...order].sort((a, b) => a - b)), JSON.stringify(order), 'ordem: estado, Revisar, Desfazer');
+  assert.equal(JSON.stringify([...order].sort((a, b) => a - b)), JSON.stringify(order), 'ordem: estado, Revisar, Desfazer, ajuste local');
   // Decisões do dono: navegação inferior fixa (sem Abas), sem "Entendi" e sem "Detalhes" (2026-10-11: só usar e validar).
   assert.doesNotMatch(SOURCE, /toggleNav|data-refino-tabs|data-refino-ack|acknowledge/);
   assert.doesNotMatch(SOURCE, /data-refino-details|data-refino-panel="details"|toggleDetails/);
@@ -231,7 +232,7 @@ test('barra única embaixo: botão do estado, Revisar e Desfazer; sem Detalhes, 
   // Botões de 56 px: todos usam a classe que o Refino já dimensiona (min-height 56px).
   const css = read('app/src/main/assets/ui/styles-autocal-cockpit.css');
   assert.match(css, /\.refino-cockpit \.autocal-primary-action \{ min-height: 56px;/);
-  assert.equal((bar.match(/autocal-primary-action/g) || []).length, 3);
+  assert.equal((bar.match(/autocal-primary-action/g) || []).length, 4);
 });
 
 test('depois de gravar não há botão extra: o piloto já está medindo e a tela volta a ele', () => {
@@ -240,4 +241,48 @@ test('depois de gravar não há botão extra: o piloto já está medindo e a tel
   // Falha vira estado legível com próxima ação ("Tentar de novo"), sem dar nada como gravado.
   assert.match(SOURCE, /Nada foi dado como gravado/);
   assert.match(SOURCE, /textContent = 'Tentar de novo'/);
+});
+
+// ---------------------------------------------------- ajuste local no Mapa K (dono, 2026-10-11: a curva aprende tudo)
+
+const LOCAL_CELLS = [{ row: 3, column: 0, deltaPercent: 15 }, { row: 4, column: 0, deltaPercent: 15 }, { row: 5, column: 0, deltaPercent: 15 }];
+const localEq = (extra = {}) => ({ autopilot: { phase: 'ESTAVEL', action: { kind: 'stable', enabled: false }, secondary: [
+  { kind: 'local', enabled: true, label: 'Revisar ajuste local no Mapa K (3 células)', cells: LOCAL_CELLS, ...extra },
+] } });
+
+test('botão do ajuste local só existe com a ação local do Kotlin (com células)', () => {
+  const m = model();
+  assert.equal(m.localAction({ autopilot: { secondary: [] } }).kind, 'none');
+  assert.equal(m.localAction({}).kind, 'none');
+  assert.equal(m.localAction(localEq({ cells: [] })).kind, 'none');
+  // A análise da curva nunca cria o botão local: só o piloto.
+  assert.equal(m.localAction({ autopilot: { proposal: { points: [{ index: 4 }] }, secondary: [{ kind: 'review', enabled: true }] } }).kind, 'none');
+  const local = m.localAction(localEq());
+  assert.equal(local.kind, 'local');
+  assert.equal(local.label, 'Revisar ajuste local no Mapa K (3 células)');
+  assert.equal(local.enabled, true);
+  assert.equal(JSON.stringify(local.cells), JSON.stringify(LOCAL_CELLS));
+  assert.equal(m.localAction(localEq({ enabled: false })).enabled, false);
+  // Célula sem número (desconhecido) nunca vira 0: fica fora.
+  assert.equal(m.localAction(localEq({ cells: [...LOCAL_CELLS, { row: 6, column: 0, deltaPercent: null }] })).cells.length, 3);
+  // Ação local não libera gravar a curva.
+  assert.equal(m.actionEnabled(localEq(), 'apply'), false);
+});
+
+test('ajuste local abre o Mapa K com as células preenchidas; desabilitado não navega', () => {
+  const window = { setTimeout: () => 0 };
+  window.window = window;
+  vm.runInNewContext(SOURCE, { window, globalThis: window, console });
+  const calls = [];
+  const fake = { eq: localEq(), app: { router: { navigate: (route, context) => { calls.push([route, context]); return true; } } } };
+  window.OmegasUi.RefinoScreen.prototype.openLocal.call(fake);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'map');
+  assert.equal(JSON.stringify(calls[0][1]), JSON.stringify({ origin: 'refino', suggestion: { mapChanges: LOCAL_CELLS } }));
+  const off = { eq: localEq({ enabled: false }), app: fake.app };
+  window.OmegasUi.RefinoScreen.prototype.openLocal.call(off);
+  assert.equal(calls.length, 1, 'sem ECU não navega');
+  // O Refino nunca grava o Mapa K: só abre a tela do Mapa K com a revisão.
+  assert.doesNotMatch(SOURCE, /writeMap\(|startMapBatchWrite/);
+  assert.match(SOURCE, /data-refino-local/);
 });
