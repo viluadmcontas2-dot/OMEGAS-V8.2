@@ -1,4 +1,4 @@
-# Checkpoint — Obsidian enxuto (2026-10-11 04:30 UTC)
+# Checkpoint — Obsidian enxuto (2026-10-11 16:20 UTC)
 
 Registro canônico para retomar sem reconstruir a história. Branch `work/platina-obsidian-enxuto`.
 
@@ -11,7 +11,7 @@ Registro canônico para retomar sem reconstruir a história. Branch `work/platin
 - Bytes de comando da ECU não mudam (UsbSerialManager, ResponseDrivenEcuEngine, AutoCalProtocol, KFactorManager, KWriteManager, AutoCalNativeActionManager — exceção: trava reset-nunca-pausa, decisão do dono 2026-10-08). Erro de transporte ≠ erro da ECU. Desconhecido = "—", nunca 0.
 - Um APK só, no fim (`verde-apk-now.yml`, `build_apk=true`), com SHA-256. Validação física só com o dono no carro.
 
-## Estado verificado (remoto = HEAD `cd805290`)
+## Estado verificado (remoto = HEAD `b714edb0`)
 
 | Commit | Fatia |
 |---|---|
@@ -27,24 +27,26 @@ Registro canônico para retomar sem reconstruir a história. Branch `work/platin
 | `019cbf57` | sem "Detalhes" no AutoCal/Refino; Curva K com a curva à esquerda |
 | `ab8cecf4` | gráficos do AutoCal/Refino na largura toda |
 | `cd805290` | cartão AutoMatch X/Y fixo no topo do AutoCal |
+| `748aa9ba` | este checkpoint |
+| `310ac875` | ponte leve `getPresentSnapshotIfChanged` (como na cinza) |
+| `27f8d770` | Aprender e Ferramentas sem rolagem, sem "Detalhes" e sem código cru |
+| `b714edb0` | enxugar: 9 arquivos de interface mortos apagados + contrato que impede a volta |
 
-Provas locais no último commit: node UI 152/152, `run_checks` PASS, blueprint AutoCal PASS, JVM 580/580 + lint (no `d3643657`). CI remota ainda não rodada nesses SHAs (workflows disparam só em `OmegasPlatina` ou `workflow_dispatch`).
+Provas: CI remota verde em `27f8d770` (`OMEGAS PLATINA CI` run 38154080587; `AutoCal Platina layout regression` run 38154082559, inclui a trava "nenhuma aba rola"). Locais em `b714edb0`: node UI 161/161, unittest Python 171 OK, `run_checks` PASS, `sem_rolagem_8_abas` PASS, blueprint AutoCal PASS. JVM 585/585 em `310ac875`.
 
 ## Em andamento (worktrees locais em scratchpad, nada publicado)
 
-1. Refino rodada 2 — corrigir a revisão adversarial (`scratchpad/audit/revisao-refino.md`): CRÍTICO 1 referência trocando entre antes/depois (falso "piorou"); ALTO 2 diário legado; ALTO 3 alinhamento da curva no serviço; ALTO 4 restaurar contra a ECU; ALTO 5 SEM_BASE re-propõe; MÉDIO 6–19; margem 5%/4%. Worktree `wt-refino2`.
-2. Aprender e Ferramentas sem rolagem (a trava de CI falha só nessas duas). Worktree `wt-learn`.
-3. F4a ponte leve `getPresentSnapshotIfChanged` + cache de interpolação (como na cinza). Worktree `wt-f4`.
-4. Auditorias só leitura: fluxo de dados (`scratchpad/audit/fluxo-dados.md`), jornada do leigo (`jornada-leigo.md`), refino global × resíduo local para Mapa K (`refino-global-local.md`).
+1. Refino rodada 2 — corrigir a revisão adversarial (`scratchpad/audit/revisao-refino.md`): CRÍTICO 1 referência trocando entre antes/depois (falso "piorou"); ALTO 2 diário legado; ALTO 3 alinhamento da curva no serviço; ALTO 4 restaurar contra a ECU; ALTO 5 SEM_BASE re-propõe; MÉDIO 6–19; margem 5%/4%; curva aprende só ≥ 1350 rpm. Worktree `wt-refino2` (base `748aa9ba`).
+2. Auditorias só leitura relançadas em `b714edb0`: fluxo de dados (`scratchpad/audit/fluxo-dados.md`) e jornada do leigo (`scratchpad/audit/jornada-leigo.md`). Já pronta: refino global × resíduo local (`refino-global-local.md`) — conclusão: o corpus não mostra resíduo local separável na lenta; o Refino basta para o global; sem planejador local de Mapa K agora.
 
 ## Próximos passos, em ordem
 
-1. Integrar cada worktree: validar isolada (node UI, run_checks, JVM+lint quando houver Kotlin, trava sem rolagem, blueprint), commitar por fatia, push, conferir `git ls-remote`.
-2. Decidir com os relatórios: um cérebro só (Refino) para o global; resíduo local (ex.: lenta pede ~20% a mais) proposto no Mapa K; o "Aprender"/AssistedCalibrationAdvisor já tem as duas camadas — reaproveitar em vez de criar.
-3. Enxugar: remover 9 arquivos mortos (floating-telemetry, predictor-current-cell, styles-expansion*, predictor-model, screens/predictor + CSS) e os testes que só os testam; manter portmon-* (testam o editor de mapa vivo).
-4. F4b: JSON da telemetria fora da thread da ECU (TelemetryForegroundService) — depois do refino rodada 2.
-5. CI remota no SHA final (`ci.yml` e `autocal-blueprint-layout.yml` via `workflow_dispatch` no branch).
-6. Um APK (`verde-apk-now.yml`, `build_apk=true`) com SHA-256; teste no carro com o dono (classe 5).
+1. Integrar o refino rodada 2: validar isolado (JVM+lint, node UI, run_checks, sondas da revisão), commitar, push, `git ls-remote`.
+2. Corrigir em fatias pequenas os achados das duas auditorias que valem agora.
+3. F4b: JSON da telemetria fora da thread da ECU (`TelemetryForegroundService`) — depois do refino rodada 2.
+4. CI remota no SHA final (`ci.yml` e `autocal-blueprint-layout.yml` via `workflow_dispatch` no branch).
+5. Um APK (`verde-apk-now.yml`, `build_apk=true`) com SHA-256; teste no carro com o dono (classe 5).
+6. Decisões a levar ao dono: limiar de 1350 rpm para a curva aprender; gasolina própria primeiro × referência da ECU.
 
 ## Primeiro item ainda não provado
 
