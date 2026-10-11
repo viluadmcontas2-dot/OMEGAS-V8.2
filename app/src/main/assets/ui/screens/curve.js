@@ -1,6 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
+  const PROPOSAL_ROWS = 4;
 
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
   function fmt(value, digits) {
@@ -75,11 +76,13 @@
         this.setView('editor');
         this.renderSuggestionFocus(suggestion);
       }
-      if (!this.data && !this.reading) this.startRead(true);
+      // Toda entrada na aba relê a Curva K da ECU (dono, 2026-10-11); o botão Reler ECU continua.
+      if (!this.reading && !this.writing && !this.backupTask) this.startRead(true);
       if (this.data && suggestion) {
         this.focusSuggestion(suggestion);
         this.prepareSuggestion(suggestion, true);
       }
+      if (!this.backupTask && !this.restoreContext) text('curveBackupStatus', '');
       this.refreshBackups();
       if (this.view === 'learning') this.renderLearning(this.store.get());
     }
@@ -90,19 +93,17 @@
       if (!select) return;
       const backups = this.api.curveBackups();
       const rows = Array.isArray(backups) ? backups : [];
-      select.innerHTML = rows.length
-        ? '<option value="">Escolha um backup…</option>' + rows.map(item => {
-            const when = Number(item.createdAt) > 0 ? new Date(Number(item.createdAt)).toLocaleString('pt-BR') : 'data desconhecida';
-            const kind = item.type === 'MANUAL_SNAPSHOT' ? 'salvo' : 'automático';
-            return `<option value="${escapeHtml(item.fileName)}">${escapeHtml(item.label || 'Curva K')} · ${escapeHtml(when)} · ${kind}</option>`;
-          }).join('')
-        : '<option value="">Nenhum backup salvo</option>';
+      // "Backups (N)" compacto no rodapé (dono, 2026-10-11); a lista completa abre ao tocar.
+      select.innerHTML = `<option value="">Backups (${rows.length})</option>` + rows.map(item => {
+        const when = Number(item.createdAt) > 0 ? new Date(Number(item.createdAt)).toLocaleString('pt-BR') : 'data desconhecida';
+        const kind = item.type === 'MANUAL_SNAPSHOT' ? 'salvo' : 'automático';
+        return `<option value="${escapeHtml(item.fileName)}">${escapeHtml(item.label || 'Curva K')} · ${escapeHtml(when)} · ${kind}</option>`;
+      }).join('');
+      select.disabled = rows.length === 0;
       if (restore) {
         restore.disabled = true;
         restore.textContent = 'Restaurar backup';
       }
-      if (rows.length) text('curveBackupStatus', `${rows.length} backup${rows.length === 1 ? '' : 's'} disponível${rows.length === 1 ? '' : 'is'} · escolha para pré-visualizar`);
-      else text('curveBackupStatus', 'Nenhum backup salvo');
     }
 
     saveBackup() {
@@ -192,22 +193,28 @@
     settleReadFailure(message) {
       this.reading = false;
       this.data = null;
+      // Sem leitura confirmada não há base para propostas: tudo volta a "—".
+      this.proposals.clear();
+      this.cancelRestorePreview('');
+      this.renderChart();
+      this.renderProposalList();
       this.root?.classList.remove('is-reading');
       text('curveSourceStatus', 'Curva não confirmada');
       this.store.patch({ curve: { ...this.store.get().curve, state: 'failed', data: null, status: {} } });
       if (message) this.alert(message);
     }
 
-    startRead() {
+    startRead(onEnter = false) {
       if (this.reading || this.writing) return;
       const result = this.api.startCurveRead();
       if (!result?.ok || !result?.started) {
+        // Releitura de entrada sem ECU não vira aviso a cada toque na aba; a curva mostrada é dita como a última lida.
+        if (onEnter && this.data) { text('curveSourceStatus', 'Última leitura · ECU sem resposta'); return; }
         this.alert(result?.error || 'Não foi possível iniciar a leitura da Curva K.');
         return;
       }
+      // A curva anterior fica na tela durante a leitura; ao chegar, só sobrevivem propostas feitas sobre o mesmo valor da ECU.
       this.reading = true;
-      this.data = null;
-      this.proposals.clear();
       text('curveSourceStatus', 'Lendo 30 pontos diretamente da ECU');
       this.root?.classList.add('is-reading');
       if (this.pendingSuggestion) this.renderSuggestionFocus(this.pendingSuggestion);
@@ -298,15 +305,17 @@
           return;
         }
         this.data = operation;
+        this.dropStaleProposals(operation.points);
         text('curveSourceStatus', 'ECU confirmada · 30 pontos');
         this.renderChart();
+        this.renderProposalList();
         this.renderEvidence(this.store.get());
         if (this.pendingSuggestion) {
           this.renderSuggestionFocus(this.pendingSuggestion);
           this.focusSuggestion(this.pendingSuggestion);
           this.prepareSuggestion(this.pendingSuggestion, true);
         } else {
-          this.selectPoint(0);
+          this.selectPoint(this.activeIndex ?? 0);
         }
         if (this.view === 'learning') this.renderLearning(this.store.get());
         this.store.patch({ curve: { ...this.store.get().curve, state: 'ready', data: operation, status: {} } });
@@ -335,7 +344,7 @@
             if (this.restoreContext) text('curveBackupStatus', 'Backup restaurado e confirmado pela ECU');
             this.restoreContext = null;
             this.refreshBackups();
-            this.startRead(true);
+            this.startRead();
           } else {
             this.root?.classList.remove('is-writing');
             this.root?.classList.add('has-result');
@@ -352,6 +361,19 @@
             this.renderProposalList();
           }
         }
+      }
+    }
+
+    /** Proposta preparada sobre um valor que a ECU já não tem perde a validade (a escrita também recusaria). */
+    dropStaleProposals(points) {
+      const fresh = new Map((Array.isArray(points) ? points : []).map(point => [Number(point.index), Number(point.factorRaw)]));
+      const before = this.proposals.size;
+      [...this.proposals.keys()].forEach(index => {
+        if (fresh.get(index) !== Number(this.proposals.get(index)?.currentRaw)) this.proposals.delete(index);
+      });
+      if (this.restoreContext && this.proposals.size !== before) {
+        this.proposals.clear();
+        this.cancelRestorePreview('A Curva K mudou na ECU · escolha o backup de novo');
       }
     }
 
@@ -592,7 +614,13 @@
       const host = document.getElementById('curveProposalList');
       if (!host) return;
       const items = [...this.proposals.values()].sort((a, b) => Number(a.index) - Number(b.index));
-      host.innerHTML = items.length ? items.map(item => `<div><span>${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b><small>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</small></div>`).join('') : '<p>Nenhum ponto preparado.</p>';
+      // Sem sub-rolagem (dono, 2026-10-11): as primeiras linhas aqui; todos os pontos aparecem no gráfico.
+      const shown = items.slice(0, PROPOSAL_ROWS);
+      const more = items.length - shown.length;
+      host.innerHTML = items.length
+        ? shown.map(item => `<div><span>${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b><small>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</small></div>`).join('')
+          + (more > 0 ? `<p class="proposal-more">+${more} ponto${more === 1 ? '' : 's'} · veja no gráfico</p>` : '')
+        : '<p>Nenhum ponto preparado.</p>';
       const review = document.getElementById('curveReviewButton');
       if (review) {
         if (this.restoreContext) {
@@ -636,6 +664,7 @@
     }
 
     writePrepared() {
+      if (this.reading || this.writing) return;
       const points = [...this.proposals.values()].map(item => ({
         index: Number(item.index),
         currentRaw: Number(item.currentRaw),

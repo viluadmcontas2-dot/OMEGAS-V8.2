@@ -74,11 +74,11 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
   padding: 8px 12px 10px;
 }
 
-/* Agora sem cabeçalho (dono, 2026-10-11): a tela já tem o próprio título. */
-.app-shell.now-focus .workspace {
+/* Sem cabeçalho global (dono, 2026-10-11): cada tela já tem o próprio título; o espaço vai para o conteúdo. */
+.app-shell .workspace {
   grid-template-rows: minmax(0, 1fr);
 }
-.app-shell.now-focus .workspace-head {
+.app-shell .workspace-head {
   display: none;
 }
 

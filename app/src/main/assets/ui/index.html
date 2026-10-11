@@ -126,21 +126,7 @@
 
         <section class="screen curve-screen" data-screen="curve" aria-labelledby="curveTitle">
           <div class="page-intro action-intro">
-            <div><small>AJUSTE GLOBAL</small><h2 id="curveTitle">Curva K</h2><p>Aprenda a tendência global e edite cada ponto individualmente.</p></div>
-            <div class="route-actions-stack">
-              <div class="view-switch" id="curveViewSwitch" role="tablist" aria-label="Visão da Curva K">
-                <button type="button" data-curve-view="learning">Aprendizado global</button>
-                <button type="button" data-curve-view="editor" class="active">Editar Curva K</button>
-              </div>
-              <div class="inline-actions"><span id="curveSourceStatus" class="source-status">Curva não lida</span><button id="curveReadButton" type="button" class="secondary">Reler ECU</button></div>
-              <div class="curve-backup-bar" aria-label="Backup da Curva K">
-                <button id="curveBackupSave" type="button" class="secondary">Salvar curva atual</button>
-                <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
-                <select id="curveBackupSelect" aria-label="Backup salvo da Curva K"><option value="">Nenhum backup salvo</option></select>
-                <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Restaurar backup</button>
-                <span id="curveBackupStatus">Nenhum backup salvo</span>
-              </div>
-            </div>
+            <div class="curve-title-line"><small>AJUSTE GLOBAL</small><h2 id="curveTitle">Curva K</h2><p>Aprenda a tendência global e edite cada ponto individualmente.</p><span id="curveSourceStatus" class="source-status">Curva não lida</span><span id="curveBackupStatus" class="source-status curve-backup-status"></span></div>
           </div>
           <div id="curveSuggestionFocus" class="suggestion-focus" hidden></div>
 
@@ -179,6 +165,19 @@
                 </aside>
               </div>
             </div>
+          </div>
+
+          <!-- Rodapé único (dono, 2026-10-11): os botões da Curva K ficam embaixo, à esquerda, ao alcance da mão. -->
+          <div class="curve-footbar" role="toolbar" aria-label="Ações da Curva K">
+            <button id="curveReadButton" type="button" class="secondary">Reler ECU</button>
+            <div class="view-switch" id="curveViewSwitch" role="tablist" aria-label="Visão da Curva K">
+              <button type="button" data-curve-view="learning">Aprendizado global</button>
+              <button type="button" data-curve-view="editor" class="active">Editar Curva K</button>
+            </div>
+            <button id="curveBackupSave" type="button" class="secondary">Salvar curva atual</button>
+            <select id="curveBackupSelect" aria-label="Backups da Curva K"><option value="">Backups</option></select>
+            <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Restaurar backup</button>
+            <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
           </div>
 
           <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Backup</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>

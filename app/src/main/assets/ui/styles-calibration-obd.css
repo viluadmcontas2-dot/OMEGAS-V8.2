@@ -26,3 +26,46 @@
   padding: 0 6px;
   font-size: 11px !important;
 }
+
+/* Curva K sem rolagem (dono, 2026-10-11): ponto à esquerda, gráfico à direita e um rodapé único de botões, à esquerda. */
+.curve-screen { --foot-h: 56px; }
+.screen.curve-screen.active { display: grid; grid-template-columns: 340px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) var(--foot-h); grid-template-areas: "title title" "side main" "foot foot"; gap: 10px; padding: 10px 16px; }
+.curve-screen > .page-intro { grid-area: title; min-height: 0; padding: 0; }
+.curve-screen .curve-title-line { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.curve-screen .curve-title-line h2 { margin: 0; }
+.curve-screen .curve-title-line p { margin: 0; min-width: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.curve-screen .curve-title-line .source-status { flex: 0 0 auto; }
+.curve-screen .curve-backup-status:empty { display: none; }
+.curve-screen > .suggestion-focus { grid-area: main; align-self: start; z-index: 2; margin: 10px; }
+.curve-screen .curve-view-stack, .curve-screen .curve-view.active, .curve-screen .curve-view.active > .curve-workspace { display: contents; }
+.curve-screen .curve-view.active > .curve-workspace > .curve-surface, .curve-screen .curve-view.active > .global-learning-surface { grid-area: main; min-height: 0; }
+.curve-screen .curve-view.active > .curve-workspace > aside, .curve-screen .curve-view.active > aside { grid-area: side; min-height: 0; overflow: hidden; }
+.curve-screen .curve-editor-panel { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 8px; }
+.curve-screen .curve-editor-panel > * { grid-column: 1 / -1; margin: 0; }
+.curve-screen .curve-editor-panel > .current-value { grid-column: 1; }
+.curve-screen .curve-editor-panel > .field-label { grid-column: 2; }
+.curve-screen .curve-editor-panel > .normalized-preview, .curve-screen .curve-editor-panel > .safety-copy { display: none; }
+.curve-screen .proposal-list { min-height: 0; max-height: none; overflow: hidden; }
+.curve-screen .proposal-list > div { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; padding: 6px 8px; border-radius: 7px; background: var(--surface-2); font-size: 12px; }
+.curve-screen .proposal-list > div + div { margin-top: 4px; }
+.curve-screen .proposal-list .proposal-more { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+.curve-screen .curve-surface { position: relative; }
+.curve-screen .evidence-disclosure[open] > .evidence-grid { position: absolute; inset: 10px 10px 56px; z-index: 3; max-height: none; overflow: hidden; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.curve-screen .evidence-grid .curve-evidence-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.curve-screen .evidence-grid .evidence-stat { padding: 8px; border-radius: 8px; background: var(--surface-2); }
+.curve-screen .evidence-grid .evidence-stat b, .curve-screen .evidence-grid .evidence-stat span { display: block; }
+.curve-screen .evidence-grid .evidence-stat b { font-size: 18px; }
+.curve-screen .evidence-grid .evidence-stat span { color: var(--muted); font-size: 11px; }
+.curve-screen .evidence-grid .curve-native-explanation header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.curve-screen .evidence-grid .curve-native-explanation h3 { margin: 2px 0 0; font-size: 14px; }
+.curve-screen .evidence-grid .global-summary-list { grid-template-columns: 1fr 1fr; overflow: hidden; }
+.curve-screen .evidence-grid .global-summary-list > div { grid-template-columns: 92px minmax(0, 1fr) auto; align-items: center; padding: 6px 8px; font-size: 11px; white-space: nowrap; }
+.curve-screen .evidence-grid .global-summary-list > div > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.curve-screen .evidence-grid p { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+.curve-footbar { grid-area: foot; display: flex; align-items: stretch; justify-content: flex-start; gap: 8px; min-width: 0; }
+.curve-footbar > button, .curve-footbar > select { flex: 0 0 auto; min-width: 136px; height: var(--foot-h); min-height: var(--foot-h); padding: 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--text); font-size: 15px; font-weight: 800; }
+.curve-footbar > .quiet-button { background: transparent; color: var(--muted); }
+.curve-footbar > select { width: 150px; min-width: 150px; padding: 0 14px; }
+.curve-footbar > button:disabled, .curve-footbar > select:disabled { opacity: .45; cursor: default; }
+.curve-footbar > .view-switch { flex: 0 0 auto; height: var(--foot-h); padding: 3px; border-radius: 10px; }
+.curve-footbar > .view-switch > button { height: 100%; min-height: 0; padding: 0 16px; font-size: 13px; }
