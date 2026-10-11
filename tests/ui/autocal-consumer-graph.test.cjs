@@ -23,11 +23,8 @@ assert.equal(cockpit.includes('requestRead()'), false, 'cockpit deve depender do
 const controls = [
   ['data-autocal-toggle', "querySelector('[data-autocal-toggle]')", 'this.runOperational(action)'],
   ['data-autocal-action', "querySelectorAll('[data-autocal-action]')", 'this.prepare(button.dataset.autocalAction)'],
-  ['data-autocal-history', "querySelector('[data-autocal-history]')", 'chartHistoryVisible'],
   ['data-autocal-band-index', "closest('[data-autocal-band-index]')", 'inspectBand'],
   ['data-autocal-ref-index', "closest('[data-autocal-ref-index]')", 'inspectReferencePoint'],
-  ['data-autocal-confirm', "closest('[data-autocal-confirm]')", 'confirmPrepared'],
-  ['data-autocal-cancel', "closest('[data-autocal-cancel]')", 'cancelPrepared'],
 ];
 for (const [selector, hook, handler] of controls) {
   assert.ok(cockpit.includes(selector), selector + ' não existe no cockpit');
@@ -39,7 +36,8 @@ assert.equal(cockpit.includes('data-autocal-chart-action'), false, 'zoom/pan gen
 assert.equal(cockpit.includes('updateChartView'), false, 'transformação visual desacoplada dos eixos não pode voltar');
 assert.ok(cockpit.includes('Petrol Inj. (ms)'), 'eixo X físico precisa permanecer explícito');
 assert.ok(cockpit.includes('MAP (bar)'), 'eixo Y físico precisa permanecer explícito');
-assert.ok(cockpit.includes('data-autocal-history'), 'histórico de leitura continua sendo o controle gráfico permitido');
+assert.equal(cockpit.includes('data-autocal-history'), false, 'não existe controle de leitura anterior (dono, 2026-10-11: sem leitura anterior)');
+assert.equal(cockpit.includes('renderReview'), false, 'Readquirir não pede segunda confirmação (dono, 2026-10-11: um toque)');
 
 assert.ok(index.includes('data-route="autocal"'), 'rota AutoCal ausente');
 assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="refino"'), 'AutoCal deve preceder o Refino');
@@ -48,7 +46,8 @@ assert.equal(cockpit.includes('data-curve-panel="autocal"'), false, 'painel lega
 
 assert.match(cockpit, /runOperational\(action\)[\s\S]*this\.api\.setAcquisitionEnabled/, 'Start\/Pause precisa usar ação operacional de um toque');
 assert.match(cockpit, /prepare\(action\)[\s\S]*this\.api\.prepare\(action\)/, 'reset nativo precisa passar por prepare');
-assert.match(cockpit, /confirmPrepared\(\)[\s\S]*this\.api\.execute\(prepared\.preparationId\)/, 'confirmação deve executar exatamente a preparação revisada');
+assert.match(cockpit, /prepare\(action\)[\s\S]*this\.api\.prepare\(action\)[\s\S]*this\.confirmPrepared\(\)/, 'um toque: preparar já executa (dono, 2026-10-11)');
+assert.match(cockpit, /confirmPrepared\(\)[\s\S]*this\.api\.execute\(prepared\.preparationId\)/, 'executa exatamente a preparação feita no mesmo toque');
 assert.match(actions, /ENABLE_AUTO_CAL[\s\S]*setEnabled\(true\)/, 'iniciar aquisição deve usar ação nativa existente');
 assert.match(actions, /DISABLE_AUTO_CAL[\s\S]*setEnabled\(false\)/, 'pausar aquisição deve usar ação nativa existente');
 assert.equal(actions.includes('RESET_ALL('), true, 'RESET_ALL do ProgBase deve permanecer exposto atrás da confirmação crítica');

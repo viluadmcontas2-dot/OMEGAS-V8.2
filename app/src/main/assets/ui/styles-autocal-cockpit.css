@@ -279,11 +279,6 @@
   stroke: #5dd39e;
 }
 
-.autocal-reference-line.previous {
-  opacity: .26;
-  stroke-dasharray: 7 6;
-}
-
 .autocal-equivalence-line {
   display: none;
   fill: none;
@@ -1788,11 +1783,10 @@
 .autocal-chart-workspace {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(260px, 30%);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 30%);
   grid-template-areas:
-    "chart chart chart"
-    "legend history inspector"
-    "compare compare inspector";
+    "chart chart"
+    "legend inspector";
   gap: 7px;
   height: 100%;
   min-height: 0;
@@ -1822,16 +1816,6 @@
   background: rgba(4,13,22,.78);
   overflow: hidden;
 }
-.autocal-history-float {
-  position: static;
-  grid-area: history;
-  align-self: start;
-  z-index: 7;
-  min-height: 48px;
-  padding: 0 10px;
-  border-radius: 9px;
-  opacity: .84;
-}
 .autocal-chart-inspector {
   position: static;
   grid-area: inspector;
@@ -1848,33 +1832,6 @@
 .autocal-chart-inspector b,
 .autocal-chart-inspector span {
   font-size: 11px;
-}
-.autocal-reset-comparison {
-  position: static;
-  grid-area: compare;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 7px;
-  padding: 7px;
-  border: 1px solid rgba(80,170,220,.18);
-  border-radius: 11px;
-  background: rgba(4,13,22,.74);
-}
-.autocal-reset-comparison[hidden] { display: none; }
-.autocal-reset-comparison > div {
-  min-width: 0;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: rgba(255,255,255,.035);
-}
-.autocal-reset-comparison small,
-.autocal-reset-comparison b,
-.autocal-reset-comparison span {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .autocal-reset-comparison small {
   color: #8398aa;
@@ -2095,8 +2052,6 @@
     grid-template-areas:
       "chart"
       "legend"
-      "history"
-      "compare"
       "inspector";
   }
 }
@@ -2234,24 +2189,6 @@
 }
 .autocal-epoch-acquisition-line.petrol { stroke: #78b7ff; }
 .autocal-epoch-acquisition-line.gas { stroke: #5dd39e; }
-.autocal-previous-gas-point {
-  fill: none;
-  stroke: #5dd39e;
-  stroke-width: 1.8;
-  stroke-dasharray: 2.5 2.5;
-  opacity: .42;
-  pointer-events: none;
-  vector-effect: non-scaling-stroke;
-}
-.autocal-chart-legend .previous::before {
-  width: 9px;
-  height: 9px;
-  border: 1.5px dashed #5dd39e;
-  border-radius: 50%;
-  background: transparent;
-  opacity: .6;
-  vertical-align: middle;
-}
 
 /* ── Refino OMEGAS: mesma linguagem do AutoCal, só o que é novo ── */
 .refino-cockpit .autocal-focus-actions { grid-template-columns: minmax(0, 1fr); }

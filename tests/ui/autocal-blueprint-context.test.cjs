@@ -19,35 +19,41 @@ test('metadata-only update preserves selection and comparison', () => {
   assert.equal(transition.referenceChanged, false);
   assert.equal(transition.resetSelection, false);
 });
-test('reference interruption preserves history within the USB session', () => {
-  assert.equal(model.referenceTransition(projection,{...projection,referenceUsable:false},snapshot,{},{}).clearHistory,false);
-  assert.equal(model.referenceTransition(projection,{...projection,sessionId:2},snapshot,snapshot,{}).clearHistory,true);
+test('reference transition keeps no previous reading (dono, 2026-10-11: sem leitura anterior)', () => {
+  for (const next of [{...projection,referenceUsable:false},{...projection,sessionId:2}]) {
+    const t=model.referenceTransition(projection,next,snapshot,snapshot,{});
+    assert.equal('clearHistory' in t,false);
+    assert.equal('previousPoints' in t,false);
+    assert.equal(t.resetSelection,true);
+  }
 });
-test('malformed execution response does not dismiss confirmation or report success', () => {
-  const alerts=[];
+test('malformed execution response never reports success and frees the next tap', () => {
+  const alerts=[]; let cancelled=0;
   const c=Object.create(Cockpit.prototype);
   c.prepared={preparationId:'prepared'};
-  c.api={execute:()=>({})};
+  c.api={execute:()=>({}),cancelPreparation:()=>{cancelled++;}};
   c.store={patch:a=>alerts.push(a)};
   c.refresh=()=>{};
   ctx.document={getElementById:()=>null};
   c.confirmPrepared();
-  assert.equal(c.prepared?.preparationId,'prepared');
+  assert.equal(c.prepared,null);
+  assert.equal(cancelled,1);
+  assert.equal(alerts.length,1);
   assert.equal(alerts[0].alert.level,'warning');
 });
-test('before-reset reference survives loss and return of reference', () => {
+test('reset keeps no previous reading (dono, 2026-10-11: sem leitura anterior)', () => {
   const c=Object.create(Cockpit.prototype);
-  Object.assign(c,{prepared:{preparationId:'p',action:'RESET_GAS'},snapshot,analysis:{},projection,previousReferencePoints:[],chartHistoryVisible:false,referenceUsable:true});
+  Object.assign(c,{prepared:{preparationId:'p',action:'RESET_GAS'},snapshot,analysis:{},projection,referenceUsable:true});
   c.api={execute:()=>({ok:true,started:true}),projection:()=>({...projection,referenceUsable:false,snapshot:{fields:[]}}),actionStatus:()=>({}),sessionStatus:()=>({}),available:()=>true};
   c.store={patch:()=>{}};
   c.render=()=>{};
   ctx.document={getElementById:()=>null};
   c.confirmPrepared();
-  assert.equal(c.previousReferencePoints.length,2);
-  assert.equal(c.previousReferencePoints[0].petrolMapBar,.3);
+  assert.equal(c.prepared,null);
+  assert.equal('previousReferencePoints' in c,false);
   c.api.projection=()=>projection;
   c.refresh();
-  assert.equal(c.previousReferencePoints.length,2);
+  assert.equal('previousReferencePoints' in c,false);
 });
 
 test('unchanged native geometry does not replace the chart DOM', () => {
@@ -56,7 +62,7 @@ test('unchanged native geometry does not replace the chart DOM', () => {
   const nodes=new Map();
   ctx.document={getElementById:id=>id==='autocalReferenceChart'?host:(nodes.has(id)?nodes.get(id):(nodes.set(id,{}),nodes.get(id))),querySelectorAll:()=>[]};
   const c=Object.create(Cockpit.prototype);
-  Object.assign(c,{snapshot,analysis:{},projection,referenceUsable:true,previousReferencePoints:[],chartHistoryVisible:false,store:{get:()=>({telemetry:{}})},state:{}});
+  Object.assign(c,{snapshot,analysis:{},projection,referenceUsable:true,store:{get:()=>({telemetry:{}})},state:{}});
   c.renderLiveCursor=()=>{};
   c.renderReferenceChart(snapshot);
   c.renderReferenceChart({...snapshot,snapshotHash:'another-counter'});

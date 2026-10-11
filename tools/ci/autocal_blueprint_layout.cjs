@@ -12,7 +12,8 @@ const page=await browser.newPage({viewport:{width:1280,height}});
 const ui=path.resolve('app/src/main/assets/ui');
 let html=fs.readFileSync(path.join(ui,'index.html'),'utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
 await page.setContent(html);
-for(const f of ['styles.css','styles-calibration-obd.css','styles-autocal-cockpit.css']) await page.addStyleTag({content:cssRef && f==='styles-autocal-cockpit.css' ? execFileSync('git',['show',cssRef+':app/src/main/assets/ui/'+f],{encoding:'utf8'}) : fs.readFileSync(path.join(ui,f),'utf8')});
+// Cenários históricos usam todo o CSS daquele commit, para reproduzir o defeito antigo independentemente da casca atual.
+for(const f of ['styles.css','styles-calibration-obd.css','styles-autocal-cockpit.css']) await page.addStyleTag({content:cssRef ? execFileSync('git',['show',cssRef+':app/src/main/assets/ui/'+f],{encoding:'utf8'}) : fs.readFileSync(path.join(ui,f),'utf8')});
 await page.evaluate(()=>{
 document.querySelector('.app-shell').classList.add('autocal-focus');
 document.querySelectorAll('[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen==='autocal'));
@@ -35,7 +36,6 @@ title:box(document.querySelector('.autocal-focus-title')),
 metrics:box(document.querySelector('.autocal-focus-metrics')),
 chart:box(document.querySelector('.autocal-chart-host')),
 inspector:box(document.querySelector('.autocal-chart-inspector')),
-history:box(document.querySelector('[data-autocal-history]')),
 actions:[...document.querySelectorAll('.autocal-focus-actions > button,.autocal-focus-actions > details > summary')].map(e=>({text:e.textContent,...box(e)}))};
 });
 await page.screenshot({path:'build/ui-evidence/'+(cssRef ? (cssRef===BASELINE?'before-overlap':'before-clipping') : 'after-'+height)+'.png'});
@@ -58,8 +58,7 @@ assert.equal(inside(result),true,'primary touch targets must fit the toolbar');
 assert.equal(clear(result),true,'primary controls must not cover telemetry or title');
 assert.equal(visibleInspector(result),true,'point information must remain below graph and inside viewport');
 assert.ok(result.chart.height>=440,'graph must remain dominant in the 672px Android WebView');
-assert.ok(result.history.y>=result.chart.bottom,'comparison control must not overlap the plot');
-assert.ok(result.history.height>=48,'comparison control must have a full touch target');
+// Sem controle de leitura anterior (dono, 2026-10-11): não há mais botão de comparação para medir.
 }
 } finally { await browser.close(); }
 })().catch(e=>{console.error(e);process.exitCode=1;});

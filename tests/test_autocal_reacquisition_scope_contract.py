@@ -47,10 +47,11 @@ assert '.put("preMutationBackup", JSONObject.NULL)' in manager
 assert 'update("SENDING_ACTION"' in manager
 assert 'update("READING_AFTER", "Atualizando estado da ECU"' in manager
 
-# UX says exactly what the operator asked for: backups are optional/manual.
-assert 'salve manualmente' in cockpit
-assert 'Backup não é requisito' in cockpit
-assert 'Confirmar executa agora pelo OMEGAS' in cockpit
+# Um toque (dono, 2026-10-11): sem tela de revisão; backup segue opcional e manual, nunca exigido nem automático.
+assert 'Confirmar executa agora pelo OMEGAS' not in cockpit
+assert 'this.confirmPrepared();' in cockpit
+_prepare = cockpit[cockpit.index('    prepare(action) {'):cockpit.index('    confirmPrepared() {')]
+assert 'backup' not in _prepare.lower(), 'o toque não pede nem espera backup'
 assert 'AlertDialog' not in bridge
 assert 'nativeAndroidConfirmation", true' not in bridge
 assert 'backup pré-mutação' not in bridge.lower()

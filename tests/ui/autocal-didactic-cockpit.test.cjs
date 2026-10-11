@@ -161,7 +161,7 @@ assert.equal(
 );
 assert.equal(
   model.referenceSourceLabel({ source: 'NONE', freshness: 'STALE_SESSION' }),
-  'Sem fonte atual · sessão anterior rejeitada',
+  'Sem fonte atual · aguardando leitura nova da ECU',
 );
 
 assert.equal(typeof model.bandNarrative, 'function', 'mensagem da região deve ser testável sem DOM');
@@ -208,7 +208,7 @@ assert.equal(source.includes('data-autocal-chart-action="zoom-out"'), false);
 assert.equal(source.includes('data-autocal-chart-action="fit"'), false);
 assert.equal(source.includes('Petrol Inj. (ms)'), true, 'eixo X precisa manter unidade física');
 assert.equal(source.includes('MAP (bar)'), true, 'eixo Y precisa manter unidade física');
-assert.equal(source.includes('data-autocal-history'), true, 'comparação com leitura anterior deve permanecer disponível');
+assert.equal(source.includes('data-autocal-history'), false, 'sem leitura anterior (dono, 2026-10-11): tudo em tempo real');
 assert.equal(source.includes('data-autocal-toggle'), true);
 assert.equal(source.includes('data-autocal-band-index'), true);
 assert.equal(source.includes('autocalHumanTitle'), true);
@@ -241,7 +241,7 @@ assert.match(source, /data-current/,
 assert.match(css, /\.autocal-zone-cell\s*\{/,
   'mapa de zonas precisa de tratamento visual próprio');
 assert.equal(source.includes('autocal-band-legend'), true, 'estados das 18 faixas precisam de legenda visível');
-assert.equal(source.includes('autocal-review-tech'), true, 'metadados técnicos da ação crítica devem ficar sob demanda');
+assert.equal(source.includes('autocal-review-tech'), false, 'sem tela de revisão antes da ECU (dono, 2026-10-11: um toque); detalhes técnicos ficam em Detalhes');
 assert.match(source, /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
 assert.match(css, /\.autocal-zone-meter\s*\{/, 'zone meter premium precisa de estilo dedicado');
 assert.match(css, /\.autocal-inline-inspector\s*\{[^}]*font-size:\s*11px/s, 'inspector operacional não pode ficar microscópico');

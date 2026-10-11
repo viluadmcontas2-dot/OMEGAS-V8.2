@@ -75,7 +75,8 @@ assert.equal(cockpit.includes('prepare('), true);
 assert.equal(cockpit.includes('execute(prepared.preparationId)'), true);
 assert.equal(cockpit.includes('Continuar para confirmação Android'), false);
 assert.equal(cockpit.includes('Confirmação Android aberta'), false);
-assert.equal(cockpit.includes('Executar agora'), true);
+assert.equal(cockpit.includes('Executar agora'), false); // um toque (dono, 2026-10-11): sem botão de segunda confirmação
+assert.match(cockpit, /prepare\(action\)[\s\S]*this\.confirmPrepared\(\)/);
 assert.equal(cockpit.includes('ACK e readback'), true);
 assert.equal(cockpit.includes('VERIFYING_FINISH'), true);
 assert.equal(cockpit.includes('RESETTING_K'), true);

@@ -30,7 +30,9 @@ assert 'data-autocal-action="RESET_K_FACTOR"' in cockpit
 assert 'data-autocal-action="RESET_ALL"' in cockpit
 assert "Continuar para confirmação Android" not in cockpit
 assert "Confirmação Android aberta" not in cockpit
-assert "Executar agora" in cockpit
+# Um toque (dono, 2026-10-11): preparar já executa; não existe botão de segunda confirmação.
+assert "Executar agora" not in cockpit
+assert "this.confirmPrepared();" in cockpit
 assert "ACK e readback" in cockpit
 assert "actionManager.execute(preparationId)" in bridge
 assert "AlertDialog" not in bridge

@@ -43,7 +43,8 @@ Viewport automotivo canônico: `1280x720`.
 
 - nenhuma escrita automática de Map K/Curve K;
 - escrita manual exige intenção explícita + ACK + readback;
-- `RESET_ALL` não é ação operacional exposta; somente Reset gas point 0x04, observado com efeito amplo, pode ser solicitado manualmente como reinício de aquisição com aviso explícito, confirmação Android e backup completo pré-mutação;
+- `RESET_ALL` não é ação operacional exposta; somente Reset gas point 0x04, observado com efeito amplo, pode ser solicitado manualmente como reinício de aquisição, em um toque (dono, 2026-10-11: sem dupla confirmação), com backup completo pré-mutação e readback da ECU;
+- o AutoCal não mostra leitura anterior (dono, 2026-10-11): nem curva esmaecida, nem legenda, nem botão, nem comparação antes × depois; tudo em tempo real. Trava `autocal-sem-leitura-anterior`: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py`;
 - ciência/protocolo críticos permanecem Kotlin/native;
 - AGORA deve permanecer no mesmo contexto da referência AutoCal;
 - LEVELS permanece RAW até existir calibração física separada;

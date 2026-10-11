@@ -129,7 +129,7 @@ const sameSessionTransition = model.referenceTransition(
 assert.equal(sameSessionTransition.sessionChanged, false);
 assert.equal(sameSessionTransition.referenceChanged, true);
 assert.equal(sameSessionTransition.resetSelection, true, 'nova referência deve invalidar a seleção antiga');
-assert.equal(sameSessionTransition.previousPoints.length, 2, 'mesma sessão pode preservar a leitura imediatamente anterior');
+assert.equal('previousPoints' in sameSessionTransition, false, 'transição não guarda pontos de leitura anterior (dono, 2026-10-11: sem leitura anterior)');
 
 const reconnectTransition = model.referenceTransition(
   previousProjection,
@@ -140,8 +140,7 @@ const reconnectTransition = model.referenceTransition(
 );
 assert.equal(reconnectTransition.sessionChanged, true);
 assert.equal(reconnectTransition.resetSelection, true, 'reconnect deve invalidar seleção da sessão anterior');
-assert.equal(reconnectTransition.clearHistory, true, 'reconnect deve fechar Leitura anterior');
-assert.equal(reconnectTransition.previousPoints.length, 0, 'Leitura anterior não pode atravessar sessão USB');
+assert.equal('clearHistory' in reconnectTransition, false, 'não existe histórico para fechar (dono, 2026-10-11: sem leitura anterior)');
 
 const referenceLostTransition = model.referenceTransition(
   { sessionId: 101, referenceUsable: true },
@@ -152,8 +151,6 @@ const referenceLostTransition = model.referenceTransition(
 );
 assert.equal(referenceLostTransition.resetSelection, true,
   'perda da referência precisa invalidar seleção antiga mesmo sem novo hash');
-assert.equal(referenceLostTransition.clearHistory, false,
-  'histórico permanece na mesma sessão; referência indisponível não é exibida como atual');
 
 const referenceRegainedTransition = model.referenceTransition(
   { sessionId: 101, referenceUsable: false },
@@ -164,8 +161,7 @@ const referenceRegainedTransition = model.referenceTransition(
 );
 assert.equal(referenceRegainedTransition.resetSelection, true,
   'referência recuperada precisa começar sem seleção herdada do estado indisponível');
-assert.equal(referenceRegainedTransition.previousPoints.length, 0,
-  'referência recuperada após gap não pode inventar Leitura anterior');
+assert.equal('previousPoints' in referenceRegainedTransition, false, 'referência recuperada não traz pontos antigos (dono, 2026-10-11: sem leitura anterior)');
 
 console.log('AUTOCAL_CHART_SEMANTICS=PASS');
 
@@ -180,7 +176,7 @@ const focused = model.referenceDomain([
   { petrolMs: 3.0, petrolMapBar: 0.30, gasMapBar: 0.32, gasEquivalentMs: 3.1 },
   { petrolMs: 8.0, petrolMapBar: 1.10, gasMapBar: 1.12, gasEquivalentMs: 8.2 },
   { petrolMs: 20.0, petrolMapBar: 1.60, gasMapBar: 1.70, gasEquivalentMs: 21.0 },
-], [], zoneWindow);
+], zoneWindow);
 assert.equal(focused.yMin, 0.20, 'o gráfico deve começar no primeiro limiar físico quando conhecido');
 assert.equal(focused.yMax, 1.15, 'o gráfico deve terminar em 1,15 bar sem opção de escala completa');
 assert.ok(focused.xMax < 10, 'pontos acima de 1,15 bar não podem esticar também o eixo de injeção');

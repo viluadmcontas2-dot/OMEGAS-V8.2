@@ -30,8 +30,10 @@ assert.match(cockpit, /O AutoMatch nativo é automático e decidido pela ECU\./,
 assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1\.0<\/button>/,
   'Reset K deve usar a semântica provada do ProgBase/MUL_ACT');
 assert.match(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Nova aquisição completa<\/button>/);
-assert.match(cockpit, /Backup não é requisito/i,
-  'backup deve ser opcional e manual, nunca um gate do reset');
+assert.match(cockpit, /prepare\(action\) \{[^}]*this\.api\.prepare\(action\)[\s\S]{0,420}this\.confirmPrepared\(\);/,
+  'backup nunca é gate do reset: um toque prepara e executa (dono, 2026-10-11)');
+assert.doesNotMatch(cockpit.slice(cockpit.indexOf('    prepare(action) {'), cockpit.indexOf('    confirmPrepared() {')), /backup/i,
+  'o caminho do toque não pede nem espera backup');
 assert.ok(
   cockpit.indexOf('data-autocal-action="RESET_GAS"') < cockpit.indexOf('<summary>Ações avançadas</summary>') &&
   cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
@@ -41,7 +43,7 @@ assert.match(cockpit, /RESET_GAS:\s*'Readquirir GNV'/);
 assert.match(cockpit, /RESET_PETROL:\s*'Readquirir gasolina'/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
 assert.doesNotMatch(cockpit, />Reset gasolina<\/button>/);
-assert.match(cockpit, /Backup não é requisito/);
+assert.doesNotMatch(cockpit, /renderReview/, 'reaquisição em um toque, sem tela de revisão (dono, 2026-10-11)');
 assert.doesNotMatch(cockpit, /PERSISTING_BACKUP/,
   'reaquisição não pode depender de persistência de backup; READING_BEFORE pode existir como estado de leitura para ações que alteram K');
 assert.doesNotMatch(cockpit, /CONFIRMED_WITH_SCOPE_WARNING/);

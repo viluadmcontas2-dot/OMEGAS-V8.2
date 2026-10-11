@@ -77,8 +77,8 @@ assert.match(cockpit, /Petrol Inj\. \(ms\)/,
   'eixo X deve declarar a unidade física');
 assert.match(cockpit, /MAP \(bar\)/,
   'eixo Y deve declarar a unidade física');
-assert.match(cockpit, /data-autocal-history/,
-  'leitura anterior continua sendo a comparação gráfica permitida');
+assert.doesNotMatch(cockpit, /data-autocal-history/,
+  'sem leitura anterior (dono, 2026-10-11): tudo em tempo real');
 
 assert.equal(cockpit.includes("'<span>B' +"), false,
   'Bxx não pode ser rótulo primário das regiões');

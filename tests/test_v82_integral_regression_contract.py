@@ -82,7 +82,9 @@ class V82IntegralRegressionContract(unittest.TestCase):
         self.assertNotIn('NATIVE_AUTOMATCH', cockpit)
         self.assertNotIn('Continuar para confirmação Android', cockpit)
         self.assertNotIn('Confirmação Android aberta', cockpit)
-        self.assertIn('Executar agora', cockpit)
+        # Um toque (dono, 2026-10-11): preparar já executa; sem botão de segunda confirmação.
+        self.assertNotIn('Executar agora', cockpit)
+        self.assertIn('this.confirmPrepared();', cockpit)
         self.assertIn('ACK e readback', cockpit)
 
     def test_predictor_never_bootstraps_confidence_from_predictions(self):
