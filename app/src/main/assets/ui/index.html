@@ -76,16 +76,6 @@
             <div class="live-condition"><small>AGORA</small><b id="learningLiveLabel">Aguardando condição válida</b><span>marcação visual leve · não altera o aprendizado</span></div>
           </div>
 
-          <div class="learning-controls">
-            <div class="layer-tabs" role="tablist" aria-label="Camada do aprendizado">
-              <button type="button" data-learning-layer="petrol">Referência</button>
-              <button type="button" data-learning-layer="cng">No GNV</button>
-              <button type="button" data-learning-layer="comparison" class="active">Diferença</button>
-              <button type="button" data-learning-layer="suggestion">Sugestão</button>
-            </div>
-            <div class="coverage-copy"><span id="learningCoverageSummary">0 gasolina · 0 GNV · 0 prontas</span><span id="learningSuggestionSummary">0 global · 0 local</span></div>
-          </div>
-
           <div class="learning-workspace">
             <section class="learning-map-surface">
               <div class="axis-top">RPM →</div>
@@ -96,6 +86,17 @@
             <aside id="learningCellDetail" class="inspector-panel">
               <div class="detail-empty"><b>Coleta em andamento</b><span>Toque em uma célula para ver evidência, equivalência e próximo passo.</span></div>
             </aside>
+          </div>
+
+          <!-- Sem rolagem (dono, 2026-10-11): as camadas do mapa ficam num rodapé embaixo, à esquerda, ao alcance da mão. -->
+          <div class="learning-controls">
+            <div class="layer-tabs" role="tablist" aria-label="Camada do aprendizado">
+              <button type="button" data-learning-layer="petrol">Referência</button>
+              <button type="button" data-learning-layer="cng">No GNV</button>
+              <button type="button" data-learning-layer="comparison" class="active">Diferença</button>
+              <button type="button" data-learning-layer="suggestion">Sugestão</button>
+            </div>
+            <div class="coverage-copy"><span id="learningCoverageSummary">0 gasolina · 0 GNV · 0 prontas</span><span id="learningSuggestionSummary">0 global · 0 local</span></div>
           </div>
         </section>
 
@@ -199,7 +200,8 @@
 
         <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
           <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Backup, sessões e saúde do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
-          <div class="tool-actions">
+          <!-- Sem rolagem (dono, 2026-10-11): os cartões (drawers.js) entram antes deste rodapé; backup embaixo, à esquerda. -->
+          <div class="tool-actions" role="toolbar" aria-label="Backup e aprendizado">
             <button id="toolExportData" type="button"><b>Exportar backup completo</b><span>Tudo do app: calibrações salvas, aprendizado e sessões</span></button>
             <button id="toolExportLearning" type="button"><b>Exportar aprendizado</b><span>Salva um arquivo .omegas</span></button>
             <button id="toolImportLearning" type="button"><b>Importar aprendizado</b><span>Confere o arquivo antes; nunca grava na ECU</span></button>

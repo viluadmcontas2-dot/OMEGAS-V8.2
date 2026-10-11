@@ -98,7 +98,8 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('function renderLightLiveContext', self.app)
         self.assertIn("route === 'dashboard' || route === 'learning' || route === 'map'", self.app)
         self.assertIn("if (route === 'learning') setText('learningLiveLabel'", self.app)
-        self.assertIn('A interpolação bilinear continua no Kotlin', self.learning_screen)
+        # Sem jargão técnico na tela (dono, 2026-10-11): a nota sobre Kotlin/WebView saiu.
+        self.assertNotIn('A interpolação bilinear continua no Kotlin', self.learning_screen)
 
     def test_learning_grid_has_physical_axes_and_direct_edit_entrypoint(self):
         self.assertIn('physical-grid-with-axes', self.grid)

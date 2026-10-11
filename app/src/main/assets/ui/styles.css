@@ -118,3 +118,170 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 .tool-power-row span { color: var(--muted); font-size: 12px; }
 .tool-power-row button { min-height: 48px; flex: 0 0 auto; }
 .tool-logs > summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
+
+/* ===== Aprender e Ferramentas sem rolagem (dono, 2026-10-11) =====
+   Nenhum estado destas duas telas rola nem sub-rola: o que não cabe vira aba interna ou "Detalhes" que troca
+   o conteúdo no mesmo lugar. Ações com 56 px, embaixo e à esquerda; toque ≥ 48 px; texto informativo ≥ 12 px.
+   Os seletores com [data-screen] e #id vencem o styles-refine.css, que o app.js carrega depois deste arquivo. */
+
+/* APRENDER: mapa 12×12 à esquerda, painel de altura inteira à direita, camadas num rodapé à esquerda. */
+.screen[data-screen="learning"] { --foot-h: 56px; --learning-panel-w: 400px; }
+.screen[data-screen="learning"].active { display: grid; grid-template-columns: minmax(0, 1fr) var(--learning-panel-w); grid-template-rows: auto minmax(0, 1fr) var(--foot-h); grid-template-areas: "intro panel" "map panel" "foot panel"; gap: 10px; padding: 10px 16px; overflow: hidden; }
+.screen[data-screen="learning"] > .learning-intro { grid-area: intro; min-height: 0; padding: 0; gap: 16px; align-items: center; }
+.screen[data-screen="learning"] > .learning-intro h2 { margin: 2px 0 0; }
+.screen[data-screen="learning"] > .learning-intro small { font-size: 12px; }
+.screen[data-screen="learning"] .live-condition { min-width: 0; }
+.screen[data-screen="learning"] .live-condition b { font-size: 14px; }
+.screen[data-screen="learning"] .live-condition span { font-size: 12px; }
+.screen[data-screen="learning"] > .learning-workspace { display: contents; }
+.screen[data-screen="learning"] .learning-map-surface { grid-area: map; min-height: 0; overflow: hidden; padding: 8px; }
+.screen[data-screen="learning"] .cell-subvalue { letter-spacing: 0; }
+.screen[data-screen="learning"] > .learning-controls { grid-area: foot; height: auto; min-width: 0; margin: 0; justify-content: flex-start; gap: 18px; }
+.screen[data-screen="learning"] .layer-tabs { flex: 0 0 auto; align-self: stretch; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.screen[data-screen="learning"] .layer-tabs button { height: 100%; min-height: 0; padding: 0 20px; border: 0; border-radius: 7px; font-size: 15px; }
+.screen[data-screen="learning"] .coverage-copy { flex: 1 1 auto; min-width: 0; flex-direction: column; gap: 4px; font-size: 12px; }
+
+/* Painel: abas Célula / Coleta / Decisões / Tolerâncias; cada aba cabe inteira, sem rolagem. */
+.screen[data-screen="learning"] #learningCellDetail { grid-area: panel; min-height: 0; overflow: hidden; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+#learningCellDetail > .learning-inspector-tabs { flex: 0 0 auto; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin: 0; }
+#learningCellDetail > .learning-inspector-tabs button { min-height: 48px; padding: 0 4px; border-radius: 8px; font-size: 14px; }
+#learningCellDetail > .learning-inspector-pane.active { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+#learningCellDetail > .learning-inspector-pane > * { flex: 0 0 auto; margin: 0; min-width: 0; }
+#learningCellDetail .detail-empty { flex: 1 1 auto; height: auto; }
+#learningCellDetail .detail-empty b { font-size: 15px; }
+#learningCellDetail .detail-empty span { max-width: 300px; font-size: 13px; }
+#learningCellDetail .learning-decision-card, #learningCellDetail .learning-current-condition, #learningCellDetail .learning-policy-summary, #learningCellDetail .learning-decision-history { display: block; margin: 0; padding: 10px 12px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--surface-2); }
+#learningCellDetail .learning-decision-card[data-eligible="true"] { border-color: #2c604c; }
+#learningCellDetail .decision-top, #learningCellDetail .learning-inspector-pane header, #learningCellDetail .tolerance-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; min-width: 0; }
+#learningCellDetail .decision-top small, #learningCellDetail .learning-inspector-pane header small, #learningCellDetail .tolerance-heading small, #learningCellDetail .detail-eyebrow { display: block; color: var(--dim); font-size: 12px; font-weight: 800; letter-spacing: .06em; }
+#learningCellDetail h3 { margin: 2px 0 0; font-size: 15px; line-height: 1.25; }
+#learningCellDetail .decision-top > span, #learningCellDetail .learning-inspector-pane header > span { flex: 0 0 auto; padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 800; white-space: nowrap; }
+#learningCellDetail .learning-decision-card[data-eligible="true"] .decision-top > span { border-color: #2c604c; color: var(--ok); }
+#learningCellDetail .learning-decision-card > p { margin: 6px 0 0; font-size: 13px; line-height: 1.35; }
+#learningCellDetail .collection-progress { height: 6px; margin: 8px 0; overflow: hidden; border-radius: 999px; background: var(--surface-3); }
+#learningCellDetail .collection-progress i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+#learningCellDetail .collection-facts { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--muted); font-size: 12px; }
+#learningCellDetail .collection-facts b, #learningCellDetail .policy-grid b { display: inline; margin: 0; color: var(--text); font-size: 13px; }
+#learningCellDetail .reason-code { display: block; margin-top: 6px; color: var(--dim); font-size: 12px; letter-spacing: .02em; overflow-wrap: anywhere; }
+#learningCellDetail .condition-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+#learningCellDetail .condition-grid > div { min-width: 0; padding: 6px 8px; border-radius: 7px; background: var(--surface); }
+#learningCellDetail .condition-grid small { display: block; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0; white-space: nowrap; }
+#learningCellDetail .condition-grid b { display: block; margin-top: 2px; font-size: 14px; font-variant-numeric: tabular-nums; }
+#learningCellDetail .learning-light-note { margin: 8px 0 0; color: var(--dim); font-size: 12px; line-height: 1.35; }
+#learningCellDetail .policy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; margin-top: 4px; color: var(--muted); font-size: 12px; }
+#learningCellDetail .learning-policy-summary > p, #learningCellDetail .learning-decision-history > p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+#learningCellDetail .decision-history-list { margin-top: 6px; }
+/* Cada decisão é uma linha corrida (hora, decisão, motivo, combustível · célula · código): as seis cabem inteiras. */
+#learningCellDetail .decision-history-list > div { display: block; padding: 5px 0 5px 8px; border-bottom: 1px solid var(--line-soft); border-left: 3px solid var(--line); font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
+#learningCellDetail .decision-history-list > div[data-level="accepted"] { border-left-color: var(--ok); }
+#learningCellDetail .decision-history-list > div[data-level="rejected"] { border-left-color: var(--warn); }
+#learningCellDetail .decision-history-list time { margin-right: 6px; color: var(--muted); font-variant-numeric: tabular-nums; }
+#learningCellDetail .decision-history-list b { font-size: 13px; }
+#learningCellDetail .decision-history-list span::before { content: " — "; color: var(--dim); }
+#learningCellDetail .decision-history-list small { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0; }
+#learningCellDetail .decision-history-list small::before { content: " · "; }
+#learningCellDetail .decision-history-list .empty-copy { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+/* Célula: "Diagnóstico técnico" troca a lista no mesmo lugar; ações embaixo, à esquerda do painel. */
+#learningCellPane .detail-list { margin: 0; }
+#learningCellPane .detail-list > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+#learningCellPane .detail-list dt { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+#learningCellPane .detail-list dd { min-width: 0; margin: 0; font-size: 13px; font-weight: 750; text-align: right; }
+#learningCellPane .map-address-contract, #learningCellPane .manual-edit-contract { display: block; margin: 0; color: var(--dim); font-size: 12px; font-weight: 600; letter-spacing: 0; line-height: 1.35; }
+#learningCellPane .manual-edit-contract { color: var(--muted); }
+#learningCellPane .learning-cell-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: auto; }
+#learningCellPane .learning-cell-actions button { min-height: 56px; padding: 0 10px; border-radius: 10px; font-size: 14px; }
+
+/* Tolerâncias: os ajustes cabem no painel; "Detalhes" (no cabeçalho) troca, no mesmo lugar, pela explicação de
+   cada ajuste e pelos limites configurados (números da política Kotlin). */
+#learningTolerancePane .tolerance-heading { align-items: center; }
+#learningTolerancePane .tolerance-heading > button { flex: 0 0 auto; min-height: 48px; padding: 0 14px; border-radius: 9px; font-size: 14px; }
+#learningTolerancePane .tolerance-intro { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+#learningTolerancePane .tolerance-profiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
+#learningTolerancePane .tolerance-profiles button { min-height: 48px; font-size: 14px; }
+#learningTolerancePane .tolerance-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
+#learningTolerancePane .tolerance-controls label { display: grid; gap: 3px; min-width: 0; }
+#learningTolerancePane .tolerance-controls label > span b { display: block; font-size: 12px; line-height: 1.25; }
+#learningTolerancePane .tolerance-controls select, #learningTolerancePane .tolerance-controls input { width: 100%; min-height: 48px; font-size: 14px; }
+#learningTolerancePane .tolerance-actions { display: flex; flex-wrap: nowrap; gap: 8px; margin-top: auto; }
+#learningTolerancePane .tolerance-actions button { flex: 0 0 auto; min-height: 56px; padding: 0 16px; border-radius: 10px; font-size: 14px; }
+#learningTolerancePane .editor-rule { margin: 0; }
+#learningTolerancePane .editor-rule b { font-size: 13px; }
+#learningTolerancePane .editor-rule span { font-size: 12px; }
+#learningTolerancePane .tolerance-controls label > span small { display: none; }
+
+/* FERRAMENTAS: três cartões (saúde, sessões, aprendizado) e o backup num rodapé embaixo, à esquerda.
+   "Sessões gravadas", "Tamanho e retenção" e o log abrem no lugar dos cartões; o título vira "Voltar". */
+#toolsDrawer { --foot-h: 60px; }
+#toolsDrawer.screen.active { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) var(--foot-h); gap: 10px; padding: 10px 16px; overflow: hidden; }
+#toolsDrawer > .page-intro { grid-row: 1; min-height: 0; padding: 0; align-items: center; }
+#toolsDrawer > .page-intro small { font-size: 12px; }
+#toolsDrawer > .page-intro h2 { margin: 2px 0 0; }
+#toolsDrawer > .page-intro > p { margin: 0; font-size: 12px; }
+#toolsDrawer > .tool-actions { grid-row: 3; display: flex; justify-content: flex-start; gap: 8px; min-width: 0; margin: 0; }
+#toolsDrawer > .tool-actions > button { flex: 0 1 auto; min-width: 0; height: var(--foot-h); min-height: 56px; padding: 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; }
+#toolsDrawer > .tool-actions b { font-size: 15px; }
+#toolsDrawer > .tool-actions span { margin-top: 3px; color: var(--muted); font-size: 12px; }
+#toolDiagnosticsWorkspace { grid-row: 2; position: relative; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch; overflow: hidden; }
+#toolDiagnosticsWorkspace > section { min-width: 0; min-height: 0; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; }
+#toolDiagnosticsWorkspace > section > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+#toolDiagnosticsWorkspace > section > header small { display: block; color: var(--dim); font-size: 12px; font-weight: 800; letter-spacing: .06em; }
+#toolDiagnosticsWorkspace > section > header h3 { margin: 3px 0 0; font-size: 17px; line-height: 1.2; }
+#toolDiagnosticsWorkspace > section > header > span { flex: 0 0 auto; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 800; }
+#toolDiagnosticsWorkspace .background-health-card[data-healthy="true"] > header > span { border-color: #2c604c; color: var(--ok); }
+#toolDiagnosticsWorkspace .diagnostic-recorder-card[data-recording="true"] > header > span { border-color: #2c604c; color: var(--ok); }
+#toolDiagnosticsWorkspace .background-health-grid, #toolDiagnosticsWorkspace .recorder-metrics, #toolDiagnosticsWorkspace .learning-portability-grid { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: 13px; }
+#toolDiagnosticsWorkspace .background-health-grid b, #toolDiagnosticsWorkspace .recorder-metrics b, #toolDiagnosticsWorkspace .learning-portability-grid b { color: var(--text); font-size: 15px; }
+#toolDiagnosticsWorkspace .learning-portability-card > p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+#toolDiagnosticsWorkspace .learning-portability-card > p b { color: var(--text); }
+#toolDiagnosticsWorkspace .tool-power-rows { margin: 0; }
+#toolDiagnosticsWorkspace .tool-power-row small { font-size: 12px; }
+#toolDiagnosticsWorkspace .recorder-space { margin: 0; height: 6px; }
+#toolDiagnosticsWorkspace .recorder-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#toolDiagnosticsWorkspace .recorder-actions button { min-height: 56px; padding: 0 18px; border-radius: 10px; font-size: 15px; }
+#toolDiagnosticsWorkspace .tool-disclosures { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-top: auto; }
+#toolDiagnosticsWorkspace details { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
+#toolDiagnosticsWorkspace details > summary { list-style: none; cursor: pointer; }
+#toolDiagnosticsWorkspace details > summary::-webkit-details-marker { display: none; }
+#toolDiagnosticsWorkspace details:not([open]) > summary { display: flex; align-items: center; min-height: 56px; padding: 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); font-size: 15px; font-weight: 800; }
+#toolDiagnosticsWorkspace .tool-disclosure-back { display: none; }
+/* Aberto: ocupa o lugar dos três cartões; o título (com "Voltar" à esquerda) fecha. */
+#toolDiagnosticsWorkspace details[open] { position: absolute; inset: 0; z-index: 3; display: block; padding: 0 16px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; visibility: visible; }
+#toolDiagnosticsWorkspace:has(details[open]) > section { visibility: hidden; }
+#toolDiagnosticsWorkspace details[open] > summary { display: flex; align-items: center; justify-content: flex-start; gap: 14px; min-height: 60px; margin: 0 -16px 10px; padding: 0 16px; border-bottom: 1px solid var(--line-soft); font-size: 17px; font-weight: 800; }
+#toolDiagnosticsWorkspace details[open] .tool-disclosure-back { order: -1; display: inline-flex; align-items: center; min-height: 48px; padding: 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--text); font-size: 15px; font-style: normal; font-weight: 800; }
+#toolDiagnosticsWorkspace .tool-disclosure-body { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+#toolDiagnosticsWorkspace .tool-disclosure-body > p, #toolDiagnosticsWorkspace .empty-copy { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+/* Sessões gravadas: até 8, em 4 colunas × 2 linhas (mesmo padrão do AutoCal). */
+#toolDiagnosticsWorkspace .recorded-session-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: none; overflow: hidden; }
+#toolDiagnosticsWorkspace .recorded-session-list > .empty-copy { grid-column: 1 / -1; }
+#toolDiagnosticsWorkspace .recorded-session-item { display: flex; flex-direction: column; gap: 5px; min-width: 0; min-height: 0; padding: 10px 12px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--surface-2); }
+#toolDiagnosticsWorkspace .recorded-session-header { display: flex; flex-direction: column; gap: 2px; }
+#toolDiagnosticsWorkspace .recorded-session-item b { font-size: 14px; }
+#toolDiagnosticsWorkspace .recorded-session-item span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+#toolDiagnosticsWorkspace .session-fuel-bar { display: flex; height: 6px; overflow: hidden; border-radius: 999px; background: var(--surface-3); }
+#toolDiagnosticsWorkspace .fuel-segment.cng { background: var(--cng); }
+#toolDiagnosticsWorkspace .fuel-segment.petrol { background: var(--petrol); }
+#toolDiagnosticsWorkspace .recorded-session-item button { align-self: flex-start; min-height: 48px; margin-top: auto; padding: 0 16px; border: 1px solid var(--line); font-size: 14px; }
+/* Tamanho e retenção: cinco campos em três colunas e "Aplicar" à esquerda. */
+#toolDiagnosticsWorkspace .diagnostic-settings-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px 12px !important; padding: 0; }
+#toolDiagnosticsWorkspace .diagnostic-settings-grid > label { display: grid; gap: 4px; align-content: start; color: var(--muted); font-size: 13px; }
+#toolDiagnosticsWorkspace .diagnostic-settings-grid small { color: var(--muted); font-size: 12px; letter-spacing: 0; }
+#toolDiagnosticsWorkspace .diagnostic-settings-grid select, #toolDiagnosticsWorkspace .diagnostic-settings-grid input[type="number"] { min-height: 48px !important; font-size: 14px !important; }
+#toolDiagnosticsWorkspace .diagnostic-settings-grid .check-setting { min-height: 56px; color: var(--text); font-size: 14px; }
+#toolDiagnosticsWorkspace [data-session-settings] { width: auto; align-self: flex-start; min-height: 56px; padding: 0 32px; border-radius: 10px; font-size: 15px; }
+#toolDiagnosticsWorkspace .settings-feedback { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0; }
+/* Log: as mesmas 24 linhas em páginas de 8; mensagem longa em até 2 linhas (inteira em "Exportar logs"). */
+#toolDiagnosticsWorkspace .tool-log-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+#toolDiagnosticsWorkspace .tool-log-toolbar .recorder-actions button { min-height: 48px; font-size: 14px; }
+#toolDiagnosticsWorkspace .log-filters { display: flex; gap: 8px; margin: 0; }
+#toolDiagnosticsWorkspace .log-filters select { min-height: 48px !important; font-size: 14px !important; }
+#toolDiagnosticsWorkspace .tool-log-pager { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+#toolDiagnosticsWorkspace .tool-log-pager button { min-height: 48px; padding: 0 14px; font-size: 14px; }
+#toolDiagnosticsWorkspace .log-lines { max-height: none; overflow: hidden; }
+#toolDiagnosticsWorkspace .log-lines > div { display: grid; grid-template-columns: 74px 120px minmax(0, 1fr); align-items: baseline; gap: 10px; padding: 3px 0 3px 10px; border-bottom: 1px solid var(--line-soft); border-left: 3px solid var(--line); font-size: 12px; }
+#toolDiagnosticsWorkspace .log-lines > div[data-level="warn"] { border-left-color: var(--warn); }
+#toolDiagnosticsWorkspace .log-lines > div[data-level="error"] { border-left-color: var(--danger); }
+#toolDiagnosticsWorkspace .log-lines time { color: var(--muted); font-variant-numeric: tabular-nums; }
+#toolDiagnosticsWorkspace .log-lines b { min-width: 0; overflow-wrap: anywhere; }
+#toolDiagnosticsWorkspace .log-lines span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; line-height: 1.25; }

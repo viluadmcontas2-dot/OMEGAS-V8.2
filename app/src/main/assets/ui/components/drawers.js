@@ -39,6 +39,8 @@
       this.tools = document.getElementById('toolsDrawer');
       this.logLevel = 'ALL';
       this.logCategory = 'ALL';
+      // Sem rolagem (dono, 2026-10-11): o log mostra uma página por vez em vez de uma lista que rola.
+      this.logPage = 0;
       this.sessionSettingsFeedback = '';
       this.ensureToolsExpansion();
       this.bind();
@@ -49,7 +51,10 @@
       const host = document.createElement('div');
       host.id = 'toolDiagnosticsWorkspace';
       host.className = 'tool-diagnostics-workspace';
-      this.tools.appendChild(host);
+      // Os cartões ficam antes do rodapé de backup (ordem do DOM = ordem na tela).
+      const footer = this.tools.querySelector('.tool-actions');
+      if (footer) this.tools.insertBefore(host, footer);
+      else this.tools.appendChild(host);
     }
 
     bind() {
@@ -108,17 +113,23 @@
       } else if (target.matches('[data-tool-selftest]')) {
         const result = this.api.selfTest();
         this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Autoteste concluído.' : (result?.error || 'Autoteste não concluído.') } });
+      } else if (target.matches('[data-log-page]')) {
+        this.logPage = Math.max(0, (this.logPage || 0) + (target.dataset.logPage === 'next' ? 1 : -1));
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
       }
     }
 
     handleToolChange(event) {
       if (event.target.matches('[data-log-level]')) {
         this.logLevel = event.target.value || 'ALL';
+        this.logPage = 0;
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       }
       if (event.target.matches('[data-log-category]')) {
         this.logCategory = event.target.value || 'ALL';
+        this.logPage = 0;
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       }
@@ -227,6 +238,11 @@
         const category = String(item.category || 'OUTROS').toUpperCase();
         return (this.logLevel === 'ALL' || level === this.logLevel) && (this.logCategory === 'ALL' || category === this.logCategory);
       }).slice(-24).reverse();
+      // Sem rolagem (dono, 2026-10-11): as mesmas 24 linhas, em páginas de 8 que cabem na tela.
+      const LOG_PAGE_SIZE = 8;
+      const logPageCount = Math.max(1, Math.ceil(filteredLogs.length / LOG_PAGE_SIZE));
+      this.logPage = Math.min(Math.max(0, this.logPage || 0), logPageCount - 1);
+      const pageLogs = filteredLogs.slice(this.logPage * LOG_PAGE_SIZE, (this.logPage + 1) * LOG_PAGE_SIZE);
       const recording = status.recording === true;
       const mb = finite(status.megabytes) || 0;
       const limitMb = finite(status.limitMb ?? settings.maxSessionMb) || 0;
@@ -242,11 +258,12 @@
         Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
         status.recording, status.events, Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
         settings, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
-        filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.sessionSettingsFeedback,
+        filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.logPage, this.sessionSettingsFeedback,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
       this.toolsSignature = signature;
       const logsOpenBeforeRender = host.querySelector('.tool-logs')?.open === true;
+      const sessionsOpenBeforeRender = host.querySelector('.tool-sessions')?.open === true;
       const batteryAction = battery.supported !== false && battery.ignoringOptimizations !== true
         ? '<button type="button" class="secondary" data-tool-battery-request>Permitir</button>' : '';
       const overlayAction = overlay.visible === true
@@ -255,6 +272,9 @@
           ? '<button type="button" class="secondary" data-tool-overlay-enable>Ativar</button>'
           : '<button type="button" class="secondary" data-tool-overlay-request>Autorizar</button>';
 
+      // Sem rolagem (dono, 2026-10-11): três cartões cabem na tela; "Sessões gravadas", "Tamanho e retenção"
+      // e o log abrem no lugar dos cartões (o título vira "Voltar") em vez de esticar a tela.
+      const disclosureTitle = text => `<span>${text}</span><em class="tool-disclosure-back">Voltar</em>`;
       host.innerHTML = `
         <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
           <header><div><small>SAÚDE DO APP</small><h3>${serviceHealthy ? 'Funcionando em segundo plano' : appStatus.serviceRunning ? 'Comunicação com a ECU exige atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div><span>${serviceHealthy ? 'OK' : 'ATENÇÃO'}</span></header>
@@ -266,6 +286,32 @@
           <div class="tool-power-rows">
             <div class="tool-power-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'O Android pode pausar o app'}</b><span>Permita para sessões longas com a tela apagada.</span></div>${batteryAction}</div>
             <div class="tool-power-row"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlay.visible === true ? 'Ativa' : 'Desativada'}</b><span>Balão por cima de outros apps (mapa, música). Não aparece por cima do OMEGAS.</span></div>${overlayAction}</div>
+          </div>
+          <div class="tool-disclosures">
+            <details class="tool-logs live-log-console" ${logsOpenBeforeRender ? 'open' : ''}>
+              <summary>${disclosureTitle(`Log do sistema (${logs.length})`)}</summary>
+              <div class="tool-disclosure-body">
+                <div class="tool-log-toolbar">
+                  <div class="recorder-actions">
+                    <button type="button" class="secondary" data-tool-export-logs>Exportar logs</button>
+                    <button type="button" class="secondary" data-tool-selftest>Executar autoteste</button>
+                  </div>
+                  <div class="log-filters">
+                    <select data-log-level>
+                      ${['ALL', 'ERROR', 'WARN', 'INFO'].map(value => `<option value="${value}" ${this.logLevel === value ? 'selected' : ''}>${value === 'ALL' ? 'Todos níveis' : value}</option>`).join('')}
+                    </select>
+                    <select data-log-category>
+                      <option value="ALL">Todas categorias</option>
+                      ${categories.map(value => `<option value="${escapeHtml(value)}" ${this.logCategory === value ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}
+                    </select>
+                  </div>
+                  ${logPageCount > 1 ? `<div class="tool-log-pager"><button type="button" class="secondary" data-log-page="prev" ${this.logPage === 0 ? 'disabled' : ''}>Mais recentes</button><span>Página ${this.logPage + 1} de ${logPageCount}</span><button type="button" class="secondary" data-log-page="next" ${this.logPage >= logPageCount - 1 ? 'disabled' : ''}>Mais antigos</button></div>` : ''}
+                </div>
+                <div class="log-lines">
+                  ${pageLogs.length ? pageLogs.map(item => `<div data-level="${escapeHtml(String(item.level || 'INFO').toLowerCase())}"><time>${escapeHtml(item.time || '')}</time><b>${escapeHtml(item.category || 'LOG')}</b><span>${escapeHtml(item.message || '')}</span></div>`).join('') : '<p class="empty-copy">Nenhum evento neste filtro.</p>'}
+                </div>
+              </div>
+            </details>
           </div>
         </section>
 
@@ -281,33 +327,57 @@
             <button type="button" class="${recording ? 'quiet-button' : 'primary'}" data-session-start ${recording ? 'disabled' : ''}>Iniciar sessão</button>
             <button type="button" class="${recording ? 'secondary' : 'quiet-button'}" data-session-stop ${recording ? '' : 'disabled'}>Encerrar</button>
           </div>
-          <div class="recorded-session-list">
-            ${sessions.length ? sessions.slice(0, 8).map(item => {
-              const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
-              const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
-              const pctCng = (finite(item.cngTicks) || 0);
-              const pctPet = (finite(item.petrolTicks) || 0);
-              const totalTicks = pctCng + pctPet;
-              const gnvPercent = totalTicks > 0 ? Math.round((pctCng / totalTicks) * 100) : 0;
-              const gasPercent = totalTicks > 0 ? 100 - gnvPercent : 0;
-              return `
-              <article class="recorded-session-item">
-                <div class="recorded-session-header">
-                  <b>${escapeHtml(item.reason || 'Sessão')}</b>
-                  <span class="session-datetime">${readableDate}</span>
+          <div class="tool-disclosures">
+            <details class="tool-sessions" ${sessionsOpenBeforeRender ? 'open' : ''}>
+              <summary>${disclosureTitle(`Sessões gravadas (${sessions.length})`)}</summary>
+              <div class="tool-disclosure-body">
+                <div class="recorded-session-list">
+                  ${sessions.length ? sessions.slice(0, 8).map(item => {
+                    const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
+                    const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
+                    const pctCng = (finite(item.cngTicks) || 0);
+                    const pctPet = (finite(item.petrolTicks) || 0);
+                    const totalTicks = pctCng + pctPet;
+                    const gnvPercent = totalTicks > 0 ? Math.round((pctCng / totalTicks) * 100) : 0;
+                    const gasPercent = totalTicks > 0 ? 100 - gnvPercent : 0;
+                    return `
+                    <article class="recorded-session-item">
+                      <div class="recorded-session-header">
+                        <b>${escapeHtml(item.reason || 'Sessão')}</b>
+                        <span class="session-datetime">${readableDate}</span>
+                      </div>
+                      <div class="recorded-session-meta">
+                        <span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · em andamento' : ''}${totalTicks > 0 ? ` · GNV ${gnvPercent}% · gasolina ${gasPercent}%` : ''}</span>
+                      </div>
+                      ${totalTicks > 0 ? `
+                      <div class="session-fuel-bar" title="GNV: ${gnvPercent}% | Gasolina: ${gasPercent}%">
+                        <div class="fuel-segment cng" style="width: ${gnvPercent}%;"></div>
+                        <div class="fuel-segment petrol" style="width: ${gasPercent}%;"></div>
+                      </div>
+                      ` : ''}
+                      <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
+                    </article>`;
+                  }).join('') : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
                 </div>
-                <div class="recorded-session-meta">
-                  <span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · em andamento' : ''}${totalTicks > 0 ? ` · GNV ${gnvPercent}% · gasolina ${gasPercent}%` : ''}</span>
+              </div>
+            </details>
+            <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
+              <summary>${disclosureTitle('Tamanho e retenção das sessões')}</summary>
+              <div class="tool-disclosure-body">
+                <div class="diagnostic-settings-grid">
+                  <label><span>Telemetria salva</span><select data-session-telemetry>
+                    ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
+                  </select></label>
+                  <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
+                  <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
+                  <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar a ECU</span></label>
+                  <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
                 </div>
-                ${totalTicks > 0 ? `
-                <div class="session-fuel-bar" title="GNV: ${gnvPercent}% | Gasolina: ${gasPercent}%">
-                  <div class="fuel-segment cng" style="width: ${gnvPercent}%;"></div>
-                  <div class="fuel-segment petrol" style="width: ${gasPercent}%;"></div>
-                </div>
-                ` : ''}
-                <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
-              </article>`;
-            }).join('') : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
+                <p>USB bruto aumenta bastante o tamanho. Use só para investigar falha de comunicação.</p>
+                <button type="button" class="secondary wide" data-session-settings>Aplicar</button>
+                ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
+              </div>
+            </details>
           </div>
         </section>
 
@@ -318,44 +388,8 @@
             <span><b>${cngCount}</b> regiões GNV</span>
             <span><b>${comparisonCount}</b> comparações</span>
           </div>
-          <p>Use <b>Exportar aprendizado</b> e <b>Importar aprendizado</b> acima. Importar confere o arquivo antes de aceitar e nunca grava na ECU. O GNV de uma calibração antiga não volta para a calibração atual.</p>
+          <p>Use <b>Exportar aprendizado</b> e <b>Importar aprendizado</b> abaixo. Importar confere o arquivo antes de aceitar e nunca grava na ECU. O GNV de uma calibração antiga não volta para a calibração atual.</p>
         </section>
-
-        <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
-          <summary>Tamanho e retenção das sessões</summary>
-          <div class="diagnostic-settings-grid">
-            <label><span>Telemetria salva</span><select data-session-telemetry>
-              ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
-            </select></label>
-            <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
-            <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
-            <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar a ECU</span></label>
-            <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
-          </div>
-          <p>USB bruto aumenta bastante o tamanho. Use só para investigar falha de comunicação.</p>
-          <button type="button" class="secondary wide" data-session-settings>Aplicar</button>
-          ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
-        </details>
-
-        <details class="tool-logs live-log-console" ${logsOpenBeforeRender ? 'open' : ''}>
-          <summary>Detalhes técnicos · log do sistema (${logs.length})</summary>
-          <div class="recorder-actions">
-            <button type="button" class="secondary" data-tool-export-logs>Exportar logs</button>
-            <button type="button" class="secondary" data-tool-selftest>Executar autoteste</button>
-          </div>
-          <div class="log-filters">
-            <select data-log-level>
-              ${['ALL', 'ERROR', 'WARN', 'INFO'].map(value => `<option value="${value}" ${this.logLevel === value ? 'selected' : ''}>${value === 'ALL' ? 'Todos níveis' : value}</option>`).join('')}
-            </select>
-            <select data-log-category>
-              <option value="ALL">Todas categorias</option>
-              ${categories.map(value => `<option value="${escapeHtml(value)}" ${this.logCategory === value ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="log-lines">
-            ${filteredLogs.length ? filteredLogs.map(item => `<div data-level="${escapeHtml(String(item.level || 'INFO').toLowerCase())}"><time>${escapeHtml(item.time || '')}</time><b>${escapeHtml(item.category || 'LOG')}</b><span>${escapeHtml(item.message || '')}</span></div>`).join('') : '<p class="empty-copy">Nenhum evento neste filtro.</p>'}
-          </div>
-        </details>
       `;
     }
   }

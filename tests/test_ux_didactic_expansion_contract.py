@@ -41,7 +41,8 @@ assert "resetLearningToleranceSettings" in api
 assert "learningDecision" in learning
 assert "reason_code" in learning
 assert "frame_count" in learning
-assert "LIMITES CONFIGURADOS" in learning
+# Sem limites técnicos na tela (dono, 2026-10-11: não preciso da lógica por trás).
+assert "LIMITES CONFIGURADOS" not in learning
 # As quatro camadas humanas atuais vivem no shell da tela e o detalhe continua
 # separando explicitamente referência gasolina, observação GNV e diferença.
 assert ">Referência<" in index
@@ -81,8 +82,8 @@ assert "protocolTransaction" not in physical_grid
 assert "function renderLightLiveContext" in app
 assert "learningLiveLabel" in app
 assert "célula ${row + 1}×${column + 1}" in app
-assert "A posição ao vivo é mostrada apenas como texto" in learning
-assert "A interpolação bilinear continua no Kotlin" in learning
+# Sem jargão técnico na tela (dono, 2026-10-11).
+assert "A interpolação bilinear continua no Kotlin" not in learning
 assert "physical-grid-with-axes" in physical_grid
 assert "setAxes(rpmBins, petrolBins)" in physical_grid
 assert ".cell-value{font-size:13px" in styles
