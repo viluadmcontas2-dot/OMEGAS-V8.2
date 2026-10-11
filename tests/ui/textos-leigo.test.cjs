@@ -37,10 +37,11 @@ function load(file, document) {
   return context.OmegasUi;
 }
 
-test('aviso (toast): texto ≥ 20 px, à esquerda, acima da navegação; status da barra com 18 px', () => {
+test('aviso (toast): texto ≥ 20 px, à direita acima da navegação (não cobre os botões da esquerda); status da barra com 18 px', () => {
   const css = read('styles.css');
   const toast = css.match(/\.alert-toast\{([^}]*)\}/)[1];
-  assert.match(toast, /left:16px/);
+  assert.match(toast, /right:16px;left:auto/, 'os botões ficam embaixo à esquerda: o aviso fica à direita');
+  assert.match(toast, /max-width:min\(600px,calc\(48vw - 16px\)\)/, 'no máximo metade da largura: nunca alcança os botões da esquerda');
   assert.match(toast, /bottom:calc\(var\(--nav-height\) \+ \d+px\)/, 'fica acima da barra de 8 abas, sem cobrir nenhuma');
   assert.match(toast, /text-align:left/);
   const size = Number(css.match(/\.alert-toast b\{[^}]*font-size:(\d+)px/)[1]);
