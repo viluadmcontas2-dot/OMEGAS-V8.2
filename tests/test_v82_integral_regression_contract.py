@@ -23,17 +23,11 @@ class V82IntegralRegressionContract(unittest.TestCase):
     def test_slow_ui_cannot_create_visual_history_queue(self):
         pipeline = read('app/src/main/java/com/omegas/prohub/util/LatestOnlyBackgroundPipeline.kt')
         scheduler = read('app/src/main/assets/ui/core/scheduler.js')
-        tracing = read('app/src/main/assets/ui/components/predictor-current-cell.js')
         self.assertIn('latest', pipeline.lower())
         self.assertIn('pending', pipeline.lower())
         self.assertIn('coalesced', pipeline.lower())
         self.assertIn('pending = task', pipeline)
         self.assertEqual(scheduler.count('setInterval'), 1)
-        self.assertNotIn("scheduler.addHook('fast'", tracing)
-        self.assertIn('this.store.subscribe', tracing)
-        self.assertNotIn('setInterval', tracing)
-        self.assertNotIn('history', tracing)
-        self.assertNotIn('setTrace', tracing)
 
     def test_concurrent_serial_clients_share_one_scheduler(self):
         engine = read('app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt')
@@ -91,7 +85,6 @@ class V82IntegralRegressionContract(unittest.TestCase):
         surface = read('app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt')
         spatial = read('app/src/main/java/com/omegas/prohub/learning/PredictorSpatialConfidence.kt')
         interpolator = read('app/src/main/java/com/omegas/prohub/learning/PredictorInterpolator.kt')
-        consumer = read('app/src/main/assets/ui/core/predictor-model.js')
         self.assertIn('VALIDADO', surface)
         self.assertIn('OBSERVADO', surface)
         self.assertIn('PREVISTO', surface)
@@ -100,22 +93,17 @@ class V82IntegralRegressionContract(unittest.TestCase):
         self.assertIn('supportFrozenBeforePrediction', interpolator)
         self.assertIn('predictionsFeedConfidence", false', interpolator)
         self.assertNotIn('KWriteManager', interpolator)
-        self.assertNotIn('OmegasNative', consumer)
-        self.assertIn("router.navigate('map'", consumer)
-        self.assertIn("intent: 'review-only'", consumer)
 
     def test_ui_authorities_remain_single_and_extensions_have_no_own_timers(self):
         router = read('app/src/main/assets/ui/core/router.js')
         store = read('app/src/main/assets/ui/core/store.js')
         scheduler = read('app/src/main/assets/ui/core/scheduler.js')
         split = read('app/src/main/assets/ui/components/split-layout.js')
-        floating = read('app/src/main/assets/ui/components/floating-telemetry.js')
-        predictor = read('app/src/main/assets/ui/screens/predictor.js')
         self.assertIn('class Router', router)
         self.assertIn('class Store', store)
         self.assertIn('class Scheduler', scheduler)
         self.assertEqual(scheduler.count('setInterval'), 1)
-        for source in (split, floating, predictor):
+        for source in (split,):
             self.assertNotIn('setInterval', source)
             self.assertNotIn('new Store', source)
             self.assertNotIn('new Router', source)
@@ -123,17 +111,21 @@ class V82IntegralRegressionContract(unittest.TestCase):
     def test_live_interpolation_is_kotlin_owned_and_visual_only(self):
         projection = read('app/src/main/java/com/omegas/prohub/learning/LearningGridProjection.kt')
         bridge = read('app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt')
-        tracing = read('app/src/main/assets/ui/components/predictor-current-cell.js')
         self.assertIn('fun liveInterpolationJson(', projection)
         self.assertIn('ContinuousLearningMath.bilinearWeights', projection)
         self.assertIn('.put("continuousWeights"', projection)
         self.assertIn('.put("affectsLearning", false)', projection)
         self.assertIn('.put("affectsCalibration", false)', projection)
         self.assertIn('LearningGridProjection.liveInterpolationJson(', bridge)
-        self.assertIn('cell.continuousWeights', tracing)
-        self.assertNotIn('bilinear', tracing)
-        self.assertIn('liveTracingEnabled', tracing)
-        self.assertNotIn('writeMap', tracing)
+
+    def test_dead_ui_modules_stay_removed(self):
+        # Enxugar (dono, 2026-10-11): módulos de interface que nada carregava foram apagados; não voltam escondidos.
+        ui = ROOT / 'app/src/main/assets/ui'
+        dead = ['components/floating-telemetry.js', 'components/predictor-current-cell.js', 'screens/predictor.js',
+                'core/predictor-model.js', 'styles-floating-telemetry.css', 'styles-predictor-live.css',
+                'styles-predictor.css', 'styles-expansion.css', 'styles-expansion-panels.css']
+        for name in dead:
+            self.assertFalse((ui / name).exists(), name)
 
 
 if __name__ == '__main__':

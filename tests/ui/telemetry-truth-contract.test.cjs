@@ -10,7 +10,6 @@ const read = relative => fs.readFileSync(path.join(ROOT, relative), 'utf8');
 
 const app = read('app/src/main/assets/ui/app.js');
 const dashboard = read('app/src/main/assets/ui/screens/dashboard.js');
-const floating = read('app/src/main/assets/ui/components/floating-telemetry.js');
 const vehicle = read('app/src/main/assets/ui/components/vehicle-status-strip.js');
 const refino = read('app/src/main/assets/ui/screens/refino.js');
 
@@ -42,12 +41,10 @@ test('invalid interpolation cannot materialize a fake physical cell', () => {
   const light = between(app, 'function renderLightLiveContext', '/** Único pump de PresentSnapshot');
   assert.match(light, /interpolation\.valid\s*===\s*true/, 'learning/map live context must honor interpolation.valid');
   assert.match(dashboard, /interpolation\.valid\s*===\s*true/, 'dashboard cell must honor interpolation.valid');
-  assert.match(floating, /interpolation\.valid\s*===\s*true/, 'floating cell must honor interpolation.valid');
 });
 
 test('unavailable telemetry never turns HubStatus numeric defaults into fake measurements', () => {
   assert.match(dashboard, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'dashboard must require valid telemetry before showing measurements');
-  assert.match(floating, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'floating telemetry must require valid telemetry before showing measurements');
   assert.match(vehicle, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'vehicle strip must require valid telemetry before showing measurements');
   assert.doesNotMatch(dashboard, /id=\\?"dashRpm\\?"[^>]*>0<\/b>/, 'dashboard initial state cannot claim 0 RPM before valid telemetry');
 });
