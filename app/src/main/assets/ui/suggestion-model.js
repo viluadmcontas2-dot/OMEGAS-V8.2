@@ -5,7 +5,8 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   if (root) root.OmegasSuggestionModel = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  const finite = value => Number.isFinite(Number(value));
+  // Desconhecido (null/vazio) não é número: Number(null) seria 0 e viraria célula 0×0.
+  const finite = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
   const clamp = value => Math.max(0, Math.min(1, Number(value) || 0));
 
   function normalize(raw = {}) {

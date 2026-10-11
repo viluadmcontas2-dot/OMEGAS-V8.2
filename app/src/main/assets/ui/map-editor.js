@@ -11,7 +11,8 @@
   const MIN_K = 100;
   const MAX_K = 255;
 
-  const finite = value => Number.isFinite(Number(value)) ? Number(value) : null;
+  // Vazio/null não vira K 0: alvo desconhecido é recusado, nunca gravado.
+  const finite = value => value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value);
   const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, value));
 
   function exactTarget(value, label) {

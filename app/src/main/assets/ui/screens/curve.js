@@ -3,7 +3,8 @@
   const ns = root.OmegasUi = root.OmegasUi || {};
   const PROPOSAL_ROWS = 4;
 
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  // Desconhecido (null/vazio) fica desconhecido: Number(null) seria 0 e viraria "0,0% · equivalente".
+  function finite(value) { return value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value); }
   function fmt(value, digits) {
     const n = finite(value);
     return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });

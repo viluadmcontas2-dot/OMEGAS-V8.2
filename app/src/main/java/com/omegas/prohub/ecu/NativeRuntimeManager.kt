@@ -327,7 +327,7 @@ class NativeRuntimeManager(
             .put("sample_desired_frames", decision.desiredFrames)
             .put("sample_duration_ms", decision.durationMs)
             .put("sample", decision.toTelemetryJson())
-            .put("learning_quality", decision.sample?.quality ?: 0.0)
+            .put("learning_quality", decision.sample?.quality ?: JSONObject.NULL) // sem amostra = desconhecido, não 0%
             .put("stable_ms", decision.durationMs)
             .put("surface_cell", learningState.optString("state", "OBSERVING_ENGINE"))
             .put(

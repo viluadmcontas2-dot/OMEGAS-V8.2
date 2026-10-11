@@ -809,7 +809,7 @@ data class SampleDecision(
         .put("cell_key", cellKey)
         .put("cell_row", cellRow)
         .put("cell_column", cellColumn)
-        .put("quality", sample?.quality ?: 0.0)
+        .put("quality", sample?.quality ?: JSONObject.NULL) // sem amostra = desconhecido, não 0%
 
     fun toJson(): JSONObject = JSONObject()
         .put("state", state)

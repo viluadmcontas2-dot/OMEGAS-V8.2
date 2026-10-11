@@ -141,6 +141,18 @@ class NativeAutoCalMonitor(
             val receiptSessionId = receipt.optLong("sessionId", sessionId)
             if (receiptSessionId == sessionId) {
                 acquisitionEpoch.manualAction(sessionId, receipt.optString("action"))
+                // Iniciar/Pausar confirmado por readback: a tela não volta ao estado antigo até a próxima leitura completa.
+                val confirmedEnabled = when (receipt.optString("action")) {
+                    "ENABLE_AUTO_CAL" -> 1
+                    "DISABLE_AUTO_CAL" -> 0
+                    else -> null
+                }
+                if (confirmedEnabled != null && receipt.optBoolean("readbackValid", false)) {
+                    autoCalEnabled = confirmedEnabled
+                    if (latestSnapshot.optBoolean("available", false)) {
+                        latestSnapshot = JSONObject(latestSnapshot.toString()).put("autoCalEnabled", confirmedEnabled)
+                    }
+                }
             }
         }
         requestSnapshot("ACTION_${receipt.optString("action", "UNKNOWN")}")

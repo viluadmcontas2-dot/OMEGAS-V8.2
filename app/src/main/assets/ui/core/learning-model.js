@@ -8,7 +8,7 @@
   'use strict';
 
   const STATES = Object.freeze({ EMPTY: 'empty', PETROL: 'petrol', CNG: 'cng', COMPARABLE: 'comparable' });
-  const finite = (value, fallback = 0) => { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : fallback; };
+  const finite = (value, fallback = 0) => { if (value === null || value === undefined || value === '') return fallback; const parsed = Number(value); return Number.isFinite(parsed) ? parsed : fallback; };
   const keyOf = (row, column) => `${row}:${column}`;
 
   function normalizeFuel(value) {

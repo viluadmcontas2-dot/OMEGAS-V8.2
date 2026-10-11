@@ -2,7 +2,8 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  // Desconhecido (null/vazio) fica desconhecido: Number(null) seria 0 e viraria "0,0% · equivalente".
+  function finite(value) { return value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value); }
   function fmt(value, digits) {
     const n = finite(value);
     return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -25,6 +26,7 @@
       this.dragStart = null;
       this.review = null;
       this.lastOperationState = '';
+      this.writeStartedAt = null;
       this.pendingContext = null;
       this.liveContext = null;
       this.ensureContextChrome();
@@ -342,6 +344,8 @@
       }
       this.root?.classList.add('is-writing');
       this.lastOperationState = '';
+      // A ponte guarda uma "última operação" só para Curva K, Mapa K, backup e reset: esta tela só segue a gravação que iniciou.
+      this.writeStartedAt = result.startedAt ?? null;
       text('mapOperationTitle', 'Escrita manual em andamento');
       text('mapOperationMessage', `0 de ${this.review.count} células confirmadas`);
       this.store.patch({ map: { ...this.store.get().map, state: 'writing', operation: result, review: this.review } });
@@ -356,6 +360,7 @@
     pollWrite() {
       const operation = this.api.mapWriteOperation();
       if (!operation || operation.state === 'IDLE' || operation.state === 'UNAVAILABLE') return;
+      if (this.writeStartedAt == null || operation.startedAt !== this.writeStartedAt) return; // operação da Curva K ou antiga
       if (operation.state === this.lastOperationState && !operation.busy) return;
       this.lastOperationState = operation.state;
       const progress = Math.max(0, Math.min(100, finite(operation.progress) || 0));
@@ -376,6 +381,7 @@
           result.querySelector('b').textContent = `${operation.confirmedCells || operation.totalCells} alterações confirmadas pela ECU`;
           result.querySelector('span').textContent = 'ACK e readback concluídos. O mapa será relido para atualizar a tela.';
         }
+        this.writeStartedAt = null;
         this.editor.reset();
         this.startRead(true);
       } else if (operation.state === 'BATCH_PARTIAL_FAILED' || operation.ok === false) {
@@ -388,6 +394,7 @@
           result.querySelector('b').textContent = 'A ECU não confirmou toda a operação';
           result.querySelector('span').textContent = `${operation.confirmedCells || 0} células foram confirmadas antes da falha. ${failure.error || operation.error || 'Releitura obrigatória.'}`;
         }
+        this.writeStartedAt = null;
         this.editor.reset();
       }
     }

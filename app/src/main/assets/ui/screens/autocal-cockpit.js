@@ -12,6 +12,11 @@
   const AUTO_CAL_OPERATIONAL_MAP_MAX_BAR = 1.15;
   const AUTO_CAL_X_AXIS_LABEL = 'Petrol Inj. (ms)';
 
+  /** Identidade de um estado de ação nativa (o mesmo "Concluído" antigo não é resultado da ação nova). */
+  function actionSignature(state) {
+    return [state?.state, state?.updatedAt, state?.action, state?.message].map(v => (v === undefined || v === null ? '' : String(v))).join('|');
+  }
+
   function finite(value) {
     if (value === null || value === undefined || value === '') return null;
     const number = Number(value);
@@ -1043,6 +1048,7 @@
         this.operationalPending = false;
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível alterar a aquisição AutoCal.' } });
       } else {
+        this.expectActionResult();
         this.store.patch({ alert: { level: 'ok', message: enable
           ? 'Início enviado. Confirmando ACK e leitura de volta da ECU…'
           : 'Pausa enviada. Confirmando ACK e leitura de volta da ECU…' } });
@@ -1074,6 +1080,7 @@
         return;
       }
       this.prepared = null;
+      this.expectActionResult();
       this.store.patch({ alert: { level: 'working', message: 'Comando enviado para a ECU. Aguarde ACK e readback.' } });
       this.refresh();
     }
@@ -1763,6 +1770,7 @@
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível abrir a confirmação do ponto.' } });
         return;
       }
+      this.expectActionResult();
       this.store.patch({ alert: { level: 'working', message: 'Readquisição enviada para a ECU. Aguarde ACK e readback deste ponto.' } });
       this.refresh();
     }
@@ -1802,6 +1810,7 @@
       }
       const count = targets.length;
       this.pendingPointReacquisitionKeys = new Set(targets.map(item => item.fuel + ':' + item.index));
+      this.expectActionResult();
       this.store.patch({
         alert: {
           level: 'working',
@@ -1882,9 +1891,14 @@
       }).join('');
     }
 
+    /** Ação aceita pela ECU: o próximo fim (Concluído/Não concluído) dela vira aviso; o estado antigo não conta. */
+    expectActionResult() {
+      this.awaitingActionResult = true;
+      this.actionBaselineSignature = actionSignature(this.actionState || {});
+    }
+
     renderActionState() {
       const host = document.getElementById('autocalActionStatus');
-      if (!host) return;
       const state = this.actionState || {};
       const name = String(state.state || 'IDLE').toUpperCase();
       const message = String(state.message || 'Nenhuma ação preparada.');
@@ -1901,13 +1915,20 @@
       const uncertainty = failed && mutationMayHaveStarted
         ? ' · Estado incerto: a ECU pode ter mudado. Releia antes de repetir.'
         : '';
-      host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
-      host.dataset.reasonCode = recoveryCode;
-      host.dataset.mutationUncertain = mutationMayHaveStarted ? 'true' : 'false';
-      host.textContent = name === 'IDLE' ? message
+      const text = name === 'IDLE' ? message
         : name === 'CONFIRMED' ? 'Concluído · ' + message
         : failed ? 'Não concluído · ' + message + uncertainty + (recoveryNext ? ' · Próximo: ' + recoveryNext : '')
         : 'Executando · ' + message;
+      // O painel com este texto fica oculto na aba: o fim da ação que o dono acabou de tocar vira aviso visível, uma vez.
+      if (this.awaitingActionResult && (failed || name === 'CONFIRMED') && actionSignature(state) !== this.actionBaselineSignature) {
+        this.awaitingActionResult = false;
+        this.store?.patch?.({ alert: { level: failed ? 'warning' : 'ok', message: text } });
+      }
+      if (!host) return;
+      host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
+      host.dataset.reasonCode = recoveryCode;
+      host.dataset.mutationUncertain = mutationMayHaveStarted ? 'true' : 'false';
+      host.textContent = text;
     }
 
     renderUnavailable() {

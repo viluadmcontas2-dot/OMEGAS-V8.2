@@ -49,7 +49,8 @@
     const next = value == null ? '—' : String(value);
     if (node.textContent !== next) node.textContent = next;
   }
-  function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  // Desconhecido (null/vazio) fica desconhecido: Number(null) seria 0 e viraria "0,0% · equivalente".
+  function finite(value) { return value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value); }
   // Formatadores criados uma vez (mesmo texto de toLocaleString, sem recriar a cada quadro).
   const RPM_FORMAT = new Intl.NumberFormat('pt-BR');
   const MS_FORMAT = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -66,8 +67,15 @@
     const value = String(raw || '—').toUpperCase();
     if (value.includes('PETROL') || value.includes('GASOLINA')) return 'GASOLINA';
     if (value.includes('CNG') || value.includes('GNV') || value.includes('GAS')) return 'GNV';
-    if (value.includes('CUTOFF')) return 'CUTOFF';
+    if (value.includes('CUTOFF')) return 'CORTE';
+    if (value.includes('TRANSIC')) return 'TRANSIÇÃO';
+    if (value.includes('DESLIG')) return 'DESLIGADO';
+    if (value.includes('DESCONHEC') || value === '--') return '—';
     return value || '—';
+  }
+  /** Abas que recebem o quadro rápido (PresentSnapshot); nas outras o quadro guardado é velho. */
+  function isTelemetryRoute(route) {
+    return route === 'dashboard' || route === 'learning' || route === 'map' || route === 'autocal';
   }
   function liveFrom(state) {
     const telemetry = state.telemetry || {};
@@ -101,13 +109,14 @@
       gap_ms: Number(sample.gap_ms ?? 0),
       learning_eligible: sample.learning_eligible === true,
       fuel_confirmed: sample.fuel_confirmed ?? live.fuel ?? null,
-      window_age_ms: Number(sample.window_age_ms ?? sample.duration_ms ?? 0),
+      // Desconhecido fica null (a tela mostra "—"), nunca "Janela 0,0 s" nem "qualidade 0%".
+      window_age_ms: finite(sample.window_age_ms ?? sample.duration_ms ?? live.sample_duration_ms),
       window_budget_ms: Number(sample.window_budget_ms ?? 0),
       frames_evicted: Number(sample.frames_evicted ?? 0),
       cell_key: sample.cell_key || '',
       cell_row: Number(sample.cell_row ?? -1),
       cell_column: Number(sample.cell_column ?? -1),
-      quality: Number(sample.quality ?? live.learning_quality ?? 0),
+      quality: finite(sample.quality ?? live.learning_quality),
       plausibility_reasons: Array.isArray(sample.plausibility_reasons) ? sample.plausibility_reasons : [],
       live,
     };
@@ -143,7 +152,12 @@
     }
 
     const status = state.status || {};
-    const fuel = fuelLabel(liveFrom(state).fuel || liveFrom(state).state || status.fuelState);
+    // Combustível só com leitura recente da ECU (o status chega a cada 1 s em todas as abas): sem cabo ou sem quadro novo
+    // há mais de 2,5 s mostra "—", nunca o último. O quadro rápido só vale nas abas que o recebem.
+    const telemetryAge = Number(status.directTelemetryAgeMs);
+    const fuelFresh = status.usbConnected === true && Number.isFinite(telemetryAge) && telemetryAge >= 0 && telemetryAge <= 2500;
+    const pumped = isTelemetryRoute(state.route);
+    const fuel = fuelLabel(fuelFresh ? (pumped ? liveFrom(state).fuel || liveFrom(state).state : null) || status.fuelState : null);
     const globalSignature = `${status.usbConnected === true ? 1 : 0}:${fuel}`;
     if (globalSignature !== previousGlobalSignature) {
       previousGlobalSignature = globalSignature;
@@ -160,8 +174,6 @@
       }
     }
 
-    const pending = Number(state.calibrationState?.suggestionPending || 0);
-    setText('suggestionCount', pending);
 
     if (state.learningLayer !== previousLearningLayer && state.route === 'learning') {
       previousLearningLayer = state.learningLayer;
@@ -221,16 +233,19 @@
 
   function renderLightLiveContext(state, route) {
     const interpolation = state.telemetry?.interpolation || {};
-    const interpolationValid = interpolation.valid === true;
+    // Mesma regra do Agora: sem quadro novo há mais de 2,5 s, o AGORA não mostra o último RPM como se fosse vivo.
+    const age = finite(state.telemetry?.telemetryAgeMs ?? state.telemetry?.ageMs);
+    const stale = age !== null && age > 2500;
+    const interpolationValid = interpolation.valid === true && !stale;
     const cell = interpolation.cell || {};
-    const rpm = finite(interpolation.rpm ?? liveFrom(state).rpm);
-    const petrolMs = finite(interpolation.petrolMs ?? liveFrom(state).petrol_ms ?? liveFrom(state).petrolMs);
+    const rpm = stale ? null : finite(interpolation.rpm ?? liveFrom(state).rpm);
+    const petrolMs = stale ? null : finite(interpolation.petrolMs ?? liveFrom(state).petrol_ms ?? liveFrom(state).petrolMs);
     const row = interpolationValid && Number.isFinite(Number(cell.row)) && Number(cell.row) >= 0 ? Number(cell.row) : null;
     const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
     const position = row !== null && column !== null ? ` · célula ${row + 1}×${column + 1}` : '';
     const label = interpolationValid && rpm !== null && petrolMs !== null
       ? `${RPM_FORMAT.format(Math.round(rpm))} RPM · ${MS_FORMAT.format(petrolMs)} ms${position}`
-      : 'Aguardando condição válida';
+      : stale ? `Sem dados há ${Math.round(age / 1000)} s` : 'Aguardando condição válida';
     if (route === 'learning') setText('learningLiveLabel', label);
     if (route === 'map') ensureScreen('map')?.renderLiveContext?.({ rpm, petrolMs, row, column, label });
   }
@@ -238,13 +253,20 @@
   /** Único pump de PresentSnapshot. Nenhum screen abre polling nativo próprio. */
   function refreshFast() {
     const route = store.get().route;
-    if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor' || route === 'autocal') {
+    if (isTelemetryRoute(route)) {
       const envelope = api.presentSnapshot() || {};
       const telemetry = envelope.data || {};
       const signature = `${route}:${telemetryVisualSignature(telemetry, route)}`;
       if (envelope.ok !== false && signature !== previousTelemetrySignature) {
         previousTelemetrySignature = signature;
         store.patch({ telemetry, presentRevision: Number(envelope.revision || 0) });
+        const state = store.get();
+        if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
+        if (route === 'learning' || route === 'map') renderLightLiveContext(state, route);
+      } else if (envelope.ok === false && previousTelemetrySignature !== 'ponte-fora') {
+        // Ponte/serviço fora: o último quadro não pode ficar na tela como se fosse vivo (com idade "40 ms" congelada).
+        previousTelemetrySignature = 'ponte-fora';
+        store.patch({ telemetry: {} });
         const state = store.get();
         if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
         if (route === 'learning' || route === 'map') renderLightLiveContext(state, route);
@@ -323,6 +345,8 @@
     if (route === 'suggestions') {
       utilities?.render(updated);
       renderPersistentSuggestions(updated);
+    } else {
+      updateSuggestionBadge(updated);
     }
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
   }
@@ -347,6 +371,13 @@
     return 'observando';
   }
 
+  /** Selo "Sugestões": um dono só (antes dois trechos escreviam com contas diferentes e o número piscava entre 1 e 0). */
+  function updateSuggestionBadge(state, refinement = refinementSuggestion()) {
+    const items = Array.isArray(state.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
+    const actionable = items.filter(item => item.lifecycle === 'PENDING' && item.actionable === true && (item.target === 'MAP_K' || item.target === 'CURVE_K')).length;
+    setText('suggestionCount', actionable + (refinement ? 1 : 0));
+  }
+
   let lastSuggestionSignature = '';
   /** Curva refinada pronta no Refino entra na fila de decisões (só leitura do piloto). */
   function refinementSuggestion() {
@@ -362,13 +393,13 @@
     const items = Array.isArray(calibration.suggestionItems) ? calibration.suggestionItems : [];
     if (!host) return;
     const refinement = refinementSuggestion();
+    updateSuggestionBadge(state, refinement);
     // Redesenhar a lista a cada 2 s fazia o toque sumir sob o dedo: só redesenha se a fila mudou.
     const signature = JSON.stringify([items.map(item => [item.id, item.lifecycle, item.actionable, item.confidence]), refinement]);
     if (signature === lastSuggestionSignature && host.childElementCount) return;
     lastSuggestionSignature = signature;
     if (!items.length && !refinement) {
       host.innerHTML = '<div class="drawer-empty"><b>Nenhuma decisão pendente</b><span>Quando houver curva refinada ou ajuste pronto para revisar, aparece aqui.</span></div>';
-      setText('suggestionCount', 0);
       return;
     }
     const current = items.filter(item => ['PENDING', 'OBSERVING'].includes(String(item.lifecycle || '')));
@@ -378,7 +409,6 @@
     const applied = items.filter(item => item.lifecycle === 'APPLIED').slice(-12).reverse();
     const validIds = new Set([...pendingMap, ...pendingCurve].map(item => item.id));
     [...selectedSuggestionIds].forEach(id => { if (!validIds.has(id)) selectedSuggestionIds.delete(id); });
-    setText('suggestionCount', pendingMap.length + pendingCurve.length + (refinement ? 1 : 0));
 
     const pendingRows = list => list.map(item => `
       <label class="suggestion-row" data-lifecycle="PENDING">
@@ -523,7 +553,7 @@
         refreshStatus();
         refreshContext();
         const route = store.get().route;
-        if (route === 'dashboard' || route === 'learning' || route === 'map' || route === 'predictor' || route === 'autocal') {
+        if (isTelemetryRoute(route)) {
           previousTelemetrySignature = '';
           refreshFast();
         }
