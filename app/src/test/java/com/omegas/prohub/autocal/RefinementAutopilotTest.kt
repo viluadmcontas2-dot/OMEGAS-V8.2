@@ -37,6 +37,14 @@ class RefinementAutopilotTest {
 
     private val noJournal = JSONObject().put("latest", JSONObject.NULL)
     private val offIndex = index(1.08 to 20, 1.06 to 20, 1.0 to 20, null to 0, null to 0)
+    /**
+     * Proposta do motor já filtrada pelo diário (RefinementJournal.proposalFrom). Desde a correção do ciclo,
+     * PROPOSTA_PRONTA exige a mesma lista que vira o botão "Revisar e gravar": antes a fase dizia "pronta" só
+     * pelas faixas e a tela podia não ter nada para gravar (frase e botão discordavam).
+     */
+    private val proposal = JSONObject().put("known", true).put("count", 2).put("signature", "4:16384>17000;5:16384>17000")
+        .put("points", JSONArray().put(JSONObject().put("index", 4).put("currentRaw", 16384).put("targetRaw", 17000))
+            .put(JSONObject().put("index", 5).put("currentRaw", 16384).put("targetRaw", 17000)))
 
     @Test
     fun `enquanto a ECU esta no automatico o OMEGAS so observa`() {
@@ -50,24 +58,29 @@ class RefinementAutopilotTest {
     @Test
     fun `ECU no maximo de automaticos libera o refino e avisa uma vez`() {
         val p = pilot()
-        val r = p.observe(true, monitor(3), acquisition(18, 15), offIndex, noJournal, 0)
+        val r = p.observe(true, monitor(3), acquisition(18, 15), offIndex, noJournal, 0, proposal)
         assertEquals("MAX_AUTOMATCH", r.getString("ecuDoneReason"))
         assertEquals("PROPOSTA_PRONTA", r.getString("phase"))
+        assertEquals("review", r.getJSONObject("action").getString("kind"))
+        assertEquals("Revisar e gravar 2 pontos", r.getJSONObject("action").getString("label"))
         assertTrue(p.takeAlert() != null)
         now += 3_000
-        p.observe(true, monitor(3), acquisition(18, 15), offIndex, noJournal, 0)
+        p.observe(true, monitor(3), acquisition(18, 15), offIndex, noJournal, 0, proposal)
         assertNull(p.takeAlert())
     }
 
     @Test
     fun `aquisicao completa e silencio da ECU contam como ECU parou e novo automatico volta a esperar`() {
         val p = pilot()
-        p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0)
-        repeat(220) { now += 3_000; p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0) }
+        p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0, proposal)
+        repeat(220) { now += 3_000; p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0, proposal) }
         assertEquals("PROPOSTA_PRONTA", p.json().getString("phase"))
         now += 3_000
-        val r = p.observe(true, monitor(2, max = null), acquisition(18, 18), offIndex, noJournal, 0)
+        val r = p.observe(true, monitor(2, max = null), acquisition(18, 18), offIndex, noJournal, 0, proposal)
         assertEquals("ECU_TRABALHANDO", r.getString("phase"))
+        // Durante o automático da ECU a proposta aparece, mas desabilitada (a ECU sobrescreveria a curva).
+        assertEquals("waiting", r.getJSONObject("action").getString("kind"))
+        assertFalse(r.getJSONObject("action").getBoolean("enabled"))
     }
 
     @Test

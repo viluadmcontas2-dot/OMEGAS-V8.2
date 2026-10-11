@@ -46,11 +46,23 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         fun fingerprint(mulActRaw: IntArray): String = JSONArray(mulActRaw.toList()).toString().hashCode().toString(16)
         /** Tempo morto do injetor de gás medido no histórico (gás ≈ gasolina×K×Mapa/100 + 0,99 ms). */
         const val GAS_DEAD_TIME_MS = 0.99
+        /** Pontos maduros mínimos da curva de gasolina da ECU para servir de referência (Platina 00f6fd02). */
+        const val ECU_REF_MIN_POINTS = 6
+        /** Faixa de MAP mínima coberta pela curva da ECU (uma curva curta demais extrapola). */
+        const val ECU_REF_MIN_SPAN_BAR = 0.20
+        /** Quanto fora da faixa da curva da ECU ainda vale (bar). */
+        const val ECU_REF_MARGIN_BAR = 0.03
+        /** Região RPM×MAP de gasolina própria com tantas leituras estáveis está madura e congela. */
+        const val PETROL_FREEZE_SAMPLES = 8
     }
 
     data class Frame(val t: Long, val fuel: String, val rpm: Double, val map: Double, val petrolMs: Double, val gasMs: Double = 0.0)
     data class Obs(val t: Long, val rpm: Double, val map: Double, val petrolMs: Double)
-    data class EvidencePair(val petrolRefMs: Double, val gasPetrolMs: Double, val rpm: Double)
+    /**
+     * [t] = quando a leitura de GNV foi feita (para separar o que foi medido antes e depois de uma gravação);
+     * [ecuRef] = a gasolina de referência veio da curva de gasolina da ECU, não de leituras próprias.
+     */
+    data class EvidencePair(val petrolRefMs: Double, val gasPetrolMs: Double, val rpm: Double, val t: Long = 0L, val ecuRef: Boolean = false)
 
     private val lock = Any()
     private val window = ArrayDeque<Frame>(3)
@@ -79,6 +91,22 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             flat = null
         }
         fun clear() { cells.clear(); count = 0; flat = null }
+        fun cellSize(obs: Obs): Int = cells[cellKey(obs.rpm, obs.map)]?.size ?: 0
+        /** Remove só as leituras que [predicate] aponta (as outras regiões ficam intactas). */
+        fun removeIf(predicate: (Obs) -> Boolean): Int {
+            var removed = 0
+            val emptied = ArrayList<Long>()
+            cells.forEach { (key, cell) ->
+                val before = cell.size
+                cell.removeAll { predicate(it.second) }
+                removed += before - cell.size
+                if (cell.isEmpty()) emptied += key
+            }
+            emptied.forEach { cells.remove(it) }
+            count -= removed
+            if (removed > 0) flat = null
+            return removed
+        }
         private fun flatten(): List<Obs> = flat ?: cells.values.flatten().sortedBy { it.first }.map { it.second }.also { flat = it }
     }
 
@@ -93,12 +121,81 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private var dirty = false
     @Volatile private var cachedIndex: JSONObject? = null
     private var cachedDense: Triple<Double, Int, JSONObject>? = null
+    /** Sobe a cada mudança nas leituras: os pares só são recalculados quando algo mudou. */
+    private var revision = 0L
+    private var cachedPairs: Pair<Long, List<EvidencePair>>? = null
+    /** Curva que estava na ECU antes da última gravação do app: leitura velha dela não é "mudou por fora". */
+    private var adoptedFrom: String? = null
+    /** Última invalidação parcial (só os pontos que a gravação mudou), para a tela explicar. */
+    private var lastInvalidation: JSONObject? = null
+    /**
+     * Curva de gasolina que a ECU já tem (pontos maduros MAP × Petrol Inj.), referência principal onde ela
+     * cobre o MAP. Não vai para o arquivo: sempre vem da ECU conectada (Platina 00f6fd02).
+     */
+    @Volatile private var ecuPetrolRef: List<Pair<Double, Double>> = emptyList()
+    /** Pontos de gasolina com atividade na ECU na última leitura (cair a zero = nova aquisição de gasolina). */
+    private var lastPetrolActivity: Int? = null
 
     init { load() }
 
-    /** Alimenta um quadro de telemetria (fuel = GASOLINA/GNV/…). */
+    /**
+     * Atualiza a curva de gasolina da ECU: pares (MAP bar, Petrol Inj. ms) dos pontos maduros.
+     * Curva curta demais, estreita demais ou fora do físico é ignorada (volta a "sem referência da ECU").
+     */
+    fun setEcuPetrolReference(points: List<Pair<Double, Double>>) {
+        val clean = points.filter { (m, t) -> m.isFinite() && t.isFinite() && m in 0.05..2.5 && t in MIN_PETROL_MS..40.0 }
+            .groupBy { Math.round(it.first * 1_000) }
+            .map { (_, group) -> group.sumOf { it.first } / group.size to group.sumOf { it.second } / group.size }
+            .sortedBy { it.first }
+        val usable = if (clean.size >= ECU_REF_MIN_POINTS && clean.last().first - clean.first().first >= ECU_REF_MIN_SPAN_BAR) clean else emptyList()
+        synchronized(lock) {
+            if (usable == ecuPetrolRef) return
+            ecuPetrolRef = usable
+            revision++
+            cachedIndex = null
+        }
+    }
+
+    /**
+     * A ECU recomeçou a aquisição de gasolina ("Readquirir gasolina" ou aquisição nova: a atividade dos buffers
+     * de gasolina cai a zero): só então a gasolina própria congelada é descartada e volta a aprender.
+     */
+    fun notePetrolAcquisition(activePetrolPoints: Int) {
+        val restarted = synchronized(lock) {
+            val previous = lastPetrolActivity
+            lastPetrolActivity = activePetrolPoints
+            previous != null && previous > 0 && activePetrolPoints == 0
+        }
+        if (!restarted) return
+        synchronized(lock) {
+            petrol.clear()
+            dirty = true
+            revision++
+            cachedIndex = null
+            cachedDense = null
+        }
+        maybeSave(force = true)
+    }
+
+    private fun ecuReferenceAt(map: Double, ref: List<Pair<Double, Double>>): Double? {
+        if (ref.isEmpty() || map < ref.first().first - ECU_REF_MARGIN_BAR || map > ref.last().first + ECU_REF_MARGIN_BAR) return null
+        if (map <= ref.first().first) return ref.first().second
+        if (map >= ref.last().first) return ref.last().second
+        for (i in 0 until ref.size - 1) {
+            val (m0, t0) = ref[i]
+            val (m1, t1) = ref[i + 1]
+            if (map in m0..m1) return if (m1 > m0) t0 + (t1 - t0) * (map - m0) / (m1 - m0) else t0
+        }
+        return null
+    }
+
+    /**
+     * Alimenta um quadro de telemetria (fuel = GASOLINA/GNV/…). A gasolina própria de cada região RPM×MAP
+     * congela com [PETROL_FREEZE_SAMPLES] leituras estáveis: depois do AutoMatch a referência não fica
+     * "sempre aprendendo" (só uma aquisição nova de gasolina descongela, [notePetrolAcquisition]).
+     */
     fun accept(frame: Frame) {
-        val obs: Obs?
+        var obs: Obs?
         synchronized(lock) {
             if (frame.fuel != "GASOLINA" && frame.fuel != "GNV" || frame.rpm <= 0 || frame.map <= 0 || frame.petrolMs < MIN_PETROL_MS) {
                 window.clear()
@@ -112,11 +209,13 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             window.addLast(frame)
             while (window.size > 3) window.removeFirst()
             obs = stableObservation()
+            if (obs != null && frame.fuel == "GASOLINA" && petrol.cellSize(obs) >= PETROL_FREEZE_SAMPLES) obs = null
             if (obs != null) {
                 (if (frame.fuel == "GASOLINA") petrol else gas).add(obs)
                 dirty = true
+                revision++
                 cachedIndex = null
-        cachedDense = null
+                cachedDense = null
             }
         }
         if (obs != null) maybeSave()
@@ -141,38 +240,97 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         airRpmBar = 0.0
         gasEpochReason = reason
         gasEpochAt = clock()
+        lastInvalidation = null
         dirty = true
+        revision++
         cachedIndex = null
         cachedDense = null
     }.also { maybeSave(force = true) }
 
+    /**
+     * Gravação de Curva K em alguns pontos: só o GNV medido onde esses pontos agem deixa de valer.
+     * [rangesMs] = trechos de Petrol Inj. (ms, abertos) em que o K interpolado mudou. O resto fica.
+     * Retorna quantas leituras de GNV saíram.
+     */
+    fun invalidateGas(reason: String, rangesMs: List<Pair<Double, Double>>): Int {
+        val removed = synchronized(lock) {
+            val ranges = rangesMs.filter { it.first < it.second }
+            val n = gas.removeIf { obs -> ranges.any { obs.petrolMs > it.first && obs.petrolMs < it.second } }
+            // Gás por ar é uma média da calibração inteira: recomeça a cada calibração nova (como antes).
+            gasUsefulRpmMs = 0.0
+            airRpmBar = 0.0
+            lastInvalidation = JSONObject().put("reason", reason).put("at", clock()).put("removed", n)
+                .put("ranges", JSONArray(ranges.map { JSONArray().put(it.first).put(if (it.second.isFinite()) it.second else JSONObject.NULL) }))
+            dirty = true
+            revision++
+            cachedIndex = null
+            cachedDense = null
+            n
+        }
+        maybeSave(force = true)
+        return removed
+    }
+
     /** O próprio app gravou esta curva: adota sem descartar o GNV medido com ela. */
     fun adoptCurve(fingerprint: String) {
-        synchronized(lock) { curveFingerprint = fingerprint; dirty = true }
+        synchronized(lock) {
+            if (curveFingerprint != null && curveFingerprint != fingerprint) adoptedFrom = curveFingerprint
+            curveFingerprint = fingerprint
+            dirty = true
+        }
         maybeSave(force = true)
     }
 
-    /** Alinha à Curva K lida da ECU; se mudou por fora do app (ProgBase, AutoMatch), descarta o GNV. */
-    fun alignCurve(fingerprint: String) {
+    /**
+     * Alinha à Curva K lida da ECU; se mudou por fora do app (ProgBase, AutoMatch), descarta o GNV.
+     * Logo depois de uma gravação do app a leitura da ECU ainda pode trazer a curva anterior por alguns
+     * segundos: isso é leitura atrasada, não mudança por fora (antes descartava o GNV duas vezes).
+     * Retorna true quando a curva mudou por fora.
+     */
+    fun alignCurve(fingerprint: String): Boolean {
         val changed = synchronized(lock) {
-            val previous = curveFingerprint
-            curveFingerprint = fingerprint
-            dirty = true
-            previous != null && previous != fingerprint
+            when {
+                fingerprint == curveFingerprint -> { adoptedFrom = null; false }
+                adoptedFrom != null && fingerprint == adoptedFrom -> false
+                else -> {
+                    val previous = curveFingerprint
+                    curveFingerprint = fingerprint
+                    adoptedFrom = null
+                    dirty = true
+                    previous != null
+                }
+            }
         }
         if (changed) resetGas("CURVA_K_MUDOU_FORA_DO_APP") else maybeSave()
+        return changed
     }
 
-    /** Pares (t_gasolina de referência, t_no_GNV) para a curva vigente. */
+    /**
+     * Pares (t_gasolina de referência, t_no_GNV) da condução para a curva vigente: a única evidência de
+     * telemetria que chega ao motor. Marcha lenta/RPM baixo fica fora dos DOIS lados (GNV e gasolina de
+     * referência): parado nunca puxa a curva (continua só no gráfico). A referência é a curva de gasolina
+     * da ECU onde ela cobre o MAP; a gasolina própria (congelada) só completa onde a ECU não tem suporte.
+     * Recalcula só quando as leituras mudam.
+     */
     fun pairs(): List<EvidencePair> = synchronized(lock) {
+        cachedPairs?.takeIf { it.first == revision }?.let { return@synchronized it.second }
+        computePairs(drivingOnly = true, ecuRef = ecuPetrolRef).also { cachedPairs = revision to it }
+    }
+
+    /** Todos os casamentos com gasolina própria, inclusive marcha lenta (diagnóstico; nunca vai ao motor). */
+    fun allPairs(): List<EvidencePair> = synchronized(lock) { computePairs(drivingOnly = false, ecuRef = emptyList()) }
+
+    private fun computePairs(drivingOnly: Boolean, ecuRef: List<Pair<Double, Double>>): List<EvidencePair> {
         // Grade RPM×MAP com célula = janela de casamento: só as 3×3 células vizinhas podem casar.
         // Mesmo resultado da busca exaustiva, sem 4000×1500 comparações por recálculo na multimídia.
         fun cell(rpm: Double, map: Double) = Math.floorDiv(rpm.toLong(), MATCH_RPM.toLong()) * 1_000_003L +
             Math.floorDiv((map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
         val grid = HashMap<Long, MutableList<Obs>>()
-        petrol.forEach { grid.getOrPut(cell(it.rpm, it.map)) { ArrayList() }.add(it) }
+        petrol.forEach { if (!drivingOnly || it.rpm >= DRIVING_MIN_RPM) grid.getOrPut(cell(it.rpm, it.map)) { ArrayList() }.add(it) }
         val matches = ArrayList<Double>()
-        gas.mapNotNull { g ->
+        return gas.mapNotNull { g ->
+            if (drivingOnly && g.rpm < DRIVING_MIN_RPM) return@mapNotNull null
+            ecuReferenceAt(g.map, ecuRef)?.let { return@mapNotNull EvidencePair(it, g.petrolMs, g.rpm, g.t, ecuRef = true) }
             matches.clear()
             val r0 = Math.floorDiv(g.rpm.toLong(), MATCH_RPM.toLong())
             val m0 = Math.floorDiv((g.map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
@@ -181,31 +339,50 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                     if (abs(it.rpm - g.rpm) <= MATCH_RPM && abs(it.map - g.map) <= MATCH_MAP) matches += it.petrolMs
                 }
             }
-            if (matches.size < 2) null else { matches.sort(); EvidencePair(matches[matches.size / 2], g.petrolMs, g.rpm) }
+            if (matches.size < 2) null else { matches.sort(); EvidencePair(matches[matches.size / 2], g.petrolMs, g.rpm, g.t) }
         }
     }
 
     /**
      * Índice de equivalência da condução (rpm ≥ 1000, ≥ 3 ms): razão mediana t_no_GNV / t_gasolina.
      * 1,00 = GNV pede exatamente o que a gasolina pede. >1 = GNV pobre (ECU compensa somando).
+     * Com [sinceMs] > 0 só conta GNV medido a partir desse instante (o "depois" de uma gravação).
      */
-    fun index(): JSONObject {
-        cachedIndex?.let { return JSONObject(it.toString()).put("gasPerAir", gasPerAir() ?: JSONObject.NULL) }
-        val all = pairs().filter { it.rpm >= DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS }
+    fun index(sinceMs: Long = 0L): JSONObject {
+        if (sinceMs <= 0L) cachedIndex?.let { return JSONObject(it.toString()).put("gasPerAir", gasPerAir() ?: JSONObject.NULL) }
+        val all = pairs().filter { it.rpm >= DRIVING_MIN_RPM && it.petrolRefMs >= AutoMatchRefinedEngine.TELEMETRY_MIN_MS && it.t >= sinceMs }
         fun median(values: List<Double>): Double? = values.sorted().let { if (it.isEmpty()) null else it[it.size / 2] }
         val bands = JSONArray()
         BANDS.forEach { (lo, hi) ->
             val sel = all.filter { it.petrolRefMs >= lo && it.petrolRefMs < hi }
             val ratio = median(sel.map { ln(it.gasPetrolMs / it.petrolRefMs) })?.let(::exp)
             bands.put(JSONObject().put("fromMs", lo).put("toMs", hi).put("samples", sel.size)
-                .put("ratio", ratio ?: JSONObject.NULL))
+                .put("ratio", ratio ?: JSONObject.NULL)
+                // Fração dos pares da faixa cuja gasolina veio da curva da ECU.
+                .put("ecuShare", if (sel.isEmpty()) 0.0 else sel.count { it.ecuRef }.toDouble() / sel.size))
         }
         val global = median(all.map { ln(it.gasPetrolMs / it.petrolRefMs) })?.let(::exp)
         val petrolCount: Int
         val gasCount: Int
         val reason: String
         val at: Long
-        synchronized(lock) { petrolCount = petrol.size; gasCount = gas.size; reason = gasEpochReason; at = gasEpochAt }
+        val invalidation: JSONObject?
+        val ecuPoints: Int
+        synchronized(lock) {
+            petrolCount = petrol.size; gasCount = gas.size; reason = gasEpochReason; at = gasEpochAt
+            invalidation = lastInvalidation?.let { JSONObject(it.toString()) }
+            ecuPoints = ecuPetrolRef.size
+        }
+        val ecuPairs = all.count { it.ecuRef }
+        val ownPairs = all.size - ecuPairs
+        // De onde vem a gasolina de referência (a tela diz isso em palavras).
+        val petrolReference = when {
+            ecuPairs > 0 && ownPairs > 0 -> "MISTA"
+            ecuPairs > 0 -> "ECU"
+            ownPairs > 0 || petrolCount >= 40 -> "PROPRIA"
+            ecuPoints > 0 -> "ECU"
+            else -> "NENHUMA"
+        }
         val result = JSONObject()
             .put("ok", true)
             .put("format", FORMAT)
@@ -215,15 +392,25 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             .put("gasObservations", gasCount)
             .put("gasEpochReason", reason)
             .put("gasEpochAt", at)
+            .put("gasInvalidation", invalidation ?: JSONObject.NULL)
+            .put("petrolReference", petrolReference)
+            .put("ecuPetrolPoints", ecuPoints)
+            .put("ecuReferencePairs", ecuPairs)
+            .put("ownReferencePairs", ownPairs)
+            .put("petrolFreezeSamples", PETROL_FREEZE_SAMPLES)
             .put("drivingMinRpm", DRIVING_MIN_RPM)
             // Gás útil (tempo de gás − tempo morto) por unidade de ar admitido (MAP×RPM), condução em GNV:
             // independe do trânsito; compara calibrações no mesmo carro. Unidade relativa.
             .put("gasPerAir", gasPerAir() ?: JSONObject.NULL)
             .put("bands", bands)
             .put("automatic", false)
+        if (sinceMs > 0L) return result.put("sinceMs", sinceMs)
         cachedIndex = result
         return JSONObject(result.toString())
     }
+
+    /** Muda sempre que as leituras, a época do GNV ou a curva de gasolina da ECU mudam (chave de memo). */
+    fun revision(): Long = synchronized(lock) { revision }
 
     /** Identidade observacional da época, sem tocar no acumulador. */
     fun gasEpochToken(): String = synchronized(lock) { "$gasEpochAt:$gasEpochReason" }

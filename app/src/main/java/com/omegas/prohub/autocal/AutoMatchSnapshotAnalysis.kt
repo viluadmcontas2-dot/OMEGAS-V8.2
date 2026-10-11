@@ -175,6 +175,9 @@ object AutoMatchSnapshotAnalysis {
             .put("automatic", false)
             .put("manualOnly", true)
             .put("snapshotHash", snapshot.optString("snapshotHash"))
+            // Quando a curva base (MUL_ACT) foi lida: o ciclo do refino não propõe sobre leitura anterior à última gravação.
+            .put("capturedAtMs", snapshot.optLong("capturedAtMs", 0L))
+            .put("mulActCapturedAtMs", fields[AutoCalProtocol.MUL_ACT.key]?.optLong("capturedAtMs", 0L) ?: 0L)
         val axis = valid(AutoCalProtocol.PETR_INJ_TBP, KFactorProtocol.POINT_COUNT)
         val currentMul = valid(AutoCalProtocol.MUL_ACT, KFactorProtocol.POINT_COUNT)
         if (axis == null || currentMul == null) {
