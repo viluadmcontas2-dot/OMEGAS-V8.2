@@ -6,23 +6,34 @@ import org.json.JSONObject
  * Curva de gasolina que a ECU já tem, extraída da aquisição lida (AutoCalAcquisition): pontos de
  * gasolina cuja zona a ECU deu como adquirida, como pares (MAP bar, Petrol Inj. ms).
  *
- * A ECU guarda isso e entrega ao conectar. É a referência de gasolina do Refino onde ela cobre o MAP
- * (ver EquivalenceLedger.setEcuPetrolReference). Portado da Platina (commit 00f6fd02).
+ * A ECU guarda isso e entrega ao conectar. Completa a referência de gasolina do Refino onde o app não
+ * mediu gasolina própria (ver EquivalenceLedger.setEcuPetrolReference). Portado da Platina (commit 00f6fd02).
  */
 object EcuPetrolReference {
-    fun fromAcquisition(acquisition: JSONObject?): List<Pair<Double, Double>> {
-        val points = acquisition?.optJSONArray("points") ?: return emptyList()
+    /** Bandas 0..5 da gasolina são lenta (limiar petrolIdleMinUpdate): nunca viram referência de condução. */
+    const val LOW_BAND_MAX_INDEX = 5
+
+    /**
+     * null = desconhecido (aquisição ainda não lida, reconexão, campo UNAVAILABLE → SEM_DADO): quem chama mantém
+     * a referência que já tinha. Erro de transporte não é "a ECU não tem gasolina".
+     */
+    fun fromAcquisition(acquisition: JSONObject?): List<Pair<Double, Double>>? {
+        val points = acquisition?.optJSONArray("points") ?: return null
         val out = ArrayList<Pair<Double, Double>>()
+        var seen = 0
         for (i in 0 until points.length()) {
             val p = points.optJSONObject(i) ?: continue
             if (p.optString("fuel") != "GASOLINA" || p.optBoolean("previous")) continue
+            if (p.optInt("index", Int.MAX_VALUE) <= LOW_BAND_MAX_INDEX) continue
+            if (p.optString("state") == "SEM_DADO") return null
+            seen++
             if (p.optString("state") != "ZONA_ADQUIRIDA") continue
             if (p.isNull("timeMs") || p.isNull("mapBar")) continue
             val time = p.optDouble("timeMs", Double.NaN)
             val map = p.optDouble("mapBar", Double.NaN)
             if (time.isFinite() && map.isFinite() && time > 0.0 && map > 0.0) out += map to time
         }
-        return out
+        return if (seen == 0) null else out
     }
 
     /**

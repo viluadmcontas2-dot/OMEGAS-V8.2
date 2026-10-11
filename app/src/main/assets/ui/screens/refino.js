@@ -124,12 +124,39 @@
     return { kind, points: [], signature: '' };
   }
 
-  /** O cartão aberto só grava a lista que está na tela; se a do Kotlin mudou, atualiza e avisa antes. */
+  /** A ação daquele tipo está liberada agora no piloto (Kotlin)? */
+  function actionEnabled(eq, kind) {
+    const primary = primaryAction(eq);
+    const secondary = secondaryActions(eq);
+    if (kind === 'apply') return (primary.kind === 'review' && primary.enabled) || secondary.some(s => s.kind === 'review' && s.enabled);
+    if (kind === 'restore') return primary.kind === 'restore' && primary.enabled;
+    if (kind === 'undo') return secondary.some(s => s.kind === 'undo' && s.enabled);
+    return false;
+  }
+
+  /**
+   * O cartão aberto só grava a lista que está na tela. Confere elegibilidade, não o alvo exato do motor (que anda
+   * com cada leitura nova): mesmos pontos, mesmo valor atual na ECU, nada retido agora e a ação liberada.
+   * 'write' grava a lista revisada; 'changed' atualiza e avisa; 'blocked' segura; 'gone' não há o que gravar.
+   */
   function reviewGate(displayed, eq) {
     if (!displayed || !displayed.kind) return 'gone';
     const now = reviewList(eq, displayed.kind);
     if (!now.points.length) return 'gone';
-    return now.signature === displayed.signature ? 'write' : 'changed';
+    if (!actionEnabled(eq, displayed.kind)) return 'blocked';
+    const shown = Array.isArray(displayed.points) ? displayed.points : [];
+    const current = new Map(now.points.map(p => [p.index, p.currentRaw]));
+    const held = new Set((Array.isArray(eq?.autopilot?.proposal?.held) && displayed.kind === 'apply' ? eq.autopilot.proposal.held : [])
+      .map(h => Number(h?.index)));
+    const same = shown.length === now.points.length && shown.every(p => current.get(p.index) === p.currentRaw && !held.has(p.index));
+    return same ? 'write' : 'changed';
+  }
+
+  /** Pontos da ECU com atividade; desconhecido (aquisição não lida, campo indisponível) = "—". */
+  function ecuPointsText(pilot) {
+    const petrol = finite(pilot?.petrolValid);
+    const gas = finite(pilot?.gasValid);
+    return petrol === null || gas === null ? '—' : `Gas ${fmt(petrol, 0)} · GNV ${fmt(gas, 0)}`;
   }
 
   /** Resultado por ponto da gravação que a tela mostra (o Kotlin já deu o veredito de cada ponto). */
@@ -156,7 +183,6 @@
       this.native = app.api;
       this.api = ns.AutoCalApi;
       this.eq = null;
-      this.analysis = null;
       this.snapshot = null;
       this.ticks = 0;
       this.operation = { phase: 'idle' };
@@ -231,7 +257,6 @@
       if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
       if (!this.api?.available?.()) { this.renderUnavailable(); return; }
       this.eq = this.api.equivalence?.() || null;
-      this.analysis = this.api.refinedAnalysis?.() || null;
       const projection = this.api.projection?.() || {};
       this.snapshot = projection.ok === true ? (projection.snapshot || {}) : {};
       this.render(force === true);
@@ -267,10 +292,17 @@
     syncReview() {
       if (!this.review) return;
       const gate = reviewGate(this.review, this.eq);
-      if (gate === 'write') return;
-      if (gate === 'changed') {
+      if (gate === 'write') {
+        if (this.review.blocked) { this.review = { ...this.review, blocked: false, notice: '' }; this.renderReview(); }
+        return;
+      }
+      if (gate === 'blocked') {
+        const action = primaryAction(this.eq);
+        const why = action.label && !action.enabled ? action.label : 'a ação não está liberada agora';
+        this.review = { ...this.review, blocked: true, notice: `Gravação indisponível agora: ${why}. Nada foi enviado à ECU.` };
+      } else if (gate === 'changed') {
         const list = reviewList(this.eq, this.review.kind);
-        this.review = { ...this.review, ...list, notice: 'A proposta mudou com leituras novas. Confira a lista atualizada antes de gravar.' };
+        this.review = { ...this.review, ...list, blocked: false, notice: 'A proposta mudou com leituras novas. Confira a lista atualizada antes de gravar.' };
       } else {
         this.review = { ...this.review, points: [], signature: '', notice: 'Nada para gravar agora: a lista deixou de valer com as leituras novas.' };
       }
@@ -287,7 +319,7 @@
         return `<div><dt>${fmt(p.referenceTimeMs, 1)} ms</dt><dd><b>${fmt(before, 3)} → ${fmt(after, 3)}</b> · ${pct(after / before)}${p.origin ? ' · ' + escapeHtml(ORIGIN[p.origin] || p.origin) : ''}</dd></div>`;
       }).join('');
       const notice = current.notice ? `<p class="refino-warning" data-refino-notice>${escapeHtml(current.notice)}</p>` : '';
-      const canWrite = current.points.length > 0;
+      const canWrite = current.points.length > 0 && !current.blocked;
       review.hidden = false;
       review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(current.title)} · ${current.points.length} ${plural(current.points.length, 'ponto', 'pontos')} da Curva K</h3></div><button type="button" data-refino-cancel class="icon-close" aria-label="Fechar revisão">×</button></header>${notice}<dl class="refino-review-list">${rows}</dl><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Ao confirmar, o app relê a curva, confere que nada mudou, grava só estes pontos e confirma por readback. Depois o OMEGAS mede sozinho, ponto por ponto.</span></div><div class="operation-actions"><button type="button" data-refino-cancel class="secondary">Cancelar</button>${canWrite ? '<button type="button" data-refino-confirm class="danger-primary">Gravar na ECU</button>' : ''}</div></div>`;
     }
@@ -395,7 +427,7 @@
       setText('refinoHeadline', headline);
       setText('refinoNext', next + (op.phase === 'idle' ? this.gasNote(eq) : ''));
       setText('refinoRatio', pct(eq.ratio));
-      setText('refinoEcuPoints', pilot.petrolValid === undefined ? '—' : `Gas ${fmt(pilot.petrolValid, 0)} · GNV ${fmt(pilot.gasValid, 0)}`);
+      setText('refinoEcuPoints', ecuPointsText(pilot));
       const dense = eq.denseBands || {};
       const oursPetrol = Array.isArray(dense.petrol) ? dense.petrol.length : 0;
       const oursGas = Array.isArray(dense.gas) ? dense.gas.length : 0;
@@ -552,7 +584,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, secondaryActions, reviewList, reviewGate, resultRows, resultSummary, REASONS };
+  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, secondaryActions, reviewList, reviewGate, actionEnabled, ecuPointsText, resultRows, resultSummary, REASONS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);

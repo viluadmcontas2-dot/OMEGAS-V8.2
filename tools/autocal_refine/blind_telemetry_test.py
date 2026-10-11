@@ -74,6 +74,39 @@ def telemetry_pairs(telemetry, until_ms=None, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
     return out
 
 
+# Regras de produção do EquivalenceLedger.pairs() (o que chega ao motor do refino).
+DRIVING_MIN_RPM = 1350  # 2ª coluna do Mapa K: a curva global só aprende a partir daqui
+PETROL_FREEZE_SAMPLES = 8  # a gasolina própria de cada região RPM×MAP congela madura
+
+
+def _cell(o):
+    return (math.floor(int(o["rpm"]) / 150), math.floor(int(o["map"] * 1000) / 20))
+
+
+def production_pairs(telemetry, driving_only=True, rpm_tol=RPM_TOL, map_tol=MAP_TOL):
+    """Pares como o EquivalenceLedger produz: gasolina congelada em PETROL_FREEZE_SAMPLES leituras por região
+    (na ordem de chegada, lenta incluída), GNV com o teto por região; com driving_only (= pairs()), condução
+    a partir de DRIVING_MIN_RPM dos dois lados; sem (= allPairs()), todos os casamentos."""
+    counts = {}
+    petrol = []
+    for o in stable_frames(telemetry, "GASOLINA"):
+        key = _cell(o)
+        if counts.get(key, 0) >= PETROL_FREEZE_SAMPLES:
+            continue
+        counts[key] = counts.get(key, 0) + 1
+        petrol.append(o)
+    gas = cap_cells(stable_frames(telemetry, "GNV"))
+    if driving_only:
+        petrol = [p for p in petrol if p["rpm"] >= DRIVING_MIN_RPM]
+        gas = [g for g in gas if g["rpm"] >= DRIVING_MIN_RPM]
+    out = []
+    for g in gas:
+        matches = sorted(p["t"] for p in petrol if abs(p["rpm"] - g["rpm"]) <= rpm_tol and abs(p["map"] - g["map"]) <= map_tol)
+        if len(matches) >= 2:
+            out.append((matches[len(matches) // 2], g["t"]))
+    return out
+
+
 def blind_targets(fixture, sequence):
     with gzip.open(REAL / f"{fixture}.json.gz", "rt", encoding="utf-8") as handle:
         data = json.load(handle)

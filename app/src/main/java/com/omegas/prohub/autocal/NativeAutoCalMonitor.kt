@@ -325,11 +325,15 @@ class NativeAutoCalMonitor(
             acquisitionMemo?.takeIf { it.first === snapshot }?.second
                 ?: AutoCalAcquisition.fromSnapshot(snapshot).also { acquisitionMemo = snapshot to it }
         } else null
+        val epoch = acquisitionEpoch.view()
         JSONObject()
             .put("autoMatchCount", count ?: JSONObject.NULL)
             .put("maxAutomatch", snapshot.opt("maxAutomatch") ?: JSONObject.NULL)
             .put("autoCalEnabled", snapshot.opt("autoCalEnabled") ?: JSONObject.NULL)
             .put("acquisition", acquisition ?: JSONObject.NULL)
+            // Geração de gasolina (recibos de reset + contador zerado): o refino descongela a gasolina própria por ela.
+            .put("usbSessionId", epoch.usbSessionId)
+            .put("petrolGeneration", epoch.petrolGeneration)
     }
 
     fun latestSnapshotJson(): JSONObject = synchronized(lock) {

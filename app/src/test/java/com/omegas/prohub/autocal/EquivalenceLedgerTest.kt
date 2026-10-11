@@ -97,6 +97,9 @@ class EquivalenceLedgerTest {
         dir.deleteRecursively()
     }
 
+    // Ajustado na rodada 2 (revisão, item 20): o teste tinha passado a conferir allPairs(); volta a conferir o
+    // caminho de produção, pairs(), contra a busca exaustiva com as mesmas regras (gasolina congelada em 8
+    // leituras por região, condução ≥ DRIVING_MIN_RPM dos dois lados).
     @Test
     fun `busca em grade da o mesmo resultado da busca exaustiva`() {
         val ledger = EquivalenceLedger(null)
@@ -108,7 +111,9 @@ class EquivalenceLedgerTest {
             val map = 0.25 + rnd.nextDouble() * 0.7
             val ms = 2.0 + map * 10 + rnd.nextDouble()
             repeat(3) { ledger.accept(EquivalenceLedger.Frame(t, "GASOLINA", rpm, map, ms)); t += 100 }
-            petrol += doubleArrayOf(rpm, map, ms)
+            // Mesma regra do acumulador: a região RPM×MAP congela com 8 leituras de gasolina.
+            val cell = EquivalenceLedger.cellKey(rpm, map)
+            if (petrol.count { EquivalenceLedger.cellKey(it[0], it[1]) == cell } < EquivalenceLedger.PETROL_FREEZE_SAMPLES) petrol += doubleArrayOf(rpm, map, ms)
             t += 5_000
         }
         val gas = ArrayList<DoubleArray>()
@@ -120,17 +125,21 @@ class EquivalenceLedgerTest {
             gas += doubleArrayOf(rpm, map, ms)
             t += 5_000
         }
-        val expected = gas.mapNotNull { g ->
-            val m = petrol.filter { abs(it[0] - g[0]) <= 150.0 && abs(it[1] - g[1]) <= 0.02 }.map { it[2] }.sorted()
+        fun exhaustive(drivingOnly: Boolean) = gas.filter { !drivingOnly || it[0] >= EquivalenceLedger.DRIVING_MIN_RPM }.mapNotNull { g ->
+            val m = petrol.filter { (!drivingOnly || it[0] >= EquivalenceLedger.DRIVING_MIN_RPM) && abs(it[0] - g[0]) <= 150.0 && abs(it[1] - g[1]) <= 0.02 }
+                .map { it[2] }.sorted()
             if (m.size < 2) null else m[m.size / 2] to g[2]
         }
-        // Mesmo algoritmo de grade (allPairs inclui a lenta, como a busca exaustiva abaixo de 1000 rpm).
-        val actual = ledger.allPairs().map { it.petrolRefMs to it.gasPetrolMs }
-        assertTrue(expected.size > 50)
-        assertEquals(expected.size, actual.size)
-        expected.zip(actual).forEach { (e, a) ->
-            assertEquals(e.first, a.first, 1e-9)
-            assertEquals(e.second, a.second, 1e-9)
+        for ((expected, actual) in listOf(
+            exhaustive(drivingOnly = true) to ledger.pairs().map { it.petrolRefMs to it.gasPetrolMs },
+            exhaustive(drivingOnly = false) to ledger.allPairs().map { it.petrolRefMs to it.gasPetrolMs },
+        )) {
+            assertTrue(expected.size > 50)
+            assertEquals(expected.size, actual.size)
+            expected.zip(actual).forEach { (e, a) ->
+                assertEquals(e.first, a.first, 1e-9)
+                assertEquals(e.second, a.second, 1e-9)
+            }
         }
     }
 
@@ -151,9 +160,9 @@ class EquivalenceLedgerTest {
     @Test
     fun `gasolina de referencia em lenta nao entra nem para casar com GNV de conducao`() {
         val ledger = EquivalenceLedger(null)
-        // Gasolina só em 950 rpm (lenta alta) e GNV em 1050 rpm na mesma região: antes casavam (±150 rpm).
-        var t = drive(ledger, "GASOLINA", 950.0, 0.40, 4.2, 0, 10)
-        drive(ledger, "GNV", 1050.0, 0.40, 4.6, t + 1_000, 10)
+        // Gasolina só em 1250 rpm (abaixo da 2ª coluna do Mapa K) e GNV em 1400 rpm na mesma região: casariam (±150 rpm).
+        var t = drive(ledger, "GASOLINA", 1250.0, 0.40, 4.2, 0, 10)
+        drive(ledger, "GNV", 1400.0, 0.40, 4.6, t + 1_000, 10)
         assertTrue(ledger.allPairs().isNotEmpty())
         assertTrue(ledger.pairs().isEmpty())
     }
@@ -215,23 +224,45 @@ class EquivalenceLedgerTest {
         assertEquals(0, ledger.index().getInt("petrolObservations"))
         drive(ledger, "GASOLINA", 2000.0, 0.60, 6.0, 120_000, 10)
         assertEquals(8, ledger.index().getInt("petrolObservations"))
+        // Recibo de "Readquirir gasolina" (geração do NativeAutoCalAcquisitionEpoch) na mesma sessão USB também descongela.
+        val epoch = ledger.index().getInt("petrolEpoch")
+        assertEquals(false, ledger.notePetrolGeneration(7L, 0))
+        assertEquals(true, ledger.notePetrolGeneration(7L, 1))
+        assertEquals(0, ledger.index().getInt("petrolObservations"))
+        assertEquals(epoch + 1, ledger.index().getInt("petrolEpoch"))
+        // Sessão USB nova recomeça a contagem: não é aquisição nova.
+        drive(ledger, "GASOLINA", 2000.0, 0.60, 6.0, 180_000, 10)
+        assertEquals(false, ledger.notePetrolGeneration(8L, 0))
+        assertEquals(8, ledger.index().getInt("petrolObservations"))
     }
 
     @Test
-    fun `referencia de gasolina vem da curva da ECU onde ela cobre o MAP`() {
+    fun `gasolina com o motor frio nunca vira referencia`() {
         val ledger = EquivalenceLedger(null)
-        // Gasolina própria diz 5,0 ms em 0,60 bar; a curva da ECU diz 5,2 ms: a da ECU vale onde ela cobre.
+        var t = 0L
+        repeat(10) { ledger.accept(EquivalenceLedger.Frame(t, "GASOLINA", 2000.0, 0.60, 5.6, 0.0, engineHot = false)); t += 280 }
+        assertEquals(0, ledger.index().getInt("petrolObservations"))
+        repeat(10) { ledger.accept(EquivalenceLedger.Frame(t, "GASOLINA", 2000.0, 0.60, 5.0, 0.0, engineHot = true)); t += 280 }
+        assertEquals(8, ledger.index().getInt("petrolObservations"))
+    }
+
+    // Ajustado na rodada 2 (revisão, item 12; decisão do dono via líder): o porte do 00f6fd02 tinha invertido a
+    // precedência (ECU primeiro). Volta à Platina: gasolina própria de condução primeiro; a curva da ECU só onde
+    // não há própria (na lenta a gasolina pede ~17% a mais que na condução no mesmo MAP).
+    @Test
+    fun `gasolina propria vem primeiro e a curva da ECU so completa onde nao ha propria`() {
+        val ledger = EquivalenceLedger(null)
+        // Gasolina própria diz 5,0 ms em 0,60 bar; a curva da ECU diz 5,2 ms: vale a própria.
         var t = drive(ledger, "GASOLINA", 2000.0, 0.60, 5.0, 0, 10)
-        t = drive(ledger, "GASOLINA", 2000.0, 1.20, 12.0, t + 1_000, 10)
         ledger.setEcuPetrolReference(listOf(0.30 to 2.8, 0.40 to 3.6, 0.50 to 4.4, 0.60 to 5.2, 0.70 to 6.0, 0.80 to 6.8))
         t = drive(ledger, "GNV", 2000.0, 0.60, 5.72, t + 1_000, 10)
-        drive(ledger, "GNV", 2000.0, 1.20, 13.2, t + 1_000, 10)
+        drive(ledger, "GNV", 2000.0, 0.75, 6.9, t + 1_000, 10)
         val pairs = ledger.pairs()
-        val atEcu = pairs.filter { abs(it.gasPetrolMs - 5.72) < 1e-9 }
-        val outside = pairs.filter { abs(it.gasPetrolMs - 13.2) < 1e-9 }
-        assertTrue(atEcu.isNotEmpty() && atEcu.all { it.ecuRef && abs(it.petrolRefMs - 5.2) < 1e-9 })
-        // 1,20 bar está fora da curva da ECU: a gasolina própria completa.
-        assertTrue(outside.isNotEmpty() && outside.all { !it.ecuRef && abs(it.petrolRefMs - 12.0) < 1e-9 })
+        val own = pairs.filter { abs(it.gasPetrolMs - 5.72) < 1e-9 }
+        val ecu = pairs.filter { abs(it.gasPetrolMs - 6.9) < 1e-9 }
+        assertTrue(own.isNotEmpty() && own.all { !it.ecuRef && abs(it.petrolRefMs - 5.0) < 1e-9 })
+        // 0,75 bar sem gasolina própria: a curva da ECU completa (6,4 ms interpolado).
+        assertTrue(ecu.isNotEmpty() && ecu.all { it.ecuRef && abs(it.petrolRefMs - 6.4) < 1e-9 })
         assertEquals("MISTA", ledger.index().getString("petrolReference"))
         // Curva curta demais da ECU é ignorada.
         ledger.setEcuPetrolReference(listOf(0.60 to 5.2, 0.62 to 5.3))

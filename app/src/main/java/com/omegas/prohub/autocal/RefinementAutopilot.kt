@@ -18,16 +18,19 @@ import kotlin.math.ln
  *    Prioridade (um botão por ação, nenhum estado sem saída, sem "Entendi"):
  *    - RESTAURAR_TRECHO: pontos pioraram (fora da margem do dono) → "Restaurar N pontos que pioraram";
  *      se houver proposta para outros pontos, "Revisar e gravar" aparece junto (pontos independentes).
- *    - PROPOSTA_PRONTA: há proposta do motor (já sem os pontos em medição/bloqueados) e as faixas
- *      medidas não estão todas dentro de ±3% → "Revisar e gravar N pontos".
+ *    - PROPOSTA_PRONTA: há proposta do motor (já sem os pontos em medição/bloqueados), feita sobre a última
+ *      gravação, com evidência de equivalência (modo EQUIVALENCE ou faixa medida fora) e as faixas medidas
+ *      não estão todas dentro de ±4% → "Revisar e gravar N pontos".
  *    - VERIFICANDO: gravação nova em medição, sem botão; a frase diz o progresso em palavras.
- *    - ESTAVEL: todas as faixas medidas dentro de ±3%: pode desconectar.
+ *    - ESTAVEL: nenhuma faixa medida fora da margem do dono (até 5%; quem passou de 5% só volta em 4%) e nada a
+ *      propor para chegar ao alvo de ±4%: pode desconectar.
  *    - COLETANDO_NOSSOS: faltam leituras GNV/gasolina no mesmo RPM×MAP.
- *    "Desfazer última gravação" só enquanto a última proposta gravada ainda está sendo medida.
+ *    "Desfazer última gravação" vale para a última proposta gravada até a próxima gravação.
  *
- * Histerese sem mudar o limiar de entrada: a faixa entra "fora" acima de ±3% (como antes) e só sai abaixo
- * do ruído de medição do diário (2%); a proposta só some depois de [PROPOSAL_EXIT_EMPTY_TICKS] observações
- * seguidas vazias, e leitura desconhecida da ECU não conta como vazia.
+ * Margem do dono com histerese: a faixa entra "fora" só acima de 5% e sai em 4% ou menos (de 4,1 a 5% nada
+ * acontece); faixa medida pela curva de gasolina da ECU (mais grossa) usa ±6% (Platina 00f6fd02). O estado
+ * da histerese é persistido. A proposta só some depois de [PROPOSAL_EXIT_EMPTY_TICKS] observações seguidas
+ * vazias, e leitura desconhecida da ECU não conta como vazia.
  *
  * Nunca grava na ECU. Só observa, decide a fase e avisa (notificação/UI).
  */
@@ -39,10 +42,17 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         /** Sem aquisição completa (faixas que o motorista nunca visita), espera mais. */
         const val QUIET_PARTIAL_MS = 25 * 60_000L
         const val PARTIAL_MIN_ZONES = 3
-        /** ±3%: abaixo disso GNV e gasolina já pedem o mesmo (ruído de medição ~2%). Limiar de entrada. */
-        val TOLERANCE_LOG = ln(1.03)
-        /** Saída da histerese: a faixa só volta a "dentro" abaixo do ruído de medição que o diário já usa. */
-        const val TOLERANCE_EXIT_LOG = RefinementJournal.NOISE_LOG
+        /** Margem do dono: até 5% é aceito; a faixa só entra "fora" acima disso. */
+        val TOLERANCE_LOG = ln(1.05)
+        /** Alvo do dono (±4%): faixa que passou de 5% só volta a "dentro" aqui. */
+        val TOLERANCE_EXIT_LOG = ln(1.04)
+        /**
+         * Faixa cuja gasolina de referência veio da curva da ECU (ecuShare ≥ 0,5), mais grossa que a própria:
+         * entra "fora" só acima de 6% (Platina 00f6fd02) e volta a "dentro" em 5%.
+         */
+        val TOLERANCE_ECU_REF_LOG = ln(1.06)
+        val TOLERANCE_ECU_REF_EXIT_LOG = ln(1.05)
+        const val ECU_REF_SHARE = 0.5
         /** A proposta só deixa de valer depois de tantas observações seguidas vazias (~9 s). */
         const val PROPOSAL_EXIT_EMPTY_TICKS = 3
         const val MIN_BAND_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
@@ -63,7 +73,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     private var dirty = false
     private var lastSaveAt = Long.MIN_VALUE / 2
     private var last: JSONObject = JSONObject().put("phase", phase).put("action", JSONObject().put("kind", "none"))
-    /** Histerese por faixa (entra acima de ±3%, sai abaixo de 2%). */
+    /** Histerese por faixa (entra acima de 5%, sai em 4%; ±6% com a referência da ECU). Persistida. */
     private val offLatch = BooleanArray(EquivalenceLedger.BANDS.size)
     /** Proposta vigente (a mesma lista que a revisão grava) e quantas observações seguidas vieram vazias. */
     private var heldProposal: JSONObject? = null
@@ -103,6 +113,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 lastCount = count
             }
             // Pontos da ECU com atividade (os que o gráfico desenha) e zonas que a ECU deu como adquiridas.
+            // Aquisição desconhecida (não lida, campo indisponível) = null, nunca "0 pontos".
             val petrolValid = activeCount(acquisition, "GASOLINA")
             val gasValid = activeCount(acquisition, "GNV")
             val petrolZones = acquiredZones(acquisition, "GASOLINA")
@@ -122,8 +133,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("autoMatchCount", count ?: JSONObject.NULL)
                 .put("maxAutomatch", max ?: JSONObject.NULL)
                 .put("autoCalEnabled", enabled ?: JSONObject.NULL)
-                .put("petrolValid", petrolValid)
-                .put("gasValid", gasValid)
+                .put("petrolValid", petrolValid ?: JSONObject.NULL)
+                .put("gasValid", gasValid ?: JSONObject.NULL)
                 .put("petrolZones", petrolZones)
                 .put("gasZones", gasZones)
                 .put("quietMinutes", quietMs / 60_000.0)
@@ -134,30 +145,41 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("gasObservations", index.optInt("gasObservations", 0))
                 .put("automatic", false)
 
-            // Faixas com histerese: entra "fora" acima de ±3% (limiar de sempre) e só sai abaixo de 2%.
+            // Faixas com histerese: entra "fora" acima de 5% e só sai em 4% (±6% com a referência da ECU).
             val bands = index.optJSONArray("bands") ?: JSONArray()
             val measured = ArrayList<JSONObject>()
             val off = JSONArray()
             val missing = JSONArray()
+            var onTarget = true
             for (i in 0 until bands.length()) {
                 val b = bands.optJSONObject(i) ?: continue
                 val r = b.optDouble("ratio", Double.NaN)
+                val ecuRef = b.optDouble("ecuShare", 0.0) >= ECU_REF_SHARE
+                val enter = if (ecuRef) TOLERANCE_ECU_REF_LOG else TOLERANCE_LOG
+                val exit = if (ecuRef) TOLERANCE_ECU_REF_EXIT_LOG else TOLERANCE_EXIT_LOG
                 val label = JSONObject().put("fromMs", b.optDouble("fromMs")).put("toMs", b.optDouble("toMs"))
                     .put("samples", b.optInt("samples")).put("ratio", if (r.isFinite()) r else JSONObject.NULL)
+                    .put("ecuReference", ecuRef)
                 if (b.optInt("samples") >= MIN_BAND_SAMPLES && r.isFinite() && r > 0) {
                     measured += label
                     val error = abs(ln(r))
                     val latched = if (i < offLatch.size) {
-                        if (error > TOLERANCE_LOG) offLatch[i] = true else if (error <= TOLERANCE_EXIT_LOG) offLatch[i] = false
+                        val was = offLatch[i]
+                        if (error > enter) offLatch[i] = true else if (error <= exit) offLatch[i] = false
+                        if (offLatch[i] != was) { dirty = true; lastSaveAt = Long.MIN_VALUE / 2 }
                         offLatch[i]
-                    } else error > TOLERANCE_LOG
+                    } else error > enter
                     if (latched) off.put(label)
+                    if (error > exit) onTarget = false
                 } else {
-                    if (i < offLatch.size) offLatch[i] = false
+                    // Sem leituras (curva nova naquele trecho, GNV recomeçado): a histerese recomeça junto.
+                    if (i < offLatch.size && offLatch[i]) { offLatch[i] = false; dirty = true; lastSaveAt = Long.MIN_VALUE / 2 }
                     missing.put(label)
                 }
             }
             out.put("bandsMeasured", measured.size).put("bandsOff", off).put("bandsMissing", missing)
+            // Margem do dono: até 4% (alvo) é estável; entre 4% e 5% (aceito) mostra a proposta do motor se houver,
+            // senão também é estável (nunca "coletando" para sempre); acima de 5% é fora até voltar a 4%.
             val stable = measured.size >= MIN_STABLE_BANDS && off.length() == 0
 
             val latest = journal.optJSONObject("latest")
@@ -165,13 +187,17 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val latestId = latest?.optString("id").orEmpty()
             val verifying = latestStatus == RefinementJournal.STATUS_VERIFYING ||
                 (journal.optJSONArray("measuringBands")?.length() ?: 0) > 0
-            // Gravação nova: a proposta anterior foi feita sobre a curva antiga e sai na hora.
+            // Gravação nova: a proposta anterior foi feita sobre a curva antiga e sai na hora. Proposta calculada
+            // antes da gravação (outro experimento de base) é descartada mesmo que chegue depois.
             if (latestId != lastJournalId) { heldProposal = null; emptyStreak = 0; lastJournalId = latestId }
-            if (proposal != null && proposal.optBoolean("known", false)) {
-                if (proposal.optInt("count", 0) > 0) { heldProposal = JSONObject(proposal.toString()); emptyStreak = 0 }
+            val current = proposal?.takeIf { it.optBoolean("known", false) && it.optString("basedOn", "") == latestId }
+            if (current != null) {
+                if (current.optInt("count", 0) > 0) { heldProposal = JSONObject(current.toString()); emptyStreak = 0 }
                 else if (++emptyStreak >= PROPOSAL_EXIT_EMPTY_TICKS) heldProposal = null
             }
-            val proposalCount = heldProposal?.optInt("count", 0) ?: 0
+            // Sem evidência de equivalência (motor em POLISH: só anti-tranco) e nenhuma faixa fora: não é "pronta".
+            val evidence = heldProposal?.optString("mode") == "EQUIVALENCE" || off.length() > 0
+            val proposalCount = if (evidence) heldProposal?.optInt("count", 0) ?: 0 else 0
 
             val resultJson = journal.optJSONObject("result")
             val points = resultJson?.optJSONArray("points") ?: JSONArray()
@@ -184,7 +210,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 !ecuOnline && lastCount == null -> "SEM_ECU"
                 ecuReason == null -> "ECU_TRABALHANDO"
                 restoreCount > 0 -> "RESTAURAR_TRECHO"
-                !stable && proposalCount > 0 -> "PROPOSTA_PRONTA"
+                (!stable || !onTarget) && proposalCount > 0 -> "PROPOSTA_PRONTA"
                 verifying -> "VERIFICANDO"
                 stable -> "ESTAVEL"
                 else -> "COLETANDO_NOSSOS"
@@ -225,9 +251,13 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("canDisconnect", phase == "ESTAVEL")
                 .put("action", action)
                 .put("secondary", secondary)
-                .put("proposal", heldProposal?.let { JSONObject(it.toString()) } ?: JSONObject()
+                .put("proposal", heldProposal?.takeIf { proposalCount > 0 }?.let { JSONObject(it.toString()) } ?: JSONObject()
                     .put("known", proposal?.optBoolean("known", false) ?: false).put("count", 0).put("points", JSONArray())
-                    .put("reason", proposal?.optString("reason") ?: "MOTOR_NAO_CONSULTADO"))
+                    .put("reason", when {
+                        heldProposal != null && !evidence -> "SEM_EVIDENCIA_DE_EQUIVALENCIA"
+                        proposal != null && current == null && proposal.optBoolean("known", false) -> "PROPOSTA_DE_OUTRA_GRAVACAO"
+                        else -> proposal?.optString("reason") ?: "MOTOR_NAO_CONSULTADO"
+                    }))
                 .put("result", JSONObject().put("improved", improved).put("worse", worse).put("measuring", measuring)
                     .put("id", resultJson?.optString("id") ?: JSONObject.NULL))
                 .put("headline", headline(phase, count, max, measured.size, off.length(), proposalCount, restoreCount,
@@ -259,14 +289,18 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     /** Estados de banda com dado real (Platina: ZONA_ADQUIRIDA/ATIVIDADE; formato antigo: VALIDO/COLETANDO). */
     private val activeStates = setOf("ZONA_ADQUIRIDA", "ATIVIDADE", "VALIDO", "COLETANDO")
 
-    private fun activeCount(acquisition: JSONObject?, fuel: String): Int {
-        val points = acquisition?.optJSONArray("points") ?: return 0
+    private fun activeCount(acquisition: JSONObject?, fuel: String): Int? {
+        val points = acquisition?.optJSONArray("points") ?: return null
         var n = 0
+        var seen = 0
         for (i in 0 until points.length()) {
             val p = points.optJSONObject(i) ?: continue
-            if (p.optString("fuel") == fuel && p.optString("state") in activeStates) n++
+            if (p.optString("fuel") != fuel) continue
+            if (p.optString("state") == "SEM_DADO") return null
+            seen++
+            if (p.optString("state") in activeStates) n++
         }
-        return n
+        return if (seen == 0) null else n
     }
 
     /** Zonas (0..3) que a ECU marcou como adquiridas para o combustível. */
@@ -317,7 +351,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             (if (improved + worse > 0) ". Até agora $improved ${plural(improved, "melhorou", "melhoraram")} e $worse ${plural(worse, "piorou", "pioraram")}." else ".")
         "RESTAURAR_TRECHO" -> "$restore ${plural(restore, "ponto piorou", "pontos pioraram")} com a última gravação. " +
             "Restaure só ${plural(restore, "esse ponto", "esses pontos")}; os que melhoraram ficam."
-        "ESTAVEL" -> "GNV equivalente à gasolina em $measured faixas (±3%). Pode desconectar."
+        "ESTAVEL" -> "GNV equivalente à gasolina em $measured faixas (dentro de 5%). Pode desconectar."
         else -> ""
     }
 
@@ -352,6 +386,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
                 .put("quietMs", quietMs).put("phase", phase).put("alertedPhase", alertedPhase)
                 .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
+                .put("offLatch", JSONArray(offLatch.toList()))
         }
         try {
             val tmp = File(target.parentFile, target.name + ".tmp")
@@ -372,6 +407,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             phase = root.optString("phase", "SEM_ECU")
             alertedPhase = root.optString("alertedPhase", "")
             ecuDoneLatch = if (root.isNull("ecuDoneLatch")) null else root.optString("ecuDoneLatch").takeIf { it.isNotBlank() }
+            root.optJSONArray("offLatch")?.let { a -> for (i in 0 until minOf(a.length(), offLatch.size)) offLatch[i] = a.optBoolean(i, false) }
         } catch (_: Exception) {
         }
     }

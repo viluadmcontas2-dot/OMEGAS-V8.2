@@ -125,19 +125,59 @@ test('ações a mais vêm do Kotlin: Revisar junto de Restaurar e Desfazer; nada
   assert.equal(both[0].label, 'Revisar e gravar 4 pontos');
 });
 
-test('revisão nunca grava lista velha: mudou atualiza, sumiu não grava', () => {
+// Ajustado na rodada 2 (revisão, itens 13 e 14): o portão conferia a assinatura exata (com o alvo do motor),
+// que muda em 18–20 de cada 20 ticks rodando, e recusava "Gravar na ECU" em série; e não olhava se a ação
+// ainda estava liberada. Agora confere elegibilidade (mesmos pontos, mesmo valor atual, nada retido) e grava a
+// lista revisada; com a ação desligada (ECU no automático, sem cabo) não grava.
+test('revisão nunca grava lista velha: mesmos pontos gravam o revisado, ponto mudou atualiza, sumiu não grava', () => {
   const m = model();
-  const eqWith = points => ({ autopilot: { proposal: { known: true, count: points.length, points, signature: points.map(p => `${p.index}:${p.currentRaw}>${p.targetRaw}`).join(';') } } });
+  const review = { kind: 'review', label: 'Revisar e gravar 1 ponto', enabled: true };
+  const eqWith = (points, extra = {}) => ({ autopilot: { action: review, proposal: { known: true, count: points.length, points, held: [], signature: points.map(p => `${p.index}:${p.currentRaw}>${p.targetRaw}`).join(';'), ...extra } } });
   const first = eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }]);
   const displayed = m.reviewList(first, 'apply');
   assert.equal(m.reviewGate(displayed, first), 'write');
-  const changed = eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17100 }]);
-  assert.equal(m.reviewGate(displayed, changed), 'changed');
+  // Alvo do motor andou com leituras novas: mesmos pontos, mesmo valor atual → grava a lista revisada.
+  assert.equal(m.reviewGate(displayed, eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17100 }])), 'write');
+  // Valor atual diferente ou outro conjunto de pontos → atualiza e avisa.
+  assert.equal(m.reviewGate(displayed, eqWith([{ index: 4, currentRaw: 16500, targetRaw: 17100 }])), 'changed');
+  assert.equal(m.reviewGate(displayed, eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }, { index: 5, currentRaw: 16384, targetRaw: 17000 }])), 'changed');
   assert.equal(m.reviewGate(displayed, eqWith([])), 'gone');
-  // Restaurar também confere a lista no toque.
-  const restore = m.reviewList({ restorePoints: [{ index: 7, currentRaw: 18000, targetRaw: 16384 }] }, 'restore');
-  assert.equal(m.reviewGate(restore, { restorePoints: [{ index: 7, currentRaw: 18000, targetRaw: 16384 }] }), 'write');
-  assert.equal(m.reviewGate(restore, { restorePoints: [] }), 'gone');
+  // Ponto retido agora (em medição) não grava.
+  assert.equal(m.reviewGate(displayed, eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }], { held: [{ index: 4, reason: 'MEDINDO' }] })), 'changed');
+  // Ação desligada (ECU voltou ao automático / sem cabo): o cartão aberto não grava.
+  const waiting = eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }]);
+  waiting.autopilot.action = { kind: 'waiting', label: 'Aguardando a ECU terminar o automático', enabled: false };
+  assert.equal(m.reviewGate(displayed, waiting), 'blocked');
+  const offline = eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }]);
+  offline.autopilot.action = { ...review, enabled: false, label: 'Conecte a ECU para gravar' };
+  assert.equal(m.reviewGate(displayed, offline), 'blocked');
+  // Revisar ao lado de Restaurar (secundária) também libera.
+  const beside = eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }]);
+  beside.autopilot.action = { kind: 'restore', label: 'Restaurar 2 pontos que pioraram', enabled: true };
+  beside.autopilot.secondary = [{ kind: 'review', label: 'Revisar e gravar 1 ponto', enabled: true }];
+  assert.equal(m.reviewGate(displayed, beside), 'write');
+  // Restaurar e Desfazer também conferem a lista e a ação no toque.
+  const restoreAction = { autopilot: { action: { kind: 'restore', label: 'Restaurar 1 ponto que piorou', enabled: true } } };
+  const restore = m.reviewList({ ...restoreAction, restorePoints: [{ index: 7, currentRaw: 18000, targetRaw: 16384 }] }, 'restore');
+  assert.equal(m.reviewGate(restore, { ...restoreAction, restorePoints: [{ index: 7, currentRaw: 18000, targetRaw: 16384 }] }), 'write');
+  assert.equal(m.reviewGate(restore, { ...restoreAction, restorePoints: [] }), 'gone');
+  assert.equal(m.reviewGate(restore, { autopilot: { action: { kind: 'review', enabled: true } }, restorePoints: [{ index: 7, currentRaw: 18000, targetRaw: 16384 }] }), 'blocked');
+  const undoLatest = { refinement: { latest: { undoable: true, undoPoints: [{ index: 10, currentRaw: 18000, targetRaw: 16384 }] } } };
+  const undo = m.reviewList(undoLatest, 'undo');
+  assert.equal(m.reviewGate(undo, { ...undoLatest, autopilot: { secondary: [{ kind: 'undo', enabled: true }] } }), 'write');
+  assert.equal(m.reviewGate(undo, { ...undoLatest, autopilot: { secondary: [{ kind: 'undo', enabled: false }] } }), 'blocked');
+});
+
+test('pontos da ECU desconhecidos mostram —, nunca Gas 0 · GNV 0 (rodada 2, item 21)', () => {
+  const m = model();
+  assert.equal(m.ecuPointsText({ petrolValid: null, gasValid: null }), '—');
+  assert.equal(m.ecuPointsText({}), '—');
+  assert.equal(m.ecuPointsText({ petrolValid: 12, gasValid: null }), '—');
+  assert.equal(m.ecuPointsText({ petrolValid: 12, gasValid: 0 }), 'Gas 12 · GNV 0');
+});
+
+test('a tela não pede a análise do motor (a ponte não recalcula; rodada 2, item 19)', () => {
+  assert.doesNotMatch(SOURCE, /refinedAnalysis/);
 });
 
 test('resultado por ponto nas palavras do dono: melhorou, piorou, ainda medindo', () => {

@@ -11,7 +11,7 @@ import kotlin.math.min
 /**
  * Ciclo fechado da Curva K: cada gravação confirmada vira um experimento.
  *
- * Antes: o índice de equivalência por faixa (t_no_GNV / t_gasolina, condução ≥1000 rpm)
+ * Antes: o índice de equivalência por faixa (t_no_GNV / t_gasolina, condução ≥1350 rpm)
  * medido com a curva antiga. Depois: o mesmo índice medido só com o GNV lido depois da
  * gravação. Por faixa o resultado é CONFIRMADA (chegou perto da gasolina), PASSOU
  * (inverteu o sinal além do ruído), CURTA (mesmo sinal, pouca melhora) ou PIOROU
@@ -20,15 +20,20 @@ import kotlin.math.min
  * Ciclo (sem estado preso, sem "Entendi"):
  *  - cada gravação é dona das faixas que tocou; outra gravação só interrompe as faixas
  *    que ela mesma tocar (pontos independentes);
- *  - a verificação nunca é eterna: fecha com tudo julgado, sem base (SEM_BASE), com o que
- *    deu para julgar depois de [VERIFY_PARTIAL_ONLINE_MS] rodando, ou INCONCLUSIVO; parado ou em
- *    marcha lenta o prazo não anda e não há veredito (o índice só tem condução);
- *  - "piorou" só fora da margem do dono (Platina 41123729): mais de 4% pior E erro acima de 5%;
- *  - só gravação de proposta/ajuste ensina o ganho por faixa; restaurar e desfazer não;
- *  - restaurar oferece só os pontos que pioraram e cuja faixa ainda está fora de 5%, nunca de uma
- *    restauração/desfazer; desfazer só enquanto a gravação ainda está sendo medida;
+ *  - antes e depois só se comparam com a MESMA referência de gasolina (curva da ECU/gasolina própria);
+ *    se ela trocou no meio, a faixa continua medindo, sem veredito, sem ensinar e sem oferecer restaurar;
+ *  - a verificação nunca é eterna: fecha com tudo julgado, sem base (SEM_BASE, só depois de medir a faixa
+ *    com a curva nova ou do prazo), com o que deu para julgar depois de [VERIFY_PARTIAL_ONLINE_MS] rodando,
+ *    ou INCONCLUSIVO; parado ou em marcha lenta o prazo não anda (o índice só tem condução);
+ *  - margem do dono: alvo ±4% ("chegou"), até 5% aceito; "piorou" só mais de 4% pior E erro acima de 5%;
+ *  - só gravação de proposta/ajuste ensina o ganho por faixa; restaurar, desfazer, reset da curva,
+ *    backup restaurado e o diário de versões antigas não;
+ *  - restaurar oferece só os pontos que pioraram, que a ECU ainda tem no valor gravado e cuja faixa está
+ *    fora de 5% agora, por até [RESTORE_OFFER_MS]; Mapa K ou gasolina readquirida anulam a oferta;
+ *    desfazer vale para a última gravação de proposta até a próxima gravação ou a curva mudar por fora;
  *  - depois de restaurar/desfazer, o ponto não recebe proposta na mesma direção até a faixa
- *    ser medida de novo; depois de restaurar, nunca mais o valor que piorou (nem além).
+ *    ser medida de novo; depois de restaurar, nunca mais o valor que piorou (nem além);
+ *  - a ordem vem do conteúdo da curva lida (MUL_ACT), não do relógio da multimídia.
  *
  * Nunca grava na ECU: só registra, avalia e informa o piloto/UI.
  */
@@ -39,11 +44,13 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         const val MIN_BAND_SAMPLES = 8
         /** Diferença abaixo disso é ruído de medição (~2%). */
         const val NOISE_LOG = 0.02
-        /** Dentro de ±3% depois da correção é "chegou" (Platina 41123729). */
-        const val OK_AFTER_LOG = 0.0296
-        /** "Piorou" só se ficou mais de ~4% pior E acima de ~5% de erro (margem do dono; Platina 41123729). */
-        const val WORSE_MARGIN_LOG = 0.04
-        const val WORSE_MIN_ERROR_LOG = 0.05
+        /** Alvo do dono: dentro de ±4% depois da correção é "chegou". */
+        val OK_AFTER_LOG = ln(1.04)
+        /** "Piorou" só se ficou mais de 4% pior E acima de 5% de erro (margem do dono; Platina 41123729). */
+        val WORSE_MARGIN_LOG = ln(1.04)
+        val WORSE_MIN_ERROR_LOG = ln(1.05)
+        /** Antes e depois com fração da curva da ECU diferente além disso: referência trocou. */
+        const val REFERENCE_SHARE_TOLERANCE = 0.25
         const val MIN_SCALE = 0.4
         const val MAX_SCALE = 1.3
         const val MAX_EXPERIMENTS = 40
@@ -51,12 +58,16 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         /** Um ponto age na faixa até meia unidade de ms além das bordas (K interpolado entre pontos vizinhos). */
         const val BAND_MARGIN_MS = 0.5
         /**
-         * Tempo rodando (ECU online, RPM de condução) depois da gravação. Passado isso a verificação fecha com
+         * Tempo rodando (ECU online, GNV, RPM de condução) depois da gravação. Passado isso a verificação fecha com
          * o que já deu para julgar: faixa que o motorista não visita não pode segurar o refino para sempre.
          */
         const val VERIFY_PARTIAL_ONLINE_MS = 15 * 60_000L
         /** Sem nenhuma faixa julgável depois disso: INCONCLUSIVO, e o refino segue. */
         const val VERIFY_GIVE_UP_ONLINE_MS = 40 * 60_000L
+        /** A oferta de restaurar vale isso depois que o resultado fecha (Platina 41123729). */
+        const val RESTORE_OFFER_MS = 30 * 60_000L
+        /** Leituras novas da MUL_ACT ainda com a curva de antes da gravação toleradas como atrasadas. */
+        const val STALE_READS_MAX = 1
         private const val MAX_TICK_MS = 10_000L
         private const val SAVE_EVERY_MS = 60_000L
         const val STATUS_VERIFYING = "VERIFICANDO"
@@ -66,11 +77,23 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         const val KIND_RESTAURAR = "RESTAURAR"
         const val KIND_DESFAZER = "DESFAZER"
         const val KIND_MANUAL = "MANUAL"
+        /** Reset da Curva K (MUL_ACT = 1,0) e backup restaurado: decisão do dono, não ensinam nem pedem restaurar. */
+        const val KIND_RESET = "RESET"
+        const val KIND_BACKUP = "BACKUP"
+        /** Experimento salvo por uma versão antiga (sem tipo): rejulgado pela margem do dono; não ensina nem oferece. */
+        const val KIND_LEGADO = "LEGADO"
         const val REASON_PREFIX = "Refino OMEGAS:"
 
         fun kindFromReason(reason: String?): String {
             val text = reason.orEmpty().trim()
-            if (!text.startsWith(REASON_PREFIX)) return KIND_MANUAL
+            if (!text.startsWith(REASON_PREFIX)) {
+                val lower = text.lowercase()
+                return when {
+                    lower.startsWith("reset curva k") || lower.startsWith("neutralizar mul_act") -> KIND_RESET
+                    lower.startsWith("restaurar backup") -> KIND_BACKUP
+                    else -> KIND_MANUAL
+                }
+            }
             val verb = text.removePrefix(REASON_PREFIX).trim().lowercase()
             return when {
                 verb.startsWith("desfazer") -> KIND_DESFAZER
@@ -84,7 +107,11 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         private val JUDGED = setOf("CONFIRMADA", "PASSOU", "CURTA", "PIOROU")
         const val OUTSIDE_AUTOMATCH = "AUTOMATCH_NATIVO"
         const val OUTSIDE_CURVE = "CURVA_K_MUDOU_FORA_DO_APP"
+        const val MAP_K_WRITTEN = "MAPA_K_GRAVADO"
+        const val PETROL_REACQUIRED = "GASOLINA_READQUIRIDA"
         private val CURVE_CHANGED_OUTSIDE = setOf(OUTSIDE_AUTOMATCH, OUTSIDE_CURVE)
+        /** Mudou o gás ou a gasolina de referência: o "piorou" medido antes não vale mais para restaurar. */
+        private val VOIDS_RESTORE = setOf(MAP_K_WRITTEN, PETROL_REACQUIRED, OUTSIDE_AUTOMATCH)
 
         /** Faixas em que um ponto do eixo age (com a margem de interpolação). */
         fun touchedBands(ms: Double): List<Int> =
@@ -106,18 +133,51 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             }
             return merged
         }
+
+        /** Veredito de uma faixa com antes/depois válidos (margem do dono). */
+        fun judge(ratioBefore: Double, ratioAfter: Double): String {
+            val e0 = ln(ratioBefore)
+            val e1 = ln(ratioAfter)
+            return when {
+                abs(e1) <= max(NOISE_LOG, OK_AFTER_LOG) || abs(e1) <= abs(e0) * 0.35 -> "CONFIRMADA"
+                abs(e1) > abs(e0) + WORSE_MARGIN_LOG && abs(e1) > WORSE_MIN_ERROR_LOG -> "PIOROU"
+                e0 * e1 < 0 -> "PASSOU"
+                else -> "CURTA"
+            }
+        }
+
+        /**
+         * Antes e depois medidos contra a mesma referência de gasolina? Mesma fração de pares com a curva da ECU,
+         * a mesma curva da ECU onde ela entra e a mesma época da gasolina própria onde ela entra.
+         */
+        fun sameReference(before: JSONObject, after: JSONObject, bandBefore: JSONObject, bandAfter: JSONObject): Boolean {
+            val sb = bandBefore.optDouble("ecuShare", 0.0).takeIf { it.isFinite() } ?: 0.0
+            val sa = bandAfter.optDouble("ecuShare", 0.0).takeIf { it.isFinite() } ?: 0.0
+            if (abs(sb - sa) > REFERENCE_SHARE_TOLERANCE) return false
+            if (max(sb, sa) > 0.0 && before.optString("ecuReference") != after.optString("ecuReference")) return false
+            if (min(sb, sa) < 1.0 && before.optInt("petrolEpoch", 0) != after.optInt("petrolEpoch", 0)) return false
+            return true
+        }
     }
 
     private val lock = Any()
+    private val saveLock = Any()
     private val experiments = ArrayList<JSONObject>()
     private val bandScale = DoubleArray(BANDS.size) { 1.0 }
     /** Bloqueios por ponto depois de restaurar/desfazer: {index, direction, badRaw, restoredRaw, at, kind, capped}. */
     private val blocks = ArrayList<JSONObject>()
     private var lastEvaluateAt = 0L
     private var lastSaveAt = Long.MIN_VALUE / 2
+    private var dirty = false
     private var experimentSequence = 0L
     /** Último índice avaliado (condução): restaurar só vale enquanto a faixa ainda está fora da margem. */
     private var lastIndexNow: JSONObject? = null
+    /** Curva que o app sabe que está na ECU (última gravação ou última leitura aceita). null = ainda não sabe. */
+    private var expectedRaw: IntArray? = null
+    /** Leituras da MUL_ACT: a última vista, a vista quando a última gravação aconteceu e as atrasadas depois dela. */
+    private var lastEcuCapture: Long? = null
+    private var preWriteCapture: Long? = null
+    private val staleCaptures = HashSet<Long>()
 
     init { load() }
 
@@ -177,6 +237,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             experimentSequence += 1L
             experiments += JSONObject()
                 .put("id", "EXP-$now-$experimentSequence")
+                .put("sequence", experimentSequence)
                 .put("appliedAt", now)
                 .put("source", source)
                 .put("kind", kind)
@@ -188,48 +249,95 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 .put("onlineMs", 0L)
                 .put("status", STATUS_VERIFYING)
             while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
-            lastSaveAt = Long.MIN_VALUE / 2
+            // A ECU agora tem a curva gravada; a leitura em mãos é a de antes (atrasada), não "mudou por fora".
+            expectedRaw = afterRaw.copyOf()
+            preWriteCapture = lastEcuCapture
+            staleCaptures.clear()
+            markChanged()
         }
         save()
     }
 
-    /** Algo mudou o motor por fora (Mapa K, AutoMatch nativo, curva por fora do app): verificações perdem validade. */
+    /**
+     * Algo mudou o motor por fora (Mapa K, AutoMatch nativo, gasolina readquirida): verificações em curso perdem
+     * validade. AutoMatch nativo troca a curva inteira (desfazer/restaurar e bloqueios perdem a referência);
+     * Mapa K e gasolina readquirida mudam o gás/a referência (a oferta de restaurar perde a base).
+     */
     fun interrupt(reason: String) {
         synchronized(lock) {
             experiments.filter { it.optString("status") == STATUS_VERIFYING }.forEach {
                 it.put("status", "INTERROMPIDO").put("interruptReason", reason).put("closedAt", clock())
             }
             if (reason in CURVE_CHANGED_OUTSIDE) {
-                // A curva da ECU não é mais a que o app gravou: desfazer/restaurar e bloqueios perdem a referência.
                 experiments.filter { !it.has("curveChangedOutside") }.forEach { it.put("curveChangedOutside", reason) }
                 blocks.clear()
+                expectedRaw = null // a próxima leitura da ECU vira a base
             }
-            lastSaveAt = Long.MIN_VALUE / 2
+            if (reason in VOIDS_RESTORE) experiments.filter { !it.has("restoreVoid") }.forEach { it.put("restoreVoid", reason) }
+            markChanged()
         }
         save()
     }
 
     /**
-     * Curva lida da ECU depois da última gravação ([mulActCapturedAtMs] > appliedAt) diferente da gravada nos
-     * pontos alterados: mudou por fora do app (ProgBase, reset). Interrompe e retorna true uma vez.
+     * Curva lida da ECU (MUL_ACT). Igual à que o app sabe: nada. Igual à de antes da última gravação: leitura
+     * atrasada (até [STALE_READS_MAX] leituras novas). Diferente: mudou por fora do app (ProgBase, gravação que
+     * falhou no meio, reset): verificações em curso param, bloqueios dos pontos que mudaram somem e a curva lida
+     * passa a valer; desfazer/restaurar seguem só nos pontos que a ECU ainda tem no valor gravado.
+     * Retorna true uma vez por mudança. A ordem vem do conteúdo e da identidade da leitura, nunca do relógio.
      */
     fun noteEcuCurve(currentRaw: IntArray, mulActCapturedAtMs: Long): Boolean {
+        if (currentRaw.size != 30) return false
         val outside = synchronized(lock) {
-            val latest = experiments.lastOrNull() ?: return false
-            if (latest.has("curveChangedOutside") || mulActCapturedAtMs <= latest.optLong("appliedAt")) return false
-            val after = latest.optJSONArray("afterRaw") ?: return false
-            changedIndexes(latest).any { it < currentRaw.size && currentRaw[it] != after.optInt(it) }
+            val newCapture = mulActCapturedAtMs != lastEcuCapture
+            lastEcuCapture = mulActCapturedAtMs
+            val expected = expectedRaw
+            if (expected == null) {
+                expectedRaw = currentRaw.copyOf()
+                markChanged()
+                return@synchronized false
+            }
+            val latest = experiments.lastOrNull()
+            if (currentRaw.contentEquals(expected)) {
+                if (latest != null && !latest.optBoolean("ecuConfirmed")) { latest.put("ecuConfirmed", true); markChanged() }
+                return@synchronized false
+            }
+            val before = latest?.optJSONArray("beforeRaw")?.let { a -> IntArray(a.length()) { a.optInt(it) } }
+            if (latest != null && !latest.optBoolean("ecuConfirmed") && before != null && currentRaw.contentEquals(before)) {
+                if (mulActCapturedAtMs == preWriteCapture) return@synchronized false
+                if (newCapture) staleCaptures += mulActCapturedAtMs
+                if (staleCaptures.size <= STALE_READS_MAX) return@synchronized false
+            }
+            val diff = expected.indices.filter { expected[it] != currentRaw[it] }.toSet()
+            experiments.filter { it.optString("status") == STATUS_VERIFYING }.forEach {
+                it.put("status", "INTERROMPIDO").put("interruptReason", OUTSIDE_CURVE).put("closedAt", clock())
+            }
+            blocks.removeAll { it.optInt("index") in diff }
+            expectedRaw = currentRaw.copyOf()
+            markChanged()
+            true
         }
-        if (outside) interrupt(OUTSIDE_CURVE)
+        if (outside) save()
         return outside
+    }
+
+    /** Id da última gravação registrada ("" sem nenhuma). */
+    fun latestId(): String = synchronized(lock) { experiments.lastOrNull()?.optString("id") ?: "" }
+
+    /** Curva que o app sabe que está na ECU (null = ainda não sabe). */
+    fun expectedCurve(): IntArray? = synchronized(lock) { expectedRaw?.copyOf() }
+
+    /** Eixo da última gravação registrada (para registrar uma gravação parcial sem leitura nova). */
+    fun latestAxis(): IntArray? = synchronized(lock) {
+        experiments.lastOrNull()?.optJSONArray("axisRaw")?.takeIf { it.length() == 30 }?.let { a -> IntArray(30) { a.optInt(it) } }
     }
 
     // ---------------------------------------------------------------- verificação
 
     /**
      * Avalia cada gravação aberta nas faixas que são dela. [indexNow] = índice atual; [indexSince] dá o índice
-     * só com o GNV medido a partir de um instante (o "depois" de cada gravação). [driving] = ECU online e
-     * rodando (RPM de condução): só então o prazo anda. Retorna true se algum veredito mudou ou fechou.
+     * só com o GNV medido a partir de um instante (o "depois" de cada gravação). [driving] = ECU online,
+     * no GNV e rodando (RPM de condução): só então o prazo anda. Retorna true se algum veredito mudou ou fechou.
      */
     fun evaluate(indexNow: JSONObject, driving: Boolean = true, indexSince: ((Long) -> JSONObject)? = null): Boolean {
         var visible = false
@@ -239,14 +347,19 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             val dt = if (lastEvaluateAt == 0L) 0L else (now - lastEvaluateAt).coerceIn(0L, MAX_TICK_MS)
             lastEvaluateAt = now
             lastIndexNow = indexNow
+            // A oferta de restaurar envelhece (tempo de serviço, imune ao relógio voltar).
+            experiments.filter { it.optString("status") == "PIOROU_EM_PARTE" }.forEach {
+                it.put("offerAgeMs", it.optLong("offerAgeMs", 0L) + dt)
+            }
             for (exp in experiments.filter { it.optString("status") == STATUS_VERIFYING }) {
-                if (driving) exp.put("onlineMs", exp.optLong("onlineMs", 0L) + dt)
+                if (driving && dt > 0) { exp.put("onlineMs", exp.optLong("onlineMs", 0L) + dt); dirty = true }
                 val onlineMs = exp.optLong("onlineMs", 0L)
                 val timeboxed = onlineMs >= VERIFY_PARTIAL_ONLINE_MS
                 val owned = ownedBands(exp)
                 val frozen = frozenBands(exp)
                 val afterIndex = indexSince?.invoke(exp.optLong("appliedAt")) ?: indexNow
-                val before = exp.optJSONObject("indexBefore")?.optJSONArray("bands") ?: JSONArray()
+                val beforeIndex = exp.optJSONObject("indexBefore") ?: JSONObject()
+                val before = beforeIndex.optJSONArray("bands") ?: JSONArray()
                 val after = afterIndex.optJSONArray("bands") ?: JSONArray()
                 val old = exp.optJSONArray("bands")
                 val verdicts = JSONArray()
@@ -262,23 +375,18 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                         .put("ratioBefore", if (rb.isFinite()) rb else JSONObject.NULL)
                         .put("ratioAfter", if (ra.isFinite()) ra else JSONObject.NULL)
                     val kept = old?.optJSONObject(i)
+                    val afterKnown = na >= MIN_BAND_SAMPLES && ra.isFinite() && ra > 0.0
                     when {
                         i in frozen && kept != null -> verdict.put("verdict", kept.optString("verdict"))
                             .put("ratioAfter", kept.opt("ratioAfter") ?: JSONObject.NULL).put("samplesAfter", kept.optInt("samplesAfter"))
                         i !in owned -> verdict.put("verdict", "NAO_ALTERADA")
-                        nb < MIN_BAND_SAMPLES || !rb.isFinite() -> verdict.put("verdict", "SEM_ANTES")
-                        na < MIN_BAND_SAMPLES || !ra.isFinite() -> verdict.put("verdict", if (timeboxed) "SEM_DADOS" else "COLETANDO")
-                        else -> {
-                            val e0 = ln(rb)
-                            val e1 = ln(ra)
-                            // Política D1 da Platina (41123729): poucos por cento nunca viram "piorou".
-                            verdict.put("verdict", when {
-                                abs(e1) <= max(NOISE_LOG, OK_AFTER_LOG) || abs(e1) <= abs(e0) * 0.35 -> "CONFIRMADA"
-                                abs(e1) > abs(e0) + WORSE_MARGIN_LOG && abs(e1) > WORSE_MIN_ERROR_LOG -> "PIOROU"
-                                e0 * e1 < 0 -> "PASSOU"
-                                else -> "CURTA"
-                            })
-                        }
+                        // Sem "antes": não julga, mas segura a faixa até medir a curva nova (ou o prazo).
+                        nb < MIN_BAND_SAMPLES || !rb.isFinite() || rb <= 0.0 ->
+                            verdict.put("verdict", if (afterKnown || timeboxed) "SEM_ANTES" else "COLETANDO")
+                        !afterKnown -> verdict.put("verdict", if (timeboxed) "SEM_DADOS" else "COLETANDO")
+                        !sameReference(beforeIndex, afterIndex, b, a) ->
+                            verdict.put("verdict", if (timeboxed) "SEM_DADOS" else "COLETANDO").put("referenceChanged", true)
+                        else -> verdict.put("verdict", judge(rb, ra))
                     }
                     verdicts.put(verdict)
                 }
@@ -295,9 +403,10 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                     structural = true
                 }
             }
+            if (visible || structural) markChanged()
         }
         val now = clock()
-        if (structural || visible || now - lastSaveAt >= SAVE_EVERY_MS) save()
+        if (structural || visible) save() else if (synchronized(lock) { dirty } && now - lastSaveAt >= SAVE_EVERY_MS) save()
         return visible || structural
     }
 
@@ -310,10 +419,10 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             owned.isEmpty() || owned.all { verdictOf(exp, it) == "SEM_ANTES" } -> "SEM_BASE"
             else -> "INCONCLUSIVO"
         }
-        exp.put("status", status).put("closedAt", now)
+        exp.put("status", status).put("closedAt", now).put("offerAgeMs", 0L)
         // Só proposta/ajuste ensinam o ganho; restaurar e desfazer nunca (senão a próxima proposta repete a direção).
         if (judged > 0 && exp.optString("kind", KIND_MANUAL) in TEACHES) learn(exp.optJSONArray("bands") ?: JSONArray())
-        lastSaveAt = Long.MIN_VALUE / 2
+        markChanged()
     }
 
     /** Ganho por faixa para a próxima proposta: passou → mais suave; curta → mais firme. */
@@ -357,6 +466,13 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     private fun verdictOf(e: JSONObject, band: Int): String =
         e.optJSONArray("bands")?.optJSONObject(band)?.optString("verdict").orEmpty()
 
+    /** A ECU ainda tem o valor que esta gravação pôs no ponto (pela curva que o app sabe que está lá)? */
+    private fun ecuStillHas(e: JSONObject, i: Int): Boolean {
+        val expected = expectedRaw ?: return true
+        val after = e.optJSONArray("afterRaw") ?: return false
+        return i < expected.size && expected[i] == after.optInt(i)
+    }
+
     /** Veredito de cada ponto alterado, pelas faixas que ele toca (a mesma regra ±0,5 ms de antes). */
     private fun pointVerdicts(exp: JSONObject): JSONArray {
         val out = JSONArray()
@@ -390,21 +506,24 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
 
     /**
      * Gravação de proposta/ajuste mais recente que ainda tem pontos que pioraram para oferecer. Nunca uma
-     * restauração ou um desfazer (sem laço). Uma gravação nova em outros pontos não apaga a oferta.
+     * restauração, um desfazer, um reset ou um registro antigo (sem laço). Uma gravação nova em outros pontos
+     * não apaga a oferta; Mapa K, gasolina readquirida, AutoMatch nativo ou o prazo apagam.
      */
     private fun restoreSource(): JSONObject? {
         for (k in experiments.indices.reversed()) {
             val e = experiments[k]
             if (e.optString("kind", KIND_MANUAL) !in TEACHES) continue
-            if (e.optString("status") != "PIOROU_EM_PARTE" || e.optBoolean("undone") || e.has("curveChangedOutside")) continue
+            if (e.optString("status") != "PIOROU_EM_PARTE" || e.optBoolean("undone") || e.has("curveChangedOutside") || e.has("restoreVoid")) continue
+            if (e.optLong("offerAgeMs", 0L) >= RESTORE_OFFER_MS) continue
             if (offerable(e, k).length() > 0) return e
         }
         return null
     }
 
     /**
-     * Pontos que pioraram, ainda no valor gravado (nenhuma gravação depois mexeu neles), sem restaurar, e cuja
-     * faixa ainda está fora da margem do dono agora (se a medição nova voltou para dentro, não há o que restaurar).
+     * Pontos que pioraram, que a ECU ainda tem no valor gravado (nenhuma gravação depois mexeu neles, nada mudou
+     * por fora), sem restaurar, e cuja faixa está fora da margem do dono agora, com evidência atual (≥ 8
+     * leituras): sem dado não há oferta; se a medição nova voltou para dentro, não há o que restaurar.
      */
     private fun offerable(src: JSONObject, position: Int): JSONArray {
         val restored = src.optJSONArray("restored")?.let { a -> (0 until a.length()).map { a.optInt(it) }.toSet() } ?: emptySet()
@@ -412,16 +531,16 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         val now = lastIndexNow?.optJSONArray("bands")
         fun stillWorse(ms: Double): Boolean = touchedBands(ms).any { b ->
             if (verdictOf(src, b) != "PIOROU") return@any false
-            val band = now?.optJSONObject(b) ?: return@any true
+            val band = now?.optJSONObject(b) ?: return@any false
             val ratio = band.optDouble("ratio", Double.NaN)
-            band.optInt("samples", 0) < MIN_BAND_SAMPLES || !ratio.isFinite() || ratio <= 0.0 || abs(ln(ratio)) > WORSE_MIN_ERROR_LOG
+            band.optInt("samples", 0) >= MIN_BAND_SAMPLES && ratio.isFinite() && ratio > 0.0 && abs(ln(ratio)) > WORSE_MIN_ERROR_LOG
         }
         val out = JSONArray()
         val points = pointVerdicts(src)
         for (k in 0 until points.length()) {
             val p = points.getJSONObject(k)
             val i = p.optInt("index")
-            if (p.optString("verdict") != "PIOROU" || i in restored || i in later || !stillWorse(p.optDouble("ms"))) continue
+            if (p.optString("verdict") != "PIOROU" || i in restored || i in later || !ecuStillHas(src, i) || !stillWorse(p.optDouble("ms"))) continue
             out.put(JSONObject().put("index", i).put("currentRaw", p.optInt("afterRaw")).put("targetRaw", p.optInt("beforeRaw"))
                 .put("referenceTimeMs", p.optDouble("ms")))
         }
@@ -435,16 +554,16 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     }
 
     /**
-     * Desfazer: só da última gravação, se veio de proposta, ainda está sendo medida (o resultado fecha sozinho
-     * no fim da medição), não foi desfeita e a curva não mudou por fora. Nunca de um desfazer/restauração.
+     * Desfazer: só da última gravação, se veio de proposta, até a próxima gravação, enquanto a ECU ainda tem
+     * todos os pontos gravados (a curva não mudou por fora). Nunca de um desfazer/restauração/reset.
      */
     private fun undoPointsOf(exp: JSONObject?): JSONArray {
-        if (exp == null || exp.optString("kind") != KIND_PROPOSTA || exp.optBoolean("undone") ||
-            exp.optString("status") != STATUS_VERIFYING || exp.has("curveChangedOutside")
-        ) return JSONArray()
+        if (exp == null || exp.optString("kind") != KIND_PROPOSTA || exp.optBoolean("undone") || exp.has("curveChangedOutside")) return JSONArray()
         val before = exp.optJSONArray("beforeRaw") ?: return JSONArray()
         val after = exp.optJSONArray("afterRaw") ?: return JSONArray()
-        return JSONArray(changedIndexes(exp).map {
+        val changed = changedIndexes(exp)
+        if (changed.any { !ecuStillHas(exp, it) }) return JSONArray()
+        return JSONArray(changed.map {
             JSONObject().put("index", it).put("currentRaw", after.optInt(it)).put("targetRaw", before.optInt(it)).put("referenceTimeMs", msOf(exp, it))
         })
     }
@@ -452,26 +571,45 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     /** Faixas que alguma gravação aberta ainda está medindo (passado o prazo, SEM_DADOS não segura nada). */
     fun measuringBands(): Set<Int> = synchronized(lock) {
         experiments.filter { it.optString("status") == STATUS_VERIFYING }
-            .flatMap { e -> ownedBands(e).filter { verdictOf(e, it) == "COLETANDO" || verdictOf(e, it).isEmpty() } }
+            .flatMap { e -> pendingBands(e) }
             .toSet()
     }
+
+    private fun pendingBands(e: JSONObject): List<Int> =
+        ownedBands(e).filter { verdictOf(e, it) == "COLETANDO" || verdictOf(e, it).isEmpty() }
 
     // ---------------------------------------------------------------- proposta
 
     /**
      * Retenções do ciclo sobre a análise refinada. A regra de entrada de cada ponto é a de antes
      * (origem ≠ HELD e calculatedRaw ≠ currentRaw) e o valor proposto é o do motor, sem mudança.
-     * Fica fora: ponto que age numa faixa em medição; ponto restaurado/desfeito na mesma direção sem
-     * evidência nova; ponto restaurado que voltaria ao valor que piorou (ou além).
-     * Leitura da ECU anterior à última gravação não gera proposta (a curva base é velha).
+     * Fica fora: ponto cujo trecho de influência cruza o trecho alterado de uma gravação ainda em medição
+     * (numa faixa que ela mede); ponto restaurado/desfeito na mesma direção sem evidência nova; ponto
+     * restaurado que voltaria ao valor que piorou (ou além). Análise sobre uma curva diferente da que o app
+     * sabe que está na ECU (leitura atrasada) não gera proposta. A proposta leva o experimento em que se baseou.
      */
     fun proposalFrom(analysis: JSONObject, indexNow: JSONObject, indexSince: ((Long) -> JSONObject)? = null): JSONObject {
-        val latestAt = synchronized(lock) { experiments.lastOrNull()?.optLong("appliedAt") ?: 0L }
+        val (basedOn, expected) = synchronized(lock) { (experiments.lastOrNull()?.optString("id") ?: "") to expectedRaw?.copyOf() }
         val out = JSONObject().put("known", false).put("count", 0).put("points", JSONArray()).put("held", JSONArray())
+            .put("basedOn", basedOn).put("mode", analysis.optString("refinementMode"))
         if (!analysis.optBoolean("available", false)) return out.put("reason", "ANALISE_INDISPONIVEL")
-        val captured = analysis.optLong("mulActCapturedAtMs", 0L).takeIf { it > 0L } ?: analysis.optLong("capturedAtMs", 0L)
-        if (latestAt > 0L && captured in 1L..latestAt) return out.put("reason", "LENDO_CURVA_NOVA")
-        val measuring = measuringBands()
+        val points = analysis.optJSONArray("points") ?: JSONArray()
+        val curve = IntArray(30) { -1 }
+        for (k in 0 until points.length()) points.optJSONObject(k)?.let { p -> p.optInt("index", -1).takeIf { it in 0 until 30 }?.let { curve[it] = p.optInt("currentRaw") } }
+        if (expected != null && curve.none { it < 0 } && !curve.contentEquals(expected)) return out.put("reason", "LENDO_CURVA_NOVA")
+        val axisMs = DoubleArray(30) { Double.NaN }
+        for (k in 0 until points.length()) points.optJSONObject(k)?.let { p -> p.optInt("index", -1).takeIf { it in 0 until 30 }?.let { axisMs[it] = p.optDouble("referenceTimeMs") } }
+        // Trechos alterados por gravações ainda em medição, com as faixas que cada uma ainda mede.
+        val open = synchronized(lock) {
+            experiments.filter { it.optString("status") == STATUS_VERIFYING }.mapNotNull { e ->
+                val pending = pendingBands(e).toSet()
+                val axis = e.optJSONArray("axisRaw") ?: return@mapNotNull null
+                val b = e.optJSONArray("beforeRaw") ?: return@mapNotNull null
+                val a = e.optJSONArray("afterRaw") ?: return@mapNotNull null
+                if (pending.isEmpty()) null
+                else affectedRangesMs(IntArray(axis.length()) { axis.optInt(it) }, IntArray(b.length()) { b.optInt(it) }, IntArray(a.length()) { a.optInt(it) }) to pending
+            }
+        }
         // Ponto oferecido para restaurar fica fora da proposta (duas ações no mesmo ponto confundem).
         val offered = restorePoints().let { a -> (0 until a.length()).map { a.getJSONObject(it).optInt("index") }.toSet() }
         val myBlocks = synchronized(lock) { blocks.map { JSONObject(it.toString()) } }
@@ -482,9 +620,15 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             val index = indexSince?.let { provider -> sinceCache.getOrPut(since) { provider(since) } } ?: indexNow
             return (index.optJSONArray("bands")?.optJSONObject(band)?.optInt("samples", 0) ?: 0) >= MIN_BAND_SAMPLES
         }
+        fun measuring(j: Int, ms: Double): Boolean {
+            if (open.isEmpty()) return false
+            val lo = if (j > 0 && axisMs[j - 1].isFinite()) axisMs[j - 1] else 0.0
+            val hi = if (j < 29 && axisMs[j + 1].isFinite()) axisMs[j + 1] else Double.POSITIVE_INFINITY
+            val bands = touchedBands(ms)
+            return open.any { (ranges, pending) -> bands.any { it in pending } && ranges.any { (rlo, rhi) -> lo < rhi && rlo < hi } }
+        }
         val kept = JSONArray()
         val held = JSONArray()
-        val points = analysis.optJSONArray("points") ?: JSONArray()
         for (k in 0 until points.length()) {
             val p = points.optJSONObject(k) ?: continue
             if (p.optString("origin") == "HELD" || p.isNull("calculatedRaw") || !p.has("calculatedRaw")) continue
@@ -497,7 +641,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             val block = myBlocks.firstOrNull { it.optInt("index") == j && it.optInt("direction") == direction }
             val reason = when {
                 j in offered -> "OFERECIDO_PARA_RESTAURAR"
-                touchedBands(ms).any { it in measuring } -> "MEDINDO"
+                measuring(j, ms) -> "MEDINDO"
                 block != null && !bandMeasuredSince(ms, block.optLong("at")) -> "AGUARDA_EVIDENCIA_NOVA"
                 block != null && block.optBoolean("capped") &&
                     (if (direction > 0) target >= block.optInt("badRaw") else target <= block.optInt("badRaw")) -> "VALOR_QUE_PIOROU"
@@ -536,7 +680,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                     .put("undoPoints", undoPointsOf(e))
                     .put("undoable", undoPointsOf(e).length() > 0)
             } ?: JSONObject.NULL)
-            // Resultado que a tela mostra (Detalhes): o da oferta de restaurar, senão a última gravação.
+            // Resultado que a tela mostra: o da oferta de restaurar, senão a última gravação.
             .put("result", result?.let { e ->
                 JSONObject().put("id", e.optString("id")).put("kind", e.optString("kind", KIND_MANUAL))
                     .put("status", e.optString("status")).put("appliedAt", e.optLong("appliedAt"))
@@ -564,21 +708,33 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             .put("automatic", false)
     }
 
+    private fun markChanged() {
+        dirty = true
+        lastSaveAt = Long.MIN_VALUE / 2
+    }
+
+    /** Grava só quando algo mudou; o "depois" medido (indexAfter) não vai para o arquivo (é recalculado). */
     private fun save() {
         val target = file ?: return
-        val payload = synchronized(lock) {
-            lastSaveAt = clock()
-            JSONObject().put("format", FORMAT)
-                .put("bandScale", JSONArray(bandScale.toList()))
-                .put("experimentSequence", experimentSequence)
-                .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()) }))
-                .put("blocks", JSONArray(blocks.map { JSONObject(it.toString()) }))
-        }
-        try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
-        } catch (_: Exception) {
+        synchronized(saveLock) {
+            val payload = synchronized(lock) {
+                if (!dirty) return
+                dirty = false
+                lastSaveAt = clock()
+                JSONObject().put("format", FORMAT)
+                    .put("bandScale", JSONArray(bandScale.toList()))
+                    .put("experimentSequence", experimentSequence)
+                    .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()).apply { remove("indexAfter"); remove("verdictNames") } }))
+                    .put("blocks", JSONArray(blocks.map { JSONObject(it.toString()) }))
+                    .put("expectedRaw", expectedRaw?.let { JSONArray(it.toList()) } ?: JSONObject.NULL)
+            }
+            try {
+                val tmp = File(target.parentFile, target.name + ".tmp")
+                tmp.writeText(payload.toString())
+                if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
+            } catch (_: Exception) {
+                synchronized(lock) { dirty = true }
+            }
         }
     }
 
@@ -593,9 +749,38 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             root.optJSONArray("experiments")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let(experiments::add) }
             root.optJSONArray("blocks")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let(blocks::add) }
             experimentSequence = root.optLong("experimentSequence", experiments.size.toLong())
+            experiments.filter { !it.has("kind") }.forEach(::migrateLegacy)
+            expectedRaw = root.optJSONArray("expectedRaw")?.takeIf { it.length() == 30 }?.let { a -> IntArray(30) { a.optInt(it) } }
+                ?: experiments.lastOrNull()?.takeIf { !it.has("curveChangedOutside") }?.optJSONArray("afterRaw")
+                    ?.takeIf { it.length() == 30 }?.let { a -> IntArray(30) { a.optInt(it) } }
         } catch (_: Exception) {
             experiments.clear()
             blocks.clear()
         }
+    }
+
+    /**
+     * Experimento de uma versão antiga (sem "kind"): o "piorou" dele foi julgado pela regra velha (+2%).
+     * Rejulga as faixas julgadas pela margem do dono a partir das razões salvas e marca como LEGADO (não ensina
+     * e nunca oferece restaurar). Onde o "piorou" caiu, o ganho aprendido com ele volta a 1,0.
+     */
+    private fun migrateLegacy(e: JSONObject) {
+        e.put("kind", KIND_LEGADO).put("migratedFrom", "SEM_TIPO")
+        val bands = e.optJSONArray("bands") ?: return
+        var anyWorse = false
+        for (i in 0 until bands.length()) {
+            val band = bands.optJSONObject(i) ?: continue
+            val old = band.optString("verdict")
+            if (old !in JUDGED) continue
+            val rb = band.optDouble("ratioBefore", Double.NaN)
+            val ra = band.optDouble("ratioAfter", Double.NaN)
+            if (!rb.isFinite() || !ra.isFinite() || rb <= 0.0 || ra <= 0.0) continue
+            val now = judge(rb, ra)
+            if (now != old) band.put("verdict", now).put("legacyVerdict", old)
+            if (old == "PIOROU" && now != "PIOROU" && i < bandScale.size) bandScale[i] = 1.0
+            if (now == "PIOROU") anyWorse = true
+        }
+        if (e.optString("status") in setOf("PIOROU_EM_PARTE", "VERIFICADO")) e.put("status", if (anyWorse) "PIOROU_EM_PARTE" else "VERIFICADO")
+        dirty = true
     }
 }

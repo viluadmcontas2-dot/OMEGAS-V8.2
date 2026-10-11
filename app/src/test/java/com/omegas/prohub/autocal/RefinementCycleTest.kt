@@ -9,12 +9,20 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
 import java.util.zip.GZIPInputStream
 
 /**
- * Ciclo do refino (classe 2, sintético, com diário e piloto reais): cada transição e os cenários do dono.
+ * Ciclo do refino (classe 2, sintético) pelo mesmo caminho do serviço: RefinementCycle (cola do serviço) com
+ * EquivalenceLedger, RefinementJournal e RefinementAutopilot reais. A telemetria entra quadro a quadro no
+ * acumulador (gasolina e GNV no mesmo RPM×MAP), o "depois" de cada gravação é o GNV medido a partir do
+ * instante real da gravação e a gravação passa pelo payload do KFactorManager (BATCH_CONFIRMED).
  * O "motor" aqui é uma função de proposta sobre a curva lida da ECU (o motor real não muda e tem teste
- * próprio); o último teste usa o motor real numa sessão de referência gravada no carro (classe 3).
+ * próprio); os últimos testes usam o motor real em sessões gravadas no carro (classe 3).
+ *
+ * Ajustado na rodada 2 (2026-10-11, revisão scratchpad/audit/revisao-refino.md, item 20): antes o "carro" usava
+ * um índice sintético (o "depois" ignorava o instante e a gravação zerava tudo), sem acumulador nem cola.
+ * Margem do dono: faixa "fora" só acima de 5% (os cenários usam 7% onde antes usavam 5%).
  */
 class RefinementCycleTest {
     private var now = 5_000_000L
@@ -23,6 +31,7 @@ class RefinementCycleTest {
     private fun ms(i: Int) = axisRaw[i] / 512.0
     private val monitorDone = JSONObject().put("autoMatchCount", 3).put("maxAutomatch", 3).put("autoCalEnabled", 1)
 
+    /** Índice sintético: só para os testes do piloto e do diário puros. */
     private fun index(vararg bands: Pair<Double?, Int>): JSONObject = JSONObject()
         .put("samples", bands.sumOf { it.second }).put("petrolObservations", 500).put("gasObservations", 200).put("ratio", 1.0)
         .put("bands", JSONArray(bands.mapIndexed { i, (ratio, n) ->
@@ -32,51 +41,85 @@ class RefinementCycleTest {
 
     private val empty get() = index(null to 0, null to 0, null to 0, null to 0, null to 0)
 
-    /** Diário + piloto reais; a ECU guarda a curva; a leitura da ECU (snapshot) atrasa até [readEcu]. */
-    private inner class Car {
-        val journal = RefinementJournal(null, clock)
+    /** Gasolina de referência de cada faixa (ms) e o MAP onde o carro roda nela (2000 rpm). */
+    private val bandPetrolMs = doubleArrayOf(3.75, 5.25, 6.75, 8.25, 10.5)
+    private val bandMap = doubleArrayOf(0.40, 0.55, 0.70, 0.85, 1.00)
+
+    /** O carro: ECU guarda a curva; a leitura da ECU (MUL_ACT) atrasa até [readEcu]; o serviço é a cola real. */
+    private inner class Car(journalFile: File? = null) {
+        val ledger = EquivalenceLedger(null, clock)
+        val journal = RefinementJournal(journalFile, clock)
         val pilot = RefinementAutopilot(null, clock)
         var curve = IntArray(30) { 16384 }
         var readAt = 0L
         var readCurve = curve.copyOf()
         var engine: (Int, IntArray) -> Int = { i, c -> c[i] }
-        var index = index(1.05 to 20, 1.05 to 20, 1.05 to 20, 1.05 to 20, 1.05 to 20)
         var online = true
         var last = JSONObject()
+        val cycle = RefinementCycle(ledger, journal, pilot, monotonicMs = { now }) { snapshot, _, _ -> analysisOf(snapshot) }
+
+        init {
+            // Gasolina própria quente em cada faixa (8 leituras estáveis: madura e congelada).
+            bandPetrolMs.indices.forEach { b -> frames("GASOLINA", bandMap[b], bandPetrolMs[b], 10) }
+        }
+
+        private fun frames(fuel: String, map: Double, petrolMs: Double, n: Int, rpm: Double = 2000.0) {
+            now += 2_000 // quadros de faixas/chamadas diferentes nunca formam a mesma janela estável
+            repeat(n) { ledger.accept(EquivalenceLedger.Frame(now, fuel, rpm, map, petrolMs, 0.0)); now += 280 }
+        }
+
+        /** Rodar no GNV: [n] leituras estáveis por faixa com t_no_GNV = t_gasolina × razão. */
+        fun drive(vararg bands: Pair<Double?, Int>) {
+            bands.forEachIndexed { b, (ratio, n) -> if (n > 0) frames("GNV", bandMap[b], bandPetrolMs[b] * (ratio ?: 1.0), n + 2) }
+        }
+
+        val index: JSONObject get() = ledger.index()
 
         fun readEcu() { readAt = now; readCurve = curve.copyOf() }
 
-        fun analysis(): JSONObject {
-            val points = JSONArray()
-            for (i in 0 until 30) {
-                val target = engine(i, readCurve)
-                points.put(JSONObject().put("index", i).put("referenceTimeMs", ms(i)).put("currentRaw", readCurve[i])
-                    .put("calculatedRaw", target).put("origin", if (target == readCurve[i]) "HELD" else "MEASURED"))
-            }
-            return JSONObject().put("ok", true).put("available", true).put("snapshotHash", "S$readAt")
-                .put("capturedAtMs", readAt).put("mulActCapturedAtMs", readAt).put("points", points)
+        fun snapshot(): JSONObject = JSONObject().put("snapshotHash", "S$readAt").put("capturedAtMs", readAt).put("fields", JSONArray()
+            .put(JSONObject().put("key", "PETR_INJ_TBP").put("status", "VALID").put("rawValues", JSONArray(axisRaw.toList())).put("capturedAtMs", readAt))
+            .put(JSONObject().put("key", "MUL_ACT").put("status", "VALID").put("rawValues", JSONArray(readCurve.toList())).put("capturedAtMs", readAt)))
+
+        private fun analysisOf(snapshot: JSONObject): JSONObject {
+            val mul = (0 until snapshot.getJSONArray("fields").length()).map { snapshot.getJSONArray("fields").getJSONObject(it) }
+                .first { it.getString("key") == "MUL_ACT" }.getJSONArray("rawValues")
+            val current = IntArray(30) { mul.getInt(it) }
+            return analysis(current, snapshot.getLong("capturedAtMs"))
         }
 
+        fun analysis(current: IntArray = readCurve, capturedAt: Long = readAt): JSONObject {
+            val points = JSONArray()
+            for (i in 0 until 30) {
+                val target = engine(i, current)
+                points.put(JSONObject().put("index", i).put("referenceTimeMs", ms(i)).put("currentRaw", current[i])
+                    .put("calculatedRaw", target).put("origin", if (target == current[i]) "HELD" else "MEASURED"))
+            }
+            return JSONObject().put("ok", true).put("available", true).put("snapshotHash", "S$capturedAt").put("refinementMode", "EQUIVALENCE")
+                .put("capturedAtMs", capturedAt).put("mulActCapturedAtMs", capturedAt).put("points", points)
+        }
+
+        /** Tick do serviço: avaliação (healthTick) e piloto (observeRefinement). Sem cabo a leitura some. */
         fun tick(): JSONObject {
             now += 3_000
-            val since: (Long) -> JSONObject = { index }
-            journal.evaluate(index, online, since)
-            last = pilot.observe(online, monitorDone, null, index, journal.json(), journal.restorePoints().length(),
-                journal.proposalFrom(analysis(), index, since))
+            cycle.evaluate(online)
+            last = cycle.observe(online, online, monitorDone, if (online) snapshot() else JSONObject().put("available", false))
             return last
         }
 
-        /** Toque em "Gravar na ECU": grava exatamente a lista, com o motivo que a tela usa; GNV daquela região zera. */
+        /** Toque em "Gravar na ECU": grava exatamente a lista; o KFactorManager confirma (ACK + readback) e o serviço registra. */
         fun write(points: JSONArray, reason: String): JSONObject {
-            val before = curve.copyOf()
+            val listed = JSONArray()
             for (k in 0 until points.length()) {
                 val p = points.getJSONObject(k)
                 assertEquals("lista velha gravada no ponto ${p.getInt("index")}", curve[p.getInt("index")], p.getInt("currentRaw"))
+                listed.put(JSONObject().put("index", p.getInt("index")).put("currentRaw", p.getInt("currentRaw")).put("targetRaw", p.getInt("targetRaw")))
                 curve[p.getInt("index")] = p.getInt("targetRaw")
             }
             now += 1_000
-            journal.recordCurveWrite(before, curve.copyOf(), axisRaw, index, "KF-$now", RefinementJournal.kindFromReason(reason))
-            index = empty
+            cycle.recordConfirmedCurve(JSONObject().put("adjustmentId", "KF-$now").put("points", listed)
+                .put("confirmedEvents", JSONArray().put(JSONObject().put("reason", reason)))
+                .put("curve", JSONObject().put("axisRaw", JSONArray(axisRaw.toList())).put("factorsRaw", JSONArray(curve.toList()))))
             return tick() // o serviço observa na hora, ainda com a leitura velha da ECU
         }
 
@@ -89,6 +132,7 @@ class RefinementCycleTest {
     private val propose = "Refino OMEGAS: curva refinada confirmada"
     private val restore = "Refino OMEGAS: restaurar pontos que pioraram"
     private val undo = "Refino OMEGAS: desfazer última gravação"
+    private val off = arrayOf(1.07 to 20, 1.07 to 20, 1.07 to 20, 1.07 to 20, 1.07 to 20)
 
     @Test
     fun `motivo da gravacao define o tipo e o resto e ajuste manual`() {
@@ -97,7 +141,9 @@ class RefinementCycleTest {
         assertEquals(RefinementJournal.KIND_RESTAURAR, RefinementJournal.kindFromReason("Refino OMEGAS: restaurar trecho que piorou"))
         assertEquals(RefinementJournal.KIND_DESFAZER, RefinementJournal.kindFromReason(undo))
         assertEquals(RefinementJournal.KIND_MANUAL, RefinementJournal.kindFromReason("Ajuste manual confirmado na UI clean-slate"))
-        assertEquals(RefinementJournal.KIND_MANUAL, RefinementJournal.kindFromReason("Restaurar backup Curva K curva.json"))
+        // Rodada 2 (item 18): reset da Curva K e backup restaurado são decisão do dono, não ensinam nem pedem restaurar.
+        assertEquals(RefinementJournal.KIND_BACKUP, RefinementJournal.kindFromReason("Restaurar backup Curva K curva.json"))
+        assertEquals(RefinementJournal.KIND_RESET, RefinementJournal.kindFromReason("Reset Curva K · ProgBase MUL_ACT=1.0"))
         assertEquals(RefinementJournal.KIND_MANUAL, RefinementJournal.kindFromReason(null))
     }
 
@@ -118,12 +164,13 @@ class RefinementCycleTest {
         val car = Car()
         var wave = 1
         car.engine = { i, c -> if (wave == 1 && ms(i) in 3.0..12.0) (c[i] * 1.05).toInt() else if (wave == 2 && ms(i) in 9.0..12.0) (c[i] * 1.03).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu()
         val s0 = car.tick()
         assertEquals("PROPOSTA_PRONTA", s0.getString("phase"))
         car.write(car.proposalPoints(), propose)
         car.readEcu(); wave = 2
-        car.index = index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.05 to 12, 1.03 to 3) // 9–12 ms nunca chega a 8 leituras
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.05 to 12, 1.03 to 3) // 9–12 ms nunca chega a 8 leituras
         repeat(290) { car.tick() } // ~14,5 min
         assertEquals("VERIFICANDO", car.last.getString("phase"))
         assertTrue("pontos da faixa em medição ficam fora da proposta", car.proposedIndexes().isEmpty())
@@ -131,7 +178,7 @@ class RefinementCycleTest {
         repeat(20) { car.tick() } // passa de 15 min de ECU online
         assertFalse(car.journal.json().getJSONObject("latest").getString("status") == RefinementJournal.STATUS_VERIFYING)
         assertEquals("PROPOSTA_PRONTA", car.last.getString("phase"))
-        assertTrue(car.proposedIndexes().all { ms(it) in 9.0..12.0 })
+        assertTrue(car.proposedIndexes().isNotEmpty() && car.proposedIndexes().all { ms(it) in 9.0..12.0 })
     }
 
     @Test
@@ -162,10 +209,11 @@ class RefinementCycleTest {
     fun `verificando diz o progresso em palavras e nunca fica mudo`() {
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..12.0) (c[i] * 1.05).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu()
-        car.index = index(1.0 to 12, 1.0 to 12, 1.0 to 12, null to 3, null to 0)
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.0 to 3, null to 0)
         repeat(120) { car.tick() } // 6 min rodando
         assertEquals("VERIFICANDO", car.last.getString("phase"))
         val headline = car.last.getString("headline")
@@ -205,6 +253,7 @@ class RefinementCycleTest {
     fun `depois de gravar a proposta velha nao volta e o piloto observa sem botao`() {
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..12.0) (c[i] * 1.05).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu()
         car.tick()
         val written = car.write(car.proposalPoints(), propose)
@@ -213,7 +262,9 @@ class RefinementCycleTest {
         assertEquals("none", written.getJSONObject("action").getString("kind"))
         assertEquals(0, written.getJSONObject("proposal").getInt("count"))
         assertEquals("LENDO_CURVA_NOVA", written.getJSONObject("proposal").getString("reason"))
-        // Desfazer já aparece como opção (secundária) enquanto mede; não existe "Entendi".
+        // A leitura velha não é "mudou por fora": a verificação continua.
+        assertEquals(RefinementJournal.STATUS_VERIFYING, car.journal.json().getJSONObject("latest").getString("status"))
+        // Desfazer já aparece como opção (secundária); não existe "Entendi".
         assertNotNull(car.secondary("undo"))
         assertNull(car.secondary("ack"))
         assertFalse(written.toString().contains("Entendi"))
@@ -223,10 +274,11 @@ class RefinementCycleTest {
     fun `piorou oferece restaurar so os pontos que pioraram e restaurar nao ensina o ganho`() {
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..12.0) (c[i] * 1.05).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu()
-        car.index = index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
         car.tick()
         assertEquals("RESTAURAR_TRECHO", car.last.getString("phase"))
         val restorePoints = car.journal.restorePoints()
@@ -244,7 +296,7 @@ class RefinementCycleTest {
 
         car.write(restorePoints, restore)
         car.readEcu()
-        car.index = index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.0 to 12, 1.0 to 12)
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.0 to 12, 1.0 to 12)
         repeat(3) { car.tick() }
         assertEquals("restaurar não ensina o ganho", scaleAfterWorse, car.journal.json().getJSONArray("bandScale").getDouble(3), 1e-9)
         assertEquals(0, car.journal.restorePoints().length())
@@ -256,10 +308,11 @@ class RefinementCycleTest {
     fun `restaurado nao volta na mesma direcao sem evidencia nova e nunca no valor que piorou`() {
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..12.0) (c[i] * 1.05).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu()
-        car.index = index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
         car.tick()
         val restored = car.journal.restorePoints()
         val bad = (0 until restored.length()).associate { restored.getJSONObject(it).getInt("index") to restored.getJSONObject(it).getInt("currentRaw") }
@@ -271,7 +324,7 @@ class RefinementCycleTest {
         val held = car.last.getJSONObject("proposal").getJSONArray("held")
         assertTrue((0 until held.length()).any { held.getJSONObject(it).getInt("index") in bad.keys })
         // Evidência nova: a faixa foi medida de novo com a curva restaurada.
-        car.index = index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.02 to 12, 1.0 to 12)
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.02 to 12, 1.0 to 12)
         repeat(3) { car.tick() }
         val proposed = car.proposalPoints()
         for (k in 0 until proposed.length()) {
@@ -279,8 +332,9 @@ class RefinementCycleTest {
             val worse = bad[p.getInt("index")] ?: continue
             assertTrue("ponto ${p.getInt("index")} voltaria ao valor que piorou", p.getInt("targetRaw") < worse)
         }
-        // Metade do passo (o ganho já aprendido com o "piorou" da proposta) é permitida; o valor ruim nunca.
+        // Metade do passo é permitida; o valor ruim nunca. (Motor novo = leitura nova: o motor é função da leitura.)
         car.engine = { i, c -> if (i in bad.keys) (c[i] * 1.02).toInt() else c[i] }
+        car.readEcu()
         repeat(2) { car.tick() }
         assertTrue(car.proposedIndexes().any { it in bad.keys })
         assertTrue(car.proposalPoints().let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
@@ -291,18 +345,18 @@ class RefinementCycleTest {
     fun `restauracao medida pior nao oferece restaurar de novo nem volta ao valor ruim`() {
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..12.0) (c[i] * 1.10).toInt() else c[i] }
+        car.drive(1.07 to 20, 1.08 to 20, 1.07 to 20, 1.02 to 20, 1.03 to 20)
         car.readEcu(); car.tick()
-        car.index = index(1.05 to 20, 1.06 to 20, 1.05 to 20, 1.02 to 20, 1.03 to 20)
-        car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu()
-        car.index = index(0.99 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 10, 1.0 to 10)
+        car.drive(0.99 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 10, 1.0 to 10)
         car.tick()
         val restorePoints = car.journal.restorePoints()
+        assertTrue(restorePoints.length() > 0)
         car.write(restorePoints, restore)
         car.readEcu()
         // A medição da restauração sai pior: antes isso pedia "restaurar" de volta o valor ruim (laço).
-        car.index = index(0.99 to 10, 1.01 to 10, 1.0 to 10, 1.20 to 10, 1.0 to 10)
+        car.drive(0.99 to 10, 1.01 to 10, 1.0 to 10, 1.20 to 10, 1.0 to 10)
         car.tick()
         assertEquals(0, car.journal.restorePoints().length())
         assertFalse(car.last.getString("phase") == "RESTAURAR_TRECHO")
@@ -312,6 +366,7 @@ class RefinementCycleTest {
     fun `desfazer nao regrava o erro nem reaparece e o ciclo continua`() {
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..12.0) (c[i] * 1.04).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu(); car.tick()
@@ -329,7 +384,7 @@ class RefinementCycleTest {
         // O motor quer de novo o que foi desfeito: fica de fora até a faixa ser medida com a curva de volta.
         assertEquals(0, car.last.getJSONObject("proposal").getInt("count"))
         assertTrue(car.journal.json().getJSONArray("history").let { h -> (0 until h.length()).any { h.getJSONObject(it).getString("status") == "DESFEITO" } })
-        car.index = index(1.04 to 12, 1.04 to 12, 1.04 to 12, 1.04 to 12, 1.04 to 12)
+        car.drive(1.06 to 12, 1.06 to 12, 1.06 to 12, 1.06 to 12, 1.06 to 12)
         repeat(4) { car.tick() }
         assertEquals("PROPOSTA_PRONTA", car.last.getString("phase"))
         // Desfazer não ensina o ganho.
@@ -342,10 +397,11 @@ class RefinementCycleTest {
         val car = Car()
         var wave = 1
         car.engine = { i, c -> if (wave == 1 && ms(i) in 7.5..9.0) (c[i] * 1.05).toInt() else if (wave == 2 && ms(i) in 3.0..5.0) (c[i] * 1.03).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu(); wave = 2
-        car.index = index(1.03 to 12, 1.03 to 12, null to 0, null to 2, null to 0)
+        car.drive(1.03 to 12, 1.03 to 12, null to 0, 1.0 to 2, null to 0)
         car.tick()
         assertEquals(RefinementJournal.STATUS_VERIFYING, car.journal.json().getJSONObject("latest").getString("status"))
         assertEquals("PROPOSTA_PRONTA", car.last.getString("phase"))
@@ -379,29 +435,33 @@ class RefinementCycleTest {
     fun `sem Entendi a oferta de restaurar some sozinha quando a faixa volta e o piloto segue sugerindo`() {
         val car = Car()
         var wave = 1
-        car.engine = { i, c -> if (wave == 1 && ms(i) in 7.5..9.0) (c[i] * 1.05).toInt() else if (wave == 2 && ms(i) in 3.0..5.0) (c[i] * 1.03).toInt() else c[i] }
+        car.engine = { i, c -> if (wave == 1 && ms(i) in 7.5..9.0) (c[i] * 1.05).toInt() else if (wave == 2 && ms(i) in 3.0..5.0) (c[i] * 1.05).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu(); wave = 2
-        car.index = index(1.03 to 12, 1.03 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
+        car.drive(1.07 to 12, 1.07 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
         car.tick()
         assertEquals("RESTAURAR_TRECHO", car.last.getString("phase"))
         assertNotNull("proposta dos outros pontos ao lado do Restaurar", car.secondary("review"))
         // O dono não restaura; a medição seguinte mostra a faixa de volta dentro da margem: a oferta some sozinha.
-        car.index = index(1.03 to 30, 1.03 to 30, 1.0 to 30, 1.03 to 30, 1.0 to 30)
+        car.drive(1.07 to 30, 1.07 to 30, 1.0 to 30, 1.03 to 30, 1.0 to 30)
         car.tick()
         assertEquals(0, car.journal.restorePoints().length())
         assertEquals("PROPOSTA_PRONTA", car.last.getString("phase"))
-        assertNull("o resultado fechou sozinho: Desfazer some", car.secondary("undo"))
+        // Rodada 2 (item 16): Desfazer vale até a próxima gravação (antes sumia quando a medição fechava).
+        assertNotNull(car.secondary("undo"))
     }
 
     @Test
-    fun `curva mudou por fora invalida desfazer restaurar e bloqueios`() {
+    fun `curva mudou por fora invalida desfazer restaurar e bloqueios e descarta o GNV`() {
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..12.0) (c[i] * 1.05).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu(); car.tick()
+        car.drive(1.0 to 12, 1.0 to 12, null to 0, null to 0, null to 0)
         assertTrue(car.journal.json().getJSONObject("latest").getBoolean("undoable"))
         // ProgBase/reset mexeu na curva: a leitura nova da ECU não bate com o que o app gravou.
         car.curve[10] = 15000
@@ -413,20 +473,24 @@ class RefinementCycleTest {
         assertFalse(latest.getBoolean("undoable"))
         assertEquals("INTERROMPIDO", latest.getString("status"))
         assertEquals(0, car.journal.json().getJSONArray("blocks").length())
+        // O serviço alinha o acumulador na mesma leitura: o GNV medido com a curva do app não vale para a nova.
+        car.tick()
+        assertEquals(0, car.index.getInt("gasObservations"))
     }
 
     @Test
-    fun `histerese faixa entre 2,9 e 3,1 por cento e proposta intermitente nao piscam nem repetem aviso`() {
+    fun `histerese na margem do dono e proposta intermitente nao piscam nem repetem aviso`() {
         val car = Car()
         var k = 0
         car.engine = { i, c -> if (k % 2 == 0 && ms(i) in 6.0..7.5) (c[i] * 1.03).toInt() else c[i] }
-        car.readEcu()
+        car.drive(1.0 to 20, 1.0 to 20, null to 0, null to 0, null to 0)
         var flips = 0
         var alerts = 0
         var lastPhase = ""
         repeat(200) {
             k++
-            car.index = index(1.0 to 20, 1.0 to 20, (if (k % 2 == 0) 1.029 else 1.031) to 20, null to 0, null to 0)
+            car.drive(null to 0, null to 0, (if (k % 2 == 0) 1.045 else 1.055) to 20, null to 0, null to 0)
+            car.readEcu() // leitura nova a cada tick: o motor responde à proposta intermitente
             val s = car.tick()
             if (lastPhase.isNotEmpty() && s.getString("phase") != lastPhase) flips++
             lastPhase = s.getString("phase")
@@ -437,6 +501,7 @@ class RefinementCycleTest {
         assertTrue("avisou $alerts vezes", alerts <= 1)
         // Sai com folga: só depois de 3 observações seguidas sem proposta.
         car.engine = { i, c -> c[i] }
+        car.readEcu()
         car.tick(); car.tick()
         assertEquals("PROPOSTA_PRONTA", car.last.getString("phase"))
         car.tick()
@@ -453,6 +518,7 @@ class RefinementCycleTest {
         // ECU no automático com proposta: aparece desabilitada.
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..5.0) (c[i] * 1.03).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu()
         now += 3_000
         val working = car.pilot.observe(true, JSONObject().put("autoMatchCount", 1).put("maxAutomatch", 3).put("autoCalEnabled", 1), null,
@@ -460,7 +526,7 @@ class RefinementCycleTest {
         assertEquals("ECU_TRABALHANDO", working.getString("phase"))
         assertEquals("waiting", working.getJSONObject("action").getString("kind"))
         assertFalse(working.getJSONObject("action").getBoolean("enabled"))
-        // Estável: faixas dentro de ±3%, sem proposta escondida virando botão.
+        // Estável: faixas dentro de ±4%, sem proposta escondida virando botão.
         val stable = RefinementAutopilot(null, clock).observe(true, monitorDone, null, index(1.01 to 20, 0.99 to 20, 1.02 to 20, null to 0, null to 0),
             JSONObject().put("latest", JSONObject.NULL), 0, car.journal.proposalFrom(car.analysis(), car.index))
         assertEquals("ESTAVEL", stable.getString("phase"))
@@ -478,6 +544,7 @@ class RefinementCycleTest {
     fun `ECU fora mantem a fase e desabilita o botao`() {
         val car = Car()
         car.engine = { i, c -> if (ms(i) in 3.0..12.0) (c[i] * 1.05).toInt() else c[i] }
+        car.drive(*off)
         car.readEcu(); car.tick()
         assertEquals("PROPOSTA_PRONTA", car.last.getString("phase"))
         car.online = false
@@ -488,10 +555,65 @@ class RefinementCycleTest {
     }
 
     @Test
-    fun `motor real na sessao de referencia vira a mesma lista que a revisao grava`() {
+    fun `referencia que troca no meio da medicao nao julga nem ensina nem pede restaurar`() {
+        val car = Car()
+        // Faixa 7,5–9 sem gasolina própria: a referência ali é a curva de gasolina da ECU.
+        car.ledger.setEcuPetrolReference(listOf(0.30 to 2.8, 0.40 to 3.6, 0.50 to 4.4, 0.60 to 5.2, 0.70 to 6.0, 0.80 to 6.8, 0.90 to 7.9, 1.10 to 9.6))
+        car.engine = { i, c -> if (ms(i) in 7.5..8.5) (c[i] * 1.05).toInt() else c[i] }
+        now += 2_000
+        repeat(14) { car.ledger.accept(EquivalenceLedger.Frame(now, "GNV", 2000.0, 0.95, 8.35 * 1.07, 0.0)); now += 280 }
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, null to 0, null to 0)
+        car.readEcu(); car.tick()
+        car.write(car.proposalPoints(), propose)
+        car.readEcu()
+        // Depois: o dono rodou na gasolina ali (quente) e a gasolina própria passa a valer na mesma faixa.
+        now += 2_000
+        repeat(10) { car.ledger.accept(EquivalenceLedger.Frame(now, "GASOLINA", 2000.0, 0.95, 8.0, 0.0)); now += 280 }
+        now += 2_000
+        repeat(14) { car.ledger.accept(EquivalenceLedger.Frame(now, "GNV", 2000.0, 0.95, 8.35 * 1.07, 0.0)); now += 280 }
+        car.tick()
+        val band = car.journal.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(3)
+        assertEquals("COLETANDO", band.getString("verdict"))
+        assertTrue(band.optBoolean("referenceChanged"))
+        assertEquals(1.0, car.journal.json().getJSONArray("bandScale").getDouble(3), 1e-9)
+        assertEquals(0, car.journal.restorePoints().length())
+    }
+
+    @Test
+    fun `diario de versao antiga carregado no carro nao vira restaurar`() {
+        val dir = Files.createTempDirectory("journal-legacy-car").toFile()
+        val file = File(dir, "refinement_journal.json")
+        val bands = JSONArray(); val before = JSONArray()
+        EquivalenceLedger.BANDS.forEachIndexed { i, (lo, hi) ->
+            before.put(JSONObject().put("fromMs", lo).put("toMs", hi).put("samples", 20).put("ratio", if (i == 3) 1.01 else 1.0))
+            bands.put(JSONObject().put("fromMs", lo).put("toMs", hi).put("samplesBefore", 20).put("samplesAfter", 9)
+                .put("ratioBefore", if (i == 3) 1.01 else 1.0).put("ratioAfter", if (i == 3) 1.035 else 1.0)
+                .put("verdict", if (i == 3) "PIOROU" else "NAO_ALTERADA"))
+        }
+        val after = IntArray(30) { if (it in 14..16) 16900 else 16384 }
+        file.writeText(JSONObject().put("format", RefinementJournal.FORMAT).put("experiments", JSONArray().put(JSONObject()
+            .put("id", "EXP-1").put("appliedAt", 1L).put("axisRaw", JSONArray(axisRaw.toList())).put("beforeRaw", JSONArray(IntArray(30) { 16384 }.toList()))
+            .put("afterRaw", JSONArray(after.toList())).put("indexBefore", JSONObject().put("bands", before))
+            .put("status", "PIOROU_EM_PARTE").put("bands", bands))).toString())
+        val car = Car(file)
+        car.curve = after.copyOf()
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.035 to 12, 1.0 to 12)
+        car.readEcu(); car.tick()
+        assertFalse(car.last.getString("phase") == "RESTAURAR_TRECHO")
+        assertEquals(0, car.journal.restorePoints().length())
+        assertEquals(RefinementJournal.KIND_LEGADO, car.journal.json().getJSONObject("latest").getString("kind"))
+        dir.deleteRecursively()
+    }
+
+    private fun referenceSession(): JSONObject {
         val file = listOf("../fixtures/autocal/real/ref_2026-10-01_1719.json.gz", "fixtures/autocal/real/ref_2026-10-01_1719.json.gz")
             .map(::File).first { it.exists() }
-        val snapshots = JSONObject(GZIPInputStream(file.inputStream()).bufferedReader().use { it.readText() }).getJSONArray("snapshots")
+        return JSONObject(GZIPInputStream(file.inputStream()).bufferedReader().use { it.readText() })
+    }
+
+    @Test
+    fun `motor real na sessao de referencia vira a mesma lista que a revisao grava`() {
+        val snapshots = referenceSession().getJSONArray("snapshots")
         val snapshot = (0 until snapshots.length()).map { snapshots.getJSONObject(it) }.first { it.getInt("sequence") == 95 }
         val analysis = AutoMatchSnapshotAnalysis.analyzeRefined(snapshot)
         assertTrue(analysis.getBoolean("available"))
@@ -514,6 +636,50 @@ class RefinementCycleTest {
         assertEquals(proposal.getString("signature"), decided.getJSONObject("proposal").getString("signature"))
     }
 
+    /**
+     * Pedido do líder (rodada 2): replay da sessão de referência pelo caminho do serviço (acumulador real, cola real,
+     * motor real) não propõe nada por causa da lenta. Uma hora a mais de lenta (gasolina e GNV, GNV 20% rico, o
+     * cenário do "dente de serra") não muda um par nem um ponto da proposta.
+     */
+    @Test
+    fun `replay da sessao de referencia nao propoe nada por causa da lenta`() {
+        val session = referenceSession()
+        val telemetry = session.getJSONArray("telemetry")
+        val snapshot = session.getJSONArray("snapshots").let { a -> (0 until a.length()).map { a.getJSONObject(it) } }.first { it.getInt("sequence") == 95 }
+        fun replay(extraIdle: Boolean): Pair<List<EquivalenceLedger.EvidencePair>, JSONObject> {
+            val ledger = EquivalenceLedger(null, clock)
+            val cycle = RefinementCycle(ledger, RefinementJournal(null, clock), RefinementAutopilot(null, clock), monotonicMs = { now })
+            var last = 0L
+            for (i in 0 until telemetry.length()) {
+                val f = telemetry.getJSONObject(i)
+                last = f.getLong("t")
+                ledger.accept(EquivalenceLedger.Frame(last, f.optString("fuel").uppercase(), f.optDouble("rpm", 0.0).takeIf { it.isFinite() } ?: 0.0,
+                    f.optDouble("load_bar", 0.0).takeIf { it.isFinite() } ?: 0.0, f.optDouble("petrol_ms", 0.0).takeIf { it.isFinite() } ?: 0.0))
+            }
+            if (extraIdle) {
+                var t = last + 60_000
+                repeat(6_000) { k -> // ~28 min de cada combustível em lenta (850–1300 rpm)
+                    val rpm = 850.0 + (k % 10) * 50
+                    ledger.accept(EquivalenceLedger.Frame(t, "GASOLINA", rpm, 0.40, 3.8)); t += 280
+                }
+                t += 5_000
+                repeat(6_000) { k ->
+                    val rpm = 850.0 + (k % 10) * 50
+                    ledger.accept(EquivalenceLedger.Frame(t, "GNV", rpm, 0.40, 3.8 * 1.20)); t += 280
+                }
+            }
+            now = last + 10_000_000
+            return ledger.pairs() to cycle.proposal(snapshot, ledger.index())
+        }
+        val (pairs, proposal) = replay(extraIdle = false)
+        val (idlePairs, idleProposal) = replay(extraIdle = true)
+        assertTrue(pairs.isNotEmpty())
+        assertTrue("par abaixo de ${EquivalenceLedger.DRIVING_MIN_RPM} rpm", pairs.all { it.rpm >= EquivalenceLedger.DRIVING_MIN_RPM })
+        assertEquals("a lenta mudou os pares da curva", pairs, idlePairs)
+        assertTrue(proposal.getBoolean("known"))
+        assertEquals("a lenta mudou a proposta", proposal.getJSONArray("points").toString(), idleProposal.getJSONArray("points").toString())
+    }
+
     @Test
     fun `leitura incompleta da ECU nunca parece aquisicao nova de gasolina`() {
         fun acquisition(vararg points: JSONObject) = JSONObject().put("points", JSONArray(points.toList()))
@@ -522,12 +688,14 @@ class RefinementCycleTest {
         assertNull(EcuPetrolReference.petrolActivity(acquisition(petrol("SEM_DADO", false), petrol("AGUARDANDO", false))))
         assertEquals(2, EcuPetrolReference.petrolActivity(acquisition(petrol("ZONA_ADQUIRIDA", true), petrol("ATIVIDADE", true), petrol("AGUARDANDO", false))))
         assertEquals(0, EcuPetrolReference.petrolActivity(acquisition(petrol("AGUARDANDO", false), petrol("AGUARDANDO", false))))
-        // Curva de gasolina da ECU: só zonas adquiridas, nunca o buffer anterior.
+        // Curva de gasolina da ECU: só zonas adquiridas, nunca o buffer anterior; leitura incompleta = desconhecida.
         val ref = EcuPetrolReference.fromAcquisition(acquisition(
             petrol("ZONA_ADQUIRIDA", true).put("timeMs", 5.2).put("mapBar", 0.6),
             petrol("ATIVIDADE", true).put("timeMs", 6.0).put("mapBar", 0.7),
             petrol("ZONA_ADQUIRIDA", true).put("timeMs", 4.4).put("mapBar", 0.5).put("previous", true),
         ))
         assertEquals(listOf(0.6 to 5.2), ref)
+        assertNull(EcuPetrolReference.fromAcquisition(null))
+        assertNull(EcuPetrolReference.fromAcquisition(acquisition(petrol("SEM_DADO", false).put("index", 9))))
     }
 }

@@ -53,6 +53,7 @@ fun main(args: Array<String>) {
         val p = line.split(" ")
         ledger.accept(EquivalenceLedger.Frame(p[0].toLong(), p[1], p[2].toDouble(), p[3].toDouble(), p[4].toDouble()))
     }
+    println("ALLPAIRS|" + ledger.allPairs().joinToString(" ") { "%.5f,%.5f".format(java.util.Locale.ROOT, it.petrolRefMs, it.gasPetrolMs) })
     println("PAIRS|" + ledger.pairs().joinToString(" ") { "%.5f,%.5f".format(java.util.Locale.ROOT, it.petrolRefMs, it.gasPetrolMs) })
 }
 """
@@ -101,7 +102,7 @@ class RefinedEngineKotlinParity(unittest.TestCase):
             out = subprocess.run(["java", "-cp", f"{jar}:{JSON_JAR}", "MainKt", str(tmp / "input.txt"), str(tmp / "frames.txt")],
                                  check=True, capture_output=True, text=True, timeout=300).stdout
         lines = out.strip().splitlines()
-        kotlin = {line.split("|")[0]: line.split("|")[1:] for line in lines if not line.startswith("PAIRS|")}
+        kotlin = {line.split("|")[0]: line.split("|")[1:] for line in lines if not line.startswith(("PAIRS|", "ALLPAIRS|"))}
         self.assertEqual(len(kotlin), len(cases))
         for case_id, snap, pairs, scale in cases:
             expected = oracle.refine(snap, pairs, scale)
@@ -113,13 +114,20 @@ class RefinedEngineKotlinParity(unittest.TestCase):
             self.assertEqual(origins, "".join(o[0] for o in expected["origins"]), case_id)
             self.assertEqual(int(mature), expected["matureCommonPoints"], case_id)
             self.assertEqual(again == "true", expected["needsAnotherPass"], case_id)
-        # acumulador Kotlin == pares do script validado
-        kotlin_pairs = [tuple(float(x) for x in p.split(",")) for p in lines[-1].split("|", 1)[1].split()]
-        python_pairs = blind.telemetry_pairs(telemetry)
-        self.assertEqual(len(kotlin_pairs), len(python_pairs))
-        for (ka, kb), (pa, pb) in zip(kotlin_pairs, python_pairs):
-            self.assertAlmostEqual(ka, pa, places=4)
-            self.assertAlmostEqual(kb, pb, places=4)
+        # Acumulador Kotlin == pares do script validado com as regras de produção. Ajustado na rodada 2
+        # (revisão, item 20): o teste comparava pairs() com todos os casamentos (sem lenta fora nem gasolina
+        # congelada) e falharia (107 × 165); confere o caminho de produção, pairs(), e também allPairs().
+        def parse(prefix):
+            line = next(l for l in lines if l.startswith(prefix))
+            return [tuple(float(x) for x in p.split(",")) for p in line.split("|", 1)[1].split()]
+        for prefix, python_pairs in (("PAIRS|", blind.production_pairs(telemetry)),
+                                     ("ALLPAIRS|", blind.production_pairs(telemetry, driving_only=False))):
+            kotlin_pairs = parse(prefix)
+            self.assertGreater(len(python_pairs), 0, prefix)
+            self.assertEqual(len(kotlin_pairs), len(python_pairs), prefix)
+            for (ka, kb), (pa, pb) in zip(kotlin_pairs, python_pairs):
+                self.assertAlmostEqual(ka, pa, places=4)
+                self.assertAlmostEqual(kb, pb, places=4)
 
 
 if __name__ == "__main__":

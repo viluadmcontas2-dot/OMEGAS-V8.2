@@ -11,9 +11,9 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationManagerCompat
-import com.omegas.prohub.autocal.EcuPetrolReference
 import com.omegas.prohub.autocal.EquivalenceLedger
 import com.omegas.prohub.autocal.RefinementAutopilot
+import com.omegas.prohub.autocal.RefinementCycle
 import com.omegas.prohub.autocal.RefinementJournal
 import com.omegas.prohub.autocal.StallWatch
 import androidx.core.app.ServiceCompat
@@ -113,6 +113,9 @@ class TelemetryForegroundService : Service() {
     /** Fase do refino (ECU no automático → nossa vez → verificando → estável); só observa e avisa. */
     lateinit var refinementAutopilot: RefinementAutopilot
         private set
+    /** Cola do refino (pura, testável na JVM): gravações → diário, referência da ECU, proposta, avaliação e piloto. */
+    lateinit var refinement: RefinementCycle
+        private set
     /** Onde o motor apagou no GNV (desaceleração/embreagem): só observa, mostra no Refino. */
     lateinit var stallWatch: StallWatch
         private set
@@ -151,6 +154,7 @@ class TelemetryForegroundService : Service() {
         equivalence = EquivalenceLedger(File(paths.runtimeRoot, "equivalence_ledger.json"))
         refinementJournal = RefinementJournal(File(paths.runtimeRoot, "refinement_journal.json"))
         refinementAutopilot = RefinementAutopilot(File(paths.runtimeRoot, "refinement_autopilot.json"))
+        refinement = RefinementCycle(equivalence, refinementJournal, refinementAutopilot)
         stallWatch = StallWatch(File(paths.runtimeRoot, "stall_watch.json"))
         val documentsMirror = DocumentsSessionMirror(this)
         sessionRecorder = SessionRecorder(paths, settings, documentsMirror)
@@ -188,9 +192,8 @@ class TelemetryForegroundService : Service() {
             },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
-                // Mapa K mudou o gás: o GNV medido antes não vale mais; a verificação da curva perde validade.
-                equivalence.resetGas("MAPA_K_GRAVADO")
-                refinementJournal.interrupt("MAPA_K_GRAVADO")
+                // Mapa K mudou o gás: o GNV medido antes não vale mais; a verificação e a oferta de restaurar perdem validade.
+                refinement.mapKWritten()
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
                 link.markDataChanged("escrita K confirmada")
@@ -226,8 +229,7 @@ class TelemetryForegroundService : Service() {
                     force = true,
                 )
                 // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida.
-                equivalence.resetGas("AUTOMATCH_NATIVO")
-                refinementJournal.interrupt("AUTOMATCH_NATIVO")
+                refinement.nativeCurveChanged()
                 if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
             },
             onNativeAutoMatchObserved = { payload ->
@@ -729,95 +731,24 @@ class TelemetryForegroundService : Service() {
 
     /** Gravação de Curva K confirmada → experimento com o índice medido com a curva antiga. */
     private fun recordCurveExperiment(payload: JSONObject) {
-        var axisRaw: IntArray? = null
-        var beforeRaw: IntArray? = null
-        var afterRaw: IntArray? = null
         try {
-            val curve = payload.optJSONObject("curve") ?: return
-            val axis = curve.optJSONArray("axisRaw") ?: return
-            val after = curve.optJSONArray("factorsRaw") ?: return
-            if (axis.length() != 30 || after.length() != 30) return
-            val afterValues = IntArray(30) { after.optInt(it) }
-            val beforeValues = afterValues.copyOf()
-            val points = payload.optJSONArray("points")
-            if (points != null) for (i in 0 until points.length()) {
-                val point = points.optJSONObject(i) ?: continue
-                val index = point.optInt("index", -1)
-                if (index in 0 until 30) beforeValues[index] = point.optInt("currentRaw", beforeValues[index])
-            }
-            val axisValues = IntArray(30) { axis.optInt(it) }
-            axisRaw = axisValues; beforeRaw = beforeValues; afterRaw = afterValues
-            refinementJournal.recordCurveWrite(
-                beforeRaw = beforeValues,
-                afterRaw = afterValues,
-                axisRaw = axisValues,
-                indexBefore = equivalence.index(),
-                source = payload.optString("adjustmentId", "K_FACTOR"),
-                // Proposta, restaurar ou desfazer do Refino (pelo motivo que a tela passou); senão ajuste manual.
-                kind = RefinementJournal.kindFromReason(
-                    payload.optJSONArray("confirmedEvents")?.optJSONObject(0)?.optString("reason"),
-                ),
-            )
+            refinement.recordConfirmedCurve(payload)
         } catch (error: Exception) {
             log.add("WARN", "REFINO", "Experimento não registrado: ${error.message}")
         } finally {
-            // Curva nova só nos pontos alterados: sai só o GNV medido onde eles agem; o resto e a gasolina ficam.
-            val axis = axisRaw
-            val before = beforeRaw
-            val after = afterRaw
-            if (axis != null && before != null && after != null) {
-                equivalence.invalidateGas("CURVA_K_GRAVADA", RefinementJournal.affectedRangesMs(axis, before, after))
-            } else {
-                equivalence.resetGas("CURVA_K_GRAVADA")
-            }
-            payload.optJSONObject("curve")?.optJSONArray("factorsRaw")?.takeIf { it.length() == 30 }?.let { raw ->
-                equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) }))
-            }
             // A fase nova (medindo, sem a proposta antiga) já vale antes do BATCH_CONFIRMED chegar à tela.
             observeRefinement()
         }
     }
 
-    /** ECU online e motor em condução (RPM ≥ 1000, injeção acima de 1 ms): só então a medição do refino anda. */
+    /** ECU online, no GNV e em condução (RPM ≥ 1350, injeção acima de 1 ms): só então a medição do refino anda. */
     private fun refinementDriving(): Boolean {
         if (!usb.connected || !runtime.ready || !telemetryStore.isValid()) return false
         val now = status()
-        return now.rpm >= EquivalenceLedger.DRIVING_MIN_RPM && now.petrolMs >= EquivalenceLedger.MIN_PETROL_MS
+        return RefinementCycle.driving(now.rpm.toDouble(), now.petrolMs, now.fuelState)
     }
 
     private val refinementLock = Any()
-    private var refinementMemo: Pair<String, JSONObject>? = null
-
-    /**
-     * Proposta do refino calculada aqui, no mesmo lugar que decide a fase (a tela nunca calcula "pronto").
-     * Motor de correção inalterado (AutoMatchSnapshotAnalysis.analyzeRefined, memo por leitura + evidência);
-     * o diário só retira os pontos em medição ou bloqueados.
-     */
-    private fun refinementProposal(index: JSONObject): JSONObject {
-        val snapshot = if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson() else JSONObject()
-        val fields = snapshot.optJSONArray("fields")
-        if (fields == null || fields.length() == 0) return JSONObject().put("known", false).put("reason", "SEM_LEITURA_DA_ECU")
-        var axisMs: List<Double>? = null
-        var mulAct: IntArray? = null
-        for (i in 0 until fields.length()) {
-            val field = fields.optJSONObject(i) ?: continue
-            val raw = field.optJSONArray("rawValues") ?: continue
-            if (field.optString("status") != "VALID" || raw.length() != 30) continue
-            when (field.optString("key")) {
-                "PETR_INJ_TBP" -> axisMs = (0 until 30).map { raw.optInt(it) / com.omegas.prohub.autocal.AutoMatchRefinedEngine.AXIS_COUNTS_PER_MS }
-                "MUL_ACT" -> mulAct = IntArray(30) { raw.optInt(it) }
-            }
-        }
-        val pairs = equivalence.pairs()
-        val scale = axisMs?.let { refinementJournal.pointGainScale(it) }
-        val key = snapshot.optString("snapshotHash") + "|" + snapshot.optLong("capturedAtMs", 0L) + "|" +
-            equivalence.revision() + "|" + scale?.joinToString(",") { "%.3f".format(it) }
-        val analysis = refinementMemo?.takeIf { it.first == key }?.second
-            ?: com.omegas.prohub.autocal.AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, pairs.map { it.petrolRefMs to it.gasPetrolMs }, scale)
-                .also { refinementMemo = key to it }
-        mulAct?.let { refinementJournal.noteEcuCurve(it, analysis.optLong("mulActCapturedAtMs", 0L)) }
-        return refinementJournal.proposalFrom(analysis, index) { since -> equivalence.index(since) }
-    }
 
     /** Piloto do refino: decide a fase e avisa uma vez por fase. Nunca grava na ECU. */
     private fun observeRefinement() {
@@ -827,26 +758,16 @@ class TelemetryForegroundService : Service() {
     private fun observeRefinementLocked() {
         try {
             val progress = if (::nativeAutoCal.isInitialized) nativeAutoCal.autoMatchProgressJson() else null
-            // Referência de gasolina = a curva que a ECU já tem (Platina 00f6fd02); sem cabo fica a última lida.
-            // Aquisição nova de gasolina na ECU (buffers de gasolina zerados) é o único jeito de descongelar a própria.
-            if (usb.connected) {
-                val acquisition = progress?.optJSONObject("acquisition")
-                equivalence.setEcuPetrolReference(EcuPetrolReference.fromAcquisition(acquisition))
-                EcuPetrolReference.petrolActivity(acquisition)?.let(equivalence::notePetrolAcquisition)
-            }
+            val snapshot = if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson() else null
+            // Gravação da Curva K que falhou no meio (pontos com ACK) também é gravação do app.
+            try { refinement.noteCurveOperation(JSONObject(kFactor.statusJson()), snapshot) } catch (_: Exception) {}
             val before = refinementAutopilot.json().optString("phase")
-            val index = equivalence.index()
-            val proposal = try { refinementProposal(index) } catch (error: Exception) {
-                JSONObject().put("known", false).put("reason", "ERRO_NO_MOTOR").put("error", error.message ?: "erro")
-            }
-            val decided = refinementAutopilot.observe(
+            // Referência de gasolina da ECU (leitura desconhecida mantém a última), proposta e fase: tudo na cola.
+            val decided = refinement.observe(
                 ecuOnline = usb.connected && runtime.ready,
-                monitor = progress,
-                acquisition = progress?.optJSONObject("acquisition"),
-                index = index,
-                journal = refinementJournal.json(),
-                restoreCount = refinementJournal.restorePoints().length(),
-                proposal = proposal,
+                usbConnected = usb.connected,
+                progress = progress,
+                snapshot = snapshot,
             )
             if (decided.optString("phase") != before) {
                 sessionRecorder.record("refinement_phase", "autocal", decided, force = true)
@@ -875,7 +796,7 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         try {
             // "Depois" de cada gravação = só o GNV medido a partir dela; o prazo só anda rodando (parado/lenta não).
-            if (refinementJournal.evaluate(equivalence.index(), refinementDriving()) { since -> equivalence.index(since) }) stateChanged()
+            if (refinement.evaluate(refinementDriving())) stateChanged()
             observeRefinement()
             handleUsbTransition()
             if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
@@ -936,6 +857,11 @@ class TelemetryForegroundService : Service() {
                 map = live.optDouble("load_bar", 0.0),
                 petrolMs = live.optDouble("petrol_ms", 0.0),
                 gasMs = live.optDouble("gas_ms_diagnostic", 0.0),
+                // Gasolina com o motor frio (partida enriquecida) não vira referência; sem leitura de água = desconhecido.
+                engineHot = if (live.has("water_c") && !live.isNull("water_c")) {
+                    live.optDouble("water_c", Double.NaN).takeIf { it.isFinite() && it > -40.0 }
+                        ?.let { it >= LearningTemperatureSettings.currentMinimumWaterC }
+                } else null,
             ),
         )
 
