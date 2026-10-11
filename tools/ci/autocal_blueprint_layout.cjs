@@ -19,7 +19,8 @@ document.querySelector('.app-shell').classList.add('autocal-focus');
 document.querySelectorAll('[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen==='autocal'));
 window.setTimeout=()=>0;
 });
-await page.addScriptTag({content:fs.readFileSync(path.join(ui,'screens/autocal-cockpit.js'),'utf8')});
+// O cenário histórico usa também o cockpit daquele commit: a marcação mudou (botões viraram rodapé, dono 2026-10-11).
+await page.addScriptTag({content:cssRef ? execFileSync('git',['show',cssRef+':app/src/main/assets/ui/screens/autocal-cockpit.js'],{encoding:'utf8'}) : fs.readFileSync(path.join(ui,'screens/autocal-cockpit.js'),'utf8')});
 await page.evaluate(()=>{
 const fields=[['PETR_INJ_TBP',[2,5,10]],['PETR_MNFLD_PRESS_RV',[.3,.6,1]],['GAS_MNFLD_PRESS_RV',[.32,.65,1.05]],['MNFLD_PRESS_THD',Array.from({length:18},(_,i)=>.15+i/17)],['ACQUIRED_ZONES_GAS',[1,1,1,1]],['ACQUIRED_ZONES_PETROL',[1,1,1,1]],['AUTO_CAL_ENABLE',[1]]].map(([key,v])=>({key,status:'VALID',physicalValues:v,rawValues:v}));
 window.projection={ok:true,sessionId:1,referenceUsable:true,snapshot:{available:true,snapshotHash:'first',fields},analysis:{},nativeStatus:{autoCalEnabled:1},nativeSnapshot:{available:true,fields},acquisitionZones:{gas:[true,true,true,true],petrol:[true,true,true,true]}};
@@ -36,7 +37,9 @@ title:box(document.querySelector('.autocal-focus-title')),
 metrics:box(document.querySelector('.autocal-focus-metrics')),
 chart:box(document.querySelector('.autocal-chart-host')),
 inspector:box(document.querySelector('.autocal-chart-inspector')),
-actions:[...document.querySelectorAll('.autocal-focus-actions > button,.autocal-focus-actions > details > summary')].map(e=>({text:e.textContent,...box(e)}))};
+actions:[...document.querySelectorAll('.autocal-focus-actions > button,.autocal-focus-actions > details > summary')].map(e=>({text:e.textContent,...box(e)})),
+screenScroll:(s=>s.scrollHeight-s.clientHeight)(document.querySelector('[data-screen="autocal"]')),
+nav:box(document.querySelector('.side-rail'))};
 });
 await page.screenshot({path:'build/ui-evidence/'+(cssRef ? (cssRef===BASELINE?'before-overlap':'before-clipping') : 'after-'+height)+'.png'});
 await page.close();return result;
@@ -57,7 +60,11 @@ for(const result of [after,fullHeight]) {
 assert.equal(inside(result),true,'primary touch targets must fit the toolbar');
 assert.equal(clear(result),true,'primary controls must not cover telemetry or title');
 assert.equal(visibleInspector(result),true,'point information must remain below graph and inside viewport');
-assert.ok(result.chart.height>=440,'graph must remain dominant in the 672px Android WebView');
+// Nav inferior sempre visível e nenhuma rolagem (dono, 2026-10-11): o gráfico ganha a largura toda e a altura que sobra.
+assert.ok(result.chart.height>=380&&result.chart.width>=1200,'graph must remain dominant with the bottom navigation visible');
+assert.ok(result.screenScroll<=1,'AutoCal never scrolls');
+assert.ok(result.nav.height>=60&&result.nav.bottom<=result.height+1,'bottom navigation stays visible');
+assert.ok(result.actions.every(a=>a.y>=result.chart.bottom),'buttons live below the graph, within reach');
 // Sem controle de leitura anterior (dono, 2026-10-11): não há mais botão de comparação para medir.
 }
 } finally { await browser.close(); }

@@ -652,6 +652,17 @@
       }
     }
 
+    /** Detalhes ocupa o lugar do gráfico; tocar de novo volta ao gráfico. */
+    toggleDetails(force) {
+      const cockpit = this.panel?.querySelector('.autocal-cockpit');
+      const button = this.panel?.querySelector('[data-autocal-details]');
+      if (!cockpit || !button) return;
+      const details = typeof force === 'boolean' ? force : cockpit.dataset.autocalView !== 'details';
+      cockpit.dataset.autocalView = details ? 'details' : 'chart';
+      button.setAttribute('aria-expanded', String(details));
+      button.textContent = details ? 'Gráfico' : 'Detalhes';
+    }
+
     inject() {
       if (!document.querySelector('link[data-autocal-cockpit-style]')) {
         const link = document.createElement('link');
@@ -665,14 +676,14 @@
         const panel = document.createElement('div');
         panel.className = 'autocal-route-panel';
         panel.innerHTML = `
-          <section class="autocal-cockpit" aria-label="Auto Calibration nativa">
+          <section class="autocal-cockpit" aria-label="Auto Calibration nativa" data-autocal-view="chart">
             <header class="autocal-focus-toolbar" aria-label="AutoCal · Gasolina e GNV">
               <div class="autocal-focus-title">
                 <div class="autocal-title-line">
                   <h3>AutoCal · Gasolina e GNV</h3>
                   <span id="autocalLiveFuel" class="autocal-fuel-chip" data-fuel-state="unknown">—</span>
                 </div>
-                <p>Aquisição e ajuste da malha de injeção</p>
+                <p id="autocalHeadline" class="autocal-headline">Aguardando AutoCal</p>
               </div>
 
               <div class="autocal-focus-metrics" aria-live="polite">
@@ -696,24 +707,6 @@
                 <p id="autocalLiveNarrative" class="autocal-live-narrative" hidden>O cursor AGORA aparece quando a telemetria MP48 é válida. Ele nunca vira evidência adquirida.</p>
               </div>
 
-              <div class="autocal-focus-actions">
-                <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
-                <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV</button>
-                <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
-                <details class="autocal-reset-menu">
-                  <summary>Ações avançadas</summary>
-                  <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
-                    <section class="autocal-reset-group" data-reset-scope="advanced">
-                      <small>CONTROLE MANUAL</small>
-                      <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
-                      <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1.0</button>
-                      <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                      <p>O AutoMatch nativo é automático e decidido pela ECU. Estes botões são intervenções manuais: AutoMatch manual força uma execução; Resetar Curva K coloca toda a curva em 1.0; Nova aquisição completa reinicia a aquisição observada pelo comando amplo original. Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0.</p>
-                    </section>
-                  </div>
-                </details>
-              </div>
             </header>
 
             <section class="autocal-reference-card" aria-label="CURVA DE AQUISIÇÃO · Gasolina × GNV">
@@ -731,6 +724,27 @@
                 <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Linhas mostram referência; bolinhas adquiridas podem ser readquiridas individualmente.</span></aside>
               </div>
             </section>
+
+            <!-- Rodapé único (dono, 2026-10-11): botões embaixo, à esquerda, ao alcance da mão. -->
+            <div class="autocal-focus-actions" role="toolbar" aria-label="Ações do AutoCal">
+              <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
+              <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
+              <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV</button>
+              <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
+              <details class="autocal-reset-menu">
+                <summary>Ações avançadas</summary>
+                <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
+                  <section class="autocal-reset-group" data-reset-scope="advanced">
+                    <small>CONTROLE MANUAL</small>
+                    <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
+                    <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1.0</button>
+                    <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
+                    <p>O AutoMatch nativo é automático e decidido pela ECU. Estes botões são intervenções manuais: AutoMatch manual força uma execução; Resetar Curva K coloca toda a curva em 1.0; Nova aquisição completa reinicia a aquisição observada pelo comando amplo original. Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0.</p>
+                  </section>
+                </div>
+              </details>
+              <button type="button" class="autocal-details-action" data-autocal-details aria-expanded="false">Detalhes</button>
+            </div>
 
             <details class="autocal-secondary-details" open>
               <summary>Contexto da aquisição</summary>
@@ -811,6 +825,7 @@
     }
 
     bind() {
+      this.panel?.querySelector('[data-autocal-details]')?.addEventListener('click', () => this.toggleDetails());
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
         if (action) this.runOperational(action);
@@ -1076,6 +1091,7 @@
       this.text('autocalHumanTitle', human.title);
       this.text('autocalHumanProgress', human.progress);
       this.text('autocalHumanAction', human.nextAction);
+      this.text('autocalHeadline', human.title + ' · ' + human.progress);
       this.text('autocalHumanAutoMatch', human.autoMatch);
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
