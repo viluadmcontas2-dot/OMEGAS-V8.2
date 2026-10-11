@@ -132,7 +132,7 @@
               this.buildGrid();
               this.renderGrid();
               this.renderEditor();
-              text('mapSourceStatus', `ECU confirmada · ${result.writableCells || 144} células graváveis`);
+              text('mapSourceStatus', 'Mapa lido da ECU');
               this.store.patch({ map: { ...this.store.get().map, state: 'ready', data: result, selection: 0, review: null } });
               this.applyContext(this.pendingContext || this.store.get().routeContext);
             } catch (error) {
@@ -196,7 +196,8 @@
       this.host.appendChild(table);
       const technical = document.createElement('div');
       technical.className = 'technical-row-note';
-      technical.innerHTML = '<b>Linha técnica 0C protegida</b><span>Visível ao protocolo, fora de qualquer seleção em massa e fora da escrita manual.</span>';
+      // Uma vez só, em palavras do dono (2026-10-11); a 13ª linha (0C) fica fora da grade e da escrita manual.
+      technical.innerHTML = '<b>Última linha: só leitura</b><span>13ª linha da ECU, fora desta grade</span>';
       this.host.appendChild(technical);
 
       table.addEventListener('click', event => {
@@ -261,9 +262,11 @@
       if (value === null) return;
       try {
         this.editor.setAdjustment(mode, value);
-        if (this.editor.selectionCount() > 0) {
+        // Somar/percentual 0 não muda nada (dono, 2026-10-11): sem prévia, sem aviso, "Gravar" fica desabilitado.
+        const noChange = value === 0 && mode !== 'target';
+        if (!noChange && this.editor.selectionCount() > 0) {
           const preview = this.api.previewMapAdjustment(this.editor.selectedCells(), mode, value);
-          if (!preview?.ok || !Array.isArray(preview.items)) throw new Error(preview?.error || 'Prévia Kotlin do Mapa K indisponível.');
+          if (!preview?.ok || !Array.isArray(preview.items)) throw new Error(preview?.error || 'Prévia do Mapa K indisponível.');
           this.editor.applyNativePreview(preview.items);
         }
         this.review = null;
@@ -304,15 +307,19 @@
 
     renderEditor(activeRow, activeColumn) {
       const count = this.editor.selectionCount();
+      // "Gravar" só com algo a gravar (dono, 2026-10-11): selecionado sem mudança diz "Escolha quanto mudar".
+      const changes = count ? this.editor.changeCount() : 0;
       text('mapSelectionCount', `${count} selecionada${count === 1 ? '' : 's'}`);
       const button = document.getElementById('mapReviewButton');
       if (button) {
-        button.disabled = count === 0;
-        button.textContent = count ? `Gravar ${count} alteração${count === 1 ? '' : 'ões'} na ECU` : 'Selecione células';
+        button.disabled = count === 0 || changes === 0;
+        button.textContent = !count ? 'Selecione células'
+          : !changes ? 'Escolha quanto mudar'
+            : `Gravar ${changes} alteração${changes === 1 ? '' : 'ões'} na ECU`;
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();
-        text('mapActiveCell', `${fmt(snapshot.axes.petrolBins[activeRow], 1)} ms · ${snapshot.axes.rpmBins[activeColumn]} RPM`);
+        text('mapActiveCell', `${fmt(snapshot.axes.petrolBins[activeRow], 1)} ms · ${fmt(snapshot.axes.rpmBins[activeColumn], 0)} RPM`);
       }
       this.store.patch({ map: { ...this.store.get().map, selection: count, review: this.review } });
     }
@@ -369,7 +376,7 @@
       text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células confirmadas`);
 
       if (operation.busy) {
-        text('mapOperationTitle', operation.writerMessage || 'Checkpoint · escrita · ACK · readback');
+        text('mapOperationTitle', operation.writerMessage || 'Gravando e conferindo…');
         return;
       }
       if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
@@ -379,7 +386,8 @@
         if (result) {
           result.dataset.level = 'ok';
           result.querySelector('b').textContent = `${operation.confirmedCells || operation.totalCells} alterações confirmadas pela ECU`;
-          result.querySelector('span').textContent = 'ACK e readback concluídos. O mapa será relido para atualizar a tela.';
+          // "Gravado" só aqui: BATCH_CONFIRMED + readbackValid (ACK e leitura de volta da ECU); texto para leigo (dono, 2026-10-11).
+          result.querySelector('span').textContent = 'Gravado e conferido na ECU. O mapa será relido.';
         }
         this.writeStartedAt = null;
         this.editor.reset();

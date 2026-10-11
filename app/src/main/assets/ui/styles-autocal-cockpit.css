@@ -2275,6 +2275,61 @@
 
 .app-shell.autocal-focus .autocal-secondary-details { display: none; }
 
+/* Ponto tocado (dono, 2026-10-11): "Reaprender este ponto" sempre à vista, sem corte. Os botões do rodapé quebram em
+   duas linhas ("Reaprender GNV" / "(apaga o atual)") para sobrar largura; o inspetor fica numa linha só (nowrap):
+   texto à esquerda, botões à direita, nunca empurrados para uma segunda linha escondida. */
+.app-shell.autocal-focus .autocal-focus-actions > button {
+  min-width: 128px;
+  max-width: 190px;
+  padding: 0 14px;
+  white-space: normal;
+  line-height: 1.12;
+}
+.app-shell.autocal-focus .autocal-reset-menu > summary { padding: 0 14px; }
+.autocal-action-note { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; opacity: .86; }
+.app-shell.autocal-focus .autocal-chart-inspector {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 4px 12px;
+}
+.app-shell.autocal-focus .autocal-chart-inspector > b,
+.app-shell.autocal-focus .autocal-chart-inspector > span { flex: 0 1 auto; min-width: 0; font-size: 14px; line-height: 1.25; }
+.autocal-point-copy { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+.app-shell.autocal-focus .autocal-point-copy b { font-size: 14px; line-height: 1.2; color: #e7f0f7; }
+.app-shell.autocal-focus .autocal-point-copy span { font-size: 13px; line-height: 1.25; color: #b9c6d3; }
+.app-shell.autocal-focus .autocal-point-actions,
+.app-shell.autocal-focus .autocal-point-batch {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 6px;
+  height: 48px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.app-shell.autocal-focus .autocal-chart-inspector.has-batch .autocal-point-copy span { display: none; }
+/* Texto do menu "Ações avançadas" legível (antes 10 px). */
+.app-shell.autocal-focus .autocal-reset-popover p { color: #c9bdc4; font-size: 14px; line-height: 1.35; }
+.app-shell.autocal-focus .autocal-point-batch button[data-autocal-clear-point-selection] { width: 84px; }
+.app-shell.autocal-focus .autocal-point-actions button,
+.app-shell.autocal-focus .autocal-point-batch button {
+  flex: 0 0 auto;
+  width: 118px;
+  min-height: 48px;
+  height: 48px;
+  margin: 0;
+  padding: 0 8px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.12;
+  white-space: normal;
+}
 /* Refino: mesma grade; passos e próxima ação entre o gráfico e os botões. */
 .app-shell.autocal-focus section.autocal-cockpit.refino-cockpit {
   grid-template-rows: auto auto minmax(0, 1fr) auto var(--act-h);

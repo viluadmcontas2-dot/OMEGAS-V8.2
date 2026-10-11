@@ -33,7 +33,9 @@ assert "Confirmação Android aberta" not in cockpit
 # Um toque (dono, 2026-10-11): preparar já executa; não existe botão de segunda confirmação.
 assert "Executar agora" not in cockpit
 assert "this.confirmPrepared();" in cockpit
-assert "ACK e readback" in cockpit
+# (dono, 2026-10-11: texto para leigo): o aviso diz "Enviado. Conferindo na ECU…"; "Concluído" só com o estado CONFIRMED (dado após o readback).
+assert "Enviado. Conferindo na ECU…" in cockpit
+assert "name === 'CONFIRMED' ? 'Concluído · '" in cockpit
 assert "actionManager.execute(preparationId)" in bridge
 assert "AlertDialog" not in bridge
 

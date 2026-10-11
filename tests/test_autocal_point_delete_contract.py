@@ -49,7 +49,7 @@ for token in (
     "MNFLD_PRESS_BUF",
     "NUM_BUF_UPD_PETR",
     "data-autocal-acquired-index",
-    "Readquirir este ponto",
+    "Reaprender este ponto",  # (dono, 2026-10-11: texto para leigo)
 ):
     assert token in cockpit, token
 assert "data-autocal-reacquire-point" in cockpit

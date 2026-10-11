@@ -37,6 +37,14 @@
   // Formatadores criados uma vez (mesmo texto de toLocaleString; recriar a cada quadro custava ~25 µs cada).
   const RPM_FORMAT = new Intl.NumberFormat('pt-BR');
   const TWO_DECIMALS = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const DECIMALS = {};
+  /** Número com vírgula decimal (dono, 2026-10-11: uma grafia só, "0,42"), mesmo formato do resto do app. */
+  function decimal(value, digits) {
+    const number = finite(value);
+    if (number === null) return '—';
+    if (!DECIMALS[digits]) DECIMALS[digits] = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    return DECIMALS[digits].format(number);
+  }
   // Chaves que mudam a cada tick do monitor nativo e que a tela não mostra: não contam como "leitura nova".
   // (o snapshot nativo também carimba cada releitura incremental: operational/acquisition/referenceRefresh*ElapsedMs.)
   const VOLATILE_KEYS = new Set(['updatedAt', 'sourceUpdatedAt', 'acquisitionRefresh', 'referenceRefresh',
@@ -92,15 +100,15 @@
   }
   function actionLabel(action) {
     return ({
-      ENABLE_AUTO_CAL: 'Habilitar Auto Calibration',
-      DISABLE_AUTO_CAL: 'Desabilitar Auto Calibration',
-      MANUAL_AUTOMATCH: 'AutoMatch manual',
+      ENABLE_AUTO_CAL: 'Retomar aprendizado',
+      DISABLE_AUTO_CAL: 'Pausar aprendizado',
+      MANUAL_AUTOMATCH: 'Ajuste automático agora',
       FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
       FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
-      RESET_PETROL: 'Readquirir gasolina',
-      RESET_GAS: 'Readquirir GNV',
-      RESET_K_FACTOR: 'Resetar Curva K para 1.0',
-      RESET_ALL: 'Nova aquisição completa',
+      RESET_PETROL: 'Reaprender gasolina (apaga o atual)',
+      RESET_GAS: 'Reaprender GNV (apaga o atual)',
+      RESET_K_FACTOR: 'Curva K toda em 1,0',
+      RESET_ALL: 'Recomeçar tudo',
     })[action] || action;
   }
 
@@ -173,7 +181,7 @@
           : acquisitionState === 'WAITING_TELEMETRY_SETTLE'
             ? 'Conectando à aquisição'
             : enabled === 1 && autoMatchQuotaReached
-              ? 'AutoCal ativo · AutoMatch ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch)
+              ? 'AutoCal ativo · Ajustes automáticos ' + Math.round(autoMatchCount) + ' de ' + Math.round(maxAutoMatch)
               : enabled === 1 ? 'AutoCal adquirindo'
               : enabled === 0 ? 'AutoCal pausado'
               : snapshot.available ? 'AutoCal aguardando estado' : 'Aguardando AutoCal';
@@ -299,7 +307,7 @@
       const raw = String(value || '').trim().toUpperCase();
       if (!raw || raw === '—' || raw === '--') return { kind: 'unknown', label: '—', active: false };
       if (raw.includes('TRANS') || raw.includes('COMUT')) return { kind: 'transition', label: 'Transição', active: false };
-      if (raw.includes('CUTOFF')) return { kind: 'cutoff', label: 'Cutoff', active: false };
+      if (raw.includes('CUTOFF')) return { kind: 'cutoff', label: 'Corte', active: false };
       if (raw.includes('DESLIG') || raw.includes('SEM_MOTOR') || raw.includes('ENGINE_OFF')) {
         return { kind: 'off', label: 'Desligado', active: false };
       }
@@ -686,7 +694,7 @@
         const panel = document.createElement('div');
         panel.className = 'autocal-route-panel';
         panel.innerHTML = `
-          <section class="autocal-cockpit" aria-label="Auto Calibration nativa">
+          <section class="autocal-cockpit" aria-label="AutoCal">
             <header class="autocal-focus-toolbar" aria-label="AutoCal · Gasolina e GNV">
               <div class="autocal-focus-title">
                 <div class="autocal-title-line">
@@ -710,7 +718,7 @@
                   <b id="autocalLiveRpm">—</b>
                 </div>
                 <div class="autocal-focus-metric autocal-focus-automatch">
-                  <small>AutoMatch</small>
+                  <small>Ajustes automáticos</small>
                   <b id="autocalAutoMatchCount">—</b>
                 </div>
                 <div class="autocal-focus-zone">
@@ -730,12 +738,12 @@
                 <div class="autocal-chart-legend">
                   <span class="petrol">Curva gasolina (ECU)</span>
                   <span class="gas">Curva GNV (ECU)</span>
-                  <span class="acquired">Pontos da aquisição corrente</span>
+                  <span class="acquired">Pontos já medidos</span>
                   <span class="current-band">Zona atual</span>
                   <span class="live">AGORA</span>
-                  <span id="autocalReferenceCount">0 pontos nativos</span>
+                  <span id="autocalReferenceCount">0 pontos da ECU</span>
                 </div>
-                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Linhas mostram referência; bolinhas adquiridas podem ser readquiridas individualmente.</span></aside>
+                <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Toque numa bolinha para reaprender só aquele ponto.</span></aside>
               </div>
             </section>
 
@@ -743,17 +751,18 @@
             <div class="autocal-focus-actions" role="toolbar" aria-label="Ações do AutoCal">
               <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
               <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
-              <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV</button>
-              <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina</button>
+              <!-- Texto para leigo (dono, 2026-10-11): o botão diz que apaga o que já foi aprendido. -->
+              <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span></button>
+              <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span></button>
               <details class="autocal-reset-menu">
                 <summary>Ações avançadas</summary>
                 <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
                   <section class="autocal-reset-group" data-reset-scope="advanced">
                     <small>CONTROLE MANUAL</small>
-                    <button type="button" data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual</button>
-                    <button type="button" data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1.0</button>
-                    <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Nova aquisição completa</button>
-                    <p>O AutoMatch nativo é automático e decidido pela ECU. Estes botões são intervenções manuais: AutoMatch manual força uma execução; Resetar Curva K coloca toda a curva em 1.0; Nova aquisição completa reinicia a aquisição observada pelo comando amplo original. Pausar aquisição é a única ação desta tela que solicita AUTO_CAL_ENABLE=0.</p>
+                    <button type="button" data-autocal-action="MANUAL_AUTOMATCH">Ajuste automático agora</button>
+                    <button type="button" data-autocal-action="RESET_K_FACTOR">Curva K toda em 1,0</button>
+                    <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Recomeçar tudo</button>
+                    <p>A ECU faz os ajustes automáticos sozinha. Ajuste automático agora: pede um ajuste já. Curva K toda em 1,0: volta a curva ao neutro. Recomeçar tudo: apaga o que a ECU aprendeu. Nenhum destes botões pausa o aprendizado.</p>
                   </section>
                 </div>
               </details>
@@ -1046,12 +1055,11 @@
       const result = this.api.setAcquisitionEnabled?.(enable) || { ok: false, error: 'Ação operacional indisponível.' };
       if (result?.ok !== true) {
         this.operationalPending = false;
-        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível alterar a aquisição AutoCal.' } });
+        this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível pausar nem retomar o aprendizado.' } });
       } else {
         this.expectActionResult();
-        this.store.patch({ alert: { level: 'ok', message: enable
-          ? 'Início enviado. Confirmando ACK e leitura de volta da ECU…'
-          : 'Pausa enviada. Confirmando ACK e leitura de volta da ECU…' } });
+        // Texto para leigo (dono, 2026-10-11); "Concluído" só chega com o estado CONFIRMED (ACK + leitura de volta).
+        this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na ECU…' } });
       }
       this.refresh();
     }
@@ -1081,7 +1089,7 @@
       }
       this.prepared = null;
       this.expectActionResult();
-      this.store.patch({ alert: { level: 'working', message: 'Comando enviado para a ECU. Aguarde ACK e readback.' } });
+      this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na ECU…' } });
       this.refresh();
     }
 
@@ -1131,10 +1139,10 @@
         toggle.dataset.action = action || '';
         toggle.disabled = !action || this.operationalPending;
         toggle.textContent = this.operationalPending
-          ? 'Confirmando ECU…'
+          ? 'Conferindo na ECU…'
           : action === 'DISABLE_AUTO_CAL'
-            ? 'Pausar aquisição'
-            : action === 'ENABLE_AUTO_CAL' ? 'Iniciar aquisição' : 'Aguardando estado';
+            ? 'Pausar aprendizado'
+            : action === 'ENABLE_AUTO_CAL' ? 'Retomar aprendizado' : 'Aguardando estado';
       }
 
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
@@ -1242,7 +1250,7 @@
       const acquisitionCopy = enabled === 1
         ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
         : enabled === 0 ? 'Aquisição pausada. O ponto AGORA é somente telemetria.' : 'Estado de aquisição ainda não confirmado.';
-      this.text('autocalLiveNarrative', rpmLabel + ' · ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. ' + acquisitionCopy);
+      this.text('autocalLiveNarrative', rpmLabel + ' · ' + decimal(live.petrolMs, 2) + ' ms · ' + decimal(live.mapBar, 3) + ' bar. ' + acquisitionCopy);
     }
 
     /** Peças do AGORA no gráfico, guardadas por gráfico desenhado (cada redesenho cria uma escala nova). */
@@ -1552,19 +1560,25 @@
           this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' · fora da janela');
           host.innerHTML = '<div class="chart-empty"><b>REFERÊNCIA FORA DA JANELA</b><span>Os vetores físicos foram lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '. Aguarde a próxima atualização automática da ECU. O AGORA continua vivo sem virar referência.</span></div>';
           this.text('autocalChartInspector', 'Referência física temporalmente incoerente. Aguarde a próxima atualização automática da ECU; o cursor AGORA continua somente como telemetria.');
+        } else if (this.ecuDisconnected()) {
+          // Sem ECU (dono, 2026-10-11: texto para leigo): diz o que fazer, nada é inventado no gráfico.
+          this.text('autocalReferenceCount', '0 pontos da ECU');
+          this.chartShowsLive = false;
+          host.innerHTML = '<div class="chart-empty"><b>ECU desconectada</b><span>Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.</span></div>';
+          this.text('autocalChartInspector', 'ECU desconectada · Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
           this.chartShowsLive = true;
-          host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não publicou uma referência física utilizável. O AGORA continua nos valores ao lado, sem inventar escala.</span></div>';
+          host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não mandou a curva de referência. Os números ao lado continuam ao vivo; o gráfico aparece sozinho.</span></div>';
           this.text('autocalChartInspector', live
-            ? 'AGORA: ' + live.petrolMs.toFixed(2) + ' ms · ' + live.mapBar.toFixed(3) + ' bar. Referência nativa indisponível.'
-            : 'Aguardando Petrol Inj. e MAP nativos.');
+            ? 'AGORA: ' + decimal(live.petrolMs, 2) + ' ms · ' + decimal(live.mapBar, 3) + ' bar. A ECU ainda não mandou a referência.'
+            : 'Aguardando a ECU mandar injeção e MAP.');
         }
         this.renderLiveNarrative();
         return;
       }
 
-      this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' nativo' + (points.length === 1 ? '' : 's'));
+      this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' da ECU');
 
       const height = 400;
       const width = chartWidthFor(host, height);
@@ -1607,11 +1621,11 @@
       const grid = yTicks.map(value => {
         const y = yFor(value);
         return '<line class="autocal-grid-line" x1="' + padLeft + '" y1="' + y.toFixed(1) + '" x2="' + (width - padRight) + '" y2="' + y.toFixed(1) + '"></line>' +
-          '<text class="autocal-axis-tick-y" x="' + (padLeft - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + value.toFixed(2) + '</text>';
+          '<text class="autocal-axis-tick-y" x="' + (padLeft - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + decimal(value, 2) + '</text>';
       }).join('') + xTicks.map(value => {
         const x = xFor(value);
         return '<line class="autocal-grid-line vertical" x1="' + x.toFixed(1) + '" y1="' + padTop + '" x2="' + x.toFixed(1) + '" y2="' + (height - padBottom) + '"></line>' +
-          '<text class="autocal-axis-tick-x" x="' + x.toFixed(1) + '" y="' + (height - 23) + '" text-anchor="middle">' + value.toFixed(1) + '</text>';
+          '<text class="autocal-axis-tick-x" x="' + x.toFixed(1) + '" y="' + (height - 23) + '" text-anchor="middle">' + decimal(value, 1) + '</text>';
       }).join('');
 
       const zoneMarkup = zoneSurface.map(zone => {
@@ -1724,31 +1738,39 @@
       }
       this.selectedAcquiredPoint = point.fuel + ':' + point.index;
       this.selectedReferenceIndex = null;
+      // Texto para leigo (dono, 2026-10-11): vírgula decimal, "pronto" e "12 medições (mínimo 8)" no lugar de "12 / 8 amostras".
       const progressText = point.acquisitionState === 'ACQUIRED'
-        ? 'adquirido'
+        ? 'pronto'
         : finite(point.progress) !== null
           ? 'coletando · ' + Math.round(point.progress * 100) + '%'
           : 'coletando';
-      const thresholdText = finite(point.threshold) !== null ? ' / ' + Math.round(point.threshold) : '';
+      const counter = finite(point.counter);
+      const threshold = finite(point.threshold);
+      // A contagem fica inteira numa linha (espaços que não quebram): "12 medições (mínimo 8)".
+      const countText = ((counter === null ? '—' : RPM_FORMAT.format(Math.round(counter))) +
+        (counter !== null && Math.round(counter) === 1 ? ' medição' : ' medições') +
+        (threshold !== null ? ' (mínimo ' + RPM_FORMAT.format(Math.round(threshold)) + ')' : '')).replace(/ /g, '\u00a0');
       const key = point.fuel + ':' + point.index;
       const inBatch = this.selectedAcquiredPoints.has(key);
       const selectedCount = this.selectedAcquiredPoints.size;
+      // Com pontos marcados, a ação vale para os marcados: "Reaprender N marcados" ocupa o lugar do botão de um ponto só,
+      // e tudo continua numa linha, sem nada cortado (trava sem rolagem, estado "ponto tocado").
       const batchActions = selectedCount > 0
         ? '<div class="autocal-point-batch" data-count="' + selectedCount + '">' +
-          '<span><b>' + selectedCount + '</b> selecionado' + (selectedCount === 1 ? '' : 's') + ' para readquirir</span>' +
-          '<button type="button" data-autocal-reacquire-selected>Readquirir selecionados</button>' +
+          '<button type="button" data-autocal-reacquire-selected>Reaprender ' + selectedCount + ' marcado' + (selectedCount === 1 ? '' : 's') + '</button>' +
           '<button type="button" class="secondary" data-autocal-clear-point-selection>Limpar</button></div>'
         : '';
-      host.innerHTML = '<b>' + point.fuelLabel + ' · ponto ' + point.point + ' · Z' + point.zone + ' · ' + progressText + '</b>' +
-        '<span>' + point.petrolMs.toFixed(2) + ' ms · MAP ' + point.mapBar.toFixed(3) + ' bar · ' +
-        Math.round(point.counter) + thresholdText + ' amostras</span>' +
+      const singleAction = selectedCount > 0 ? '' :
+        '<button type="button" class="autocal-point-reacquire" data-autocal-reacquire-point ' +
+        'data-autocal-reacquire-fuel="' + point.fuel + '" data-autocal-reacquire-index="' + point.index + '">' +
+        'Reaprender este ponto</button>';
+      host.classList?.toggle?.('has-batch', selectedCount > 0);
+      host.innerHTML = '<div class="autocal-point-copy"><b>' + point.fuelLabel + ' · ponto ' + point.point + ' · zona ' + point.zone + ' · ' + progressText + '</b>' +
+        '<span>' + decimal(point.petrolMs, 2) + ' ms · ' + decimal(point.mapBar, 3) + ' bar · ' + countText + '</span></div>' +
         '<div class="autocal-point-actions">' +
         '<button type="button" class="secondary" data-autocal-toggle-point-selection ' +
         'data-autocal-reacquire-fuel="' + point.fuel + '" data-autocal-reacquire-index="' + point.index + '" aria-pressed="' + (inBatch ? 'true' : 'false') + '">' +
-        (inBatch ? 'Remover da seleção' : 'Selecionar junto') + '</button>' +
-        '<button type="button" class="autocal-point-reacquire" data-autocal-reacquire-point ' +
-        'data-autocal-reacquire-fuel="' + point.fuel + '" data-autocal-reacquire-index="' + point.index + '">' +
-        'Readquirir este ponto</button></div>' + batchActions;
+        (inBatch ? 'Desmarcar' : 'Marcar mais pontos') + '</button>' + singleAction + '</div>' + batchActions;
       document.querySelectorAll('#autocalReferenceChart [data-autocal-acquired-index]').forEach(node => {
         const nodeKey = String(node.dataset.autocalAcquiredFuel) + ':' + String(node.dataset.autocalAcquiredIndex);
         node.classList.toggle('selected', nodeKey === this.selectedAcquiredPoint);
@@ -1771,7 +1793,7 @@
         return;
       }
       this.expectActionResult();
-      this.store.patch({ alert: { level: 'working', message: 'Readquisição enviada para a ECU. Aguarde ACK e readback deste ponto.' } });
+      this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na ECU…' } });
       this.refresh();
     }
  
@@ -1814,8 +1836,8 @@
       this.store.patch({
         alert: {
           level: 'working',
-          message: count + ' ponto' + (count === 1 ? '' : 's') +
-            ' em readquisição. A seleção só será limpa após confirmação da ECU.',
+          message: 'Enviado: ' + count + ' ponto' + (count === 1 ? '' : 's') +
+            ' para reaprender. Conferindo na ECU…',
         },
       });
       this.refresh();
@@ -1828,10 +1850,11 @@
       this.selectedReferenceIndex = point.index;
       this.selectedAcquiredPoint = null;
       const mapDelta = point.gasMapBar - point.petrolMapBar;
-      host.innerHTML = '<b>Ponto ' + (point.index + 1) + ' · ' + point.petrolMs.toFixed(2) + ' ms</b>' +
-        '<span>MAP gasolina ' + point.petrolMapBar.toFixed(3) + ' bar · MAP GNV ' + point.gasMapBar.toFixed(3) + ' bar' +
-        ' · ΔMAP ' + (mapDelta > 0 ? '+' : '') + mapDelta.toFixed(3) + ' bar' +
-        (finite(point.gasEquivalentMs) === null ? '' : ' · GNV equivalente ' + point.gasEquivalentMs.toFixed(2) + ' ms') + '</span>';
+      host.classList?.toggle?.('has-batch', false);
+      host.innerHTML = '<div class="autocal-point-copy"><b>Ponto ' + (point.index + 1) + ' · ' + decimal(point.petrolMs, 2) + ' ms</b>' +
+        '<span>MAP gasolina ' + decimal(point.petrolMapBar, 3) + ' bar · MAP GNV ' + decimal(point.gasMapBar, 3) + ' bar' +
+        ' · diferença ' + (mapDelta > 0 ? '+' : '') + decimal(mapDelta, 3) + ' bar' +
+        (finite(point.gasEquivalentMs) === null ? '' : ' · GNV equivalente ' + decimal(point.gasEquivalentMs, 2) + ' ms') + '</span></div>';
       document.querySelectorAll('#autocalReferenceChart [data-autocal-ref-index]').forEach(node => {
         node.classList.toggle('selected', Number(node.dataset.autocalRefIndex) === Number(point.index));
       });
@@ -1945,6 +1968,13 @@
     text(id, value) {
       const node = document.getElementById(id);
       if (node && node.textContent !== String(value ?? '—')) node.textContent = String(value ?? '—');
+    }
+
+    /** ECU sabidamente desligada: o monitor nativo diz DISCONNECTED ou o app diz USB desconectado (desconhecido não conta). */
+    ecuDisconnected() {
+      if (String(this.state?.state || '').toUpperCase() === 'DISCONNECTED') return true;
+      const status = typeof this.store?.get === 'function' ? this.store.get()?.status : null;
+      return status?.usbConnected === false;
     }
   }
 

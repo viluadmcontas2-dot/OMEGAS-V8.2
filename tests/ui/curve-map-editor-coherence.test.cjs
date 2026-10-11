@@ -16,7 +16,7 @@ assert.equal(map.includes('openReview()'), false, 'Mapa K não deve exigir uma t
 assert.equal(map.includes('writeReview()'), false, 'Mapa K deve ter uma única confirmação humana');
 assert.equal(curve.includes('Atual da ECU'), false); // label lives in the shared HTML shell, not recalculated in JS
 assert.equal(curve.includes('globalTrendRemoved'), false); // global/local split belongs to Kotlin Advisor, not UI
-assert.equal(map.includes('Linha técnica 0C protegida'), true); // map shell keeps the protocol-row safety copy next to the editor
+assert.equal(map.includes('Última linha: só leitura'), true); // map shell keeps the protocol-row safety copy next to the editor (dono, 2026-10-11: texto para leigo)
 assert.equal(curveState.includes('PREVISAO_OMEGAS'), true);
 assert.equal(curveState.includes('OBSERVADO_SEM_PREVISAO'), true);
 assert.equal(curveState.includes('SEM_PREVISAO'), true);

@@ -153,10 +153,18 @@
   }
 
   /** Pontos da ECU com atividade; desconhecido (aquisição não lida, campo indisponível) = "—". */
+  // "Gasolina" por extenso (dono, 2026-10-11): "Gas" se lê gás = GNV.
   function ecuPointsText(pilot) {
     const petrol = finite(pilot?.petrolValid);
     const gas = finite(pilot?.gasValid);
-    return petrol === null || gas === null ? '—' : `Gas ${fmt(petrol, 0)} · GNV ${fmt(gas, 0)}`;
+    return petrol === null || gas === null ? '—' : `Gasolina ${fmt(petrol, 0)} · GNV ${fmt(gas, 0)}`;
+  }
+
+  /** Nossos pontos (faixas densas medidas pelo app); sem a medição (lista ausente) = "—", nunca "0". */
+  function ourPointsText(dense) {
+    const petrol = Array.isArray(dense?.petrol) ? dense.petrol.length : null;
+    const gas = Array.isArray(dense?.gas) ? dense.gas.length : null;
+    return petrol === null || gas === null ? '—' : `Gasolina ${fmt(petrol, 0)} · GNV ${fmt(gas, 0)}`;
   }
 
   /** Resultado por ponto da gravação que a tela mostra (o Kotlin já deu o veredito de cada ponto). */
@@ -220,7 +228,7 @@
               <p id="refinoHeadline">Aguardando a ECU</p>
             </div>
             <div class="autocal-focus-metrics" aria-live="polite">
-              <div class="autocal-focus-metric"><small>GNV ÷ Gasolina</small><b><span id="refinoRatio">—</span></b></div>
+              <div class="autocal-focus-metric"><small>GNV vs gasolina</small><b><span id="refinoRatio">—</span></b></div>
               <div class="autocal-focus-metric"><small>Pontos da ECU</small><b class="refino-split" id="refinoEcuPoints">—</b></div>
               <div class="autocal-focus-metric"><small>Nossos pontos</small><b class="refino-split" id="refinoOurPoints">—</b></div>
             </div>
@@ -428,10 +436,7 @@
       setText('refinoNext', next + (op.phase === 'idle' ? this.gasNote(eq) : ''));
       setText('refinoRatio', pct(eq.ratio));
       setText('refinoEcuPoints', ecuPointsText(pilot));
-      const dense = eq.denseBands || {};
-      const oursPetrol = Array.isArray(dense.petrol) ? dense.petrol.length : 0;
-      const oursGas = Array.isArray(dense.gas) ? dense.gas.length : 0;
-      setText('refinoOurPoints', `Gas ${oursPetrol} · GNV ${oursGas}`);
+      setText('refinoOurPoints', ourPointsText(eq.denseBands));
       const steps = document.getElementById('refinoSteps');
       if (steps) {
         const at = PHASES.findIndex(([k]) => k === (phase === 'RESTAURAR_TRECHO' ? 'VERIFICANDO' : phase));
@@ -584,7 +589,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, secondaryActions, reviewList, reviewGate, actionEnabled, ecuPointsText, resultRows, resultSummary, REASONS };
+  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, secondaryActions, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);

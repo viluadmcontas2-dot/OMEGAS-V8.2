@@ -79,7 +79,8 @@ class V82IntegralRegressionContract(unittest.TestCase):
         # Um toque (dono, 2026-10-11): preparar já executa; sem botão de segunda confirmação.
         self.assertNotIn('Executar agora', cockpit)
         self.assertIn('this.confirmPrepared();', cockpit)
-        self.assertIn('ACK e readback', cockpit)
+        # (dono, 2026-10-11: texto para leigo): "Concluído" só com o estado CONFIRMED, que o Kotlin dá depois do readback.
+        self.assertIn("name === 'CONFIRMED' ? 'Concluído · '", cockpit)
 
     def test_predictor_never_bootstraps_confidence_from_predictions(self):
         surface = read('app/src/main/java/com/omegas/prohub/learning/PredictorSurface.kt')

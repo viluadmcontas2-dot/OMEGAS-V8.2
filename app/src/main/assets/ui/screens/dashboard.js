@@ -31,8 +31,17 @@
       const value = String(raw || "\u2014").toUpperCase();
       if (value.includes("PETROL") || value.includes("GASOLINA")) return "GASOLINA";
       if (value.includes("CNG") || value.includes("GNV") || value === "GAS") return "GNV";
-      if (value.includes("CUTOFF")) return "CUTOFF";
+      if (value.includes("CUTOFF")) return "CORTE";
       return value || "\u2014";
+    }
+    /** Idade do último dado em palavras (dono, 2026-10-11: texto para leigo); desconhecido = "\u2014". */
+    function ageText(age) {
+      if (age === null || age < 0) return "\u2014";
+      if (age <= 2500) return "atualizado agora";
+      const seconds = Math.round(age / 1e3);
+      if (seconds < 60) return "sem dados há " + seconds + " s";
+      if (seconds < 3600) return "sem dados há " + Math.round(seconds / 60) + " min";
+      return "sem dados há " + integerFormat.format(Math.round(seconds / 3600)) + " h";
     }
     function ensureStyles() {
       if (document.querySelector("link[data-dashboard-now]")) return;
@@ -61,7 +70,8 @@
             }
           });
         }
-        this.root.innerHTML = '\n        <div class="now-page-intro">\n          <div><small>AGORA</small><h2>O que o motor est\xE1 fazendo</h2></div>\n          <p>Informa\xE7\xE3o essencial, grande e sem repeti\xE7\xE3o.</p>\n        </div>\n\n        <div class="now-dashboard-shell">\n          <section class="now-hero-card" aria-label="Leitura principal">\n            <div class="now-hero-copy">\n              <small class="now-hero-label">PETROL INJECTION</small>\n              <p id="dashHeroStatus" class="now-hero-status">Aguardando ECU</p>\n              <div class="now-hero-value"><strong id="dashHeroPetrol">\u2014</strong><em>ms</em></div>\n              <span class="now-hero-note">Leitura em tempo real da MP48 \xB7 sem duplicar telemetria</span>\n            </div>\n            <div class="now-hero-visual" aria-hidden="true"><span></span><i></i></div>\n          </section>\n\n          <section class="now-metric-grid" aria-label="Telemetria essencial">\n            <article class="now-metric-card"><small>RPM</small><b id="dashRpm">\u2014</b><span>rota\xE7\xE3o</span></article>\n            <article class="now-metric-card"><small>MAP</small><b id="dashMap">\u2014</b><span>bar</span></article>\n            <article class="now-metric-card"><small>COMBUST\xCDVEL</small><b id="dashFuel">\u2014</b><span>MP48</span></article>\n            <article class="now-metric-card"><small>LEVELS RAW</small><b id="dashLevelsRaw">\u2014</b><span>MP48 bruto \xB7 sem %</span></article>\n            <article class="now-metric-card now-refino-card" role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b><span id="dashRefinoNext">toque para abrir</span></article>\n            <article class="now-metric-card"><small>C\xC9LULA</small><b id="dashCell">\u2014</b><span>posi\xE7\xE3o atual</span></article>\n          </section>\n\n          <section id="dashHealth" class="now-session-card" data-level="offline">\n            <span class="state-indicator"></span>\n            <div class="now-session-copy"><small>SESS\xC3O</small><b>MP48 desconectado</b><p data-health-detail>Conecte a ECU para iniciar a sess\xE3o</p></div>\n            <div class="now-session-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashAge">\u2014</span></div>\n          </section>\n        </div>';
+        // Textos para leigo (dono, 2026-10-11): sem inglês, sem "MP48" (só "ECU"), sem frase de desenvolvedor.
+        this.root.innerHTML = '\n        <div class="now-page-intro">\n          <div><small>AGORA</small><h2>O que o motor est\xE1 fazendo</h2></div>\n        </div>\n\n        <div class="now-dashboard-shell">\n          <section class="now-hero-card" aria-label="Leitura principal">\n            <div class="now-hero-copy">\n              <small class="now-hero-label">INJEÇÃO (ms)</small>\n              <p id="dashHeroStatus" class="now-hero-status">Aguardando ECU</p>\n              <div class="now-hero-value"><strong id="dashHeroPetrol">\u2014</strong><em>ms</em></div>\n              <span class="now-hero-note">Tempo que a ECU manda injetar</span>\n            </div>\n            <div class="now-hero-visual" aria-hidden="true"><span></span><i></i></div>\n          </section>\n\n          <section class="now-metric-grid" aria-label="Telemetria essencial">\n            <article class="now-metric-card"><small>RPM</small><b id="dashRpm">\u2014</b><span>rota\xE7\xE3o</span></article>\n            <article class="now-metric-card"><small>MAP</small><b id="dashMap">\u2014</b><span>bar</span></article>\n            <article class="now-metric-card"><small>COMBUST\xCDVEL</small><b id="dashFuel">\u2014</b><span>em uso</span></article>\n            <article class="now-metric-card"><small>NÍVEL DO GNV</small><b id="dashLevelsRaw">\u2014</b><span>sensor sem escala</span></article>\n            <article class="now-metric-card now-refino-card" role="button" data-dash-refino><small>REFINO</small><b id="dashRefino">\u2014</b><span id="dashRefinoNext">toque para abrir</span></article>\n            <article class="now-metric-card"><small>C\xC9LULA</small><b id="dashCell">\u2014</b><span>posi\xE7\xE3o atual</span></article>\n          </section>\n\n          <section id="dashHealth" class="now-session-card" data-level="offline">\n            <span class="state-indicator"></span>\n            <div class="now-session-copy"><small>SESS\xC3O</small><b>ECU desconectada</b><p data-health-detail>Ligue a igni\xE7\xE3o e confira o cabo USB.</p></div>\n            <div class="now-session-facts"><span id="dashEcuStatus">ECU desconectada</span><span id="dashAge">\u2014</span></div>\n          </section>\n        </div>';
       }
       /** Fase do refino (o nosso AutoCal) em uma linha; consulta a cada 3 s, no máximo. */
       renderRefino() {
@@ -71,7 +81,7 @@
         const api = root.OmegasUi && root.OmegasUi.AutoCalApi;
         const eq = api && typeof api.refinementPhase === "function" ? api.refinementPhase() : null;
         const pilot = eq && eq.autopilot || {};
-        const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU auto", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Pronta", VERIFICANDO: "Medindo", RESTAURAR_TRECHO: "Piorou", ESTAVEL: "Est\xE1vel" };
+        const labels = { SEM_ECU: "Sem ECU", ECU_TRABALHANDO: "ECU aprendendo", COLETANDO_NOSSOS: "Coletando", PROPOSTA_PRONTA: "Pronta", VERIFICANDO: "Medindo", RESTAURAR_TRECHO: "Piorou", ESTAVEL: "Est\xE1vel" };
         text("dashRefino", labels[pilot.phase] || "\u2014");
         text("dashRefinoNext", pilot.phase === "ESTAVEL" ? "pode desconectar" : pilot.phase === "PROPOSTA_PRONTA" ? "toque para revisar" : "toque para abrir");
       }
@@ -104,10 +114,9 @@
         text("dashLevelsRaw", levelsRaw === null ? "\u2014" : integerFormat.format(Math.round(levelsRaw)));
         this.renderRefino();
         text("dashCell", row !== null && column !== null ? "".concat(row + 1, "\xD7").concat(column + 1) : "\u2014");
-        text("dashEcuStatus", connected ? "ECU online" : "ECU offline");
-        const ageLabel = age === null || age < 0 ? "\u2014" : age < 1e3 ? "".concat(Math.round(age), " ms") : "".concat(fmt(age / 1e3, 1), " s");
-        text("dashAge", ageLabel);
-        let heroStatus = "Conecte a MP48 para iniciar a sess\xE3o";
+        text("dashEcuStatus", connected ? "ECU conectada" : "ECU desconectada");
+        text("dashAge", ageText(age));
+        let heroStatus = "ECU desconectada";
         if (connected && stuck) heroStatus = "Comunica\xE7\xE3o da ECU exige aten\xE7\xE3o";
         else if (connected && expired) heroStatus = "Telemetria temporariamente expirada";
         else if (connected && stale) heroStatus = "Telemetria com atraso";
@@ -116,12 +125,12 @@
         const health = document.getElementById("dashHealth");
         if (health) {
           let level = "ok";
-          let message = "Leitura em tempo real";
-          let detail = "ECU e telemetria principal atualizadas";
+          let message = "Conexão OK";
+          let detail = "Dados da ECU chegando em tempo real";
           if (!connected) {
             level = "offline";
-            message = "MP48 desconectado";
-            detail = "Conecte a ECU para iniciar a sess\xE3o";
+            message = "ECU desconectada";
+            detail = "Ligue a igni\xE7\xE3o e confira o cabo USB.";
           } else if (stuck) {
             level = "critical";
             message = "Comunica\xE7\xE3o travada";

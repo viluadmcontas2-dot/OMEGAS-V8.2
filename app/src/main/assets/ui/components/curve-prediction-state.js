@@ -24,7 +24,9 @@
       const badge = document.createElement('span');
       badge.id = 'curvePredictionState';
       badge.className = 'curve-prediction-state';
-      badge.textContent = 'SEM PREVISÃO';
+      // Sem previsão não mostra selo nenhum (dono, 2026-10-11: sem "SEM PREVISÃO" na tela).
+      badge.textContent = '';
+      badge.style.display = 'none'; // o CSS do selo usa inline-flex, que venceria o atributo hidden
       heading.appendChild(badge);
       this.badge = badge;
       if (!document.querySelector('link[data-curve-prediction-style]')) {
@@ -65,11 +67,13 @@
       // Roda a cada quadro de telemetria: só escreve no DOM quando o estado muda.
       if (this.badge.dataset.state === stateName) return;
       this.badge.dataset.state = stateName;
+      // Estado interno continua com o nome técnico (data-state); a tela só mostra palavra de leigo, ou nada.
       this.badge.textContent = stateName === 'PREVISAO_OMEGAS'
-        ? 'PREVISÃO OMEGAS'
+        ? 'AJUSTE PRONTO'
         : stateName === 'OBSERVADO_SEM_PREVISAO'
-          ? 'OBSERVADO · SEM PREVISÃO'
-          : 'SEM PREVISÃO';
+          ? 'MEDIDO'
+          : '';
+      this.badge.style.display = stateName === 'SEM_PREVISAO' ? 'none' : '';
       this.badge.title = actionable
         ? 'Existe alvo K exato registrado; ainda exige revisão humana.'
         : error !== null

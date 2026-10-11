@@ -31,7 +31,7 @@ class PredictorMapResidualContract(unittest.TestCase):
         self.assertIn('Mp48WorkClass.SAFETY', self.kwrite)
 
     def test_ui_keeps_0c_protected_and_single_manual_confirmation_before_write(self):
-        self.assertIn('Linha técnica 0C protegida', self.map_ui)
+        self.assertIn('Última linha: só leitura', self.map_ui)  # (dono, 2026-10-11: texto para leigo)
         self.assertIn('previewMapAdjustment', self.map_ui)
         self.assertIn('writePrepared()', self.map_ui)
         self.assertIn('this.editor.buildReview()', self.map_ui)

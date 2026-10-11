@@ -52,7 +52,8 @@ test('Agora Verde preserva a hierarquia multimídia Blue', () => {
   assert.equal(occurrences(dashboard, '>RPM<'), 1);
   assert.equal(occurrences(dashboard, '>MAP<'), 1);
   assert.equal(occurrences(dashboard, '>COMBUSTÍVEL<'), 1);
-  assert.equal(occurrences(dashboard, '>LEVELS RAW<'), 1);
+  assert.equal(occurrences(dashboard, '>NÍVEL DO GNV<'), 1); // (dono, 2026-10-11: texto para leigo): o valor continua RAW
+  assert.equal(occurrences(dashboard, '>sensor sem escala<'), 1);
   assert.equal(occurrences(dashboard, '>REFINO<'), 1);
   assert.equal(occurrences(dashboard, '>CÉLULA<'), 1);
   assert.doesNotMatch(dashboard, /dashHeroRpm|dashLtft|GAS INJ\./);

@@ -34,7 +34,7 @@ const snapshot = {
 };
 
 const human = model.humanState(snapshot, { state: 'READY', autoCalEnabled: 1, latestSnapshot: snapshot });
-assert.equal(human.title, 'AutoCal ativo · AutoMatch 3/3');
+assert.equal(human.title, 'AutoCal ativo · Ajustes automáticos 3 de 3'); // (dono, 2026-10-11: texto para leigo)
 assert.equal(human.petrolZones, 4);
 assert.equal(human.gasZones, 3);
 assert.equal(human.petrolZoneFlags.join(','), 'true,true,true,true');

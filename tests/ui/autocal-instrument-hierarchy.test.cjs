@@ -41,5 +41,5 @@ test('overlapping petrol and GNV curves remain distinguishable without geometric
   assert.match(css, /\.autocal-reference-line\.petrol:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*4/);
   assert.match(css, /\.autocal-reference-line\.gas:not\(\.previous\)\s*\{[\s\S]*stroke-width:\s*2\.5/);
   assert.match(css, /\.autocal-reference-point\.petrol\s*\{[\s\S]*fill:\s*#07101a[\s\S]*stroke:\s*#78b7ff/);
-  assert.match(js, /ΔMAP/);
+  assert.match(js, / · diferença ' \+/); // (dono, 2026-10-11: texto para leigo): "ΔMAP" virou "diferença"
 });

@@ -10,10 +10,12 @@ const dashboard = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screen
 const autocal = fs.readFileSync(path.join(ROOT, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
 
 test('LEVELS RAW belongs to Dashboard/AGORA and is absent from AutoCal', () => {
-  assert.match(dashboard, /LEVELS RAW/);
+  assert.match(dashboard, /NÍVEL DO GNV/); // (dono, 2026-10-11: texto para leigo): o valor continua RAW (sensor sem escala)
+  assert.match(dashboard, /sensor sem escala/);
   assert.match(dashboard, /dashLevelsRaw/);
   assert.match(dashboard, /level_raw/);
   assert.doesNotMatch(autocal, /LEVELS RAW/);
+  assert.doesNotMatch(autocal, /NÍVEL DO GNV/);
   assert.doesNotMatch(autocal, /autocalLiveLevel/);
   assert.doesNotMatch(autocal, /levelRaw/);
   assert.doesNotMatch(autocal, /level_raw/);

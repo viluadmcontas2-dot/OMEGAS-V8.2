@@ -17,8 +17,11 @@ for forbidden in (
 assert "persistentCurveChanges(state)" in CURVE
 assert "finite(exact?.after)" in CURVE
 assert "this.api.previewCurvePoint(index, requested)" in CURVE
-assert "A sugestão ainda não possui alvo K exato calculado pelo Kotlin" in CURVE
-assert "A UI só desenha alvos K exatos vindos do Kotlin" in CURVE
+# (dono, 2026-10-11: texto para leigo): sem "Kotlin" na tela; a regra continua no código: a proposta desenhada só vem da prévia
+# nativa ou do alvo exato registrado, e sugestão sem alvo exato não prepara nada.
+assert "Esta sugestão ainda não tem um valor exato para gravar." in CURVE
+assert "proposedFactor: finite(proposal?.targetFactor) ?? finite(exact?.after) ?? null" in CURVE
+assert "Linha do meio = GNV igual à gasolina." in CURVE
 
 # A adaptação científica/quantização continua no Kotlin.
 assert "KFactorProtocol.rawFromFactor" in ADAPTER

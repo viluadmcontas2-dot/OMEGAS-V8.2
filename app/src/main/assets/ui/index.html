@@ -107,7 +107,7 @@
 
           <div class="map-workspace">
             <section class="map-surface">
-              <div class="surface-toolbar"><div><button id="mapSelectAll" type="button" class="quiet-button">Selecionar 144</button><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button></div><span>Linha técnica 0C protegida</span></div>
+              <div class="surface-toolbar"><div><button id="mapSelectAll" type="button" class="quiet-button">Selecionar tudo</button><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button></div></div>
               <div id="mapGrid" class="map-grid-host"><div class="empty-state"><b>Mapa K</b><span>A leitura começa ao abrir esta área.</span></div></div>
             </section>
             <aside class="inspector-panel map-editor-panel">
@@ -115,12 +115,13 @@
               <label class="field-label"><span>Como ajustar</span><select id="mapAdjustmentMode"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select></label>
               <label class="field-label"><span>Valor</span><input id="mapAdjustmentValue" type="number" inputmode="decimal" step="1" value="0"></label>
               <div class="nudge-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
-              <div class="safety-copy"><b>Prévia somente</b><span>Confira atual→alvo no mapa. Gravar é a única confirmação humana; Checkpoint, ACK e readback são automáticos.</span></div>
+              <!-- Texto para leigo (dono, 2026-10-11): um toque em Gravar; a conferência na ECU (resposta + leitura de volta) é automática. -->
+              <div class="safety-copy"><b>Nada foi gravado.</b><span>Confira os números e toque em Gravar; o app confere na ECU sozinho.</span></div>
               <button id="mapReviewButton" type="button" class="primary wide" disabled>Selecione células</button>
             </aside>
           </div>
 
-          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Escrita manual em andamento</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence"><span>Checkpoint</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
+          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Escrita manual em andamento</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence"><span>Preparar</span><span>Gravação</span><span>Resposta da ECU</span><span>Conferência</span></div></div></div>
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="mapOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="mapDismissResult" type="button" class="secondary">Voltar ao mapa</button></div></div>
         </section>
 
@@ -135,7 +136,7 @@
               <section class="global-learning-surface">
                 <header class="surface-heading"><div><small>APRENDIZADO GLOBAL</small><h3>Gasolina × GNV por Petrol Inj.</h3></div><div class="global-legend"><span><i class="petrol-dot"></i>Gasolina</span><span><i class="cng-dot"></i>No GNV</span></div></header>
                 <div id="curveLearningChart" class="curve-learning-chart"><div class="empty-state">Colete gasolina e GNV para formar a referência global.</div></div>
-                <div class="curve-learning-axis"><span>Petrol Inj. →</span><span>MAP ↑</span></div>
+                <div class="curve-learning-axis"><span>Injeção (ms) →</span><span>Fator K ↑</span></div>
               </section>
               <aside id="curveLearningSummary" class="inspector-panel global-learning-summary">
                 <div class="detail-empty"><b>Aprendizado global</b><span>A referência da gasolina e o comportamento no GNV aparecerão aqui conforme a evidência chegar.</span></div>
@@ -147,21 +148,21 @@
                 <section class="curve-surface">
                   <div class="curve-legend"><span><i class="line actual"></i>Atual da ECU</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque em qualquer um dos 30 pontos</span></div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
-                  <div class="curve-axis">Petrol Inj. →</div>
+                  <div class="curve-axis">Injeção (ms) →</div>
                   <details class="evidence-disclosure"><summary><span><small>CONTEXTO</small><b>Evidência técnica</b></span><em>abrir</em></summary><div id="curveEvidenceList" class="evidence-grid"></div></details>
                 </section>
                 <aside class="inspector-panel curve-editor-panel">
                   <div class="editor-heading"><div><small>PONTO ATIVO</small><h3 id="curveActivePoint">Selecione um ponto</h3></div></div>
                   <div class="current-value"><small>Atual</small><b id="curveCurrentFactor">—</b></div>
-                  <label class="field-label"><span>Fator desejado</span><input id="curveTargetFactor" type="number" inputmode="decimal" step="0.001" min="0.6" max="4"></label>
+                  <label class="field-label"><span>Fator desejado</span><input id="curveTargetFactor" type="text" inputmode="decimal" autocomplete="off" placeholder="ex.: 1,02"></label>
                   <div class="curve-nudge-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>
-                  <div id="curveTargetNormalized" class="normalized-preview">Prévia calculada pelo Kotlin</div>
+                  <div id="curveTargetNormalized" class="normalized-preview">Prévia do valor que será gravado</div>
                   <button id="curvePreparePoint" type="button" class="secondary wide">Preparar este ponto</button>
                   <div class="context-separator"></div>
                   <div class="editor-heading"><div><small>PROPOSTA</small><h3>Pontos preparados</h3></div><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
-                  <div id="curveProposalList" class="proposal-list"><p>Nenhum ponto preparado.</p></div>
-                  <div class="safety-copy"><b>Uma confirmação</b><span>Confira antes→depois acima. Gravar inicia backup, escrita, ACK e readback sem outro “tem certeza?”.</span></div>
-                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Prepare pontos</button>
+                  <div id="curveProposalList" class="proposal-list"><p>Toque num ponto do gráfico e em “Preparar este ponto”.</p></div>
+                  <div class="safety-copy"><b>Uma confirmação</b><span>Confira o antes → depois. Gravar grava e confere na ECU sozinho, sem outro “tem certeza?”. Quer uma cópia antes? Salvar curva atual.</span></div>
+                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Nenhum ponto preparado</button>
                 </aside>
               </div>
             </div>
@@ -177,10 +178,10 @@
             <button id="curveBackupSave" type="button" class="secondary">Salvar curva atual</button>
             <select id="curveBackupSelect" aria-label="Backups da Curva K"><option value="">Backups</option></select>
             <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Restaurar backup</button>
-            <button id="curveResetButton" type="button" class="quiet-button">Resetar Curva K</button>
+            <button id="curveResetButton" type="button" class="quiet-button">Curva K toda em 1,0</button>
           </div>
 
-          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Backup</span><span>Escrita</span><span>ACK</span><span>Readback</span></div></div></div>
+          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Preparar</span><span>Gravação</span><span>Resposta da ECU</span><span>Conferência</span></div></div></div>
           <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
         </section>
 

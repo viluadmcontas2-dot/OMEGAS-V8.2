@@ -173,7 +173,17 @@ test('pontos da ECU desconhecidos mostram —, nunca Gas 0 · GNV 0 (rodada 2, i
   assert.equal(m.ecuPointsText({ petrolValid: null, gasValid: null }), '—');
   assert.equal(m.ecuPointsText({}), '—');
   assert.equal(m.ecuPointsText({ petrolValid: 12, gasValid: null }), '—');
-  assert.equal(m.ecuPointsText({ petrolValid: 12, gasValid: 0 }), 'Gas 12 · GNV 0');
+  assert.equal(m.ecuPointsText({ petrolValid: 12, gasValid: 0 }), 'Gasolina 12 · GNV 0'); // (dono, 2026-10-11: texto para leigo): "Gas" se lê gás
+});
+
+test('nossos pontos desconhecidos mostram —, nunca Gasolina 0 · GNV 0 (dono, 2026-10-11)', () => {
+  const m = model();
+  assert.equal(m.ourPointsText(undefined), '—');
+  assert.equal(m.ourPointsText({}), '—');
+  assert.equal(m.ourPointsText({ petrol: [1, 2] }), '—', 'sem a lista do GNV não se inventa 0');
+  assert.equal(m.ourPointsText({ petrol: [1, 2, 3], gas: [] }), 'Gasolina 3 · GNV 0', 'lista vazia medida é 0 de verdade');
+  assert.doesNotMatch(SOURCE, /`Gas \$\{/, 'sem "Gas" no lugar de gasolina');
+  assert.match(SOURCE, /<small>GNV vs gasolina<\/small>/);
 });
 
 test('a tela não pede a análise do motor (a ponte não recalcula; rodada 2, item 19)', () => {

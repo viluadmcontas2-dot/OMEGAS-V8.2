@@ -8,10 +8,11 @@ const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/
 
 assert.doesNotMatch(cockpit, /<summary>Corrigir aquisição<\/summary>/,
   'reaquisição de combustível não deve ficar escondida em menu para uso na multimídia');
-assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Readquirir GNV<\/button>/,
-  'Reset Gas deve aparecer como intenção humana de readquirir GNV');
-assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Readquirir gasolina<\/button>/,
-  'Reset Petrol deve aparecer como intenção humana de readquirir gasolina');
+// (dono, 2026-10-11: texto para leigo): o botão diz que reaprende e que apaga o que já foi aprendido.
+assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reaprender GNV <span class="autocal-action-note">\(apaga o atual\)<\/span><\/button>/,
+  'Reset Gas deve aparecer como intenção humana de reaprender GNV');
+assert.match(cockpit, /class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reaprender gasolina <span class="autocal-action-note">\(apaga o atual\)<\/span><\/button>/,
+  'Reset Petrol deve aparecer como intenção humana de reaprender gasolina');
 assert.ok(
   cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
   'reaquisição diária deve aparecer antes do reset pesado'
@@ -20,16 +21,18 @@ assert.match(cockpit, /<summary>Ações avançadas<\/summary>/,
   'AutoMatch manual, Curva K e reset completo devem ficar em complexidade sob demanda');
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
-assert.match(cockpit, /data-autocal-action="MANUAL_AUTOMATCH">AutoMatch manual<\/button>/);
+assert.match(cockpit, /data-autocal-action="MANUAL_AUTOMATCH">Ajuste automático agora<\/button>/); // (dono, 2026-10-11: texto para leigo)
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOCAL"/,
   'Finish AutoCal original nasce desabilitado e não deve virar etapa diária');
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOMATCH"/,
   'Finish AutoMatch pertence ao PanelDbg oculto do ProgBase e não deve aparecer na superfície diária');
-assert.match(cockpit, /O AutoMatch nativo é automático e decidido pela ECU\./,
+// (dono, 2026-10-11: texto para leigo)
+assert.match(cockpit, /A ECU faz os ajustes automáticos sozinha\./,
   'a UX deve explicar que o AutoMatch normal é ECU-owned, separado do AutoMatch manual');
-assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Resetar Curva K para 1\.0<\/button>/,
+assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Curva K toda em 1,0<\/button>/,
   'Reset K deve usar a semântica provada do ProgBase/MUL_ACT');
-assert.match(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Nova aquisição completa<\/button>/);
+assert.match(cockpit, /data-autocal-action="RESET_ALL"[^>]*>Recomeçar tudo<\/button>/);
+assert.doesNotMatch(cockpit, /AUTO_CAL_ENABLE=0/, 'o texto do menu não mostra código cru');
 assert.match(cockpit, /prepare\(action\) \{[^}]*this\.api\.prepare\(action\)[\s\S]{0,420}this\.confirmPrepared\(\);/,
   'backup nunca é gate do reset: um toque prepara e executa (dono, 2026-10-11)');
 assert.doesNotMatch(cockpit.slice(cockpit.indexOf('    prepare(action) {'), cockpit.indexOf('    confirmPrepared() {')), /backup/i,
@@ -39,8 +42,8 @@ assert.ok(
   cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
   'a interface deve manter a readquisição diária fora do menu avançado'
 );
-assert.match(cockpit, /RESET_GAS:\s*'Readquirir GNV'/);
-assert.match(cockpit, /RESET_PETROL:\s*'Readquirir gasolina'/);
+assert.match(cockpit, /RESET_GAS:\s*'Reaprender GNV \(apaga o atual\)'/); // (dono, 2026-10-11: texto para leigo)
+assert.match(cockpit, /RESET_PETROL:\s*'Reaprender gasolina \(apaga o atual\)'/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
 assert.doesNotMatch(cockpit, />Reset gasolina<\/button>/);
 assert.doesNotMatch(cockpit, /renderReview/, 'reaquisição em um toque, sem tela de revisão (dono, 2026-10-11)');

@@ -63,6 +63,7 @@ const requestBody = source.slice(requestStart, requestEnd);
 assert.match(requestBody, /pendingPointReacquisitionKeys = new Set/);
 assert.doesNotMatch(requestBody, /selectedAcquiredPoints\.clear\(\)/,
   'início assíncrono não pode apagar a seleção antes do resultado final');
-assert.match(source, /A seleção só será limpa após confirmação da ECU/);
+// (dono, 2026-10-11: texto para leigo): o aviso diz só "Enviado… Conferindo na ECU"; a regra (não limpar antes do resultado) segue provada acima.
+assert.match(requestBody, /para reaprender\. Conferindo na ECU…/);
 
 console.log('AUTOCAL_BATCH_RECOVERY_INTENT=PASS');

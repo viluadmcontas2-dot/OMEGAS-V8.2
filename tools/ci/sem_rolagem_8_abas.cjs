@@ -1,6 +1,6 @@
 // Trava do dono (2026-10-11): nenhuma das 8 abas rola nem tem sub-rolagem, nada fica cortado, a navegação inferior
 // nunca some e não existe botão "Abas". Mede o app real (index.html) no Chromium a 1280x672 (WebView do carro) e
-// 1280x720, também nos estados que mais crescem (Ações avançadas do AutoCal, evidência da Curva K). Ponte AutoCal simulada
+// 1280x720, também nos estados que mais crescem (Ações avançadas e ponto tocado do AutoCal, evidência da Curva K). Ponte AutoCal simulada
 // só para haver dados; nenhum dado vai para o app.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -53,11 +53,34 @@ function fakeBridge() {
   };
 }
 
-// Estados extras que mais crescem, por aba.
+// Estados extras que mais crescem, por aba: [nome, toques, seletores que precisam ficar visíveis e inteiros].
+// Toque { dispatch } entrega o clique direto ao elemento (bolinha do gráfico SVG, que o AGORA pode cobrir).
 const EXTRAS = {
   curve: [['evidência aberta', ['.evidence-disclosure > summary']]],
-  autocal: [['Ações avançadas', ['.autocal-reset-menu > summary']]],
+  autocal: [
+    ['Ações avançadas', ['.autocal-reset-menu > summary']],
+    // Dono (2026-10-11): ao tocar num ponto, "Reaprender este ponto" aparece inteiro (antes ia para uma 2ª linha cortada).
+    ['ponto tocado', [{ dispatch: '[data-autocal-acquired-fuel="GAS"][data-autocal-acquired-index="0"]' }],
+      ['#autocalChartInspector [data-autocal-reacquire-point]', '#autocalChartInspector [data-autocal-toggle-point-selection]']],
+  ],
 };
+
+/** Seletor obrigatório: existe, está visível e cabe inteiro na tela e em todo ancestral que corta (overflow). */
+function requiredVisible(selector) {
+  const e = document.querySelector(selector);
+  if (!e) return 'ausente: ' + selector;
+  const r = e.getBoundingClientRect();
+  const cs = getComputedStyle(e);
+  if (cs.display === 'none' || cs.visibility === 'hidden' || r.width < 40 || r.height < 40) return 'invisível: ' + selector;
+  if (r.bottom > innerHeight || r.right > innerWidth || r.top < 0 || r.left < 0) return 'fora da tela: ' + selector;
+  for (let a = e.parentElement; a; a = a.parentElement) {
+    const acs = getComputedStyle(a);
+    if (!/(hidden|clip)/.test(acs.overflowY + acs.overflowX) || acs.display === 'contents') continue;
+    const ar = a.getBoundingClientRect();
+    if (r.bottom > ar.bottom + 1 || r.right > ar.right + 1 || r.top < ar.top - 1 || r.left < ar.left - 1) return 'cortado: ' + selector;
+  }
+  return null;
+}
 
 function measure() {
   const screen = document.querySelector('.screen.active');
@@ -111,14 +134,19 @@ function measure() {
       const routes = await page.$$eval('.side-nav button[data-route]', bs => bs.map(b => b.dataset.route));
       assert.equal(routes.length, 8, 'a navegação tem as 8 abas');
       for (const route of routes) {
-        for (const [label, clicks] of [['', []], ...(EXTRAS[route] || [])]) {
+        for (const [label, clicks, required = []] of [['', []], ...(EXTRAS[route] || [])]) {
           await page.locator(`.side-nav button[data-route="${route}"]`).click();
           await page.waitForTimeout(900);
           for (const selector of clicks) {
-            await page.locator(selector).locator('visible=true').first().click({ timeout: 2000 });
+            if (selector.dispatch) await page.locator(selector.dispatch).first().dispatchEvent('click', {}, { timeout: 2000 });
+            else await page.locator(selector).locator('visible=true').first().click({ timeout: 2000 });
             await page.waitForTimeout(300);
           }
           const result = await page.evaluate(measure);
+          for (const selector of required) {
+            const problem = await page.evaluate(requiredVisible, selector);
+            if (problem) result.problems.push(problem);
+          }
           const id = `${route}${label ? ' (' + label + ')' : ''}@${height}`;
           console.log(id, result.problems.length ? 'PROBLEMA ' + result.problems.join(' | ') : 'OK');
           if (result.problems.length) failures.push(id);

@@ -49,9 +49,10 @@ test('fluxo visual é selecionar, pedir prévia Kotlin e usar uma única confirm
 test('não existe modo oficina, checkbox nem segunda confirmação no fluxo ativo', () => {
   const active = MAP_SCREEN + HTML;
   assert.doesNotMatch(active, /workshopModeButton|workshopRequested|confirmWriteCheckbox|mapWriteButton|mapReviewBack/);
-  assert.match(HTML, /Gravar é a única confirmação humana/);
-  assert.match(HTML, /Checkpoint, ACK e readback são automáticos/);
-  assert.match(MAP_SCREEN, /Gravar \$\{count\} alteração/);
+  // (dono, 2026-10-11: texto para leigo): um toque em Gravar; a conferência na ECU (ACK + readback) é automática e só ela dá "confirmadas".
+  assert.match(HTML, /Nada foi gravado\.<\/b><span>Confira os números e toque em Gravar; o app confere na ECU sozinho\./);
+  assert.match(MAP_SCREEN, /operation\.state === 'BATCH_CONFIRMED' && operation\.readbackValid === true/);
+  assert.match(MAP_SCREEN, /Gravar \$\{changes\} alteração/);
 });
 
 test('uma grade completa produz revisão de 144 células após a prévia nativa e antes de qualquer envio', () => {

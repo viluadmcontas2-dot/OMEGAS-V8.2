@@ -57,8 +57,9 @@ class ResetNuncaPausaAprendizado(unittest.TestCase):
                 MANAGER,
                 rf"{name}\(\s*AutoCalProtocol\.manualAction\(AutoCalProtocol\.ManualActionMode\.{name}\)",
             )
-        self.assertRegex(COCKPIT, r'data-autocal-action="RESET_GAS">Readquirir GNV<')
-        self.assertRegex(COCKPIT, r'data-autocal-action="RESET_PETROL">Readquirir gasolina<')
+        # (dono, 2026-10-11: texto para leigo): "Reaprender … (apaga o atual)".
+        self.assertRegex(COCKPIT, r'data-autocal-action="RESET_GAS">Reaprender GNV <')
+        self.assertRegex(COCKPIT, r'data-autocal-action="RESET_PETROL">Reaprender gasolina <')
         self.assertIn("this.prepare(button.dataset.autocalAction);", COCKPIT)
         # Curva K tem caminho próprio (30 escritas em MUL_ACT), nunca o 0x24.
         self.assertRegex(MANAGER, r"RESET_K_FACTOR\(\s*byteArrayOf\(\)")

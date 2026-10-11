@@ -26,7 +26,8 @@ assert "AutoCalProtocol.MUL_ACT" not in section
 assert '.put("level_raw", levelRaw)' in protocol
 assert "level_percentage" not in protocol
 assert "levelPercentage" not in scale
-assert "LEVELS RAW" in dashboard
+assert "NÍVEL DO GNV" in dashboard  # (dono, 2026-10-11: texto para leigo): o valor continua RAW
+assert "sensor sem escala" in dashboard
 assert 'id="dashLevelsRaw"' in dashboard
 assert "level_raw" in dashboard
 

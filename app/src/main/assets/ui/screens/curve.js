@@ -15,6 +15,15 @@
     const next = value == null ? '—' : String(value);
     if (node.textContent !== next) node.textContent = next;
   }
+  // Campo "Fator desejado" com vírgula decimal (dono, 2026-10-11: "1,02", como o resto do app); aceita vírgula ou ponto.
+  // Mesmos dígitos de antes (sem arredondar o alvo normalizado pela ECU), só a vírgula muda.
+  function factorText(value) {
+    const n = finite(value);
+    return n === null ? '' : String(n).replace('.', ',');
+  }
+  function parseFactor(value) {
+    return finite(typeof value === 'string' ? value.trim().replace(',', '.') : value);
+  }
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
@@ -118,26 +127,39 @@
       text('curveBackupStatus', 'Salvando curva atual…');
     }
 
+    /**
+     * "Curva K toda em 1,0" em um toque (dono, 2026-10-11: sem dupla confirmação; proteção = cópia antes).
+     * 1) guarda uma cópia da curva atual pelo mesmo caminho do botão "Salvar curva atual";
+     * 2) só com a cópia confirmada (poll → startResetAfterBackup) o reset começa; cópia que falha não reseta.
+     */
     resetCurve() {
       if (this.reading || this.writing || this.backupTask) return;
-      const confirmed = window.confirm(
-        'Resetar a Curva K para 1.0? Nenhum backup automático será criado. Se quiser guardar a curva atual, use Salvar curva antes.'
-      );
-      if (!confirmed) return;
+      const backup = this.api.startCurveBackup('Cópia antes de pôr a Curva K em 1,0');
+      if (!backup?.ok || !backup?.started) {
+        this.alert(`Não foi possível guardar a cópia da curva. A Curva K não foi mexida. ${backup?.error || ''}`.trim());
+        return;
+      }
+      this.backupTask = 'reset-backup';
+      this.resetBackupStartedAt = backup.startedAt ?? null;
+      text('curveBackupStatus', 'Guardando cópia antes de pôr em 1,0…');
+    }
+
+    /** Segundo passo do reset: só roda depois da cópia confirmada (arquivo + hash) da curva atual. */
+    startResetAfterBackup() {
       this.cancelRestorePreview('');
       this.proposals.clear();
       this.renderChart();
       this.renderProposalList();
       const result = this.api.resetCurve();
       if (!result?.ok || !result?.started) {
-        this.alert(result?.error || 'Não foi possível iniciar o reset da Curva K.');
+        this.alert(result?.error || 'Não foi possível pôr a Curva K em 1,0. A cópia ficou guardada.');
         return;
       }
       this.writing = true;
       this.root?.classList.remove('has-result');
       this.root?.classList.add('is-writing');
-      text('curveOperationTitle', 'Resetando Curva K para 1.0');
-      text('curveOperationMessage', 'Escrita → ACK → readback');
+      text('curveOperationTitle', 'Pondo a Curva K toda em 1,0');
+      text('curveOperationMessage', 'Gravando e conferindo…');
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
     }
@@ -211,11 +233,17 @@
       if (!result?.ok || !result?.started) {
         // Releitura de entrada sem ECU não vira aviso a cada toque na aba; a curva mostrada é dita como a última lida.
         if (onEnter && this.data) { text('curveSourceStatus', 'Última leitura · ECU sem resposta'); return; }
+        // Sem curva na tela, o gráfico diz o que fazer (dono, 2026-10-11) em vez de "a leitura começa ao abrir".
+        if (!this.data) { text('curveSourceStatus', 'Curva não lida'); this.renderChart(); }
         this.alert(result?.error || 'Não foi possível iniciar a leitura da Curva K.');
         return;
       }
       // A curva anterior fica na tela durante a leitura; ao chegar, só sobrevivem propostas feitas sobre o mesmo valor da ECU.
       this.reading = true;
+      if (!this.data) {
+        const host = document.getElementById('curveChart');
+        if (host) host.innerHTML = '<div class="chart-empty">Lendo a Curva K da ECU…</div>';
+      }
       text('curveSourceStatus', 'Lendo 30 pontos diretamente da ECU');
       this.root?.classList.add('is-reading');
       if (this.pendingSuggestion) this.renderSuggestionFocus(this.pendingSuggestion);
@@ -228,6 +256,23 @@
       if (this.backupTask && !operation.busy) {
         const task = this.backupTask;
         this.backupTask = null;
+        if (task === 'reset-backup') {
+          // A cópia precisa ser esta (mesmo início), estar completa e ter arquivo + hash; senão a curva não é mexida.
+          const startedAt = this.resetBackupStartedAt;
+          this.resetBackupStartedAt = null;
+          const sameOperation = startedAt == null || operation.startedAt == null || operation.startedAt === startedAt;
+          const saved = operation.state === 'COMPLETED' && operation.ok === true && sameOperation &&
+            Boolean(operation.fileName) && Boolean(operation.hash);
+          this.refreshBackups();
+          if (!saved) {
+            text('curveBackupStatus', 'Cópia não guardada · Curva K não foi mexida');
+            this.alert(`Não foi possível guardar a cópia da curva. A Curva K não foi mexida. ${operation.error || ''}`.trim());
+            return;
+          }
+          text('curveBackupStatus', 'Cópia guardada · pondo a Curva K em 1,0');
+          this.startResetAfterBackup();
+          return;
+        }
         if (operation.state !== 'COMPLETED' || !operation.ok) {
           this.restoreContext = null;
           const select = document.getElementById('curveBackupSelect');
@@ -327,9 +372,10 @@
         const progress = Math.max(0, Math.min(100, finite(operation.progress) || finite(operation.writerProgress) || 0));
         const bar = document.getElementById('curveOperationProgress');
         if (bar) bar.style.width = `${progress}%`;
-        text('curveOperationTitle', operation.message || operation.writerMessage || 'Backup · escrita · ACK · readback');
+        text('curveOperationTitle', operation.message || operation.writerMessage || 'Gravando e conferindo…');
         if (!operation.busy) {
           this.writing = false;
+          // "Gravado" só depois do ACK e da leitura de volta da ECU (BATCH_CONFIRMED + readbackValid); o texto é para leigo.
           if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
             this.root?.classList.remove('is-writing');
             this.root?.classList.add('has-result');
@@ -337,7 +383,7 @@
             if (result) {
               result.dataset.level = 'ok';
               result.querySelector('b').textContent = 'Curva K confirmada pela ECU';
-              result.querySelector('span').textContent = 'ACK e readback completos. A curva será relida.';
+              result.querySelector('span').textContent = 'Gravado e conferido na ECU.';
             }
             this.data = null;
             this.proposals.clear();
@@ -387,7 +433,7 @@
       text('curveActivePoint', `Ponto ${this.activeIndex + 1} · ${fmt(point.petrolMs, 2)} ms`);
       text('curveCurrentFactor', fmt(point.factor, 4));
       const input = document.getElementById('curveTargetFactor');
-      if (input) input.value = String(finite(this.proposals.get(this.activeIndex)?.targetFactor ?? point.factor) ?? '');
+      if (input) input.value = factorText(this.proposals.get(this.activeIndex)?.targetFactor ?? point.factor);
       this.renderChart();
       this.renderLearningPointContext(this.store.get(), this.activeIndex);
     }
@@ -395,9 +441,9 @@
     nudgeActive(delta) {
       if (this.activeIndex === null || !delta) return;
       const input = document.getElementById('curveTargetFactor');
-      const current = finite(input?.value) ?? finite(this.points().find(item => Number(item.index) === this.activeIndex)?.factor);
+      const current = parseFactor(input?.value) ?? finite(this.points().find(item => Number(item.index) === this.activeIndex)?.factor);
       if (current === null) return;
-      if (input) input.value = String(Math.max(0.6, Math.min(4, current + delta)).toFixed(4));
+      if (input) input.value = factorText(Number(Math.max(0.6, Math.min(4, current + delta)).toFixed(4)));
       this.prepareActivePoint();
     }
 
@@ -432,7 +478,7 @@
         this.cancelRestorePreview('Prévia de restauração descartada por edição manual');
         this.proposals.clear();
       }
-      const requested = finite(document.getElementById('curveTargetFactor')?.value);
+      const requested = parseFactor(document.getElementById('curveTargetFactor')?.value);
       if (requested === null) { this.alert('Informe o fator K desejado.'); return; }
       const preview = this.api.previewCurvePoint(this.activeIndex, requested);
       if (!preview?.ok) { this.alert(preview?.error || 'Prévia da Curva K inválida.'); return; }
@@ -468,7 +514,7 @@
         return changed;
       }
 
-      if (!silent) this.alert('A sugestão ainda não possui alvo K exato calculado pelo Kotlin.');
+      if (!silent) this.alert('Esta sugestão ainda não tem um valor exato para gravar.');
       return false;
     }
 
@@ -481,7 +527,7 @@
       if (!preview.changed) this.proposals.delete(index);
       else this.proposals.set(index, preview);
       const input = document.getElementById('curveTargetFactor');
-      if (input && index === this.activeIndex && finite(preview.targetFactor) !== null) input.value = String(preview.targetFactor);
+      if (input && index === this.activeIndex && finite(preview.targetFactor) !== null) input.value = factorText(preview.targetFactor);
       if (index === this.activeIndex) text('curveTargetNormalized', preview.changed ? `${fmt(preview.currentFactor, 4)} → ${fmt(preview.targetFactor, 4)}` : 'Sem alteração');
       if (!deferRender) {
         this.renderChart();
@@ -494,7 +540,7 @@
       const points = this.points();
       if (!host) return;
       if (!points.length) {
-        host.innerHTML = '<div class="chart-empty">Leia a Curva K para visualizar os 30 pontos.</div>';
+        host.innerHTML = '<div class="chart-empty">Curva não lida. Ligue a ECU e toque em Reler ECU.</div>';
         return;
       }
       const width = 920; const height = 350; const padX = 42; const padY = 34;
@@ -593,7 +639,7 @@
 
       const actionable = points.filter(item => item.actionable).length;
       const observed = points.filter(item => item.error !== null).length;
-      summaryHost.innerHTML = `<div class="editor-heading"><div><small>30 PONTOS FÍSICOS</small><h3>Aprendizado global</h3></div></div><div class="global-summary-grid"><div><small>COMPARAÇÕES</small><b>${Number(advisor.comparisonCount || 0)}</b></div><div><small>VISITAS</small><b>${Number(advisor.uniqueVisitCount || 0)}</b></div><div><small>FAIXAS OBSERVADAS</small><b>${observed}/30</b></div><div><small>PRONTAS</small><b>${actionable}</b></div></div><div id="curveLearningPointContext" class="global-summary-list"></div><p class="empty-copy">O eixo X é Petrol Inj. dos 30 pontos. A linha zero é o alvo do erro. A UI só desenha alvos K exatos vindos do Kotlin.</p>`;
+      summaryHost.innerHTML = `<div class="editor-heading"><div><small>30 PONTOS FÍSICOS</small><h3>Aprendizado global</h3></div></div><div class="global-summary-grid"><div><small>COMPARAÇÕES</small><b>${Number(advisor.comparisonCount || 0)}</b></div><div><small>VISITAS</small><b>${Number(advisor.uniqueVisitCount || 0)}</b></div><div><small>FAIXAS OBSERVADAS</small><b>${observed}/30</b></div><div><small>PRONTAS</small><b>${actionable}</b></div></div><div id="curveLearningPointContext" class="global-summary-list"></div><p class="empty-copy">O eixo de baixo é a injeção (ms) dos 30 pontos. Linha do meio = GNV igual à gasolina.</p>`;
       this.renderLearningPointContext(state, this.activeIndex ?? points.find(item => item.error !== null)?.index ?? 0);
     }
 
@@ -608,7 +654,9 @@
       const exact = this.persistentCurveChanges(state).get(Number(index));
       const error = finite(advice.errorPercent ?? advice.error_percent ?? advice.relativeErrorPercent);
       const target = finite(proposal?.targetFactor) ?? finite(exact?.after);
-      host.innerHTML = `<div><span>Ponto ${Number(index) + 1} · ${fmt(current.petrolMs ?? advice.petrolMs, 2)} ms</span><b>erro ${error === null ? '—' : `${error > 0 ? '+' : ''}${fmt(error, 1)}%`}</b><small>confiança ${Math.round((finite(advice.confidence) || 0) * 100)}% · incerteza ±${fmt(advice.uncertaintyPercent, 1)}%</small></div><div><span>K atual</span><b>${fmt(current.factor, 4)}</b><small>proposta ${fmt(target, 4)}</small></div>`;
+      // Desconhecido = "—" (dono, 2026-10-11): sem proposta não é "0,0000", sem confiança não é "0%".
+      const confidence = finite(advice.confidence);
+      host.innerHTML = `<div><span>Ponto ${Number(index) + 1} · ${fmt(current.petrolMs ?? advice.petrolMs, 2)} ms</span><b>erro ${error === null ? '—' : `${error > 0 ? '+' : ''}${fmt(error, 1)}%`}</b><small>confiança ${confidence === null ? '—' : `${Math.round(confidence * 100)}%`} · incerteza ±${fmt(advice.uncertaintyPercent, 1)}%</small></div><div><span>K atual</span><b>${fmt(current.factor, 4)}</b><small>proposta ${fmt(target, 4)}</small></div>`;
     }
 
     renderProposalList() {
@@ -621,17 +669,17 @@
       host.innerHTML = items.length
         ? shown.map(item => `<div><span>${fmt(item.petrolMs, 2)} ms</span><b>${fmt(item.currentFactor, 4)} → ${fmt(item.targetFactor, 4)}</b><small>${item.deltaPercent > 0 ? '+' : ''}${fmt(item.deltaPercent, 1)}%</small></div>`).join('')
           + (more > 0 ? `<p class="proposal-more">+${more} ponto${more === 1 ? '' : 's'} · veja no gráfico</p>` : '')
-        : '<p>Nenhum ponto preparado.</p>';
+        : '<p>Toque num ponto do gráfico e em “Preparar este ponto”.</p>';
       const review = document.getElementById('curveReviewButton');
       if (review) {
         if (this.restoreContext) {
           review.disabled = true;
-          review.textContent = 'Restauração pronta no botão acima';
+          review.textContent = 'Toque em Restaurar, no rodapé';
         } else {
           review.disabled = items.length === 0;
           review.textContent = items.length
             ? `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`
-            : 'Prepare pontos';
+            : 'Nenhum ponto preparado';
         }
       }
     }
@@ -647,7 +695,10 @@
       const actionablePoints = rawGlobal.filter(item => item.actionable === true);
       const comparisonCount = finite(advisor.comparisonCount) ?? (Array.isArray(maps.comparisons) ? maps.comparisons.length : 0);
       const uniqueVisits = finite(advisor.uniqueVisitCount) ?? 0;
-      host.innerHTML = `<div class="curve-evidence-summary"><div class="evidence-stat"><b>${comparisonCount}</b><span>comparações gasolina × GNV</span></div><div class="evidence-stat"><b>${uniqueVisits}</b><span>visitas físicas únicas</span></div><div class="evidence-stat"><b>${petrol.length}</b><span>pontos da referência gasolina</span></div><div class="evidence-stat"><b>${cng.length}</b><span>pontos observados no GNV</span></div></div><div class="curve-native-explanation"><header><div><small>EVIDÊNCIA FÍSICA</small><h3>Gasolina × GNV por MAP</h3></div><span>sob demanda</span></header><div class="global-summary-list">${petrol.slice(0, 12).map((item, i) => `<div><span>MAP ${fmt(item.mapBar, 2)} bar</span><b>Gas ${fmt(item.petrolMs, 2)} · GNV ${fmt(cng[i]?.petrolMs, 2)} ms</b><small>${escapeHtml(item.confidenceStage || cng[i]?.confidenceStage || '')}</small></div>`).join('') || '<p class="empty-copy">Ainda sem evidência física global.</p>'}</div><p>${actionablePoints.length} ponto(s) K estão atualmente prontos segundo o assessor Kotlin. Esta seção não calcula correção.</p></div>`;
+      // Texto para leigo (dono, 2026-10-11): "Gasolina" por extenso ("Gas" se lê gás = GNV), sem código cru
+      // (ACCEPTED…) nem nomes internos (Kotlin, assessor).
+      const ready = actionablePoints.length;
+      host.innerHTML = `<div class="curve-evidence-summary"><div class="evidence-stat"><b>${comparisonCount}</b><span>comparações gasolina × GNV</span></div><div class="evidence-stat"><b>${uniqueVisits}</b><span>passagens</span></div><div class="evidence-stat"><b>${petrol.length}</b><span>pontos da referência gasolina</span></div><div class="evidence-stat"><b>${cng.length}</b><span>pontos observados no GNV</span></div></div><div class="curve-native-explanation"><header><div><small>EVIDÊNCIA FÍSICA</small><h3>Gasolina × GNV por MAP</h3></div></header><div class="global-summary-list">${petrol.slice(0, 12).map((item, i) => `<div><span>MAP ${fmt(item.mapBar, 2)} bar</span><b>Gasolina ${fmt(item.petrolMs, 2)} · GNV ${fmt(cng[i]?.petrolMs, 2)} ms</b></div>`).join('') || '<p class="empty-copy">Ainda sem evidência física global.</p>'}</div><p>${ready} ponto${ready === 1 ? '' : 's'} pronto${ready === 1 ? '' : 's'} para ajustar.</p></div>`;
     }
 
     renderSuggestionFocus(suggestion, preparedPreview = null) {
@@ -659,8 +710,8 @@
       const prepared = preparedPreview?.changed === true || persistentChanges.some(change => this.proposals.has(Number(change.index)));
       const label = persistentChanges.length
         ? `${persistentChanges.length} ponto${persistentChanges.length === 1 ? '' : 's'} da Curva K`
-        : 'aguardando alvo exato do Kotlin';
-      host.innerHTML = `<b>${prepared ? 'Sugestão preparada para revisão' : 'Sugestão global em revisão'}</b><span>${escapeHtml(label)}</span><small>${escapeHtml(suggestion.rationale || suggestion.reason || suggestion.explanation || '')}</small><button type="button" data-curve-prepare-suggestion ${this.data && persistentChanges.length ? '' : 'disabled'}>${prepared ? 'Repreparar sugestão' : 'Preparar sugestão'}</button><small>${prepared ? 'Revise o antes/depois; nenhuma escrita foi iniciada.' : 'A prévia é normalizada pelo Kotlin. Não grava na ECU.'}</small>`;
+        : 'ainda sem valor exato para gravar';
+      host.innerHTML = `<b>${prepared ? 'Sugestão preparada para revisão' : 'Sugestão global em revisão'}</b><span>${escapeHtml(label)}</span><small>${escapeHtml(suggestion.rationale || suggestion.reason || suggestion.explanation || '')}</small><button type="button" data-curve-prepare-suggestion ${this.data && persistentChanges.length ? '' : 'disabled'}>${prepared ? 'Preparar de novo' : 'Preparar sugestão'}</button><small>${prepared ? 'Confira o antes → depois; nada foi gravado.' : 'Preparar não grava na ECU.'}</small>`;
       host.querySelector('[data-curve-prepare-suggestion]')?.addEventListener('click', () => this.prepareSuggestion(suggestion));
     }
 

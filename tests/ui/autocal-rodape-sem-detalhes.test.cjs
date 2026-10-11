@@ -18,7 +18,7 @@ assert.match(cockpit, /<p id="autocalHeadline" class="autocal-headline">/, 'fras
 assert.match(cockpit, /this\.text\('autocalHeadline', human\.title \+ ' · ' \+ human\.progress\);/, 'a frase acompanha o estado da ECU');
 // AutoMatch X/Y sempre à vista no topo (dono, 2026-10-11), "—" quando a ECU não informou.
 const header2 = cockpit.match(/<header class="autocal-focus-toolbar"[\s\S]*?<\/header>/)?.[0] || '';
-assert.match(header2, /<small>AutoMatch<\/small>\s*<b id="autocalAutoMatchCount">/, 'cartão AutoMatch no topo');
+assert.match(header2, /<small>Ajustes automáticos<\/small>\s*<b id="autocalAutoMatchCount">/, 'cartão AutoMatch no topo'); // (dono, 2026-10-11: texto para leigo)
 assert.match(cockpit, /this\.text\('autocalAutoMatchCount', autoMatchFraction\(human\.autoMatchCount, human\.maxAutoMatch\)\);/);
 assert.doesNotMatch(cockpit, /data-autocal-details|toggleDetails/, 'sem botão Detalhes (dono, 2026-10-11)');
 

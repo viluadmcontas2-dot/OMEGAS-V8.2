@@ -243,7 +243,21 @@
       });
       if (next.size !== this.selected.size) throw new Error('Prévia nativa incompleta para a seleção atual.');
       this.targetOverrides = next;
+      // Prévia sem mudança (ex.: valor 0) não é erro do dono (2026-10-11): sem aviso; a tela só não oferece "Gravar".
+      // buildReview() continua recusando gravar quando nada muda.
+      if (this.changeCount() === 0) return { mode: this.mode, adjustment: this.adjustment, count: 0, items: [] };
       return this.buildReview();
+    }
+
+    /** Células selecionadas cujo alvo (prévia nativa) difere do atual; 0 sem prévia completa. Nunca lança. */
+    changeCount() {
+      if (!this.hasMap() || !this.selected.size || this.targetOverrides.size !== this.selected.size) return 0;
+      let changes = 0;
+      for (const { row, column } of this.selected.values()) {
+        const target = this.targetOverrides.get(this.key(row, column));
+        if (target !== undefined && target !== this.rows[row][column]) changes += 1;
+      }
+      return changes;
     }
 
     setTargetOverrides(changes) {

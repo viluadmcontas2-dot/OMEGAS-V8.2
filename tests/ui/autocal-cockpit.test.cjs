@@ -45,7 +45,7 @@ assert.equal(cockpit.includes("data-autocal-action=\"DISABLE_AUTO_CAL\""), false
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_PETROL\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_GAS\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_K_FACTOR\""), true);
-assert.equal(cockpit.includes("Resetar Curva K para 1.0"), true);
+assert.equal(cockpit.includes("Curva K toda em 1,0"), true); // (dono, 2026-10-11: texto para leigo)
 assert.equal(cockpit.includes("data-autocal-action=\"NEUTRALIZE_LIVE_K\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), true);
 assert.equal(cockpit.includes("data-autocal-action=\"MANUAL_AUTOMATCH\""), true);
@@ -54,7 +54,7 @@ assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOCAL\""), false,
 assert.equal(cockpit.includes("class=\"autocal-finish-action\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOMATCH\""), false);
 assert.equal(cockpitCss.includes('.autocal-finish-action'), false);
-assert.equal(cockpit.includes('O AutoMatch nativo é automático e decidido pela ECU.'), true);
+assert.equal(cockpit.includes('A ECU faz os ajustes automáticos sozinha.'), true); // (dono, 2026-10-11: texto para leigo)
 assert.equal(cockpit.includes('Nada aqui roda automaticamente.'), false);
 assert.equal(cockpit.includes('autoMatchQuotaReached'), true);
 assert.equal(cockpit.includes('AutoMatch automático '), true);
@@ -77,7 +77,10 @@ assert.equal(cockpit.includes('Continuar para confirmação Android'), false);
 assert.equal(cockpit.includes('Confirmação Android aberta'), false);
 assert.equal(cockpit.includes('Executar agora'), false); // um toque (dono, 2026-10-11): sem botão de segunda confirmação
 assert.match(cockpit, /prepare\(action\)[\s\S]*this\.confirmPrepared\(\)/);
-assert.equal(cockpit.includes('ACK e readback'), true);
+// (dono, 2026-10-11: texto para leigo): o aviso não diz mais "ACK e readback"; "Concluído" e o aviso final só saem com o estado CONFIRMED,
+// que o Kotlin só dá depois da leitura de volta (readback) da ECU.
+assert.equal(cockpit.includes("name === 'CONFIRMED' ? 'Concluído · '"), true);
+assert.equal(cockpit.includes("this.awaitingActionResult && (failed || name === 'CONFIRMED')"), true);
 assert.equal(cockpit.includes('VERIFYING_FINISH'), true);
 assert.equal(cockpit.includes('RESETTING_K'), true);
 assert.equal(cockpit.includes("querySelectorAll('[data-autocal-action]')"), true);
@@ -112,7 +115,7 @@ assert.equal(cockpit.includes("PETR_INJ_TBUF_GAS"), true);
 assert.equal(cockpit.includes("MNFLD_PRESS_BUF_GAS"), true);
 assert.equal(cockpit.includes("PETR_INJ_TBUF"), true);
 assert.equal(cockpit.includes("MNFLD_PRESS_BUF"), true);
-assert.equal(cockpit.includes('Readquirir este ponto'), true);
+assert.equal(cockpit.includes('Reaprender este ponto'), true); // (dono, 2026-10-11: texto para leigo)
 assert.equal(cockpit.includes("acquisitionState: acquired ? 'ACQUIRED' : 'COLLECTING'"), true);
 assert.equal(cockpit.includes("data-acquisition-state"), true);
 assert.equal(cockpit.includes("coletando · "), true);

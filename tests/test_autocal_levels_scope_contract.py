@@ -12,9 +12,12 @@ assert "telemetryStatus" not in projection
 assert "telemetryStore.liveJson()" not in bridge
 assert "autocalLiveLevel" not in cockpit
 assert "LEVELS RAW" not in cockpit
+assert "NÍVEL DO GNV" not in cockpit
 assert "level_raw" not in cockpit
 
-assert "LEVELS RAW" in dashboard
+# (dono, 2026-10-11: texto para leigo): o rótulo virou "NÍVEL DO GNV"; o valor continua RAW (level_raw, "sensor sem escala").
+assert "NÍVEL DO GNV" in dashboard
+assert "sensor sem escala" in dashboard
 assert "dashLevelsRaw" in dashboard
 assert "level_raw" in dashboard
 

@@ -36,12 +36,17 @@ assert 'id="curveResetButton"' in index
 assert "resetCurve()" in api
 assert "fun startCurveReset()" in bridge
 assert "curveResetButton" in curve
-assert "Resetar a Curva K para 1.0" in curve
+# Um toque (dono, 2026-10-11): sem window.confirm; o botão diz "Curva K toda em 1,0".
+assert "window.confirm" not in curve
+assert ">Curva K toda em 1,0</button>" in index
 
 # Backup da Curva K é manual: reset/escrita não podem criar backup/checkpoint automático.
 assert "createBackup(adjustmentId" not in manager
 assert '.put("automaticBackup", false)' in manager
-assert "Nenhum backup automático será criado" in curve
+# A cópia antes do reset é a do botão "Salvar curva atual" (startCurveBackup), pedida pela tela;
+# o reset só começa com a cópia confirmada (tests/ui/curva-k-reset-um-toque.test.cjs).
+assert "this.api.startCurveBackup('Cópia antes de pôr a Curva K em 1,0')" in curve
+assert "startResetAfterBackup()" in curve
 assert 'saveInternalCheckpoint("Antes de resetar Curva K' not in service
 assert 'saveInternalCheckpoint("Antes de ajustar K factor' not in service
 
