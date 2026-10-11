@@ -2191,7 +2191,6 @@
 .autocal-epoch-acquisition-line.gas { stroke: #5dd39e; }
 
 /* ── Refino OMEGAS: mesma linguagem do AutoCal, só o que é novo ── */
-.refino-cockpit .autocal-focus-actions { grid-template-columns: minmax(0, 1fr); }
 .refino-cockpit .autocal-primary-action { min-height: 56px; font-size: 14px; }
 .refino-cockpit .autocal-primary-action[data-kind="stable"] { border-color: rgba(93,211,158,.5); color: #c9f7e3; background: rgba(30,103,75,.32); }
 .refino-cockpit .autocal-primary-action[data-kind="restore"] { border-color: rgba(226,94,94,.55); background: #592329; color: #fff; }
@@ -2217,31 +2216,16 @@
 .autocal-chart-legend .refino-ours-gas::before { width: 8px; height: 8px; border-radius: 2px; background: #c38bff; }
 .refino-stall-mark { stroke: #ff6b6b; stroke-width: 3; stroke-linecap: round; fill: none; }
 .autocal-chart-legend .refino-stall-legend::before { content: '✕'; width: auto; height: auto; background: none; color: #ff6b6b; font-weight: 900; }
-.refino-stalls { display: grid; gap: 2px; margin: 0 0 8px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(226,94,94,.45); background: rgba(110,32,38,.32); }
-.refino-stalls[hidden] { display: none; }
-.refino-stalls b { color: #ffd2d2; font-size: 13px; }
-.refino-stalls span { color: #f1c7c7; font-size: 12px; }
 .refino-cockpit .autocal-primary-action[data-kind="waiting"] { color: #c5d0db; background: rgba(35,47,58,.6); border-color: rgba(255,255,255,.1); cursor: default; }
 .refino-cockpit .autocal-primary-action[data-kind="review"] { background: #2d6fd1; border-color: #4a8be8; color: #fff; }
 .refino-split { font-size: 17px !important; white-space: nowrap; }
-.refino-verdicts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; margin: 8px 0; }
-.refino-verdicts > div { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: rgba(35,47,58,.45); }
-.refino-verdicts span { color: #8f9daf; font-size: 11px; }
-.refino-verdicts b { color: #e0e8f1; font-variant-numeric: tabular-nums; }
-.refino-verdicts small { font-size: 12px; color: #b7c6d2; }
-.refino-verdicts [data-verdict="CONFIRMADA"] small { color: #5dd39e; }
-.refino-verdicts [data-verdict="PIOROU"] small { color: #ff8a8a; }
-.refino-verdicts [data-verdict="PASSOU"] small { color: #ffd27a; }
-.refino-note, .refino-journal p, .refino-tech dd, .refino-tech dt { font-size: 12px; color: #aab7c6; }
-.refino-tech dl > div { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
-.refino-tech dd { margin: 0; color: #e0e8f1; }
 .refino-review-list { max-height: 260px; overflow-y: auto; }
 .refino-warning { padding: 9px 11px; border-radius: 10px; background: rgba(104,78,26,.32); color: #ffefbd; font-size: 12px; }
 .refino-route-screen { position: relative; }
 
 /* ── AutoCal e Refino sem rolagem (dono, 2026-10-11) ──
    Título e estado em cima, gráfico grande, botões embaixo à esquerda (alcance da mão), ponto tocado à direita deles.
-   A navegação inferior nunca some. "Detalhes" troca o gráfico pelas informações secundárias, no mesmo lugar. */
+   A navegação inferior é fixa e nunca some. Sem "Detalhes" (dono, 2026-10-11): só o que o leigo usa fica na tela. */
 .app-shell.autocal-focus { --act-h: 56px; }
 .app-shell.autocal-focus .screen.autocal-route-screen { overflow: hidden; padding: 8px 12px 10px; }
 .app-shell.autocal-focus .autocal-cockpit-view,
@@ -2288,37 +2272,8 @@
 .app-shell.autocal-focus .refino-action-bar > button[hidden] { display: none; }
 .app-shell.autocal-focus .autocal-reset-menu > summary { height: 100%; }
 .app-shell.autocal-focus .autocal-reset-popover { top: auto; bottom: calc(100% + 6px); left: 0; right: auto; }
-.app-shell.autocal-focus .autocal-details-action,
-.app-shell.autocal-focus .refino-action-bar > [data-kind="details"] { border: 1px solid var(--line); background: var(--surface-2); color: var(--text); }
-.app-shell.autocal-focus .autocal-details-action[aria-expanded="true"],
-.app-shell.autocal-focus .refino-action-bar > [aria-expanded="true"] { border-color: #78b7ff; color: #d6eaff; }
 
-/* Detalhes do AutoCal: as informações secundárias ocupam o lugar da legenda e do gráfico, em colunas, sem rolagem. */
 .app-shell.autocal-focus .autocal-secondary-details { display: none; }
-.app-shell.autocal-focus .autocal-cockpit[data-autocal-view="details"] .autocal-chart-legend,
-.app-shell.autocal-focus .autocal-cockpit[data-autocal-view="details"] .autocal-chart-host { display: none; }
-.app-shell.autocal-focus .autocal-cockpit[data-autocal-view="details"] .autocal-secondary-details {
-  display: block;
-  grid-row: 2 / 4;
-  grid-column: 1 / -1;
-  position: static;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
-.app-shell.autocal-focus .autocal-secondary-details > summary { display: none; }
-.app-shell.autocal-focus .autocal-secondary-details .autocal-secondary-stack {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-rows: min-content;
-  align-content: start;
-  gap: 8px;
-  height: 100%;
-  overflow: hidden;
-}
-.app-shell.autocal-focus .autocal-secondary-stack > * { min-width: 0; margin: 0; }
-.app-shell.autocal-focus .autocal-cockpit[data-autocal-view="details"] .autocal-zone-meter { display: grid; gap: 6px; }
 
 /* Refino: mesma grade; passos e próxima ação entre o gráfico e os botões. */
 .app-shell.autocal-focus section.autocal-cockpit.refino-cockpit {
@@ -2327,27 +2282,3 @@
 }
 .app-shell.autocal-focus .refino-cockpit #refinoSteps { grid-area: steps; margin: 0; }
 .app-shell.autocal-focus .refino-cockpit #refinoNext { grid-area: next; align-self: center; margin: 0; min-width: 0; }
-.app-shell.autocal-focus .refino-cockpit [data-refino-panel="details"]:not([hidden]) {
-  display: block;
-  grid-row: 2 / 4;
-  grid-column: 1 / -1;
-  min-height: 0;
-  margin: 0;
-  overflow: hidden;
-}
-.app-shell.autocal-focus .refino-cockpit[data-refino-view="details"] [data-refino-panel="chart"] .autocal-chart-legend,
-.app-shell.autocal-focus .refino-cockpit[data-refino-view="details"] [data-refino-panel="chart"] .autocal-chart-host,
-.app-shell.autocal-focus .refino-cockpit[data-refino-view="details"] [data-refino-panel="chart"] .autocal-chart-inspector { display: none; }
-.app-shell.autocal-focus .refino-cockpit [data-refino-panel="details"][hidden] { display: none; }
-/* Ordem de leitura nos Detalhes: estado, zonas, AutoMatch, evidência, sessão, técnico. */
-.app-shell.autocal-focus .autocal-secondary-stack > .autocal-hero { order: 1; }
-.app-shell.autocal-focus .autocal-secondary-stack > .autocal-zone-card { order: 2; }
-.app-shell.autocal-focus .autocal-secondary-stack > .autocal-command-bar { order: 3; }
-.app-shell.autocal-focus .autocal-secondary-stack > .autocal-automatch-evidence { order: 4; }
-.app-shell.autocal-focus .autocal-secondary-stack > .autocal-session-strip { order: 5; }
-.app-shell.autocal-focus .autocal-secondary-stack > .autocal-technical-details { order: 6; }
-.app-shell.autocal-focus .autocal-secondary-stack > .autocal-session-drawer { order: 7; grid-column: 1 / -1; }
-/* "Ver sessões" mostra só a faixa de sessão e a lista (até 8, em 4 colunas): nada de sub-rolagem. */
-.app-shell.autocal-focus .autocal-secondary-stack:has(> .autocal-session-drawer:not([hidden])) > :not(.autocal-session-drawer):not(.autocal-session-strip) { display: none; }
-.app-shell.autocal-focus .autocal-secondary-stack > .autocal-session-strip:has(~ .autocal-session-drawer:not([hidden])) { grid-column: 1 / -1; }
-.app-shell.autocal-focus .autocal-session-drawer .autocal-session-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: none; overflow: hidden; }

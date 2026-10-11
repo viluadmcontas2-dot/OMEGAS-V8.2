@@ -23,6 +23,8 @@ for (const id of order) assert.equal(intro.includes(`id="${id}"`), false, `${id}
 assert.ok(intro.includes('id="curveSourceStatus"') && intro.includes('id="curveBackupStatus"'), 'estado da leitura e dos backups ficam ao lado do título');
 const css = fs.readFileSync(path.join(ui, 'styles-calibration-obd.css'), 'utf8');
 assert.match(css, /\.curve-footbar \{[^}]*justify-content: flex-start/, 'botões alinhados à esquerda');
+assert.match(css, /\.screen\.curve-screen\.active \{[^}]*grid-template-columns: minmax\(0, 1fr\) 340px;[^}]*"title title" "main side" "foot foot"/,
+  'curva colada à esquerda e cartão de edição à direita (dono, 2026-10-11)');
 assert.match(css, /\.curve-screen \.proposal-list \{[^}]*overflow: hidden/, 'lista de propostas sem sub-rolagem');
 
 // Comportamento, com DOM mínimo.

@@ -27,9 +27,10 @@
   font-size: 11px !important;
 }
 
-/* Curva K sem rolagem (dono, 2026-10-11): ponto à esquerda, gráfico à direita e um rodapé único de botões, à esquerda. */
+/* Curva K sem rolagem (dono, 2026-10-11): curva colada à esquerda, cartão de edição à direita e um rodapé único de
+   botões alinhados à esquerda. */
 .curve-screen { --foot-h: 56px; }
-.screen.curve-screen.active { display: grid; grid-template-columns: 340px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) var(--foot-h); grid-template-areas: "title title" "side main" "foot foot"; gap: 10px; padding: 10px 16px; }
+.screen.curve-screen.active { display: grid; grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto minmax(0, 1fr) var(--foot-h); grid-template-areas: "title title" "main side" "foot foot"; gap: 10px; padding: 10px 16px; }
 .curve-screen > .page-intro { grid-area: title; min-height: 0; padding: 0; }
 .curve-screen .curve-title-line { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .curve-screen .curve-title-line h2 { margin: 0; }

@@ -241,7 +241,7 @@ assert.match(source, /data-current/,
 assert.match(css, /\.autocal-zone-cell\s*\{/,
   'mapa de zonas precisa de tratamento visual próprio');
 assert.equal(source.includes('autocal-band-legend'), true, 'estados das 18 faixas precisam de legenda visível');
-assert.equal(source.includes('autocal-review-tech'), false, 'sem tela de revisão antes da ECU (dono, 2026-10-11: um toque); detalhes técnicos ficam em Detalhes');
+assert.equal(source.includes('autocal-review-tech'), false, 'sem tela de revisão antes da ECU (dono, 2026-10-11: um toque)');
 assert.match(source, /data-autocal-ref-index=[^\n]+r="22"/, 'pontos do gráfico precisam de alvo de toque de pelo menos 44 px');
 assert.match(css, /\.autocal-zone-meter\s*\{/, 'zone meter premium precisa de estilo dedicado');
 assert.match(css, /\.autocal-inline-inspector\s*\{[^}]*font-size:\s*11px/s, 'inspector operacional não pode ficar microscópico');

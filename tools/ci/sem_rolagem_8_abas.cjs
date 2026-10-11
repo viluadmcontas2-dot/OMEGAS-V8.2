@@ -1,6 +1,6 @@
 // Trava do dono (2026-10-11): nenhuma das 8 abas rola nem tem sub-rolagem, nada fica cortado, a navegação inferior
 // nunca some e não existe botão "Abas". Mede o app real (index.html) no Chromium a 1280x672 (WebView do carro) e
-// 1280x720, também nos estados que mais crescem (Detalhes, sessões, evidência da Curva K). Ponte AutoCal simulada
+// 1280x720, também nos estados que mais crescem (Ações avançadas do AutoCal, evidência da Curva K). Ponte AutoCal simulada
 // só para haver dados; nenhum dado vai para o app.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -56,8 +56,7 @@ function fakeBridge() {
 // Estados extras que mais crescem, por aba.
 const EXTRAS = {
   curve: [['evidência aberta', ['.evidence-disclosure > summary']]],
-  autocal: [['Detalhes', ['[data-autocal-details]']], ['Detalhes + sessões', ['[data-autocal-details]', '[data-autocal-sessions]']], ['Ações avançadas', ['.autocal-reset-menu > summary']]],
-  refino: [['Detalhes', ['[data-refino-details]']]],
+  autocal: [['Ações avançadas', ['.autocal-reset-menu > summary']]],
 };
 
 function measure() {

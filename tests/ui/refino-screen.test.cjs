@@ -163,27 +163,25 @@ test('motivos da gravação do Refino batem com a classificação do Kotlin (pro
   assert.match(journal, /verb\.startsWith\("restaurar"\) -> KIND_RESTAURAR/);
 });
 
-test('barra única embaixo: botão do estado, Revisar, Desfazer e Detalhes; sem Abas nem Entendi; frase sob o título', () => {
+test('barra única embaixo: botão do estado, Revisar e Desfazer; sem Detalhes, Abas nem Entendi; frase sob o título', () => {
   const bar = SOURCE.match(/<div class="refino-action-bar"[\s\S]*?<\/div>/)?.[0] || '';
   assert.ok(bar, 'a tela monta a barra de ações');
-  const order = ['data-refino-primary', 'data-refino-review', 'data-refino-undo', 'data-refino-details'].map(attr => bar.indexOf(attr));
+  const order = ['data-refino-primary', 'data-refino-review', 'data-refino-undo'].map(attr => bar.indexOf(attr));
   assert.ok(order.every(i => i >= 0), 'todos os botões estão na barra');
-  assert.equal(JSON.stringify([...order].sort((a, b) => a - b)), JSON.stringify(order), 'ordem: estado, Revisar, Desfazer, Detalhes');
-  // Decisão do dono: a navegação inferior nunca some (sem botão Abas) e não existe "Entendi" no ciclo.
+  assert.equal(JSON.stringify([...order].sort((a, b) => a - b)), JSON.stringify(order), 'ordem: estado, Revisar, Desfazer');
+  // Decisões do dono: navegação inferior fixa (sem Abas), sem "Entendi" e sem "Detalhes" (2026-10-11: só usar e validar).
   assert.doesNotMatch(SOURCE, /toggleNav|data-refino-tabs|data-refino-ack|acknowledge/);
-  assert.doesNotMatch(bar, /Entendi|Abas/);
-  // A barra vem depois do gráfico e dos detalhes (embaixo); o cabeçalho não tem mais botões.
-  assert.ok(SOURCE.indexOf('refino-action-bar') > SOURCE.indexOf('data-refino-panel="details"'));
+  assert.doesNotMatch(SOURCE, /data-refino-details|data-refino-panel="details"|toggleDetails/);
+  assert.doesNotMatch(bar, /Entendi|Abas|Detalhes/);
+  // A barra vem depois do gráfico (embaixo); o cabeçalho não tem botões.
+  assert.ok(SOURCE.indexOf('refino-action-bar') > SOURCE.indexOf('data-refino-panel="chart"'));
   const header = SOURCE.match(/<header class="autocal-focus-toolbar">[\s\S]*?<\/header>/)?.[0] || '';
   assert.doesNotMatch(header, /<button/);
   assert.match(header, /<h3>Refino · GNV = Gasolina<\/h3>[\s\S]*<p id="refinoHeadline">/);
-  // "Detalhes" troca o gráfico pelas seções no mesmo lugar (sem rolagem).
-  assert.match(SOURCE, /data-refino-panel="chart"/);
-  assert.match(SOURCE, /panel\.hidden = panel\.dataset\.refinoPanel !== this\.view/);
   // Botões de 56 px: todos usam a classe que o Refino já dimensiona (min-height 56px).
   const css = read('app/src/main/assets/ui/styles-autocal-cockpit.css');
   assert.match(css, /\.refino-cockpit \.autocal-primary-action \{ min-height: 56px;/);
-  assert.equal((bar.match(/autocal-primary-action/g) || []).length, 4);
+  assert.equal((bar.match(/autocal-primary-action/g) || []).length, 3);
 });
 
 test('depois de gravar não há botão extra: o piloto já está medindo e a tela volta a ele', () => {

@@ -652,17 +652,6 @@
       }
     }
 
-    /** Detalhes ocupa o lugar do gráfico; tocar de novo volta ao gráfico. */
-    toggleDetails(force) {
-      const cockpit = this.panel?.querySelector('.autocal-cockpit');
-      const button = this.panel?.querySelector('[data-autocal-details]');
-      if (!cockpit || !button) return;
-      const details = typeof force === 'boolean' ? force : cockpit.dataset.autocalView !== 'details';
-      cockpit.dataset.autocalView = details ? 'details' : 'chart';
-      button.setAttribute('aria-expanded', String(details));
-      button.textContent = details ? 'Gráfico' : 'Detalhes';
-    }
-
     inject() {
       if (!document.querySelector('link[data-autocal-cockpit-style]')) {
         const link = document.createElement('link');
@@ -676,7 +665,7 @@
         const panel = document.createElement('div');
         panel.className = 'autocal-route-panel';
         panel.innerHTML = `
-          <section class="autocal-cockpit" aria-label="Auto Calibration nativa" data-autocal-view="chart">
+          <section class="autocal-cockpit" aria-label="Auto Calibration nativa">
             <header class="autocal-focus-toolbar" aria-label="AutoCal · Gasolina e GNV">
               <div class="autocal-focus-title">
                 <div class="autocal-title-line">
@@ -743,7 +732,6 @@
                   </section>
                 </div>
               </details>
-              <button type="button" class="autocal-details-action" data-autocal-details aria-expanded="false">Detalhes</button>
             </div>
 
             <details class="autocal-secondary-details" open>
@@ -825,7 +813,6 @@
     }
 
     bind() {
-      this.panel?.querySelector('[data-autocal-details]')?.addEventListener('click', () => this.toggleDetails());
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
         if (action) this.runOperational(action);
@@ -1091,7 +1078,10 @@
       this.text('autocalHumanTitle', human.title);
       this.text('autocalHumanProgress', human.progress);
       this.text('autocalHumanAction', human.nextAction);
-      this.text('autocalHeadline', human.title + ' · ' + human.progress);
+      // Frase única do estado (dono, 2026-10-11: sem Detalhes): zonas e AutoMatch, o que o leigo acompanha.
+      const autoMatchShort = human.autoMatchCount === null || human.autoMatchCount === undefined || String(human.title).includes('AutoMatch')
+        ? '' : ' · AutoMatch ' + Math.round(human.autoMatchCount) + (human.maxAutoMatch > 0 ? '/' + Math.round(human.maxAutoMatch) : '');
+      this.text('autocalHeadline', human.title + ' · ' + human.progress + autoMatchShort);
       this.text('autocalHumanAutoMatch', human.autoMatch);
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
