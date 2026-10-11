@@ -17,11 +17,16 @@
     return value || '—';
   }
 
+  // Formatadores criados uma vez (mesmo texto de toLocaleString; criar um por quadro custava ~25 µs cada).
+  const RPM_FORMAT = new Intl.NumberFormat('pt-BR');
+  const MS_FORMAT = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const AGE_FORMAT = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+
   function ageLabel(ageMs) {
     const age = finite(ageMs);
     if (age === null || age < 0) return '—';
     if (age < 1000) return `${Math.round(age)} ms`;
-    return `${(age / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} s`;
+    return `${AGE_FORMAT.format(age / 1000)} s`;
   }
 
   class VehicleStatusStrip {
@@ -76,15 +81,30 @@
       this.fact('ecu', ecuOnline ? 'ONLINE' : 'OFFLINE', ecuOnline ? 'online' : 'offline');
       this.fact('freshness', ageLabel(age), age !== null && age >= 0 ? 'measured' : 'unknown');
       this.fact('fuel', fuel, fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
-      this.fact('rpm', rpm === null ? '—' : Math.round(rpm).toLocaleString('pt-BR'), rpm === null ? 'unknown' : 'measured');
-      this.fact('petrol', petrol === null ? '—' : `${petrol.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms`, petrol === null ? 'unknown' : 'measured');
+      this.fact('rpm', rpm === null ? '—' : RPM_FORMAT.format(Math.round(rpm)), rpm === null ? 'unknown' : 'measured');
+      this.fact('petrol', petrol === null ? '—' : `${MS_FORMAT.format(petrol)} ms`, petrol === null ? 'unknown' : 'measured');
+    }
+
+    /** Os 6 campos da faixa são fixos depois da injeção: guarda os nós em vez de procurar a cada quadro. */
+    factNodes(key) {
+      const cache = this.factCache || (this.factCache = new Map());
+      let entry = cache.get(key);
+      if (!entry || entry.node.isConnected === false) {
+        const node = this.node?.querySelector(`[data-vehicle-fact="${key}"]`);
+        if (!node) return null;
+        entry = { node, target: node.querySelector('b') };
+        cache.set(key, entry);
+      }
+      return entry;
     }
 
     fact(key, value, state) {
-      const node = this.node?.querySelector(`[data-vehicle-fact="${key}"]`);
-      if (!node) return;
-      node.dataset.state = state || 'neutral';
-      const target = node.querySelector('b');
+      const entry = this.factNodes(key);
+      if (!entry) return;
+      const { node, target } = entry;
+      // Escreve só o que mudou: cada quadro novo da ECU chega aqui, e regravar o mesmo valor ainda custa ao DOM.
+      const nextState = state || 'neutral';
+      if (node.dataset.state !== nextState) node.dataset.state = nextState;
       if (target && target.textContent !== String(value)) target.textContent = String(value);
     }
   }

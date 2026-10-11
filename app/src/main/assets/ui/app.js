@@ -50,6 +50,9 @@
     if (node.textContent !== next) node.textContent = next;
   }
   function finite(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+  // Formatadores criados uma vez (mesmo texto de toLocaleString, sem recriar a cada quadro).
+  const RPM_FORMAT = new Intl.NumberFormat('pt-BR');
+  const MS_FORMAT = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   function rounded(value, digits) {
     const number = finite(value);
     if (number === null) return '—';
@@ -187,7 +190,9 @@
     const source = telemetry || {};
     const live = source.live || source.data || source;
     const freshnessAge = finite(source.telemetryAgeMs ?? source.ageMs);
-    const freshnessBucket = freshnessAge === null || freshnessAge < 0 ? -1 : Math.min(20, Math.floor(freshnessAge / 500));
+    // Meio segundo até 10 s; depois de 1 em 1 s: sem quadro novo, a idade continua andando em vez de congelar em 10 s.
+    const freshnessBucket = freshnessAge === null || freshnessAge < 0 ? -1
+      : freshnessAge < 10000 ? Math.floor(freshnessAge / 500) : 20 + Math.min(3600, Math.floor(freshnessAge / 1000));
     const sourceSequence = Number.isFinite(Number(source.sequence)) ? Number(source.sequence) : -1;
     if (route === 'dashboard') {
       return [
@@ -224,7 +229,7 @@
     const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
     const position = row !== null && column !== null ? ` · célula ${row + 1}×${column + 1}` : '';
     const label = interpolationValid && rpm !== null && petrolMs !== null
-      ? `${Math.round(rpm).toLocaleString('pt-BR')} RPM · ${petrolMs.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ms${position}`
+      ? `${RPM_FORMAT.format(Math.round(rpm))} RPM · ${MS_FORMAT.format(petrolMs)} ms${position}`
       : 'Aguardando condição válida';
     if (route === 'learning') setText('learningLiveLabel', label);
     if (route === 'map') ensureScreen('map')?.renderLiveContext?.({ rpm, petrolMs, row, column, label });
@@ -282,7 +287,9 @@
     if (needsScience) {
       const science = api.scienceSnapshotSince(scienceRevision) || {};
       const nextRevision = Number(science.revision || scienceRevision || 0);
-      patch.scienceRefreshing = science.refreshing === true;
+      // Ciência igual (changed:false) e mesmo estado de recálculo: nada a gravar no store, nenhum redesenho.
+      const refreshing = science.refreshing === true;
+      if (refreshing !== (state.scienceRefreshing === true)) patch.scienceRefreshing = refreshing;
       if (science.changed === true && science.data && typeof science.data === 'object') {
         scienceRevision = nextRevision;
         const data = science.data;

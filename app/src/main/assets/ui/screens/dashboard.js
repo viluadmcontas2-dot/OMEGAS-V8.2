@@ -6,9 +6,16 @@
       if (value === null || value === undefined || value === "") return null;
       return Number.isFinite(Number(value)) ? Number(value) : null;
     }
+    // Formatadores criados uma vez por casas decimais (mesmo texto de toLocaleString, sem recriar a cada quadro).
+    const formats = {};
+    function formatFor(digits) {
+      if (!formats[digits]) formats[digits] = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+      return formats[digits];
+    }
+    const integerFormat = new Intl.NumberFormat("pt-BR");
     function fmt(value, digits) {
       const n = finite(value);
-      return n === null ? "\u2014" : n.toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+      return n === null ? "\u2014" : formatFor(digits).format(n);
     }
     function text(id, value) {
       const node = document.getElementById(id);
@@ -91,10 +98,10 @@
         const row = interpolationValid && Number.isFinite(Number(cell.row)) && Number(cell.row) >= 0 ? Number(cell.row) : null;
         const column = interpolationValid && Number.isFinite(Number(cell.column)) && Number(cell.column) >= 0 ? Number(cell.column) : null;
         text("dashHeroPetrol", fmt(petrol, 2));
-        text("dashRpm", rpm === null ? "\u2014" : Math.round(rpm).toLocaleString("pt-BR"));
+        text("dashRpm", rpm === null ? "\u2014" : integerFormat.format(Math.round(rpm)));
         text("dashMap", fmt(map, 2));
         text("dashFuel", fuel);
-        text("dashLevelsRaw", levelsRaw === null ? "\u2014" : Math.round(levelsRaw).toLocaleString("pt-BR"));
+        text("dashLevelsRaw", levelsRaw === null ? "\u2014" : integerFormat.format(Math.round(levelsRaw)));
         this.renderRefino();
         text("dashCell", row !== null && column !== null ? "".concat(row + 1, "\xD7").concat(column + 1) : "\u2014");
         text("dashEcuStatus", connected ? "ECU online" : "ECU offline");
