@@ -61,6 +61,8 @@
       const error = finite(advice?.errorPercent ?? advice?.error_percent ?? advice?.relativeErrorPercent);
       const actionable = advice?.actionable === true && target !== null;
       const stateName = actionable ? 'PREVISAO_OMEGAS' : error !== null ? 'OBSERVADO_SEM_PREVISAO' : 'SEM_PREVISAO';
+      // Roda a cada quadro de telemetria: só escreve no DOM quando o estado muda.
+      if (this.badge.dataset.state === stateName) return;
       this.badge.dataset.state = stateName;
       this.badge.textContent = stateName === 'PREVISAO_OMEGAS'
         ? 'PREVISÃO OMEGAS'
