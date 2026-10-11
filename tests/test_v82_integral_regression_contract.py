@@ -127,6 +127,15 @@ class V82IntegralRegressionContract(unittest.TestCase):
         for name in dead:
             self.assertFalse((ui / name).exists(), name)
 
+    def test_direct_writers_are_not_exposed_to_javascript(self):
+        # Auditoria de fluxo (2026-10-11): gravadores diretos e leituras seriais síncronas sem tela que os chame não
+        # ficam na ponte JS; a gravação manual passa pela ponte V7 com readback.
+        import re
+        bridge = read('app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt')
+        for name in ('startKWrite', 'startKBatchWrite', 'startKFactorWrite', 'readKMap', 'readKLine', 'readKCell'):
+            self.assertIn(f'fun {name}(', bridge)
+            self.assertIsNone(re.search(r'@JavascriptInterface\s+fun ' + name + r'\(', bridge), name)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -375,9 +375,11 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun runEngineSelfTests(): String = activity?.serviceOrNull()?.engineSelfTestJson() ?: unavailable()
     @JavascriptInterface fun runProtocolLab(): String = activity?.serviceOrNull()?.protocolLabJson() ?: unavailable()
 
-    @JavascriptInterface fun readKCell(row: Int, column: Int): String = activity?.serviceOrNull()?.readKCell(row, column) ?: unavailable()
-    @JavascriptInterface fun readKLine(row: Int): String = activity?.serviceOrNull()?.readKLine(row) ?: unavailable()
-    @JavascriptInterface fun readKMap(): String = activity?.serviceOrNull()?.readKMap() ?: unavailable()
+    // Fora da ponte JS (auditoria de fluxo, 2026-10-11): nenhuma tela chama; leitura serial síncrona travaria a tela.
+    // O Mapa K lê pela ponte V7 (startMapRead), que roda fora da thread da tela.
+    fun readKCell(row: Int, column: Int): String = activity?.serviceOrNull()?.readKCell(row, column) ?: unavailable()
+    fun readKLine(row: Int): String = activity?.serviceOrNull()?.readKLine(row) ?: unavailable()
+    fun readKMap(): String = activity?.serviceOrNull()?.readKMap() ?: unavailable()
 
     /**
      * Inicia a leitura completa fora da thread JavaScript. A WebView continua
@@ -429,7 +431,8 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun previewKMapCell(row: Int, column: Int, targetValue: Int): String =
         activity?.serviceOrNull()?.previewKMapCell(row, column, targetValue) ?: unavailable()
 
-    @JavascriptInterface
+    // Gravadores diretos fora da ponte JS (auditoria de fluxo, 2026-10-11): nenhuma tela chama e eles contornam o
+    // coordenador V7. A gravação manual continua pela ponte V7 (Mapa K/Curva K), com readback. Bytes não mudam.
     fun startKWrite(row: Int, column: Int, current: Int, target: Int, maxStep: Int, pauseMs: Int): String {
         val service = activity?.serviceOrNull() ?: return unavailable()
         CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return safetyBlocked(it) }
@@ -442,7 +445,6 @@ class HubJavascriptBridge(activity: MainActivity) {
         return service.startKWrite(row, column, current, target, maxStep, pauseMs)
     }
 
-    @JavascriptInterface
     fun startKBatchWrite(cellsJson: String, maxStep: Int, pauseMs: Int, reason: String): String {
         val service = activity?.serviceOrNull() ?: return unavailable()
         CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return safetyBlocked(it) }
@@ -476,7 +478,6 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun previewKFactorPoint(index: Int, targetFactor: Double): String =
         KFactorManualPlanner.preview(AppPaths(appContext).runtimeRoot, index, targetFactor).toString()
 
-    @JavascriptInterface
     fun startKFactorWrite(pointsJson: String, reason: String): String {
         val service = activity?.serviceOrNull() ?: return unavailable()
         CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return safetyBlocked(it) }

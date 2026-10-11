@@ -67,6 +67,9 @@
 
     render(state) {
       if (!this.node) return;
+      // A faixa mora no cabeçalho, oculto na navegação inferior: não redesenhar o que não aparece a cada mudança.
+      // Se voltar a aparecer, o próximo status (1 s) redesenha.
+      if (typeof this.node.getClientRects === 'function' && this.node.getClientRects().length === 0) return;
       const status = state.status || {};
       const telemetryRoot = state.telemetry || {};
       const telemetryValid = telemetryRoot.valid === true;
