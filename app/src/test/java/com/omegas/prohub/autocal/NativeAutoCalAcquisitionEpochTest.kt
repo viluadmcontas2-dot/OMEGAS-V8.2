@@ -7,6 +7,43 @@ class NativeAutoCalAcquisitionEpochTest {
     private fun counts(total: Int) = IntArray(18) { if (it < total) 1 else 0 }
     private fun filled() = counts(6)
 
+    // Carro, 2026-10-12: após "Reaprender GNV" a ECU ainda devolveu os contadores antigos por alguns ciclos e a tela
+    // voltou a mostrar GNV 12/18 como vivo. O pendente de GNV só cai com contadores zerados; a gasolina não é afetada.
+    @Test fun resetGasStaysPendingWhileEcuStillReportsOldGasCounters() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(9L)
+        gate.nativeCounter(9L, 0)
+        assertTrue(gate.acquisitionGroup(9L, 0, filled(), counts(12)))
+        assertTrue(gate.manualAction(9L, "RESET_GAS"))
+        assertTrue(gate.view().gasPending)
+        gate.nativeCounter(9L, 0) // o monitor re-observa o contador antes do próximo grupo (baseline novo)
+        // Mesma leitura antiga: não é a aquisição nova, a época continua pendente.
+        assertFalse(gate.acquisitionGroup(9L, 0, filled(), counts(12)))
+        assertTrue(gate.view().gasPending)
+        assertEquals("GAS_RESET_NOT_APPLIED_YET", gate.view().reason)
+        assertFalse(gate.view().comparisonAllowed)
+        // Contadores de GNV zerados: aí sim a nova geração começa, com a gasolina preservada.
+        assertTrue(gate.acquisitionGroup(9L, 0, filled(), counts(0)))
+        assertFalse(gate.view().gasPending)
+        assertFalse(gate.view().petrolPending)
+        assertEquals(6, gate.view().petrolSamples)
+        assertEquals(0, gate.view().gasSamples)
+    }
+
+    @Test fun resetPetrolStaysPendingWhileEcuStillReportsOldPetrolCounters() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(10L)
+        gate.nativeCounter(10L, 0)
+        assertTrue(gate.acquisitionGroup(10L, 0, filled(), filled()))
+        assertTrue(gate.manualAction(10L, "RESET_PETROL"))
+        gate.nativeCounter(10L, 0)
+        assertFalse(gate.acquisitionGroup(10L, 0, filled(), filled()))
+        assertTrue(gate.view().petrolPending)
+        assertEquals("PETROL_RESET_NOT_APPLIED_YET", gate.view().reason)
+        assertTrue(gate.acquisitionGroup(10L, 0, counts(0), filled()))
+        assertFalse(gate.view().petrolPending)
+    }
+
     @Test fun autoMatchStartsNewGasGenerationWithoutDiscardingPetrol() {
         val gate = NativeAutoCalAcquisitionEpoch()
         gate.reset(4L)

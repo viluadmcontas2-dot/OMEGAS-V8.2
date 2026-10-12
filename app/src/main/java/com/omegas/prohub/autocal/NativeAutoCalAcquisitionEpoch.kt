@@ -38,6 +38,9 @@ class NativeAutoCalAcquisitionEpoch {
     private var gasSamples = 0
     private var previousPetrol: IntArray? = null
     private var previousGas: IntArray? = null
+    /** Reset manual/AutoMatch pediu nova aquisição: só um grupo com os contadores daquele combustível zerados a confirma. */
+    private var petrolAwaitingZero = false
+    private var gasAwaitingZero = false
     private var reason = "SESSION_BOOTSTRAP"
 
     fun reset(sessionId: Long) {
@@ -53,6 +56,8 @@ class NativeAutoCalAcquisitionEpoch {
         gasSamples = 0
         previousPetrol = null
         previousGas = null
+        petrolAwaitingZero = false
+        gasAwaitingZero = false
         reason = if (sessionId > 0L) "SESSION_BOOTSTRAP" else "DISCONNECTED"
     }
 
@@ -68,6 +73,7 @@ class NativeAutoCalAcquisitionEpoch {
         gasReferencePending = true
         gasSamples = 0
         previousGas = null
+        // AutoMatch nativo não zera os contadores (contrato allThreeMatchesPermitAcquisitionEvenWithoutObservedZero).
         reason = if (count > before) "NATIVE_AUTOMATCH" else "AUTOMATCH_COUNTER_RESTART"
         return true
     }
@@ -82,6 +88,7 @@ class NativeAutoCalAcquisitionEpoch {
                 petrolReferencePending = true
                 petrolSamples = 0
                 previousPetrol = null
+                petrolAwaitingZero = true
             }
             "RESET_GAS", "MANUAL_AUTOMATCH" -> {
                 gasGeneration++
@@ -89,6 +96,7 @@ class NativeAutoCalAcquisitionEpoch {
                 gasReferencePending = true
                 gasSamples = 0
                 previousGas = null
+                gasAwaitingZero = true
                 nativeCount = null // o contador pode voltar a 0: novo baseline, sem duplicar época
             }
             "RESET_ALL" -> {
@@ -102,6 +110,8 @@ class NativeAutoCalAcquisitionEpoch {
                 gasSamples = 0
                 previousPetrol = null
                 previousGas = null
+                petrolAwaitingZero = true
+                gasAwaitingZero = true
                 nativeCount = null
             }
             else -> return false // RESET_K_FACTOR, pausa, Finish etc. NÃO resetam aquisição
@@ -127,6 +137,18 @@ class NativeAutoCalAcquisitionEpoch {
             gasReferencePending = true
             reason = "GAS_COUNTER_RESTART"
         }
+        // Bug visto no carro (dono, 2026-10-12): depois de "Reaprender GNV" a ECU ainda devolve os contadores antigos
+        // por alguns ciclos; aceitar esse grupo rearmava a época e a tela voltava a mostrar os 12/18 pontos apagados
+        // como vivos. Um combustível reiniciado só sai de "pendente" quando a ECU devolve os contadores dele
+        // zerados (único pós-estado que o corpus prova); o outro combustível segue normalmente.
+        val petrolStale = petrolAwaitingZero && petrol.any { it > 0 }
+        val gasStale = gasAwaitingZero && gas.any { it > 0 }
+        if (petrolStale || gasStale) {
+            reason = if (gasStale) "GAS_RESET_NOT_APPLIED_YET" else "PETROL_RESET_NOT_APPLIED_YET"
+            return false
+        }
+        petrolAwaitingZero = false
+        gasAwaitingZero = false
         previousPetrol = petrol.copyOf()
         previousGas = gas.copyOf()
         petrolSamples = petrol.count { it > 0 }
