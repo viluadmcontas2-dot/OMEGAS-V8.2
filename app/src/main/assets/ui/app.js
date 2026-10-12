@@ -393,19 +393,29 @@
   function updateSuggestionBadge(state, refinement = refinementSuggestion()) {
     const items = Array.isArray(state.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
     const actionable = items.filter(item => item.lifecycle === 'PENDING' && item.actionable === true && (item.target === 'MAP_K' || item.target === 'CURVE_K')).length;
-    setText('suggestionCount', actionable + (refinement ? 1 : 0));
+    setText('suggestionCount', actionable + (refinement?.curve ? 1 : 0) + (refinement?.local ? 1 : 0));
   }
 
   let toolsSessionsKey = '';
   let toolsSessionsAt = 0;
   let lastSuggestionSignature = '';
-  /** Curva refinada pronta no Refino entra na fila de decisões (só leitura do piloto). */
+  /**
+   * O que o Refino tem pronto entra em Sugestões (só leitura do piloto): a curva (global) e o ajuste local do Mapa K
+   * (dono, 2026-10-11: a curva aprende tudo e sabe onde ajustar o quê). null quando não há nada.
+   */
   function refinementSuggestion() {
     const eq = (root.OmegasUi || ui).AutoCalApi?.refinementPhase?.();
-    const phase = eq?.autopilot?.phase;
-    if (phase === 'PROPOSTA_PRONTA') return { title: 'Curva refinada pronta', text: eq.autopilot.headline || 'O refino tem uma curva para revisar.' };
-    if (phase === 'RESTAURAR_TRECHO') return { title: 'Um trecho piorou depois da gravação', text: 'Restaure só esse trecho no Refino.' };
-    return null;
+    const pilot = eq?.autopilot || {};
+    const count = finite(pilot.proposal?.count);
+    let curve = null;
+    if (pilot.phase === 'PROPOSTA_PRONTA') curve = { title: 'Curva refinada pronta', text: count ? `${count} ${count === 1 ? 'ponto' : 'pontos'} da Curva K para revisar e gravar.` : 'Revise e grave no Refino.' };
+    if (pilot.phase === 'RESTAURAR_TRECHO') curve = { title: 'Um trecho piorou depois da gravação', text: 'Restaure só esse trecho no Refino.' };
+    const localAction = (Array.isArray(pilot.secondary) ? pilot.secondary : []).find(item => item && item.kind === 'local' && item.enabled !== false);
+    const cells = (Array.isArray(localAction?.cells) ? localAction.cells : [])
+      .filter(c => c && Number.isInteger(Number(c.row)) && Number.isInteger(Number(c.column)) && finite(c.deltaPercent) !== null)
+      .map(c => ({ row: Number(c.row), column: Number(c.column), deltaPercent: Number(c.deltaPercent) }));
+    const local = cells.length ? { cells } : null;
+    return curve || local ? { curve, local } : null;
   }
   function renderPersistentSuggestions(state) {
     const host = byId('suggestionList');
@@ -419,7 +429,7 @@
     if (signature === lastSuggestionSignature && host.childElementCount) return;
     lastSuggestionSignature = signature;
     if (!items.length && !refinement) {
-      host.innerHTML = '<div class="detail-empty"><b>Nada para revisar agora</b><span>Quando o Refino tiver uma curva pronta, ela aparece aqui.</span></div>';
+      host.innerHTML = '<div class="detail-empty"><b>Nada para revisar agora</b><span>Quando o Refino tiver uma curva ou um ajuste local pronto, aparece aqui.</span></div>';
       return;
     }
     const current = items.filter(item => ['PENDING', 'OBSERVING'].includes(String(item.lifecycle || '')));
@@ -443,12 +453,13 @@
       </div>`).join('');
 
     host.innerHTML = `
-      ${refinement ? `<section class="suggestion-group" data-suggestion-group="REFINO"><header><div><small>REFINO</small><h3>${escapeHtml(refinement.title)}</h3><p>${escapeHtml(refinement.text)}</p></div><div class="suggestion-group-actions"><button type="button" class="primary" data-open-refino>Abrir Refino</button></div></header></section>` : ''}
-      <div class="suggestion-queue-summary">
+      ${refinement?.curve ? `<section class="suggestion-group" data-suggestion-group="REFINO"><header><div><small>AJUSTE GLOBAL · REFINO</small><h3>${escapeHtml(refinement.curve.title)}</h3><p>${escapeHtml(refinement.curve.text)}</p></div><div class="suggestion-group-actions"><button type="button" class="primary" data-open-refino>Abrir Refino</button></div></header></section>` : ''}
+      ${refinement?.local ? `<section class="suggestion-group" data-suggestion-group="LOCAL"><header><div><small>AJUSTE LOCAL · MAPA K</small><h3>${refinement.local.cells.length} ${refinement.local.cells.length === 1 ? 'célula' : 'células'} para revisar</h3><p>Só onde a diferença é daquela rotação; a curva cuida do resto. Abrir não grava.</p></div><div class="suggestion-group-actions"><button type="button" class="primary" data-open-local>Revisar no Mapa K</button></div></header></section>` : ''}
+      ${items.length ? `<div class="suggestion-queue-summary">
         <div><small>PENDENTES</small><b>${pendingMap.length + pendingCurve.length}</b></div>
         <div><small>OBSERVANDO</small><b>${observing.length}</b></div>
         <div><small>APLICADAS</small><b>${applied.length}</b></div>
-      </div>
+      </div>` : ''}
       ${pendingMap.length ? `<section class="suggestion-group" data-suggestion-group="MAP_K"><header><div><small>AJUSTE LOCAL</small><h3>Mapa K · ${pendingMap.length} prontas</h3></div><div class="suggestion-group-actions"><button type="button" class="quiet-button" data-select-ready="MAP_K">Selecionar prontas</button><button type="button" class="primary" data-review-selected="MAP_K">Revisar selecionadas</button></div></header>${pendingRows(pendingMap)}</section>` : ''}
       ${pendingCurve.length ? `<section class="suggestion-group" data-suggestion-group="CURVE_K"><header><div><small>AJUSTE GLOBAL</small><h3>Curva K · ${pendingCurve.length} pronta${pendingCurve.length === 1 ? '' : 's'}</h3></div><div class="suggestion-group-actions"><button type="button" class="quiet-button" data-select-ready="CURVE_K">Selecionar prontas</button><button type="button" class="primary" data-review-selected="CURVE_K">Revisar selecionadas</button></div></header>${pendingRows(pendingCurve)}</section>` : ''}
       ${observing.length ? `<section class="suggestion-group"><header><div><small>OBSERVANDO</small><h3>Ainda observando</h3></div></header>${passiveRows(observing)}</section>` : ''}
@@ -456,6 +467,9 @@
     `;
 
     host.querySelector('[data-open-refino]')?.addEventListener('click', () => router.navigate('refino'));
+    host.querySelector('[data-open-local]')?.addEventListener('click', () => {
+      if (refinement?.local) router.navigate('map', { origin: 'suggestions', suggestion: { mapChanges: refinement.local.cells } });
+    });
     host.querySelectorAll('[data-suggestion-select]').forEach(input => input.addEventListener('change', () => {
       if (input.checked) selectedSuggestionIds.add(input.dataset.suggestionSelect);
       else selectedSuggestionIds.delete(input.dataset.suggestionSelect);
