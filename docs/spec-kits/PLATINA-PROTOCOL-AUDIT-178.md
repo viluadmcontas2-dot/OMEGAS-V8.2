@@ -4,7 +4,7 @@
 - Branch: `work/platina-obsidian-enxuto` (explicit owner selection).
 - WorkUnit: `docs/workunits/PLATINA-PROTOCOL-AUDIT-178.md`.
 - Evidence: `docs/evidence/PLATINA-PROTOCOL-AUDIT-178.md`.
-- State: IMPLEMENTED — remote readback required before issue closure.
+- State: IMPLEMENTED — publication validation receipt tracked in #178.
 
 ## Observable result
 

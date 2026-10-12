@@ -4,7 +4,7 @@
 - Spec Kit: `docs/spec-kits/PLATINA-PROTOCOL-AUDIT-178.md`.
 - Branch: `work/platina-obsidian-enxuto` (owner-selected continuation).
 - Base SHA: `c8b24f4271c364403474e35412e6f60123d51482`.
-- State: IMPLEMENTED — remote readback required before issue closure.
+- State: IMPLEMENTED — publication validation receipt tracked in #178.
 
 ## Completed work
 
@@ -17,3 +17,7 @@ At the base SHA, the action-map, dump and original-oracle Python contracts passe
 ## Completion gate
 
 Remote commit readback must show only this Spec Kit, WorkUnit, evidence ledger, manifest and the corrected WU-006 paragraph. Confirm branch head and preserve concurrent work before closing #178.
+
+## Retained-export follow-up
+
+Recovered the existing Ghidra text from the prior Claude session, without another native import or decompilation. Archived eleven complete relevant function sections with hashes and line ranges. The evidence ledger now answers all six host-format questions, distinguishing parameter-dependent/runtime unknowns and the old export provenance limitation. Initial commit 96cc43dd53890a7678f49802fc5993ef2bee1e83 readback confirmed the five expected documentation paths and corrected paragraph.
