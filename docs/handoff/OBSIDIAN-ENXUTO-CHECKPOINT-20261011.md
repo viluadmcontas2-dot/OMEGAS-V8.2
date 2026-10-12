@@ -57,6 +57,13 @@ Provas locais em `131a7153`: JVM 619/619 + lint 0 erros, node UI 194/194, unitte
 3. Teste no carro com o dono (classe 5): lenta e cruzeiro no GNV, Refino propõe curva/ajuste local, gravação com readback, Desfazer.
 4. Ainda em aberto para decidir com dado do carro: gasolina própria primeiro × referência da ECU; semântica do Mapa K (multiplicativo? neutro 100 ou 128? interpola?).
 
+## Ambiente de engenharia reversa (REA) — decisão do dono 2026-10-12: rotina, persistente, via MCP
+
+- `tools/rea/install.sh` instala/atualiza REA 6.4.0, JADX headless 0.7.1 (JAR auditado por SHA-256) e Ghidra 12.1.x; exporta `REA_JADX_MCP_JAR`/`GHIDRA_INSTALL_DIR`; registra o MCP no Claude Code. Idempotente.
+- `.claude/settings.json` + `.claude/hooks/session-start.sh`: hook SessionStart assíncrono que roda o instalador em toda sessão na nuvem. `.mcp.json`: registro do servidor MCP `rea` no projeto.
+- Provado nesta sessão: `rea inspect-android-package` e `search-android-classes` sobre o APK `74ebda24…` (2 566 classes, `com.omegas.v7.test` 8.0.0-test-debug; achou `com.omegas.prohub.calibration.KFactorManager`).
+- Bloqueio: o proxy da nuvem nega downloads de release de `NationalSecurityAgency/ghidra` (403/404) e a API do GitHub só cobre o repo do projeto; o clone git do código 12.1.4 passa (`/home/user/nationalsecurityagency/ghidra`). Alternativas: liberar `github.com`/`objects.githubusercontent.com` para esse repo nas configurações do ambiente, ou definir `GHIDRA_ZIP_URL` com um espelho acessível.
+
 ## Primeiro item ainda não provado
 
 CI remota verde em `131a7153` e APK com SHA-256; depois validação física no carro.
