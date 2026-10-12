@@ -1,10 +1,7 @@
-# Platina APK readiness gate. Build on explicit dispatch or a deliberate workflow-only push on Obsidian.
+# Platina APK readiness gate. This workflow never builds on push.
 name: OMEGAS PLATINA APK READY GATED
 
 on:
-  push:
-    branches: [work/platina-obsidian-enxuto]
-    paths: ['.github/workflows/verde-apk-now.yml']
   workflow_dispatch:
     inputs:
       build_apk:
@@ -24,7 +21,7 @@ concurrency:
 
 jobs:
   verify-build-publish:
-    if: ${{ github.event_name == 'push' || inputs.build_apk == true }}
+    if: ${{ inputs.build_apk == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
