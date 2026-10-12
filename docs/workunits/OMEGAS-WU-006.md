@@ -65,7 +65,7 @@ Estado:
 - UX foi provada em WebView Android real 1280×720 nos cenários vinculantes. Isso não equivale a validação física no veículo.
 - O resumo N/4 não é mais a única orientação: os flags nativos `0x016F/0x0170` aparecem como Z1..Z4 com estado `OK/FALTA`, e CurrentBand orienta a zona `AGORA`.
 - A curva principal foi despoluída: a narrativa live redundante fica fora da superfície visual principal; RPM, Petrol Inj. e MAP permanecem nos cards.
-- A identidade de ações foi reconciliada diretamente com RTTI/disassembly do ProgBase: AutoMatch=`0x01`, ResetPetrol=`0x02`, ResetGas=`0x04`, Modify refs=`0x08`; ResetAll usa rota separada.
+- A identidade host das ações segue o contrato original-derived atual (`tests/fixtures/progbase-autocal-action-map-v1.json`, schema v2): Manual AutoMatch=`0x08`, ResetPetrol=`0x01`, ResetGas=`0x02`, ResetAll=`0x04`; Modify map refs usa rota separada. O nome do arquivo v1 não altera o schema v2. A interpretação anterior foi substituída; identidade host não prova efeitos seletivos internos da ECU. Reconciliação documental: #178 / `PLATINA-PROTOCOL-AUDIT-178`.
 - O efeito amplo original de ResetGas está documentado; resets destrutivos permanecem intertravados e exigem backup pré-mutação durável antes de qualquer envio.
 
 ## Estratégia de execução

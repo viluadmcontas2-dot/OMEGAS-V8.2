@@ -1,0 +1,92 @@
+[
+  {
+    "name": "00-LEIA-ME.md",
+    "bytes": 2457,
+    "sha256": "d61a50afa630f36a90e78319c959a379676ceba187d3700edd0246aebaf56c45"
+  },
+  {
+    "name": "01-CAMADA-FISICA.md",
+    "bytes": 1628,
+    "sha256": "1e407d7149eafa4772b38952686600b46b495f8c90721a54e92cd6b1330accbb"
+  },
+  {
+    "name": "02-FRAMING-CHECKSUM.md",
+    "bytes": 3893,
+    "sha256": "9acc5c6f0af50a7cb9b917facb8d30f571c66531e3dc1430b1ed03eaaec50fcc"
+  },
+  {
+    "name": "03-CONEXAO-HANDSHAKE.md",
+    "bytes": 3104,
+    "sha256": "3fa5f3afcdfbe2abb32b34185f4ec4db4236e560db5fc252ab8a06116de66820"
+  },
+  {
+    "name": "04-VERSIONAMENTO.md",
+    "bytes": 3376,
+    "sha256": "d1721cc0f8dc6c5129b8c2a62124e8aab90a7c3cc48085af0e2860dab979da24"
+  },
+  {
+    "name": "05-ESTRUTURAS-DADOS.md",
+    "bytes": 3682,
+    "sha256": "526e9d6f29e1e47a5f32681a5cece8ef26e94eb5977dc0d88e448f9843e32871"
+  },
+  {
+    "name": "06-COMANDOS-LEITURA.md",
+    "bytes": 4565,
+    "sha256": "24d01dec8848765edb76dfeb53bc13d4a6100565bab99cfda91089812c038c49"
+  },
+  {
+    "name": "07-COMANDOS-ESCRITA.md",
+    "bytes": 5403,
+    "sha256": "07a7da268ed804ef3f1ee644f92aaedf3737fc470c67db12c1fd4013195a0f89"
+  },
+  {
+    "name": "08-DADOS-TEMPO-REAL.md",
+    "bytes": 3905,
+    "sha256": "70ac5f85e52a951c31b0f3c0a0eb7f56caf433fdde38cf9a556d0a7b5e3cf4ae"
+  },
+  {
+    "name": "09-PROTOCOLO-FLASH.md",
+    "bytes": 5713,
+    "sha256": "c75642820aef23b29ae1ec756307c3650d6cf0d35a1ba70ddf29c1a39369e656"
+  },
+  {
+    "name": "10-EEPROM-CONFIG.md",
+    "bytes": 3338,
+    "sha256": "79dabe7c08dd20ea0f42fd341f5d5364d8f5ac1b428b92c428fdaa02a8fb051c"
+  },
+  {
+    "name": "11-TRATAMENTO-ERROS.md",
+    "bytes": 3316,
+    "sha256": "0022da4bfd4bc1abe4dc8b4da9e6d733c3edce1fb01e9412d495c97e3472c43e"
+  },
+  {
+    "name": "12-MAPA-OPCODES.md",
+    "bytes": 5169,
+    "sha256": "0ed50b5be878bd36c2ae78a6f983b5244e51b287632de752462d956d06ffda2d"
+  },
+  {
+    "name": "13-FIRMWARE-CRIPTOGRAFIA.md",
+    "bytes": 5052,
+    "sha256": "f060472088ab7b02de966028e6c291de06268e13810dfae29d085f6fa1c92a15"
+  },
+  {
+    "name": "14-GUIA-IMPLEMENTACAO.md",
+    "bytes": 5537,
+    "sha256": "f55ddd23f4c6822c92660669ac83b3de43f2e5c595af8de3d7a4dfa5d49ab0b8"
+  },
+  {
+    "name": "15-ACHADOS-NEGATIVOS.md",
+    "bytes": 2642,
+    "sha256": "3367add2509f5436c1e6d2722689c2339be3f53168f8a5dce420f5f8578fa78c"
+  },
+  {
+    "name": "16-CORRECOES-BENCHMARK.md",
+    "bytes": 6298,
+    "sha256": "1f4dd729706630367808f052dc323c430e877d52b7a0ff1492ea0eb0050cee9a"
+  },
+  {
+    "name": "decrypt_ple.py",
+    "bytes": 6055,
+    "sha256": "689f022e6a9b3e7809e447938303a03233ed25849397272e239216a0fe6a3a10"
+  }
+]
