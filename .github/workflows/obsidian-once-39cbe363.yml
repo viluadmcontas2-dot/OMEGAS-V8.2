@@ -1,0 +1,68 @@
+# One-time APK delivery explicitly requested by the repository owner (2026-10-12).
+# A single push to THIS FILE triggers this build. Source pinned to Claude's reviewed commit.
+# Existing manually gated APK workflow is unchanged. No ECU write occurs in CI.
+name: Obsidian APK 39cbe363 owner delivery
+on:
+  push:
+    branches: [work/platina-obsidian-enxuto]
+    paths: ['.github/workflows/obsidian-once-39cbe363.yml']
+permissions:
+  contents: read
+env:
+  PRODUCT_SHA: 39cbe363af1293c2e8247f493ae68aaa18168ff8
+  OMEGAS_SOURCE_SHA: 39cbe363af1293c2e8247f493ae68aaa18168ff8
+jobs:
+  verify-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact Claude source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PRODUCT_SHA }}
+      - name: Verify original SHA
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
+          echo "SOURCE_SHA=$(git rev-parse HEAD)"
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Run tests, lint, and build APK
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          python3 -B tools/run_checks.py
+          ./gradlew clean testDebugUnitTest lintDebug assembleDebug -PomegasAbis=armeabi-v7a --no-daemon --stacktrace
+      - name: Confirm APK and write evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          mkdir -p build/evidence
+          SHA="$(sha256sum "$APK" | cut -d' ' -f1)"
+          BYTES="$(stat -c %s "$APK")"
+          {
+            echo "STATUS=PASS"
+            echo "SOURCE_SHA=$PRODUCT_SHA"
+            echo "SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+            echo "APK_SHA256=$SHA"
+            echo "APK_BYTES=$BYTES"
+            echo "BUILD=run_checks+clean+testDebugUnitTest+lintDebug+assembleDebug"
+            echo "PHYSICAL_ECU_TEST=NOT_PERFORMED"
+          } | tee build/evidence/obsidian-39cbe363.txt
+      - name: Upload exact APK and provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: omegas-obsidian-39cbe363-verified
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            build/evidence/obsidian-39cbe363.txt
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
