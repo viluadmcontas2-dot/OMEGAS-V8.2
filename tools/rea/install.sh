@@ -12,7 +12,10 @@ JADX_URL="https://github.com/1013503897/jadx-headless-mcp/releases/download/v${J
 JADX_SHA256="6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75"   # auditado pelo REA (src/android/JadxRelease.ts)
 GHIDRA_VERSION="${GHIDRA_VERSION:-12.1.4}"                                            # REA 6.4 exige 12.1.x
 GHIDRA_TAG="Ghidra_${GHIDRA_VERSION}_build"
-GHIDRA_ZIP_URL="${GHIDRA_ZIP_URL:-}"   # opcional: URL direta do zip oficial (ghidra_12.1.4_PUBLIC_<data>.zip)
+# Zip oficial da tag 12.1.4 (nome resolvido por tentativa em 2026-10-12: a API de releases é negada pelo proxy da nuvem,
+# mas o download direto passa). Troque GHIDRA_ZIP_URL junto com GHIDRA_VERSION ao atualizar.
+GHIDRA_ZIP_URL="${GHIDRA_ZIP_URL:-https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.4_build/ghidra_12.1.4_PUBLIC_20260921.zip}"
+GHIDRA_ZIP_SHA256="${GHIDRA_ZIP_SHA256:-ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db}"   # conferido no download de 2026-10-12
 
 TOOLS="${REA_TOOLS_DIR:-$HOME/.omegas-rea}"
 mkdir -p "$TOOLS"
@@ -49,6 +52,7 @@ if [ ! -x "$GHIDRA_DIR/support/analyzeHeadless" ]; then
   else
     log "baixando Ghidra ${GHIDRA_VERSION}"
     curl -fsSL -o "$TOOLS/ghidra.zip.part" "$url"
+    if [ -n "$GHIDRA_ZIP_SHA256" ]; then echo "$GHIDRA_ZIP_SHA256  $TOOLS/ghidra.zip.part" | sha256sum -c - >/dev/null || { log "ERRO: SHA-256 do Ghidra não confere"; rm -f "$TOOLS/ghidra.zip.part"; exit 1; }; fi
     rm -rf "$TOOLS/ghidra.extract"; mkdir -p "$TOOLS/ghidra.extract"
     unzip -q "$TOOLS/ghidra.zip.part" -d "$TOOLS/ghidra.extract"
     mv "$TOOLS/ghidra.extract"/ghidra_* "$GHIDRA_DIR"
