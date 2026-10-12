@@ -47,4 +47,18 @@ class UsbProtocolReplyTest {
         assertFalse(reply.retryable)
         assertFalse(reply.nonRetryable)
     }
+    @Test
+    fun `ack invalido nao autoriza avancar handshake`() {
+        for (error in listOf("Checksum inválido", "Resposta incompleta", "Tamanho ausente")) {
+            val reply = UsbProtocolReply(
+                ok = false,
+                status = 0x53,
+                rawResponse = byteArrayOf(0x53),
+                error = error,
+            )
+            assertEquals(error, UsbProtocolStatusClass.UNKNOWN, reply.statusClass)
+            assertFalse(reply.retryable)
+            assertFalse(reply.nonRetryable)
+        }
+    }
 }
