@@ -36,7 +36,11 @@ data class UsbProtocolReply(
     val elapsedMs: Long = 0,
 ) {
     val statusClass: UsbProtocolStatusClass
-        get() = UsbProtocolStatusClassifier.classify(status, payload)
+        get() = if (!ok && status == UsbProtocolStatusClassifier.STATUS_ACK) {
+            UsbProtocolStatusClass.UNKNOWN
+        } else {
+            UsbProtocolStatusClassifier.classify(status, payload)
+        }
 
     val retryable: Boolean
         get() = statusClass == UsbProtocolStatusClass.EXTENDED_RETRYABLE
