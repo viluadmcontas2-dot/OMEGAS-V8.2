@@ -77,6 +77,21 @@ fi
 # ---- Registro do MCP no Claude Code (pessoal; o do projeto fica em .mcp.json) --------------------
 if [ "${1:-}" != "--doctor" ]; then
   npx -y "rea-agents@${REA_VERSION}" setup --yes --client claude_code --format json >/dev/null 2>&1 || log "AVISO: rea setup falhou (registro pessoal); o .mcp.json do projeto continua valendo"
+  # O rea setup grava GHIDRA_INSTALL_DIR/JAVA_HOME mas não o JAR do JADX: completa o registro pessoal (~/.claude.json).
+  python3 - "$JADX_JAR" <<'PY' || log "AVISO: não completei o registro pessoal com REA_JADX_MCP_JAR"
+import json, os, sys
+p = os.path.expanduser("~/.claude.json")
+try:
+    d = json.load(open(p))
+except Exception:
+    sys.exit(0)
+srv = d.setdefault("mcpServers", {}).get("rea")
+if srv is not None:
+    env = srv.setdefault("env", {})
+    env["REA_JADX_MCP_JAR"] = sys.argv[1]
+    env["REA_BROWSER_NO_SANDBOX"] = "1"
+    json.dump(d, open(p, "w"), indent=2)
+PY
 fi
 npx -y "rea-agents@${REA_VERSION}" doctor --format json 2>/dev/null | python3 -c '
 import json,sys
