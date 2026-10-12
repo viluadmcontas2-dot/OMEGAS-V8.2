@@ -1,0 +1,20 @@
+{
+  "red": {
+    "revision": "0c2fe99d5a469b617fcbff10752afe600bb60e7a",
+    "test_sha256": "4797519C1AB4CD320DE2734F885F8F356043EDE38363F020A468150E24682ACF",
+    "source_sha256": "F151962B0A99C74A91B9A73803706D2E927BB506878634FBED81A9103445177C",
+    "expected_red": true,
+    "tests": "UsbProtocolReplyTest",
+    "compiler": "Kotlin 2.2.10",
+    "exit_code": 1
+  },
+  "green": {
+    "exit_code": 0,
+    "test_sha256": "4797519C1AB4CD320DE2734F885F8F356043EDE38363F020A468150E24682ACF",
+    "revision": "d58c736290faad49a64a3fdb35d2753c05f93f06",
+    "source_sha256": "84C55CBE9CE92CEA4FBAC6F7B47F0B97564CEF9061BC3E0DD09926585CBCDEC9",
+    "expected_red": false,
+    "compiler": "Kotlin 2.2.10",
+    "tests": "UsbProtocolReplyTest"
+  }
+}

@@ -1,0 +1,1367 @@
+{
+  "selected_target": "ProgBase.exe",
+  "catalog_tools": 170,
+  "scope": "Native PE protocol/resources and retained-evidence parity; no unrelated target is selected merely to exercise a tool.",
+  "rows": [
+    {
+      "name": "address_name",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "address_to_file_offset",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "analyze_function",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "analyze_javascript_application",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "analyze_swift_types",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "analyze_web_bundle",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "annotate_native_function",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "batch_decompile",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "binary_overview",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "binary_session",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": true,
+      "note": null
+    },
+    {
+      "name": "build_call_path",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "build_reconstruction_obligation_ledger",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "capture_adb_screen",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "capture_browser_scenario",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "capture_electron_scenario",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "capture_native_ui_scenario",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "capture_process_scenario",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": true,
+      "note": "Attempted; unsupported_host on Windows, no capture evidence produced."
+    },
+    {
+      "name": "capture_web_screenshot",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "close_binary",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "collect_adb_bugreport",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "comment",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_application_versions",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_artifacts",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_bundles",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_functions",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_javascript_export_shapes",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_managed_members",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_process_captures",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_source_to_bundle",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_web_captures",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "compare_web_screenshots",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "correlate_static_and_runtime",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "current_address",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "current_document",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "current_procedure",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "decode_android_resources",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "decode_interface_builder",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "decompile_jeb_item",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "demangle_swift",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "discover_webmcp_tools",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "evaluate_reconstruction_coverage",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "export_evidence_bundle",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": true,
+      "note": null
+    },
+    {
+      "name": "export_web_scripts",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "extract_artifact",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "extract_firmware",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "find_changed_behavior",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "find_xrefs_to_name",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "get_call_graph",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "get_evidence_bundle",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": true,
+      "note": null
+    },
+    {
+      "name": "get_navigation_context",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "get_objc_classes",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "get_objc_protocols",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "goto_address",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "import_evidence_bundle",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "import_managed_reconstruction",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inline_comment",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_adb_client",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_adb_device",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_adb_display",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_adb_package",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_adb_window",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_address_context",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_analysis_view",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_android_class",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_android_method",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_android_package",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_apktool_client",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_artifact",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_asset_catalog",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_binary_layout",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_electron_page",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_evm_interface",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_firmware_regions",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_jeb_client",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_keyed_archive",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_macho",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_managed_artifact",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_managed_members",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_managed_native_boundaries",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_native_api",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_native_data_type",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_native_dispatch_metadata",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_native_instruction",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_native_load_image",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_pe_resources",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": true,
+      "note": null
+    },
+    {
+      "name": "inspect_plist",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_recorded_crash",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_signature",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_web_event_listeners",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_web_network_capture",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "inspect_web_page",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "install_adb_package",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_adb_devices",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_adb_directory",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_adb_features",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_adb_packages",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_adb_processes",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_adb_services",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_architectures",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_bookmarks",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_browser_targets",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_documents",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_electron_targets",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_javascript_runtime_targets",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_jeb_units",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_names",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_procedures",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_segments",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_strings",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "list_unknowns",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "next_address",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "observe_javascript_runtime",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "observe_native_calls",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "observe_native_ui",
+      "available_in_current_session": false,
+      "availability_reason": "unsupported_host",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "observe_web_execution",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "observe_web_session",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "open_binary",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "open_jeb_project",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "prev_address",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "procedure_address",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "procedure_assembly",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "procedure_callees",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "procedure_callers",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "procedure_info",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "procedure_pseudo_code",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "procedure_references",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "project_android_application_graph",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "project_apple_application_graph",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "project_managed_application_graph",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "pull_adb_file",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "pull_adb_package",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "push_adb_file",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "read_adb_logcat",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "read_adb_setting",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "read_bytes",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "read_function_instructions",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "reconcile_javascript_runtime",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "record_unknown",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": true,
+      "note": null
+    },
+    {
+      "name": "recover_javascript_sources",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "resolve_adb_packages",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "resolve_containing_procedure",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "resolve_native_call_targets",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "search_android_classes",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "search_procedures",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "search_strings",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "set_address_name",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "set_addresses_names",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "set_bookmark",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "set_comment",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "set_inline_comment",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "start_adb_activity",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "start_adb_app",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "stop_adb_app",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_android_references",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_application_feature",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_call_path",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_dylib_resolution",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_feature",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_javascript_semantics",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_native_ui_action",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_native_values",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_web_module_imports",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "trace_web_source_location",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "uninstall_adb_package",
+      "available_in_current_session": false,
+      "availability_reason": "provider_missing",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "unset_bookmark",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "update_unknown",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "verify_managed_native_boundaries",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "not applicable to selected Windows native PE",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "verify_reconstruction",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "verify_unknown_resolution",
+      "available_in_current_session": true,
+      "availability_reason": "available",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    },
+    {
+      "name": "xrefs",
+      "available_in_current_session": false,
+      "availability_reason": "target_required",
+      "applicability": "native/evidence capability; select only for a concrete unresolved question",
+      "used_this_pass": false,
+      "note": null
+    }
+  ]
+}

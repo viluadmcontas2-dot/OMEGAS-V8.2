@@ -1,0 +1,44 @@
+{
+  "sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "image_base": "0x400000",
+  "functions": [
+    {
+      "name": "@TAebProtocol@SetEcuBaudRate$qqri",
+      "entry": "009247f0",
+      "instructions_verified": 64
+    },
+    {
+      "name": "@TAebProtocol@GetByAddress$qqriipi",
+      "entry": "009259c4",
+      "instructions_verified": 99
+    },
+    {
+      "name": "@TAebProtocol@SetVector$qqrp8AEB_DATApi",
+      "entry": "0092617c",
+      "instructions_verified": 177
+    },
+    {
+      "name": "@TAebProtocol@SetVector$qqrp8AEB_DATApiui",
+      "entry": "009263b0",
+      "instructions_verified": 181
+    },
+    {
+      "name": "@TAebProtocol@PreparaProg$qqri",
+      "entry": "00927d80",
+      "instructions_verified": 290
+    },
+    {
+      "name": "@TAebProtocol@Progflash$qqrv",
+      "entry": "0092839c",
+      "instructions_verified": 62
+    },
+    {
+      "name": "@TAebProtocol@SendHEXflash$qqrpci",
+      "entry": "00928968",
+      "instructions_verified": 325
+    }
+  ],
+  "total_instructions_verified": 1198,
+  "tautocaldm_fixture_matches_current_resource": true,
+  "method": "Every retained saved-project instruction byte mapped to original PE file bytes; no application execution or new analysis."
+}
