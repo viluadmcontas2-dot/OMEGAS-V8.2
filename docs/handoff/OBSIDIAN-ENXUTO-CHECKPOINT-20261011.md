@@ -59,10 +59,11 @@ Provas locais em `131a7153`: JVM 619/619 + lint 0 erros, node UI 194/194, unitte
 
 ## Ambiente de engenharia reversa (REA) — decisão do dono 2026-10-12: rotina, persistente, via MCP
 
-- `tools/rea/install.sh` instala/atualiza REA 6.4.0, JADX headless 0.7.1 (JAR auditado por SHA-256) e Ghidra 12.1.x; exporta `REA_JADX_MCP_JAR`/`GHIDRA_INSTALL_DIR`; registra o MCP no Claude Code. Idempotente.
-- `.claude/settings.json` + `.claude/hooks/session-start.sh`: hook SessionStart assíncrono que roda o instalador em toda sessão na nuvem. `.mcp.json`: registro do servidor MCP `rea` no projeto.
-- Provado nesta sessão: `rea inspect-android-package` e `search-android-classes` sobre o APK `74ebda24…` (2 566 classes, `com.omegas.v7.test` 8.0.0-test-debug; achou `com.omegas.prohub.calibration.KFactorManager`).
-- Bloqueio: o proxy da nuvem nega downloads de release de `NationalSecurityAgency/ghidra` (403/404) e a API do GitHub só cobre o repo do projeto; o clone git do código 12.1.4 passa (`/home/user/nationalsecurityagency/ghidra`). Alternativas: liberar `github.com`/`objects.githubusercontent.com` para esse repo nas configurações do ambiente, ou definir `GHIDRA_ZIP_URL` com um espelho acessível.
+- `tools/rea/install.sh` instala/atualiza REA 6.4.0, JADX headless 0.7.1 (JAR auditado por SHA-256) e Ghidra 12.1.4 (zip oficial `ghidra_12.1.4_PUBLIC_20260921.zip`, SHA-256 `ddac49f9…`, conferido); exporta `REA_JADX_MCP_JAR`/`GHIDRA_INSTALL_DIR` para a sessão (`CLAUDE_ENV_FILE`); registra e completa o MCP `rea` no Claude Code. Idempotente (reexecução: 7 s). Ferramentas em `~/.omegas-rea/`.
+- `.claude/settings.json` + `.claude/hooks/session-start.sh`: hook SessionStart assíncrono (até 15 min) só na nuvem. `.mcp.json`: servidor MCP `rea` do projeto, com as mesmas variáveis.
+- Provado nesta sessão (classe 2): `rea doctor` → motor ghidra 12.1.4 disponível; `inspect-android-package`/`search-android-classes` sobre o APK `74ebda24…` (2 566 classes, `com.omegas.v7.test` 8.0.0-test-debug, achou `KFactorManager`); `analyze /usr/bin/unzip --provider ghidra` → ELF x86_64 reconhecido.
+- Limites: IDA/Hopper não configurados (pagos; Ghidra cobre). Sem USB na nuvem: ADB/ECU real continuam no carro. API de releases do GitHub negada pelo proxy (download direto do asset passa; URL fixada no script).
+- Próximo uso: ProgBase original (quando o dono enviar o executável) e APKs autorizados de outros apps de GNV.
 
 ## Primeiro item ainda não provado
 
