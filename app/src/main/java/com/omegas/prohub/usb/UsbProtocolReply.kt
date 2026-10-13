@@ -48,3 +48,6 @@ data class UsbProtocolReply(
     val nonRetryable: Boolean
         get() = statusClass == UsbProtocolStatusClass.EXTENDED_NON_RETRYABLE
 }
+
+/** Número de bytes de dados após o segundo byte da resposta, antes de SUM8. */
+internal fun usbResponsePayloadLength(status: Int, secondByte: Int): Int = secondByte

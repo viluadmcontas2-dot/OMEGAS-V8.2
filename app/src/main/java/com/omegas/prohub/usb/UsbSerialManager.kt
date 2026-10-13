@@ -381,7 +381,7 @@ class UsbSerialManager(
             val status = statusBytes[0].toInt() and 0xFF
             val lenBytes = readExact(1, timeoutMs)
             if (lenBytes.size != 1) return@withLock UsbProtocolReply(false, status = status, request = request, echo = echo, rawResponse = statusBytes, error = "Resposta sem campo de tamanho", elapsedMs = android.os.SystemClock.elapsedRealtime() - started)
-            val length = lenBytes[0].toInt() and 0xFF
+            val length = usbResponsePayloadLength(status, lenBytes[0].toInt() and 0xFF)
             if (length > 192) return@withLock UsbProtocolReply(false, status = status, request = request, echo = echo, rawResponse = statusBytes + lenBytes, error = "Tamanho de resposta inválido: $length", elapsedMs = android.os.SystemClock.elapsedRealtime() - started)
             val tail = readExact(length + 1, timeoutMs)
             val raw = statusBytes + lenBytes + tail
