@@ -2348,7 +2348,7 @@
 .ao-grid { stroke: rgba(255,255,255,.07); stroke-width: 1; }
 .ao-tick { fill: #8da0b5; font-size: 9.5px; }
 .ao-axis-title { fill: #8da0b5; font-size: 10px; }
-.ao-zone { fill: rgba(255,120,120,.10); }
+.ao-zone { fill: rgba(150,160,176,.10); } /* zona não adquirida = cinza (dono, 2026-10-13) */
 .ao-zone[data-acquired="true"] { fill: rgba(110,255,130,.12); }
 .ao-zone-edge { stroke: rgba(255,255,255,.28); stroke-dasharray: 3 4; }
 .ao-zone-label { fill: #aebccd; font-size: 15px; font-weight: 800; }
@@ -2383,9 +2383,9 @@
 .ao-dot-row { display: inline-flex; gap: 6px; }
 .ao-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid transparent; background: #6b7788; }
 .ao-dot[data-state="done"] { background: #38d27a; }
-.ao-dot[data-state="collecting"] { background: #3da5ff; }
-.ao-dot[data-state="missing"] { background: #ff9d3d; }
-.ao-dot.match[data-state="missing"] { background: transparent; border-color: #ff9d3d; }
+.ao-dot[data-state="collecting"] { background: #ff5d5d; } /* didático: só vermelho (falta) e verde (adquirida) */
+.ao-dot[data-state="missing"] { background: #ff5d5d; }
+.ao-dot.match[data-state="missing"] { background: transparent; border-color: #ff5d5d; }
 .ao-dot[data-current="true"] { box-shadow: 0 0 0 2px #0b1118, 0 0 0 4px #e6eef7; }
 
 /* Identidade de combustível (dono, 2026-10-13): gasolina VERMELHA (quadros, bolinhas, curva), GNV verde; nada roxo. */
