@@ -22,6 +22,15 @@
   const RPM_FORMAT = new Intl.NumberFormat('pt-BR');
   const MS_FORMAT = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const AGE_FORMAT = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+  const VOLT_FORMAT = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+  // Tensão da ECU (pedido do dono, 2026-10-13). Campo de campo: acima de 14,1 V o sistema GNV desliga e a ECU volta
+  // ao último estado seguro do mapa e da curva (relato do dono). Isso é o que torna perigoso zerar a curva K
+  // de uma vez: a correção explode, a tensão sobe. Por isso o dono mantém Mapa K alto e curva K em 1,0.
+  // Fonte: byte 19 do canal 48 01 (0 na gasolina, ~200-231 no GNV nas duas capturas); escala raw/16 é PROVISÓRIA
+  // (PROTOCOLO-LANDI doc 18) até o dono comparar com o módulo OBD no celular.
+  const VOLTAGE_ALERT_V = 14.1;
+  const VOLTAGE_RAW_PER_VOLT = 16;
 
   function ageLabel(ageMs) {
     const age = finite(ageMs);
@@ -60,7 +69,8 @@
         <div data-vehicle-fact="freshness"><small>FRESCOR</small><b>—</b></div>
         <div data-vehicle-fact="fuel"><small>COMBUSTÍVEL</small><b>—</b></div>
         <div data-vehicle-fact="rpm"><small>RPM</small><b>—</b></div>
-        <div data-vehicle-fact="petrol"><small>PETROL INJ.</small><b>—</b></div>`;
+        <div data-vehicle-fact="petrol"><small>PETROL INJ.</small><b>—</b></div>
+        <div data-vehicle-fact="voltage" title="Tensão da ECU (provisório: byte 19 ÷ 16, ainda não comparado com o módulo OBD). Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>TENSÃO ECU*</small><b>—</b></div>`;
       header.appendChild(strip);
       return strip;
     }
@@ -87,6 +97,11 @@
       this.fact('fuel', fuel, fuel === 'GNV' ? 'cng' : fuel === 'GASOLINA' ? 'petrol' : 'neutral');
       this.fact('rpm', rpm === null ? '—' : RPM_FORMAT.format(Math.round(rpm)), rpm === null ? 'unknown' : 'measured');
       this.fact('petrol', petrol === null ? '—' : `${MS_FORMAT.format(petrol)} ms`, petrol === null ? 'unknown' : 'measured');
+      // Byte 19 = 0 (gasolina) ou ausente = sem leitura: "—", nunca 0 V.
+      const rawVoltage = telemetryValid ? finite(live.unknown_raw_19 ?? live.unknownRaw19) : null;
+      const volts = rawVoltage !== null && rawVoltage > 0 ? rawVoltage / VOLTAGE_RAW_PER_VOLT : null;
+      this.fact('voltage', volts === null ? '—' : `${VOLT_FORMAT.format(volts)} V`,
+        volts === null ? 'unknown' : volts >= VOLTAGE_ALERT_V ? 'alert' : 'measured');
     }
 
     /** Os 6 campos da faixa são fixos depois da injeção: guarda os nós em vez de procurar a cada quadro. */

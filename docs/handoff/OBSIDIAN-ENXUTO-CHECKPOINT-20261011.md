@@ -133,3 +133,10 @@ Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*
 - AGENTS.md corrigido: modos da ação AutoCal (1 gasolina, 2 GNV, 4 Reset all, 8 manual); o texto "0x04 = reset de gás" estava errado.
 - Não alterado ainda: código do OMEGAS. Conflitos com invariantes do dono (GasPointPrev, Reset all, Enable em 1 toque) seguem para decisão na auditoria (`docs/evidence/2026-10-13-autocal-original-vs-omegas.md`).
 - Primeiro item não comprovado: efeito da ECU dos modos 1/2/8; critério dos patamares do K; anomalia do releitura do Mapa K (doc 23).
+
+## Atualização 2026-10-13 (noite, 3) — tensão da ECU e Export→Mapa K
+
+- Faixa de status ganhou **TENSÃO ECU\*** (byte 19 ÷ 16, provisório, "—" na gasolina, alerta ≥ 14,1 V). RED→GREEN: `tests/ui/status-tensao-ecu.test.cjs` (4 testes). Suíte `tests/ui`: 199 passam, 1 falha já existente (`learning-jvm-payload` precisa do resultado do Gradle, ausente neste ambiente).
+- Primeiro item não comprovado: a escala ÷16 do byte 19. Comparar com o módulo OBD no celular (mesmo instante, GNV ligado). Se não bater, remover o campo ou trocar a escala.
+- Decisão do dono registrada no AGENTS.md: sem `ExportToK` do original; interpolação curva K → Mapa K por escritas manuais do Mapa K.
+- Não feito: rotina de interpolação curva K → Mapa K; aviso antes de Reset K/Reset all. Entrada prevista: `MapKManualPlanner.kt`.

@@ -25,6 +25,12 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 - Ciência e protocolo críticos ficam em Kotlin/native. AGORA fica no mesmo contexto da referência AutoCal. LEVELS fica RAW até haver calibração física separada.
 - Desconhecido é "—", nunca 0. Erro de transporte não é erro da ECU. "Gravado" só após readback igual.
 
+## Decisões de campo do dono (2026-10-13)
+
+- Zerar a curva K faz a correção explodir e a tensão da ECU subir; acima de **14,1 V o GNV desliga** e a ECU volta ao último estado seguro. O dono usa Mapa K ~220 e curva K em 1,0. Detalhe: PROTOCOLO-LANDI `17` (relato de campo).
+- O `ExportToK` do original **não será usado**. A curva K vira Mapa K por rotina própria, só com escritas manuais do Mapa K (ACK + readback). Entrada: `calibration/MapKManualPlanner.kt`.
+- A faixa de status mostra a tensão da ECU (byte 19 do `48 01` ÷ 16, **escala provisória**) com alerta em 14,1 V. Teste: `tests/ui/status-tensao-ecu.test.cjs`.
+
 ## Mapa do código (entrada → teste)
 
 | Assunto | Entrada | Teste |
