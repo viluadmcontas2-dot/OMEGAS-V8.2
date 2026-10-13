@@ -2391,3 +2391,4 @@
 /* Identidade de combustível (dono, 2026-10-13): gasolina VERMELHA (quadros, bolinhas, curva), GNV verde; nada roxo. */
 .ao-dots[data-dots="petrol"] small { color: #ff8d8d; }
 .ao-dots[data-dots="gas"] small { color: #7dff7d; }
+.ao-hit { fill: transparent; stroke: none; cursor: pointer; touch-action: manipulation; }

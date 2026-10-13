@@ -170,3 +170,12 @@ test('bolinhas dos ajustes automáticos: uma por AutoMatch da cota, cheia = feit
   assert.deepEqual(plain(O.automatchDots(1, null)), []);
   assert.deepEqual(plain(O.automatchDots(1, 99)), [], 'cota absurda não vira 99 bolinhas');
 });
+
+test('pontos têm área de toque de pelo menos 16 px de raio (celular) e o ponto visível por cima', () => {
+  const model = build(snapshot, { fuel: 'gas' });
+  const main = O.renderMain(model, 700, 420);
+  const hits = (main.match(/class="ao-hit"[^>]*r="(\d+)"/g) || []);
+  const visible = (main.match(/class="ao-point (petrol|gas)"/g) || []);
+  assert.ok(hits.length > 0 && hits.length === visible.length, 'um toque para cada ponto visível');
+  assert.ok(hits.every(h => Number(/r="(\d+)"/.exec(h)[1]) >= 16));
+});

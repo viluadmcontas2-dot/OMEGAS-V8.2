@@ -637,6 +637,8 @@
       const xFor = index => padX + (index / Math.max(1, points.length - 1)) * (width - padX * 2);
       const yFor = factor => height - padY - ((factor - min) / (max - min)) * (height - padY * 2);
       this.chartScale = { min, max, width, height, padX, padY, xFor, yFor };
+      // Alvo de toque: 20 no celular (dedo), 15 com mouse; os nós ficam a ~28 px um do outro.
+      const hitRadius = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 20 : 15;
       const actualPath = points.map((point, index) => `${index ? 'L' : 'M'} ${xFor(index).toFixed(1)} ${yFor(Number(point.factor)).toFixed(1)}`).join(' ');
       const proposalPath = points.map((point, index) => {
         const proposal = this.proposals.get(Number(point.index));
@@ -649,7 +651,7 @@
         const y = yFor(proposed ? this.proposals.get(Number(point.index)).targetFactor : point.factor).toFixed(1);
         const x = xFor(index).toFixed(1);
         const label = index % 5 === 0 || index === points.length - 1 ? `<text class="curve-point-label" x="${x}" y="${height - 8}" text-anchor="middle">${fmt(point.petrolMs, 1)}</text>` : '';
-        return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="15" tabindex="0" role="button" aria-label="Ponto ${Number(point.index) + 1}, ${fmt(point.petrolMs, 2)} ms"></circle><circle class="curve-point ${selected ? 'active' : ''} ${proposed ? 'proposed' : ''}" data-curve-dot="${point.index}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
+        return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="${hitRadius}" tabindex="0" role="button" aria-label="Ponto ${Number(point.index) + 1}, ${fmt(point.petrolMs, 2)} ms"></circle><circle class="curve-point ${selected ? 'active' : ''} ${proposed ? 'proposed' : ''}" data-curve-dot="${point.index}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
       }).join('')}</svg>`;
       host.querySelectorAll('[data-curve-index]').forEach(point => {
         const select = () => this.selectPoint(Number(point.dataset.curveIndex));

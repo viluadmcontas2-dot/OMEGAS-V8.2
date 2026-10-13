@@ -260,6 +260,8 @@
     for (const [points, cls] of [[model.petrolPoints, 'petrol'], [model.gasPoints, 'gas']]) {
       for (const node of points) {
         if (!node.visible) continue;
+        // Área de toque de 32 px (boa prática de celular: alvo ≥ 44 px no total com o ponto) + o ponto visível por cima.
+        out.push('<circle class="ao-hit" data-series="' + cls + '-point" data-band="' + node.index + '" cx="' + fixed(p.X(node.x)) + '" cy="' + fixed(p.Y(node.y)) + '" r="16"/>');
         out.push('<circle class="ao-point ' + cls + '" data-series="' + cls + '-point" data-band="' + node.index + '" cx="' + fixed(p.X(node.x)) + '" cy="' + fixed(p.Y(node.y)) + '" r="5"/>');
       }
     }
