@@ -14,6 +14,7 @@
   // Zonas por banda (tabela [5, 9, 13] do código do original): 0–4, 5–8, 9–12, 13–17.
   const ZONE_EDGES = [0, 5, 9, 13, 17];
   const BANDS = 18;
+  const X_AXIS_FLOOR_MS = 6;
 
   function finite(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -107,7 +108,7 @@
     if (lastNode === null || thresholds.length !== BANDS || thresholds.some(value => value === null)) {
       return { ok: false, reason: 'Aguardando eixo e limiares da ECU.' };
     }
-    const axisX = { min: 1, max: Math.max(lastNode, 2) };
+    const fullAxisX = { min: 1, max: Math.max(lastNode, 2) };
     const axisY = { ...AXIS_Y };
 
     const petrolX = physical(snapshot, 'PETR_INJ_TBUF');
@@ -164,18 +165,25 @@
 
     const liveMap = finite(live?.mapBar ?? live?.load_bar);
     const livePetrol = finite(live?.petrolMs ?? live?.petrol_ms);
+    const petrolPoints = pairs(petrolX, petrolY, axisY);
+    const gasPoints = pairs(gasX, gasY, axisY);
+    // Eixo X flexível (dono, 2026-10-13): só até onde já houve aquisição (ou onde o motor está agora), com 1 ms de folga
+    // e passo de 2 ms para o eixo não ficar pulando; nunca além do último nó da ECU nem abaixo de 6 ms.
+    const reached = Math.max(0, ...petrolPoints.map(n => n.x), ...gasPoints.map(n => n.x), livePetrol ?? 0);
+    const axisX = { min: 1, max: Math.min(fullAxisX.max, Math.max(X_AXIS_FLOOR_MS, Math.ceil((reached + 1) / 2) * 2)) };
     return {
       ok: true,
       fuel,
       axisX,
+      fullAxisX,
       axisY,
       kAxisY: { ...K_AXIS_Y },
       thresholds,
       zones,
       petrolSquares: squares('petrol'),
       gasSquares: squares('gas'),
-      petrolPoints: pairs(petrolX, petrolY, axisY),
-      gasPoints: pairs(gasX, gasY, axisY),
+      petrolPoints,
+      gasPoints,
       petrolCurve: pairs(tbp, physical(snapshot, 'PETR_MNFLD_PRESS_RV'), axisY),
       gasCurve: pairs(tbp, physical(snapshot, 'GAS_MNFLD_PRESS_RV'), axisY),
       limitMin: physical(snapshot, 'LIMIT_PRESSURE_MIN')[0] ?? null,
@@ -315,7 +323,7 @@
         out.push('<text class="ao-tick" x="' + (p.m.left - 6) + '" y="' + fixed(p.Y(value) + 3.5) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
       }
     }
-    const nodes = model.kNodes.filter(node => node.y >= model.kAxisY.min && node.y <= model.kAxisY.max);
+    const nodes = model.kNodes.filter(node => node.y >= model.kAxisY.min && node.y <= model.kAxisY.max && node.x <= model.axisX.max);
     const pts = nodes.map(node => [p.X(node.x), p.Y(node.y)]);
     out.push('<line class="ao-k-ceiling" data-k-ceiling="1.8" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(K_WRITE_CEILING)) + '" y2="' + fixed(p.Y(K_WRITE_CEILING)) + '"/>');
     if (pts.length > 1) out.push('<path class="ao-k-line" data-series="k-line" d="' + smooth(pts) + '"/>');

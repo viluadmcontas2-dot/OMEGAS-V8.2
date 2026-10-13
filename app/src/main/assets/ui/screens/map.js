@@ -179,6 +179,7 @@
       if (!result.changing.length) return 'A Curva K está neutra (1,0) nas linhas do Mapa K: nada a passar para o Mapa K.';
       this.editor.clearSelection();
       let changedCells = 0;
+      let saturated = 0;
       try {
         for (const item of result.changing) {
           const cells = Array.from({ length: snapshot.rows[item.row].length }, (_, column) => ({
@@ -193,6 +194,7 @@
           preview.items.forEach(entry => {
             this.editor.setTargetOverride(Number(entry.row), Number(entry.column), entry.target);
             if (Number(entry.target) !== Number(entry.current)) changedCells += 1;
+            if (planner.saturates(entry.current, item.percent)) saturated += 1;
           });
         }
       } catch (error) {
@@ -206,7 +208,9 @@
       this.renderGrid();
       this.renderEditor();
       const skipped = result.rows.filter(item => item.status !== 'ok').length;
-      return `Proposta pronta: ${result.changing.length} linha${result.changing.length === 1 ? '' : 's'}, ${changedCells} células. Confira e grave; depois deixe a Curva K em 1,0.`;
+      // Mapa K guarda no máximo 255: se o valor pedido passa disso a célula é cortada e a correção fica menor que a da curva.
+      const warning = saturated ? ` ATENÇÃO: ${saturated} células passam de 255 e ficam em 255 (a correção sai menor que a da curva).` : '';
+      return `Proposta pronta: ${result.changing.length} linha${result.changing.length === 1 ? '' : 's'}, ${changedCells} células.${warning} Confira e grave; depois deixe a Curva K em 1,0.`;
     }
 
     poll() {

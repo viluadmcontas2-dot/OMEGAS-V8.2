@@ -39,12 +39,60 @@ test('fronteiras de zona no MAP = THD[5], THD[9], THD[13] (0,45 / 0,65 / 0,85 ba
   assert.ok(Math.abs(model.zones[1].lower - 0.45) < 0.01 && Math.abs(model.zones[2].lower - 0.65) < 0.01 && Math.abs(model.zones[3].lower - 0.85) < 0.01);
 });
 
-test('eixos fixos: X de 1 ao último nó de PETR_INJ_TBP, Y de 0,15 a 1,10', () => {
+const axisMaxFor = (reached, full = 22) => Math.min(full, Math.max(6, Math.ceil((reached + 1) / 2) * 2));
+
+test('eixo Y fixo 0,15–1,10; eixo X flexível: só até onde já houve aquisição (+1 ms, passo 2), teto no último nó', () => {
   const model = build(snapshot, { fuel: 'gas' });
-  const tbp = phys('PETR_INJ_TBP');
-  assert.deepEqual(model.axisX, { min: 1, max: tbp[tbp.length - 1] });
-  assert.equal(model.axisX.max, 22);
   assert.deepEqual({ min: model.axisY.min, max: model.axisY.max }, { min: 0.15, max: 1.10 });
+  const tbp = phys('PETR_INJ_TBP');
+  assert.deepEqual(model.fullAxisX, { min: 1, max: tbp[tbp.length - 1] });
+  assert.equal(model.fullAxisX.max, 22);
+  const xs = [...phys('PETR_INJ_TBUF'), ...phys('PETR_INJ_TBUF_GAS')].filter((x, n, all) => x !== 0);
+  assert.equal(model.axisX.max, axisMaxFor(Math.max(...xs)));
+  assert.ok(model.axisX.max < 22, 'não vai a 22 ms quando só adquiriu até ~14');
+});
+
+test('eixo X: depois de um reset (nada adquirido) fica no mínimo de 6 ms e acompanha o AGORA', () => {
+  const zeroed = JSON.parse(JSON.stringify(snapshot));
+  for (const f of zeroed.fields) if (['PETR_INJ_TBUF', 'PETR_INJ_TBUF_GAS', 'MNFLD_PRESS_BUF', 'MNFLD_PRESS_BUF_GAS'].includes(f.key)) { f.rawValues = f.rawValues.map(() => 0); f.physicalValues = f.physicalValues.map(() => 0); }
+  assert.equal(build(zeroed, { fuel: 'gas' }).axisX.max, 6);
+  assert.equal(build(zeroed, { fuel: 'gas', live: { mapBar: 0.4, petrolMs: 4 } }).axisX.max, 6);
+  assert.equal(build(zeroed, { fuel: 'gas', live: { mapBar: 0.4, petrolMs: 12.3 } }).axisX.max, 14, 'o ponto AGORA nunca fica fora do desenho');
+});
+
+test('eixo X: nunca passa do último nó da ECU, mesmo com AGORA além dele', () => {
+  const m = build(snapshot, { fuel: 'gas', live: { mapBar: 0.9, petrolMs: 40 } });
+  assert.equal(m.axisX.max, 22);
+  assert.equal(axisMaxFor(21.5), 22);
+  assert.equal(axisMaxFor(3), 6);
+  assert.equal(axisMaxFor(5), 6);
+  assert.equal(axisMaxFor(5.01), 8);
+});
+
+test('eixo X flexível no desenho: rótulos só até o máximo e nada de NaN; curva K recortada no mesmo eixo', () => {
+  const model = build(snapshot, { fuel: 'gas', live: { mapBar: 0.6, petrolMs: 8 } });
+  const main = O.renderMain(model, 700, 420);
+  const labels = [...main.matchAll(/class="ao-tick" x="[\d.]+" y="4(?:0\d|1\d)" text-anchor="middle">(\d+)</g)].map(m => Number(m[1]));
+  assert.ok(labels.length > 0 && Math.max(...labels) === model.axisX.max && Math.min(...labels) === 1);
+  assert.equal(/NaN|Infinity|undefined/.test(main + O.renderK(model, 700, 160)), false);
+  const k = O.renderK(model, 700, 160);
+  const drawn = [...k.matchAll(/data-node="(\d+)"/g)].map(m => Number(m[1]));
+  const tbp = phys('PETR_INJ_TBP');
+  assert.ok(drawn.every(n => tbp[n] <= model.axisX.max), 'nó fora do eixo não é desenhado');
+});
+
+test('legenda e gráfico usam as mesmas variáveis de cor (nenhuma cor solta divergindo)', () => {
+  const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
+  const ao = css.slice(css.indexOf('/* Tela do original em tempo real'));
+  for (const rule of ['.ao-curve.petrol', '.ao-point.petrol', '.ao-square.petrol', '.ao-k-line', '.ao-limit-max', '.ao-g-petrol', '.ao-g-gas', '.ao-g-k', '.ao-g-limit-max', '.ao-dot[data-state="done"]']) {
+    const at = ao.indexOf(rule);
+    assert.ok(at >= 0, rule);
+    assert.match(ao.slice(at, ao.indexOf('}', at)), /var\(--ao-/, rule + ' deve usar variável de cor');
+  }
+  const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
+  for (const label of ['Pontos já medidos', 'Curva da ECU', 'Faixas com amostras', 'AGORA', 'Faixa de MAP atual', 'Zona adquirida · não adquirida', 'Limites de MAP', 'Curva K', 'Teto 1,8']) {
+    assert.ok(cockpit.includes('<b>' + label + '</b>'), 'legenda: ' + label);
+  }
 });
 
 test('rótulo #n/d: n = entradas ≠ 0 do buffer MAP do combustível em uso na zona; d = U8_0 / CALIBRATION_VAL_1', () => {

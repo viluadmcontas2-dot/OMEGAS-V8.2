@@ -169,3 +169,11 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - REA: `compare_application_versions` entre `2796780` e a branch confirmou 2 módulos novos (`autocal-original.js`, `curve-to-map.js`) e os arquivos alterados; desconhecidos residuais registrados com `record_unknown`.
 - Mantido por decisão: leitura da curva K e de `0x018D/E` a cada 4 s (contratos de tempo real); K só muda em automatch.
 - Não comprovado: travamento real ao resetar (só no aparelho), escala da tensão (byte 19 ÷ 16), proposta Curva K → Mapa K no aparelho, retrato em celular na vertical (o casco do app não foi feito para isso).
+
+## Atualização 2026-10-13 (noite, 8) — eixo flexível, legenda auditada, evidência do retorno do corte
+
+- Eixo X do gráfico só até onde há aquisição (+1 ms, passo 2, mínimo 6 ms, teto no último nó); linhas das zonas grossas e claras; legenda refeita com os mesmos glifos e variáveis de cor do gráfico; zona não adquirida cinza; bolinhas vermelho/verde.
+- Aviso "células passam de 255" na proposta Curva K → Mapa K.
+- Evidência: `docs/evidence/2026-10-13-retorno-do-corte-e-inteligencia-local.md` (GNV injeta 12–30 % menos logo após sair do corte, em ~2 ms) + proposta de inteligência local.
+- ERRO MEU registrado: o APK `9954128` foi gerado e enviado antes da aprovação das prévias. Regra no AGENTS.md: sem APK sem aprovação.
+- Primeiro item não comprovado: causa da interrupção no aparelho; falta uma sessão gravada com a interrupção (o detector da proposta 1 serve para isso).

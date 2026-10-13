@@ -63,14 +63,15 @@ Comandos de verificação: `node --test tests/ui/*.test.cjs` · `python3 -B -m u
 
 **Reabertura:** só reabrir o `ProgBase.exe` se a pergunta não estiver em `docs/reverse/` nem no `PROTOCOLO-LANDI`. Use o CLI do REA em segundo plano com instantâneo (receita no checkpoint); o MCP estoura 60 s nesse binário. Antes de varrer código, consulte o mapa acima ou use a Serena.
 
+## Regra do APK (dono, 2026-10-13)
+
+Não gerar APK sem aprovação explícita do dono. Ordem: mexer → testar → mandar as prévias (imagens) → dono aprova → só então `verde-apk-now.yml`. Aprovação de uma rodada não vale para a seguinte.
+
 ## Fronteiras
 
 - Não alterar bytes nem classes de comando da ECU (`UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager`, `AutoCalNativeActionManager`) sem autorização do dono.
+- Alvo que não roda aqui (ECU, programa Windows): skill `.claude/skills/emular-por-observacao/SKILL.md` (capturas → parser → esquema → decompilação mínima → emulador → tela renderizada → app real).
 - O programa ativo compara o OMEGAS Platina com o **ProgBase original e seus logs reais**.
-
-## Método de campo
-
-Quando o alvo não roda aqui (ECU, programa Windows), use a skill `.claude/skills/emular-por-observacao/SKILL.md`: capturas → parser → esquema → decompilação mínima → emulador → tela renderizada → app real com dados reais.
 
 ## Execução paralela
 

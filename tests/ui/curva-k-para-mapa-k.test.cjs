@@ -77,3 +77,14 @@ test('entradas inválidas: sem curva ou sem eixo não inventam nada', () => {
   assert.equal(plan({ tbp: [], k: [], rowMs: [2] }).rows[0].status, 'sem-curva');
   assert.equal(plan({ tbp: [2, 4], k: [1, 1], rowMs: [null] }).rows[0].status, 'sem-eixo');
 });
+
+test('saturação: 220 × 1,484 = 326 passa de 255 (Mapa K guarda 1 byte); 160 × 1,484 = 237 cabe', () => {
+  const { expectedTarget, saturates } = require('../../app/src/main/assets/ui/core/curve-to-map.js');
+  assert.equal(Math.round(expectedTarget(160, 48.4)), 237);
+  assert.equal(Math.round(expectedTarget(220, 48.4)), 326);
+  assert.equal(saturates(220, 48.4), true);
+  assert.equal(saturates(160, 48.4), false);
+  assert.equal(saturates(255, 0), false, 'exatamente 255 não satura');
+  assert.equal(saturates(250, 2), false, '255,0 cabe');
+  assert.equal(saturates(250, 3), true);
+});

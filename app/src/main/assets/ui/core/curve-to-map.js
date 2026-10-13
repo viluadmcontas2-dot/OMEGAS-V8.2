@@ -49,5 +49,15 @@
     return { rows, changing, nodes: nodes.length };
   }
 
-  return { plan, lerp };
+  /** Valor que a conta "percent" do Mapa K nativo daria, antes de limitar a 100–255. */
+  function expectedTarget(current, percent) {
+    return Number(current) * (1 + Number(percent) / 100);
+  }
+
+  /** O Mapa K guarda 1 byte (máx. 255): a célula "satura" quando o valor pedido passa disso e é cortada. */
+  function saturates(current, percent, maximum = 255) {
+    return expectedTarget(current, percent) > maximum + 0.5;
+  }
+
+  return { plan, lerp, expectedTarget, saturates };
 });

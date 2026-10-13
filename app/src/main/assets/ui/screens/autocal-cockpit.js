@@ -706,6 +706,7 @@
                   <div class="ao-dots" data-dots="petrol"><small>Gasolina</small><span class="ao-dot-row"></span></div>
                   <div class="ao-dots" data-dots="gas"><small>GNV</small><span class="ao-dot-row"></span></div>
                   <div class="ao-dots" data-dots="automatch"><small>Ajustes</small><span class="ao-dot-row"></span></div>
+                  <div class="ao-dots ao-dots-key" aria-hidden="true"><i class="ao-dot" data-state="done"></i><small>adquirida</small><i class="ao-dot" data-state="missing"></i><small>falta</small></div>
                 </div>
               </div>
 
@@ -744,13 +745,15 @@
               <span class="autocal-plot-title">CURVA DE AQUISIÇÃO · Gasolina × GNV</span>
               <div class="autocal-chart-workspace">
                 <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
-                <div class="autocal-chart-legend">
-                  <span class="petrol">Curva gasolina (ECU)</span>
-                  <span class="gas">Curva GNV (ECU)</span>
-                  <span class="acquired">Pontos já medidos</span>
-                  <span class="current-band">Zona atual</span>
-                  <span class="live">AGORA</span>
-                  <span id="autocalReferenceCount">0 pontos da ECU</span>
+                <div class="autocal-chart-legend ao-keybar" aria-label="Legenda do gráfico">
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><circle class="ao-g-petrol" cx="7" cy="7" r="5"/><circle class="ao-g-gas" cx="19" cy="7" r="5"/></svg><b>Pontos já medidos</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-line-petrol" d="M0 5 H12"/><path class="ao-g-line-gas" d="M13 9 H26"/></svg><b>Curva da ECU</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-petrol" x="2" y="2" width="9" height="10"/><rect class="ao-g-gas" x="15" y="2" width="9" height="10"/></svg><b>Faixas com amostras</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-run" d="M13 1 L20 7 L13 13 L6 7 Z"/></svg><b>AGORA</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-band" x="0" y="3" width="26" height="8"/></svg><b>Faixa de MAP atual</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-zone-ok" x="0" y="2" width="12" height="10"/><rect class="ao-g-zone-no" x="14" y="2" width="12" height="10"/></svg><b>Zona adquirida · não adquirida</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-limit-min" d="M0 4 H26"/><path class="ao-g-limit-max" d="M0 10 H26"/></svg><b>Limites de MAP</b></span>
+                  <span id="autocalReferenceCount" class="ao-key-count">0 pontos da ECU</span>
                 </div>
                 <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Toque numa bolinha para reaprender só aquele ponto.</span></aside>
               </div>
@@ -1618,7 +1621,7 @@
       host.innerHTML = '<div class="ao-layout" style="grid-template-columns:' + sideWidth + 'px ' + mainWidth + 'px;grid-template-rows:' + mainHeight + 'px ' + kHeight + 'px">' +
         '<div class="ao-cell ao-acq">' + O.renderAcquisition(model, sideWidth, mainHeight) + '</div>' +
         '<div class="ao-cell ao-main">' + O.renderMain(model, mainWidth, mainHeight) + '</div>' +
-        '<div class="ao-cell ao-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span></div>' +
+        '<div class="ao-cell ao-legend"><span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-k" d="M0 7 H26"/></svg><b>Curva K</b></span><span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-ceiling" d="M0 7 H26"/></svg><b>Teto 1,8</b></span></div>' +
         '<div class="ao-cell ao-k">' + O.renderK(model, mainWidth, kHeight) + '</div></div>';
       // Pontos clicáveis: mesmo contrato do inspetor de pontos (reaprender só aquele ponto).
       host.querySelectorAll?.('[data-series$="-point"]').forEach(node => {
