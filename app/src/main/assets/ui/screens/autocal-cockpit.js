@@ -1603,8 +1603,17 @@
       const live = AutoCalUxModel.livePoint(sample);
       // Combustível em uso (campo +0x4A0 do original): gasolina → zonas e rótulos da gasolina; senão GNV.
       const fuel = AutoCalUxModel.liveFuelState(live?.fuel).kind === 'petrol' ? 'petrol' : 'gas';
-      const model = O.build(snapshot, { fuel, live });
-      if (!model.ok) return false;
+      let model = O.build(snapshot, { fuel, live });
+      if (model.ok) {
+        this.lastGoodOriginalSnapshot = snapshot;
+      } else if (this.lastGoodOriginalSnapshot) {
+        // Como no original (dono, 2026-10-13): reset, zona nova ou leitura em andamento NÃO apagam nem refazem o gráfico;
+        // ele segue mostrando o último estado válido (o AGORA continua vivo) até a próxima leitura boa substituir tudo.
+        model = O.build(this.lastGoodOriginalSnapshot, { fuel, live });
+        if (!model.ok) return false;
+      } else {
+        return false;
+      }
       this.chartShowsLive = true;
       this.chartScale = null;
       const width = Math.max(420, Math.round(host.getBoundingClientRect?.().width || 860));
