@@ -28,8 +28,9 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 ## Decisões de campo do dono (2026-10-13)
 
 - Voltar a curva K a 1,0 só é perigoso se a curva estava exercendo uma **correção grande** (ex.: ~1,5): aí o motor precisa se readaptar de uma vez, a correção da ECU explode, a tensão sobe e, **acima de 14,1 V, o GNV desliga** (a ECU volta ao último estado seguro do mapa e da curva). O dono resolveu isso passando a correção grande para o **Mapa K (~220)** e deixando a curva em 1,0: com a curva neutra, um reset dela é irrelevante, e o AutoCal só faz refino proporcional. Detalhe: PROTOCOLO-LANDI `17` (relato de campo). Regra de projeto: avisar antes de resetar a curva **só quando ela estiver longe de 1,0**.
-- O `ExportToK` do original **não será usado**. A curva K vira Mapa K por rotina própria, só com escritas manuais do Mapa K (ACK + readback). Entrada: `calibration/MapKManualPlanner.kt`.
-- A faixa de status mostra a tensão da ECU (byte 19 do `48 01` ÷ 16, **escala provisória**) com alerta em 14,1 V. Teste: `tests/ui/status-tensao-ecu.test.cjs`.
+- O `ExportToK` do original **não é usado**. A curva K vira Mapa K por rotina própria (`core/curve-to-map.js`, botão "Curva K → Mapa K" na aba Mapa K): só **propõe**; gravar segue o fluxo manual (ACK + readback). Fórmula do original: PROTOCOLO-LANDI `26`. Teste: `tests/ui/curva-k-para-mapa-k.test.cjs`.
+- A Curva K aceita arrasto de nó (aba Ajuste global): soltar só prepara a prévia; gravar exige revisão e leitura de volta. Provas: `tests/ui/curva-k-arrasto.test.cjs`, `tools/ci/curva_k_arrasto.cjs`.
+- A faixa de status e a barra do AutoCal mostram a tensão da ECU (byte 19 do `48 01` ÷ 16, **escala provisória**) com alerta em 14,1 V. Teste: `tests/ui/status-tensao-ecu.test.cjs`.
 
 ## Mapa do código (entrada → teste)
 

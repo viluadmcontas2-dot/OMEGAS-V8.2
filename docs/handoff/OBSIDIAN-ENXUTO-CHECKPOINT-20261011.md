@@ -152,3 +152,11 @@ Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*
 ## Correção 2026-10-13 (noite, 5) — risco do reset da curva K é condicional
 
 Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. Certo, segundo o dono: só explode se a curva estava exercendo correção grande. Com a correção no Mapa K (~220) e a curva em 1,0, o reset da curva é irrelevante e o AutoCal só refina. O aviso antes de Reset K deve depender do afastamento atual da curva em relação a 1,0 (ex.: max|K−1|), não ser fixo. AGENTS.md e comentário da faixa de status corrigidos.
+
+## Atualização 2026-10-13 (noite, 6) — tensão no AutoCal, arrasto na Curva K, Curva K → Mapa K
+
+- Tensão da ECU (byte 19 ÷ 16, provisória, alerta ≥ 14,1 V) agora também na barra do AutoCal (`autocal-cockpit.js`, `tests/ui/autocal-tensao-ecu.test.cjs`). O aviso condicional antes do Reset K foi **dispensado pelo dono** (não fazer).
+- Aba Curva K (Ajuste global): arrasto de nó; durante o arrasto só o nó e a linha tracejada se movem (zero redesenho, medido no Chromium: `tools/ci/curva_k_arrasto.cjs`); soltar prepara a prévia (nunca grava).
+- `core/curve-to-map.js` + botão "Curva K → Mapa K": fórmula do `ExportToK` por desmontagem (PROTOCOLO-LANDI doc 26); propõe nas células, gravar segue o fluxo manual. `tools/ci/curva_para_mapa.cjs` no app real (demonstração).
+- Corrigido erro antigo: o botão dizia "alteraçãoões".
+- Não comprovado: F = 2560 (escala do eixo de linhas do Mapa K), a 13ª linha do Mapa K, e tudo que depende do aparelho (travamento ao resetar, escala da tensão).

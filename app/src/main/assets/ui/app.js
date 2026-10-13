@@ -284,7 +284,7 @@
     }
 
     const state = store.get();
-    if (route === 'map' && instances.map && (state.map?.state === 'writing' || state.map?.state === 'reading')) instances.map.poll();
+    if (route === 'map' && instances.map && (state.map?.state === 'writing' || state.map?.state === 'reading' || instances.map.curveImport)) instances.map.poll();
     if (route === 'curve' && instances.curve && (instances.curve.reading || instances.curve.writing)) instances.curve.poll();
   }
 
