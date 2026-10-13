@@ -1,0 +1,22 @@
+[
+  {
+    "test_sha256": "4797519C1AB4CD320DE2734F885F8F356043EDE38363F020A468150E24682ACF",
+    "tests": "UsbProtocolReplyTest,UsbResponseLengthTest",
+    "expected_red": true,
+    "exit_code": 1,
+    "revision": "3788e44871c3e0651d5316df42acd9b1c7ccf61e",
+    "compiler": "Kotlin 2.2.10",
+    "source_sha256": "1A27E677F5F3E29714B47D2E25DB6042836AE91BA426FAD89DF7EF4545B0AB2E",
+    "junit_output": "JUnit version 4.13.2\n......E..E\nTime: 0,215\nThere were 2 failures:\n1) CA consome metadado codigo e checksum independentemente do metadado(com.omegas.prohub.usb.UsbResponseLengthTest)\njava.lang.AssertionError: CA 00 10 DA expected:<4> but was:<3>\n\tat org.junit.Assert.fail(Assert.java:89)\n\tat org.junit.Assert.failNotEquals(Assert.java:835)\n\tat org.junit.Assert.assertEquals(Assert.java:120)\n\tat com.omegas.prohub.usb.UsbResponseLengthTest.assertFirstFrame(UsbResponseLengthTest.kt:35)\n\tat com.omegas.prohub.usb.UsbResponseLengthTest.CA consome metadado codigo e checksum independentemente do metadado(UsbResponseLengthTest.kt:19)\n2) 96 consome um byte fixo e checksum sem invadir proximo frame(com.omegas.prohub.usb.UsbResponseLengthTest)\njava.lang.AssertionError: 96 01 97 expected:<3> but was:<4>\n\tat org.junit.Assert.fail(Assert.java:89)\n\tat org.junit.Assert.failNotEquals(Assert.java:835)\n\tat org.junit.Assert.assertEquals(Assert.java:120)\n\tat com.omegas.prohub.usb.UsbResponseLengthTest.assertFirstFrame(UsbResponseLengthTest.kt:35)\n\tat com.omegas.prohub.usb.UsbResponseLengthTest.96 consome um byte fixo e checksum sem invadir proximo frame(UsbResponseLengthTest.kt:12)\n\nFAILURES!!!\nTests run: 8,  Failures: 2\n\n"
+  },
+  {
+    "revision": "b5565ebceb23a213baa1a1c888462a64bb199de2",
+    "source_sha256": "DC7DCB6EC7CDD8BE02F4C0FE24F8113094B777201534221F864402071A45AADA",
+    "expected_red": false,
+    "compiler": "Kotlin 2.2.10",
+    "test_sha256": "4797519C1AB4CD320DE2734F885F8F356043EDE38363F020A468150E24682ACF",
+    "tests": "UsbProtocolReplyTest,UsbResponseLengthTest",
+    "exit_code": 0,
+    "junit_output": "JUnit version 4.13.2\n........\nTime: 0,216\n\nOK (8 tests)\n\n"
+  }
+]

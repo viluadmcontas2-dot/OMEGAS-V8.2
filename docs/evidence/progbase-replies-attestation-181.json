@@ -1,0 +1,24 @@
+{
+  "sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "image_base": "0x400000",
+  "functions": [
+    {
+      "name": "@TAebProtocol@ReadByte$qqri",
+      "entry": "00922b0c",
+      "instructions_verified": 28
+    },
+    {
+      "name": "@TAebProtocol@IsAck$qqrv",
+      "entry": "00923860",
+      "instructions_verified": 200
+    },
+    {
+      "name": "@TAebProtocol@ChecksumOk$qqrv",
+      "entry": "00923b30",
+      "instructions_verified": 195
+    }
+  ],
+  "total_instructions_verified": 423,
+  "tautocaldm_fixture_matches_current_resource": true,
+  "method": "Every retained saved-project instruction byte mapped to original PE file bytes; no application execution or new analysis."
+}
