@@ -105,3 +105,5 @@ Trabalho concorrente já na branch (2026-10-13, outro agente; ler antes de tocar
 ## Primeiro item ainda não provado
 
 Comportamento do AutoMatch original (passo 1) e CI/APK do SHA atual; depois validação física no carro.
+
+Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*.json`): só RTTI e exportações; o AutoMatch não tem função nomeada. Para chegar ao código: `xrefs` em `BtnFinishAutomatchClick&` (`0xa9fbe3`, tabela de métodos publicados do form) e em `@TAeb3DMap@CalcolaWorkingPoint$qqrv` (`0xc44801`), depois `decompile` no endereço apontado. `CalcolaWorkingPoint` pertence a `TAeb3DMap` (mapa 3D), não ao AutoCal.
