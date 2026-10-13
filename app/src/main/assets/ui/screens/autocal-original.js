@@ -252,11 +252,7 @@
       out.push('<line class="ao-zone-edge" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(y) + '" y2="' + fixed(y) + '"/>');
       out.push('<text class="ao-zone-label" data-zone-label="' + zone.zone + '" x="' + (p.m.left + p.w - 6) + '" y="' + fixed(y + 18) + '" text-anchor="end">' + esc(zone.label) + '</text>');
     }
-    if (model.band) {
-      const top = p.Y(Math.min(model.band.upper, model.axisY.max));
-      const bottom = p.Y(Math.max(model.band.lower, model.axisY.min));
-      out.push('<rect class="ao-band" data-current-band="' + model.band.index + '" x="' + p.m.left + '" y="' + fixed(top) + '" width="' + p.w + '" height="' + fixed(bottom - top) + '"/>');
-    }
+    out.push('<g data-ao-live="band">' + liveBand(model, p) + '</g>');
     for (const [value, cls, name] of [[model.limitMin, 'ao-limit-min', 'min'], [model.limitMax, 'ao-limit-max', 'max']]) {
       if (value !== null) out.push('<line class="' + cls + '" data-limit="' + name + '" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
     }
@@ -275,13 +271,7 @@
         out.push('<circle class="ao-point ' + cls + '" data-series="' + cls + '-point" data-band="' + node.index + '" cx="' + fixed(p.X(node.x)) + '" cy="' + fixed(p.Y(node.y)) + '" r="5"/>');
       }
     }
-    if (model.run && model.run.y >= model.axisY.min && model.run.y <= model.axisY.max) {
-      const x = p.X(Math.min(Math.max(model.run.x, model.axisX.min), model.axisX.max));
-      const y = p.Y(model.run.y);
-      out.push('<line class="ao-run-axis" x1="' + fixed(x) + '" x2="' + fixed(x) + '" y1="' + p.m.top + '" y2="' + (p.m.top + p.h) + '"/>');
-      out.push('<line class="ao-run-axis" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(y) + '" y2="' + fixed(y) + '"/>');
-      out.push('<path class="ao-run" data-series="run" d="M' + fixed(x) + ',' + fixed(y - 7) + ' l7,7 l-7,7 l-7,-7 z"/>');
-    }
+    out.push('<g data-ao-live="run">' + liveRun(model, p) + '</g>');
     out.push('</g></svg>');
     return out.join('');
   }
@@ -303,9 +293,7 @@
         out.push('<rect class="ao-square ' + cls + '" data-band="' + square.band + '" data-count="' + square.count + '" x="' + fixed(p.X(x) - 5) + '" y="' + fixed(p.Y(square.y) - 5) + '" width="10" height="10"/>');
       }
     }
-    if (model.mapNow !== null && model.mapNow >= model.axisY.min && model.mapNow <= model.axisY.max) {
-      out.push('<line class="ao-run-axis" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(model.mapNow)) + '" y2="' + fixed(p.Y(model.mapNow)) + '"/>');
-    }
+    out.push('<g data-ao-live="acq">' + liveAcq(model, p) + '</g>');
     out.push('</svg>');
     return out.join('');
   }
@@ -330,13 +318,68 @@
     for (const [index, node] of nodes.entries()) {
       out.push('<circle class="ao-k-node' + (node.y > K_WRITE_CEILING ? ' over' : '') + '" data-node="' + node.index + '" data-value="' + node.y.toFixed(3) + '" cx="' + fixed(pts[index][0]) + '" cy="' + fixed(pts[index][1]) + '" r="3"><title>' + node.y.toFixed(3) + '</title></circle>');
     }
-    if (model.run) {
-      const x = p.X(Math.min(Math.max(model.run.x, model.axisX.min), model.axisX.max));
-      out.push('<line class="ao-run-axis" x1="' + fixed(x) + '" x2="' + fixed(x) + '" y1="' + p.m.top + '" y2="' + (p.m.top + p.h) + '"/>');
-    }
+    out.push('<g data-ao-live="k">' + liveK(model, p) + '</g>');
     out.push('</svg>');
     return out.join('');
   }
 
-  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, K_WRITE_CEILING, ZONE_EDGES, BANDS, zoneOfBand, build, zoneStates, automatchDots, renderMain, renderAcquisition, renderK };
+
+  // ------------------------------------------------------------------------------------- camada AO VIVO (leve)
+  // Dono, 2026-10-13: o cursor e a faixa de MAP atual têm que andar em tempo real. Só estes poucos elementos dependem da
+  // telemetria; o resto do gráfico (zonas, curvas, pontos, quadrados) só muda quando a ECU manda dado novo. Por isso o
+  // desenho é dividido: o gráfico inteiro é feito uma vez e esta camada é trocada a cada amostra (alguns elementos).
+  function liveBand(model, p) {
+    if (!model.band) return '';
+    const top = p.Y(Math.min(model.band.upper, model.axisY.max));
+    const bottom = p.Y(Math.max(model.band.lower, model.axisY.min));
+    return '<rect class="ao-band" data-current-band="' + model.band.index + '" x="' + p.m.left + '" y="' + fixed(top) + '" width="' + p.w + '" height="' + fixed(bottom - top) + '"/>';
+  }
+
+  function liveRun(model, p) {
+    if (!model.run || !(model.run.y >= model.axisY.min && model.run.y <= model.axisY.max)) return '';
+    const x = p.X(Math.min(Math.max(model.run.x, model.axisX.min), model.axisX.max));
+    const y = p.Y(model.run.y);
+    return '<line class="ao-run-axis" x1="' + fixed(x) + '" x2="' + fixed(x) + '" y1="' + p.m.top + '" y2="' + (p.m.top + p.h) + '"/>' +
+      '<line class="ao-run-axis" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(y) + '" y2="' + fixed(y) + '"/>' +
+      '<path class="ao-run" data-series="run" d="M' + fixed(x) + ',' + fixed(y - 7) + ' l7,7 l-7,7 l-7,-7 z"/>';
+  }
+
+  function liveAcq(model, p) {
+    if (model.mapNow === null || !(model.mapNow >= model.axisY.min && model.mapNow <= model.axisY.max)) return '';
+    return '<line class="ao-run-axis" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(model.mapNow)) + '" y2="' + fixed(p.Y(model.mapNow)) + '"/>';
+  }
+
+  function liveK(model, p) {
+    if (!model.run) return '';
+    const x = p.X(Math.min(Math.max(model.run.x, model.axisX.min), model.axisX.max));
+    return '<line class="ao-run-axis" x1="' + fixed(x) + '" x2="' + fixed(x) + '" y1="' + p.m.top + '" y2="' + (p.m.top + p.h) + '"/>';
+  }
+
+  /** Só o que depende do AGORA (faixa de MAP atual, ponto de operação, MAP agora) para a amostra `live`. */
+  function liveState(model, live) {
+    const liveMap = finite(live?.mapBar ?? live?.load_bar);
+    const livePetrol = finite(live?.petrolMs ?? live?.petrol_ms);
+    return {
+      band: currentBand(model.thresholds, liveMap),
+      run: liveMap !== null && livePetrol !== null ? { x: livePetrol, y: liveMap } : null,
+      mapNow: liveMap,
+    };
+  }
+
+  /** O modelo sem nada do AGORA: serve de chave para saber se o gráfico inteiro precisa ser refeito. */
+  function staticModel(model) {
+    if (!model) return model;
+    return { ...model, band: null, run: null, mapNow: null };
+  }
+
+  /** Conteúdo das camadas ao vivo ({band, run, acq, k}) para os mesmos tamanhos do gráfico inteiro. */
+  function renderLive(model, sizes) {
+    if (!model?.ok) return null;
+    const main = plot(sizes.mainWidth, sizes.mainHeight, model.axisX, model.axisY, { bottom: 30 });
+    const acq = plot(sizes.sideWidth, sizes.mainHeight, { min: -0.9, max: 0.9 }, model.axisY, { left: 40, right: 6, bottom: 20 });
+    const k = plot(sizes.mainWidth, sizes.kHeight, model.axisX, model.kAxisY, { bottom: 8 });
+    return { band: liveBand(model, main), run: liveRun(model, main), acq: liveAcq(model, acq), k: liveK(model, k) };
+  }
+
+  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, K_WRITE_CEILING, ZONE_EDGES, BANDS, zoneOfBand, build, zoneStates, automatchDots, renderMain, renderAcquisition, renderK, liveState, staticModel, renderLive };
 })(typeof window !== 'undefined' ? window : globalThis);

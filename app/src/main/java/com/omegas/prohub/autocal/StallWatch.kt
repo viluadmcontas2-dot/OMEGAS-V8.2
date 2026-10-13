@@ -11,7 +11,7 @@ import java.io.File
  * logo antes — porque é ali que a curva ficou pobre (desaceleração, embreagem, quebra-molas).
  *
  * Também vê o "quase apagou" (tropeço): RPM < NEAR_RPM por pelo menos NEAR_MIN_MS e o motor volta sozinho.
- * Nas sessões reais do dono (corpus tests/fixtures/sessoes-uteis, 9,4 h de GNV): 13 apagões e 26 tropeços; 88% dos
+ * Nas sessões reais do dono (corpus tests/fixtures/sessoes-uteis, 9,4 h de GNV): 14 apagões e 26 tropeços; 88% dos
  * tropeços tiveram o Petrol Inj. mínimo entre 1,5 e 3,5 ms e 10 vieram logo depois do corte (cutoff).
  * Desligar a chave na marcha lenta (o motor nunca passou de KEYOFF_MAX_RPM nos últimos segundos) não é apagão: no
  * corpus, 5 dos 18 "apagões" da regra antiga eram só isso.
@@ -66,7 +66,9 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
             }
             if (stalled) return@synchronized null
             val before = recent.filter { it.t < frame.t && frame.t - it.t <= LOOKBACK_MS && it.rpm >= RUNNING_RPM }
-            val gnv = before.isNotEmpty() && before.count { it.fuel == "GNV" } * 2 >= before.size
+            // CUTOFF (corte de injeção em desaceleração) é o GNV rodando: contar o corte contra o GNV escondia apagões que vêm
+            // logo depois de uma desaceleração longa (sessão real 2026-10-13 16:13: 3 s de corte, volta a ~2 ms, apagou).
+            val gnv = before.isNotEmpty() && before.count { it.fuel == "GNV" || it.fuel == "CUTOFF" } * 2 >= before.size
             // Nunca passou de KEYOFF_MAX_RPM nos últimos segundos: é a chave sendo desligada na lenta, não apagão nem tropeço.
             val revved = recent.any { it.t < frame.t && it.rpm >= KEYOFF_MAX_RPM }
             val tracking = near

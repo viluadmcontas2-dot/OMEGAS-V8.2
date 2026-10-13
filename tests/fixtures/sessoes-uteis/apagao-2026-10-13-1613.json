@@ -1,0 +1,323 @@
+{
+ "descricao": "Apagão real no GNV (APK 8.0.0-test-debug, 2026-10-13 16:13:49 local): desaceleração em CORTE (injeção 0) a ~1500-2200 rpm, volta a injetar GNV a ~2 ms (MAP ~0,2 bar), o giro cai de 1489 a 749 em ~1,2 s e a ECU apaga o motor. t_s = 0 é o evento engine_stall registrado pelo app.",
+ "engine_stall_registrado": {
+  "at": 1791918828415,
+  "rpmBefore": 1236,
+  "petrolMs": 2.14528,
+  "mapBar": 0.227,
+  "minPetrolMs": 1.8713600000000001,
+  "decelerating": true
+ },
+ "quadros": [
+  {
+   "t_s": -7.913,
+   "rpm": 2110,
+   "gas_ms": 14.26688,
+   "petrol_ms": 5.173760000000001,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.688,
+   "dyn": 223
+  },
+  {
+   "t_s": -7.618,
+   "rpm": 2175,
+   "gas_ms": 13.550080000000001,
+   "petrol_ms": 4.910080000000001,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.688,
+   "dyn": 223
+  },
+  {
+   "t_s": -7.357,
+   "rpm": 2236,
+   "gas_ms": 13.649920000000002,
+   "petrol_ms": 4.96384,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.707,
+   "dyn": 223
+  },
+  {
+   "t_s": -7.102,
+   "rpm": 2294,
+   "gas_ms": 14.681600000000001,
+   "petrol_ms": 5.260800000000001,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.766,
+   "dyn": 223
+  },
+  {
+   "t_s": -6.829,
+   "rpm": 2220,
+   "gas_ms": 9.4976,
+   "petrol_ms": 3.0745600000000004,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.511,
+   "dyn": 219
+  },
+  {
+   "t_s": -6.285,
+   "rpm": 2303,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.237,
+   "dyn": 224
+  },
+  {
+   "t_s": -6.007,
+   "rpm": 2264,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.198,
+   "dyn": 224
+  },
+  {
+   "t_s": -5.667,
+   "rpm": 2198,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.178,
+   "dyn": 224
+  },
+  {
+   "t_s": -5.394,
+   "rpm": 2124,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.168,
+   "dyn": 224
+  },
+  {
+   "t_s": -4.565,
+   "rpm": 1898,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.158,
+   "dyn": 224
+  },
+  {
+   "t_s": -4.008,
+   "rpm": 1736,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.168,
+   "dyn": 224
+  },
+  {
+   "t_s": -3.734,
+   "rpm": 1668,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.178,
+   "dyn": 224
+  },
+  {
+   "t_s": -3.471,
+   "rpm": 1653,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.178,
+   "dyn": 224
+  },
+  {
+   "t_s": -3.195,
+   "rpm": 1631,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.188,
+   "dyn": 224
+  },
+  {
+   "t_s": -2.864,
+   "rpm": 1549,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "CUTOFF",
+   "fuel_byte": 148,
+   "map_bar": 0.188,
+   "dyn": 224
+  },
+  {
+   "t_s": -2.323,
+   "rpm": 1489,
+   "gas_ms": 4.32896,
+   "petrol_ms": 1.8201600000000002,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.198,
+   "dyn": 225
+  },
+  {
+   "t_s": -2.062,
+   "rpm": 1352,
+   "gas_ms": 6.190080000000001,
+   "petrol_ms": 2.3244800000000003,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.217,
+   "dyn": 224
+  },
+  {
+   "t_s": -1.803,
+   "rpm": 1293,
+   "gas_ms": 5.081600000000001,
+   "petrol_ms": 1.8713600000000001,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.227,
+   "dyn": 224
+  },
+  {
+   "t_s": -1.515,
+   "rpm": 1221,
+   "gas_ms": 5.667840000000001,
+   "petrol_ms": 2.08128,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.227,
+   "dyn": 224
+  },
+  {
+   "t_s": -1.162,
+   "rpm": 749,
+   "gas_ms": 9.27744,
+   "petrol_ms": 2.9824,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.325,
+   "dyn": 222
+  },
+  {
+   "t_s": -0.617,
+   "rpm": 484,
+   "gas_ms": 18.567680000000003,
+   "petrol_ms": 5.83936,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.815,
+   "dyn": 211
+  },
+  {
+   "t_s": -0.344,
+   "rpm": 484,
+   "gas_ms": 18.567680000000003,
+   "petrol_ms": 5.83936,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.982,
+   "dyn": 215
+  },
+  {
+   "t_s": -0.051,
+   "rpm": 484,
+   "gas_ms": 18.567680000000003,
+   "petrol_ms": 5.83936,
+   "fuel": "GNV",
+   "fuel_byte": 144,
+   "map_bar": 0.982,
+   "dyn": 214
+  },
+  {
+   "t_s": 0.2,
+   "rpm": 0,
+   "gas_ms": null,
+   "petrol_ms": 0.18688000000000002,
+   "fuel": "DESLIGADO",
+   "fuel_byte": 0,
+   "map_bar": 0.982,
+   "dyn": 0
+  },
+  {
+   "t_s": 0.478,
+   "rpm": 0,
+   "gas_ms": null,
+   "petrol_ms": 0.18688000000000002,
+   "fuel": "DESLIGADO",
+   "fuel_byte": 0,
+   "map_bar": 0.982,
+   "dyn": 0
+  },
+  {
+   "t_s": 1.045,
+   "rpm": 0,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "DESLIGADO",
+   "fuel_byte": 0,
+   "map_bar": 0.982,
+   "dyn": 0
+  },
+  {
+   "t_s": 1.539,
+   "rpm": 0,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "DESLIGADO",
+   "fuel_byte": 0,
+   "map_bar": 0.982,
+   "dyn": 0
+  },
+  {
+   "t_s": 1.83,
+   "rpm": 0,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "DESLIGADO",
+   "fuel_byte": 0,
+   "map_bar": 0.982,
+   "dyn": 0
+  },
+  {
+   "t_s": 2.122,
+   "rpm": 0,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "DESLIGADO",
+   "fuel_byte": 0,
+   "map_bar": 0.982,
+   "dyn": 0
+  },
+  {
+   "t_s": 2.413,
+   "rpm": 0,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "DESLIGADO",
+   "fuel_byte": 0,
+   "map_bar": 0.982,
+   "dyn": 0
+  },
+  {
+   "t_s": 2.707,
+   "rpm": 0,
+   "gas_ms": null,
+   "petrol_ms": 0,
+   "fuel": "DESLIGADO",
+   "fuel_byte": 0,
+   "map_bar": 0.982,
+   "dyn": 0
+  }
+ ]
+}

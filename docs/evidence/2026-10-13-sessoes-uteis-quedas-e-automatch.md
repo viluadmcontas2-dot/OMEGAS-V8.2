@@ -13,3 +13,8 @@ Scripts (reproduzíveis): `tools/sessoes/analise_quedas.py`, `replay_stallwatch.
 - A razão gás/gasolina bruta mistura sessões com curvas K diferentes: serve para a forma, não para o valor absoluto da correção.
 - Não prova causa (embreagem, quebra-molas): só onde (1,5–3,5 ms, MAP ≈ 0,2 bar, logo após o corte) e com que frequência.
 - O app antigo marcava `MUL_ACT` como inválido (esperava 18 nós); aqui foi decodificado do `rawPayloadHex` (30 × u16 Q14).
+
+## Sessão nova do APK de teste (Drive `OMEGAS`, 2026-10-13 16:13, versão 8.0.0-test-debug)
+Apagão gravado pelo próprio app (`engine_stall`, 19:13:49 UTC): desaceleração em **corte** (injeção 0) de 2300 → 1550 rpm por ~3,4 s (MAP ≈ 0,18 bar); volta a injetar GNV com **1,8–2,3 ms** (MAP ≈ 0,2 bar) a 1489 rpm; em 1,2 s o giro cai para 749 → 484 rpm, a ECU responde com injeção 5,8 ms / MAP 0,98 e o motor apaga (`DESLIGADO`). Fixture: `tests/fixtures/sessoes-uteis/apagao-2026-10-13-1613.json`; teste `tests/test_apagao_real_2026_10_13.py`.
+Achado no detector: o tempo em CORTE contava contra o GNV (lookback de 4 s) e podia esconder esse tipo de apagão; corrigido (CORTE conta como GNV). Replay do corpus inteiro: 14 apagões (13 + este tipo antes escondido) e 26 tropeços.
+Após esse apagão a gravação termina (cabo USB removido às 19:15:42: "USB get_status request failed").

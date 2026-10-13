@@ -1,6 +1,7 @@
 'use strict';
 
-// AutoCal leve: cursor AGORA e narrativa no máximo 2 vezes por segundo (aprovado pelo dono, 2026-10-11);
+// AutoCal leve: cursor AGORA e narrativa no máximo 10 vezes por segundo (dono, 2026-10-13: "o cursor não fica em tempo real";
+// antes 2 por segundo, aprovado em 2026-10-11 quando cada amostra refazia o gráfico inteiro; agora só uma camada leve anda);
 // números do topo seguem cada quadro (nada mais muda no que se vê); sem quadro novo, nenhuma escrita no DOM;
 // releitura de 1 s com vigia: mesma leitura (só carimbos de tempo mudando) não redesenha; leitura nova,
 // operação em curso, AGORA que aparece/some e o vigia de 2,5 s redesenham.
@@ -92,7 +93,7 @@ function boot(api, initialTelemetry) {
   };
 }
 
-test('cursor AGORA e narrativa: no máximo 2 vezes por segundo; números do topo seguem cada quadro', () => {
+test('cursor AGORA e narrativa: no máximo 10 vezes por segundo; números do topo seguem cada quadro', () => {
   const rig = boot({ available: () => false }, telemetry(4.0, 0.5, 2000));
   rig.setScale();
   const cursor = [];
@@ -111,9 +112,9 @@ test('cursor AGORA e narrativa: no máximo 2 vezes por segundo; números do topo
     last = { cx, text, rpm };
     rig.tick(50);
   }
-  assert.equal(cursor.length, 4, 'cursor vivo, a cada 0,5 s: ' + cursor.length + ' posições em 2 s');
-  assert.equal(narrative.length, 4, 'narrativa a cada 0,5 s: ' + narrative.length);
-  for (let index = 1; index < cursor.length; index += 1) assert.ok(cursor[index] - cursor[index - 1] >= 500);
+  assert.equal(cursor.length, 20, 'cursor vivo, a cada 0,1 s: ' + cursor.length + ' posições em 2 s');
+  assert.equal(narrative.length, 20, 'narrativa a cada 0,1 s: ' + narrative.length);
+  for (let index = 1; index < cursor.length; index += 1) assert.ok(cursor[index] - cursor[index - 1] >= 100);
   assert.equal(rpmChanges, 40, 'RPM do topo continua mudando a cada quadro (nada mais muda no que se vê)');
 });
 

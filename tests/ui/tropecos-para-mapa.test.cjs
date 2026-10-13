@@ -26,6 +26,13 @@ test('evidência suficiente: propõe linhas da faixa × colunas do RPM, +5% (um 
   assert.ok(out.cells.every(c => c.deltaPercent === 5));
 });
 
+test('um apagão real sozinho já basta para propor (o motor morreu)', () => {
+  const one = suggest({ regions: [{ fromMs: 2.0, toMs: 2.5, count: 1, mapBar: 0.23, rpmBefore: 1236, rpmLow: 1236, rpmHigh: 1236 }] }, { petrolBins: PETROL_BINS, rpmBins: RPM_BINS });
+  assert.equal(one.ok, true);
+  assert.equal(one.percent, 5);
+  assert.ok(one.cells.every(c => c.deltaPercent === 5));
+});
+
 test('pouca evidência (< mínimo): não propõe e diz por quê; sem Mapa K lido: também não', () => {
   const few = suggest({ nearRegions: [near(2.0, MIN_EVENTS - 1, 1400, 1700)] }, { petrolBins: PETROL_BINS, rpmBins: RPM_BINS });
   assert.equal(few.ok, false);

@@ -3,7 +3,7 @@
   const ns = root.OmegasUi = root.OmegasUi || {};
   const AUTO_CAL_LIVE_STALE_MS = 7500;
   // Cursor AGORA, zona atual e narrativa: no máximo 2 vezes por segundo (aprovado pelo dono, 2026-10-11).
-  const AUTO_CAL_LIVE_MIN_MS = 500;
+  const AUTO_CAL_LIVE_MIN_MS = 100; // cursor, zona e faixa de MAP em tempo real (10 Hz): só mexem em poucos elementos
   // Números do topo (combustível, RPM, Petrol Inj., MAP, zona): true = seguem cada quadro (texto só se mudou), como hoje;
   // false = andam junto com o cursor (≤ 2 Hz), como na versão cinza. Escolha do dono; o padrão não muda o que se vê.
   const AUTO_CAL_METRICS_EVERY_FRAME = true;
@@ -943,7 +943,7 @@
       const sample = this.liveTelemetry();
       const liveNow = !!AutoCalUxModel.livePoint(sample);
       const due = this.refreshBusy(reading) || fingerprint !== this.readingKey || liveNow !== this.renderedLive ||
-        (this.chartShowsLive === true && sample !== this.renderedSample) ||
+        (this.chartShowsLive === true && !this.originalChart && sample !== this.renderedSample) ||
         !(Date.now() - (this.readingAt || 0) < AUTO_CAL_REFRESH_WATCHDOG_MS);
       if (!due) return;
       this.prefetched = { reading, fingerprint };
@@ -1345,6 +1345,7 @@
     }
 
     renderLiveCursor() {
+      this.paintOriginalLive();
       const telemetry = this.liveTelemetry();
       // Mesma amostra, mesmo dado e mesmo gráfico: nada a repintar (o fast de 50 ms volta aqui sem tocar no DOM).
       const seen = this.liveCursorSeen;
@@ -1604,6 +1605,7 @@
       // Combustível em uso (campo +0x4A0 do original): gasolina → zonas e rótulos da gasolina; senão GNV.
       const fuel = AutoCalUxModel.liveFuelState(live?.fuel).kind === 'petrol' ? 'petrol' : 'gas';
       let model = O.build(snapshot, { fuel, live });
+      const lastHost = host;
       if (model.ok) {
         this.lastGoodOriginalSnapshot = snapshot;
       } else if (this.lastGoodOriginalSnapshot) {
@@ -1618,15 +1620,20 @@
       this.chartScale = null;
       const width = Math.max(420, Math.round(host.getBoundingClientRect?.().width || 860));
       const height = Math.max(150, Math.round(host.getBoundingClientRect?.().height || 300));
-      const key = JSON.stringify([model, width, height, Array.from(this.selectedAcquiredPoints || []), this.selectedAcquiredPoint]);
+      // A chave NÃO inclui o AGORA (faixa de MAP atual, ponto de operação): ele anda numa camada leve (paintOriginalLive).
+      const key = JSON.stringify([O.staticModel(model), width, height, Array.from(this.selectedAcquiredPoints || []), this.selectedAcquiredPoint]);
       this.text('autocalReferenceCount', 'Amostras por zona (baixa → alta): ' + model.zones.map(zone => zone.label).join(' · '));
       this.currentAcquiredPoints = [...AutoCalUxModel.acquiredPoints(snapshot, 'petrol'), ...AutoCalUxModel.acquiredPoints(snapshot, 'gas')];
       this.currentReferencePoints = [];
-      if (this.renderedChartHost === host && this.chartRenderKey === key) return true;
       const sideWidth = Math.round(width * 0.17);
       const mainWidth = width - sideWidth - 6;
       const mainHeight = Math.round(height * 0.74);
       const kHeight = height - mainHeight - 6;
+      if (this.renderedChartHost === host && this.chartRenderKey === key) {
+        this.originalChart = { host, model, sizes: { sideWidth, mainWidth, mainHeight, kHeight }, painted: this.originalChart?.painted || {} };
+        this.paintOriginalLive();
+        return true;
+      }
       host.innerHTML = '<div class="ao-layout" style="grid-template-columns:' + sideWidth + 'px ' + mainWidth + 'px;grid-template-rows:' + mainHeight + 'px ' + kHeight + 'px">' +
         '<div class="ao-cell ao-acq">' + O.renderAcquisition(model, sideWidth, mainHeight) + '</div>' +
         '<div class="ao-cell ao-main">' + O.renderMain(model, mainWidth, mainHeight) + '</div>' +
@@ -1643,13 +1650,43 @@
       });
       this.renderedChartHost = host;
       this.chartRenderKey = key;
+      this.originalChart = { host, model, sizes: { sideWidth, mainWidth, mainHeight, kHeight }, painted: {} };
       return true;
+    }
+
+    /**
+     * Anda só a camada AO VIVO do gráfico original (faixa de MAP atual + cursor): poucos elementos trocados, sem refazer o
+     * SVG nem reler a ponte. Usa a telemetria mais recente. Se o motor passou do fim do eixo, refaz o gráfico (raro).
+     */
+    paintOriginalLive() {
+      const chart = this.originalChart;
+      const O = ns.AutoCalOriginal;
+      if (!chart || !O?.renderLive || !chart.host?.isConnected) return;
+      const telemetry = this.store.get().telemetry || {};
+      if (chart.telemetry === telemetry) return;
+      chart.telemetry = telemetry;
+      const live = AutoCalUxModel.livePoint(telemetry, this.projection);
+      const state = live ? O.liveState(chart.model, live) : { band: null, run: null, mapNow: null };
+      if (state.run && state.run.x > chart.model.axisX.max + 1e-9 && chart.model.axisX.max < chart.model.fullAxisX.max) {
+        this.chartRenderKey = null; // o eixo precisa crescer: refaz uma vez
+        this.renderReferenceChart(this.snapshot);
+        return;
+      }
+      const parts = O.renderLive({ ...chart.model, ...state }, chart.sizes);
+      if (!parts) return;
+      chart.model = { ...chart.model, ...state };
+      for (const name of ['band', 'run', 'acq', 'k']) {
+        if (chart.painted[name] === parts[name]) continue;
+        const node = chart.host.querySelector('[data-ao-live="' + name + '"]');
+        if (node) { node.innerHTML = parts[name]; chart.painted[name] = parts[name]; }
+      }
     }
 
     renderReferenceChart(snapshot) {
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
       if (this.renderOriginalChart(snapshot)) return;
+      this.originalChart = null; // o gráfico de reserva (sem camada leve) volta a seguir cada amostra
       const points = AutoCalUxModel.referencePoints(snapshot, this.analysis || {});
       const acquiredPetrol = AutoCalUxModel.acquiredPoints(snapshot, 'petrol');
       const acquiredGas = AutoCalUxModel.acquiredPoints(snapshot, 'gas');

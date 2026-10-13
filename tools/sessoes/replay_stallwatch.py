@@ -20,7 +20,7 @@ def replay(T):
             continue
         if stalled: continue
         before = [u for u in recent if u['t_ms'] < f['t_ms'] and f['t_ms'] - u['t_ms'] <= LOOK and u['rpm'] >= RUNNING]
-        gnv = before and sum(1 for u in before if u['fuel'] == 'GNV') * 2 >= len(before)
+        gnv = before and sum(1 for u in before if u['fuel'] in ('GNV', 'CUTOFF')) * 2 >= len(before)
         revved = max((u['rpm'] for u in recent if u['t_ms'] < f['t_ms']), default=0) >= KEYOFF_MAX_RPM
         if rpm < NEAR and near is None and dropAt is None and gnv and revved:
             last = [u for u in before if f['t_ms'] - u['t_ms'] <= 2000] or before

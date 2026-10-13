@@ -2425,13 +2425,42 @@
 .ao-dots-key { gap: 5px; opacity: .85; }
 .ao-dots-key .ao-dot { width: 10px; height: 10px; }
 
-/* Refino: quase apagou (losango vazado) e cartão de tropeços */
+/* Refino reformulado (dono, 2026-10-13): "não preciso saber de tudo, só corrigir e interagir".
+   Sem fases 1–5 nem números de bastidor: frase grande do que está acontecendo, o que fazer, o cartão do engasgo e os
+   botões. O gráfico fica numa seção fechada ("Ver o gráfico"). */
 .refino-near-mark { fill: none; stroke: var(--ao-bad, #ff5d5d); stroke-width: 2; }
 .autocal-chart-legend .refino-near-legend::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 6px; transform: rotate(45deg); border: 2px solid var(--ao-bad, #ff5d5d); box-sizing: border-box; vertical-align: middle; }
-.refino-stalls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 8px 0 0; padding: 10px 14px; border: 1px solid rgba(255, 93, 93, .45); border-radius: 10px; background: rgba(255, 93, 93, .06); }
+.app-shell.autocal-focus section.autocal-cockpit.refino-cockpit {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) var(--act-h);
+  grid-template-areas: "head" "next" "stalls" "graph" "." "actions";
+  gap: 6px 0;
+  align-content: start;
+}
+.app-shell.autocal-focus section.autocal-cockpit.refino-cockpit[data-graph-open="true"] {
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) var(--act-h);
+  grid-template-areas: "head" "next" "stalls" "toggle" "graph" "actions";
+}
+.refino-cockpit .autocal-focus-title { max-width: 1100px; }
+.refino-cockpit #refinoHeadline { margin: 12px 0 0; font-size: 26px; line-height: 1.25; font-weight: 800; color: #eef5fb; }
+.app-shell.autocal-focus .refino-cockpit .refino-next { grid-area: next; margin: 0 0 6px; font-size: 18px; line-height: 1.4; color: #c5d0db; max-width: 1100px; }
+.app-shell.autocal-focus .refino-cockpit[data-graph-open="true"] #refinoHeadline { font-size: 20px; margin-top: 4px; }
+.app-shell.autocal-focus .refino-cockpit[data-graph-open="true"] .refino-next { font-size: 15px; }
+.refino-stalls { grid-area: stalls; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 18px; align-items: center; max-width: calc(100vw - 48px); box-sizing: border-box; padding: 12px 16px; border: 1px solid rgba(255, 93, 93, .45); border-radius: 12px; background: rgba(255, 93, 93, .07); }
 .refino-stalls[hidden] { display: none; }
-.refino-stalls b { display: block; font-size: 15px; }
-.refino-stalls { max-width: calc(100vw - 48px); box-sizing: border-box; }
-.refino-stalls b, .refino-stalls span { white-space: normal; min-width: 0; }
-.refino-stalls span { flex: 1 1 320px; font-size: 13px; color: var(--muted, #9aa7b8); line-height: 1.4; }
-.refino-stalls button { flex: 0 0 auto; min-height: 44px; }
+.refino-stalls b { grid-column: 1; font-size: 19px; line-height: 1.25; white-space: normal; }
+.refino-stalls span { grid-column: 1; font-size: 15px; line-height: 1.4; color: #c5d0db; white-space: normal; min-width: 0; }
+.refino-stalls small { grid-column: 1; font-size: 13px; color: #98a6b6; white-space: normal; }
+.refino-stalls button { grid-column: 2; grid-row: 1 / span 3; align-self: center; min-height: 56px; padding: 0 22px; font-size: 16px; font-weight: 800; border-radius: 10px; background: #2d6fd1; border: 1px solid #4a8be8; color: #fff; }
+.refino-graph { grid-area: graph; min-height: 0; }
+.refino-graph[hidden] { display: none; }
+.refino-graph-toggle { grid-area: graph; justify-self: start; align-self: start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14); background: transparent; color: #aebed0; font-size: 14px; font-weight: 700; cursor: pointer; }
+.app-shell.autocal-focus .refino-cockpit[data-graph-open="true"] .refino-graph-toggle { grid-area: toggle; }
+.app-shell.autocal-focus .refino-graph { display: flex; flex-direction: column; gap: 6px; }
+.app-shell.autocal-focus .refino-graph[hidden] { display: none; }
+.app-shell.autocal-focus .refino-graph .autocal-reference-card,
+.app-shell.autocal-focus .refino-graph .autocal-chart-workspace { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; gap: 6px; }
+.app-shell.autocal-focus .refino-graph .autocal-chart-host { flex: 1 1 auto; min-height: 0; }
+.app-shell.autocal-focus .refino-graph .autocal-chart-legend { flex-wrap: wrap; overflow: visible; }
+.app-shell.autocal-focus .refino-graph .autocal-chart-inspector { height: auto; min-height: 44px; }
+.app-shell.autocal-focus .refino-cockpit .refino-action-bar { grid-area: actions; align-self: end; }

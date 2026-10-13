@@ -107,4 +107,21 @@ class StallWatchTest {
         assertEquals(1, w.json().getInt("count"))
         assertEquals(0, w.json().getInt("nearCount"))
     }
+
+    @Test
+    fun `apagao real de 2026-10-13 - desacelera em corte, volta a 2 ms, o giro despenca e apaga - e registrado`() {
+        // Sequência reproduzida da sessão gravada (tests/fixtures/sessoes-uteis/apagao-2026-10-13-1613.json), quadros de 250 ms.
+        // Antes da correção o tempo em CORTE contava contra o GNV e este apagão podia passar batido.
+        val w = StallWatch(null)
+        var t = 0L
+        fun f(fuel: String, rpm: Double, petrol: Double, map: Double) { w.accept(StallWatch.Frame(t, fuel, rpm, map, petrol)); t += 250 }
+        repeat(16) { f("CUTOFF", 2_200.0 - it * 40.0, 0.0, 0.18) }                 // ~4 s de desaceleração em corte
+        listOf(1_489.0 to 1.82, 1_352.0 to 2.32, 1_293.0 to 1.87, 1_221.0 to 2.08, 749.0 to 2.98).forEach { (rpm, ms) -> f("GNV", rpm, ms, 0.22) }
+        repeat(3) { f("GNV", 484.0, 5.84, 0.98) }
+        var event: org.json.JSONObject? = null
+        repeat(8) { event = w.accept(StallWatch.Frame(t, "DESLIGADO", 0.0, 0.98, 0.19)) ?: event; t += 250 }
+        assertNotNull(event)
+        assertEquals(StallWatch.KIND_STALL, event!!.getString("kind"))
+        assertEquals(1, w.json().getInt("count"))
+    }
 }

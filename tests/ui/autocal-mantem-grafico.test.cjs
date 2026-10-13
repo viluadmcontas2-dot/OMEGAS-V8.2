@@ -17,11 +17,12 @@ vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
 const builds = [];
 context.OmegasUi.AutoCalOriginal = {
   build: (snapshot) => { builds.push(snapshot.tag); return snapshot.good ? { ok: true, tag: snapshot.tag, zones: [{ label: 'Z1' }] } : { ok: false, reason: 'Aguardando eixo e limiares da ECU.' }; },
+  staticModel: model => model, renderLive: () => ({ band: '', run: '', acq: '', k: '' }), liveState: () => ({ band: null, run: null, mapNow: null }),
   renderAcquisition: model => '<acq ' + model.tag + '>', renderMain: model => '<main ' + model.tag + '>', renderK: model => '<k ' + model.tag + '>',
 };
 const render = context.OmegasUi.AutoCalCockpit.prototype.renderOriginalChart;
 function run(self, snapshot) { return render.call(self, snapshot); }
-const makeSelf = () => ({ liveTelemetry: () => null, text: () => {}, selectedAcquiredPoints: new Set(), renderedChartHost: null, chartRenderKey: null });
+const makeSelf = () => ({ liveTelemetry: () => null, paintOriginalLive() {}, text: () => {}, selectedAcquiredPoints: new Set(), renderedChartHost: null, chartRenderKey: null });
 
 test('snapshot ruim depois de um bom (reset/zona nova): mantém o gráfico, sem apagar', () => {
   const self = makeSelf();

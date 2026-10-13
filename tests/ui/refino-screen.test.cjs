@@ -183,7 +183,8 @@ test('nossos pontos desconhecidos mostram —, nunca Gasolina 0 · GNV 0 (dono, 
   assert.equal(m.ourPointsText({ petrol: [1, 2] }), '—', 'sem a lista do GNV não se inventa 0');
   assert.equal(m.ourPointsText({ petrol: [1, 2, 3], gas: [] }), 'Gasolina 3 · GNV 0', 'lista vazia medida é 0 de verdade');
   assert.doesNotMatch(SOURCE, /`Gas \$\{/, 'sem "Gas" no lugar de gasolina');
-  assert.match(SOURCE, /<small>GNV vs gasolina<\/small>/);
+  // Refino reformulado (dono, 2026-10-13): sem fases 1–5 nem caixas de números; só frase, ação e botões.
+  assert.doesNotMatch(SOURCE, /refino-steps|refinoSteps|<small>GNV vs gasolina<\/small>/);
 });
 
 test('a tela não pede a análise do motor (a ponte não recalcula; rodada 2, item 19)', () => {

@@ -173,6 +173,6 @@ test('Curva K: o campo "Fator desejado" mostra e aceita vírgula', () => {
 
 test('Refino: "Gasolina" por extenso e "GNV vs gasolina"', () => {
   const source = read('screens/refino.js');
-  assert.match(source, /<small>GNV vs gasolina<\/small>/);
+  assert.doesNotMatch(source, /refino-steps|<small>GNV vs gasolina<\/small>/, 'Refino reformulado (dono, 2026-10-13): sem fases nem números de bastidor');
   assert.doesNotMatch(source, /GNV ÷ Gasolina|`Gas \$\{/);
 });

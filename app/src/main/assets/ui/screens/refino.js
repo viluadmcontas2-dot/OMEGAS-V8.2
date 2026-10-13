@@ -241,31 +241,29 @@
               <div class="autocal-title-line"><h3>Refino · GNV = Gasolina</h3><span id="refinoPhaseChip" class="autocal-fuel-chip" data-fuel-state="unknown">—</span></div>
               <p id="refinoHeadline">Aguardando a ECU</p>
             </div>
-            <div class="autocal-focus-metrics" aria-live="polite">
-              <div class="autocal-focus-metric"><small>GNV vs gasolina</small><b><span id="refinoRatio">—</span></b></div>
-              <div class="autocal-focus-metric"><small>Pontos da ECU</small><b class="refino-split" id="refinoEcuPoints">—</b></div>
-              <div class="autocal-focus-metric"><small>Nossos pontos</small><b class="refino-split" id="refinoOurPoints">—</b></div>
-            </div>
           </header>
-          <ol class="refino-steps" id="refinoSteps" aria-label="Fases do refino"></ol>
           <p class="refino-next" id="refinoNext"></p>
-          <section class="autocal-reference-card" aria-label="NOSSA CURVA · Gasolina × GNV" data-refino-panel="chart">
-            <span class="autocal-plot-title">NOSSA CURVA · Gasolina × GNV</span>
-            <div class="autocal-chart-workspace">
-              <div id="refinoChart" class="autocal-chart-host"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
-              <div class="autocal-chart-legend">
-                <span class="petrol">Curva gasolina (ECU)</span>
-                <span class="gas">Curva GNV (ECU)</span>
-                <span class="acquired">Pontos da ECU</span>
-                <span class="refino-ours-petrol">Nossos · gasolina</span>
-                <span class="refino-ours-gas">Nossos · GNV</span>
-                <span class="refino-stall-legend">Motor apagou</span>
-                <span class="refino-near-legend">Quase apagou</span>
-                <span class="live">AGORA</span>
+          <section id="refinoStalls" class="refino-stalls" aria-label="O carro engasgou" hidden></section>
+          <button type="button" class="refino-graph-toggle" id="refinoGraphToggle" aria-expanded="false" aria-controls="refinoGraph">Ver o gráfico</button>
+          <div class="refino-graph" id="refinoGraph" hidden>
+            <section class="autocal-reference-card" aria-label="NOSSA CURVA · Gasolina × GNV" data-refino-panel="chart">
+              <span class="autocal-plot-title">NOSSA CURVA · Gasolina × GNV</span>
+              <div class="autocal-chart-workspace">
+                <div id="refinoChart" class="autocal-chart-host"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
+                <div class="autocal-chart-legend">
+                  <span class="petrol">Curva gasolina (ECU)</span>
+                  <span class="gas">Curva GNV (ECU)</span>
+                  <span class="acquired">Pontos da ECU</span>
+                  <span class="refino-ours-petrol">Nossos · gasolina</span>
+                  <span class="refino-ours-gas">Nossos · GNV</span>
+                  <span class="refino-stall-legend">Motor apagou</span>
+                  <span class="refino-near-legend">Quase apagou</span>
+                  <span class="live">AGORA</span>
+                </div>
+                <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU. Quadradinhos: nossos pontos. Vermelho = gasolina, verde = GNV.</span></aside>
               </div>
-              <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU. Quadradinhos: nossos pontos, um a cada 0,025 bar. Cor igual à do AutoCal: vermelho = gasolina, verde = GNV.</span></aside>
-            </div>
-          </section>
+            </section>
+          </div>
           <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">
             <button type="button" class="autocal-primary-action" data-refino-primary hidden></button>
             <button type="button" class="autocal-primary-action" data-kind="review" data-refino-review hidden>Revisar e gravar</button>
@@ -273,8 +271,18 @@
             <button type="button" class="secondary autocal-primary-action" data-kind="local" data-refino-local hidden></button>
           </div>
           <div id="refinoReview" class="autocal-review" hidden></div>
-          <section id="refinoStalls" class="refino-stalls" aria-label="Tropeços e apagões do GNV" hidden></section>
         </section>`;
+      const graph = host.querySelector('#refinoGraph');
+      const toggle = host.querySelector('#refinoGraphToggle');
+      const cockpit = host.querySelector('.refino-cockpit');
+      toggle?.addEventListener('click', () => {
+        const open = graph.hidden;
+        graph.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.textContent = open ? 'Esconder o gráfico' : 'Ver o gráfico';
+        if (cockpit) cockpit.dataset.graphOpen = open ? 'true' : 'false';
+        if (open) this.renderChart();
+      });
       host.addEventListener('click', event => this.onClick(event));
     }
 
@@ -467,14 +475,6 @@
       const next = op.phase === 'failed' ? 'Nada foi dado como gravado. Toque em "Tentar de novo" quando a ECU estabilizar: a lista é refeita com a curva lida na hora.' : pilot.next || '';
       setText('refinoHeadline', headline);
       setText('refinoNext', next + (op.phase === 'idle' ? this.gasNote(eq) : ''));
-      setText('refinoRatio', pct(eq.ratio));
-      setText('refinoEcuPoints', ecuPointsText(pilot));
-      setText('refinoOurPoints', ourPointsText(eq.denseBands));
-      const steps = document.getElementById('refinoSteps');
-      if (steps) {
-        const at = PHASES.findIndex(([k]) => k === (phase === 'RESTAURAR_TRECHO' ? 'VERIFICANDO' : phase));
-        steps.innerHTML = PHASES.map(([k, label], i) => `<li data-state="${at < 0 ? 'pending' : i < at ? 'done' : i === at ? 'active' : 'pending'}"${phase === 'RESTAURAR_TRECHO' && k === 'VERIFICANDO' ? ' data-problem="true"' : ''}><i aria-hidden="true">${at >= 0 && i < at ? '✓' : i + 1}</i>${escapeHtml(label)}</li>`).join('');
-      }
 
       const button = document.querySelector('[data-refino-primary]');
       if (button) {
@@ -507,7 +507,8 @@
         if (local.kind !== 'none') localNode.textContent = local.label;
       }
       this.renderStalls(eq);
-      this.renderChart();
+      // O gráfico só é desenhado com a seção aberta (dono, 2026-10-13: a tela é para corrigir e interagir, não para ver tudo).
+      if (document.getElementById('refinoGraph')?.hidden === false) this.renderChart();
     }
 
     /** Cartão de tropeços e apagões do GNV: o que a ECU mostrou, onde, e o botão que leva ao Mapa K (grava só no mapa, com confirmação). */
@@ -515,13 +516,15 @@
       const host = document.getElementById('refinoStalls');
       if (!host) return;
       const stalls = eq.stalls || {};
-      const total = (finite(stalls.count) || 0) + (finite(stalls.nearCount) || 0);
-      host.hidden = total === 0;
-      if (!total) return;
-      const top = ns.OmegasStallRegion?.topRegion?.(stalls) || root.OmegasStallRegion?.topRegion?.(stalls);
-      const where = top ? ` Mais em ${fmt(top.fromMs, 1)}–${fmt(top.toMs, 1)} ms (MAP ≈ ${fmt(top.mapBars.length ? top.mapBars[0] : null, 2)} bar).` : '';
-      const cut = finite(stalls.nearEvents && stalls.nearEvents.filter(e => e.afterCutoff).length) || 0;
-      const html = `<b>Motor engasgou no GNV</b><span>${finite(stalls.count) || 0} apagão(ões) e ${finite(stalls.nearCount) || 0} quase-apagão(ões) (RPM caiu abaixo de 500 e voltou).${where}${cut ? ` ${cut} logo depois do corte.` : ''} A ECU manda os dados; o app só registra onde foi.</span><button type="button" class="secondary autocal-primary-action" data-refino-stall>Levar ao Mapa K (só no mapa, você confirma)</button>`;
+      const dead = finite(stalls.count) || 0;
+      const near = finite(stalls.nearCount) || 0;
+      host.hidden = dead + near === 0;
+      if (host.hidden) return;
+      const top = root.OmegasStallRegion?.topRegion?.(stalls);
+      const times = n => (n === 1 ? '1 vez' : `${n} vezes`);
+      const when = top ? `Quase sempre ao soltar e voltar do acelerador, perto de ${fmt(top.fromMs, 1)} ms.` : '';
+      const died = dead ? ` ${dead === 1 ? 'Em 1 o motor apagou' : `Em ${dead} o motor apagou`}.` : '';
+      const html = `<b>O carro engasgou ${times(dead + near)} no GNV</b><span>${died} ${when}</span><button type="button" class="autocal-primary-action" data-refino-stall>Reforçar o Mapa K aqui</button><small>Só no mapa · você confere e confirma antes de gravar</small>`.replace('<span> ', '<span>');
       if (host.dataset.html !== html) { host.dataset.html = html; host.innerHTML = html; }
     }
 

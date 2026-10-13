@@ -8,7 +8,7 @@
   /**
    * Tropeços e apagões do GNV → células do Mapa K (dono, 2026-10-13). O detector (StallWatch.kt) só LÊ o que a ECU manda e
    * registra ONDE o motor engasgou (Petrol Inj., MAP, RPM). Aqui só se decide QUAIS células do Mapa K propor e QUANTO:
-   *  - lugar: a faixa de Petrol Inj. com mais ocorrências (apagão pesa 2, tropeço pesa 1), exigindo MIN_EVENTS;
+   *  - lugar: a faixa de Petrol Inj. com mais ocorrências (apagão pesa 2, tropeço pesa 1); basta 1 apagão real ou MIN_EVENTS tropeços;
    *  - células: as linhas do Mapa K que cobrem a faixa × as colunas de RPM que cobrem o RPM de antes (no máximo 3 colunas);
    *  - quanto: um passo pequeno (+5%; +10% com muita evidência), nunca acima do passo máximo do ajuste local (15%).
    * Só propõe: gravar é o fluxo manual do Mapa K (prévia, confirmação, ACK e leitura de volta). Direção = mais GNV, porque o
@@ -68,7 +68,8 @@
     const region = topRegion(stalls);
     if (!region) return { ok: false, reason: 'Sem tropeços nem apagões registrados.' };
     const events = region.stalls + region.near;
-    if (events < minEvents) return { ok: false, reason: `Só ${events} ocorrência${events === 1 ? '' : 's'} nesta faixa: preciso de ${minEvents} para propor.`, region };
+    // Um apagão de verdade (o motor morreu) já basta; tropeços sozinhos precisam de MIN_EVENTS.
+    if (region.stalls < 1 && events < minEvents) return { ok: false, reason: `Só ${events} ocorrência${events === 1 ? '' : 's'} nesta faixa: preciso de ${minEvents} para propor.`, region };
     const rows = covering(axes.petrolBins, region.fromMs, region.toMs);
     let columns = Number.isFinite(region.rpmLow) && Number.isFinite(region.rpmHigh) ? covering(axes.rpmBins, region.rpmLow, region.rpmHigh) : [];
     if (!rows.length || !columns.length) return { ok: false, reason: 'O Mapa K ainda não foi lido: não sei quais células.', region };
