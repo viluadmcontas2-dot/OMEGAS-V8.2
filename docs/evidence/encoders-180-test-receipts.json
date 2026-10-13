@@ -1,0 +1,22 @@
+[
+  {
+    "test_sha256": "9EDCC9E3D5942937F8A9B7C421E45489C86B886F4085115E44B5A333102326DF",
+    "exit_code": 1,
+    "compiler": "Kotlin 2.2.10",
+    "expected_red": true,
+    "revision": "a00b9cac5af2c9e85ea5bdc66f7ec52b4344d64f",
+    "source_sha256": "49BC7B336348293C58835FA95A36A369D50D13B54B5F3C5C49D59CB35A942087",
+    "tests": "AutoCalProtocolTest,KFactorProtocolTest",
+    "junit_output": "JUnit version 4.13.2\n............E..E.................\nTime: 0,348\nThere were 2 failures:\n1) vetor u16 curto usa opcode compacto original(com.omegas.prohub.ecu.AutoCalProtocolTest)\narray lengths differed, expected.length=6 actual.length=7; arrays first differed at element [0]; expected:<51> but was:<55>\n\tat org.junit.internal.ComparisonCriteria.arrayEquals(ComparisonCriteria.java:78)\n\tat org.junit.internal.ComparisonCriteria.arrayEquals(ComparisonCriteria.java:28)\n\tat org.junit.Assert.internalArrayEquals(Assert.java:534)\n\tat org.junit.Assert.assertArrayEquals(Assert.java:343)\n\tat org.junit.Assert.assertArrayEquals(Assert.java:354)\n\tat com.omegas.prohub.ecu.AutoCalProtocolTest.vetor u16 curto usa opcode compacto original(AutoCalProtocolTest.kt:336)\n\t... 30 trimmed\nCaused by: java.lang.AssertionError: expected:<51> but was:<55>\n\tat org.junit.Assert.fail(Assert.java:89)\n\tat org.junit.Assert.failNotEquals(Assert.java:835)\n\tat org.junit.Assert.assertEquals(Assert.java:120)\n\tat org.junit.Assert.assertEquals(Assert.java:146)\n\tat org.junit.internal.ExactComparisonCriteria.assertElementsEqual(ExactComparisonCriteria.java:8)\n\tat org.junit.internal.ComparisonCriteria.arrayEquals(ComparisonCriteria.java:76)\n\t... 36 more\n2) dois u16 usam ultimo formato compacto original(com.omegas.prohub.ecu.AutoCalProtocolTest)\narray lengths differed, expected.length=8 actual.length=9; arrays first differed at element [0]; expected:<53> but was:<55>\n\tat org.junit.internal.ComparisonCriteria.arrayEquals(ComparisonCriteria.java:78)\n\tat org.junit.internal.ComparisonCriteria.arrayEquals(ComparisonCriteria.java:28)\n\tat org.junit.Assert.internalArrayEquals(Assert.java:534)\n\tat org.junit.Assert.assertArrayEquals(Assert.java:343)\n\tat org.junit.Assert.assertArrayEquals(Assert.java:354)\n\tat com.omegas.prohub.ecu.AutoCalProtocolTest.dois u16 usam ultimo formato compacto original(AutoCalProtocolTest.kt:341)\n\t... 30 trimmed\nCaused by: java.lang.AssertionError: expected:<53> but was:<55>\n\tat org.junit.Assert.fail(Assert.java:89)\n\tat org.junit.Assert.failNotEquals(Assert.java:835)\n\tat org.junit.Assert.assertEquals(Assert.java:120)\n\tat org.junit.Assert.assertEquals(Assert.java:146)\n\tat org.junit.internal.ExactComparisonCriteria.assertElementsEqual(ExactComparisonCriteria.java:8)\n\tat org.junit.internal.ComparisonCriteria.arrayEquals(ComparisonCriteria.java:76)\n\t... 36 more\n\nFAILURES!!!\nTests run: 31,  Failures: 2\n\n"
+  },
+  {
+    "revision": "ee2b0637ec3ac57ca420daf5ee914c30d35e27fe",
+    "exit_code": 0,
+    "source_sha256": "E13CAC8010D7C773EDCD23958534628C6AD80F56AC24D418AB6FDAF27BB96791",
+    "expected_red": false,
+    "test_sha256": "9EDCC9E3D5942937F8A9B7C421E45489C86B886F4085115E44B5A333102326DF",
+    "compiler": "Kotlin 2.2.10",
+    "tests": "AutoCalProtocolTest,KFactorProtocolTest",
+    "junit_output": "JUnit version 4.13.2\n...............................\nTime: 0,347\n\nOK (31 tests)\n\n"
+  }
+]
