@@ -262,7 +262,7 @@
                 <span class="refino-stall-legend">Motor apagou</span>
                 <span class="live">AGORA</span>
               </div>
-              <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU (azul gasolina, verde GNV). Quadradinhos: nossos pontos (laranja gasolina, roxo GNV), um a cada 0,025 bar.</span></aside>
+              <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU. Quadradinhos: nossos pontos, um a cada 0,025 bar. Cor igual à do AutoCal: vermelho = gasolina, verde = GNV.</span></aside>
             </div>
           </section>
           <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">

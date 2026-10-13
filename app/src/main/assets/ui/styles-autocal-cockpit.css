@@ -2210,10 +2210,10 @@
 .refino-steps li[data-problem="true"] i { background: #e25e5e; color: #fff; }
 .refino-next { margin: 6px 0 8px; color: #c5d0db; font-size: 13px; }
 .refino-our-point { opacity: .9; stroke: rgba(6,18,31,.7); stroke-width: 1; }
-.refino-our-point.petrol { fill: #ffb547; }
-.refino-our-point.gas { fill: #c38bff; }
-.autocal-chart-legend .refino-ours-petrol::before { width: 8px; height: 8px; border-radius: 2px; background: #ffb547; }
-.autocal-chart-legend .refino-ours-gas::before { width: 8px; height: 8px; border-radius: 2px; background: #c38bff; }
+.refino-our-point.petrol { fill: var(--ao-petrol-line); }
+.refino-our-point.gas { fill: var(--ao-gas); }
+.autocal-chart-legend .refino-ours-petrol::before { width: 8px; height: 8px; border-radius: 2px; background: var(--ao-petrol-line); }
+.autocal-chart-legend .refino-ours-gas::before { width: 8px; height: 8px; border-radius: 2px; background: var(--ao-gas); }
 .refino-stall-mark { stroke: #ff6b6b; stroke-width: 3; stroke-linecap: round; fill: none; }
 .autocal-chart-legend .refino-stall-legend::before { content: '✕'; width: auto; height: auto; background: none; color: #ff6b6b; font-weight: 900; }
 .refino-cockpit .autocal-primary-action[data-kind="waiting"] { color: #c5d0db; background: rgba(35,47,58,.6); border-color: rgba(255,255,255,.1); cursor: default; }

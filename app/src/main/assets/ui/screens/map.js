@@ -210,11 +210,12 @@
       this.renderGrid();
       this.renderEditor();
       const share = Math.round(summary.curveShare * 100);
-      const parts = [`${changes.length} ${changes.length === 1 ? 'célula' : 'células'} do mapa`, `${nodes.length} ${nodes.length === 1 ? 'ponto' : 'pontos'} da curva`];
-      const tight = summary.tightCells ? ` ${summary.tightCells} células ficam perto do limite do mapa (sem folga para o ajuste local).` : '';
-      const lost = summary.saturatedCells ? ` ATENÇÃO: ${summary.saturatedCells} células não cabem em 100–255 e a correção sai um pouco menor nelas.` : '';
-      const rest = share >= 1 ? ` A curva continua com até ${share}% de correção onde o mapa não tem espaço.` : ' A curva fica neutra (1,0).';
-      return `Proposta pronta: ${parts.join(' + ')}. Erro máximo ${summary.maxRowErrorPct.toFixed(2)}% no resultado final.${rest}${tight}${lost} Confira e grave: primeiro o mapa, depois a curva.`;
+      const extra = [
+        share >= 1 ? `curva com até ${share}%` : '',
+        summary.tightCells ? `${summary.tightCells} células sem folga` : '',
+        summary.saturatedCells ? `${summary.saturatedCells} células não cabem em 100–255` : '',
+      ].filter(Boolean).join(' · ');
+      return `Proposta: ${changes.length} células + ${nodes.length} pontos da curva · erro ${summary.maxRowErrorPct.toFixed(1)}%${extra ? ` · ${extra}` : ''}. Grave: mapa, depois curva.`;
     }
 
     /** Segunda etapa: a curva refatorada, só depois do mapa confirmado pela ECU. */
