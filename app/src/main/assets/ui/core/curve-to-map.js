@@ -56,6 +56,74 @@
     return valuesByRow[last];
   }
 
+  // ------------------------------------------------------------------------------------------------------------
+  // Suavização da curva ANTES de passar para o mapa (dono, 2026-10-13): a curva nativa do AutoMatch sai serrilhada e com
+  // pontos extremos (nas 57 curvas reais das sessões do dono: pulo máximo entre vizinhos mediana 17,7%, p90 37%; ex.:
+  // 1,50 → 0,89 → 1,50 em nós vizinhos). Exportar assim levaria o serrilhado para o mapa. Alisador de Whittaker em ln(K)
+  // sobre Petrol Inj. (penalidade na 2ª derivada, passo não uniforme) com pesos robustos (pontos extremos pesam pouco).
+  // Medido nas 57 curvas: serrilhado mediano 17,7% → ≤1,3%, pior caso 3,4%; desvio RMS mediano 3,1% (concentrado nos extremos).
+  // ------------------------------------------------------------------------------------------------------------
+  const SMOOTH_LAMBDA = 1;
+  const SMOOTH_ROBUST = 0.04;     // resíduo (em ln) a partir do qual um ponto passa a pesar pouco
+  const SMOOTH_DEADBAND = 0.005;  // mudança menor que 0,5% não vale a pena: mantém o valor da ECU
+
+  function solveDense(A, b) {
+    const n = b.length;
+    for (let i = 0; i < n; i += 1) {
+      let p = i;
+      for (let r = i + 1; r < n; r += 1) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+      [A[i], A[p]] = [A[p], A[i]]; [b[i], b[p]] = [b[p], b[i]];
+      for (let r = i + 1; r < n; r += 1) {
+        const f = A[r][i] / A[i][i];
+        for (let c = i; c < n; c += 1) A[r][c] -= f * A[i][c];
+        b[r] -= f * b[i];
+      }
+    }
+    const x = Array(n).fill(0);
+    for (let i = n - 1; i >= 0; i -= 1) {
+      let sum = b[i];
+      for (let c = i + 1; c < n; c += 1) sum -= A[i][c] * x[c];
+      x[i] = sum / A[i][i];
+    }
+    return x;
+  }
+
+  /** Devolve a curva suavizada (mesmo tamanho). xs crescente (ms), ys > 0. Nunca devolve fora de [piso, teto] de escrita. */
+  function smoothCurve(xs, ys, { lambda = SMOOTH_LAMBDA, robust = SMOOTH_ROBUST, deadband = SMOOTH_DEADBAND } = {}) {
+    const n = ys.length;
+    if (n < 4 || xs.some((x, i) => i > 0 && !(x > xs[i - 1]))) return ys.slice();
+    const y = ys.map(Math.log);
+    let w = Array(n).fill(1);
+    let z = y.slice();
+    for (let iteration = 0; iteration < 8; iteration += 1) {
+      const A = Array.from({ length: n }, () => Array(n).fill(0));
+      const b = Array(n).fill(0);
+      for (let i = 0; i < n; i += 1) { A[i][i] += w[i]; b[i] += w[i] * y[i]; }
+      for (let i = 1; i < n - 1; i += 1) {
+        const h0 = xs[i] - xs[i - 1];
+        const h1 = xs[i + 1] - xs[i];
+        const co = [2 / (h0 * (h0 + h1)), -2 / (h0 * h1), 2 / (h1 * (h0 + h1))];
+        const scale = ((h0 + h1) / 2) ** 2;
+        const idx = [i - 1, i, i + 1];
+        for (let a = 0; a < 3; a += 1) for (let q = 0; q < 3; q += 1) A[idx[a]][idx[q]] += lambda * co[a] * co[q] * scale;
+      }
+      z = solveDense(A, b);
+      w = z.map((value, i) => 1 / (1 + (Math.abs(y[i] - value) / robust) ** 2));
+    }
+    return z.map((value, i) => {
+      if (Math.abs(value - y[i]) < deadband) return ys[i];
+      return Math.min(K_WRITE_CEILING, Math.max(K_WRITE_FLOOR, Math.exp(value)));
+    });
+  }
+
+  /** Maior pulo (em %) da 2ª diferença de ln(K) entre vizinhos: mede serrilhado. */
+  function roughness(ys) {
+    const y = ys.map(Math.log);
+    let max = 0;
+    for (let i = 1; i < y.length - 1; i += 1) max = Math.max(max, Math.abs(y[i - 1] - 2 * y[i] + y[i + 1]));
+    return max * 100;
+  }
+
   /**
    * Refatora o produto Mapa K × curva K. A ECU aplica o produto; ele precisa continuar o mesmo em cada linha E entre as
    * linhas (nos nós da curva). Multiplicar a curva em cada linha e zerar a curva perde a forma da curva entre as linhas
@@ -66,12 +134,14 @@
    * @param {{tbp:number[], k:number[], rowMs:number[], cells:number[][]}} input
    *   tbp/k = curva K lida (30 nós); rowMs = Tinj de cada linha; cells = Mapa K lido (linha × coluna).
    */
-  function balance({ tbp = [], k = [], rowMs = [], cells = [], mapMin = MAP_MIN, mapMax = MAP_MAX, headroom = LOCAL_HEADROOM } = {}) {
+  function balance({ tbp = [], k = [], rowMs = [], cells = [], mapMin = MAP_MIN, mapMax = MAP_MAX, headroom = LOCAL_HEADROOM, smooth = true } = {}) {
     const nodes = [];
     for (let i = 0; i < Math.min(tbp.length, k.length); i += 1) nodes.push({ i, x: finite(tbp[i]), y: finite(k[i]) });
     const valid = nodes.filter(n => n.x !== null && n.x > 0 && n.y !== null && n.y > 0);
     const xs = valid.map(n => n.x);
     const ys = valid.map(n => n.y);
+    // Curva ALVO: a da ECU suavizada (o produto que o mapa e a curva novos têm que reproduzir). Sem suavizar, é a própria da ECU.
+    const ysT = smooth ? smoothCurve(xs, ys) : ys.slice();
     const winLo = mapMin / (1 - headroom);
     const winHi = mapMax / (1 + headroom);
 
@@ -83,25 +153,25 @@
       if (valid.length < 2) return { ...base, status: 'sem-curva' };
       if (ms < xs[0]) return { ...base, status: 'abaixo' };
       if (ms > xs[xs.length - 1]) return { ...base, status: 'acima' };
-      const kOld = interp(xs, ys, ms);
+      const kOld = interp(xs, ysT, ms);
       if (kOld === null) return { ...base, status: 'degenerada' };
-      return { ...base, kOld };
+      return { ...base, kOld, kEcu: interp(xs, ys, ms) };
     });
     const live = rows.filter(r => r.status === 'ok');
     const columns = live.length ? cells[live[0].row].length : 0;
     const rx = live.map(r => r.ms);
 
-    const nextK = ys.slice();
+    const nextK = ysT.slice();
     let inside = [];
     let target = [];            // alvo float por linha viva × coluna
     if (live.length) {
-      const first = rx[0];
-      const last = rx[rx.length - 1];
-      // Tolerância de 0,01 ms: o eixo das linhas vem de inteiros × 0,00256 e cai um fio antes do nó (17,99936 × 18,0).
-      inside = valid.map((n, idx) => (n.x >= first - 0.01 && n.x <= last + 0.01 ? idx : -1)).filter(idx => idx >= 0);
+      // TODOS os nós absorvem, também os fora do alcance das linhas: o Mapa K vale a linha da ponta ali (INFERIDO), então
+      // quando a célula da ponta muda o nó de fora tem que compensar, senão o produto muda (erro de ~20% medido em curva
+      // com K ≠ 1 nas pontas) e a curva gravada fica com degrau entre o nó de dentro e o de fora.
+      inside = valid.map((_, idx) => idx);
       // Produto real que a ECU aplica hoje (por coluna): mapa entre linhas × curva atual.
       const totalAtRow = live.map(r => cells[r.row].map(v => v * r.kOld));
-      const totalAtNode = inside.map(idx => Array.from({ length: columns }, (_, c) => mapAt(rx, live.map(r => cells[r.row][c]), xs[idx]) * ys[idx]));
+      const totalAtNode = inside.map(idx => Array.from({ length: columns }, (_, c) => mapAt(rx, live.map(r => cells[r.row][c]), xs[idx]) * ysT[idx]));
       // Janela de cada célula: a com folga, ampliada só até onde a célula já estava (nunca empurra para mais longe).
       const allowed = live.map(r => cells[r.row].map(v => [Math.max(mapMin, Math.min(winLo, v)), Math.min(mapMax, Math.max(winHi, v))]));
       inside.forEach(idx => { nextK[idx] = 1; });
@@ -124,7 +194,7 @@
     }
     const ceilingRaw = Math.round(K_WRITE_CEILING * Q14);
     const floorRaw = Math.round(K_WRITE_FLOOR * Q14);
-    const realizedRaw = nextK.map((v, idx) => (inside.includes(idx) ? Math.min(ceilingRaw, Math.max(floorRaw, Math.round(v * Q14))) : Math.round(ys[idx] * Q14)));
+    const realizedRaw = nextK.map((v, idx) => (inside.includes(idx) ? Math.min(ceilingRaw, Math.max(floorRaw, Math.round(v * Q14))) : Math.round(ysT[idx] * Q14)));
     const realized = realizedRaw.map(v => v / Q14);
 
     // Células finais com a curva que de fato vai para a ECU; erros medidos no produto (linhas e nós).
@@ -157,7 +227,7 @@
     let maxNodeError = 0;
     inside.forEach(idx => {
       for (let c = 0; c < columns; c += 1) {
-        const before = mapAt(rx, live.map(r => cells[r.row][c]), xs[idx]) * ys[idx];
+        const before = mapAt(rx, live.map(r => cells[r.row][c]), xs[idx]) * ysT[idx];
         const after = mapAt(rx, finalByRow.map(row => row[c]), xs[idx]) * realized[idx];
         maxNodeError = Math.max(maxNodeError, Math.abs(after / before - 1));
       }
@@ -169,6 +239,7 @@
       changed: Math.round(n.y * Q14) !== realizedRaw[idx],
     }));
     const share = inside.length ? Math.max(...inside.map(idx => Math.abs(realized[idx] - 1))) : 0;
+    const smoothDev = ys.map((v, i) => Math.abs(Math.log(ysT[i] / v)) * 100);
     return {
       rows: outRows,
       nodes: curveNodes,
@@ -182,6 +253,11 @@
         maxRowErrorPct: maxRowError * 100,
         maxNodeErrorPct: maxNodeError * 100,
         curveShare: share,
+        smoothed: smooth,
+        roughnessBefore: roughness(ys),
+        roughnessAfter: roughness(ysT),
+        smoothedNodes: smoothDev.filter(d => d > 0.01).length,
+        smoothMaxChangePct: smoothDev.length ? Math.max(...smoothDev) : 0,
       },
     };
   }
@@ -204,5 +280,5 @@
     return worst * 100;
   }
 
-  return { balance, naiveError, interp, bracket, mapAt, MAP_MIN, MAP_MAX, LOCAL_HEADROOM, K_WRITE_CEILING, K_WRITE_FLOOR };
+  return { balance, naiveError, smoothCurve, roughness, interp, bracket, mapAt, MAP_MIN, MAP_MAX, LOCAL_HEADROOM, K_WRITE_CEILING, K_WRITE_FLOOR };
 });

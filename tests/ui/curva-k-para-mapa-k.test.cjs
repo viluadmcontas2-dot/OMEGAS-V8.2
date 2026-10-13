@@ -142,3 +142,55 @@ test('etapa da curva: curva mudou desde o plano → não grava; falha de ECU →
   assert.equal(b.ok, false);
   assert.match(b.error, /NAK/);
 });
+
+// ---- Suavização antes de exportar (dono, 2026-10-13): o AutoMatch nativo gera serrilhado e pontos extremos ----
+const real = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/curvas-k-reais.json'), 'utf8'));
+const { smoothCurve, roughness } = require('../../app/src/main/assets/ui/core/curve-to-map.js');
+const REAL_X = real.tbp_raw.map(v => v / 512);
+const REAL_CURVES = real.curvas_raw.map(c => c.map(v => v / 16384));
+const median = a => a.slice().sort((p, q) => p - q)[Math.floor(a.length / 2)];
+
+test('curvas reais da ECU (57): serrilhado cai para ≤3,5% e o desvio típico é pequeno', () => {
+  const before = REAL_CURVES.map(roughness);
+  assert.ok(median(before) > 10, 'as curvas reais são mesmo serrilhadas: ' + median(before));
+  const rms = [];
+  REAL_CURVES.forEach(k => {
+    const s = smoothCurve(REAL_X, k);
+    assert.ok(roughness(s) <= 3.5, 'serrilhado depois: ' + roughness(s));
+    s.forEach(v => assert.ok(v >= 0.6 && v <= 1.8));
+    rms.push(Math.sqrt(k.reduce((acc, v, i) => acc + Math.log(s[i] / v) ** 2, 0) / k.length) * 100);
+  });
+  assert.ok(median(rms) < 4, 'desvio RMS mediano ' + median(rms));
+});
+
+test('curva já suave ou neutra não é mexida (faixa morta), e suavizar duas vezes quase não muda', () => {
+  const neutral = REAL_X.map(() => 1);
+  assert.deepEqual(smoothCurve(REAL_X, neutral), neutral);
+  const smooth = REAL_X.map((x, i) => 1.2 + 0.1 * Math.sin(i / 6));
+  smoothCurve(REAL_X, smooth).forEach((v, i) => assert.ok(Math.abs(Math.log(v / smooth[i])) < 0.02));
+  REAL_CURVES.slice(0, 10).forEach(k => {
+    const once = smoothCurve(REAL_X, k);
+    const twice = smoothCurve(REAL_X, once);
+    twice.forEach((v, i) => assert.ok(Math.abs(Math.log(v / once[i])) < 0.05, 'segunda passada mexe pouco'));
+  });
+});
+
+test('exportar com suavização: o serrilhado da curva NÃO vai para o mapa nem para a curva nova', () => {
+  const rowMs = ROWS_MS;
+  REAL_CURVES.filter(k => roughness(k) > 15).slice(0, 12).forEach(k => {
+    const cells = rowMs.map(() => Array(COLS).fill(150));
+    const smoothOut = balance({ tbp: REAL_X, k, rowMs, cells });
+    const rawOut = balance({ tbp: REAL_X, k, rowMs, cells, smooth: false });
+    assert.equal(smoothOut.summary.smoothed, true);
+    assert.ok(smoothOut.summary.roughnessAfter <= 3.5, 'curva alvo suave: ' + smoothOut.summary.roughnessAfter);
+    // curva nova que vai para a ECU: suave em todos os nós; sem suavizar ela herdaria o serrilhado
+    const newK = REAL_X.map((_, i) => smoothOut.nodes.find(n => n.index === i)?.target ?? k[i]);
+    assert.ok(roughness(newK) <= 6.0, 'curva gravada: ' + roughness(newK));
+    // linha do mapa: variação entre linhas vizinhas fica suave (serrilhado do alvo = ~0), não copia o zigue-zague
+    const col = smoothOut.rows.filter(r => r.status === 'ok').map(r => Math.log(r.cells[0].target));
+    const colRaw = rawOut.rows.filter(r => r.status === 'ok').map(r => Math.log(r.cells[0].target));
+    const d2 = a => Math.max(...a.slice(1, -1).map((v, i) => Math.abs(a[i] - 2 * v + a[i + 2]))) * 100;
+    assert.ok(d2(col) <= d2(colRaw) + 1e-9, 'o mapa suavizado não é mais serrilhado que o cru');
+    assert.ok(smoothOut.summary.maxRowErrorPct < 3, 'produto = curva suavizada, erro ' + smoothOut.summary.maxRowErrorPct);
+  });
+});

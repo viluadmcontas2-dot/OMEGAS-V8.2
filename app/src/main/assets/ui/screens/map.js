@@ -215,7 +215,10 @@
         summary.tightCells ? `${summary.tightCells} células sem folga` : '',
         summary.saturatedCells ? `${summary.saturatedCells} células não cabem em 100–255` : '',
       ].filter(Boolean).join(' · ');
-      return `Proposta: ${changes.length} células + ${nodes.length} pontos da curva · erro ${summary.maxRowErrorPct.toFixed(1)}%${extra ? ` · ${extra}` : ''}. Grave: mapa, depois curva.`;
+      // A curva da ECU sai serrilhada do AutoMatch; ela é suavizada ANTES de virar mapa (senão o serrilhado vai junto).
+      const smoothed = summary.smoothed && summary.roughnessBefore - summary.roughnessAfter >= 1
+        ? ` · curva suavizada (serrilhado ${summary.roughnessBefore.toFixed(0)}% → ${summary.roughnessAfter.toFixed(0)}%)` : '';
+      return `Proposta: ${changes.length} células + ${nodes.length} pontos da curva${smoothed} · erro ${summary.maxRowErrorPct.toFixed(1)}%${extra ? ` · ${extra}` : ''}. Grave: mapa, depois curva.`;
     }
 
     /** Segunda etapa: a curva refatorada, só depois do mapa confirmado pela ECU. */
