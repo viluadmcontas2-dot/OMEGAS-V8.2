@@ -331,6 +331,40 @@ class AutoCalProtocolTest {
         }
     }
 
+    @Test
+    fun `vetor u16 curto usa opcode compacto original`() {
+        assertArrayEquals(hex("33 61 01 34 12 DB"), AutoCalProtocol.writeVectorU16(0x0161, intArrayOf(0x1234)))
+    }
+
+    @Test
+    fun `dois u16 usam ultimo formato compacto original`() {
+        assertArrayEquals(hex("35 61 01 34 12 CD AB 55"), AutoCalProtocol.writeVectorU16(0x0161, intArrayOf(0x1234, 0xABCD)))
+    }
+
+    @Test
+    fun `tres u16 usam primeiro formato estendido original`() {
+        assertArrayEquals(hex("37 61 08 01 34 12 CD AB 00 40 9F"), AutoCalProtocol.writeVectorU16(0x0161, intArrayOf(0x1234, 0xABCD, 0x4000)))
+    }
+
+    @Test
+    fun `vetor u8 preserva fronteira compacta e estendida`() {
+        assertArrayEquals(hex("36 61 01 01 02 03 04 05 A7"), AutoCalProtocol.writeVectorU8(0x0161, intArrayOf(1, 2, 3, 4, 5)))
+        assertArrayEquals(hex("37 61 08 01 01 02 03 04 05 06 B6"), AutoCalProtocol.writeVectorU8(0x0161, intArrayOf(1, 2, 3, 4, 5, 6)))
+    }
+
+    @Test
+    fun `vetores rejeitam valores e comprimentos fora do campo`() {
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.writeVectorU16(0x0161, intArrayOf()) }
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.writeVectorU16(0x0161, intArrayOf(-1)) }
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.writeVectorU16(0x0161, intArrayOf(0x10000)) }
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.writeVectorU16(0x10000, intArrayOf(1)) }
+        val maximum = AutoCalProtocol.writeVectorU16(0x0161, IntArray(126))
+        assertArrayEquals(hex("37 61 FE 01"), maximum.copyOfRange(0, 4))
+        assertEquals(257, maximum.size)
+        assertEquals(0x97, maximum.last().toInt() and 0xFF)
+        assertThrows(IllegalArgumentException::class.java) { AutoCalProtocol.writeVectorU16(0x0161, IntArray(127)) }
+    }
+
     private fun hex(value: String): ByteArray = value.split(' ')
         .map { it.toInt(16).toByte() }
         .toByteArray()

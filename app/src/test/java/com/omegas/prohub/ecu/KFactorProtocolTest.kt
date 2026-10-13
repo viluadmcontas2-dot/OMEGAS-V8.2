@@ -1,6 +1,7 @@
 package com.omegas.prohub.ecu
 
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -85,5 +86,14 @@ class KFactorProtocolTest {
         assertEquals(30, decoded.size)
         assertEquals(0x4000, decoded.first())
         assertEquals(0x401D, decoded.last())
+    }
+    @Test
+    fun `escrita K preserva limites e frame dos extremos`() {
+        assertArrayEquals(byteArrayOf(0x14, 0x61, 0x01, 0, 0, 0, 0x76), KFactorProtocol.writeFactor(0, 0))
+        assertArrayEquals(byteArrayOf(0x14, 0x61, 0x01, 0x1D, 0xFF.toByte(), 0xFF.toByte(), 0x91.toByte()), KFactorProtocol.writeFactor(29, 0xFFFF))
+        assertThrows(IllegalArgumentException::class.java) { KFactorProtocol.writeFactor(-1, 0) }
+        assertThrows(IllegalArgumentException::class.java) { KFactorProtocol.writeFactor(30, 0) }
+        assertThrows(IllegalArgumentException::class.java) { KFactorProtocol.writeFactor(0, -1) }
+        assertThrows(IllegalArgumentException::class.java) { KFactorProtocol.writeFactor(0, 0x10000) }
     }
 }
