@@ -15,10 +15,10 @@ const curveSection = index.slice(index.indexOf('data-screen="curve"'), index.ind
 const intro = curveSection.slice(0, curveSection.indexOf('curve-view-stack'));
 const footbar = curveSection.slice(curveSection.indexOf('class="curve-footbar"'));
 assert.ok(curveSection.includes('class="curve-footbar"'), 'Curva K tem rodapé único');
-const order = ['curveBackupSave', 'curveBackupSelect', 'curveBackupRestore', 'curveResetButton'];
+const order = ['curveReadButton', 'curveBackupSave', 'curveBackupSelect', 'curveBackupRestore', 'curveResetButton'];
 const positions = order.map(id => footbar.indexOf(`id="${id}"`));
 assert.ok(positions.every(p => p > 0), 'todos os botões da Curva K estão no rodapé');
-assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'ordem do rodapé: vista, Salvar, Backups, Restaurar, Resetar');
+assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'ordem do rodapé: Reler, Salvar, Backups, Restaurar, Resetar');
 for (const id of order) assert.equal(intro.includes(`id="${id}"`), false, `${id} não fica mais no topo`);
 assert.ok(intro.includes('id="curveSourceStatus"') && intro.includes('id="curveBackupStatus"'), 'estado da leitura e dos backups ficam ao lado do título');
 const css = fs.readFileSync(path.join(ui, 'styles-calibration-obd.css'), 'utf8');

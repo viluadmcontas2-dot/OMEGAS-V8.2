@@ -34,7 +34,8 @@
   const TITLES = { apply: 'Gravar curva refinada', restore: 'Restaurar pontos que pioraram', undo: 'Desfazer última gravação' };
   const POLL_MS = 300;
   const OPERATION_TIMEOUT_MS = 90000;
-  const DATA_EVERY_TICKS = 2;
+  // Dados do Refino a cada tick de status (1 s): antes 2 s + 5 amostras por faixa somavam ~3 s até o ponto aparecer (dono, 2026-10-13).
+  const DATA_EVERY_TICKS = 1;
 
   function finite(value) {
     if (value === null || value === undefined || value === '') return null;

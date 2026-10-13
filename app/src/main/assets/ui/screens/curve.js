@@ -53,6 +53,8 @@
     }
 
     bind() {
+      // A leitura é automática (reconexão + 15 s), mas o botão fica para o dono forçar a releitura quando quiser (2026-10-13).
+      document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
       document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
       document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.writeRestore());
