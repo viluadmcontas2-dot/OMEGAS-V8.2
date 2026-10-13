@@ -20,23 +20,14 @@ object KFactorProtocol {
         11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 20.0, 22.0,
     )
 
-    fun readFactors(): ByteArray = Mp48Protocol.frame(byteArrayOf(0x29, 0x61, 0x01))
+    fun readFactors(): ByteArray = AutoCalProtocol.readVector(FACTOR_ADDRESS)
 
-    fun readPetrolAxis(): ByteArray = Mp48Protocol.frame(byteArrayOf(0x29, 0x4B, 0x01))
+    fun readPetrolAxis(): ByteArray = AutoCalProtocol.readVector(AXIS_ADDRESS)
 
     fun writeFactor(index: Int, rawQ14: Int): ByteArray {
         require(index in 0 until POINT_COUNT) { "Índice K factor inválido: $index" }
         require(rawQ14 in 0..MAX_RAW) { "K factor Q14 inválido: $rawQ14" }
-        return Mp48Protocol.frame(
-            byteArrayOf(
-                0x14,
-                0x61,
-                0x01,
-                index.toByte(),
-                (rawQ14 and 0xFF).toByte(),
-                ((rawQ14 ushr 8) and 0xFF).toByte(),
-            ),
-        )
+        return AutoCalProtocol.writeIndexedU16(FACTOR_ADDRESS, index, rawQ14)
     }
 
     fun decodeRawPoints(payload: ByteArray): IntArray {

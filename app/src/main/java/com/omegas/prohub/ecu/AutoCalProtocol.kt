@@ -295,29 +295,10 @@ object AutoCalProtocol {
         require(values.isNotEmpty())
         require(values.all { it in 0..0xFF })
         val payload = values.map { it.toByte() }.toByteArray()
-        return if (payload.size <= 5) {
-            Mp48Protocol.frame(
-                byteArrayOf(
-                    (0x31 + payload.size).toByte(),
-                    (address and 0xFF).toByte(),
-                    ((address ushr 8) and 0xFF).toByte(),
-                ) + payload,
-            )
-        } else {
-            val blockLength = payload.size + 2
-            require(blockLength <= 0xFF)
-            Mp48Protocol.frame(
-                byteArrayOf(
-                    WRITE_VECTOR_EXTENDED.toByte(),
-                    (address and 0xFF).toByte(),
-                    blockLength.toByte(),
-                    ((address ushr 8) and 0xFF).toByte(),
-                ) + payload,
-            )
-        }
+        return frameVector(address, payload)
     }
 
-    /** ProgBase/AEB SetVector U16 little-endian using the extended 0x37 grammar. */
+    /** ProgBase SetVector U16: little-endian, compacto até dois elementos. */
     fun writeVectorU16(address: Int, values: IntArray): ByteArray {
         require(address in 0..0xFFFF)
         require(values.isNotEmpty())
@@ -327,16 +308,27 @@ object AutoCalProtocol {
             payload[index * 2] = (value and 0xFF).toByte()
             payload[index * 2 + 1] = ((value ushr 8) and 0xFF).toByte()
         }
-        val blockLength = payload.size + 2
-        require(blockLength <= 0xFF)
-        return Mp48Protocol.frame(
+        return frameVector(address, payload)
+    }
+
+    private fun frameVector(address: Int, payload: ByteArray): ByteArray {
+        val header = if (payload.size <= 5) {
+            byteArrayOf(
+                (0x31 + payload.size).toByte(),
+                (address and 0xFF).toByte(),
+                ((address ushr 8) and 0xFF).toByte(),
+            )
+        } else {
+            val blockLength = payload.size + 2
+            require(blockLength <= 0xFF)
             byteArrayOf(
                 WRITE_VECTOR_EXTENDED.toByte(),
                 (address and 0xFF).toByte(),
                 blockLength.toByte(),
                 ((address ushr 8) and 0xFF).toByte(),
-            ) + payload,
-        )
+            )
+        }
+        return Mp48Protocol.frame(header + payload)
     }
 
     /**
