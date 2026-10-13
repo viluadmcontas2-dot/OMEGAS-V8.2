@@ -1,0 +1,1391 @@
+<title>Landi Renzo Omegas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;600&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap">
+<style>
+/* Layout: single-column document with collapsible sections, pinned nav rail on desktop */
+:root {
+  --bg: #FAFAF8;
+  --fg: #1A1A1A;
+  --fg-muted: #6B6B6B;
+  --surface: #F0EFEC;
+  --surface-alt: #E6E4E0;
+  --border: #D4D2CD;
+  --accent: #C0392B;
+  --accent-soft: #F2D7D5;
+  --accent-fg: #fff;
+  --code-bg: #2B2B2B;
+  --code-fg: #E8E6E3;
+  --tag-blue: #2980B9;
+  --tag-green: #27AE60;
+  --tag-orange: #E67E22;
+  --tag-purple: #8E44AD;
+  --tag-blue-bg: #EBF5FB;
+  --tag-green-bg: #EAFAF1;
+  --tag-orange-bg: #FEF5E7;
+  --tag-purple-bg: #F4ECF7;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141414;
+    --fg: #E0DED8;
+    --fg-muted: #8A8A8A;
+    --surface: #1E1E1C;
+    --surface-alt: #2A2A27;
+    --border: #3A3A36;
+    --accent: #E74C3C;
+    --accent-soft: #3D1A1A;
+    --accent-fg: #fff;
+    --code-bg: #1A1A1A;
+    --code-fg: #D4D2CD;
+    --tag-blue: #5DADE2;
+    --tag-green: #58D68D;
+    --tag-orange: #F0B27A;
+    --tag-purple: #BB8FCE;
+    --tag-blue-bg: #1A2A3A;
+    --tag-green-bg: #1A3A2A;
+    --tag-orange-bg: #3A2A1A;
+    --tag-purple-bg: #2A1A3A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141414;
+  --fg: #E0DED8;
+  --fg-muted: #8A8A8A;
+  --surface: #1E1E1C;
+  --surface-alt: #2A2A27;
+  --border: #3A3A36;
+  --accent: #E74C3C;
+  --accent-soft: #3D1A1A;
+  --accent-fg: #fff;
+  --code-bg: #1A1A1A;
+  --code-fg: #D4D2CD;
+  --tag-blue: #5DADE2;
+  --tag-green: #58D68D;
+  --tag-orange: #F0B27A;
+  --tag-purple: #BB8FCE;
+  --tag-blue-bg: #1A2A3A;
+  --tag-green-bg: #1A3A2A;
+  --tag-orange-bg: #3A2A1A;
+  --tag-purple-bg: #2A1A3A;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  line-height: 1.65;
+  padding-inline: 20px;
+  padding-block: 0;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+h1, h2, h3 {
+  font-family: 'Fraunces', Georgia, serif;
+  text-wrap: balance;
+  line-height: 1.2;
+}
+h1 { font-size: 2.2rem; margin: 2rem 0 0.5rem; font-weight: 700; }
+h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; font-weight: 700; color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+h3 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; font-weight: 700; }
+
+p { margin: 0.6rem 0; }
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  background: var(--surface);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+pre {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+pre code { background: none; padding: 0; color: inherit; }
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 2rem 0 1rem;
+  border-bottom: 3px solid var(--accent);
+  margin-bottom: 1.5rem;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.7rem;
+  border-radius: 3px;
+  width: fit-content;
+}
+.hero h1 { margin: 0; }
+.hero-sub { color: var(--fg-muted); font-size: 0.95rem; margin: 0; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+.stat {
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--accent);
+}
+.stat-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.2;
+}
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15em 0.5em;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.tag-blue { background: var(--tag-blue-bg); color: var(--tag-blue); }
+.tag-green { background: var(--tag-green-bg); color: var(--tag-green); }
+.tag-orange { background: var(--tag-orange-bg); color: var(--tag-orange); }
+.tag-purple { background: var(--tag-purple-bg); color: var(--tag-purple); }
+
+.method-list {
+  columns: 2;
+  column-gap: 1.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 2;
+  margin: 0.5rem 0 1rem;
+}
+@media (max-width: 560px) { .method-list { columns: 1; } }
+.method-list span { break-inside: avoid; display: block; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 1rem 0;
+}
+th {
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  border-bottom: 2px solid var(--border);
+  padding: 0.5rem 0.75rem;
+}
+td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+
+.toc {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+}
+.toc-title {
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  margin-bottom: 0.5rem;
+}
+.toc ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 2;
+}
+.toc a {
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+.arch-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 1rem 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.note {
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  padding: 0.75rem 1rem;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.88rem;
+  margin: 1rem 0;
+}
+
+.lang-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.5rem 0;
+}
+
+details {
+  margin: 0.5rem 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+details summary {
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  user-select: none;
+}
+details summary:hover { background: var(--surface-alt); }
+details[open] summary { border-bottom: 1px solid var(--border); }
+details > div { padding: 1rem; }
+
+.duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+@media (max-width: 600px) { .duo { grid-template-columns: 1fr; } }
+.duo > div { min-width: 0; }
+
+.file-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  background: var(--surface-alt);
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  color: var(--fg-muted);
+}
+.md { font-size: 0.92rem; }
+.md h3, .md h4, .md h5 { margin: 1.1rem 0 0.4rem; }
+.md h5 { font-size: 0.95rem; }
+.tw { overflow-x: auto; }
+.md ul, .md ol { padding-left: 1.3rem; }
+.md hr { border: 0; border-top: 1px solid var(--border); }
+.md a { color: var(--accent); }
+details summary .file-badge { margin-left: 0.5rem; }
+</style>
+
+<div class="hero">
+  <span class="hero-badge">Reverse Engineering Report</span>
+  <h1>Landi Renzo Omegas 4.2</h1>
+  <p class="hero-sub">Automotive gas ECU calibration software &mdash; full binary analysis for Android port</p>
+</div>
+
+<div class="stat-grid">
+  <div class="stat"><div class="stat-val">12.6 MB</div><div class="stat-label">ProgBase.exe</div></div>
+  <div class="stat"><div class="stat-val">3.3 MB</div><div class="stat-label">Resources.dll</div></div>
+  <div class="stat"><div class="stat-val">175</div><div class="stat-label">Decompiled funcs</div></div>
+  <div class="stat"><div class="stat-val">26</div><div class="stat-label">Languages</div></div>
+  <div class="stat"><div class="stat-val">909</div><div class="stat-label">Localization keys</div></div>
+  <div class="stat"><div class="stat-val">~25</div><div class="stat-label">UI screens</div></div>
+</div>
+
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#identity">Binary Identity</a></li>
+    <li><a href="#architecture">Application Architecture</a></li>
+    <li><a href="#protocol">AEB Communication Protocol</a></li>
+    <li><a href="#data-model">ECU Data Model</a></li>
+    <li><a href="#ui-screens">UI Screens &amp; Flow</a></li>
+    <li><a href="#resources">Resources &amp; Assets</a></li>
+    <li><a href="#security">Licensing &amp; Security</a></li>
+    <li><a href="#i18n">Internationalization</a></li>
+    <li><a href="#flash-protocol">Firmware Flash Protocol</a></li>
+    <li><a href="#android">Android Port Architecture</a></li>
+    <li><a href="#roadmap">Implementation Roadmap</a></li>
+    <li><a href="#ref">Referência atual do repositório (gerada)</a></li>
+  </ol>
+</div>
+
+<!-- ===== 1. BINARY IDENTITY ===== -->
+<h2 id="identity">1. Binary Identity</h2>
+
+<div class="duo">
+  <div>
+    <h3>ProgBase.exe</h3>
+    <table>
+      <tr><th colspan="2">Main Application</th></tr>
+      <tr><td>Format</td><td>PE32 x86 (native)</td></tr>
+      <tr><td>Framework</td><td>Embarcadero Delphi / VCL</td></tr>
+      <tr><td>Version</td><td>4.2.0.6</td></tr>
+      <tr><td>Size</td><td>12,643,840 bytes</td></tr>
+      <tr><td>SHA-256</td><td><code style="font-size:0.65rem;word-break:break-all">8a2d297c...c68ac36f4</code></td></tr>
+      <tr><td>Language</td><td>Italian (primary)</td></tr>
+    </table>
+  </div>
+  <div>
+    <h3>Resources.dll</h3>
+    <table>
+      <tr><th colspan="2">Asset Library</th></tr>
+      <tr><td>Format</td><td>PE32 x86 (native)</td></tr>
+      <tr><td>Framework</td><td>Delphi package</td></tr>
+      <tr><td>Version</td><td>4.5.0.0</td></tr>
+      <tr><td>Size</td><td>3,289,600 bytes</td></tr>
+      <tr><td>Resources</td><td>178 PE resources</td></tr>
+      <tr><td>Content</td><td>141 encrypted map templates, 25 bitmaps, 8 icons</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="note">
+  Both binaries are <strong>native Win32 Delphi/VCL</strong> &mdash; NOT .NET managed code. There is no IL to decompile; all business logic is compiled x86 machine code. Analysis was performed via string extraction, symbol table recovery, and PE resource inspection.
+</div>
+
+<!-- ===== 2. ARCHITECTURE ===== -->
+<h2 id="architecture">2. Application Architecture</h2>
+
+<div class="arch-box">┌─────────────────────────────────────────────────────────┐
+│                    PRESENTATION LAYER                    │
+│  TFormMainBase → TFormMain                              │
+│  ├─ TFormCalibra      (auto-calibration)                │
+│  ├─ TFormModMappa     (map editing)                     │
+│  ├─ TFormDiagnosi     (diagnostics/OBD)                 │
+│  ├─ TFormSwitch       (gas/petrol switch config)        │
+│  ├─ TFormConfig       (ECU configuration)               │
+│  ├─ TFormGraficoScope (real-time oscilloscope)          │
+│  ├─ TFormService      (service tools)                   │
+│  └─ TFormLandiConnect (cloud connectivity)              │
+├─────────────────────────────────────────────────────────┤
+│                    BUSINESS LOGIC LAYER                  │
+│  TAebRegistryData   (ECU parameter registry)            │
+│  TAebNumber (236×)  TAebVector (278×)  TAebMatrix (82×) │
+│  TAebStrings        TAebPacketData                      │
+│  TDataRefresher     TGridReference                      │
+├─────────────────────────────────────────────────────────┤
+│                  COMMUNICATION LAYER                     │
+│  TAebProtocol (99 methods)                              │
+│  ├─ TAebConnection.LoadDll() → AEB DLL bridge           │
+│  ├─ TAebDevice   (device abstraction)                   │
+│  │   ├─ TAebCom  (Win32 serial COM port)                │
+│  │   ├─ TAebFtdi (FTDI USB adapter)                     │
+│  │   ├─ TAebTcp  (TCP/IP Ethernet)                      │
+│  │   └─ TAebBee  (Wireless BLE/ZigBee)                  │
+│  └─ TAebPacketData (packet framing & checksum)          │
+├─────────────────────────────────────────────────────────┤
+│                    PLATFORM / OS LAYER                   │
+│  Win32 API: SetCommState, ReadFile, WriteFile            │
+│  SetupDi*: USB device enumeration                       │
+│  FTDI: FT_CreateDeviceInfoList, FT_GetDeviceInfoDetail  │
+│  WinSock: TCP/IP for TAebTcp                            │
+│  HASP Dongle DLL: license enforcement                   │
+│  HTTP: www.serviceapplications.net (updates/cloud)      │
+└─────────────────────────────────────────────────────────┘</div>
+
+<h3>VCL Component Inventory</h3>
+<div class="stat-grid">
+  <div class="stat"><div class="stat-val">838</div><div class="stat-label">TLabel</div></div>
+  <div class="stat"><div class="stat-val">199</div><div class="stat-label">TChart</div></div>
+  <div class="stat"><div class="stat-val">186</div><div class="stat-label">TForm</div></div>
+  <div class="stat"><div class="stat-val">151</div><div class="stat-label">TButton</div></div>
+  <div class="stat"><div class="stat-val">236</div><div class="stat-label">TAebNumber</div></div>
+  <div class="stat"><div class="stat-val">278</div><div class="stat-label">TAebVector</div></div>
+  <div class="stat"><div class="stat-val">82</div><div class="stat-label">TAebMatrix</div></div>
+</div>
+
+<!-- ===== 3. PROTOCOL ===== -->
+<h2 id="protocol">3. AEB Communication Protocol</h2>
+
+<p>The <code>TAebProtocol</code> class is the heart of the application &mdash; 99 methods handling all ECU communication. The protocol uses a custom packet format with checksum verification over serial, USB, TCP, or wireless transports.</p>
+
+<h3>Transport Layer</h3>
+<table>
+  <tr><th>Transport</th><th>Class</th><th>Technology</th><th>Android Equivalent</th></tr>
+  <tr>
+    <td><span class="tag tag-blue">Serial</span></td>
+    <td><code>TAebCom</code></td>
+    <td>Win32 COM port (RS-232)</td>
+    <td>USB-OTG + Serial adapter</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-green">USB</span></td>
+    <td><code>TAebFtdi</code></td>
+    <td>FTDI USB-to-Serial (ftd2xx.dll)</td>
+    <td>Android USB Host API + FTDI driver</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-orange">TCP/IP</span></td>
+    <td><code>TAebTcp</code></td>
+    <td>WinSock TCP</td>
+    <td>java.net.Socket / Ktor</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-purple">Wireless</span></td>
+    <td><code>TAebBee</code></td>
+    <td>Proprietary (BLE/ZigBee)</td>
+    <td>Android BLE API</td>
+  </tr>
+</table>
+
+<h3>Serial Configuration</h3>
+<table>
+  <tr><th>Parameter</th><th>Values Found</th></tr>
+  <tr><td>Baud Rates</td><td><code>9600</code>, <code>19200</code>, <code>38400</code>, <code>57600</code>, <code>115200</code></td></tr>
+  <tr><td>APIs Used</td><td>SetCommState, BuildCommDCB, SetCommTimeouts, SetupComm, PurgeComm, ClearCommError</td></tr>
+  <tr><td>Flow Control</td><td>DTR/RTS control (SetDtr, SetRts, SetDtrControl, SetRtsControl)</td></tr>
+  <tr><td>Auto-Switch</td><td>EnableAutoSwitchBaud / DisableAutoSwitchBaud</td></tr>
+</table>
+
+<h3>Protocol Methods (all 99)</h3>
+
+<details>
+  <summary>Connection Management (18 methods)</summary>
+  <div>
+    <div class="method-list">
+      <span>Connect</span>
+      <span>Disconnect</span>
+      <span>FindConnection</span>
+      <span>FindEcu</span>
+      <span>FindPort</span>
+      <span>ForceConnection</span>
+      <span>ForceConnectionWithNoExitBootForced</span>
+      <span>IsConnect</span>
+      <span>IsOnLine</span>
+      <span>OnLine</span>
+      <span>OffLine</span>
+      <span>EnableConnection</span>
+      <span>DisableConnection</span>
+      <span>EnableAutoReconnect</span>
+      <span>DisableAutoReconnect</span>
+      <span>CloseHandleOnDisconnect</span>
+      <span>KeepHandleOnDisconnect</span>
+      <span>CheckForAebBee</span>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary>Data Read/Write (22 methods)</summary>
+  <div>
+    <div class="method-list">
+      <span>SendCommand</span>
+      <span>SendByte</span>
+      <span>SendInt</span>
+      <span>SendChecksum</span>
+      <span>SendReset</span>
+      <span>ReadByte</span>
+      <span>ReadInt</span>
+      <span>ReadHexValue</span>
+      <span>GetNumber</span>
+      <span>SetNumber</span>
+      <span>GetVector</span>
+      <span>SetVector</span>
+      <span>GetByAddress</span>
+      <span>SetByAddress</span>
+      <span>SetByteExtended</span>
+      <span>SetString</span>
+      <span>SetDuty</span>
+      <span>GetPacket</span>
+      <span>GetIdentification</span>
+      <span>GetProtocolCommand</span>
+      <span>SetProtocolCommand</span>
+      <span>GetProtocolVersion</span>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary>Flash / Firmware (11 methods)</summary>
+  <div>
+    <div class="method-list">
+      <span>SendToBoot</span>
+      <span>ExitBoot</span>
+      <span>ExitBootNotForced</span>
+      <span>PreparaProg</span>
+      <span>Progflash</span>
+      <span>Endflash</span>
+      <span>Cancflash</span>
+      <span>SendHEXflash</span>
+      <span>SendS19flash</span>
+      <span>ScaricaFileHEX</span>
+      <span>ScaricaFileS19</span>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary>File Transfer (4 methods)</summary>
+  <div>
+    <div class="method-list">
+      <span>ScaricaFile</span>
+      <span>ScaricaArrayHEX</span>
+      <span>ScaricaArrayS19</span>
+      <span>CheckEEpromWrite</span>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary>Port &amp; Baud Configuration (18 methods)</summary>
+  <div>
+    <div class="method-list">
+      <span>ReadPort</span>
+      <span>SetPortW</span>
+      <span>ReadBaud</span>
+      <span>SetBaud</span>
+      <span>SaveBaud</span>
+      <span>RestoreBaud</span>
+      <span>ReadBootBaud</span>
+      <span>SetBootBaud</span>
+      <span>SetEcuBaudRate</span>
+      <span>SetNewEcuBaudRate</span>
+      <span>EnableAutoSwitchBaud</span>
+      <span>DisableAutoSwitchBaud</span>
+      <span>SetCom</span>
+      <span>SetDtr</span>
+      <span>SetDtrControl</span>
+      <span>SetRts</span>
+      <span>SetRtsControl</span>
+      <span>SetWindowHandle</span>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary>Device &amp; Transport (10 methods)</summary>
+  <div>
+    <div class="method-list">
+      <span>GetAebDevice</span>
+      <span>SetAebDevice</span>
+      <span>SetTcpDevice</span>
+      <span>EnableTcpDevice</span>
+      <span>DisableTcpDevice</span>
+      <span>ShowAebBeeSettings</span>
+      <span>SetModuleName</span>
+      <span>GetElementDimension</span>
+      <span>GetComFail</span>
+      <span>HandleFail</span>
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary>Timing &amp; Status (16 methods)</summary>
+  <div>
+    <div class="method-list">
+      <span>ReadAnswerTimeout</span>
+      <span>SetAnswerTimeout</span>
+      <span>SetBusyTime</span>
+      <span>SetMaxRetryCount</span>
+      <span>GetMaxRetryCount</span>
+      <span>GetCancFlashTimeout</span>
+      <span>SetCancFlashTimeout</span>
+      <span>ChecksumOk</span>
+      <span>IsAck</span>
+      <span>WaitEchoAtCk</span>
+      <span>WaitSingleEcho</span>
+      <span>EnableErrorHandling</span>
+      <span>DisableErrorHandling</span>
+      <span>SetOnLogData</span>
+      <span>SetOnUpdateProgress</span>
+      <span>SetOnUpdateStatus</span>
+    </div>
+  </div>
+</details>
+
+<h3>Packet Structure (decoded from serial capture)</h3>
+
+<div class="note">
+  <strong>CONFIRMED from Portmon capture + Ghidra decompilation (175 functions, 275KB pseudocode).</strong> TX checksum: 134/134 verified. RX checksum: 7/7 verified after correcting the scope. Protocol confirmed at source code level.
+</div>
+
+<pre><code>PHYSICAL LAYER:
+  Baud: 9600 (operational), 38400 (discovery probe only)
+  Format: 8N1 (8 data bits, no parity, 1 stop bit)
+  Flow control: None (RTS cleared, DTR cleared)
+  Timeouts: ReadInterval=100ms, ReadMultiplier=50ms, ReadConstant=200ms
+  Buffer: 4096 bytes in/out
+  MCU clock: 8 MHz (boot baud = 8000000 / (divisor × 16))
+
+PORT DISCOVERY SEQUENCE:
+  1. For each serial port (COM, Silabser, etc.):
+     a. Open at 38400 baud, 8N1
+     b. Send single byte: [0x00]
+     c. Wait 250ms for response
+     d. If [0x80] received → ECU found on this port
+     e. If TIMEOUT → close, try next port
+  2. Reopen found port at 9600 baud for communication
+
+CONNECTION HANDSHAKE (from Ghidra: TAebProtocol.Connect):
+  1. TX: [01] [00] [3A] [3B]      → Set parameter 0 = 0x3A
+  2. Wait for ACK
+  3. TX: [00] [25] [25]            → Get protocol version (sub-cmd 0x25)
+  4. RX: echo + ACK + version data
+  5. First byte of response = protocolVersion (stored at +0x2C4)
+
+DISCONNECT (from Ghidra: TAebProtocol.Disconnect):
+  TX: [00] [01] [01]              → System sub-cmd 0x01 = disconnect
+
+TX PACKET (Host → ECU):
+  ┌──────┬────────────────┬──────────┐
+  │ CMD  │   PARAMETERS   │ CHECKSUM │
+  │ 1 B  │   0..N bytes   │   1 B    │
+  └──────┴────────────────┴──────────┘
+  Checksum = SUM(CMD + all PARAM bytes) mod 256
+  ✓ Verified: 134/134 packets (100%)
+
+RX PACKET (ECU → Host):
+  ┌───────────────┬──────┬──────┬───────────┬──────────┐
+  │  ECHO OF TX   │ ACK  │ LEN  │   DATA    │ CHECKSUM │
+  │  (full copy)  │ 1 B  │ 1 B  │ LEN bytes │   1 B    │
+  └───────────────┴──────┴──────┴───────────┴──────────┘
+
+  ACK BYTE (from Ghidra: TAebProtocol.IsAck):
+    0x53 ('S') = Success, data follows
+    0xCA       = NACK with error code (reads 2 extra status bytes)
+    0x96       = Timeout/retry condition (reads 1 byte + checksum)
+    Other      = Communication error, triggers reconnect
+
+  Checksum = SUM(ACK + LEN + DATA bytes) mod 256
+  (Echo bytes are NOT included in RX checksum)
+  ✓ Verified: 7/7 known packets match H2 hypothesis</code></pre>
+
+<h3>Complete Opcode Map (all confirmed from Ghidra decompilation)</h3>
+
+<div class="note">
+  <strong>Opcode byte structure:</strong> High nibble = operation class, low 3 bits = payload length. When payload &ge; 7, opcode uses 0x_7 and an extra length byte follows. Protocol version affects addressing: v0 = 1-byte addr (&lt;0xFF), v1 = extended (0xFF marker), v2 = native 2-byte addr.
+</div>
+
+<h4>System &amp; Connection</h4>
+<table>
+  <tr><th>Opcode</th><th>Name</th><th>TX Format</th><th>RX Data</th></tr>
+  <tr><td><code>0x01</code></td><td>Connect (step 1)</td><td>[01][00][3A][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x00</code></td><td>Connect (step 2)</td><td>[00][0x25][CK]</td><td>ACK + protocol version byte</td></tr>
+  <tr><td><code>0x00</code></td><td>Disconnect</td><td>[00][01][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x00</code></td><td>GetIdentification</td><td>[00][02][CK]</td><td>ACK + 4-6 bytes: [code_lo][type][family][version][ext_lo?][ext_hi?]</td></tr>
+</table>
+
+<h4>Read Operations</h4>
+<table>
+  <tr><th>Opcode</th><th>v1</th><th>Name</th><th>TX Format (v2 shown)</th><th>RX Data</th></tr>
+  <tr><td><code>0x09</code></td><td><code>0x08</code></td><td>GetNumber</td><td>[09][addr_lo][addr_hi][CK]</td><td>ACK + 1/2/4 bytes value</td></tr>
+  <tr><td><code>0x0A</code></td><td><code>0x09</code></td><td>GetNumber+idx</td><td>[0A][addr_lo][addr_hi][idx][CK]</td><td>ACK + 1/2/4 bytes value</td></tr>
+  <tr><td><code>0x0B</code></td><td><code>0x0A</code></td><td>GetNumber+2idx</td><td>[0B][addr_lo][addr_hi][subidx][idx][CK]</td><td>ACK + 1/2/4 bytes value</td></tr>
+  <tr><td><code>0x29</code></td><td><code>0x28</code></td><td>GetVector</td><td>[29][addr_lo][addr_hi][CK]</td><td>ACK + N&times;elemSize bytes</td></tr>
+  <tr><td><code>0x2A</code></td><td><code>0x29</code></td><td>GetVector+row</td><td>[2A][addr_lo][addr_hi][row_idx][CK]</td><td>ACK + row data</td></tr>
+  <tr><td><code>0x48</code></td><td>&mdash;</td><td>GetPacket</td><td>[48][channel_id][CK]</td><td>ACK + up to 251 bytes bulk data</td></tr>
+  <tr><td><code>0x6A</code></td><td>&mdash;</td><td>GetByAddress (16-bit)</td><td>[6A][flags][addr_lo][addr_hi][CK]</td><td>ACK + 1 or 2 bytes value</td></tr>
+  <tr><td><code>0x6C</code></td><td>&mdash;</td><td>GetByAddress (32-bit)</td><td>[6C][flags][a0][a1][a2][a3][CK]</td><td>ACK + 1 or 2 bytes value</td></tr>
+</table>
+
+<h4>Write Operations</h4>
+<table>
+  <tr><th>Opcode</th><th>Name</th><th>TX Format (v2 shown)</th><th>RX</th></tr>
+  <tr><td><code>0x11</code></td><td>SetNumber (1B val)</td><td>[11][addr_lo][value][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x12</code></td><td>SetNumber (2B val)</td><td>[12][addr_lo][val_lo][val_hi][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x14</code></td><td>SetNumber (4B val)</td><td>[14][addr_lo][b0][b1][b2][b3][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x12</code></td><td>SetNumber+idx (1B)</td><td>[12][addr][idx][value][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x13</code></td><td>SetNumber+idx (2B)</td><td>[13][addr][idx][val_lo][val_hi][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x15</code></td><td>SetNumber+idx (4B)</td><td>[15][addr][idx][b0][b1][b2][b3][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x30|L</code></td><td>SetVector</td><td>[0x30|len][addr][data...][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x37</code></td><td>SetVector (long)</td><td>[37][extra_len][addr][data...][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x73</code></td><td>SetByAddress 8v/16a</td><td>[73][flags][addr_lo][addr_hi][val][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x74</code></td><td>SetByAddress 16v/16a</td><td>[74][flags][addr_lo][addr_hi][v_lo][v_hi][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x75</code></td><td>SetByAddress 8v/32a</td><td>[75][flags][a0][a1][a2][a3][val][CK]</td><td>ACK</td></tr>
+  <tr><td><code>0x76</code></td><td>SetByAddress 16v/32a</td><td>[76][flags][a0][a1][a2][a3][v_lo][v_hi][CK]</td><td>ACK</td></tr>
+</table>
+
+<h4>Element Dimension Query</h4>
+<table>
+  <tr><th>v2 Opcode</th><th>v1</th><th>Type</th><th>TX Format</th><th>RX</th></tr>
+  <tr><td><code>0x09</code></td><td><code>0x08</code></td><td>Number dim</td><td>[09][addr][CK]</td><td>ACK + dimension count</td></tr>
+  <tr><td><code>0x0A</code></td><td><code>0x09</code></td><td>Vector dim</td><td>[0A][addr][0x00][CK]</td><td>ACK + dimension count</td></tr>
+  <tr><td><code>0x0B</code></td><td><code>0x0A</code></td><td>Matrix dim</td><td>[0B][addr][0x00][0x00][CK]</td><td>ACK + dimension count</td></tr>
+</table>
+
+<h4>Boot &amp; Flash</h4>
+<table>
+  <tr><th>Opcode</th><th>Name</th><th>TX Format</th><th>Expected Response</th></tr>
+  <tr><td><code>0x93</code></td><td>Progflash (enter boot)</td><td>[93][CK]</td><td>Echo 0xA7 (retry &times;4)</td></tr>
+  <tr><td><code>0x85</code></td><td>Endflash (exit boot)</td><td>[85][CK]</td><td>ACK + 'S' (0x53)</td></tr>
+  <tr><td><code>0x00/09</code></td><td>Cancflash (erase check)</td><td>[00][09][CK]</td><td>ACK + result (0=erase done)</td></tr>
+  <tr><td><code>0x00/0A</code></td><td>ExitBootNotForced</td><td>[00][0A][CK]</td><td>ACK + status byte</td></tr>
+  <tr><td><code>0x00/0B</code></td><td>ExitBoot (forced)</td><td>[00][0B][CK]</td><td>ACK + status byte</td></tr>
+  <tr><td><code>0x53/31</code></td><td>SendHEXflash (data)</td><td>[53][31][len+3][addr_h][addr_l][data...]</td><td>0xA7 per line</td></tr>
+  <tr><td><code>0x53/39</code></td><td>SendHEXflash (EOF)</td><td>[53][39][03][FF][FF]</td><td>'S' (0x53)</td></tr>
+</table>
+
+<h4>Duty &amp; Baud Configuration</h4>
+<table>
+  <tr><th>Opcode</th><th>Name</th><th>TX Format</th></tr>
+  <tr><td><code>0x01/05</code></td><td>SetDuty ON</td><td>[01][05][param_id][value][CK]</td></tr>
+  <tr><td><code>0x02/05</code></td><td>SetDuty OFF</td><td>[02][05][param_id][value][CK]</td></tr>
+  <tr><td><code>0x02/03</code></td><td>SetEcuBaudRate</td><td>[02][03][baud_hi][baud_lo][CK]</td></tr>
+  <tr><td><code>0x02/19</code></td><td>SetNewEcuBaudRate</td><td>[02][19][baud/2_hi][baud/2_lo][CK]</td></tr>
+</table>
+
+<h3>Protocol Versioning (from Ghidra)</h3>
+<pre><code>  Version negotiated at connect via: [00] [0x25] [CK]
+  First response byte → protocolVersion (stored at self+0x2C4)
+
+  Version 0-1: 1-byte addressing (address &lt; 0xFF)
+    GetNumber  = CMD 0x08, [08] [addr_lo] [CK]
+    GetVector  = CMD 0x28, [28] [addr_lo] [CK]
+
+  Version 1 (extended): 2-byte addressing for addr ≥ 0xFE
+    [08] [0xFF] [addr+1] [CK]  (marker 0xFF + offset)
+
+  Version 2+: 2-byte addressing natively
+    GetNumber  = CMD 0x09, [09] [addr_lo] [addr_hi] [CK]
+    GetVector  = CMD 0x29, [29] [addr_lo] [addr_hi] [CK]
+
+  Baud rate range: 1200 (0x4B0) to 115200 (0x1C200)
+  Boot baud: calculated as 8000000 / (baudTable[index] × 16)</code></pre>
+
+<h3>Known ECU Addresses</h3>
+<table>
+  <tr><th>Address</th><th>Type</th><th>Content</th></tr>
+  <tr><td><code>0x0000</code></td><td>READ_BLOCK</td><td>ECU serial number (20 bytes ASCII, e.g. "4Z03xAcgHb7Fu0rYejAs")</td></tr>
+  <tr><td><code>0x0002</code></td><td>SYSTEM</td><td>Firmware ID: [FE 4F 45 0B] (family/type/hw/ver)</td></tr>
+  <tr><td><code>0x0025</code></td><td>SYSTEM</td><td>Protocol version: [01 02] = v1.2</td></tr>
+  <tr><td><code>0x0033</code></td><td>READ_NUMBER</td><td>Configuration flags</td></tr>
+  <tr><td><code>0x0040</code></td><td>READ_NUMBER</td><td>Lambda sensor type (0xFE)</td></tr>
+  <tr><td><code>0x004C</code></td><td>READ_NUMBER</td><td>Injector configuration</td></tr>
+  <tr><td><code>0x005B</code></td><td>READ_NUMBER</td><td>Sensor type configuration</td></tr>
+  <tr><td><code>0x0054</code></td><td>READ_MATRIX_ROW</td><td>Calibration map (12×13 matrix, rows 0x00&ndash;0x0C)</td></tr>
+  <tr><td><code>0x008A</code></td><td>READ_BLOCK</td><td>Calibration reference vector (5 bytes)</td></tr>
+  <tr><td><code>0x008B</code></td><td>READ_BLOCK</td><td>Temperature correction curve (30 bytes)</td></tr>
+  <tr><td><code>0x00C0</code></td><td>READ_BLOCK</td><td>Feature flags (4 bytes)</td></tr>
+  <tr><td><code>0x00C2</code></td><td>READ_BLOCK</td><td>Extended ECU status (30 bytes)</td></tr>
+</table>
+
+<h3>Real-Time Data Channel 0x01 (34 bytes, engine snapshot)</h3>
+<pre><code>Offset  Size  Likely Parameter
+  0-1    2B   RPM (big-endian, varies: 0x0342..0x0348 = ~834..840)
+  2-3    2B   MAP sensor / pressure
+  4-5    2B   Engine status flags
+  6-7    2B   Lambda / O2 sensor
+  8-9    2B   Gas pressure
+ 10-11   2B   (reserved)
+ 12-13   2B   Injection timing
+ 14-15   2B   Engine temperature
+ 16-17   2B   Gas temperature
+ 18-19   2B   (varies with RPM)
+ 20-21   2B   Battery voltage
+ 22-23   2B   TPS / throttle position
+ 24-27   4B   (zero in idle)
+ 28-29   2B   OBD data field
+ 30-31   2B   (zero in idle)
+ 32-33   2B   Gas pressure (redundant / filtered)</code></pre>
+
+<!-- ===== 4. DATA MODEL ===== -->
+<h2 id="data-model">4. ECU Data Model</h2>
+
+<p>ECU data is organized in three core container types, all with uniform read/write/backup/file-persistence interfaces:</p>
+
+<div class="duo">
+  <div>
+    <h3>TAebNumber</h3>
+    <p><span class="tag tag-blue">236 instances</span> Single scalar value</p>
+    <div class="method-list" style="columns:1">
+      <span>GetInt / SetInt</span>
+      <span>GetDouble / SetDouble</span>
+      <span>GetEcuData / SetEcuData</span>
+      <span>SetDataInEcu</span>
+      <span>ReadFromFile / WriteToFile</span>
+      <span>ReadFromHCFFile / WriteToHCFFile</span>
+      <span>BackupData / RestoreBackup</span>
+      <span>Download / Reload</span>
+    </div>
+  </div>
+  <div>
+    <h3>TAebVector</h3>
+    <p><span class="tag tag-green">278 instances</span> 1D array (curves)</p>
+    <div class="method-list" style="columns:1">
+      <span>GetInt / SetInt</span>
+      <span>GetDouble / SetDouble</span>
+      <span>GetEcuData / SetEcuData</span>
+      <span>SetArrayDimension</span>
+      <span>SetIndexCol / SetIndexRow</span>
+      <span>ReadFromHCFFile / WriteToHCFFile</span>
+      <span>BackupData / RestoreBackup</span>
+      <span>Download / Reload</span>
+    </div>
+  </div>
+</div>
+
+<h3>TAebMatrix</h3>
+<p><span class="tag tag-orange">82 instances</span> 2D grid (calibration maps &mdash; the core tuning data)</p>
+<div class="method-list">
+  <span>GetData / SetData</span>
+  <span>GetDouble / SetDouble</span>
+  <span>GetInt / SetInt</span>
+  <span>GetEcuData / SetEcuData</span>
+  <span>SetDataInEcu</span>
+  <span>SetRowDimension</span>
+  <span>SetColumnDimension</span>
+  <span>SetMatrixType</span>
+  <span>ReadFromHCFFile / WriteToHCFFile</span>
+  <span>BackupData / RestoreBackup</span>
+  <span>Download / Reload</span>
+</div>
+
+<h3>TAebPacketData</h3>
+<p><span class="tag tag-purple">Real-time data stream</span> Manages periodic ECU polling with configurable intervals</p>
+<div class="method-list">
+  <span>AllocateMemory / DeallocateMemory</span>
+  <span>InitData / ResetData</span>
+  <span>Download / Reload / UpdateData</span>
+  <span>SetTimeInterval</span>
+  <span>SetDataRefresher</span>
+  <span>SetSerialCode</span>
+  <span>BackupData / RestoreBackup / DiscardBackup</span>
+  <span>Notification</span>
+  <span>ReadFromFile / WriteToFile</span>
+  <span>ReadFromHCFFile / WriteToHCFFile</span>
+</div>
+
+<h3>AEB_DATA Structure (from Ghidra)</h3>
+<pre><code>  struct AEB_DATA {       // 16 bytes, passed to all Get/Set functions
+    uint32  SerialCode;   // +0x00  Parameter address/ID (0x00..0x1FF)
+    uint32  ElementCount; // +0x04  Number of elements (vectors/matrices)
+    uint32  ElementSize;  // +0x08  Bytes per element: 1, 2, or 4
+    uint32  IsSigned;     // +0x0C  0=unsigned, nonzero=signed
+  };
+
+  Address range by protocol version:
+    v0: SerialCode 0x00..0xFE (1-byte addressing)
+    v1: SerialCode 0x00..0x1FE (extended: 0xFF marker + offset)
+    v2: SerialCode 0x00..unlimited (native 2-byte addressing)</code></pre>
+
+<h3>IDENTIFICATION_DATA Structure</h3>
+<pre><code>  struct IDENTIFICATION_DATA {  // 4 or 6 bytes from GetIdentification [00][02]
+    uint8  device_code_lo;     // [0] Hardware code low byte
+    uint8  device_type;        // [1] 0x03 = bootloader mode
+    uint8  hardware_family;    // [2] Family ID (0..0x0B+)
+    uint8  hardware_version;   // [3] bit7 = dual-flash flag
+    uint8  extended_lo;        // [4] (only if count==6)
+    uint8  extended_hi;        // [5] (only if count==6)
+  };</code></pre>
+
+<h3>TAebPacketData Object Layout (from Ghidra)</h3>
+<pre><code>  Real-time polling: GetPacket(channel_id) with configurable interval
+  Min interval: 20ms. Max response: 251 bytes. Default: 1000ms.
+
+  Key offsets:
+    +0x44  ElementCount (default 1)
+    +0x58  ElementSize (1, 2, or 4)
+    +0x60  last_reload_success (bool)
+    +0x68  IsSigned flag
+    +0x6C  SerialCode → channel ID for GetPacket
+    +0xC4  last ComFail error code
+    +0x148 current_value (raw integer)
+    +0x150 data_offset in response buffer
+    +0x158 TimeInterval (ms)
+
+  UpdateData extracts value at: response_ptr + data_offset + 4
+  Each TAebPacketData is configured for one field in the bulk response.</code></pre>
+
+<h3>CheckEEpromWrite</h3>
+<pre><code>  Polls ECU waiting for EEPROM write completion:
+    Loop: GetNumber(address) until result == 0xAC
+    Sleep(500ms) between polls
+    Timeout after configurable milliseconds
+    0xAC = "EEPROM write complete" magic value</code></pre>
+
+<h3>Error Flags (ComFail bitmask at +0x44)</h3>
+<pre><code>  Bit 0 (0x01): General error
+  Bit 2 (0x04): SerialCode out of range (v0: addr > 0xFE)
+  Bit 3 (0x08): Echo mismatch (SendByte verify failed)
+  Bit 5 (0x20): SerialCode out of range (v1: addr > 0x1FE)
+  Bit 6 (0x40): Reconnection failed
+  0x8020:       GetPacket/GetVector size mismatch
+
+  Abort mask 0x29 (bits 0,3,5): checked in SendByte/SendInt
+  Abort mask 0x44 (bits 2,6):   checked in HandleFail (no retry)</code></pre>
+
+<h3>ECU Parameters (extracted)</h3>
+<table>
+  <tr><th>Category</th><th>Parameters</th></tr>
+  <tr><td><span class="tag tag-blue">Injection</span></td><td>TIPO_INIEZIONE, TIPO_INIETTORE, MASK_INIETTORI_BENZINA, SPLIT_FUEL, RPM_FOR_SPLIT_FUEL</td></tr>
+  <tr><td><span class="tag tag-green">Temperature</span></td><td>TEMP_ACQUA_MONOFUEL, TEMP_AUTOTARATURA, TEMP_DIAGNOSI, TEMP_GAS_CALDO, TEMP_GAS_CAMBIO, TEMP_RID_CAMBIO</td></tr>
+  <tr><td><span class="tag tag-orange">RPM</span></td><td>GIRI_ANTICIPO, GIRI_AUTOTARATURA, GIRI_CUTOFF, GIRI_MIN_CAMBIO, GIRI_PER_BENZINA, GIRI_PER_K, GIRI_SUP_BENZINA, GIRI_TEMPO_CUTOFF</td></tr>
+  <tr><td><span class="tag tag-purple">Sensors</span></td><td>TIPO_LAMBDA, TIPO_SENSORE, TIPO_SENSORE_TEMPERATURA, TIPO_CARBURANTE, TIPO_ACCENS</td></tr>
+  <tr><td><span class="tag tag-blue">OBD</span></td><td>TIPO_CONNESSIONE_OBD, OBD_PARAMETER_PID, PRESS_RETROPASSAGGIO</td></tr>
+  <tr><td><span class="tag tag-green">Config</span></td><td>FLAG_CONF, MASK_FUNCTION, K_MAPPA_NEUTRO, POMPA_BENZINA</td></tr>
+</table>
+
+<h3>File Formats</h3>
+<table>
+  <tr><th>Extension</th><th>Purpose</th></tr>
+  <tr><td><code>.hcf</code></td><td>ECU calibration data (main save/load format)</td></tr>
+  <tr><td><code>.s19</code></td><td>Motorola S-record firmware files</td></tr>
+  <tr><td><code>.hex</code></td><td>Intel HEX firmware files</td></tr>
+  <tr><td><code>.dat</code></td><td>License file (encrypted, 280 bytes)</td></tr>
+  <tr><td><code>.xml</code></td><td>Configuration / export data</td></tr>
+  <tr><td><code>.json</code></td><td>Localization strings (909 keys, 26 languages)</td></tr>
+  <tr><td><code>.pdf</code></td><td>Report generation</td></tr>
+  <tr><td><code>.bmp</code></td><td>Image assets (DIB format in Resources.dll)</td></tr>
+</table>
+
+<!-- ===== 5. UI SCREENS ===== -->
+<h2 id="ui-screens">5. UI Screens &amp; Flow</h2>
+
+<table>
+  <tr><th>Form</th><th>Function</th><th>Android Screen</th></tr>
+  <tr><td><code>TFormSplash</code></td><td>Splash screen at launch</td><td>SplashActivity</td></tr>
+  <tr><td><code>TFormMainBase / TFormMain</code></td><td>Main window, navigation hub</td><td>MainActivity + Navigation</td></tr>
+  <tr><td><code>TFormConfig</code></td><td>ECU type/injector configuration</td><td>ConfigFragment</td></tr>
+  <tr><td><code>TFormCalibra</code></td><td>Auto-calibration wizard</td><td>CalibrationFragment</td></tr>
+  <tr><td><code>TFormModMappa</code></td><td>Map editing (3D surface editor)</td><td>MapEditorFragment</td></tr>
+  <tr><td><code>TFormModificaMappa</code></td><td>Map modification tools</td><td>(part of MapEditor)</td></tr>
+  <tr><td><code>TFormDiagnosi</code></td><td>ECU diagnostics &amp; error codes</td><td>DiagnosticsFragment</td></tr>
+  <tr><td><code>TFormSwitch</code></td><td>Gas/petrol switch settings</td><td>SwitchFragment</td></tr>
+  <tr><td><code>TFormGraficoScope</code></td><td>Real-time oscilloscope</td><td>ScopeFragment</td></tr>
+  <tr><td><code>TFormGraficoDrt</code></td><td>DRT (Dynamic Response Test) chart</td><td>DrtFragment</td></tr>
+  <tr><td><code>TFormGestioneTracce</code></td><td>Trace/log management</td><td>TraceFragment</td></tr>
+  <tr><td><code>TFormRiferimenti</code></td><td>Calibration references</td><td>ReferencesFragment</td></tr>
+  <tr><td><code>TFormRifAutocal</code></td><td>Auto-cal reference values</td><td>AutoCalRefFragment</td></tr>
+  <tr><td><code>TFormCorrCalibra</code></td><td>Calibration corrections</td><td>CalCorrectionsFragment</td></tr>
+  <tr><td><code>TFormCentriCelle</code></td><td>Cell centers editor</td><td>CellCentersFragment</td></tr>
+  <tr><td><code>TFormScarica</code></td><td>Download (ECU &rarr; PC)</td><td>DownloadFragment</td></tr>
+  <tr><td><code>TFormFile</code></td><td>File operations</td><td>FileFragment</td></tr>
+  <tr><td><code>TFormService</code></td><td>Service mode tools</td><td>ServiceFragment</td></tr>
+  <tr><td><code>TFormStampa</code></td><td>Print / report</td><td>ReportFragment</td></tr>
+  <tr><td><code>TFormPdf</code></td><td>PDF preview</td><td>(PDF viewer intent)</td></tr>
+  <tr><td><code>TFormLandiConnect</code></td><td>Cloud connectivity</td><td>CloudFragment</td></tr>
+  <tr><td><code>TFormVisualizza</code></td><td>Data visualization</td><td>VisualizationFragment</td></tr>
+  <tr><td><code>TFormHelpScope</code></td><td>Scope help overlay</td><td>HelpBottomSheet</td></tr>
+  <tr><td><code>TFormAttesa</code></td><td>Wait/progress dialog</td><td>ProgressDialog</td></tr>
+  <tr><td><code>TFormMessaggio</code></td><td>Message dialog</td><td>AlertDialog / Snackbar</td></tr>
+  <tr><td><code>TFormAggKey</code></td><td>License key update</td><td>LicenseFragment</td></tr>
+</table>
+
+<!-- ===== 6. RESOURCES ===== -->
+<h2 id="resources">6. Resources &amp; Assets</h2>
+
+<h3>ProgBase.exe Resources (152 total)</h3>
+<table>
+  <tr><th>Type</th><th>Count</th><th>Purpose</th></tr>
+  <tr><td>RT_BITMAP</td><td>48</td><td>UI toolbar icons, indicators</td></tr>
+  <tr><td>RT_RCDATA</td><td>48</td><td>Delphi form data (DFM), embedded data</td></tr>
+  <tr><td>RT_STRING</td><td>32</td><td>String tables</td></tr>
+  <tr><td>RT_CURSOR</td><td>9</td><td>Custom mouse cursors</td></tr>
+  <tr><td>RT_UNKNOWN(257)</td><td>4</td><td>Custom resources (AEB-specific)</td></tr>
+  <tr><td>AVI</td><td>1</td><td>Animation (progress/splash)</td></tr>
+  <tr><td>RT_VERSION</td><td>1</td><td>Version info block</td></tr>
+</table>
+
+<h3>Resources.dll Resources (178 total)</h3>
+<table>
+  <tr><th>Type</th><th>Count</th><th>Purpose</th></tr>
+  <tr><td>RT_UNKNOWN(256)</td><td>141</td><td>Encrypted calibration map templates (<code>ENCRYPTED_MLTP_FILE</code>)</td></tr>
+  <tr><td>RT_BITMAP</td><td>25</td><td>Vehicle/injector diagrams, icons</td></tr>
+  <tr><td>RT_ICON</td><td>8</td><td>Application icons (multi-resolution)</td></tr>
+  <tr><td>RT_RCDATA</td><td>2</td><td>DVCLAL, PLATFORMTARGETS</td></tr>
+  <tr><td>RT_GROUP_ICON</td><td>1</td><td>Icon group definition</td></tr>
+  <tr><td>RT_VERSION</td><td>1</td><td>DLL version block</td></tr>
+</table>
+
+<div class="note">
+  The 141 <code>RT_UNKNOWN(256)</code> resources are encrypted map template files (<code>ENCRYPTED_MLTP_FILE</code>), containing pre-configured calibration maps for different vehicle/injector combinations. These use AEB's proprietary encryption (AEBKEY) and will need to be reverse-engineered or recreated for the Android port.
+</div>
+
+<!-- ===== 7. SECURITY ===== -->
+<h2 id="security">7. Licensing &amp; Security</h2>
+
+<table>
+  <tr><th>Mechanism</th><th>Details</th></tr>
+  <tr><td>Hardware Dongle</td><td>HASP (Aladdin/SafeNet) USB dongle &mdash; DLL-based API</td></tr>
+  <tr><td>License File</td><td><code>License.dat</code> &mdash; 280 bytes, encrypted binary</td></tr>
+  <tr><td>Crypto Provider</td><td>AEBKEY &mdash; proprietary encryption for license + map templates</td></tr>
+  <tr><td>PIN Protection</td><td>"sottochiave" (sub-key) system for advanced parameter editing</td></tr>
+  <tr><td>Cloud Auth</td><td>HTTP to <code>www.serviceapplications.net</code> with User-Agent <code>OmegasLandiRenzo/1.0</code></td></tr>
+</table>
+
+<div class="note">
+  For the Android port: the HASP dongle is physically impossible on mobile. The licensing model must be replaced with a modern approach &mdash; Play Store licensing, Firebase-based activation, or JWT-based API tokens.
+</div>
+
+<!-- ===== 8. I18N ===== -->
+<h2 id="i18n">8. Internationalization</h2>
+
+<p>The application ships with 909 localization message keys across 26 languages, embedded as JSON in the binary:</p>
+
+<div class="lang-grid">
+  <span class="tag tag-blue">ita (Italian)</span>
+  <span class="tag tag-blue">eng (English)</span>
+  <span class="tag tag-blue">deu (German)</span>
+  <span class="tag tag-blue">fra (French)</span>
+  <span class="tag tag-blue">spa (Spanish)</span>
+  <span class="tag tag-blue">por (Portuguese)</span>
+  <span class="tag tag-blue">pol (Polish)</span>
+  <span class="tag tag-blue">cze (Czech)</span>
+  <span class="tag tag-blue">rom (Romanian)</span>
+  <span class="tag tag-blue">hun (Hungarian)</span>
+  <span class="tag tag-blue">ned (Dutch)</span>
+  <span class="tag tag-blue">rus (Russian)</span>
+  <span class="tag tag-green">tur (Turkish)</span>
+  <span class="tag tag-green">gre (Greek)</span>
+  <span class="tag tag-green">bul (Bulgarian)</span>
+  <span class="tag tag-green">cro (Croatian)</span>
+  <span class="tag tag-green">ser (Serbian)</span>
+  <span class="tag tag-green">slo (Slovak)</span>
+  <span class="tag tag-green">alb (Albanian)</span>
+  <span class="tag tag-green">ucr (Ukrainian)</span>
+  <span class="tag tag-green">geo (Georgian)</span>
+  <span class="tag tag-orange">ara (Arabic)</span>
+  <span class="tag tag-orange">far (Farsi)</span>
+  <span class="tag tag-orange">heb (Hebrew)</span>
+  <span class="tag tag-orange">chn (Chinese)</span>
+  <span class="tag tag-orange">tha (Thai)</span>
+</div>
+
+<p style="margin-top:0.75rem;">Key message categories: connection status, calibration instructions, diagnostic codes, safety warnings, UI labels, file operations, OBD parameters.</p>
+
+<!-- ===== 9. FIRMWARE FLASH PROTOCOL ===== -->
+<h2 id="flash-protocol">9. Firmware Flash Protocol (from Ghidra)</h2>
+
+<div class="note">
+  <strong>Fully decoded from Ghidra decompilation</strong> &mdash; no live capture needed. The complete flash sequence, bootloader handshake, baud rate negotiation, and both S-record and Intel HEX formats are documented below.
+</div>
+
+<h3>Flash Sequence (ScaricaFile orchestrator)</h3>
+<pre><code>  ┌─────────────────────────────────────────────────────┐
+  │  ScaricaFile / ScaricaFileHEX / ScaricaFileS19      │
+  │  Full firmware upload orchestrator                   │
+  └───────┬─────────────────────────────────────────────┘
+          │
+  1. SaveBaud()          → Save current communication baud rate
+  2. PreparaProg()       → Prepare ECU for programming
+  3. Cancflash()         → Clear existing flash (erase)
+  4. Progflash()         → [0x93][CK] → expect 0xA7 (flash mode)
+          │                  Retry ×4 on failure
+  5. Sleep(3300ms)       → Wait for bootloader to initialize
+  6. ReadBootBaud()      → Read boot baud rate from ECU
+  7. SetBaud(bootBaud)   → Switch host to boot baud rate
+          │                  Boot baud = 8MHz / (divisor × 16)
+          │
+  8. ┌── LOOP: for each line in firmware file ──┐
+     │  SendHEXflash() or SendS19flash()        │
+     │  → Parse line, send address+data         │
+     │  → Wait for 0xA7 or 'S' ACK per line     │
+     │  → Progress callback on each line         │
+     └──────────────────────────────────────────┘
+          │
+  9. Endflash()          → [0x85][CK] → expect 'S' (0x53)
+ 10. RestoreBaud()       → Restore original communication baud
+ 11. Disconnect()        → Clean disconnect from ECU</code></pre>
+
+<h3>Firmware Record Formats</h3>
+<table>
+  <tr><th>Format</th><th>Line Prefix</th><th>Wire Frame</th><th>Checksum</th></tr>
+  <tr>
+    <td><strong>Intel HEX</strong></td>
+    <td><code>:LLAAAATT...CC</code></td>
+    <td>Data: <code>[53][31][len+3][addr_h][addr_l][data...]</code><br>EOF: <code>[53][39][03][FF][FF]</code></td>
+    <td>Standard Intel HEX (two's complement of sum of bytes)</td>
+  </tr>
+  <tr>
+    <td><strong>Motorola S-record</strong></td>
+    <td><code>S1LLAAAA...CC</code></td>
+    <td>Parsed as S1/S9 records, sent as raw bytes after decode</td>
+    <td>One's complement of sum of byte count + address + data</td>
+  </tr>
+</table>
+
+<h3>Boot Mode Commands</h3>
+<table>
+  <tr><th>Command</th><th>Byte</th><th>Expected Response</th><th>Retry</th></tr>
+  <tr><td>Progflash (enter boot)</td><td><code>0x93</code></td><td><code>0xA7</code></td><td>×4</td></tr>
+  <tr><td>Endflash (exit boot)</td><td><code>0x85</code></td><td><code>'S'</code> (0x53)</td><td>×1</td></tr>
+  <tr><td>Cancflash (erase)</td><td colspan="3">Internal preparation before flash write</td></tr>
+</table>
+
+<h3>SendToBoot Sequence Detail</h3>
+<pre><code>  SendToBoot(baudIndex):
+    1. SaveBaud()              → Store current baud in ECU EEPROM
+    2. PreparaProg()           → [prepare commands]
+    3. Cancflash()             → [erase flash]
+    4. Sleep(3300 ms)          → Wait for MCU to restart in boot mode
+    5. ReadBootBaud()          → Read baudTable[index] from ECU
+    6. bootBaud = 8000000 / (baudTable[index] × 16)
+    7. SetBaud(bootBaud)       → Switch serial port to boot baud
+    → ECU is now in boot mode, ready for SendHEXflash/SendS19flash</code></pre>
+
+
+<!-- ===== 11. ANDROID PORT ===== -->
+<h2 id="android">11. Android Port Architecture</h2>
+
+<h3>Technology Stack</h3>
+<table>
+  <tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr>
+  <tr><td>Language</td><td><strong>Kotlin</strong></td><td>Modern Android standard, null safety, coroutines</td></tr>
+  <tr><td>UI Framework</td><td><strong>Jetpack Compose</strong></td><td>Declarative UI, Material 3, animations</td></tr>
+  <tr><td>Architecture</td><td><strong>MVI + Clean Architecture</strong></td><td>Unidirectional data flow, testable layers</td></tr>
+  <tr><td>DI</td><td><strong>Hilt</strong></td><td>Compile-time dependency injection</td></tr>
+  <tr><td>Async</td><td><strong>Kotlin Coroutines + Flow</strong></td><td>Reactive streams for real-time ECU data</td></tr>
+  <tr><td>Charts</td><td><strong>Vico</strong></td><td>Compose-native charting (replaces 199 TCharts)</td></tr>
+  <tr><td>3D Maps</td><td><strong>OpenGL ES / Custom Canvas</strong></td><td>3D surface rendering for calibration maps</td></tr>
+  <tr><td>Navigation</td><td><strong>Navigation Compose</strong></td><td>Type-safe navigation graph</td></tr>
+  <tr><td>Storage</td><td><strong>Room + DataStore</strong></td><td>ECU data persistence + preferences</td></tr>
+  <tr><td>USB</td><td><strong>Android USB Host API + usb-serial-for-android</strong></td><td>FTDI/serial communication</td></tr>
+  <tr><td>BLE</td><td><strong>Android BLE API + Nordic library</strong></td><td>Wireless ECU communication</td></tr>
+  <tr><td>Network</td><td><strong>Ktor Client</strong></td><td>TCP socket + HTTP for cloud</td></tr>
+</table>
+
+<h3>Module Architecture</h3>
+<div class="arch-box">app/
+├── :core
+│   ├── :core:protocol          # AEB protocol implementation
+│   │   ├── AebProtocol.kt     # 99 methods → Kotlin coroutine-based
+│   │   ├── AebPacket.kt       # Packet framing, checksum
+│   │   └── AebCommand.kt      # Command definitions
+│   ├── :core:transport         # Transport abstraction layer
+│   │   ├── Transport.kt       # Interface: connect/send/receive/close
+│   │   ├── UsbSerialTransport  # TAebCom + TAebFtdi → USB-OTG
+│   │   ├── TcpTransport       # TAebTcp → Socket
+│   │   └── BleTransport       # TAebBee → BLE GATT
+│   ├── :core:data              # ECU data model
+│   │   ├── EcuNumber.kt       # TAebNumber equivalent
+│   │   ├── EcuVector.kt       # TAebVector equivalent
+│   │   ├── EcuMatrix.kt       # TAebMatrix equivalent
+│   │   ├── EcuRegistry.kt     # TAebRegistryData
+│   │   └── EcuSnapshot.kt     # Backup/restore operations
+│   └── :core:model             # Shared domain models
+│       ├── EcuParameter.kt    # Parameter definitions
+│       ├── CalibrationMap.kt  # Map data structures
+│       └── DiagnosticCode.kt  # OBD error codes
+├── :feature
+│   ├── :feature:connection     # TFormMain → Connect/Disconnect
+│   ├── :feature:calibration    # TFormCalibra → Auto-calibration
+│   ├── :feature:map-editor     # TFormModMappa → 3D map editor
+│   ├── :feature:diagnostics    # TFormDiagnosi → OBD diagnostics
+│   ├── :feature:scope          # TFormGraficoScope → Real-time scope
+│   ├── :feature:config         # TFormConfig → ECU configuration
+│   ├── :feature:switch         # TFormSwitch → Gas/petrol switch
+│   ├── :feature:flash          # TFormScarica → Firmware update
+│   ├── :feature:service        # TFormService → Service tools
+│   └── :feature:cloud          # TFormLandiConnect → Cloud sync
+├── :ui
+│   ├── :ui:design-system       # Colors, typography, components
+│   ├── :ui:charts              # Vico wrappers, 3D surface renderer
+│   └── :ui:common              # Shared composables
+└── :data
+    ├── :data:local             # Room DB, DataStore, HCF file parser
+    └── :data:remote            # Ktor HTTP client, cloud API</div>
+
+<h3>Key Design Decisions</h3>
+
+<details>
+  <summary>1. Protocol Layer: Coroutine-based reactive communication</summary>
+  <div>
+    <p>The original Delphi code uses a <code>TimerIO</code> polling loop. On Android, we replace this with Kotlin <code>Flow</code>-based reactive streams:</p>
+<pre><code>// Core protocol interface
+interface AebProtocol {
+    val connectionState: StateFlow&lt;ConnectionState&gt;
+    val ecuData: SharedFlow&lt;EcuDataUpdate&gt;
+
+    suspend fun connect(transport: Transport): Result&lt;EcuIdentity&gt;
+    suspend fun disconnect()
+    suspend fun sendCommand(cmd: Int, payload: ByteArray = byteArrayOf()): Result&lt;ByteArray&gt;
+    suspend fun readNumber(address: Int): Result&lt;Double&gt;
+    suspend fun writeNumber(address: Int, value: Double): Result&lt;Unit&gt;
+    suspend fun readVector(address: Int, size: Int): Result&lt;DoubleArray&gt;
+    suspend fun readMatrix(rows: Int, cols: Int, address: Int): Result&lt;Array&lt;DoubleArray&gt;&gt;
+    suspend fun startRealtimeStream(interval: Duration): Flow&lt;EcuPacket&gt;
+    suspend fun flashFirmware(data: ByteArray, onProgress: (Float) -&gt; Unit): Result&lt;Unit&gt;
+}</code></pre>
+  </div>
+</details>
+
+<details>
+  <summary>2. Transport Abstraction: USB-OTG replaces COM/FTDI</summary>
+  <div>
+<pre><code>// Unified transport interface
+interface Transport {
+    val isConnected: StateFlow&lt;Boolean&gt;
+    suspend fun open(config: TransportConfig): Result&lt;Unit&gt;
+    suspend fun close()
+    suspend fun write(data: ByteArray): Result&lt;Int&gt;
+    suspend fun read(buffer: ByteArray, timeout: Duration): Result&lt;Int&gt;
+    fun availableDevices(): Flow&lt;List&lt;TransportDevice&gt;&gt;
+}
+
+// USB Serial (covers TAebCom + TAebFtdi)
+class UsbSerialTransport(
+    private val usbManager: UsbManager,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+) : Transport { ... }
+
+// BLE (covers TAebBee)
+class BleTransport(
+    private val bleManager: BluetoothManager,
+    private val serviceUuid: UUID,
+    private val characteristicUuid: UUID
+) : Transport { ... }</code></pre>
+  </div>
+</details>
+
+<details>
+  <summary>3. Map Editor: OpenGL ES 3D surface with touch gestures</summary>
+  <div>
+    <p>The original uses TeeChart for 3D map visualization. On Android, we build a custom OpenGL ES renderer with pinch-to-zoom, rotate, and cell-tap editing:</p>
+<pre><code>@Composable
+fun MapEditor3D(
+    matrix: EcuMatrix,
+    onCellEdit: (row: Int, col: Int, value: Double) -&gt; Unit,
+    modifier: Modifier = Modifier
+) {
+    val renderer = remember { MapSurfaceRenderer() }
+    AndroidView(
+        factory = { ctx -&gt;
+            GLSurfaceView(ctx).apply {
+                setEGLContextClientVersion(3)
+                setRenderer(renderer)
+                // Touch: rotate, zoom, cell selection
+            }
+        },
+        update = { renderer.updateData(matrix) },
+        modifier = modifier
+    )
+}</code></pre>
+  </div>
+</details>
+
+<details>
+  <summary>4. Real-time Scope: Canvas-based high-performance rendering</summary>
+  <div>
+    <p>The oscilloscope needs 60fps rendering of multiple data channels. Using Compose Canvas with a ring buffer:</p>
+<pre><code>@Composable
+fun RealtimeScope(
+    channels: List&lt;ScopeChannel&gt;,
+    timeWindow: Duration = 10.seconds,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier.fillMaxSize()) {
+        channels.forEach { channel -&gt;
+            val path = Path()
+            channel.samples.forEachIndexed { i, sample -&gt;
+                val x = i.toFloat() / channel.samples.size * size.width
+                val y = size.height - (sample - channel.min) /
+                    (channel.max - channel.min) * size.height
+                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            drawPath(path, channel.color, style = Stroke(2.dp.toPx()))
+        }
+    }
+}</code></pre>
+  </div>
+</details>
+
+<!-- ===== 10. ROADMAP ===== -->
+<h2 id="roadmap">12. Implementation Roadmap</h2>
+
+<table>
+  <tr><th>Phase</th><th>Deliverable</th><th>Effort</th><th>Priority</th></tr>
+  <tr>
+    <td><span class="tag tag-blue">Phase 1</span></td>
+    <td><strong>Core Protocol + Connection</strong><br>AEB packet framing, checksum, USB serial transport, device discovery, connect/disconnect</td>
+    <td>2&ndash;3 weeks</td>
+    <td>Critical</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-blue">Phase 2</span></td>
+    <td><strong>ECU Data Model + Read/Write</strong><br>Number/Vector/Matrix containers, ECU registry, HCF file parser, parameter read/write</td>
+    <td>2 weeks</td>
+    <td>Critical</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-green">Phase 3</span></td>
+    <td><strong>Main UI Shell</strong><br>Navigation, connection screen, dashboard with ECU status, Material 3 design system</td>
+    <td>1&ndash;2 weeks</td>
+    <td>High</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-green">Phase 4</span></td>
+    <td><strong>Configuration &amp; Calibration</strong><br>ECU config screen, auto-calibration wizard, reference values</td>
+    <td>2&ndash;3 weeks</td>
+    <td>High</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-orange">Phase 5</span></td>
+    <td><strong>Map Editor</strong><br>3D surface renderer, cell editing, map import/export, comparison views</td>
+    <td>3&ndash;4 weeks</td>
+    <td>High</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-orange">Phase 6</span></td>
+    <td><strong>Diagnostics &amp; Scope</strong><br>OBD integration, error code display, real-time oscilloscope, DRT charts</td>
+    <td>2&ndash;3 weeks</td>
+    <td>Medium</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-purple">Phase 7</span></td>
+    <td><strong>Advanced Features</strong><br>Firmware flash, trace management, BLE transport, cloud sync</td>
+    <td>3&ndash;4 weeks</td>
+    <td>Medium</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-purple">Phase 8</span></td>
+    <td><strong>Polish &amp; Release</strong><br>26-language localization, premium UI/UX, animations, testing, Play Store</td>
+    <td>2&ndash;3 weeks</td>
+    <td>Final</td>
+  </tr>
+</table>
+
+<div class="note" style="margin-top:1.5rem">
+  <strong>Total estimated effort: 17&ndash;24 weeks</strong> for a single developer. The most technically challenging parts are the AEB protocol byte-level implementation (requires ECU hardware testing) and the 3D map editor (custom OpenGL renderer). The localization and UI are substantial but well-understood work.
+</div>
+
+<!--GEN:BEGIN-->
+<!--GEN:END-->
+
+<script>
+document.querySelectorAll('.toc a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
