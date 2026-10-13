@@ -223,10 +223,11 @@
       this.ticks = 0;
       this.operation = { phase: 'idle' };
       this.review = null;
+      this.preview = false;
       this.lastRenderKey = '';
       // Gravar no Mapa K sem sair da tela (core/map-fix.js): o mesmo fluxo para engasgo e para diferença por RPM.
       this.mapFix = root.OmegasMapFix && root.OmegasMapEditor
-        ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: () => this.render(true), env: { setTimeout: root.setTimeout.bind(root) } })
+        ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: () => { this.render(true); if (this.preview) this.renderPreview(); }, env: { setTimeout: root.setTimeout.bind(root) } })
         : null;
       this.inject();
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
@@ -272,10 +273,8 @@
             <span class="ao-key"><i class="dm"></i><b>Quase apagou</b></span>
           </div>
           <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">
-            <button type="button" class="autocal-primary-action" data-kind="review" data-refino-curve hidden>Gravar na Curva K</button>
-            <button type="button" class="autocal-primary-action" data-kind="map" data-refino-map hidden>Gravar no Mapa K</button>
+            <button type="button" class="autocal-primary-action" data-kind="review" data-refino-preview hidden>Ver alterações</button>
             <button type="button" class="secondary autocal-primary-action" data-kind="undo" data-refino-undo hidden>Desfazer</button>
-            <button type="button" class="secondary autocal-primary-action" data-kind="cancel" data-refino-cancel-fix hidden>Cancelar</button>
             <button type="button" class="secondary autocal-primary-action" data-kind="ok" data-refino-ok hidden>Entendi</button>
           </div>
           <div id="refinoReview" class="autocal-review" hidden></div>
@@ -296,15 +295,42 @@
     onClick(event) {
       const hit = selector => event.target.closest(selector);
       if (hit('[data-refino-ok]')) { this.operation = { phase: 'idle' }; this.mapFix?.dismiss(); this.refresh(true); return; }
-      if (hit('[data-refino-cancel]')) { this.closeReview(); return; }
+      if (hit('[data-refino-cancel]')) { this.closePreview(); return; }
       if (hit('[data-refino-confirm]')) { this.confirm(); return; }
-      if (hit('[data-refino-cancel-fix]')) { this.mapFix?.dismiss(); return; }
-      if (hit('[data-refino-curve]')) { this.openReview(primaryAction(this.eq).kind === 'restore' ? 'restore' : 'apply'); return; }
-      if (hit('[data-refino-map]')) { this.mapAction(); return; }
+      if (hit('[data-refino-map-confirm]')) { this.preview = false; this.closeReview(); this.mapFix?.write('apply'); return; }
+      if (hit('[data-refino-preview]')) { this.openPreview(); return; }
       if (hit('[data-refino-undo]')) {
         if (this.mapFix?.state.phase === 'done') this.mapFix.undo();
-        else this.openReview('undo');
+        else this.openPreview('undo');
       }
+    }
+
+    /** Qual gravação da Curva K existe agora: 'apply' (proposta pronta), 'restore' (trecho que piorou) ou null. */
+    curveKind() {
+      const primary = primaryAction(this.eq);
+      const secondary = secondaryActions(this.eq);
+      if ((primary.kind === 'review' && primary.enabled) || secondary.some(item => item.kind === 'review' && item.enabled)) return 'apply';
+      if (primary.kind === 'restore' && primary.enabled) return 'restore';
+      return null;
+    }
+
+    /** "Ver alterações": monta o cartão. Ler o Mapa K é só leitura; nada é gravado até um "Gravar" dentro do cartão. */
+    openPreview(undo) {
+      const kind = undo || this.curveKind();
+      const list = kind ? reviewList(this.eq, kind) : { points: [] };
+      this.review = list.points.length ? { ...list, reason: REASONS[kind], title: TITLES[kind], notice: '' } : null;
+      this.preview = true;
+      const proposal = undo ? null : this.mapProposal();
+      if (proposal && this.mapFix && this.mapFix.state.phase === 'idle') this.mapFix.start(proposal.plan);
+      this.render(true);
+      this.renderPreview();
+    }
+
+    closePreview() {
+      this.preview = false;
+      this.closeReview();
+      if (this.mapFix && !this.mapFix.busy) this.mapFix.dismiss();
+      this.render(true);
     }
 
     /** Uma proposta para o Mapa K por vez: o engasgo vem primeiro (segurança); depois a diferença por RPM do piloto. */
@@ -341,27 +367,12 @@
       return null;
     }
 
-    mapAction() {
-      const fix = this.mapFix;
-      if (!fix || fix.busy) return;
-      if (fix.state.phase === 'ready') { fix.write('apply'); return; }
-      const proposal = this.mapProposal();
-      if (proposal) fix.start(proposal.plan);
-    }
-
-    openReview(kind) {
-      const list = reviewList(this.eq, kind);
-      if (!list.points.length) return;
-      this.review = { ...list, reason: REASONS[kind], title: TITLES[kind], notice: '' };
-      this.renderReview();
-    }
-
     /** Lista na tela = lista que será gravada. Mudou no Kotlin? Atualiza o cartão e avisa; sumiu? Diz por quê. */
     syncReview() {
       if (!this.review) return;
       const gate = reviewGate(this.review, this.eq);
       if (gate === 'write') {
-        if (this.review.blocked) { this.review = { ...this.review, blocked: false, notice: '' }; this.renderReview(); }
+        if (this.review.blocked) { this.review = { ...this.review, blocked: false, notice: '' }; this.renderPreview(); }
         return;
       }
       if (gate === 'blocked') {
@@ -374,28 +385,50 @@
       } else {
         this.review = { ...this.review, points: [], signature: '', notice: 'Nada para gravar agora: a lista deixou de valer com as leituras novas.' };
       }
-      this.renderReview();
+      this.renderPreview();
     }
 
-    renderReview() {
-      const review = document.getElementById('refinoReview');
-      const current = this.review;
-      if (!review || !current) return;
-      const rows = current.points.map(p => {
-        const before = p.currentRaw / 16384;
-        const after = p.targetRaw / 16384;
-        return `<div><dt>${fmt(p.referenceTimeMs, 1)} ms</dt><dd><b>${fmt(before, 3)} → ${fmt(after, 3)}</b> · ${pct(after / before)}${p.origin ? ' · ' + escapeHtml(ORIGIN[p.origin] || p.origin) : ''}</dd></div>`;
-      }).join('');
-      const notice = current.notice ? `<p class="refino-warning" data-refino-notice>${escapeHtml(current.notice)}</p>` : '';
-      const canWrite = current.points.length > 0 && !current.blocked;
-      review.hidden = false;
-      review.innerHTML = `<div class="autocal-review-card"><header><div><small>REVISÃO ANTES DA ECU</small><h3>${escapeHtml(current.title)} · ${current.points.length} ${plural(current.points.length, 'ponto', 'pontos')} da Curva K</h3></div><button type="button" data-refino-cancel class="icon-close" aria-label="Fechar revisão">×</button></header>${notice}<dl class="refino-review-list">${rows}</dl><div class="write-contract"><b>Nada foi enviado à ECU.</b><span>Ao confirmar, o app relê a curva, confere que nada mudou, grava só estes pontos e confirma por readback. Depois o OMEGAS mede sozinho, ponto por ponto.</span></div><div class="operation-actions"><button type="button" data-refino-cancel class="secondary">Cancelar</button>${canWrite ? '<button type="button" data-refino-confirm class="danger-primary">Gravar na ECU</button>' : ''}</div></div>`;
+    /** Texto humano de uma lista de pontos da Curva K: quantos, onde, quanto muda. Sem tabela. */
+    curveSummary(points) {
+      const rows = points.map(p => ({ ms: finite(p.referenceTimeMs), ratio: p.targetRaw / p.currentRaw })).filter(r => Number.isFinite(r.ratio));
+      if (!rows.length) return '';
+      const withMs = rows.filter(r => r.ms !== null);
+      const lo = withMs.length ? Math.min(...withMs.map(r => r.ms)) : null;
+      const hi = withMs.length ? Math.max(...withMs.map(r => r.ms)) : null;
+      const mean = rows.reduce((sum, r) => sum + (r.ratio - 1) * 100, 0) / rows.length;
+      const big = rows.reduce((a, r) => (Math.abs(r.ratio - 1) > Math.abs(a.ratio - 1) ? r : a), rows[0]);
+      const sign = v => `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmt(Math.abs(v), 1)}%`;
+      const where = lo === null ? '' : lo === hi ? ` em ${fmt(lo, 1)} ms` : ` entre ${fmt(lo, 1)} e ${fmt(hi, 1)} ms`;
+      const biggest = Math.abs(big.ratio - 1) * 100 >= 0.05 ? ` O maior ajuste é ${sign((big.ratio - 1) * 100)}${big.ms !== null ? ` em ${fmt(big.ms, 1)} ms` : ''}.` : '';
+      return `Corrige ${rows.length} ${plural(rows.length, 'ponto', 'pontos')}${where}; ajuste médio ${sign(mean)}.${biggest}`;
+    }
+
+    /** Cartão "O que vai mudar": uma seção por destino (Curva K, Mapa K), cada uma com o seu botão Gravar. */
+    renderPreview() {
+      const host = document.getElementById('refinoReview');
+      if (!host) return;
+      if (!this.preview) { host.hidden = true; host.innerHTML = ''; return; }
+      const sections = [];
+      const review = this.review;
+      if (review) {
+        const notice = review.notice ? `<p class="refino-warning" data-refino-notice>${escapeHtml(review.notice)}</p>` : '';
+        const canWrite = review.points.length > 0 && !review.blocked;
+        const name = review.kind === 'undo' ? 'Desfazer a última gravação' : review.kind === 'restore' ? 'Restaurar o trecho que piorou' : 'Curva K';
+        sections.push(`<section class="refino-change"><div><b>${escapeHtml(name)}</b><p>${escapeHtml(this.curveSummary(review.points) || 'Nada para gravar agora.')}</p>${notice}</div>${canWrite ? '<button type="button" class="autocal-primary-action" data-kind="review" data-refino-confirm>Gravar na Curva K</button>' : ''}</section>`);
+      }
+      const fix = this.mapFix?.state || { phase: 'idle' };
+      if (fix.phase === 'reading') sections.push('<section class="refino-change"><div><b>Mapa K</b><p>Lendo o Mapa K da ECU…</p></div></section>');
+      else if (fix.phase === 'ready') sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.summary)}</p></div><button type="button" class="autocal-primary-action" data-kind="map" data-refino-map-confirm>Gravar no Mapa K</button></section>`);
+      else if (fix.phase === 'failed') sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.message)}</p></div></section>`);
+      else if (fix.note && !review) sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.note)}</p></div></section>`);
+      if (!sections.length) sections.push('<section class="refino-change"><div><b>Nada a mudar agora</b><p>O refino ainda não tem uma alteração segura para propor.</p></div></section>');
+      host.hidden = false;
+      host.innerHTML = `<div class="refino-card" role="dialog" aria-label="O que vai mudar"><header><div><small>O QUE VAI MUDAR</small><h3>Nada foi enviado à ECU ainda</h3></div><button type="button" data-refino-cancel class="icon-close" aria-label="Fechar">×</button></header>${sections.join('')}<footer>Cada gravação é conferida na ECU e pode ser desfeita.</footer></div>`;
     }
 
     closeReview() {
       this.review = null;
-      const review = document.getElementById('refinoReview');
-      if (review) { review.hidden = true; review.innerHTML = ''; }
+      if (!this.preview) this.renderPreview();
     }
 
     confirm() {
@@ -405,6 +438,7 @@
       const fresh = this.api?.equivalence?.() || this.eq;
       if (fresh) this.eq = fresh;
       if (reviewGate(pending, this.eq) !== 'write') { this.syncReview(); return; }
+      this.preview = false;
       this.closeReview();
       this.runWrite(pending.points.map(({ index, currentRaw, targetRaw }) => ({ index, currentRaw, targetRaw })), pending.reason);
     }
@@ -482,16 +516,16 @@
 
       let headline = pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
       let next = (pilot.next || '') + (op.phase === 'idle' && fix.phase === 'idle' ? this.gasNote(eq) : '');
-      const show = { curve: false, map: false, undo: false, cancel: false, ok: false };
+      const show = { preview: false, undo: false, ok: false };
       const label = {};
-      if (op.phase === 'reading' || op.phase === 'writing') {
+      if (this.preview) {
+        // O cartão está aberto: ele tem os próprios botões; a barra fica quieta.
+      } else if (op.phase === 'reading' || op.phase === 'writing') {
         headline = op.phase === 'reading' ? 'Conferindo a Curva K da ECU…' : 'Gravando e conferindo na ECU…'; next = 'Não desligue o carro nem tire o cabo.';
       } else if (op.phase === 'failed') {
         headline = op.message; next = 'Nada foi dado como gravado. A lista é refeita com a curva lida na hora.'; show.ok = true; label.ok = 'Tentar de novo';
       } else if (fix.phase === 'reading' || fix.phase === 'writing') {
         headline = fix.message; next = 'Não desligue o carro nem tire o cabo.';
-      } else if (fix.phase === 'ready') {
-        headline = 'Pronto para gravar no Mapa K'; next = fix.summary; show.map = true; show.cancel = true; label.map = 'Gravar no Mapa K';
       } else if (fix.phase === 'done') {
         headline = 'Gravado e conferido no Mapa K'; next = 'Dirija e veja se o engasgo some. Se piorar, desfaça.'; show.undo = true; show.ok = true; label.ok = 'Pronto';
       } else if (fix.phase === 'undone') {
@@ -501,30 +535,17 @@
       } else {
         const stallInfo = describeStalls(eq.stalls);
         if (stallInfo.total > 0) next = `${stallInfo.title}. ${stallInfo.text}`.trim();
-        if (fix.note) next = fix.note;
-        const primary = primaryAction(eq);
-        const secondary = secondaryActions(eq);
-        const curveReady = (primary.kind === 'review' && primary.enabled) || secondary.some(item => item.kind === 'review' && item.enabled);
-        const restore = primary.kind === 'restore' && primary.enabled;
-        show.curve = curveReady || restore;
-        label.curve = restore && !curveReady ? 'Restaurar na Curva K' : 'Gravar na Curva K';
-        show.map = !!this.mapProposal();
-        show.undo = secondary.some(item => item.kind === 'undo' && item.enabled);
+        show.preview = !!this.curveKind() || !!this.mapProposal();
+        show.undo = secondaryActions(eq).some(item => item.kind === 'undo' && item.enabled);
         label.undo = 'Desfazer última gravação';
       }
       setText('refinoHeadline', headline);
       setText('refinoNext', next);
-      const proposal = show.map && fix.phase === 'idle' ? this.mapProposal() : null;
-      for (const [name, selector] of [['curve', '[data-refino-curve]'], ['map', '[data-refino-map]'], ['undo', '[data-refino-undo]'], ['cancel', '[data-refino-cancel-fix]'], ['ok', '[data-refino-ok]']]) {
+      for (const [name, selector] of [['preview', '[data-refino-preview]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
         const node = document.querySelector(selector);
         if (!node) continue;
         node.hidden = !show[name];
-        if (label[name] && node.textContent !== label[name] && name !== 'map') node.textContent = label[name];
-      }
-      const mapNode = document.querySelector('[data-refino-map]');
-      if (mapNode && show.map) {
-        const html = fix.phase === 'ready' ? 'Gravar no Mapa K' : `Gravar no Mapa K<small>${escapeHtml(proposal?.sub || '')}</small>`;
-        if (mapNode.innerHTML !== html) mapNode.innerHTML = html;
+        if (label[name] && node.textContent !== label[name]) node.textContent = label[name];
       }
       this.renderChart();
     }

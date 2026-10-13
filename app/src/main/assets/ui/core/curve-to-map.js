@@ -134,14 +134,17 @@
    * @param {{tbp:number[], k:number[], rowMs:number[], cells:number[][]}} input
    *   tbp/k = curva K lida (30 nós); rowMs = Tinj de cada linha; cells = Mapa K lido (linha × coluna).
    */
-  function balance({ tbp = [], k = [], rowMs = [], cells = [], mapMin = MAP_MIN, mapMax = MAP_MAX, headroom = LOCAL_HEADROOM, smooth = true } = {}) {
+  function balance({ tbp = [], k = [], rowMs = [], cells = [], mapMin = MAP_MIN, mapMax = MAP_MAX, headroom = LOCAL_HEADROOM, smooth = true, refine = null } = {}) {
     const nodes = [];
     for (let i = 0; i < Math.min(tbp.length, k.length); i += 1) nodes.push({ i, x: finite(tbp[i]), y: finite(k[i]) });
     const valid = nodes.filter(n => n.x !== null && n.x > 0 && n.y !== null && n.y > 0);
     const xs = valid.map(n => n.x);
     const ys = valid.map(n => n.y);
-    // Curva ALVO: a da ECU suavizada (o produto que o mapa e a curva novos têm que reproduzir). Sem suavizar, é a própria da ECU.
-    const ysT = smooth ? smoothCurve(xs, ys) : ys.slice();
+    // Refino (dono, 2026-10-13: "a exportação já sai refinada, sem esperar adquirir tudo de novo"): onde o Refino já tem um alvo
+    // validado para o nó (`refine[índice]`, fator K), a curva-base é a refinada; o resto segue a da ECU.
+    const yr = Array.isArray(refine) ? valid.map(n => (finite(refine[n.i]) !== null && refine[n.i] > 0 ? refine[n.i] : n.y)) : ys;
+    // Curva ALVO: a (refinada e) suavizada — o produto que o mapa e a curva novos têm que reproduzir. Sem suavizar, é a base.
+    const ysT = smooth ? smoothCurve(xs, yr) : yr.slice();
     const winLo = mapMin / (1 - headroom);
     const winHi = mapMax / (1 + headroom);
 
@@ -239,7 +242,8 @@
       changed: Math.round(n.y * Q14) !== realizedRaw[idx],
     }));
     const share = inside.length ? Math.max(...inside.map(idx => Math.abs(realized[idx] - 1))) : 0;
-    const smoothDev = ys.map((v, i) => Math.abs(Math.log(ysT[i] / v)) * 100);
+    const smoothDev = yr.map((v, i) => Math.abs(Math.log(ysT[i] / v)) * 100);
+    const refinedNodes = yr.filter((v, i) => v !== ys[i]).length;
     return {
       rows: outRows,
       nodes: curveNodes,
@@ -256,6 +260,7 @@
         smoothed: smooth,
         roughnessBefore: roughness(ys),
         roughnessAfter: roughness(ysT),
+        refinedNodes,
         smoothedNodes: smoothDev.filter(d => d > 0.01).length,
         smoothMaxChangePct: smoothDev.length ? Math.max(...smoothDev) : 0,
       },
@@ -280,5 +285,26 @@
     return worst * 100;
   }
 
-  return { balance, naiveError, smoothCurve, roughness, interp, bracket, mapAt, MAP_MIN, MAP_MAX, LOCAL_HEADROOM, K_WRITE_CEILING, K_WRITE_FLOOR };
+  /**
+   * Alvos do Refino por nó (fator K) a partir da proposta do piloto (Kotlin). Só vale para o nó cujo valor atual na ECU ainda é
+   * EXATAMENTE o que o piloto usou (`currentRaw`); proposta velha (a curva mudou) é ignorada: nada de misturar gerações.
+   * @param points curva lida agora [{index, factorRaw}], @param proposal [{index, currentRaw, targetRaw}]
+   */
+  function refinementTargets(points, proposal) {
+    const refine = Array(30).fill(null);
+    let applied = 0;
+    let stale = 0;
+    const raw = new Map((points || []).map((p, i) => [Number(p.index ?? i), finite(p.factorRaw)]));
+    for (const item of Array.isArray(proposal) ? proposal : []) {
+      const index = Number(item?.index);
+      const target = finite(item?.targetRaw);
+      if (!Number.isInteger(index) || index < 0 || index > 29 || target === null || target <= 0) continue;
+      if (raw.get(index) !== finite(item.currentRaw)) { stale += 1; continue; }
+      refine[index] = target / Q14;
+      applied += 1;
+    }
+    return { refine, applied, stale };
+  }
+
+  return { balance, naiveError, refinementTargets, smoothCurve, roughness, interp, bracket, mapAt, MAP_MIN, MAP_MAX, LOCAL_HEADROOM, K_WRITE_CEILING, K_WRITE_FLOOR };
 });

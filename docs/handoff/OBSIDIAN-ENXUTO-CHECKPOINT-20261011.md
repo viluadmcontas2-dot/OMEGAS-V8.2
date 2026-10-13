@@ -220,3 +220,11 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - HMI (NHTSA, diretrizes de distração de 2012–2013, não revalidadas): olhadas ≤ 2 s, ≤ 6 toques em 12 s por tarefa, evitar > 30 caracteres de texto. Nossas ações de gravar levam 2 toques (Mapa K) ou 2–3 (Curva K). Letra mínima/alvo de toque não veio da pesquisa (ISO 15008 seria a fonte).
 - Gráfico: números dos eixos de 9,5 px → 12 px, rótulo de 0,10 em 0,10 (grade continua de 0,05), eixo K de 0,4 em 0,4. Antes o painel da Curva K aparecia cortado até a releitura de 1 s: o gráfico agora é medido de novo 2 quadros depois de abrir a aba (AutoCal e Refino), tamanho estável nos três caminhos testados.
 - Provas locais: node 223/0, unittest OK, run_checks PASS, e2e PASS, original×OMEGAS PASS.
+
+## 2026-10-13 · noite 15 — cartão do Refino, export refinado, medidor de uso, verificação de protocolo
+- Refino: UM botão "Ver alterações" abre o cartão "O que vai mudar" (seções Curva K / Mapa K, cada uma com seu "Gravar"; rodapé "conferida na ECU e pode ser desfeita"). Nada é enviado antes do toque no "Gravar".
+- Export Curva K→Mapa K usa o refino do AutoCal (`refinementTargets`, `balance({refine})`).
+- Medidor de uso (`core/usage-meter.js`, `ui_usage` na sessão); verificação do protocolo (`tools/sessoes/verificar_protocolo_autocal.py`). Docs: `docs/evidence/2026-10-13-auditoria-protocolo-e-api-claude.md`.
+- Provas locais: node 232/0, unittest OK (4 skip), run_checks PASS, e2e refino_mapa/sem_rolagem_abas/curva_para_mapa/curva_k_arrasto/comparar_com_original/usage_meter PASS.
+- Não provado: Kotlin novo (`recordUiUsage`) sem CI; aparelho; efeito físico; Reaprender GNV no fio. CIs `e6f03d3`/`4166d59` sem resultado conferido.
+- Primeiro item ainda não comprovado: CI deste commit.

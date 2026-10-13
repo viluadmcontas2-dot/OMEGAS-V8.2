@@ -2259,3 +2259,23 @@
 .refino-chart .ao-our-point.petrol { opacity: .4; }
 .refino-cockpit .autocal-primary-action[data-kind="map"] { background: #1f7a52; border-color: #3fae7e; color: #fff; }
 .refino-cockpit .autocal-primary-action small { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: #e3f7ec; opacity: 1; }
+
+/* Cartão "O que vai mudar" do Refino (dono, 2026-10-13: "um botão para prever as alterações e um cardzinho premium, sem poluição,
+   didático"): uma seção por destino, frase curta, botão Gravar dentro; fundo escurecido sem desfoque pesado (multimídia). */
+.refino-cockpit .autocal-review { align-items: center; background: rgba(4,7,11,.86); backdrop-filter: none; }
+.refino-card {
+  width: min(760px, 100%); padding: 22px 24px; border-radius: 18px;
+  border: 1px solid rgba(120,183,255,.28); background: linear-gradient(180deg, #131b26 0%, #0e141c 100%);
+  box-shadow: 0 24px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.refino-card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.refino-card header small { color: #8fa4b7; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+.refino-card header h3 { margin: 4px 0 0; font-size: 22px; color: #eef5fb; }
+.refino-change { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 0; border-top: 1px solid rgba(255,255,255,.08); }
+.refino-change > div { min-width: 0; }
+.refino-change b { display: block; font-size: 20px; color: #f3f8fc; }
+.refino-change p { margin: 6px 0 0; font-size: 17px; line-height: 1.4; color: #c5d0db; }
+.refino-change .refino-warning { color: #ffcf8a; font-size: 15px; }
+.refino-change .autocal-primary-action { flex: 0 0 auto; min-width: 200px; min-height: 56px; font-size: 16px; }
+.refino-card footer { margin-top: 6px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); color: #98a6b6; font-size: 14px; }
+.refino-card .icon-close { min-width: 48px; min-height: 48px; font-size: 26px; background: transparent; color: #aebed0; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; }

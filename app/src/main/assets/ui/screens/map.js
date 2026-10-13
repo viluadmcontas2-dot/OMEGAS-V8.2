@@ -181,11 +181,16 @@
       if (!planner) return 'Rotina Curva K → Mapa K indisponível.';
       const snapshot = this.editor.snapshot();
       this.curvePlan = null;
+      // Refino já pronto (proposta do piloto, Kotlin): entra na exportação, para o Mapa K já sair refinado e sem serrilhado.
+      const pilot = (root.OmegasUi || {}).AutoCalApi?.equivalence?.()?.autopilot;
+      const proposal = pilot?.phase === 'PROPOSTA_PRONTA' ? pilot?.proposal?.points : null;
+      const refined = proposal && planner.refinementTargets ? planner.refinementTargets(points, proposal) : null;
       const result = planner.balance({
         tbp: points.map(point => point.petrolMs),
         k: points.map(point => point.factor),
         rowMs: snapshot.axes.petrolBins,
         cells: snapshot.rows,
+        refine: refined && refined.applied ? refined.refine : null,
       });
       const summary = result.summary;
       if (!summary.rowsUsed) return 'Nenhuma linha do Mapa K cai dentro da faixa da Curva K: nada a passar para o Mapa K.';
@@ -218,7 +223,8 @@
       // A curva da ECU sai serrilhada do AutoMatch; ela é suavizada ANTES de virar mapa (senão o serrilhado vai junto).
       const smoothed = summary.smoothed && summary.roughnessBefore - summary.roughnessAfter >= 1
         ? ` · curva suavizada (serrilhado ${summary.roughnessBefore.toFixed(0)}% → ${summary.roughnessAfter.toFixed(0)}%)` : '';
-      return `Proposta: ${changes.length} células + ${nodes.length} pontos da curva${smoothed} · erro ${summary.maxRowErrorPct.toFixed(1)}%${extra ? ` · ${extra}` : ''}. Grave: mapa, depois curva.`;
+      const refinedText = summary.refinedNodes ? ` · inclui o refino (${summary.refinedNodes} ${summary.refinedNodes === 1 ? 'ponto' : 'pontos'})` : '';
+      return `Proposta: ${changes.length} células + ${nodes.length} pontos da curva${refinedText}${smoothed} · erro ${summary.maxRowErrorPct.toFixed(1)}%${extra ? ` · ${extra}` : ''}. Grave: mapa, depois curva.`;
     }
 
     /** Segunda etapa: a curva refatorada, só depois do mapa confirmado pela ECU. */

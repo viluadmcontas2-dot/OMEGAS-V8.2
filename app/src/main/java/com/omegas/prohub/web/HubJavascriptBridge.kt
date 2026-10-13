@@ -525,6 +525,16 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun getLogs(): String = activity?.serviceOrNull()?.logsJson() ?: "[]"
     @JavascriptInterface fun exportLogs() = activity?.exportLogs()
     @JavascriptInterface fun exportData() = activity?.exportData()
+    /** Contagens de uso da interface (abas e toques) para o log da sessão; só contagens, nada de rede (core/usage-meter.js). */
+    @JavascriptInterface fun recordUiUsage(json: String): String {
+        return try {
+            val service = activity?.serviceOrNull() ?: return unavailable()
+            service.sessionRecorder.record("ui_usage", "webview", JSONObject(json), force = true)
+            JSONObject().put("ok", true).toString()
+        } catch (error: Exception) {
+            JSONObject().put("ok", false).toString()
+        }
+    }
 
     @JavascriptInterface fun requestBluetoothPermission() = activity?.requestBluetoothPermission()
 

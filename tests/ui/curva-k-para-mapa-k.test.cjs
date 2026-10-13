@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { balance, naiveError, interp, mapAt, MAP_MIN, MAP_MAX } = require('../../app/src/main/assets/ui/core/curve-to-map.js');
+const { balance, naiveError, interp, mapAt, refinementTargets, MAP_MIN, MAP_MAX } = require('../../app/src/main/assets/ui/core/curve-to-map.js');
 const { writeCurveStage } = require('../../app/src/main/assets/ui/core/balance-runner.js');
 const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/autocal-captura-ac-t1000.json'), 'utf8'));
 const phys = name => fixture.snapshot.fields.find(f => f.key === name).physicalValues;
@@ -193,4 +193,45 @@ test('exportar com suavização: o serrilhado da curva NÃO vai para o mapa nem 
     assert.ok(d2(col) <= d2(colRaw) + 1e-9, 'o mapa suavizado não é mais serrilhado que o cru');
     assert.ok(smoothOut.summary.maxRowErrorPct < 3, 'produto = curva suavizada, erro ' + smoothOut.summary.maxRowErrorPct);
   });
+});
+
+// ---- exportação já refinada (dono, 2026-10-13): o que o Refino aprendeu entra no Mapa K sem esperar outro AutoMatch ----
+const POINTS = TBP.map((x, i) => ({ index: i, petrolMs: x, factor: K[i], factorRaw: Math.round(K[i] * 16384) }));
+
+test('refinementTargets: só vale para o nó cujo valor na ECU ainda é exatamente o que o piloto usou; proposta velha é ignorada', () => {
+  const ok = { index: 10, currentRaw: POINTS[10].factorRaw, targetRaw: POINTS[10].factorRaw + 400 };
+  const stale = { index: 11, currentRaw: POINTS[11].factorRaw + 1, targetRaw: POINTS[11].factorRaw + 400 };
+  const junk = [{ index: 99, currentRaw: 1, targetRaw: 2 }, { index: 3, currentRaw: POINTS[3].factorRaw, targetRaw: 0 }, null];
+  const r = refinementTargets(POINTS, [ok, stale, ...junk]);
+  assert.equal(r.applied, 1);
+  assert.equal(r.stale, 1);
+  assert.ok(Math.abs(r.refine[10] - (POINTS[10].factorRaw + 400) / 16384) < 1e-12);
+  assert.equal(r.refine[11], null);
+  assert.equal(r.refine.filter(v => v !== null).length, 1);
+});
+
+test('com o refino, o Mapa K sai refinado: o produto novo reproduz a curva REFINADA (suavizada), e a curva gravada parte do valor REAL da ECU', () => {
+  const cells = flat(160);
+  const proposal = [8, 9, 10, 11, 12].map(i => ({ index: i, currentRaw: POINTS[i].factorRaw, targetRaw: Math.round(POINTS[i].factorRaw * 1.06) }));
+  const { refine, applied } = refinementTargets(POINTS, proposal);
+  assert.equal(applied, 5);
+  const base = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells });
+  const refined = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells, refine });
+  assert.equal(refined.summary.refinedNodes, 5);
+  assert.equal(base.summary.refinedNodes, 0);
+  assert.ok(refined.summary.maxRowErrorPct < 0.5, 'o produto ainda fecha: ' + refined.summary.maxRowErrorPct);
+  // currentRaw dos nós = o que a ECU tem hoje (a conferência de "curva mudou" do runner depende disso), não o alvo do refino.
+  refined.nodes.forEach(n => assert.equal(n.currentRaw, POINTS[n.index].factorRaw));
+  // O mapa refinado é diferente do mapa sem refino, nas linhas que o refino tocou (≈ +6% × peso da suavização).
+  const diff = refined.rows.flatMap((r, ri) => (r.cells || []).map((c, ci) => (base.rows[ri].cells?.[ci] ? c.target - base.rows[ri].cells[ci].target : 0)));
+  assert.ok(diff.some(d => d > 0), 'o refino aumentou alguma célula');
+  const ratio = refined.rows.filter(r => r.cells.length).map((r, i) => r.cells[0].target / base.rows.filter(x => x.cells.length)[i].cells[0].target);
+  assert.ok(Math.max(...ratio) <= 1.07 && Math.min(...ratio) >= 0.98, 'a mudança é do tamanho do refino (≤ +6–7%): ' + ratio.join(','));
+});
+
+test('sem proposta (ou toda velha) o resultado é idêntico ao de antes', () => {
+  const cells = flat(160);
+  const none = refinementTargets(POINTS, []);
+  assert.equal(none.applied, 0);
+  assert.equal(JSON.stringify(balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells, refine: null })), JSON.stringify(balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells })));
 });

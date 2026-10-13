@@ -218,25 +218,42 @@ test('motivos da gravação do Refino batem com a classificação do Kotlin (pro
   assert.match(journal, /verb\.startsWith\("restaurar"\) -> KIND_RESTAURAR/);
 });
 
-test('barra única embaixo: Gravar na Curva K, Gravar no Mapa K e Desfazer; sem Detalhes nem Abas; nenhum botão "Aguardando"', () => {
+test('barra única embaixo: UM botão "Ver alterações" (+ Desfazer); as gravações ficam dentro do cartão; nenhum botão "Aguardando"', () => {
   const bar = SOURCE.match(/<div class="refino-action-bar"[\s\S]*?<\/div>/)?.[0] || '';
   assert.ok(bar, 'a tela monta a barra de ações');
-  // Dono, 2026-10-13: "um botão para gravar na curva e um botão para gravar no mapa; as interações precisam ser claras".
-  const order = ['data-refino-curve', 'data-refino-map', 'data-refino-undo'].map(attr => bar.indexOf(attr));
-  assert.ok(order.every(i => i >= 0), 'todos os botões estão na barra');
-  assert.equal(JSON.stringify([...order].sort((a, b) => a - b)), JSON.stringify(order), 'ordem: Curva K, Mapa K, Desfazer');
-  assert.match(bar, />Gravar na Curva K</);
-  assert.match(bar, />Gravar no Mapa K</);
-  assert.doesNotMatch(bar, /Aguardando|Revisar e gravar|Detalhes|Abas/);
+  // Dono, 2026-10-13: "apenas um botão para prever as alterações e abrir um cardzinho premium, sem poluição, didático".
+  assert.match(bar, />Ver alterações</);
+  assert.ok(bar.indexOf('data-refino-preview') < bar.indexOf('data-refino-undo'));
+  assert.doesNotMatch(bar, /Gravar na Curva K|Gravar no Mapa K|Aguardando|Revisar e gravar|Detalhes|Abas/);
+  // O cartão traz uma seção por destino, cada uma com o seu "Gravar"; nada de tabela de pontos.
+  assert.match(SOURCE, /data-refino-confirm[^>]*>Gravar na Curva K</);
+  assert.match(SOURCE, /data-refino-map-confirm>Gravar no Mapa K</);
+  assert.match(SOURCE, /Nada foi enviado à ECU ainda/);
+  assert.doesNotMatch(SOURCE, /refino-review-list|<dl /);
   assert.doesNotMatch(SOURCE, /toggleNav|data-refino-tabs|data-refino-ack|acknowledge/);
   assert.doesNotMatch(SOURCE, /data-refino-details|data-refino-panel="details"|toggleDetails/);
-  // Nada de botão desabilitado: sem ação possível o botão some e a frase explica.
   assert.doesNotMatch(SOURCE, /node\.disabled|button\.disabled|\.disabled = /);
   const header = SOURCE.match(/<header class="autocal-focus-toolbar">[\s\S]*?<\/header>/)?.[0] || '';
   assert.doesNotMatch(header, /<button/);
   assert.match(header, /<h3>Refino · GNV = Gasolina<\/h3>[\s\S]*<p id="refinoHeadline">/);
   const css = read('app/src/main/assets/ui/styles-autocal-cockpit.css');
   assert.match(css, /\.refino-cockpit \.autocal-primary-action \{ min-height: 56px;/);
+});
+
+test('o resumo da Curva K é uma frase: quantos pontos, onde, quanto muda', () => {
+  const window = { setTimeout: () => 0 };
+  window.window = window;
+  vm.runInNewContext(SOURCE, { window, globalThis: window, console });
+  const summary = window.OmegasUi.RefinoScreen.prototype.curveSummary;
+  const text = summary.call({}, [
+    { currentRaw: 16384, targetRaw: 16384 * 1.03, referenceTimeMs: 2.0 },
+    { currentRaw: 16384, targetRaw: 16384 * 1.07, referenceTimeMs: 5.5 },
+    { currentRaw: 16384, targetRaw: 16384 * 0.99, referenceTimeMs: 9.4 },
+  ]);
+  assert.match(text, /^Corrige 3 pontos entre 2,0 e 9,4 ms; ajuste médio \+3,0%\./);
+  assert.match(text, /O maior ajuste é \+7,0% em 5,5 ms\./);
+  assert.equal(summary.call({}, []), '');
+  assert.match(summary.call({}, [{ currentRaw: 16384, targetRaw: 17000, referenceTimeMs: 4 }]), /^Corrige 1 ponto em 4,0 ms/);
 });
 
 test('depois de gravar não há botão extra: o piloto já está medindo e a tela volta a ele', () => {

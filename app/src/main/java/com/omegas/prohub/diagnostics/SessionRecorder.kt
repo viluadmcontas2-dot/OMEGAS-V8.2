@@ -789,6 +789,7 @@ Tipos principais:
 - full_snapshot: estado aprofundado periódico, incluindo aprendizado e runtime;
 - app_log: conexão, recuperação serial, mapa K, readback e erros;
 - obd: fonte opcional e isolada;
+- ui_usage: contagens de uso da interface (visitas e segundos por aba, toques por controle), deltas desde o último envio; só contagens, sem valores digitados;
 - usb_raw: somente quando habilitado explicitamente;
 - k_*: leitura, escrita, ACK e confirmação do mapa K;
 - export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.
