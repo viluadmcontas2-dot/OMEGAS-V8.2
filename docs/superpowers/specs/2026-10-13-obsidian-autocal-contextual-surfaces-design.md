@@ -1,4 +1,4 @@
-# OMEGAS Obsidian — AutoCal contextual e superfícies de equivalência
+# OMEGAS Obsidian — AutoCal geométrico e refino do residual por RPM
 
 **Estado:** proposta para revisão do proprietário  
 **Branch de referência:** `work/platina-obsidian-enxuto`  
@@ -16,7 +16,9 @@ O princípio nativo é simples e forte:
 3. comparar as duas curvas;
 4. aproximar a curva do GNV da curva-base por uma correção coerente.
 
-O OMEGAS deve preservar esse princípio e ampliá-lo. Em vez de manter somente uma relação `MAP × tempo`, ele deve aprender uma família de curvas ou superfícies condicionadas pelo regime real do motor: `RPM × MAP × Tpet × contexto × época de calibração`.
+O OMEGAS deve preservar esse princípio sem tentar sofisticar a própria curva-base. A aquisição nativa já resolve a referência da forma mais direta: observa onde o cursor está no plano `MAP × ms`, marca o ponto e desenha a curva por sucessivas aquisições.
+
+A ampliação necessária ocorre **depois** dessa curva. O OMEGAS mede o residual que ainda sobra no GNV e verifica se ele se repete localmente por RPM na mesma região da curva. Ele não substitui a curva bidimensional por uma referência multivariável.
 
 Essa ampliação não autoriza o aplicativo a reescrever a calibração por conta própria. O resultado continua sendo uma sugestão explicada, sujeita a revisão humana, ACK e readback.
 
@@ -25,11 +27,11 @@ Essa ampliação não autoriza o aplicativo a reescrever a calibração por cont
 ```text
 AutoCal nativo + Curva K
         ↓
-Inteligência contextual própria do OMEGAS
-(famílias de curvas e superfícies por regime)
+Inteligência própria do OMEGAS
+(residual local associado à RPM)
         ↓
-Residual GNV × gasolina
-por RPM, MAP, Tpet, temperatura, pressão e época
+Residual GNV × curva-base da gasolina
+na posição MAP × ms, agrupado por RPM
         ↓
 River em shadow
 predição + drift + incerteza
@@ -68,23 +70,29 @@ K_alvo(Tp) = K(Tg) · Tg / Tp
 
 é uma hipótese operacional explícita do aplicativo. Ela não deve ser confundida com prova completa da matemática interna do ProgBase ou com equivalência de combustão.
 
-### 3.2 Ampliação contextual
+### 3.2 Refino local sem redesenhar a referência
 
-O OMEGAS estima superfícies condicionais:
-
-```text
-C_f,e(MAP, RPM, Tpet, θ)
-```
-
-onde `f` é o combustível e `θ` contém somente variáveis realmente disponíveis e validadas, por exemplo temperatura, pressão e estado transitório.
-
-Uma observação útil de equivalência exige pareamento contextual entre gasolina e GNV dentro da mesma época de calibração. Um residual candidato é:
+Cada aquisição nativa é um ponto geométrico:
 
 ```text
-r = log(Tpet_GNV_contextual / Tpet_gasolina_contextual)
+Pᵢ = (MAPᵢ, msᵢ)
 ```
 
-ou sua diferença robusta em milissegundos quando o domínio logarítmico não for apropriado.
+A curva é a interpolação dos pontos adquiridos:
+
+```text
+C_f,e(MAP) = Interpolar({Pᵢ})
+```
+
+O OMEGAS não cria outra `Cₚ` dependente de RPM. Para um ponto adquirido durante GNV, ele mede a distância para a curva-base na mesma posição de MAP:
+
+```text
+rᵢ = msᵢ,GNV − Cₚ,e(MAPᵢ)
+```
+
+ou a razão logarítmica equivalente quando isso estiver numericamente justificado. O valor `rᵢ` é então associado à RPM observada naquele ponto. O refinador procura um padrão local e repetível de `r` por RPM, sem alterar a geometria adquirida da curva-base.
+
+MAP localiza o ponto ao longo da curva; RPM explica a parcela que a curva bidimensional não consegue distinguir. Temperatura, pressão, transiente e época de calibração são inicialmente **gates de comparabilidade e validade**, não dimensões obrigatórias de uma nova superfície.
 
 Há duas estruturas diferentes que o algoritmo não pode misturar:
 
@@ -95,14 +103,14 @@ Uma segunda trajetória no gráfico pode ser estrutura normal da referência e n
 
 ### 3.3 Decomposição da recomendação
 
-O árbitro determinístico testa:
+O árbitro determinístico testa o que sobrou após o AutoCal nativo:
 
 ```text
-r(contexto) = g(Tpet) + l(RPM, MAP, Tpet) + ruído
+r = b(MAP) + l(RPM | vizinhança MAP × ms) + ruído
 ```
 
-- `g`: componente global candidato a Curva K;
-- `l`: componente local candidato a Mapa K, somente se a semântica e a resposta forem identificáveis;
+- `b`: residual global que indica que o AutoCal/Curva K ainda não convergiu e não deve ser mascarado pelo refinador local;
+- `l`: componente local por RPM, candidato a refino somente se a semântica e a resposta forem identificáveis;
 - `desconhecido`: evidência insuficiente, confundimento por época/transiente ou incerteza excessiva.
 
 Não se presume valor neutro do Mapa K, relação aditiva/multiplicativa ou equivalência entre combinações de mapa e curva. Saturação em 255 só pode entrar em otimização depois que essas propriedades forem demonstradas.
@@ -133,7 +141,7 @@ Validação por sessão física inteira, sem misturar partes da mesma condução
 
 Para B contra A, Wilcoxon `p = 0,000144958`, diferença pareada mediana `−0,02281 ms` e intervalo bootstrap de 95% da mediana `[−0,02853; −0,01371] ms`.
 
-Conclusão atual: uma correção contínua/aditiva por RPM é o primeiro candidato determinístico. Duas curvas rígidas são uma visualização útil, não uma regra comprovada.
+Conclusão atual: RPM contém estrutura real que a projeção `MAP × ms` não mostra. Este experimento ainda não prova, sozinho, que essa estrutura deva virar correção: ele modelou a nuvem de pontos. O próximo teste deve calcular explicitamente o residual **depois** da curva nativa. Uma correção contínua por RPM é o primeiro candidato; duas curvas rígidas continuam sendo apenas uma visualização útil.
 
 ### 4.3 Evidência direta nos buffers nativos
 
@@ -159,7 +167,7 @@ Em holdout de sessões físicas inteiras, usando apenas gasolina e sempre um sna
 - River HATR: mediana `0,5899 ms`;
 - River ARF: mediana `0,8165 ms`.
 
-Os modelos online pioraram a base nativa nesse teste. Portanto, River não deve reconstruir nem substituir `Cₚ`. Seu lugar é aprender o residual contextual onde houver evidência pareada.
+Os modelos online pioraram a base nativa nesse teste. Portanto, River não deve reconstruir nem substituir `Cₚ`. Seu lugar é investigar exclusivamente o residual local por RPM depois da aquisição nativa.
 
 ### 4.5 River no residual GNV × gasolina
 
@@ -195,10 +203,10 @@ Uma escrita, readback diferente ou mudança comprovada da calibração fecha a �
 
 O pipeline shadow:
 
-1. preserva a aquisição nativa e sua curva;
+1. preserva a aquisição nativa e sua curva, sem aprender uma referência alternativa;
 2. agrega visitas estáveis, sem transformar frames correlacionados em amostras independentes;
 3. encontra vizinhanças comparáveis de gasolina e GNV;
-4. estima residual e incerteza;
+4. mede a distância residual para a curva na mesma posição `MAP × ms` e associa a RPM;
 5. mantém River como desafiante online e detector de drift;
 6. compara River com baselines determinísticos;
 7. classifica o padrão como global, local ou desconhecido;
@@ -222,8 +230,8 @@ Falhar em qualquer gate relevante resulta em `DESCONHECIDO`, com a causa mostrad
 
 ## 7. Curva K, Mapa K e limites de atuação
 
-- Desvio suave que acompanha `Tpet` em vários regimes é candidato global para Curva K.
-- Desvio reproduzível restrito a uma vizinhança de `RPM × MAP` é candidato local para Mapa K.
+- Desvio global indica primeiro que a convergência nativa/Curva K ainda precisa ser concluída; o refinador local não deve escondê-lo.
+- Desvio reproduzível por RPM dentro da mesma vizinhança da curva `MAP × ms` é candidato ao refino local.
 - Separação causada apenas pela referência natural da gasolina não é correção.
 - Confundimento por temperatura, pressão, transiente ou época é desconhecido até ser desambiguado.
 - Redistribuição entre Curva K e Mapa K perto de 255 permanece hipótese não identificada.
@@ -254,7 +262,7 @@ Versionar manifesto, extratores, gráficos e recibos dos experimentos acima. Inc
 Criar testes falhando para um componente shadow mínimo que:
 
 - preserve a curva-base nativa;
-- separe referência de residual;
+- mantenha a referência estritamente `MAP × ms` e separe dela o residual por RPM;
 - não imponha corte fixo de RPM;
 - produza `GLOBAL`, `LOCAL` ou `UNKNOWN` com justificativa;
 - jamais chame writers.
@@ -275,7 +283,8 @@ Somente após identificação suficiente da resposta da calibração, expor uma 
 
 - Nenhuma mudança em writer ou comando MP48.
 - Nenhum APK necessário para provar o modelo offline.
-- AutoCal e Curva K nativos preservados como base.
+- AutoCal e Curva K nativos preservados como base geométrica `MAP × ms`.
+- Nenhum modelo alternativo multivariável para substituir a curva-base.
 - Nenhuma fronteira fixa de RPM sem demonstração independente.
 - Validação por sessão física, sem vazamento entre partes.
 - Épocas de calibração obrigatórias.
@@ -294,4 +303,4 @@ Somente após identificação suficiente da resposta da calibração, expor uma 
 
 ## 12. Decisão solicitada ao proprietário
 
-Confirmar este contrato: o OMEGAS preserva a inteligência nativa de duas curvas como base e a amplia por superfícies contextuais; River pesquisa o residual em shadow; um árbitro determinístico decide se há evidência global, local ou desconhecida; qualquer ação continua manual e verificável.
+Confirmar este contrato: o OMEGAS mantém intacta a simplicidade sofisticada do AutoCal — pontos no plano `MAP × ms` formando as curvas — e acrescenta somente o refino do residual local por RPM. River pesquisa esse residual em shadow; um árbitro determinístico decide se ele é local ou ainda desconhecido; qualquer ação continua manual e verificável.
