@@ -3,12 +3,33 @@
     "rea": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "rea-agents@6.4.0", "mcp"],
+      "args": [
+        "-y",
+        "rea-agents@6.4.0",
+        "mcp"
+      ],
       "env": {
         "REA_JADX_MCP_JAR": "/root/.omegas-rea/jadx-headless-mcp-0.7.1-all.jar",
         "GHIDRA_INSTALL_DIR": "/root/.omegas-rea/ghidra_12.1.4_PUBLIC",
         "REA_BROWSER_NO_SANDBOX": "1"
       }
+    },
+    "serena": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "serena-agent==2.0.0",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "claude-code",
+        "--project-from-cwd",
+        "--enable-web-dashboard",
+        "false",
+        "--open-web-dashboard",
+        "false"
+      ]
     }
   }
 }

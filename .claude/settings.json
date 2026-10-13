@@ -183,5 +183,9 @@
       "mcp__rea__verify_unknown_resolution",
       "mcp__rea__xrefs"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "rea",
+    "serena"
+  ]
 }
