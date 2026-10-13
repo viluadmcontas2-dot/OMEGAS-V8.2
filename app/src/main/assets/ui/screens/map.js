@@ -206,9 +206,7 @@
       this.renderGrid();
       this.renderEditor();
       const skipped = result.rows.filter(item => item.status !== 'ok').length;
-      return `Proposta pronta: ${result.changing.length} linha${result.changing.length === 1 ? '' : 's'} do Mapa K pelo fator da Curva K (${changedCells} células mudam)` +
-        (skipped ? `; ${skipped} fora da curva ficam como estão` : '') +
-        '. Confira e grave. Depois de gravar, deixe a Curva K em 1,0 para a correção não valer duas vezes.';
+      return `Proposta pronta: ${result.changing.length} linha${result.changing.length === 1 ? '' : 's'}, ${changedCells} células. Confira e grave; depois deixe a Curva K em 1,0.`;
     }
 
     poll() {
