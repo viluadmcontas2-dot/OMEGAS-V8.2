@@ -30,7 +30,7 @@ Objetivo do dono: regular o GNV até ficar linear e equivalente à gasolina, sem
 ## Defeito real achado pelo fuzz (já no APK 7cd4ff9)
 - Fuzz de 3000 cenários com anomalias: **437 (14,6%) terminavam com um combustível "pendente" para sempre** (app mostra 0, a ECU já tem até 18 bandas). É o sintoma "depois de Reaprender não adquire até trocar de combustível".
 - Causa: o reset guardava como base a leitura anterior, que o app zera quando o AutoMatch nativo muda de época; sem base, a regra "só zero libera" nunca liberava se o carro readquirisse antes de o app ver o zero.
-- Correção (`NativeAutoCalAcquisitionEpoch`): a base passa a ser o último grupo aceito (sobrevive à troca de época) e só a leitura **idêntica** à de antes do reset é "velha"; qualquer diferença é dado vivo da ECU. Regressões JUnit novas + fuzz 400 cenários: 437/3000 → **0/400**. O APK `7cd4ff9` (entregue) ainda tem o defeito; a correção está em `86d9337`.
+- Correção (`NativeAutoCalAcquisitionEpoch`): a base passa a ser o último grupo aceito (sobrevive à troca de época) e só a leitura **idêntica** à de antes do reset é "velha"; qualquer diferença é dado vivo da ECU. Regressões JUnit novas + fuzz: antes 437/3000 violações; depois **0/3000** (sem exceção, app = ECU, ninguém preso em "pendente"). CI do commit da correção: verde. O APK `7cd4ff9` (entregue) ainda tem o defeito; a correção está em `86d9337`.
 
 ## Ainda solto (decisão/CI necessária)
 - 33 funções da ponte Android sem uso no JS (ex.: `setGnvSettings`, `runProtocolLab`, `restartEngine`, `previewKMapCell`, `setGpsEnabled`): superfície exposta ao WebView sem uso. Poda recomendada no próximo ciclo, com CI (Kotlin não compila local).
