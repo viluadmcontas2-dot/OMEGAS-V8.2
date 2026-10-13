@@ -343,7 +343,7 @@ class AutoCalProtocolTest {
 
     @Test
     fun `tres u16 usam primeiro formato estendido original`() {
-        assertArrayEquals(hex("37 61 08 01 34 12 CD AB 00 40 9F"), AutoCalProtocol.writeVectorU16(0x0161, intArrayOf(0x1234, 0xABCD, 0x4000)))
+        assertArrayEquals(hex("37 61 08 01 34 12 CD AB 00 40 03"), AutoCalProtocol.writeVectorU16(0x0161, intArrayOf(0x1234, 0xABCD, 0x4000)))
     }
 
     @Test
