@@ -1,4 +1,8 @@
+import sys
 import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools" / "autocal_refine"))
 
 from rpm_residual_replay import Pair
 import rpm_residual_models as models
