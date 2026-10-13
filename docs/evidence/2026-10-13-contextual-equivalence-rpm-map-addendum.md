@@ -70,3 +70,14 @@ Há resultado conclusivo em três níveis:
 Ainda não é conclusivo o valor exato que deve ser aplicado ao Mapa K. O próximo experimento mínimo é aumentar a cobertura de gasolina na mesma época, repetindo baixa e média RPM no MAP de 0,55 bar. Até isso ocorrer, o algoritmo pode detectar e explicar a bifurcação, mas deve manter a sugestão em shadow/manual.
 
 Nenhuma escrita automática de ECU é autorizada por este resultado.
+
+## Correção hierárquica posterior
+
+O residual acima não deve ser aplicado diretamente ao Mapa K enquanto existir
+erro global material. A decomposição e o teste com River sobre o alvo correto
+estão registrados em
+`docs/evidence/2026-10-13-global-first-hierarchical-residual.md`.
+
+A decisão vigente é: Curva K global primeiro; nova época; somente então o
+residual repetível por `RPM × MAP`. Não se aprende nem se preenche a malha de
+144 células como condição para calibrar o veículo.

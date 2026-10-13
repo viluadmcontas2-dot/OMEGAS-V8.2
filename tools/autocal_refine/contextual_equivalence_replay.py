@@ -35,6 +35,12 @@ MATCH_RPM = 200.0
 MATCH_MAP = 0.025
 MAX_NEIGHBORS = 8
 VISIT_MS = 5_000
+LOCAL_VISIT_MS = 30_000
+GLOBAL_ENTER_LOG = math.log(1.05)
+LOCAL_ENTER_LOG = math.log(1.05)
+LOCAL_STABILITY_LOG = math.log(1.03)
+MIN_LOCAL_PAIRS = 8
+MIN_LOCAL_VISITS = 3
 
 
 @dataclass(frozen=True)
@@ -152,6 +158,105 @@ def contextual_groups(pairs: Sequence[ContextPair]) -> list[dict]:
     return rows
 
 
+def hierarchical_groups(pairs: Sequence[ContextPair]) -> list[dict]:
+    """Allocate proportional error to the native curve before RPM x MAP.
+
+    The global term is a robust centre across RPM regimes at the same native
+    curve position.  The local term is what remains for a supported RPM x MAP
+    region.  A material global term always wins: local evidence is held until
+    the Curve K correction is applied and a new calibration epoch is observed.
+    """
+    grouped: dict[tuple, list[ContextPair]] = defaultdict(list)
+    for pair in pairs:
+        grouped[(pair.lineage, pair.epoch, rpm_column(pair.rpm), map_bin(pair.map_bar))].append(pair)
+
+    stats = []
+    for (lineage, epoch, column, pressure), members in sorted(grouped.items()):
+        visit_values: dict[tuple[str, int], list[float]] = defaultdict(list)
+        for pair in members:
+            visit_values[(pair.gas_session, pair.gas_t // LOCAL_VISIT_MS)].append(pair.error_log)
+        visits = [statistics.median(values) for values in visit_values.values()]
+        stats.append({
+            "lineage": lineage,
+            "epoch": epoch,
+            "column": column,
+            "pressure": pressure,
+            "members": members,
+            "visits": visits,
+            "error": statistics.median(pair.error_log for pair in members),
+            "petrol_ms": statistics.median(pair.petrol_ref_ms for pair in members),
+        })
+
+    rows = []
+    for stat in stats:
+        comparable = [other for other in stats
+                      if other["lineage"] == stat["lineage"]
+                      and other["epoch"] == stat["epoch"]
+                      and abs(other["petrol_ms"] - stat["petrol_ms"]) <= 0.5]
+        regimes = {other["column"] for other in comparable}
+        other_regimes = regimes - {stat["column"]}
+        # One vote per contextual regime prevents a densely sampled cell from
+        # turning its local peculiarity into a global curve correction.
+        by_regime: dict[int, list[float]] = defaultdict(list)
+        for other in comparable:
+            by_regime[other["column"]].append(other["error"])
+        global_error = statistics.median(
+            statistics.median(values) for values in by_regime.values()
+        )
+        residual = stat["error"] - global_error
+        visit_residuals = [value - global_error for value in stat["visits"]]
+        centre = statistics.median(visit_residuals)
+        stable_sign = bool(visit_residuals) and (
+            all(value > 0.0 for value in visit_residuals)
+            or all(value < 0.0 for value in visit_residuals)
+        )
+        stable_spread = bool(visit_residuals) and statistics.median(
+            abs(value - centre) for value in visit_residuals
+        ) <= LOCAL_STABILITY_LOG
+        supported = (
+            len(stat["members"]) >= MIN_LOCAL_PAIRS
+            and len(stat["visits"]) >= MIN_LOCAL_VISITS
+            and bool(other_regimes)
+            and stable_sign
+            and stable_spread
+        )
+
+        if not other_regimes:
+            priority = "UNKNOWN"
+            reason = "SEM_OUTRO_REGIME_NA_CURVA"
+        elif abs(global_error) > GLOBAL_ENTER_LOG:
+            priority = "GLOBAL_FIRST"
+            reason = "CURVA_K_ANTES_DO_RESIDUAL_LOCAL"
+        elif not supported:
+            priority = "UNKNOWN"
+            reason = "EVIDENCIA_LOCAL_INSUFICIENTE"
+        elif abs(residual) > LOCAL_ENTER_LOG:
+            priority = "LOCAL_RESIDUAL"
+            reason = "RESIDUAL_RPM_MAP_REPETIVEL"
+        else:
+            priority = "ALIGNED"
+            reason = "SEM_RESIDUAL_LOCAL_MATERIAL"
+
+        rows.append({
+            "lineage": stat["lineage"],
+            "epoch": stat["epoch"],
+            "rpm_bin": stat["column"],
+            "rpm_center": (850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500)[stat["column"]],
+            "map_bin": stat["pressure"],
+            "petrol_ref_ms": stat["petrol_ms"],
+            "pairs": len(stat["members"]),
+            "visits": len(stat["visits"]),
+            "comparable_rpm_regimes": len(regimes),
+            "raw_error_percent": (math.exp(stat["error"]) - 1.0) * 100.0,
+            "global_error_percent": (math.exp(global_error) - 1.0) * 100.0,
+            "local_residual_percent": (math.exp(residual) - 1.0) * 100.0,
+            "priority": priority,
+            "reason": reason,
+            "local_candidate": priority == "LOCAL_RESIDUAL",
+        })
+    return rows
+
+
 def compare_context_models(observations: Sequence[Observation]) -> dict:
     """Full-session holdout for MAP-only versus RPM+MAP Tpet surfaces."""
     scopes: dict[tuple, list[Observation]] = defaultdict(list)
@@ -255,9 +360,11 @@ def run(paths: Sequence[Path], output: Path, source_head: str = "") -> dict:
                    reference_after_gas=pair.reference_after_gas)
         pair_rows.append(row)
     groups = contextual_groups(pairs)
+    hierarchy = hierarchical_groups(pairs)
     models = compare_context_models(observations)
     write_csv(output / "context-pairs.csv", pair_rows)
     write_csv(output / "rpm-map-groups.csv", groups)
+    write_csv(output / "hierarchical-residual-groups.csv", hierarchy)
     (output / "context-model-comparison.json").write_text(
         json.dumps(models, indent=2) + "\n", encoding="utf-8")
     summary = {
@@ -269,10 +376,19 @@ def run(paths: Sequence[Path], output: Path, source_head: str = "") -> dict:
         "pairs": len(pairs),
         "pairsUsingOnlyFuturePetrol": sum(pair.reference_after_gas for pair in pairs),
         "groups": len(groups),
+        "hierarchicalGroups": len(hierarchy),
+        "allocation": {
+            "globalFirst": sum(row["priority"] == "GLOBAL_FIRST" for row in hierarchy),
+            "localResidual": sum(row["priority"] == "LOCAL_RESIDUAL" for row in hierarchy),
+            "aligned": sum(row["priority"] == "ALIGNED" for row in hierarchy),
+            "unknown": sum(row["priority"] == "UNKNOWN" for row in hierarchy),
+        },
         "modelComparison": models,
         "limits": [
             "Pairs never cross a calibration epoch.",
             "Tpet is the response and is not used to select a contextual match.",
+            "The native global curve is allocated before any RPM x MAP residual.",
+            "A material global error holds local candidates until a new calibration epoch.",
             "The result is offline evidence, not an ECU write recommendation.",
         ],
     }
