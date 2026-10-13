@@ -1,5 +1,10 @@
 {
   "mcpServers": {
+    "codex": {
+      "type": "stdio",
+      "command": "/opt/codex-mcp/bin/codex",
+      "args": ["mcp-server"]
+    },
     "rea": {
       "type": "stdio",
       "command": "npx",
