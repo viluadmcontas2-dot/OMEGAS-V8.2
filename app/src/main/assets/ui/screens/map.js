@@ -90,6 +90,7 @@
 
     settleReadFailure(message) {
       this.reading = false;
+      if (this.curveImport) { this.curveImport = null; const b = document.getElementById('mapFromCurve'); if (b) b.disabled = false; }
       this.editor.reset();
       this.cells.clear();
       this.rowHeaders = [];
@@ -122,81 +123,81 @@
     }
 
     /**
-     * Curva K → Mapa K (rotina própria; o ExportToK do original não é usado). Lê a curva da ECU, calcula por linha o fator
-     * da curva no Tinj da linha (core/curve-to-map.js) e deixa a PROPOSTA na grade; gravar segue o fluxo manual (ACK + leitura de volta).
+     * Curva K → Mapa K (rotina própria; o ExportToK do original não é usado). Relê o Mapa K e a Curva K da ECU AGORA (nada
+     * fixo: o mapa pode ter qualquer valor), refatora o produto Mapa × Curva (core/curve-to-map.js) e deixa a PROPOSTA na
+     * grade. Gravar = mapa (fluxo manual, ACK + leitura de volta) e, em seguida, a curva neutra (core/balance-runner.js).
      */
     startCurveToMap() {
       if (!this.editor.hasMap() || this.reading || this.curveImport || this.root?.classList.contains('is-writing')) return;
-      const started = this.api.startCurveRead();
-      if (!started?.ok || !started?.started) {
-        this.alert(started?.error || 'Não foi possível ler a Curva K.');
-        return;
-      }
-      this.curveImport = { startedAt: Date.now() };
+      this.curveImport = { phase: 'map', startedAt: Date.now() };
+      this.curvePlan = null;
       const button = document.getElementById('mapFromCurve');
       if (button) button.disabled = true;
+      this.startRead(false);
+      if (!this.reading) this.finishCurveImport('Não foi possível reler o Mapa K. Nada foi proposto.');
+    }
+
+    finishCurveImport(message) {
+      this.curveImport = null;
+      const button = document.getElementById('mapFromCurve');
+      if (button) button.disabled = false;
+      if (message) this.alert(message);
+    }
+
+    /** Chamado quando o Mapa K acabou de ser relido: agora lê a curva. */
+    continueCurveToMap() {
+      const pending = this.curveImport;
+      if (!pending || pending.phase !== 'map') return;
+      const started = this.api.startCurveRead();
+      if (!started?.ok || !started?.started) {
+        this.finishCurveImport(started?.error || 'Não foi possível ler a Curva K.');
+        return;
+      }
+      this.curveImport = { phase: 'curve', startedAt: Date.now() };
       text('mapSourceStatus', 'Lendo a Curva K para propor o Mapa K');
     }
 
     pollCurveToMap() {
       const pending = this.curveImport;
-      if (!pending) return;
-      const finish = message => {
-        this.curveImport = null;
-        const button = document.getElementById('mapFromCurve');
-        if (button) button.disabled = false;
-        text('mapSourceStatus', 'Mapa lido da ECU');
-        if (message) this.alert(message);
-      };
+      if (!pending || pending.phase !== 'curve') return;
       const operation = this.api.curveOperation();
       if (!operation || operation.busy) {
-        if (Date.now() - pending.startedAt > 20000) finish('A leitura da Curva K demorou demais. Nada foi proposto.');
+        if (Date.now() - pending.startedAt > 20000) this.finishCurveImport('A leitura da Curva K demorou demais. Nada foi proposto.');
         return;
       }
       if (!operation.ok || !Array.isArray(operation.points) || operation.points.length !== 30 ||
           (operation.state !== 'COMPLETED' && !operation.demo)) {
-        finish(operation.error || 'A Curva K não retornou os 30 pontos válidos. Nada foi proposto.');
+        this.finishCurveImport(operation.error || 'A Curva K não retornou os 30 pontos válidos. Nada foi proposto.');
         return;
       }
       const message = this.applyCurveToMap(operation.points);
-      this.curveImport = null;
-      const button = document.getElementById('mapFromCurve');
-      if (button) button.disabled = false;
       text('mapSourceStatus', 'Mapa lido da ECU');
-      if (message) this.alert(message);
+      this.finishCurveImport(message);
     }
 
-    /** Devolve a mensagem para o dono; a proposta fica nas células (alvos nativos) e "Gravar" fica disponível. */
+    /** Devolve a mensagem para o dono; a proposta fica nas células (alvos) e "Gravar" fica disponível. */
     applyCurveToMap(points) {
       const planner = root.OmegasCurveToMap;
       if (!planner) return 'Rotina Curva K → Mapa K indisponível.';
       const snapshot = this.editor.snapshot();
-      const result = planner.plan({
+      this.curvePlan = null;
+      const result = planner.balance({
         tbp: points.map(point => point.petrolMs),
         k: points.map(point => point.factor),
         rowMs: snapshot.axes.petrolBins,
+        cells: snapshot.rows,
       });
-      if (!result.changing.length) return 'A Curva K está neutra (1,0) nas linhas do Mapa K: nada a passar para o Mapa K.';
+      const summary = result.summary;
+      if (!summary.rowsUsed) return 'Nenhuma linha do Mapa K cai dentro da faixa da Curva K: nada a passar para o Mapa K.';
+      if (!summary.cellsChanged) return summary.nodesChanged ? 'Só a curva mudaria (o mapa já absorve tudo): use a aba Ajuste global se quiser mexer nela.' : 'Mapa K e Curva K já estão equilibrados (curva neutra nas linhas): nada a fazer.';
+      const changes = [];
+      result.rows.forEach(row => row.cells.forEach(cell => {
+        if (cell.target !== cell.current) changes.push({ row: row.row, column: cell.column, target: cell.target });
+      }));
+      const nodes = result.nodes.filter(node => node.changed).map(({ index, currentRaw, targetRaw }) => ({ index, currentRaw, targetRaw }));
       this.editor.clearSelection();
-      let changedCells = 0;
-      let saturated = 0;
       try {
-        for (const item of result.changing) {
-          const cells = Array.from({ length: snapshot.rows[item.row].length }, (_, column) => ({
-            row: item.row, column, current: snapshot.rows[item.row][column],
-            petrolMs: snapshot.axes.petrolBins[item.row] ?? null, rpm: snapshot.axes.rpmBins[column] ?? null,
-          }));
-          // Mesma conta do botão "Percentual": valor × (1 + p/100), arredondado e limitado pelo Mapa K nativo.
-          const preview = this.api.previewMapAdjustment(cells, 'percent', item.percent);
-          if (!preview?.ok || !Array.isArray(preview.items) || preview.items.length !== cells.length) {
-            throw new Error(preview?.error || 'Prévia do Mapa K indisponível.');
-          }
-          preview.items.forEach(entry => {
-            this.editor.setTargetOverride(Number(entry.row), Number(entry.column), entry.target);
-            if (Number(entry.target) !== Number(entry.current)) changedCells += 1;
-            if (planner.saturates(entry.current, item.percent)) saturated += 1;
-          });
-        }
+        if (changes.length) this.editor.setTargetOverrides(changes);
       } catch (error) {
         this.editor.clearSelection();
         this.review = null;
@@ -204,13 +205,35 @@
         this.renderEditor();
         return error.message;
       }
+      this.curvePlan = { changes, nodes, armed: false };
       this.review = null;
       this.renderGrid();
       this.renderEditor();
-      const skipped = result.rows.filter(item => item.status !== 'ok').length;
-      // Mapa K guarda no máximo 255: se o valor pedido passa disso a célula é cortada e a correção fica menor que a da curva.
-      const warning = saturated ? ` ATENÇÃO: ${saturated} células passam de 255 e ficam em 255 (a correção sai menor que a da curva).` : '';
-      return `Proposta pronta: ${result.changing.length} linha${result.changing.length === 1 ? '' : 's'}, ${changedCells} células.${warning} Confira e grave; depois deixe a Curva K em 1,0.`;
+      const share = Math.round(summary.curveShare * 100);
+      const parts = [`${changes.length} ${changes.length === 1 ? 'célula' : 'células'} do mapa`, `${nodes.length} ${nodes.length === 1 ? 'ponto' : 'pontos'} da curva`];
+      const tight = summary.tightCells ? ` ${summary.tightCells} células ficam perto do limite do mapa (sem folga para o ajuste local).` : '';
+      const lost = summary.saturatedCells ? ` ATENÇÃO: ${summary.saturatedCells} células não cabem em 100–255 e a correção sai um pouco menor nelas.` : '';
+      const rest = share >= 1 ? ` A curva continua com até ${share}% de correção onde o mapa não tem espaço.` : ' A curva fica neutra (1,0).';
+      return `Proposta pronta: ${parts.join(' + ')}. Erro máximo ${summary.maxRowErrorPct.toFixed(2)}% no resultado final.${rest}${tight}${lost} Confira e grave: primeiro o mapa, depois a curva.`;
+    }
+
+    /** Segunda etapa: a curva refatorada, só depois do mapa confirmado pela ECU. */
+    async runCurveStage() {
+      const plan = this.curvePlan;
+      const runner = root.OmegasBalanceRunner;
+      if (!plan?.armed || !plan.nodes.length || !runner) return;
+      text('mapSourceStatus', 'Gravando a Curva K (etapa 2 de 2)');
+      const outcome = await runner.writeCurveStage(this.api, plan.nodes, { reason: 'Curva K → Mapa K: curva refatorada' });
+      if (outcome.ok) {
+        this.curvePlan = null;
+        text('mapSourceStatus', 'Mapa lido da ECU');
+        this.alert('Mapa e Curva K gravados e conferidos pela ECU. A curva ficou neutra nas linhas do mapa; o AutoCal segue aprendendo o resto.');
+      } else {
+        // Mapa já novo + curva antiga = correção em dobro: avisa e deixa "Concluir curva" para tentar de novo.
+        plan.armed = true;
+        plan.failed = outcome.error;
+        this.alert(`O mapa foi gravado, mas a curva NÃO: ${outcome.error} Até concluir, a correção está em dobro nas linhas. Toque em Curva K → Mapa K para refazer o plano.`);
+      }
     }
 
     poll() {
@@ -230,6 +253,7 @@
               text('mapSourceStatus', 'Mapa lido da ECU');
               this.store.patch({ map: { ...this.store.get().map, state: 'ready', data: result, selection: 0, review: null } });
               this.applyContext(this.pendingContext || this.store.get().routeContext);
+              this.continueCurveToMap();
             } catch (error) {
               this.settleReadFailure(error.message);
             }
@@ -444,6 +468,13 @@
         this.renderEditor();
         return;
       }
+      // Proposta do Curva K → Mapa K gravada sem edição: depois do mapa confirmado vem a curva (etapa 2).
+      const plan = this.curvePlan;
+      if (plan) {
+        const sent = new Map(this.review.items.map(item => [`${item.row}:${item.column}`, item.target]));
+        plan.armed = sent.size === plan.changes.length && plan.changes.every(c => sent.get(`${c.row}:${c.column}`) === c.target);
+        if (!plan.armed) this.curvePlan = null;
+      }
       this.root?.classList.add('is-writing');
       this.lastOperationState = '';
       // A ponte guarda uma "última operação" só para Curva K, Mapa K, backup e reset: esta tela só segue a gravação que iniciou.
@@ -486,7 +517,8 @@
         }
         this.writeStartedAt = null;
         this.editor.reset();
-        this.startRead(true);
+        const reread = () => this.startRead(true);
+        if (this.curvePlan?.armed) this.runCurveStage().then(reread, reread); else reread();
       } else if (operation.state === 'BATCH_PARTIAL_FAILED' || operation.ok === false) {
         this.root?.classList.remove('is-writing');
         this.root?.classList.add('has-result');
@@ -498,6 +530,7 @@
           result.querySelector('span').textContent = `${operation.confirmedCells || 0} células foram confirmadas antes da falha. ${failure.error || operation.error || 'Releitura obrigatória.'}`;
         }
         this.writeStartedAt = null;
+        this.curvePlan = null;
         this.editor.reset();
       }
     }

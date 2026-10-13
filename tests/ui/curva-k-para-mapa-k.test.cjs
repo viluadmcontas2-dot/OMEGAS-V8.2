@@ -1,90 +1,144 @@
 'use strict';
 
-// "Curva K → Mapa K" próprio do OMEGAS. Fórmula tirada do ExportToK do ProgBase (desmontagem, PROTOCOLO-LANDI doc 26):
-// por linha do Mapa K, x = Tinj da linha (ms); acha o par de nós da curva K com TBP[a] ≤ x ≤ TBP[b];
-// K = y0 + (y1−y0)·(x−x0)/(x1−x0); cada célula da linha é multiplicada por K. Linhas fora de [TBP[0], TBP[último]] não mudam.
+// "Curva K → Mapa K" do OMEGAS (dono, 2026-10-13): a ECU aplica Mapa K × curva K, então a rotina REFATORA o produto
+// (mapa leva o que cabe com folga, curva fica neutra/resto). Nada é fixo: o mapa vem da leitura em tempo real.
+// A interpolação da curva vem do ExportToK do ProgBase (PROTOCOLO-LANDI doc 26); o resto é do OMEGAS.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { plan, lerp } = require('../../app/src/main/assets/ui/core/curve-to-map.js');
+const { balance, naiveError, interp, mapAt, MAP_MIN, MAP_MAX } = require('../../app/src/main/assets/ui/core/curve-to-map.js');
+const { writeCurveStage } = require('../../app/src/main/assets/ui/core/balance-runner.js');
 const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/autocal-captura-ac-t1000.json'), 'utf8'));
 const phys = name => fixture.snapshot.fields.find(f => f.key === name).physicalValues;
 const TBP = phys('PETR_INJ_TBP');
 const K = phys('MUL_ACT');
-// Eixo de linhas do Mapa K da captura (TEMPI_PER_K × 0,00256 ms): 2,0 … 18 ms.
 const ROWS_MS = [781, 977, 1172, 1367, 1758, 2344, 3125, 3906, 4687, 5469, 6250, 7031].map(v => v * 0.00256);
+const COLS = 12;
 
-test('interpolação linear entre dois nós, como no original', () => {
-  assert.equal(lerp(1, 0, 2, 10, 20), 15);
-  assert.equal(lerp(2, 0, 2, 10, 20), 20);
-  assert.equal(lerp(0, 0, 2, 10, 20), 10);
+function seeded(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+const flat = value => ROWS_MS.map(() => Array(COLS).fill(value));
+const product = (cells, ks, x, c) => mapAt(ROWS_MS, cells.map(r => r[c]), x) * interp(TBP, ks, x);
+
+test('captura real, mapa baixo/médio/alto: produto preservado, curva neutra nas linhas, nada fora de 100–255', () => {
+  for (const value of [100, 120, 160, 200, 220, 255]) {
+    const cells = flat(value);
+    const out = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells });
+    assert.ok(out.summary.maxRowErrorPct < 2.5, `mapa ${value}: erro por linha ${out.summary.maxRowErrorPct}`);
+    out.rows.forEach(r => r.cells.forEach(c => assert.ok(c.target >= MAP_MIN && c.target <= MAP_MAX)));
+    out.nodes.forEach(n => assert.ok(n.target >= 0.6 && n.target <= 1.8, 'respeita o piso/teto de escrita da curva'));
+  }
 });
 
-test('nó a nó: x exatamente em um nó devolve o K desse nó', () => {
-  const result = plan({ tbp: [1, 2, 3], k: [1.0, 1.5, 1.2], rowMs: [1, 2, 3] });
-  assert.deepEqual(result.rows.map(r => r.k), [1.0, 1.5, 1.2]);
+test('mapa com folga: erro do produto ≤0,35% e curva fica com a menor parte; ingênuo erra ~12%', () => {
+  const cells = flat(160);
+  const out = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells });
+  assert.ok(out.summary.maxRowErrorPct < 0.35, String(out.summary.maxRowErrorPct));
+  assert.ok(out.summary.maxNodeErrorPct < 0.35, String(out.summary.maxNodeErrorPct));
+  assert.ok(naiveError({ tbp: TBP, k: K, rowMs: ROWS_MS, cells }) > 10, 'multiplicar e zerar a curva perde a forma entre as linhas');
 });
 
-test('entre nós: K cresce linearmente (caso do original)', () => {
-  const result = plan({ tbp: [2, 4], k: [1.0, 1.4], rowMs: [3] });
-  assert.ok(Math.abs(result.rows[0].k - 1.2) < 1e-12);
-  assert.equal(result.rows[0].status, 'ok');
+test('mapa sem folga (alto): a curva assume o excedente em vez de a célula estourar ou inventar 326', () => {
+  const out = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells: flat(220) });
+  assert.ok(out.summary.curveShare > 0.1, 'a curva não é neutra quando o mapa não tem folga');
+  out.rows.forEach(r => r.cells.forEach(c => assert.ok(c.target <= 255)));
+  assert.ok(out.summary.maxRowErrorPct < 2.5);
 });
 
-test('fora da faixa da curva a linha NÃO muda (como o original) e é dita', () => {
-  const result = plan({ tbp: [2, 4], k: [1.0, 1.4], rowMs: [1.5, 4.5] });
-  assert.deepEqual(result.rows.map(r => [r.status, r.k]), [['abaixo', null], ['acima', null]]);
-  assert.equal(result.rows.filter(r => r.status === 'ok').length, 0);
+test('propriedade: mapas e curvas aleatórios (50 casos) — produto, faixa e idempotência', () => {
+  const rnd = seeded(7);
+  for (let n = 0; n < 50; n += 1) {
+    const k = TBP.map(() => 0.7 + rnd() * 0.9);
+    const cells = ROWS_MS.map(() => Array.from({ length: COLS }, () => Math.round(110 + rnd() * 130)));
+    const out = balance({ tbp: TBP, k, rowMs: ROWS_MS, cells });
+    out.rows.forEach(r => r.cells.forEach(c => {
+      assert.ok(c.target >= MAP_MIN && c.target <= MAP_MAX);
+      if (!c.saturated) assert.ok(Math.abs(c.errorPct) < 3, `caso ${n}: erro ${c.errorPct}`);
+    }));
+    out.nodes.forEach(node => assert.ok(node.targetRaw >= Math.round(0.6 * 16384) && node.targetRaw <= Math.round(1.8 * 16384)));
+  }
 });
 
-test('nós repetidos (divisão por zero) não zeram a linha: ela é pulada', () => {
-  const result = plan({ tbp: [2, 2, 4], k: [1.0, 1.2, 1.4], rowMs: [2] });
-  assert.notEqual(result.rows[0].status, 'ok-zero');
-  assert.ok(result.rows[0].k === null || result.rows[0].k > 0);
+test('idempotência em curvas e mapas suaves (como os reais): refazer o plano quase não muda nada', () => {
+  const rnd = seeded(11);
+  for (let n = 0; n < 30; n += 1) {
+    const base = 0.9 + rnd() * 0.5;
+    const k = TBP.map((_, i) => base + 0.15 * Math.sin(i / 4 + n));
+    const level = Math.round(115 + rnd() * 120);
+    const cells = ROWS_MS.map((_, r) => Array.from({ length: COLS }, (__, c) => Math.min(255, Math.max(100, level + r * 2 - c))));
+    const out = balance({ tbp: TBP, k, rowMs: ROWS_MS, cells });
+    const next = out.rows.map(r => r.cells.map(c => c.target));
+    const kNext = TBP.map((_, i) => out.nodes.find(node => node.index === i)?.target ?? k[i]);
+    const again = balance({ tbp: TBP, k: kNext, rowMs: ROWS_MS, cells: next });
+    assert.ok(again.summary.maxRowErrorPct < 2.5, `caso ${n}: segunda passada ${again.summary.maxRowErrorPct}`);
+  }
 });
 
-test('nós com Tinj 0 ou K inválido são ignorados; K ≤ 0 nunca vira fator', () => {
-  const result = plan({ tbp: [0, 2, 4], k: [1.0, 0, 1.4], rowMs: [3] });
-  assert.equal(result.rows[0].status, 'sem-curva');
+test('linhas fora do eixo da curva e dados faltando não são tocados', () => {
+  const out = balance({ tbp: [3, 10], k: [1.2, 1.4], rowMs: [1, 5, 20], cells: [[150, 150], [150, 150], [150, 150]] });
+  assert.equal(out.rows[0].status, 'abaixo');
+  assert.equal(out.rows[2].status, 'acima');
+  assert.equal(out.rows[1].status, 'ok');
+  assert.equal(balance({ tbp: [], k: [], rowMs: [2], cells: [[150]] }).rows[0].status, 'sem-curva');
+  assert.equal(balance({ tbp: TBP, k: K, rowMs: [2], cells: [[150, null]] }).rows[0].status, 'sem-dados');
 });
 
-test('com a captura real: 12 linhas dentro da curva e K igual à interpolação manual', () => {
-  const result = plan({ tbp: TBP, k: K, rowMs: ROWS_MS });
-  assert.equal(result.rows.length, 12);
-  assert.ok(result.rows.every(r => r.status === 'ok'));
-  const manual = ROWS_MS.map(x => {
-    const i = TBP.findIndex((v, n) => n < TBP.length - 1 && v <= x && x <= TBP[n + 1]);
-    return K[i] + (K[i + 1] - K[i]) * (x - TBP[i]) / (TBP[i + 1] - TBP[i]);
-  });
-  result.rows.forEach((r, n) => assert.ok(Math.abs(r.k - manual[n]) < 1e-12, 'linha ' + n));
+test('curva já neutra: nada muda', () => {
+  const out = balance({ tbp: TBP, k: TBP.map(() => 1), rowMs: ROWS_MS, cells: flat(180) });
+  assert.equal(out.summary.cellsChanged, 0);
+  assert.equal(out.summary.nodesChanged, 0);
 });
 
-test('curva neutra (tudo 1,0): nenhuma linha muda', () => {
-  const result = plan({ tbp: TBP, k: TBP.map(() => 1), rowMs: ROWS_MS });
-  assert.equal(result.rows.every(r => r.percent === 0), true);
-  assert.equal(result.changing.length, 0);
+// ECU falsa: curva em Q14 + operações assíncronas do jeito da ponte (READING → COMPLETED, WRITING → BATCH_CONFIRMED).
+function fakeEcu(raw, { failWrite = false, drift = false } = {}) {
+  const state = { raw: raw.slice(), op: { state: 'IDLE', busy: false }, writes: 0 };
+  let pending = 0;
+  return {
+    state,
+    startCurveRead() { pending = 2; state.op = { state: 'READING', busy: true, kind: 'read' }; return { ok: true, started: true }; },
+    writeCurve(points) {
+      state.writes += 1; pending = 2; state.op = { state: 'WRITING', busy: true, kind: 'write', points };
+      return { ok: true, started: true };
+    },
+    curveOperation() {
+      if (pending > 0 && --pending > 0) return state.op;
+      if (state.op.kind === 'read') {
+        if (drift) state.raw[3] += 5;
+        state.op = { state: 'COMPLETED', busy: false, ok: true, points: state.raw.map((factorRaw, index) => ({ index, factorRaw })) };
+      } else if (state.op.kind === 'write') {
+        if (failWrite) state.op = { state: 'BATCH_PARTIAL_FAILED', busy: false, ok: false, error: 'NAK' };
+        else { state.op.points.forEach(p => { state.raw[p.index] = p.targetRaw; }); state.op = { state: 'BATCH_CONFIRMED', busy: false, ok: true, readbackValid: true }; }
+      }
+      return state.op;
+    },
+  };
+}
+const nodesOf = out => out.nodes.filter(n => n.changed).map(n => ({ index: n.index, currentRaw: n.currentRaw, targetRaw: n.targetRaw }));
+const noWait = () => Promise.resolve();
+
+test('etapa da curva: grava, confere e, repetida, não regrava (sem dobrar)', async () => {
+  const out = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells: flat(160) });
+  const ecu = fakeEcu(K.map(v => Math.round(v * 16384)));
+  const first = await writeCurveStage(ecu, nodesOf(out), { sleep: noWait });
+  assert.equal(first.ok, true);
+  assert.equal(ecu.state.writes, 1);
+  const second = await writeCurveStage(ecu, nodesOf(out), { sleep: noWait });
+  assert.equal(second.ok, true);
+  assert.equal(second.written, 0);
+  assert.equal(ecu.state.writes, 1, 'a segunda tentativa vê a curva já no alvo e não grava');
 });
 
-test('percentual = (K − 1) × 100, é o que o Mapa K nativo aplica como "percent"', () => {
-  const result = plan({ tbp: [2, 4], k: [1.0, 1.5], rowMs: [4] });
-  assert.ok(Math.abs(result.rows[0].percent - 50) < 1e-9);
-  assert.deepEqual(result.changing.map(r => r.row), [0]);
-});
-
-test('entradas inválidas: sem curva ou sem eixo não inventam nada', () => {
-  assert.equal(plan({ tbp: [], k: [], rowMs: [2] }).rows[0].status, 'sem-curva');
-  assert.equal(plan({ tbp: [2, 4], k: [1, 1], rowMs: [null] }).rows[0].status, 'sem-eixo');
-});
-
-test('saturação: 220 × 1,484 = 326 passa de 255 (Mapa K guarda 1 byte); 160 × 1,484 = 237 cabe', () => {
-  const { expectedTarget, saturates } = require('../../app/src/main/assets/ui/core/curve-to-map.js');
-  assert.equal(Math.round(expectedTarget(160, 48.4)), 237);
-  assert.equal(Math.round(expectedTarget(220, 48.4)), 326);
-  assert.equal(saturates(220, 48.4), true);
-  assert.equal(saturates(160, 48.4), false);
-  assert.equal(saturates(255, 0), false, 'exatamente 255 não satura');
-  assert.equal(saturates(250, 2), false, '255,0 cabe');
-  assert.equal(saturates(250, 3), true);
+test('etapa da curva: curva mudou desde o plano → não grava; falha de ECU → erro claro', async () => {
+  const out = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells: flat(160) });
+  const raw = K.map(v => Math.round(v * 16384));
+  const drifted = fakeEcu(raw, { drift: true });
+  const a = await writeCurveStage(drifted, nodesOf(out), { sleep: noWait });
+  assert.equal(a.ok, false);
+  assert.equal(a.stale, true);
+  assert.equal(drifted.state.writes, 0);
+  const failing = fakeEcu(raw, { failWrite: true });
+  const b = await writeCurveStage(failing, nodesOf(out), { sleep: noWait });
+  assert.equal(b.ok, false);
+  assert.match(b.error, /NAK/);
 });
