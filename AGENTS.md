@@ -46,7 +46,11 @@ Comandos de verificação: `node --test tests/ui/*.test.cjs` · `python3 -B -m u
 | Quais strings e unidades do ProgBase existem? | Só RTTI e exportações; o AutoMatch não tem função nomeada. | `docs/reverse/evidence/` |
 | O residual por RPM separa curva global de Mapa K? | Replay causal já feito. | `docs/evidence/2026-10-13-sessaoutil-rpm-residual-investigation.md` |
 
-**Reabertura:** só reabrir o `ProgBase.exe` se a pergunta não estiver em `docs/reverse/`. Use o CLI do REA em segundo plano com instantâneo (receita no checkpoint); o MCP estoura 60 s nesse binário. Antes de varrer código, consulte o mapa acima ou use a Serena.
+| Como é o protocolo serial AEB (framing, checksum, opcodes, handshake, flash)? | Documentado a partir do `ProgBase.exe` e do Portmon. | repositório `viluadmcontas2-dot/PROTOCOLO-LANDI` (índice `00-LEIA-ME.md`; opcodes em `12-MAPA-OPCODES.md`) |
+
+**Ordem de consulta:** 1) `docs/reverse/` e este mapa; 2) `PROTOCOLO-LANDI`, lendo só o arquivo do assunto pela API do GitHub (privado, exige `add_repo`; não clonar); 3) só então o `ProgBase.exe`. O `PROTOCOLO-LANDI` é evidência derivada: para byte de comando que vá para o código, confirmar no log real.
+
+**Reabertura:** só reabrir o `ProgBase.exe` se a pergunta não estiver em `docs/reverse/` nem no `PROTOCOLO-LANDI`. Use o CLI do REA em segundo plano com instantâneo (receita no checkpoint); o MCP estoura 60 s nesse binário. Antes de varrer código, consulte o mapa acima ou use a Serena.
 
 ## Fronteiras
 
