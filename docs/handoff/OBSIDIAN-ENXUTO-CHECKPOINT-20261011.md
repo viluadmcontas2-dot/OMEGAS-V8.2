@@ -116,3 +116,12 @@ Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*
 - Divergências do OMEGAS: `docs/evidence/2026-10-13-autocal-original-vs-omegas.md`. Mais graves: zonas deslocadas uma banda (`autocal-cockpit.js:353`, `:120`) e `0x94` = GNV em corte tratado como desconhecido (`Mp48Protocol.kt`). Nada corrigido no código ainda.
 - Incógnitas registradas no REA (`record_unknown`): frames dos botões sem captura, "#n/3", quadrados/cores, animações, campos constantes.
 - Primeiro item não provado desta frente: frames dos botões Reset petrol/gas, Manual automatch e Reset K no original (exige nova captura Portmon apertando cada botão).
+
+### Atualização 2026-10-13 (noite) — protocolo gráfico do original
+
+- `PROTOCOLO-LANDI` @ `bd1c65d`: docs 21 (protocolo gráfico) e 22 (registro de 393 parâmetros), `dfm/`, `reverse/ghidra/`, `tools/`, `evidencia/`. Artefato do relatório republicado (v6, mesma URL).
+- **Provado no código do `ProgBase.exe`:** Reset gasolina/GNV/all e Manual automatch = `SendCommand(0x24, {04, modo})` com modos `01/02/04/08` (`push 1/2/4/8` em `0x5189C0/CC/D8/B4`); zonas por banda `0–4/5–8/9–12/13–17` com fronteiras `THD[5/9/13]`; rótulo `#n/d` = entradas ≠ 0 do buffer de MAP do combustível em uso ÷ limiar; painel Acquisition = contador ≥ limiar; curva K editável por arrasto (grava `MUL_ACT[i]` ao soltar, `0,1 < K < 10`); apagar pontos = `0x016D/0x016E`; desligar o Enable exige Sim/Não com aviso de que a curva K deixa de atuar.
+- Divergências do OMEGAS (12 defeitos + conflitos com invariantes): `docs/evidence/2026-10-13-autocal-original-vs-omegas.md`, com imagem lado a lado. Nada corrigido no código.
+- Emulação: `orig_emulator.py` (tela original por instante da captura) e `render_omegas.cjs` (a `index.html` real do OMEGAS com dados da captura) no PROTOCOLO-LANDI/`tools`.
+- Incógnitas que ficaram (REA `record_unknown`): cor NACQ padrão, pontos vermelhos pequenos e "+" verde da S2, critério da ECU para acender as flags de zona e para o limite de passo do K, animações.
+- Primeiro item não provado desta frente: comportamento do OMEGAS **no carro** com as correções de zona/`0x94`/K a cada ciclo (nada foi alterado ainda; precisa de prévia PNG aprovada antes de mexer na tela).
