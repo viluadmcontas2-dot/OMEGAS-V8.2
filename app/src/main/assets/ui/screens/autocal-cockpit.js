@@ -705,6 +705,10 @@
               </div>
 
               <div class="autocal-focus-metrics" aria-live="polite">
+                <div class="autocal-focus-metric autocal-focus-voltage" id="autocalLiveVoltBox" data-state="unknown" title="Tensão da ECU (provisório: byte 19 do canal 48 01 ÷ 16, ainda não comparado com o módulo OBD). Só aparece no GNV. Acima de 14,1 V o GNV desliga.">
+                  <small>Tensão ECU*</small>
+                  <b><span id="autocalLiveVolt">—</span><em>V</em></b>
+                </div>
                 <div class="autocal-focus-metric">
                   <small>MAP</small>
                   <b><span id="autocalLiveMap">—</span><em>bar</em></b>
@@ -1209,6 +1213,7 @@
 
     /** Números do topo (combustível, RPM, Petrol Inj., MAP, zona); texto e atributo só quando mudam. */
     renderLiveMetrics(telemetry) {
+      this.renderVoltage(telemetry);
       const live = AutoCalUxModel.livePoint(telemetry || {}, this.projection);
       const fuelChip = document.getElementById('autocalLiveFuel');
       if (!live) {
@@ -1228,6 +1233,18 @@
       this.text('autocalLiveMap', TWO_DECIMALS.format(live.mapBar));
       const liveZone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
       this.text('autocalLiveZone', liveZone === null ? '—' : 'Z' + liveZone);
+    }
+
+    /**
+     * Tensão da ECU na barra do AutoCal (dono, 2026-10-13). Mesma regra da faixa de status: byte 19 do 48 01 ÷ 16
+     * (provisório), 0/ausente = "—"; a partir de 14,1 V o campo fica em alerta (o GNV desliga acima disso).
+     */
+    renderVoltage(telemetry) {
+      const live = telemetry?.valid === true ? (telemetry.live || telemetry.data || {}) : null;
+      const raw = live ? finite(live.unknown_raw_19 ?? live.unknownRaw19) : null;
+      const volts = raw !== null && raw > 0 ? raw / 16 : null;
+      this.text('autocalLiveVolt', volts === null ? '—' : volts.toFixed(1).replace('.', ','));
+      setData(document.getElementById('autocalLiveVoltBox'), 'state', volts === null ? 'unknown' : volts >= 14.1 ? 'alert' : 'measured');
     }
 
     renderLiveNarrative() {
@@ -1547,7 +1564,7 @@
       const width = Math.max(560, Math.round(host.getBoundingClientRect?.().width || 860));
       const height = Math.max(250, Math.round(host.getBoundingClientRect?.().height || 300));
       const key = JSON.stringify([model, width, height, Array.from(this.selectedAcquiredPoints || []), this.selectedAcquiredPoint]);
-      this.text('autocalReferenceCount', model.zones.map(zone => zone.label).join(' · '));
+      this.text('autocalReferenceCount', 'Amostras por zona (baixa → alta): ' + model.zones.map(zone => zone.label).join(' · '));
       this.currentAcquiredPoints = [...AutoCalUxModel.acquiredPoints(snapshot, 'petrol'), ...AutoCalUxModel.acquiredPoints(snapshot, 'gas')];
       this.currentReferencePoints = [];
       if (this.renderedChartHost === host && this.chartRenderKey === key) return true;

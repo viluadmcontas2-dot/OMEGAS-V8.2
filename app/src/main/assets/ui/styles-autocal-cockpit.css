@@ -2369,3 +2369,8 @@
 .ao-run { fill: #ff3b3b; stroke: #fff; stroke-width: 1; }
 .ao-k-line { fill: none; stroke: #2f9bff; stroke-width: 3; }
 .ao-k-node { fill: #2f9bff; }
+
+/* Tensão da ECU na barra do AutoCal: vermelha a partir de 14,1 V (o GNV desliga acima disso). */
+.autocal-focus-voltage[data-state="alert"] { border-color: rgba(255,123,114,.6); }
+.autocal-focus-voltage[data-state="alert"] b { color: #ff7b72; }
+.autocal-focus-voltage[data-state="unknown"] b { color: #7f8da0; }

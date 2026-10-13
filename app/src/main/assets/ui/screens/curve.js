@@ -24,6 +24,13 @@
   function parseFactor(value) {
     return finite(typeof value === 'string' ? value.trim().replace(',', '.') : value);
   }
+  // Arrasto de nó (dono, 2026-10-13): mesmos limites do botão de ajuste fino; passo de 0,001 (precisão da ECU em Q14 é maior).
+  const DRAG_FACTOR_MIN = 0.6;
+  const DRAG_FACTOR_MAX = 4;
+  function dragFactor(yView, scale) {
+    const raw = scale.min + ((scale.height - scale.padY - yView) / (scale.height - scale.padY * 2)) * (scale.max - scale.min);
+    return Math.round(Math.min(DRAG_FACTOR_MAX, Math.max(DRAG_FACTOR_MIN, raw)) * 1000) / 1000;
+  }
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
   }
@@ -65,6 +72,83 @@
       });
       document.getElementById('curveReviewButton')?.addEventListener('click', () => this.writePrepared());
       document.getElementById('curveDismissResult')?.addEventListener('click', () => this.dismissResult());
+      this.bindDrag();
+    }
+
+    /**
+     * Arrastar um nó da Curva K (como no original, que grava ao soltar): aqui soltar só PREPARA a prévia do ponto;
+     * a escrita continua exigindo a revisão e a leitura de volta (invariante do dono). Durante o arrasto só o nó,
+     * a linha tracejada e o valor mudam (um quadro por requestAnimationFrame); nada é relido nem redesenhado por inteiro.
+     */
+    bindDrag() {
+      const host = document.getElementById('curveChart');
+      if (!host || typeof host.addEventListener !== 'function') return;
+      const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : callback => setTimeout(callback, 16);
+      host.addEventListener('pointerdown', event => {
+        // O nó visível (data-curve-dot) fica por cima da área de toque (data-curve-index): os dois iniciam o arrasto.
+        const hit = event.target?.closest?.('[data-curve-index], [data-curve-dot]');
+        if (!hit || !this.chartScale || event.button > 0 || this.writing) return;
+        const index = Number(hit.dataset.curveIndex ?? hit.dataset.curveDot);
+        const point = this.points().find(item => Number(item.index) === index);
+        if (!point) return;
+        event.preventDefault();
+        this.drag = null;
+        this.selectPoint(index);
+        const start = this.proposals.get(index)?.targetFactor ?? point.factor;
+        this.drag = { index, pointerId: event.pointerId, start: Number(start), factor: Number(start), moved: false, frame: 0 };
+        try { host.setPointerCapture?.(event.pointerId); } catch (_) { /* sem captura: o arrasto segue pelo host */ }
+        host.classList?.add('dragging');
+      });
+      host.addEventListener('pointermove', event => {
+        const drag = this.drag;
+        if (!drag || event.pointerId !== drag.pointerId || !this.chartScale) return;
+        const svg = host.querySelector('svg');
+        const box = svg?.getBoundingClientRect?.();
+        if (!box || !(box.height > 0)) return;
+        const yView = ((event.clientY - box.top) / box.height) * this.chartScale.height;
+        drag.factor = dragFactor(yView, this.chartScale);
+        drag.moved = drag.moved || Math.abs(drag.factor - drag.start) >= 0.001;
+        if (!drag.frame) drag.frame = raf(() => { drag.frame = 0; this.paintDrag(); });
+      });
+      const finish = event => {
+        const drag = this.drag;
+        if (!drag || (event && event.pointerId !== drag.pointerId)) return;
+        this.drag = null;
+        host.classList?.remove('dragging');
+        try { host.releasePointerCapture?.(drag.pointerId); } catch (_) { /* já solto */ }
+        if (!drag.moved) { this.renderChart(); return; }
+        const input = document.getElementById('curveTargetFactor');
+        if (input) input.value = factorText(drag.factor);
+        this.prepareActivePoint();
+      };
+      host.addEventListener('pointerup', finish);
+      host.addEventListener('pointercancel', event => {
+        const drag = this.drag;
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        this.drag = null;
+        host.classList?.remove('dragging');
+        this.renderChart();
+      });
+    }
+
+    /** Move só o que muda durante o arrasto: nó, linha tracejada e o valor mostrado. */
+    paintDrag() {
+      const drag = this.drag;
+      const scale = this.chartScale;
+      const host = document.getElementById('curveChart');
+      if (!drag || !scale || !host) return;
+      const y = scale.yFor(drag.factor).toFixed(1);
+      host.querySelectorAll(`[data-curve-index="${drag.index}"], [data-curve-dot="${drag.index}"]`).forEach(node => node.setAttribute('cy', y));
+      const path = host.querySelector('.curve-line.proposal');
+      if (path) {
+        path.setAttribute('d', this.points().map((point, position) => {
+          const value = Number(point.index) === drag.index ? drag.factor : (this.proposals.get(Number(point.index))?.targetFactor ?? point.factor);
+          return `${position ? 'L' : 'M'} ${scale.xFor(position).toFixed(1)} ${scale.yFor(Number(value)).toFixed(1)}`;
+        }).join(' '));
+      }
+      const input = document.getElementById('curveTargetFactor');
+      if (input) input.value = factorText(drag.factor);
+      text('curveTargetNormalized', `${fmt(drag.start, 4)} → ${fmt(drag.factor, 4)}`);
     }
 
     needsLearning() { return this.view === 'learning'; }
@@ -537,6 +621,8 @@
 
     renderChart() {
       const host = document.getElementById('curveChart');
+      // Durante o arrasto ninguém redesenha o gráfico por baixo do dedo (a leitura periódica também passa aqui).
+      if (this.drag) return;
       const points = this.points();
       if (!host) return;
       if (!points.length) {
@@ -549,6 +635,7 @@
       const max = Math.max(min + 0.2, Math.max(...factors, ...points.map(item => finite(item.factor) || 0)) + 0.08);
       const xFor = index => padX + (index / Math.max(1, points.length - 1)) * (width - padX * 2);
       const yFor = factor => height - padY - ((factor - min) / (max - min)) * (height - padY * 2);
+      this.chartScale = { min, max, width, height, padX, padY, xFor, yFor };
       const actualPath = points.map((point, index) => `${index ? 'L' : 'M'} ${xFor(index).toFixed(1)} ${yFor(Number(point.factor)).toFixed(1)}`).join(' ');
       const proposalPath = points.map((point, index) => {
         const proposal = this.proposals.get(Number(point.index));
@@ -561,7 +648,7 @@
         const y = yFor(proposed ? this.proposals.get(Number(point.index)).targetFactor : point.factor).toFixed(1);
         const x = xFor(index).toFixed(1);
         const label = index % 5 === 0 || index === points.length - 1 ? `<text class="curve-point-label" x="${x}" y="${height - 8}" text-anchor="middle">${fmt(point.petrolMs, 1)}</text>` : '';
-        return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="15" tabindex="0" role="button" aria-label="Ponto ${Number(point.index) + 1}, ${fmt(point.petrolMs, 2)} ms"></circle><circle class="curve-point ${selected ? 'active' : ''} ${proposed ? 'proposed' : ''}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
+        return `<circle class="curve-point-hit" data-curve-index="${point.index}" cx="${x}" cy="${y}" r="15" tabindex="0" role="button" aria-label="Ponto ${Number(point.index) + 1}, ${fmt(point.petrolMs, 2)} ms"></circle><circle class="curve-point ${selected ? 'active' : ''} ${proposed ? 'proposed' : ''}" data-curve-dot="${point.index}" cx="${x}" cy="${y}" r="${selected ? 9 : 7}"></circle>${label}`;
       }).join('')}</svg>`;
       host.querySelectorAll('[data-curve-index]').forEach(point => {
         const select = () => this.selectPoint(Number(point.dataset.curveIndex));
@@ -753,4 +840,5 @@
   }
 
   ns.CurveScreen = CurveScreen;
+  ns.CurveDrag = { dragFactor, FACTOR_MIN: DRAG_FACTOR_MIN, FACTOR_MAX: DRAG_FACTOR_MAX };
 })(typeof window !== 'undefined' ? window : globalThis);
