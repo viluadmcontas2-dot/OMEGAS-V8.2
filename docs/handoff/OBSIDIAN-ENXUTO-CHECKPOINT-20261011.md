@@ -228,3 +228,4 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - Provas locais: node 232/0, unittest OK (4 skip), run_checks PASS, e2e refino_mapa/sem_rolagem_abas/curva_para_mapa/curva_k_arrasto/comparar_com_original/usage_meter PASS.
 - Não provado: Kotlin novo (`recordUiUsage`) sem CI; aparelho; efeito físico; Reaprender GNV no fio. CIs `e6f03d3`/`4166d59` sem resultado conferido.
 - Primeiro item ainda não comprovado: CI deste commit.
+- CI verde: e6f03d3 (run 1334) e 4166d59 (run 1335). CI de 5c0d170 (run 1336, com `recordUiUsage`) em andamento — não conferida.
