@@ -12,9 +12,8 @@ test('AutoCal uses graph-first premium hierarchy', () => {
   assert.match(js, /AutoCal · Gasolina e GNV/);
   assert.match(js, /CURVA DE AQUISIÇÃO · Gasolina × GNV/);
   assert.match(js, /id="autocalReferenceChart"/);
-  assert.match(js, /id="autocalLiveRpm"/);
-  assert.match(js, /id="autocalLivePetrol"/);
-  assert.match(js, /id="autocalLiveMap"/);
+  // RPM, Petrol Inj., MAP e tensão agora vivem na barra global (components/live-bar.js).
+  assert.doesNotMatch(js, /id="autocalLive(Rpm|Petrol|Map|Volt)"/);
   assert.match(js, /id="autocalLiveZone"/);
   assert.doesNotMatch(js, /autocalLiveLevel/);
   assert.match(css, /\.autocal-focus-toolbar\s*\{/);

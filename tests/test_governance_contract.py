@@ -42,7 +42,7 @@ class StableRepositoryContract(unittest.TestCase):
             "app/src/main/assets/ui/core/router.js",
             "app/src/main/assets/ui/core/scheduler.js",
             "app/src/main/assets/ui/core/native-api.js",
-            "app/src/main/assets/ui/screens/dashboard.js",
+            "app/src/main/assets/ui/components/live-bar.js",
             "app/src/main/assets/ui/screens/local-refino.js",
             "app/src/main/assets/ui/screens/map.js",
             "app/src/main/assets/ui/screens/curve.js",

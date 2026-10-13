@@ -192,7 +192,7 @@ test('tela inteira: sem quadro novo a idade guardada no estado anda (inclusive a
   const clock = fakeClock(6_000_000);
   const bridge = fakeBridge(clock);
   const app = bootApp(bridge, clock);
-  assert.equal(app.store.get().route, 'dashboard');
+  assert.equal(app.store.get().route, 'autocal');
   const ages = [];
   for (let tick = 0; tick < 70; tick += 1) {
     app.scheduler.onFast();

@@ -50,8 +50,9 @@ assert 'id="mapWriteButton"' not in index
 autocal_screen = index.split('data-screen="autocal"', 1)[1].split('data-screen="refino"', 1)[0]
 assert "page-intro" not in autocal_screen
 assert "autocal-focus" in app
-assert ".app-shell.autocal-focus .workspace-head" in base_css
-assert "display: none" in base_css.split(".app-shell.autocal-focus .workspace-head", 1)[1].split("}", 1)[0]
+# A barra do topo (tensão, MAP, Petrol Inj., RPM) é persistente em todas as abas (dono, 2026-10-13): nunca fica oculta.
+assert ".app-shell .workspace-head.live-bar" in base_css
+assert "display: none" not in base_css.split(".app-shell .workspace-head.live-bar", 1)[1].split("}", 1)[0]
 assert autocal.index('<details id="autocalTechnicalDetails"') < autocal.index('id="autocalBands"')
 assert "18 REGIÕES · DETALHE TÉCNICO" in autocal
 assert "height: clamp(340px, 52vh, 430px)" in css

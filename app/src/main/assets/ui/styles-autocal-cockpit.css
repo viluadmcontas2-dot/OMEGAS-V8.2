@@ -2346,7 +2346,7 @@
 .ao-zone[data-acquired="true"] { fill: rgba(110,255,130,.12); }
 .ao-zone-edge { stroke: rgba(255,255,255,.8); stroke-width: 2.5; stroke-dasharray: 12 7; } /* bem visível à distância (pedido do dono) */
 .ao-zone-label { fill: #aebccd; font-size: 15px; font-weight: 800; }
-.ao-band { fill: rgba(255,0,255,.16); }
+.ao-band { fill: rgba(255,255,255,.12); }
 .ao-limit-min { stroke: var(--ao-limit-min); stroke-width: 2.5; stroke-dasharray: 8 6; }
 .ao-limit-max { stroke: var(--ao-bad); stroke-width: 2.5; stroke-dasharray: 8 6; }
 .ao-curve { fill: none; stroke-width: 2; }
@@ -2401,7 +2401,7 @@
 .ao-g-line-petrol { stroke: var(--ao-petrol-line); fill: none; stroke-width: 2; }
 .ao-g-line-gas { stroke: var(--ao-gas); fill: none; stroke-width: 2; }
 .ao-g-run { fill: #ff3b3b; stroke: #fff; stroke-width: 1; }
-.ao-g-band { fill: rgba(255,0,255,.35); stroke: none; }
+.ao-g-band { fill: rgba(255,255,255,.35); stroke: none; }
 .ao-g-zone-ok { fill: rgba(110,255,130,.35); stroke: none; }
 .ao-g-zone-no { fill: rgba(150,160,176,.35); stroke: none; }
 .ao-g-limit-min { stroke: var(--ao-limit-min); stroke-width: 2.5; stroke-dasharray: 5 3; fill: none; }

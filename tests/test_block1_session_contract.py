@@ -26,7 +26,6 @@ class Block1SessionContract(unittest.TestCase):
         self.html = (UI / "index.html").read_text("utf-8")
         self.app = (UI / "app.js").read_text("utf-8")
         self.scheduler = (UI / "core/scheduler.js").read_text("utf-8")
-        self.dashboard = normalize_js_source((UI / "screens/dashboard.js").read_text("utf-8"))
         self.bridge = BRIDGE.read_text("utf-8")
         self.policy = POLICY.read_text("utf-8")
         self.css = (UI / "styles.css").read_text("utf-8")
@@ -72,11 +71,6 @@ class Block1SessionContract(unittest.TestCase):
         self.assertIn('scheduler.stop()', self.app)
         self.assertIn('scheduler.start()', self.app)
         self.assertNotIn('MutationObserver', self.app + self.scheduler)
-
-    def test_dashboard_makes_stale_expired_and_stuck_visible(self):
-        for marker in ('stale', 'expired', 'engineStuck', 'Telemetria atrasada', 'Telemetria expirada', 'Comunicação travada'):
-            self.assertIn(marker, self.dashboard)
-        self.assertIn('Ajustes permanecem bloqueados até a condição normalizar', self.dashboard)
 
     def test_multimedia_1280x720_is_the_explicit_primary_surface(self):
         # Navegação inferior aprovada pelo dono (2026-10-11): uma linha de 84 px embaixo.

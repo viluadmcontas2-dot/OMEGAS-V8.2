@@ -194,3 +194,10 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - Provas locais: `node --test tests/ui/*.test.cjs` 235/0; `unittest` 207 OK (4 skip); e2e `sem_rolagem_8_abas`, `curva_para_mapa`, `curva_k_arrasto`, `refino_local` PASS. Prévias: `docs/evidence/img/previas-2026-10-13d/`.
 - Não provado: comportamento no aparelho (velocidade do cursor, gravação real do reforço), efeito físico do +% no engasgo. APK só após aprovação das prévias.
 - Primeiro item ainda não comprovado: CI remota (`ci.yml`) desse commit; Kotlin `StallWatch` com CUTOFF/`getStalls` (commit 72400c4) também sem resultado verificado.
+
+## 2026-10-13 · noite 11 — barra persistente, poda de Agora/Sugestões, aquisição sem ordem
+- Dono: barra do topo (tensão, MAP, Petrol Inj., RPM) persistente em todas as abas; podar Agora e Sugestões; abrir AutoCal sem lag; GNV e gasolina adquiridos em qualquer ordem; auditoria de interface.
+- Feito: `components/live-bar.js` + `<header id="liveBar">`; 6 abas (AutoCal, Refino, Refino local, Ajuste local, Ajuste global, Ferramentas), padrão AutoCal; quadro rápido em todas as abas (também corrige o cursor AGORA do Refino, que antes não recebia telemetria); poda de `dashboard.js`, `suggestion-model.js`, `curve-prediction-state.js`, `split-layout.js`; sem roxo (+ teste); `NativeAutoCalAcquisitionEpoch.kt`: cada combustível decide por si e o reset vale como aplicado quando os contadores zeram OU caem abaixo do que havia (antes só zero: pendente para sempre se o carro voltasse a adquirir entre duas leituras). Auditoria: `docs/evidence/2026-10-13-auditoria-interface-6-abas.md`.
+- Provas locais: node 218/0, unittest OK, e2e sem_rolagem_abas/refino_local/curva_para_mapa PASS, `autocal_abertura.cjs` (≤ 55 ms a 4× de lentidão). Kotlin: testes novos em `NativeAutoCalAcquisitionEpochTest.kt` SEM prova local (sem SDK) — dependem da CI.
+- Não provado: aparelho; se a ECU adquire GNV parada em marcha lenta após o reset (causa do "não coleta" pode ser da ECU).
+- Primeiro item ainda não comprovado: CI do commit desta noite.

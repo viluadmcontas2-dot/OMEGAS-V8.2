@@ -5,12 +5,10 @@ ROOT = Path(__file__).resolve().parents[1]
 MONITOR = ROOT / "app/src/main/java/com/omegas/prohub/autocal/NativeAutoCalMonitor.kt"
 PROTOCOL = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48Protocol.kt"
 SCALE = ROOT / "app/src/main/java/com/omegas/prohub/ecu/Mp48TelemetryScale.kt"
-DASHBOARD = ROOT / "app/src/main/assets/ui/screens/dashboard.js"
 
 monitor = MONITOR.read_text(encoding="utf-8")
 protocol = PROTOCOL.read_text(encoding="utf-8")
 scale = SCALE.read_text(encoding="utf-8")
-dashboard = DASHBOARD.read_text(encoding="utf-8")
 
 section = monitor.split("private fun refreshAcquisitionGroup", 1)[1].split("private fun refreshReferenceGroup", 1)[0]
 required = [
@@ -26,9 +24,5 @@ assert "AutoCalProtocol.MUL_ACT" not in section
 assert '.put("level_raw", levelRaw)' in protocol
 assert "level_percentage" not in protocol
 assert "levelPercentage" not in scale
-assert "NÍVEL DO GNV" in dashboard  # (dono, 2026-10-11: texto para leigo): o valor continua RAW
-assert "sensor sem escala" in dashboard
-assert 'id="dashLevelsRaw"' in dashboard
-assert "level_raw" in dashboard
 
 print("LEVELS_AND_AUTOCAL_OPERATIONAL_REFRESH_CONTRACT=PASS")

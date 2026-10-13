@@ -43,10 +43,10 @@ const baselineRun = productContract(baseline);
 assert.equal(baselineRun.status, 0, 'baseline do meta-teste precisa estar verde');
 
 const mutants = [
-  ['route-removed', 'app/src/main/assets/ui/core/router.js', "'curve', 'autocal', 'refino'", "'curve', 'refino'"],
+  ['route-removed', 'app/src/main/assets/ui/core/router.js', "['autocal', 'refino'", "['refino'"],
   ['nav-reordered', 'app/src/main/assets/ui/index.html',
-    'data-route="autocal"><i>05</i><span>AutoCal</span></button>\n        <button type="button" data-route="refino"',
-    'data-route="refino"><i>05</i><span>Refino</span></button>\n        <button type="button" data-route="autocal"'],
+    'data-route="autocal" class="active"><i>01</i><span>AutoCal</span></button>\n        <button type="button" data-route="refino"><i>02</i><span>Refino</span></button>',
+    'data-route="refino" class="active"><i>01</i><span>Refino</span></button>\n        <button type="button" data-route="autocal"><i>02</i><span>AutoCal</span></button>'],
   ['reader-status-miswired', 'app/src/main/assets/ui/core/autocal-api.js',
     "readerStatus: () => invoke('getStatus'", "readerStatus: () => invoke('getNativeMonitorStatus'"],
   ['reader-snapshot-miswired', 'app/src/main/assets/ui/core/autocal-api.js',

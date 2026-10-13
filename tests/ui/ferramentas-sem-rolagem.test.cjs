@@ -3,7 +3,7 @@
 // Trava do dono (2026-10-11): "todo o aplicativo funciona sem rolagem nem sub-rolagem".
 // Aprender e Ferramentas: nada rola; o que não cabe vira aba interna (sem "Detalhes" — dono, 2026-10-11)
 // no mesmo lugar, ações embaixo e à esquerda, toque ≥ 48 px, texto ≥ 12 px. A medição real no Chromium
-// fica em tools/ci/sem_rolagem_8_abas.cjs; aqui travamos as decisões de marcação/CSS sem navegador.
+// fica em tools/ci/sem_rolagem_abas.cjs; aqui travamos as decisões de marcação/CSS sem navegador.
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

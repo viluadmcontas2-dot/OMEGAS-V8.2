@@ -41,7 +41,7 @@ function bootCore() {
 
 test('Store é a autoridade única e notifica mudanças sem duplicar estado', () => {
   const { context } = bootCore();
-  const store = new context.OmegasUi.Store({ route: 'dashboard', value: 1 });
+  const store = new context.OmegasUi.Store({ route: 'autocal', value: 1 });
   const snapshots = [];
   store.subscribe(state => snapshots.push({ ...state }), true);
   store.patch({ value: 2 });
@@ -50,7 +50,7 @@ test('Store é a autoridade única e notifica mudanças sem duplicar estado', ()
   assert.equal(snapshots.length, 3);
 });
 
-test('Router aceita sete destinos humanos e limpa contexto antigo ao navegar', () => {
+test('Router aceita seis destinos humanos e limpa contexto antigo ao navegar', () => {
   const { context, storage } = bootCore();
   const store = new context.OmegasUi.Store(context.OmegasUi.createInitialState());
   const router = new context.OmegasUi.Router(store);
@@ -60,7 +60,8 @@ test('Router aceita sete destinos humanos e limpa contexto antigo ao navegar', (
   assert.equal(router.navigate('curve'), true);
   assert.equal(store.get().route, 'curve');
   assert.equal(store.get().routeContext, null);
-  assert.equal(router.navigate('suggestions'), true);
+  assert.equal(router.navigate('suggestions'), false, 'Sugestões foi podada');
+  assert.equal(router.navigate('dashboard'), false, 'Agora foi podada');
   assert.equal(router.navigate('tools'), true);
   assert.equal(router.navigate('adjust'), false);
   assert.equal(storage.get('omegas-v8-route'), 'tools');

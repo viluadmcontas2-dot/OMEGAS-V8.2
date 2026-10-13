@@ -41,6 +41,9 @@ class NativeAutoCalAcquisitionEpoch {
     /** Reset manual/AutoMatch pediu nova aquisição: só um grupo com os contadores daquele combustível zerados a confirma. */
     private var petrolAwaitingZero = false
     private var gasAwaitingZero = false
+    /** Contadores do combustível no instante do reset: a prova de que a ECU aplicou o reset é zerar OU ficar abaixo disto. */
+    private var petrolBaseline: IntArray? = null
+    private var gasBaseline: IntArray? = null
     private var reason = "SESSION_BOOTSTRAP"
 
     fun reset(sessionId: Long) {
@@ -58,6 +61,8 @@ class NativeAutoCalAcquisitionEpoch {
         previousGas = null
         petrolAwaitingZero = false
         gasAwaitingZero = false
+        petrolBaseline = null
+        gasBaseline = null
         reason = if (sessionId > 0L) "SESSION_BOOTSTRAP" else "DISCONNECTED"
     }
 
@@ -83,6 +88,7 @@ class NativeAutoCalAcquisitionEpoch {
         if (sessionId <= 0L || sessionId != usbSessionId) return false
         when (action) {
             "RESET_PETROL" -> {
+                petrolBaseline = previousPetrol ?: petrolBaseline
                 petrolGeneration++
                 petrolPending = true
                 petrolReferencePending = true
@@ -91,6 +97,7 @@ class NativeAutoCalAcquisitionEpoch {
                 petrolAwaitingZero = true
             }
             "RESET_GAS", "MANUAL_AUTOMATCH" -> {
+                gasBaseline = previousGas ?: gasBaseline
                 gasGeneration++
                 gasPending = true
                 gasReferencePending = true
@@ -100,6 +107,8 @@ class NativeAutoCalAcquisitionEpoch {
                 nativeCount = null // o contador pode voltar a 0: novo baseline, sem duplicar época
             }
             "RESET_ALL" -> {
+                petrolBaseline = previousPetrol ?: petrolBaseline
+                gasBaseline = previousGas ?: gasBaseline
                 petrolGeneration++
                 gasGeneration++
                 petrolPending = true
@@ -141,22 +150,32 @@ class NativeAutoCalAcquisitionEpoch {
         // por alguns ciclos; aceitar esse grupo rearmava a época e a tela voltava a mostrar os 12/18 pontos apagados
         // como vivos. Um combustível reiniciado só sai de "pendente" quando a ECU devolve os contadores dele
         // zerados (único pós-estado que o corpus prova); o outro combustível segue normalmente.
-        val petrolStale = petrolAwaitingZero && petrol.any { it > 0 }
-        val gasStale = gasAwaitingZero && gas.any { it > 0 }
-        if (petrolStale || gasStale) {
-            reason = if (gasStale) "GAS_RESET_NOT_APPLIED_YET" else "PETROL_RESET_NOT_APPLIED_YET"
-            return false
+        // Cada combustível decide por si (dono, 2026-10-13: GNV e gasolina podem ser adquiridos em qualquer ordem e a qualquer
+        // momento): um reset ainda não aplicado num deles NUNCA segura o outro. O reset conta como aplicado quando a ECU
+        // devolve os contadores zerados OU abaixo do que havia no reset (se o carro já voltou a adquirir antes da próxima
+        // leitura, os contadores nem chegam a zero — esperar só o zero deixava o combustível "pendente" para sempre).
+        val petrolStale = petrolAwaitingZero && !resetApplied(petrol, petrolBaseline)
+        val gasStale = gasAwaitingZero && !resetApplied(gas, gasBaseline)
+        if (petrolStale || gasStale) reason = if (gasStale) "GAS_RESET_NOT_APPLIED_YET" else "PETROL_RESET_NOT_APPLIED_YET"
+        if (!petrolStale) {
+            petrolAwaitingZero = false
+            petrolBaseline = null
+            previousPetrol = petrol.copyOf()
+            petrolSamples = petrol.count { it > 0 }
+            petrolPending = false
         }
-        petrolAwaitingZero = false
-        gasAwaitingZero = false
-        previousPetrol = petrol.copyOf()
-        previousGas = gas.copyOf()
-        petrolSamples = petrol.count { it > 0 }
-        gasSamples = gas.count { it > 0 }
-        petrolPending = false
-        gasPending = false
-        return true
+        if (!gasStale) {
+            gasAwaitingZero = false
+            gasBaseline = null
+            previousGas = gas.copyOf()
+            gasSamples = gas.count { it > 0 }
+            gasPending = false
+        }
+        return !petrolStale && !gasStale
     }
+
+    private fun resetApplied(counters: IntArray, baseline: IntArray?): Boolean =
+        counters.all { it == 0 } || (baseline != null && counters.sum() < baseline.sum())
 
     /** Grupo RV30 novo, lido após a aquisição da mesma época ter suporte mínimo. */
     fun referenceGroup(sessionId: Long, count: Int): Boolean {

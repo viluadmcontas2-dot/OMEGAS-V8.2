@@ -9,8 +9,7 @@ const ROOT = path.resolve('.');
 const read = relative => fs.readFileSync(path.join(ROOT, relative), 'utf8');
 
 const app = read('app/src/main/assets/ui/app.js');
-const dashboard = read('app/src/main/assets/ui/screens/dashboard.js');
-const vehicle = read('app/src/main/assets/ui/components/vehicle-status-strip.js');
+const liveBar = read('app/src/main/assets/ui/components/live-bar.js');
 const refino = read('app/src/main/assets/ui/screens/refino.js');
 
 function between(source, start, end) {
@@ -40,13 +39,11 @@ test('global fuel gives priority to live telemetry over the slower status snapsh
 test('invalid interpolation cannot materialize a fake physical cell', () => {
   const light = between(app, 'function renderLightLiveContext', '/** Único pump de PresentSnapshot');
   assert.match(light, /interpolation\.valid\s*===\s*true/, 'learning/map live context must honor interpolation.valid');
-  assert.match(dashboard, /interpolation\.valid\s*===\s*true/, 'dashboard cell must honor interpolation.valid');
 });
 
 test('unavailable telemetry never turns HubStatus numeric defaults into fake measurements', () => {
-  assert.match(dashboard, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'dashboard must require valid telemetry before showing measurements');
-  assert.match(vehicle, /telemetryValid\s*=\s*[^;]*valid\s*===\s*true/, 'vehicle strip must require valid telemetry before showing measurements');
-  assert.doesNotMatch(dashboard, /id=\\?"dashRpm\\?"[^>]*>0<\/b>/, 'dashboard initial state cannot claim 0 RPM before valid telemetry');
+  assert.match(liveBar, /source\.valid\s*===\s*true/, 'a barra do topo exige telemetria válida antes de mostrar medidas');
+  assert.doesNotMatch(read('app/src/main/assets/ui/index.html'), /data-live="rpm"[^>]*><small>RPM<\/small><b>0</, 'a barra não afirma 0 RPM antes de haver telemetria');
 });
 
 test('missing refino value stays unavailable instead of becoming numeric zero', () => {

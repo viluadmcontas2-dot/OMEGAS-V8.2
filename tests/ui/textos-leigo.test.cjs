@@ -50,30 +50,6 @@ test('aviso (toast): texto ≥ 20 px, à direita acima da navegação (não cobr
   assert.match(css, /\.rail-status b\{[^}]*font-size:18px/);
 });
 
-test('Agora: sem ECU diz o que fazer; idade do dado em palavras; sem inglês nem MP48', () => {
-  const document = fakeDocument();
-  const ns = load('screens/dashboard.js', document);
-  const screen = new ns.DashboardScreen();
-  const html = screen.root.innerHTML;
-  assert.match(html, />INJEÇÃO \(ms\)</);
-  assert.match(html, />NÍVEL DO GNV<\/small><b id="dashLevelsRaw">[^<]*<\/b><span>sensor sem escala</);
-  assert.doesNotMatch(html, /PETROL INJECTION|LEVELS RAW|MP48|Informa\\xE7\\xE3o essencial|sem duplicar telemetria/);
-  const text = id => document.nodes.get(id).textContent;
-  screen.render({ status: { usbConnected: false }, telemetry: {} });
-  assert.equal(text('dashEcuStatus'), 'ECU desconectada');
-  assert.equal(text('dashHeroStatus'), 'ECU desconectada');
-  const health = document.nodes.get('dashHealth');
-  assert.equal(health.querySelector('.now-session-copy b').textContent, 'ECU desconectada');
-  assert.equal(health.querySelector('[data-health-detail]').textContent, 'Ligue a ignição e confira o cabo USB.');
-  assert.equal(text('dashAge'), '—', 'idade desconhecida = —');
-  screen.render({ status: { usbConnected: true }, telemetry: { valid: true, telemetryAgeMs: 42, live: { fuel: 'CUTOFF' } } });
-  assert.equal(text('dashAge'), 'atualizado agora');
-  assert.equal(text('dashFuel'), 'CORTE');
-  screen.render({ status: { usbConnected: true }, telemetry: { valid: true, telemetryAgeMs: 12000, live: {} } });
-  assert.equal(text('dashAge'), 'sem dados há 12 s');
-  assert.match(read('screens/dashboard.js'), /ECU_TRABALHANDO: "ECU aprendendo"/);
-});
-
 test('AutoCal: ponto tocado com vírgula, "12 medições (mínimo 8)" e "Reaprender este ponto"', () => {
   const document = fakeDocument();
   const ns = load('screens/autocal-cockpit.js', document);
@@ -149,7 +125,6 @@ test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem ACCEPTED/Kotlin
   assert.match(index, /<span>Injeção \(ms\) →<\/span><span>Fator K ↑<\/span>/);
   assert.match(index, /<div class="curve-axis">Injeção \(ms\) →<\/div>/);
   assert.match(index, /id="curveTargetFactor" type="text" inputmode="decimal"/, 'campo aceita vírgula');
-  assert.doesNotMatch(read('components/curve-prediction-state.js'), /'SEM PREVISÃO'|SEM PREVISÃO'/);
 });
 
 test('Curva K: o campo "Fator desejado" mostra e aceita vírgula', () => {

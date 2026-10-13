@@ -61,19 +61,6 @@ class RedHotfixContractTest(unittest.TestCase):
         for forbidden in ("KWriteManager", "ExistingCalibrationWriter", "writeKCell(", "writeKFactor"):
             self.assertNotIn(forbidden, overlay)
 
-    def test_dashboard_promotes_petrol_injection_without_new_polling(self):
-        dashboard = read("app/src/main/assets/ui/screens/dashboard.js")
-        app = read("app/src/main/assets/ui/app.js")
-        self.assertIn('INJEÇÃO (ms)', dashboard)  # (dono, 2026-10-11: texto para leigo)
-        self.assertIn('id="dashHeroPetrol"', dashboard)
-        self.assertLess(
-            dashboard.index('id="dashHeroPetrol"'),
-            dashboard.index('id="dashRpm"'),
-            "Petrol Injection deve preceder RPM na hierarquia hero",
-        )
-        self.assertNotIn("setInterval", dashboard, "Dashboard não ganha polling próprio")
-        self.assertIn("intervalMs: 200", app)
-
     def test_tools_heavy_payloads_remain_route_gated(self):
         app = read("app/src/main/assets/ui/app.js")
         match = re.search(

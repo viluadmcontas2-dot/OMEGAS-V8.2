@@ -17,15 +17,12 @@
       </div>
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
-        <button type="button" data-route="dashboard" class="active"><i>01</i><span>Agora</span></button>
-        <button type="button" data-route="local"><i>02</i><span>Refino local</span></button>
-        <button type="button" data-route="map"><i>03</i><span>Ajuste local</span></button>
-        <button type="button" data-route="curve"><i>04</i><span>Ajuste global</span></button>
-        <button type="button" data-route="autocal"><i>05</i><span>AutoCal</span></button>
-        <button type="button" data-route="refino"><i>06</i><span>Refino</span></button>
-        <div class="nav-divider"></div>
-        <button type="button" data-route="suggestions"><i>07</i><span>Sugestões</span><em id="suggestionCount">0</em></button>
-        <button type="button" data-route="tools"><i>08</i><span>Ferramentas</span></button>
+        <button type="button" data-route="autocal" class="active"><i>01</i><span>AutoCal</span></button>
+        <button type="button" data-route="refino"><i>02</i><span>Refino</span></button>
+        <button type="button" data-route="local"><i>03</i><span>Refino local</span></button>
+        <button type="button" data-route="map"><i>04</i><span>Ajuste local</span></button>
+        <button type="button" data-route="curve"><i>05</i><span>Ajuste global</span></button>
+        <button type="button" data-route="tools"><i>06</i><span>Ferramentas</span></button>
       </nav>
 
       <div class="rail-status">
@@ -35,41 +32,14 @@
     </aside>
 
     <section class="workspace">
-      <header class="workspace-head">
-        <div><small id="routeEyebrow">AGORA</small><h1 id="routeTitle">Agora</h1></div>
-        <p>Leitura, aprendizado e ajuste manual assistido da MP48.</p>
+      <header id="liveBar" class="workspace-head live-bar" aria-label="Leituras ao vivo da ECU" aria-live="off">
+        <div class="live-cell" data-live="voltage" data-state="unknown" title="Tensão da ECU (provisório: byte 19 do canal 48 01 ÷ 16, ainda não comparado com o módulo OBD). Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>Tensão ECU*</small><b>—</b><em>V</em></div>
+        <div class="live-cell" data-live="map"><small>MAP</small><b>—</b><em>bar</em></div>
+        <div class="live-cell" data-live="petrol"><small>Petrol Inj.</small><b>—</b><em>ms</em></div>
+        <div class="live-cell" data-live="rpm"><small>RPM</small><b>—</b></div>
       </header>
 
       <main class="screen-host">
-        <section class="screen active" data-screen="dashboard" aria-labelledby="dashboardTitle">
-          <div class="page-intro">
-            <div><small>AGORA</small><h2 id="dashboardTitle">O que o motor está fazendo</h2></div>
-            <p>O essencial da sessão em tempo real. Sem gráficos decorativos.</p>
-          </div>
-
-          <div class="now-grid">
-            <section class="hero-reading">
-              <small>PETROL INJ.</small>
-              <div><strong id="dashPetrol">—</strong><em>ms</em></div>
-              <p id="dashPetrolContext">referência atual em gasolina</p>
-            </section>
-
-            <section class="condition-strip" aria-label="Condição física atual">
-              <div><small>RPM</small><b id="dashRpm">0</b></div>
-              <div><small>MAP</small><b><span id="dashMap">—</span> bar</b></div>
-              <div><small>COMBUSTÍVEL</small><b id="dashFuel">—</b></div>
-              <div class="diagnostic"><small>GAS INJ.</small><b><span id="dashGas">—</span> ms</b><span>pulso GNV · diagnóstico</span></div>
-            </section>
-
-
-            <section id="dashHealth" class="session-state" data-level="offline">
-              <span class="state-indicator"></span>
-              <div><small>SESSÃO</small><b>Aguardando ECU</b><p data-health-detail>Conecte a ECU para iniciar a sessão</p></div>
-              <div class="state-facts"><span id="dashEcuStatus">ECU offline</span><span id="dashAge">—</span></div>
-            </section>
-          </div>
-        </section>
-
         <section class="screen local-refino-screen" data-screen="local" aria-labelledby="localTitle">
           <div class="page-intro"><div><small>REFINO LOCAL</small><h2 id="localTitle">Corrigir engasgo</h2></div></div>
           <div id="localRefinoHost" class="local-refino-host"></div>
@@ -169,11 +139,6 @@
           <div id="refinoScreenHost" class="autocal-cockpit-view" aria-live="polite"></div>
         </section>
 
-        <section id="suggestionDrawer" class="screen utility-screen" data-screen="suggestions" aria-labelledby="suggestionsTitle">
-          <div class="page-intro"><div><small>SUGESTÕES</small><h2 id="suggestionsTitle">Sugestões para revisar</h2></div><p>Abrir não grava nada.</p></div>
-          <div id="suggestionList" class="suggestion-list"><div class="detail-empty"><b>Nenhuma sugestão pronta</b><span>O aprendizado continua coletando evidência.</span></div></div>
-        </section>
-
         <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
           <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Backup, sessões e saúde do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
           <!-- Sem rolagem (dono, 2026-10-11): os cartões (drawers.js) entram antes deste rodapé; backup embaixo, à esquerda. -->
@@ -189,7 +154,6 @@
     <div id="alertToast" class="alert-toast" role="status" aria-live="polite"><b></b><button type="button" aria-label="Fechar">×</button></div>
   </div>
 
-  <script src="suggestion-model.js" defer></script>
   <script src="map-editor.js" defer></script>
   <script src="core/curve-to-map.js" defer></script>
   <script src="core/balance-runner.js" defer></script>
@@ -199,7 +163,6 @@
   <script src="core/router.js" defer></script>
   <script src="core/scheduler.js" defer></script>
   <script src="components/drawers.js" defer></script>
-  <script src="screens/dashboard.js" defer></script>
   <script src="screens/map.js" defer></script>
   <script src="screens/curve.js" defer></script>
   <script src="app.js" defer></script>

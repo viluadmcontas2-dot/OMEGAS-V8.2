@@ -711,22 +711,6 @@
               </div>
 
               <div class="autocal-focus-metrics" aria-live="polite">
-                <div class="autocal-focus-metric autocal-focus-voltage" id="autocalLiveVoltBox" data-state="unknown" title="Tensão da ECU (provisório: byte 19 do canal 48 01 ÷ 16, ainda não comparado com o módulo OBD). Só aparece no GNV. Acima de 14,1 V o GNV desliga.">
-                  <small>Tensão ECU*</small>
-                  <b><span id="autocalLiveVolt">—</span><em>V</em></b>
-                </div>
-                <div class="autocal-focus-metric">
-                  <small>MAP</small>
-                  <b><span id="autocalLiveMap">—</span><em>bar</em></b>
-                </div>
-                <div class="autocal-focus-metric">
-                  <small>Petrol Inj.</small>
-                  <b><span id="autocalLivePetrol">—</span><em>ms</em></b>
-                </div>
-                <div class="autocal-focus-metric">
-                  <small>RPM</small>
-                  <b id="autocalLiveRpm">—</b>
-                </div>
                 <div class="autocal-focus-metric autocal-focus-automatch">
                   <small>Ajustes automáticos</small>
                   <b id="autocalAutoMatchCount">—</b>
@@ -1220,26 +1204,19 @@
       return this.liveSample;
     }
 
-    /** Números do topo (combustível, RPM, Petrol Inj., MAP, zona); texto e atributo só quando mudam. */
+    /** Números do topo (combustível e zona; RPM, Petrol Inj., MAP e tensão ficam na barra global, components/live-bar.js); texto e atributo só quando mudam. */
     renderLiveMetrics(telemetry) {
-      this.renderVoltage(telemetry);
       const live = AutoCalUxModel.livePoint(telemetry || {}, this.projection);
       const fuelChip = document.getElementById('autocalLiveFuel');
       if (!live) {
         this.text('autocalLiveFuel', '—');
         setData(fuelChip, 'fuelState', 'unknown');
-        this.text('autocalLiveRpm', '—');
-        this.text('autocalLivePetrol', '—');
-        this.text('autocalLiveMap', '—');
         this.text('autocalLiveZone', '—');
         return;
       }
       const fuelState = AutoCalUxModel.liveFuelState(live.fuel);
       this.text('autocalLiveFuel', fuelState.label);
       if (fuelChip && fuelChip.dataset.fuelState !== fuelState.kind) fuelChip.dataset.fuelState = fuelState.kind;
-      this.text('autocalLiveRpm', live.rpm === null ? '—' : RPM_FORMAT.format(Math.round(live.rpm)));
-      this.text('autocalLivePetrol', TWO_DECIMALS.format(live.petrolMs));
-      this.text('autocalLiveMap', TWO_DECIMALS.format(live.mapBar));
       const liveZone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
       this.text('autocalLiveZone', liveZone === null ? '—' : 'Z' + liveZone);
     }
@@ -1279,18 +1256,6 @@
       host.setAttribute('aria-label', 'Gasolina: ' + groups.petrol.map(i => 'zona ' + (i.zone + 1) + ' ' + label[i.state]).join(', ') +
         '. GNV: ' + groups.gas.map(i => 'zona ' + (i.zone + 1) + ' ' + label[i.state]).join(', ') +
         '. Ajustes automáticos: ' + (matchDots.length ? matchDots.filter(i => i.done).length + ' de ' + matchDots.length : 'sem leitura') + '.');
-    }
-
-    /**
-     * Tensão da ECU na barra do AutoCal (dono, 2026-10-13). Mesma regra da faixa de status: byte 19 do 48 01 ÷ 16
-     * (provisório), 0/ausente = "—"; a partir de 14,1 V o campo fica em alerta (o GNV desliga acima disso).
-     */
-    renderVoltage(telemetry) {
-      const live = telemetry?.valid === true ? (telemetry.live || telemetry.data || {}) : null;
-      const raw = live ? finite(live.unknown_raw_19 ?? live.unknownRaw19) : null;
-      const volts = raw !== null && raw > 0 ? raw / 16 : null;
-      this.text('autocalLiveVolt', volts === null ? '—' : volts.toFixed(1).replace('.', ','));
-      setData(document.getElementById('autocalLiveVoltBox'), 'state', volts === null ? 'unknown' : volts >= 14.1 ? 'alert' : 'measured');
     }
 
     renderLiveNarrative() {
@@ -1618,8 +1583,9 @@
       }
       this.chartShowsLive = true;
       this.chartScale = null;
-      const width = Math.max(420, Math.round(host.getBoundingClientRect?.().width || 860));
-      const height = Math.max(150, Math.round(host.getBoundingClientRect?.().height || 300));
+      const box = host.getBoundingClientRect?.() || {}; // uma leitura só: cada getBoundingClientRect força o layout
+      const width = Math.max(420, Math.round(box.width || 860));
+      const height = Math.max(150, Math.round(box.height || 300));
       // A chave NÃO inclui o AGORA (faixa de MAP atual, ponto de operação): ele anda numa camada leve (paintOriginalLive).
       const key = JSON.stringify([O.staticModel(model), width, height, Array.from(this.selectedAcquiredPoints || []), this.selectedAcquiredPoint]);
       this.text('autocalReferenceCount', 'Amostras por zona (baixa → alta): ' + model.zones.map(zone => zone.label).join(' · '));
@@ -1630,7 +1596,7 @@
       const mainHeight = Math.round(height * 0.74);
       const kHeight = height - mainHeight - 6;
       if (this.renderedChartHost === host && this.chartRenderKey === key) {
-        this.originalChart = { host, model, sizes: { sideWidth, mainWidth, mainHeight, kHeight }, painted: this.originalChart?.painted || {} };
+        this.originalChart = { host, model, sizes: { sideWidth, mainWidth, mainHeight, kHeight }, painted: this.originalChart?.painted || {}, nodes: this.originalChart?.nodes || {} };
         this.paintOriginalLive();
         return true;
       }
@@ -1650,7 +1616,7 @@
       });
       this.renderedChartHost = host;
       this.chartRenderKey = key;
-      this.originalChart = { host, model, sizes: { sideWidth, mainWidth, mainHeight, kHeight }, painted: {} };
+      this.originalChart = { host, model, sizes: { sideWidth, mainWidth, mainHeight, kHeight }, painted: {}, nodes: {} };
       return true;
     }
 
@@ -1677,7 +1643,8 @@
       chart.model = { ...chart.model, ...state };
       for (const name of ['band', 'run', 'acq', 'k']) {
         if (chart.painted[name] === parts[name]) continue;
-        const node = chart.host.querySelector('[data-ao-live="' + name + '"]');
+        // Os 4 grupos ao vivo são guardados: nada de buscar no DOM a cada amostra.
+        const node = chart.nodes[name] || (chart.nodes[name] = chart.host.querySelector('[data-ao-live="' + name + '"]'));
         if (node) { node.innerHTML = parts[name]; chart.painted[name] = parts[name]; }
       }
     }

@@ -33,35 +33,33 @@ function telemetry(petrolMs, mapBar, rpm, extra) {
   return { valid: true, ageMs: 40, telemetryAgeMs: 40, sequence: 1, live: { rpm, petrol_ms: petrolMs, load_bar: mapBar, fuel: 'GNV' }, ...(extra || {}) };
 }
 
-test('faixa de status: quadro novo com os mesmos valores não escreve; RPM novo escreve só o RPM', () => {
-  const facts = Object.fromEntries(['service', 'ecu', 'freshness', 'fuel', 'rpm', 'petrol'].map(key => {
-    const fact = fakeNode('fact:' + key);
+test('barra do topo: quadro novo com os mesmos valores não escreve; RPM novo escreve só o RPM', () => {
+  const cells = Object.fromEntries(['voltage', 'map', 'petrol', 'rpm'].map(key => {
+    const cell = fakeNode('cell:' + key);
     const value = fakeNode('value:' + key);
-    fact.querySelector = () => value;
-    return [key, { fact, value }];
+    cell.querySelector = () => value;
+    return [key, { cell, value }];
   }));
-  const strip = fakeNode('strip');
-  strip.querySelector = selector => facts[/data-vehicle-fact="([^"]+)"/.exec(selector)?.[1]]?.fact || null;
-  const document = { getElementById: id => (id === 'vehicleStatusStrip' ? strip : null), querySelector: () => ({}) };
+  const bar = fakeNode('bar');
+  bar.querySelector = selector => cells[/data-live="([^"]+)"/.exec(selector)?.[1]]?.cell || null;
+  const document = { getElementById: id => (id === 'liveBar' ? bar : null) };
   const context = { console, document, setTimeout: () => 1 };
   context.window = context;
   vm.createContext(context);
-  vm.runInContext(read('components/vehicle-status-strip.js'), context, { filename: 'vehicle-status-strip.js' });
+  vm.runInContext(read('components/live-bar.js'), context, { filename: 'live-bar.js' });
   const store = { state: {}, get: () => store.state, subscribe: () => () => {} };
-  const component = new context.OmegasUi.VehicleStatusStrip({ store });
-  const writes = () => Object.values(facts).reduce((sum, item) => sum + item.fact.writes + item.value.writes, 0);
-  const state = { status: { serviceRunning: true, usbConnected: true, engineReady: true }, telemetry: telemetry(4.2, 0.5, 2100) };
-  component.render(state);
+  const component = new context.OmegasUi.LiveBar({ store });
+  const writes = () => Object.values(cells).reduce((sum, item) => sum + item.cell.writes + item.value.writes, 0);
+  component.render({ telemetry: telemetry(4.2, 0.5, 2100) });
   assert.ok(writes() > 0, 'primeira pintura escreve');
   const before = writes();
-  component.render({ ...state, telemetry: { ...state.telemetry, sequence: 2 } });
+  component.render({ telemetry: { ...telemetry(4.2, 0.5, 2100), sequence: 2 } });
   assert.equal(writes() - before, 0, 'quadro novo com os mesmos valores não pode tocar no DOM');
-  component.render({ ...state, telemetry: telemetry(4.2, 0.5, 2150, { sequence: 3 }) });
+  component.render({ telemetry: telemetry(4.2, 0.5, 2150, { sequence: 3 }) });
   assert.equal(writes() - before, 1, 'RPM novo: exatamente uma escrita');
-  assert.equal(facts.rpm.value.textContent, '2.150');
-  component.render({ ...state, telemetry: { valid: false } });
-  assert.equal(facts.rpm.value.textContent, '—', 'telemetria inválida continua "—", nunca 0');
-  assert.equal(facts.rpm.fact.dataset.state, 'unknown');
+  assert.equal(cells.rpm.value.textContent, '2.150');
+  component.render({ telemetry: { valid: false } });
+  assert.equal(cells.rpm.value.textContent, '—', 'telemetria inválida continua "—", nunca 0');
 });
 
 function bootApp(overrides) {

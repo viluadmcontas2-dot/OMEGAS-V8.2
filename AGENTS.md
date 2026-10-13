@@ -32,19 +32,19 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 - O `ExportToK` do original **não é usado**. A curva K vira Mapa K por rotina própria (`app/src/main/assets/ui/core/curve-to-map.js`, botão "Curva K → Mapa K" na aba Mapa K): relê mapa e curva na hora (nenhum valor fixo), **refatora o produto Mapa×Curva** e só **propõe**; gravar = mapa, depois curva neutra (`app/src/main/assets/ui/core/balance-runner.js`), cada etapa com ACK + readback. Fórmula da curva do original: PROTOCOLO-LANDI `26`. Teste: `tests/ui/curva-k-para-mapa-k.test.cjs`.
 - A Curva K aceita arrasto de nó (aba Ajuste global): soltar só prepara a prévia; gravar exige revisão e leitura de volta. Provas: `tests/ui/curva-k-arrasto.test.cjs`, `tools/ci/curva_k_arrasto.cjs`.
 - **Sessões reais do dono** (Drive `OMEGAS/Sessoes Uteis`, fonte de informação, não de regras): corpus compacto em `tests/fixtures/sessoes-uteis/` (LEIA-ME.md, IDs do Drive, carregador `tools/sessoes/corpus.py`); o bruto fica no Drive.
-- A faixa de status e a barra do AutoCal mostram a tensão da ECU (byte 19 do `48 01` ÷ 16, **escala provisória**) com alerta em 14,1 V. Teste: `tests/ui/status-tensao-ecu.test.cjs`.
+- Barra do topo **persistente em todas as abas** (`app/src/main/assets/ui/components/live-bar.js`): tensão da ECU (byte 19 do `48 01` ÷ 16, **escala provisória**, alerta em 14,1 V), MAP, Petrol Inj. e RPM. Abas: AutoCal, Refino, Refino local, Ajuste local, Ajuste global, Ferramentas (Agora e Sugestões podadas). Teste: `tests/ui/global-live-bar.test.cjs`.
 
 ## Mapa do código (entrada → teste)
 
 | Assunto | Entrada | Teste |
 |---|---|---|
-| Refino (fases, proposta) | `app/src/main/java/com/omegas/prohub/autocal/RefinementAutopilot.kt`, `app/src/main/assets/ui/screens/refino.js` (gráfico = o do AutoCal), `app/src/main/assets/ui/screens/local-refino.js` (aba "Refino local", 1 botão; substituiu o Aprender), `autocal/StallWatch.kt`, `app/src/main/assets/ui/core/stall-region.js` | `tests/ui/sugestoes-refino.test.cjs`, `tests/ui/tropecos-para-mapa.test.cjs`, `tests/ui/refino-mesmo-grafico.test.cjs`, `tools/ci/refino_local.cjs`, `StallWatchTest.kt` |
+| Refino (fases, proposta) | `app/src/main/java/com/omegas/prohub/autocal/RefinementAutopilot.kt`, `app/src/main/assets/ui/screens/refino.js` (gráfico = o do AutoCal), `app/src/main/assets/ui/screens/local-refino.js` (aba "Refino local", 1 botão; substituiu o Aprender), `autocal/StallWatch.kt`, `app/src/main/assets/ui/core/stall-region.js` | `tests/ui/tropecos-para-mapa.test.cjs`, `tests/ui/refino-mesmo-grafico.test.cjs`, `tools/ci/refino_local.cjs`, `StallWatchTest.kt` |
 | Tela AutoCal do original (zonas, `#n/d`, eixos, Acquisition, curva K) | `app/src/main/assets/ui/screens/autocal-original.js` (usado por `autocal-cockpit.js`) | `tests/ui/autocal-original-parity.test.cjs` |
 | Global × local (por RPM) | `autocal/EquivalenceAttribution.kt`, `autocal/LocalMapPlanner.kt` | `tests/test_rpm_residual_replay.py` |
 | Época de aquisição do AutoCal | `autocal/NativeAutoCalAcquisitionEpoch.kt` | `NativeAutoCalAcquisitionEpochTest.kt` |
 | Mapa K manual e ajuste local | `calibration/MapKManualPlanner.kt`, `app/src/main/assets/ui/screens/map.js` | `tests/ui/mapa-k-ajuste-local.test.cjs` |
 | Telemetria e ponte | `service/TelemetryForegroundService.kt`, `web/HubJavascriptBridge.kt` | `tests/test_governance_contract.py` |
-| Layout sem rolagem | `ui/screens/*.js` | `tools/ci/sem_rolagem_8_abas.cjs` |
+| Layout sem rolagem | `ui/screens/*.js` | `tools/ci/sem_rolagem_abas.cjs` |
 
 Comandos de verificação: `node --test tests/ui/*.test.cjs` · `python3 -B -m unittest discover -s tests -p "test_*.py"` · `python3 -B tools/run_checks.py` · `sh ./gradlew testDebugUnitTest lintDebug`.
 

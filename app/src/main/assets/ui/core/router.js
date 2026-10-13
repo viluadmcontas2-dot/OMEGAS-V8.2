@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const ROUTES = ['dashboard', 'local', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools'];
+  const ROUTES = ['autocal', 'refino', 'local', 'map', 'curve', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
 
   function loadOptionalScript(src, onload) {
@@ -31,9 +31,9 @@
       return true;
     }
     restore() {
-      let saved = 'dashboard';
+      let saved = 'autocal';
       try { saved = root.localStorage.getItem(STORAGE_KEY) || saved; } catch (_) {}
-      if (!ROUTES.includes(saved)) saved = 'dashboard';
+      if (!ROUTES.includes(saved)) saved = 'autocal';
       this.store.patch({ route: saved, routeContext: null });
       return saved;
     }
@@ -43,9 +43,7 @@
   ns.ROUTES = ROUTES;
 
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
-  loadOptionalScript('components/vehicle-status-strip.js');
-  loadOptionalScript('components/curve-prediction-state.js');
-  loadOptionalScript('components/split-layout.js');
+  loadOptionalScript('components/live-bar.js');
   // Predictor fora do produto (decisão do dono): não é carregado nem aparece na navegação.
   loadOptionalScript('core/autocal-api.js', () =>
     loadOptionalScript('screens/autocal-original.js', () =>

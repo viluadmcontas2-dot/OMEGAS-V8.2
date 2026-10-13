@@ -38,7 +38,7 @@
   ns.Store = Store;
   ns.createInitialState = function () {
     return {
-      route: 'dashboard',
+      route: 'autocal',
       visible: true,
       status: {},
       telemetry: {},

@@ -30,7 +30,7 @@
 .map-axis-corner small{display:block;font-size:9px;letter-spacing:.06em;color:#aebed0}.map-axis-header small{display:block;font-size:9px;letter-spacing:.04em}
 .map-axis-corner b,.map-axis-header b{display:block;margin-top:2px;font-size:11px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
 .map-axis-header{cursor:pointer;touch-action:manipulation}
-.map-axis-header.selected{background:var(--accent-soft);border-color:#8f86ff;color:var(--text);outline:2px solid rgba(143,134,255,.72);outline-offset:-2px}
+.map-axis-header.selected{background:var(--accent-soft);border-color:#6aaeff;color:var(--text);outline:2px solid rgba(106,174,255,.72);outline-offset:-2px}
 .map-rpm-header b{font-size:11px}
 .map-ms-header b{font-size:16px;line-height:1;font-weight:950;color:#f7fbff}
 .map-k-cell{padding:2px!important}
@@ -94,7 +94,7 @@
 /* OBD conexão: progresso humano. */
 .obd-connection-progress{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
 .obd-connection-progress>span{padding:8px;border:1px solid var(--line-soft);border-radius:8px;background:var(--surface);font-size:9px;color:var(--dim)}
-.obd-connection-progress>span[data-state="done"]{color:var(--ok);border-color:#285a49}.obd-connection-progress>span[data-state="active"]{color:var(--text);border-color:#5a5296;background:var(--accent-soft)}
+.obd-connection-progress>span[data-state="done"]{color:var(--ok);border-color:#285a49}.obd-connection-progress>span[data-state="active"]{color:var(--text);border-color:#2f5f9e;background:var(--accent-soft)}
 
 /* Curva K: duas leituras alinhadas nos mesmos 30 pontos. */
 .global-learning-stack{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:7px;height:100%;min-height:0}

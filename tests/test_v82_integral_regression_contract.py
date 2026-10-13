@@ -99,12 +99,12 @@ class V82IntegralRegressionContract(unittest.TestCase):
         router = read('app/src/main/assets/ui/core/router.js')
         store = read('app/src/main/assets/ui/core/store.js')
         scheduler = read('app/src/main/assets/ui/core/scheduler.js')
-        split = read('app/src/main/assets/ui/components/split-layout.js')
+        live_bar = read('app/src/main/assets/ui/components/live-bar.js')
         self.assertIn('class Router', router)
         self.assertIn('class Store', store)
         self.assertIn('class Scheduler', scheduler)
         self.assertEqual(scheduler.count('setInterval'), 1)
-        for source in (split,):
+        for source in (live_bar,):
             self.assertNotIn('setInterval', source)
             self.assertNotIn('new Store', source)
             self.assertNotIn('new Router', source)

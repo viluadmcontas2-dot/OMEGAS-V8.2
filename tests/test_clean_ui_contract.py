@@ -25,8 +25,6 @@ class CleanUiContract(unittest.TestCase):
         self.curve_screen = (UI / "screens/curve.js").read_text("utf-8")
         self.learning_screen = (UI / "screens/local-refino.js").read_text("utf-8")
         self.refino_screen = (UI / "screens/refino.js").read_text("utf-8")
-        self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
-        self.suggestion_model = (UI / "suggestion-model.js").read_text("utf-8")
 
     def test_only_clean_ui_is_active(self):
         main = MAIN.read_text("utf-8")
@@ -43,15 +41,17 @@ class CleanUiContract(unittest.TestCase):
 
     def test_eight_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'local', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']
+        expected = ['autocal', 'refino', 'local', 'map', 'curve', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'local', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['autocal', 'refino', 'local', 'map', 'curve', 'tools']", self.router)
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
+        self.assertNotIn('data-route="dashboard"', self.html)
+        self.assertNotIn('data-route="suggestions"', self.html)
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
-        for label in ('Agora', 'Refino local', 'Ajuste local', 'Ajuste global', 'AutoCal', 'Refino', 'Sugestões', 'Ferramentas'):
+        for label in ('AutoCal', 'Refino', 'Refino local', 'Ajuste local', 'Ajuste global', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):
@@ -80,19 +80,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('filter:none!important', self.calibration_obd_css)
         self.assertNotIn('--rpm-ratio', self.app)
         self.assertNotIn('--rpm-ratio', self.css)
-
-    def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
-        self.assertIn('INJEÇÃO (ms)', self.dashboard)  # (dono, 2026-10-11: texto para leigo)
-        self.assertIn('dashHeroPetrol', self.dashboard)
-        self.assertIn('now-dashboard-shell', self.dashboard)
-        for marker in ('dashRpm', 'dashMap', 'dashFuel', 'dashLevelsRaw', 'dashRefino', 'dashCell'):
-            self.assertIn(marker, self.dashboard)
-        self.assertIn('NÍVEL DO GNV', self.dashboard)  # (dono, 2026-10-11: texto para leigo): o valor continua RAW
-        self.assertIn('sensor sem escala', self.dashboard)
-        self.assertIn('level_raw', self.dashboard)
-        self.assertNotIn('level_percentage', self.dashboard)
-        self.assertNotIn('dashHeroRpm', self.dashboard)
-        self.assertNotIn('dashGas', self.dashboard)
 
     def test_learning_map_curve_and_obd_have_expected_contracts(self):
         self.assertIn('id="mapSelectAll"', self.html)
@@ -165,12 +152,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn("operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true", self.map_screen)
         self.assertIn('writePrepared()', self.map_screen)
         self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
-
-    def test_suggestions_route_is_review_navigation_not_auto_apply(self):
-        self.assertIn('data-screen="suggestions"', self.html)
-        self.assertIn('Abrir não grava nada.', self.html)  # (dono, 2026-10-11: texto para leigo)
-        for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite(', 'autoApply', 'protocolTransaction'):
-            self.assertNotIn(forbidden, self.suggestion_model)
 
     def test_map_and_curve_share_router_state(self):
         self.assertIn("route === 'map'", self.app)

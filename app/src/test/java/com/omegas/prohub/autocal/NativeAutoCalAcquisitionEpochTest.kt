@@ -44,6 +44,42 @@ class NativeAutoCalAcquisitionEpochTest {
         assertFalse(gate.view().petrolPending)
     }
 
+    // Dono, 2026-10-13: depois de "Reaprender GNV" + "Reaprender gasolina" a aquisição não podia depender de ordem. Um reset ainda
+    // não aplicado na ECU para um combustível não segura o outro.
+    @Test fun unappliedGasResetDoesNotHoldPetrolAcquisition() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(20L)
+        gate.nativeCounter(20L, 0)
+        assertTrue(gate.acquisitionGroup(20L, 0, filled(), counts(12)))
+        assertTrue(gate.manualAction(20L, "RESET_GAS"))
+        assertTrue(gate.manualAction(20L, "RESET_PETROL"))
+        gate.nativeCounter(20L, 0)
+        // Gasolina já recomeçou na ECU; o GNV ainda devolve os contadores antigos.
+        assertFalse(gate.acquisitionGroup(20L, 0, counts(0), counts(12)))
+        assertFalse("a gasolina que a ECU já reiniciou sai de pendente", gate.view().petrolPending)
+        assertTrue(gate.view().gasPending)
+        // Depois é a vez do GNV, quando o carro rodar nele: ordem qualquer.
+        assertTrue(gate.acquisitionGroup(20L, 0, counts(2), counts(0)))
+        assertFalse(gate.view().gasPending)
+        assertEquals(2, gate.view().petrolSamples)
+    }
+
+    // Se o carro já voltou a adquirir antes da leitura seguinte, os contadores nem passam por zero; ficar abaixo do que havia
+    // no reset prova que a ECU aplicou (antes: pendente para sempre).
+    @Test fun resetCountsAsAppliedWhenCountersDropBelowTheResetBaselineEvenWithoutZero() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(21L)
+        gate.nativeCounter(21L, 0)
+        assertTrue(gate.acquisitionGroup(21L, 0, filled(), counts(12)))
+        assertTrue(gate.manualAction(21L, "RESET_GAS"))
+        gate.nativeCounter(21L, 0)
+        assertFalse(gate.acquisitionGroup(21L, 0, filled(), counts(12)))
+        assertTrue(gate.view().gasPending)
+        assertTrue(gate.acquisitionGroup(21L, 0, filled(), counts(3)))
+        assertFalse(gate.view().gasPending)
+        assertEquals(3, gate.view().gasSamples)
+    }
+
     @Test fun autoMatchStartsNewGasGenerationWithoutDiscardingPetrol() {
         val gate = NativeAutoCalAcquisitionEpoch()
         gate.reset(4L)

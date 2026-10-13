@@ -93,29 +93,25 @@ function boot(api, initialTelemetry) {
   };
 }
 
-test('cursor AGORA e narrativa: no máximo 10 vezes por segundo; números do topo seguem cada quadro', () => {
+test('cursor AGORA e narrativa: no máximo 10 vezes por segundo', () => {
   const rig = boot({ available: () => false }, telemetry(4.0, 0.5, 2000));
   rig.setScale();
   const cursor = [];
   const narrative = [];
-  let rpmChanges = 0;
-  let last = { cx: null, text: null, rpm: null };
+  let last = { cx: null, text: null };
   for (let index = 0; index < 40; index += 1) { // 2 s de quadros a 20 Hz, todos diferentes
     rig.store.state = { ...rig.store.state, telemetry: telemetry(4.0 + index * 0.05, 0.5 + index * 0.005, 2000 + index * 10) };
     rig.hooks.fast();
     const cx = rig.points[1].getAttribute('cx');
     const text = rig.byId('autocalLiveNarrative').textContent;
-    const rpm = rig.byId('autocalLiveRpm').textContent;
     if (cx !== last.cx) cursor.push(rig.now());
     if (text !== last.text) narrative.push(rig.now());
-    if (rpm !== last.rpm) rpmChanges += 1;
-    last = { cx, text, rpm };
+    last = { cx, text };
     rig.tick(50);
   }
   assert.equal(cursor.length, 20, 'cursor vivo, a cada 0,1 s: ' + cursor.length + ' posições em 2 s');
   assert.equal(narrative.length, 20, 'narrativa a cada 0,1 s: ' + narrative.length);
   for (let index = 1; index < cursor.length; index += 1) assert.ok(cursor[index] - cursor[index - 1] >= 100);
-  assert.equal(rpmChanges, 40, 'RPM do topo continua mudando a cada quadro (nada mais muda no que se vê)');
 });
 
 test('sem quadro novo, o tick de 50 ms não escreve nada no DOM', () => {
