@@ -196,4 +196,35 @@ class NativeAutoCalAcquisitionEpochTest {
         assertEquals("GAS_COUNTER_RESTART", gate.view().reason)
         assertFalse(gate.view().comparisonAllowed)
     }
+
+    // Fuzz 2026-10-13 (437 de 3000 cenários): reset logo depois de um AutoMatch nativo (previousGas zerado pela troca de
+    // época) ficava sem base; se o carro já tinha voltado a adquirir, o GNV ficava "pendente" para sempre. A base agora é o
+    // último grupo aceito, e só a leitura IDÊNTICA à de antes do reset é "velha".
+    @Test fun resetRightAfterAutoMatchKeepsLastSeenBaselineAndLiveCountersAreNotStale() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(40L)
+        gate.nativeCounter(40L, 0)
+        assertTrue(gate.acquisitionGroup(40L, 0, filled(), counts(12)))
+        assertTrue(gate.nativeCounter(40L, 1)) // AutoMatch nativo: previousGas volta a null
+        assertTrue(gate.manualAction(40L, "RESET_GAS"))
+        gate.nativeCounter(40L, 1)
+        assertFalse(gate.acquisitionGroup(40L, 1, filled(), counts(12))) // quadro antigo idêntico: ainda não aplicou
+        assertTrue(gate.view().gasPending)
+        // O carro já readquiriu e passou dos números antigos: é dado vivo da ECU, não "pendente".
+        assertTrue(gate.acquisitionGroup(40L, 1, filled(), IntArray(18) { 13 }))
+        assertFalse(gate.view().gasPending)
+        assertEquals(18, gate.view().gasSamples)
+    }
+
+    // Sem nenhuma leitura na sessão não há dado velho a esconder: o primeiro grupo é aceito.
+    @Test fun resetWithoutAnyPriorReadingAcceptsTheFirstGroup() {
+        val gate = NativeAutoCalAcquisitionEpoch()
+        gate.reset(41L)
+        gate.nativeCounter(41L, 0)
+        assertTrue(gate.manualAction(41L, "RESET_ALL"))
+        gate.nativeCounter(41L, 0)
+        assertTrue(gate.acquisitionGroup(41L, 0, counts(5), counts(7)))
+        assertFalse(gate.view().gasPending)
+        assertFalse(gate.view().petrolPending)
+    }
 }

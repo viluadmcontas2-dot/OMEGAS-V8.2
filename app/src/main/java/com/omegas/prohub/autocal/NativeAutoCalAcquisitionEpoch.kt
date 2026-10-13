@@ -38,6 +38,13 @@ class NativeAutoCalAcquisitionEpoch {
     private var gasSamples = 0
     private var previousPetrol: IntArray? = null
     private var previousGas: IntArray? = null
+    /**
+     * Último grupo ACEITO de cada combustível, que sobrevive à troca de época do AutoMatch nativo (previous* zera nela).
+     * Serve de base para provar que um reset foi aplicado (fuzz 2026-10-13: reset logo depois de um AutoMatch não tinha base e o
+     * combustível ficava "pendente" para sempre se o carro já tivesse voltado a adquirir antes de a leitura ver zero).
+     */
+    private var lastSeenPetrol: IntArray? = null
+    private var lastSeenGas: IntArray? = null
     /** Reset manual/AutoMatch pediu nova aquisição: só um grupo com os contadores daquele combustível zerados a confirma. */
     private var petrolAwaitingZero = false
     private var gasAwaitingZero = false
@@ -59,6 +66,8 @@ class NativeAutoCalAcquisitionEpoch {
         gasSamples = 0
         previousPetrol = null
         previousGas = null
+        lastSeenPetrol = null
+        lastSeenGas = null
         petrolAwaitingZero = false
         gasAwaitingZero = false
         petrolBaseline = null
@@ -88,7 +97,7 @@ class NativeAutoCalAcquisitionEpoch {
         if (sessionId <= 0L || sessionId != usbSessionId) return false
         when (action) {
             "RESET_PETROL" -> {
-                petrolBaseline = previousPetrol ?: petrolBaseline
+                petrolBaseline = previousPetrol ?: lastSeenPetrol ?: petrolBaseline
                 petrolGeneration++
                 petrolPending = true
                 petrolReferencePending = true
@@ -97,7 +106,7 @@ class NativeAutoCalAcquisitionEpoch {
                 petrolAwaitingZero = true
             }
             "RESET_GAS", "MANUAL_AUTOMATCH" -> {
-                gasBaseline = previousGas ?: gasBaseline
+                gasBaseline = previousGas ?: lastSeenGas ?: gasBaseline
                 gasGeneration++
                 gasPending = true
                 gasReferencePending = true
@@ -107,8 +116,8 @@ class NativeAutoCalAcquisitionEpoch {
                 nativeCount = null // o contador pode voltar a 0: novo baseline, sem duplicar época
             }
             "RESET_ALL" -> {
-                petrolBaseline = previousPetrol ?: petrolBaseline
-                gasBaseline = previousGas ?: gasBaseline
+                petrolBaseline = previousPetrol ?: lastSeenPetrol ?: petrolBaseline
+                gasBaseline = previousGas ?: lastSeenGas ?: gasBaseline
                 petrolGeneration++
                 gasGeneration++
                 petrolPending = true
@@ -161,6 +170,7 @@ class NativeAutoCalAcquisitionEpoch {
             petrolAwaitingZero = false
             petrolBaseline = null
             previousPetrol = petrol.copyOf()
+            lastSeenPetrol = petrol.copyOf()
             petrolSamples = petrol.count { it > 0 }
             petrolPending = false
         }
@@ -168,14 +178,21 @@ class NativeAutoCalAcquisitionEpoch {
             gasAwaitingZero = false
             gasBaseline = null
             previousGas = gas.copyOf()
+            lastSeenGas = gas.copyOf()
             gasSamples = gas.count { it > 0 }
             gasPending = false
         }
         return !petrolStale && !gasStale
     }
 
+    /**
+     * "Contadores velhos" = a leitura é IDÊNTICA ao que havia antes do reset (a ECU devolvendo o quadro antigo por alguns
+     * ciclos: bug do carro de 2026-10-12). Qualquer diferença (banda menor OU maior, p.ex. o carro já readquirindo) é dado vivo
+     * da ECU e o app deve espelhá-lo. Zerado = reset aplicado. Sem base (nada lido na sessão) não há dado velho a esconder.
+     * Fuzz 2026-10-13: exigir "menor que a base" deixava o combustível "pendente" para sempre quando o carro readquiria rápido.
+     */
     private fun resetApplied(counters: IntArray, baseline: IntArray?): Boolean =
-        counters.all { it == 0 } || (baseline != null && counters.sum() < baseline.sum())
+        counters.all { it == 0 } || baseline == null || !counters.contentEquals(baseline)
 
     /** Grupo RV30 novo, lido após a aquisição da mesma época ter suporte mínimo. */
     fun referenceGroup(sessionId: Long, count: Int): Boolean {
