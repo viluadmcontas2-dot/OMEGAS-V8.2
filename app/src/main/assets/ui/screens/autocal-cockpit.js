@@ -711,8 +711,8 @@
                 <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
                 <div class="autocal-chart-legend ao-keybar" aria-label="Legenda do gráfico">
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><circle class="ao-g-petrol" cx="7" cy="7" r="5"/><circle class="ao-g-gas" cx="19" cy="7" r="5"/></svg><b>Pontos já medidos</b></span>
-                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-line-petrol" d="M0 5 H12"/><path class="ao-g-line-gas" d="M13 9 H26"/></svg><b>Curva da ECU</b></span>
-                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-petrol" x="2" y="2" width="9" height="10"/><rect class="ao-g-gas" x="15" y="2" width="9" height="10"/></svg><b>Faixas com amostras</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-line-petrol" d="M0 5 H12"/><path class="ao-g-line-gas" d="M13 9 H26"/></svg><b>Curva da ECU (✕ = pontos)</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-petrol" x="2" y="2" width="9" height="10"/><rect class="ao-g-gas" x="15" y="2" width="9" height="10"/></svg><b>Faixas prontas ■</b></span>
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-run" d="M13 1 L20 7 L13 13 L6 7 Z"/></svg><b>AGORA</b></span>
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-band" x="0" y="3" width="26" height="8"/></svg><b>Faixa de MAP atual</b></span>
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-zone-ok" x="0" y="2" width="12" height="10"/><rect class="ao-g-zone-no" x="14" y="2" width="12" height="10"/></svg><b>Zona adquirida · não adquirida</b></span>
@@ -1577,7 +1577,7 @@
       const height = Math.max(150, Math.round(box.height || 300));
       // A chave NÃO inclui o AGORA (faixa de MAP atual, ponto de operação): ele anda numa camada leve (paintOriginalLive).
       const key = JSON.stringify([O.staticModel(model), width, height, Array.from(this.selectedAcquiredPoints || []), this.selectedAcquiredPoint]);
-      this.text('autocalReferenceCount', 'Amostras por zona (baixa → alta): ' + model.zones.map(zone => zone.label).join(' · '));
+      this.text('autocalReferenceCount', 'Prontas por zona: ' + model.zones.map(zone => zone.label).join(' · '));
       this.currentAcquiredPoints = [...AutoCalUxModel.acquiredPoints(snapshot, 'petrol'), ...AutoCalUxModel.acquiredPoints(snapshot, 'gas')];
       this.currentReferencePoints = [];
       const sideWidth = Math.round(width * 0.17);
