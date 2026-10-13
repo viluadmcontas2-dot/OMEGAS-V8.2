@@ -19,7 +19,6 @@
   const utilities = ui.Drawers ? new ui.Drawers(store, router, api) : null;
 
   const routeMeta = {
-    local: ['REFINO LOCAL', 'Refino local'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     autocal: ['AUTO-CAL', 'AutoCal'],
@@ -332,10 +331,6 @@
     }
     if (route === 'refino') {
       afterPaint(() => root.OmegasApp?.refino?.refresh?.(true));
-      return;
-    }
-    if (route === 'local') {
-      afterPaint(() => root.OmegasApp?.localRefino?.refresh?.(true));
       return;
     }
     if (route === 'tools') {

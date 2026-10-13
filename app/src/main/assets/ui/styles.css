@@ -293,11 +293,6 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 
 /* Refino local (dono, 2026-10-13): uma frase e UM botão. Substitui a antiga aba Aprender. */
 .screen[data-screen="local"].active{display:flex;flex-direction:column;gap:14px;overflow:hidden}
-.local-refino-host{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center}
-.local-refino{width:min(920px,100%);display:grid;gap:14px;justify-items:center;text-align:center;padding:28px 24px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
-.local-refino[data-level="warn"]{border-color:rgba(255,184,77,.5)}.local-refino[data-level="bad"]{border-color:rgba(255,93,93,.55)}.local-refino[data-level="ok"]{border-color:rgba(93,211,158,.4)}
-.local-refino h2{margin:0;font-size:30px;line-height:1.2}
-.local-refino p{margin:0;max-width:760px;font-size:19px;line-height:1.45;color:var(--muted)}
 .local-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:6px}
 .local-actions button{min-height:72px;min-width:240px;padding:0 32px;border-radius:14px;font-size:22px;font-weight:800;border:1px solid var(--line);background:var(--surface-2);color:var(--text);cursor:pointer}
 .local-actions .local-main{background:#2d6fd1;border-color:#4a8be8;color:#fff}

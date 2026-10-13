@@ -19,10 +19,9 @@
       <nav class="side-nav" aria-label="Áreas do aplicativo">
         <button type="button" data-route="autocal" class="active"><i>01</i><span>AutoCal</span></button>
         <button type="button" data-route="refino"><i>02</i><span>Refino</span></button>
-        <button type="button" data-route="local"><i>03</i><span>Refino local</span></button>
-        <button type="button" data-route="map"><i>04</i><span>Ajuste local</span></button>
-        <button type="button" data-route="curve"><i>05</i><span>Ajuste global</span></button>
-        <button type="button" data-route="tools"><i>06</i><span>Ferramentas</span></button>
+        <button type="button" data-route="map"><i>03</i><span>Ajuste local</span></button>
+        <button type="button" data-route="curve"><i>04</i><span>Ajuste global</span></button>
+        <button type="button" data-route="tools"><i>05</i><span>Ferramentas</span></button>
       </nav>
 
       <div class="rail-status">
@@ -40,11 +39,6 @@
       </header>
 
       <main class="screen-host">
-        <section class="screen local-refino-screen" data-screen="local" aria-labelledby="localTitle">
-          <div class="page-intro"><div><small>REFINO LOCAL</small><h2 id="localTitle">Corrigir engasgo</h2></div></div>
-          <div id="localRefinoHost" class="local-refino-host"></div>
-        </section>
-
         <section class="screen map-screen" data-screen="map" aria-labelledby="mapTitle">
           <div class="page-intro action-intro">
             <div><small>AJUSTE LOCAL</small><h2 id="mapTitle">Mapa K</h2><p>Corrija regiões específicas sem misturar tendência global.</p></div>
@@ -158,6 +152,7 @@
   <script src="core/curve-to-map.js" defer></script>
   <script src="core/balance-runner.js" defer></script>
   <script src="core/stall-region.js" defer></script>
+  <script src="core/map-fix.js" defer></script>
   <script src="core/native-api.js" defer></script>
   <script src="core/store.js" defer></script>
   <script src="core/router.js" defer></script>

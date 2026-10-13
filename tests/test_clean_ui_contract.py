@@ -23,7 +23,7 @@ class CleanUiContract(unittest.TestCase):
         self.map_editor = (UI / "map-editor.js").read_text("utf-8")
         self.map_screen = (UI / "screens/map.js").read_text("utf-8")
         self.curve_screen = (UI / "screens/curve.js").read_text("utf-8")
-        self.learning_screen = (UI / "screens/local-refino.js").read_text("utf-8")
+        self.learning_screen = (UI / "core/map-fix.js").read_text("utf-8")
         self.refino_screen = (UI / "screens/refino.js").read_text("utf-8")
 
     def test_only_clean_ui_is_active(self):
@@ -41,17 +41,17 @@ class CleanUiContract(unittest.TestCase):
 
     def test_eight_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['autocal', 'refino', 'local', 'map', 'curve', 'tools']
+        expected = ['autocal', 'refino', 'map', 'curve', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['autocal', 'refino', 'local', 'map', 'curve', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['autocal', 'refino', 'map', 'curve', 'tools']", self.router)
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="dashboard"', self.html)
         self.assertNotIn('data-route="suggestions"', self.html)
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
-        for label in ('AutoCal', 'Refino', 'Refino local', 'Ajuste local', 'Ajuste global', 'Ferramentas'):
+        for label in ('AutoCal', 'Refino', 'Ajuste local', 'Ajuste global', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):

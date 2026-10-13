@@ -75,7 +75,7 @@ function measure() {
   const rr = rail?.getBoundingClientRect();
   if (!rail || !visible(rail) || rr.bottom > innerHeight + 1 || rr.height < 60) problems.push('navegação inferior não visível');
   const navButtons = [...document.querySelectorAll('.side-nav button')].filter(visible).length;
-  if (navButtons !== 6) problems.push('navegação com ' + navButtons + ' botões');
+  if (navButtons !== 5) problems.push('navegação com ' + navButtons + ' botões');
   // Barra do topo persistente: visível em TODAS as abas, com as 4 leituras inteiras e centralizadas (dono, 2026-10-13).
   const bar = document.getElementById('liveBar');
   const br = bar?.getBoundingClientRect();
@@ -105,7 +105,7 @@ function measure() {
       await page.goto('file://' + INDEX, { waitUntil: 'load' });
       await page.waitForTimeout(1500);
       const routes = await page.$$eval('.side-nav button[data-route]', bs => bs.map(b => b.dataset.route));
-      assert.equal(routes.length, 6, 'a navegação tem as 6 abas');
+      assert.equal(routes.length, 5, 'a navegação tem as 5 abas');
       for (const route of routes) {
         for (const [label, clicks, required = []] of [['', []], ...(EXTRAS[route] || [])]) {
           await page.locator(`.side-nav button[data-route="${route}"]`).click();

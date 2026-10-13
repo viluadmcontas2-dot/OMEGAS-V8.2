@@ -61,15 +61,19 @@ test('o eixo cresce para caber nossos pontos e o AGORA continua na camada leve',
   assert.ok(live.run.includes('ao-run'));
 });
 
-test('Refino local: a frase diz o que aconteceu e o botão só vale com engasgo registrado', () => {
-  const ctx = load('app/src/main/assets/ui/core/stall-region.js');
-  const local = load('app/src/main/assets/ui/screens/local-refino.js');
-  const model = local.OmegasUi.LocalRefinoModel;
-  assert.equal(model.describe(null).total, 0);
-  assert.match(model.describe({ count: 0, nearCount: 0 }).title, /Nenhum engasgo/);
-  const d = model.describe({ count: 1, nearCount: 4, regions: [{ fromMs: 2.0, toMs: 2.5, count: 1 }], nearRegions: [{ fromMs: 2.0, toMs: 2.5, count: 4 }] });
+test('frase do engasgo: diz o que aconteceu, em português, sem número de bastidor', () => {
+  const refino = load('app/src/main/assets/ui/screens/refino.js').OmegasUi.RefinoModel;
+  assert.equal(refino.describeStalls(null).total, 0);
+  assert.match(refino.describeStalls({ count: 0, nearCount: 0 }).title, /Nenhum engasgo/);
+  const d = refino.describeStalls({ count: 1, nearCount: 4 });
   assert.equal(d.total, 5);
   assert.match(d.title, /O carro engasgou 5 vezes no GNV/);
   assert.match(d.text, /o motor apagou/);
-  assert.ok(ctx.OmegasStallRegion || true);
+});
+
+test('no Refino o gráfico tem uma lógica só: ECU e marcadores saem, nossa curva do GNV é a que se vê', () => {
+  const css = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/styles-autocal-cockpit.css'), 'utf8');
+  assert.match(css, /\.refino-chart \.ao-point, \.refino-chart \.ao-hit, \.refino-chart \.ao-marker, \.refino-chart \.ao-zone-label \{ display: none; \}/);
+  assert.match(css, /\.refino-chart \.ao-curve\.gas \{ opacity: \.4;/);
+  assert.match(css, /\.refino-chart \.ao-our-curve\.petrol \{ display: none; \}/);
 });

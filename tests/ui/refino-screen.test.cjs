@@ -218,26 +218,25 @@ test('motivos da gravação do Refino batem com a classificação do Kotlin (pro
   assert.match(journal, /verb\.startsWith\("restaurar"\) -> KIND_RESTAURAR/);
 });
 
-test('barra única embaixo: botão do estado, Revisar e Desfazer; sem Detalhes, Abas nem Entendi; frase sob o título', () => {
+test('barra única embaixo: Gravar na Curva K, Gravar no Mapa K e Desfazer; sem Detalhes nem Abas; nenhum botão "Aguardando"', () => {
   const bar = SOURCE.match(/<div class="refino-action-bar"[\s\S]*?<\/div>/)?.[0] || '';
   assert.ok(bar, 'a tela monta a barra de ações');
-  // Ajustado (dono, 2026-10-11: a curva aprende tudo e sabe onde ajustar o quê): + botão do ajuste local no Mapa K.
-  const order = ['data-refino-primary', 'data-refino-review', 'data-refino-undo', 'data-refino-local'].map(attr => bar.indexOf(attr));
+  // Dono, 2026-10-13: "um botão para gravar na curva e um botão para gravar no mapa; as interações precisam ser claras".
+  const order = ['data-refino-curve', 'data-refino-map', 'data-refino-undo'].map(attr => bar.indexOf(attr));
   assert.ok(order.every(i => i >= 0), 'todos os botões estão na barra');
-  assert.equal(JSON.stringify([...order].sort((a, b) => a - b)), JSON.stringify(order), 'ordem: estado, Revisar, Desfazer, ajuste local');
-  // Decisões do dono: navegação inferior fixa (sem Abas), sem "Entendi" e sem "Detalhes" (2026-10-11: só usar e validar).
+  assert.equal(JSON.stringify([...order].sort((a, b) => a - b)), JSON.stringify(order), 'ordem: Curva K, Mapa K, Desfazer');
+  assert.match(bar, />Gravar na Curva K</);
+  assert.match(bar, />Gravar no Mapa K</);
+  assert.doesNotMatch(bar, /Aguardando|Revisar e gravar|Detalhes|Abas/);
   assert.doesNotMatch(SOURCE, /toggleNav|data-refino-tabs|data-refino-ack|acknowledge/);
   assert.doesNotMatch(SOURCE, /data-refino-details|data-refino-panel="details"|toggleDetails/);
-  assert.doesNotMatch(bar, /Entendi|Abas|Detalhes/);
-  // A barra vem depois do gráfico (embaixo); o cabeçalho não tem botões.
-  assert.ok(SOURCE.indexOf('refino-action-bar') > SOURCE.indexOf('data-refino-panel="chart"'));
+  // Nada de botão desabilitado: sem ação possível o botão some e a frase explica.
+  assert.doesNotMatch(SOURCE, /node\.disabled|button\.disabled|\.disabled = /);
   const header = SOURCE.match(/<header class="autocal-focus-toolbar">[\s\S]*?<\/header>/)?.[0] || '';
   assert.doesNotMatch(header, /<button/);
   assert.match(header, /<h3>Refino · GNV = Gasolina<\/h3>[\s\S]*<p id="refinoHeadline">/);
-  // Botões de 56 px: todos usam a classe que o Refino já dimensiona (min-height 56px).
   const css = read('app/src/main/assets/ui/styles-autocal-cockpit.css');
   assert.match(css, /\.refino-cockpit \.autocal-primary-action \{ min-height: 56px;/);
-  assert.equal((bar.match(/autocal-primary-action/g) || []).length, 4);
 });
 
 test('depois de gravar não há botão extra: o piloto já está medindo e a tela volta a ele', () => {
@@ -245,7 +244,7 @@ test('depois de gravar não há botão extra: o piloto já está medindo e a tel
   assert.match(SOURCE, /done\.state === 'BATCH_CONFIRMED' && done\.readbackValid === true\) \{[\s\S]{0,200}this\.operation = \{ phase: 'idle' \};\s*this\.refresh\(true\);/);
   // Falha vira estado legível com próxima ação ("Tentar de novo"), sem dar nada como gravado.
   assert.match(SOURCE, /Nada foi dado como gravado/);
-  assert.match(SOURCE, /textContent = 'Tentar de novo'/);
+  assert.match(SOURCE, /label\.ok = 'Tentar de novo'/);
 });
 
 // ---------------------------------------------------- ajuste local no Mapa K (dono, 2026-10-11: a curva aprende tudo)
@@ -274,20 +273,24 @@ test('botão do ajuste local só existe com a ação local do Kotlin (com célul
   assert.equal(m.actionEnabled(localEq(), 'apply'), false);
 });
 
-test('ajuste local abre o Mapa K com as células preenchidas; desabilitado não navega', () => {
+test('o Mapa K recebe UMA proposta por vez: engasgo primeiro, depois a diferença por RPM; sem nenhuma, sem botão', () => {
   const window = { setTimeout: () => 0 };
   window.window = window;
   vm.runInNewContext(SOURCE, { window, globalThis: window, console });
-  const calls = [];
-  const fake = { eq: localEq(), app: { router: { navigate: (route, context) => { calls.push([route, context]); return true; } } } };
-  window.OmegasUi.RefinoScreen.prototype.openLocal.call(fake);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], 'map');
-  assert.equal(JSON.stringify(calls[0][1]), JSON.stringify({ origin: 'refino', suggestion: { mapChanges: LOCAL_CELLS } }));
-  const off = { eq: localEq({ enabled: false }), app: fake.app };
-  window.OmegasUi.RefinoScreen.prototype.openLocal.call(off);
-  assert.equal(calls.length, 1, 'sem ECU não navega');
-  // O Refino nunca grava o Mapa K: só abre a tela do Mapa K com a revisão.
+  const proto = window.OmegasUi.RefinoScreen.prototype;
+  const stalls = { count: 1, events: [{ kind: 'STALL', petrolMs: 2.2, mapBar: 0.3 }], regions: [{ fromMs: 2.0, toMs: 2.5, count: 1, rpmLow: 1400, rpmHigh: 1600 }], nearCount: 0 };
+  window.OmegasStallRegion = { suggest: () => ({ ok: true, cells: [{ row: 0, column: 1 }], percent: 5, region: { fromMs: 2, toMs: 2.5 } }), topRegion: () => ({ fromMs: 2 }) };
+  const both = proto.mapProposal.call({ eq: { ...localEq(), stalls } });
+  assert.equal(both.sub, 'reforço do engasgo');
+  const plan = both.plan({ axes: { petrolBins: [], rpmBins: [] } });
+  assert.equal(plan.ok, true);
+  assert.equal(JSON.stringify(plan.cells), JSON.stringify([{ row: 0, column: 1, deltaPercent: 5 }]));
+  assert.match(plan.summary(1), /Reforço do GNV em 1 célula do Mapa K \(\+5%\)/);
+  const onlyLocal = proto.mapProposal.call({ eq: localEq() });
+  assert.equal(onlyLocal.sub, 'diferença por RPM');
+  assert.equal(JSON.stringify(onlyLocal.plan().cells), JSON.stringify(LOCAL_CELLS));
+  assert.equal(proto.mapProposal.call({ eq: localEq({ enabled: false }) }), null, 'ação desabilitada não vira botão');
+  assert.equal(proto.mapProposal.call({ eq: {} }), null);
+  // O Refino não grava o Mapa K por conta própria: só pelo fluxo com toque em "Gravar" (core/map-fix.js).
   assert.doesNotMatch(SOURCE, /writeMap\(|startMapBatchWrite/);
-  assert.match(SOURCE, /data-refino-local/);
 });

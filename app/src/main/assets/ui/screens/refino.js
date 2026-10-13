@@ -64,6 +64,19 @@
     return prefix + points.map(p => `${p.index}:${p.currentRaw}>${p.targetRaw}`).join(';');
   }
 
+  const vezes = n => (n === 1 ? '1 vez' : `${n} vezes`);
+  /** O que dizer sobre os engasgos registrados (puro: testado sem tela). */
+  function describeStalls(stalls) {
+    const dead = finite(stalls?.count) || 0;
+    const near = finite(stalls?.nearCount) || 0;
+    const total = dead + near;
+    if (!total) return { total: 0, title: 'Nenhum engasgo registrado', text: '' };
+    const top = root.OmegasStallRegion?.topRegion?.(stalls);
+    const when = top ? ` Quase sempre ao soltar e voltar do acelerador, perto de ${Number(top.fromMs).toFixed(1).replace('.', ',')} ms.` : '';
+    const died = dead ? ` Em ${dead} o motor apagou.` : '';
+    return { total, title: `O carro engasgou ${vezes(total)} no GNV`, text: `${died}${when}`.trim() };
+  }
+
   /** Pontos que o motor mudaria (regra de entrada, só para os detalhes técnicos; o botão vem do Kotlin). */
   function proposedPoints(analysis) {
     const points = Array.isArray(analysis?.points) ? analysis.points : [];
@@ -211,6 +224,10 @@
       this.operation = { phase: 'idle' };
       this.review = null;
       this.lastRenderKey = '';
+      // Gravar no Mapa K sem sair da tela (core/map-fix.js): o mesmo fluxo para engasgo e para diferença por RPM.
+      this.mapFix = root.OmegasMapFix && root.OmegasMapEditor
+        ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: () => this.render(true), env: { setTimeout: root.setTimeout.bind(root) } })
+        : null;
       this.inject();
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
         if (this.store.get().route !== 'refino') return;
@@ -245,16 +262,18 @@
           <p class="refino-next" id="refinoNext"></p>
           <div id="refinoChart" class="autocal-chart-host refino-chart" aria-label="Gráfico do Refino"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
           <div class="refino-legend" aria-hidden="true">
-            <span class="ao-key"><i class="sq petrol"></i><b>Nossos · gasolina</b></span>
-            <span class="ao-key"><i class="sq gas"></i><b>Nossos · GNV</b></span>
+            <span class="ao-key"><i class="ln petrol"></i><b>Gasolina (referência)</b></span>
+            <span class="ao-key"><i class="sq gas"></i><b>GNV medido por nós</b></span>
+            <span class="ao-key"><i class="ln gas dim"></i><b>GNV hoje na ECU</b></span>
             <span class="ao-key"><i class="x">✕</i><b>Apagou</b></span>
             <span class="ao-key"><i class="dm"></i><b>Quase apagou</b></span>
           </div>
           <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">
-            <button type="button" class="autocal-primary-action" data-refino-primary hidden></button>
-            <button type="button" class="autocal-primary-action" data-kind="review" data-refino-review hidden>Revisar e gravar</button>
-            <button type="button" class="secondary autocal-primary-action" data-kind="undo" data-refino-undo hidden>Desfazer última gravação</button>
-            <button type="button" class="secondary autocal-primary-action" data-kind="local" data-refino-local hidden></button>
+            <button type="button" class="autocal-primary-action" data-kind="review" data-refino-curve hidden>Gravar na Curva K</button>
+            <button type="button" class="autocal-primary-action" data-kind="map" data-refino-map hidden>Gravar no Mapa K</button>
+            <button type="button" class="secondary autocal-primary-action" data-kind="undo" data-refino-undo hidden>Desfazer</button>
+            <button type="button" class="secondary autocal-primary-action" data-kind="cancel" data-refino-cancel-fix hidden>Cancelar</button>
+            <button type="button" class="secondary autocal-primary-action" data-kind="ok" data-refino-ok hidden>Entendi</button>
           </div>
           <div id="refinoReview" class="autocal-review" hidden></div>
         </section>`;
@@ -272,27 +291,59 @@
     }
 
     onClick(event) {
-      if (event.target.closest('[data-refino-dismiss]')) { this.operation = { phase: 'idle' }; this.refresh(true); return; }
-      if (event.target.closest('[data-refino-primary]')) { this.primary(); return; }
-      if (event.target.closest('[data-refino-cancel]')) { this.closeReview(); return; }
-      if (event.target.closest('[data-refino-confirm]')) { this.confirm(); return; }
-      if (event.target.closest('[data-refino-review]')) { this.openReview('apply'); return; }
-      if (event.target.closest('[data-refino-undo]')) { this.openReview('undo'); return; }
-      if (event.target.closest('[data-refino-local]')) { this.openLocal(); return; }
+      const hit = selector => event.target.closest(selector);
+      if (hit('[data-refino-ok]')) { this.operation = { phase: 'idle' }; this.mapFix?.dismiss(); this.refresh(true); return; }
+      if (hit('[data-refino-cancel]')) { this.closeReview(); return; }
+      if (hit('[data-refino-confirm]')) { this.confirm(); return; }
+      if (hit('[data-refino-cancel-fix]')) { this.mapFix?.dismiss(); return; }
+      if (hit('[data-refino-curve]')) { this.openReview(primaryAction(this.eq).kind === 'restore' ? 'restore' : 'apply'); return; }
+      if (hit('[data-refino-map]')) { this.mapAction(); return; }
+      if (hit('[data-refino-undo]')) {
+        if (this.mapFix?.state.phase === 'done') this.mapFix.undo();
+        else this.openReview('undo');
+      }
     }
 
-    primary() {
-      const action = primaryAction(this.eq);
-      if (!action.enabled) return;
-      if (action.kind === 'review') this.openReview('apply');
-      if (action.kind === 'restore') this.openReview('restore');
-    }
-
-    /** Ajuste local: abre o Mapa K com as células preenchidas (lá a revisão, a gravação, o ACK e o readback). */
-    openLocal() {
+    /** Uma proposta para o Mapa K por vez: o engasgo vem primeiro (segurança); depois a diferença por RPM do piloto. */
+    mapProposal() {
+      const stalls = this.eq?.stalls;
+      const info = describeStalls(stalls);
+      if (info.total > 0 && root.OmegasStallRegion) {
+        return {
+          sub: 'reforço do engasgo',
+          plan: ({ axes }) => {
+            const suggestion = root.OmegasStallRegion.suggest(stalls, { petrolBins: axes.petrolBins, rpmBins: axes.rpmBins });
+            if (!suggestion.ok) return { ok: false, reason: suggestion.reason };
+            const region = suggestion.region;
+            const ms = v => Number(v).toFixed(1).replace('.', ',');
+            return {
+              ok: true,
+              cells: suggestion.cells.map(c => ({ row: c.row, column: c.column, deltaPercent: suggestion.percent })),
+              summary: count => `Reforço do GNV em ${count} ${count === 1 ? 'célula' : 'células'} do Mapa K (+${suggestion.percent}%), perto de ${ms(region.fromMs)}–${ms(region.toMs)} ms. O resto do mapa não muda.`,
+            };
+          },
+        };
+      }
       const local = localAction(this.eq);
-      if (!local.enabled) return;
-      this.app?.router?.navigate('map', { origin: 'refino', suggestion: { mapChanges: local.cells } });
+      if (local.kind === 'local' && local.enabled) {
+        return {
+          sub: 'diferença por RPM',
+          plan: () => ({
+            ok: true,
+            cells: local.cells,
+            summary: count => `Ajuste de ${count} ${count === 1 ? 'célula' : 'células'} do Mapa K onde a diferença é daquela rotação. O resto do mapa não muda.`,
+          }),
+        };
+      }
+      return null;
+    }
+
+    mapAction() {
+      const fix = this.mapFix;
+      if (!fix || fix.busy) return;
+      if (fix.state.phase === 'ready') { fix.write('apply'); return; }
+      const proposal = this.mapProposal();
+      if (proposal) fix.start(proposal.plan);
     }
 
     openReview(kind) {
@@ -389,7 +440,7 @@
         const status = this.native.curveOperation() || {};
         if (status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''))) {
           if (Date.now() - started > OPERATION_TIMEOUT_MS) { this.fail('Tempo limite aguardando a ECU.'); return; }
-          if (this.operation.phase === 'writing') { this.operation.progress = finite(status.progress); this.renderOperation(); }
+          
           root.setTimeout(tick, POLL_MS);
           return;
         }
@@ -409,67 +460,68 @@
       if (headline) headline.textContent = 'Refino indisponível nesta tela (ponte AutoCal ausente).';
     }
 
-    renderOperation() {
-      const button = document.querySelector('[data-refino-primary]');
-      const op = this.operation;
-      if (!button) return;
-      if (op.phase === 'reading' || op.phase === 'writing') {
-        button.hidden = false;
-        button.disabled = true;
-        button.dataset.kind = 'waiting';
-        const progress = finite(op.progress);
-        button.textContent = op.phase === 'reading' ? 'Conferindo a curva da ECU…' : `Gravando…${progress === null ? '' : ' ' + Math.round(progress) + '%'}`;
-      }
-    }
-
+    /** Frase e botões por estado. Nada de botão desabilitado: sem ação possível, só a frase. */
     render(force) {
       const eq = this.eq || {};
       const pilot = eq.autopilot || {};
       const phase = pilot.phase || 'SEM_ECU';
       const op = this.operation;
+      const fix = this.mapFix?.state || { phase: 'idle' };
       const result = eq.refinement?.result || null;
       const key = JSON.stringify([phase, pilot.headline, pilot.next, pilot.action, pilot.secondary, pilot.proposal?.signature, pilot.petrolValid, pilot.gasValid,
-        eq.ratio, eq.samples, op, eq.denseBands, eq.stalls?.count, eq.stalls?.nearCount, eq.gasEpochAt, eq.gasInvalidation?.at, this.snapshot?.snapshotHash,
+        eq.ratio, eq.samples, op, fix, eq.denseBands, eq.stalls?.count, eq.stalls?.nearCount, eq.gasEpochAt, eq.gasInvalidation?.at, this.snapshot?.snapshotHash,
         result && [result.id, result.status, (result.points || []).map(p => p.outcome)], eq.refinement?.verifying]);
       if (!force && key === this.lastRenderKey) return;
       this.lastRenderKey = key;
 
       const chip = document.getElementById('refinoPhaseChip');
       if (chip) { chip.dataset.fuelState = PHASE_TONE[phase] || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Pontos pioraram' : 'Sem ECU'])[1]; }
-      const headline = op.phase === 'failed' ? op.message : pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
-      const next = op.phase === 'failed' ? 'Nada foi dado como gravado. Toque em "Tentar de novo" quando a ECU estabilizar: a lista é refeita com a curva lida na hora.' : pilot.next || '';
-      setText('refinoHeadline', headline);
-      setText('refinoNext', next + (op.phase === 'idle' ? this.gasNote(eq) : ''));
 
-      const button = document.querySelector('[data-refino-primary]');
-      if (button) {
-        if (op.phase === 'reading' || op.phase === 'writing') this.renderOperation();
-        else if (op.phase === 'failed') { button.hidden = false; button.disabled = false; button.textContent = 'Tentar de novo'; button.dataset.kind = 'retry'; button.dataset.refinoDismiss = ''; }
-        else {
-          delete button.dataset.refinoDismiss;
-          const action = primaryAction(eq);
-          button.hidden = action.kind === 'none';
-          button.disabled = !action.enabled;
-          button.textContent = action.label;
-          button.dataset.kind = action.kind;
-        }
+      let headline = pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
+      let next = (pilot.next || '') + (op.phase === 'idle' && fix.phase === 'idle' ? this.gasNote(eq) : '');
+      const show = { curve: false, map: false, undo: false, cancel: false, ok: false };
+      const label = {};
+      if (op.phase === 'reading' || op.phase === 'writing') {
+        headline = op.phase === 'reading' ? 'Conferindo a Curva K da ECU…' : 'Gravando e conferindo na ECU…'; next = 'Não desligue o carro nem tire o cabo.';
+      } else if (op.phase === 'failed') {
+        headline = op.message; next = 'Nada foi dado como gravado. A lista é refeita com a curva lida na hora.'; show.ok = true; label.ok = 'Tentar de novo';
+      } else if (fix.phase === 'reading' || fix.phase === 'writing') {
+        headline = fix.message; next = 'Não desligue o carro nem tire o cabo.';
+      } else if (fix.phase === 'ready') {
+        headline = 'Pronto para gravar no Mapa K'; next = fix.summary; show.map = true; show.cancel = true; label.map = 'Gravar no Mapa K';
+      } else if (fix.phase === 'done') {
+        headline = 'Gravado e conferido no Mapa K'; next = 'Dirija e veja se o engasgo some. Se piorar, desfaça.'; show.undo = true; show.ok = true; label.ok = 'Pronto';
+      } else if (fix.phase === 'undone') {
+        headline = 'Desfeito e conferido na ECU'; next = 'O Mapa K voltou ao valor de antes.'; show.ok = true; label.ok = 'Pronto';
+      } else if (fix.phase === 'failed') {
+        headline = fix.message; next = 'Nada foi dado como gravado. Confira o Mapa K antes de dirigir.'; show.ok = true; label.ok = 'Entendi';
+      } else {
+        const stallInfo = describeStalls(eq.stalls);
+        if (stallInfo.total > 0) next = `${stallInfo.title}. ${stallInfo.text}`.trim();
+        if (fix.note) next = fix.note;
+        const primary = primaryAction(eq);
+        const secondary = secondaryActions(eq);
+        const curveReady = (primary.kind === 'review' && primary.enabled) || secondary.some(item => item.kind === 'review' && item.enabled);
+        const restore = primary.kind === 'restore' && primary.enabled;
+        show.curve = curveReady || restore;
+        label.curve = restore && !curveReady ? 'Restaurar na Curva K' : 'Gravar na Curva K';
+        show.map = !!this.mapProposal();
+        show.undo = secondary.some(item => item.kind === 'undo' && item.enabled);
+        label.undo = 'Desfazer última gravação';
       }
-      const busy = op.phase !== 'idle';
-      const secondary = secondaryActions(eq);
-      [['review', '[data-refino-review]'], ['undo', '[data-refino-undo]']].forEach(([kind, selector]) => {
+      setText('refinoHeadline', headline);
+      setText('refinoNext', next);
+      const proposal = show.map && fix.phase === 'idle' ? this.mapProposal() : null;
+      for (const [name, selector] of [['curve', '[data-refino-curve]'], ['map', '[data-refino-map]'], ['undo', '[data-refino-undo]'], ['cancel', '[data-refino-cancel-fix]'], ['ok', '[data-refino-ok]']]) {
         const node = document.querySelector(selector);
-        if (!node) return;
-        const item = secondary.find(s => s.kind === kind);
-        node.hidden = busy || !item;
-        node.disabled = !item || !item.enabled;
-        if (item) node.textContent = item.label;
-      });
-      const localNode = document.querySelector('[data-refino-local]');
-      if (localNode) {
-        const local = localAction(eq);
-        localNode.hidden = busy || local.kind === 'none';
-        localNode.disabled = !local.enabled;
-        if (local.kind !== 'none') localNode.textContent = local.label;
+        if (!node) continue;
+        node.hidden = !show[name];
+        if (label[name] && node.textContent !== label[name] && name !== 'map') node.textContent = label[name];
+      }
+      const mapNode = document.querySelector('[data-refino-map]');
+      if (mapNode && show.map) {
+        const html = fix.phase === 'ready' ? 'Gravar no Mapa K' : `Gravar no Mapa K<small>${escapeHtml(proposal?.sub || '')}</small>`;
+        if (mapNode.innerHTML !== html) mapNode.innerHTML = html;
       }
       this.renderChart();
     }
@@ -572,7 +624,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { proposedPoints, undoPoints, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
+  ns.RefinoModel = { describeStalls, proposedPoints, undoPoints, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);
