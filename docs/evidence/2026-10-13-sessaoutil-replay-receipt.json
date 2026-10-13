@@ -1,0 +1,53 @@
+{
+  "schema": "omegas-sessaoutil-rpm-investigation-receipt-v1",
+  "sourceHead": "a567b8818fcc0247bb11f4e6b2e5025c3a8e6a0f",
+  "drive": {
+    "fileId": "16mu0ywMhSDNyWscXd0AvLf3V0UazHS28",
+    "bytes": 4928780,
+    "sha256": "ba3f31216330fea6fb83ec4f7a69a2529545b3792b38c206c5af8d1ac46e116c",
+    "physicalSessions": 5,
+    "zipIntegrity": "PASS"
+  },
+  "nativeAcquisitionReplay": {
+    "rows": 281,
+    "nativeCorrelations": 53,
+    "inferredIntervalMatches": 228,
+    "analysisEpochsWithRows": 17,
+    "strictComparablePairs": 17,
+    "strictSignedPositive": 11,
+    "strictSignedNegative": 4,
+    "strictSignedZero": 2,
+    "matureRepeatedPairs": 0
+  },
+  "residualReplay": {
+    "versionedCorpus": {"sessions": 45, "observations": 43066, "pairs": 8255, "groups": 22, "localGroups": 0},
+    "sessaoutil": {"sessions": 5, "observations": 8051, "pairs": 132, "groups": 8, "localGroups": 0}
+  },
+  "riverShadow": {
+    "version": "0.26.1",
+    "evaluatedPairs": 7222,
+    "evaluatedSessions": 10,
+    "incumbent": {"median": 3.324778392256079, "mean": 4.736339759334917, "p90": 11.003666354210011},
+    "arf": {"median": 3.5078087537497478, "mean": 4.392360649122401, "p90": 8.482669277799532, "sessionWins": 6},
+    "decision": "SHADOW_ONLY"
+  },
+  "rea": {
+    "version": "6.4.0",
+    "mcpRegistration": "ALIGNED",
+    "jadx": "OPERATIONAL",
+    "ghidra": "BLOCKED_JRE_WITHOUT_JDK",
+    "baselineApkSha256": "bd563553acfef57193697033e81c8bcd2776ff4af46adbfd6c23b76489a2ae86",
+    "baselineApkRevision": "39cbe363",
+    "evidenceIds": [
+      "ev_6a7cc7dec477587f4173a59696b2aa91566a2b017e7c59b35392d53b1ca691fb",
+      "ev_e3db6f59d89ecc30d6c2887292ba8462e47e0b8be29e5fab5e1638f35de99361",
+      "ev_b2682e2e8447eaf3c09db388a1c415c217d6e37ed045bf2cbbc0bbd22dd8981b"
+    ]
+  },
+  "safety": {
+    "ecuWrites": 0,
+    "protocolChanges": 0,
+    "androidBehaviorChanges": 0,
+    "physicalValidation": false
+  }
+}
