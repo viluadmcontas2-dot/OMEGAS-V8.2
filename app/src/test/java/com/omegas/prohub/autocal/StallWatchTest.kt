@@ -63,6 +63,9 @@ class StallWatchTest {
         assertEquals(0, json.getInt("count"))
         assertEquals(1, json.getInt("nearCount"))
         assertEquals(2.0, json.getJSONArray("nearRegions").getJSONObject(0).getDouble("fromMs"), 1e-9)
+        val region = json.getJSONArray("nearRegions").getJSONObject(0)
+        assertTrue(region.getDouble("rpmLow") <= region.getDouble("rpmHigh"))
+        assertTrue(region.getDouble("rpmHigh") <= 1_700.0)
     }
 
     @Test

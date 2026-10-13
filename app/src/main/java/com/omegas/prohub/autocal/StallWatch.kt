@@ -132,12 +132,16 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
                 JSONObject().put("fromMs", from).put("toMs", from + BIN_MS).put("count", list.size)
                     .put("mapBar", median(list.map { it.optDouble("mapBar") }))
                     .put("rpmBefore", median(list.map { it.optDouble("rpmBefore") }))
+                    .put("rpmLow", list.minOf { it.optDouble("rpmBefore") })
+                    .put("rpmHigh", list.maxOf { it.optDouble("rpmBefore") })
             }.sortedByDescending { it.optInt("count") }
         val nearBins = nearEvents.groupBy { kotlin.math.floor(it.optDouble("minPetrolMs") / BIN_MS) * BIN_MS }
             .map { (from, list) ->
                 JSONObject().put("fromMs", from).put("toMs", from + BIN_MS).put("count", list.size)
                     .put("mapBar", median(list.map { it.optDouble("mapBar") }))
                     .put("rpmBefore", median(list.map { it.optDouble("rpmBefore") }))
+                    .put("rpmLow", list.minOf { it.optDouble("rpmBefore") })
+                    .put("rpmHigh", list.maxOf { it.optDouble("rpmBefore") })
                     .put("afterCutoff", list.count { it.optBoolean("afterCutoff") })
             }.sortedByDescending { it.optInt("count") }
         JSONObject().put("count", events.size)

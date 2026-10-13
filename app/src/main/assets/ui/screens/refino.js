@@ -260,6 +260,7 @@
                 <span class="refino-ours-petrol">Nossos · gasolina</span>
                 <span class="refino-ours-gas">Nossos · GNV</span>
                 <span class="refino-stall-legend">Motor apagou</span>
+                <span class="refino-near-legend">Quase apagou</span>
                 <span class="live">AGORA</span>
               </div>
               <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU. Quadradinhos: nossos pontos, um a cada 0,025 bar. Cor igual à do AutoCal: vermelho = gasolina, verde = GNV.</span></aside>
@@ -272,6 +273,7 @@
             <button type="button" class="secondary autocal-primary-action" data-kind="local" data-refino-local hidden></button>
           </div>
           <div id="refinoReview" class="autocal-review" hidden></div>
+          <section id="refinoStalls" class="refino-stalls" aria-label="Tropeços e apagões do GNV" hidden></section>
         </section>`;
       host.addEventListener('click', event => this.onClick(event));
     }
@@ -294,6 +296,7 @@
       if (event.target.closest('[data-refino-review]')) { this.openReview('apply'); return; }
       if (event.target.closest('[data-refino-undo]')) { this.openReview('undo'); return; }
       if (event.target.closest('[data-refino-local]')) { this.openLocal(); return; }
+      if (event.target.closest('[data-refino-stall]')) { this.openStalls(); return; }
       const dot = event.target.closest('[data-refino-dot]');
       if (dot) this.inspect(dot.dataset.refinoDot);
     }
@@ -310,6 +313,13 @@
       const local = localAction(this.eq);
       if (!local.enabled) return;
       this.app?.router?.navigate('map', { origin: 'refino', suggestion: { mapChanges: local.cells } });
+    }
+
+    /** Tropeços → Mapa K: abre o Mapa K com as células propostas (lá: prévia, conferência, ACK e leitura de volta). */
+    openStalls() {
+      const stalls = this.eq?.stalls;
+      if (!stalls) return;
+      this.app?.router?.navigate('map', { origin: 'refino', suggestion: { stallStalls: stalls } });
     }
 
     openReview(kind) {
@@ -446,7 +456,7 @@
       const op = this.operation;
       const result = eq.refinement?.result || null;
       const key = JSON.stringify([phase, pilot.headline, pilot.next, pilot.action, pilot.secondary, pilot.proposal?.signature, pilot.petrolValid, pilot.gasValid,
-        eq.ratio, eq.samples, op, eq.denseBands, eq.stalls?.count, eq.gasEpochAt, eq.gasInvalidation?.at, this.snapshot?.snapshotHash,
+        eq.ratio, eq.samples, op, eq.denseBands, eq.stalls?.count, eq.stalls?.nearCount, eq.gasEpochAt, eq.gasInvalidation?.at, this.snapshot?.snapshotHash,
         result && [result.id, result.status, (result.points || []).map(p => p.outcome)], eq.refinement?.verifying]);
       if (!force && key === this.lastRenderKey) return;
       this.lastRenderKey = key;
@@ -496,7 +506,23 @@
         localNode.disabled = !local.enabled;
         if (local.kind !== 'none') localNode.textContent = local.label;
       }
+      this.renderStalls(eq);
       this.renderChart();
+    }
+
+    /** Cartão de tropeços e apagões do GNV: o que a ECU mostrou, onde, e o botão que leva ao Mapa K (grava só no mapa, com confirmação). */
+    renderStalls(eq) {
+      const host = document.getElementById('refinoStalls');
+      if (!host) return;
+      const stalls = eq.stalls || {};
+      const total = (finite(stalls.count) || 0) + (finite(stalls.nearCount) || 0);
+      host.hidden = total === 0;
+      if (!total) return;
+      const top = ns.OmegasStallRegion?.topRegion?.(stalls) || root.OmegasStallRegion?.topRegion?.(stalls);
+      const where = top ? ` Mais em ${fmt(top.fromMs, 1)}–${fmt(top.toMs, 1)} ms (MAP ≈ ${fmt(top.mapBars.length ? top.mapBars[0] : null, 2)} bar).` : '';
+      const cut = finite(stalls.nearEvents && stalls.nearEvents.filter(e => e.afterCutoff).length) || 0;
+      const html = `<b>Motor engasgou no GNV</b><span>${finite(stalls.count) || 0} apagão(ões) e ${finite(stalls.nearCount) || 0} quase-apagão(ões) (RPM caiu abaixo de 500 e voltou).${where}${cut ? ` ${cut} logo depois do corte.` : ''} A ECU manda os dados; o app só registra onde foi.</span><button type="button" class="secondary autocal-primary-action" data-refino-stall>Levar ao Mapa K (só no mapa, você confirma)</button>`;
+      if (host.dataset.html !== html) { host.dataset.html = html; host.innerHTML = html; }
     }
 
     /** Por que nossos pontos de GNV recomeçaram (inteiros ou só onde a gravação mexeu). */
@@ -562,11 +588,14 @@
       const stallEvents = Array.isArray(this.eq?.stalls?.events) ? this.eq.stalls.events : [];
       const stallMarkup = stallEvents.filter(e => finite(e.petrolMs) !== null && finite(e.mapBar) !== null && e.petrolMs <= xMax && e.mapBar >= yMin && e.mapBar <= yMax)
         .map(e => { const x = xFor(e.petrolMs); const y = yFor(e.mapBar); return `<path class="refino-stall-mark" d="M${(x - 6).toFixed(1)} ${(y - 6).toFixed(1)} L${(x + 6).toFixed(1)} ${(y + 6).toFixed(1)} M${(x + 6).toFixed(1)} ${(y - 6).toFixed(1)} L${(x - 6).toFixed(1)} ${(y + 6).toFixed(1)}"></path>`; }).join('');
+      const nearEvents = Array.isArray(this.eq?.stalls?.nearEvents) ? this.eq.stalls.nearEvents : [];
+      const nearMarkup = nearEvents.filter(e => finite(e.petrolMs) !== null && finite(e.mapBar) !== null && e.petrolMs <= xMax && e.mapBar >= yMin && e.mapBar <= yMax)
+        .map(e => { const x = xFor(e.petrolMs); const y = yFor(e.mapBar); return `<path class="refino-near-mark" d="M${x.toFixed(1)} ${(y - 7).toFixed(1)} L${(x + 7).toFixed(1)} ${y.toFixed(1)} L${x.toFixed(1)} ${(y + 7).toFixed(1)} L${(x - 7).toFixed(1)} ${y.toFixed(1)} Z"></path>`; }).join('');
       this.chartScale = { xMin, xMax, yMin, yMax, xFor, yFor };
       host.innerHTML = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Nossa curva: Petrol Inj. por MAP, gasolina e GNV, pontos da ECU e nossos">${grid}` +
         `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 5}" text-anchor="middle">Petrol Inj. (ms)</text>` +
         `<text class="autocal-axis-title y" x="14" y="${height / 2}" text-anchor="middle" transform="rotate(-90 14 ${height / 2})">MAP (bar)</text>` +
-        `<g>${hasPetrolRv ? `<path class="autocal-reference-line petrol" d="${path('petrolMapBar')}"></path>` : ''}${hasGasRv ? `<path class="autocal-reference-line gas" d="${path('gasMapBar')}"></path>` : ''}${oursMarkup}${acquiredMarkup}${stallMarkup}<g class="autocal-live-layer" data-refino-live hidden><circle class="autocal-live-halo" r="13"></circle><circle class="autocal-live-point" r="6"></circle><text class="autocal-live-label" text-anchor="start">AGORA</text></g></g></svg>`;
+        `<g>${hasPetrolRv ? `<path class="autocal-reference-line petrol" d="${path('petrolMapBar')}"></path>` : ''}${hasGasRv ? `<path class="autocal-reference-line gas" d="${path('gasMapBar')}"></path>` : ''}${oursMarkup}${acquiredMarkup}${nearMarkup}${stallMarkup}<g class="autocal-live-layer" data-refino-live hidden><circle class="autocal-live-halo" r="13"></circle><circle class="autocal-live-point" r="6"></circle><text class="autocal-live-label" text-anchor="start">AGORA</text></g></g></svg>`;
       this.renderLive();
     }
 

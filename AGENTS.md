@@ -38,7 +38,7 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 
 | Assunto | Entrada | Teste |
 |---|---|---|
-| Refino (fases, proposta) | `app/src/main/java/com/omegas/prohub/autocal/RefinementAutopilot.kt`, `app/src/main/assets/ui/screens/refino.js` | `tests/ui/sugestoes-refino.test.cjs` |
+| Refino (fases, proposta) | `app/src/main/java/com/omegas/prohub/autocal/RefinementAutopilot.kt`, `app/src/main/assets/ui/screens/refino.js`, `autocal/StallWatch.kt` (tropeços), `app/src/main/assets/ui/core/stall-region.js` | `tests/ui/sugestoes-refino.test.cjs`, `tests/ui/tropecos-para-mapa.test.cjs`, `StallWatchTest.kt` |
 | Tela AutoCal do original (zonas, `#n/d`, eixos, Acquisition, curva K) | `app/src/main/assets/ui/screens/autocal-original.js` (usado por `autocal-cockpit.js`) | `tests/ui/autocal-original-parity.test.cjs` |
 | Global × local (por RPM) | `autocal/EquivalenceAttribution.kt`, `autocal/LocalMapPlanner.kt` | `tests/test_rpm_residual_replay.py` |
 | Época de aquisição do AutoCal | `autocal/NativeAutoCalAcquisitionEpoch.kt` | `NativeAutoCalAcquisitionEpochTest.kt` |

@@ -2424,3 +2424,14 @@
 .ao-g-ceiling { stroke: var(--ao-bad); fill: none; stroke-width: 2; stroke-dasharray: 5 3; }
 .ao-dots-key { gap: 5px; opacity: .85; }
 .ao-dots-key .ao-dot { width: 10px; height: 10px; }
+
+/* Refino: quase apagou (losango vazado) e cartão de tropeços */
+.refino-near-mark { fill: none; stroke: var(--ao-bad, #ff5d5d); stroke-width: 2; }
+.autocal-chart-legend .refino-near-legend::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 6px; transform: rotate(45deg); border: 2px solid var(--ao-bad, #ff5d5d); box-sizing: border-box; vertical-align: middle; }
+.refino-stalls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 8px 0 0; padding: 10px 14px; border: 1px solid rgba(255, 93, 93, .45); border-radius: 10px; background: rgba(255, 93, 93, .06); }
+.refino-stalls[hidden] { display: none; }
+.refino-stalls b { display: block; font-size: 15px; }
+.refino-stalls { max-width: calc(100vw - 48px); box-sizing: border-box; }
+.refino-stalls b, .refino-stalls span { white-space: normal; min-width: 0; }
+.refino-stalls span { flex: 1 1 320px; font-size: 13px; color: var(--muted, #9aa7b8); line-height: 1.4; }
+.refino-stalls button { flex: 0 0 auto; min-height: 44px; }
