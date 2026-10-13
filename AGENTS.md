@@ -67,6 +67,10 @@ Comandos de verificação: `node --test tests/ui/*.test.cjs` · `python3 -B -m u
 - Não alterar bytes nem classes de comando da ECU (`UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager`, `AutoCalNativeActionManager`) sem autorização do dono.
 - O programa ativo compara o OMEGAS Platina com o **ProgBase original e seus logs reais**.
 
+## Método de campo
+
+Quando o alvo não roda aqui (ECU, programa Windows), use a skill `.claude/skills/emular-por-observacao/SKILL.md`: capturas → parser → esquema → decompilação mínima → emulador → tela renderizada → app real com dados reais.
+
 ## Execução paralela
 
 Só quando o dono autorizar e as tarefas forem independentes: um dono por superfície de escrita; exploradores e falsificadores em paralelo; integração serializada; relato de worker não é prova, verificar o estado integrado.
