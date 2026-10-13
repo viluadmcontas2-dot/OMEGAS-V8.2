@@ -67,7 +67,7 @@ class DocumentsSessionMirror(private val context: Context) {
         }
         return try {
             val safeSession = safeName(sessionId)
-            val name = SessionPartPlanner.partName(sessionId, plan.part)
+            val name = plan.fileName(sessionId)
             val write: (OutputStream) -> Int = { SessionPartPlanner.writeZip(plan, sessionId, it) }
             val count = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) publishZipScoped("$PUBLIC_ROOT/$safeSession/", name, write)
             else publishZipLegacy(safeSession, name, write)

@@ -27,10 +27,16 @@ object SessionPartPlanner {
         val files: List<File>,
         val final: Boolean,
         internal val nextState: JSONObject,
-    )
+        /** Sessão inteira num ZIP só (dono, 2026-10-13: "49 partes é ridículo"): primeira e última publicação ao mesmo tempo. */
+        val single: Boolean = false,
+    ) {
+        fun fileName(sessionId: String): String = if (single) singleName(sessionId) else partName(sessionId, part)
+    }
 
     fun partName(sessionId: String, part: Int): String =
         DocumentsSessionMirror.safeName(sessionId) + "_parte_" + part.toString().padStart(4, '0') + ".zip"
+
+    fun singleName(sessionId: String): String = DocumentsSessionMirror.safeName(sessionId) + ".zip"
 
     private fun readState(dir: File): JSONObject = try {
         File(dir, STATE_FILE).takeIf { it.isFile }?.let { JSONObject(it.readText()) } ?: JSONObject()
@@ -89,7 +95,8 @@ object SessionPartPlanner {
         val part = state.optInt("nextPart", 1)
         val next = JSONObject().put("format", FORMAT).put("nextPart", part + 1)
             .put("offsets", nextOffsets).put("meta", nextMeta)
-        return Plan(part, slices, files, final, next)
+        // Nada foi publicado ainda e a sessão fechou (ou foi recuperada depois de queda): um ZIP só, com tudo.
+        return Plan(part, slices, files, final, next, single = final && part == 1 && !state.has("offsets"))
     }
 
     /** ZIP da parte: `<sessão>/events_0001.from_<byte>.jsonl`, arquivos mudados e `parte.json`. */
@@ -98,7 +105,7 @@ object SessionPartPlanner {
         val listing = JSONArray()
         ZipOutputStream(output.buffered()).use { zip ->
             plan.slices.forEach { slice ->
-                val entryName = slice.name.removeSuffix(".jsonl") + ".from_" + slice.from + ".jsonl"
+                val entryName = if (plan.single && slice.from == 0L) slice.name else slice.name.removeSuffix(".jsonl") + ".from_" + slice.from + ".jsonl"
                 zip.putNextEntry(ZipEntry("$prefix/$entryName"))
                 val digest = MessageDigest.getInstance("SHA-256")
                 RandomAccessFile(slice.file, "r").use { raf ->
@@ -127,7 +134,8 @@ object SessionPartPlanner {
             zip.putNextEntry(ZipEntry("$prefix/parte.json"))
             zip.write(JSONObject().put("format", FORMAT).put("sessionId", sessionId).put("part", plan.part)
                 .put("final", plan.final).put("createdAtMs", System.currentTimeMillis())
-                .put("howToJoin", "Concatene os events_NNNN.from_*.jsonl de todas as partes em ordem de byte.")
+                .put("single", plan.single)
+                .put("howToJoin", if (plan.single) "Sessão completa neste ZIP: events_NNNN.jsonl inteiros." else "Concatene os events_NNNN.from_*.jsonl de todas as partes em ordem de byte.")
                 .put("entries", listing).toString(2).toByteArray(Charsets.UTF_8))
             zip.closeEntry()
         }

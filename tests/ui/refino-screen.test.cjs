@@ -311,3 +311,14 @@ test('o Mapa K recebe UMA proposta por vez: engasgo primeiro, depois a diferenç
   // O Refino não grava o Mapa K por conta própria: só pelo fluxo com toque em "Gravar" (core/map-fix.js).
   assert.doesNotMatch(SOURCE, /writeMap\(|startMapBatchWrite/);
 });
+
+// Pausar a ECU e refinar: só quando o piloto diz explicitamente que a ECU ainda está no automático, online e ligada.
+test('Pausar a ECU e refinar agora só é oferecido com a ECU ainda no automático', () => {
+  const m = model();
+  assert.equal(m.pauseOffer({ autopilot: { ecuDone: false, ecuOnline: true, autoCalEnabled: 1 } }).offered, true);
+  assert.equal(m.pauseOffer({ autopilot: { ecuDone: true } }).offered, false, 'ECU concluída: nada a pausar');
+  assert.equal(m.pauseOffer({ autopilot: { ecuDone: false, autoCalEnabled: 0 } }).offered, false, 'já pausada');
+  assert.equal(m.pauseOffer({ autopilot: { ecuDone: false, ecuOnline: false } }).offered, false, 'sem ECU');
+  assert.equal(m.pauseOffer({}).offered, false, 'estado desconhecido não oferece');
+  assert.equal(m.pauseOffer(null).offered, false);
+});

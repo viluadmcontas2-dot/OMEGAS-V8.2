@@ -39,7 +39,7 @@ class SessionRecorder(
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
         private const val PREVIEW_LIMIT = 120
-        /** Parte pública imutável a cada 2 min: num corte de energia perde-se no máximo isso. */
+        /** Garantia local (flash/manifesto) a cada 2 min; a publicação para Download/Drive só acontece ao fechar a sessão. */
         private const val DOCUMENTS_MIRROR_INTERVAL_MS = 120_000L
         /** Evento do AutoCal antecipa a parte, sem gerar uma parte por evento. */
         private const val DURABLE_EVENT_MIN_GAP_MS = 15_000L
@@ -698,7 +698,9 @@ class SessionRecorder(
             syncToDisk()
             updateManifest()
             semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
-            publishParts(dir, sessionId, final = !recording)
+            // Gravando: só garante no armazenamento do app (flash, manifesto, razões); NADA vai para o Drive/Download até a sessão
+            // fechar (um ZIP por sessão, dono 2026-10-13: "49 partes é ridículo"). Se o app morrer, a próxima abertura publica.
+            if (!recording) publishParts(dir, sessionId, final = true)
         } finally {
             lastDocumentsMirrorAt = now
         }

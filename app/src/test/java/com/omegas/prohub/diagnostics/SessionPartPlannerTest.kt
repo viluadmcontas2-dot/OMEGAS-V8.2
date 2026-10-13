@@ -75,4 +75,36 @@ class SessionPartPlannerTest {
         assertEquals("s_1_parte_0007.zip", SessionPartPlanner.partName("s 1", 7))
         dir.deleteRecursively()
     }
+
+    // Dono, 2026-10-13: 90 min de gravação saíram em 49 ZIPs de 100 KB. Sessão que fecha (ou é recuperada depois de queda) sem
+    // nenhuma parte já publicada sai em UM ZIP só, com os eventos inteiros e o nome da sessão.
+    @Test
+    fun `sessao fechada sem parte anterior sai em um zip so`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        val log = File(dir, "events_0001.jsonl")
+        File(dir, "manifest.json").writeText("{\"v\":1}")
+        log.writeText("{\"seq\":1}\n{\"seq\":2}\n{\"seq\":3}\n")
+        val plan = SessionPartPlanner.plan(dir, final = true)!!
+        assertTrue(plan.single)
+        assertEquals("s_1.zip", plan.fileName("s 1"))
+        val out = ByteArrayOutputStream()
+        SessionPartPlanner.writeZip(plan, "s 1", out)
+        val zip = unzip(out.toByteArray())
+        assertArrayEquals(log.readBytes(), zip.getValue("s_1/events_0001.jsonl"))
+        assertTrue(JSONObject(String(zip.getValue("s_1/parte.json"))).getBoolean("single"))
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `sessao que ja publicou partes continua em partes mesmo ao fechar`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        val log = File(dir, "events_0001.jsonl")
+        log.writeText("{\"seq\":1}\n")
+        publish(dir)!! // parte 1 (sessão antiga, de versão anterior)
+        log.appendText("{\"seq\":2}\n")
+        val plan = SessionPartPlanner.plan(dir, final = true)!!
+        assertTrue(!plan.single)
+        assertEquals("s_1_parte_0002.zip", plan.fileName("s 1"))
+        dir.deleteRecursively()
+    }
 }
