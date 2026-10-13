@@ -65,6 +65,43 @@ Provas locais em `131a7153`: JVM 619/619 + lint 0 erros, node UI 194/194, unitte
 - Limites: IDA/Hopper não configurados (pagos; Ghidra cobre). Sem USB na nuvem: ADB/ECU real continuam no carro. API de releases do GitHub negada pelo proxy (download direto do asset passa; URL fixada no script).
 - Próximo uso: ProgBase original (quando o dono enviar o executável) e APKs autorizados de outros apps de GNV.
 
+## Atualização 2026-10-13 (remoto = HEAD desta branch, PR #177)
+
+Commits depois de `131a7153`:
+
+| Commit | Fatia |
+|---|---|
+| `39bcc363` | Sugestões mostra cartão da curva + cartão do ajuste local; sem contadores zero |
+| `f0b3aa30` | bug do carro: "Reaprender GNV" ficava em 12/18. Época do AutoCal só aceita novo grupo depois que os contadores daquele combustível voltam a 0 (`GAS_RESET_NOT_APPLIED_YET`/`PETROL_RESET_NOT_APPLIED_YET`); AutoMatch nativo não zera nada. Testes em `NativeAutoCalAcquisitionEpochTest.kt` |
+| `c5159005`, `a69811a6`, `903860f8`, `c5374039` | ambiente REA persistente (`tools/rea/install.sh`, `.mcp.json`, hook SessionStart) |
+| `c8b24f42` | `docs/reverse/PROGBASE-LOGNOVO-RESET-2026-10-12.md`: o log real prova que a ECU zera os contadores na hora no `RESET_ALL` e que o ProgBase nunca usa reset seletivo |
+
+Fatos do ProgBase/log já estabelecidos (não redescobrir):
+- `PortmonLOGNOVO.LOG`: 2 631 711 linhas, 39 524 escritas; 0 `RESET_GAS`/`RESET_PETROL`/`MANUAL_AUTOMATCH`; 1 `RESET_ALL` (`02 24 04 04 2E`); `NUM_BUF_UPD_GAS` vai de `[10×16,0,0]` para `[0×18]` no ciclo seguinte; ciclo de leitura ~1,83 s; `AUTO_CAL_ENABLE` 4× liga/4× desliga; nenhuma escrita direta de `MUL_ACT`; todos os endereços lidos já são conhecidos pelo app.
+- `ProgBase.exe` (C++Builder, PE32 x86, SHA-256 `8a2d297c…`): unidades `Autocal_dm` (init `0x5134a4`), `Autocal_dm_ee` (`0x513610`), `Autocal_ui` (`0x51b5d4`), `Autocal_settings` (`0x514380`). Identificadores: `TAutoCalDM/_EE`, `TAutoCalUI`, `TFormRifAutocal`, `TFormCalibra`, `TFormCorrCalibra`, `TFormModificaMappa`, `TStrategiaPandaDM`, `TStrategiaTempiMortiDM`, `ActionAutoMatchExecute`, `AutoCalMulAct`, `BtnFinishAutomatch`, `CalcolaWorkingPoint`, `CalcolaCoordinateWorkPoint`, `EditSogliaGiri/Map/Press/Adatta`, `EditNumAutomatch`, campos `MUL_PREV_EE`, `MUL_UPD_CALL_CNTR_EE`, `GAS_POINT_2DELETE`, `AUTO_CALIBR_BYTE_ARRAY/WORD_ARRAY(D)`, `PETR_INJ_TBUFL`.
+- Consequência para o app: a seletividade de `0x02`/`0x01` (Reaprender só GNV/só gasolina) nunca foi exercitada pelo original. Teste no carro: AutoCal → Reaprender GNV → Ferramentas → Log do sistema → `autocal_native_action` antes/depois de `NUM_BUF_UPD_GAS`. Se não zerar, só "Recomeçar tudo" é real.
+
+Como usar o REA no ProgBase (lição desta sessão): o MCP `rea` conecta (170 ferramentas), mas no executável de 6,3 MB `search_procedures`/decompile estouram os 60 s do MCP. Use o CLI em segundo plano, com instantâneo:
+
+```
+cd <pasta com ProgBase.exe>
+REA_GHIDRA_STARTUP_TIMEOUT_MS=3600000 GHIDRA_HEADLESS_MAXMEM=8G \
+  npx -y rea-agents@6.4.0 search "$PWD/ProgBase.exe" "AutoMatch|MulAct|WorkingPoint|Strategia" \
+  --mode regex --provider ghidra --snapshot "$PWD/progbase.rea-snapshot" --format json
+npx -y rea-agents@6.4.0 decompile "$PWD/ProgBase.exe" 0x<addr> --provider ghidra --snapshot "$PWD/progbase.rea-snapshot"
+```
+
+Os arquivos (ProgBase.exe, Resources.dll, PortmonLOGNOVO.zip) vêm dos links do Drive do dono ("qualquer um com o link"); baixar com `https://drive.usercontent.google.com/download?id=<id>&export=download&confirm=t`. O instantâneo (`.rea-snapshot`) é da sessão e some com o contêiner: reconstruir custa ~6 min.
+
+Trabalho concorrente já na branch (2026-10-13, outro agente; ler antes de tocar nos mesmos temas, não refazer): `docs/superpowers/specs/2026-10-13-obsidian-autocal-contextual-surfaces-design.md` (superfícies contextuais do AutoCal, refino estreitado ao residual por RPM), `docs/evidence/2026-10-13-sessaoutil-rpm-residual-investigation.md` + `tools/autocal_refine/rpm_residual_*.py` (replay causal do residual RPM), `docs/workunits/PLATINA-PROTOCOL-AUDIT-178.md` + `docs/workunits/OMEGAS-WU-006.md` (auditoria de protocolo #178–#181: `AutoCalProtocol.kt`, `KFactorProtocol.kt`, `UsbProtocolReply.kt` alterados com evidência do original — conferir com o dono que isso foi autorizado, pois a regra é não mudar bytes/classes de comando da ECU).
+
+## Próximos passos, em ordem (2026-10-13)
+
+1. Decompilar `ActionAutoMatchExecute`, `AutoCalMulAct`, `CalcolaWorkingPoint`, `TStrategiaPandaDM` e registrar em `docs/reverse/PROGBASE-AUTOMATCH-<data>.md` o que o original faz com os pares ms×MAP e como escolhe ponto de trabalho; contrastar com `AutoMatchRefinedEngine`/`EquivalenceAttribution`.
+2. Inteligência global × local na tela do AutoCal (pedido do dono, foto da bifurcação em Z1): mostrar na tela do AutoCal a atribuição por RPM vinda do Refino (`EquivalenceAttribution`), sem leitura anterior. Prévia PNG antes de implementar.
+3. Mapa K perto de 255: quando células saturam, propor renormalização do mapa (base 100) com a curva absorvendo o ganho; um toque, cópia antes, Desfazer depois, "Gravado" só com readback. Decidir a semântica do Mapa K (multiplicativo? neutro 100 ou 128?) com dado do carro ou com o decompilado de `TFormModificaMappa`.
+4. CI remota verde no SHA final; um APK (`verde-apk-now.yml`, `build_apk=true`) com SHA-256; descrição do PR #177; teste no carro (classe 5).
+
 ## Primeiro item ainda não provado
 
-CI remota verde em `131a7153` e APK com SHA-256; depois validação física no carro.
+Comportamento do AutoMatch original (passo 1) e CI/APK do SHA atual; depois validação física no carro.
