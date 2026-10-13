@@ -177,3 +177,12 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - Evidência: `docs/evidence/2026-10-13-retorno-do-corte-e-inteligencia-local.md` (GNV injeta 12–30 % menos logo após sair do corte, em ~2 ms) + proposta de inteligência local.
 - ERRO MEU registrado: o APK `9954128` foi gerado e enviado antes da aprovação das prévias. Regra no AGENTS.md: sem APK sem aprovação.
 - Primeiro item não comprovado: causa da interrupção no aparelho; falta uma sessão gravada com a interrupção (o detector da proposta 1 serve para isso).
+
+## Atualização 2026-10-13 (noite, 9) — Curva→Mapa refatorada, corpus das Sessões Úteis, StallWatch v2
+
+- **Curva K → Mapa K** agora refatora o produto Mapa×Curva sem valor fixo (`core/curve-to-map.js` `balance()`, erro ≤ 0,35% com folga; ingênuo errava 12,3%) e grava em 2 etapas (mapa, depois curva neutra, `core/balance-runner.js`, sem regravar se já no alvo). x87 do `ExportToK` original EXECUTADO no Unicorn (`tools/reverse/exporttok_x87.py`): K e Trunc idênticos; F=2560 segue inferido.
+- **Corpus das Sessões Úteis** (Drive `OMEGAS/Sessoes Uteis`): `tests/fixtures/sessoes-uteis/` (LEIA-ME, IDs do Drive, teste de integridade); bruto só no Drive; conector: 1 zip por vez, zips > ~6 MB falham.
+- **Evidência:** `docs/evidence/2026-10-13-sessoes-uteis-quedas-e-automatch.md` — 13 apagões reais + 26 tropeços (88% com Petrol Inj. mín. 1,5–3,5 ms); a regra antiga contava 5 desligamentos de chave como apagão; a ECU zera as zonas de GNV em todo AutoMatch (14/14).
+- **StallWatch v2** (`StallWatch.kt` + `StallWatchTest.kt`): tropeço (kind `NEAR_STALL`, `nearCount/nearRegions` no JSON), chave na lenta não conta, `afterCutoff`. Réplica Python validada no corpus (`tools/sessoes/replay_stallwatch.py`). CI remota disparada em `26a67c0`.
+- Coerência visual: gasolina vermelha/GNV verde em Refino e Curva K; gráfico do AutoCal mantém o último estado válido (não reconstrói em reset/zona nova).
+- Primeiro item não comprovado: Refino usar tropeços para sugerir (mapa × curva) — NÃO feito; depende do dono aprovar o plano. Também pendentes: auditoria tela por tela, poda, APK (só com aprovação das prévias).
