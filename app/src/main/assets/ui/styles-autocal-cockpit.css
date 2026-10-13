@@ -2392,3 +2392,5 @@
 .ao-dots[data-dots="petrol"] small { color: #ff8d8d; }
 .ao-dots[data-dots="gas"] small { color: #7dff7d; }
 .ao-hit { fill: transparent; stroke: none; cursor: pointer; touch-action: manipulation; }
+.ao-k-ceiling { stroke: #ff6b6b; stroke-width: 1.5; stroke-dasharray: 5 4; }
+.ao-k-node.over { fill: #ff4d4d; }

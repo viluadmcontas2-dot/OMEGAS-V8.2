@@ -8,7 +8,9 @@
    * Por decisão do dono (2026-10-13) NÃO existe a série GasPointPrev (leitura anterior) nem "Manual automatch".
    */
   const AXIS_Y = { min: 0.15, max: 1.10, step: 0.05 };
-  const K_AXIS_Y = { min: 0.4, max: 1.6, step: 0.1 };
+  // O original mostra 0,4–1,6; aqui vai até 2,0 para que um nó acima do teto de gravação (1,8) apareça em vez de sumir.
+  const K_AXIS_Y = { min: 0.4, max: 2.0, step: 0.1 };
+  const K_WRITE_CEILING = 1.8;
   // Zonas por banda (tabela [5, 9, 13] do código do original): 0–4, 5–8, 9–12, 13–17.
   const ZONE_EDGES = [0, 5, 9, 13, 17];
   const BANDS = 18;
@@ -315,9 +317,10 @@
     }
     const nodes = model.kNodes.filter(node => node.y >= model.kAxisY.min && node.y <= model.kAxisY.max);
     const pts = nodes.map(node => [p.X(node.x), p.Y(node.y)]);
+    out.push('<line class="ao-k-ceiling" data-k-ceiling="1.8" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(K_WRITE_CEILING)) + '" y2="' + fixed(p.Y(K_WRITE_CEILING)) + '"/>');
     if (pts.length > 1) out.push('<path class="ao-k-line" data-series="k-line" d="' + smooth(pts) + '"/>');
     for (const [index, node] of nodes.entries()) {
-      out.push('<circle class="ao-k-node" data-node="' + node.index + '" data-value="' + node.y.toFixed(3) + '" cx="' + fixed(pts[index][0]) + '" cy="' + fixed(pts[index][1]) + '" r="3"><title>' + node.y.toFixed(3) + '</title></circle>');
+      out.push('<circle class="ao-k-node' + (node.y > K_WRITE_CEILING ? ' over' : '') + '" data-node="' + node.index + '" data-value="' + node.y.toFixed(3) + '" cx="' + fixed(pts[index][0]) + '" cy="' + fixed(pts[index][1]) + '" r="3"><title>' + node.y.toFixed(3) + '</title></circle>');
     }
     if (model.run) {
       const x = p.X(Math.min(Math.max(model.run.x, model.axisX.min), model.axisX.max));
@@ -327,5 +330,5 @@
     return out.join('');
   }
 
-  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, ZONE_EDGES, BANDS, zoneOfBand, build, zoneStates, automatchDots, renderMain, renderAcquisition, renderK };
+  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, K_WRITE_CEILING, ZONE_EDGES, BANDS, zoneOfBand, build, zoneStates, automatchDots, renderMain, renderAcquisition, renderK };
 })(typeof window !== 'undefined' ? window : globalThis);

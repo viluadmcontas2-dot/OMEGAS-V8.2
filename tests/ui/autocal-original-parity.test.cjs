@@ -89,11 +89,12 @@ test('nós com Tinj ou MAP = 0 são omitidos; nós abaixo do eixo MAP ficam invi
   assert.ok(model.petrolCurve.filter(n => n.visible).every(n => n.y >= 0.15 && n.y <= 1.10));
 });
 
-test('curva K = MUL_ACT por nó de PETR_INJ_TBP, eixo Y 0,4–1,6', () => {
+test('curva K = MUL_ACT por nó de PETR_INJ_TBP, eixo Y 0,4–2,0 (original 0,4–1,6)', () => {
   const model = build(snapshot, { fuel: 'gas' });
   assert.equal(model.kNodes.length, 30);
   assert.deepEqual(model.kNodes.map(n => n.y), phys('MUL_ACT'));
-  assert.deepEqual({ min: model.kAxisY.min, max: model.kAxisY.max }, { min: 0.4, max: 1.6 });
+  // Original: 0,4–1,6. Aqui 0,4–2,0 para um nó acima do teto de gravação (1,8) aparecer, com a linha do teto.
+  assert.deepEqual({ min: model.kAxisY.min, max: model.kAxisY.max }, { min: 0.4, max: 2.0 });
 });
 
 test('banda atual e ponto de operação vêm do MAP/Tinj vivos', () => {
@@ -178,4 +179,14 @@ test('pontos têm área de toque de pelo menos 16 px de raio (celular) e o ponto
   const visible = (main.match(/class="ao-point (petrol|gas)"/g) || []);
   assert.ok(hits.length > 0 && hits.length === visible.length, 'um toque para cada ponto visível');
   assert.ok(hits.every(h => Number(/r="(\d+)"/.exec(h)[1]) >= 16));
+});
+
+test('curva K: linha do teto 1,8 e nó acima do teto em vermelho (nunca some do gráfico)', () => {
+  const high = JSON.parse(JSON.stringify(snapshot));
+  const k = high.fields.find(f => f.key === 'MUL_ACT');
+  k.physicalValues[10] = 1.95; k.rawValues[10] = Math.round(1.95 * 16384);
+  const svg = O.renderK(build(high, { fuel: 'gas' }), 700, 160);
+  assert.match(svg, /data-k-ceiling="1.8"/);
+  assert.match(svg, /class="ao-k-node over" data-node="10"/);
+  assert.equal((O.renderK(build(snapshot, { fuel: 'gas' }), 700, 160).match(/ao-k-node over/g) || []).length, 0);
 });

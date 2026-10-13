@@ -160,3 +160,12 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - `core/curve-to-map.js` + botão "Curva K → Mapa K": fórmula do `ExportToK` por desmontagem (PROTOCOLO-LANDI doc 26); propõe nas células, gravar segue o fluxo manual. `tools/ci/curva_para_mapa.cjs` no app real (demonstração).
 - Corrigido erro antigo: o botão dizia "alteraçãoões".
 - Não comprovado: F = 2560 (escala do eixo de linhas do Mapa K), a 13ª linha do Mapa K, e tudo que depende do aparelho (travamento ao resetar, escala da tensão).
+
+## Atualização 2026-10-13 (noite, 7) — fechamento da rodada
+
+- Curva K: teto de escrita **1,8** (Kotlin `KFactorProtocol.MAX_WRITE_*` + JS). CI remota `ci.yml` (dispatch na branch) verde em `b91e760`: contratos rápidos, testes JVM e lint.
+- AutoCal: bolinhas de estado no topo (verde completa, azul coletando, laranja falta; uma por AutoMatch); gasolina vermelha, GNV verde, nada roxo; K de 0,4 a 2,0 com linha do teto 1,8; área de toque maior (celular). Manual automatch e Finish fora da tela (dono).
+- Previas enviadas ao dono: `docs/evidence/img/previas-2026-10-13/`. Skill do método: `.claude/skills/emular-por-observacao/` (+ artefato).
+- REA: `compare_application_versions` entre `2796780` e a branch confirmou 2 módulos novos (`autocal-original.js`, `curve-to-map.js`) e os arquivos alterados; desconhecidos residuais registrados com `record_unknown`.
+- Mantido por decisão: leitura da curva K e de `0x018D/E` a cada 4 s (contratos de tempo real); K só muda em automatch.
+- Não comprovado: travamento real ao resetar (só no aparelho), escala da tensão (byte 19 ÷ 16), proposta Curva K → Mapa K no aparelho, retrato em celular na vertical (o casco do app não foi feito para isso).

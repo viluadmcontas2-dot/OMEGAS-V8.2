@@ -20,6 +20,7 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 
 - Nenhuma escrita automática de Map K/Curve K. Escrita manual exige intenção explícita + ACK + readback.
 - `RESET_ALL` não é ação exposta; só o reset do GNV (ação AutoCal `02 24 04 02`) pode ser pedido à mão, em um toque, com backup completo antes e readback da ECU.
+- Teto de escrita da curva K = **1,8** (dono, 2026-10-13), como o piso de 100 do Mapa K: `KFactorProtocol.MAX_WRITE_FACTOR`/`MAX_WRITE_RAW` valem para escrita manual, restauração de backup e AutoMatch; a leitura segue até o limite do protocolo. Testes: `KFactorManualPlannerTest.kt`, `AutoMatchKFactorDraftTest.kt`, `tests/ui/curva-k-arrasto.test.cjs`.
 - `reset-nunca-pausa-aprendizado` (dono, 2026-10-08): após qualquer reset, `AUTO_CAL_ENABLE` é conferido e religado até readback = 1, mesmo em timeout/NAK; sem isso o reset não está concluído. Teste: `ResetNuncaPausaAprendizadoTest.kt` + `tests/test_reset_nunca_pausa_aprendizado.py`.
 - `autocal-sem-leitura-anterior` (dono, 2026-10-11): o AutoCal não mostra leitura anterior nem comparação antes × depois; tudo em tempo real. Teste: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py`.
 - Ciência e protocolo críticos ficam em Kotlin/native. AGORA fica no mesmo contexto da referência AutoCal. LEVELS fica RAW até haver calibração física separada.
