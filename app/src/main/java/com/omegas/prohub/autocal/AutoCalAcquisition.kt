@@ -138,17 +138,22 @@ object AutoCalAcquisition {
                 .put("calibrationValues", JSONArray(calibration.toList()))
                 .put("calibrationValueMapping", "PROGBASE_DUMP_GRID_PROVEN")
                 .put("runtimeSelectorBoundaryInclusive", LOW_BAND_MAX_INDEX)
-                .put("zoneBoundariesInclusive", JSONArray(listOf(5, 9, 13)))
+                .put("zoneBoundariesInclusive", JSONArray(listOf(4, 8, 12)))
                 .put("maturityThresholdsPromoted", maturityThresholdsAvailable)
                 .put("source", "ECU_VALUES_PROGBASE_DUMP_SELECTOR"))
             .put("rawOnly", true)
             .put("noCorrectionApplied", true)
     }
 
+    /**
+     * Zona da ECU por banda: fronteiras em THD[5]=0,45, THD[9]=0,65 e THD[13]=0,85 bar (bandas 0-4 | 5-8 | 9-12 | 13-16).
+     * Provado no fio (PortmonLOGNOVO, 2026-10-13): a bandeira 0x0170 vira 1 com MAP 0,668-0,698 (zona 3) e 0,756-0,874
+     * (zona 4); 6/10/14 nao cabe nesses instantes. Evidencia: docs/evidence/2026-10-13-zonas-autocal-prova-ecu.md.
+     */
     private fun zone(index: Int): Int = when (index) {
-        in 0..5 -> 0
-        in 6..9 -> 1
-        in 10..13 -> 2
+        in 0..4 -> 0
+        in 5..8 -> 1
+        in 9..12 -> 2
         else -> 3
     }
 

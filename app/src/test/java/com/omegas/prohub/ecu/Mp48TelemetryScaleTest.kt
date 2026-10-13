@@ -107,10 +107,25 @@ class Mp48TelemetryScaleTest {
             assertEquals("Estado bruto 0x%02X".format(rawByte), fuel, frame.fuel)
             assertEquals(rawByte, frame.fuelByte)
         }
-        listOf(0xA1, 0xB1, 0x94).forEach { rawByte ->
+        listOf(0xA1, 0xB1).forEach { rawByte ->
             val payload = progBaseReferencePayload.copyOf().apply { this[11] = rawByte.toByte() }
             assertEquals(Mp48Fuel.UNKNOWN, Mp48Protocol.decodeTelemetry(payload, 1234L).fuel)
         }
+    }
+
+    @Test
+    fun `byte 0x94 e GNV em corte mesmo fora da heuristica fisica`() {
+        // Observado no fio (PortmonLOGNOVO/AUTOCAL): 0x94 em 1 277 quadros, sempre com injecao 0; o ProgBase le
+        // as zonas GNV com ele. 7 desses quadros tem MAP 0,39-0,57, acima do limite da heuristica physicalCutoff.
+        val payload = progBaseReferencePayload.copyOf().apply {
+            this[0] = 0xD0.toByte(); this[1] = 0x07 // 2000 rpm
+            this[6] = 0; this[7] = 0; this[8] = 0; this[9] = 0
+            this[11] = 0x94.toByte()
+            this[17] = 0xCC.toByte(); this[18] = 0x01 // MAP 0,460 bar
+        }
+        val frame = Mp48Protocol.decodeTelemetry(payload, 1234L)
+        assertEquals(Mp48Fuel.CUTOFF, frame.fuel)
+        assertEquals(0x94, frame.fuelByte)
     }
 
     @Test

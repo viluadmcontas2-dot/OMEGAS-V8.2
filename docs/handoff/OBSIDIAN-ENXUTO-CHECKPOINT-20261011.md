@@ -125,3 +125,12 @@ Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*
 - Emulação: `orig_emulator.py` (tela original por instante da captura) e `render_omegas.cjs` (a `index.html` real do OMEGAS com dados da captura) no PROTOCOLO-LANDI/`tools`.
 - Incógnitas que ficaram (REA `record_unknown`): cor NACQ padrão, pontos vermelhos pequenos e "+" verde da S2, critério da ECU para acender as flags de zona e para o limite de passo do K, animações.
 - Primeiro item não provado desta frente: comportamento do OMEGAS **no carro** com as correções de zona/`0x94`/K a cada ciclo (nada foi alterado ainda; precisa de prévia PNG aprovada antes de mexer na tela).
+
+## Atualização 2026-10-13 (noite) — auditoria das divergências do AutoCal com prova no fio
+
+- Dono (2026-10-13): a tela do AutoCal está correta (resets 0x01/0x02/0x04 expostos em um toque); o AGENTS.md é que estava errado e foi corrigido.
+- `docs/evidence/2026-10-13-zonas-autocal-prova-ecu.md` + `tools/evidence/zonas_autocal_portmon.py`: as fronteiras de zona são THD[5]/THD[9]/THD[13] (bandas 0–4 | 5–8 | 9–12 | 13–16), provado pelas viradas das bandeiras `0x0170` contra o MAP da telemetria (3 viradas excluem 6/10/14). Achado novo: a bandeira de zona marca "motor passou pela zona", não "bandas cheias". `0x94` = GNV em corte (impacto pequeno: 7/181 quadros viravam TRANSITION).
+- Corrigido: `AutoCalAcquisition.zone()`, `autocal-cockpit.js` (`zoneForBand`, `edges`), `Mp48Protocol.kt` (`0x94` → CUTOFF), com RED → GREEN.
+- Não corrigido (confirmado, menor): curva K relida a cada 4 s (`REFERENCE_INTERVAL_MS`); aquisição não lida com Enable off; eixos auto-escalados. `LOW_BAND_MAX_INDEX = 5` fica como pergunta (seletor de maturidade, não zona).
+- ProgBase.exe roda no Wine 9 + Xvfb (instalado só neste contêiner) mas para na tela de licença Landirenzo; não se contorna licença. O caminho de prova continua sendo os logs Portmon.
+- Próximo: trava "Curva K primeiro" no `RefinementAutopilot` (ajuste local só sem proposta de curva pendente, erro global ≤ 5 % e época nova depois da última escrita da curva); hoje `CURVA_PRIMEIRO` só espera a curva na mesma banda.

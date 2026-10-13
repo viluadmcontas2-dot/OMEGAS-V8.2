@@ -19,7 +19,7 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 ## Invariantes (cada um tem teste)
 
 - Nenhuma escrita automática de Map K/Curve K. Escrita manual exige intenção explícita + ACK + readback.
-- `RESET_ALL` não é ação exposta; só o reset de ponto de gás 0x04 pode ser pedido à mão, em um toque, com backup completo antes e readback da ECU.
+- Resets nativos (`0x01` gasolina, `0x02` GNV, `0x04` tudo — "Recomeçar tudo") são ações de um toque na tela do AutoCal, sempre com cópia completa antes e readback da ECU; nenhum reset é automático. (Dono, 2026-10-13: a tela está correta; o texto antigo "só 0x04 de ponto de gás" estava errado — `0x04` é Reset all.)
 - `reset-nunca-pausa-aprendizado` (dono, 2026-10-08): após qualquer reset, `AUTO_CAL_ENABLE` é conferido e religado até readback = 1, mesmo em timeout/NAK; sem isso o reset não está concluído. Teste: `ResetNuncaPausaAprendizadoTest.kt` + `tests/test_reset_nunca_pausa_aprendizado.py`.
 - `autocal-sem-leitura-anterior` (dono, 2026-10-11): o AutoCal não mostra leitura anterior nem comparação antes × depois; tudo em tempo real. Teste: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py`.
 - Ciência e protocolo críticos ficam em Kotlin/native. AGORA fica no mesmo contexto da referência AutoCal. LEVELS fica RAW até haver calibração física separada.

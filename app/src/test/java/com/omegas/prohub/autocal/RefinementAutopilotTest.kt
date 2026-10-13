@@ -15,7 +15,7 @@ class RefinementAutopilotTest {
     private fun monitor(count: Int, max: Int? = 3, enabled: Int? = 1) = JSONObject()
         .put("autoMatchCount", count).put("maxAutomatch", max ?: JSONObject.NULL).put("autoCalEnabled", enabled ?: JSONObject.NULL)
 
-    private fun zone(index: Int) = when (index) { in 0..5 -> 0; in 6..9 -> 1; in 10..13 -> 2; else -> 3 }
+    private fun zone(index: Int) = when (index) { in 0..4 -> 0; in 5..8 -> 1; in 9..12 -> 2; else -> 3 }
 
     /** Formato da Platina (AutoCalAcquisition): ZONA_ADQUIRIDA/ATIVIDADE/AGUARDANDO + zoneAcquired por zona. */
     private fun acquisition(petrolAcquired: Int, gasAcquired: Int) = JSONObject().put("points", JSONArray().apply {

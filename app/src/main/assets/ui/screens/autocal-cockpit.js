@@ -117,10 +117,11 @@
     return Array.isArray(item?.physicalValues) ? item.physicalValues.map(value => finite(value)) : [];
   }
 
+  // Zonas da ECU: fronteiras em THD[5]/THD[9]/THD[13] (0,45/0,65/0,85 bar), provado no fio; ver AutoCalAcquisition.zone.
   function zoneForBand(index) {
-    if (index <= 5) return 0;
-    if (index <= 9) return 1;
-    if (index <= 13) return 2;
+    if (index <= 4) return 0;
+    if (index <= 8) return 1;
+    if (index <= 12) return 2;
     return 3;
   }
 
@@ -350,7 +351,7 @@
       if (thresholds.length !== 18 || thresholds.some(value => finite(value) === null)) return [];
       if (thresholds.some((value, index) => index > 0 && !(value > thresholds[index - 1]))) return [];
       // São 18 limiares físicos, portanto 17 intervalos; não inventar threshold[18].
-      const edges = [0, 6, 10, 14, 17];
+      const edges = [0, 5, 9, 13, 17];
       const state = (flags, index) => !Array.isArray(flags) || flags.length !== 4
         ? 'unknown' : flags[index] === true ? 'acquired' : 'missing';
       return Array.from({ length: 4 }, (_, index) => ({

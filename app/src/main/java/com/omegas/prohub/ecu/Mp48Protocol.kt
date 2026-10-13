@@ -104,6 +104,9 @@ object Mp48Protocol {
             fuelByte == 0x80 || fuelByte == 0xA0 -> Mp48Fuel.PETROL
             fuelByte == 0x88 || fuelByte == 0xA8 -> Mp48Fuel.TRANSITION
             fuelByte == 0x90 || fuelByte == 0xB0 -> Mp48Fuel.CNG
+            // 0x94 = GNV em corte de desaceleracao: observado 1 277x no fio (injecao 0, MAP ate 0,57); o ProgBase
+            // le as zonas GNV com ele. Bit 0x04 = corte.
+            fuelByte == 0x94 -> Mp48Fuel.CUTOFF
             else -> Mp48Fuel.UNKNOWN
         }
         val state = when (fuel) {

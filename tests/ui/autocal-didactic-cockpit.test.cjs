@@ -90,7 +90,11 @@ const surface = model.zoneSurface(currentZoneSnapshot, {
 });
 assert.equal(surface.length, 4, 'malha deve conter quatro zonas físicas');
 assert.equal(surface[0].lower, 0.2);
-assert.ok(Math.abs(surface[0].upper - 0.8) < 1e-9);
+assert.ok(Math.abs(surface[0].upper - 0.7) < 1e-9, 'zona 1 termina em THD[5] (0,45 bar na ECU real), nao em THD[6]');
+assert.ok(Math.abs(surface[1].upper - 1.1) < 1e-9, 'zona 2 termina em THD[9]');
+assert.ok(Math.abs(surface[2].upper - 1.5) < 1e-9, 'zona 3 termina em THD[13]');
+assert.equal(model.currentZone(currentZoneSnapshot, { mapBar: 0.75 }), 2,
+  'MAP na banda 5 (THD[5]..THD[6]) ja e zona 2, como as linhas pontilhadas do ProgBase');
 assert.ok(Math.abs(surface[3].upper - 1.9) < 1e-9, 'zona 4 termina no último dos 18 limiares reais');
 assert.equal(surface.map(item => item.gasState).join(','), 'acquired,missing,acquired,missing');
 assert.equal(surface.map(item => item.petrolState).join(','), 'acquired,missing,missing,missing');
@@ -192,7 +196,8 @@ const bands = model.bandStrip(snapshot);
 assert.equal(bands.length, 18);
 assert.equal(bands[4].state, 'anchored');
 assert.equal(bands[16].state, 'empty');
-assert.equal(bands[13].zoneAcquired, true);
+assert.equal(bands[12].zoneAcquired, true, 'banda 12 (0,80-0,85) fecha a zona 3');
+assert.equal(bands[13].zoneAcquired, false, 'banda 13 (0,85-0,90) ja e zona 4, que o fixture nao tem');
 assert.equal(bands[16].zoneAcquired, false);
 
 assert.equal(model.toggleAction(1), 'DISABLE_AUTO_CAL');

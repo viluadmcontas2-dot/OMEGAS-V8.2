@@ -110,7 +110,7 @@ class AutoCalAcquisitionTest {
         assertEquals(3, thresholds.getInt("gasNormal"))
         assertEquals("PROGBASE_DUMP_GRID_PROVEN", thresholds.getString("calibrationValueMapping"))
         assertEquals(5, thresholds.getInt("runtimeSelectorBoundaryInclusive"))
-        assertEquals(listOf(5, 9, 13), buildList {
+        assertEquals(listOf(4, 8, 12), buildList {
             val values = thresholds.getJSONArray("zoneBoundariesInclusive")
             repeat(values.length()) { add(values.getInt(it)) }
         })
@@ -119,6 +119,24 @@ class AutoCalAcquisitionTest {
         assertEquals(3, petrolNormal.getInt("threshold"))
         assertEquals(3, gasLow.getInt("threshold"))
         assertEquals(3, gasNormal.getInt("threshold"))
+    }
+
+    @Test
+    fun `zonas da ECU cortam em THD 5 9 13 - banda 5 pertence a zona 2`() {
+        // Prova no fio (PortmonLOGNOVO): a bandeira de zona vira 1 com MAP 0,668-0,698 (zona 3) e 0,756-0,874
+        // (zona 4); logo as fronteiras sao THD[5]=0,45, THD[9]=0,65, THD[13]=0,85 -> bandas 0-4 | 5-8 | 9-12 | 13-16.
+        val gasCounts = IntArray(18).also { it[4] = 8; it[5] = 8; it[9] = 8; it[13] = 8 }
+        val snapshot = snapshot(
+            field("ACQUIRED_ZONES_GAS", intArrayOf(0, 1, 0, 1)),
+            field("PETR_INJ_TBUF_GAS", IntArray(18) { 2000 }),
+            field("MNFLD_PRESS_BUF_GAS", IntArray(18) { 500 }),
+            field("NUM_BUF_UPD_GAS", gasCounts),
+        )
+        val points = AutoCalAcquisition.fromSnapshot(snapshot).getJSONArray("points")
+        assertFalse("banda 4 (0,40-0,45) e zona 1", points.getJSONObject(18 + 4).getBoolean("zoneAcquired"))
+        assertTrue("banda 5 (0,45-0,50) e zona 2", points.getJSONObject(18 + 5).getBoolean("zoneAcquired"))
+        assertFalse("banda 9 (0,65-0,70) e zona 3", points.getJSONObject(18 + 9).getBoolean("zoneAcquired"))
+        assertTrue("banda 13 (0,85-0,90) e zona 4", points.getJSONObject(18 + 13).getBoolean("zoneAcquired"))
     }
 
     private fun snapshot(vararg fields: JSONObject) = JSONObject().put("fields", JSONArray(fields.toList()))
