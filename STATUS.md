@@ -160,7 +160,3 @@ Para fechar #84 e reconciliar #81, o HEAD corrente deve produzir, no mesmo SHA:
 - provenance ORIGINAL_DERIVED preservada para AutoCal/Curve K e `SYNTHETIC_NON_SCIENTIFIC` explícita no cenário visual shifted.
 
 Os run IDs do SHA final são registrados nos issues #84/#81 depois que Actions termina; não se cria outro commit apenas para registrar o próprio run ID.
-
-## NON-GOAL
-
-Nenhum port/cherry-pick/cópia SIL/CIU nesta WorkUnit.

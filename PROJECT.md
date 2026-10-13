@@ -48,4 +48,3 @@ O ProgBase original é referência comportamental e semântica. O objetivo não 
 - reimplementar AutoMatch nativo como writer host-side;
 - aplicar Predictor automaticamente;
 - copiar UI do ProgBase;
-- usar SIL/CIU sem autorização explícita.

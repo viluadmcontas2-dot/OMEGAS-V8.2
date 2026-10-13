@@ -1,66 +1,58 @@
 # OMEGAS — contrato operacional estável
 
-## Autoridade
+Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica no checkpoint; evidência, em `docs/`. Não duplicar aqui.
 
-- **GitHub remoto é a autoridade técnica do OMEGAS:** código, Issues, specs, planos, WorkUnits, STATUS e evidências versionadas.
-- Boot obrigatório: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → Spec Kit ativo → WorkUnit ativa → Issues ligadas.
-- Notion pode ser consultado **somente como referência read-only** de UX/produto quando o owner pedir (ex.: CUSTOMROM / OMEGA DEV). Notion/Linear não controlam esta execução OMEGAS.
-- Chat, Brainbase, AgentRed e MMMACHINE são superfícies de operação; nunca substituem o estado remoto versionado.
+## Autoridade e boot
 
-## Superfície de trabalho
+- **GitHub remoto é a autoridade técnica do OMEGAS:** código, Issues, specs, planos, WorkUnits, STATUS e evidências versionadas. Chat, Brainbase, AgentRed e MMMACHINE são superfícies de operação.
+- Boot obrigatório: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → Spec Kit ativo → WorkUnit ativa → Issues ligadas. Trabalho em andamento: `docs/handoff/OBSIDIAN-ENXUTO-CHECKPOINT-20261011.md`.
+- Notion só como referência read-only de UX quando o dono pedir. Notion/Linear não controlam a execução.
+- `WORK_SURFACE=REMOTE` · `SOURCE_MUTATION_TARGET=GITHUB_REMOTE_API` · `LOCAL_SOURCE_MUTATION=DENIED` · `TEST_SURFACE=EPHEMERAL_RUNTIME|REMOTE_CI|DEVICE_WHEN_AUTHORIZED`
+- Antes de escrever e antes de concluir: resolver HEAD remoto de `OmegasPlatina`, reconciliar movimento concorrente, nunca sobrescrever trabalho alheio. Runtime local/MMMACHINE pode testar ou inspecionar o SHA remoto exato, mas não é fonte de autoridade.
 
-`WORK_SURFACE=REMOTE`
-`SOURCE_MUTATION_TARGET=GITHUB_REMOTE_API`
-`LOCAL_SOURCE_MUTATION=DENIED`
-`TEST_SURFACE=EPHEMERAL_RUNTIME|REMOTE_CI|DEVICE_WHEN_AUTHORIZED`
+## Método
 
-Antes de escrita relevante e antes de concluir:
-1. resolver HEAD remoto de `OmegasPlatina`;
-2. reconciliar movimento concorrente;
-3. nunca sobrescrever trabalho remoto alheio.
+`@Codex Engineering Guardrails` + Superpowers aplicável. Mudança de comportamento: `evidência → RED válido → correção mínima → GREEN focado → revisão do diff → verificação ampla proporcional → CI remota`. Não chamar de PASS o teste que não exercitou o comportamento observado.
 
-Runtime local/MMMACHINE pode testar ou inspecionar o SHA remoto exato, mas não é fonte de autoridade.
+**Gate global de realidade** (tudo que depende de ECU/MP48/telemetria): teste estático é apoio, não prova. Cadeia alvo: `corpus real → replay determinístico → runtime/bridge real → WebView renderizado → evidência visual`. Viewport canônico `1280x720`. Validação física só com ECU real e o dono.
 
-## Método obrigatório
+## Invariantes (cada um tem teste)
 
-Engenharia: `@Codex Engineering Guardrails` + Superpowers aplicável.
+- Nenhuma escrita automática de Map K/Curve K. Escrita manual exige intenção explícita + ACK + readback.
+- `RESET_ALL` não é ação exposta; só o reset de ponto de gás 0x04 pode ser pedido à mão, em um toque, com backup completo antes e readback da ECU.
+- `reset-nunca-pausa-aprendizado` (dono, 2026-10-08): após qualquer reset, `AUTO_CAL_ENABLE` é conferido e religado até readback = 1, mesmo em timeout/NAK; sem isso o reset não está concluído. Teste: `ResetNuncaPausaAprendizadoTest.kt` + `tests/test_reset_nunca_pausa_aprendizado.py`.
+- `autocal-sem-leitura-anterior` (dono, 2026-10-11): o AutoCal não mostra leitura anterior nem comparação antes × depois; tudo em tempo real. Teste: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py`.
+- Ciência e protocolo críticos ficam em Kotlin/native. AGORA fica no mesmo contexto da referência AutoCal. LEVELS fica RAW até haver calibração física separada.
+- Desconhecido é "—", nunca 0. Erro de transporte não é erro da ECU. "Gravado" só após readback igual.
 
-Mudança comportamental:
-`evidência -> RED válido -> correção mínima -> GREEN focado -> revisão do diff -> verificação ampla proporcional -> CI remota`.
+## Mapa do código (entrada → teste)
 
-Não chamar teste de produto de PASS quando ele não exercitou o comportamento observado pelo operador.
+| Assunto | Entrada | Teste |
+|---|---|---|
+| Refino (fases, proposta) | `app/src/main/java/com/omegas/prohub/autocal/RefinementAutopilot.kt`, `app/src/main/assets/ui/screens/refino.js` | `tests/ui/sugestoes-refino.test.cjs` |
+| Global × local (por RPM) | `autocal/EquivalenceAttribution.kt`, `autocal/LocalMapPlanner.kt` | `tests/test_rpm_residual_replay.py` |
+| Época de aquisição do AutoCal | `autocal/NativeAutoCalAcquisitionEpoch.kt` | `NativeAutoCalAcquisitionEpochTest.kt` |
+| Mapa K manual e ajuste local | `calibration/MapKManualPlanner.kt`, `app/src/main/assets/ui/screens/map.js` | `tests/ui/mapa-k-ajuste-local.test.cjs` |
+| Telemetria e ponte | `service/TelemetryForegroundService.kt`, `web/HubJavascriptBridge.kt` | `tests/test_governance_contract.py` |
+| Layout sem rolagem | `ui/screens/*.js` | `tools/ci/sem_rolagem_8_abas.cjs` |
 
-## Gate global de realidade
+Comandos de verificação: `node --test tests/ui/*.test.cjs` · `python3 -B -m unittest discover -s tests -p "test_*.py"` · `python3 -B tools/run_checks.py` · `sh ./gradlew testDebugUnitTest lintDebug`.
 
-Para qualquer superfície dependente de ECU/MP48/telemetria, contratos estáticos/unitários são apoio, não prova final.
+## Fatos já provados (não reabrir)
 
-A cadeia alvo é:
-`corpus real -> replay determinístico -> runtime/bridge real aplicável -> WebView/app renderizado -> evidência visual/estado`.
+| Pergunta | Resposta | Onde |
+|---|---|---|
+| A ECU zera os contadores no `RESET_ALL`? | Sim, na hora. O ProgBase nunca usa reset seletivo. | `docs/reverse/PROGBASE-LOGNOVO-RESET-2026-10-12.md` |
+| Quais strings e unidades do ProgBase existem? | Só RTTI e exportações; o AutoMatch não tem função nomeada. | `docs/reverse/evidence/` |
+| O residual por RPM separa curva global de Mapa K? | Replay causal já feito. | `docs/evidence/2026-10-13-sessaoutil-rpm-residual-investigation.md` |
 
-Viewport automotivo canônico: `1280x720`.
+**Reabertura:** só reabrir o `ProgBase.exe` se a pergunta não estiver em `docs/reverse/`. Use o CLI do REA em segundo plano com instantâneo (receita no checkpoint); o MCP estoura 60 s nesse binário. Antes de varrer código, consulte o mapa acima ou use a Serena.
 
-## Invariantes OMEGAS Platina atuais
+## Fronteiras
 
-- nenhuma escrita automática de Map K/Curve K;
-- escrita manual exige intenção explícita + ACK + readback;
-- `RESET_ALL` não é ação operacional exposta; somente Reset gas point 0x04, observado com efeito amplo, pode ser solicitado manualmente como reinício de aquisição, em um toque (dono, 2026-10-11: sem dupla confirmação), com backup completo pré-mutação e readback da ECU;
-- reset de gasolina/GNV/tudo nunca pausa o aprendizado (dono, 2026-10-08): depois do comando, AUTO_CAL_ENABLE é conferido e religado com o mesmo comando de aquisição até readback = 1, mesmo em timeout/NAK (erro de transporte ≠ erro da ECU); sem readback = 1 o reset não é dado como concluído. Trava `reset-nunca-pausa-aprendizado`: `ResetNuncaPausaAprendizadoTest.kt` + `tests/test_reset_nunca_pausa_aprendizado.py`;
-- o AutoCal não mostra leitura anterior (dono, 2026-10-11): nem curva esmaecida, nem legenda, nem botão, nem comparação antes × depois; tudo em tempo real. Trava `autocal-sem-leitura-anterior`: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py`;
-- ciência/protocolo críticos permanecem Kotlin/native;
-- AGORA deve permanecer no mesmo contexto da referência AutoCal;
-- LEVELS permanece RAW até existir calibração física separada;
-- validação física só pode ser alegada com dispositivo/ECU real.
-
-## Fronteira SIL/CIU
-
-**SIL/CIU é independente. Não portar, copiar, cherry-pickar, mesclar ou usar código SIL/CIU como implementação da Platina sem autorização explícita do owner.**
-
-O programa ativo compara o OMEGAS Platina com o **ProgBase original e seus logs reais**.
+- Não alterar bytes nem classes de comando da ECU (`UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager`, `AutoCalNativeActionManager`) sem autorização do dono.
+- O programa ativo compara o OMEGAS Platina com o **ProgBase original e seus logs reais**.
 
 ## Execução paralela
 
-Execução paralela só quando explicitamente autorizada pelo owner ou por instrução aplicável quando as tarefas forem realmente independentes.
-- um owner por superfície de escrita;
-- scouts/falsificadores podem rodar em paralelo;
-- integração e promoção ficam serializadas;
-- relato de worker não é prova: verificar o estado integrado diretamente.
+Só quando o dono autorizar e as tarefas forem independentes: um dono por superfície de escrita; exploradores e falsificadores em paralelo; integração serializada; relato de worker não é prova, verificar o estado integrado.

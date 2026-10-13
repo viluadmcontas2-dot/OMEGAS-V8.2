@@ -27,4 +27,4 @@ GitHub Actions não fazem parte deste bootstrap inicial.
 
 ## Programa ativo — OMEGAS Verde
 
-O programa atual está indexado em `docs/spec-kits/OMEGAS-SK-001.md` e rastreado pela Issue #81. O foco é paridade observável do AutoCal com o ProgBase original, replay derivado de logs reais e gate visual/runtime. SIL/CIU permanece fora do escopo até autorização explícita.
+O programa atual está indexado em `docs/spec-kits/OMEGAS-SK-001.md` e rastreado pela Issue #81. O foco é paridade observável do AutoCal com o ProgBase original, replay derivado de logs reais e gate visual/runtime.

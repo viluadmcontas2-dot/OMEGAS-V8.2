@@ -20,7 +20,6 @@ class StableRepositoryContract(unittest.TestCase):
             "local_source_mutation=denied",
             "runtime local/mmmachine pode testar ou inspecionar o sha remoto exato",
             "gate global de realidade",
-            "sil/ciu é independente",
         ):
             self.assertIn(marker, agents)
         self.assertIn("@codex engineering guardrails", agents)
