@@ -200,7 +200,7 @@
 }
 
 .autocal-chart-legend .petrol::before {
-  background: #78b7ff;
+  background: #ff8d8d;
 }
 
 .autocal-chart-legend .gas::before {
@@ -2342,7 +2342,7 @@
 .ao-layout { display: grid; gap: 6px; width: 100%; height: 100%; }
 .ao-cell { min-width: 0; min-height: 0; overflow: hidden; }
 .ao-legend { display: flex; align-items: center; gap: 10px; padding-left: 8px; font-size: 10px; color: #9fb0c4; }
-.ao-legend .petrol::before, .ao-legend .gas::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 2px; background: #76a8ff; }
+.ao-legend .petrol::before, .ao-legend .gas::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 2px; background: #ff8d8d; }
 .ao-legend .gas::before { background: #7dff7d; }
 .ao-svg { display: block; width: 100%; height: 100%; user-select: none; }
 .ao-grid { stroke: rgba(255,255,255,.07); stroke-width: 1; }
@@ -2356,19 +2356,19 @@
 .ao-limit-min { stroke: #4da3ff; stroke-width: 2; stroke-dasharray: 6 5; }
 .ao-limit-max { stroke: #ff6b6b; stroke-width: 2; stroke-dasharray: 6 5; }
 .ao-curve { fill: none; stroke-width: 2; }
-.ao-curve.petrol, .ao-marker.petrol { stroke: #76a8ff; }
+.ao-curve.petrol, .ao-marker.petrol { stroke: #ff5d5d; }
 .ao-curve.gas, .ao-marker.gas { stroke: #7dff7d; }
 .ao-marker { fill: none; stroke-width: 1.5; }
 .ao-point { stroke-width: 1; cursor: pointer; }
-.ao-point.petrol { fill: #76a8ff; stroke: #cfe0ff; }
+.ao-point.petrol { fill: #ff8d8d; stroke: #ffc7c7; }
 .ao-point.gas { fill: #7dff7d; stroke: #d2ffd2; }
 .ao-point.selected, .ao-point.batch-selected { stroke: #fff; stroke-width: 2.5; }
-.ao-square.petrol { fill: #76a8ff; }
+.ao-square.petrol { fill: #ff8d8d; }
 .ao-square.gas { fill: #7dff7d; }
 .ao-run-axis { stroke: rgba(190,200,215,.55); stroke-width: 1.5; }
 .ao-run { fill: #ff3b3b; stroke: #fff; stroke-width: 1; }
-.ao-k-line { fill: none; stroke: #ffcf5a; stroke-width: 3; }
-.ao-k-node { fill: #ffcf5a; }
+.ao-k-line { fill: none; stroke: #2f9bff; stroke-width: 3; }
+.ao-k-node { fill: #2f9bff; }
 
 /* Tensão da ECU na barra do AutoCal: vermelha a partir de 14,1 V (o GNV desliga acima disso). */
 .autocal-focus-voltage[data-state="alert"] { border-color: rgba(255,123,114,.6); }
@@ -2383,11 +2383,11 @@
 .ao-dot-row { display: inline-flex; gap: 6px; }
 .ao-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid transparent; background: #6b7788; }
 .ao-dot[data-state="done"] { background: #38d27a; }
-.ao-dot[data-state="collecting"] { background: #b78bff; }
+.ao-dot[data-state="collecting"] { background: #3da5ff; }
 .ao-dot[data-state="missing"] { background: #ff9d3d; }
 .ao-dot.match[data-state="missing"] { background: transparent; border-color: #ff9d3d; }
 .ao-dot[data-current="true"] { box-shadow: 0 0 0 2px #0b1118, 0 0 0 4px #e6eef7; }
 
-/* Identidade de combustível: gasolina azul (a mesma cor do resto do app), GNV verde; rótulos das bolinhas seguem. */
-.ao-dots[data-dots="petrol"] small { color: #76a8ff; }
+/* Identidade de combustível (dono, 2026-10-13): gasolina VERMELHA (quadros, bolinhas, curva), GNV verde; nada roxo. */
+.ao-dots[data-dots="petrol"] small { color: #ff8d8d; }
 .ao-dots[data-dots="gas"] small { color: #7dff7d; }
