@@ -50,4 +50,8 @@ data class UsbProtocolReply(
 }
 
 /** Número de bytes de dados após o segundo byte da resposta, antes de SUM8. */
-internal fun usbResponsePayloadLength(status: Int, secondByte: Int): Int = secondByte
+internal fun usbResponsePayloadLength(status: Int, secondByte: Int): Int = when (status) {
+    0x96 -> 0 // IsAck: um byte fixo já lido, seguido somente por checksum.
+    0xCA -> 1 // IsAck: um byte fixo já lido, seguido por código e checksum.
+    else -> secondByte
+}
