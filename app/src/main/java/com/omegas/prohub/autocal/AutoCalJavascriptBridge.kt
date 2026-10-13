@@ -262,6 +262,15 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Refino indisponível")
     }
 
+    /** Só os engasgos/apagões do GNV (aba Refino local, a cada 2–3 s): não recalcula pares nem bandas. */
+    @JavascriptInterface
+    fun getStalls(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        JSONObject().put("ok", true).put("stalls", service.stallWatch.json()).toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Engasgos indisponíveis")
+    }
+
     fun destroy() {
         synchronized(managerLock) {
             manager?.close()

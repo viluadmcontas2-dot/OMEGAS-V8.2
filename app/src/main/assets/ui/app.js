@@ -21,7 +21,7 @@
 
   const routeMeta = {
     dashboard: ['AGORA', 'Agora'],
-    learning: ['APRENDER', 'Aprender'],
+    local: ['REFINO LOCAL', 'Refino local'],
     predictor: ['DECIDIR', 'Predictor'],
     map: ['AJUSTE LOCAL', 'Ajuste local'],
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
@@ -36,7 +36,6 @@
   let previousTelemetrySignature = '';
   let previousStatusSignature = '';
   let previousAlert = null;
-  let previousLearningLayer = null;
   let toastTimer = null;
   let routeButtons = [];
   let screenNodes = [];
@@ -85,7 +84,7 @@
 
   /** Abas que recebem o quadro rápido (PresentSnapshot); nas outras o quadro guardado é velho. */
   function isTelemetryRoute(route) {
-    return route === 'dashboard' || route === 'learning' || route === 'map' || route === 'autocal';
+    return route === 'dashboard' || route === 'map' || route === 'autocal';
   }
   function liveFrom(state) {
     const telemetry = state.telemetry || {};
@@ -102,40 +101,9 @@
     }
   }
 
-  function learningDecisionFromTelemetry(telemetry) {
-    const source = telemetry || {};
-    const live = source.live || source.data || source;
-    const sample = live.sample && typeof live.sample === 'object' ? live.sample : {};
-    return {
-      ok: source.ok !== false,
-      state: sample.state || live.sample_state || 'OBSERVING_ENGINE',
-      reason: sample.reason || live.sample_reason || 'Observando o motor',
-      reason_code: sample.reason_code || sample.reasonCode || live.sample_state || 'OBSERVING_ENGINE',
-      frame_count: Number(sample.frame_count ?? live.sample_frame_count ?? 0),
-      minimum_frames: Number(sample.minimum_frames ?? live.sample_minimum_frames ?? 0),
-      desired_frames: Number(sample.desired_frames ?? live.sample_desired_frames ?? 0),
-      duration_ms: Number(sample.duration_ms ?? live.sample_duration_ms ?? 0),
-      median_interval_ms: Number(sample.median_interval_ms ?? 0),
-      gap_ms: Number(sample.gap_ms ?? 0),
-      learning_eligible: sample.learning_eligible === true,
-      fuel_confirmed: sample.fuel_confirmed ?? live.fuel ?? null,
-      // Desconhecido fica null (a tela mostra "—"), nunca "Janela 0,0 s" nem "qualidade 0%".
-      window_age_ms: finite(sample.window_age_ms ?? sample.duration_ms ?? live.sample_duration_ms),
-      window_budget_ms: Number(sample.window_budget_ms ?? 0),
-      frames_evicted: Number(sample.frames_evicted ?? 0),
-      cell_key: sample.cell_key || '',
-      cell_row: Number(sample.cell_row ?? -1),
-      cell_column: Number(sample.cell_column ?? -1),
-      quality: finite(sample.quality ?? live.learning_quality),
-      plausibility_reasons: Array.isArray(sample.plausibility_reasons) ? sample.plausibility_reasons : [],
-      live,
-    };
-  }
-
   function ensureScreen(route) {
     if (instances[route]) return instances[route];
     if (route === 'dashboard' && ui.DashboardScreen) instances.dashboard = new ui.DashboardScreen(store, api);
-    if (route === 'learning' && ui.LearningScreen) instances.learning = new ui.LearningScreen(store, router, api);
     if (route === 'map' && ui.MapScreen) instances.map = new ui.MapScreen(store, api, router);
     if (route === 'curve' && ui.CurveScreen) instances.curve = new ui.CurveScreen(store, api);
     return instances[route] || null;
@@ -184,11 +152,6 @@
       }
     }
 
-
-    if (state.learningLayer !== previousLearningLayer && state.route === 'learning') {
-      previousLearningLayer = state.learningLayer;
-      ensureScreen('learning')?.render(state);
-    }
 
     if (state.alert && state.alert !== previousAlert) {
       previousAlert = state.alert;
@@ -256,7 +219,6 @@
     const label = interpolationValid && rpm !== null && petrolMs !== null
       ? `${RPM_FORMAT.format(Math.round(rpm))} RPM · ${MS_FORMAT.format(petrolMs)} ms${position}`
       : stale ? `Sem dados há ${Math.round(age / 1000)} s` : 'Aguardando condição válida';
-    if (route === 'learning') setText('learningLiveLabel', label);
     if (route === 'map') ensureScreen('map')?.renderLiveContext?.({ rpm, petrolMs, row, column, label });
   }
 
@@ -272,14 +234,14 @@
         store.patch({ telemetry, presentRevision: Number(envelope.revision || 0) });
         const state = store.get();
         if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
-        if (route === 'learning' || route === 'map') renderLightLiveContext(state, route);
+        if (route === 'map') renderLightLiveContext(state, route);
       } else if (envelope.ok === false && previousTelemetrySignature !== 'ponte-fora') {
         // Ponte/serviço fora: o último quadro não pode ficar na tela como se fosse vivo (com idade "40 ms" congelada).
         previousTelemetrySignature = 'ponte-fora';
         store.patch({ telemetry: {} });
         const state = store.get();
         if (route === 'dashboard') ensureScreen('dashboard')?.render(state);
-        if (route === 'learning' || route === 'map') renderLightLiveContext(state, route);
+        if (route === 'map') renderLightLiveContext(state, route);
       }
     }
 
@@ -313,7 +275,7 @@
     const curve = route === 'curve' ? ensureScreen('curve') : null;
     const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
-    const needsScience = route === 'learning' || route === 'predictor' || route === 'suggestions' ||
+    const needsScience = route === 'predictor' || route === 'suggestions' ||
       route === 'map' || route === 'tools' || curveNeedsLearning || route === 'curve';
 
     if (needsScience) {
@@ -335,11 +297,6 @@
       }
     }
 
-    if (route === 'learning') {
-      patch.learningStatus = api.learningStatus() || {};
-      patch.learningDecision = learningDecisionFromTelemetry(state.telemetry);
-      patch.learningTolerance = api.learningToleranceSettings() || {};
-    }
     if (route === 'tools') {
       patch.sessionStatus = api.sessionStatus() || {};
       patch.logs = api.logs() || [];
@@ -355,7 +312,6 @@
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if (route === 'learning') ensureScreen('learning')?.render(updated);
     if (curveNeedsLearning && curve) {
       if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
       if (curve.needsLearning?.()) curve.renderLearning(updated);
@@ -508,13 +464,6 @@
       afterPaint(refreshFast);
       return;
     }
-    if (route === 'learning') {
-      previousTelemetrySignature = '';
-      ensureScreen('learning')?.render(store.get());
-      renderLightLiveContext(store.get(), 'learning');
-      afterPaint(() => { refreshFast(); refreshContext(); });
-      return;
-    }
     if (route === 'predictor') {
       previousTelemetrySignature = '';
       afterPaint(() => { refreshFast(); refreshContext(); });
@@ -543,6 +492,10 @@
     }
     if (route === 'refino') {
       afterPaint(() => root.OmegasApp?.refino?.refresh?.(true));
+      return;
+    }
+    if (route === 'local') {
+      afterPaint(() => root.OmegasApp?.localRefino?.refresh?.(true));
       return;
     }
     if (route === 'suggestions' || route === 'tools') {

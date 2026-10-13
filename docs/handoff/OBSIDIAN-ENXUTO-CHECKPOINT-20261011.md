@@ -186,3 +186,11 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - **StallWatch v2** (`StallWatch.kt` + `StallWatchTest.kt`): tropeço (kind `NEAR_STALL`, `nearCount/nearRegions` no JSON), chave na lenta não conta, `afterCutoff`. Réplica Python validada no corpus (`tools/sessoes/replay_stallwatch.py`). CI remota disparada em `26a67c0`.
 - Coerência visual: gasolina vermelha/GNV verde em Refino e Curva K; gráfico do AutoCal mantém o último estado válido (não reconstrói em reset/zona nova).
 - Primeiro item não comprovado: Refino usar tropeços para sugerir (mapa × curva) — NÃO feito; depende do dono aprovar o plano. Também pendentes: auditoria tela por tela, poda, APK (só com aprovação das prévias).
+
+## 2026-10-13 · noite 10 — poda do Aprender + Refino local + gráfico único
+
+- Dono: "podar do código" a aba Aprender (coleta, tolerâncias, grade física) e pôr no lugar o **Refino local** (1 botão, sem navegar); o gráfico do **Refino** deve ser o **mesmo objeto do AutoCal**, sem o painel de aquisição, com nossos pontos/curva/marcas por cima.
+- Feito (local → commit desta noite): removidos `screens/learning.js`, `core/learning-model.js`, `components/physical-grid.js` e os testes que só exerciam essas telas; `screens/local-refino.js` (rota `local`: lê Mapa K → escolhe células do engasgo → "Gravar" com ACK+readback → "Desfazer"); `autocal-original.js` ganhou `build(..., {extras})` + grupo `ao-ours`; `refino.js` usa `O.build/renderMain/renderK` e a camada ao vivo; caminho morto `stallStalls` saiu do `map.js`.
+- Provas locais: `node --test tests/ui/*.test.cjs` 235/0; `unittest` 207 OK (4 skip); e2e `sem_rolagem_8_abas`, `curva_para_mapa`, `curva_k_arrasto`, `refino_local` PASS. Prévias: `docs/evidence/img/previas-2026-10-13d/`.
+- Não provado: comportamento no aparelho (velocidade do cursor, gravação real do reforço), efeito físico do +% no engasgo. APK só após aprovação das prévias.
+- Primeiro item ainda não comprovado: CI remota (`ci.yml`) desse commit; Kotlin `StallWatch` com CUTOFF/`getStalls` (commit 72400c4) também sem resultado verificado.

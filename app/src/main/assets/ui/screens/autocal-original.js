@@ -169,7 +169,16 @@
     const gasPoints = pairs(gasX, gasY, axisY);
     // Eixo X flexível (dono, 2026-10-13): só até onde já houve aquisição (ou onde o motor está agora), com 1 ms de folga
     // e passo de 2 ms para o eixo não ficar pulando; nunca além do último nó da ECU nem abaixo de 6 ms.
-    const reached = Math.max(0, ...petrolPoints.map(n => n.x), ...gasPoints.map(n => n.x), livePetrol ?? 0);
+    // Extras do Refino (nossos pontos medidos e marcas de engasgo) entram no MESMO gráfico; o AutoCal não passa nada.
+    const extras = options.extras || null;
+    const ours = extras ? {
+      petrol: ourNodes(extras.petrol, axisY, fullAxisX),
+      gas: ourNodes(extras.gas, axisY, fullAxisX),
+      stalls: markNodes(extras.stalls, axisY, fullAxisX),
+      near: markNodes(extras.near, axisY, fullAxisX),
+    } : null;
+    const oursX = ours ? [...ours.petrol, ...ours.gas, ...ours.stalls, ...ours.near].map(n => n.x) : [];
+    const reached = Math.max(0, ...petrolPoints.map(n => n.x), ...gasPoints.map(n => n.x), ...oursX, livePetrol ?? 0);
     const axisX = { min: 1, max: Math.min(fullAxisX.max, Math.max(X_AXIS_FLOOR_MS, Math.ceil((reached + 1) / 2) * 2)) };
     return {
       ok: true,
@@ -192,7 +201,21 @@
       run: liveMap !== null && livePetrol !== null ? { x: livePetrol, y: liveMap } : null,
       mapNow: liveMap,
       kNodes,
+      ours,
     };
+  }
+
+  /** Nossos pontos medidos (faixas densas do Refino): {tpetMs, mapBar} → nós do gráfico, só os visíveis e finitos. */
+  function ourNodes(list, axisY, axisX) {
+    return (Array.isArray(list) ? list : [])
+      .map(p => ({ x: finite(p?.tpetMs), y: finite(p?.mapBar), samples: finite(p?.samples) }))
+      .filter(n => n.x !== null && n.y !== null && n.x > 0 && n.x <= axisX.max && n.y >= axisY.min && n.y <= axisY.max)
+      .sort((a, b) => a.x - b.x);
+  }
+  function markNodes(list, axisY, axisX) {
+    return (Array.isArray(list) ? list : [])
+      .map(e => ({ x: finite(e?.petrolMs), y: finite(e?.mapBar) }))
+      .filter(n => n.x !== null && n.y !== null && n.x > 0 && n.x <= axisX.max && n.y >= axisY.min && n.y <= axisY.max);
   }
 
   // ---------------------------------------------------------------------------------------------- desenho (SVG)
@@ -271,8 +294,30 @@
         out.push('<circle class="ao-point ' + cls + '" data-series="' + cls + '-point" data-band="' + node.index + '" cx="' + fixed(p.X(node.x)) + '" cy="' + fixed(p.Y(node.y)) + '" r="5"/>');
       }
     }
+    if (model.ours) out.push(renderOurs(model.ours, p));
     out.push('<g data-ao-live="run">' + liveRun(model, p) + '</g>');
     out.push('</g></svg>');
+    return out.join('');
+  }
+
+  /** Só no Refino: nossa curva (linha tracejada pelos nossos pontos), nossos pontos (quadrados) e as marcas de engasgo. */
+  function renderOurs(ours, p) {
+    const out = ['<g class="ao-ours" data-ao-ours="1">'];
+    for (const [nodes, cls] of [[ours.petrol, 'petrol'], [ours.gas, 'gas']]) {
+      if (nodes.length > 1) out.push('<path class="ao-our-curve ' + cls + '" data-series="our-' + cls + '-curve" d="' + smooth(nodes.map(n => [p.X(n.x), p.Y(n.y)])) + '"/>');
+      for (const n of nodes) {
+        out.push('<rect class="ao-our-point ' + cls + '" data-series="our-' + cls + '-point" x="' + fixed(p.X(n.x) - 4) + '" y="' + fixed(p.Y(n.y) - 4) + '" width="8" height="8" rx="1.5"/>');
+      }
+    }
+    for (const n of ours.near) {
+      const x = p.X(n.x), y = p.Y(n.y);
+      out.push('<path class="ao-near-mark" data-series="near" d="M' + fixed(x) + ',' + fixed(y - 7) + ' l7,7 l-7,7 l-7,-7 z"/>');
+    }
+    for (const n of ours.stalls) {
+      const x = p.X(n.x), y = p.Y(n.y);
+      out.push('<path class="ao-stall-mark" data-series="stall" d="M' + fixed(x - 6) + ',' + fixed(y - 6) + ' l12,12 M' + fixed(x + 6) + ',' + fixed(y - 6) + ' l-12,12"/>');
+    }
+    out.push('</g>');
     return out.join('');
   }
 

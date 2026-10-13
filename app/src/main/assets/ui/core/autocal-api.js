@@ -42,5 +42,7 @@
     equivalence: () => invoke('getEquivalence', [], { ok: false }),
     // Só a fase do piloto: barata, para Agora e Sugestões (equivalence() recalcula milhares de pontos).
     refinementPhase: () => invoke('getRefinementPhase', [], { ok: false }),
+    // Engasgos e apagões do GNV (StallWatch): barato, para a aba Refino local.
+    stalls: () => invoke('getStalls', [], { ok: false }),
   };
 })(typeof window !== 'undefined' ? window : globalThis);

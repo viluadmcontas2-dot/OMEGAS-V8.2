@@ -542,15 +542,7 @@
     applyContext(context) {
       if (!context || !this.editor.hasMap()) return;
       const suggestion = context.suggestion;
-      let changes = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges : [];
-      // Tropeços/apagões do Refino: as células saem do Mapa K lido AGORA (eixos reais), só como proposta (core/stall-region.js).
-      if (suggestion?.stallStalls && root.OmegasStallRegion) {
-        const axes = this.editor.snapshot().axes;
-        const result = root.OmegasStallRegion.suggest(suggestion.stallStalls, { petrolBins: axes.petrolBins, rpmBins: axes.rpmBins });
-        if (!result.ok) { this.alert(result.reason); return; }
-        changes = result.cells;
-        this.alert(`Tropeços no GNV: +${result.percent}% em ${result.cells.length} células do Mapa K (${result.reason}). Só no mapa, só aqui: nada foi gravado. Confira e grave.`);
-      }
+      const changes = Array.isArray(suggestion?.mapChanges) ? suggestion.mapChanges : [];
       try {
         // Ajuste local do Refino (dono, 2026-10-11: a curva aprende tudo e sabe onde ajustar o quê): só o percentual por
         // célula. O alvo sai da prévia Kotlin (MapKManualPlanner), o mesmo caminho do ajuste percentual manual, sobre o

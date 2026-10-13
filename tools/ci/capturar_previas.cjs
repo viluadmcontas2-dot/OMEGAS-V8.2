@@ -36,8 +36,42 @@ fs.mkdirSync(OUT, { recursive: true });
     await page.waitForTimeout(200);
     await shot('08-mapa-k-proposta-curva-para-mapa.png');
     await page.locator('.side-nav button[data-route="autocal"]').click().catch(() => {}); await page.waitForTimeout(600); await shot('09-autocal-referencia.png');
-    const refino = page.locator('.side-nav button[data-route="refino"], .side-nav button[data-route="suggestions"]').first();
-    if (await refino.count()) { await refino.click(); await page.waitForTimeout(800); await shot('10-refino.png'); }
+    // Refino e Refino local com dados de exemplo (o demo não tem aquisição da ECU): snapshot real capturado + nossos pontos + engasgos.
+    const snapshot = JSON.parse(fs.readFileSync(path.resolve('tests/ui/fixtures/autocal-captura-ac-t1000.json'), 'utf8')).snapshot;
+    await page.evaluate(snap => {
+      const api = window.OmegasUi.AutoCalApi;
+      const stalls = {
+        count: 2, nearCount: 4,
+        events: [{ kind: 'STALL', petrolMs: 2.4, mapBar: 0.34 }, { kind: 'STALL', petrolMs: 2.2, mapBar: 0.3 }],
+        nearEvents: [{ kind: 'NEAR_STALL', petrolMs: 2.1, mapBar: 0.28 }, { kind: 'NEAR_STALL', petrolMs: 2.6, mapBar: 0.36 }, { kind: 'NEAR_STALL', petrolMs: 3.2, mapBar: 0.42 }],
+        regions: [{ fromMs: 2.0, toMs: 2.5, count: 2, mapBar: 0.32, rpmBefore: 1500, rpmLow: 1400, rpmHigh: 1600 }],
+        nearRegions: [{ fromMs: 2.0, toMs: 2.5, count: 4, mapBar: 0.3, rpmBefore: 1450, rpmLow: 1350, rpmHigh: 1700 }],
+      };
+      const dense = { petrol: [], gas: [] };
+      for (let i = 0; i < 14; i += 1) {
+        const ms = 1.6 + i * 0.55;
+        dense.petrol.push({ tpetMs: ms, mapBar: 0.2 + ms * 0.095, samples: 40 });
+        if (i < 11) dense.gas.push({ tpetMs: ms + 0.05, mapBar: 0.2 + ms * 0.095 + (i % 3 === 0 ? 0.008 : -0.004), samples: 30 });
+      }
+      api.available = () => true;
+      api.projection = () => ({ ok: true, snapshot: snap });
+      api.equivalence = () => ({ autopilot: { phase: 'COLETANDO_NOSSOS', headline: 'Coletando os nossos pontos', next: 'Dirija normalmente: o refino mede e propõe a curva sozinho.', action: { kind: 'waiting', label: 'Aguardando', enabled: false } }, denseBands: dense, stalls });
+      api.stalls = () => ({ ok: true, stalls });
+    }, snapshot);
+    await page.evaluate(() => document.querySelectorAll('.alert-toast').forEach(n => n.remove()));
+    await page.locator('.side-nav button[data-route="refino"]').click();
+    await page.waitForTimeout(500);
+    await page.evaluate(() => window.OmegasApp.refino.refresh(true));
+    await page.waitForTimeout(400);
+    await shot('15-refino-mesmo-grafico-do-autocal.png');
+    await page.locator('.side-nav button[data-route="local"]').click();
+    await page.waitForTimeout(500);
+    await page.evaluate(() => window.OmegasApp.localRefino.refresh(true));
+    await page.waitForTimeout(300);
+    await shot('16-refino-local-um-botao.png');
+    await page.locator('.local-main').click();
+    await page.waitForSelector('[data-local-action="write"]', { timeout: 15000 });
+    await shot('17-refino-local-pronto-para-gravar.png');
     if (errors.length) { console.error('erros de página:', errors); process.exit(1); }
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exit(1); });

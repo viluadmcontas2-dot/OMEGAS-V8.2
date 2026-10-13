@@ -14,7 +14,6 @@ adapter = read("app/src/main/java/com/omegas/prohub/calibration/AdvisorSuggestio
 coordinator = read("app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt")
 causal = read("app/src/main/java/com/omegas/v7/runtime/CalibrationCausalTransitionV7.kt")
 continuous = read("app/src/main/java/com/omegas/prohub/learning/ContinuousLearningMath.kt")
-learning_ui = read("app/src/main/assets/ui/screens/learning.js")
 stability_test = read("app/src/test/java/com/omegas/v7/runtime/LearningStabilityV7Test.kt")
 causal_test = read("app/src/test/java/com/omegas/v7/runtime/CalibrationCausalTransitionV7Test.kt")
 causal_step_test = read("app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7CausalStepTest.kt")
@@ -84,9 +83,6 @@ assert "CONSOLIDATED" in stability_test
 assert "REVALIDATING" in stability_test
 assert "um outlier isolado apenas revalida" in stability_test
 assert "mudanca repetivel promove novo consolidado" in stability_test
-assert "stableComparisonError" in learning_ui
-assert "state === 'CONSOLIDATED' || state === 'REVALIDATING'" in learning_ui
-assert "state === 'LEARNING'" in learning_ui
 
 # The existing bilinear physical geometry is the only spatial propagation currently authorized.
 assert "fun bilinearWeights" in continuous

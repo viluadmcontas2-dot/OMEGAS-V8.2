@@ -51,7 +51,7 @@ assert.match(cockpit, /function chartWidthFor\(host, height\)[\s\S]*?Math\.round
 assert.match(cockpit, /const width = chartWidthFor\(host, height\);/, 'gráfico principal usa a largura da tela');
 assert.match(cockpit, /width = chartWidthFor\(host, height\), left = 64/, 'gráfico da reaquisição usa a largura da tela');
 assert.doesNotMatch(cockpit, /viewBox="0 0 1000 400"/, 'nada de proporção fixa que deixa faixas vazias');
-assert.match(refino, /Math\.round\(height \* box\.width \/ box\.height\)/, 'Refino também ocupa a largura toda');
+assert.match(refino, /const width = Math\.max\(420, Math\.round\(box\.width/, 'Refino também ocupa a largura toda');
 
 // Nenhuma tela esconde a navegação nem tem botão "Abas".
 const sources = ['index.html', 'app.js', ...fs.readdirSync(path.join(ui, 'screens')).map(f => 'screens/' + f)];

@@ -91,9 +91,13 @@ test('Refino é um destino próprio logo abaixo do AutoCal e grava só com confe
   assert.match(SOURCE, /A Curva K da ECU mudou/);
   assert.match(SOURCE, /done\.state === 'BATCH_CONFIRMED' && done\.readbackValid === true/);
   assert.doesNotMatch(SOURCE, /setInterval/);
-  // Mesma linguagem visual do AutoCal da Platina: mesmo gráfico e mesmas classes.
-  assert.match(SOURCE, /autocal-reference-svg/);
-  assert.match(SOURCE, /AutoCalUxModel/);
+  // Dono (2026-10-13): o gráfico do Refino é O MESMO objeto do AutoCal (autocal-original.js), sem o painel de aquisição,
+  // sempre visível (sem botão "Ver o gráfico") e sem cartão de engasgo próprio (a correção fica no Refino local).
+  assert.match(SOURCE, /O\.build\(/);
+  assert.match(SOURCE, /O\.renderMain\(/);
+  assert.match(SOURCE, /O\.renderK\(/);
+  assert.doesNotMatch(SOURCE, /renderAcquisition/);
+  assert.doesNotMatch(SOURCE, /refinoGraphToggle|refinoStalls|data-refino-stall|refinoInspector/);
 });
 
 // ---------------------------------------------------------------- ciclo do refino (2026-10-11)

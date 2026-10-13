@@ -50,11 +50,8 @@ function load(file) {
   return context;
 }
 
-test('as duas telas e o painel do Aprender não rolam (overflow escondido, nunca auto/scroll)', () => {
+test('Ferramentas não rolam (overflow escondido, nunca auto/scroll)', () => {
   assert.doesNotMatch(block(), /overflow(?:-[xy])?\s*:\s*(?:auto|scroll)/, 'o bloco novo não pode criar rolagem');
-  assert.match(rule('.screen[data-screen="learning"].active'), /overflow:\s*hidden/);
-  assert.match(rule('.screen[data-screen="learning"] #learningCellDetail'), /overflow:\s*hidden/, 'painel Célula/Coleta/Decisões/Tolerâncias sem sub-rolagem');
-  assert.match(rule('#learningCellDetail > .learning-inspector-pane.active'), /overflow:\s*hidden/);
   assert.match(rule('#toolsDrawer.screen.active'), /overflow:\s*hidden/, 'Ferramentas deixou de ser .utility-screen que rola');
   assert.match(rule('#toolDiagnosticsWorkspace'), /overflow:\s*hidden/);
   for (const list of ['#toolDiagnosticsWorkspace .recorded-session-list', '#toolDiagnosticsWorkspace .log-lines']) {
@@ -64,17 +61,6 @@ test('as duas telas e o painel do Aprender não rolam (overflow escondido, nunca
 });
 
 test('ações embaixo, à esquerda, com 56 px; toque ≥ 48 px', () => {
-  const learning = rule('.screen[data-screen="learning"].active');
-  assert.match(learning, /grid-template-areas:\s*"intro panel"\s*"map panel"\s*"foot panel"/, 'camadas no rodapé, painel em altura inteira');
-  assert.match(rule('.screen[data-screen="learning"]'), /--foot-h:\s*56px/);
-  assert.match(rule('.screen[data-screen="learning"] > .learning-controls'), /grid-area:\s*foot[\s\S]*justify-content:\s*flex-start/);
-  const learningHtml = section('learning');
-  assert.ok(learningHtml.indexOf('class="learning-workspace"') < learningHtml.indexOf('class="learning-controls"'), 'camadas depois do mapa (embaixo)');
-  assert.ok(px(rule('#learningCellPane .learning-cell-actions button'), 'min-height') >= 56);
-  assert.match(rule('#learningCellPane .learning-cell-actions'), /margin-top:\s*auto/, 'ações da célula embaixo do painel');
-  assert.ok(px(rule('#learningTolerancePane .tolerance-actions button'), 'min-height') >= 56);
-  assert.ok(px(rule('#learningCellDetail > .learning-inspector-tabs button'), 'min-height') >= 48);
-
   assert.match(rule('#toolsDrawer'), /--foot-h:\s*60px/);
   assert.match(rule('#toolsDrawer > .tool-actions'), /grid-row:\s*3[\s\S]*justify-content:\s*flex-start/, 'backup no rodapé, à esquerda');
   assert.ok(px(rule('#toolsDrawer > .tool-actions > button'), 'min-height') >= 56);
@@ -83,7 +69,7 @@ test('ações embaixo, à esquerda, com 56 px; toque ≥ 48 px', () => {
   for (const selector of ['#toolDiagnosticsWorkspace .recorded-session-item button', '#toolDiagnosticsWorkspace .tool-log-pager button', '#toolDiagnosticsWorkspace .log-filters select']) {
     assert.ok(px(rule(selector), 'min-height') >= 48, selector);
   }
-  assert.doesNotMatch(html + read('screens/learning.js') + read('components/drawers.js'), />\s*Abas\s*</, 'sem botão "Abas"');
+  assert.doesNotMatch(html + read('components/drawers.js'), />\s*Abas\s*</, 'sem botão "Abas"');
 });
 
 test('texto do bloco novo nunca abaixo de 12 px', () => {
@@ -95,42 +81,6 @@ test('texto do bloco novo nunca abaixo de 12 px', () => {
 test('Ferramentas: painel aberto ocupa o lugar dos cartões (CSS)', () => {
   assert.doesNotMatch(block(), /data-cell-view|data-tolerance-view/, 'sem vistas de Detalhes (dono, 2026-10-11)');
   assert.match(rule('#toolDiagnosticsWorkspace details[open]'), /position:\s*absolute[\s\S]*inset:\s*0/, 'disclosure aberto ocupa o lugar dos cartões');
-});
-
-test('Aprender: Decisões em aba própria; sem Detalhes, sem Diagnóstico técnico e sem código cru (dono, 2026-10-11)', () => {
-  const context = load('screens/learning.js');
-  const proto = context.OmegasUi.LearningScreen.prototype;
-  const source = read('screens/learning.js');
-  assert.match(source, /data-learning-inspector="history">Decisões</);
-  assert.doesNotMatch(source, /Diagnóstico técnico|data-learning-view-toggle|toggleView|reason-code|LIMITES CONFIGURADOS/);
-
-  const screen = Object.create(proto);
-  screen.collectionPane = { innerHTML: '', querySelector: () => null };
-  screen.historyPane = { innerHTML: '' };
-  screen.decisionHistory = [{ time: '10:00:00', level: 'accepted', label: 'Evidência aceita', reason: 'Amostra forte', code: 'SAMPLE_ACCEPTED', fuel: 'Gasolina', cell: '2×2' }];
-  screen.renderCollection({ learningDecision: { state: 'FORMING_SAMPLE', reason: 'Formando', frame_count: 7, desired_frames: 10 }, telemetry: { live: { rpm: 2500 } } });
-  assert.match(screen.collectionPane.innerHTML, /MEDIÇÃO AGORA[\s\S]*CONDIÇÃO AGORA/);
-  assert.doesNotMatch(screen.collectionPane.innerHTML, /ÚLTIMAS DECISÕES|FORMING_SAMPLE|OBSERVING_ENGINE/, 'Coleta sem histórico e sem código cru');
-  assert.match(screen.historyPane.innerHTML, /ÚLTIMAS DECISÕES OBSERVADAS[\s\S]*Amostra forte/);
-  assert.doesNotMatch(screen.historyPane.innerHTML, /SAMPLE_ACCEPTED/, 'Decisões sem código cru');
-
-  const tolerance = Object.create(proto);
-  tolerance.tolerancePane = { innerHTML: '', dataset: {}, querySelectorAll: () => [], querySelector: () => null };
-  tolerance.toleranceSignature = '';
-  tolerance.renderTolerances({ learningTolerance: { policy: { mapOscillationBar: 0.035 }, controlModel: { minimumWaterC: 60, levels: ['A', 'B'], controls: [{ id: 'rpm', title: 'Rotação', description: 'Quanto varia', selected: 1 }] } } });
-  const pane = tolerance.tolerancePane.innerHTML;
-  assert.doesNotMatch(pane, />Detalhes<|LIMITES CONFIGURADOS/, 'Tolerâncias só com os ajustes');
-  // Tolerâncias fixas no Kotlin (o "Aplicar tolerâncias" antigo fingia): só a água mínima, que muda de verdade (dono, 2026-10-11).
-  assert.match(pane, /class="tolerance-actions"><button type="button" class="primary" data-apply-water>Aplicar temperatura<\/button><\/div>/);
-  assert.doesNotMatch(pane, /data-apply-tolerances|data-reset-tolerances|data-tolerance-profile/, 'sem controles que não aplicam nada');
-  assert.match(pane, /Nada aqui escreve na ECU\./);
-
-  const cell = Object.create(proto);
-  cell.router = { navigate: () => {} };
-  cell.cellPane = { innerHTML: '', dataset: {}, querySelector: () => ({ addEventListener: () => {} }) };
-  cell.renderDetail({ learning: {} }, 0, 0);
-  assert.doesNotMatch(cell.cellPane.innerHTML, /Diagnóstico técnico|<details/);
-  assert.match(cell.cellPane.innerHTML, /Abrir o Mapa K não grava nada\./); // (dono, 2026-10-11: texto para leigo)
 });
 
 function toolsHarness(open) {

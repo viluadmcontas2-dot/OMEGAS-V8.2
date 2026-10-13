@@ -19,11 +19,11 @@ class CleanUiContract(unittest.TestCase):
         self.router = (UI / "core/router.js").read_text("utf-8")
         self.scheduler = (UI / "core/scheduler.js").read_text("utf-8")
         self.native_api = (UI / "core/native-api.js").read_text("utf-8")
-        self.grid = (UI / "components/physical-grid.js").read_text("utf-8")
+        self.grid = ""  # Aprender/grade física podados (dono, 2026-10-13)
         self.map_editor = (UI / "map-editor.js").read_text("utf-8")
         self.map_screen = (UI / "screens/map.js").read_text("utf-8")
         self.curve_screen = (UI / "screens/curve.js").read_text("utf-8")
-        self.learning_screen = (UI / "screens/learning.js").read_text("utf-8")
+        self.learning_screen = (UI / "screens/local-refino.js").read_text("utf-8")
         self.refino_screen = (UI / "screens/refino.js").read_text("utf-8")
         self.dashboard = (UI / "screens/dashboard.js").read_text("utf-8")
         self.suggestion_model = (UI / "suggestion-model.js").read_text("utf-8")
@@ -43,15 +43,15 @@ class CleanUiContract(unittest.TestCase):
 
     def test_eight_static_human_destinations_with_refino_below_autocal(self):
         routes = re.findall(r'data-route="([^"]+)"', self.html)
-        expected = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']
+        expected = ['dashboard', 'local', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']
         self.assertEqual(expected, routes)
         for route in expected:
             self.assertIn(f'data-screen="{route}"', self.html)
-        self.assertIn("const ROUTES = ['dashboard', 'learning', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']", self.router)
+        self.assertIn("const ROUTES = ['dashboard', 'local', 'map', 'curve', 'autocal', 'refino', 'suggestions', 'tools']", self.router)
         self.assertEqual(routes.index('autocal') + 1, routes.index('refino'))
         self.assertNotIn('data-route="obd"', self.html)
         self.assertNotIn("predictor-model.js", self.router)
-        for label in ('Agora', 'Aprender', 'Ajuste local', 'Ajuste global', 'AutoCal', 'Refino', 'Sugestões', 'Ferramentas'):
+        for label in ('Agora', 'Refino local', 'Ajuste local', 'Ajuste global', 'AutoCal', 'Refino', 'Sugestões', 'Ferramentas'):
             self.assertIn(f'<span>{label}</span>', self.html)
 
     def test_one_store_one_router_one_scheduler(self):
@@ -81,36 +81,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('--rpm-ratio', self.app)
         self.assertNotIn('--rpm-ratio', self.css)
 
-    def test_learning_fast_path_has_bounded_visual_trace_without_weight_chasing(self):
-        self.assertNotIn('setTrace(', self.app)
-        self.assertNotIn('TRACE_MAX_CONTRIBUTORS', self.grid)
-        self.assertNotIn('TRACE_WEIGHT_STEPS', self.grid)
-        self.assertNotIn('continuousWeights', self.learning_screen)
-        self.assertIn('setTrace(', self.grid)
-        self.assertIn('traceTrailMs = 1400', self.grid)
-        self.assertIn('traceTrailMax = 16', self.grid)
-        self.assertIn('live-contributor', self.grid)
-        self.assertIn('live-nearest', self.grid)
-        self.assertIn('live-trail', self.grid)
-        self.assertNotIn('setInterval(', self.grid)
-        self.assertNotIn('setTimeout(', self.grid)
-        self.assertNotRegex(self.grid, r'writeMap|startMapBatchWrite|protocolTransaction')
-        self.assertIn('function renderLightLiveContext', self.app)
-        self.assertIn("route === 'dashboard' || route === 'learning' || route === 'map'", self.app)
-        self.assertIn("if (route === 'learning') setText('learningLiveLabel'", self.app)
-        # Sem jargão técnico na tela (dono, 2026-10-11): a nota sobre Kotlin/WebView saiu.
-        self.assertNotIn('A interpolação bilinear continua no Kotlin', self.learning_screen)
-
-    def test_learning_grid_has_physical_axes_and_direct_edit_entrypoint(self):
-        self.assertIn('physical-grid-with-axes', self.grid)
-        self.assertIn('setAxes(rpmBins, petrolBins)', self.grid)
-        self.assertIn('data-edit-learning-cell', self.learning_screen)
-        self.assertIn("this.router.navigate('map'", self.learning_screen)
-        self.assertIn("origin: 'learning'", self.learning_screen)
-        self.assertIn('Abrir o Mapa K não grava nada', self.learning_screen)  # (dono, 2026-10-11: texto para leigo)
-        for forbidden in ('writeMap(', 'startKBatchWrite(', 'writeCurve('):
-            self.assertNotIn(forbidden, self.learning_screen)
-
     def test_dashboard_prioritizes_petrol_injection_and_groups_context(self):
         self.assertIn('INJEÇÃO (ms)', self.dashboard)  # (dono, 2026-10-11: texto para leigo)
         self.assertIn('dashHeroPetrol', self.dashboard)
@@ -125,10 +95,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('dashGas', self.dashboard)
 
     def test_learning_map_curve_and_obd_have_expected_contracts(self):
-        for layer in ('petrol', 'cng', 'comparison'):
-            self.assertIn(f'data-learning-layer="{layer}"', self.html)
-        # Camada "Sugestão" saiu (dono, 2026-10-11): a fila que a alimentava está congelada desde a base.
-        self.assertNotIn('data-learning-layer="suggestion"', self.html)
         self.assertIn('id="mapSelectAll"', self.html)
         self.assertIn('id="curveChart"', self.html)
 
@@ -200,10 +166,6 @@ class CleanUiContract(unittest.TestCase):
         self.assertIn('writePrepared()', self.map_screen)
         self.assertIn("this.api.writeMap(this.review.items", self.map_screen)
 
-    def test_learning_route_never_calls_writer(self):
-        for forbidden in ('writeMap(', 'writeCurve(', 'startKBatchWrite(', 'protocolTransaction'):
-            self.assertNotIn(forbidden, self.learning_screen)
-
     def test_suggestions_route_is_review_navigation_not_auto_apply(self):
         self.assertIn('data-screen="suggestions"', self.html)
         self.assertIn('Abrir não grava nada.', self.html)  # (dono, 2026-10-11: texto para leigo)
@@ -217,12 +179,6 @@ class CleanUiContract(unittest.TestCase):
 
     def test_scheduler_has_single_timer_budget(self):
         self.assertEqual(1, self.scheduler.count('setInterval('))
-        self.assertNotIn('setInterval(', self.grid)
-        self.assertNotIn('setTimeout(', self.grid)
-
-    def test_grid_selection_does_not_create_second_state_store(self):
-        self.assertNotIn('new Store(', self.grid)
-        self.assertNotIn('localStorage', self.grid)
 
     def test_no_opacity_or_filter_animation_in_active_grid(self):
         combined_css = self.css + self.refine_css + self.obd_css + self.calibration_obd_css

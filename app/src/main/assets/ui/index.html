@@ -18,7 +18,7 @@
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
         <button type="button" data-route="dashboard" class="active"><i>01</i><span>Agora</span></button>
-        <button type="button" data-route="learning"><i>02</i><span>Aprender</span></button>
+        <button type="button" data-route="local"><i>02</i><span>Refino local</span></button>
         <button type="button" data-route="map"><i>03</i><span>Ajuste local</span></button>
         <button type="button" data-route="curve"><i>04</i><span>Ajuste global</span></button>
         <button type="button" data-route="autocal"><i>05</i><span>AutoCal</span></button>
@@ -70,33 +70,9 @@
           </div>
         </section>
 
-        <section class="screen" data-screen="learning" aria-labelledby="learningTitle">
-          <div class="page-intro learning-intro">
-            <div><small>APRENDER</small><h2 id="learningTitle">Gasolina × GNV por região</h2></div>
-            <div class="live-condition"><small>AGORA</small><b id="learningLiveLabel">Aguardando condição válida</b></div>
-          </div>
-
-          <div class="learning-workspace">
-            <section class="learning-map-surface">
-              <div class="axis-top">RPM →</div>
-              <div id="learningGrid" class="physical-grid-host" aria-label="Mapa de aprendizado"></div>
-              <div class="axis-side">INJEÇÃO (ms) ↓</div>
-              <div class="trace-note"><span class="trace-sample nearest"></span>onde o motor está agora <span class="trace-sample contributor"></span>regiões vizinhas</div>
-            </section>
-            <aside id="learningCellDetail" class="inspector-panel">
-              <div class="detail-empty"><b>Coleta em andamento</b><span>Toque em uma célula para ver evidência, equivalência e próximo passo.</span></div>
-            </aside>
-          </div>
-
-          <!-- Sem rolagem (dono, 2026-10-11): as camadas do mapa ficam num rodapé embaixo, à esquerda, ao alcance da mão. -->
-          <div class="learning-controls">
-            <div class="layer-tabs" role="tablist" aria-label="Camada do aprendizado">
-              <button type="button" data-learning-layer="petrol">Referência</button>
-              <button type="button" data-learning-layer="cng">No GNV</button>
-              <button type="button" data-learning-layer="comparison" class="active">Diferença</button>
-            </div>
-            <div class="coverage-copy"><span id="learningCoverageSummary">— gasolina · — GNV · — prontas</span><span class="coverage-legend">Diferença: + GNV pede mais · − GNV pede menos</span></div>
-          </div>
+        <section class="screen local-refino-screen" data-screen="local" aria-labelledby="localTitle">
+          <div class="page-intro"><div><small>REFINO LOCAL</small><h2 id="localTitle">Corrigir engasgo</h2></div></div>
+          <div id="localRefinoHost" class="local-refino-host"></div>
         </section>
 
         <section class="screen map-screen" data-screen="map" aria-labelledby="mapTitle">
@@ -222,11 +198,8 @@
   <script src="core/store.js" defer></script>
   <script src="core/router.js" defer></script>
   <script src="core/scheduler.js" defer></script>
-  <script src="core/learning-model.js" defer></script>
-  <script src="components/physical-grid.js" defer></script>
   <script src="components/drawers.js" defer></script>
   <script src="screens/dashboard.js" defer></script>
-  <script src="screens/learning.js" defer></script>
   <script src="screens/map.js" defer></script>
   <script src="screens/curve.js" defer></script>
   <script src="app.js" defer></script>

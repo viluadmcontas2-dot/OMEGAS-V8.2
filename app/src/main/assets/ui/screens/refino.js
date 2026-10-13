@@ -2,8 +2,9 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  // Refino OMEGAS: o "nosso AutoCal". Mesma linguagem visual do AutoCal da Platina
-  // (cabeçalho, gráfico Petrol Inj. × MAP, revisão), com os nossos pontos por cima.
+  // Refino OMEGAS: o "nosso AutoCal". O gráfico é O MESMO objeto do AutoCal (screens/autocal-original.js: zonas, curvas da
+  // ECU, curva K, AGORA), sem o painel de aquisição à esquerda; por cima entram só os nossos pontos, a nossa curva e as marcas
+  // de engasgo (dono, 2026-10-13).
   // A matemática é do Kotlin (AutoMatchRefinedEngine, EquivalenceLedger, diário e piloto).
   // A fase, a frase e os botões também: esta tela só desenha o que o piloto decidiu
   // (eq.autopilot.action/secondary/proposal) e nunca calcula um "pronto" próprio.
@@ -217,7 +218,7 @@
         if (this.ticks % DATA_EVERY_TICKS === 0) this.refresh();
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
-        if (this.store.get().route === 'refino') this.renderLive();
+        if (this.store.get().route === 'refino') this.paintLive();
       });
       // Ao entrar na aba, desenha na hora (sem esperar o próximo tick).
       let lastRoute = null;
@@ -231,11 +232,10 @@
     inject() {
       const host = document.getElementById('refinoScreenHost');
       if (!host || host.querySelector('.autocal-cockpit')) return;
-      // Frase de estado sob o título; botões embaixo, à esquerda (barra única, um botão por ação); "Detalhes"
-      // troca o gráfico pelas seções de resultado/técnicas no mesmo lugar (sem rolagem). A navegação inferior
-      // do app nunca some (decisão do dono): não há botão de abas aqui.
+      // Frase de estado sob o título, o MESMO gráfico do AutoCal (sempre visível) e a barra de botões embaixo, à esquerda.
+      // A navegação inferior do app nunca some (decisão do dono): não há botão de abas aqui.
       host.innerHTML = `
-        <section class="autocal-cockpit refino-cockpit" aria-label="Refino OMEGAS" data-refino-view="chart">
+        <section class="autocal-cockpit refino-cockpit" aria-label="Refino OMEGAS">
           <header class="autocal-focus-toolbar">
             <div class="autocal-focus-title">
               <div class="autocal-title-line"><h3>Refino · GNV = Gasolina</h3><span id="refinoPhaseChip" class="autocal-fuel-chip" data-fuel-state="unknown">—</span></div>
@@ -243,26 +243,12 @@
             </div>
           </header>
           <p class="refino-next" id="refinoNext"></p>
-          <section id="refinoStalls" class="refino-stalls" aria-label="O carro engasgou" hidden></section>
-          <button type="button" class="refino-graph-toggle" id="refinoGraphToggle" aria-expanded="false" aria-controls="refinoGraph">Ver o gráfico</button>
-          <div class="refino-graph" id="refinoGraph" hidden>
-            <section class="autocal-reference-card" aria-label="NOSSA CURVA · Gasolina × GNV" data-refino-panel="chart">
-              <span class="autocal-plot-title">NOSSA CURVA · Gasolina × GNV</span>
-              <div class="autocal-chart-workspace">
-                <div id="refinoChart" class="autocal-chart-host"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
-                <div class="autocal-chart-legend">
-                  <span class="petrol">Curva gasolina (ECU)</span>
-                  <span class="gas">Curva GNV (ECU)</span>
-                  <span class="acquired">Pontos da ECU</span>
-                  <span class="refino-ours-petrol">Nossos · gasolina</span>
-                  <span class="refino-ours-gas">Nossos · GNV</span>
-                  <span class="refino-stall-legend">Motor apagou</span>
-                  <span class="refino-near-legend">Quase apagou</span>
-                  <span class="live">AGORA</span>
-                </div>
-                <aside id="refinoInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Bolinhas: pontos da ECU. Quadradinhos: nossos pontos. Vermelho = gasolina, verde = GNV.</span></aside>
-              </div>
-            </section>
+          <div id="refinoChart" class="autocal-chart-host refino-chart" aria-label="Gráfico do Refino"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
+          <div class="refino-legend" aria-hidden="true">
+            <span class="ao-key"><i class="sq petrol"></i><b>Nossos · gasolina</b></span>
+            <span class="ao-key"><i class="sq gas"></i><b>Nossos · GNV</b></span>
+            <span class="ao-key"><i class="x">✕</i><b>Apagou</b></span>
+            <span class="ao-key"><i class="dm"></i><b>Quase apagou</b></span>
           </div>
           <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">
             <button type="button" class="autocal-primary-action" data-refino-primary hidden></button>
@@ -272,17 +258,6 @@
           </div>
           <div id="refinoReview" class="autocal-review" hidden></div>
         </section>`;
-      const graph = host.querySelector('#refinoGraph');
-      const toggle = host.querySelector('#refinoGraphToggle');
-      const cockpit = host.querySelector('.refino-cockpit');
-      toggle?.addEventListener('click', () => {
-        const open = graph.hidden;
-        graph.hidden = !open;
-        toggle.setAttribute('aria-expanded', String(open));
-        toggle.textContent = open ? 'Esconder o gráfico' : 'Ver o gráfico';
-        if (cockpit) cockpit.dataset.graphOpen = open ? 'true' : 'false';
-        if (open) this.renderChart();
-      });
       host.addEventListener('click', event => this.onClick(event));
     }
 
@@ -304,9 +279,6 @@
       if (event.target.closest('[data-refino-review]')) { this.openReview('apply'); return; }
       if (event.target.closest('[data-refino-undo]')) { this.openReview('undo'); return; }
       if (event.target.closest('[data-refino-local]')) { this.openLocal(); return; }
-      if (event.target.closest('[data-refino-stall]')) { this.openStalls(); return; }
-      const dot = event.target.closest('[data-refino-dot]');
-      if (dot) this.inspect(dot.dataset.refinoDot);
     }
 
     primary() {
@@ -321,13 +293,6 @@
       const local = localAction(this.eq);
       if (!local.enabled) return;
       this.app?.router?.navigate('map', { origin: 'refino', suggestion: { mapChanges: local.cells } });
-    }
-
-    /** Tropeços → Mapa K: abre o Mapa K com as células propostas (lá: prévia, conferência, ACK e leitura de volta). */
-    openStalls() {
-      const stalls = this.eq?.stalls;
-      if (!stalls) return;
-      this.app?.router?.navigate('map', { origin: 'refino', suggestion: { stallStalls: stalls } });
     }
 
     openReview(kind) {
@@ -506,26 +471,7 @@
         localNode.disabled = !local.enabled;
         if (local.kind !== 'none') localNode.textContent = local.label;
       }
-      this.renderStalls(eq);
-      // O gráfico só é desenhado com a seção aberta (dono, 2026-10-13: a tela é para corrigir e interagir, não para ver tudo).
-      if (document.getElementById('refinoGraph')?.hidden === false) this.renderChart();
-    }
-
-    /** Cartão de tropeços e apagões do GNV: o que a ECU mostrou, onde, e o botão que leva ao Mapa K (grava só no mapa, com confirmação). */
-    renderStalls(eq) {
-      const host = document.getElementById('refinoStalls');
-      if (!host) return;
-      const stalls = eq.stalls || {};
-      const dead = finite(stalls.count) || 0;
-      const near = finite(stalls.nearCount) || 0;
-      host.hidden = dead + near === 0;
-      if (host.hidden) return;
-      const top = root.OmegasStallRegion?.topRegion?.(stalls);
-      const times = n => (n === 1 ? '1 vez' : `${n} vezes`);
-      const when = top ? `Quase sempre ao soltar e voltar do acelerador, perto de ${fmt(top.fromMs, 1)} ms.` : '';
-      const died = dead ? ` ${dead === 1 ? 'Em 1 o motor apagou' : `Em ${dead} o motor apagou`}.` : '';
-      const html = `<b>O carro engasgou ${times(dead + near)} no GNV</b><span>${died} ${when}</span><button type="button" class="autocal-primary-action" data-refino-stall>Reforçar o Mapa K aqui</button><small>Só no mapa · você confere e confirma antes de gravar</small>`.replace('<span> ', '<span>');
-      if (host.dataset.html !== html) { host.dataset.html = html; host.innerHTML = html; }
+      this.renderChart();
     }
 
     /** Por que nossos pontos de GNV recomeçaram (inteiros ou só onde a gravação mexeu). */
@@ -541,97 +487,72 @@
       return reason ? ` Nossos pontos de GNV recomeçaram às ${at(eq.gasEpochAt)} porque ${reason} (o GNV medido com a curva antiga não vale para a nova).` : '';
     }
 
+    /**
+     * O MESMO gráfico do AutoCal (AutoCalOriginal.build/renderMain/renderK), sem o painel de aquisição, com os nossos pontos,
+     * a nossa curva e as marcas de engasgo por cima. Como no AutoCal: leitura ruim/zona nova não apaga o desenho (guarda o
+     * último bom) e o AGORA anda numa camada leve (paintLive), sem refazer o SVG.
+     */
     renderChart() {
+      const O = ns.AutoCalOriginal;
       const host = document.getElementById('refinoChart');
-      const model = ns.AutoCalUxModel;
-      if (!host || !model) return;
-      const snapshot = this.snapshot || {};
-      // Curva RV zerada (ECU ainda sem aquisição daquele combustível) não vira linha no zero.
-      const reference = model.referencePoints(snapshot, {});
-      const hasPetrolRv = reference.some(p => finite(p.petrolMapBar) > 0);
-      const hasGasRv = reference.some(p => finite(p.gasMapBar) > 0);
-      const acquired = [...model.acquiredPoints(snapshot, 'petrol'), ...model.acquiredPoints(snapshot, 'gas')];
+      if (!O || !host) return;
+      const ux = ns.AutoCalUxModel;
+      const live = ux?.livePoint?.(this.store.get().telemetry || {}) || null;
+      const fuel = ux?.liveFuelState?.(live?.fuel)?.kind === 'petrol' ? 'petrol' : 'gas';
       const dense = this.eq?.denseBands || {};
-      const ours = [
-        ...(Array.isArray(dense.petrol) ? dense.petrol : []).map(p => ({ ...p, fuel: 'PETROL' })),
-        ...(Array.isArray(dense.gas) ? dense.gas : []).map(p => ({ ...p, fuel: 'GAS' })),
-      ].filter(p => finite(p.tpetMs) !== null && finite(p.mapBar) !== null);
-      this.ours = ours;
-      this.acquired = acquired;
-      if (!reference.length && !acquired.length && !ours.length) {
-        host.innerHTML = '<div class="chart-empty"><b>SEM PONTOS AINDA</b><span>Rode na gasolina e no GNV com a ECU conectada. Os pontos da ECU e os nossos aparecem aqui.</span></div>';
+      const stalls = this.eq?.stalls || {};
+      const extras = { petrol: dense.petrol, gas: dense.gas, stalls: stalls.events, near: stalls.nearEvents };
+      let model = O.build(this.snapshot || {}, { fuel, live, extras });
+      if (model.ok) this.lastGoodSnapshot = this.snapshot;
+      else if (this.lastGoodSnapshot) model = O.build(this.lastGoodSnapshot, { fuel, live, extras });
+      if (!model.ok) {
+        if (this.chart) return;
+        host.innerHTML = '<div class="chart-empty"><b>SEM PONTOS AINDA</b><span>Ligue a ECU e rode na gasolina e no GNV. O gráfico aparece aqui, igual ao do AutoCal.</span></div>';
         return;
       }
-      // Escala focada onde há pontos medidos (ECU + nossos); a RV só completa o contexto.
-      const measuredXs = [...acquired.map(p => p.petrolMs), ...ours.map(p => p.tpetMs)].filter(v => v > 0);
-      const xs = measuredXs.length ? measuredXs : reference.map(p => p.petrolMs).filter(v => v > 0);
-      const xMin = 0;
-      const xMax = Math.max(4, Math.ceil(Math.max(...xs) * 1.25));
-      const ys = [
-        ...reference.filter(p => p.petrolMs <= xMax).flatMap(p => [hasPetrolRv ? p.petrolMapBar : null, hasGasRv ? p.gasMapBar : null]),
-        ...acquired.map(p => p.mapBar), ...ours.map(p => p.mapBar),
-      ].filter(v => Number.isFinite(v) && v > 0);
-      const yMin = Math.max(0, Math.floor(Math.min(...ys) * 20) / 20 - 0.05);
-      const yMax = Math.ceil(Math.max(...ys) * 20) / 20 + 0.05;
-      // Ocupa toda a área (dono, 2026-10-11): largura do desenho na proporção da tela, altura fixa em 400 unidades.
-      const box = typeof host.getBoundingClientRect === 'function' ? host.getBoundingClientRect() : null;
-      const height = 400;
-      const width = box && box.width > 0 && box.height > 0 ? Math.max(1000, Math.round(height * box.width / box.height)) : 1000;
-      const padLeft = 64; const padRight = 28; const padTop = 22; const padBottom = 48;
-      const xFor = v => padLeft + ((v - xMin) / (xMax - xMin)) * (width - padLeft - padRight);
-      const yFor = v => height - padBottom - ((v - yMin) / (yMax - yMin)) * (height - padTop - padBottom);
-      const xTicks = Array.from({ length: 6 }, (_, i) => xMin + i * (xMax - xMin) / 5);
-      const yTicks = Array.from({ length: 5 }, (_, i) => yMin + i * (yMax - yMin) / 4);
-      const grid = yTicks.map(v => `<line class="autocal-grid-line" x1="${padLeft}" y1="${yFor(v).toFixed(1)}" x2="${width - padRight}" y2="${yFor(v).toFixed(1)}"></line><text class="autocal-axis-tick-y" x="${padLeft - 8}" y="${(yFor(v) + 4).toFixed(1)}" text-anchor="end">${v.toFixed(2)}</text>`).join('') +
-        xTicks.map(v => `<line class="autocal-grid-line vertical" x1="${xFor(v).toFixed(1)}" y1="${padTop}" x2="${xFor(v).toFixed(1)}" y2="${height - padBottom}"></line><text class="autocal-axis-tick-x" x="${xFor(v).toFixed(1)}" y="${height - 23}" text-anchor="middle">${v.toFixed(1)}</text>`).join('');
-      const path = key => reference.filter(p => finite(p[key]) !== null && p[key] > 0 && p[key] >= yMin && p[key] <= yMax && p.petrolMs <= xMax)
-        .map((p, i) => `${i ? 'L' : 'M'} ${xFor(p.petrolMs).toFixed(1)} ${yFor(p[key]).toFixed(1)}`).join(' ');
-      const acquiredMarkup = acquired.map((p, i) => `<circle class="autocal-acquired-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'} ${p.acquisitionState === 'ACQUIRED' ? 'acquired' : 'collecting'}" data-refino-dot="ecu:${i}" cx="${xFor(p.petrolMs).toFixed(1)}" cy="${yFor(p.mapBar).toFixed(1)}" r="${p.acquisitionState === 'ACQUIRED' ? '6.0' : '4.6'}"></circle>`).join('');
-      const oursMarkup = ours.map((p, i) => `<rect class="refino-our-point ${p.fuel === 'GAS' ? 'gas' : 'petrol'}" data-refino-dot="our:${i}" x="${(xFor(p.tpetMs) - 3.5).toFixed(1)}" y="${(yFor(p.mapBar) - 3.5).toFixed(1)}" width="7" height="7" rx="1.5"></rect>`).join('');
-      const stallEvents = Array.isArray(this.eq?.stalls?.events) ? this.eq.stalls.events : [];
-      const stallMarkup = stallEvents.filter(e => finite(e.petrolMs) !== null && finite(e.mapBar) !== null && e.petrolMs <= xMax && e.mapBar >= yMin && e.mapBar <= yMax)
-        .map(e => { const x = xFor(e.petrolMs); const y = yFor(e.mapBar); return `<path class="refino-stall-mark" d="M${(x - 6).toFixed(1)} ${(y - 6).toFixed(1)} L${(x + 6).toFixed(1)} ${(y + 6).toFixed(1)} M${(x + 6).toFixed(1)} ${(y - 6).toFixed(1)} L${(x - 6).toFixed(1)} ${(y + 6).toFixed(1)}"></path>`; }).join('');
-      const nearEvents = Array.isArray(this.eq?.stalls?.nearEvents) ? this.eq.stalls.nearEvents : [];
-      const nearMarkup = nearEvents.filter(e => finite(e.petrolMs) !== null && finite(e.mapBar) !== null && e.petrolMs <= xMax && e.mapBar >= yMin && e.mapBar <= yMax)
-        .map(e => { const x = xFor(e.petrolMs); const y = yFor(e.mapBar); return `<path class="refino-near-mark" d="M${x.toFixed(1)} ${(y - 7).toFixed(1)} L${(x + 7).toFixed(1)} ${y.toFixed(1)} L${x.toFixed(1)} ${(y + 7).toFixed(1)} L${(x - 7).toFixed(1)} ${y.toFixed(1)} Z"></path>`; }).join('');
-      this.chartScale = { xMin, xMax, yMin, yMax, xFor, yFor };
-      host.innerHTML = `<svg class="autocal-reference-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Nossa curva: Petrol Inj. por MAP, gasolina e GNV, pontos da ECU e nossos">${grid}` +
-        `<text class="autocal-axis-title x" x="${((padLeft + width - padRight) / 2).toFixed(1)}" y="${height - 5}" text-anchor="middle">Petrol Inj. (ms)</text>` +
-        `<text class="autocal-axis-title y" x="14" y="${height / 2}" text-anchor="middle" transform="rotate(-90 14 ${height / 2})">MAP (bar)</text>` +
-        `<g>${hasPetrolRv ? `<path class="autocal-reference-line petrol" d="${path('petrolMapBar')}"></path>` : ''}${hasGasRv ? `<path class="autocal-reference-line gas" d="${path('gasMapBar')}"></path>` : ''}${oursMarkup}${acquiredMarkup}${nearMarkup}${stallMarkup}<g class="autocal-live-layer" data-refino-live hidden><circle class="autocal-live-halo" r="13"></circle><circle class="autocal-live-point" r="6"></circle><text class="autocal-live-label" text-anchor="start">AGORA</text></g></g></svg>`;
-      this.renderLive();
+      const box = host.getBoundingClientRect?.() || {};
+      const width = Math.max(420, Math.round(box.width || 860));
+      const height = Math.max(150, Math.round(box.height || 300));
+      const mainHeight = Math.round(height * 0.74);
+      const kHeight = height - mainHeight - 6;
+      const sizes = { sideWidth: 60, mainWidth: width, mainHeight, kHeight };
+      const key = JSON.stringify([O.staticModel(model), width, height]);
+      if (this.chart && this.chart.host === host && this.chart.key === key && host.isConnected) {
+        this.chart.model = model;
+        this.paintLive(true);
+        return;
+      }
+      host.innerHTML = '<div class="ao-layout" style="grid-template-columns:' + width + 'px;grid-template-rows:' + mainHeight + 'px ' + kHeight + 'px">' +
+        '<div class="ao-cell ao-main">' + O.renderMain(model, width, mainHeight) + '</div>' +
+        '<div class="ao-cell ao-k">' + O.renderK(model, width, kHeight) + '</div></div>';
+      this.chart = { host, model, sizes, key, painted: {}, telemetry: null };
+      this.paintLive(true);
     }
 
-    /** Cursor AGORA (Petrol Inj. × MAP da telemetria ao vivo); só move o marcador, sem redesenhar. */
-    renderLive() {
-      const layer = document.querySelector('[data-refino-live]');
-      const scale = this.chartScale;
-      if (!layer || !scale) return;
-      const live = ns.AutoCalUxModel?.livePoint?.(this.store.get().telemetry || {});
-      if (!live || finite(live.petrolMs) === null || finite(live.mapBar) === null) { layer.setAttribute('hidden', ''); return; }
-      const px = Math.min(Math.max(live.petrolMs, scale.xMin), scale.xMax);
-      const py = Math.min(Math.max(live.mapBar, scale.yMin), scale.yMax);
-      const x = scale.xFor(px).toFixed(1);
-      const y = scale.yFor(py).toFixed(1);
-      layer.removeAttribute('hidden');
-      layer.querySelectorAll('circle').forEach(c => { c.setAttribute('cx', x); c.setAttribute('cy', y); });
-      const label = layer.querySelector('text');
-      if (label) { label.setAttribute('x', (Number(x) + 12).toFixed(1)); label.setAttribute('y', (Number(y) - 10).toFixed(1)); }
-    }
-
-    inspect(token) {
-      const [kind, raw] = String(token || '').split(':');
-      const index = Number(raw);
-      const inspector = document.getElementById('refinoInspector');
-      if (!inspector) return;
-      if (kind === 'our') {
-        const p = (this.ours || [])[index];
-        if (!p) return;
-        inspector.innerHTML = `<b>Nosso ponto · ${p.fuel === 'GAS' ? 'GNV' : 'Gasolina'}</b><span>MAP ${fmt(p.mapBar, 3)} bar · ${fmt(p.tpetMs, 2)} ms · ${fmt(p.samples, 0)} leituras estáveis · RPM típico ${fmt(p.rpmMedian, 0)}</span>`;
-      } else {
-        const p = (this.acquired || [])[index];
-        if (!p) return;
-        inspector.innerHTML = `<b>Ponto da ECU · ${escapeHtml(p.fuelLabel)} B${p.point}</b><span>MAP ${fmt(p.mapBar, 3)} bar · ${fmt(p.petrolMs, 2)} ms · ${p.acquisitionState === 'ACQUIRED' ? 'adquirido' : 'coletando'} (${fmt(p.counter, 0)}/${fmt(p.threshold, 0)})</span>`;
+    /** Anda só a camada AO VIVO (faixa de MAP atual + cursor); se o motor passou do fim do eixo, refaz uma vez. */
+    paintLive(force) {
+      const chart = this.chart;
+      const O = ns.AutoCalOriginal;
+      if (!chart || !O?.renderLive || !chart.host?.isConnected) return;
+      const telemetry = this.store.get().telemetry || {};
+      if (!force && chart.telemetry === telemetry) return;
+      chart.telemetry = telemetry;
+      const live = ns.AutoCalUxModel?.livePoint?.(telemetry) || null;
+      const state = live ? O.liveState(chart.model, live) : { band: null, run: null, mapNow: null };
+      if (state.run && state.run.x > chart.model.axisX.max + 1e-9 && chart.model.axisX.max < chart.model.fullAxisX.max && !this.growing) {
+        this.growing = true;
+        this.chart = null;
+        this.renderChart();
+        this.growing = false;
+        return;
+      }
+      const parts = O.renderLive({ ...chart.model, ...state }, chart.sizes);
+      if (!parts) return;
+      chart.model = { ...chart.model, ...state };
+      for (const name of ['band', 'run', 'k']) {
+        if (chart.painted[name] === parts[name]) continue;
+        const node = chart.host.querySelector('[data-ao-live="' + name + '"]');
+        if (node) { node.innerHTML = parts[name]; chart.painted[name] = parts[name]; }
       }
     }
   }
@@ -643,7 +564,7 @@
 
   function boot() {
     const app = root.OmegasApp;
-    if (!app?.store || !app?.scheduler || !app?.api || !ns.AutoCalApi || !ns.AutoCalUxModel) {
+    if (!app?.store || !app?.scheduler || !app?.api || !ns.AutoCalApi || !ns.AutoCalUxModel || !ns.AutoCalOriginal) {
       root.setTimeout(boot, 50);
       return;
     }

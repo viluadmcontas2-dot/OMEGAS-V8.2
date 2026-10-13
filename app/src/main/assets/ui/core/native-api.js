@@ -150,26 +150,6 @@
   }
 
 
-  function demoToleranceSettings() {
-    const levels = ['Muito rigoroso', 'Rigoroso', 'Equilibrado', 'Flexível', 'Muito flexível'];
-    const controls = [
-      ['rpm', 'Estabilidade da rotação', 'Quanto a rotação pode variar durante uma medição.'],
-      ['map', 'Estabilidade da carga', 'Quanto o MAP pode variar durante uma medição.'],
-      ['petrol', 'Estabilidade do Petrol Inj.', 'Quanto o tempo comandado pela ECU pode oscilar.'],
-      ['pressure', 'Estabilidade da pressão GNV', 'Quanto a pressão diferencial pode variar.'],
-      ['collection', 'Ritmo da coleta', 'Quanto tempo o aplicativo observa antes de formar uma evidência.'],
-    ].map(([id, title, description]) => ({ id, title, description, selected: 2, selectedLabel: levels[2], actualValues: {} }));
-    return {
-      ok: true,
-      policy: {
-        requiredFrames: 10, rpmOscillationMinimum: 40, rpmOscillationPercent: 1.5,
-        mapOscillationBar: 0.035, petrolOscillationPercent: 10,
-        pressureOscillationBar: 0.04, minimumWaterC: 60,
-      },
-      controlModel: { ok: true, minimumWaterC: 60, levels, controls },
-    };
-  }
-
   function demoMapAdjustment(cells, mode, adjustment) {
     const minimumK = 100;
     const maximumK = 255;
@@ -258,48 +238,6 @@
     telemetry() { return this.demo ? demoTelemetry() : invoke(this.native, 'getLiveTelemetry', [], {}); }
     fullSnapshot() { return this.demo ? demoTelemetry() : invoke(this.native, 'getFullEngineSnapshot', [], {}); }
     learning() { return this.demo ? demoLearning() : invoke(this.native, 'getLearningMaps', [], {}); }
-    learningStatus() { return this.demo ? { live: { state: 'DEMO', reason: 'Dados simulados para validar interface.' } } : invoke(this.native, 'getLearningSyncStatus', [], {}); }
-    learningDecision() {
-      const snapshot = this.fullSnapshot() || {};
-      const live = snapshot.live || snapshot.data || {};
-      const sample = live.sample && typeof live.sample === 'object' ? live.sample : {};
-      return {
-        ok: snapshot.ok !== false,
-        state: sample.state || live.sample_state || 'OBSERVING_ENGINE',
-        reason: sample.reason || live.sample_reason || 'Observando o motor',
-        reason_code: sample.reason_code || sample.reasonCode || live.sample_state || 'OBSERVING_ENGINE',
-        frame_count: Number(sample.frame_count ?? live.sample_frame_count ?? 0),
-        minimum_frames: Number(sample.minimum_frames ?? live.sample_minimum_frames ?? 0),
-        desired_frames: Number(sample.desired_frames ?? live.sample_desired_frames ?? 0),
-        duration_ms: Number(sample.duration_ms ?? live.sample_duration_ms ?? 0),
-        median_interval_ms: Number(sample.median_interval_ms ?? 0),
-        gap_ms: Number(sample.gap_ms ?? 0),
-        learning_eligible: sample.learning_eligible === true,
-        fuel_confirmed: sample.fuel_confirmed ?? live.fuel ?? null,
-        window_age_ms: Number(sample.window_age_ms ?? sample.duration_ms ?? 0),
-        window_budget_ms: Number(sample.window_budget_ms ?? 0),
-        frames_evicted: Number(sample.frames_evicted ?? 0),
-        cell_key: sample.cell_key || '',
-        cell_row: Number(sample.cell_row ?? -1),
-        cell_column: Number(sample.cell_column ?? -1),
-        quality: Number(sample.quality ?? live.learning_quality ?? 0),
-        plausibility_reasons: Array.isArray(sample.plausibility_reasons) ? sample.plausibility_reasons : [],
-        live,
-      };
-    }
-    learningToleranceSettings() { return this.demo ? demoToleranceSettings() : invoke(this.native, 'getLearningToleranceSettings', [], {}); }
-    setLearningToleranceControls(semanticControls) {
-      if (this.demo) return { ...demoToleranceSettings(), applied: semanticControls || {}, demo: true };
-      return invoke(this.native, 'setLearningToleranceSettings', [JSON.stringify({ semanticControls: semanticControls || {} })], { ok: false });
-    }
-    resetLearningToleranceSettings() { return this.demo ? demoToleranceSettings() : invoke(this.native, 'resetLearningToleranceSettings', [], { ok: false }); }
-    /** Água mínima para aprender: o único ajuste de coleta que o Kotlin aplica de verdade. */
-    setLearningMinimumWaterC(value) {
-      const celsius = Math.round(Number(value));
-      if (!Number.isFinite(celsius)) return { ok: false, error: 'Informe a temperatura em °C.' };
-      if (this.demo) return { ok: true, minimumWaterC: celsius, applied: celsius, demo: true };
-      return invoke(this.native, 'setLearningMinimumWaterC', [celsius], { ok: false, error: 'Ponte indisponível' });
-    }
 
     batteryOptimizationStatus() {
       return this.demo
