@@ -799,23 +799,21 @@ RX PACKET (ECU → Host):
 </table>
 
 <h3>Real-Time Data Channel 0x01 (34 bytes, engine snapshot)</h3>
-<pre><code>Offset  Size  Likely Parameter
-  0-1    2B   RPM (big-endian, varies: 0x0342..0x0348 = ~834..840)
-  2-3    2B   MAP sensor / pressure
-  4-5    2B   Engine status flags
-  6-7    2B   Lambda / O2 sensor
-  8-9    2B   Gas pressure
- 10-11   2B   (reserved)
- 12-13   2B   Injection timing
- 14-15   2B   Engine temperature
- 16-17   2B   Gas temperature
- 18-19   2B   (varies with RPM)
- 20-21   2B   Battery voltage
- 22-23   2B   TPS / throttle position
- 24-27   4B   (zero in idle)
- 28-29   2B   OBD data field
- 30-31   2B   (zero in idle)
- 32-33   2B   Gas pressure (redundant / filtered)</code></pre>
+<div class="note">Corrected 2026-10-13 against two full serial captures (75,985 transactions, 100% checksum). All fields little-endian. Source of truth: <code>18-FORMULAS-ESCALA.md</code>.</div>
+<pre><code>Offset  Type  Field                     Formula                 Status
+  0     u16   RPM                       rpm = raw               OBSERVED (0x0365 = 869 idle)
+  6     u16   CNG injection, bank 1     ms = raw * 0.00256      INFERRED (0 = no pulse)
+  8     u16   Petrol injection, bank 1  ms = raw * 0.00256      OBSERVED (cross-check vs AutoCal buffer: ratio 0.999)
+ 11     u8    Fuel state bits           0x80 petrol, 0x88 switching, 0x90 CNG, 0x94 CNG cut-off
+ 12     u8    Water temperature         C = 109 - raw           INFERRED
+ 13     u8    Level                     raw                     INFERRED
+ 14     u16   Gas pressure (abs)        bar = raw / 800         INFERRED
+ 16     u8    Gas temperature           C = raw - 20            INFERRED
+ 17     s16   MAP                       bar = raw / 1000        OBSERVED (cross-check)
+ 24     u16   CNG injection, bank 2     ms = raw * 0.00256      INFERRED
+ 28     u16   Petrol injection, bank 2  ms = raw * 0.00256      INFERRED
+
+AutoCal vectors use DIFFERENT scales: ms = raw/512, bar = raw/1024, K = raw/16384.</code></pre>
 
 <!-- ===== 4. DATA MODEL ===== -->
 <h2 id="data-model">4. ECU Data Model</h2>

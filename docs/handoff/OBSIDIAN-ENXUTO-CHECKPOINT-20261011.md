@@ -107,3 +107,12 @@ Trabalho concorrente já na branch (2026-10-13, outro agente; ler antes de tocar
 Comportamento do AutoMatch original (passo 1) e CI/APK do SHA atual; depois validação física no carro.
 
 Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*.json`): só RTTI e exportações; o AutoMatch não tem função nomeada. Para chegar ao código: `xrefs` em `BtnFinishAutomatchClick&` (`0xa9fbe3`, tabela de métodos publicados do form) e em `@TAeb3DMap@CalcolaWorkingPoint$qqrv` (`0xc44801`), depois `decompile` no endereço apontado. `CalcolaWorkingPoint` pertence a `TAeb3DMap` (mapa 3D), não ao AutoCal.
+
+
+## Atualização 2026-10-13 (tarde) — AutoCal por observação
+
+- `PROTOCOLO-LANDI` @ `84968e3`: docs 17–20 (ciclo AutoCal, escalas, endereços, tela) + `tools/` (Portmon → JSONL). Fontes: `PortmonAUTOCAL (1).LOG` `4a70f5ae…`, `PortmonLOGNOVO.LOG` `43a63272…` (Drive, pasta compartilhada pelo dono).
+- Artefato do relatório republicado (v5) com `tools/protocolo-artifact/build.py`; tabela do canal `0x01` do modelo corrigida.
+- Divergências do OMEGAS: `docs/evidence/2026-10-13-autocal-original-vs-omegas.md`. Mais graves: zonas deslocadas uma banda (`autocal-cockpit.js:353`, `:120`) e `0x94` = GNV em corte tratado como desconhecido (`Mp48Protocol.kt`). Nada corrigido no código ainda.
+- Incógnitas registradas no REA (`record_unknown`): frames dos botões sem captura, "#n/3", quadrados/cores, animações, campos constantes.
+- Primeiro item não provado desta frente: frames dos botões Reset petrol/gas, Manual automatch e Reset K no original (exige nova captura Portmon apertando cada botão).
