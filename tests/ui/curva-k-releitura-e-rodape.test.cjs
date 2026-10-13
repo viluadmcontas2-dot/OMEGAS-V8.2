@@ -10,12 +10,12 @@ const ui = path.join(root, 'app/src/main/assets/ui');
 const source = fs.readFileSync(path.join(ui, 'screens/curve.js'), 'utf8');
 const index = fs.readFileSync(path.join(ui, 'index.html'), 'utf8');
 
-// Estrutura: rodapé único com os 6 controles, nessa ordem; o topo só tem título e estado.
+// Estrutura: rodapé único com os 5 controles, nessa ordem; o topo só tem título e estado.
 const curveSection = index.slice(index.indexOf('data-screen="curve"'), index.indexOf('data-screen="autocal"'));
 const intro = curveSection.slice(0, curveSection.indexOf('curve-view-stack'));
 const footbar = curveSection.slice(curveSection.indexOf('class="curve-footbar"'));
 assert.ok(curveSection.includes('class="curve-footbar"'), 'Curva K tem rodapé único');
-const order = ['curveReadButton', 'curveViewSwitch', 'curveBackupSave', 'curveBackupSelect', 'curveBackupRestore', 'curveResetButton'];
+const order = ['curveReadButton', 'curveBackupSave', 'curveBackupSelect', 'curveBackupRestore', 'curveResetButton'];
 const positions = order.map(id => footbar.indexOf(`id="${id}"`));
 assert.ok(positions.every(p => p > 0), 'todos os botões da Curva K estão no rodapé');
 assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'ordem do rodapé: Reler, vista, Salvar, Backups, Restaurar, Resetar');

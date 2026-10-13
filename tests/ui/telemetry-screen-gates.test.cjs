@@ -99,7 +99,7 @@ test('ciência nova (changed:true) e recálculo em curso continuam chegando ao s
   // Marcador neutro: a fila V7 congelada (sugestões/estabilidade) é zerada na entrada do app (withoutFrozenQueue).
   let answer = { ok: true, changed: true, revision: 8, refreshing: false, data: { calibrationState: { curveRevision: 2, suggestionPending: 5, suggestionItems: [{ id: 'velha' }] } } };
   const { app, patches } = bootApp({ scienceSnapshotSince: () => answer });
-  app.router.navigate('map');
+  app.router.navigate('tools'); // só Ferramentas lê a ciência (poda, 2026-10-13)
   patches.length = 0;
   app.scheduler.onContext();
   assert.equal(patches.length, 1);

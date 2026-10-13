@@ -49,8 +49,6 @@
       this.writing = false;
       this.backupTask = null;
       this.restoreContext = null;
-      this.view = 'editor';
-      this.learningSignature = '';
       this.bind();
     }
 
@@ -65,7 +63,6 @@
         if (fileName) this.prepareRestore(fileName);
       });
       document.getElementById('curvePreparePoint')?.addEventListener('click', () => this.prepareActivePoint());
-      document.querySelectorAll('[data-curve-view]').forEach(button => button.addEventListener('click', () => this.setView(button.dataset.curveView || 'editor')));
       document.querySelectorAll('[data-curve-nudge]').forEach(button => button.addEventListener('click', () => this.nudgeActive(Number(button.dataset.curveNudge) || 0)));
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
         this.cancelRestorePreview('Restauração descartada · nenhuma escrita enviada');
@@ -152,23 +149,10 @@
       text('curveTargetNormalized', `${fmt(drag.start, 4)} → ${fmt(drag.factor, 4)}`);
     }
 
-    needsLearning() { return this.view === 'learning'; }
-
-    setView(view) {
-      if (view !== 'learning' && view !== 'editor') return false;
-      this.view = view;
-      document.querySelectorAll('[data-curve-view]').forEach(button => button.classList.toggle('active', button.dataset.curveView === this.view));
-      document.querySelectorAll('[data-curve-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.curvePanel === this.view));
-      if (this.view === 'learning') this.renderLearning(this.store.get());
-      else this.renderChart();
-      return true;
-    }
-
     onEnter(context) {
       const suggestion = context && context.suggestion;
       if (suggestion) {
         this.pendingSuggestion = suggestion;
-        this.setView('editor');
         this.renderSuggestionFocus(suggestion);
       }
       // Toda entrada na aba relê a Curva K da ECU (dono, 2026-10-11); o botão Reler ECU continua.
@@ -179,7 +163,6 @@
       }
       if (!this.backupTask && !this.restoreContext) text('curveBackupStatus', '');
       this.refreshBackups();
-      if (this.view === 'learning') this.renderLearning(this.store.get());
     }
 
     refreshBackups() {
@@ -440,7 +423,6 @@
         text('curveSourceStatus', 'ECU confirmada · 30 pontos');
         this.renderChart();
         this.renderProposalList();
-        this.renderEvidence(this.store.get());
         if (this.pendingSuggestion) {
           this.renderSuggestionFocus(this.pendingSuggestion);
           this.focusSuggestion(this.pendingSuggestion);
@@ -448,8 +430,7 @@
         } else {
           this.selectPoint(this.activeIndex ?? 0);
         }
-        if (this.view === 'learning') this.renderLearning(this.store.get());
-        this.store.patch({ curve: { ...this.store.get().curve, state: 'ready', data: operation, status: {} } });
+          this.store.patch({ curve: { ...this.store.get().curve, state: 'ready', data: operation, status: {} } });
         return;
       }
 
@@ -520,7 +501,6 @@
       const input = document.getElementById('curveTargetFactor');
       if (input) input.value = factorText(this.proposals.get(this.activeIndex)?.targetFactor ?? point.factor);
       this.renderChart();
-      this.renderLearningPointContext(this.store.get(), this.activeIndex);
     }
 
     nudgeActive(delta) {
@@ -660,95 +640,6 @@
       });
     }
 
-    persistentCurveChanges(state) {
-      const items = Array.isArray(state.calibrationState?.suggestionItems) ? state.calibrationState.suggestionItems : [];
-      const changes = new Map();
-      items.filter(item => item.target === 'CURVE_K' && item.lifecycle === 'PENDING' && item.actionable === true)
-        .forEach(item => (Array.isArray(item.curveChanges) ? item.curveChanges : []).forEach(change => {
-          const index = Number(change.index);
-          if (Number.isInteger(index)) changes.set(index, change);
-        }));
-      return changes;
-    }
-
-    renderLearning(state) {
-      const host = document.getElementById('curveLearningChart');
-      const summaryHost = document.getElementById('curveLearningSummary');
-      if (!host || !summaryHost) return;
-      const maps = state.learning || {};
-      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const suggestions = Array.isArray(advisor.kFactorSuggestions) ? advisor.kFactorSuggestions : [];
-      const currentPoints = this.points();
-      const exactChanges = this.persistentCurveChanges(state);
-      const points = Array.from({ length: 30 }, (_, index) => {
-        const advice = suggestions.find(item => Number(item.index) === index) || {};
-        const current = currentPoints.find(item => Number(item.index) === index) || {};
-        const petrolMs = finite(current.petrolMs ?? advice.petrolMs);
-        const factor = finite(current.factor);
-        const proposal = this.proposals.get(index);
-        const exact = exactChanges.get(index);
-        return {
-          index,
-          petrolMs,
-          error: finite(advice.errorPercent ?? advice.error_percent ?? advice.relativeErrorPercent),
-          confidence: finite(advice.confidence) ?? 0,
-          uncertainty: finite(advice.uncertaintyPercent ?? advice.uncertainty_percent),
-          actionable: advice.actionable === true,
-          reason: advice.decisionReason || advice.readiness || '',
-          factor,
-          proposedFactor: finite(proposal?.targetFactor) ?? finite(exact?.after) ?? null,
-        };
-      });
-      const signature = JSON.stringify({ points, comparisonCount: advisor.comparisonCount, uniqueVisitCount: advisor.uniqueVisitCount });
-      if (signature === this.learningSignature) return;
-      this.learningSignature = signature;
-
-      const heading = this.root?.querySelector('.global-learning-surface .surface-heading h3');
-      if (heading) heading.textContent = 'Erro global aprendido × Curva K';
-      const legend = this.root?.querySelector('.global-learning-surface .global-legend');
-      if (legend) legend.innerHTML = '<span>erro aprendido</span><span>atual × proposta</span>';
-
-      const width = 920; const height = 180; const px = 42; const py = 22;
-      const xFor = index => px + (index / 29) * (width - px * 2);
-      const errors = points.map(item => item.error).filter(value => value !== null);
-      const maxAbs = Math.max(3, ...errors.map(Math.abs));
-      const errorY = value => height / 2 - (Number(value || 0) / maxAbs) * (height / 2 - py);
-      const errorPath = points.filter(item => item.error !== null).map((item, pos) => `${pos ? 'L' : 'M'} ${xFor(item.index).toFixed(1)} ${errorY(item.error).toFixed(1)}`).join(' ');
-      const factorValues = points.flatMap(item => [item.factor, item.proposedFactor]).filter(value => value !== null);
-      const minFactor = factorValues.length ? Math.min(...factorValues) - 0.05 : 0.8;
-      const maxFactor = factorValues.length ? Math.max(...factorValues) + 0.05 : 1.2;
-      const factorY = value => height - py - ((Number(value) - minFactor) / Math.max(0.01, maxFactor - minFactor)) * (height - py * 2);
-      const actualPath = points.filter(item => item.factor !== null).map((item, pos) => `${pos ? 'L' : 'M'} ${xFor(item.index).toFixed(1)} ${factorY(item.factor).toFixed(1)}`).join(' ');
-      const proposedPath = points.filter(item => item.proposedFactor !== null).map((item, pos) => `${pos ? 'L' : 'M'} ${xFor(item.index).toFixed(1)} ${factorY(item.proposedFactor).toFixed(1)}`).join(' ');
-
-      host.innerHTML = `<div class="global-learning-stack">
-        <section class="global-error-chart"><small class="global-chart-label">ERRO GLOBAL · alvo 0%</small><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Erro global aprendido nos 30 pontos"><line x1="${px}" y1="${height / 2}" x2="${width - px}" y2="${height / 2}" class="learn-grid-line"></line>${errorPath ? `<path class="learned-cng-line" d="${errorPath}"></path>` : ''}${points.map(item => item.error === null ? '' : `<circle data-learning-curve-index="${item.index}" class="${item.actionable ? 'learned-cng-point' : 'learned-petrol-point'}" cx="${xFor(item.index).toFixed(1)}" cy="${errorY(item.error).toFixed(1)}" r="${item.index === this.activeIndex ? 7 : 4}"></circle>${item.uncertainty === null ? '' : `<line x1="${xFor(item.index).toFixed(1)}" x2="${xFor(item.index).toFixed(1)}" y1="${errorY(item.error + item.uncertainty).toFixed(1)}" y2="${errorY(item.error - item.uncertainty).toFixed(1)}" class="learn-grid-line"></line>`}`).join('')}</svg></section>
-        <section class="global-k-chart"><small class="global-chart-label">CURVA K · atual × proposta</small><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Curva K atual e proposta nos mesmos 30 pontos">${actualPath ? `<path class="curve-line actual" d="${actualPath}"></path>` : ''}${proposedPath ? `<path class="curve-line proposal" d="${proposedPath}"></path>` : ''}${points.map(item => item.factor === null ? '' : `<circle data-learning-curve-index="${item.index}" class="curve-point ${item.index === this.activeIndex ? 'active' : ''}" cx="${xFor(item.index).toFixed(1)}" cy="${factorY(item.proposedFactor ?? item.factor).toFixed(1)}" r="${item.index === this.activeIndex ? 7 : 4}"></circle>${item.index % 5 === 0 || item.index === 29 ? `<text class="curve-point-label" x="${xFor(item.index).toFixed(1)}" y="${height - 5}" text-anchor="middle">${fmt(item.petrolMs, 1)}</text>` : ''}`).join('')}</svg></section>
-      </div>`;
-      host.querySelectorAll('[data-learning-curve-index]').forEach(node => node.addEventListener('click', () => this.selectPoint(Number(node.dataset.learningCurveIndex))));
-
-      const actionable = points.filter(item => item.actionable).length;
-      const observed = points.filter(item => item.error !== null).length;
-      summaryHost.innerHTML = `<div class="editor-heading"><div><small>30 PONTOS FÍSICOS</small><h3>Aprendizado global</h3></div></div><div class="global-summary-grid"><div><small>COMPARAÇÕES</small><b>${Number(advisor.comparisonCount || 0)}</b></div><div><small>VISITAS</small><b>${Number(advisor.uniqueVisitCount || 0)}</b></div><div><small>FAIXAS OBSERVADAS</small><b>${observed}/30</b></div><div><small>PRONTAS</small><b>${actionable}</b></div></div><div id="curveLearningPointContext" class="global-summary-list"></div><p class="empty-copy">O eixo de baixo é a injeção (ms) dos 30 pontos. Linha do meio = GNV igual à gasolina.</p>`;
-      this.renderLearningPointContext(state, this.activeIndex ?? points.find(item => item.error !== null)?.index ?? 0);
-    }
-
-    renderLearningPointContext(state, index) {
-      const host = document.getElementById('curveLearningPointContext');
-      if (!host) return;
-      const maps = state.learning || {};
-      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const advice = (Array.isArray(advisor.kFactorSuggestions) ? advisor.kFactorSuggestions : []).find(item => Number(item.index) === Number(index)) || {};
-      const current = this.points().find(item => Number(item.index) === Number(index)) || {};
-      const proposal = this.proposals.get(Number(index));
-      const exact = this.persistentCurveChanges(state).get(Number(index));
-      const error = finite(advice.errorPercent ?? advice.error_percent ?? advice.relativeErrorPercent);
-      const target = finite(proposal?.targetFactor) ?? finite(exact?.after);
-      // Desconhecido = "—" (dono, 2026-10-11): sem proposta não é "0,0000", sem confiança não é "0%".
-      const confidence = finite(advice.confidence);
-      host.innerHTML = `<div><span>Ponto ${Number(index) + 1} · ${fmt(current.petrolMs ?? advice.petrolMs, 2)} ms</span><b>erro ${error === null ? '—' : `${error > 0 ? '+' : ''}${fmt(error, 1)}%`}</b><small>confiança ${confidence === null ? '—' : `${Math.round(confidence * 100)}%`} · incerteza ±${fmt(advice.uncertaintyPercent, 1)}%</small></div><div><span>K atual</span><b>${fmt(current.factor, 4)}</b><small>proposta ${fmt(target, 4)}</small></div>`;
-    }
-
     renderProposalList() {
       const host = document.getElementById('curveProposalList');
       if (!host) return;
@@ -772,23 +663,6 @@
             : 'Nenhum ponto preparado';
         }
       }
-    }
-
-    renderEvidence(state) {
-      const host = document.getElementById('curveEvidenceList');
-      if (!host) return;
-      const maps = state.learning || {};
-      const advisor = maps.assistedCalibration || maps.assisted_calibration || {};
-      const petrol = Array.isArray(advisor.petrolCurve) ? advisor.petrolCurve : [];
-      const cng = Array.isArray(advisor.cngCurve) ? advisor.cngCurve : [];
-      const rawGlobal = Array.isArray(advisor.kFactorSuggestions) ? advisor.kFactorSuggestions : [];
-      const actionablePoints = rawGlobal.filter(item => item.actionable === true);
-      const comparisonCount = finite(advisor.comparisonCount) ?? (Array.isArray(maps.comparisons) ? maps.comparisons.length : 0);
-      const uniqueVisits = finite(advisor.uniqueVisitCount) ?? 0;
-      // Texto para leigo (dono, 2026-10-11): "Gasolina" por extenso ("Gas" se lê gás = GNV), sem código cru
-      // (ACCEPTED…) nem nomes internos (Kotlin, assessor).
-      const ready = actionablePoints.length;
-      host.innerHTML = `<div class="curve-evidence-summary"><div class="evidence-stat"><b>${comparisonCount}</b><span>comparações gasolina × GNV</span></div><div class="evidence-stat"><b>${uniqueVisits}</b><span>passagens</span></div><div class="evidence-stat"><b>${petrol.length}</b><span>pontos da referência gasolina</span></div><div class="evidence-stat"><b>${cng.length}</b><span>pontos observados no GNV</span></div></div><div class="curve-native-explanation"><header><div><small>EVIDÊNCIA FÍSICA</small><h3>Gasolina × GNV por MAP</h3></div></header><div class="global-summary-list">${petrol.slice(0, 12).map((item, i) => `<div><span>MAP ${fmt(item.mapBar, 2)} bar</span><b>Gasolina ${fmt(item.petrolMs, 2)} · GNV ${fmt(cng[i]?.petrolMs, 2)} ms</b></div>`).join('') || '<p class="empty-copy">Ainda sem evidência física global.</p>'}</div><p>${ready} ponto${ready === 1 ? '' : 's'} pronto${ready === 1 ? '' : 's'} para ajustar.</p></div>`;
     }
 
     renderSuggestionFocus(suggestion, preparedPreview = null) {

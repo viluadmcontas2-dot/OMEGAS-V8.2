@@ -72,24 +72,12 @@
           <div id="curveSuggestionFocus" class="suggestion-focus" hidden></div>
 
           <div class="curve-view-stack">
-            <div class="curve-view curve-learning-view" data-curve-panel="learning">
-              <section class="global-learning-surface">
-                <header class="surface-heading"><div><small>APRENDIZADO GLOBAL</small><h3>Gasolina × GNV por Petrol Inj.</h3></div><div class="global-legend"><span><i class="petrol-dot"></i>Gasolina</span><span><i class="cng-dot"></i>No GNV</span></div></header>
-                <div id="curveLearningChart" class="curve-learning-chart"><div class="empty-state">Colete gasolina e GNV para formar a referência global.</div></div>
-                <div class="curve-learning-axis"><span>Injeção (ms) →</span><span>Fator K ↑</span></div>
-              </section>
-              <aside id="curveLearningSummary" class="inspector-panel global-learning-summary">
-                <div class="detail-empty"><b>Aprendizado global</b><span>A referência da gasolina e o comportamento no GNV aparecerão aqui conforme a evidência chegar.</span></div>
-              </aside>
-            </div>
-
             <div class="curve-view curve-editor-view active" data-curve-panel="editor">
               <div class="curve-workspace">
                 <section class="curve-surface">
                   <div class="curve-legend"><span><i class="line actual"></i>Atual da ECU</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque em qualquer um dos 30 pontos</span></div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
                   <div class="curve-axis">Injeção (ms) →</div>
-                  <details class="evidence-disclosure"><summary><span><small>CONTEXTO</small><b>Evidência técnica</b></span><em>abrir</em></summary><div id="curveEvidenceList" class="evidence-grid"></div></details>
                 </section>
                 <aside class="inspector-panel curve-editor-panel">
                   <div class="editor-heading"><div><small>PONTO ATIVO</small><h3 id="curveActivePoint">Selecione um ponto</h3></div></div>
@@ -111,10 +99,6 @@
           <!-- Rodapé único (dono, 2026-10-11): os botões da Curva K ficam embaixo, à esquerda, ao alcance da mão. -->
           <div class="curve-footbar" role="toolbar" aria-label="Ações da Curva K">
             <button id="curveReadButton" type="button" class="secondary">Reler ECU</button>
-            <div class="view-switch" id="curveViewSwitch" role="tablist" aria-label="Visão da Curva K">
-              <button type="button" data-curve-view="learning">Aprendizado global</button>
-              <button type="button" data-curve-view="editor" class="active">Editar Curva K</button>
-            </div>
             <button id="curveBackupSave" type="button" class="secondary">Salvar curva atual</button>
             <select id="curveBackupSelect" aria-label="Backups da Curva K"><option value="">Backups</option></select>
             <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Restaurar backup</button>

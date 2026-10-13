@@ -30,15 +30,8 @@ assert.match(css, /\.side-nav button span\s*\{[^}]*font-size:15px/s);
 assert.match(css, /\.side-nav button\s*\{[^}]*height:64px/s);
 assert.match(css, /\.source-status\s*\{[^}]*min-height:40px[^}]*font-size:11px/s);
 
-assert.match(obd, /\.curve-learning-axis\s*\{[^}]*font-size:11px/s);
 assert.match(obd, /\.curve-point-label\s*\{[^}]*font-size:11px/s);
 assert.match(obd, /\.curve-nudge-row button\s*\{[^}]*min-height:44px/s);
-assert.match(obd, /\.obd-map-grid\s*\{[^}]*grid-template-columns:64px repeat\(12,minmax\(28px,1fr\)\)/s);
-assert.match(obd, /\.obd-map-axis,\.obd-map-corner\s*\{[^}]*font-size:10px/s);
-assert.match(obd, /\.obd-map-cell b\s*\{[^}]*font-size:11px/s);
-assert.match(obd, /\.obd-map-tabs button\s*\{[^}]*min-height:44px[^}]*font-size:11px/s);
-assert.match(obd, /\.obd-mode-buttons button\s*\{[^}]*min-height:\s*44px[^}]*font-size:\s*11px/s,
-  'seletor da fonte OBD deve ter alvo automotivo de 44px e texto legível');
 
 assert.match(refine, /\.recorder-actions button[\s\S]*min-height:\s*44px[\s\S]*font-size:\s*11px/s,
   'ações do gravador devem ser tocáveis na multimídia');

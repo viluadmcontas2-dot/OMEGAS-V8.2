@@ -1,6 +1,6 @@
 // Trava do dono (2026-10-11): nenhuma das abas rola nem tem sub-rolagem, nada fica cortado, a navegação inferior
 // nunca some e não existe botão "Abas". Mede o app real (index.html) no Chromium a 1280x672 (WebView do carro) e
-// 1280x720, também nos estados que mais crescem (Ações avançadas e ponto tocado do AutoCal, evidência da Curva K). Ponte AutoCal simulada
+// 1280x720, também nos estados que mais crescem (Ações avançadas e ponto tocado do AutoCal). Ponte AutoCal simulada
 // só para haver dados; nenhum dado vai para o app.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -16,7 +16,6 @@ const { fakeBridge } = require('./_ponte_falsa.cjs');
 // Estados extras que mais crescem, por aba: [nome, toques, seletores que precisam ficar visíveis e inteiros].
 // Toque { dispatch } entrega o clique direto ao elemento (bolinha do gráfico SVG, que o AGORA pode cobrir).
 const EXTRAS = {
-  curve: [['evidência aberta', ['.evidence-disclosure > summary']]],
   autocal: [
     ['Ações avançadas', ['.autocal-reset-menu > summary']],
     // Dono (2026-10-11): ao tocar num ponto, "Reaprender este ponto" aparece inteiro (antes ia para uma 2ª linha cortada).

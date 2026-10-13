@@ -81,19 +81,9 @@
   font-weight: 700;
 }
 
-.autocal-zone-dots {
-  display: flex;
-  gap: 5px;
-}
 
-.autocal-zone-dots i {
-  width: 9px;
-  height: 9px;
-  border: 1px solid rgba(255,255,255,.16);
-  border-radius: 50%;
-  background: rgba(255,255,255,.05);
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
-}
+
+
 
 .autocal-zone-meter .petrol i[data-active="true"] {
   border-color: rgba(120,183,255,.72);
@@ -115,19 +105,9 @@
   line-height: 1.4;
 }
 
-.autocal-hero-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
 
-.autocal-hero-actions button,
-.autocal-primary-action,
-.autocal-reset-actions button,
-.autocal-chart-tools button,
-.autocal-review-card button {
+
+.autocal-primary-action,.autocal-review-card button{
   min-height: 56px;
 }
 
@@ -166,18 +146,9 @@
   white-space: nowrap;
 }
 
-.autocal-chart-tools {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex: 0 0 auto;
-}
 
-.autocal-chart-tools button {
-  min-width: 52px;
-  padding: 0 12px;
-  font-size: 13px;
-}
+
+
 
 .autocal-chart-legend {
   display: flex;
@@ -243,9 +214,7 @@
   vector-effect: non-scaling-stroke;
 }
 
-.autocal-axis-label,
-.autocal-axis-tick-x,
-.autocal-axis-tick-y {
+.autocal-axis-tick-x,.autocal-axis-tick-y{
   fill: #8fa0b3;
   font-size: 11px;
   pointer-events: none;
@@ -481,13 +450,9 @@
   font-weight: 800;
 }
 
-.autocal-more-actions {
-  position: relative;
-  min-width: 0;
-}
 
-.autocal-more-actions > summary,
-.autocal-technical-details > summary {
+
+.autocal-technical-details > summary{
   display: grid;
   place-items: center;
   min-height: 56px;
@@ -500,37 +465,17 @@
   list-style: none;
 }
 
-.autocal-more-actions > summary::-webkit-details-marker,
-.autocal-technical-details > summary::-webkit-details-marker {
+.autocal-technical-details > summary::-webkit-details-marker{
   display: none;
 }
 
-.autocal-more-actions[open] {
-  grid-column: 1 / -1;
-}
 
-.autocal-reset-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 7px;
-  margin-top: 7px;
-  padding: 9px;
-  border-radius: 10px;
-  background: rgba(218,84,84,.055);
-}
 
-.autocal-reset-actions button {
-  color: #f0c0c0;
-  border-color: rgba(226,94,94,.24);
-}
 
-.autocal-reset-actions p {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: #a79498;
-  font-size: 10px;
-  line-height: 1.4;
-}
+
+
+
+
 
 .autocal-technical-details {
   overflow: hidden;
@@ -651,24 +596,11 @@
   font-size: 11px;
 }
 
-.autocal-review-tech {
-  margin: 12px 0;
-  border-top: 1px solid rgba(255,255,255,.06);
-  border-bottom: 1px solid rgba(255,255,255,.06);
-}
 
-.autocal-review-tech > summary {
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  color: #aab7c6;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  list-style: none;
-}
 
-.autocal-review-tech > summary::-webkit-details-marker { display: none; }
+
+
+
 
 .autocal-review-card dl {
   display: grid;
@@ -783,106 +715,33 @@
   min-width: 0;
 }
 
-.autocal-read-context {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(220px, .8fr);
-  gap: 10px;
-  align-items: center;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 10px;
-  background: rgba(255,255,255,.02);
-}
 
-.autocal-read-context[hidden] {
-  display: none;
-}
 
-.autocal-read-context b,
-.autocal-read-context span {
-  display: block;
-}
 
-.autocal-read-context b {
-  color: #e0e8f1;
-  font-size: 14px;
-  white-space: nowrap;
-}
 
-.autocal-read-context span,
-.autocal-read-context p {
-  color: #9dacbc;
-  font-size: 11px;
-  line-height: 1.35;
-}
 
-.autocal-read-context p {
-  margin: 0;
-  text-align: right;
-}
 
-.autocal-live-strip {
-  display: grid;
-  grid-template-columns: minmax(180px, 1.3fr) repeat(3, minmax(86px, .7fr));
-  gap: 6px;
-  align-items: stretch;
-  margin-bottom: 7px;
-}
 
-.autocal-live-summary,
-.autocal-live-metric {
-  min-width: 0;
-  padding: 7px 9px;
-  border-radius: 9px;
-  background: rgba(255,255,255,.028);
-}
 
-.autocal-live-summary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 8px;
-  align-content: center;
-}
 
-.autocal-live-summary small {
-  grid-column: 1 / -1;
-}
 
-.autocal-live-summary b {
-  overflow: hidden;
-  color: #e4edf6;
-  font-size: 14px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.autocal-live-summary span {
-  align-self: center;
-  color: #9bd9c0;
-  font-size: 12px;
-  font-weight: 800;
-}
 
-.autocal-live-summary small,
-.autocal-live-metric small {
-  display: block;
-  color: #8291a4;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .1em;
-}
 
-.autocal-live-metric b {
-  display: block;
-  margin-top: 2px;
-  overflow: hidden;
-  color: #edf3f8;
-  font-size: 16px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .autocal-live-narrative {
   grid-column: 1 / -1;
@@ -1001,13 +860,11 @@
   box-shadow: 0 0 0 3px rgba(255,255,255,.12);
 }
 
-.source-status[data-level="working"],
-.autocal-read-context[data-read-level="working"] {
+.source-status[data-level="working"]{
   border-color: rgba(120,183,255,.4);
 }
 
-.source-status[data-level="error"],
-.autocal-read-context[data-read-level="error"] {
+.source-status[data-level="error"]{
   border-color: rgba(255,119,119,.5);
 }
 
@@ -1140,14 +997,14 @@
 .autocal-tech-grid small { font-size: 11px; }
 .autocal-human-copy p { font-size: 14px; }
 .autocal-zone-meter span { font-size: 12px; }
-.autocal-zone-dots i { width: 11px; height: 11px; }
+
 .autocal-human-copy strong { font-size: 14px; }
 .autocal-section-head h4 { font-size: 18px; }
 .autocal-section-head p { font-size: 13px; }
 .autocal-section-head > span { font-size: 13px; }
-.autocal-chart-tools button { font-size: 14px; }
+
 .autocal-chart-legend { font-size: 13px; }
-.autocal-axis-label { font-size: 12px; }
+
 .chart-empty { font-size: 13px; }
 .chart-empty b { font-size: 15px; }
 .autocal-inline-inspector { font-size: 13px; }
@@ -1156,9 +1013,8 @@
 .autocal-band-segment small { font-size: 11px; }
 .autocal-command-copy b { font-size: 15px; }
 .autocal-command-copy span { font-size: 13px; }
-.autocal-more-actions > summary,
-.autocal-technical-details > summary { font-size: 14px; }
-.autocal-reset-actions p { font-size: 12px; }
+.autocal-technical-details > summary{ font-size: 14px; }
+
 .autocal-tech-grid b { font-size: 13px; }
 .autocal-events article p,
 .autocal-events article small,
@@ -1167,16 +1023,14 @@
 .autocal-review-card p,
 .autocal-review-card dd,
 .autocal-review-card dt { font-size: 13px; }
-.autocal-review-tech > summary { font-size: 13px; }
-.autocal-live-summary small,
-.autocal-live-metric small { font-size: 11px; }
-.autocal-live-summary b { font-size: 15px; }
-.autocal-live-summary span { font-size: 13px; }
-.autocal-live-metric b { font-size: 18px; }
+
+
+
+
+
 .autocal-live-narrative { font-size: 13px; }
-.autocal-read-context b { font-size: 15px; }
-.autocal-read-context span,
-.autocal-read-context p { font-size: 13px; }
+
+
 .autocal-live-label { font-size: 13px; }
 .autocal-session-copy small,
 .autocal-session-item small { font-size: 11px; }
@@ -1217,7 +1071,7 @@
 
 .autocal-reference-card .autocal-section-head { order: 0; }
 .autocal-reference-card .autocal-chart-legend { order: 1; }
-.autocal-reference-card .autocal-live-strip { order: 2; }
+
 .autocal-reference-card .autocal-chart-workspace { order: 3; }
 
 .autocal-section-head h4 {
@@ -1266,31 +1120,12 @@
   backdrop-filter: none;
 }
 
-.autocal-live-strip {
-  grid-template-columns: minmax(180px, 1.2fr) repeat(3, minmax(105px, .72fr));
-  gap: 8px;
-  margin: 9px 0 0;
-  padding-top: 9px;
-  border-top: 1px solid rgba(255,255,255,.055);
-}
-.autocal-live-summary,
-.autocal-live-metric {
-  min-height: 64px;
-  padding: 9px 11px;
-  border: 1px solid rgba(255,255,255,.055);
-  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.018));
-}
-.autocal-live-summary {
-  border-color: rgba(31,213,239,.20);
-  box-shadow: inset 3px 0 0 rgba(31,213,239,.74);
-}
-.autocal-live-summary small,
-.autocal-live-metric small {
-  color: #7f96aa;
-  letter-spacing: .12em;
-}
-.autocal-live-summary b { font-size: 16px; }
-.autocal-live-metric b { font-size: 20px; }
+
+
+
+
+
+
 .autocal-live-narrative {
   color: #8597a9;
   font-size: 13px;
@@ -1328,11 +1163,7 @@
 .autocal-human-copy strong {
   margin-top: 3px;
 }
-.autocal-hero-actions button,
-.autocal-primary-action,
-.autocal-reset-actions button,
-.autocal-chart-tools button,
-.autocal-review-card button {
+.autocal-primary-action,.autocal-review-card button{
   min-height: 48px;
 }
 
@@ -1383,13 +1214,7 @@
 
 
 /* AutoCal operator zone map: preserve ECU Z1..Z4 identity instead of only N/4. */
-.autocal-chart-head-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  min-width: 0;
-}
+
 .autocal-zone-meter {
   display: flex;
   align-items: center;
@@ -1481,16 +1306,8 @@
   padding: 3px 8px;
   line-height: 1.2;
 }
-.autocal-live-strip {
-  gap: 6px;
-  margin: 2px 0 0;
-  padding-top: 4px;
-}
-.autocal-live-summary,
-.autocal-live-metric {
-  min-height: 56px;
-  padding: 7px 9px;
-}
+
+
 .autocal-live-narrative {
   font-size: 13px;
   line-height: 1.15;
@@ -1833,22 +1650,9 @@
 .autocal-chart-inspector span {
   font-size: 11px;
 }
-.autocal-reset-comparison small {
-  color: #8398aa;
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: .11em;
-}
-.autocal-reset-comparison b {
-  margin-top: 2px;
-  color: #e6f4ff;
-  font-size: 13px;
-}
-.autocal-reset-comparison span {
-  margin-top: 2px;
-  color: #91a4b4;
-  font-size: 9px;
-}
+
+
+
 
 .autocal-secondary-details {
   position: static;
@@ -1925,7 +1729,7 @@
   font-size: 11px;
   line-height: 1.35;
 }
-.autocal-read-context { display: none !important; }
+
 
 .autocal-session-strip.autocal-secondary-card {
   display: grid;
@@ -2198,20 +2002,20 @@
 .autocal-fuel-chip[data-fuel-state="ready"] { border-color: rgba(226,178,76,.5); color: #ffefbd; background: rgba(104,78,26,.32); }
 .autocal-fuel-chip[data-fuel-state="ok"] { border-color: rgba(93,211,158,.5); color: #c9f7e3; background: rgba(30,103,75,.32); }
 .autocal-fuel-chip[data-fuel-state="problem"] { border-color: rgba(226,94,94,.55); color: #ffd2d2; background: rgba(110,32,38,.4); }
-.refino-steps { display: flex; align-items: center; gap: 0; margin: 10px 0 0; padding: 0; list-style: none; flex-wrap: wrap; pointer-events: none; }
-.refino-steps li { display: inline-flex; align-items: center; gap: 6px; padding: 0 14px 0 0; margin-right: 14px; font-size: 13px; font-weight: 700; color: #6f7d8d; background: none; border: 0; position: relative; }
-.refino-steps li:not(:last-child)::after { content: ''; position: absolute; right: -8px; top: 50%; width: 14px; height: 2px; background: rgba(255,255,255,.12); }
-.refino-steps li i { width: 20px; height: 20px; display: inline-grid; place-items: center; border-radius: 50%; font-style: normal; font-size: 11px; background: rgba(35,47,58,.8); color: #8f9daf; }
-.refino-steps li[data-state="done"] { color: #5dd39e; }
-.refino-steps li[data-state="done"] i { background: rgba(30,103,75,.5); color: #c9f7e3; }
-.refino-steps li[data-state="active"] { color: #fff; }
-.refino-steps li[data-state="active"] i { background: #78b7ff; color: #06121f; }
-.refino-steps li[data-problem="true"] { color: #ff9b9b; }
-.refino-steps li[data-problem="true"] i { background: #e25e5e; color: #fff; }
+
+
+
+
+
+
+
+
+
+
 .refino-next { margin: 6px 0 8px; color: #c5d0db; font-size: 13px; }
 .refino-cockpit .autocal-primary-action[data-kind="waiting"] { color: #c5d0db; background: rgba(35,47,58,.6); border-color: rgba(255,255,255,.1); cursor: default; }
 .refino-cockpit .autocal-primary-action[data-kind="review"] { background: #2d6fd1; border-color: #4a8be8; color: #fff; }
-.refino-split { font-size: 17px !important; white-space: nowrap; }
+
 .refino-review-list { max-height: 260px; overflow-y: auto; }
 .refino-warning { padding: 9px 11px; border-radius: 10px; background: rgba(104,78,26,.32); color: #ffefbd; font-size: 12px; }
 .refino-route-screen { position: relative; }
@@ -2365,9 +2169,9 @@
 .ao-k-node { fill: var(--ao-k); }
 
 /* Tensão da ECU na barra do AutoCal: vermelha a partir de 14,1 V (o GNV desliga acima disso). */
-.autocal-focus-voltage[data-state="alert"] { border-color: rgba(255,123,114,.6); }
-.autocal-focus-voltage[data-state="alert"] b { color: #ff7b72; }
-.autocal-focus-voltage[data-state="unknown"] b { color: #7f8da0; }
+
+
+
 
 /* Bolinhas de estado no topo do AutoCal (no lugar do texto): verde completa, azul coletando, laranja falta. */
 .autocal-headline.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

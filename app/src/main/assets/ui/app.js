@@ -85,9 +85,6 @@
     const telemetry = state.telemetry || {};
     return telemetry.live || telemetry.data || telemetry;
   }
-  function curveEvidenceVisible() {
-    return document.querySelector('[data-screen="curve"] .evidence-disclosure')?.open === true;
-  }
   function afterPaint(task) {
     if (typeof root.requestAnimationFrame === 'function') {
       root.requestAnimationFrame(() => root.setTimeout(task, 0));
@@ -256,10 +253,9 @@
   function refreshContext() {
     const state = store.get();
     const route = state.route;
-    const curve = route === 'curve' ? ensureScreen('curve') : null;
-    const curveNeedsLearning = route === 'curve' && (curveEvidenceVisible() || curve?.needsLearning?.());
     const patch = {};
-    const needsScience = route === 'map' || route === 'tools' || curveNeedsLearning || route === 'curve';
+    // Só Ferramentas lê a ciência (cartão Aprendizado); Mapa K e Curva K não precisam dela (poda, 2026-10-13).
+    const needsScience = route === 'tools';
 
     if (needsScience) {
       const science = api.scienceSnapshotSince(scienceRevision) || {};
@@ -295,10 +291,6 @@
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if (curveNeedsLearning && curve) {
-      if (curveEvidenceVisible() && curve.data) curve.renderEvidence(updated);
-      if (curve.needsLearning?.()) curve.renderLearning(updated);
-    }
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
   }
 
@@ -352,9 +344,6 @@
   function bindGlobalEvents() {
     routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
-    document.querySelector('[data-screen="curve"] .evidence-disclosure')?.addEventListener('toggle', event => {
-      if (event.currentTarget.open && store.get().route === 'curve') afterPaint(refreshContext);
-    });
 
     document.addEventListener('visibilitychange', () => {
       const visible = !document.hidden;

@@ -96,24 +96,12 @@ test('AutoCal: rótulos para leigo e uma grafia só ("AutoCal")', () => {
   assert.doesNotMatch(source, /value\.toFixed\(\d\) \+ '<\/text>'/, 'eixos com vírgula');
 });
 
-test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem ACCEPTED/Kotlin/SEM PREVISÃO na tela', () => {
+test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem jargão na tela', () => {
   const document = fakeDocument();
   const ns = load('screens/curve.js', document);
   const api = { curveBackups: () => [], previewCurvePoint: () => ({ ok: true }) };
   const store = { state: { curve: {} }, get() { return this.state; }, patch(p) { Object.assign(this.state, p); } };
   const screen = new ns.CurveScreen(store, api);
-  screen.renderLearningPointContext({ learning: { assistedCalibration: { kFactorSuggestions: [{ index: 0 }] } } }, 0);
-  const context = document.nodes.get('curveLearningPointContext').innerHTML;
-  assert.match(context, /confiança — ·/);
-  assert.match(context, /proposta —/);
-  screen.renderEvidence({ learning: { assistedCalibration: {
-    petrolCurve: [{ mapBar: 0.4, petrolMs: 2, confidenceStage: 'ACCEPTED' }], cngCurve: [{ petrolMs: 2.1, confidenceStage: 'ACCEPTED' }],
-    kFactorSuggestions: [{ actionable: true }, { actionable: true }], comparisonCount: 3, uniqueVisitCount: 2,
-  } } });
-  const evidence = document.nodes.get('curveEvidenceList').innerHTML;
-  assert.match(evidence, /<b>Gasolina 2,00 · GNV 2,10 ms<\/b>/);
-  assert.match(evidence, /2 pontos prontos para ajustar\./);
-  assert.doesNotMatch(evidence, /ACCEPTED|Kotlin|assessor|>Gas |visitas físicas/);
   screen.renderProposalList();
   assert.equal(document.nodes.get('curveReviewButton').textContent, 'Nenhum ponto preparado');
   screen.restoreContext = { fileName: 'b.json' };
@@ -122,7 +110,6 @@ test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem ACCEPTED/Kotlin
   screen.renderChart();
   assert.match(document.nodes.get('curveChart').innerHTML, /Curva não lida\. Ligue a ECU e toque em Reler ECU\./);
   const index = read('index.html');
-  assert.match(index, /<span>Injeção \(ms\) →<\/span><span>Fator K ↑<\/span>/);
   assert.match(index, /<div class="curve-axis">Injeção \(ms\) →<\/div>/);
   assert.match(index, /id="curveTargetFactor" type="text" inputmode="decimal"/, 'campo aceita vírgula');
 });

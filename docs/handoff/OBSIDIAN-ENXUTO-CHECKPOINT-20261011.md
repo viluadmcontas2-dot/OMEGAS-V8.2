@@ -209,3 +209,8 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - Protocolo de aquisição (revisão): bytes dos botões iguais ao original (modos 1/2/4/8 via `FUN_00517568`, OBS-COD); só o modo 4 (Reset all) foi visto no fio; 1/2 são DESCONHECIDOS no fio. Nada no app bloqueia a leitura do GNV (a época só marca "pendente", não esconde dados). Teste no carro: Reaprender GNV e olhar `NUM_BUF_UPD_GAS` no log da sessão.
 - Ciência: `docs/evidence/2026-10-13-linearidade-gasolina-x-gnv-na-queda.md` — o engasgo do GNV parece transitório (volta de carga alta e depois do corte), sem sinal de mistura pobre antes; +5 % no Mapa K não tem prova física.
 - Primeiro item ainda não comprovado: CI desta noite; aparelho.
+
+## 2026-10-13 · noite 13 — poda da Curva K (Aprendizado global/Evidência), ciência só em Ferramentas, CSS morto
+- Curva K: saíram "Aprendizado global" e "Evidência técnica" (HTML, `curve.js`, polling). A ciência (`scienceSnapshotSince`) agora só é lida na aba Ferramentas (Mapa K e Curva K não usam).
+- `tools/ci/podar_css_morto.py`: removeu 368 seletores/regras sem uso (CSS −30 KB); `tools/ci/capturar_estados.cjs` + `comparar_pngs.py` provam que 9 estados da tela ficaram **pixel a pixel iguais** antes e depois (0 pixels diferentes).
+- Provas: node 223/0, unittest OK, `run_checks` PASS, e2e sem_rolagem/refino_mapa/curva_para_mapa/curva_k_arrasto/comparar_com_original PASS.
