@@ -261,7 +261,8 @@
     }
     for (const value of yTicks(model.axisY, 1)) {
       out.push('<line class="ao-grid" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
-      out.push('<text class="ao-tick" x="' + (p.m.left - 6) + '" y="' + fixed(p.Y(value) + 3.5) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
+      // Grade de 0,05 em 0,05; número de 0,10 em 0,10 e em 12 px (multimídia: letra legível, sem número em cima de número).
+      if (Math.round((value - model.axisY.min) / model.axisY.step) % 2 === 0) out.push('<text class="ao-tick" x="' + (p.m.left - 6) + '" y="' + fixed(p.Y(value) + 4) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
     }
     const xTicks = Math.floor(model.axisX.max);
     for (let value = Math.ceil(model.axisX.min); value <= xTicks; value += 1) {
@@ -329,7 +330,7 @@
     out.push('<svg class="ao-svg" data-ao="acquisition" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Acquisition">');
     for (const value of yTicks(model.axisY, 1)) {
       out.push('<line class="ao-grid" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
-      out.push('<text class="ao-tick" x="' + (p.m.left - 5) + '" y="' + fixed(p.Y(value) + 3.5) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
+      if (Math.round((value - model.axisY.min) / model.axisY.step) % 2 === 0) out.push('<text class="ao-tick" x="' + (p.m.left - 5) + '" y="' + fixed(p.Y(value) + 4) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
     }
     out.push('<text class="ao-axis-title" x="' + fixed(p.m.left + p.w / 2) + '" y="' + (height - 4) + '" text-anchor="middle">Acquisition</text>');
     for (const [squares, cls, x] of [[model.petrolSquares, 'petrol', -0.3], [model.gasSquares, 'gas', 0.3]]) {
@@ -351,8 +352,8 @@
     out.push('<svg class="ao-svg" data-ao="k" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Curva K">');
     for (let value = model.kAxisY.min; value <= model.kAxisY.max + 1e-9; value += model.kAxisY.step) {
       out.push('<line class="ao-grid" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
-      // Grade de 0,1 em 0,1; rótulo de 0,2 em 0,2 para não se sobrepor na altura pequena do painel.
-      if (Math.round((value - model.kAxisY.min) / model.kAxisY.step) % 2 === 0) {
+      // Grade de 0,1 em 0,1; rótulo de 0,4 em 0,4 (12 px) para não se sobrepor na altura pequena do painel.
+      if (Math.round((value - model.kAxisY.min) / model.kAxisY.step) % 4 === 0) {
         out.push('<text class="ao-tick" x="' + (p.m.left - 6) + '" y="' + fixed(p.Y(value) + 3.5) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
       }
     }

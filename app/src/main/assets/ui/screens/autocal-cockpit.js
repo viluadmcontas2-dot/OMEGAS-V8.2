@@ -895,6 +895,15 @@
     enter() {
       this.active = true;
       this.refresh();
+      // Medida do gráfico depois que o layout assenta (dono: lag/pulo ao abrir a aba): a 1ª pintura mede a área antes de a
+      // linha de ações e a barra do topo se acomodarem; um segundo quadro depois, refaz UMA vez com a medida final.
+      if (typeof root.requestAnimationFrame === 'function') {
+        root.requestAnimationFrame(() => root.requestAnimationFrame(() => {
+          if (!this.active || this.store.get().route !== 'autocal' || !this.snapshot) return;
+          this.chartRenderKey = null;
+          this.renderReferenceChart(this.snapshot);
+        }));
+      }
     }
 
     /** As 3 leituras da ponte do AutoCal, na mesma ordem de sempre. */

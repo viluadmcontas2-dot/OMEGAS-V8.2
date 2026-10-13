@@ -2144,8 +2144,8 @@
 .ao-legend { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px; padding-left: 8px; }
 .ao-svg { display: block; width: 100%; height: 100%; user-select: none; }
 .ao-grid { stroke: rgba(255,255,255,.07); stroke-width: 1; }
-.ao-tick { fill: #8da0b5; font-size: 9.5px; }
-.ao-axis-title { fill: #8da0b5; font-size: 10px; }
+.ao-tick { fill: #aebccd; font-size: 12px; }
+.ao-axis-title { fill: #aebccd; font-size: 12px; }
 .ao-zone { fill: rgba(150,160,176,.10); } /* zona não adquirida = cinza (dono, 2026-10-13) */
 .ao-zone[data-acquired="true"] { fill: rgba(110,255,130,.12); }
 .ao-zone-edge { stroke: rgba(255,255,255,.8); stroke-width: 2.5; stroke-dasharray: 12 7; } /* bem visível à distância (pedido do dono) */

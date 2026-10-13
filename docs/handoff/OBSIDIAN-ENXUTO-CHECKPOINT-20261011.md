@@ -214,3 +214,9 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - Curva K: saíram "Aprendizado global" e "Evidência técnica" (HTML, `curve.js`, polling). A ciência (`scienceSnapshotSince`) agora só é lida na aba Ferramentas (Mapa K e Curva K não usam).
 - `tools/ci/podar_css_morto.py`: removeu 368 seletores/regras sem uso (CSS −30 KB); `tools/ci/capturar_estados.cjs` + `comparar_pngs.py` provam que 9 estados da tela ficaram **pixel a pixel iguais** antes e depois (0 pixels diferentes).
 - Provas: node 223/0, unittest OK, `run_checks` PASS, e2e sem_rolagem/refino_mapa/curva_para_mapa/curva_k_arrasto/comparar_com_original PASS.
+
+## 2026-10-13 · noite 14 — legibilidade do gráfico e pulo de tamanho ao abrir a aba
+- CIs verdes: 4721c70 (inclui `NativeAutoCalAcquisitionEpochTest` novos) e 7938d37.
+- HMI (NHTSA, diretrizes de distração de 2012–2013, não revalidadas): olhadas ≤ 2 s, ≤ 6 toques em 12 s por tarefa, evitar > 30 caracteres de texto. Nossas ações de gravar levam 2 toques (Mapa K) ou 2–3 (Curva K). Letra mínima/alvo de toque não veio da pesquisa (ISO 15008 seria a fonte).
+- Gráfico: números dos eixos de 9,5 px → 12 px, rótulo de 0,10 em 0,10 (grade continua de 0,05), eixo K de 0,4 em 0,4. Antes o painel da Curva K aparecia cortado até a releitura de 1 s: o gráfico agora é medido de novo 2 quadros depois de abrir a aba (AutoCal e Refino), tamanho estável nos três caminhos testados.
+- Provas locais: node 223/0, unittest OK, run_checks PASS, e2e PASS, original×OMEGAS PASS.

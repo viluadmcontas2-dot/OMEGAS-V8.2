@@ -242,7 +242,10 @@
       this.store.subscribe(state => {
         if (state.route === lastRoute) return;
         lastRoute = state.route;
-        if (state.route === 'refino') root.setTimeout(() => this.refresh(true), 0);
+        if (state.route !== 'refino') return;
+        root.setTimeout(() => this.refresh(true), 0);
+        // Mede o gráfico de novo depois que o layout assenta (evita o pulo de tamanho ao abrir a aba).
+        if (typeof root.requestAnimationFrame === 'function') root.requestAnimationFrame(() => root.requestAnimationFrame(() => { this.chart = null; this.renderChart(); }));
       }, true);
     }
 
