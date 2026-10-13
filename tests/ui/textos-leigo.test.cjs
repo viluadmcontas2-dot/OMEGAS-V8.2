@@ -112,7 +112,7 @@ test('AutoCal: sem ECU o gráfico diz "ECU desconectada" e o que fazer', () => {
 test('AutoCal: rótulos para leigo e uma grafia só ("AutoCal")', () => {
   const source = read('screens/autocal-cockpit.js');
   for (const label of ['Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span>', 'Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span>',
-    '>Recomeçar tudo<', '>Ajuste automático agora<', '>Curva K toda em 1,0<', "'Pausar aprendizado'", "'Retomar aprendizado'",
+    '>Recomeçar tudo<', '>Curva K toda em 1,0<', "'Pausar aprendizado'", "'Retomar aprendizado'",
     '<small>Ajustes automáticos</small>', '0 pontos da ECU', '>Pontos já medidos<', "'Enviado. Conferindo na ECU…'"]) {
     assert.ok(source.includes(label), label);
   }

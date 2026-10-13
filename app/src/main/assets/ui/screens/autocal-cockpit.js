@@ -102,7 +102,6 @@
     return ({
       ENABLE_AUTO_CAL: 'Retomar aprendizado',
       DISABLE_AUTO_CAL: 'Pausar aprendizado',
-      MANUAL_AUTOMATCH: 'Ajuste automático agora',
       FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
       FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
       RESET_PETROL: 'Reaprender gasolina (apaga o atual)',
@@ -117,10 +116,11 @@
     return Array.isArray(item?.physicalValues) ? item.physicalValues.map(value => finite(value)) : [];
   }
 
+  // Zonas do original: bandas 0–4, 5–8, 9–12, 13–17 (tabela [5, 9, 13] do ProgBase; PROTOCOLO-LANDI doc 21 §5).
   function zoneForBand(index) {
-    if (index <= 5) return 0;
-    if (index <= 9) return 1;
-    if (index <= 13) return 2;
+    if (index <= 4) return 0;
+    if (index <= 8) return 1;
+    if (index <= 12) return 2;
     return 3;
   }
 
@@ -350,7 +350,7 @@
       if (thresholds.length !== 18 || thresholds.some(value => finite(value) === null)) return [];
       if (thresholds.some((value, index) => index > 0 && !(value > thresholds[index - 1]))) return [];
       // São 18 limiares físicos, portanto 17 intervalos; não inventar threshold[18].
-      const edges = [0, 6, 10, 14, 17];
+      const edges = [0, 5, 9, 13, 17];
       const state = (flags, index) => !Array.isArray(flags) || flags.length !== 4
         ? 'unknown' : flags[index] === true ? 'acquired' : 'missing';
       return Array.from({ length: 4 }, (_, index) => ({
@@ -759,10 +759,9 @@
                 <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
                   <section class="autocal-reset-group" data-reset-scope="advanced">
                     <small>CONTROLE MANUAL</small>
-                    <button type="button" data-autocal-action="MANUAL_AUTOMATCH">Ajuste automático agora</button>
                     <button type="button" data-autocal-action="RESET_K_FACTOR">Curva K toda em 1,0</button>
                     <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Recomeçar tudo</button>
-                    <p>A ECU faz os ajustes automáticos sozinha. Ajuste automático agora: pede um ajuste já. Curva K toda em 1,0: volta a curva ao neutro. Recomeçar tudo: apaga o que a ECU aprendeu. Nenhum destes botões pausa o aprendizado.</p>
+                    <p>A ECU faz os ajustes automáticos sozinha. Curva K toda em 1,0: volta a curva ao neutro. Recomeçar tudo: apaga o que a ECU aprendeu. Nenhum destes botões pausa o aprendizado.</p>
                   </section>
                 </div>
               </details>
@@ -1528,9 +1527,57 @@
       this.renderLiveNarrative();
     }
 
+    /**
+     * Tela do original em tempo real (PROTOCOLO-LANDI docs 20/21/25): Acquisition + gráfico principal + curva K,
+     * desenhados direto dos vetores da ECU. Não espera "referência utilizável": depois de um Reset o gráfico
+     * continua vivo e vazio, em vez de congelar à espera de um grupo coerente.
+     */
+    renderOriginalChart(snapshot) {
+      const O = ns.AutoCalOriginal;
+      const host = document.getElementById('autocalReferenceChart');
+      if (!O || !host) return false;
+      const sample = this.liveTelemetry();
+      const live = AutoCalUxModel.livePoint(sample);
+      // Combustível em uso (campo +0x4A0 do original): gasolina → zonas e rótulos da gasolina; senão GNV.
+      const fuel = AutoCalUxModel.liveFuelState(live?.fuel).kind === 'petrol' ? 'petrol' : 'gas';
+      const model = O.build(snapshot, { fuel, live });
+      if (!model.ok) return false;
+      this.chartShowsLive = true;
+      this.chartScale = null;
+      const width = Math.max(560, Math.round(host.getBoundingClientRect?.().width || 860));
+      const height = Math.max(250, Math.round(host.getBoundingClientRect?.().height || 300));
+      const key = JSON.stringify([model, width, height, Array.from(this.selectedAcquiredPoints || []), this.selectedAcquiredPoint]);
+      this.text('autocalReferenceCount', model.zones.map(zone => zone.label).join(' · '));
+      this.currentAcquiredPoints = [...AutoCalUxModel.acquiredPoints(snapshot, 'petrol'), ...AutoCalUxModel.acquiredPoints(snapshot, 'gas')];
+      this.currentReferencePoints = [];
+      if (this.renderedChartHost === host && this.chartRenderKey === key) return true;
+      const sideWidth = Math.round(width * 0.17);
+      const mainWidth = width - sideWidth - 6;
+      const mainHeight = Math.round(height * 0.74);
+      const kHeight = height - mainHeight - 6;
+      host.innerHTML = '<div class="ao-layout" style="grid-template-columns:' + sideWidth + 'px ' + mainWidth + 'px;grid-template-rows:' + mainHeight + 'px ' + kHeight + 'px">' +
+        '<div class="ao-cell ao-acq">' + O.renderAcquisition(model, sideWidth, mainHeight) + '</div>' +
+        '<div class="ao-cell ao-main">' + O.renderMain(model, mainWidth, mainHeight) + '</div>' +
+        '<div class="ao-cell ao-legend"><span class="petrol">Gasolina</span><span class="gas">GNV</span></div>' +
+        '<div class="ao-cell ao-k">' + O.renderK(model, mainWidth, kHeight) + '</div></div>';
+      // Pontos clicáveis: mesmo contrato do inspetor de pontos (reaprender só aquele ponto).
+      host.querySelectorAll?.('[data-series$="-point"]').forEach(node => {
+        const gas = node.dataset.series === 'gas-point';
+        node.dataset.autocalAcquiredFuel = gas ? 'GAS' : 'PETROL';
+        node.dataset.autocalAcquiredIndex = node.dataset.band;
+        const nodeKey = (gas ? 'GAS' : 'PETROL') + ':' + node.dataset.band;
+        if (this.selectedAcquiredPoints?.has(nodeKey)) node.classList.add('batch-selected');
+        if (this.selectedAcquiredPoint === nodeKey) node.classList.add('selected');
+      });
+      this.renderedChartHost = host;
+      this.chartRenderKey = key;
+      return true;
+    }
+
     renderReferenceChart(snapshot) {
       const host = document.getElementById('autocalReferenceChart');
       if (!host) return;
+      if (this.renderOriginalChart(snapshot)) return;
       const points = AutoCalUxModel.referencePoints(snapshot, this.analysis || {});
       const acquiredPetrol = AutoCalUxModel.acquiredPoints(snapshot, 'petrol');
       const acquiredGas = AutoCalUxModel.acquiredPoints(snapshot, 'gas');

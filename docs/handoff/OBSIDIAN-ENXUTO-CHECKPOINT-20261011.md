@@ -140,3 +140,11 @@ Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*
 - Primeiro item não comprovado: a escala ÷16 do byte 19. Comparar com o módulo OBD no celular (mesmo instante, GNV ligado). Se não bater, remover o campo ou trocar a escala.
 - Decisão do dono registrada no AGENTS.md: sem `ExportToK` do original; interpolação curva K → Mapa K por escritas manuais do Mapa K.
 - Não feito: rotina de interpolação curva K → Mapa K; aviso antes de Reset K/Reset all. Entrada prevista: `MapKManualPlanner.kt`.
+
+## Atualização 2026-10-13 (noite, 4) — tela AutoCal fiel ao original, em tempo real
+
+- Novo `screens/autocal-original.js` (modelo + SVG): zonas por banda **0–4/5–8/9–12/13–17** (o OMEGAS usava 0–5/6–9/10–13/14–17, deslocado uma banda), fronteiras `THD[5]/[9]/[13]`, eixos fixos (X 1…último nó, Y 0,15–1,10), rótulos `#n/d`, painel Acquisition, curva K (0,4–1,6), limites MIN/MAX, banda atual e ponto de operação. Desenha direto dos vetores; **não espera "referência utilizável"** (causa provável do gráfico que travava depois de Reset/épocas incoerentes: ele caía em "SEM REFERÊNCIA"/"comparação suspensa"). Sem GasPointPrev, sem Manual automatch, sem Finish.
+- `autocal-cockpit.js`: `zoneForBand`/`zoneSurface` corrigidos; botão e rótulo de Manual automatch removidos (dono); o gráfico usa o novo desenho quando há eixo e limiares.
+- Testes: `tests/ui/autocal-original-parity.test.cjs` (13, com fixture da captura real e verificação por mutação das bordas das zonas); 3 testes antigos ajustados porque fixavam o erro de zona/Manual automatch. `tests/ui`: 212 passam, 1 falha já existente (`learning-jvm-payload`, precisa do resultado do Gradle). Python 208 OK. `SEM_ROLAGEM_8_ABAS=PASS`. Imagens em `docs/evidence/img/2026-10-13-autocal-omegas-original-fiel-*.png`.
+- NÃO comprovado: o travamento real ao clicar Reset gasolina/GNV (só existe no aparelho). A causa acima é hipótese; falta rodar no aparelho. Reset all continua exposto em "Ações avançadas" (AGENTS.md diz que não deveria; testes antigos dizem que sim): decisão do dono pendente.
+- Falta: aviso antes de Reset K/Reset all com a tensão; rotina curva K → Mapa K; gravar nó da curva K por arrasto (não será feita: o dono não quer escrita da curva sem Mapa K); ler `0x018D/E` e `0x0161` a cada ciclo (itens 4–7 do doc de divergências).

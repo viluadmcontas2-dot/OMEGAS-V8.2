@@ -1,0 +1,305 @@
+(function (root) {
+  'use strict';
+  const ns = root.OmegasUi = root.OmegasUi || {};
+
+  /**
+   * Modelo e desenho do AutoCal como o programa original (PROTOCOLO-LANDI docs 20, 21 e 25), em tempo real.
+   * Lê só os vetores do snapshot nativo e nunca depende de "referência utilizável": o que a ECU mandou é o que se desenha.
+   * Por decisão do dono (2026-10-13) NÃO existe a série GasPointPrev (leitura anterior) nem "Manual automatch".
+   */
+  const AXIS_Y = { min: 0.15, max: 1.10, step: 0.05 };
+  const K_AXIS_Y = { min: 0.4, max: 1.6, step: 0.1 };
+  // Zonas por banda (tabela [5, 9, 13] do código do original): 0–4, 5–8, 9–12, 13–17.
+  const ZONE_EDGES = [0, 5, 9, 13, 17];
+  const BANDS = 18;
+
+  function finite(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+  function field(snapshot, key) {
+    const fields = Array.isArray(snapshot?.fields) ? snapshot.fields : [];
+    return fields.find(item => String(item?.key || '') === key && String(item?.status || '') === 'VALID') || null;
+  }
+  function physical(snapshot, key) {
+    const item = field(snapshot, key);
+    return Array.isArray(item?.physicalValues) ? item.physicalValues.map(finite) : [];
+  }
+  function raw(snapshot, key) {
+    const item = field(snapshot, key);
+    return Array.isArray(item?.rawValues) ? item.rawValues.map(finite) : [];
+  }
+  function esc(text) {
+    return String(text).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+  }
+
+  function zoneOfBand(index) {
+    if (index <= 4) return 0;
+    if (index <= 8) return 1;
+    if (index <= 12) return 2;
+    return 3;
+  }
+
+  /** Nós com Tinj ou MAP = 0 são omitidos (slot vazio); nós abaixo do eixo MAP ficam fora do desenho. */
+  function pairs(xs, ys, axisY) {
+    const count = Math.min(xs.length, ys.length);
+    const out = [];
+    for (let index = 0; index < count; index += 1) {
+      const x = xs[index];
+      const y = ys[index];
+      if (x === null || y === null || x === 0 || y === 0) continue;
+      out.push({ index, x, y, visible: y >= axisY.min && y <= axisY.max });
+    }
+    return out;
+  }
+
+  function currentBand(thresholds, mapBar) {
+    if (mapBar === null || thresholds.length < 2 || thresholds.some(value => value === null)) return null;
+    for (let index = 0; index < thresholds.length - 1; index += 1) {
+      if (!(thresholds[index + 1] > thresholds[index])) return null;
+    }
+    if (!(mapBar > thresholds[0] && mapBar < thresholds[thresholds.length - 1])) return null;
+    for (let index = 0; index < thresholds.length - 1; index += 1) {
+      if (mapBar > thresholds[index] && mapBar <= thresholds[index + 1]) {
+        return { index, lower: thresholds[index], upper: thresholds[index + 1] };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @param {object} snapshot  snapshot nativo (fields[].key/status/rawValues/physicalValues)
+   * @param {{fuel?: 'gas'|'petrol', live?: object}} options  fuel = combustível em uso (zonas e rótulos seguem ele)
+   */
+  function build(snapshot, options = {}) {
+    const fuel = options.fuel === 'petrol' ? 'petrol' : 'gas';
+    const live = options.live || null;
+    const tbp = physical(snapshot, 'PETR_INJ_TBP');
+    const thresholds = physical(snapshot, 'MNFLD_PRESS_THD');
+    const lastNode = [...tbp].reverse().find(value => value !== null && value > 0) ?? null;
+    if (lastNode === null || thresholds.length !== BANDS || thresholds.some(value => value === null)) {
+      return { ok: false, reason: 'Aguardando eixo e limiares da ECU.' };
+    }
+    const axisX = { min: 1, max: Math.max(lastNode, 2) };
+    const axisY = { ...AXIS_Y };
+
+    const petrolX = physical(snapshot, 'PETR_INJ_TBUF');
+    const petrolY = physical(snapshot, 'MNFLD_PRESS_BUF');
+    const gasX = physical(snapshot, 'PETR_INJ_TBUF_GAS');
+    const gasY = physical(snapshot, 'MNFLD_PRESS_BUF_GAS');
+    const counters = { petrol: raw(snapshot, 'NUM_BUF_UPD_PETR'), gas: raw(snapshot, 'NUM_BUF_UPD_GAS') };
+    const calibration = raw(snapshot, 'CALIBRATION_VAL_1');
+    const u8 = index => raw(snapshot, 'VECT_AUTOCAL_U8_' + index)[0] ?? null;
+    const calibrationAt = index => (calibration.length > index ? calibration[index] : null);
+
+    // Limiar de amostras por banda (FUN_00516f64): o 5 é constante do código do original.
+    const threshold = (which, band) => which === 'gas'
+      ? (band <= 5 ? calibrationAt(5) : calibrationAt(8))
+      : (band <= 5 ? u8(1) : calibrationAt(2));
+    const squares = which => Array.from({ length: BANDS }, (_, band) => {
+      const count = counters[which][band] ?? null;
+      const limit = threshold(which, band);
+      const y = (which === 'gas' ? gasY : petrolY)[band] ?? null;
+      const shown = count !== null && limit !== null && limit > 0 && count >= limit && y !== null && y !== 0;
+      return { band, count, limit, y, shown };
+    });
+
+    // Rótulo "#n/d" (ChartDataAfterDraw): n = entradas ≠ 0 do buffer MAP do combustível em uso dentro da zona.
+    const bufferInUse = fuel === 'gas' ? gasY : petrolY;
+    const denominators = fuel === 'gas'
+      ? [calibrationAt(4), calibrationAt(7), calibrationAt(7), calibrationAt(7)]
+      : [u8(0), calibrationAt(1), calibrationAt(1), calibrationAt(1)];
+    const zoneFlags = raw(snapshot, fuel === 'gas' ? 'ACQUIRED_ZONES_GAS' : 'ACQUIRED_ZONES_PETROL');
+    const zones = Array.from({ length: 4 }, (_, zone) => {
+      let n = 0;
+      for (let band = ZONE_EDGES[zone]; band < ZONE_EDGES[zone + 1]; band += 1) {
+        if ((bufferInUse[band] ?? 0) !== 0) n += 1;
+      }
+      const d = denominators[zone];
+      return {
+        zone,
+        lower: thresholds[ZONE_EDGES[zone]],
+        upper: thresholds[Math.min(ZONE_EDGES[zone + 1], BANDS - 1)],
+        acquired: zoneFlags.length === 4 ? zoneFlags[zone] !== 0 && zoneFlags[zone] !== null : null,
+        n,
+        d,
+        label: d === null ? '#' + n + '/—' : '#' + n + '/' + d,
+      };
+    });
+
+    const kValues = physical(snapshot, 'MUL_ACT');
+    const kNodes = [];
+    for (let index = 0; index < Math.min(tbp.length, kValues.length); index += 1) {
+      if (tbp[index] !== null && tbp[index] > 0 && kValues[index] !== null) {
+        kNodes.push({ index, x: tbp[index], y: kValues[index] });
+      }
+    }
+
+    const liveMap = finite(live?.mapBar ?? live?.load_bar);
+    const livePetrol = finite(live?.petrolMs ?? live?.petrol_ms);
+    return {
+      ok: true,
+      fuel,
+      axisX,
+      axisY,
+      kAxisY: { ...K_AXIS_Y },
+      thresholds,
+      zones,
+      petrolSquares: squares('petrol'),
+      gasSquares: squares('gas'),
+      petrolPoints: pairs(petrolX, petrolY, axisY),
+      gasPoints: pairs(gasX, gasY, axisY),
+      petrolCurve: pairs(tbp, physical(snapshot, 'PETR_MNFLD_PRESS_RV'), axisY),
+      gasCurve: pairs(tbp, physical(snapshot, 'GAS_MNFLD_PRESS_RV'), axisY),
+      limitMin: physical(snapshot, 'LIMIT_PRESSURE_MIN')[0] ?? null,
+      limitMax: physical(snapshot, 'LIMIT_PRESSURE_MAX')[0] ?? null,
+      band: currentBand(thresholds, liveMap),
+      run: liveMap !== null && livePetrol !== null ? { x: livePetrol, y: liveMap } : null,
+      mapNow: liveMap,
+      kNodes,
+    };
+  }
+
+  // ---------------------------------------------------------------------------------------------- desenho (SVG)
+  function plot(width, height, axisX, axisY, margin) {
+    const m = { left: 46, right: 10, top: 10, bottom: 28, ...margin };
+    const w = width - m.left - m.right;
+    const h = height - m.top - m.bottom;
+    return {
+      m, w, h,
+      X: value => m.left + ((value - axisX.min) / (axisX.max - axisX.min)) * w,
+      Y: value => m.top + h - ((value - axisY.min) / (axisY.max - axisY.min)) * h,
+    };
+  }
+  const fixed = value => Number(value).toFixed(1);
+  function yTicks(axisY, every) {
+    const out = [];
+    for (let i = 0; axisY.min + i * axisY.step <= axisY.max + 1e-9; i += every) out.push(axisY.min + i * axisY.step);
+    return out;
+  }
+  function smooth(points) {
+    if (points.length < 3) return 'M' + points.map(p => fixed(p[0]) + ',' + fixed(p[1])).join(' L');
+    let d = 'M' + fixed(points[0][0]) + ',' + fixed(points[0][1]);
+    for (let i = 0; i < points.length - 1; i += 1) {
+      const p0 = points[Math.max(i - 1, 0)], p1 = points[i], p2 = points[i + 1], p3 = points[Math.min(i + 2, points.length - 1)];
+      d += ' C' + fixed(p1[0] + (p2[0] - p0[0]) / 6) + ',' + fixed(p1[1] + (p2[1] - p0[1]) / 6) + ' ' +
+        fixed(p2[0] - (p3[0] - p1[0]) / 6) + ',' + fixed(p2[1] - (p3[1] - p1[1]) / 6) + ' ' + fixed(p2[0]) + ',' + fixed(p2[1]);
+    }
+    return d;
+  }
+
+  /** Gráfico principal (ChartData): zonas, bandas, curvas, pontos, limites e o ponto de operação. */
+  function renderMain(model, width, height) {
+    if (!model?.ok) return '';
+    const p = plot(width, height, model.axisX, model.axisY, { bottom: 30 });
+    const out = [];
+    out.push('<svg class="ao-svg" data-ao="main" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="AutoCal · Tinj gasolina × MAP">');
+    out.push('<defs><clipPath id="aoMainClip"><rect x="' + p.m.left + '" y="' + p.m.top + '" width="' + p.w + '" height="' + p.h + '"/></clipPath></defs>');
+    for (const zone of model.zones) {
+      const top = p.Y(Math.min(zone.upper, model.axisY.max));
+      const bottom = p.Y(Math.max(zone.lower, model.axisY.min));
+      out.push('<rect class="ao-zone" data-zone="' + zone.zone + '" data-acquired="' + (zone.acquired === null ? 'unknown' : zone.acquired) +
+        '" x="' + p.m.left + '" y="' + fixed(top) + '" width="' + p.w + '" height="' + fixed(Math.max(bottom - top, 0)) + '"/>');
+    }
+    for (const value of yTicks(model.axisY, 1)) {
+      out.push('<line class="ao-grid" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
+      out.push('<text class="ao-tick" x="' + (p.m.left - 6) + '" y="' + fixed(p.Y(value) + 3.5) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
+    }
+    const xTicks = Math.floor(model.axisX.max);
+    for (let value = Math.ceil(model.axisX.min); value <= xTicks; value += 1) {
+      out.push('<text class="ao-tick" x="' + fixed(p.X(value)) + '" y="' + (height - 12) + '" text-anchor="middle">' + value + '</text>');
+    }
+    out.push('<text class="ao-axis-title" x="' + fixed(p.m.left + p.w / 2) + '" y="' + (height - 1) + '" text-anchor="middle">Petrol injection time (ms)</text>');
+    out.push('<g clip-path="url(#aoMainClip)">');
+    for (const zone of model.zones) {
+      // Fronteira de cada zona acima da primeira + rótulo #n/d encostado à direita, sobre a fronteira.
+      const y = p.Y(Math.min(zone.upper, model.axisY.max));
+      out.push('<line class="ao-zone-edge" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(y) + '" y2="' + fixed(y) + '"/>');
+      out.push('<text class="ao-zone-label" data-zone-label="' + zone.zone + '" x="' + (p.m.left + p.w - 6) + '" y="' + fixed(y + 18) + '" text-anchor="end">' + esc(zone.label) + '</text>');
+    }
+    if (model.band) {
+      const top = p.Y(Math.min(model.band.upper, model.axisY.max));
+      const bottom = p.Y(Math.max(model.band.lower, model.axisY.min));
+      out.push('<rect class="ao-band" data-current-band="' + model.band.index + '" x="' + p.m.left + '" y="' + fixed(top) + '" width="' + p.w + '" height="' + fixed(bottom - top) + '"/>');
+    }
+    for (const [value, cls, name] of [[model.limitMin, 'ao-limit-min', 'min'], [model.limitMax, 'ao-limit-max', 'max']]) {
+      if (value !== null) out.push('<line class="' + cls + '" data-limit="' + name + '" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
+    }
+    for (const [curve, cls] of [[model.petrolCurve, 'petrol'], [model.gasCurve, 'gas']]) {
+      const visible = curve.filter(node => node.visible).map(node => [p.X(node.x), p.Y(node.y)]);
+      if (visible.length > 1) out.push('<path class="ao-curve ' + cls + '" data-series="' + cls + '-curve" d="' + smooth(visible) + '"/>');
+      for (const [x, y] of visible) out.push('<path class="ao-marker ' + cls + '" d="' + (cls === 'petrol'
+        ? 'M' + fixed(x - 3) + ',' + fixed(y) + ' h6 M' + fixed(x) + ',' + fixed(y - 3) + ' v6'
+        : 'M' + fixed(x - 3) + ',' + fixed(y - 3) + ' l6,6 M' + fixed(x + 3) + ',' + fixed(y - 3) + ' l-6,6') + '"/>');
+    }
+    for (const [points, cls] of [[model.petrolPoints, 'petrol'], [model.gasPoints, 'gas']]) {
+      for (const node of points) {
+        if (!node.visible) continue;
+        out.push('<circle class="ao-point ' + cls + '" data-series="' + cls + '-point" data-band="' + node.index + '" cx="' + fixed(p.X(node.x)) + '" cy="' + fixed(p.Y(node.y)) + '" r="5"/>');
+      }
+    }
+    if (model.run && model.run.y >= model.axisY.min && model.run.y <= model.axisY.max) {
+      const x = p.X(Math.min(Math.max(model.run.x, model.axisX.min), model.axisX.max));
+      const y = p.Y(model.run.y);
+      out.push('<line class="ao-run-axis" x1="' + fixed(x) + '" x2="' + fixed(x) + '" y1="' + p.m.top + '" y2="' + (p.m.top + p.h) + '"/>');
+      out.push('<line class="ao-run-axis" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(y) + '" y2="' + fixed(y) + '"/>');
+      out.push('<path class="ao-run" data-series="run" d="M' + fixed(x) + ',' + fixed(y - 7) + ' l7,7 l-7,7 l-7,-7 z"/>');
+    }
+    out.push('</g></svg>');
+    return out.join('');
+  }
+
+  /** Painel Acquisition (ChartPoint): uma coluna de quadrados por combustível, no valor do MAP do buffer. */
+  function renderAcquisition(model, width, height) {
+    if (!model?.ok) return '';
+    const p = plot(width, height, { min: -0.9, max: 0.9 }, model.axisY, { left: 40, right: 6, bottom: 20 });
+    const out = [];
+    out.push('<svg class="ao-svg" data-ao="acquisition" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Acquisition">');
+    for (const value of yTicks(model.axisY, 1)) {
+      out.push('<line class="ao-grid" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
+      out.push('<text class="ao-tick" x="' + (p.m.left - 5) + '" y="' + fixed(p.Y(value) + 3.5) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
+    }
+    out.push('<text class="ao-axis-title" x="' + fixed(p.m.left + p.w / 2) + '" y="' + (height - 4) + '" text-anchor="middle">Acquisition</text>');
+    for (const [squares, cls, x] of [[model.petrolSquares, 'petrol', -0.3], [model.gasSquares, 'gas', 0.3]]) {
+      for (const square of squares) {
+        if (!square.shown || square.y < model.axisY.min || square.y > model.axisY.max) continue;
+        out.push('<rect class="ao-square ' + cls + '" data-band="' + square.band + '" data-count="' + square.count + '" x="' + fixed(p.X(x) - 5) + '" y="' + fixed(p.Y(square.y) - 5) + '" width="10" height="10"/>');
+      }
+    }
+    if (model.mapNow !== null && model.mapNow >= model.axisY.min && model.mapNow <= model.axisY.max) {
+      out.push('<line class="ao-run-axis" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(model.mapNow)) + '" y2="' + fixed(p.Y(model.mapNow)) + '"/>');
+    }
+    out.push('</svg>');
+    return out.join('');
+  }
+
+  /** Curva K (ChartKLine): MUL_ACT por nó, suavizada, só leitura (a ECU é quem a ajusta). */
+  function renderK(model, width, height) {
+    if (!model?.ok) return '';
+    const p = plot(width, height, model.axisX, model.kAxisY, { bottom: 8 });
+    const out = [];
+    out.push('<svg class="ao-svg" data-ao="k" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Curva K">');
+    for (let value = model.kAxisY.min; value <= model.kAxisY.max + 1e-9; value += model.kAxisY.step) {
+      out.push('<line class="ao-grid" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
+      // Grade de 0,1 em 0,1; rótulo de 0,2 em 0,2 para não se sobrepor na altura pequena do painel.
+      if (Math.round((value - model.kAxisY.min) / model.kAxisY.step) % 2 === 0) {
+        out.push('<text class="ao-tick" x="' + (p.m.left - 6) + '" y="' + fixed(p.Y(value) + 3.5) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
+      }
+    }
+    const nodes = model.kNodes.filter(node => node.y >= model.kAxisY.min && node.y <= model.kAxisY.max);
+    const pts = nodes.map(node => [p.X(node.x), p.Y(node.y)]);
+    if (pts.length > 1) out.push('<path class="ao-k-line" data-series="k-line" d="' + smooth(pts) + '"/>');
+    for (const [index, node] of nodes.entries()) {
+      out.push('<circle class="ao-k-node" data-node="' + node.index + '" data-value="' + node.y.toFixed(3) + '" cx="' + fixed(pts[index][0]) + '" cy="' + fixed(pts[index][1]) + '" r="3"><title>' + node.y.toFixed(3) + '</title></circle>');
+    }
+    if (model.run) {
+      const x = p.X(Math.min(Math.max(model.run.x, model.axisX.min), model.axisX.max));
+      out.push('<line class="ao-run-axis" x1="' + fixed(x) + '" x2="' + fixed(x) + '" y1="' + p.m.top + '" y2="' + (p.m.top + p.h) + '"/>');
+    }
+    out.push('</svg>');
+    return out.join('');
+  }
+
+  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, ZONE_EDGES, BANDS, zoneOfBand, build, renderMain, renderAcquisition, renderK };
+})(typeof window !== 'undefined' ? window : globalThis);

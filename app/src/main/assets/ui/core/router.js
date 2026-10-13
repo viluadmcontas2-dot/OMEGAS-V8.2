@@ -48,5 +48,6 @@
   loadOptionalScript('components/split-layout.js');
   // Predictor fora do produto (decisão do dono): não é carregado nem aparece na navegação.
   loadOptionalScript('core/autocal-api.js', () =>
-    loadOptionalScript('screens/autocal-cockpit.js', () => loadOptionalScript('screens/refino.js')));
+    loadOptionalScript('screens/autocal-original.js', () =>
+      loadOptionalScript('screens/autocal-cockpit.js', () => loadOptionalScript('screens/refino.js'))));
 })(typeof window !== 'undefined' ? window : globalThis);

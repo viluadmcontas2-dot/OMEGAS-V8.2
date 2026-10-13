@@ -21,7 +21,7 @@ assert.match(cockpit, /<summary>Ações avançadas<\/summary>/,
   'AutoMatch manual, Curva K e reset completo devem ficar em complexidade sob demanda');
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
-assert.match(cockpit, /data-autocal-action="MANUAL_AUTOMATCH">Ajuste automático agora<\/button>/); // (dono, 2026-10-11: texto para leigo)
+assert.doesNotMatch(cockpit, /MANUAL_AUTOMATCH/); // dono, 2026-10-13: Manual automatch não é exposto
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOCAL"/,
   'Finish AutoCal original nasce desabilitado e não deve virar etapa diária');
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOMATCH"/,

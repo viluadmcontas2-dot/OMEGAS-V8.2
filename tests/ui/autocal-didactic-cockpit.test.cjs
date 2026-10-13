@@ -90,7 +90,8 @@ const surface = model.zoneSurface(currentZoneSnapshot, {
 });
 assert.equal(surface.length, 4, 'malha deve conter quatro zonas físicas');
 assert.equal(surface[0].lower, 0.2);
-assert.ok(Math.abs(surface[0].upper - 0.8) < 1e-9);
+// Zona 1 = bandas 0–4: termina em THD[5] (tabela [5, 9, 13] do ProgBase; PROTOCOLO-LANDI doc 21 §5). Antes estava em THD[6] (erro).
+assert.ok(Math.abs(surface[0].upper - 0.7) < 1e-9);
 assert.ok(Math.abs(surface[3].upper - 1.9) < 1e-9, 'zona 4 termina no último dos 18 limiares reais');
 assert.equal(surface.map(item => item.gasState).join(','), 'acquired,missing,acquired,missing');
 assert.equal(surface.map(item => item.petrolState).join(','), 'acquired,missing,missing,missing');
@@ -192,7 +193,9 @@ const bands = model.bandStrip(snapshot);
 assert.equal(bands.length, 18);
 assert.equal(bands[4].state, 'anchored');
 assert.equal(bands[16].state, 'empty');
-assert.equal(bands[13].zoneAcquired, true);
+// Zona 3 = bandas 9–12; a banda 13 já é da zona 4 (antes contada na zona 3 por erro de uma banda).
+assert.equal(bands[12].zoneAcquired, true);
+assert.equal(bands[13].zoneAcquired, false);
 assert.equal(bands[16].zoneAcquired, false);
 
 assert.equal(model.toggleAction(1), 'DISABLE_AUTO_CAL');
