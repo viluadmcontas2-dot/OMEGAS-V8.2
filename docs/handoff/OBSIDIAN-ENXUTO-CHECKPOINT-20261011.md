@@ -148,3 +148,7 @@ Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*
 - Testes: `tests/ui/autocal-original-parity.test.cjs` (13, com fixture da captura real e verificação por mutação das bordas das zonas); 3 testes antigos ajustados porque fixavam o erro de zona/Manual automatch. `tests/ui`: 212 passam, 1 falha já existente (`learning-jvm-payload`, precisa do resultado do Gradle). Python 208 OK. `SEM_ROLAGEM_8_ABAS=PASS`. Imagens em `docs/evidence/img/2026-10-13-autocal-omegas-original-fiel-*.png`.
 - NÃO comprovado: o travamento real ao clicar Reset gasolina/GNV (só existe no aparelho). A causa acima é hipótese; falta rodar no aparelho. Reset all continua exposto em "Ações avançadas" (AGENTS.md diz que não deveria; testes antigos dizem que sim): decisão do dono pendente.
 - Falta: aviso antes de Reset K/Reset all com a tensão; rotina curva K → Mapa K; gravar nó da curva K por arrasto (não será feita: o dono não quer escrita da curva sem Mapa K); ler `0x018D/E` e `0x0161` a cada ciclo (itens 4–7 do doc de divergências).
+
+## Correção 2026-10-13 (noite, 5) — risco do reset da curva K é condicional
+
+Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. Certo, segundo o dono: só explode se a curva estava exercendo correção grande. Com a correção no Mapa K (~220) e a curva em 1,0, o reset da curva é irrelevante e o AutoCal só refina. O aviso antes de Reset K deve depender do afastamento atual da curva em relação a 1,0 (ex.: max|K−1|), não ser fixo. AGENTS.md e comentário da faixa de status corrigidos.

@@ -24,9 +24,9 @@
   const AGE_FORMAT = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
   const VOLT_FORMAT = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-  // Tensão da ECU (pedido do dono, 2026-10-13). Campo de campo: acima de 14,1 V o sistema GNV desliga e a ECU volta
-  // ao último estado seguro do mapa e da curva (relato do dono). Isso é o que torna perigoso zerar a curva K
-  // de uma vez: a correção explode, a tensão sobe. Por isso o dono mantém Mapa K alto e curva K em 1,0.
+  // Tensão da ECU (pedido do dono, 2026-10-13). Relato de campo: acima de 14,1 V o sistema GNV desliga e a ECU volta
+  // ao último estado seguro do mapa e da curva. Isso acontece quando a curva K exercia uma correção grande e é zerada
+  // de uma vez (a correção explode e a tensão sobe); com a curva neutra (1,0) e a correção no Mapa K, o reset é irrelevante.
   // Fonte: byte 19 do canal 48 01 (0 na gasolina, ~200-231 no GNV nas duas capturas); escala raw/16 é PROVISÓRIA
   // (PROTOCOLO-LANDI doc 18) até o dono comparar com o módulo OBD no celular.
   const VOLTAGE_ALERT_V = 14.1;
