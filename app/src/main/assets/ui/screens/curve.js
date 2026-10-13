@@ -24,9 +24,10 @@
   function parseFactor(value) {
     return finite(typeof value === 'string' ? value.trim().replace(',', '.') : value);
   }
-  // Arrasto de nó (dono, 2026-10-13): mesmos limites do botão de ajuste fino; passo de 0,001 (precisão da ECU em Q14 é maior).
+  // Arrasto de nó (dono, 2026-10-13): mesmos limites do botão de ajuste fino (0,6 a 1,8); passo de 0,001 (precisão da ECU em Q14 é maior).
+  // Teto de gravação da curva K (dono, 2026-10-13): nenhum nó sobe acima de 1,8 por erro. Mesmo valor do KFactorProtocol.MAX_WRITE_FACTOR.
   const DRAG_FACTOR_MIN = 0.6;
-  const DRAG_FACTOR_MAX = 4;
+  const DRAG_FACTOR_MAX = 1.8;
   function dragFactor(yView, scale) {
     const raw = scale.min + ((scale.height - scale.padY - yView) / (scale.height - scale.padY * 2)) * (scale.max - scale.min);
     return Math.round(Math.min(DRAG_FACTOR_MAX, Math.max(DRAG_FACTOR_MIN, raw)) * 1000) / 1000;
@@ -527,7 +528,7 @@
       const input = document.getElementById('curveTargetFactor');
       const current = parseFactor(input?.value) ?? finite(this.points().find(item => Number(item.index) === this.activeIndex)?.factor);
       if (current === null) return;
-      if (input) input.value = factorText(Number(Math.max(0.6, Math.min(4, current + delta)).toFixed(4)));
+      if (input) input.value = factorText(Number(Math.max(DRAG_FACTOR_MIN, Math.min(DRAG_FACTOR_MAX, current + delta)).toFixed(4)));
       this.prepareActivePoint();
     }
 

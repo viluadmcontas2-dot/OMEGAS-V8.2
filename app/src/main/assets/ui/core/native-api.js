@@ -373,6 +373,8 @@
       if (this.demo) {
         const point = this.demoCurveState.points.find(item => Number(item.index) === Number(index));
         if (!point) return { ok: false, error: 'Ponto inválido' };
+        // Mesmo teto do Kotlin (KFactorProtocol.MAX_WRITE_FACTOR): nenhum nó da curva K sobe acima de 1,8.
+        if (!(Number(targetFactor) >= 0.6 && Number(targetFactor) <= 1.8)) return { ok: false, error: 'Informe um fator entre 0,60 e 1,80' };
         const targetRaw = Math.round(Number(targetFactor) * 16384);
         return {
           ok: true, index: Number(index), petrolMs: point.petrolMs,

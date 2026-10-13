@@ -14,7 +14,7 @@ const header = cockpit.match(/<header class="autocal-focus-toolbar"[\s\S]*?<\/he
 assert.ok(header, 'cabeçalho do AutoCal existe');
 assert.equal(header.includes('autocal-focus-actions'), false, 'botões não ficam no cabeçalho');
 assert.ok(cockpit.indexOf('class="autocal-focus-actions"') > cockpit.indexOf('id="autocalReferenceChart"'), 'botões ficam depois do gráfico');
-assert.match(cockpit, /<p id="autocalHeadline" class="autocal-headline">/, 'frase de estado sob o título');
+assert.match(cockpit, /<p id="autocalHeadline" class="autocal-headline sr-only">/, 'frase de estado só para leitor de tela (as bolinhas ocupam o lugar visual)');
 assert.match(cockpit, /this\.text\('autocalHeadline', human\.title \+ ' · ' \+ human\.progress\);/, 'a frase acompanha o estado da ECU');
 // AutoMatch X/Y sempre à vista no topo (dono, 2026-10-11), "—" quando a ECU não informou.
 const header2 = cockpit.match(/<header class="autocal-focus-toolbar"[\s\S]*?<\/header>/)?.[0] || '';

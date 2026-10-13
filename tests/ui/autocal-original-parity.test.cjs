@@ -145,3 +145,28 @@ test('depois de um reset (vetores zerados) o modelo continua válido e vazio, se
   const svg = O.renderMain(model, 700, 420) + O.renderAcquisition(model, 140, 420) + O.renderK(model, 700, 160);
   assert.equal(/NaN|Infinity|undefined/.test(svg), false);
 });
+
+test('bolinhas por zona: verde = completa, azul = coletando, laranja = falta, cinza = sem leitura', () => {
+  const states = plain(O.zoneStates(snapshot, 'gas')).map(z => z.state);
+  const flags = rawv('ACQUIRED_ZONES_GAS');
+  const buf = phys('MNFLD_PRESS_BUF_GAS');
+  const expected = [0, 1, 2, 3].map(zone => {
+    if (flags[zone] !== 0) return 'done';
+    const edges = [0, 5, 9, 13, 17];
+    return buf.slice(edges[zone], edges[zone + 1]).some(v => v !== 0) ? 'collecting' : 'missing';
+  });
+  assert.deepEqual(states, expected);
+  assert.ok(states.includes('done') && states.includes('collecting'));
+  assert.deepEqual(plain(O.zoneStates({ fields: [] }, 'gas')).map(z => z.state), ['unknown', 'unknown', 'unknown', 'unknown']);
+  const zeroed = JSON.parse(JSON.stringify(snapshot));
+  for (const f of zeroed.fields) if (['ACQUIRED_ZONES_GAS', 'MNFLD_PRESS_BUF_GAS'].includes(f.key)) { f.rawValues = f.rawValues.map(() => 0); f.physicalValues = f.physicalValues.map(() => 0); }
+  assert.deepEqual(plain(O.zoneStates(zeroed, 'gas')).map(z => z.state), ['missing', 'missing', 'missing', 'missing'], 'depois de um reset tudo falta');
+});
+
+test('bolinhas dos ajustes automáticos: uma por AutoMatch da cota, cheia = feito, sem contador = nada', () => {
+  assert.deepEqual(plain(O.automatchDots(2, 3)), [{ index: 0, done: true }, { index: 1, done: true }, { index: 2, done: false }]);
+  assert.deepEqual(plain(O.automatchDots(0, 3)).map(d => d.done), [false, false, false]);
+  assert.deepEqual(plain(O.automatchDots(null, 3)), []);
+  assert.deepEqual(plain(O.automatchDots(1, null)), []);
+  assert.deepEqual(plain(O.automatchDots(1, 99)), [], 'cota absurda não vira 99 bolinhas');
+});

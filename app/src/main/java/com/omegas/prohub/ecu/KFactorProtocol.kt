@@ -11,6 +11,13 @@ object KFactorProtocol {
     const val Q14_ONE = 16_384.0
     const val MAX_RAW = 0xFFFF
     const val MAX_FACTOR = MAX_RAW / Q14_ONE
+
+    /**
+     * Teto de ESCRITA (dono, 2026-10-13): nenhuma gravação (manual, restauração de backup ou AutoMatch) leva um nó da
+     * curva K acima de 1,8. A LEITURA continua decodificando até MAX_RAW: se a ECU já estiver acima, dá para abaixar.
+     */
+    const val MAX_WRITE_FACTOR = 1.8
+    const val MAX_WRITE_RAW = 29_491 // floor(1,8 × 16384)
     const val AXIS_COUNTS_PER_MS = 512.0
 
     /** Eixo observado no bloco 0x014B; depois de 10 ms ele deixa de ser uniforme. */

@@ -27,22 +27,22 @@ class KFactorManualPlannerTest {
             assertFalse(preview.getBoolean("automatic"))
             assertFalse(preview.getBoolean("saturatedAtMaximum"))
             assertEquals(0.60, preview.getDouble("minimumFactor"), 0.0)
-            assertEquals(KFactorProtocol.MAX_FACTOR, preview.getDouble("maximumFactor"), 0.0)
-            assertEquals(4.0, preview.getDouble("maximumInputFactor"), 0.0)
-            assertEquals(KFactorProtocol.MAX_RAW, preview.getInt("maximumRaw"))
+            assertEquals(KFactorProtocol.MAX_WRITE_FACTOR, preview.getDouble("maximumFactor"), 0.0)
+            assertEquals(1.8, preview.getDouble("maximumInputFactor"), 0.0)
+            assertEquals(KFactorProtocol.MAX_WRITE_RAW, preview.getInt("maximumRaw"))
         } finally {
             root.deleteRecursively()
         }
     }
 
     @Test
-    fun `aceita fator acima de tres e meio dentro do u16 Q14`() {
+    fun `aceita fator alto ate o teto de escrita de um virgula oito`() {
         val root = Files.createTempDirectory("omegas-k-factor-high").toFile()
         try {
             writeCache(root)
-            val preview = KFactorManualPlanner.preview(root, 9, 3.90)
+            val preview = KFactorManualPlanner.preview(root, 9, 1.75)
             assertTrue(preview.getBoolean("ok"))
-            assertEquals(KFactorProtocol.rawFromFactor(3.90), preview.getInt("targetRaw"))
+            assertEquals(KFactorProtocol.rawFromFactor(1.75), preview.getInt("targetRaw"))
             assertFalse(preview.getBoolean("saturatedAtMaximum"))
         } finally {
             root.deleteRecursively()
@@ -50,16 +50,15 @@ class KFactorManualPlannerTest {
     }
 
     @Test
-    fun `operacional quatro satura exatamente no raw maximo`() {
+    fun `o teto de escrita um virgula oito vai exatamente ao raw maximo seguro`() {
         val root = Files.createTempDirectory("omegas-k-factor-max").toFile()
         try {
             writeCache(root)
-            val maximum = KFactorManualPlanner.preview(root, 9, 4.0)
+            val maximum = KFactorManualPlanner.preview(root, 9, 1.8)
             assertTrue(maximum.getBoolean("ok"))
-            assertTrue(maximum.getBoolean("saturatedAtMaximum"))
-            assertEquals(4.0, maximum.getDouble("requestedFactor"), 0.0)
-            assertEquals(KFactorProtocol.MAX_RAW, maximum.getInt("targetRaw"))
-            assertEquals(KFactorProtocol.MAX_FACTOR, maximum.getDouble("targetFactor"), 0.0)
+            assertFalse(maximum.getBoolean("saturatedAtMaximum"))
+            assertEquals(1.8, maximum.getDouble("requestedFactor"), 0.0)
+            assertEquals(KFactorProtocol.MAX_WRITE_RAW, maximum.getInt("targetRaw"))
         } finally {
             root.deleteRecursively()
         }
@@ -71,10 +70,12 @@ class KFactorManualPlannerTest {
         try {
             writeCache(root)
             assertFalse(KFactorManualPlanner.preview(root, 9, 0.59).getBoolean("ok"))
-            assertFalse(KFactorManualPlanner.preview(root, 9, 4.0001).getBoolean("ok"))
-            val maximum = KFactorManualPlanner.preview(root, 9, KFactorProtocol.MAX_FACTOR)
+            assertFalse(KFactorManualPlanner.preview(root, 9, 1.8001).getBoolean("ok"))
+            assertFalse(KFactorManualPlanner.preview(root, 9, 3.9).getBoolean("ok"))
+            assertFalse(KFactorManualPlanner.preview(root, 9, 4.0).getBoolean("ok"))
+            val maximum = KFactorManualPlanner.preview(root, 9, KFactorProtocol.MAX_WRITE_FACTOR)
             assertTrue(maximum.getBoolean("ok"))
-            assertEquals(KFactorProtocol.MAX_RAW, maximum.getInt("targetRaw"))
+            assertEquals(KFactorProtocol.MAX_WRITE_RAW, maximum.getInt("targetRaw"))
         } finally {
             root.deleteRecursively()
         }

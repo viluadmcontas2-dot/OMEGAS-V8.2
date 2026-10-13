@@ -701,7 +701,12 @@
                   <h3>AutoCal · Gasolina e GNV</h3>
                   <span id="autocalLiveFuel" class="autocal-fuel-chip" data-fuel-state="unknown">—</span>
                 </div>
-                <p id="autocalHeadline" class="autocal-headline">Aguardando AutoCal</p>
+                <p id="autocalHeadline" class="autocal-headline sr-only">Aguardando AutoCal</p>
+                <div id="autocalStatusDots" class="ao-status" role="group" aria-label="Estado do AutoCal">
+                  <div class="ao-dots" data-dots="petrol"><small>Gasolina</small><span class="ao-dot-row"></span></div>
+                  <div class="ao-dots" data-dots="gas"><small>GNV</small><span class="ao-dot-row"></span></div>
+                  <div class="ao-dots" data-dots="automatch"><small>Ajustes</small><span class="ao-dot-row"></span></div>
+                </div>
               </div>
 
               <div class="autocal-focus-metrics" aria-live="polite">
@@ -1120,6 +1125,7 @@
       // o que a ECU não informou fica "—", nunca 0.
       this.text('autocalHeadline', human.title + ' · ' + human.progress);
       this.text('autocalAutoMatchCount', autoMatchFraction(human.autoMatchCount, human.maxAutoMatch));
+      this.renderStatusDots(snapshot, human);
       this.text('autocalHumanAutoMatch', human.autoMatch);
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
@@ -1233,6 +1239,43 @@
       this.text('autocalLiveMap', TWO_DECIMALS.format(live.mapBar));
       const liveZone = AutoCalUxModel.currentZone(this.snapshot || {}, live);
       this.text('autocalLiveZone', liveZone === null ? '—' : 'Z' + liveZone);
+    }
+
+    /**
+     * Bolinhas do topo (dono, 2026-10-13: no lugar do texto "Gasolina 4/4 zonas · Faltam…"): uma por zona de cada combustível
+     * (verde = completa, azul = coletando, laranja = falta; anel = zona onde o motor está agora) e uma por AutoMatch da cota.
+     * Só redesenha quando o conjunto de estados muda.
+     */
+    renderStatusDots(snapshot, human) {
+      const O = ns.AutoCalOriginal;
+      const host = document.getElementById('autocalStatusDots');
+      if (!O || !host) return;
+      const live = AutoCalUxModel.livePoint(this.liveTelemetry());
+      const liveZone = live ? AutoCalUxModel.currentZone(snapshot, live) : null;
+      const groups = {
+        petrol: O.zoneStates(snapshot, 'petrol'),
+        gas: O.zoneStates(snapshot, 'gas'),
+      };
+      const label = { done: 'completa', collecting: 'coletando', missing: 'falta', unknown: 'sem leitura' };
+      const matchDots = O.automatchDots(human.autoMatchCount, human.maxAutoMatch);
+      const key = JSON.stringify([groups, matchDots, liveZone]);
+      if (host.dataset.key === key) return;
+      host.dataset.key = key;
+      const zoneHtml = (list, name) => list.map(item => '<i class="ao-dot" data-state="' + item.state + '"' +
+        (liveZone === item.zone + 1 ? ' data-current="true"' : '') +
+        ' title="' + name + ' · zona ' + (item.zone + 1) + ': ' + label[item.state] + '"></i>').join('');
+      const row = name => host.querySelector('[data-dots="' + name + '"] .ao-dot-row');
+      if (row('petrol')) row('petrol').innerHTML = zoneHtml(groups.petrol, 'Gasolina');
+      if (row('gas')) row('gas').innerHTML = zoneHtml(groups.gas, 'GNV');
+      if (row('automatch')) {
+        row('automatch').innerHTML = matchDots.length
+          ? matchDots.map(item => '<i class="ao-dot match" data-state="' + (item.done ? 'done' : 'missing') +
+            '" title="Ajuste automático ' + (item.index + 1) + ': ' + (item.done ? 'feito' : 'falta') + '"></i>').join('')
+          : '<i class="ao-dot" data-state="unknown" title="Contador sem leitura"></i>';
+      }
+      host.setAttribute('aria-label', 'Gasolina: ' + groups.petrol.map(i => 'zona ' + (i.zone + 1) + ' ' + label[i.state]).join(', ') +
+        '. GNV: ' + groups.gas.map(i => 'zona ' + (i.zone + 1) + ' ' + label[i.state]).join(', ') +
+        '. Ajustes automáticos: ' + (matchDots.length ? matchDots.filter(i => i.done).length + ' de ' + matchDots.length : 'sem leitura') + '.');
     }
 
     /**
@@ -1561,8 +1604,8 @@
       if (!model.ok) return false;
       this.chartShowsLive = true;
       this.chartScale = null;
-      const width = Math.max(560, Math.round(host.getBoundingClientRect?.().width || 860));
-      const height = Math.max(250, Math.round(host.getBoundingClientRect?.().height || 300));
+      const width = Math.max(420, Math.round(host.getBoundingClientRect?.().width || 860));
+      const height = Math.max(150, Math.round(host.getBoundingClientRect?.().height || 300));
       const key = JSON.stringify([model, width, height, Array.from(this.selectedAcquiredPoints || []), this.selectedAcquiredPoint]);
       this.text('autocalReferenceCount', 'Amostras por zona (baixa → alta): ' + model.zones.map(zone => zone.label).join(' · '));
       this.currentAcquiredPoints = [...AutoCalUxModel.acquiredPoints(snapshot, 'petrol'), ...AutoCalUxModel.acquiredPoints(snapshot, 'gas')];

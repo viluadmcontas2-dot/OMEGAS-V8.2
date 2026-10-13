@@ -20,7 +20,7 @@ class AutoMatchKFactorDraftTest {
         assertFalse(draft.toJson().getBoolean("automatic"))
         assertTrue(draft.toJson().getBoolean("requiresFreshCurveRead"))
         assertEquals(0.60, draft.toJson().getDouble("minimumFactor"), 0.0)
-        assertEquals(KFactorProtocol.MAX_FACTOR, draft.toJson().getDouble("maximumFactor"), 0.0)
+        assertEquals(KFactorProtocol.MAX_WRITE_FACTOR, draft.toJson().getDouble("maximumFactor"), 0.0)
     }
 
     @Test
@@ -40,11 +40,14 @@ class AutoMatchKFactorDraftTest {
         val edited = AutoMatchKFactorDraftPlanner.setTargetFactor(draft, 3, 1.23456)
         assertEquals(KFactorProtocol.rawFromFactor(1.23456), edited.points[3].targetRaw)
 
-        val high = AutoMatchKFactorDraftPlanner.setTargetFactor(draft, 3, 3.90)
-        assertEquals(KFactorProtocol.rawFromFactor(3.90), high.points[3].targetRaw)
+        val high = AutoMatchKFactorDraftPlanner.setTargetFactor(draft, 3, 1.75)
+        assertEquals(KFactorProtocol.rawFromFactor(1.75), high.points[3].targetRaw)
 
-        val maximum = AutoMatchKFactorDraftPlanner.setTargetFactor(draft, 3, KFactorProtocol.MAX_FACTOR)
-        assertEquals(KFactorProtocol.MAX_RAW, maximum.points[3].targetRaw)
+        val maximum = AutoMatchKFactorDraftPlanner.setTargetFactor(draft, 3, KFactorProtocol.MAX_WRITE_FACTOR)
+        assertEquals(KFactorProtocol.MAX_WRITE_RAW, maximum.points[3].targetRaw)
+        assertThrows(IllegalArgumentException::class.java) {
+            AutoMatchKFactorDraftPlanner.setTargetFactor(draft, 3, 1.81)
+        }
 
         assertThrows(IllegalArgumentException::class.java) {
             AutoMatchKFactorDraftPlanner.setTargetFactor(draft, 3, 0.59)

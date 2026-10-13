@@ -83,7 +83,7 @@ data class AutoMatchKFactorDraft(
 
 object AutoMatchKFactorDraftPlanner {
     const val MIN_FACTOR = 0.60
-    const val MAX_FACTOR = KFactorProtocol.MAX_FACTOR
+    const val MAX_FACTOR = KFactorProtocol.MAX_WRITE_FACTOR
 
     val REFINED_PRESELECTED_ORIGINS = setOf("MEASURED", "BLENDED", "SMOOTHED")
 
@@ -167,5 +167,5 @@ object AutoMatchKFactorDraftPlanner {
     }
 
     private fun safeRawRange(): IntRange =
-        KFactorProtocol.rawFromFactor(MIN_FACTOR)..KFactorProtocol.MAX_RAW
+        KFactorProtocol.rawFromFactor(MIN_FACTOR)..KFactorProtocol.MAX_WRITE_RAW
 }

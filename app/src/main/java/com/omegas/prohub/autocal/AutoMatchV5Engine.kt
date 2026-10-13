@@ -25,7 +25,7 @@ object AutoMatchV5Engine {
     const val SUPPORT_MIN_MS = 2.785
     const val SUPPORT_MAX_MS = 12.791
     const val MIN_FACTOR = 0.60
-    const val MAX_FACTOR = KFactorProtocol.MAX_FACTOR
+    const val MAX_FACTOR = KFactorProtocol.MAX_WRITE_FACTOR
 
     fun calculate(
         petrol: AutoMatchCurve30,

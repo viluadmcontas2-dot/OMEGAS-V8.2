@@ -39,7 +39,7 @@ class KFactorManager(
     companion object {
         const val MAX_BATCH_POINTS = KFactorProtocol.POINT_COUNT
         const val MIN_SAFE_FACTOR = 0.60
-        const val MAX_SAFE_FACTOR = KFactorProtocol.MAX_FACTOR
+        const val MAX_SAFE_FACTOR = KFactorProtocol.MAX_WRITE_FACTOR
     }
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
@@ -289,7 +289,7 @@ class KFactorManager(
             repeat(KFactorProtocol.POINT_COUNT) { index ->
                 val currentRaw = currentFactors[index]
                 val targetRaw = targetFactors[index]
-                if (targetRaw !in minimumRaw..KFactorProtocol.MAX_RAW) {
+                if (targetRaw !in minimumRaw..KFactorProtocol.MAX_WRITE_RAW) {
                     return error("O backup contém fator fora da faixa segura no ponto ${index + 1}")
                         .put("unsafeBackup", true)
                         .put("fileName", fileName)
@@ -337,7 +337,7 @@ class KFactorManager(
         val normalized = JSONArray()
         val seen = linkedSetOf<Int>()
         val minimumRaw = KFactorProtocol.rawFromFactor(MIN_SAFE_FACTOR)
-        val maximumRaw = KFactorProtocol.MAX_RAW
+        val maximumRaw = KFactorProtocol.MAX_WRITE_RAW
         repeat(points.length()) { position ->
             val point = points.optJSONObject(position) ?: return error("Ponto ${position + 1} inválido")
             val index = point.optInt("index", -1)

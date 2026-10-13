@@ -8,13 +8,13 @@ import java.io.File
 /** Monta a alteração manual sem escrever nem acessar a porta USB. */
 object KFactorManualPlanner {
     private const val MINIMUM_SAFE_FACTOR = 0.60
-    private const val MAXIMUM_FACTOR = KFactorProtocol.MAX_FACTOR
-    private const val MAXIMUM_INPUT_FACTOR = 4.0
+    private const val MAXIMUM_FACTOR = KFactorProtocol.MAX_WRITE_FACTOR
+    private const val MAXIMUM_INPUT_FACTOR = KFactorProtocol.MAX_WRITE_FACTOR
 
     fun preview(runtimeRoot: File, index: Int, targetFactor: Double): JSONObject = try {
         require(index in 0 until KFactorProtocol.POINT_COUNT) { "Ponto K factor inválido" }
         require(targetFactor.isFinite() && targetFactor in MINIMUM_SAFE_FACTOR..MAXIMUM_INPUT_FACTOR) {
-            "Informe um fator entre 0,60 e 4,00"
+            "Informe um fator entre 0,60 e 1,80"
         }
         val cache = File(runtimeRoot, "k_factor_cache.json")
         require(cache.isFile) { "Leia a curva K factor nesta conexão" }
@@ -45,7 +45,7 @@ object KFactorManualPlanner {
             .put("maximumFactor", MAXIMUM_FACTOR)
             .put("maximumInputFactor", MAXIMUM_INPUT_FACTOR)
             .put("minimumRaw", KFactorProtocol.rawFromFactor(MINIMUM_SAFE_FACTOR))
-            .put("maximumRaw", KFactorProtocol.MAX_RAW)
+            .put("maximumRaw", KFactorProtocol.MAX_WRITE_RAW)
             .put("delta", normalizedTarget - currentFactor)
             .put("deltaPercent", if (currentFactor < 0.001) 0.0 else (normalizedTarget / currentFactor - 1.0) * 100.0)
             .put("changed", currentRaw != targetRaw)

@@ -69,6 +69,30 @@
   }
 
   /**
+   * Bolinhas por zona (UX do dono, 2026-10-13): verde = zona completa (flag da ECU), azul = coletando (já há amostra na zona),
+   * laranja = falta. Zona sem leitura = 'unknown' (cinza). Vale para cada combustível, independente do que está em uso.
+   */
+  function zoneStates(snapshot, fuel) {
+    const flags = raw(snapshot, fuel === 'petrol' ? 'ACQUIRED_ZONES_PETROL' : 'ACQUIRED_ZONES_GAS');
+    const buffer = physical(snapshot, fuel === 'petrol' ? 'MNFLD_PRESS_BUF' : 'MNFLD_PRESS_BUF_GAS');
+    return Array.from({ length: 4 }, (_, zone) => {
+      if (flags.length !== 4 || flags[zone] === null) return { zone, state: 'unknown' };
+      if (flags[zone] !== 0) return { zone, state: 'done' };
+      let samples = 0;
+      for (let band = ZONE_EDGES[zone]; band < ZONE_EDGES[zone + 1]; band += 1) if ((buffer[band] ?? 0) !== 0) samples += 1;
+      return { zone, state: samples > 0 ? 'collecting' : 'missing' };
+    });
+  }
+
+  /** Uma bolinha por AutoMatch da cota: cheia = já feito. Sem contador ou sem cota = lista vazia (nada inventado). */
+  function automatchDots(count, max) {
+    const done = finite(count);
+    const total = finite(max);
+    if (done === null || total === null || total < 1 || total > 12) return [];
+    return Array.from({ length: total }, (_, index) => ({ index, done: index < done }));
+  }
+
+  /**
    * @param {object} snapshot  snapshot nativo (fields[].key/status/rawValues/physicalValues)
    * @param {{fuel?: 'gas'|'petrol', live?: object}} options  fuel = combustível em uso (zonas e rótulos seguem ele)
    */
@@ -301,5 +325,5 @@
     return out.join('');
   }
 
-  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, ZONE_EDGES, BANDS, zoneOfBand, build, renderMain, renderAcquisition, renderK };
+  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, ZONE_EDGES, BANDS, zoneOfBand, build, zoneStates, automatchDots, renderMain, renderAcquisition, renderK };
 })(typeof window !== 'undefined' ? window : globalThis);
