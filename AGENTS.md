@@ -19,7 +19,7 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 ## Invariantes (cada um tem teste)
 
 - Nenhuma escrita automática de Map K/Curve K. Escrita manual exige intenção explícita + ACK + readback.
-- `RESET_ALL` não é ação exposta; só o reset de ponto de gás 0x04 pode ser pedido à mão, em um toque, com backup completo antes e readback da ECU.
+- `RESET_ALL` não é ação exposta; só o reset do GNV (ação AutoCal `02 24 04 02`) pode ser pedido à mão, em um toque, com backup completo antes e readback da ECU.
 - `reset-nunca-pausa-aprendizado` (dono, 2026-10-08): após qualquer reset, `AUTO_CAL_ENABLE` é conferido e religado até readback = 1, mesmo em timeout/NAK; sem isso o reset não está concluído. Teste: `ResetNuncaPausaAprendizadoTest.kt` + `tests/test_reset_nunca_pausa_aprendizado.py`.
 - `autocal-sem-leitura-anterior` (dono, 2026-10-11): o AutoCal não mostra leitura anterior nem comparação antes × depois; tudo em tempo real. Teste: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py`.
 - Ciência e protocolo críticos ficam em Kotlin/native. AGORA fica no mesmo contexto da referência AutoCal. LEVELS fica RAW até haver calibração física separada.
@@ -45,7 +45,8 @@ Comandos de verificação: `node --test tests/ui/*.test.cjs` · `python3 -B -m u
 | A ECU zera os contadores no `RESET_ALL`? | Sim, na hora. O ProgBase nunca usa reset seletivo. | `docs/reverse/PROGBASE-LOGNOVO-RESET-2026-10-12.md` |
 | Quais strings e unidades do ProgBase existem? | Só RTTI e exportações; o AutoMatch não tem função nomeada. | `docs/reverse/evidence/` |
 | O residual por RPM separa curva global de Mapa K? | Replay causal já feito. | `docs/evidence/2026-10-13-sessaoutil-rpm-residual-investigation.md` |
-
+| Modos da ação AutoCal `02 24 04 <modo>`? | 1 = gasolina, 2 = GNV, 4 = **Reset all** (zera tudo, K=1,0; visto no fio), 8 = automatch manual. O antigo "0x04 = reset de gás" estava errado. | PROTOCOLO-LANDI `17`, `23`; `docs/evidence/2026-10-13-autocal-original-vs-omegas.md` |
+| Zonas, rótulos, eixos e fluxo gráfico do AutoCal original? | Provados no código e na captura (zonas 0–4/5–8/9–12/13–17). | PROTOCOLO-LANDI `20`, `21`, `23`; emulador em `tools/` do LANDI |
 | Como é o protocolo serial AEB (framing, checksum, opcodes, handshake, flash)? | Documentado a partir do `ProgBase.exe` e do Portmon. | repositório `viluadmcontas2-dot/PROTOCOLO-LANDI` (índice `00-LEIA-ME.md`; opcodes em `12-MAPA-OPCODES.md`) |
 | Como a tela AutoCal conversa com a ECU (polling, reset, automatch, fim, escalas, layout)? | Observado em duas capturas reais + telas do original. | `PROTOCOLO-LANDI` 17–20; divergências do OMEGAS em `docs/evidence/2026-10-13-autocal-original-vs-omegas.md` |
 

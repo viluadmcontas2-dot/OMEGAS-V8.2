@@ -125,3 +125,11 @@ Resultado da busca REA (2026-10-13, `docs/reverse/evidence/progbase-rea-search-*
 - Emulação: `orig_emulator.py` (tela original por instante da captura) e `render_omegas.cjs` (a `index.html` real do OMEGAS com dados da captura) no PROTOCOLO-LANDI/`tools`.
 - Incógnitas que ficaram (REA `record_unknown`): cor NACQ padrão, pontos vermelhos pequenos e "+" verde da S2, critério da ECU para acender as flags de zona e para o limite de passo do K, animações.
 - Primeiro item não provado desta frente: comportamento do OMEGAS **no carro** com as correções de zona/`0x94`/K a cada ciclo (nada foi alterado ainda; precisa de prévia PNG aprovada antes de mexer na tela).
+
+## Atualização 2026-10-13 (noite, 2) — branch `OmegasVermelho`
+
+- Branch nova `OmegasVermelho` (a partir de `work/platina-obsidian-enxuto` @2796780) nos dois repositórios; as outras branches ficaram intactas. Nenhuma branch será apagada sem ordem do dono.
+- PROTOCOLO-LANDI @`8e09b04`: docs 17–24 (AutoCal completo, protocolo gráfico, comunicação, inventário de 32 telas), emulador de ECU (9 testes), emulador da tela original, renderizador de telas do DFM. Artefato publicado v8 com esse estado.
+- AGENTS.md corrigido: modos da ação AutoCal (1 gasolina, 2 GNV, 4 Reset all, 8 manual); o texto "0x04 = reset de gás" estava errado.
+- Não alterado ainda: código do OMEGAS. Conflitos com invariantes do dono (GasPointPrev, Reset all, Enable em 1 toque) seguem para decisão na auditoria (`docs/evidence/2026-10-13-autocal-original-vs-omegas.md`).
+- Primeiro item não comprovado: efeito da ECU dos modos 1/2/8; critério dos patamares do K; anomalia do releitura do Mapa K (doc 23).
