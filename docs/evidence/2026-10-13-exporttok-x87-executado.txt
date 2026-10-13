@@ -1,0 +1,22 @@
+linha  x(ms)       a  b  K(x87)       K(JS)        |dK|
+  0   1.999360   2  3  0.980042     0.980042     0.00e+00
+  1   2.501120   4  5  0.98030668736 0.98030668736 0.00e+00
+  2   3.000320   5  6  1.0981595936 1.0981595936 0.00e+00
+  3   3.499520   5  6  1.0257656095999999 1.0257656095999999 0.00e+00
+  4   4.500480   8  9  1.33280835936 1.33280835936 0.00e+00
+  5   6.000640  11 12  1.4839392499200001 1.4839392499200001 0.00e+00
+  6   8.000000  14 15  1.483948     1.483948     0.00e+00
+  7   9.999360  18 19  1.483948     1.483948     0.00e+00
+  8  11.998720  20 21  1.424622     1.424622     0.00e+00
+  9  14.000640  23 24  1.424622     1.424622     0.00e+00
+ 10  16.000000  24 25  1.424622     1.424622     0.00e+00
+ 11  17.999360  26 27  1.424622     1.424622     0.00e+00
+max |K_x87-K_JS| = 0 ; casos de Trunc = 1872 ; 80bits vs 53bits diferem em 0
+
+# Leitura (OMEGAS, 2026-10-13)
+OBSERVADO (execução): o código x87 REAL do ProgBase.exe (0x42EE14, 0x512708, 0x51280C, 0xA45A58, sha256 8a2d297c…) rodou no Unicorn.
+ - K do original == interpolação do JS (diferença 0 nas 12 linhas); par de nós escolhido = primeiro i com TBP[i] ≤ x ≤ TBP[i+1].
+ - Trunc do original == floor(célula × K) em 1872 casos (células 100–255 × 12 linhas); precisão 80 bits vs 53 bits: 0 diferenças.
+ - x das linhas = 1,99936 … 17,99936 ms (TEMPI × 0,00256).
+INFERIDO (não provado): F = 2560 foi ENTRADA (stub do campo [obj+0x2980]); 0x979E74 (Items[i]) e 0x42F338 (nº de linhas) também são stubs.
+NÃO COBERTO: GetCell/SetCell (0x42EC94/0x42ECD8), tela, e o que a ECU faz com o resultado. A conta nova (balance) é do OMEGAS, não do original.
