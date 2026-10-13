@@ -53,7 +53,6 @@
     }
 
     bind() {
-      document.getElementById('curveReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('curveBackupSave')?.addEventListener('click', () => this.saveBackup());
       document.getElementById('curveResetButton')?.addEventListener('click', () => this.resetCurve());
       document.getElementById('curveBackupRestore')?.addEventListener('click', () => this.writeRestore());
@@ -295,7 +294,18 @@
       if (message) this.alert(message);
     }
 
-    startRead(onEnter = false) {
+    /**
+     * Atualização automática (dono, 2026-10-13: "não tenho que clicar em Reler"): o app.js chama isto ao reconectar a ECU e
+     * a cada 15 s na aba. Leitura silenciosa: sem faixa "Lendo…", só troca o gráfico se a ECU mudou. Não mexe enquanto o
+     * dono edita (proposta preparada) ou grava.
+     */
+    autoSync(justConnected) {
+      if (this.reading || this.writing || this.backupTask) return;
+      if (this.data && this.proposals.size > 0 && !justConnected) return;
+      this.startRead(true, !!this.data);
+    }
+
+    startRead(onEnter = false, silent = false) {
       if (this.reading || this.writing) return;
       const result = this.api.startCurveRead();
       if (!result?.ok || !result?.started) {
@@ -312,8 +322,10 @@
         const host = document.getElementById('curveChart');
         if (host) host.innerHTML = '<div class="chart-empty">Lendo a Curva K da ECU…</div>';
       }
-      text('curveSourceStatus', 'Lendo 30 pontos diretamente da ECU');
-      this.root?.classList.add('is-reading');
+      if (!silent) {
+        text('curveSourceStatus', 'Lendo 30 pontos diretamente da ECU');
+        this.root?.classList.add('is-reading');
+      }
       if (this.pendingSuggestion) this.renderSuggestionFocus(this.pendingSuggestion);
     }
 
@@ -607,7 +619,7 @@
       const points = this.points();
       if (!host) return;
       if (!points.length) {
-        host.innerHTML = '<div class="chart-empty">Curva não lida. Ligue a ECU e toque em Reler ECU.</div>';
+        host.innerHTML = '<div class="chart-empty">Curva não lida. Ligue a ECU: ela aparece sozinha.</div>';
         return;
       }
       const width = 920; const height = 350; const padX = 42; const padY = 34;

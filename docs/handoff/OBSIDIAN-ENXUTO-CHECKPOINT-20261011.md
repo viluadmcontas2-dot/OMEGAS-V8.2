@@ -229,3 +229,8 @@ Texto anterior ("zerar a curva faz a correção explodir") estava largo demais. 
 - Não provado: Kotlin novo (`recordUiUsage`) sem CI; aparelho; efeito físico; Reaprender GNV no fio. CIs `e6f03d3`/`4166d59` sem resultado conferido.
 - Primeiro item ainda não comprovado: CI deste commit.
 - CI verde: e6f03d3 (run 1334) e 4166d59 (run 1335). CI de 5c0d170 (run 1336, com `recordUiUsage`) em andamento — não conferida.
+
+## 2026-10-13 · noite 16 — atualização automática, refino em qualquer fase, aquisição emulada, estresse
+- Ver `docs/evidence/2026-10-13-noite16-auto-sync-estresse-aquisicao.md`. Sem botão Reler (autoSync: reconexão + 15 s na Curva K); export usa o refino em qualquer fase; Refino a 50 ms; ≤10 pontos por combustível na tela; legenda reescrita.
+- Provas: `tools/jvm/rodar_aquisicao_emulada.sh` (monitor real × ECU falsa, 5 cenários + mutação), `tools/ci/estresse_interface.cjs` PASS, node 232/0.
+- Não provado: aparelho; CI de 5c0d170 e do commit desta noite; cabo de guerra do GNV (só plano).

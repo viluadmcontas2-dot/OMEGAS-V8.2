@@ -205,12 +205,29 @@
     };
   }
 
-  /** Nossos pontos medidos (faixas densas do Refino): {tpetMs, mapBar} → nós do gráfico, só os visíveis e finitos. */
+  const OUR_MAX_NODES = 10;
+
+  /**
+   * Nossos pontos medidos (faixas densas do Refino) → nós do gráfico. O app pode medir quantos pontos quiser; a tela mostra no
+   * máximo OUR_MAX_NODES por combustível (dono, 2026-10-13: "não preciso ver os mil pontos"): vizinhos no eixo X viram um
+   * ponto só, ponderado pelas amostras. Só a tela é resumida; o motor continua usando tudo.
+   */
   function ourNodes(list, axisY, axisX) {
-    return (Array.isArray(list) ? list : [])
-      .map(p => ({ x: finite(p?.tpetMs), y: finite(p?.mapBar), samples: finite(p?.samples) }))
+    const nodes = (Array.isArray(list) ? list : [])
+      .map(p => ({ x: finite(p?.tpetMs), y: finite(p?.mapBar), samples: Math.max(1, finite(p?.samples) || 1) }))
       .filter(n => n.x !== null && n.y !== null && n.x > 0 && n.x <= axisX.max && n.y >= axisY.min && n.y <= axisY.max)
       .sort((a, b) => a.x - b.x);
+    if (nodes.length <= OUR_MAX_NODES) return nodes;
+    const width = axisX.max / OUR_MAX_NODES;
+    const bins = new Map();
+    for (const n of nodes) {
+      const key = Math.min(OUR_MAX_NODES - 1, Math.floor(n.x / width));
+      const bin = bins.get(key) || { x: 0, y: 0, samples: 0 };
+      bin.x += n.x * n.samples; bin.y += n.y * n.samples; bin.samples += n.samples;
+      bins.set(key, bin);
+    }
+    return [...bins.entries()].sort((a, b) => a[0] - b[0])
+      .map(([, b]) => ({ x: b.x / b.samples, y: b.y / b.samples, samples: b.samples }));
   }
   function markNodes(list, axisY, axisX) {
     return (Array.isArray(list) ? list : [])

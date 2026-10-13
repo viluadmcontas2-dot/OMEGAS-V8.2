@@ -15,10 +15,10 @@ const curveSection = index.slice(index.indexOf('data-screen="curve"'), index.ind
 const intro = curveSection.slice(0, curveSection.indexOf('curve-view-stack'));
 const footbar = curveSection.slice(curveSection.indexOf('class="curve-footbar"'));
 assert.ok(curveSection.includes('class="curve-footbar"'), 'Curva K tem rodapé único');
-const order = ['curveReadButton', 'curveBackupSave', 'curveBackupSelect', 'curveBackupRestore', 'curveResetButton'];
+const order = ['curveBackupSave', 'curveBackupSelect', 'curveBackupRestore', 'curveResetButton'];
 const positions = order.map(id => footbar.indexOf(`id="${id}"`));
 assert.ok(positions.every(p => p > 0), 'todos os botões da Curva K estão no rodapé');
-assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'ordem do rodapé: Reler, vista, Salvar, Backups, Restaurar, Resetar');
+assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'ordem do rodapé: vista, Salvar, Backups, Restaurar, Resetar');
 for (const id of order) assert.equal(intro.includes(`id="${id}"`), false, `${id} não fica mais no topo`);
 assert.ok(intro.includes('id="curveSourceStatus"') && intro.includes('id="curveBackupStatus"'), 'estado da leitura e dos backups ficam ao lado do título');
 const css = fs.readFileSync(path.join(ui, 'styles-calibration-obd.css'), 'utf8');
@@ -102,7 +102,7 @@ screen.onEnter({});
 assert.equal(alerts.length, before, 'sem aviso repetido ao entrar na aba sem ECU');
 assert.match(nodes.get('curveSourceStatus').textContent, /Última leitura/);
 screen.startRead();
-assert.equal(alerts.length, before + 1, 'o toque em Reler ECU sem ECU avisa');
+assert.equal(alerts.length, before + 1, 'a leitura manual sem ECU avisa');
 
 // 5) Backups compacto: "Backups (N)" e desabilitado sem nenhum.
 screen.refreshBackups();
@@ -122,6 +122,30 @@ const list = nodes.get('curveProposalList').innerHTML;
 assert.equal((list.match(/<div>/g) || []).length, 4);
 assert.match(list, /\+5 pontos · veja no gráfico/);
 assert.equal(nodes.get('curveReviewButton').textContent, 'Gravar 9 pontos na ECU', 'o botão diz o total que será gravado');
+
+// 6) Atualização automática (sem botão Reler): ao reconectar a ECU lê mesmo com proposta preparada; a cada 15 s só lê se o
+//    dono não está editando; nunca durante gravação; silenciosa (sem a faixa "Lendo…").
+{
+  let n = 0;
+  const auto = { ...api, startCurveRead: () => { n += 1; return { ok: true, started: true }; } };
+  const { screen: s2 } = makeScreen(auto);
+  s2.autoSync(false);
+  assert.equal(n, 1, 'sem curva na tela, a atualização automática lê');
+  s2.reading = false; s2.data = { points: points(base) };
+  s2.proposals.set(1, { index: 1, currentRaw: 16384, targetRaw: 16500 });
+  s2.autoSync(false);
+  assert.equal(n, 1, 'editando (proposta preparada): o relógio de 15 s não mexe na tela');
+  s2.autoSync(true);
+  assert.equal(n, 2, 'ECU reconectada: lê mesmo assim (a proposta antiga só sobrevive se o valor da ECU for o mesmo)');
+  s2.reading = false; s2.writing = true;
+  s2.autoSync(true);
+  assert.equal(n, 2, 'nunca durante gravação');
+  s2.writing = false; s2.reading = false; s2.proposals.clear();
+  document.getElementById('curveSourceStatus').textContent = 'ECU confirmada · 30 pontos';
+  s2.autoSync(false);
+  assert.equal(n, 3);
+  assert.equal(document.getElementById('curveSourceStatus').textContent, 'ECU confirmada · 30 pontos', 'leitura silenciosa não troca o texto por "Lendo…"');
+}
 
 // 7) Gravar nunca sai durante uma leitura.
 let writes = 0;

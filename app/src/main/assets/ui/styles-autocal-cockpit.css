@@ -2222,8 +2222,8 @@
 .ao-our-curve { fill: none; stroke-width: 2; stroke-dasharray: 7 5; opacity: .95; }
 .ao-our-curve.petrol { stroke: var(--ao-petrol-line); }
 .ao-our-curve.gas { stroke: var(--ao-gas); }
-.ao-stall-mark { stroke: #ff6b6b; stroke-width: 3; stroke-linecap: round; fill: none; }
-.ao-near-mark { fill: none; stroke: var(--ao-bad, #ff5d5d); stroke-width: 2; }
+.ao-stall-mark { stroke: #ffffff; stroke-width: 3; stroke-linecap: round; fill: none; }
+.ao-near-mark { fill: none; stroke: #ffffff; stroke-width: 2; }
 .app-shell.autocal-focus section.autocal-cockpit.refino-cockpit {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr) auto var(--act-h);
@@ -2244,7 +2244,8 @@
 .refino-legend i.ln.petrol { border-color: var(--ao-petrol-line, #ff5d5d); }
 .refino-legend i.ln.gas { border-color: var(--ao-gas, #5dd39e); }
 .refino-legend i.ln.dim { opacity: .4; border-top-width: 2px; }
-.refino-legend i.x { color: #ff6b6b; font-weight: 900; }
+.ao-g-stall { stroke: #ffffff; stroke-width: 2.5; stroke-linecap: round; fill: none; }
+.ao-g-near { stroke: #ffffff; stroke-width: 2; fill: none; }
 .refino-legend i.dm { width: 9px; height: 9px; transform: rotate(45deg); border: 2px solid var(--ao-bad, #ff5d5d); box-sizing: border-box; }
 .app-shell.autocal-focus .refino-cockpit .refino-action-bar { grid-area: actions; align-self: end; }
 

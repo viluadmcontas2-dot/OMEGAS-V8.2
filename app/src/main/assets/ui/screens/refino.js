@@ -266,11 +266,11 @@
           <p class="refino-next" id="refinoNext"></p>
           <div id="refinoChart" class="autocal-chart-host refino-chart" aria-label="Gráfico do Refino"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
           <div class="refino-legend" aria-hidden="true">
-            <span class="ao-key"><i class="ln petrol"></i><b>Gasolina (referência)</b></span>
-            <span class="ao-key"><i class="sq gas"></i><b>GNV medido por nós</b></span>
-            <span class="ao-key"><i class="ln gas dim"></i><b>GNV hoje na ECU</b></span>
-            <span class="ao-key"><i class="x">✕</i><b>Apagou</b></span>
-            <span class="ao-key"><i class="dm"></i><b>Quase apagou</b></span>
+            <span class="ao-key"><svg viewBox="0 0 26 14"><line class="ao-g-line-petrol" x1="2" x2="24" y1="7" y2="7"/></svg><b>Gasolina (ECU)</b></span>
+            <span class="ao-key"><svg viewBox="0 0 26 14"><line class="ao-g-line-gas" x1="2" x2="24" y1="7" y2="7"/></svg><b>GNV (ECU)</b></span>
+            <span class="ao-key"><svg viewBox="0 0 26 14"><rect class="ao-g-petrol" x="3" y="3" width="8" height="8" rx="1.5"/><rect class="ao-g-gas" x="15" y="3" width="8" height="8" rx="1.5"/></svg><b>Medido por nós</b></span>
+            <span class="ao-key"><svg viewBox="0 0 26 14"><path class="ao-g-stall" d="M8,3 l10,8 M18,3 l-10,8"/></svg><b>Apagou</b></span>
+            <span class="ao-key"><svg viewBox="0 0 26 14"><path class="ao-g-near" d="M13,2 l6,5 l-6,5 l-6,-5 z"/></svg><b>Quase apagou</b></span>
           </div>
           <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">
             <button type="button" class="autocal-primary-action" data-kind="review" data-refino-preview hidden>Ver alterações</button>

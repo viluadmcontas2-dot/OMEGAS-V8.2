@@ -56,7 +56,6 @@
     }
 
     bind() {
-      document.getElementById('mapReadButton')?.addEventListener('click', () => this.startRead());
       document.getElementById('mapBackToLearning')?.addEventListener('click', () => this.router?.navigate('learning'));
       document.getElementById('mapSelectAll')?.addEventListener('click', () => {
         try { this.editor.selectAll(); this.review = null; this.renderEditor(); this.refreshSelectionPreview(); }
@@ -86,6 +85,12 @@
         return;
       }
       if (this.editor.hasMap()) this.applyContext(this.pendingContext);
+    }
+
+    /** Atualização automática ao reconectar a ECU (sem botão Reler). Nunca apaga edição, revisão ou gravação em curso. */
+    autoSync(justConnected) {
+      if (this.reading || this.curveImport || this.review || this.root?.classList.contains('is-writing')) return;
+      if (!this.editor.hasMap() || justConnected) this.startRead(true);
     }
 
     settleReadFailure(message) {
@@ -181,9 +186,11 @@
       if (!planner) return 'Rotina Curva K → Mapa K indisponível.';
       const snapshot = this.editor.snapshot();
       this.curvePlan = null;
-      // Refino já pronto (proposta do piloto, Kotlin): entra na exportação, para o Mapa K já sair refinado e sem serrilhado.
+      // Refino do piloto (Kotlin): vale em QUALQUER fase, também com a ECU ainda no automático (dono, 2026-10-13: não esperar o
+      // 3º AutoMatch). O motor calcula a proposta o tempo todo com os nossos pontos; só pontos cujo valor na ECU ainda é o da
+      // proposta entram (refinementTargets descarta os que a ECU já mexeu).
       const pilot = (root.OmegasUi || {}).AutoCalApi?.equivalence?.()?.autopilot;
-      const proposal = pilot?.phase === 'PROPOSTA_PRONTA' ? pilot?.proposal?.points : null;
+      const proposal = pilot?.proposal?.known && Number(pilot?.proposal?.count) > 0 ? pilot.proposal.points : null;
       const refined = proposal && planner.refinementTargets ? planner.refinementTargets(points, proposal) : null;
       const result = planner.balance({
         tbp: points.map(point => point.petrolMs),

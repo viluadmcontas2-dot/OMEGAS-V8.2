@@ -232,9 +232,25 @@
     if (route === 'curve' && instances.curve && (instances.curve.reading || instances.curve.writing)) instances.curve.poll();
   }
 
+  // Mapa K e Curva K se atualizam sozinhos: ao reconectar a ECU e a cada 15 s (leitura silenciosa) — sem botão Reler.
+  const AUTO_SYNC_MS = 15000;
+  let lastUsb = null;
+  let lastAutoSync = 0;
+  function autoSyncEcu(route, online) {
+    const justConnected = online && lastUsb === false;
+    lastUsb = online;
+    if (!online || (route !== 'curve' && route !== 'map')) return;
+    const screen = instances[route];
+    const now = Date.now();
+    if (!screen || typeof screen.autoSync !== 'function' || (!justConnected && now - lastAutoSync < AUTO_SYNC_MS)) return;
+    lastAutoSync = now;
+    screen.autoSync(justConnected);
+  }
+
   function refreshStatus() {
     const status = api.status() || {};
     const route = store.get().route;
+    autoSyncEcu(route, status.usbConnected === true);
     const signature = JSON.stringify({ status, demo: api.isDemo() });
     if (signature !== previousStatusSignature) {
       previousStatusSignature = signature;
@@ -298,7 +314,8 @@
   let toolsSessionsAt = 0;
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
   function activateRoute(route, context) {
-    scheduler.setCadenceMs(route === 'autocal' ? 50 : 200);
+    // Cursor em tempo real nos dois gráficos de aquisição (AutoCal e Refino, dono 2026-10-13); demais abas a 200 ms.
+    scheduler.setCadenceMs(route === 'autocal' || route === 'refino' ? 50 : 200);
     store.patch({ toolsOpen: route === 'tools' });
     if (route === 'map') {
       previousTelemetrySignature = '';

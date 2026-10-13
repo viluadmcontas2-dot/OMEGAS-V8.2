@@ -108,7 +108,7 @@ test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem jargão na tela
   screen.renderProposalList();
   assert.equal(document.nodes.get('curveReviewButton').textContent, 'Toque em Restaurar, no rodapé');
   screen.renderChart();
-  assert.match(document.nodes.get('curveChart').innerHTML, /Curva não lida\. Ligue a ECU e toque em Reler ECU\./);
+  assert.match(document.nodes.get('curveChart').innerHTML, /Curva não lida\. Ligue a ECU: ela aparece sozinha\./);
   const index = read('index.html');
   assert.match(index, /<div class="curve-axis">Injeção \(ms\) →<\/div>/);
   assert.match(index, /id="curveTargetFactor" type="text" inputmode="decimal"/, 'campo aceita vírgula');
