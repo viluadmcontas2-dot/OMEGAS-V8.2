@@ -49,4 +49,59 @@ class StallWatchTest {
         assertNull(r.second)
         assertTrue(w.json().getInt("count") == 0)
     }
+
+    @Test
+    fun `quase apagou - RPM cai abaixo de 500 por mais de 300 ms e volta - vira tropeco com o lugar e nao apagao`() {
+        val w = StallWatch(null)
+        var (t, _) = feed(w, 0, "GNV", (0 until 20).map { 1_700.0 - it * 25.0 }, petrol = 2.1, map = 0.25) // desacelerando
+        t = feed(w, t, "GNV", List(6) { 420.0 }, petrol = 2.0, map = 0.30).first                        // 600 ms abaixo de 500
+        val (_, event) = feed(w, t, "GNV", List(10) { 850.0 }, petrol = 3.9, map = 0.45)                 // o motor se recuperou
+        assertNotNull(event)
+        assertEquals(StallWatch.KIND_NEAR, (event as org.json.JSONObject).getString("kind"))
+        assertEquals(420.0, event.getDouble("minRpm"), 1e-9)
+        val json = w.json()
+        assertEquals(0, json.getInt("count"))
+        assertEquals(1, json.getInt("nearCount"))
+        assertEquals(2.0, json.getJSONArray("nearRegions").getJSONObject(0).getDouble("fromMs"), 1e-9)
+    }
+
+    @Test
+    fun `tropeco depois do corte (cutoff) e marcado`() {
+        val w = StallWatch(null)
+        var (t, _) = feed(w, 0, "GNV", List(15) { 1_600.0 }, petrol = 2.2)
+        t = feed(w, t, "CUTOFF", List(4) { 1_400.0 }, petrol = 0.3).first
+        t = feed(w, t, "GNV", List(5) { 430.0 }, petrol = 2.0).first
+        val (_, event) = feed(w, t, "GNV", List(8) { 900.0 })
+        assertEquals(true, (event as org.json.JSONObject).getBoolean("afterCutoff"))
+    }
+
+    @Test
+    fun `um quadro isolado abaixo de 500 (ruido) nao e tropeco`() {
+        val w = StallWatch(null)
+        var (t, _) = feed(w, 0, "GNV", List(20) { 1_500.0 })
+        t = feed(w, t, "GNV", listOf(300.0)).first
+        val (_, event) = feed(w, t, "GNV", List(10) { 1_500.0 })
+        assertNull(event)
+        assertEquals(0, w.json().getInt("nearCount"))
+    }
+
+    @Test
+    fun `chave desligada na lenta com o RPM decaindo nao e apagao nem tropeco`() {
+        val w = StallWatch(null)
+        val (t, _) = feed(w, 0, "GNV", List(45) { 872.0 + (it % 3) })        // lenta estável, nunca passou de 1000
+        val (_, event) = feed(w, t, "GNV", listOf(860.0, 800.0, 700.0, 610.0, 450.0, 250.0) + List(12) { 0.0 })
+        assertNull(event)
+        assertEquals(0, w.json().getInt("count"))
+        assertEquals(0, w.json().getInt("nearCount"))
+    }
+
+    @Test
+    fun `apagao real depois de acelerar acima de 1000 continua sendo registrado`() {
+        val w = StallWatch(null)
+        val (t, _) = feed(w, 0, "GNV", (0 until 12).map { 1_500.0 - it * 60.0 } + List(8) { 780.0 }, petrol = 8.0, map = 0.9)
+        val (_, event) = feed(w, t, "GNV", List(12) { 0.0 })
+        assertEquals(StallWatch.KIND_STALL, (event as org.json.JSONObject).getString("kind"))
+        assertEquals(1, w.json().getInt("count"))
+        assertEquals(0, w.json().getInt("nearCount"))
+    }
 }
