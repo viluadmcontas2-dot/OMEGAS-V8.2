@@ -1,5 +1,7 @@
 # OMEGAS Obsidian — AutoCal nativo, `Sessaoutil` e residual por RPM
 
+> **Correção metodológica:** a seção de replay causal abaixo reproduz a limitação online “gasolina anterior”. Ela não é a análise científica final de equivalência. O replay offline correto usa RPM × MAP como estado, Tpet como resposta e independe da ordem de coleta. Consulte o [adendo contextual](2026-10-13-contextual-equivalence-rpm-map-addendum.md), que encontrou uma bifurcação real com sinais opostos por RPM.
+
 Data da análise: 2026-10-13  
 Branch de autoridade: `work/platina-obsidian-enxuto`  
 HEAD usado no replay: `a567b8818fcc0247bb11f4e6b2e5025c3a8e6a0f`
