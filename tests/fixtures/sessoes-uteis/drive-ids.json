@@ -1,0 +1,54 @@
+{
+ "pasta_sessoes_uteis": "1P4gTYUxCRetkdFD10aCjYHGIko33t3-J",
+ "pasta_zipadas": "1545PiVEX-FLtDCL-mr09F96GbKvpwmvo",
+ "resumo_json": "1fCzanfm6VohUFXIm6a7Rcn6iDw1ep2MB",
+ "indice_md": "1NG0zV6TN8Mj55Hss5awR6FPxU5wCwMpJ",
+ "manifesto_pacotes": "1CYMfKzlXIki2SVfJrF1cj2CfENtf2mC8",
+ "extras_manual_snapshots_e_curva_zip": "1vhVELJtVkclca-pVmAwG-X7VAaVSeF6U",
+ "pacotes_com_gnv": {
+  "rank001-008": "1JhmYEyO0He_66VkI2q6dLOtOdDaQhNsc",
+  "rank009-016": "1qTXWaP127FMT3x2sosz0hAZZNZKHUu4X",
+  "rank017-023": "1JYUWi23APtn_UMURRIu0eNpuBgmhw1iQ",
+  "rank024-029": "1w6C5CIDGcCNOA5ksHQhtCU0AuqjQnVEy",
+  "rank030-036": "1axdNtEvuYiI1JXhS0q-VW4GxExilUaqO",
+  "rank037-043": "1znOV5Lx1DPyM-0xWD9rLJfrk4qCxHUo_",
+  "rank044-051": "1SCL2AByBO3Xsdookv2ND6DVNpJOFqvBs",
+  "rank052-060": "1a_3eK6zeRgw9wcfBPdOJwNJMMGd9Tg3O",
+  "rank061-070": "11JfB_NLb48T7sKbVdki1GoodR2ZuIFYa",
+  "rank071-073": "1p9hv528WciOo6r_G24Thx2v4sXYGHJU0",
+  "rank075-076": "19MDul9YEdVpVtdn7WGD3V74mnU4v72is",
+  "rank080-081": "1v-PR-Ighukz16wYeVrQnZtLoM4TvxUx_",
+  "rank082-084": "1Gfl5TeIOlaqEJuU6oZB_UJZXzIdABu43",
+  "rank090-092": "1gO4K8LbaZbxdJmCLjhX2JdwXBMCyAcdn"
+ },
+ "pacotes_sem_gnv": {
+  "rank077": "17NoUq3b5aY3FF34dfLgJBTUlLLpvTl1v",
+  "rank078": "1MlFB9SnCaDVjOMkwuqFNFA9UB-b5V3Nz",
+  "rank079": "14IIWqFcfdOZejYWI4wl048Hg3oUg4VrC",
+  "rank085-086": "176TUuC9i6HCvFKjz0cttQ7uRLYET2d9D",
+  "rank087": "1b1lsuMgstN72b6wfj94VlB7v6VjU99pP",
+  "rank088": "1vkjEqz_qa08B_90QW8XxTsC9UsEr-raa",
+  "rank089": "1fVQTm1QfZsQxPHzZ9q9-k2j8J9l07yDJ",
+  "rank093-095": "1Y6yucBKGpzPcp_SJG8fiWXs3vL7KaIGl",
+  "rank096-098": "18eQvza1rrrEAbbTnrCtrgKaANQmRi2tQ",
+  "rank099-102": "1v_5zM_pJhs0WDm5U4a1503pNFErmzTzo",
+  "rank103-106": "1R7g1i14diYiMGnYS8VdJ5-14Q6e3H1Kj",
+  "rank107-112": "1YFy83O33SqLCY-CmVCUKiEy7aTjfsweM",
+  "rank113-122": "1FsSiLo1bTe4SwV3uCCyEFDgeIWl5EQgI",
+  "rank123-137": "1T7j0juBXBvNZ39SyB9JP6sGWgK5kk5pt",
+  "rank138-177": "1z3fJv5eqyElr3U_mzKQe-IHj2mWK8Toh",
+  "semresumo-2026-09-24": "1Sg2vp8dg-CIhVPu8XZVkluoVVYeq-B3D",
+  "semresumo-3sessoes": "1RaxjqkXfgHCp3WVViCtkLQ-IllexI1dj"
+ },
+ "nao_baixados": {
+  "rank074": {
+   "id": "1XhFRszvj_1hPIDvRJnioFuP26YYrOBhB",
+   "motivo": "6,6 MB zip: o conector do Drive derruba a conexão (mensagem grande demais); sessão sem motivo, 0 eventos, 0 GNV"
+  },
+  "semresumo-data-desconhecida-28MB": {
+   "id": "1TN_fUa37eTQHlvZPc8orwiHx_vBHHHPO",
+   "motivo": "30 MB: grande demais para o conector; 1 sessão antiga em segmentos, 0 GNV"
+  }
+ },
+ "aviso_conector": "download_file_content devolve base64 e salva em arquivo quando passa do limite; chamar UM pacote por vez (paralelo derruba a conexão); zips >~6 MB falham."
+}

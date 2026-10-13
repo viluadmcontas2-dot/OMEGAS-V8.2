@@ -1,0 +1,9 @@
+{
+ "linhas_telemetria": 177457,
+ "linhas_gnv": 110390,
+ "sha256": {
+  "telemetria.csv.gz": "cf8638feb1193b3a2a69c6dd7e9bb3427cd71f5de20b1fe1c6fce65f46613476",
+  "eventos-calibracao.jsonl.gz": "a4d97abe6877258a5093ce7a161ceafc18d06728033b241fa064a82ba81df75f",
+  "sessoes.json": "94dbc0459670e0b842a2d481fe6d24c5fa856fee0e2f380ea2835b3f87af9d70"
+ }
+}
