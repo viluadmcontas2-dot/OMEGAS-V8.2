@@ -48,12 +48,6 @@
     const number = finite(value);
     return number === null ? '—' : number.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
   }
-  function pct(ratio) {
-    const r = finite(ratio);
-    if (r === null) return '—';
-    const p = (r - 1) * 100;
-    return `${p > 0 ? '+' : ''}${fmt(p, 1)}%`;
-  }
   function plural(n, one, many) { return Number(n) === 1 ? one : many; }
   function pointList(list) {
     return (Array.isArray(list) ? list : [])
@@ -335,6 +329,8 @@
 
     /** Uma proposta para o Mapa K por vez: o engasgo vem primeiro (segurança); depois a diferença por RPM do piloto. */
     mapProposal() {
+      // Porta de gravação: com a ECU ainda no automático, nenhuma proposta de Mapa K (a ECU aplicaria a correção em cima).
+      if (root.OmegasWriteGate && !root.OmegasWriteGate.check(this.eq?.autopilot).ok) return null;
       const stalls = this.eq?.stalls;
       const info = describeStalls(stalls);
       if (info.total > 0 && root.OmegasStallRegion) {

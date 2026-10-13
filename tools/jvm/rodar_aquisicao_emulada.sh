@@ -29,4 +29,4 @@ for i in 1 2 3 4 5 6 7 8 9 10; do
   for b in $BAD; do case "$b" in /*) abs="$b";; *) abs="$ROOT/$b";; esac; FILES=$(echo $FILES | tr ' ' '\n' | grep -v -x "$abs" | tr '\n' ' '); done
 done
 echo "$OUT" | grep -E "error:" && { echo "Não compilou"; exit 2; }
-java -Dstdout.encoding=UTF-8 -cp "$T/out.jar:$T/json.jar:$("$T/kotlinc/bin/kotlinc" -version >/dev/null 2>&1; echo $T/kotlinc/lib/kotlin-stdlib.jar)" com.omegas.prohub.autocal.AquisicaoEmuladaKt
+java -Dstdout.encoding=UTF-8 -cp "$T/out.jar:$T/json.jar:$("$T/kotlinc/bin/kotlinc" -version >/dev/null 2>&1; echo $T/kotlinc/lib/kotlin-stdlib.jar)" com.omegas.prohub.autocal.AquisicaoEmuladaKt "$@"

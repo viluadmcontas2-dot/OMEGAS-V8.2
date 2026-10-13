@@ -29,11 +29,6 @@
   function setData(node, key, value) {
     if (node && node.dataset[key] !== value) node.dataset[key] = value;
   }
-  function setHtml(node, html) {
-    if (!node || node.__omegasHtml === html) return;
-    node.innerHTML = html;
-    node.__omegasHtml = html;
-  }
   // Formatadores criados uma vez (mesmo texto de toLocaleString; recriar a cada quadro custava ~25 µs cada).
   const RPM_FORMAT = new Intl.NumberFormat('pt-BR');
   const TWO_DECIMALS = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -98,18 +93,6 @@
     const item = field(snapshot, key);
     return Array.isArray(item?.rawValues) ? item.rawValues.map(value => finite(value) ?? 0) : [];
   }
-  function actionLabel(action) {
-    return ({
-      ENABLE_AUTO_CAL: 'Retomar aprendizado',
-      DISABLE_AUTO_CAL: 'Pausar aprendizado',
-      FINISH_AUTOCAL: 'Encerrar cota AutoMatch (técnico)',
-      FINISH_AUTOMATCH: 'Encerrar AutoMatch (debug)',
-      RESET_PETROL: 'Reaprender gasolina (apaga o atual)',
-      RESET_GAS: 'Reaprender GNV (apaga o atual)',
-      RESET_K_FACTOR: 'Curva K toda em 1,0',
-      RESET_ALL: 'Recomeçar tudo',
-    })[action] || action;
-  }
 
   function physicalVector(snapshot, key) {
     const item = field(snapshot, key);
@@ -129,9 +112,6 @@
     return Array.from({ length: 4 }, (_, index) => (finite(values[index]) ?? 0) > 0);
   }
 
-  function nativeZoneCount(snapshot, key) {
-    return nativeZoneFlags(snapshot, key).filter(Boolean).length;
-  }
 
   function projectedZoneFlags(projection, fuel) {
     const zones = projection?.ok === true && projection?.acquisitionZones && typeof projection.acquisitionZones === 'object'

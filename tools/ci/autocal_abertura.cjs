@@ -6,7 +6,7 @@ const path = require('path');
 const { fakeBridge } = require('./_ponte_falsa.cjs');
 const INDEX = path.resolve('app/src/main/assets/ui/index.html');
 const LIMIT = Number(process.argv[2] || 0);
-const ROUTES = ['autocal', 'refino', 'local', 'map', 'curve', 'tools'];
+const ROUTES = ['autocal', 'refino', 'map', 'curve', 'tools'];
 
 (async () => {
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });

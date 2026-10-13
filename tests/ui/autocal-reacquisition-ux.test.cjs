@@ -42,8 +42,6 @@ assert.ok(
   cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('<summary>Ações avançadas</summary>'),
   'a interface deve manter a readquisição diária fora do menu avançado'
 );
-assert.match(cockpit, /RESET_GAS:\s*'Reaprender GNV \(apaga o atual\)'/); // (dono, 2026-10-11: texto para leigo)
-assert.match(cockpit, /RESET_PETROL:\s*'Reaprender gasolina \(apaga o atual\)'/);
 assert.doesNotMatch(cockpit, />Reset GNV<\/button>/);
 assert.doesNotMatch(cockpit, />Reset gasolina<\/button>/);
 assert.doesNotMatch(cockpit, /renderReview/, 'reaquisição em um toque, sem tela de revisão (dono, 2026-10-11)');

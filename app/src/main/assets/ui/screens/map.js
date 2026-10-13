@@ -133,6 +133,8 @@
      * grade. Gravar = mapa (fluxo manual, ACK + leitura de volta) e, em seguida, a curva neutra (core/balance-runner.js).
      */
     startCurveToMap() {
+      const gate = root.OmegasWriteGate?.check((root.OmegasUi || {}).AutoCalApi?.equivalence?.()?.autopilot);
+      if (gate && !gate.ok) { this.alert(gate.message); return; }
       if (!this.editor.hasMap() || this.reading || this.curveImport || this.root?.classList.contains('is-writing')) return;
       this.curveImport = { phase: 'map', startedAt: Date.now() };
       this.curvePlan = null;

@@ -22,6 +22,11 @@ class FakeEcu : Mp48SerialScheduler {
     var autoMatchCount = 1
     var step = 0
     val unknown = LinkedHashSet<String>()
+    /** Anomalias injetáveis: a ECU de verdade perde respostas, devolve lixo, reconecta e muda de sessão USB. */
+    var connected = true
+    var sessionId = 7L
+    var failNext = 0
+    var corruptNext = 0
 
     init {
         for (f in AutoCalProtocol.READ_ONLY_FIELDS) {
@@ -79,10 +84,16 @@ class FakeEcu : Mp48SerialScheduler {
 
     fun nativeAutoMatchDone() { autoMatchCount += 1; setScalar(AutoCalProtocol.NUM_AUTOMATCH_EXECUTED, autoMatchCount) }
 
-    override fun isConnected() = true
-    override fun currentSessionId() = 7L
+    override fun isConnected() = connected
+    override fun currentSessionId() = sessionId
+
+    fun setK(values: IntArray) = setU16Vector(AutoCalProtocol.MUL_ACT, values)
+    fun k(): IntArray = vectors.getValue(AutoCalProtocol.MUL_ACT.address).let { b -> IntArray(30) { i -> (b[i * 2].toInt() and 0xFF) or ((b[i * 2 + 1].toInt() and 0xFF) shl 8) } }
+    fun resetPetrol() = setU16Vector(AutoCalProtocol.NUM_BUF_UPD_PETR, IntArray(18))
+    fun resetGas() = setU16Vector(AutoCalProtocol.NUM_BUF_UPD_GAS, IntArray(18))
 
     private fun answer(request: ByteArray): UsbProtocolReply {
+        if (failNext > 0) { failNext -= 1; return UsbProtocolReply(ok = false, error = "timeout", request = request) }
         val cmd = request[0].toInt() and 0xFF
         val payload: ByteArray? = when {
             request.size == 3 && cmd == 0x48 && (request[1].toInt() and 0xFF) == 0x0B ->
@@ -93,14 +104,15 @@ class FakeEcu : Mp48SerialScheduler {
             else -> null
         }
         if (payload == null) { unknown += request.joinToString(" ") { "%02X".format(it) }; return UsbProtocolReply(ok = false, error = "desconhecido", request = request) }
-        return UsbProtocolReply(ok = true, status = 0x53, payload = payload.copyOf(), request = request)
+        val bytes = if (corruptNext > 0 && payload.size > 1) { corruptNext -= 1; payload.copyOf(payload.size - 1) } else payload.copyOf()
+        return UsbProtocolReply(ok = true, status = 0x53, payload = bytes, request = request)
     }
     private fun addr(r: ByteArray) = (r[1].toInt() and 0xFF) or ((r[2].toInt() and 0xFF) shl 8)
 
     override fun transaction(request: ByteArray, reason: String, timeoutMs: Int, purgeBefore: Boolean, expectedSessionId: Long, workClass: Mp48WorkClass, telemetryAfter: Boolean) = answer(request)
     override fun <T> unit(reason: String, expectedSessionId: Long, workClass: Mp48WorkClass, telemetryAfter: Boolean, waitTimeoutMs: Long, block: (Mp48SerialUnit) -> T): T =
         block(object : Mp48SerialUnit {
-            override val sessionId = 7L
+            override val sessionId: Long get() = this@FakeEcu.sessionId
             override fun transaction(request: ByteArray, reason: String, timeoutMs: Int, purgeBefore: Boolean) = answer(request)
         })
 }
@@ -108,7 +120,7 @@ class FakeEcu : Mp48SerialScheduler {
 private var failures = 0
 private fun check(ok: Boolean, text: String) { println((if (ok) "OK     " else "FALHOU ") + text); if (!ok) failures++ }
 
-fun main() {
+fun main(args: Array<String>) {
     val ecu = FakeEcu()
     val monitor = NativeAutoCalMonitor(serial = ecu, calibrationBusy = { false })
     fun epoch() = monitor.statusJson().getJSONObject("liveAcquisitionEpoch")
@@ -173,5 +185,84 @@ fun main() {
     check(e.getInt("gasSamples") == truth(AutoCalProtocol.NUM_BUF_UPD_GAS), "GNV: app ${e.getInt("gasSamples")} = ECU ${truth(AutoCalProtocol.NUM_BUF_UPD_GAS)}")
 
     if (ecu.unknown.isNotEmpty()) println("\nrequisições que a ECU falsa não conhece: ${ecu.unknown}")
+    println("\n== F) Cabo de guerra: a ECU reescreve a Curva K a cada AutoMatch, indo e voltando")
+    val tug = FakeEcu(); val mt = NativeAutoCalMonitor(serial = tug, calibrationBusy = { false })
+    fun settle(m: NativeAutoCalMonitor, ticks: Int) = repeat(ticks) { SystemClock.now += 1000; m.tick() }
+    settle(mt, 14)
+    val ups = listOf(1.12, 0.93, 1.09, 0.95)
+    for ((i, f) in ups.withIndex()) {
+        tug.setK(IntArray(30) { (16384 * f).toInt() })
+        tug.nativeAutoMatchDone()
+        settle(mt, 8)
+    }
+    val km = mt.statusJson().getJSONObject("kMovement")
+    println("   kMovement=$km")
+    check(km.getInt("events") >= 3, "medidor viu ${km.getInt("events")} AutoMatch com mudança da curva")
+    check(km.getBoolean("oscillating"), "vai-e-volta detectado (inversões em ${km.getInt("reversalPoints")} de ${km.getInt("pointsWithTwoMoves")} pontos)")
+    check(km.getBoolean("measurementOnly"), "medidor só mede (nada gravado)")
+
+    println("\n== G) Convergindo: a ECU mexe sempre para o mesmo lado")
+    val conv = FakeEcu(); val mc = NativeAutoCalMonitor(serial = conv, calibrationBusy = { false })
+    settle(mc, 14)
+    for (f in listOf(1.04, 1.07, 1.09, 1.10)) { conv.setK(IntArray(30) { (16384 * f).toInt() }); conv.nativeAutoMatchDone(); settle(mc, 8) }
+    val kc = mc.statusJson().getJSONObject("kMovement")
+    check(kc.getInt("events") >= 3 && !kc.getBoolean("oscillating"), "convergindo não é cabo de guerra (eventos=${kc.getInt("events")}, inversões=${kc.getInt("reversalPoints")})")
+
+    if (args.firstOrNull() == "fuzz") fuzz(args.getOrNull(1)?.toInt() ?: 1000)
     exitProcess(if (failures == 0) 0 else 1)
+}
+
+/**
+ * Milhares de cenários aleatórios (semente fixa) com anomalias: respostas perdidas, payload truncado, desconexão, troca de
+ * sessão USB, reset (todos/gasolina/GNV) no meio da aquisição, AutoMatch nativo reescrevendo a curva, troca de combustível.
+ * Invariantes depois de um período quieto: o app mostra o que a ECU tem, nenhum combustível preso em "pendente",
+ * nenhuma exceção escapa do monitor, o medidor nunca grava.
+ */
+fun fuzz(scenarios: Int) {
+    println("\n== FUZZ: $scenarios cenários com anomalias")
+    var exceptions = 0; var badTruth = 0; var stuck = 0
+    val firstBad = ArrayList<String>()
+    for (seed in 1..scenarios) {
+        val rnd = java.util.Random(seed.toLong() * 7919)
+        val ecu = FakeEcu(); val mon = NativeAutoCalMonitor(serial = ecu, calibrationBusy = { false })
+        var fuel = if (rnd.nextBoolean()) "PETROL" else "GAS"
+        var thrown: Throwable? = null
+        fun step(acquire: Boolean) {
+            if (acquire) ecu.acquire(fuel)
+            SystemClock.now += 1000
+            try { mon.tick() } catch (t: Throwable) { thrown = thrown ?: t }
+        }
+        repeat(12) { step(false) }
+        val steps = 60 + rnd.nextInt(140)
+        repeat(steps) {
+            val r = rnd.nextDouble()
+            when {
+                r < 0.05 -> fuel = if (fuel == "GAS") "PETROL" else "GAS"
+                r < 0.065 -> { ecu.resetAll(); mon.onManualActionConfirmed(JSONObject().put("sessionId", ecu.sessionId).put("action", "RESET_ALL").put("readbackValid", true)) }
+                r < 0.075 -> { ecu.resetGas(); mon.onManualActionConfirmed(JSONObject().put("sessionId", ecu.sessionId).put("action", "RESET_GAS").put("readbackValid", true)) }
+                r < 0.085 -> { ecu.resetPetrol(); mon.onManualActionConfirmed(JSONObject().put("sessionId", ecu.sessionId).put("action", "RESET_PETROL").put("readbackValid", true)) }
+                r < 0.10 -> { val f = 0.85 + rnd.nextDouble() * 0.4; ecu.setK(IntArray(30) { (16384 * f * (0.97 + rnd.nextDouble() * 0.06)).toInt() }); ecu.nativeAutoMatchDone() }
+                r < 0.13 -> ecu.failNext = 1 + rnd.nextInt(6)
+                r < 0.15 -> ecu.corruptNext = 1 + rnd.nextInt(4)
+                r < 0.16 -> { ecu.connected = false; repeat(1 + rnd.nextInt(4)) { step(false) }; ecu.connected = true }
+                r < 0.17 -> ecu.sessionId += 1
+            }
+            step(rnd.nextDouble() < 0.7)
+        }
+        ecu.failNext = 0; ecu.corruptNext = 0; ecu.connected = true
+        // Período quieto: a ECU continua adquirindo o combustível em uso e o app tem tempo de ler tudo.
+        repeat(40) { step(it % 3 == 0) }
+        val e = mon.statusJson().getJSONObject("liveAcquisitionEpoch")
+        val petrolTruth = ecu.counters(AutoCalProtocol.NUM_BUF_UPD_PETR).count { it > 0 }
+        val gasTruth = ecu.counters(AutoCalProtocol.NUM_BUF_UPD_GAS).count { it > 0 }
+        val why = ArrayList<String>()
+        if (thrown != null) { exceptions++; why += "exceção ${thrown!!::class.simpleName}: ${thrown!!.message}" }
+        if (e.getInt("petrolSamples") != petrolTruth || e.getInt("gasSamples") != gasTruth) { badTruth++; why += "app gasolina=${e.getInt("petrolSamples")} GNV=${e.getInt("gasSamples")} × ECU ${petrolTruth}/${gasTruth}" }
+        if (e.getBoolean("petrolPending") || e.getBoolean("gasPending")) { stuck++; why += "preso em pendente (${e.getString("reason")})" }
+        if (why.isNotEmpty() && firstBad.size < 8) firstBad += "semente $seed: ${why.joinToString("; ")}"
+    }
+    check(exceptions == 0, "nenhuma exceção escapou do monitor em $scenarios cenários (violações: $exceptions)")
+    check(badTruth == 0, "app = ECU depois do período quieto em $scenarios cenários (violações: $badTruth)")
+    check(stuck == 0, "nenhum combustível preso em 'pendente' (violações: $stuck)")
+    firstBad.forEach { println("   $it") }
 }

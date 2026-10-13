@@ -62,6 +62,8 @@ class NativeAutoCalMonitor(
     private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()
     private val refreshPlanner = NativeAutoCalRefreshPlanner()
     private val acquisitionEpoch = NativeAutoCalAcquisitionEpoch()
+    /** Só mede o vai-e-volta da Curva K feito pela própria ECU entre AutoMatch (nada é gravado ou decidido a partir disto). */
+    private val kMovement = NativeKMovementTracker()
 
     @Volatile private var sessionId = 0L
     @Volatile private var latestSnapshot = JSONObject().put("available", false)
@@ -93,6 +95,7 @@ class NativeAutoCalMonitor(
             autoMatchCounterTracker.reset()
             refreshPlanner.reset()
             acquisitionEpoch.reset(newSessionId)
+            kMovement.reset()
             // Agenda o bootstrap, mas tick() preserva o gate SESSION_SETTLE_MS antes
             // de qualquer leitura pesada. Assim o primeiro probe estável sempre
             // produz um snapshot completo e a UI não fica presa sem thresholds.
@@ -121,6 +124,7 @@ class NativeAutoCalMonitor(
             autoMatchCounterTracker.reset()
             refreshPlanner.reset()
             acquisitionEpoch.reset(0L)
+            kMovement.reset()
             snapshotRequested = false
             snapshotReason = ""
             latestSnapshot = JSONObject().put("available", false)
@@ -317,6 +321,7 @@ class NativeAutoCalMonitor(
         JSONObject(state.toString())
             .put("latestSnapshot", JSONObject(latestSnapshot.toString()).put("liveAcquisitionEpoch", liveEpoch))
             .put("liveAcquisitionEpoch", liveEpoch)
+            .put("kMovement", kMovement.summary().toJson())
             .put("snapshotRequested", snapshotRequested)
             .put("snapshotReason", snapshotReason)
             .put("appAutomaticWrite", false)
@@ -965,9 +970,13 @@ class NativeAutoCalMonitor(
         if (countIncreased &&
             autoMatchEvidence?.state == NativeAutoMatchEvidenceBracket.State.FACTOR_CHANGE_CONFIRMED
         ) {
+            val kMovementSummary = autoMatchEvidence.beforeRaw?.let { before ->
+                autoMatchEvidence.afterRaw?.let { after -> kMovement.observe(probe.autoMatchCount, before, after) }
+            }
             try {
                 onNativeCalibrationObserved(
                     autoMatchEvidence.toJson()
+                        .put("kMovement", kMovementSummary?.toJson() ?: JSONObject.NULL)
                         .put("source", SOURCE_NATIVE_AUTOCAL)
                         .put("calibrationType", "K_FACTOR")
                         .put("cause", "ECU_AUTOMATCH_COUNT_CHANGED")

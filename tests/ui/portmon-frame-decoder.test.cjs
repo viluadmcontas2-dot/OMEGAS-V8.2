@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { decodeEnvelope } = require('../../app/src/main/assets/ui/portmon-frame-decoder.js');
+const { decodeEnvelope } = require('../../tools/portmon/portmon-frame-decoder.js');
 
 test('decodifica resposta real 48 01 49 e valida checksum sem somar eco', () => {
   const decoded = decodeEnvelope(

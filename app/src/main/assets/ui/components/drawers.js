@@ -60,20 +60,12 @@
     }
 
     bind() {
-      document.getElementById('toolsButton')?.addEventListener('click', () => {
-        this.store.patch({ toolsOpen: !this.store.get().toolsOpen });
-      });
       document.querySelectorAll('[data-close-drawer]').forEach(button => button.addEventListener('click', () => {
         this.store.patch({ toolsOpen: false });
       }));
       document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
       document.getElementById('toolExportLearning')?.addEventListener('click', () => this.api.exportLearning());
       document.getElementById('toolImportLearning')?.addEventListener('click', () => this.api.importLearning());
-      document.getElementById('toolExportLogs')?.addEventListener('click', () => this.api.exportLogs());
-      document.getElementById('toolSelfTest')?.addEventListener('click', () => {
-        const result = this.api.selfTest();
-        this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Autoteste concluído.' : (result?.error || 'Autoteste não concluído.') } });
-      });
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('click', event => this.handleToolClick(event));
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('change', event => this.handleToolChange(event));
     }
