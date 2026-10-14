@@ -370,8 +370,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         val reads = v.optInt("newReads", 0)
         val budget = v.optInt("budgetReads", RefinementJournal.VERIFY_PARTIAL_SAMPLES)
         return when {
-            left > 0 -> "faltam $left ${plural(left, "faixa", "faixas")} · ${reads.coerceAtMost(budget)} de $budget leituras novas"
-            reads >= budget -> "sem leituras novas nas faixas gravadas · fecha sozinho com mais leituras"
+            left > 0 -> "faltam $left ${plural(left, "trecho", "trechos")} · ${reads.coerceAtMost(budget)} de $budget leituras novas"
+            reads >= budget -> "sem leituras novas nos trechos gravados · fecha sozinho com mais leituras"
             else -> "fechando o resultado · $reads de $budget leituras novas"
         }
     }
@@ -384,17 +384,17 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         "ECU_TRABALHANDO" -> "A ECU está no automático" +
             (if (count != null) " $count" + (if (max != null) " de $max" else "") else "") +
             ". O OMEGAS observa e junta pontos próprios (${out.optInt("ourPoints")} até agora)."
-        "COLETANDO_NOSSOS" -> if (off > 0) "$off ${plural(off, "faixa", "faixas")} fora da gasolina, ainda sem proposta do motor. O OMEGAS segue medindo."
+        "COLETANDO_NOSSOS" -> if (off > 0) "$off ${plural(off, "trecho", "trechos")} fora da gasolina, ainda sem proposta do motor. O OMEGAS segue medindo."
             else "A ECU terminou. Agora o OMEGAS junta pontos GNV × gasolina no mesmo RPM e MAP."
         "PROPOSTA_PRONTA" -> "Curva refinada pronta: $proposal ${plural(proposal, "ponto", "pontos")} para ajustar" +
-            (if (off > 0) " ($off de $measured faixas fora da gasolina)." else ".") +
+            (if (off > 0) " ($off de $measured trechos fora da gasolina)." else ".") +
             (verification?.let { " Gravação anterior: ${progress(it)}." } ?: "")
         "VERIFICANDO" -> "Medindo a gravação: " + (verification?.let { progress(it) } ?: "aguardando leituras") +
             (if (improved + worse > 0) ". Até agora $improved ${plural(improved, "melhorou", "melhoraram")} e $worse ${plural(worse, "piorou", "pioraram")}." else ".")
         "RESTAURAR_TRECHO" -> "$restore ${plural(restore, "ponto piorou", "pontos pioraram")} com a última gravação. " +
             "Restaure só ${plural(restore, "esse ponto", "esses pontos")}; os que melhoraram ficam."
-        "ESTAVEL" -> if (local > 0) "Curva equivalente à gasolina em $measured faixas (dentro de 5%). Falta um ajuste local no Mapa K."
-            else "GNV equivalente à gasolina em $measured faixas (dentro de 5%). Pode desconectar."
+        "ESTAVEL" -> if (local > 0) "Curva equivalente à gasolina em $measured trechos (dentro de 5%). Falta um ajuste local no Mapa K."
+            else "GNV equivalente à gasolina em $measured trechos (dentro de 5%). Pode desconectar."
         else -> ""
     }
 
@@ -407,13 +407,13 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             when {
                 index.optInt("petrolObservations") < 40 -> "Rode alguns minutos na gasolina para criar a referência."
                 wanted.isNotEmpty() -> "Rode no GNV passando por cargas de injeção $wanted." +
-                    (if (verifying) " Se não passar por lá, o OMEGAS fecha a medição depois de ${RefinementJournal.VERIFY_PARTIAL_SAMPLES} leituras novas e segue com as outras faixas." else "")
+                    (if (verifying) " Se não passar por lá, o OMEGAS fecha a medição depois de ${RefinementJournal.VERIFY_PARTIAL_SAMPLES} leituras novas e segue com os outros trechos." else "")
                 verifying && measuring > 0 -> "Continue rodando no GNV: faltam poucas leituras para fechar o resultado."
                 else -> "Continue rodando no GNV."
             }
         }
         "PROPOSTA_PRONTA" -> "Toque em Revisar e gravar. Nada é gravado sem você confirmar; a ECU confere por readback."
-        "RESTAURAR_TRECHO" -> "Restaurar volta só esses pontos ao valor anterior, com readback. Sem restaurar, o OMEGAS segue medindo e a oferta some se a faixa voltar para dentro da margem." +
+        "RESTAURAR_TRECHO" -> "Restaurar volta só esses pontos ao valor anterior, com readback. Sem restaurar, o OMEGAS segue medindo e a oferta some se o trecho voltar para dentro da margem." +
             (if (proposal > 0) " Os outros $proposal ${plural(proposal, "ponto", "pontos")} podem ser revisados e gravados agora." else "")
         "ESTAVEL" -> if (local > 0) "Toque em Revisar ajuste local: abre o Mapa K com as células preenchidas. Nada é gravado sem você confirmar."
             else "Nenhuma ação. O OMEGAS continua medindo e avisa se algo mudar."

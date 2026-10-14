@@ -275,7 +275,7 @@
         </section>
 
         <section class="diagnostic-recorder-card" data-recording="${recording ? 'true' : 'false'}">
-          <header><div><small>GRAVAÇÃO DE DIAGNÓSTICO</small><h3>${recording ? 'Gravando diagnóstico' : 'Gravação parada'}</h3></div><span>${recording ? 'GRAVANDO' : 'PARADA'}</span></header>
+          <header><div><small>REGISTRO DE SESSÃO</small><h3>${recording ? 'Registrando sessão' : 'Registro parado'}</h3></div><span>${recording ? 'REGISTRANDO' : 'PARADO'}</span></header>
           <div class="recorder-metrics">
             <span><b>${durationLabel(status.durationMs)}</b> duração</span>
             <span><b>${finite(status.megabytes) === null ? '—' : `${fmt(mb, 1)} MB`}</b> usados</span>
@@ -283,12 +283,12 @@
           </div>
           <div class="recorder-space"><i style="width:${fullness.toFixed(1)}%"></i></div>
           <div class="recorder-actions">
-            <button type="button" class="${recording ? 'quiet-button' : 'primary'}" data-session-start ${recording ? 'disabled' : ''}>Gravar diagnóstico</button>
+            <button type="button" class="${recording ? 'quiet-button' : 'primary'}" data-session-start ${recording ? 'disabled' : ''}>Registrar sessão</button>
             <button type="button" class="${recording ? 'secondary' : 'quiet-button'}" data-session-stop ${recording ? '' : 'disabled'}>Parar</button>
           </div>
           <div class="tool-disclosures">
             <details class="tool-sessions" ${sessionsOpenBeforeRender ? 'open' : ''}>
-              <summary>${disclosureTitle(`Gravações (${sessions.length})`)}</summary>
+              <summary>${disclosureTitle(`Sessões (${sessions.length})`)}</summary>
               <div class="tool-disclosure-body">
                 <div class="recorded-session-list">
                   ${sessions.length ? sessions.slice(0, 8).map(item => {
@@ -316,7 +316,7 @@
                       ` : ''}
                       <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
                     </article>`;
-                  }).join('') : '<p class="empty-copy">Nenhuma sessão gravada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
+                  }).join('') : '<p class="empty-copy">Nenhuma sessão registrada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
                 </div>
               </div>
             </details>

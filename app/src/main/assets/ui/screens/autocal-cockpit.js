@@ -1158,7 +1158,7 @@
       if (!host || !this.sessionDrawerOpen) return;
       const sessions = Array.isArray(this.sessions) ? this.sessions.slice(0, 8) : [];
       if (!sessions.length) {
-        host.innerHTML = '<p class="empty-copy">Nenhuma sessão gravada ainda.</p>';
+        host.innerHTML = '<p class="empty-copy">Nenhuma sessão registrada ainda.</p>';
         return;
       }
       host.innerHTML = sessions.map((item, index) => {
@@ -1577,7 +1577,7 @@
       const height = Math.max(150, Math.round(box.height || 300));
       // A chave NÃO inclui o AGORA (faixa de MAP atual, ponto de operação): ele anda numa camada leve (paintOriginalLive).
       const key = JSON.stringify([O.staticModel(model), width, height, Array.from(this.selectedAcquiredPoints || []), this.selectedAcquiredPoint]);
-      this.text('autocalReferenceCount', 'Prontas por zona: ' + model.zones.map(zone => zone.label).join(' · '));
+      this.text('autocalReferenceCount', 'Dados por zona: ' + model.zones.map(zone => zone.label).join(' · '));
       this.currentAcquiredPoints = [...AutoCalUxModel.acquiredPoints(snapshot, 'petrol'), ...AutoCalUxModel.acquiredPoints(snapshot, 'gas')];
       this.currentReferencePoints = [];
       const sideWidth = Math.round(width * 0.17);

@@ -198,7 +198,7 @@
 
     /**
      * "Curva K toda em 1,0" em um toque (dono, 2026-10-11: sem dupla confirmação; proteção = cópia antes).
-     * 1) guarda uma cópia da curva atual pelo mesmo caminho do botão "Salvar curva atual";
+     * 1) guarda uma cópia da curva atual pelo mesmo caminho do botão "Guardar backup";
      * 2) só com a cópia confirmada (poll → startResetAfterBackup) o reset começa; cópia que falha não reseta.
      */
     resetCurve() {
@@ -674,7 +674,7 @@
           review.disabled = items.length === 0;
           review.textContent = items.length
             ? `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`
-            : 'Nenhum ponto preparado';
+            : 'Gravar na ECU';
         }
       }
     }

@@ -64,7 +64,7 @@ test('valor 0: tocar numa célula não habilita Gravar nem mostra aviso', () => 
   assert.deepEqual(h.alerts, [], 'nenhum aviso sem o dono ter errado');
   assert.equal(h.previews.length, 0, 'somar 0 % não pede prévia');
   assert.equal(h.button().disabled, true);
-  assert.equal(h.button().textContent, 'Escolha quanto mudar');
+  assert.equal(h.button().textContent, 'Gravar na ECU');
   assert.equal(h.nodes.get('mapActiveCell').textContent, '3,5 ms · 3.000 RPM', 'milhar com ponto, como no cabeçalho');
 });
 
@@ -81,7 +81,7 @@ test('com +1 o botão diz quantas células mudam; prévia sem mudança também n
   h.screen.applyAdjustment();
   assert.deepEqual(h.alerts, []);
   assert.equal(h.button().disabled, true);
-  assert.equal(h.button().textContent, 'Escolha quanto mudar');
+  assert.equal(h.button().textContent, 'Gravar na ECU');
   assert.throws(() => h.screen.editor.buildReview(), /não muda nenhuma célula/, 'a gravação continua recusada quando nada muda');
 });
 

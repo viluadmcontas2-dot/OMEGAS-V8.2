@@ -32,9 +32,9 @@
 
     <section class="workspace">
       <header id="liveBar" class="workspace-head live-bar" aria-label="Leituras ao vivo da ECU" aria-live="off">
-        <div class="live-cell" data-live="voltage" data-state="unknown" title="Tensão da ECU (provisório: byte 19 do canal 48 01 ÷ 16, ainda não comparado com o módulo OBD). Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>Tensão ECU*</small><b>—</b><em>V</em></div>
+        <div class="live-cell" data-live="voltage" data-state="unknown" title="Tensão da ECU (provisório: byte 19 do canal 48 01 ÷ 16, ainda não comparado com o módulo OBD). Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>Tensão ECU</small><b>—</b><em>V</em></div>
         <div class="live-cell" data-live="map"><small>MAP</small><b>—</b><em>bar</em></div>
-        <div class="live-cell" data-live="petrol"><small>Petrol Inj.</small><b>—</b><em>ms</em></div>
+        <div class="live-cell" data-live="petrol"><small>Inj. gasolina</small><b>—</b><em>ms</em></div>
         <div class="live-cell" data-live="rpm"><small>RPM</small><b>—</b></div>
       </header>
 
@@ -57,7 +57,7 @@
               <div class="nudge-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
               <!-- Texto para leigo (dono, 2026-10-11): um toque em Gravar; a conferência na ECU (resposta + leitura de volta) é automática. -->
               <div class="safety-copy"><b>Nada foi gravado.</b><span>Confira os números e toque em Gravar; o app confere na ECU sozinho.</span></div>
-              <button id="mapReviewButton" type="button" class="primary wide" disabled>Selecione células</button>
+              <button id="mapReviewButton" type="button" class="primary wide" disabled>Gravar na ECU</button>
             </aside>
           </div>
 
@@ -90,7 +90,7 @@
                   <div class="editor-heading"><div><small>PROPOSTA</small><h3>Pontos preparados</h3></div><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
                   <div id="curveProposalList" class="proposal-list"><p>Toque num ponto do gráfico e em “Preparar este ponto”.</p></div>
                   <div class="safety-copy"><b>Uma confirmação</b><span>Confira o antes → depois. Gravar grava e confere na ECU sozinho, sem outro “tem certeza?”. Quer uma cópia antes? Salvar curva atual.</span></div>
-                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Nenhum ponto preparado</button>
+                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Gravar na ECU</button>
                 </aside>
               </div>
             </div>
@@ -99,7 +99,7 @@
           <!-- Rodapé único (dono, 2026-10-11): os botões da Curva K ficam embaixo, à esquerda, ao alcance da mão. -->
           <div class="curve-footbar" role="toolbar" aria-label="Ações da Curva K">
             <button id="curveReadButton" type="button" class="secondary">Reler ECU</button>
-            <button id="curveBackupSave" type="button" class="secondary">Salvar curva atual</button>
+            <button id="curveBackupSave" type="button" class="secondary">Guardar backup</button>
             <select id="curveBackupSelect" aria-label="Backups da Curva K"><option value="">Backups</option></select>
             <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Restaurar backup</button>
             <button id="curveResetButton" type="button" class="quiet-button">Curva K toda em 1,0</button>

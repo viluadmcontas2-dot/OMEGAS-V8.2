@@ -222,7 +222,7 @@ class RefinementCycleTest {
         repeat(120) { car.tick() }
         assertEquals("VERIFICANDO", car.last.getString("phase"))
         val headline = car.last.getString("headline")
-        assertTrue(headline, headline.startsWith("Medindo a gravação: faltam 2 faixas · 39 de 100 leituras novas"))
+        assertTrue(headline, headline.startsWith("Medindo a gravação: faltam 2 trechos · 39 de 100 leituras novas"))
         car.online = false
         repeat(100) { car.tick() } // parado: sem leitura nova nada anda
         assertTrue(car.last.getString("headline").contains("39 de 100 leituras novas"))

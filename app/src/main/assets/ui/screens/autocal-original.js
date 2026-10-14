@@ -285,7 +285,7 @@
     for (let value = Math.ceil(model.axisX.min); value <= xTicks; value += 1) {
       out.push('<text class="ao-tick" x="' + fixed(p.X(value)) + '" y="' + (height - 12) + '" text-anchor="middle">' + value + '</text>');
     }
-    out.push('<text class="ao-axis-title" x="' + fixed(p.m.left + p.w / 2) + '" y="' + (height - 1) + '" text-anchor="middle">Petrol injection time (ms)</text>');
+    out.push('<text class="ao-axis-title" x="' + fixed(p.m.left + p.w / 2) + '" y="' + (height - 1) + '" text-anchor="middle">Tempo de injeção na gasolina (ms)</text>');
     out.push('<g clip-path="url(#aoMainClip)">');
     for (const zone of model.zones) {
       // Fronteira de cada zona acima da primeira + rótulo #n/d encostado à direita, sobre a fronteira.
@@ -349,7 +349,7 @@
       out.push('<line class="ao-grid" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
       if (Math.round((value - model.axisY.min) / model.axisY.step) % 2 === 0) out.push('<text class="ao-tick" x="' + (p.m.left - 5) + '" y="' + fixed(p.Y(value) + 4) + '" text-anchor="end">' + value.toFixed(2) + '</text>');
     }
-    out.push('<text class="ao-axis-title" x="' + fixed(p.m.left + p.w / 2) + '" y="' + (height - 4) + '" text-anchor="middle">Acquisition</text>');
+    out.push('<text class="ao-axis-title" x="' + fixed(p.m.left + p.w / 2) + '" y="' + (height - 4) + '" text-anchor="middle">Aquisição</text>');
     for (const [squares, cls, x] of [[model.petrolSquares, 'petrol', -0.3], [model.gasSquares, 'gas', 0.3]]) {
       for (const square of squares) {
         if (!square.shown || square.y < model.axisY.min || square.y > model.axisY.max) continue;

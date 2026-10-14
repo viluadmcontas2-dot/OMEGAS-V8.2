@@ -451,8 +451,8 @@
       const button = document.getElementById('mapReviewButton');
       if (button) {
         button.disabled = count === 0 || changes === 0;
-        button.textContent = !count ? 'Selecione células'
-          : !changes ? 'Escolha quanto mudar'
+        button.textContent = !count ? 'Gravar na ECU'
+          : !changes ? 'Gravar na ECU'
             : `Gravar ${changes} ${changes === 1 ? 'alteração' : 'alterações'} na ECU`;
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {

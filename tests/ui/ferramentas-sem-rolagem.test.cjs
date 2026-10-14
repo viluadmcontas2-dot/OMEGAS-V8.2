@@ -111,7 +111,7 @@ test('Ferramentas: cartões + disclosures que abrem no lugar; log em páginas de
   drawers.renderTools(state);
   const out = host.innerHTML;
   for (const card of ['background-health-card', 'diagnostic-recorder-card', 'learning-portability-card']) assert.match(out, new RegExp('<section class="' + card + '"'));
-  assert.match(out, /<details class="tool-sessions" open>[\s\S]*Gravações \(9\)[\s\S]*class="recorded-session-list"/, 'lista de sessões dentro do disclosure, estado aberto preservado');
+  assert.match(out, /<details class="tool-sessions" open>[\s\S]*Sessões \(9\)[\s\S]*class="recorded-session-list"/, 'lista de sessões dentro do disclosure, estado aberto preservado');
   assert.equal((out.match(/data-export-session=/g) || []).length, 8, 'até 8 sessões, como antes');
   assert.match(out, /<details class="diagnostic-settings" >/);
   assert.match(out, /<details class="tool-logs live-log-console" >/);

@@ -103,7 +103,7 @@ test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem jargão na tela
   const store = { state: { curve: {} }, get() { return this.state; }, patch(p) { Object.assign(this.state, p); } };
   const screen = new ns.CurveScreen(store, api);
   screen.renderProposalList();
-  assert.equal(document.nodes.get('curveReviewButton').textContent, 'Nenhum ponto preparado');
+  assert.equal(document.nodes.get('curveReviewButton').textContent, 'Gravar na ECU');
   screen.restoreContext = { fileName: 'b.json' };
   screen.renderProposalList();
   assert.equal(document.nodes.get('curveReviewButton').textContent, 'Toque em Restaurar, no rodapé');

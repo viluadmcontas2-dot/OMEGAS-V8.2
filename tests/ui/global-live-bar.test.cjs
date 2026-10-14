@@ -35,7 +35,7 @@ test('o HTML tem a barra com tensão (provisória), MAP, Petrol Inj. e RPM, e el
   const html = read('index.html');
   assert.match(html, /<header id="liveBar"[^>]*class="workspace-head live-bar"/);
   for (const key of ['voltage', 'map', 'petrol', 'rpm']) assert.match(html, new RegExp('data-live="' + key + '"'));
-  assert.match(html, /Tensão ECU\*/);
+  assert.match(html, /<small>Tensão ECU<\/small>/); assert.match(html, /title="Tensão da ECU \(provisório/);
   assert.ok(html.indexOf('id="liveBar"') < html.indexOf('<main class="screen-host">'));
   assert.doesNotMatch(html, /data-route="(dashboard|suggestions)"|data-screen="(dashboard|suggestions)"/);
 });
