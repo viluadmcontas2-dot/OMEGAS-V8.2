@@ -121,7 +121,9 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val petrolZones = acquiredZones(acquisition, "GASOLINA")
             val gasZones = acquiredZones(acquisition, "GNV")
             val complete = petrolZones >= 4 && gasZones >= 4
-            if (awaitingRestartEvidence && !complete) { awaitingRestartEvidence = false; dirty = true }
+            // Sem leitura da aquisição (cabo fora, campo ausente) não há evidência nem a favor nem contra: "incompleta" aqui seria inventar.
+            val acquisitionKnown = acquisition?.optJSONArray("points")?.let { it.length() > 0 } == true
+            if (acquisitionKnown && awaitingRestartEvidence && !complete) { awaitingRestartEvidence = false; dirty = true }
             val fresh = when {
                 manual -> "MANUAL"
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
@@ -130,7 +132,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 else -> null
             }
             // Evidência contra o "terminou" já travado: AutoCal religado, ou a aquisição deixou de estar completa.
-            if ((ecuDoneLatch == "AUTOCAL_DESLIGADO" && enabled != 0) || (ecuDoneLatch == "AQUISICAO_COMPLETA" && !complete)) {
+            if ((ecuDoneLatch == "AUTOCAL_DESLIGADO" && enabled != 0) || (ecuDoneLatch == "AQUISICAO_COMPLETA" && acquisitionKnown && !complete)) {
                 ecuDoneLatch = null; if (!complete) awaitingRestartEvidence = false else awaitingRestartEvidence = true; dirty = true
             }
             if (fresh != null && fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }

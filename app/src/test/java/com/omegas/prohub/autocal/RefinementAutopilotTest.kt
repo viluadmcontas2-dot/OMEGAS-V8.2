@@ -113,6 +113,18 @@ class RefinementAutopilotTest {
     }
 
     @Test
+    fun `cabo fora no meio da espera pos readquirir nao conta como aquisicao incompleta`() {
+        val p = pilot()
+        assertTrue(p.observe(true, monitor(0), acquisition(18, 18), offIndex, noJournal, 0, proposal).getBoolean("ecuDone"))
+        p.noteAcquisitionRestart()
+        // Cabo fora: sem leitura da aquisição.
+        p.observe(false, null, null, offIndex, noJournal, 0, proposal)
+        // Volta com a leitura velha ainda completa: não vale.
+        val back = p.observe(true, monitor(0), acquisition(18, 18), offIndex, noJournal, 0, proposal)
+        assertFalse(back.getBoolean("ecuDone"))
+    }
+
+    @Test
     fun `refinar por minha conta nao sobrevive a reabrir o app`() {
         val dir = java.io.File.createTempFile("pilot", ".json")
         val p = RefinementAutopilot(dir) { now }
