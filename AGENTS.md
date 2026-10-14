@@ -64,6 +64,9 @@ Comandos de verificação: `node --test tests/ui/*.test.cjs` · `python3 -B -m u
 
 **Reabertura:** só reabrir o `ProgBase.exe` se a pergunta não estiver em `docs/reverse/` nem no `PROTOCOLO-LANDI`. Use o CLI do REA em segundo plano com instantâneo (receita no checkpoint); o MCP estoura 60 s nesse binário. Antes de varrer código, consulte o mapa acima ou use a Serena.
 
+## Só evidência, nunca relógio (dono, 2026-10-14)
+Nenhuma decisão do app (ECU terminou, fechar verificação, oferta de restaurar, visita, "piorou") depende de minutos. Vale o que a ECU mostra (AutoMatch n/3, zonas 4+4, readquirir) e a quantidade de leituras estáveis. Não existe botão de pausar a ECU (dono rejeitou: desliga a curva).
+
 ## Regra do APK (dono, 2026-10-13)
 
 Não gerar APK sem aprovação explícita do dono. Ordem: mexer → testar → mandar as prévias (imagens) → dono aprova → só então `verde-apk-now.yml`. Aprovação de uma rodada não vale para a seguinte.

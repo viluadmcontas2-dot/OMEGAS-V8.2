@@ -23,13 +23,13 @@ import kotlin.math.min
  *  - antes e depois só se comparam com a MESMA referência de gasolina (curva da ECU/gasolina própria);
  *    se ela trocou no meio, a faixa continua medindo, sem veredito, sem ensinar e sem oferecer restaurar;
  *  - a verificação nunca é eterna: fecha com tudo julgado, sem base (SEM_BASE, só depois de medir a faixa
- *    com a curva nova ou do prazo), com o que deu para julgar depois de [VERIFY_PARTIAL_ONLINE_MS] rodando,
- *    ou INCONCLUSIVO; parado o prazo não anda (lenta no GNV anda: dono, 2026-10-11, a curva aprende tudo);
+ *    com a curva nova ou de juntar [VERIFY_PARTIAL_SAMPLES] leituras), com o que deu para julgar, ou INCONCLUSIVO;
+ *    só evidência, nunca relógio (dono, 2026-10-14);
  *  - margem do dono: alvo ±4% ("chegou"), até 5% aceito; "piorou" só mais de 4% pior E erro acima de 5%;
  *  - só gravação de proposta/ajuste ensina o ganho por faixa; restaurar, desfazer, reset da curva,
  *    backup restaurado e o diário de versões antigas não;
  *  - restaurar oferece só os pontos que pioraram, que a ECU ainda tem no valor gravado e cuja faixa está
- *    fora de 5% agora, por até [RESTORE_OFFER_MS]; Mapa K ou gasolina readquirida anulam a oferta;
+ *    fora de 5% agora, enquanto a evidência atual disser que piorou; Mapa K ou gasolina readquirida anulam a oferta;
  *    desfazer vale para a última gravação de proposta até a próxima gravação ou a curva mudar por fora;
  *  - depois de restaurar/desfazer, o ponto não recebe proposta na mesma direção até a faixa
  *    ser medida de novo; depois de restaurar, nunca mais o valor que piorou (nem além);
@@ -65,14 +65,12 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         /** Um ponto age na faixa até meia unidade de ms além das bordas (K interpolado entre pontos vizinhos). */
         const val BAND_MARGIN_MS = 0.5
         /**
-         * Tempo com o motor funcionando no GNV (ECU online, qualquer rotação) depois da gravação. Passado isso fecha com
-         * o que já deu para julgar: faixa que o motorista não visita não pode segurar o refino para sempre.
+         * Evidência (não relógio): leituras estáveis novas, em todas as faixas, depois da gravação. Com este tanto fecha com o
+         * que já deu para julgar: faixa que o motorista não visita não segura o refino para sempre.
          */
-        const val VERIFY_PARTIAL_ONLINE_MS = 15 * 60_000L
-        /** Sem nenhuma faixa julgável depois disso: INCONCLUSIVO, e o refino segue. */
-        const val VERIFY_GIVE_UP_ONLINE_MS = 40 * 60_000L
-        /** A oferta de restaurar vale isso depois que o resultado fecha (Platina 41123729). */
-        const val RESTORE_OFFER_MS = 30 * 60_000L
+        const val VERIFY_PARTIAL_SAMPLES = 100
+        /** Com este tanto de leituras novas e nenhuma faixa julgável: INCONCLUSIVO, e o refino segue. */
+        const val VERIFY_GIVE_UP_SAMPLES = 500
         /** Leituras novas da MUL_ACT ainda com a curva de antes da gravação toleradas como atrasadas. */
         const val STALE_READS_MAX = 1
         private const val MAX_TICK_MS = 10_000L
@@ -253,7 +251,6 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 .put("afterRaw", JSONArray(afterRaw.toList()))
                 .put("indexBefore", indexBefore)
                 .put("owned", JSONArray(touched.toList()))
-                .put("onlineMs", 0L)
                 .put("status", STATUS_VERIFYING)
             while (experiments.size > MAX_EXPERIMENTS) experiments.removeAt(0)
             // A ECU agora tem a curva gravada; a leitura em mãos é a de antes (atrasada), não "mudou por fora".
@@ -351,20 +348,15 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         var structural = false
         synchronized(lock) {
             val now = clock()
-            val dt = if (lastEvaluateAt == 0L) 0L else (now - lastEvaluateAt).coerceIn(0L, MAX_TICK_MS)
             lastEvaluateAt = now
             lastIndexNow = indexNow
-            // A oferta de restaurar envelhece (tempo de serviço, imune ao relógio voltar).
-            experiments.filter { it.optString("status") == "PIOROU_EM_PARTE" }.forEach {
-                it.put("offerAgeMs", it.optLong("offerAgeMs", 0L) + dt)
-            }
             for (exp in experiments.filter { it.optString("status") == STATUS_VERIFYING }) {
-                if (driving && dt > 0) { exp.put("onlineMs", exp.optLong("onlineMs", 0L) + dt); dirty = true }
-                val onlineMs = exp.optLong("onlineMs", 0L)
-                val timeboxed = onlineMs >= VERIFY_PARTIAL_ONLINE_MS
+                val afterIndex = indexSince?.invoke(exp.optLong("appliedAt")) ?: indexNow
+                val newReads = (0 until (afterIndex.optJSONArray("bands")?.length() ?: 0)).sumOf { afterIndex.optJSONArray("bands")!!.optJSONObject(it)?.optInt("samples", 0) ?: 0 }
+                if (newReads != exp.optInt("newReads", -1)) { exp.put("newReads", newReads); dirty = true }
+                val timeboxed = newReads >= VERIFY_PARTIAL_SAMPLES
                 val owned = ownedBands(exp)
                 val frozen = frozenBands(exp)
-                val afterIndex = indexSince?.invoke(exp.optLong("appliedAt")) ?: indexNow
                 val beforeIndex = exp.optJSONObject("indexBefore") ?: JSONObject()
                 val before = beforeIndex.optJSONArray("bands") ?: JSONArray()
                 val after = afterIndex.optJSONArray("bands") ?: JSONArray()
@@ -408,7 +400,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 val pending = owned.count { verdictOf(exp, it) == "COLETANDO" }
                 val judged = BANDS.indices.count { verdictOf(exp, it) in JUDGED }
                 val noBase = owned.all { verdictOf(exp, it) in setOf("SEM_ANTES", "INTERROMPIDA") }
-                if ((pending == 0 && (judged > 0 || noBase)) || onlineMs >= VERIFY_GIVE_UP_ONLINE_MS) {
+                if ((pending == 0 && (judged > 0 || noBase)) || newReads >= VERIFY_GIVE_UP_SAMPLES) {
                     close(exp, now)
                     structural = true
                 }
@@ -429,7 +421,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             owned.isEmpty() || owned.all { verdictOf(exp, it) == "SEM_ANTES" } -> "SEM_BASE"
             else -> "INCONCLUSIVO"
         }
-        exp.put("status", status).put("closedAt", now).put("offerAgeMs", 0L)
+        exp.put("status", status).put("closedAt", now)
         // Só proposta/ajuste ensinam o ganho; restaurar e desfazer nunca (senão a próxima proposta repete a direção).
         if (judged > 0 && exp.optString("kind", KIND_MANUAL) in TEACHES) learn(exp.optJSONArray("bands") ?: JSONArray())
         markChanged()
@@ -524,7 +516,6 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             val e = experiments[k]
             if (e.optString("kind", KIND_MANUAL) !in TEACHES) continue
             if (e.optString("status") != "PIOROU_EM_PARTE" || e.optBoolean("undone") || e.has("curveChangedOutside") || e.has("restoreVoid")) continue
-            if (e.optLong("offerAgeMs", 0L) >= RESTORE_OFFER_MS) continue
             if (offerable(e, k).length() > 0) return e
         }
         return null
@@ -682,8 +673,8 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             .put("format", FORMAT)
             .put("bandScale", JSONArray(bandScale.toList()))
             .put("bands", JSONArray(BANDS.map { JSONObject().put("fromMs", it.first).put("toMs", it.second) }))
-            .put("verifyBudgetMs", VERIFY_PARTIAL_ONLINE_MS)
-            .put("giveUpBudgetMs", VERIFY_GIVE_UP_ONLINE_MS)
+            .put("verifyBudgetSamples", VERIFY_PARTIAL_SAMPLES)
+            .put("giveUpBudgetSamples", VERIFY_GIVE_UP_SAMPLES)
             .put("latest", last?.let { e ->
                 JSONObject(e.toString()).apply { remove("axisRaw"); remove("verdictNames"); remove("indexAfter") }
                     .put("points", pointVerdicts(e))
@@ -694,15 +685,15 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             .put("result", result?.let { e ->
                 JSONObject().put("id", e.optString("id")).put("kind", e.optString("kind", KIND_MANUAL))
                     .put("status", e.optString("status")).put("appliedAt", e.optLong("appliedAt"))
-                    .put("closedAt", e.optLong("closedAt", 0L)).put("onlineMs", e.optLong("onlineMs", 0L))
+                    .put("closedAt", e.optLong("closedAt", 0L)).put("newReads", e.optInt("newReads", 0))
                     .put("points", pointVerdicts(e))
                     .put("bands", e.optJSONArray("bands") ?: JSONArray())
             } ?: JSONObject.NULL)
             // Progresso da medição em curso (para a frase "faltam N faixas · X de 15 min rodando").
             .put("verifying", experiments.lastOrNull { it.optString("status") == STATUS_VERIFYING }?.let { open ->
                 JSONObject().put("id", open.optString("id")).put("bandsLeft", measuringBands().size)
-                    .put("drivingMs", open.optLong("onlineMs", 0L)).put("budgetMs", VERIFY_PARTIAL_ONLINE_MS)
-                    .put("giveUpMs", VERIFY_GIVE_UP_ONLINE_MS)
+                    .put("newReads", open.optInt("newReads", 0)).put("budgetReads", VERIFY_PARTIAL_SAMPLES)
+                    .put("giveUpReads", VERIFY_GIVE_UP_SAMPLES)
             } ?: JSONObject.NULL)
             .put("restoreFrom", source?.optString("id") ?: JSONObject.NULL)
             .put("measuringBands", JSONArray(measuringBands().toList()))

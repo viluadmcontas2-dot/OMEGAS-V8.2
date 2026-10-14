@@ -160,7 +160,7 @@ class RefinementCycleTest {
     }
 
     @Test
-    fun `verificacao com faixa nunca visitada fecha em 15 min de ECU online e a proposta volta`() {
+    fun `verificacao com faixa nunca visitada fecha com leituras suficientes e a proposta volta`() {
         val car = Car()
         var wave = 1
         car.engine = { i, c -> if (wave == 1 && ms(i) in 3.0..12.0) (c[i] * 1.05).toInt() else if (wave == 2 && ms(i) in 9.0..12.0) (c[i] * 1.03).toInt() else c[i] }
@@ -170,12 +170,13 @@ class RefinementCycleTest {
         assertEquals("PROPOSTA_PRONTA", s0.getString("phase"))
         car.write(car.proposalPoints(), propose)
         car.readEcu(); wave = 2
-        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.05 to 12, 1.03 to 3) // 9–12 ms nunca chega a 8 leituras
-        repeat(290) { car.tick() } // ~14,5 min
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.05 to 12, 1.03 to 3) // 9–12 ms nunca chega a 8 leituras (51 leituras novas)
+        repeat(290) { car.tick() } // por mais que passe tempo, sem leituras novas nada fecha
         assertEquals("VERIFICANDO", car.last.getString("phase"))
         assertTrue("pontos da faixa em medição ficam fora da proposta", car.proposedIndexes().isEmpty())
         assertEquals("none", car.action().getString("kind"))
-        repeat(20) { car.tick() } // passa de 15 min de ECU online
+        car.drive(1.0 to 60, 1.0 to 60, 1.0 to 60, 1.05 to 60, 1.03 to 3) // 126 leituras novas: passa de 100
+        repeat(20) { car.tick() }
         assertFalse(car.journal.json().getJSONObject("latest").getString("status") == RefinementJournal.STATUS_VERIFYING)
         assertEquals("PROPOSTA_PRONTA", car.last.getString("phase"))
         assertTrue(car.proposedIndexes().isNotEmpty() && car.proposedIndexes().all { ms(it) in 9.0..12.0 })
@@ -194,16 +195,18 @@ class RefinementCycleTest {
     // Ajustado (dono, 2026-10-11: a curva aprende tudo): a lenta agora conta no prazo (RefinementCycle.driving);
     // só parado (motor desligado, ECU fora ou na gasolina) não conta.
     @Test
-    fun `prazo da verificacao so anda com o motor no GNV e parado nao conta`() {
+    fun `verificacao so anda com leituras novas e sem leituras nada fecha`() {
         val journal = RefinementJournal(null, clock)
-        journal.recordCurveWrite(IntArray(30) { 16384 }, IntArray(30) { 17000 }, axisRaw, index(1.05 to 20, 1.05 to 20, 1.05 to 20, 1.05 to 20, 1.05 to 20), "KF")
-        repeat(1200) { now += 3_000; journal.evaluate(empty, driving = false) } // 1 h parado
+        val points = IntArray(30) { 16384 }.also { for (i in 14..16) it[i] = 17000 } // só a faixa 7,5–9
+        journal.recordCurveWrite(IntArray(30) { 16384 }, points, axisRaw, index(1.0 to 20, 1.0 to 20, 1.0 to 20, 1.05 to 20, 1.0 to 20), "KF")
+        repeat(1200) { now += 3_000; journal.evaluate(empty, driving = false) } // horas sem leitura nova
         assertEquals(RefinementJournal.STATUS_VERIFYING, journal.json().getJSONObject("latest").getString("status"))
-        assertEquals(0L, journal.json().getJSONObject("verifying").getLong("drivingMs"))
-        repeat(310) { now += 3_000; journal.evaluate(empty, driving = true) } // ~15,5 min rodando
-        // Passado o prazo parcial sem nenhuma faixa medida: nada fica retido (a proposta segue) e fecha sozinho em 40 min.
-        assertTrue(journal.measuringBands().isEmpty())
-        repeat(500) { now += 3_000; journal.evaluate(empty, driving = true) } // > 40 min rodando
+        assertEquals(0, journal.json().getJSONObject("verifying").getInt("newReads"))
+        // Leituras só nas faixas que não foram gravadas: a faixa gravada sem leituras não segura a proposta.
+        journal.evaluate(index(null to 3, null to 3, null to 3, null to 3, null to 3))
+        assertEquals(RefinementJournal.STATUS_VERIFYING, journal.json().getJSONObject("latest").getString("status"))
+        // Leituras de sobra (500+) e nenhuma julgável nas faixas gravadas: INCONCLUSIVO.
+        journal.evaluate(index(null to 300, null to 300, null to 300, null to 3, null to 0))
         assertEquals("INCONCLUSIVO", journal.json().getJSONObject("latest").getString("status"))
     }
 
@@ -216,13 +219,13 @@ class RefinementCycleTest {
         car.write(car.proposalPoints(), propose)
         car.readEcu()
         car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.0 to 3, null to 0)
-        repeat(120) { car.tick() } // 6 min rodando
+        repeat(120) { car.tick() }
         assertEquals("VERIFICANDO", car.last.getString("phase"))
         val headline = car.last.getString("headline")
-        assertTrue(headline, headline.startsWith("Medindo a gravação: faltam 2 faixas · 6 de 15 min rodando"))
+        assertTrue(headline, headline.startsWith("Medindo a gravação: faltam 2 faixas · 39 de 100 leituras novas"))
         car.online = false
-        repeat(100) { car.tick() } // parado: o tempo não anda
-        assertTrue(car.last.getString("headline").contains("6 de 15 min rodando"))
+        repeat(100) { car.tick() } // parado: sem leitura nova nada anda
+        assertTrue(car.last.getString("headline").contains("39 de 100 leituras novas"))
     }
 
     @Test

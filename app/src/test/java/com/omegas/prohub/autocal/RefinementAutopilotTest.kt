@@ -70,11 +70,10 @@ class RefinementAutopilotTest {
     }
 
     @Test
-    fun `aquisicao completa e silencio da ECU contam como ECU parou e novo automatico volta a esperar`() {
+    fun `aquisicao completa nos dois combustiveis conta como ECU parou e novo automatico volta a esperar`() {
         val p = pilot()
-        p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0, proposal)
-        repeat(220) { now += 3_000; p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0, proposal) }
-        assertEquals("PROPOSTA_PRONTA", p.json().getString("phase"))
+        val r1 = p.observe(true, monitor(1, max = null), acquisition(18, 18), offIndex, noJournal, 0, proposal)
+        assertEquals("PROPOSTA_PRONTA", r1.getString("phase")) // evidência da ECU, sem esperar relógio
         now += 3_000
         val r = p.observe(true, monitor(2, max = null), acquisition(18, 18), offIndex, noJournal, 0, proposal)
         assertEquals("ECU_TRABALHANDO", r.getString("phase"))
@@ -84,16 +83,27 @@ class RefinementAutopilotTest {
     }
 
     @Test
-    fun `readquirir zera o silencio da ECU e desfaz o ECU terminou`() {
+    fun `aquisicao incompleta nunca vira ECU terminou so por tempo`() {
         val p = pilot()
-        p.observe(true, monitor(0), acquisition(14, 14), offIndex, noJournal, 0, proposal)
-        repeat(520) { now += 3_000; p.observe(true, monitor(0), acquisition(14, 14), offIndex, noJournal, 0, proposal) }
-        assertEquals("SEM_AUTOMATICO_NOVO", p.json().getString("ecuDoneReason"))
-        p.noteAcquisitionRestart()
-        now += 3_000
-        val r = p.observe(true, monitor(0), acquisition(14, 14), offIndex, noJournal, 0, proposal)
+        p.observe(true, monitor(1), acquisition(14, 14), offIndex, noJournal, 0, proposal)
+        now += 24 * 3_600_000L
+        val r = p.observe(true, monitor(1), acquisition(14, 14), offIndex, noJournal, 0, proposal)
         assertFalse(r.getBoolean("ecuDone"))
         assertEquals("ECU_TRABALHANDO", r.getString("phase"))
+    }
+
+    @Test
+    fun `readquirir desfaz o ECU terminou e a aquisicao velha ainda completa nao o refaz`() {
+        val p = pilot()
+        assertTrue(p.observe(true, monitor(0), acquisition(18, 18), offIndex, noJournal, 0, proposal).getBoolean("ecuDone"))
+        p.noteAcquisitionRestart()
+        // A leitura ainda mostra a aquisição velha completa: não vale.
+        val stale = p.observe(true, monitor(0), acquisition(18, 18), offIndex, noJournal, 0, proposal)
+        assertFalse(stale.getBoolean("ecuDone"))
+        assertEquals("ECU_TRABALHANDO", stale.getString("phase"))
+        // A ECU zerou e voltou a adquirir: incompleta, depois completa de novo = terminou de novo.
+        assertFalse(p.observe(true, monitor(0), acquisition(6, 6), offIndex, noJournal, 0, proposal).getBoolean("ecuDone"))
+        assertTrue(p.observe(true, monitor(0), acquisition(18, 18), offIndex, noJournal, 0, proposal).getBoolean("ecuDone"))
     }
 
     @Test

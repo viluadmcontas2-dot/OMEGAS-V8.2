@@ -14,7 +14,7 @@ import kotlin.math.ln
  *    aquisição. O OMEGAS só observa e junta pontos próprios (RPM×MAP) em paralelo:
  *    gravar agora seria sobrescrito pelo próximo automático da ECU.
  * 2. A ECU parou (atingiu MAX_AUTOMATCH, AutoCal desligado/congelado, ou aquisição
- *    completa e sem automático novo há [QUIET_MS] de ECU online): é a nossa vez.
+ *    completa nos dois combustíveis; só evidência da ECU, nunca relógio): é a nossa vez.
  *    Prioridade (um botão por ação, nenhum estado sem saída, sem "Entendi"):
  *    - RESTAURAR_TRECHO: pontos pioraram (fora da margem do dono) → "Restaurar N pontos que pioraram";
  *      se houver proposta para outros pontos, "Revisar e gravar" aparece junto (pontos independentes).
@@ -41,11 +41,6 @@ import kotlin.math.ln
 class RefinementAutopilot(private val file: File? = null, private val clock: () -> Long = System::currentTimeMillis) {
     companion object {
         const val FORMAT = "omegas-refinement-autopilot-v1"
-        /** ECU online sem automático novo, com aquisição completa, por este tempo = ECU parou. */
-        const val QUIET_MS = 10 * 60_000L
-        /** Sem aquisição completa (faixas que o motorista nunca visita), espera mais. */
-        const val QUIET_PARTIAL_MS = 25 * 60_000L
-        const val PARTIAL_MIN_ZONES = 3
         /** Margem do dono: até 5% é aceito; a faixa só entra "fora" acima disso. */
         val TOLERANCE_LOG = ln(1.05)
         /** Alvo do dono (±4%): faixa que passou de 5% só volta a "dentro" aqui. */
@@ -68,7 +63,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
     private val lock = Any()
     private var lastCount: Int? = null
-    private var quietMs = 0L
+    /** Depois de readquirir ou de um AutoMatch, a aquisição velha ainda pode aparecer "completa" na leitura: só vale de novo depois de vista incompleta. */
+    private var awaitingRestartEvidence = false
     private var lastTickAt = 0L
     private var phase = "SEM_ECU"
     private var alertedPhase = ""
@@ -107,14 +103,12 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     ): JSONObject {
         val result = synchronized(lock) {
             val now = clock()
-            val dt = if (lastTickAt == 0L) 0L else (now - lastTickAt).coerceIn(0L, MAX_TICK_MS)
             lastTickAt = now
             val enabled = monitor?.optInt("autoCalEnabled", -1)?.takeIf { monitor.has("autoCalEnabled") && !monitor.isNull("autoCalEnabled") }
             val count = monitor?.optInt("autoMatchCount", -1)?.takeIf { it >= 0 }
             val max = monitor?.optInt("maxAutomatch", -1)?.takeIf { it > 0 && !monitor.isNull("maxAutomatch") }
             if (ecuOnline && count != null) {
-                if (lastCount != null && count != lastCount) { quietMs = 0L; ecuDoneLatch = null; dirty = true }
-                else { quietMs += dt; if (dt > 0) dirty = true }
+                if (lastCount != null && count != lastCount) { ecuDoneLatch = null; awaitingRestartEvidence = true; dirty = true }
                 if (lastCount != count) dirty = true
                 lastCount = count
             }
@@ -125,11 +119,11 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val petrolZones = acquiredZones(acquisition, "GASOLINA")
             val gasZones = acquiredZones(acquisition, "GNV")
             val complete = petrolZones >= 4 && gasZones >= 4
+            if (awaitingRestartEvidence && !complete) { awaitingRestartEvidence = false; dirty = true }
             val fresh = when {
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
-                complete && quietMs >= QUIET_MS -> "AQUISICAO_COMPLETA"
-                petrolZones >= PARTIAL_MIN_ZONES && gasZones >= PARTIAL_MIN_ZONES && quietMs >= QUIET_PARTIAL_MS -> "SEM_AUTOMATICO_NOVO"
+                complete && !awaitingRestartEvidence -> "AQUISICAO_COMPLETA"
                 else -> null
             }
             if (fresh != null && fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
@@ -143,7 +137,6 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("gasValid", gasValid ?: JSONObject.NULL)
                 .put("petrolZones", petrolZones)
                 .put("gasZones", gasZones)
-                .put("quietMinutes", quietMs / 60_000.0)
                 .put("ecuDone", ecuReason != null)
                 .put("ecuDoneReason", ecuReason ?: JSONObject.NULL)
                 .put("ourPoints", index.optInt("samples", 0))
@@ -267,9 +260,9 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val open = journal.optJSONObject("verifying")
             val verification = if (verifying && open != null) JSONObject()
                 .put("bandsLeft", open.optInt("bandsLeft", 0))
-                .put("drivingMinutes", open.optLong("drivingMs", 0L) / 60_000.0)
-                .put("budgetMinutes", open.optLong("budgetMs", RefinementJournal.VERIFY_PARTIAL_ONLINE_MS) / 60_000.0)
-                .put("giveUpMinutes", open.optLong("giveUpMs", RefinementJournal.VERIFY_GIVE_UP_ONLINE_MS) / 60_000.0)
+                .put("newReads", open.optInt("newReads", 0))
+                .put("budgetReads", open.optInt("budgetReads", RefinementJournal.VERIFY_PARTIAL_SAMPLES))
+                .put("giveUpReads", open.optInt("giveUpReads", RefinementJournal.VERIFY_GIVE_UP_SAMPLES))
             else null
             out.put("phase", phase)
                 .put("canDisconnect", phase == "ESTAVEL" && localCount == 0)
@@ -309,8 +302,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
      * "ECU terminou" aos 52 min, e o AutoMatch da ECU veio 1 min depois por cima da proposta.
      */
     fun noteAcquisitionRestart() = synchronized(lock) {
-        quietMs = 0L
         ecuDoneLatch = null
+        awaitingRestartEvidence = true
         dirty = true
     }
 
@@ -359,19 +352,15 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
 
     private fun plural(n: Int, one: String, many: String) = if (n == 1) one else many
 
-    /**
-     * "faltam 2 faixas · 6 de 15 min rodando" (parado o tempo não anda; lenta no GNV conta). Passado o prazo
-     * sem nenhuma faixa medida: diz em quanto tempo rodando o resultado fecha sozinho.
-     */
+    /** "faltam 2 faixas · 60 de 150 leituras novas" (só evidência: parado nada anda). */
     private fun progress(v: JSONObject): String {
         val left = v.optInt("bandsLeft", 0)
-        val minutes = Math.floor(v.optDouble("drivingMinutes", 0.0)).toInt()
-        val budget = Math.round(v.optDouble("budgetMinutes", 15.0)).toInt()
-        val giveUp = Math.round(v.optDouble("giveUpMinutes", 40.0)).toInt()
+        val reads = v.optInt("newReads", 0)
+        val budget = v.optInt("budgetReads", RefinementJournal.VERIFY_PARTIAL_SAMPLES)
         return when {
-            left > 0 -> "faltam $left ${plural(left, "faixa", "faixas")} · $minutes de $budget min rodando"
-            minutes >= budget -> "sem leituras novas nas faixas gravadas · fecha sozinho em até ${(giveUp - minutes).coerceAtLeast(1)} min rodando"
-            else -> "fechando o resultado · $minutes de $budget min rodando"
+            left > 0 -> "faltam $left ${plural(left, "faixa", "faixas")} · ${reads.coerceAtMost(budget)} de $budget leituras novas"
+            reads >= budget -> "sem leituras novas nas faixas gravadas · fecha sozinho com mais leituras"
+            else -> "fechando o resultado · $reads de $budget leituras novas"
         }
     }
 
@@ -427,7 +416,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             dirty = false
             lastSaveAt = now
             JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
-                .put("quietMs", quietMs).put("phase", phase).put("alertedPhase", alertedPhase)
+                .put("awaiting", awaitingRestartEvidence).put("phase", phase).put("alertedPhase", alertedPhase)
                 .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
                 .put("offLatch", JSONArray(offLatch.toList()))
         }
@@ -446,7 +435,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val root = JSONObject(source.readText())
             if (root.optString("format") != FORMAT) return
             lastCount = if (root.isNull("lastCount")) null else root.optInt("lastCount")
-            quietMs = root.optLong("quietMs", 0L)
+            awaitingRestartEvidence = root.optBoolean("awaiting", false)
             phase = root.optString("phase", "SEM_ECU")
             alertedPhase = root.optString("alertedPhase", "")
             ecuDoneLatch = if (root.isNull("ecuDoneLatch")) null else root.optString("ecuDoneLatch").takeIf { it.isNotBlank() }

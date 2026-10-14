@@ -319,11 +319,11 @@ class RefinementReviewTest {
     }
 
     @Test
-    fun `10 oferta de restaurar expira e o Mapa K anula`() {
+    fun `10 oferta de restaurar nao expira por tempo e o Mapa K anula`() {
         val (journal, _) = worsenedJournal(laterWrite = false)
         assertEquals(3, journal.restorePoints().length())
-        repeat(620) { now += 3_000; journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 24, 1.0 to 12)) } // 31 min
-        assertEquals("a oferta não expira em 30 min", 0, journal.restorePoints().length())
+        repeat(620) { now += 3_000; journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 24, 1.0 to 12)) } // horas depois
+        assertEquals("a evidência ainda diz que piorou: a oferta fica", 3, journal.restorePoints().length())
         val (other, _) = worsenedJournal(laterWrite = false)
         assertEquals(3, other.restorePoints().length())
         other.interrupt("MAPA_K_GRAVADO")

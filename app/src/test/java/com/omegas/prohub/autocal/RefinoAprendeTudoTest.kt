@@ -159,8 +159,9 @@ class RefinoAprendeTudoTest {
         val rig = Rig()
         rig.petrol(idle, cruise)
         repeat(3) { rig.visit(cruise to 1.0, n = 10) }
-        // Cada passo: 3 visitas novas de 10 leituras na lenta (a região guarda as 30 mais recentes).
-        fun step(ratio: Double): JSONObject? { repeat(3) { rig.visit(idle to ratio, n = 10) }; rig.tick(); return rig.local() }
+        // Cada passo: 3 visitas novas de 10 leituras na lenta (a região guarda as 30 mais recentes); entre uma visita e outra
+        // o carro passa por outra região (visita = passagem; sem relógio).
+        fun step(ratio: Double): JSONObject? { repeat(3) { rig.visit(idle to ratio, n = 10); rig.visit(cruise to 1.0, n = 2) }; rig.tick(); return rig.local() }
         assertNull("4,2% nunca vira botão", step(1.042))
         val entered = step(1.055)
         assertNotNull("5,5% entra", entered)

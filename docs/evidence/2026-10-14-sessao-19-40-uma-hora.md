@@ -18,3 +18,6 @@ Achados
 4. Telemetria sem buraco longo; fim por USB desconectado (59,6 min), sem perda de pacote registrada.
 
 Não provado: a causa do apagão; se o corte de 55 °C é o certo para o sensor desta ECU (a água nunca passou de 64 °C).
+
+## Decisão do dono (2026-10-14): só evidência, nunca relógio
+Trocado por evidência (commit desta data): "ECU terminou" = AutoMatch n/n, AutoCal desligado ou zonas 4+4 nos dois combustíveis (e só vale de novo depois de vista incompleta após Readquirir/AutoMatch); fim da verificação = 100 leituras novas (parcial) / 500 (INCONCLUSIVO); "piorou" = 20+ leituras; oferta de restaurar dura enquanto a evidência atual disser que piorou; "visita" = passagem por outra região no meio. Removidos: 10/25 min de silêncio, 15/40 min de verificação, 30 min de oferta, 30 s de visita. Efeito colateral aceito: com pouca gasolina (zonas <4+4) o Refino espera a ECU (3/3), como antes de o botão Pausar existir.

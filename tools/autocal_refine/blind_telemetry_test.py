@@ -88,7 +88,6 @@ MIN_VISITS = 3
 VISIT_SPREAD_LOG = math.log(1.03)
 MIN_OTHER_PAIRS = 8
 SAME_T_MS = 0.5
-VISIT_GAP_MS = 30_000
 
 
 def _cell(o):
@@ -126,18 +125,22 @@ def attribution(pairs, latched=frozenset()):
         b = band_of(p["tp"])
         col = kmap_column(p["rpm"])
         members.append({**p, "col": col, "key": (col, b) if b >= 0 else None, "err": math.log(p["tg"] / p["tp"])})
+    visit, previous = 0, None
+    for m in sorted(members, key=lambda x: x["ts"]):
+        if m["key"] != previous:
+            visit += 1
+        m["visit"] = visit
+        previous = m["key"]
     by_key = {}
     for m in members:
         if m["key"] is not None:
             by_key.setdefault(m["key"], []).append(m)
     stats = []
     for key, group in by_key.items():
-        visits, last = [], None
-        for m in sorted(group, key=lambda x: x["ts"]):
-            if last is None or m["ts"] - last > VISIT_GAP_MS:
-                visits.append([])
-            visits[-1].append(m["err"])
-            last = m["ts"]
+        by_visit = {}
+        for m in group:
+            by_visit.setdefault(m["visit"], []).append(m["err"])
+        visits = [by_visit[k] for k in sorted(by_visit)]
         stats.append({"key": key, "n": len(group), "tp": _upper_median([m["tp"] for m in group]),
                       "err": _upper_median([m["err"] for m in group]), "visits": [_upper_median(v) for v in visits]})
 

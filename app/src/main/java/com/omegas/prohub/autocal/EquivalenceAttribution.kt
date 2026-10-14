@@ -34,8 +34,6 @@ object EquivalenceAttribution {
     val VISIT_SPREAD_LOG = ln(1.03)
     const val MIN_OTHER_PAIRS = 8
     const val SAME_T_MS = 0.5
-    /** Uma visita = uma passagem pela região; pausa de até 30 s no mesmo grupo é a mesma visita. */
-    const val VISIT_GAP_MS = 30_000L
 
     const val LOCAL = "LOCAL"
     const val FEW_PAIRS = "POUCOS_PARES"
@@ -96,24 +94,17 @@ object EquivalenceAttribution {
     /** Mediana superior (a mesma regra do índice do acumulador). */
     private fun median(values: List<Double>): Double? = if (values.isEmpty()) null else values.sorted()[values.size / 2]
 
-    private class Member(val pair: EquivalenceLedger.EvidencePair, val column: Int, val key: Key?, val error: Double)
+    private class Member(val pair: EquivalenceLedger.EvidencePair, val column: Int, val key: Key?, val error: Double) {
+        /** Passagem pela região: números seguidos (na ordem das leituras) no mesmo grupo; outro grupo no meio abre visita nova. */
+        var visit = 0
+    }
 
     private class Stat(val key: Key, val members: List<Member>) {
         val petrolMs = median(members.map { it.pair.petrolRefMs })!!
         val gasMs = median(members.map { it.pair.gasPetrolMs })!!
         val error = median(members.map { it.error })!!
-        /** Mediana de ln(t_GNV/t_gasolina) por visita (ordem do tempo; intervalo > [VISIT_GAP_MS] abre visita nova). */
-        val visitErrors: List<Double> = run {
-            val sorted = members.sortedBy { it.pair.t }
-            val visits = ArrayList<MutableList<Double>>()
-            var lastT: Long? = null
-            sorted.forEach { m ->
-                if (lastT == null || m.pair.t - lastT!! > VISIT_GAP_MS) visits.add(ArrayList())
-                visits.last().add(m.error)
-                lastT = m.pair.t
-            }
-            visits.map { median(it)!! }
-        }
+        /** Mediana de ln(t_GNV/t_gasolina) por visita (visita = leituras seguidas no mesmo grupo, sem relógio). */
+        val visitErrors: List<Double> = members.groupBy { it.visit }.toSortedMap().values.map { median(it.map { m -> m.error })!! }
     }
 
     /**
@@ -123,6 +114,13 @@ object EquivalenceAttribution {
     fun classify(pairs: List<EquivalenceLedger.EvidencePair>, latched: Set<Key>): List<Group> {
         val members = pairs.filter { it.petrolRefMs > 0.0 && it.gasPetrolMs > 0.0 }.map {
             Member(it, column(it.rpm), keyOf(it.rpm, it.petrolRefMs), ln(it.gasPetrolMs / it.petrolRefMs))
+        }
+        var visit = 0
+        var previous: Key? = null
+        members.sortedBy { it.pair.t }.forEach { m ->
+            if (m.key != previous) visit++
+            m.visit = visit
+            previous = m.key
         }
         val stats = members.filter { it.key != null }.groupBy { it.key!! }.map { (key, list) -> Stat(key, list) }
         fun othersOf(stat: Stat, excluded: Set<Key>): List<Double> = members.filter {
