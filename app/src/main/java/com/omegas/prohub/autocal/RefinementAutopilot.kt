@@ -407,7 +407,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             when {
                 index.optInt("petrolObservations") < 40 -> "Rode alguns minutos na gasolina para criar a referência."
                 wanted.isNotEmpty() -> "Rode no GNV passando por cargas de injeção $wanted." +
-                    (if (verifying) " Se não passar por lá, o OMEGAS fecha a medição em até 15 min rodando (parado não conta)." else "")
+                    (if (verifying) " Se não passar por lá, o OMEGAS fecha a medição depois de ${RefinementJournal.VERIFY_PARTIAL_SAMPLES} leituras novas e segue com as outras faixas." else "")
                 verifying && measuring > 0 -> "Continue rodando no GNV: faltam poucas leituras para fechar o resultado."
                 else -> "Continue rodando no GNV."
             }
