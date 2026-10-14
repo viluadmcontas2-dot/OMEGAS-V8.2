@@ -128,19 +128,6 @@
     return { kind: 'local', label: String(item.label || 'Revisar ajuste local no Mapa K'), enabled: item.enabled !== false, cells };
   }
 
-  /**
-   * "Pausar a ECU e refinar agora" (dono, 2026-10-13): a ECU só é dada como "terminada" com 3 de 3 AutoMatch, ou com as zonas dos
-   * DOIS combustíveis adquiridas e quieta por 10–25 min. Sem gasolina suficiente isso nunca chega e o Refino espera para sempre.
-   * Pausar o aprendizado da ECU (ação que já existe, conferida por readback) impede qualquer AutoMatch novo por cima do que
-   * gravarmos e libera o refino na hora. Só é oferecido com a ECU online, no automático e AINDA trabalhando.
-   */
-  function pauseOffer(eq) {
-    const pilot = eq?.autopilot;
-    if (!pilot || pilot.ecuDone !== false || pilot.ecuOnline === false) return { offered: false };
-    if (Number(pilot.autoCalEnabled) === 0) return { offered: false };
-    return { offered: true, label: 'Pausar a ECU e refinar agora' };
-  }
-
   /** Lista que a revisão mostra e grava: sempre a do Kotlin naquele instante, com assinatura. */
   function reviewList(eq, kind) {
     if (kind === 'apply') {
@@ -282,7 +269,6 @@
           </div>
           <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">
             <button type="button" class="autocal-primary-action" data-kind="review" data-refino-preview hidden>Ver alterações</button>
-            <button type="button" class="secondary autocal-primary-action" data-kind="pause" data-refino-pause hidden>Pausar a ECU e refinar agora</button>
             <button type="button" class="secondary autocal-primary-action" data-kind="undo" data-refino-undo hidden>Desfazer</button>
             <button type="button" class="secondary autocal-primary-action" data-kind="ok" data-refino-ok hidden>Entendi</button>
           </div>
@@ -303,7 +289,6 @@
 
     onClick(event) {
       const hit = selector => event.target.closest(selector);
-      if (hit('[data-refino-pause]')) { this.pauseEcu(); return; }
       if (hit('[data-refino-ok]')) { this.operation = { phase: 'idle' }; this.mapFix?.dismiss(); this.refresh(true); return; }
       if (hit('[data-refino-cancel]')) { this.closePreview(); return; }
       if (hit('[data-refino-confirm]')) { this.confirm(); return; }
@@ -325,15 +310,6 @@
     }
 
     /** "Ver alterações": monta o cartão. Ler o Mapa K é só leitura; nada é gravado até um "Gravar" dentro do cartão. */
-    pauseEcu() {
-      if (!pauseOffer(this.eq).offered || !this.api?.setAcquisitionEnabled) return;
-      const result = this.api.setAcquisitionEnabled(false) || { ok: false, error: 'Ação indisponível.' };
-      this.store.patch({ alert: result.ok === true
-        ? { level: 'working', message: 'Pausando a aquisição da ECU e conferindo… O refino libera em seguida. Para voltar ao automático, toque em "Retomar aprendizado" no AutoCal.' }
-        : { level: 'warning', message: result.error || 'Não foi possível pausar a ECU. Nada foi alterado.' } });
-      root.setTimeout(() => this.refresh(true), 1500);
-    }
-
     openPreview(undo) {
       const kind = undo || this.curveKind();
       const list = kind ? reviewList(this.eq, kind) : { points: [] };
@@ -562,8 +538,7 @@
       }
       setText('refinoHeadline', headline);
       setText('refinoNext', next);
-      show.pause = pauseOffer(eq).offered;
-      for (const [name, selector] of [['preview', '[data-refino-preview]'], ['pause', '[data-refino-pause]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
+      for (const [name, selector] of [['preview', '[data-refino-preview]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
         const node = document.querySelector(selector);
         if (!node) continue;
         node.hidden = !show[name];
@@ -670,7 +645,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { pauseOffer, describeStalls, proposedPoints, undoPoints, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
+  ns.RefinoModel = { describeStalls, proposedPoints, undoPoints, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);
