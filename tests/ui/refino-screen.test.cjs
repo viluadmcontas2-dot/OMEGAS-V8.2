@@ -312,3 +312,16 @@ test('o Mapa K recebe UMA proposta por vez: engasgo primeiro, depois a diferenç
   assert.doesNotMatch(SOURCE, /writeMap\(|startMapBatchWrite/);
 });
 
+
+// Refinar por minha conta: só com a ECU online e ainda no automático (ou já assumido); some quando a ECU termina.
+test('Refinar por minha conta so aparece com a ECU ainda no automatico ou ja assumido', () => {
+  const m = model();
+  const a = m.manualOffer({ autopilot: { ecuDone: false, ecuOnline: true } });
+  assert.equal(a.offered, true); assert.equal(a.on, false); assert.equal(a.label, 'Refinar por minha conta');
+  const b = m.manualOffer({ autopilot: { ecuDone: true, manual: true, ecuOnline: true } });
+  assert.equal(b.offered, true); assert.equal(b.on, true); assert.equal(b.label, 'Voltar ao automático da ECU');
+  assert.equal(m.manualOffer({ autopilot: { ecuDone: true, ecuDoneReason: 'MAX_AUTOMATCH' } }).offered, false, 'ECU concluída: nada a assumir');
+  assert.equal(m.manualOffer({ autopilot: { ecuDone: false, ecuOnline: false } }).offered, false, 'sem ECU');
+  assert.equal(m.manualOffer({}).offered, false, 'estado desconhecido não oferece');
+  assert.equal(m.manualOffer(null).offered, false);
+});

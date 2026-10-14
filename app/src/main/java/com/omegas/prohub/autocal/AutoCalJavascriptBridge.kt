@@ -265,6 +265,16 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Refino indisponível")
     }
 
+    /** "Refinar por minha conta": libera as gravações do Refino com a ECU no automático (decisão do dono). */
+    @JavascriptInterface
+    fun setRefinementManual(enabled: Boolean): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        service.refinementAutopilot.setManual(enabled)
+        JSONObject().put("ok", true).put("autopilot", service.refinementAutopilot.json()).toString()
+    } catch (error: Exception) {
+        localFailure(error.message ?: "Refino indisponível")
+    }
+
     /** Só os engasgos/apagões do GNV (aba Refino local, a cada 2–3 s): não recalcula pares nem bandas. */
     @JavascriptInterface
     fun getStalls(): String = try {

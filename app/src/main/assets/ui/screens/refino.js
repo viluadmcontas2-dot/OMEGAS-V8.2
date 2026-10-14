@@ -128,6 +128,19 @@
     return { kind: 'local', label: String(item.label || 'Revisar ajuste local no Mapa K'), enabled: item.enabled !== false, cells };
   }
 
+  /**
+   * "Refinar por minha conta" (dono, 2026-10-14): enquanto a ECU ainda está no automático o Refino espera. O dono pode assumir:
+   * as gravações liberam, ele decide quando gravar e depois manda a ECU reler o GNV. Só aparece com a ECU online e ainda
+   * trabalhando (ou já assumida); some quando a ECU termina de verdade.
+   */
+  function manualOffer(eq) {
+    const pilot = eq?.autopilot;
+    if (!pilot || pilot.ecuOnline === false) return { offered: false, on: false };
+    const on = pilot.manual === true;
+    if (!on && pilot.ecuDone !== false) return { offered: false, on: false };
+    return { offered: true, on, label: on ? 'Voltar ao automático da ECU' : 'Refinar por minha conta' };
+  }
+
   /** Lista que a revisão mostra e grava: sempre a do Kotlin naquele instante, com assinatura. */
   function reviewList(eq, kind) {
     if (kind === 'apply') {
@@ -269,6 +282,7 @@
           </div>
           <div class="refino-action-bar" data-refino-actions role="toolbar" aria-label="Ações do refino">
             <button type="button" class="autocal-primary-action" data-kind="review" data-refino-preview hidden>Ver alterações</button>
+            <button type="button" class="secondary autocal-primary-action" data-kind="manual" data-refino-manual hidden>Refinar por minha conta</button>
             <button type="button" class="secondary autocal-primary-action" data-kind="undo" data-refino-undo hidden>Desfazer</button>
             <button type="button" class="secondary autocal-primary-action" data-kind="ok" data-refino-ok hidden>Entendi</button>
           </div>
@@ -294,6 +308,7 @@
       if (hit('[data-refino-confirm]')) { this.confirm(); return; }
       if (hit('[data-refino-map-confirm]')) { this.preview = false; this.closeReview(); this.mapFix?.write('apply'); return; }
       if (hit('[data-refino-preview]')) { this.openPreview(); return; }
+      if (hit('[data-refino-manual]')) { this.toggleManual(); return; }
       if (hit('[data-refino-undo]')) {
         if (this.mapFix?.state.phase === 'done') this.mapFix.undo();
         else this.openPreview('undo');
@@ -310,6 +325,18 @@
     }
 
     /** "Ver alterações": monta o cartão. Ler o Mapa K é só leitura; nada é gravado até um "Gravar" dentro do cartão. */
+    toggleManual() {
+      const offer = manualOffer(this.eq);
+      if (!offer.offered || !this.api?.setRefinementManual) return;
+      const result = this.api.setRefinementManual(!offer.on) || { ok: false };
+      this.store.patch({ alert: result.ok === true
+        ? { level: 'working', message: offer.on
+            ? 'Voltei ao automático: o Refino espera a ECU terminar.'
+            : 'Você assumiu o Refino. A gravação está liberada com a ECU no automático. Depois de gravar, mande a ECU reler o GNV (AutoCal › Readquirir GNV).' }
+        : { level: 'warning', message: result.error || 'Não foi possível mudar. Nada foi alterado.' } });
+      root.setTimeout(() => this.refresh(true), 800);
+    }
+
     openPreview(undo) {
       const kind = undo || this.curveKind();
       const list = kind ? reviewList(this.eq, kind) : { points: [] };
@@ -513,7 +540,7 @@
 
       let headline = pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
       let next = (pilot.next || '') + (op.phase === 'idle' && fix.phase === 'idle' ? this.gasNote(eq) : '');
-      const show = { preview: false, undo: false, ok: false };
+      const show = { preview: false, manual: manualOffer(eq).offered, undo: false, ok: false };
       const label = {};
       if (this.preview) {
         // O cartão está aberto: ele tem os próprios botões; a barra fica quieta.
@@ -538,7 +565,8 @@
       }
       setText('refinoHeadline', headline);
       setText('refinoNext', next);
-      for (const [name, selector] of [['preview', '[data-refino-preview]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
+      label.manual = manualOffer(eq).label;
+      for (const [name, selector] of [['preview', '[data-refino-preview]'], ['manual', '[data-refino-manual]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
         const node = document.querySelector(selector);
         if (!node) continue;
         node.hidden = !show[name];
@@ -645,7 +673,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { describeStalls, proposedPoints, undoPoints, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
+  ns.RefinoModel = { manualOffer, describeStalls, proposedPoints, undoPoints, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);

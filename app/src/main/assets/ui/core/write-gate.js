@@ -10,7 +10,7 @@
    * conhecia quando COMEÇOU. Se o app grava Curva K ou Mapa K enquanto a ECU ainda está no automático, a ECU aplica a correção
    * dela em cima da nossa (e com buffers adquiridos sob o produto antigo). Por isso toda gravação que o app PROPÕE (reforço do
    * engasgo, ajuste local, exportação para o Mapa K) só abre quando o piloto diz que a ECU terminou (`ecuDone`: AutoCal
-   * desligado, máximo de AutoMatch atingido, ou aquisição completa e quieta). Edição manual na aba Curva K não passa por aqui.
+   * desligado, máximo de AutoMatch atingido, aquisição completa nos dois combustíveis, ou "refinar por minha conta"). Edição manual na aba Curva K não passa por aqui.
    * Estado desconhecido (sem piloto, ponte fora) não bloqueia: a porta só fecha quando o Kotlin diz explicitamente que não acabou.
    */
   function check(autopilot) {
@@ -20,7 +20,7 @@
     const where = n !== null && m !== null ? ` (${n} de ${m})` : '';
     return {
       ok: false,
-      message: `A ECU ainda está no AutoMatch${where}. Espere ela terminar: se eu gravar agora, ela aplica a correção dela em cima da minha.`,
+      message: `A ECU ainda está no AutoMatch${where}. Espere ela terminar: se eu gravar agora, ela aplica a correção dela em cima da minha. Para gravar assim mesmo, toque em “Refinar por minha conta” no Refino.`,
     };
   }
 

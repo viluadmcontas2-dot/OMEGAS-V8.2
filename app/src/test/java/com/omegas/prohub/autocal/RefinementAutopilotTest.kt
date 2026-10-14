@@ -83,6 +83,25 @@ class RefinementAutopilotTest {
     }
 
     @Test
+    fun `refinar por minha conta libera com a ECU no automatico e voltar ao automatico fecha de novo`() {
+        val p = pilot()
+        val working = p.observe(true, monitor(1), acquisition(10, 8), offIndex, noJournal, 0, proposal)
+        assertFalse(working.getBoolean("ecuDone"))
+        p.setManual(true)
+        val mine = p.observe(true, monitor(1), acquisition(10, 8), offIndex, noJournal, 0, proposal)
+        assertTrue(mine.getBoolean("ecuDone"))
+        assertEquals("MANUAL", mine.getString("ecuDoneReason"))
+        assertEquals("PROPOSTA_PRONTA", mine.getString("phase"))
+        assertTrue(mine.getBoolean("manual"))
+        // AutoMatch da ECU no meio: continua liberado (por conta do dono).
+        assertTrue(p.observe(true, monitor(2), acquisition(10, 8), offIndex, noJournal, 0, proposal).getBoolean("ecuDone"))
+        p.setManual(false)
+        val back = p.observe(true, monitor(2), acquisition(10, 8), offIndex, noJournal, 0, proposal)
+        assertFalse(back.getBoolean("ecuDone"))
+        assertEquals("ECU_TRABALHANDO", back.getString("phase"))
+    }
+
+    @Test
     fun `aquisicao incompleta nunca vira ECU terminou so por tempo`() {
         val p = pilot()
         p.observe(true, monitor(1), acquisition(14, 14), offIndex, noJournal, 0, proposal)

@@ -65,6 +65,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     private var lastCount: Int? = null
     /** Depois de readquirir ou de um AutoMatch, a aquisição velha ainda pode aparecer "completa" na leitura: só vale de novo depois de vista incompleta. */
     private var awaitingRestartEvidence = false
+    /** Dono (2026-10-14): "refinar por minha conta" libera as gravações mesmo com a ECU no automático; ele decide quando gravar e manda a ECU reler o GNV. */
+    private var manual = false
     private var lastTickAt = 0L
     private var phase = "SEM_ECU"
     private var alertedPhase = ""
@@ -121,6 +123,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             val complete = petrolZones >= 4 && gasZones >= 4
             if (awaitingRestartEvidence && !complete) { awaitingRestartEvidence = false; dirty = true }
             val fresh = when {
+                manual -> "MANUAL"
                 enabled == 0 -> "AUTOCAL_DESLIGADO"
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
                 complete && !awaitingRestartEvidence -> "AQUISICAO_COMPLETA"
@@ -139,6 +142,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("gasZones", gasZones)
                 .put("ecuDone", ecuReason != null)
                 .put("ecuDoneReason", ecuReason ?: JSONObject.NULL)
+                .put("manual", manual)
                 .put("ourPoints", index.optInt("samples", 0))
                 .put("petrolObservations", index.optInt("petrolObservations", 0))
                 .put("gasObservations", index.optInt("gasObservations", 0))
@@ -307,6 +311,14 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         dirty = true
     }
 
+    /** Liga/desliga o "refinar por minha conta". Desligar volta a valer só o que a ECU mostra. */
+    fun setManual(on: Boolean) = synchronized(lock) {
+        if (manual == on) return@synchronized
+        manual = on
+        if (!on && ecuDoneLatch == "MANUAL") ecuDoneLatch = null
+        dirty = true
+    }
+
     fun takeAlert(): JSONObject? = synchronized(lock) {
         if (phase !in ALERT_PHASES || alertedPhase == phase) {
             if (phase !in ALERT_PHASES && alertedPhase.isNotEmpty() && phase != "SEM_ECU" && ecuDoneLatch != null) { alertedPhase = ""; dirty = true }
@@ -416,7 +428,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             dirty = false
             lastSaveAt = now
             JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
-                .put("awaiting", awaitingRestartEvidence).put("phase", phase).put("alertedPhase", alertedPhase)
+                .put("awaiting", awaitingRestartEvidence).put("manual", manual).put("phase", phase).put("alertedPhase", alertedPhase)
                 .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
                 .put("offLatch", JSONArray(offLatch.toList()))
         }
@@ -436,6 +448,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             if (root.optString("format") != FORMAT) return
             lastCount = if (root.isNull("lastCount")) null else root.optInt("lastCount")
             awaitingRestartEvidence = root.optBoolean("awaiting", false)
+            manual = root.optBoolean("manual", false)
             phase = root.optString("phase", "SEM_ECU")
             alertedPhase = root.optString("alertedPhase", "")
             ecuDoneLatch = if (root.isNull("ecuDoneLatch")) null else root.optString("ecuDoneLatch").takeIf { it.isNotBlank() }

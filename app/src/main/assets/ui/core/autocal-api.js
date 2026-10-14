@@ -30,6 +30,7 @@
     actionStatus: () => invoke('getNativeActionStatus', [], {}),
     startRead: () => invoke('startRead', [], {}),
     cancelRead: () => invoke('cancelRead', [], {}),
+    setRefinementManual: enabled => invoke('setRefinementManual', [!!enabled], {}),
     setAcquisitionEnabled: enabled => invoke('setAcquisitionEnabled', [!!enabled], {}),
     prepare: action => invoke('prepareNativeAction', [String(action || '')], {}),
     prepareKFactorReset: () => invoke('prepareNativeAction', ['RESET_K_FACTOR'], {}),
