@@ -138,7 +138,7 @@
     if (!pilot || pilot.ecuOnline === false) return { offered: false, on: false };
     const on = pilot.manual === true;
     if (!on && pilot.ecuDone !== false) return { offered: false, on: false };
-    return { offered: true, on, label: on ? 'Voltar ao automático da ECU' : 'Refinar por minha conta' };
+    return { offered: true, on, label: on ? 'Esperar a ECU terminar' : 'Refinar por minha conta' };
   }
 
   /** Lista que a revisão mostra e grava: sempre a do Kotlin naquele instante, com assinatura. */
@@ -331,8 +331,8 @@
       const result = this.api.setRefinementManual(!offer.on) || { ok: false };
       this.store.patch({ alert: result.ok === true
         ? { level: 'working', message: offer.on
-            ? 'Voltei ao automático: o Refino espera a ECU terminar.'
-            : 'Você assumiu o Refino. A gravação está liberada com a ECU no automático. Depois de gravar, mande a ECU reler o GNV (AutoCal › Readquirir GNV).' }
+            ? 'Certo: o Refino volta a esperar a ECU terminar.'
+            : 'Você assumiu o Refino. Agora dá para gravar mesmo com a ECU no automático. Depois de gravar, mande a ECU reler o GNV (AutoCal › Reaprender GNV).' }
         : { level: 'warning', message: result.error || 'Não foi possível mudar. Nada foi alterado.' } });
       root.setTimeout(() => this.refresh(true), 800);
     }

@@ -1,5 +1,5 @@
 // "Refinar por minha conta": com a ECU ainda no automático o Refino mostra o botão; um toque libera as gravações (o Kotlin
-// passa a dizer ecuDone) e o botão vira "Voltar ao automático da ECU". Com a ECU concluída de verdade o botão some.
+// passa a dizer ecuDone) e o botão vira "Esperar a ECU terminar". Com a ECU concluída de verdade o botão some.
 const { chromium } = require('playwright');
 const path = require('path');
 const assert = require('node:assert/strict');
@@ -37,7 +37,7 @@ const INDEX = path.resolve('app/src/main/assets/ui/index.html');
     await page.click('[data-refino-manual]');
     assert.deepEqual(await page.evaluate(() => window.__manual), [true], 'um toque = assumir');
     await page.waitForTimeout(1200);
-    assert.equal(await page.textContent('[data-refino-manual]'), 'Voltar ao automático da ECU', 'depois de assumir, o botão volta ao automático');
+    assert.equal(await page.textContent('[data-refino-manual]'), 'Esperar a ECU terminar', 'depois de assumir, o botão volta ao automático');
     await page.click('[data-refino-manual]');
     assert.deepEqual(await page.evaluate(() => window.__manual), [true, false]);
     // ECU concluída de verdade: o botão some.

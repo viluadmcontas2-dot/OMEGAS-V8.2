@@ -319,7 +319,7 @@ test('Refinar por minha conta so aparece com a ECU ainda no automatico ou ja ass
   const a = m.manualOffer({ autopilot: { ecuDone: false, ecuOnline: true } });
   assert.equal(a.offered, true); assert.equal(a.on, false); assert.equal(a.label, 'Refinar por minha conta');
   const b = m.manualOffer({ autopilot: { ecuDone: true, manual: true, ecuOnline: true } });
-  assert.equal(b.offered, true); assert.equal(b.on, true); assert.equal(b.label, 'Voltar ao automático da ECU');
+  assert.equal(b.offered, true); assert.equal(b.on, true); assert.equal(b.label, 'Esperar a ECU terminar');
   assert.equal(m.manualOffer({ autopilot: { ecuDone: true, ecuDoneReason: 'MAX_AUTOMATCH' } }).offered, false, 'ECU concluída: nada a assumir');
   assert.equal(m.manualOffer({ autopilot: { ecuDone: false, ecuOnline: false } }).offered, false, 'sem ECU');
   assert.equal(m.manualOffer({}).offered, false, 'estado desconhecido não oferece');
