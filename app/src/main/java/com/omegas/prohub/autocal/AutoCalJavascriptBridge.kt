@@ -195,7 +195,8 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
         val result = actionManager.execute(preparationId)
         if (!result.optBoolean("ok", false)) actionManager.clearPreparation()
-        else if (action != AutoCalNativeActionManager.Action.FINISH_AUTOCAL && action != AutoCalNativeActionManager.Action.FINISH_AUTOMATCH) {
+        else if (action != AutoCalNativeActionManager.Action.FINISH_AUTOCAL && action != AutoCalNativeActionManager.Action.FINISH_AUTOMATCH &&
+            action != AutoCalNativeActionManager.Action.RESET_K_FACTOR) {
             activityRef.get()?.serviceOrNull()?.refinementAutopilot?.noteAcquisitionRestart()
         }
         return result

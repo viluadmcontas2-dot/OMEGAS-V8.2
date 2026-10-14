@@ -102,6 +102,30 @@ class RefinementAutopilotTest {
     }
 
     @Test
+    fun `religar o AutoCal e aquisicao que deixa de estar completa desfazem o ECU terminou`() {
+        val p = pilot()
+        assertEquals("AUTOCAL_DESLIGADO", p.observe(true, monitor(1, enabled = 0), acquisition(10, 8), offIndex, noJournal, 0, proposal).getString("ecuDoneReason"))
+        val on = p.observe(true, monitor(1, enabled = 1), acquisition(10, 8), offIndex, noJournal, 0, proposal)
+        assertFalse("religado: a ECU volta a trabalhar", on.getBoolean("ecuDone"))
+        assertTrue(p.observe(true, monitor(1), acquisition(18, 18), offIndex, noJournal, 0, proposal).getBoolean("ecuDone"))
+        val dropped = p.observe(true, monitor(1), acquisition(6, 18), offIndex, noJournal, 0, proposal)
+        assertFalse("zonas caíram: a aquisição recomeçou", dropped.getBoolean("ecuDone"))
+    }
+
+    @Test
+    fun `refinar por minha conta nao sobrevive a reabrir o app`() {
+        val dir = java.io.File.createTempFile("pilot", ".json")
+        val p = RefinementAutopilot(dir) { now }
+        p.setManual(true)
+        p.observe(true, monitor(1), acquisition(10, 8), offIndex, noJournal, 0, proposal)
+        val reopened = RefinementAutopilot(dir) { now }
+        val r = reopened.observe(true, monitor(1), acquisition(10, 8), offIndex, noJournal, 0, proposal)
+        assertFalse(r.getBoolean("manual"))
+        assertFalse(r.getBoolean("ecuDone"))
+        dir.delete()
+    }
+
+    @Test
     fun `aquisicao incompleta nunca vira ECU terminou so por tempo`() {
         val p = pilot()
         p.observe(true, monitor(1), acquisition(14, 14), offIndex, noJournal, 0, proposal)

@@ -65,7 +65,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     private var lastCount: Int? = null
     /** Depois de readquirir ou de um AutoMatch, a aquisição velha ainda pode aparecer "completa" na leitura: só vale de novo depois de vista incompleta. */
     private var awaitingRestartEvidence = false
-    /** Dono (2026-10-14): "refinar por minha conta" libera as gravações mesmo com a ECU no automático; ele decide quando gravar e manda a ECU reler o GNV. */
+    /** NÃO persiste: cada abertura do app volta a esperar a ECU. Dono (2026-10-14): "refinar por minha conta" libera as gravações mesmo com a ECU no automático; ele decide quando gravar e manda a ECU reler o GNV. */
     private var manual = false
     private var lastTickAt = 0L
     private var phase = "SEM_ECU"
@@ -128,6 +128,10 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 max != null && count != null && count >= max -> "MAX_AUTOMATCH"
                 complete && !awaitingRestartEvidence -> "AQUISICAO_COMPLETA"
                 else -> null
+            }
+            // Evidência contra o "terminou" já travado: AutoCal religado, ou a aquisição deixou de estar completa.
+            if ((ecuDoneLatch == "AUTOCAL_DESLIGADO" && enabled != 0) || (ecuDoneLatch == "AQUISICAO_COMPLETA" && !complete)) {
+                ecuDoneLatch = null; if (!complete) awaitingRestartEvidence = false else awaitingRestartEvidence = true; dirty = true
             }
             if (fresh != null && fresh != ecuDoneLatch) { ecuDoneLatch = fresh; dirty = true }
             val ecuReason = ecuDoneLatch
@@ -428,7 +432,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             dirty = false
             lastSaveAt = now
             JSONObject().put("format", FORMAT).put("lastCount", lastCount ?: JSONObject.NULL)
-                .put("awaiting", awaitingRestartEvidence).put("manual", manual).put("phase", phase).put("alertedPhase", alertedPhase)
+                .put("awaiting", awaitingRestartEvidence).put("phase", phase).put("alertedPhase", alertedPhase)
                 .put("ecuDoneLatch", ecuDoneLatch ?: JSONObject.NULL)
                 .put("offLatch", JSONArray(offLatch.toList()))
         }
@@ -448,10 +452,9 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
             if (root.optString("format") != FORMAT) return
             lastCount = if (root.isNull("lastCount")) null else root.optInt("lastCount")
             awaitingRestartEvidence = root.optBoolean("awaiting", false)
-            manual = root.optBoolean("manual", false)
             phase = root.optString("phase", "SEM_ECU")
             alertedPhase = root.optString("alertedPhase", "")
-            ecuDoneLatch = if (root.isNull("ecuDoneLatch")) null else root.optString("ecuDoneLatch").takeIf { it.isNotBlank() }
+            ecuDoneLatch = if (root.isNull("ecuDoneLatch")) null else root.optString("ecuDoneLatch").takeIf { it.isNotBlank() }?.takeIf { it != "MANUAL" }
             root.optJSONArray("offLatch")?.let { a -> for (i in 0 until minOf(a.length(), offLatch.size)) offLatch[i] = a.optBoolean(i, false) }
         } catch (_: Exception) {
         }
