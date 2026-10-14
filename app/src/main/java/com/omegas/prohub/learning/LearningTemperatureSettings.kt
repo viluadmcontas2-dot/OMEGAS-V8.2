@@ -13,7 +13,7 @@ class LearningTemperatureSettings(context: Context) {
     companion object {
         const val MIN_ALLOWED_C = 40
         const val MAX_ALLOWED_C = 80
-        const val DEFAULT_C = 55
+        const val DEFAULT_C = 40
 
         @Volatile
         var currentMinimumWaterC: Int = DEFAULT_C

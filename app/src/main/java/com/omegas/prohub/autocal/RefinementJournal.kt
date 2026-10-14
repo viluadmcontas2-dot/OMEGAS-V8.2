@@ -49,6 +49,13 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         /** "Piorou" só se ficou mais de 4% pior E acima de 5% de erro (margem do dono; Platina 41123729). */
         val WORSE_MARGIN_LOG = ln(1.04)
         val WORSE_MIN_ERROR_LOG = ln(1.05)
+        /**
+         * "Piorou" é o único veredito que muda a curva do dono (oferta de restaurar, ganho da faixa pela metade), então
+         * não sai de 8 leituras: pede [WORSE_MIN_SAMPLES] leituras estáveis depois da gravação (sessão 20:41, 2026-10-13:
+         * "piorou 6" com 10 a 163 leituras logo após gravar). Só por quantidade de evidência, nunca por relógio (dono,
+         * 2026-10-14). Melhorou/chegou não espera.
+         */
+        const val WORSE_MIN_SAMPLES = 20
         /** Antes e depois com fração da curva da ECU diferente além disso: referência trocou. */
         const val REFERENCE_SHARE_TOLERANCE = 0.25
         const val MIN_SCALE = 0.4
@@ -386,7 +393,10 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                         !afterKnown -> verdict.put("verdict", if (timeboxed) "SEM_DADOS" else "COLETANDO")
                         !sameReference(beforeIndex, afterIndex, b, a) ->
                             verdict.put("verdict", if (timeboxed) "SEM_DADOS" else "COLETANDO").put("referenceChanged", true)
-                        else -> verdict.put("verdict", judge(rb, ra))
+                        else -> {
+                            val judged = judge(rb, ra)
+                            verdict.put("verdict", if (judged == "PIOROU" && na < WORSE_MIN_SAMPLES && !timeboxed) "COLETANDO" else judged)
+                        }
                     }
                     verdicts.put(verdict)
                 }

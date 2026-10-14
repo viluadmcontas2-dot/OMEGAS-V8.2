@@ -232,8 +232,19 @@ class RefinementCycleTest {
             val points = IntArray(30) { 16384 }.also { for (i in 14..16) it[i] = 17000 } // 7,5–8,5 ms (faixa 7,5–9)
             journal.recordCurveWrite(IntArray(30) { 16384 }, points, axisRaw, index(1.0 to 20, 1.0 to 20, 1.0 to 20, before to 20, 1.0 to 20), "KF", RefinementJournal.KIND_PROPOSTA)
             now += 3_000
-            journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, after to 12, 1.0 to 12))
+            journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, after to 24, 1.0 to 12))
             return journal.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(3).getString("verdict")
+        }
+        // Poucas leituras depois de gravar (8 a 19): ainda não é veredito de "piorou"; segue coletando (sem relógio).
+        run {
+            val journal = RefinementJournal(null, clock)
+            val points = IntArray(30) { 16384 }.also { for (i in 14..16) it[i] = 17000 }
+            journal.recordCurveWrite(IntArray(30) { 16384 }, points, axisRaw, index(1.0 to 20, 1.0 to 20, 1.0 to 20, 1.005 to 20, 1.0 to 20), "KF", RefinementJournal.KIND_PROPOSTA)
+            now += 3_000
+            journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 19, 1.0 to 12))
+            assertEquals("COLETANDO", journal.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(3).getString("verdict"))
+            journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 20, 1.0 to 12))
+            assertEquals("PIOROU", journal.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(3).getString("verdict"))
         }
         assertFalse(verdictFor(1.005, 1.042) == "PIOROU") // 4,1%: dentro da margem do dono
         assertFalse(verdictFor(1.01, 1.049) == "PIOROU")  // até 5% aceito
@@ -244,7 +255,7 @@ class RefinementCycleTest {
         val points = IntArray(30) { 16384 }.also { for (i in 14..16) it[i] = 17000 }
         journal.recordCurveWrite(IntArray(30) { 16384 }, points, axisRaw, index(1.0 to 20, 1.0 to 20, 1.0 to 20, 1.005 to 20, 1.0 to 20), "KF", RefinementJournal.KIND_PROPOSTA)
         now += 3_000
-        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 12, 1.0 to 12))
+        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 24, 1.0 to 12))
         assertTrue(journal.restorePoints().length() > 0)
         now += 3_000
         journal.evaluate(index(1.0 to 30, 1.0 to 30, 1.0 to 30, 1.03 to 30, 1.0 to 30)) // medição nova voltou para dentro
@@ -280,7 +291,7 @@ class RefinementCycleTest {
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu()
-        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 24, 1.0 to 12)
         car.tick()
         assertEquals("RESTAURAR_TRECHO", car.last.getString("phase"))
         val restorePoints = car.journal.restorePoints()
@@ -314,7 +325,7 @@ class RefinementCycleTest {
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu()
-        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
+        car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 24, 1.0 to 12)
         car.tick()
         val restored = car.journal.restorePoints()
         val bad = (0 until restored.length()).associate { restored.getJSONObject(it).getInt("index") to restored.getJSONObject(it).getInt("currentRaw") }
@@ -351,14 +362,14 @@ class RefinementCycleTest {
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu()
-        car.drive(0.99 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 10, 1.0 to 10)
+        car.drive(0.99 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 24, 1.0 to 10)
         car.tick()
         val restorePoints = car.journal.restorePoints()
         assertTrue(restorePoints.length() > 0)
         car.write(restorePoints, restore)
         car.readEcu()
         // A medição da restauração sai pior: antes isso pedia "restaurar" de volta o valor ruim (laço).
-        car.drive(0.99 to 10, 1.01 to 10, 1.0 to 10, 1.20 to 10, 1.0 to 10)
+        car.drive(0.99 to 10, 1.01 to 10, 1.0 to 10, 1.20 to 24, 1.0 to 10)
         car.tick()
         assertEquals(0, car.journal.restorePoints().length())
         assertFalse(car.last.getString("phase") == "RESTAURAR_TRECHO")
@@ -425,7 +436,7 @@ class RefinementCycleTest {
         val history = journal.json().getJSONArray("history")
         assertEquals(RefinementJournal.STATUS_VERIFYING, history.getJSONObject(history.length() - 2).getString("status"))
         now += 3_000
-        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12))
+        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.12 to 24, 1.0 to 12))
         val firstStatus = journal.json().getJSONArray("history").let { it.getJSONObject(it.length() - 2).getString("status") }
         assertEquals("a primeira gravação terminou de medir as faixas dela", "PIOROU_EM_PARTE", firstStatus)
         val offer = journal.restorePoints()
@@ -442,7 +453,7 @@ class RefinementCycleTest {
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu(); wave = 2
-        car.drive(1.07 to 12, 1.07 to 12, 1.0 to 12, 1.12 to 12, 1.0 to 12)
+        car.drive(1.07 to 12, 1.07 to 12, 1.0 to 12, 1.12 to 24, 1.0 to 12)
         car.tick()
         assertEquals("RESTAURAR_TRECHO", car.last.getString("phase"))
         assertNotNull("proposta dos outros pontos ao lado do Restaurar", car.secondary("review"))

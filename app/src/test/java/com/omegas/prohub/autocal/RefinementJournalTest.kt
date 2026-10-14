@@ -39,7 +39,7 @@ class RefinementJournalTest {
         val before = IntArray(30) { 16384 }
         val after = before.copyOf().also { for (i in 5..29) it[i] = 18000 }
         write(journal, before, after, index(1.05 to 20, 1.06 to 20, 1.05 to 20, 1.02 to 20, 1.03 to 20))
-        journal.evaluate(index(0.96 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 10, 1.0 to 10))
+        journal.evaluate(index(0.96 to 10, 1.01 to 10, 1.0 to 10, 1.09 to 24, 1.0 to 10))
         val latest = journal.json().getJSONObject("latest")
         assertEquals("PIOROU_EM_PARTE", latest.getString("status"))
         val verdicts = latest.getJSONArray("bands")

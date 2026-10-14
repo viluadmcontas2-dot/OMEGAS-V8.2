@@ -167,11 +167,11 @@ class RefinementReviewTest {
         val e1 = curve(14..16 to 17000) // 7,5–8,5 ms (faixa 7,5–9)
         journal.recordCurveWrite(base, e1, axisRaw, index(1.0 to 20, 1.0 to 20, 1.0 to 20, 1.005 to 20, 1.0 to 20), "KF-1", RefinementJournal.KIND_PROPOSTA)
         now += 3_000
-        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 12, 1.0 to 12)) // piorou na faixa 7,5–9
+        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 24, 1.0 to 12)) // piorou na faixa 7,5–9
         if (!laterWrite) return journal to e1
         val e2 = e1.copyOf().also { for (i in 4..5) it[i] = 16900 } // outra gravação em 2,5–3,0 ms
         now += 3_000
-        journal.recordCurveWrite(e1, e2, axisRaw, index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 12, 1.0 to 12), "KF-2", RefinementJournal.KIND_PROPOSTA)
+        journal.recordCurveWrite(e1, e2, axisRaw, index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 24, 1.0 to 12), "KF-2", RefinementJournal.KIND_PROPOSTA)
         return journal to e2
     }
 
@@ -206,7 +206,7 @@ class RefinementReviewTest {
         c.proposal(snapshot(base, now), empty)
         journal.recordCurveWrite(base, e1, axisRaw, index(1.0 to 20, 1.0 to 20, 1.0 to 20, 1.005 to 20, 1.0 to 20), "KF-1", RefinementJournal.KIND_PROPOSTA)
         now += 3_000
-        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 12, 1.0 to 12))
+        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 24, 1.0 to 12))
         val ecu = e1.copyOf().also { it[14] = 16384 }
         val failed = JSONObject().put("state", "BATCH_FAILED").put("details", JSONObject().put("adjustmentId", "KF-2").put("partial", true)
             .put("confirmedEvents", JSONArray().put(JSONObject().put("index", 14).put("beforeRaw", 17000).put("afterRaw", 16384)
@@ -322,7 +322,7 @@ class RefinementReviewTest {
     fun `10 oferta de restaurar expira e o Mapa K anula`() {
         val (journal, _) = worsenedJournal(laterWrite = false)
         assertEquals(3, journal.restorePoints().length())
-        repeat(620) { now += 3_000; journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 12, 1.0 to 12)) } // 31 min
+        repeat(620) { now += 3_000; journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 24, 1.0 to 12)) } // 31 min
         assertEquals("a oferta não expira em 30 min", 0, journal.restorePoints().length())
         val (other, _) = worsenedJournal(laterWrite = false)
         assertEquals(3, other.restorePoints().length())
@@ -435,7 +435,7 @@ class RefinementReviewTest {
         journal.recordCurveWrite(curve(14..16 to 17000), curve(), axisRaw, index(1.0 to 20, 1.0 to 20, 1.0 to 20, 1.005 to 20, 1.0 to 20), "KF",
             RefinementJournal.kindFromReason("Reset Curva K · ProgBase MUL_ACT=1.0"))
         now += 3_000
-        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 12, 1.0 to 12))
+        journal.evaluate(index(1.0 to 12, 1.0 to 12, 1.0 to 12, 1.08 to 24, 1.0 to 12))
         assertEquals(1.0, journal.json().getJSONArray("bandScale").getDouble(3), 1e-9)
         assertEquals(0, journal.restorePoints().length())
     }
