@@ -84,6 +84,19 @@ class RefinementAutopilotTest {
     }
 
     @Test
+    fun `readquirir zera o silencio da ECU e desfaz o ECU terminou`() {
+        val p = pilot()
+        p.observe(true, monitor(0), acquisition(14, 14), offIndex, noJournal, 0, proposal)
+        repeat(520) { now += 3_000; p.observe(true, monitor(0), acquisition(14, 14), offIndex, noJournal, 0, proposal) }
+        assertEquals("SEM_AUTOMATICO_NOVO", p.json().getString("ecuDoneReason"))
+        p.noteAcquisitionRestart()
+        now += 3_000
+        val r = p.observe(true, monitor(0), acquisition(14, 14), offIndex, noJournal, 0, proposal)
+        assertFalse(r.getBoolean("ecuDone"))
+        assertEquals("ECU_TRABALHANDO", r.getString("phase"))
+    }
+
+    @Test
     fun `todas as faixas dentro de 3 por cento pode desconectar`() {
         val p = pilot()
         val r = p.observe(true, monitor(0, enabled = 0), acquisition(0, 0), index(1.01 to 20, 0.99 to 20, 1.02 to 12, null to 0, null to 0), noJournal, 0)

@@ -195,6 +195,9 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
 
         val result = actionManager.execute(preparationId)
         if (!result.optBoolean("ok", false)) actionManager.clearPreparation()
+        else if (action != AutoCalNativeActionManager.Action.FINISH_AUTOCAL && action != AutoCalNativeActionManager.Action.FINISH_AUTOMATCH) {
+            activityRef.get()?.serviceOrNull()?.refinementAutopilot?.noteAcquisitionRestart()
+        }
         return result
             .put("confirmationPending", false)
             .put("nativeAndroidConfirmation", false)

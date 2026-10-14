@@ -303,6 +303,17 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     }
 
     /** Fase atual quer avisar e ainda não avisou? Marca como avisada. */
+    /**
+     * O dono (ou o app) mandou a ECU readquirir (zerar gasolina/GNV, apagar ponto, AutoMatch manual): a aquisição recomeça,
+     * então o "silêncio" medido até aqui não vale mais. Sessão 19:40 (2026-10-13): reset aos 46 min, "quieto 49,8 min" e
+     * "ECU terminou" aos 52 min, e o AutoMatch da ECU veio 1 min depois por cima da proposta.
+     */
+    fun noteAcquisitionRestart() = synchronized(lock) {
+        quietMs = 0L
+        ecuDoneLatch = null
+        dirty = true
+    }
+
     fun takeAlert(): JSONObject? = synchronized(lock) {
         if (phase !in ALERT_PHASES || alertedPhase == phase) {
             if (phase !in ALERT_PHASES && alertedPhase.isNotEmpty() && phase != "SEM_ECU" && ecuDoneLatch != null) { alertedPhase = ""; dirty = true }
