@@ -1,0 +1,20 @@
+{
+  "firmware": "EVO_L_#00563.s19",
+  "profile": "strict",
+  "status": "STOPPED_AT_UNKNOWN_BOOTLOADER_RESPONSE",
+  "source_records": 2295,
+  "accepted_records": 0,
+  "transmitted_bytes": 2,
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "blocked": {
+    "state": "DESCONHECIDO",
+    "reason": "Bootloader reply not observed; no synthetic ACK in strict mode",
+    "requested_bytes": 1,
+    "phase": "PROGFLASH"
+  },
+  "preconditions": "INFERIDO: already in compatible bootloader, erase completed, buffering enabled; full PreparaProg/Cancflash wrapper not executed",
+  "payload_decryption": "DESCONHECIDO",
+  "ecu_flash_written": false,
+  "physical_port_opened": false,
+  "original_machine_code_executed": true
+}

@@ -1,0 +1,12 @@
+test_echo_mutation_rejects_line_after_nine_attempts (__main__.HostTests.test_echo_mutation_rejects_line_after_nine_attempts) ... ok
+test_machine_code_mutation_is_caught_by_wire_oracle (__main__.HostTests.test_machine_code_mutation_is_caught_by_wire_oracle) ... ok
+test_negative_ack_exhausts_four_progflash_attempts (__main__.HostTests.test_negative_ack_exhausts_four_progflash_attempts) ... ok
+test_original_progflash_command_and_expected_reply (__main__.HostTests.test_original_progflash_command_and_expected_reply) ... ok
+test_real_files_every_original_line_is_transported_unchanged (__main__.HostTests.test_real_files_every_original_line_is_transported_unchanged) ... ok
+test_strict_stops_without_inventing_bootloader_ack (__main__.HostTests.test_strict_stops_without_inventing_bootloader_ack) ... ok
+test_unstable_ack_rejects_line (__main__.HostTests.test_unstable_ack_rejects_line) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 3.995s
+
+OK

@@ -1,0 +1,12 @@
+{
+  "fixture": "tests/fixtures/portmon-autocal-real-sample.json",
+  "source_capture_sha256": "4a70f5ae79b1d688c05bd169f3e6a588b52105580d24b8a72a5cff398a384c0b",
+  "stats": {
+    "transactions": 6,
+    "echo_ok": 6,
+    "tx_checksum_ok": 6,
+    "rx_checksum_ok": 6,
+    "flash_requests": 0
+  },
+  "scope": "OBS-FIO: calibration capture only; does not contain observed bootloader flash replies"
+}

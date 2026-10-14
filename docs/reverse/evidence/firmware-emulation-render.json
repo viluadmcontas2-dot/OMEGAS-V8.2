@@ -1,0 +1,11 @@
+{
+  "viewport": [
+    1280,
+    720
+  ],
+  "strict_stops": true,
+  "contract_evo_l_count": 2294,
+  "contract_evo_count": 2733,
+  "no_vertical_overflow": true,
+  "physical_equivalence": false
+}

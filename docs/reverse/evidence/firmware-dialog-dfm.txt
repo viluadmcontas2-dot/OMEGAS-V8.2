@@ -1,0 +1,112 @@
+object FormScarica: TFormScarica
+  Left = 190
+  Top = 212
+  BorderStyle = bsDialog
+  Caption = 'Programmazione centralina'
+  ClientHeight = 166
+  ClientWidth = 519
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -16
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poScreenCenter
+  PixelsPerInch = 96
+  TextHeight = 20
+  object LabelFile: TLabel
+    Left = 24
+    Top = 24
+    Width = 60
+    Height = 25
+    AutoSize = False
+    Caption = 'File:'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -19
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object LabelN: TLabel
+    Left = 90
+    Top = 24
+    Width = 400
+    Height = 33
+    AutoSize = False
+    Caption = 'FileName'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -19
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label1: TLabel
+    Left = 24
+    Top = 63
+    Width = 60
+    Height = 25
+    AutoSize = False
+    Caption = 'Data:'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -19
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object LabelD: TLabel
+    Left = 90
+    Top = 63
+    Width = 400
+    Height = 25
+    AutoSize = False
+    Caption = '01/01/2000'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -19
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object ButtonCambia: TButton
+    Left = 184
+    Top = 112
+    Width = 150
+    Height = 32
+    Cursor = crHandPoint
+    Caption = '&Cambia file'
+    TabOrder = 2
+    OnClick = ButtonCambiaClick
+  end
+  object ButtonRiprogr: TButton
+    Left = 16
+    Top = 112
+    Width = 150
+    Height = 32
+    Cursor = crHandPoint
+    Caption = '&Programma'
+    Default = True
+    ModalResult = 1
+    TabOrder = 0
+  end
+  object ButtonAnnulla: TButton
+    Left = 352
+    Top = 112
+    Width = 150
+    Height = 32
+    Cursor = crHandPoint
+    Cancel = True
+    Caption = '&Annulla'
+    ModalResult = 2
+    TabOrder = 1
+  end
+  object OpenDialogFile: TOpenDialog
+    Options = [ofHideReadOnly,ofPathMustExist,ofFileMustExist,ofEnableSizing]
+    Title = 'Seleziona file di programmazione'
+    Left = 442
+    Top = 32
+  end
+end

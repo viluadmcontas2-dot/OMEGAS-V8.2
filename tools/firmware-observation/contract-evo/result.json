@@ -1,0 +1,15 @@
+{
+  "firmware": "EVO_#01153.s19",
+  "profile": "contract",
+  "status": "TRANSPORT_CONTRACT_COMPLETE",
+  "source_records": 2734,
+  "accepted_records": 2733,
+  "transmitted_bytes": 106451,
+  "binary_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "blocked": null,
+  "preconditions": "INFERIDO: already in compatible bootloader, erase completed, buffering enabled; full PreparaProg/Cancflash wrapper not executed",
+  "payload_decryption": "DESCONHECIDO",
+  "ecu_flash_written": false,
+  "physical_port_opened": false,
+  "original_machine_code_executed": true
+}
