@@ -1,0 +1,23 @@
+{
+  "sha256": "2c30ffcf8b74b9e758320bee5b65f69b75561b8da9fb16ae9a647d160c26b9db",
+  "bytes": 65536,
+  "exports": [
+    "?GetNByteToAllocate@@YAKK@Z",
+    "CryptGetLastErrorString",
+    "CryptInit",
+    "DataDecrypt",
+    "DataEncrypt",
+    "DataFree",
+    "FileDecrypt",
+    "FileEncrypt",
+    "GetCiphApiVersion"
+  ],
+  "aes_sbox_file_offset": "0x88e0",
+  "aes_t0_little_endian_file_offset": "0x8ae0",
+  "cryptinit_key_and_block_lengths_observed": [
+    16,
+    24,
+    32
+  ],
+  "relationship_to_evo_inner_cipher": "DESCONHECIDO"
+}

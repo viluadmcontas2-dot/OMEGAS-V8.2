@@ -1,0 +1,547 @@
+[
+  {
+    "package": "EVO 479",
+    "url": "https://hybrid.supply/downloads/landi-renzo/hsd_9485.zip",
+    "sha256": "c3437b87ae04cb33308c80a1c2fee0be32ba7eec2c5f7ab1d23ff97698d120d3",
+    "bytes": 109572,
+    "entries": [
+      {
+        "name": "EVO_#00479.ple",
+        "size": 109426
+      }
+    ],
+    "interesting": [
+      {
+        "name": "EVO_#00479.ple",
+        "path": "/workspace/firmware-internet-research/archive_9485/EVO_#00479.ple",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e30310fa43dc8c74c12ad2e1c"
+      }
+    ]
+  },
+  {
+    "package": "Omegas firmware",
+    "url": "https://hybrid.supply/downloads/landi-renzo/hsd_9486.zip",
+    "sha256": "1e7bc1a34f65e46d8beba3b91ab2365e6edf468b248fc10490a8514c8e51df87",
+    "bytes": 1585350,
+    "entries": [
+      {
+        "name": "OMEGAS_Firmware_www/",
+        "size": 0
+      },
+      {
+        "name": "OMEGAS_Firmware_www/FIRMWARE_opis.pdf",
+        "size": 30900
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#00800.plr",
+        "size": 78384
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01102_x1dot5 duzy wsp..plr",
+        "size": 87394
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01600.plr",
+        "size": 96374
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01899.plr",
+        "size": 96420
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01915 cut off.plr",
+        "size": 96482
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#02100.plr",
+        "size": 97708
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#00800.pln",
+        "size": 77420
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#01102_x1dot5duzy wsp..pln",
+        "size": 80112
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#01500.pln",
+        "size": 82296
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#01599.pln",
+        "size": 82364
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#01615.pln",
+        "size": 83306
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#02100.pln",
+        "size": 83634
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01311_automappold.plr",
+        "size": 87338
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01899 cut-off.plr",
+        "size": 96420
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#01111_automappold.pln",
+        "size": 80028
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#01599cut off.pln",
+        "size": 82364
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#01600.pln",
+        "size": 83358
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE188_LAN#01615 cut-off duzy wsp.pln",
+        "size": 83306
+      }
+    ],
+    "interesting": [
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#00800.plr",
+        "path": "/workspace/firmware-internet-research/archive_9486/LRE184_LAN#00800.plr",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e30312de91b3bf5df7cd59257"
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01102_x1dot5 duzy wsp..plr",
+        "path": "/workspace/firmware-internet-research/archive_9486/LRE184_LAN#01102_x1dot5 duzy wsp..plr",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e30315947f38e9a2015ef9be8"
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01600.plr",
+        "path": "/workspace/firmware-internet-research/archive_9486/LRE184_LAN#01600.plr",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e30317af5e41f1a73379b4d86"
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01899.plr",
+        "path": "/workspace/firmware-internet-research/archive_9486/LRE184_LAN#01899.plr",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e303188d61fb8a21e935a09a1"
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01915 cut off.plr",
+        "path": "/workspace/firmware-internet-research/archive_9486/LRE184_LAN#01915 cut off.plr",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e3031cc3541046b29afc5fc55"
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#02100.plr",
+        "path": "/workspace/firmware-internet-research/archive_9486/LRE184_LAN#02100.plr",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e303125f339ae44065561d03c"
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01311_automappold.plr",
+        "path": "/workspace/firmware-internet-research/archive_9486/LRE184_LAN#01311_automappold.plr",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e30313b73215f753566181c67"
+      },
+      {
+        "name": "OMEGAS_Firmware_www/LRE184_LAN#01899 cut-off.plr",
+        "path": "/workspace/firmware-internet-research/archive_9486/LRE184_LAN#01899 cut-off.plr",
+        "prefix_hex": "454e435259505445445f46494c455f565f30312e303188d61fb8a21e935a09a1"
+      }
+    ]
+  },
+  {
+    "package": "Plus Upgrade 20110203",
+    "url": "https://hybrid.supply/downloads/landi-renzo/hsd_9490.zip",
+    "sha256": "19e1bc03706a40151e86b52504ed5e18977b0d7bee024bdd06b06267a8c3f96a",
+    "bytes": 8848728,
+    "entries": [
+      {
+        "name": "Upgrade_PLUS_20110203/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Config.cfg",
+        "size": 448
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/FS202032G24/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/FS202032G24/Diagnosi_FS202032G24.GDG",
+        "size": 87744
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/FS202032G24/ECU.cfg",
+        "size": 5664
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/FS202032G24/GestLang.cfg",
+        "size": 100
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/FS202032G24/InterfaceParametri_FS202032G24.GPC",
+        "size": 79360
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/FS202032G24/InterfaceVariabili_FS202032G24.GVS",
+        "size": 12544
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/FS202032G24/Parametri_FS202032G24.PAR",
+        "size": 625216
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/FS202032G24/Variabili_FS202032G24.VAR",
+        "size": 232448
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/LR202044G34/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/LR202044G34/Diagnosi_LR202044G34.GDG",
+        "size": 89472
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/LR202044G34/ECU.cfg",
+        "size": 5664
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/LR202044G34/GestLang.cfg",
+        "size": 100
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/LR202044G34/InterfaceParametri_LR202044G34.GPC",
+        "size": 74848
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/LR202044G34/InterfaceVariabili_LR202044G34.GVS",
+        "size": 12608
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/LR202044G34/Parametri_LR202044G34.PAR",
+        "size": 636256
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU/LR202044G34/Variabili_LR202044G34.VAR",
+        "size": 237280
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/AE202045G28/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/AE202045G28/Diagnosi_AE202045G28.GDG",
+        "size": 106176
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/AE202045G28/ECU.cfg",
+        "size": 5696
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/AE202045G28/GestLang.cfg",
+        "size": 100
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/AE202045G28/InterfaceParametri_AE202045G28.GPC",
+        "size": 76672
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/AE202045G28/InterfaceVariabili_AE202045G28.GVS",
+        "size": 12512
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/AE202045G28/Parametri_AE202045G28.PAR",
+        "size": 614752
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Configuration/LC02_ECU_8/AE202045G28/Variabili_AE202045G28.VAR",
+        "size": 253024
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/ciphapi.dll",
+        "size": 65536
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_ECU/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_ECU/FS202038G24_20100620.hex",
+        "size": 205128
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_ECU/LR202043G34.hex",
+        "size": 197552
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_ECU_8/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_ECU_8/AE202045G28_NoSwitchOption_20091203_retry5.hex",
+        "size": 261891
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_Wait.ini",
+        "size": 387
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPC32k.exe",
+        "size": 69632
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPc32k.ini",
+        "size": 101
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPcAZ60.exe",
+        "size": 69632
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPcAz60.ini",
+        "size": 80
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPc_LC02.exe",
+        "size": 73728
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/Palm/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/PcUtility.exe",
+        "size": 90112
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/PcUtility.ini",
+        "size": 602
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/Update.exe",
+        "size": 40960
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/VW - FSI/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/VW - FSI/VW-FSI_16_06_BLF_Lm_G_02038G24_02.dat",
+        "size": 243072
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/VW - FSI/VW-TFSI_20_08_BWA_Lb_G_202035G24_00.dat",
+        "size": 245664
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/VW - FSI/VW-TSI_12_10_CBZB_Ls_02038G24_00.dat",
+        "size": 241664
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/VW - FSI/VW-TSI_14_08_BLG_Lm_G_02038G24_00.dat",
+        "size": 622272
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/VW - FSI/VW-TSI_14_08_CAVA_Lm_02038G24_00.dat",
+        "size": 243040
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/VW - FSI/VW-TSI_14_08_CAXA_Lm_G_02038G24_00.dat",
+        "size": 241888
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/WV-Seat-Skoda/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/WV-Seat-Skoda/Polo6R_12_09_CGPA_Ls_LR202043G34_01.dat",
+        "size": 246144
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU/LPG/WV-Seat-Skoda/Polo6R_14_09_CGGB_Ls_LR202043G34_01.dat",
+        "size": 246144
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/CHEVROLET/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/CHEVROLET/EQUINOX_34_08_XXXXX_Lm_02045G28_00.dat",
+        "size": 390496
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/CHEVROLET/equinox_35_07_XXC_Lb_02035G28_00.dat",
+        "size": 219744
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/CHEVROLET/SILVERADO_48_09_XXXXX_Lb_02045G28_00.dat",
+        "size": 230720
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/CHEVROLET/Silverado_60_09_XXXX_Lb_02045G28_00.dat",
+        "size": 334336
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/default_LPG_Vacuum_AE202045G28_01.dat",
+        "size": 230816
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/FORD/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/FORD/E350_54_08_6C2E_Lb_02045G28_00.dat",
+        "size": 223520
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/FORD/E350_54_08_6C2E_Lb_02045G28_NoSwitch.dat",
+        "size": 222592
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/FORD/F250_46_09_XXXX_Lb_02045G28_00.dat",
+        "size": 335072
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/FORD/Furgone_54_08_XXXX_Lb_02045G28_00.dat",
+        "size": 336448
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/LINCOLN/",
+        "size": 0
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/LINCOLN/Limousine_46_09_XXXX_Lb_02045G28_00.dat",
+        "size": 230240
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/Parameter/LC02_ECU_8/LPG/LINCOLN/Limousine_46_09_XXXX_Lm_02045G28_00.dat",
+        "size": 222624
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/TCULR.cfg",
+        "size": 4256
+      }
+    ],
+    "interesting": [
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/ciphapi.dll",
+        "path": "/workspace/firmware-internet-research/archive_9490/ciphapi.dll",
+        "prefix_hex": "4d5a90000300000004000000ffff0000b8000000000000004000000000000000"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_ECU/FS202038G24_20100620.hex",
+        "path": "/workspace/firmware-internet-research/archive_9490/FS202038G24_20100620.hex",
+        "prefix_hex": "3a30323030303030343030303146390d0a3a3032393530433030303045343739"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_ECU/LR202043G34.hex",
+        "path": "/workspace/firmware-internet-research/archive_9490/LR202043G34.hex",
+        "prefix_hex": "3a30323030303030343030303146390d0a3a3032393530383030303045343744"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_ECU_8/AE202045G28_NoSwitchOption_20091203_retry5.hex",
+        "path": "/workspace/firmware-internet-research/archive_9490/AE202045G28_NoSwitchOption_20091203_retry5.hex",
+        "prefix_hex": "3a30323030303030343030303146390d0a3a3032423841453030303045344234"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LC02_Wait.ini",
+        "path": "/workspace/firmware-internet-research/archive_9490/LC02_Wait.ini",
+        "prefix_hex": "0d0a5b434f4e4649475d0d0a6c6f676f203d20300d0a5b434f4d5d0d0a626175"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPC32k.exe",
+        "path": "/workspace/firmware-internet-research/archive_9490/LoaderPC32k.exe",
+        "prefix_hex": "4d5a90000300000004000000ffff0000b8000000000000004000000000000000"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPc32k.ini",
+        "path": "/workspace/firmware-internet-research/archive_9490/LoaderPc32k.ini",
+        "prefix_hex": "0d0a5b434f4e4649475d0d0a6c6f676f203d20300d0a4c616e67456e67203d20"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPcAZ60.exe",
+        "path": "/workspace/firmware-internet-research/archive_9490/LoaderPcAZ60.exe",
+        "prefix_hex": "4d5a90000300000004000000ffff0000b8000000000000004000000000000000"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPcAz60.ini",
+        "path": "/workspace/firmware-internet-research/archive_9490/LoaderPcAz60.ini",
+        "prefix_hex": "0d0a5b434f4e4649475d0d0a6c6f676f203d20300d0a5b434f4d5d0d0a626175"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/LoaderPc_LC02.exe",
+        "path": "/workspace/firmware-internet-research/archive_9490/LoaderPc_LC02.exe",
+        "prefix_hex": "4d5a90000300000004000000ffff0000b8000000000000004000000000000000"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/PcUtility.exe",
+        "path": "/workspace/firmware-internet-research/archive_9490/PcUtility.exe",
+        "prefix_hex": "4d5a90000300000004000000ffff0000b8000000000000004000000000000000"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/PcUtility.ini",
+        "path": "/workspace/firmware-internet-research/archive_9490/PcUtility.ini",
+        "prefix_hex": "0d0a5b434f4e4649475d0d0a4c6f676f203d20300d0a5b434f4d5d0d0a626175"
+      },
+      {
+        "name": "Upgrade_PLUS_20110203/LoaderPC/Update.exe",
+        "path": "/workspace/firmware-internet-research/archive_9490/Update.exe",
+        "prefix_hex": "4d5a90000300000004000000ffff0000b8000000000000004000000000000000"
+      }
+    ]
+  },
+  {
+    "package": "Omegas EVO software 2.16.9",
+    "url": "https://hybrid.supply/downloads/landi-renzo/hsd_9489.zip",
+    "sha256": "a71e00cca104d905e9c2e6b61a5a3d6c0a96211bcfaddfd27579016cad821617",
+    "bytes": 11217335,
+    "entries": [
+      {
+        "name": "2.16.9 C/",
+        "size": 0
+      },
+      {
+        "name": "2.16.9 C/setup.exe",
+        "size": 11879395
+      }
+    ],
+    "interesting": []
+  }
+]

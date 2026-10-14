@@ -1,0 +1,28 @@
+[
+  {
+    "routine": "Cancflash",
+    "synthetic_status": 0,
+    "returned": 0,
+    "wire": "000909",
+    "response": "53010054",
+    "evidence": "OBS-COD acceptance; INFERIDO device data"
+  },
+  {
+    "routine": "Cancflash",
+    "synthetic_status": 1,
+    "returned": 1,
+    "wire": "000909",
+    "response": "53010155",
+    "evidence": "OBS-COD acceptance; INFERIDO device data"
+  },
+  {
+    "routine": "GetIdentification",
+    "returned": 1,
+    "wire": [
+      "000202"
+    ],
+    "response": "530463030b01c9",
+    "decoded_memory": "63030b0100000000",
+    "evidence": "OBS-COD acceptance; identification bytes are synthetic, not an observed ECU"
+  }
+]

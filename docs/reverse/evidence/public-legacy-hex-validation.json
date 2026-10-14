@@ -1,0 +1,47 @@
+[
+  {
+    "file": "AE202045G28_NoSwitchOption_20091203_retry5.hex",
+    "record_types": {
+      "4": 98,
+      "0": 3420,
+      "1": 1
+    },
+    "invalid_records": [],
+    "unique_bytes": 107876,
+    "min_address": "0x18000",
+    "max_address": "0x33f2f",
+    "overlap_writes": 0,
+    "entropy": 7.141708261800938,
+    "status": "Valid Intel HEX; low entropy/structured tables suggest plaintext, MCU family and bootloader coverage unconfirmed"
+  },
+  {
+    "file": "FS202038G24_20100620.hex",
+    "record_types": {
+      "4": 92,
+      "0": 2683,
+      "1": 1
+    },
+    "invalid_records": [],
+    "unique_bytes": 84336,
+    "min_address": "0x18000",
+    "max_address": "0x2c971",
+    "overlap_writes": 0,
+    "entropy": 6.953035868241086,
+    "status": "Valid Intel HEX; low entropy/structured tables suggest plaintext, MCU family and bootloader coverage unconfirmed"
+  },
+  {
+    "file": "LR202043G34.hex",
+    "record_types": {
+      "4": 91,
+      "0": 2584,
+      "1": 1
+    },
+    "invalid_records": [],
+    "unique_bytes": 81200,
+    "min_address": "0x18000",
+    "max_address": "0x2bd3f",
+    "overlap_writes": 0,
+    "entropy": 6.9598787440082255,
+    "status": "Valid Intel HEX; low entropy/structured tables suggest plaintext, MCU family and bootloader coverage unconfirmed"
+  }
+]

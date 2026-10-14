@@ -1,0 +1,192 @@
+[
+  {
+    "source": "EVO_#00479.ple",
+    "source_sha256": "99a1f73258792bc3f4e6534cc33a14af00d698721c681211bdd8a7a65df6b3bd",
+    "outer_output_sha256": "d08d5a66bae70b76809cf11b490d425056d40d63ccc9eaecac1a2ab3368f67e5",
+    "marker": "ENCRYPTED_ECU_FILE_V_03.00",
+    "records": 1404,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1403,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30332E3030"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE184_LAN#00800.plr",
+    "source_sha256": "2a3aaf2ca190dff0f74f8569006b48959730cd30eb2821334dfc7ef1c32039e2",
+    "outer_output_sha256": "2f409e3ffceb08741b9190dd2849ce0fef96bd9a9bb5b90e8d268c03b16ae448",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1020,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1019,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE184_LAN#01102_x1dot5 duzy wsp..plr",
+    "source_sha256": "8b47497a47706a1fd7860f981075364bf1bd8cec7fe99b412d3f079d69da4b87",
+    "outer_output_sha256": "1707cf16e0b93ca6554a23148a15b6a0c1c48a62e400677cd739aa350510b524",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1135,
+    "standard_length_and_checksum_valid": 42,
+    "checksum_valid": 1134,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE184_LAN#01600.plr",
+    "source_sha256": "1559d17108f8b78dcc23f80fffb5cf66fbbe1488d57c2e7397c30eba41321746",
+    "outer_output_sha256": "89b43a3367955f4b462e29c50385d5ab762d6b92d95156fa51759e2cc43fce4f",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1250,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1249,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE184_LAN#01899.plr",
+    "source_sha256": "0a0b6d94f4975b28fc217a4e93860658b339b9f750ccc9c4ab89a46e369bb1ae",
+    "outer_output_sha256": "4a4841600a3d76903de8561883d391369ee5e289ab310e487278f6760399a204",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1250,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1249,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE184_LAN#01915 cut off.plr",
+    "source_sha256": "65d429c1d4fca968c8d6c3314defc892ff7ad474716c5f214b13a81e7c628c70",
+    "outer_output_sha256": "058346e69636628dcad067eaefca16bcbf9f008d953b275960b6096a7259d690",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1253,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1252,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE184_LAN#02100.plr",
+    "source_sha256": "4ec71203cd94b6cb1972fb39d90bceea49852667380a31635760c3ac55027820",
+    "outer_output_sha256": "7a19218275e2226f1da0640446f7292a16d21071c39f16b60efa0a232be82ae9",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1267,
+    "standard_length_and_checksum_valid": 39,
+    "checksum_valid": 1266,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#00800.pln",
+    "source_sha256": "de31a87c3b8d4c73ba3ca276fcbd09a100e13b0715d9e9a9d6d4317f68ae75bb",
+    "outer_output_sha256": "3ca03b346a67f6988b25f75de386edd2c33f31a982c8737ee0697a297a807f87",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1008,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1007,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#01102_x1dot5duzy wsp..pln",
+    "source_sha256": "b2e897b6a973baf3107d2c3e2cb4d1d2549c017f4d17704cb02299f5c2f81d1e",
+    "outer_output_sha256": "3d5152bfa19450ddc36ee94f1853e37d80988d83a7b2856adf843db4f38c228b",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1041,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1040,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#01500.pln",
+    "source_sha256": "b0f9458802e2d27445c54803fbe6849d2078fd21afdf315876ecaa25417e4350",
+    "outer_output_sha256": "4ed667847f81dba2041384fed4f7735a76911e4f256f5eb40229ab538c2d4785",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1068,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1067,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#01599.pln",
+    "source_sha256": "8d90f74280d8382ba97b8a562de29d1c5541270349a11ed9a16c4886635c85cf",
+    "outer_output_sha256": "4d728411b2d0ae7614e407b000b9310c0b4e4f0856a90730a0582eee24f6b81b",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1070,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1069,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#01615.pln",
+    "source_sha256": "cd51f556a7a64b3efc71b33b4ad0470f7ff63f775c94668706ae3440adc9b04c",
+    "outer_output_sha256": "d26f1714abcf5fc7579edb4d0d52fa757453619916b862549bdebde5b54aeaf7",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1081,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1080,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#02100.pln",
+    "source_sha256": "16af50aa9aec151914f2f8caa9dd89b4dbfe4371fa98cf227dda05cd60fba1b6",
+    "outer_output_sha256": "45b24dd6928ef1408159a544a769acaa45ca230fa53d50a68a12a15623062545",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1086,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1085,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE184_LAN#01311_automappold.plr",
+    "source_sha256": "e06f38220c141cc894d28938c5aae4d8083c3b4265c131aaad064edded0f0690",
+    "outer_output_sha256": "0f65d587fe5e486127930c34596be365b456a27763ff4133b27464d33127674a",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1135,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1134,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE184_LAN#01899 cut-off.plr",
+    "source_sha256": "0a0b6d94f4975b28fc217a4e93860658b339b9f750ccc9c4ab89a46e369bb1ae",
+    "outer_output_sha256": "4a4841600a3d76903de8561883d391369ee5e289ab310e487278f6760399a204",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1250,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1249,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#01111_automappold.pln",
+    "source_sha256": "7d60cdb0b3f274c622c67be024ad8d34fb8907dd3055f45dbcb3416cc07b35ac",
+    "outer_output_sha256": "7f2f340fbfa3226a099a7e8176f15457026502beb60efde3e77b72718354c90f",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1041,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1040,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#01599cut off.pln",
+    "source_sha256": "8d90f74280d8382ba97b8a562de29d1c5541270349a11ed9a16c4886635c85cf",
+    "outer_output_sha256": "4d728411b2d0ae7614e407b000b9310c0b4e4f0856a90730a0582eee24f6b81b",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1070,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1069,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#01600.pln",
+    "source_sha256": "c64d92cc3673b55fb5518ba5f1e93bfe95ca76a3a4fbcc5cfb3128c9676d0190",
+    "outer_output_sha256": "8b8439fa5c3762763d7ea55601d23548c550139d82a37eec5d9b5e9354fdfe8a",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1082,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1081,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  },
+  {
+    "source": "OMEGAS_Firmware_www/LRE188_LAN#01615 cut-off duzy wsp.pln",
+    "source_sha256": "cd51f556a7a64b3efc71b33b4ad0470f7ff63f775c94668706ae3440adc9b04c",
+    "outer_output_sha256": "d26f1714abcf5fc7579edb4d0d52fa757453619916b862549bdebde5b54aeaf7",
+    "marker": "ENCRYPTED_ECU_FILE_V_01.01",
+    "records": 1081,
+    "standard_length_and_checksum_valid": 0,
+    "checksum_valid": 1080,
+    "prefix": "S0454E435259505445445F4543555F46494C455F565F30312E3031"
+  }
+]
