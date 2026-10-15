@@ -45,6 +45,9 @@ if command -v python3 >/dev/null 2>&1; then
     fi
   fi
   if [[ -x "$root/graphify-venv/bin/graphify" ]]; then
+    if [[ ! -f "$skill_root/graphify/SKILL.md" ]]; then
+      "$root/graphify-venv/bin/graphify" install --platform claude || echo "[agent-stack] Graphify skill install failed."
+    fi
     ln -sfn "$root/graphify-venv/bin/graphify" "${HOME}/.local/bin/graphify"
     if [[ -n "${CLAUDE_ENV_FILE:-}" ]]; then
       if ! grep -Fq 'claude-agent-stack: PATH' "$CLAUDE_ENV_FILE" 2>/dev/null; then
