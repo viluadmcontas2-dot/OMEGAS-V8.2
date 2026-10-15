@@ -6,7 +6,7 @@ import kotlin.math.sqrt
 
 /**
  * Estado estatístico combinável. A fusão usa Welford ponderado e não faz
- * "média das médias". O objeto é seguro para persistência, OBD e OMEGAS Link.
+ * "média das médias". O objeto é seguro para persistência.
  */
 data class WeightedStat(
     var effectiveWeight: Double = 0.0,

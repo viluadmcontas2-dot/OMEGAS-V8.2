@@ -44,8 +44,6 @@
       telemetry: {},
       learning: {},
       predictor: { state: 'idle', data: null, activeCell: null, inspector: null },
-      obd: {},
-      obdDevices: {},
       map: { state: 'idle', data: null, selection: 0, activeCell: null, review: null, operation: null },
       curve: { state: 'idle', data: null, activePoint: null, proposal: null, status: {} },
       sessionStatus: {},

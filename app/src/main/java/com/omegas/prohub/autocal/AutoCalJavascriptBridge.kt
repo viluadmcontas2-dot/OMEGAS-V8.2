@@ -226,7 +226,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         .put("appAutomaticWrite", false)
         .put("nativeAutoMatchInsideEcu", true)
         .put("manualAutoMatchExposed", true)
-        .put("obdIndependent", true)
         .toString()
 
     /**
@@ -365,7 +364,6 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
                     onConfirmed = { receipt ->
                         service.sessionRecorder.record("autocal_native_action", "autocal", receipt, force = true)
                         service.nativeAutoCal.onManualActionConfirmed(receipt)
-                        try { service.link.markDataChanged("ação AutoCal nativa confirmada") } catch (_: Exception) {}
                     },
                     onStateChanged = activity::refreshWebUi,
                 )

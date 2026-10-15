@@ -206,8 +206,6 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("lastError", status.lastError)
             .put("uptimeSeconds", status.uptimeSeconds)
             .put("gpsEnabled", status.gpsEnabled)
-            .put("lanEnabled", status.lanEnabled)
-            .put("lanAddress", status.lanAddress)
             .put("directTelemetryAgeMs", status.directTelemetryAgeMs)
             .put("calibrationBusy", service.kWriter.isBusy() || service.kFactor.isBusy())
             .put("kMapState", kStatus.optString("state", "IDLE"))
@@ -508,17 +506,7 @@ class HubJavascriptBridge(activity: MainActivity) {
         }
     }
 
-    @JavascriptInterface fun requestBluetoothPermission() = activity?.requestBluetoothPermission()
-
-    @JavascriptInterface
-    fun configureOmegasLink(enabled: Boolean, pairCode: String): String =
-        activity?.serviceOrNull()?.configureOmegasLink(enabled, pairCode) ?: unavailable()
-    @JavascriptInterface fun claimLinkMain(): String = activity?.serviceOrNull()?.claimLinkMain() ?: unavailable()
-    @JavascriptInterface fun releaseLinkMain(): String = activity?.serviceOrNull()?.releaseLinkMain() ?: unavailable()
-    @JavascriptInterface fun syncLinkNow(): String = activity?.serviceOrNull()?.syncLinkNow() ?: unavailable()
-
     @JavascriptInterface fun setGpsEnabled(enabled: Boolean) = activity?.setGpsEnabled(enabled)
-    @JavascriptInterface fun setLanEnabled(enabled: Boolean): String = activity?.serviceOrNull()?.setLanEnabled(enabled)?.toString() ?: unavailable()
     @JavascriptInterface fun openAppSettings() = activity?.openAppSettings()
     @JavascriptInterface
     fun registerRefuel(addedM3: Double, distanceKm: Double): String {

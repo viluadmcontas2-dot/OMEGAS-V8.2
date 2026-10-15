@@ -5,7 +5,7 @@ import org.json.JSONObject
 
 /**
  * Critério térmico do aprendizado baseado exclusivamente na temperatura informada
- * pela ECU Landi. A temperatura OBD permanece uma fonte separada e opcional.
+ * pela ECU Landi.
  */
 class LearningTemperatureSettings(context: Context) {
     private val prefs = context.getSharedPreferences("omegas_learning_native", Context.MODE_PRIVATE)
@@ -33,6 +33,5 @@ class LearningTemperatureSettings(context: Context) {
         .put("minimumWaterC", currentMinimumWaterC)
         .put("minimumAllowedC", MIN_ALLOWED_C)
         .put("maximumAllowedC", MAX_ALLOWED_C)
-        .put("obdIndependent", true)
 }
 

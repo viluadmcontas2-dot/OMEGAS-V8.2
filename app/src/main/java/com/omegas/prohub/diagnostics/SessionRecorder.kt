@@ -752,7 +752,6 @@ class SessionRecorder(
             "${payload.optInt("rpm", 0)} rpm • ${payload.optString("fuel", payload.optString("state", "--"))} • " +
                 "${payload.optDouble("petrol_ms", 0.0)} ms • MAP ${payload.optDouble("load_bar", payload.optDouble("map_bar", 0.0))}"
         }
-        "obd" -> "RPM ${data.opt("rpm")} • STFT ${data.opt("stft")} • ${data.optString("quality", "--")}"
         "app_log" -> "${data.optString("category", "LOG")}: ${data.optString("message", "").take(140)}"
         "settings_changed" -> "Configurações alteradas"
         "usb_raw" -> "${data.optString("direction")} • ${data.optInt("size", 0)} bytes"
@@ -769,7 +768,6 @@ Tipos principais:
 - telemetry: uma única cópia de cada telemetria publicada pelo núcleo Android;
 - full_snapshot: estado aprofundado periódico, incluindo aprendizado e runtime;
 - app_log: conexão, recuperação serial, mapa K, readback e erros;
-- obd: fonte opcional e isolada;
 - ui_usage: contagens de uso da interface (visitas e segundos por aba, toques por controle), deltas desde o último envio; só contagens, sem valores digitados;
 - usb_raw: somente quando habilitado explicitamente;
 - k_*: leitura, escrita, ACK e confirmação do mapa K;

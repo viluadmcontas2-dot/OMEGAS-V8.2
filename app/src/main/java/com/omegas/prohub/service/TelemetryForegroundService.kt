@@ -29,9 +29,7 @@ import com.omegas.prohub.gps.GpsTelemetryManager
 import com.omegas.prohub.learning.LearningArchiveManager
 import com.omegas.prohub.learning.LearningTemperatureSettings
 import com.omegas.prohub.learning.LearningToleranceSettings
-import com.omegas.prohub.link.OmegasLinkManager
 import com.omegas.prohub.model.HubStatus
-import com.omegas.prohub.network.LanPanelServer
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.storage.DataArchiveManager
@@ -90,15 +88,11 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var gps: GpsTelemetryManager
         private set
-    lateinit var lanServer: LanPanelServer
-        private set
     lateinit var kWriter: KWriteManager
         private set
     lateinit var kFactor: KFactorManager
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
-        private set
-    lateinit var link: OmegasLinkManager
         private set
     lateinit var learningArchive: LearningArchiveManager
         private set
@@ -187,7 +181,6 @@ class TelemetryForegroundService : Service() {
                     if (::learningArchive.isInitialized) {
                         learningArchive.saveInternalCheckpoint("Mapa K confirmado")
                     }
-                    if (::link.isInitialized) link.markDataChanged("mapa K confirmado")
                 }
             },
             onConfirmedBatch = { payload ->
@@ -196,7 +189,6 @@ class TelemetryForegroundService : Service() {
                 refinement.mapKWritten()
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
-                link.markDataChanged("escrita K confirmada")
             },
         )
         kFactor = KFactorManager(
@@ -209,7 +201,6 @@ class TelemetryForegroundService : Service() {
                 recordCurveExperiment(payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
-                link.markDataChanged("escrita K factor confirmada")
             },
             publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
         )
@@ -230,7 +221,6 @@ class TelemetryForegroundService : Service() {
                 )
                 // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida.
                 refinement.nativeCurveChanged()
-                if (::link.isInitialized) link.markDataChanged("AutoCal nativo alterou Curva K")
             },
             onNativeAutoMatchObserved = { payload ->
                 sessionRecorder.record(
@@ -243,36 +233,6 @@ class TelemetryForegroundService : Service() {
             onStateChanged = { stateChanged() },
         )
         learningArchive = LearningArchiveManager(paths, settings, runtime, kWriter, log)
-        link = OmegasLinkManager(
-            settings = settings,
-            log = log,
-            usbConnected = { usb.connected },
-            coreTelemetry = ::coreTelemetryForLink,
-            exportLearning = { runtime.exportLearning(settings.deviceId) },
-            mergeLearning = { payload -> runtime.mergeLearning(payload, settings.deviceId) },
-            exportHistory = { kWriter.exportHistoryComponent(settings.deviceId) },
-            mergeHistory = { payload -> kWriter.mergeHistoryComponent(payload) },
-            onStateChanged = ::stateChanged,
-            exportAutoCalContext = {
-                JSONObject()
-                    .put("schema", "landi-autocal-18x30-v2")
-                    .put("source", "ECU_NATIVE")
-                    .put("nativeEcuEvidence", runtime.exportLearning(settings.deviceId).optJSONArray("nativeEcuEvidence") ?: org.json.JSONArray())
-                    .put("automaticCalibration", false)
-                    .put("manualOnly", true)
-            },
-            mergeAutoCalContext = { payload ->
-                JSONObject().put("ok", true).put("accepted", false).put("source", payload.optString("source", "UNKNOWN"))
-                    .put("reason", "context-only-no-local-mutation")
-            },
-            exportNativeReceipts = {
-                val file = File(paths.runtimeRoot, "autocal_native_receipts.json")
-                JSONObject().put("receipts", if (file.isFile) {
-                    try { org.json.JSONArray(file.readText(Charsets.UTF_8)) } catch (_: Exception) { org.json.JSONArray() }
-                } else org.json.JSONArray())
-            },
-        )
-        lanServer = LanPanelServer(this, log, ::fullEngineSnapshotJson, ::serviceStatusJson)
 
         startForegroundCompat()
         overlay.restoreIfAllowed()
@@ -281,8 +241,6 @@ class TelemetryForegroundService : Service() {
             gps.start(settings.gpsIntervalMs)
             startForegroundCompat()
         }
-        if (settings.lanServerEnabled) lanServer.start(settings.lanServerPort, settings.lanAccessToken)
-        if (settings.linkEnabled) link.start()
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
         autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 1_000L, 1_000L, TimeUnit.MILLISECONDS)
@@ -317,8 +275,6 @@ class TelemetryForegroundService : Service() {
         try { runtime.stop(3) } catch (_: Exception) {}
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
         try { usb.disconnect() } catch (_: Exception) {}
-        try { link.close() } catch (_: Exception) {}
-        try { lanServer.close() } catch (_: Exception) {}
         try { gps.stop() } catch (_: Exception) {}
         try { overlay.close() } catch (_: Exception) {}
         try { sessionRecorder.close() } catch (_: Exception) {}
@@ -373,8 +329,6 @@ class TelemetryForegroundService : Service() {
             gpsEnabled = gps.running,
             gpsSpeedKmh = gps.json().optDouble("speedKmh", 0.0),
             gpsAccuracyM = gps.json().optDouble("accuracyM", 0.0),
-            lanEnabled = lanServer.running,
-            lanAddress = if (lanServer.running) lanServer.address() else "",
             directTelemetryAgeMs = telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it },
         )
     }
@@ -422,7 +376,6 @@ class TelemetryForegroundService : Service() {
             .put("k_write", try { JSONObject(kWriter.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("k_factor", try { JSONObject(kFactor.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("session_recorder", try { JSONObject(sessionRecorder.statusJson()) } catch (_: Exception) { JSONObject() })
-            .put("link_status", try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("consumption", consumptionTracker.buildTelemetryJson(settings.gnvCylinderCapacityM3.toFloat()))
             .put("native_updated_at", System.currentTimeMillis())
             .put("telemetry_age_ms", telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it })
@@ -465,11 +418,6 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração K factor está em andamento").toString()
         }
-        if (::link.isInitialized && !link.canWriteLocally()) {
-            return JSONObject().put("ok", false)
-                .put("error", "Este aparelho não possui o controle principal do MP48")
-                .toString()
-        }
         learningArchive.saveInternalCheckpoint("Antes de ajustar célula K")
         return kWriter.startWrite(row, column, current, target, maxStep, pauseMs).toString()
     }
@@ -484,11 +432,6 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração K factor está em andamento").toString()
         }
-        if (::link.isInitialized && !link.canWriteLocally()) {
-            return JSONObject().put("ok", false)
-                .put("error", "Este aparelho não possui o controle principal do MP48")
-                .toString()
-        }
         return try {
             learningArchive.saveInternalCheckpoint("Antes de ajustar mapa K: " + reason.take(100))
             kWriter.startBatchWrite(JSONArray(cellsJson), maxStep, pauseMs, reason).toString()
@@ -501,11 +444,6 @@ class TelemetryForegroundService : Service() {
         if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
         if (kWriter.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração do mapa K está em andamento").toString()
-        }
-        if (::link.isInitialized && !link.canWriteLocally()) {
-            return JSONObject().put("ok", false)
-                .put("error", "Este aparelho não possui o controle principal do MP48")
-                .toString()
         }
         CalibrationWriteSafetyPolicy.unsafeReason(status())?.let { reason ->
             return JSONObject().put("ok", false).put("error", reason).toString()
@@ -521,11 +459,6 @@ class TelemetryForegroundService : Service() {
         if (!usb.connected) return JSONObject().put("ok", false).put("error", "USB desconectado").toString()
         if (kWriter.isBusy()) {
             return JSONObject().put("ok", false).put("error", "Uma alteração do mapa K está em andamento").toString()
-        }
-        if (::link.isInitialized && !link.canWriteLocally()) {
-            return JSONObject().put("ok", false)
-                .put("error", "Este aparelho não possui o controle principal do MP48")
-                .toString()
         }
         return try {
             val points = JSONArray(pointsJson)
@@ -586,18 +519,6 @@ class TelemetryForegroundService : Service() {
             .apply { if (!ok) put("error", gps.lastError) }
     }
 
-    fun setLanEnabled(enabled: Boolean): JSONObject {
-        settings.lanServerEnabled = enabled
-        val ok = if (enabled) lanServer.start(settings.lanServerPort, settings.lanAccessToken) else {
-            lanServer.stop()
-            true
-        }
-        stateChanged()
-        return JSONObject().put("ok", ok).put("enabled", lanServer.running)
-            .put("address", if (lanServer.running) lanServer.address() else "")
-            .apply { if (!ok) put("error", lanServer.lastError) }
-    }
-
     fun overlayReady(): Boolean = ::overlay.isInitialized
 
     fun overlayStatusJson(): String = if (::overlay.isInitialized) overlay.statusJson().toString() else "{}"
@@ -613,19 +534,6 @@ class TelemetryForegroundService : Service() {
 
     fun nativeAutoCalSnapshotJson(): String =
         if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson().toString() else "{}"
-
-    fun configureOmegasLink(enabled: Boolean, pairCode: String): String {
-        val normalizedCode = pairCode.filter(Char::isDigit)
-        if (normalizedCode.isNotBlank() && normalizedCode.length != 6) {
-            return JSONObject().put("ok", false).put("error", "O código do Link deve ter 6 números").toString()
-        }
-        if (normalizedCode.length == 6) settings.linkPairCode = normalizedCode
-        settings.linkEnabled = enabled
-        return link.applySettings().toString()
-    }
-    fun claimLinkMain(): String = link.claimMain().toString()
-    fun releaseLinkMain(): String = link.releaseMain().toString()
-    fun syncLinkNow(): String = link.syncNow().toString()
 
     private fun usbStateChanged() {
         if (stopping) return
@@ -699,7 +607,6 @@ class TelemetryForegroundService : Service() {
                 stopSelf()
             }
         }
-        if (::link.isInitialized) link.onLocalCapabilitiesChanged()
         updateWakeLock()
     }
 
@@ -872,38 +779,6 @@ class TelemetryForegroundService : Service() {
     private fun onEngineExited(crashed: Boolean) {
         if (crashed) healthFailures += 1
         stateChanged()
-    }
-
-    private fun coreTelemetryForLink(): JSONObject {
-        val status = status()
-        return JSONObject()
-            .put("engineReady", status.engineReady)
-            .put("rpm", status.rpm)
-            .put("petrolMs", status.petrolMs)
-            .put("petrol_ms", status.petrolMs)
-            .put("gasMs", status.gasMs)
-            .put("gas_ms_diagnostic", status.gasMs)
-            .put("mapBar", status.mapBar)
-            .put("load_bar", status.mapBar)
-            .put("fuelState", status.fuelState)
-            .put("fuel", status.fuelState)
-            .put("state", status.ecuState)
-            .put("updatedAt", System.currentTimeMillis() - status.directTelemetryAgeMs.coerceAtLeast(0L))
-            .put("source", "android-native")
-    }
-
-    private fun serviceStatusJson(): JSONObject {
-        val status = status()
-        return JSONObject()
-            .put("ok", true)
-            .put("appVersion", BuildConfig.VERSION_NAME)
-            .put("engineRunning", status.engineRunning)
-            .put("engineReady", status.engineReady)
-            .put("usbConnected", status.usbConnected)
-            .put("rpm", status.rpm)
-            .put("fuel", status.fuelState)
-            .put("lastError", status.lastError)
-            .put("calibrationBusy", kWriter.isBusy() || kFactor.isBusy())
     }
 
     private fun stateChanged() {
