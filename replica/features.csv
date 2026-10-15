@@ -1,0 +1,36 @@
+feature,area,priority,original,clone,notes
+Conectar à ECU por USB e mostrar online/offline,ecu,must,yes,no,connectUsb; S09
+Leitura ao vivo (tensão MAP inj. RPM) em todas as abas,telemetria,must,yes,no,S06; tensão provisória; alerta 14.1 V
+Desconhecido mostra "—" nunca 0,telemetria,must,yes,no,invariante
+AutoCal em tempo real sem leitura anterior,autocal,must,yes,no,autocal-sem-leitura-anterior
+Zonas 0-4/5-8/9-12/13-17 com #n/d e eixos,autocal,must,yes,no,paridade com ProgBase
+Bolinhas de estado por AutoMatch,autocal,should,yes,no,verde azul laranja
+Reset do GNV (02 24 04 02) em um toque com backup e readback,autocal,must,yes,no,RESET_ALL nunca exposto
+Religar AUTO_CAL_ENABLE até readback igual a 1 após reset,autocal,must,yes,no,reset-nunca-pausa-aprendizado
+Religar aquisição de AutoCal ou zonas desfaz "ECU terminou",autocal,must,yes,no,commit 2fa65c8
+Excluir ponto do AutoCal,autocal,could,yes,no,preparePointDelete
+Refino com fases e trechos travados,refino,must,yes,no,RefinementAutopilot; StallWatch
+Refinar por minha conta (interruptor),refino,should,yes,no,dono grava quando quer
+Gravar no Mapa K sem sair do Refino,refino,should,yes,no,map-fix.js
+Diálogo "O que vai mudar" antes de gravar,refino,must,yes,no,S08
+Ler Mapa K ao abrir a aba,mapa k,must,yes,no,startMapRead
+Selecionar células e ajustar por percentual ou soma,mapa k,must,yes,no,previewMapAdjustment
+Gravar Mapa K com ACK e readback,mapa k,must,yes,no,piso 100; nunca automático
+Curva K para Mapa K (produto refatorado),mapa k,should,yes,no,curve-to-map.js; grava mapa depois curva neutra
+Ler e exibir Curva K (0.4 a 2.0 linha de teto 1.8),curva k,must,yes,no,readKFactorCurve
+Arrastar nó da Curva K (soltar só prepara),curva k,should,yes,no,curva-k-arrasto
+Gravar Curva K com revisão e readback (teto 1.8),curva k,must,yes,no,MAX_WRITE_FACTOR
+Backup e restauração da Curva K,curva k,must,yes,no,restauração respeita teto 1.8
+Curva K toda em 1.0 com aviso só se longe de 1.0,curva k,should,yes,no,decisão de campo 2026-10-13
+Exportar backup completo,ferramentas,must,yes,no,exportData
+Exportar e importar aprendizado .omegas,ferramentas,must,yes,no,importar nunca grava na ECU
+Registro de sessão (iniciar parar exportar),ferramentas,must,yes,no,SessionRecorder
+Saúde do serviço e otimização de bateria,ferramentas,should,yes,no,drawers.js
+Telemetria flutuante (overlay) que nunca cobre o app,ferramentas,could,yes,no,TelemetryOverlayController
+Layout sem rolagem em 1280x720,ux,must,yes,no,sem_rolagem_abas
+"Gravado" só após readback igual,seguranca,must,yes,no,invariante
+Predictor automático,predictor,skip,no,no,fora do produto por decisão do dono
+Escrita automática de Map K ou Curva K,seguranca,skip,no,no,proibida por invariante
+RESET_ALL exposto na UI,seguranca,skip,no,no,proibido por invariante
+Telas de GNV/Link/LAN/GPS visíveis,configuracao,could,unknown,no,existem na ponte; local na UI não confirmado
+Validação física com ECU real,validacao,skip,no,no,só com o dono
