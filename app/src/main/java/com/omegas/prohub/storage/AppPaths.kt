@@ -29,9 +29,5 @@ class AppPaths(context: Context) {
         ).forEach { it.mkdirs() }
     }
 
-    fun clearTemp() {
-        tempRoot.listFiles()?.forEach { it.deleteRecursively() }
-        stagingRoot.listFiles()?.forEach { it.deleteRecursively() }
-    }
 }
 

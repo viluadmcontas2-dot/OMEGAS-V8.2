@@ -350,13 +350,6 @@ class V7SessionRuntime(
         return applied
     }
 
-    fun restoreCheckpoint(checkpointId: String): CalibrationStateV7 {
-        val checkpoint = state.checkpoints.singleOrNull { it.id == checkpointId }
-            ?: error("Checkpoint não encontrado: $checkpointId")
-        state = state.copy(calibration = checkpoint.calibration)
-        return checkpoint.calibration
-    }
-
     private fun stabilizeSuggestion(
         fresh: LocalSuggestionV7,
         existing: LocalSuggestionV7?,

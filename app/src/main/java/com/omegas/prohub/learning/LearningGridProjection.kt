@@ -103,12 +103,6 @@ object LearningGridProjection {
             .put("cell", cell)
     }
 
-    fun sameCell(rpmA: Double, petrolA: Double, rpmB: Double, petrolB: Double): Boolean {
-        val a = cellFor(rpmA, petrolA)
-        val b = cellFor(rpmB, petrolB)
-        return a.optInt("row") == b.optInt("row") && a.optInt("column") == b.optInt("column")
-    }
-
     fun enrichRegion(region: JSONObject): JSONObject {
         val copy = JSONObject(region.toString())
         val cell = cellFor(

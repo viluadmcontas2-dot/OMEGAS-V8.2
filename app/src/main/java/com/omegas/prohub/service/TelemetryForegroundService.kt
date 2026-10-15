@@ -429,9 +429,7 @@ class TelemetryForegroundService : Service() {
         return root.toString()
     }
 
-    fun engineMetricsJson(): String = runtime.metricsJson()
     fun engineSelfTestJson(): String = runtime.selfTestJson()
-    fun protocolLabJson(): String = runtime.protocolJson()
     fun learningSyncStatusJson(): String = runtime.learningStatus().toString()
 
     @Synchronized fun readKCell(row: Int, column: Int): String =
@@ -444,13 +442,9 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.recoverInsertionState().toString()
     fun previewKMapCell(row: Int, column: Int, targetValue: Int): String = runtime.previewKWrite(row, column, targetValue).toString()
     fun kWriteStatusJson(): String = kWriter.statusJson()
-    fun kWriteHistoryJson(): String = kWriter.historyJson()
-
     @Synchronized fun readKFactorCurve(): String =
         if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.readCurve().toString()
     fun kFactorStatusJson(): String = kFactor.statusJson()
-    fun kFactorHistoryJson(): String = kFactor.historyJson()
-
     @Synchronized fun saveKFactorBackup(label: String): String =
         if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.saveCurrentBackup(label).toString()
 
@@ -553,8 +547,6 @@ class TelemetryForegroundService : Service() {
     } catch (error: Exception) {
         JSONObject().put("ok", false).put("error", error.message ?: "Snapshot AutoCal inválido").toString()
     }
-    fun learningCheckpointStatusJson(): String = learningArchive.checkpointStatus().toString()
-
     fun sessionRecorderStatusJson(): String = sessionRecorder.statusJson()
     fun sessionRecorderListJson(): String = sessionRecorder.listSessionsJson()
     fun updateSessionRecorderSettings(
@@ -622,17 +614,6 @@ class TelemetryForegroundService : Service() {
     fun nativeAutoCalSnapshotJson(): String =
         if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson().toString() else "{}"
 
-    fun linkStatusJson(): String {
-        val raw = try { JSONObject(link.statusJson()) } catch (_: Exception) { JSONObject() }
-        return raw.put("connected", raw.optBoolean("peerConnected", false))
-            .put(
-                "message",
-                raw.optString("lastError").ifBlank {
-                    if (raw.optBoolean("peerConnected")) "Outro aparelho conectado" else "Aguardando aparelho na rede local"
-                },
-            )
-            .toString()
-    }
     fun configureOmegasLink(enabled: Boolean, pairCode: String): String {
         val normalizedCode = pairCode.filter(Char::isDigit)
         if (normalizedCode.isNotBlank() && normalizedCode.length != 6) {

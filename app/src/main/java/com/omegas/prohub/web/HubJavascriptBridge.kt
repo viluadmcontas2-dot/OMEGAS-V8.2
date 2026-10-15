@@ -235,9 +235,6 @@ class HubJavascriptBridge(activity: MainActivity) {
         .toString()
 
     @JavascriptInterface
-    fun getLearningCheckpointStatus(): String = activity?.serviceOrNull()?.learningCheckpointStatusJson() ?: "{}"
-
-    @JavascriptInterface
     fun getLearningMaps(): String {
         val status = activity?.serviceOrNull()?.status()
         val file = File(AppPaths(appContext).runtimeRoot, LearningTelemetrySchemaMigration.ACTIVE_STATE_FILE)
@@ -313,24 +310,6 @@ class HubJavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun getLearningTemperatureSettings(): String = learningTemperature.toJson().toString()
-
-    @JavascriptInterface
-    fun setLearningMinimumWaterC(value: Int): String {
-        val applied = learningTemperature.setMinimumWaterC(value)
-        activity?.serviceOrNull()?.let { service ->
-            service.log.add("INFO", "LEARNING-NATIVE", "Temperatura mínima Landi ajustada para $applied °C")
-            service.sessionRecorder.record(
-                "settings_changed",
-                "learning",
-                JSONObject().put("minimumLandiWaterC", applied).put("source", "LANDI_ECU"),
-                force = true,
-            )
-        }
-        return learningTemperature.toJson().put("applied", applied).toString()
-    }
-
-    @JavascriptInterface
     fun getLearningToleranceSettings(): String = learningTolerances.toJson().toString()
 
     /**
@@ -371,10 +350,7 @@ class HubJavascriptBridge(activity: MainActivity) {
             .toString()
     } ?: unavailable()
 
-    @JavascriptInterface fun getEngineMetrics(): String = activity?.serviceOrNull()?.engineMetricsJson() ?: unavailable()
     @JavascriptInterface fun runEngineSelfTests(): String = activity?.serviceOrNull()?.engineSelfTestJson() ?: unavailable()
-    @JavascriptInterface fun runProtocolLab(): String = activity?.serviceOrNull()?.protocolLabJson() ?: unavailable()
-
     // Fora da ponte JS (auditoria de fluxo, 2026-10-11): nenhuma tela chama; leitura serial síncrona travaria a tela.
     // O Mapa K lê pela ponte V7 (startMapRead), que roda fora da thread da tela.
     fun readKCell(row: Int, column: Int): String = activity?.serviceOrNull()?.readKCell(row, column) ?: unavailable()
@@ -470,7 +446,6 @@ class HubJavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface fun getKWriteStatus(): String = activity?.serviceOrNull()?.kWriteStatusJson() ?: "{}"
-    @JavascriptInterface fun getKWriteHistory(): String = activity?.serviceOrNull()?.kWriteHistoryJson() ?: "[]"
     @JavascriptInterface fun recoverKInsertionState(): String =
         activity?.serviceOrNull()?.recoverKInsertionState() ?: unavailable()
 
@@ -496,9 +471,6 @@ class HubJavascriptBridge(activity: MainActivity) {
         }
         return service.startKFactorWrite(points.toString(), reason)
     }
-
-    @JavascriptInterface fun getKFactorStatus(): String = activity?.serviceOrNull()?.kFactorStatusJson() ?: "{}"
-    @JavascriptInterface fun getKFactorHistory(): String = activity?.serviceOrNull()?.kFactorHistoryJson() ?: "[]"
 
     @JavascriptInterface fun getLearningSyncStatus(): String = activity?.serviceOrNull()?.learningSyncStatusJson() ?: "{}"
     @JavascriptInterface fun importLearningArchive() = activity?.importLearningArchive()
@@ -538,7 +510,6 @@ class HubJavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface fun requestBluetoothPermission() = activity?.requestBluetoothPermission()
 
-    @JavascriptInterface fun getLinkStatus(): String = activity?.serviceOrNull()?.linkStatusJson() ?: "{}"
     @JavascriptInterface
     fun configureOmegasLink(enabled: Boolean, pairCode: String): String =
         activity?.serviceOrNull()?.configureOmegasLink(enabled, pairCode) ?: unavailable()
@@ -556,9 +527,4 @@ class HubJavascriptBridge(activity: MainActivity) {
         return service.consumptionTracker.registerRefuel(addedM3, distanceKm, capacity).toString()
     }
 
-    @JavascriptInterface
-    fun setGnvSettings(capacityM3: Float): String {
-        AppSettings(appContext).gnvCylinderCapacityM3 = capacityM3
-        return JSONObject().put("ok", true).toString()
-    }
 }

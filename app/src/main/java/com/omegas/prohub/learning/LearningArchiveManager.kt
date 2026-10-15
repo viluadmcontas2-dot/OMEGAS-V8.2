@@ -77,27 +77,6 @@ class LearningArchiveManager(
     }
 
     @Synchronized
-    fun checkpointStatus(): JSONObject {
-        val history = checkpointFiles()
-        val recent = JSONArray()
-        history.take(8).forEach { file ->
-            recent.put(JSONObject()
-                .put("id", file.nameWithoutExtension)
-                .put("updatedAt", file.lastModified())
-                .put("bytes", file.length())
-                .put("reason", checkpointReason(file)))
-        }
-        return JSONObject()
-            .put("available", checkpointCurrent.isFile)
-            .put("updatedAt", if (checkpointCurrent.isFile) checkpointCurrent.lastModified() else 0L)
-            .put("bytes", if (checkpointCurrent.isFile) checkpointCurrent.length() else 0L)
-            .put("previousAvailable", checkpointPrevious.isFile)
-            .put("historyCount", history.size)
-            .put("historyLimit", maxCheckpointHistory)
-            .put("recent", recent)
-            .put("storage", "single-car-continuity-v1")
-    }
-
     private fun writeAtomically(destination: File, bytes: ByteArray) {
         destination.parentFile?.mkdirs()
         val temp = File(destination.parentFile, destination.name + ".tmp")

@@ -22,8 +22,6 @@ data class WeightedStat(
     var lastValue: Double? = null,
     var updatedAt: Long = 0L,
 ) {
-    fun copyDeep(): WeightedStat = copy()
-
     fun update(value: Double, weight: Double = 1.0, physical: Boolean = true, now: Long = System.currentTimeMillis()) {
         if (!value.isFinite() || !weight.isFinite() || weight <= 0.0) return
         val oldWeight = effectiveWeight

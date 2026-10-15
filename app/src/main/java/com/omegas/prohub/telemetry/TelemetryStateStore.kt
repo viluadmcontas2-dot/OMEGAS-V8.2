@@ -116,21 +116,6 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
         sequence.incrementAndGet()
     }
 
-    fun lightweightJson(): String = synchronized(lock) {
-        JSONObject()
-            .put("sequence", sequence.get())
-            .put("updatedAt", telemetryUpdatedAt)
-            .put("stateUpdatedAt", stateUpdatedAt)
-            .put("ageMs", if (telemetryUpdatedAt == 0L) -1 else System.currentTimeMillis() - telemetryUpdatedAt)
-            .put("valid", valid)
-            .put("sessionId", sessionId)
-            .put("telemetry", JSONObject(telemetry.toString()))
-            .put("runtime", JSONObject(runtime.toString()))
-            .put("gps", JSONObject(gps.toString()))
-            .put("history", JSONArray(history.map { JSONObject(it.toString()) }))
-            .toString()
-    }
-
     /** Snapshot mínimo para a WebView; não serializa o histórico. */
     fun liveJson(): String = synchronized(lock) {
         JSONObject()

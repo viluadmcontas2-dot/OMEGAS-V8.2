@@ -175,4 +175,3 @@ data class LearningPerformanceMetrics(
     }
 }
 
-fun JSONArray.toIntList(): List<Int> = List(length()) { optInt(it) }

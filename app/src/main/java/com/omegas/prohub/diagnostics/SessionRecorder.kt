@@ -246,10 +246,6 @@ class SessionRecorder(
             )
     }
 
-    fun previewJson(): String = synchronized(previewLock) {
-        JSONArray(preview.map { JSONObject(it.toString()) }).toString()
-    }
-
     @Synchronized
     fun listSessionsJson(): String {
         val array = JSONArray()
@@ -286,23 +282,6 @@ class SessionRecorder(
                 )
             }
         return array.toString()
-    }
-
-    fun clearStoppedSessions(): JSONObject {
-        var deleted = 0
-        var preserved = 0
-        paths.sessionLogsRoot.listFiles { file -> file.isDirectory }?.forEach { dir ->
-            if (recording && dir.absolutePath == sessionDir?.absolutePath) return@forEach
-            if (documentsMirror != null && !documentsMirrorMarker(dir).isFile) {
-                val published = try { publishParts(dir, dir.name, final = true) } catch (_: Exception) { false }
-                if (!published) {
-                    preserved += 1
-                    return@forEach
-                }
-            }
-            if (dir.deleteRecursively()) deleted += 1
-        }
-        return JSONObject().put("ok", true).put("deleted", deleted).put("preservedWithoutPublicCopy", preserved)
     }
 
     fun exportSession(

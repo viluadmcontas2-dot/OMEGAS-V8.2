@@ -158,7 +158,3 @@ fun TelemetryForegroundService.v7LoadSession(fileName: String): String = try {
 
 fun TelemetryForegroundService.v7SessionFilesJson(): String =
     V7CalibrationRegistry.get(this).listFiles().toString()
-
-fun TelemetryForegroundService.releaseV7CalibrationCoordinator() {
-    V7CalibrationRegistry.remove(this)
-}

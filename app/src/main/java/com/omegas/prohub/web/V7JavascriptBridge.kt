@@ -44,10 +44,6 @@ class V7JavascriptBridge(activity: MainActivity) {
         ?: unavailable()
 
     @JavascriptInterface
-    fun listSessionFiles(): String = activity?.serviceOrNull()?.v7SessionFilesJson()
-        ?: "[]"
-
-    @JavascriptInterface
     fun getLastOperation(): String = JSONObject(lastOperation.toString())
         .put("busy", busy.get())
         .toString()
@@ -67,11 +63,6 @@ class V7JavascriptBridge(activity: MainActivity) {
     fun ingestLearningSnapshot(snapshotJson: String): String =
         activity?.serviceOrNull()?.v7IngestLearningSnapshot(snapshotJson)
             ?: unavailable()
-
-    @JavascriptInterface
-    fun synchronizeFromEcu(fileName: String): String = startOperation("SYNCHRONIZING_ECU") { service ->
-        service.v7SynchronizeCalibration(fileName)
-    }
 
     /**
      * Compatibilidade de API: sugestão nunca mais alcança writer diretamente.
@@ -534,14 +525,6 @@ class V7JavascriptBridge(activity: MainActivity) {
             .put("internalChunks", plan.chunks.size)
             .toString()
     }
-
-    @JavascriptInterface
-    fun saveSession(fileName: String): String = activity?.serviceOrNull()?.v7SaveSession(fileName)
-        ?: unavailable()
-
-    @JavascriptInterface
-    fun loadSession(fileName: String): String = activity?.serviceOrNull()?.v7LoadSession(fileName)
-        ?: unavailable()
 
     private fun unsafeCalibrationWriteReason(service: com.omegas.prohub.service.TelemetryForegroundService): String? =
         CalibrationWriteSafetyPolicy.unsafeReason(service.status())
