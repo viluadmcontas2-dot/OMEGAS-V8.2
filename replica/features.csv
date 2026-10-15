@@ -34,3 +34,6 @@ Escrita automática de Map K ou Curva K,seguranca,skip,no,no,proibida por invari
 RESET_ALL exposto na UI,seguranca,skip,no,no,proibido por invariante
 Telas de GNV/Link/LAN/GPS visíveis,configuracao,could,unknown,no,existem na ponte; local na UI não confirmado
 Validação física com ECU real,validacao,skip,no,no,só com o dono
+Pausar e retomar aprendizado (DISABLE_AUTO_CAL),autocal,could,unknown,no,botão existe no código mas AGENTS.md diz sem botão de pausar; decisão do dono
+Reaprender GNV ou gasolina (apaga o atual),autocal,should,yes,no,botões vistos em 01-autocal.png
+Desfazer última gravação no Refino,refino,should,yes,no,botão visto em 02-refino.png

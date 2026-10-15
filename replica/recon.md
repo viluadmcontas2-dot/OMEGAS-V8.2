@@ -3,7 +3,7 @@
 Scope: o app inteiro do dono como está na branch `ccr-7eed5bd3-251im7` — as 5 abas (AutoCal, Refino, Ajuste local, Ajuste global, Ferramentas), a barra ao vivo e a ponte nativa. Alvo: calibração de GNV na ECU MP48/AEB.
 For: o próprio dono (produto dele). Clean-room não se aplica: a fonte é o código dele.
 Date: 2026-10-15
-Método: leitura do código do repositório (`index.html`, `router.js`, `native-api.js`, `HubJavascriptBridge.kt`, `AutoCalJavascriptBridge.kt`, `drawers.js`), `PROJECT.md`, `STATUS.md`, `AGENTS.md`. **Nada foi executado; nenhuma tela foi renderizada** (replica/screens/ está vazio). Estados marcados "lido no código" não foram vistos em tela.
+Método: leitura do código do repositório (`index.html`, `router.js`, `native-api.js`, `HubJavascriptBridge.kt`, `AutoCalJavascriptBridge.kt`, `drawers.js`), `PROJECT.md`, `STATUS.md`, `AGENTS.md`. As 5 abas foram renderizadas em 1280×720 com `tools/ci/capturar_abas.cjs` (ponte falsa, sem ECU: **dados de demonstração**, "Simulação de interface · nenhuma escrita real"), em `screens/01-autocal.png` … `05-tools.png`. Nenhum fluxo foi executado nem testado. Estados marcados "lido no código" não foram vistos em tela.
 
 ## Sources
 
@@ -24,15 +24,15 @@ Ler a ECU → deixar o AutoCal nativo da ECU aprender (gasolina × GNV) → o Re
 
 | ID | screen | route / how to reach | purpose | key components | states seen |
 | --- | --- | --- | --- | --- | --- |
-| S01 | AutoCal | aba 01, `data-route=autocal` (padrão ao abrir) | acompanhar a aquisição da ECU em tempo real (zonas 0–4/5–8/9–12/13–17, `#n/d`, eixos, curva K, bolinhas de estado, chip de combustível) | gráfico do AutoCal original, bolinhas de AutoMatch, ações nativas (reset GNV `02 24 04 02`, religar aquisição), exclusão de ponto | ECU offline, coletando, completa, cota 3/3, aquisição religada (lido no código) |
-| S02 | Refino | aba 02 | fases do refino, trechos que travam, proposta de ajuste | mesmo gráfico do AutoCal, `refinoPhaseChip`, diálogo "O que vai mudar" (S08), interruptor "Refinar por minha conta" | automático, manual, trecho travado (lido no código) |
-| S03 | Ajuste local (Mapa K) | aba 03 | corrigir regiões do Mapa K | grade `mapGrid`, seleção de células, modo percentual/somar, botões −5/−1/+1/+5, "Gravar na ECU", "Curva K → Mapa K" | mapa não lido, lido, seleção, escrevendo, resultado ok/erro |
-| S04 | Ajuste global (Curva K) | aba 04 | editar a curva K ponto a ponto | `curveChart` com arrasto de nó, painel "Ponto ativo", pontos preparados, rodapé (Reler ECU, Guardar backup, Backups, Restaurar, "Curva K toda em 1,0") | não lida, lida, ponto preparado, escrevendo, resultado |
-| S05 | Ferramentas | aba 05 | backup, sessões e saúde do app | cartões de `drawers.js` (serviço, BATERIA, TELEMETRIA FLUTUANTE, REGISTRO DE SESSÃO, APRENDIZADO), Exportar backup completo, Exportar/Importar aprendizado `.omegas` | serviço ativo/atenção/parado, gravando/parado |
+| S01 | AutoCal | aba 01, `data-route=autocal` (padrão ao abrir) — `screens/01-autocal.png` | acompanhar a aquisição da ECU em tempo real (zonas, `#n/d` por faixa, eixos, curva K com teto 1,8, bolinhas Gasolina/GNV/Ajustes, "Ajustes automáticos 2/3", chip "Zona Z1") | gráfico do AutoCal original, medidor "Aquisição", legenda, **4 botões: Pausar aprendizado, Reaprender GNV (apaga o atual), Reaprender gasolina (apaga o atual), Ações avançadas**, dica "Toque em um ponto" | ECU offline, coletando, completa, cota 3/3, aquisição religada (lido no código) |
+| S02 | Refino | aba 02 — `screens/02-refino.png` | fases do refino, trechos que travam, proposta de ajuste | mesmo gráfico do AutoCal, chip "Curva pronta", frase "12 pontos para ajustar", relato de engasgos ("engasgou 6 vezes no GNV…"), marcas Apagou/Quase apagou, botões **Ver alterações** e **Desfazer última gravação** (+ diálogo S08, interruptor "Refinar por minha conta") | curva pronta com engasgos (visto); automático/manual (lido no código) |
+| S03 | Ajuste local (Mapa K) | aba 03 — `screens/03-map.png` | corrigir regiões do Mapa K | grade `mapGrid`, seleção de células, modo percentual/somar, botões −5/−1/+1/+5, "Gravar na ECU", "Curva K → Mapa K" | lido (visto: grade 12 faixas de injeção × 12 RPM, 13ª linha só leitura, "Mapa lido da ECU"); não lido, seleção, escrevendo, resultado (lido no código) |
+| S04 | Ajuste global (Curva K) | aba 04 — `screens/04-curve.png` | editar a curva K ponto a ponto | `curveChart` com arrasto de nó, painel "Ponto ativo", pontos preparados, rodapé (Reler ECU, Guardar backup, Backups, Restaurar, "Curva K toda em 1,0") | lida (visto: "ECU confirmada · 30 pontos", ponto 1 = 1,02, Backups (0), Restaurar desabilitado); ponto preparado, escrevendo, resultado (lido no código) |
+| S05 | Ferramentas | aba 05 — `screens/05-tools.png` | backup, sessões e saúde do app | 3 cartões: SAÚDE DO APP (Bateria, Telemetria flutuante, "Log do sistema"), REGISTRO DE SESSÃO (Registrar sessão/Parar, Sessões, "Tamanho e retenção"), APRENDIZADO (48 regiões gasolina/GNV); rodapé: Exportar backup completo, Exportar/Importar aprendizado | visto: serviço OK, registro parado, 0 sessões, overlay desativado |
 | S06 | Barra ao vivo | topo, em todas as abas | tensão da ECU (alerta 14,1 V, escala provisória), MAP, Inj. gasolina, RPM | 4 `live-cell` | desconhecido "—", normal, alerta de tensão |
 | S07 | Camadas de operação | sobre S03/S04 | escrita em andamento e resultado | `operation-layer writing/result`, `operation-result` | escrevendo, ok, erro |
 | S08 | Diálogo "O que vai mudar" | dentro do Refino | revisar antes → depois da proposta | `refino-card` | aberto, confirmado, cancelado |
-| S09 | Menu lateral + status | à esquerda, sempre | navegar e mostrar ECU online/combustível | `side-rail`, `globalEcu`, `globalFuel` | online, offline |
+| S09 | Barra de navegação + status | **embaixo**, sempre (no HTML é `side-rail`, no 1280×720 aparece na base) | navegar entre as 5 abas; marca OMEGAS · demo à esquerda; "ECU online" + combustível à direita | `side-rail`, `globalEcu`, `globalFuel` | online (visto), offline |
 | S10 | Aviso flutuante (toast) | `alertToast` | alertas curtos | toast com fechar | oculto, visível |
 
 Não-telas relevantes: balão de telemetria flutuante (`TelemetryOverlayController`), notificação do serviço em primeiro plano.
@@ -124,7 +124,7 @@ Relationships: EcuLink 1-n Session; EcuLink 1-1 MapK; EcuLink 1-1 CurveK; CurveK
 
 ## Feature matrix
 
-Ver `features.csv`. Must: 21, should: 7, could: 3, skip: 4 (35 funções).
+Ver `features.csv`. Must: 21, should: 9, could: 4, skip: 4 (38 funções).
 
 ## Out of scope (cannot or should not be cloned)
 
@@ -138,8 +138,13 @@ Ver `features.csv`. Must: 21, should: 7, could: 3, skip: 4 (35 funções).
 
 Screens 10 (5 abas + 5 camadas/componentes), flows 9, entities 12. Hard parts: (1) protocolo serial da ECU e arbitragem USB (`Mp48SerialScheduler`, backpressure); (2) gravar com ACK + readback e `reset-nunca-pausa-aprendizado`; (3) AutoCal/Refino em tempo real sem relógio, só por evidência. Size: **XL** para reproduzir do zero; o app já existe, então este mapa serve de índice e de checklist de paridade.
 
+## Divergências achadas ao renderizar
+
+- **"Pausar aprendizado" existe no AutoCal** (`autocal-cockpit.js:1129`, ação `DISABLE_AUTO_CAL`, vira "Retomar aprendizado"), mas o AGENTS.md diz "Sem botão de pausar a ECU (desliga a curva)". Pode ser regra antiga ou botão que sobrou; **decisão do dono**. Na matriz está como `unknown`.
+- Minha primeira versão do mapa dizia "menu lateral"; a imagem mostra barra inferior (corrigido em S09).
+
 ## Lacunas desta rodada (UNKNOWN)
 
-- Nenhuma tela foi renderizada; `replica/screens/` está vazio. Dá para gerar as capturas 1280×720 com `tools/ci/` quando o dono mandar.
+- As capturas usam ponte falsa e dados de demonstração; não provam comportamento com ECU real. Estados de erro, escrita em andamento, diálogo "O que vai mudar" e "Ações avançadas" não foram capturados (`tools/ci/capturar_estados.cjs` pode gerar).
 - `PROTOCOLO-LANDI` não foi lido (exige `add_repo`).
 - Telas de configuração (GNV, Link, LAN, GPS) existem na ponte, mas não achei onde aparecem na UI.
