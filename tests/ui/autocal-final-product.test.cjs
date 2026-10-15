@@ -105,7 +105,6 @@ assert.match(
 assert.match(cockpit, /const liveMarkup = live/, 'camada AGORA precisa depender da telemetria viva');
 assert.match(cockpit, /if \(!live\) \{\s*if \(layer\) layer\.setAttribute\('display', 'none'\);/s,
   'telemetria inválida precisa esconder cursor AGORA antigo');
-assert.match(cockpit, /state === 'CANCEL_REQUESTED'/, 'cancelamento intermediário precisa de estado humano explícito');
 assert.match(cockpit, /const nativeSnapshot = state\.latestSnapshot\?\.fields \? state\.latestSnapshot : \{\};/,
   'estado de aquisição deve vir do monitor nativo');
 assert.match(cockpit, /const enabled = finite\(state\.autoCalEnabled \?\? nativeSnapshot\.autoCalEnabled \?\? scalarValue\(nativeSnapshot, 'AUTO_CAL_ENABLE'\)\);/,

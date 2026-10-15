@@ -273,11 +273,6 @@ const nativeActiveWhileManualStale = model.humanState(
 assert.equal(nativeActiveWhileManualStale.enabled, 1, 'monitor nativo deve vencer snapshot manual antigo');
 assert.equal(model.toggleAction(nativeActiveWhileManualStale.enabled), 'DISABLE_AUTO_CAL');
 
-const cancelling = model.readNarrative({ state: 'CANCEL_REQUESTED', busy: true, message: 'Cancelamento solicitado', progress: 40 });
-assert.equal(cancelling.busy, true);
-assert.equal(cancelling.cancelling, true);
-assert.equal(cancelling.title, 'Cancelando leitura');
-
 const validAutoCalLive = model.livePoint(
   { valid: true, ageMs: 100, live: { rpm: 1300, petrol_ms: 4.8, load_bar: 0.44, level_raw: 999 } },
 );

@@ -2237,16 +2237,8 @@
 .refino-legend { grid-area: legend; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: #c5d0db; }
 .refino-legend .ao-key { display: inline-flex; align-items: center; gap: 6px; }
 .refino-legend i { display: inline-block; font-style: normal; }
-.refino-legend i.sq { width: 9px; height: 9px; border-radius: 2px; }
-.refino-legend i.sq.petrol { background: var(--ao-petrol-line, #ff5d5d); }
-.refino-legend i.sq.gas { background: var(--ao-gas, #5dd39e); }
-.refino-legend i.ln { width: 20px; height: 0; border-top: 3px solid; }
-.refino-legend i.ln.petrol { border-color: var(--ao-petrol-line, #ff5d5d); }
-.refino-legend i.ln.gas { border-color: var(--ao-gas, #5dd39e); }
-.refino-legend i.ln.dim { opacity: .4; border-top-width: 2px; }
 .ao-g-stall { stroke: #ffffff; stroke-width: 2.5; stroke-linecap: round; fill: none; }
 .ao-g-near { stroke: #ffffff; stroke-width: 2; fill: none; }
-.refino-legend i.dm { width: 9px; height: 9px; transform: rotate(45deg); border: 2px solid var(--ao-bad, #ff5d5d); box-sizing: border-box; }
 .app-shell.autocal-focus .refino-cockpit .refino-action-bar { grid-area: actions; align-self: end; }
 
 /* Gráfico do Refino com UMA lógica (dono, 2026-10-13: "sem curvas demais, sem incoerência"): a meta é GNV = Gasolina.

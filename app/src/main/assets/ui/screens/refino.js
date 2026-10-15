@@ -22,9 +22,6 @@
     SEM_ECU: 'unknown', ECU_TRABALHANDO: 'unknown', COLETANDO_NOSSOS: 'collecting',
     PROPOSTA_PRONTA: 'ready', VERIFICANDO: 'collecting', RESTAURAR_TRECHO: 'problem', ESTAVEL: 'ok',
   };
-  /** As três palavras do dono para cada ponto gravado (+ sem medição possível). */
-  const OUTCOME = { MELHOROU: 'melhorou', PIOROU: 'piorou', MEDINDO: 'ainda medindo', SEM_MEDICAO: 'sem medição' };
-  const ORIGIN = { MEASURED: 'Medido', BLENDED: 'Transição', SMOOTHED: 'Anti-tranco', HELD: 'Mantido', LOW_GUARD: 'Trava da baixa' };
   /** Motivo que vai para a ECU com a gravação; o Kotlin classifica por ele (RefinementJournal.kindFromReason). */
   const REASONS = {
     apply: 'Refino OMEGAS: curva refinada confirmada',
@@ -74,29 +71,6 @@
     const when = top ? ` Quase sempre ao soltar e voltar do acelerador, perto de ${Number(top.fromMs).toFixed(1).replace('.', ',')} ms.` : '';
     const died = dead ? ` Em ${dead} o motor apagou.` : '';
     return { total, title: `O carro engasgou ${vezes(total)} no GNV`, text: `${died}${when}`.trim() };
-  }
-
-  /** Pontos que o motor mudaria (regra de entrada, só para os detalhes técnicos; o botão vem do Kotlin). */
-  function proposedPoints(analysis) {
-    const points = Array.isArray(analysis?.points) ? analysis.points : [];
-    return points
-      .filter(p => p && p.origin !== 'HELD' && finite(p.calculatedRaw) !== null && Number(p.calculatedRaw) !== Number(p.currentRaw))
-      .map(p => ({ index: Number(p.index), currentRaw: Number(p.currentRaw), targetRaw: Number(p.calculatedRaw) }));
-  }
-
-  /**
-   * Desfazer a última gravação registrada no diário (antes ← depois). Se o Kotlin diz que não há o que
-   * desfazer (undoable === false: foi um desfazer/restauração, já desfeita ou aceita), não há lista — sem laço.
-   */
-  function undoPoints(latest) {
-    if (latest && latest.undoable === false) return [];
-    if (Array.isArray(latest?.undoPoints)) return pointList(latest.undoPoints).map(({ index, currentRaw, targetRaw }) => ({ index, currentRaw, targetRaw }));
-    const before = latest?.beforeRaw;
-    const after = latest?.afterRaw;
-    if (!Array.isArray(before) || !Array.isArray(after) || before.length !== 30 || after.length !== 30) return [];
-    const out = [];
-    for (let i = 0; i < 30; i += 1) if (Number(before[i]) !== Number(after[i])) out.push({ index: i, currentRaw: Number(after[i]), targetRaw: Number(before[i]) });
-    return out;
   }
 
   /** Ação principal = a que o piloto (Kotlin) decidiu para a fase. Sem ação do Kotlin, nenhum botão. */
@@ -190,37 +164,6 @@
       .map(h => Number(h?.index)));
     const same = shown.length === now.points.length && shown.every(p => current.get(p.index) === p.currentRaw && !held.has(p.index));
     return same ? 'write' : 'changed';
-  }
-
-  /** Pontos da ECU com atividade; desconhecido (aquisição não lida, campo indisponível) = "—". */
-  // "Gasolina" por extenso (dono, 2026-10-11): "Gas" se lê gás = GNV.
-  function ecuPointsText(pilot) {
-    const petrol = finite(pilot?.petrolValid);
-    const gas = finite(pilot?.gasValid);
-    return petrol === null || gas === null ? '—' : `Gasolina ${fmt(petrol, 0)} · GNV ${fmt(gas, 0)}`;
-  }
-
-  /** Nossos pontos (faixas densas medidas pelo app); sem a medição (lista ausente) = "—", nunca "0". */
-  function ourPointsText(dense) {
-    const petrol = Array.isArray(dense?.petrol) ? dense.petrol.length : null;
-    const gas = Array.isArray(dense?.gas) ? dense.gas.length : null;
-    return petrol === null || gas === null ? '—' : `Gasolina ${fmt(petrol, 0)} · GNV ${fmt(gas, 0)}`;
-  }
-
-  /** Resultado por ponto da gravação que a tela mostra (o Kotlin já deu o veredito de cada ponto). */
-  function resultRows(result) {
-    const points = Array.isArray(result?.points) ? result.points : [];
-    return points.map(p => ({
-      index: Number(p.index), ms: finite(p.ms), beforeRaw: finite(p.beforeRaw), afterRaw: finite(p.afterRaw),
-      verdict: String(p.verdict || ''), outcome: String(p.outcome || 'SEM_MEDICAO'),
-      label: OUTCOME[p.outcome] || OUTCOME.SEM_MEDICAO,
-    }));
-  }
-
-  function resultSummary(result) {
-    const rows = resultRows(result);
-    const count = name => rows.filter(r => r.outcome === name).length;
-    return { improved: count('MELHOROU'), worse: count('PIOROU'), measuring: count('MEDINDO'), none: count('SEM_MEDICAO'), total: rows.length };
   }
 
   class RefinoScreen {
@@ -704,7 +647,7 @@
     app.refino = new RefinoScreen(app);
   }
 
-  ns.RefinoModel = { manualOffer, describeStalls, proposedPoints, undoPoints, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, ecuPointsText, ourPointsText, resultRows, resultSummary, REASONS };
+  ns.RefinoModel = { manualOffer, describeStalls, primaryAction, secondaryActions, localAction, reviewList, reviewGate, actionEnabled, REASONS };
   ns.RefinoScreen = RefinoScreen;
   if (typeof document !== 'undefined') boot();
 })(typeof window !== 'undefined' ? window : globalThis);

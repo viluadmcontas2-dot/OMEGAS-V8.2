@@ -236,7 +236,6 @@
       return invoke(this.native, 'getScienceSnapshotSince', [Number(revision) || 0], { ok: false, changed: false, revision: Number(revision) || 0 });
     }
     telemetry() { return this.demo ? demoTelemetry() : invoke(this.native, 'getLiveTelemetry', [], {}); }
-    fullSnapshot() { return this.demo ? demoTelemetry() : invoke(this.native, 'getFullEngineSnapshot', [], {}); }
     learning() { return this.demo ? demoLearning() : invoke(this.native, 'getLearningMaps', [], {}); }
 
     batteryOptimizationStatus() {

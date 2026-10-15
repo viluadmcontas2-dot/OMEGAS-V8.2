@@ -28,30 +28,6 @@ function analysis(changed) {
   };
 }
 
-test('revisão propõe só pontos medidos que mudam; mantidos nunca são gravados', () => {
-  const m = model();
-  const points = m.proposedPoints(analysis([4, 5, 6]));
-  assert.equal(points.length, 3);
-  assert.equal(JSON.stringify(points[0]), JSON.stringify({ index: 4, currentRaw: 16384, targetRaw: 17000 }));
-  const held = analysis([]);
-  held.points[2] = { ...held.points[2], calculatedRaw: 17000, origin: 'HELD' };
-  assert.equal(m.proposedPoints(held).length, 0);
-});
-
-test('desfazer usa antes/depois do diário', () => {
-  const m = model();
-  const before = Array(30).fill(16384);
-  const after = before.map((v, i) => (i === 10 ? 18000 : v));
-  const points = m.undoPoints({ beforeRaw: before, afterRaw: after });
-  assert.equal(points.length, 1);
-  assert.equal(JSON.stringify(points[0]), JSON.stringify({ index: 10, currentRaw: 18000, targetRaw: 16384 }));
-  assert.equal(m.undoPoints({}).length, 0);
-});
-
-// Ajustado na correção do ciclo (2026-10-11): antes a tela calculava "pronto" pela análise e podia
-// discordar da fase (fase COLETANDO com botão de gravar; fase PROPOSTA_PRONTA sem botão; VERIFICANDO com
-// botão "Medindo…" desabilitado para sempre). Agora a ação de cada fase vem do piloto (Kotlin) e a tela
-// só a desenha: a análise sozinha nunca cria um botão.
 test('uma ação principal por fase do piloto, decidida no Kotlin', () => {
   const m = model();
   const ready = analysis([4]);
@@ -104,10 +80,7 @@ test('Refino é um destino próprio logo abaixo do AutoCal e grava só com confe
 
 test('Desfazer some depois de usado: sem lista quando o Kotlin diz que não há o que desfazer', () => {
   const m = model();
-  const before = Array(30).fill(16384);
-  const bad = before.map((v, i) => (i === 10 ? 18000 : v));
   // Último registro é o próprio desfazer (antes = valor ruim): o Kotlin marca undoable=false e a lista some.
-  assert.equal(m.undoPoints({ beforeRaw: bad, afterRaw: before, undoable: false }).length, 0);
   assert.equal(m.reviewList({ refinement: { latest: { undoable: false, undoPoints: [{ index: 10, currentRaw: 16384, targetRaw: 18000 }] } } }, 'undo').points.length, 0);
   // Proposta recém-gravada: o Kotlin dá a lista (atual ← anterior) e a revisão usa exatamente ela.
   const latest = { undoable: true, undoPoints: [{ index: 10, currentRaw: 18000, targetRaw: 16384, referenceTimeMs: 5.5 }] };
@@ -172,20 +145,7 @@ test('revisão nunca grava lista velha: mesmos pontos gravam o revisado, ponto m
   assert.equal(m.reviewGate(undo, { ...undoLatest, autopilot: { secondary: [{ kind: 'undo', enabled: false }] } }), 'blocked');
 });
 
-test('pontos da ECU desconhecidos mostram —, nunca Gas 0 · GNV 0 (rodada 2, item 21)', () => {
-  const m = model();
-  assert.equal(m.ecuPointsText({ petrolValid: null, gasValid: null }), '—');
-  assert.equal(m.ecuPointsText({}), '—');
-  assert.equal(m.ecuPointsText({ petrolValid: 12, gasValid: null }), '—');
-  assert.equal(m.ecuPointsText({ petrolValid: 12, gasValid: 0 }), 'Gasolina 12 · GNV 0'); // (dono, 2026-10-11: texto para leigo): "Gas" se lê gás
-});
-
-test('nossos pontos desconhecidos mostram —, nunca Gasolina 0 · GNV 0 (dono, 2026-10-11)', () => {
-  const m = model();
-  assert.equal(m.ourPointsText(undefined), '—');
-  assert.equal(m.ourPointsText({}), '—');
-  assert.equal(m.ourPointsText({ petrol: [1, 2] }), '—', 'sem a lista do GNV não se inventa 0');
-  assert.equal(m.ourPointsText({ petrol: [1, 2, 3], gas: [] }), 'Gasolina 3 · GNV 0', 'lista vazia medida é 0 de verdade');
+test('a tela não usa "Gas" no lugar de gasolina nem as fases/caixas antigas do Refino', () => {
   assert.doesNotMatch(SOURCE, /`Gas \$\{/, 'sem "Gas" no lugar de gasolina');
   // Refino reformulado (dono, 2026-10-13): sem fases 1–5 nem caixas de números; só frase, ação e botões.
   assert.doesNotMatch(SOURCE, /refino-steps|refinoSteps|<small>GNV vs gasolina<\/small>/);
@@ -193,17 +153,6 @@ test('nossos pontos desconhecidos mostram —, nunca Gasolina 0 · GNV 0 (dono, 
 
 test('a tela não pede a análise do motor (a ponte não recalcula; rodada 2, item 19)', () => {
   assert.doesNotMatch(SOURCE, /refinedAnalysis/);
-});
-
-test('resultado por ponto nas palavras do dono: melhorou, piorou, ainda medindo', () => {
-  const m = model();
-  const result = { status: 'VERIFICANDO', points: [
-    { index: 10, ms: 5.5, beforeRaw: 16384, afterRaw: 17000, verdict: 'CONFIRMADA', outcome: 'MELHOROU' },
-    { index: 14, ms: 7.5, beforeRaw: 16384, afterRaw: 17000, verdict: 'PIOROU', outcome: 'PIOROU' },
-    { index: 18, ms: 9.5, beforeRaw: 16384, afterRaw: 17000, verdict: 'COLETANDO', outcome: 'MEDINDO' },
-  ] };
-  assert.equal(JSON.stringify(m.resultRows(result).map(r => r.label)), JSON.stringify(['melhorou', 'piorou', 'ainda medindo']));
-  assert.equal(JSON.stringify(m.resultSummary(result)), JSON.stringify({ improved: 1, worse: 1, measuring: 1, none: 0, total: 3 }));
 });
 
 test('motivos da gravação do Refino batem com a classificação do Kotlin (proposta, restaurar, desfazer)', () => {
