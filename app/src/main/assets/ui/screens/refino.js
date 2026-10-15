@@ -36,6 +36,10 @@
   const OPERATION_TIMEOUT_MS = 90000;
   // Dados do Refino a cada tick de status (1 s): antes 2 s + 5 amostras por faixa somavam ~3 s até o ponto aparecer (dono, 2026-10-13).
   const DATA_EVERY_TICKS = 1;
+  // Botão que aparece e some (dono, 2026-10-15): uma leitura ruim da ponte ou um tranco do cabo esvaziava a barra por um instante.
+  // Aparecer é imediato; esconder só depois deste tempo contínuo sem a ação (só cosmético: a gravação reconfere no toque).
+  const HIDE_GRACE_MS = 2500;
+  const EQ_MISS_LIMIT = 3;
 
   function finite(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -233,6 +237,8 @@
       this.review = null;
       this.preview = false;
       this.lastRenderKey = '';
+      this.eqMisses = 0;
+      this.hiding = {};
       // Gravar no Mapa K sem sair da tela (core/map-fix.js): o mesmo fluxo para engasgo e para diferença por RPM.
       this.mapFix = root.OmegasMapFix && root.OmegasMapEditor
         ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: () => { this.render(true); if (this.preview) this.renderPreview(); }, env: { setTimeout: root.setTimeout.bind(root) } })
@@ -294,7 +300,10 @@
     refresh(force) {
       if (this.operation.phase === 'reading' || this.operation.phase === 'writing') return;
       if (!this.api?.available?.()) { this.renderUnavailable(); return; }
-      this.eq = this.api.equivalence?.() || null;
+      const next = this.api.equivalence?.() || null;
+      // Leitura sem piloto ({ok:false}, erro da ponte) não apaga a tela: mantém a última boa por algumas leituras.
+      if (next && next.autopilot) { this.eq = next; this.eqMisses = 0; }
+      else if (!this.eq || (this.eqMisses = (this.eqMisses || 0) + 1) > EQ_MISS_LIMIT) this.eq = next;
       const projection = this.api.projection?.() || {};
       this.snapshot = projection.ok === true ? (projection.snapshot || {}) : {};
       this.render(force === true);
@@ -542,6 +551,7 @@
       let next = (pilot.next || '') + (op.phase === 'idle' && fix.phase === 'idle' ? this.gasNote(eq) : '');
       const show = { preview: false, manual: manualOffer(eq).offered, undo: false, ok: false };
       const label = {};
+      let idle = false;
       if (this.preview) {
         // O cartão está aberto: ele tem os próprios botões; a barra fica quieta.
       } else if (op.phase === 'reading' || op.phase === 'writing') {
@@ -559,6 +569,7 @@
       } else {
         const stallInfo = describeStalls(eq.stalls);
         if (stallInfo.total > 0) next = `${stallInfo.title}. ${stallInfo.text}`.trim();
+        idle = true;
         show.preview = !!this.curveKind() || !!this.mapProposal();
         show.undo = secondaryActions(eq).some(item => item.kind === 'undo' && item.enabled);
         label.undo = 'Desfazer última gravação';
@@ -566,6 +577,9 @@
       setText('refinoHeadline', headline);
       setText('refinoNext', next);
       label.manual = manualOffer(eq).label;
+      // Carência só no repouso: cartão aberto, gravando ou erro escondem na hora (nada de botão velho durante uma operação).
+      if (idle) this.holdVisible(show, this.shown); else this.hiding = {};
+      this.shown = { ...show };
       for (const [name, selector] of [['preview', '[data-refino-preview]'], ['manual', '[data-refino-manual]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
         const node = document.querySelector(selector);
         if (!node) continue;
@@ -573,6 +587,23 @@
         if (label[name] && node.textContent !== label[name]) node.textContent = label[name];
       }
       this.renderChart();
+    }
+
+    /**
+     * Carência para esconder (botão não pisca): quem estava visível e deixou de ser pedido continua por HIDE_GRACE_MS;
+     * se o pedido volta, zera. Quando a carência vence, volta a desenhar (a chave de render não mudou, então agenda).
+     */
+    holdVisible(show, before) {
+      const now = Date.now();
+      let pending = false;
+      for (const name of ['preview', 'manual', 'undo']) {
+        if (show[name] || !before?.[name]) { delete this.hiding[name]; continue; }
+        this.hiding[name] = this.hiding[name] || now;
+        if (now - this.hiding[name] < HIDE_GRACE_MS) { show[name] = true; pending = true; } else delete this.hiding[name];
+      }
+      if (pending && !this.holdTimer) {
+        this.holdTimer = root.setTimeout(() => { this.holdTimer = null; this.render(true); }, HIDE_GRACE_MS / 2);
+      }
     }
 
     /** Por que nossos pontos de GNV recomeçaram (inteiros ou só onde a gravação mexeu). */

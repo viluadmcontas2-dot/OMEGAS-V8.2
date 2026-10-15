@@ -219,7 +219,9 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 !ecuOnline && lastCount == null -> "SEM_ECU"
                 ecuReason == null -> "ECU_TRABALHANDO"
                 restoreCount > 0 -> "RESTAURAR_TRECHO"
-                (!stable || !onTarget) && proposalCount > 0 -> "PROPOSTA_PRONTA"
+                // Já "pronta" e a proposta segue de pé: fica. A razão oscilando em torno de 4% (sem estar "fora") alternava
+                // pronta/estável a cada leitura e o botão piscava; a proposta só sai pela própria saída debounced (3 vazias).
+                (!stable || !onTarget || phase == "PROPOSTA_PRONTA") && proposalCount > 0 -> "PROPOSTA_PRONTA"
                 verifying -> "VERIFICANDO"
                 stable -> "ESTAVEL"
                 else -> "COLETANDO_NOSSOS"

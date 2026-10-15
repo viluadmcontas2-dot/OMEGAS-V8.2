@@ -196,4 +196,16 @@ class RefinementAutopilotTest {
         assertEquals(1, r.getInt("gasZones"))
         assertEquals("ECU_TRABALHANDO", r.getString("phase"))
     }
+
+    /** Botão que aparece e some: ratio oscilando em torno de 4% (sem estar "fora") alternava PROPOSTA_PRONTA e ESTAVEL a cada leitura. */
+    @Test
+    fun `proposta pronta nao pisca com a razao oscilando em torno de 4 por cento`() {
+        val p = pilot()
+        val eqProposal = JSONObject(proposal.toString()).put("mode", "EQUIVALENCE").put("basedOn", "")
+        val phases = listOf(1.045, 1.035, 1.046, 1.034, 1.045).map { r ->
+            val idx = index(r to 20, r to 20, 1.0 to 20, null to 0, null to 0)
+            p.observe(true, monitor(3), acquisition(18, 18), idx, noJournal, 0, eqProposal).getString("phase")
+        }
+        assertEquals(listOf("PROPOSTA_PRONTA"), phases.distinct())
+    }
 }
