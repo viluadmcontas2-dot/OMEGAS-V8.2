@@ -74,6 +74,10 @@ Não gerar APK sem aprovação explícita do dono. Ordem: mexer → testar → m
 - Alvo que não roda aqui (ECU, programa Windows): skill `.claude/skills/emular-por-observacao/SKILL.md` (capturas → parser → esquema → decompilação mínima → emulador → tela renderizada → app real).
 - O programa ativo compara o OMEGAS Platina com o **ProgBase original e seus logs reais**.
 
+## Codex primeiro (regra fixa do dono, 2026-10-16)
+
+Toda tarefa delegável (leitura de sessões/corpus, análises, código, testes, revisão de diff, relatórios) vai PRIMEIRO para o Codex (`mcp__codex__codex`), com escopo fechado e critério de pronto. O Claude guarda tokens para decisões com o dono, junção/push, CI e comunicação. Relato do Codex não é prova: conferir o estado integrado antes de publicar. Hook: `.claude/hooks/codex-primeiro.txt`.
+
 ## Execução paralela
 
 Só quando o dono autorizar e as tarefas forem independentes: um dono por superfície de escrita; exploradores e falsificadores em paralelo; integração serializada; relato de worker não é prova, verificar o estado integrado.

@@ -1,0 +1,5 @@
+REGRA FIXA DO DONO (2026-10-16) — CODEX PRIMEIRO, SEMPRE:
+- Toda tarefa delegável (ler sessões/corpus, análises, escrever código e testes, revisar diffs, gerar relatórios, grep/estudo de arquivos) vai PRIMEIRO para o Codex (mcp__codex__codex / codex-reply), com escopo fechado, caminhos absolutos e critério de pronto.
+- O Claude só faz o que o Codex não pode: decisão com o dono, junção/push, disparo e leitura do CI, mensagens ao dono. Antes de gastar tokens do Claude lendo/escrevendo, pergunte: "o Codex pode fazer isto?" Se sim, delegue.
+- Relato do Codex não é prova: conferir o estado integrado (git diff, testes) antes de publicar.
+- Se o Codex estiver indisponível, dizer isso UMA vez e seguir com o mínimo.
