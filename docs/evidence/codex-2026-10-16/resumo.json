@@ -1,0 +1,22 @@
+{
+  "sessoes": 99,
+  "telemetria": 202441,
+  "snapshots": 518,
+  "referencias": 138,
+  "automatches": 17,
+  "delta_automatch_mediana_pct": -22.43100667044513,
+  "automatches_baixos": 17,
+  "gnv_h": 11.284735833333333,
+  "quedas": 174,
+  "stall_gnv": 8,
+  "uniao": 175,
+  "correlacao_n": 49,
+  "pearson": 0.2917156063923194,
+  "spearman": 0.3441281551105182,
+  "estaveis": {
+    "GNV": 68239,
+    "GASOLINA": 14611
+  },
+  "celulas_equivalencia": 30,
+  "consistentes": 0
+}
