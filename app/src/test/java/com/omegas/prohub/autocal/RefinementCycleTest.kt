@@ -59,18 +59,26 @@ class RefinementCycleTest {
         val cycle = RefinementCycle(ledger, journal, pilot, monotonicMs = { now }) { snapshot, _, _ -> analysisOf(snapshot) }
 
         init {
-            // Gasolina própria quente em cada faixa (8 leituras estáveis: madura e congelada).
-            bandPetrolMs.indices.forEach { b -> frames("GASOLINA", bandMap[b], bandPetrolMs[b], 10) }
+            // Gasolina própria quente em cada faixa (8 leituras estáveis = 24 quadros: madura e congelada).
+            bandPetrolMs.indices.forEach { b -> frames("GASOLINA", bandMap[b], bandPetrolMs[b], 24) }
         }
 
-        private fun frames(fuel: String, map: Double, petrolMs: Double, n: Int, rpm: Double = 2000.0) {
+        /**
+         * [n] quadros a 280 ms; cada 3 formam UMA leitura estável (dono, 2026-10-16: a janela zera ao emitir). [cells] > 1
+         * alterna a rotação entre leituras (±150 rpm: regiões RPM×MAP distintas que ainda casam com a gasolina de 2000 rpm),
+         * como um carro andando; parado numa região só o diário não dá "piorou" (RefinementJournal.WORSE_MIN_CELLS).
+         */
+        private fun frames(fuel: String, map: Double, petrolMs: Double, n: Int, cells: Int = 1) {
             now += 2_000 // quadros de faixas/chamadas diferentes nunca formam a mesma janela estável
-            repeat(n) { ledger.accept(EquivalenceLedger.Frame(now, fuel, rpm, map, petrolMs, 0.0)); now += 280 }
+            repeat(n) { k ->
+                ledger.accept(EquivalenceLedger.Frame(now, fuel, 2000.0 + 150.0 * ((k / 3) % cells - cells / 2), map, petrolMs, 0.0))
+                now += 280
+            }
         }
 
-        /** Rodar no GNV: [n] leituras estáveis por faixa com t_no_GNV = t_gasolina × razão. */
+        /** Rodar no GNV: [n] leituras estáveis (3 quadros cada) por faixa, em 3 regiões RPM×MAP, com t_no_GNV = t_gasolina × razão. */
         fun drive(vararg bands: Pair<Double?, Int>) {
-            bands.forEachIndexed { b, (ratio, n) -> if (n > 0) frames("GNV", bandMap[b], bandPetrolMs[b] * (ratio ?: 1.0), n + 2) }
+            bands.forEachIndexed { b, (ratio, n) -> if (n > 0) frames("GNV", bandMap[b], bandPetrolMs[b] * (ratio ?: 1.0), 3 * n, cells = 3) }
         }
 
         val index: JSONObject get() = ledger.index()
@@ -577,16 +585,16 @@ class RefinementCycleTest {
         car.ledger.setEcuPetrolReference(listOf(0.30 to 2.8, 0.40 to 3.6, 0.50 to 4.4, 0.60 to 5.2, 0.70 to 6.0, 0.80 to 6.8, 0.90 to 7.9, 1.10 to 9.6))
         car.engine = { i, c -> if (ms(i) in 7.5..8.5) (c[i] * 1.05).toInt() else c[i] }
         now += 2_000
-        repeat(14) { car.ledger.accept(EquivalenceLedger.Frame(now, "GNV", 2000.0, 0.95, 8.35 * 1.07, 0.0)); now += 280 }
+        repeat(36) { car.ledger.accept(EquivalenceLedger.Frame(now, "GNV", 2000.0, 0.95, 8.35 * 1.07, 0.0)); now += 280 } // 12 leituras
         car.drive(1.0 to 12, 1.0 to 12, 1.0 to 12, null to 0, null to 0)
         car.readEcu(); car.tick()
         car.write(car.proposalPoints(), propose)
         car.readEcu()
         // Depois: o dono rodou na gasolina ali (quente) e a gasolina própria passa a valer na mesma faixa.
         now += 2_000
-        repeat(10) { car.ledger.accept(EquivalenceLedger.Frame(now, "GASOLINA", 2000.0, 0.95, 8.0, 0.0)); now += 280 }
+        repeat(30) { car.ledger.accept(EquivalenceLedger.Frame(now, "GASOLINA", 2000.0, 0.95, 8.0, 0.0)); now += 280 } // 8 leituras maduras
         now += 2_000
-        repeat(14) { car.ledger.accept(EquivalenceLedger.Frame(now, "GNV", 2000.0, 0.95, 8.35 * 1.07, 0.0)); now += 280 }
+        repeat(36) { car.ledger.accept(EquivalenceLedger.Frame(now, "GNV", 2000.0, 0.95, 8.35 * 1.07, 0.0)); now += 280 }
         car.tick()
         val band = car.journal.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(3)
         assertEquals("COLETANDO", band.getString("verdict"))
@@ -695,10 +703,12 @@ class RefinementCycleTest {
         val ledger = replay(root, until = RealSessionReplaySupport.appWrites(root).first())
         val pairs = ledger.pairs()
         val idle = pairs.filter { it.rpm < 1_000.0 }
-        assertTrue("a lenta entra na curva (${idle.size} pares)", idle.size >= 40)
+        // Ajustado (dono, 2026-10-16): leituras independentes (3 quadros cada, sem sobreposição) dão ~1/5 dos pares da janela
+        // deslizante nesta sessão (9 em vez de 40+); o que se prova é que a lenta entra e não vira ajuste local.
+        assertTrue("a lenta entra na curva (${idle.size} pares)", idle.size >= 8)
         val idleError = kotlin.math.exp(median(idle.map { kotlin.math.ln(it.gasPetrolMs / it.petrolRefMs) })) - 1.0
         println("REF E0: pares=${pairs.size} lenta=${idle.size} erro da lenta=${"%.1f".format(idleError * 100)}% grupos locais=${ledger.index().getJSONArray("localGroups")}")
-        assertTrue("a lenta entra na curva", idle.size >= 40)
+        assertTrue("a lenta entra na curva", idle.size >= 8)
         assertTrue("lenta equivalente na curva do dono", kotlin.math.abs(idleError) < 0.02)
         assertEquals("nenhum grupo local", 0, ledger.index().getJSONArray("localGroups").length())
         val snapshot = RealSessionReplaySupport.snapshot(root, 95)
@@ -731,14 +741,15 @@ class RefinementCycleTest {
         val ledger = replay(root, cuts = listOf(write to write, before to after))
         val pairs = ledger.pairs()
         val idle = pairs.filter { it.rpm < 1_000.0 }
-        assertTrue("a lenta entra na curva (${idle.size} pares)", idle.size >= 15)
+        // Ajustado (dono, 2026-10-16): leituras independentes (sem sobreposição) dão 6 pares de lenta nesta época, não 15+.
+        assertTrue("a lenta entra na curva (${idle.size} pares)", idle.size >= 5)
         val idleError = kotlin.math.exp(median(idle.map { kotlin.math.ln(it.gasPetrolMs / it.petrolRefMs) })) - 1.0
         val band0 = ledger.index().getJSONArray("bands").getJSONObject(0)
         println("AUTOMATCH E2: pares=${pairs.size} lenta=${idle.size} erro da lenta=${"%.1f".format(idleError * 100)}% faixa 3–4,5=${band0} grupos locais=${ledger.index().getJSONArray("localGroups")}")
-        assertTrue("a lenta entra na curva", idle.size >= 15)
+        assertTrue("a lenta entra na curva", idle.size >= 5)
         assertTrue(idleError > 0.10)
         assertEquals("não separável: nenhum grupo local", 0, ledger.index().getJSONArray("localGroups").length())
-        assertTrue(band0.getInt("samples") >= 15 && band0.getDouble("ratio") > 1.10)
+        assertTrue(band0.getInt("samples") >= 5 && band0.getDouble("ratio") > 1.10)
         // Última leitura da ECU na época E2 (mesma curva nativa do seq 1716; a primeira com faixas nativas maduras para
         // o motor usar a telemetria: sem elas o motor só suaviza e não aprende de nenhum par).
         val snapshot = RealSessionReplaySupport.snapshot(root, 2262)

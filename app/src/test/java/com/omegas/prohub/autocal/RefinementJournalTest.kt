@@ -4,6 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -73,5 +74,37 @@ class RefinementJournalTest {
         val scale = journal.pointGainScale(axisRaw.map { it / 512.0 })
         assertEquals(30, scale.size)
         assertTrue(scale.all { it == 1.0 })
+    }
+
+    /** Índice com a contagem de regiões RPM×MAP distintas por faixa (`cells`), como o acumulador emite. */
+    private fun indexCells(vararg bands: Triple<Double?, Int, Int>): JSONObject = JSONObject().put("ratio", 1.0).put("bands",
+        JSONArray(bands.mapIndexed { i, (ratio, n, cells) ->
+            JSONObject().put("fromMs", EquivalenceLedger.BANDS[i].first).put("toMs", EquivalenceLedger.BANDS[i].second)
+                .put("samples", n).put("cells", cells).put("ratio", ratio ?: JSONObject.NULL)
+        }))
+
+    // Dono, 2026-10-16 (sessão real: RESTAURAR_TRECHO 16 s depois de gravar, parado): "piorou" só com mudança relativa
+    // ≥ 3% E leituras novas em ≥ 3 regiões RPM×MAP da faixa; abaixo disso fica coletando, sem oferta de restaurar.
+    @Test
+    fun `piorou exige mudanca de 3 por cento e leituras novas em 3 regioes distintas`() {
+        assertNotEquals("PIOROU", RefinementJournal.judge(1.03, 1.06))
+        assertNotEquals("PIOROU", RefinementJournal.judge(1.0, 1.029))
+        assertEquals("PIOROU", RefinementJournal.judge(1.0, 1.08))
+        val journal = RefinementJournal(null)
+        val before = IntArray(30) { 16384 }
+        val after = before.copyOf().also { for (i in 14..16) it[i] = 17000 } // 7,5–8,5 ms (faixa 7,5–9)
+        write(journal, before, after, index(1.0 to 20, 1.0 to 20, 1.0 to 20, 1.0 to 20, 1.0 to 20))
+        // 24 leituras paradas numa região só (semáforo): coleta, sem oferta de restaurar.
+        journal.evaluate(indexCells(Triple(1.0, 12, 3), Triple(1.0, 12, 3), Triple(1.0, 12, 3), Triple(1.12, 24, 1), Triple(1.0, 12, 3)))
+        var band = journal.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(3)
+        assertEquals("COLETANDO", band.getString("verdict"))
+        assertEquals("POUCAS_REGIOES", band.getString("thinWorse"))
+        assertEquals(0, journal.restorePoints().length())
+        // As mesmas 24 leituras em 3 regiões: piorou de verdade e a oferta de restaurar aparece.
+        journal.evaluate(indexCells(Triple(1.0, 12, 3), Triple(1.0, 12, 3), Triple(1.0, 12, 3), Triple(1.12, 24, 3), Triple(1.0, 12, 3)))
+        band = journal.json().getJSONObject("latest").getJSONArray("bands").getJSONObject(3)
+        assertEquals("PIOROU", band.getString("verdict"))
+        assertEquals(3, band.getInt("cellsAfter"))
+        assertTrue(journal.restorePoints().length() > 0)
     }
 }

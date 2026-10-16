@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.util.AtomicJsonFile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -25,7 +26,8 @@ import kotlin.math.min
  *  - a verificação nunca é eterna: fecha com tudo julgado, sem base (SEM_BASE, só depois de medir a faixa
  *    com a curva nova ou de juntar [VERIFY_PARTIAL_SAMPLES] leituras), com o que deu para julgar, ou INCONCLUSIVO;
  *    só evidência, nunca relógio (dono, 2026-10-14);
- *  - margem do dono: alvo ±4% ("chegou"), até 5% aceito; "piorou" só mais de 4% pior E erro acima de 5%;
+ *  - margem do dono: alvo ±4% ("chegou"), até 5% aceito; "piorou" só mais de 4% pior E erro acima de 5% E mudança
+ *    de pelo menos 3% E leituras novas em pelo menos 3 regiões RPM×MAP da faixa (dono, 2026-10-16); senão coleta;
  *  - só gravação de proposta/ajuste ensina o ganho por faixa; restaurar, desfazer, reset da curva,
  *    backup restaurado e o diário de versões antigas não;
  *  - restaurar oferece só os pontos que pioraram, que a ECU ainda tem no valor gravado e cuja faixa está
@@ -49,13 +51,22 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         /** "Piorou" só se ficou mais de 4% pior E acima de 5% de erro (margem do dono; Platina 41123729). */
         val WORSE_MARGIN_LOG = ln(1.04)
         val WORSE_MIN_ERROR_LOG = ln(1.05)
+        /** Mudança relativa entre o antes e o depois abaixo de 3% não vira ação (dono, 2026-10-16). */
+        val WORSE_MIN_DELTA_LOG = ln(1.03)
         /**
          * "Piorou" é o único veredito que muda a curva do dono (oferta de restaurar, ganho da faixa pela metade), então
          * não sai de 8 leituras: pede [WORSE_MIN_SAMPLES] leituras estáveis depois da gravação (sessão 20:41, 2026-10-13:
          * "piorou 6" com 10 a 163 leituras logo após gravar). Só por quantidade de evidência, nunca por relógio (dono,
-         * 2026-10-14). Melhorou/chegou não espera.
+         * 2026-10-14). Melhorou/chegou não espera. As leituras do acumulador são independentes (3 quadros cada, sem
+         * sobreposição): 20 leituras são ~17 s de GNV estável, não ~1 s (sessão 16/10: RESTAURAR_TRECHO 16 s após gravar).
          */
         const val WORSE_MIN_SAMPLES = 20
+        /**
+         * "Piorou" também pede leituras novas em pelo menos tantas regiões RPM×MAP distintas da faixa (índice `cells`):
+         * parado num semáforo o acumulador junta dezenas de leituras do mesmo ponto, e isso não é evidência de faixa.
+         * Abaixo disso a faixa fica COLETANDO (SEM_DADOS depois do prazo parcial), nunca "piorou".
+         */
+        const val WORSE_MIN_CELLS = 3
         /** Antes e depois com fração da curva da ECU diferente além disso: referência trocou. */
         const val REFERENCE_SHARE_TOLERANCE = 0.25
         const val MIN_SCALE = 0.4
@@ -139,13 +150,13 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             return merged
         }
 
-        /** Veredito de uma faixa com antes/depois válidos (margem do dono). */
+        /** Veredito de uma faixa com antes/depois válidos (margem do dono). "Piorou" exige mudança relativa ≥ 3%. */
         fun judge(ratioBefore: Double, ratioAfter: Double): String {
             val e0 = ln(ratioBefore)
             val e1 = ln(ratioAfter)
             return when {
                 abs(e1) <= max(NOISE_LOG, OK_AFTER_LOG) || abs(e1) <= abs(e0) * 0.35 -> "CONFIRMADA"
-                abs(e1) > abs(e0) + WORSE_MARGIN_LOG && abs(e1) > WORSE_MIN_ERROR_LOG -> "PIOROU"
+                abs(e1) > abs(e0) + WORSE_MARGIN_LOG && abs(e1) > WORSE_MIN_ERROR_LOG && abs(e1 - e0) >= WORSE_MIN_DELTA_LOG -> "PIOROU"
                 e0 * e1 < 0 -> "PASSOU"
                 else -> "CURTA"
             }
@@ -183,6 +194,8 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     private var lastEcuCapture: Long? = null
     private var preWriteCapture: Long? = null
     private val staleCaptures = HashSet<Long>()
+    /** Motivo de o arquivo não ter sido lido (ou lido em parte); vai em [json] para a tela dizer em palavras. */
+    private var loadError: String? = null
 
     init { load() }
 
@@ -387,7 +400,12 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                             verdict.put("verdict", if (timeboxed) "SEM_DADOS" else "COLETANDO").put("referenceChanged", true)
                         else -> {
                             val judged = judge(rb, ra)
-                            verdict.put("verdict", if (judged == "PIOROU" && na < WORSE_MIN_SAMPLES && !timeboxed) "COLETANDO" else judged)
+                            // Índice sem contagem de regiões (versão antiga, sintético): cada leitura conta como uma região.
+                            val cells = if (a.has("cells")) a.optInt("cells", 0) else na
+                            val thin = judged == "PIOROU" && (cells < WORSE_MIN_CELLS || (na < WORSE_MIN_SAMPLES && !timeboxed))
+                            verdict.put("cellsAfter", cells)
+                            if (thin) verdict.put("thinWorse", if (cells < WORSE_MIN_CELLS) "POUCAS_REGIOES" else "POUCAS_LEITURAS")
+                            verdict.put("verdict", if (!thin) judged else if (timeboxed) "SEM_DADOS" else "COLETANDO")
                         }
                     }
                     verdicts.put(verdict)
@@ -699,6 +717,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             .put("measuringBands", JSONArray(measuringBands().toList()))
             .put("blocks", JSONArray(blocks.map { JSONObject(it.toString()) }))
             .put("count", experiments.size)
+            .put("loadError", loadError ?: JSONObject.NULL)
             .put("history", JSONArray(experiments.takeLast(10).map { e ->
                 JSONObject().put("id", e.optString("id")).put("appliedAt", e.optLong("appliedAt"))
                     .put("status", e.optString("status")).put("source", e.optString("source"))
@@ -730,20 +749,28 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                     .put("expectedRaw", expectedRaw?.let { JSONArray(it.toList()) } ?: JSONObject.NULL)
             }
             try {
-                val tmp = File(target.parentFile, target.name + ".tmp")
-                tmp.writeText(payload.toString())
-                if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
+                AtomicJsonFile.write(target, payload.toString())
             } catch (_: Exception) {
                 synchronized(lock) { dirty = true }
             }
         }
     }
 
+    /**
+     * Arquivo (ou a reserva `.bak`) → memória. Formato desconhecido ou JSON inválido não zera nada nem apaga arquivo:
+     * fica o motivo em [loadError]. Antes o `catch` zerava tudo em silêncio e o salvamento seguinte apagava o que sobrava.
+     */
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
+        val target = file ?: return
+        val root = AtomicJsonFile.readJson(target) ?: run {
+            if (target.isFile || AtomicJsonFile.backupOf(target).isFile) loadError = "Diário do refino ilegível (nem a reserva .bak serviu)"
+            return
+        }
+        if (root.optString("format") != FORMAT) {
+            loadError = "Formato desconhecido do diário do refino: ${root.optString("format")}"
+            return
+        }
         try {
-            val root = JSONObject(source.readText())
-            if (root.optString("format") != FORMAT) return
             root.optJSONArray("bandScale")?.let { a ->
                 for (i in 0 until min(a.length(), bandScale.size)) bandScale[i] = a.optDouble(i, 1.0).coerceIn(MIN_SCALE, MAX_SCALE)
             }
@@ -754,9 +781,9 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             expectedRaw = root.optJSONArray("expectedRaw")?.takeIf { it.length() == 30 }?.let { a -> IntArray(30) { a.optInt(it) } }
                 ?: experiments.lastOrNull()?.takeIf { !it.has("curveChangedOutside") }?.optJSONArray("afterRaw")
                     ?.takeIf { it.length() == 30 }?.let { a -> IntArray(30) { a.optInt(it) } }
-        } catch (_: Exception) {
-            experiments.clear()
-            blocks.clear()
+        } catch (error: Exception) {
+            // Fica o que já foi lido; só o motivo é registrado.
+            loadError = "Diário do refino lido em parte: ${error.message ?: error.javaClass.simpleName}"
         }
     }
 

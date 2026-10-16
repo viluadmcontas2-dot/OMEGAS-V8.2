@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.util.AtomicJsonFile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -81,6 +82,8 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
     private var heldProposal: JSONObject? = null
     private var emptyStreak = 0
     private var lastJournalId = ""
+    /** Motivo de o arquivo não ter sido lido (ou lido em parte); vai na fase para a tela dizer em palavras. */
+    private var loadError: String? = null
 
     init { load() }
 
@@ -152,6 +155,7 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("ourPoints", index.optInt("samples", 0))
                 .put("petrolObservations", index.optInt("petrolObservations", 0))
                 .put("gasObservations", index.optInt("gasObservations", 0))
+                .put("loadError", loadError ?: JSONObject.NULL)
                 .put("automatic", false)
 
             // Faixas com histerese: entra "fora" acima de 5% e só sai em 4% (±6% com a referência da ECU).
@@ -439,26 +443,32 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
                 .put("offLatch", JSONArray(offLatch.toList()))
         }
         try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
+            AtomicJsonFile.write(target, payload.toString())
         } catch (_: Exception) {
             synchronized(lock) { dirty = true }
         }
     }
 
+    /** Arquivo (ou a reserva `.bak`) → memória. Formato/JSON inválido não zera nada nem apaga arquivo: fica o motivo em [loadError]. */
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
+        val target = file ?: return
+        val root = AtomicJsonFile.readJson(target) ?: run {
+            if (target.isFile || AtomicJsonFile.backupOf(target).isFile) loadError = "Estado do piloto ilegível (nem a reserva .bak serviu)"
+            return
+        }
+        if (root.optString("format") != FORMAT) {
+            loadError = "Formato desconhecido do estado do piloto: ${root.optString("format")}"
+            return
+        }
         try {
-            val root = JSONObject(source.readText())
-            if (root.optString("format") != FORMAT) return
             lastCount = if (root.isNull("lastCount")) null else root.optInt("lastCount")
             awaitingRestartEvidence = root.optBoolean("awaiting", false)
             phase = root.optString("phase", "SEM_ECU")
             alertedPhase = root.optString("alertedPhase", "")
             ecuDoneLatch = if (root.isNull("ecuDoneLatch")) null else root.optString("ecuDoneLatch").takeIf { it.isNotBlank() }?.takeIf { it != "MANUAL" }
             root.optJSONArray("offLatch")?.let { a -> for (i in 0 until minOf(a.length(), offLatch.size)) offLatch[i] = a.optBoolean(i, false) }
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            loadError = "Estado do piloto lido em parte: ${error.message ?: error.javaClass.simpleName}"
         }
     }
 }
