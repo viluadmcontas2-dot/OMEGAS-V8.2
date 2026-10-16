@@ -9,7 +9,7 @@ def read(path: str) -> str:
 
 def test_active_authority_is_omegas_platina():
     assert "Branch autorizada: `OmegasPlatina`" in read("PROJECT.md")
-    assert "resolver HEAD remoto de `OmegasPlatina`" in read("AGENTS.md")
+    assert "resolver HEAD remoto de `OmegasVermelho`" in read("AGENTS.md")  # canônica: Vermelho (dono, 2026-10-16)
     assert "Branch: `OmegasPlatina`" in read("STATUS.md")
 
 
