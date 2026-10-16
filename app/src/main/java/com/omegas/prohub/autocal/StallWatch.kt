@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.util.AtomicJsonFile
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -49,6 +50,8 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
     private val nearEvents = ArrayList<JSONObject>()
     private class Near(val at: Long, var minRpm: Double, val before: List<Frame>, val afterCutoff: Boolean)
     private var near: Near? = null
+    /** Motivo de o arquivo não ter sido lido (ou lido em parte); vai em [json] para a tela dizer em palavras. */
+    private var loadError: String? = null
 
     init { load() }
 
@@ -152,28 +155,34 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
             .put("nearCount", nearEvents.size)
             .put("nearEvents", JSONArray(nearEvents.takeLast(10).map { JSONObject(it.toString()) }))
             .put("nearRegions", JSONArray(nearBins))
+            .put("loadError", loadError ?: JSONObject.NULL)
     }
 
     private fun save() {
         val target = file ?: return
         val payload = synchronized(lock) { JSONObject().put("format", FORMAT).put("events", JSONArray(events.map { JSONObject(it.toString()) })).put("nearEvents", JSONArray(nearEvents.map { JSONObject(it.toString()) })) }
         try {
-            val tmp = File(target.parentFile, target.name + ".tmp")
-            tmp.writeText(payload.toString())
-            if (!tmp.renameTo(target)) { target.writeText(payload.toString()); tmp.delete() }
+            AtomicJsonFile.write(target, payload.toString())
         } catch (_: Exception) {
         }
     }
 
+    /** Arquivo (ou a reserva `.bak`) → memória. Formato/JSON inválido não zera nada nem apaga arquivo: fica o motivo em [loadError]. */
     private fun load() {
-        val source = file?.takeIf { it.isFile } ?: return
+        val target = file ?: return
+        val root = AtomicJsonFile.readJson(target) ?: run {
+            if (target.isFile || AtomicJsonFile.backupOf(target).isFile) loadError = "Registro de apagões ilegível (nem a reserva .bak serviu)"
+            return
+        }
+        if (root.optString("format") != FORMAT) {
+            loadError = "Formato desconhecido do registro de apagões: ${root.optString("format")}"
+            return
+        }
         try {
-            val root = JSONObject(source.readText())
-            if (root.optString("format") != FORMAT) return
             root.optJSONArray("events")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let(events::add) }
             root.optJSONArray("nearEvents")?.let { a -> for (i in 0 until a.length()) a.optJSONObject(i)?.let(nearEvents::add) }
-        } catch (_: Exception) {
-            events.clear(); nearEvents.clear()
+        } catch (error: Exception) {
+            loadError = "Registro de apagões lido em parte: ${error.message ?: error.javaClass.simpleName}"
         }
     }
 }

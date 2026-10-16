@@ -32,9 +32,9 @@ class RefinementReviewTest {
 
     private val empty get() = index(null to 0, null to 0, null to 0, null to 0, null to 0)
 
-    /** Quadros estáveis a cada 280 ms; o relógio do diário anda junto (o "depois" é por instante real). */
-    private fun drive(ledger: EquivalenceLedger, fuel: String, rpm: Double, map: Double, petrolMs: Double, frames: Int) {
-        repeat(frames) { ledger.accept(EquivalenceLedger.Frame(now, fuel, rpm, map, petrolMs, 0.0)); now += 280 }
+    /** [readings] leituras estáveis (3 quadros a 280 ms cada; a janela zera ao emitir); o relógio do diário anda junto (o "depois" é por instante real). */
+    private fun drive(ledger: EquivalenceLedger, fuel: String, rpm: Double, map: Double, petrolMs: Double, readings: Int) {
+        repeat(3 * readings) { ledger.accept(EquivalenceLedger.Frame(now, fuel, rpm, map, petrolMs, 0.0)); now += 280 }
     }
 
     private fun ecuCurve() = listOf(0.30, 0.40, 0.50, 0.60, 0.70, 0.80).map { it to it * 5.0 / 0.60 }
@@ -152,7 +152,7 @@ class RefinementReviewTest {
         drive(ledger, "GASOLINA", 2000.0, 0.60, 5.0, 10)
         drive(ledger, "GNV", 2000.0, 0.60, 5.4, 12)
         c.proposal(snapshot(curveA, now), ledger.index())
-        assertEquals(10, ledger.index().getInt("gasObservations"))
+        assertEquals(12, ledger.index().getInt("gasObservations"))
         // ProgBase mudou a curva por fora: GNV medido com a curva A não vale para a B.
         now += 4_000
         c.proposal(snapshot(curveA.copyOf().also { it[12] = 15000 }, now), ledger.index())

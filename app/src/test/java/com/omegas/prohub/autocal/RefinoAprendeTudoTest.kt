@@ -47,12 +47,12 @@ class RefinoAprendeTudoTest {
             repeat(n) { ledger.accept(EquivalenceLedger.Frame(now, fuel, at.first, at.second, petrolMs)); now += 280 }
         }
 
-        /** Gasolina própria quente e madura (8 leituras estáveis) em cada região. */
-        fun petrol(vararg at: Triple<Double, Double, Double>) = at.forEach { frames("GASOLINA", it, it.third, 10) }
+        /** Gasolina própria quente e madura (8 leituras estáveis = 24 quadros; a janela zera ao emitir) em cada região. */
+        fun petrol(vararg at: Triple<Double, Double, Double>) = at.forEach { frames("GASOLINA", it, it.third, 24) }
 
-        /** Uma visita no GNV: [n] leituras estáveis por região com t_no_GNV = t_gasolina × razão; depois 2 min longe. */
+        /** Uma visita no GNV: [n] leituras estáveis (3 quadros cada) por região com t_no_GNV = t_gasolina × razão; depois 2 min longe. */
         fun visit(vararg at: Pair<Triple<Double, Double, Double>, Double>, n: Int = 6) {
-            at.forEach { (where, ratio) -> frames("GNV", where, where.third * ratio, n + 2) }
+            at.forEach { (where, ratio) -> frames("GNV", where, where.third * ratio, 3 * n) }
             now += 120_000
         }
 
