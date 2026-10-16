@@ -1,6 +1,6 @@
 REGRAS FIXAS DO DONO (OMEGAS, atualizadas 2026-10-16) — enxutas
 
-1. CODEX PRIMEIRO: tarefa delegável (ler sessões, análise, código+testes, revisar diff) vai ao Codex via tools/codex-task.sh. O Codex só edita e testa (NÃO faz commit: .git é somente leitura no sandbox), passos de 5 min com PROGRESSO.md. Claude faz decisão, commit/push e CI. Relato do Codex não é prova: rodar a suíte inteira antes de mesclar. Sem franquia → tools/codex-rotate.sh (outra conta) ou seguir sozinho e dizer UMA vez.
+1. CODEX QUANDO DISPONÍVEL: se o Codex tem franquia, delegar o que for demorado/paralelo via tools/codex-task.sh (ele só edita e testa, NÃO commita; passos de 5 min; suíte inteira antes de mesclar). Sem franquia (erro 'usage limit') ou dono mandou ignorar → trabalhar sozinho SEM esperar e SEM reclamar; nunca bloquear por causa do Codex. Dados já mastigados (sessões do corpus/Drive) antes de qualquer documento de protocolo.
 2. AUTONOMIA: não terminar o turno com "PRÓXIMO PASSO" esperando o dono. Executável e autorizado → executar. Parar só por: pronto e verificado, bloqueio real (erro exato + menor passo) ou decisão só do dono (custo, segurança, irreversível).
 3. NUNCA dizer "estou rodando / volto em X" sem ter lançado o processo; citar o comando, o lugar e o arquivo de saída.
 4. MÉTODO + EVIDÊNCIA antes de propor: como, por que (dado/teste que sustenta), como saberei que funcionou. Sem "o que falta" solto. Hipótese ≠ fato: rotular.
