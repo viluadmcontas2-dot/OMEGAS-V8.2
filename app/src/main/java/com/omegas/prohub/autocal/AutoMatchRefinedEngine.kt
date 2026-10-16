@@ -70,7 +70,6 @@ object AutoMatchRefinedEngine {
         val gasCounts: IntArray?,
         /** Pares (t_gasolina de referência, t_no_GNV) da condução, medidos com a curva vigente. */
         val telemetryPairs: List<kotlin.Pair<Double, Double>> = emptyList(),
-        val telemetryWeights: List<Double> = emptyList(),
         /** Ganho aprendido por ponto (RefinementJournal): <1 suaviza, >1 firma a correção. */
         val pointGainScale: DoubleArray? = null,
     )
@@ -167,9 +166,9 @@ object AutoMatchRefinedEngine {
         // A telemetria complementa as faixas nativas; nunca habilita a equivalência sozinha.
         val bandTargetCount = targets.size
         if (equivalence && input.telemetryPairs.isNotEmpty()) {
-            targets = targets + input.telemetryPairs.mapIndexedNotNull { index, (tp, tg) ->
-                if (tp < TELEMETRY_MIN_MS || tg <= 0.0 || tp > axisMs.last()) return@mapIndexedNotNull null
-                Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT * (input.telemetryWeights.getOrNull(index) ?: 1.0), tg / tp, ln(interp(tg, axisMs, kOld) * tg / tp))
+            targets = targets + input.telemetryPairs.mapNotNull { (tp, tg) ->
+                if (tp < TELEMETRY_MIN_MS || tg <= 0.0 || tp > axisMs.last()) return@mapNotNull null
+                Target(Double.NaN, tp, tg, TELEMETRY_WEIGHT, tg / tp, ln(interp(tg, axisMs, kOld) * tg / tp))
             }
         }
 
