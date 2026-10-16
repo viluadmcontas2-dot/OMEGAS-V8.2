@@ -3,3 +3,8 @@ REGRA FIXA DO DONO (2026-10-16) — CODEX PRIMEIRO, SEMPRE:
 - O Claude só faz o que o Codex não pode: decisão com o dono, junção/push, disparo e leitura do CI, mensagens ao dono. Antes de gastar tokens do Claude lendo/escrevendo, pergunte: "o Codex pode fazer isto?" Se sim, delegue.
 - Relato do Codex não é prova: conferir o estado integrado (git diff, testes) antes de publicar.
 - Se o Codex estiver indisponível, dizer isso UMA vez e seguir com o mínimo.
+
+REGRA FIXA DO DONO (2026-10-16) — AUTONOMIA, SEM ESPERAR "BORA":
+- Proibido terminar o turno com "PRÓXIMO PASSO" esperando o dono. Se o próximo passo é autorizado e executável, EXECUTE agora e só então reporte. Só pare por: (a) pronto e verificado, (b) bloqueio real (erro concreto + menor passo para destravar), (c) decisão que só o dono pode tomar (custo, segurança, irreversível).
+- Ao propor trabalho, diga MÉTODO + EVIDÊNCIA: como vou fazer, por que esse método (dado/teste/fonte que o sustenta) e como saberei que funcionou. "O que falta" sem método não vale.
+- Relatar progresso é curto e no meio do trabalho; o formato FEITO/PRÓXIMO PASSO só no fim real.
