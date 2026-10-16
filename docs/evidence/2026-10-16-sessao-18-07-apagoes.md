@@ -32,3 +32,11 @@ Método: razão gas_ms/petrol_ms (mediana) nos 60 s antes e 3–60 s depois de c
 **Decisão de método:** re-escalar os pares GNV existentes por K_novo/K_velho (por nó) em vez de apagá-los; peso reduzido e nunca como único critério para gravar; substituir por leituras novas conforme chegam. A hipótese continua válida só para a razão de ms até haver mais gravações (precisa de n ≥ 30 por faixa).
 
 **Tentativa anterior (Codex, `wip/codex-fatia1b`) NÃO mesclada:** quebrou 19 de 667 testes no CI (EquivalenceLedgerTest, RefinementCycleTest, RefinementReviewTest, LiveOnlyLearningStoreTest). Refazer em passos pequenos, cada um verde no CI.
+
+## Teste "pares da ECU × curva suave do app" — INCONCLUSIVO (não repetir assim)
+
+Tentativa: comparar a rugosidade entre bandas vizinhas dos pares da ECU (buffers `*_BUF`/`*_BUF_GAS`) com a mediana de `gas_ms/petrol_ms` dos quadros do app, em 464 snapshots do corpus.
+- Só 3 snapshots tinham bandas suficientes (≥9 bandas cheias nos 4 buffers) e janela de quadros: 60 têm 16 bandas, mas a janela de 120 s antes não tinha ≥15 amostras por banda; 363 estavam com aquisição parcial.
+- **Unidades diferentes:** a razão dos buffers da ECU ficou em ≈0,93 e a razão gas_ms/petrol_ms dos quadros em ≈2,3. Os buffers da ECU parecem já normalizados; a comparação direta não vale.
+- Rugosidade ECU 0,058 × app 0,061 (n=3): sem diferença. **Nada foi provado nem refutado.**
+- Para refazer: primeiro descobrir a normalização dos buffers (PROTOCOLO-LANDI `17`–`20`) e usar a janela de aquisição completa, não 120 s fixos.
