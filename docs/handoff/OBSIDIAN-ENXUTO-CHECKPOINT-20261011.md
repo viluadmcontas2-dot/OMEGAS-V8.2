@@ -1,5 +1,7 @@
 # Checkpoint — Obsidian enxuto (2026-10-11 17:45 UTC)
 
+> **Plano vigente (2026-10-16):** `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md` — canônica passa a ser `OmegasVermelho`.
+
 Registro canônico para retomar sem reconstruir a história. Branch `work/platina-obsidian-enxuto`.
 
 ## Objetivo e restrições (dono)
