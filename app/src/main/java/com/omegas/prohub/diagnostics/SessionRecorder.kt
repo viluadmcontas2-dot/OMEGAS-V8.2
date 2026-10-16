@@ -17,6 +17,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -43,6 +44,60 @@ class SessionRecorder(
         private const val DOCUMENTS_MIRROR_INTERVAL_MS = 120_000L
         /** Evento do AutoCal antecipa a parte, sem gerar uma parte por evento. */
         private const val DURABLE_EVENT_MIN_GAP_MS = 15_000L
+        /**
+         * Teto total das sessões guardadas no app (1,5 GB). Sessão sem cópia pública confirmada não saía nunca; sem
+         * permissão ou com o MediaStore falhando, o disco enchia (até 256 MB por viagem) e depois tudo falhava em
+         * silêncio. Acima do teto as mais antigas saem, espelhadas ou não; a ativa nunca.
+         */
+        internal const val SESSIONS_TOTAL_LIMIT_BYTES = 1_536L * 1024L * 1024L
+
+        /**
+         * Poda das pastas de sessão (puro, sem Android). Regra de sempre: pasta minúscula e [durable] (cópia pública
+         * confirmada) sai; fora das [keep] mais recentes só sai quem é [durable]. Regra nova: acima de
+         * [totalLimitBytes] as mais antigas saem mesmo sem cópia pública, nunca [activeDir].
+         * Devolve quantas saíram pelo teto.
+         */
+        internal fun pruneSessionDirs(
+            root: File,
+            activeDir: File?,
+            keep: Int,
+            totalLimitBytes: Long,
+            durable: (File) -> Boolean,
+        ): Int {
+            val dirs = root.listFiles { file -> file.isDirectory }
+                ?.sortedByDescending { it.lastModified() }
+                .orEmpty()
+            val sizes = HashMap<File, Long>()
+            fun sizeOf(dir: File): Long = sizes.getOrPut(dir) {
+                dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+            }
+            fun isActive(dir: File): Boolean = activeDir != null && dir.absolutePath == activeDir.absolutePath
+
+            val validDirs = dirs.filter { dir ->
+                if (sizeOf(dir) < 10 * 1024 && durable(dir) && !isActive(dir)) {
+                    dir.deleteRecursively()
+                    false
+                } else {
+                    true
+                }
+            }
+            validDirs.drop((keep - 1).coerceAtLeast(0)).forEach { old ->
+                if (durable(old) && !isActive(old)) old.deleteRecursively()
+            }
+
+            var total = validDirs.filter { it.isDirectory }.sumOf { sizeOf(it) }
+            var removed = 0
+            for (old in validDirs.asReversed()) {
+                if (total <= totalLimitBytes) break
+                if (!old.isDirectory || isActive(old)) continue
+                val size = sizeOf(old)
+                if (old.deleteRecursively()) {
+                    total -= size
+                    removed += 1
+                }
+            }
+            return removed
+        }
     }
 
     private val droppedEvents = AtomicLong(0L)
@@ -55,6 +110,19 @@ class SessionRecorder(
         { runnable -> Thread(runnable, "omegas-session-recorder").apply { isDaemon = true } },
         { _, _ -> droppedEvents.incrementAndGet() },
     )
+    /**
+     * Publicação (ZIP para Download/Drive) fora do worker de eventos e de quem pediu a parada: empacotar uma sessão
+     * de até 256 MB na thread de quem chamava `stop()` (a mesma do agendador que reconecta o USB) travava o app,
+     * e no worker travaria a gravação da sessão seguinte.
+     */
+    private val publisher = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "omegas-session-publisher").apply {
+            isDaemon = true
+            priority = Thread.NORM_PRIORITY - 1
+        }
+    }
+    /** Uma publicação por vez (fechamento, recuperação ou limpeza manual): os offsets das partes são por pasta. */
+    private val publishLock = Any()
     private val sequence = AtomicLong(0L)
     private val previewLock = Any()
     private val preview = ArrayDeque<JSONObject>()
@@ -89,7 +157,7 @@ class SessionRecorder(
     fun start(reason: String, metadata: JSONObject = JSONObject()): JSONObject {
         if (recording) return statusObject().put("ok", true).put("alreadyRecording", true)
         return try {
-            pruneOldSessions()
+            val pruned = pruneOldSessions()
             val now = System.currentTimeMillis()
             val id = "session_${fileStamp.format(Date(now))}_${settings.deviceId.take(8)}"
             val dir = File(paths.sessionLogsRoot, id).apply { mkdirs() }
@@ -129,6 +197,14 @@ class SessionRecorder(
                 "native",
                 JSONObject().put("reason", reason).put("metadata", metadata),
             )
+            if (pruned > 0) {
+                recordNow(
+                    "app_log",
+                    "native",
+                    JSONObject().put("level", "INFO").put("category", "SESSOES")
+                        .put("message", "Sessões antigas apagadas para liberar espaço: $pruned"),
+                )
+            }
             worker.execute {
                 synchronized(this) {
                     if (recording && sessionId == id) syncDocumentsMirror(force = true)
@@ -153,6 +229,7 @@ class SessionRecorder(
             semanticLedger?.finish(stoppedAt, stopReason)
             closeWriter()
             updateManifest()
+            // Garante no flash e agenda a publicação: o ZIP sai no publisher, nunca na thread de quem parou.
             syncDocumentsMirror(force = true)
             statusObject().put("ok", true)
         }
@@ -406,8 +483,8 @@ class SessionRecorder(
 
     fun recoverDocumentsMirrorAsync() {
         if (documentsMirror == null) return
-        if (worker.isShutdown) return
-        worker.execute {
+        if (publisher.isShutdown) return
+        publisher.execute {
             paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
                 ?.sortedBy { it.lastModified() }
                 ?.forEach { dir ->
@@ -422,10 +499,14 @@ class SessionRecorder(
         }
     }
 
-    @Synchronized
     fun close() {
+        // Sem @Synchronized: segurar o monitor enquanto `stop()` espera o worker (que precisa do mesmo monitor)
+        // travava 5 s em todo encerramento. `stop()` toma o monitor sozinho, só pelo tempo de fechar o segmento.
         if (recording) stop("serviço encerrado")
         worker.shutdownNow()
+        // O ZIP em andamento termina se o processo viver; se morrer, a mesma parte é refeita na próxima abertura
+        // (o offset só avança depois de publicar). Nada é apagado antes de publicado.
+        publisher.shutdown()
     }
 
     private fun createActiveExportSnapshot(dir: File): ExportSnapshot {
@@ -700,7 +781,8 @@ class SessionRecorder(
             semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
             // Gravando: só garante no armazenamento do app (flash, manifesto, razões); NADA vai para o Drive/Download até a sessão
             // fechar (um ZIP por sessão, dono 2026-10-13: "49 partes é ridículo"). Se o app morrer, a próxima abertura publica.
-            if (!recording) publishParts(dir, sessionId, final = true)
+            // Parada: o ZIP sai no publisher; aqui (monitor da sessão, thread de quem parou) nada pesado.
+            if (!recording) publishAsync(dir, sessionId)
         } finally {
             lastDocumentsMirrorAt = now
         }
@@ -712,11 +794,21 @@ class SessionRecorder(
         try { segmentStream?.fd?.sync() } catch (_: Exception) {}
     }
 
+    /** Publica em segundo plano; quem parou volta na hora. Se falhar ou o app morrer, a pasta fica sem marcador e a próxima abertura publica. */
+    private fun publishAsync(dir: File, id: String) {
+        if (documentsMirror == null || publisher.isShutdown) return
+        try {
+            publisher.execute {
+                try { publishParts(dir, id, final = true) } catch (_: Exception) {}
+            }
+        } catch (_: Exception) {}
+    }
+
     /**
      * Publica a próxima parte imutável com o que é novo. Os offsets só avançam depois da
      * parte publicada; se o app morrer no meio, a mesma parte é refeita com o mesmo nome.
      */
-    private fun publishParts(dir: File, id: String, final: Boolean): Boolean {
+    private fun publishParts(dir: File, id: String, final: Boolean): Boolean = synchronized(publishLock) {
         val mirror = documentsMirror ?: return false
         val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
         if (plan == null) {
@@ -738,28 +830,15 @@ class SessionRecorder(
         } catch (_: Exception) {}
     }
 
-    private fun pruneOldSessions() {
-        val dirs = paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
-            ?.sortedByDescending { it.lastModified() }
-            .orEmpty()
-
-        // Sessão sem cópia pública confirmada nunca é podada automaticamente.
-        val validDirs = dirs.filter { dir ->
-            val durable = documentsMirror == null || documentsMirrorMarker(dir).isFile
-            val size = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
-            if (size < 10 * 1024 && durable) {
-                dir.deleteRecursively()
-                false
-            } else {
-                true
-            }
-        }
-
-        val keep = settings.sessionKeepCount.coerceAtLeast(25)
-        validDirs.drop((keep - 1).coerceAtLeast(0)).forEach { old ->
-            if (documentsMirror == null || documentsMirrorMarker(old).isFile) old.deleteRecursively()
-        }
-    }
+    /** Devolve quantas sessões saíram pelo teto total (regra em [pruneSessionDirs]). */
+    private fun pruneOldSessions(): Int = pruneSessionDirs(
+        root = paths.sessionLogsRoot,
+        activeDir = if (recording) sessionDir else null,
+        keep = settings.sessionKeepCount.coerceAtLeast(25),
+        totalLimitBytes = SESSIONS_TOTAL_LIMIT_BYTES,
+        // Sessão sem cópia pública confirmada só sai pelo teto total, nunca pela contagem.
+        durable = { dir -> documentsMirror == null || documentsMirrorMarker(dir).isFile },
+    )
 
     private fun awaitPendingWrites(timeoutMs: Long = 5_000L) {
         if (worker.isShutdown) return

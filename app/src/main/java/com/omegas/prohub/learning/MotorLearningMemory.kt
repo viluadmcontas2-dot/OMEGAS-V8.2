@@ -13,8 +13,10 @@ import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.pow
@@ -34,12 +36,20 @@ import kotlin.math.sqrt
 class MotorLearningMemory(
     private val stateFile: File,
     private val log: RingLog,
+    /** Relógio do intervalo de salvamento (injetável nos testes). */
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
     companion object {
         const val FORMAT = "omegas-learning-v5"
         private const val MAX_COMPARISONS = 600
         private const val MAX_SESSIONS = 100
         private const val MAX_REGIONS = 2000
+        /**
+         * No máximo um salvamento a cada 30 s. Cada amostra publicada rearmava o laço (cópia sob a trava, JSON de
+         * até 5 MB, digest, fsync, .bak) sem intervalo; numa viagem de horas isso era contínuo. Parada da conexão,
+         * fechamento e exportação salvam na hora; um corte de energia perde no máximo esses 30 s.
+         */
+        const val PERSIST_MIN_INTERVAL_MS = 30_000L
     }
 
     private val lock = Any()
@@ -71,6 +81,15 @@ class MotorLearningMemory(
     }
     private val persistDirty = AtomicBoolean(false)
     private val persistDrainScheduled = AtomicBoolean(false)
+    /**
+     * Versão do estado sujo (cada publicação incrementa). Um pedido de salvar já (parada, fechamento, exportação)
+     * marca até qual versão não pode esperar o intervalo; o semáforo só acorda o worker.
+     */
+    private val dirtyVersion = AtomicLong(0L)
+    private val flushRequestedVersion = AtomicLong(0L)
+    private val persistNow = Semaphore(0)
+    @Volatile private var persistedVersion = 0L
+    @Volatile private var lastPersistedAt = 0L
     @Volatile private var lastPersistFuture: Future<*>? = null
 
     init {
@@ -108,7 +127,7 @@ class MotorLearningMemory(
         closeCurrentSession(reason)
         activeVisit = null
         observedOutsideFrames = 0
-        persist()
+        persistNow()
         statusLocked()
     }
 
@@ -172,9 +191,11 @@ class MotorLearningMemory(
 
     fun statusJson(): JSONObject = synchronized(lock) { statusLocked() }
 
+    /** Salva já o que estiver pendente e espera (fechamento, testes): não respeita o intervalo mínimo. */
     fun awaitPersistence(timeoutSeconds: Long = 10L) {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds.coerceAtLeast(1L))
         while (persistDirty.get() || persistDrainScheduled.get()) {
+            if (persistDirty.get()) requestImmediatePersist()
             val remaining = deadline - System.nanoTime()
             if (remaining <= 0L) return
             try {
@@ -193,6 +214,8 @@ class MotorLearningMemory(
     }
 
     fun export(deviceId: String): JSONObject = synchronized(lock) {
+        // O que sai exportado também vai para o disco já, sem esperar o intervalo nem segurar quem exporta.
+        if (persistDirty.get()) requestImmediatePersist()
         JSONObject()
             .put("ok", true)
             .put("format", FORMAT)
@@ -1028,20 +1051,51 @@ class MotorLearningMemory(
 
     private fun persist() {
         // Apenas marca o estado como sujo no caminho da telemetria. A cópia
-        // consistente e toda serialização acontecem no executor dedicado.
+        // consistente e toda serialização acontecem no executor dedicado,
+        // respeitando PERSIST_MIN_INTERVAL_MS.
+        dirtyVersion.incrementAndGet()
         persistDirty.set(true)
         schedulePersistDrain()
     }
 
+    /** Marca sujo e pede o salvamento já (parada da conexão): sem esperar o intervalo nem bloquear quem chamou. */
+    private fun persistNow() {
+        persist()
+        requestImmediatePersist()
+    }
+
+    /** O que está sujo agora deve ser salvo sem esperar o intervalo; nunca bloqueia quem pediu. */
+    private fun requestImmediatePersist() {
+        val version = dirtyVersion.get()
+        while (true) {
+            val current = flushRequestedVersion.get()
+            if (version <= current || flushRequestedVersion.compareAndSet(current, version)) break
+        }
+        persistNow.release()
+    }
+
     private fun schedulePersistDrain() {
+        if (persistExecutor.isShutdown) return
         if (!persistDrainScheduled.compareAndSet(false, true)) return
         lastPersistFuture = persistExecutor.submit {
             try {
-                while (persistDirty.getAndSet(false)) {
+                // Intervalo mínimo entre salvamentos; um pedido imediato por versão ainda não salva acorda antes.
+                var remainingMs = lastPersistedAt + PERSIST_MIN_INTERVAL_MS - clock()
+                while (remainingMs > 0L && flushRequestedVersion.get() <= persistedVersion) {
+                    val startedAt = System.nanoTime()
+                    try { persistNow.tryAcquire(remainingMs, TimeUnit.MILLISECONDS) } catch (_: InterruptedException) { break }
+                    remainingMs -= TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt).coerceAtLeast(1L)
+                }
+                persistNow.drainPermits()
+                // Um salvamento por tarefa: o que sujar durante a escrita reagenda (com intervalo) no finally.
+                if (persistDirty.getAndSet(false)) {
+                    val version = dirtyVersion.get()
                     // O lock protege somente a cópia imutável. JSON, digest e disco ficam fora dele.
                     val snapshot = synchronized(lock) { persistenceSnapshotLocked() }
                     val newest = buildPersistedState(snapshot)
                     writePersistedState(newest)
+                    persistedVersion = version
+                    lastPersistedAt = clock()
                 }
             } finally {
                 persistDrainScheduled.set(false)
