@@ -58,3 +58,22 @@ Nas 2 sessões novas: 5 de 10 retomadas quase apagaram, todas com rpm de retomad
 **Não separa:** a razão gás/gasolina (≈K) no corte e na retomada é a mesma para quem apagou e quem passou (2,15 × 2,01 antes; 2,15 × 2,15 depois; petrol_ms 2,22 × 2,13). A curva toda estava em ≈1,2–1,3 nesse corpus, então **não há variação de K suficiente para provar que mais K evita o apagão** (nem que não evita). Na sessão 18-07 apagou/quase apagou com nós 0–3 em 1,30, 1,03 e 1,2.
 
 **Consequência:** o gatilho é a rotação em que a ECU volta a injetar, não só o valor da curva. Falta: (1) saber se a ECU expõe esse limiar de retomada (o app não o altera hoje); (2) um experimento controlado de K nos nós 0–3 (ex.: 3 valores, 20 retomadas cada) para medir o efeito real, só com o dono dirigindo.
+
+## Cruzamento rpm × tempo de injeção (corpus, ≈80 mil quadros estáveis de GNV)
+
+Razão gás/gasolina (gas_ms/petrol_ms) relativa à referência de cada sessão (mediana em 8–12 ms), só quadros estáveis (|Δrpm| < 60), por faixa de rpm × bin de 1 ms. Mediana (n ≥ 40 por célula):
+
+| ms | 700–1100 | 1100–1600 | 1600–2200 | 2200–2750 | 2750–3250 |
+|---|---|---|---|---|---|
+| 1–2 | — | 0,88 | 0,88 | 0,90 | 0,94 |
+| 2–3 | 1,01 | 0,91 | 0,89 | 0,92 | 0,91 |
+| 3–4 | **1,10** | 1,00 | 0,98 | 1,00 | 1,00 |
+| 4–5 | **1,08** | 1,08 | 1,05 | 1,06 | 1,11 |
+| 8–10 | 1,02–1,04 | 1,00 | 1,00 | 1,00 | 1,01 |
+| 12–13 | 0,96 | 0,98 | 0,96 | 0,96 | 0,96 |
+
+**Leitura (aplicada = curva K × Mapa K reais do dono, não a ideal):**
+1. O formato é quase igual em todas as faixas de rpm acima de 1100: o **afundamento de 1–3 ms (≈ −10%)** é função do tempo de injeção, não da rotação → trata-se na **Curva K por nó** (o prior dos nós baixos já levanta esses nós).
+2. A rotação só muda o quadro em **700–1100 rpm (lenta)**: +8–10% em 3–6 ms (lenta rica, coerente com Q2 −14%) → trata-se no **Mapa K por rpm**, não na curva.
+3. Acima de 11 ms a razão cai ≈ −3% em todas as faixas (cauda): candidato a nó 19–22.
+Limite: é o que foi aplicado (inclui o que o dono ajustou), não prova do ideal; a lenta tem n enorme (22 mil em 4–5 ms) e domina.
