@@ -6,5 +6,5 @@ set -u
 CWD="$1"; PROMPT_FILE="$2"; OUT="$3"; SANDBOX="${4:-workspace-write}"
 CODEX="${CODEX_BIN:-$(command -v codex || echo /opt/codex-mcp/bin/codex)}"
 "$(dirname "$0")/codex-ensure-login.sh" >/dev/null 2>&1 || { echo "codex: sem login" >&2; exit 2; }
-nohup "$CODEX" exec --sandbox "$SANDBOX" -C "$CWD" "$(cat "$PROMPT_FILE")" > "$OUT" 2>&1 &
+nohup "$CODEX" exec --skip-git-repo-check --sandbox "$SANDBOX" -C "$CWD" "$(cat "$PROMPT_FILE")" > "$OUT" 2>&1 &
 echo "codex pid $! → $OUT"
