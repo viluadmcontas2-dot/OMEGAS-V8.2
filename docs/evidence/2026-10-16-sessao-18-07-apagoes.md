@@ -77,3 +77,22 @@ Razão gás/gasolina (gas_ms/petrol_ms) relativa à referência de cada sessão 
 2. A rotação só muda o quadro em **700–1100 rpm (lenta)**: +8–10% em 3–6 ms (lenta rica, coerente com Q2 −14%) → trata-se no **Mapa K por rpm**, não na curva.
 3. Acima de 11 ms a razão cai ≈ −3% em todas as faixas (cauda): candidato a nó 19–22.
 Limite: é o que foi aplicado (inclui o que o dono ajustou), não prova do ideal; a lenta tem n enorme (22 mil em 4–5 ms) e domina.
+
+## Curva "ideal" da sessão 18-38 (último snapshot AutoMatch, 21:39:13) — motor do app sobre os buffers reais da ECU
+
+Fonte: `autocal_native_snapshot` (1 por sessão; traz as 18 bandas de gasolina e GNV: MAP, ms, contagem; `*_PREV`; `MUL_ACT` com os 30 nós; `PETR_/GAS_MNFLD_PRESS_RV`; limiares; `NUM_AUTOMATCH_EXECUTED=3`). `AutoMatchRefinedEngine.refine` com esses buffers: modo EQUIVALENCE, 24 pontos comuns maduros, erro ponderado 9,0% → 7,9%.
+
+| nó (ms) | atual | ideal (equivalência) | Δ |
+|---|---|---|---|
+| 1,5 | 1,206 | 1,160 | −3,8% |
+| 2,0 | 1,212 | 1,105 | −8,8% |
+| 2,5 | 1,196 | 1,066 | −10,8% |
+| 3,0 | 1,178 | 1,096 | −7,0% |
+| 5,0 | 1,249 | 1,311 | +5,0% |
+| 5,5 | 1,237 | 1,355 | +9,6% |
+| 6,0 | 1,251 | 1,315 | +5,1% |
+| ≥ 11 | 1,344 | 1,344 | 0 (sem evidência) |
+
+**Conflito a resolver:** a equivalência de regime (buffers da ECU) manda BAIXAR os nós de 2–3 ms (−7 a −11%); a prática do dono para evitar apagão é LEVANTAR os nós 0–3. Objetivos diferentes (equivalência estável × sobrevivência na retomada). Os buffers têm ~10 amostras por banda e ruído de ±15% (bandas 3 e 7 não monotônicas). Não resolver sem experimento controlado.
+
+**Exportação (lacunas):** Mapa K NÃO está em nenhuma sessão exportada (`k_write: MAP_PENDING`, sem matriz); o snapshot do AutoMatch sai 1× por sessão (3× na 18-07), não a cada escrita da ECU; a curva K sai a cada 5 s no `full_snapshot`.
