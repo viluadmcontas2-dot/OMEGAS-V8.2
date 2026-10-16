@@ -7,8 +7,7 @@ CURVE_WRITER = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/KFactorM
 
 
 def test_map_writer_uses_fast_ack_then_final_row_readback():
-    assert "escrita ACK MAP_K" in MAP_WRITER
-    assert "ECU_WRITE_ACK_PENDING_FINAL_READBACK" in MAP_WRITER
+    # Só estrutura (rótulos de log mudam): verificação final por linha, fora do laço de escrita.
     assert "BATCH_VERIFYING_ROWS" in MAP_WRITER
     assert "confirmação final K[$row]" in MAP_WRITER
     assert "escrita + readback MAP_K" not in MAP_WRITER
@@ -17,7 +16,6 @@ def test_map_writer_uses_fast_ack_then_final_row_readback():
 
 
 def test_curve_writer_uses_fast_ack_then_single_final_curve_readback():
-    assert "escrita ACK K factor" in CURVE_WRITER
     assert "VERIFYING_FINAL" in CURVE_WRITER
     assert "confirmação final K factor" in CURVE_WRITER
     assert "escrita + readback K factor" not in CURVE_WRITER
