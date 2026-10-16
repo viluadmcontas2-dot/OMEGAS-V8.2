@@ -479,7 +479,12 @@ class NativeRuntimeManager(
             .put("error", error.message ?: "Estado de aprendizado indisponível")
     }
 
-    private fun flushLearning(boundary: String, timeoutMs: Long = 10_000L): Boolean {
+    /**
+     * Dreno do pipeline de aprendizado antes de exportar/registrar: no máximo 1 s (dono, 16/10).
+     * O checkpoint que antecede a gravação pode perder o último segundo de amostras; é inofensivo,
+     * e a gravação deixa de ficar "travada confirmando" enquanto o buffer não drena.
+     */
+    private fun flushLearning(boundary: String, timeoutMs: Long = 1_000L): Boolean {
         val ok = learningPipeline.flush(timeoutMs)
         if (!ok) {
             log.add("WARN", "LEARNING-PIPELINE", "Buffer não drenou em $boundary dentro de ${timeoutMs}ms")

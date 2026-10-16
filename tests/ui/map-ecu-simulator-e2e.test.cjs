@@ -32,9 +32,9 @@ class ScriptedMp48Ecu {
     };
   }
 
-  writeIntent(items, maxStep = 3, pauseMs = 150, reason = 'teste') {
+  writeIntent(items, reason = 'teste') {
     const payload = JSON.parse(JSON.stringify(items));
-    this.calls.push({ payload, maxStep, pauseMs, reason });
+    this.calls.push({ payload, reason });
     this.status = { state: 'WRITING', ok: true, ack: false, readback: false };
 
     if (this.mode === 'START_REJECTED') {
@@ -96,7 +96,7 @@ function applyPlannerPreview(editor, mode, adjustment) {
 
 function submit(editor, ecu, reason) {
   const review = editor.buildReview();
-  const started = ecu.writeIntent(review.items, 3, 150, reason);
+  const started = ecu.writeIntent(review.items, reason);
   if (!started.ok || !started.started) throw new Error(started.error || 'A escrita não iniciou');
   return review;
 }

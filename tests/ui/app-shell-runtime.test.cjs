@@ -136,8 +136,8 @@ test('APK usa OmegasV7 para uma única intenção de mapa e curva', () => {
     getObdStatus: () => '{}',
   };
   context.OmegasV7 = {
-    startMapBatchWrite(payload, maxStep, pauseMs, reason) {
-      calls.push({ type: 'map', payload: JSON.parse(payload), maxStep, pauseMs, reason });
+    startMapBatchWrite(payload, reason) {
+      calls.push({ type: 'map', payload: JSON.parse(payload), reason });
       return JSON.stringify({ ok: true, started: true });
     },
     startCurveBatchWrite(payload, reason) {
@@ -147,11 +147,12 @@ test('APK usa OmegasV7 para uma única intenção de mapa e curva', () => {
   };
   const api = new context.OmegasUi.NativeApi();
   assert.equal(api.isDemo(), false);
-  api.writeMap([{ row: 0, column: 0, current: 120, target: 125 }], 3, 150, 'teste');
+  api.writeMap([{ row: 0, column: 0, current: 120, target: 125 }], 'teste');
   api.writeCurve([{ index: 0, currentRaw: 12000, targetRaw: 12100 }], 'teste curva');
   assert.equal(calls.length, 2);
   assert.equal(calls[0].type, 'map');
   assert.equal(calls[0].payload.length, 1);
+  assert.equal(calls[0].reason, 'teste', 'sem limite de passo: o motivo vai logo depois das células');
   assert.equal(calls[1].type, 'curve');
   assert.equal(calls[1].payload.length, 1);
 });

@@ -19,7 +19,7 @@ const { MapEditor } = require('../../app/src/main/assets/ui/map-editor.js');
 
 function submitInternalBlock(editor, ecu, reason) {
   const review = editor.buildReview();
-  const start = JSON.parse(ecu.startKBatchWrite(JSON.stringify(review.items), 3, 150, reason));
+  const start = JSON.parse(ecu.startKBatchWrite(JSON.stringify(review.items), reason));
   if (!start.ok || !start.started) throw new Error(start.error || 'Bloco interno não iniciou');
   return { review, calls: 1 };
 }
@@ -65,7 +65,7 @@ test('timeout de ACK não altera a memória simulada', () => {
   const ecu = loadBench();
   const before = JSON.parse(ecu.readKMap());
   ecu.setPortmonSimulatorMode('ACK_TIMEOUT');
-  ecu.startKBatchWrite(JSON.stringify([{ row: 1, column: 1, current: before.rows[1][1], target: 140 }]), 3, 150, 'timeout');
+  ecu.startKBatchWrite(JSON.stringify([{ row: 1, column: 1, current: before.rows[1][1], target: 140 }]), 'timeout');
   const status = JSON.parse(ecu.getKWriteStatus());
   assert.equal(status.state, 'FAILED');
   assert.equal(status.ack, false);
@@ -76,7 +76,7 @@ test('ACK rejeitado não altera a memória simulada', () => {
   const ecu = loadBench();
   const before = JSON.parse(ecu.readKMap());
   ecu.setPortmonSimulatorMode('ACK_REJECTED');
-  ecu.startKBatchWrite(JSON.stringify([{ row: 1, column: 2, current: before.rows[1][2], target: 141 }]), 3, 150, 'nack');
+  ecu.startKBatchWrite(JSON.stringify([{ row: 1, column: 2, current: before.rows[1][2], target: 141 }]), 'nack');
   const status = JSON.parse(ecu.getKWriteStatus());
   assert.equal(status.state, 'FAILED');
   assert.equal(status.readback, false);
@@ -87,7 +87,7 @@ test('readback divergente nunca aparece como sucesso', () => {
   const ecu = loadBench();
   const before = JSON.parse(ecu.readKMap());
   ecu.setPortmonSimulatorMode('READBACK_DIVERGENT');
-  ecu.startKBatchWrite(JSON.stringify([{ row: 3, column: 4, current: before.rows[3][4], target: 150 }]), 3, 150, 'divergente');
+  ecu.startKBatchWrite(JSON.stringify([{ row: 3, column: 4, current: before.rows[3][4], target: 150 }]), 'divergente');
   const status = JSON.parse(ecu.getKWriteStatus());
   assert.equal(status.state, 'FAILED');
   assert.equal(status.ack, true);
@@ -103,7 +103,7 @@ test('bloco interno de 16 células produz 16 frames e uma única operação do w
     const column = index % 12;
     return { row, column, current: map.rows[row][column], target: map.rows[row][column] + 1 };
   });
-  const start = JSON.parse(ecu.startKBatchWrite(JSON.stringify(payload), 3, 150, 'bloco interno'));
+  const start = JSON.parse(ecu.startKBatchWrite(JSON.stringify(payload), 'bloco interno'));
   assert.equal(start.started, true);
   const status = JSON.parse(ecu.getKWriteStatus());
   assert.equal(status.state, 'BATCH_CONFIRMED');

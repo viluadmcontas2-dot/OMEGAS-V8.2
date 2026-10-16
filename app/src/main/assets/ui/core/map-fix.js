@@ -85,7 +85,7 @@
       const items = kind === 'undo' ? this.state.undoItems : this.state.items;
       if (!Array.isArray(items) || !items.length || this.busy) return;
       const reason = kind === 'undo' ? 'Refino: desfazer correção no Mapa K' : 'Refino: correção no Mapa K';
-      const result = this.native.writeMap(items, 0, 0, reason);
+      const result = this.native.writeMap(items, reason);
       if (!result?.ok || !result?.started) { this.fail(result?.error || 'A gravação não iniciou.'); return; }
       const undoItems = this.state.undoItems;
       this.set({ phase: 'writing', message: 'Gravando e conferindo na ECU…', undoItems });

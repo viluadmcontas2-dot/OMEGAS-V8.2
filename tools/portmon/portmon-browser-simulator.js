@@ -113,7 +113,7 @@
     },
     getKMapReadResult: () => json(mapReadResult),
     readKMap: () => json(readMap()),
-    startKBatchWrite(payloadJson, maxStep, pauseMs, reason) {
+    startKBatchWrite(payloadJson, reason) {
       if (!connected) return json({ ok: false, started: false, error: 'ECU simulada desconectada' });
       let payload;
       try { payload = JSON.parse(payloadJson); } catch (_) { return json({ ok: false, started: false, error: 'Lote inválido' }); }
@@ -133,7 +133,7 @@
       } catch (error) {
         writeStatus = { ok: false, state: 'FAILED', busy: false, progress: 100, ack: false, readback: false, message: error.message || String(error) };
       }
-      return json({ ok: true, started: true, simulated: true, cells: payload.length, maxStep, pauseMs });
+      return json({ ok: true, started: true, simulated: true, cells: payload.length });
     },
     getKWriteStatus: () => json(writeStatus),
     setPortmonSimulatorMode(nextMode) {

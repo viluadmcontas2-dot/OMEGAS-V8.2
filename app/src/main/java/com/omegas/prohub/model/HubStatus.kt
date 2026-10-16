@@ -34,8 +34,6 @@ data class HubStatus(
     val gpsEnabled: Boolean = false,
     val gpsSpeedKmh: Double = 0.0,
     val gpsAccuracyM: Double = 0.0,
-    val lanEnabled: Boolean = false,
-    val lanAddress: String = "",
     val directTelemetryAgeMs: Long = -1,
 )
 

@@ -111,15 +111,14 @@ def test_native_automatch_and_inferred_math_are_not_writers():
 
 def test_predictor_and_v7_suggestion_path_is_manual_review_only():
     coordinator = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/V7CalibrationCoordinator.kt").read_text(encoding="utf-8")
-    writer = (ROOT / "app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriterV7.kt").read_text(encoding="utf-8")
 
     assert "private val ecuWriter" not in coordinator
     assert "active.applySuggestionToEcu(" not in coordinator
     assert "MANUAL_REVIEW_REQUIRED" in coordinator
     assert "automaticWriteBlocked" in coordinator
     assert "writesStarted" in coordinator
-    assert "LAB_ONLY" in writer
-    assert "labOnlyWriterEnabled: Boolean = false" in writer
+    # Adaptador sugestão -> writer apagado (dono, 16/10): não existe mais caminho compilável.
+    assert not (ROOT / "app/src/main/java/com/omegas/prohub/calibration/ExistingCalibrationWriterV7.kt").exists()
 
 
 if __name__ == "__main__":
