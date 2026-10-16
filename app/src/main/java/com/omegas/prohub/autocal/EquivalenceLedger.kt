@@ -31,6 +31,9 @@ import kotlin.math.exp
 class EquivalenceLedger(private val file: File? = null, private val clock: () -> Long = System::currentTimeMillis) {
     companion object {
         const val FORMAT = "omegas-equivalence-ledger-v1"
+        /** Hipótese K_novo/K_velho NÃO validada (Validador 2026-10-16: zero amostras).
+         * Preservamos a previsão para partida quente, mas ela não participa de decisões ou progresso. */
+        const val PREDICTION_EVIDENCE_WEIGHT = 0.0
         const val STABLE_WINDOW_MS = 1_200L
         const val STABLE_RPM_SPREAD = 150.0
         const val STABLE_MAP_SPREAD = 0.03
@@ -97,14 +100,14 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
      * CELL_CAP leituras mais recentes e não perde lugar para outra.
      */
     private class CellLane(private val cap: Int) : AbstractCollection<Obs>() {
-        private val cells = LinkedHashMap<Long, ArrayDeque<Pair<Long, Obs>>>()
+        private val cells = LinkedHashMap<Pair<Long, Long>, ArrayDeque<Pair<Long, Obs>>>()
         private var seq = 0L
         private var count = 0
         private var flat: List<Obs>? = null
         override val size: Int get() = count
         override fun iterator(): Iterator<Obs> = flatten().iterator()
         fun add(obs: Obs) {
-            val cell = cells.getOrPut(cellKey(obs.rpm, obs.map)) { ArrayDeque() }
+            val cell = cells.getOrPut(cellKey(obs.rpm, obs.map) to obs.epoch) { ArrayDeque() }
             cell.addLast(seq++ to obs)
             count++
             if (cell.size > CELL_CAP) { cell.removeFirst(); count-- }
@@ -115,11 +118,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             flat = null
         }
         fun clear() { cells.clear(); count = 0; flat = null }
-        fun cellSize(obs: Obs): Int = cells[cellKey(obs.rpm, obs.map)]?.size ?: 0
+        fun cellSize(obs: Obs): Int = cells[cellKey(obs.rpm, obs.map) to obs.epoch]?.size ?: 0
         /** Remove só as leituras que [predicate] aponta (as outras regiões ficam intactas). */
         fun removeIf(predicate: (Obs) -> Boolean): Int {
             var removed = 0
-            val emptied = ArrayList<Long>()
+            val emptied = ArrayList<Pair<Long, Long>>()
             cells.forEach { (key, cell) ->
                 val before = cell.size
                 cell.removeAll { predicate(it.second) }
@@ -251,7 +254,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     private fun clearPetrol() {
         synchronized(lock) {
-            petrol.clear()
+            // A aquisição da ECU não apaga a referência independente do carro.
             petrolEpoch++
             dirty = true
             revision++
@@ -302,7 +305,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             if (obs != null) window.clear()
             if (obs != null && frame.fuel == "GASOLINA" && (frame.engineHot == false || petrol.cellSize(obs) >= PETROL_FREEZE_SAMPLES)) obs = null
             if (obs != null) {
-                val accepted = obs!!.copy(epoch = configurationEpoch)
+                val accepted = obs!!.copy(epoch = if (frame.fuel == "GNV") configurationEpoch else 0L)
                 (if (frame.fuel == "GASOLINA") petrol else gas).add(accepted)
                 if (frame.fuel == "GNV") {
                     val pair = computePairs(petrol, listOf(accepted), ecuPetrolRef).firstOrNull()
@@ -349,10 +352,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             val adjusted = gas.map { o ->
                 val ms = o.petrolMs * o.scale
                 val h = factor(after, ms) / factor(before, ms)
-                o.copy(scale = o.scale / h, weight = o.weight * 0.5)
+                o.copy(scale = o.scale / h, weight = o.weight * PREDICTION_EVIDENCE_WEIGHT)
             }
             gas.clear()
             adjusted.forEach(gas::add)
+            usage.clear()
             configurationEpoch++
             curveAxis = axis.copyOf()
             curveRaw = after.copyOf()
@@ -377,6 +381,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         synchronized(lock) {
             val old = gas.map { it.copy(weight = 0.0) }
             gas.clear(); old.forEach(gas::add)
+            usage.clear()
             configurationEpoch++; gasEpochAt = clock(); gasEpochReason = reason
             window.clear(); dirty = true; revision++
             cachedIndex = null; cachedDense = null; cachedEvidence = null
@@ -397,19 +402,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     }
 
     /** A curva/mapa mudou: o GNV medido com a curva antiga deixa de valer. A gasolina fica. */
-    fun resetGas(reason: String) = synchronized(lock) {
-        gas.clear()
-        gasUsefulRpmMs = 0.0
-        airRpmBar = 0.0
-        gasEpochReason = reason
-        gasEpochAt = clock()
-        lastInvalidation = null
-        dirty = true
-        revision++
-        cachedIndex = null
-        cachedDense = null
-        cachedEvidence = null
-    }.also { maybeSave(force = true) }
+    fun resetGas(reason: String) = suspendGas(reason)
 
     /**
      * Gravação de Curva K em alguns pontos: só o GNV medido onde esses pontos agem deixa de valer.
@@ -419,7 +412,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     fun invalidateGas(reason: String, rangesMs: List<Pair<Double, Double>>): Int {
         val removed = synchronized(lock) {
             val ranges = rangesMs.filter { it.first < it.second }
-            val n = gas.removeIf { obs -> ranges.any { obs.petrolMs > it.first && obs.petrolMs < it.second } }
+            val affected = gas.filter { obs -> obs.weight > 0 && ranges.any { obs.petrolMs > it.first && obs.petrolMs < it.second } }.toSet()
+            val n = affected.size
+            val dated = gas.map { if (it in affected) it.copy(weight = 0.0) else it }
+            gas.clear(); dated.forEach(gas::add)
+            window.clear()
             // Gás por ar é uma média da calibração inteira: recomeça a cada calibração nova (como antes).
             gasUsefulRpmMs = 0.0
             airRpmBar = 0.0
@@ -545,7 +542,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val grid = HashMap<Long, MutableList<Obs>>()
         petrolObs.forEach { grid.getOrPut(cell(it.rpm, it.map)) { ArrayList() }.add(it) }
         val matches = ArrayList<Double>()
-        return gasObs.filter { it.weight > 0.0 }.mapNotNull { g ->
+        return gasObs.filter { it.weight > 0.0 && (it.epoch == configurationEpoch || PREDICTION_EVIDENCE_WEIGHT > 0) }.mapNotNull { g ->
             matches.clear()
             val r0 = Math.floorDiv(g.rpm.toLong(), MATCH_RPM.toLong())
             val m0 = Math.floorDiv((g.map * 1_000).toLong(), (MATCH_MAP * 1_000).toLong())
@@ -599,7 +596,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val ecuToken: String
         val epoch: Int
         synchronized(lock) {
-            petrolCount = petrol.size; gasCount = gas.size; reason = gasEpochReason; at = gasEpochAt
+            petrolCount = petrol.size; gasCount = gas.count { it.epoch == configurationEpoch && it.weight > 0 }; reason = gasEpochReason; at = gasEpochAt
             invalidation = lastInvalidation?.let { JSONObject(it.toString()) }
             ecuPoints = ecuPetrolRef.size
             ecuToken = ecuReferenceToken(ecuPetrolRef)
@@ -659,7 +656,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     fun revision(): Long = synchronized(lock) { revision }
 
     /** Identidade observacional da época, sem tocar no acumulador. */
-    fun gasEpochToken(): String = synchronized(lock) { "$gasEpochAt:$gasEpochReason" }
+    fun gasEpochToken(): String = synchronized(lock) { "$configurationEpoch:$gasEpochAt:$gasEpochReason" }
 
     fun gasPerAir(): Double? = synchronized(lock) { if (airRpmBar > 0) gasUsefulRpmMs / airRpmBar else null }
 
@@ -688,7 +685,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
                     .put("idleShare", values.count { it.rpm < IDLE_DIAGNOSTIC_RPM }.toDouble() / values.size)) }
             }
         }
-        val result = JSONObject().put("petrol", lane(petrol)).put("gas", lane(gas))
+        val result = JSONObject().put("petrol", lane(petrol)).put("gas", lane(gas.filter { it.epoch == configurationEpoch && it.weight > 0 }))
             .put("binBar", binBar).put("minSamples", minSamples)
         cachedDense = Triple(binBar, minSamples, result)
         JSONObject(result.toString())
@@ -800,6 +797,11 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
             }
             lane(root.optJSONArray("petrol"), petrol)
             lane(root.optJSONArray("gas"), gas)
+            if (!root.has("memory")) {
+                // Ancien format: configuration inconnue; historique seulement, jamais preuve actuelle.
+                val unknown = gas.map { it.copy(weight = 0.0, epoch = -1L) }
+                gas.clear(); unknown.forEach(gas::add)
+            }
             curveFingerprint = root.optString("curveFingerprint").takeIf { it.isNotBlank() && it != "null" }
             gasEpochReason = root.optString("gasEpochReason", "CARREGADO")
             gasEpochAt = root.optLong("gasEpochAt", 0L)
