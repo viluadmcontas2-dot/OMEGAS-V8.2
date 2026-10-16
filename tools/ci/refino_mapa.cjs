@@ -38,7 +38,7 @@ const INDEX = path.resolve('app/src/main/assets/ui/index.html');
       refino.api = Object.assign(Object.create(refino.api), { equivalence: () => eq });
       const api = window.OmegasApp.api;
       window.__writes = [];
-      api.writeMap = (items, a, b, reason) => { window.__writes.push({ items, reason }); return { ok: true, started: true, startedAt: 1 }; };
+      api.writeMap = (items, reason) => { window.__writes.push({ items, reason }); return { ok: true, started: true, startedAt: 1 }; };
       api.mapWriteOperation = () => ({ ok: true, state: 'BATCH_CONFIRMED', readbackValid: true, busy: false, startedAt: 1 });
       refino.refresh(true);
     });

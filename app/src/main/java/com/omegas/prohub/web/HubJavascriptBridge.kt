@@ -206,8 +206,6 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("lastError", status.lastError)
             .put("uptimeSeconds", status.uptimeSeconds)
             .put("gpsEnabled", status.gpsEnabled)
-            .put("lanEnabled", status.lanEnabled)
-            .put("lanAddress", status.lanAddress)
             .put("directTelemetryAgeMs", status.directTelemetryAgeMs)
             .put("calibrationBusy", service.kWriter.isBusy() || service.kFactor.isBusy())
             .put("kMapState", kStatus.optString("state", "IDLE"))
@@ -433,7 +431,7 @@ class HubJavascriptBridge(activity: MainActivity) {
 
     // Gravadores diretos fora da ponte JS (auditoria de fluxo, 2026-10-11): nenhuma tela chama e eles contornam o
     // coordenador V7. A gravação manual continua pela ponte V7 (Mapa K/Curva K), com readback. Bytes não mudam.
-    fun startKWrite(row: Int, column: Int, current: Int, target: Int, maxStep: Int, pauseMs: Int): String {
+    fun startKWrite(row: Int, column: Int, current: Int, target: Int): String {
         val service = activity?.serviceOrNull() ?: return unavailable()
         CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return safetyBlocked(it) }
         if (target < 100) {
@@ -442,10 +440,10 @@ class HubJavascriptBridge(activity: MainActivity) {
                 .put("error", "O valor mínimo de segurança do mapa K é 100")
                 .toString()
         }
-        return service.startKWrite(row, column, current, target, maxStep, pauseMs)
+        return service.startKWrite(row, column, current, target)
     }
 
-    fun startKBatchWrite(cellsJson: String, maxStep: Int, pauseMs: Int, reason: String): String {
+    fun startKBatchWrite(cellsJson: String, reason: String): String {
         val service = activity?.serviceOrNull() ?: return unavailable()
         CalibrationWriteSafetyPolicy.unsafeReason(service.status())?.let { return safetyBlocked(it) }
         val cells = try { JSONArray(cellsJson) } catch (_: Exception) {
@@ -466,7 +464,7 @@ class HubJavascriptBridge(activity: MainActivity) {
                     .toString()
             }
         }
-        return service.startKBatchWrite(cells.toString(), maxStep, pauseMs, reason)
+        return service.startKBatchWrite(cells.toString(), reason)
     }
 
     @JavascriptInterface fun getKWriteStatus(): String = activity?.serviceOrNull()?.kWriteStatusJson() ?: "{}"
@@ -538,16 +536,7 @@ class HubJavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface fun requestBluetoothPermission() = activity?.requestBluetoothPermission()
 
-    @JavascriptInterface fun getLinkStatus(): String = activity?.serviceOrNull()?.linkStatusJson() ?: "{}"
-    @JavascriptInterface
-    fun configureOmegasLink(enabled: Boolean, pairCode: String): String =
-        activity?.serviceOrNull()?.configureOmegasLink(enabled, pairCode) ?: unavailable()
-    @JavascriptInterface fun claimLinkMain(): String = activity?.serviceOrNull()?.claimLinkMain() ?: unavailable()
-    @JavascriptInterface fun releaseLinkMain(): String = activity?.serviceOrNull()?.releaseLinkMain() ?: unavailable()
-    @JavascriptInterface fun syncLinkNow(): String = activity?.serviceOrNull()?.syncLinkNow() ?: unavailable()
-
     @JavascriptInterface fun setGpsEnabled(enabled: Boolean) = activity?.setGpsEnabled(enabled)
-    @JavascriptInterface fun setLanEnabled(enabled: Boolean): String = activity?.serviceOrNull()?.setLanEnabled(enabled)?.toString() ?: unavailable()
     @JavascriptInterface fun openAppSettings() = activity?.openAppSettings()
     @JavascriptInterface
     fun registerRefuel(addedM3: Double, distanceKm: Double): String {

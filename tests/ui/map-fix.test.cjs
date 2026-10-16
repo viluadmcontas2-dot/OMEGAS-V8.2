@@ -20,7 +20,7 @@ function rig({ writeState = 'BATCH_CONFIRMED', readbackValid = true, previewOk =
   const native = {
     startMapRead: () => ({ ok: true, started: true }), mapReadResult: () => ({ ok: true, state: 'COMPLETED' }),
     previewMapAdjustment(cells, mode, delta) { log.previews.push({ cells, mode, delta }); return previewOk ? { ok: true, items: cells.map(c => ({ ...c, target: 120 + delta })) } : { ok: false, error: 'sem prévia' }; },
-    writeMap(items, a, b, reason) { log.writes.push({ items, reason }); return { ok: true, started: true, startedAt: log.writes.length }; },
+    writeMap(items, reason) { log.writes.push({ items, reason }); return { ok: true, started: true, startedAt: log.writes.length }; },
     mapWriteOperation: () => ({ ok: true, state: writeState, readbackValid, busy: false, startedAt: log.writes.length }),
   };
   const states = [];

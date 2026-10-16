@@ -404,7 +404,8 @@ class KFactorManager(
                 expectedSessionId = expectedSessionId,
                 workClass = Mp48WorkClass.MANUAL_WRITE,
                 telemetryAfter = true,
-                waitTimeoutMs = 10_000L,
+                // Vez na porta: no máximo 1 s (dono, 16/10). Ocupada = ✗ na hora, nunca "travado confirmando" por 10 s.
+                waitTimeoutMs = 1_000L,
             ) { unit ->
                 update("VERIFYING_CURRENT", "Conferindo os 30 pontos antes da escrita", 8)
                 val ecuBefore = readRawPoints(unit, KFactorProtocol.readFactors(), "conferência K factor")

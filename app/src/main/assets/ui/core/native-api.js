@@ -277,9 +277,9 @@
       if (this.demo) return demoMapAdjustment(cells, mode, adjustment);
       return invoke(this.v7, 'previewMapAdjustment', [JSON.stringify(cells || []), mode || 'percent', Number(adjustment)], { ok: false, error: 'Prévia Kotlin do Mapa K indisponível' });
     }
-    writeMap(cells, maxStep, pauseMs, reason) {
+    writeMap(cells, reason) {
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Simulação: nenhuma escrita é enviada à ECU.' };
-      return invoke(this.v7, 'startMapBatchWrite', [JSON.stringify(cells || []), 0, 0, reason || 'Ajuste manual'], { ok: false, error: 'Ponte V7 indisponível' });
+      return invoke(this.v7, 'startMapBatchWrite', [JSON.stringify(cells || []), reason || 'Ajuste manual'], { ok: false, error: 'Ponte V7 indisponível' });
     }
     mapWriteOperation() { return this.demo ? { ok: true, state: 'IDLE', busy: false, progress: 0 } : invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false }); }
 

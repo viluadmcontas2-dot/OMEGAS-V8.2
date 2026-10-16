@@ -22,11 +22,18 @@ scheduler = read("app/src/main/assets/ui/core/scheduler.js")
 assert "FOREGROUND_SERVICE_DATA_SYNC" not in manifest
 assert "dataSync" not in manifest
 assert "connectedDevice" in manifest
-assert "android.permission.CHANGE_NETWORK_STATE" in manifest
 assert "FOREGROUND_SERVICE_TYPE_DATA_SYNC" not in service
 assert "FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE" in service
 assert "START_STICKY" in service
 assert 'android:stopWithTask="false"' in manifest
+
+# Painel Wi-Fi e OMEGAS Link apagados (dono, 16/10): o app não usa rede.
+assert "android.permission.CHANGE_NETWORK_STATE" not in manifest
+assert "android.permission.INTERNET" not in manifest
+assert not (ROOT / "app/src/main/java/com/omegas/prohub/network/LanPanelServer.kt").exists()
+assert not (ROOT / "app/src/main/java/com/omegas/prohub/link/OmegasLinkManager.kt").exists()
+assert "OmegasLinkManager" not in service and "LanPanelServer" not in service and "canWriteLocally" not in service
+assert "link_status" not in service
 
 # Aprendizado explicável continua vindo do Kotlin; a UI não inventa equivalência.
 assert "sample_reason" in runtime

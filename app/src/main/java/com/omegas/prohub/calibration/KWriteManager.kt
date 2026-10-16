@@ -42,9 +42,6 @@ class KWriteManager(
         const val TOTAL_ROW_COUNT = KMapPhysicalAxes.PROTOCOL_ROWS
         const val MIN_SAFE_K = 100
         const val MAX_BATCH_CELLS = ROW_COUNT * COLUMN_COUNT
-        /** Compatibilidade de API; o writer direto não usa mais ramping. */
-        const val MAX_SAFE_STEP = 25
-        const val MAX_SAFE_PAUSE_MS = 2_000
     }
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
@@ -258,27 +255,15 @@ class KWriteManager(
         }
     }
 
-    fun startWrite(
-        row: Int,
-        column: Int,
-        expectedCurrent: Int,
-        target: Int,
-        maxStep: Int,
-        pauseMs: Int,
-        reason: String = "Manual",
-    ): JSONObject {
+    fun startWrite(row: Int, column: Int, expectedCurrent: Int, target: Int, reason: String = "Manual"): JSONObject {
         val cells = JSONArray().put(JSONObject()
             .put("row", row).put("column", column)
             .put("current", expectedCurrent).put("target", target))
-        return startBatchWrite(cells, maxStep, pauseMs, reason)
+        return startBatchWrite(cells, reason)
     }
 
-    fun startBatchWrite(
-        cells: JSONArray,
-        @Suppress("UNUSED_PARAMETER") maxStep: Int,
-        @Suppress("UNUSED_PARAMETER") pauseMs: Int,
-        reason: String = "Calibração manual",
-    ): JSONObject {
+    /** Gravação direta, sem limite de passo nem pausa (dono, 16/10): só a conferência (readback) a encerra. */
+    fun startBatchWrite(cells: JSONArray, reason: String = "Calibração manual"): JSONObject {
         if (insertionStateUnknown.get()) return safetyError()
         if (cells.length() !in 1..MAX_BATCH_CELLS) return error("Selecione entre 1 e $MAX_BATCH_CELLS células")
         val normalized = JSONArray()
@@ -378,7 +363,8 @@ class KWriteManager(
                 expectedSessionId = expectedSessionId,
                 workClass = Mp48WorkClass.MANUAL_WRITE,
                 telemetryAfter = true,
-                waitTimeoutMs = 10_000L,
+                // Vez na porta: no máximo 1 s (dono, 16/10). Ocupada = ✗ na hora, nunca "travado confirmando" por 10 s.
+                waitTimeoutMs = 1_000L,
             ) { unit ->
                 requireAck(
                     unit.transaction(

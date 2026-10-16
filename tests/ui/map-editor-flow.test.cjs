@@ -29,7 +29,7 @@ function applyPreview(editor, targetFactory) {
 
 function submitIntent(editor, api, reason = 'teste') {
   const review = editor.buildReview();
-  const result = api.writeMap(review.items, 3, 150, reason);
+  const result = api.writeMap(review.items, reason);
   if (!result || !result.ok || !result.started) throw new Error(result?.error || 'A escrita não iniciou');
   return { review, result };
 }
@@ -109,8 +109,8 @@ test('uma intenção humana envia as 144 células em uma única chamada do adapt
   applyPreview(editor, cell => cell.current + 5);
   const calls = [];
   const api = {
-    writeMap(items, maxStep, pauseMs, reason) {
-      calls.push({ items, maxStep, pauseMs, reason });
+    writeMap(items, reason) {
+      calls.push({ items, reason });
       return { ok: true, started: true, state: 'MAP_K_QUEUED' };
     },
   };
@@ -120,8 +120,7 @@ test('uma intenção humana envia as 144 células em uma única chamada do adapt
   assert.equal(calls[0].items.length, 144);
   assert.equal(calls[0].items[0].current, 120);
   assert.equal(calls[0].items[0].target, 125);
-  assert.equal(calls[0].maxStep, 3);
-  assert.equal(calls[0].pauseMs, 150);
+  assert.equal(calls[0].reason, 'teste real');
 });
 
 test('cancelar antes da chamada mantém a interface sem escrita', () => {

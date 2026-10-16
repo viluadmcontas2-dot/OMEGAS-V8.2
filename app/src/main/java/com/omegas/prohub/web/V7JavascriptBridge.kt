@@ -341,7 +341,7 @@ class V7JavascriptBridge(activity: MainActivity) {
      * e readback final das linhas afetadas.
      */
     @JavascriptInterface
-    fun startMapBatchWrite(cellsJson: String, maxStep: Int, pauseMs: Int, reason: String): String {
+    fun startMapBatchWrite(cellsJson: String, reason: String): String {
         val currentActivity = activity ?: return unavailable()
         val service = currentActivity.serviceOrNull() ?: return unavailable()
         unsafeCalibrationWriteReason(service)?.let { reasonUnsafe ->
@@ -406,8 +406,6 @@ class V7JavascriptBridge(activity: MainActivity) {
                         JSONObject(
                             service.startKBatchWrite(
                                 chunk.toString(),
-                                maxStep,
-                                pauseMs,
                                 "$reason • bloco ${chunkIndex + 1}/${plan.chunks.size}",
                             ),
                         )

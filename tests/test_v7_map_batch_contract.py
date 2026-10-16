@@ -28,7 +28,7 @@ class V8MapBatchContract(unittest.TestCase):
     def test_user_intent_supports_full_writable_grid_as_one_native_batch(self):
         self.assertIn("MAX_USER_CELLS = KMapPhysicalAxes.WRITABLE_ROWS * KMapPhysicalAxes.COLUMNS", self.plan)
         self.assertIn("INTERNAL_CHUNK_CELLS = MAX_USER_CELLS", self.plan)
-        self.assertIn("fun startMapBatchWrite", self.bridge)
+        self.assertIn("fun startMapBatchWrite(cellsJson: String, reason: String)", self.bridge)
         self.assertIn("MapBatchPlan.build(cells)", self.bridge)
         self.assertIn("até 144 células", self.bridge)
 
@@ -41,6 +41,11 @@ class V8MapBatchContract(unittest.TestCase):
     def test_writer_is_direct_target_without_ramp_or_artificial_pause(self):
         self.assertNotIn("buildRamp(", self.writer)
         self.assertNotIn("Thread.sleep(pauseMs", self.writer)
+        # Sem limite de passo (dono, 16/10): nem parâmetro, nem constante; só a conferência fica.
+        self.assertNotIn("maxStep", self.writer)
+        self.assertNotIn("pauseMs", self.writer)
+        self.assertNotIn("MAX_SAFE_STEP", self.writer)
+        self.assertIn("fun startBatchWrite(cells: JSONArray, reason: String", self.writer)
         self.assertIn("Mp48Protocol.writeKCell(row, column, target)", self.writer)
         self.assertIn("cells.length() !in 1..MAX_BATCH_CELLS", self.writer)
         self.assertIn("const val MAX_BATCH_CELLS = ROW_COUNT * COLUMN_COUNT", self.writer)
@@ -48,7 +53,7 @@ class V8MapBatchContract(unittest.TestCase):
         self.assertIn('"escrita direta Mapa K"', self.writer)
 
     def test_ui_does_not_request_ramping(self):
-        self.assertIn("this.api.writeMap(this.review.items, 0, 0,", self.map_ui)
+        self.assertIn("this.api.writeMap(this.review.items,", self.map_ui)
         self.assertNotIn("this.api.writeMap(this.review.items, 3, 150,", self.map_ui)
 
     def test_success_requires_every_cell_confirmed(self):
