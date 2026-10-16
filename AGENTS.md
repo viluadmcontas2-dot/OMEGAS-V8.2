@@ -8,7 +8,7 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 - Boot obrigatório: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → Spec Kit ativo → WorkUnit ativa → Issues ligadas. Trabalho em andamento: `docs/handoff/OBSIDIAN-ENXUTO-CHECKPOINT-20261011.md`.
 - Notion só como referência read-only de UX quando o dono pedir. Notion/Linear não controlam a execução.
 - `WORK_SURFACE=REMOTE` · `SOURCE_MUTATION_TARGET=GITHUB_REMOTE_API` · `LOCAL_SOURCE_MUTATION=DENIED` · `TEST_SURFACE=EPHEMERAL_RUNTIME|REMOTE_CI|DEVICE_WHEN_AUTHORIZED`
-- Antes de escrever e antes de concluir: resolver HEAD remoto de `OmegasPlatina`, reconciliar movimento concorrente, nunca sobrescrever trabalho alheio. Runtime local/MMMACHINE pode testar ou inspecionar o SHA remoto exato, mas não é fonte de autoridade.
+- Antes de escrever e antes de concluir: resolver HEAD remoto de `OmegasVermelho` (canônica desde 2026-10-16), reconciliar movimento concorrente, nunca sobrescrever trabalho alheio. Runtime local/MMMACHINE pode testar ou inspecionar o SHA remoto exato, mas não é fonte de autoridade.
 
 ## Método
 
@@ -18,7 +18,7 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 
 ## Invariantes (cada um tem teste)
 
-- Nenhuma escrita automática de Map K/Curve K. Escrita manual exige intenção explícita + ACK + readback.
+- Nenhuma escrita automática de Map K/Curve K, com UMA exceção decidida pelo dono (2026-10-16, D1): o Refino grava sozinho a Curva K (e o Mapa K por faixa de RPM) logo após cada escrita da ECU (AutoMatch detectado por `autocal_native_calibration_epoch`), sem teto por ponto, só dentro das travas absolutas (0,8 ≤ K ≤ 1,8; mapa > 200 → K ≤ 1,5; limites do mapa do dono), com ACK + readback, registro na sessão e um interruptor único para desligar. Escrita manual exige intenção explícita + ACK + readback. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md` (Q1: a ECU aplica o AutoMatch sobre a curva viva).
 - `RESET_ALL` não é ação exposta; só o reset do GNV (ação AutoCal `02 24 04 02`) pode ser pedido à mão, em um toque, com backup completo antes e readback da ECU.
 - Teto de escrita da curva K = **1,8** (dono, 2026-10-13), como o piso de 100 do Mapa K: `KFactorProtocol.MAX_WRITE_FACTOR`/`MAX_WRITE_RAW` valem para escrita manual, restauração de backup e AutoMatch; a leitura segue até o limite do protocolo. Testes: `KFactorManualPlannerTest.kt`, `AutoMatchKFactorDraftTest.kt`, `tests/ui/curva-k-arrasto.test.cjs`.
 - `reset-nunca-pausa-aprendizado` (dono, 2026-10-08): após qualquer reset, `AUTO_CAL_ENABLE` é conferido e religado até readback = 1, mesmo em timeout/NAK; sem isso o reset não está concluído. Teste: `ResetNuncaPausaAprendizadoTest.kt` + `tests/test_reset_nunca_pausa_aprendizado.py`.

@@ -1,19 +1,20 @@
-# OMEGAS Platina — Status
+# OMEGAS — Status
 
-## APK Platina + Refino (candidato para teste no carro) — 2026-10-02
+Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
-- **Base:** a árvore da `OmegasPlatina` (`b185e80a`), acrescida do cérebro do refino, da aba Refino, da remoção do OBD, de Ferramentas e Sugestões corrigidas, e do balão flutuante que nunca cobre o app.
-- **Fonte:** `8331cc36e05e6c37ac6db4dc309cb1cedc12edc9`, branch `claude/brave-darwin-wuliyo`, que descende de `OmegasPlatina`.
-- **Workflow:** `verde-apk-now.yml` com `build_apk=true`; run `37071148942`; conclusão `success` (`clean testDebugUnitTest lintDebug assembleDebug`).
-- **Artifact:** `11254009286` / `omegas-platina-final-8331cc36…`, 4.763.006 bytes, digest `sha256:34a283505e171ef4b7cd796733dc1f39574b4099524d76b34185bd3048a4d844`. Expira em 2026-10-16.
-- **Provas locais no mesmo SHA:**
-  - `QUALITY_GATE_FAST=PASS`;
-  - JVM 540 OK (via kotlinc);
-  - paridade Kotlin↔Python OK;
-  - capturas 1280×720 com o snapshot real de 01/10 17:19.
-  - O único teste UI que falha, `learning-jvm-payload`, já falhava na Platina original.
-- `PHYSICAL_VALIDATION_CLAIMED=false`.
+## Último APK (2026-10-14, Vermelho)
 
+- Workflow `verde-apk-now.yml`, run `38510873623` (SUCCESS, `workflow_dispatch`), commit `785258605337d8f3c0d57991e95fc566c832c761` (ponta da `OmegasVermelho`).
+- Artifact `omegas-platina-final-785258605337d8f3c0d57991e95fc566c832c761` (id `11869543913`), 4.842.440 bytes, digest do ZIP `sha256:c5b606bac036255efa636b08ac5a288e0d831b162b025f5068bf658e4dcb73c3`; expira em 2026-10-28. SHA-256 do APK dentro do ZIP: não lido nesta sessão (UNKNOWN).
+- Cópia no Drive do dono: `OMEGAS-785258605337.apk` (4.841.657 bytes, 2026-10-14).
+- Prova: classes 1–3 no CI (contratos, JVM, replay) e 4 em render Chromium. Não provado: classe 5 (carro). `PHYSICAL_VALIDATION_CLAIMED=false`.
+
+## Em andamento (2026-10-16)
+
+Fase 1 do plano (porta de gravação no toque, Curva→Mapa recuperável, persistência à prova de queda, "piorou" honesto, apagar Wi-Fi/Link e limite de passo, sessões e aprendizado leves) na branch `claude/carregar-sessao-r7j85r`; entra na Vermelho por PR com CI verde no SHA. Decisões do dono: D1 = Refino grava sozinho após cada AutoMatch (só travas absolutas); D2 = sem API do Claude no app.
+
+---
+Histórico (Platina, até 2026-10-02):
 ## Active control surface
 
 - Branch: `OmegasPlatina`
