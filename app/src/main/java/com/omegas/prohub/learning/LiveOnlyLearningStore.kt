@@ -120,55 +120,10 @@ class LiveOnlyLearningStore(
             )
         }
 
-        val before = delegate.export("reset-audit")
-        val baseline = selectPetrolBaseline(before)
-        val petrolRegionsBefore = countRegions(baseline.snapshot, Mp48Fuel.PETROL.wireName)
-        val discardedCngRegions = countRegions(before, Mp48Fuel.CNG.wireName)
-        val discardedComparisons = before.optJSONArray("comparisons")?.length() ?: 0
-        val discardedSessions = before.optJSONArray("sessions")?.length() ?: 0
-        val discardedNativeEvidence = before.optJSONArray("nativeEcuEvidence")?.length() ?: 0
-
-        val rebuild = rebuildPreservingPetrol(baseline.snapshot, "calibration_confirmed")
+        // O Ledger preserva e reescala pares; o legado só avança a época, sem reconstruir nem apagar arquivos.
         val fresh = delegate.onCalibrationAdjustment(payload)
-
-        lastResetReceipt = JSONObject()
-            .put("policy", RESET_POLICY)
-            .put("reasonCode", if (nativeObserved) "ECU_NATIVE_AUTOCAL_EPOCH" else "CONFIRMED_CALIBRATION_DERIVED_RESET")
-            .put(
-                "reason",
-                if (nativeObserved) {
-                    "AutoCal nativo alterou a base global; gasolina preservada e evidência GNV anterior foi supersedida."
-                } else {
-                    "Calibração confirmada; gasolina preservada e GNV, equivalências, comparações, sugestões e confiança zerados."
-                },
-            )
-            .put("calibrationType", payload.optString("calibrationType", "UNKNOWN"))
-            .put("adjustmentId", payload.optString("adjustmentId"))
-            .put("newHash", payload.optString("newHash", payload.optString("hash")))
-            .put("petrolRegionsBefore", petrolRegionsBefore)
-            .put("preservedPetrolRegions", rebuild.preservedPetrolRegions)
-            .put("petrolRecoverySource", baseline.recoveredFromQuarantine ?: JSONObject.NULL)
-            .put("discardedCngRegions", discardedCngRegions)
-            .put("discardedComparisons", discardedComparisons)
-            .put("discardedSessions", discardedSessions)
-            .put("discardedNativeEvidence", discardedNativeEvidence)
-            .put("quarantinedFiles", rebuild.archives)
-            .put("resetAt", System.currentTimeMillis())
-
-        log.add(
-            "WARN",
-            "LEARNING-RESET",
-            if (nativeObserved) {
-                "AutoCal nativo observado: base gasolina preservada; época GNV anterior supersedida"
-            } else {
-                "Calibração confirmada: base gasolina preservada; aprendizado GNV e derivados zerados"
-            },
-        )
-        return decorate(fresh)
-            .put("ok", true)
-            .put("resetPerformed", true)
-            .put("petrolBaselinePreserved", true)
-            .put("resetReceipt", JSONObject(lastResetReceipt.toString()))
+        log.add("INFO", "LEARNING-EPOCH", "Calibração confirmada: gasolina e histórico GNV preservados; nova época em conferência")
+        return decorate(fresh).put("resetPerformed", false).put("petrolBaselinePreserved", true)
     }
 
     @Synchronized

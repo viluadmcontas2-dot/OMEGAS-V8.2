@@ -734,6 +734,24 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
     }
 
     /** Grava só quando algo mudou; o "depois" medido (indexAfter) não vai para o arquivo (é recalculado). */
+    fun exportMemory(): JSONObject = synchronized(lock) {
+        JSONObject().put("format", FORMAT)
+                    .put("bandScale", JSONArray(bandScale.toList()))
+                    .put("experimentSequence", experimentSequence)
+                    .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()).apply { remove("indexAfter"); remove("verdictNames") } }))
+                    .put("blocks", JSONArray(blocks.map { JSONObject(it.toString()) }))
+                    .put("expectedRaw", expectedRaw?.let { JSONArray(it.toList()) } ?: JSONObject.NULL)
+    }
+
+    fun restoreMemory(root: JSONObject): Boolean = synchronized(lock) {
+        if (experiments.isNotEmpty() || root.optString("format") != FORMAT) return@synchronized false
+        readMemory(root)
+        // Histórico recuperado nunca oferece restaurar uma configuração ainda não relida.
+        interrupt("MEMORIA_RECUPERADA")
+        dirty = true
+        true
+    }
+
     private fun save() {
         val target = file ?: return
         synchronized(saveLock) {
@@ -741,12 +759,7 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
                 if (!dirty) return
                 dirty = false
                 lastSaveAt = clock()
-                JSONObject().put("format", FORMAT)
-                    .put("bandScale", JSONArray(bandScale.toList()))
-                    .put("experimentSequence", experimentSequence)
-                    .put("experiments", JSONArray(experiments.map { JSONObject(it.toString()).apply { remove("indexAfter"); remove("verdictNames") } }))
-                    .put("blocks", JSONArray(blocks.map { JSONObject(it.toString()) }))
-                    .put("expectedRaw", expectedRaw?.let { JSONArray(it.toList()) } ?: JSONObject.NULL)
+                exportMemory()
             }
             try {
                 AtomicJsonFile.write(target, payload.toString())
@@ -766,6 +779,10 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
             if (target.isFile || AtomicJsonFile.backupOf(target).isFile) loadError = "Diário do refino ilegível (nem a reserva .bak serviu)"
             return
         }
+        readMemory(root)
+    }
+
+    private fun readMemory(root: JSONObject) {
         if (root.optString("format") != FORMAT) {
             loadError = "Formato desconhecido do diário do refino: ${root.optString("format")}"
             return

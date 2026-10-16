@@ -14,7 +14,7 @@ class RefinementCycle(
     private val monotonicMs: () -> Long = { System.nanoTime() / 1_000_000L },
     /** Motor de correção (inalterado: AutoMatchSnapshotAnalysis.analyzeRefined); os testes do ciclo trocam por um sintético. */
     private val analyze: (JSONObject, List<Pair<Double, Double>>, DoubleArray?) -> JSONObject =
-        { snapshot, pairs, scale -> AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, pairs, scale) },
+        { snapshot, pairs, scale -> AutoMatchSnapshotAnalysis.analyzeRefined(snapshot, pairs, scale, equivalence.pairs().map { it.weight }) },
 ) {
     companion object {
         /** O motor refinado roda de novo por leituras novas no máximo a cada isso (o resto do memo é por conteúdo). */
@@ -53,6 +53,7 @@ class RefinementCycle(
 
     /** Gravação de Curva K confirmada (BATCH_CONFIRMED + readback) → experimento com o índice da curva antiga. */
     fun recordConfirmedCurve(payload: JSONObject) = synchronized(lock) {
+        if (!payload.optBoolean("readbackValid", false)) return@synchronized
         var axisRaw: IntArray? = null
         var beforeRaw: IntArray? = null
         var afterRaw: IntArray? = null
@@ -82,9 +83,9 @@ class RefinementCycle(
             val before = beforeRaw
             val after = afterRaw
             if (axis != null && before != null && after != null) {
-                equivalence.invalidateGas("CURVA_K_GRAVADA", RefinementJournal.affectedRangesMs(axis, before, after))
+                equivalence.rescaleCurve(axis, before, after, "CURVA_K_GRAVADA")
             } else {
-                equivalence.resetGas("CURVA_K_GRAVADA")
+                equivalence.suspendGas("CURVA_K_SEM_BASE_PARA_REESCALA")
             }
             payload.optJSONObject("curve")?.optJSONArray("factorsRaw")?.takeIf { it.length() == 30 }?.let { raw ->
                 equivalence.adoptCurve(EquivalenceLedger.fingerprint(IntArray(30) { raw.optInt(it) }))
@@ -120,7 +121,7 @@ class RefinementCycle(
         }
         if (before.contentEquals(after)) return@synchronized false
         journal.recordCurveWrite(before, after, axis, equivalence.index(), id, RefinementJournal.kindFromReason(reason))
-        equivalence.invalidateGas("CURVA_K_GRAVADA", RefinementJournal.affectedRangesMs(axis, before, after))
+        equivalence.rescaleCurve(axis, before, after, "CURVA_K_GRAVADA")
         equivalence.adoptCurve(EquivalenceLedger.fingerprint(after))
         true
     }
@@ -132,13 +133,19 @@ class RefinementCycle(
 
     /** Mapa K gravado: o gás mudou; GNV antigo sai, verificações param e a oferta de restaurar perde a base. */
     fun mapKWritten() = synchronized(lock) {
-        equivalence.resetGas(RefinementJournal.MAP_K_WRITTEN)
+        equivalence.suspendGas(RefinementJournal.MAP_K_WRITTEN)
         journal.interrupt(RefinementJournal.MAP_K_WRITTEN)
     }
 
     /** A ECU trocou a Curva K sozinha (AutoMatch nativo). */
-    fun nativeCurveChanged() = synchronized(lock) {
-        equivalence.resetGas(RefinementJournal.OUTSIDE_AUTOMATCH)
+    fun nativeCurveChanged(payload: JSONObject = JSONObject(), snapshot: JSONObject? = null) = synchronized(lock) {
+        if (!payload.optBoolean("readbackValid", false)) return@synchronized
+        val axis = raw30(field(snapshot, "PETR_INJ_TBP")) ?: journal.latestAxis()
+        val before = payload.optJSONArray("beforeRaw")?.let { a -> IntArray(a.length()) { a.optInt(it) } }
+        val after = payload.optJSONArray("afterRaw")?.let { a -> IntArray(a.length()) { a.optInt(it) } }
+        if (axis == null || before == null || after == null ||
+            !equivalence.rescaleCurve(axis, before, after, RefinementJournal.OUTSIDE_AUTOMATCH))
+            equivalence.suspendGas("AUTOMATCH_SEM_BASE_PARA_REESCALA")
         journal.interrupt(RefinementJournal.OUTSIDE_AUTOMATCH)
     }
 
@@ -176,8 +183,9 @@ class RefinementCycle(
         if (mulAct != null) {
             // Curva mudou por fora (ProgBase, reset, gravação que falhou no meio): o GNV medido com a outra não vale.
             val fingerprint = EquivalenceLedger.fingerprint(mulAct)
-            if (journal.noteEcuCurve(mulAct, mulActAt)) equivalence.curveChangedOutside(fingerprint)
-            else equivalence.alignCurve(fingerprint)
+            val axis = raw30(field(snapshot, "PETR_INJ_TBP"))
+            journal.noteEcuCurve(mulAct, mulActAt)
+            if (axis != null) equivalence.observeCurve(axis, mulAct)
         }
         val scale = axisMs?.let { journal.pointGainScale(it) }
         val key = listOf(
