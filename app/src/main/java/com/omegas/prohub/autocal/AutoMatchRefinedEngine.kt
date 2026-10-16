@@ -70,7 +70,6 @@ object AutoMatchRefinedEngine {
     const val LOW_REF_TO_MS = 8.0
     const val LOW_DIP = 0.92
     const val LOW_TARGET = 0.98
-    const val LOW_WEIGHT = 2.0
 
     data class Input(
         val axisRaw: IntArray,
@@ -145,24 +144,14 @@ object AutoMatchRefinedEngine {
         val available: Boolean get() = mode != Mode.UNAVAILABLE
     }
 
-    const val LOW_MAX_PASSES = 8
-
     /**
-     * Uma passada do motor por vez limita o degrau (coerência, anti-serrilhado). Com nó baixo afundado a correção
-     * é repetida internamente até o nó alcançar o alvo (ou parar de mudar), como vários AutoMatches seguidos.
+     * Nós baixos afundados são levantados ANTES do motor (a curva que o motor vê já é coerente, sem degrau): a evidência,
+     * o alisamento e a coerência seguem valendo sobre ela. "Atual" e "antes" continuam sendo a curva lida da ECU.
      */
     fun refine(input: Input): Result {
-        var r = refineOnce(input)
-        var passes = 1
-        while (passes < LOW_MAX_PASSES && r.available &&
-            lowNodePrior(r.axisMs, r.refinedRaw.map { it / Q14 }).isNotEmpty()
-        ) {
-            val next = refineOnce(input.copy(mulActRaw = r.refinedRaw.toIntArray()))
-            if (!next.available || next.refinedRaw == r.refinedRaw) break
-            r = next
-            passes++
-        }
-        if (passes == 1) return r
+        val lifted = liftLowNodes(input.axisRaw, input.mulActRaw) ?: return refineOnce(input)
+        val r = refineOnce(input.copy(mulActRaw = lifted))
+        if (!r.available) return r
         val original = input.mulActRaw.toList()
         return r.copy(
             currentRaw = original,
@@ -213,7 +202,7 @@ object AutoMatchRefinedEngine {
 
         val observations = (if (equivalence) {
             targets.map { Observation(axisWeights(it.petrolMs, axisMs), it.logTarget, it.weight) }
-        } else emptyList()) + lowNodePrior(axisMs, kOld)
+        } else emptyList())
 
         val evidence = DoubleArray(POINT_COUNT)
         observations.forEach { o -> o.a.forEach { (j, a) -> evidence[j] += o.w * a } }
@@ -229,12 +218,7 @@ object AutoMatchRefinedEngine {
         val scale = input.pointGainScale?.takeIf { it.size == POINT_COUNT }
         val scaled = if (scale == null) fitted else fitted.mapIndexed { j, z -> x0[j] + scale[j] * (z - x0[j]) }
         val eEff = effectiveElasticity(x0, u)
-        val coherent = enforceCoherence(scaled, x0, u, eEff)
-        // Com nós baixos levantados, os vizinhos de referência não podem ser rebaixados pelo alisamento.
-        val lowActive = lowNodePrior(axisMs, kOld).isNotEmpty()
-        val final = if (!lowActive) coherent else coherent.mapIndexed { j, z ->
-            if (axisMs[j] > LOW_NODE_MAX_MS && axisMs[j] <= LOW_REF_TO_MS) max(z, x0[j]) else z
-        }
+        val final = enforceCoherence(scaled, x0, u, eEff)
 
         val origins = List(POINT_COUNT) { j ->
             when {
@@ -405,16 +389,19 @@ object AutoMatchRefinedEngine {
 
     // ---------------------------------------------------------------- ajuste
 
-    /** Observações extras (no fim da lista: o índice das metas medidas não muda) que levantam nós baixos afundados. */
-    private fun lowNodePrior(axisMs: List<Double>, kOld: List<Double>): List<Observation> {
-        val ref = kOld.filterIndexed { j, _ -> axisMs[j] in LOW_REF_FROM_MS..LOW_REF_TO_MS }.sorted()
-            .let { if (it.size < 5) return emptyList() else it[it.size / 2] }
-        val low = (0 until POINT_COUNT).filter { axisMs[it] <= LOW_NODE_MAX_MS && kOld[it] < ref * LOW_DIP }
-        if (low.isEmpty()) return emptyList()
-        // Âncoras: os vizinhos de referência (3,5–8 ms) seguram o valor, para o alisamento não rebaixá-los junto.
-        val anchors = (0 until POINT_COUNT).filter { axisMs[it] > LOW_NODE_MAX_MS && axisMs[it] <= LOW_REF_TO_MS }
-        return low.map { Observation(listOf(it to 1.0), ln(ref * LOW_TARGET), LOW_WEIGHT) } +
-            anchors.map { Observation(listOf(it to 1.0), ln(kOld[it]), LOW_WEIGHT) }
+    /** Curva com os nós baixos afundados (>8% abaixo da referência de 3,5–8 ms) levantados a 98% dela; null se nenhum. */
+    internal fun liftLowNodes(axisRaw: IntArray, mulActRaw: IntArray): IntArray? {
+        if (axisRaw.size != POINT_COUNT || mulActRaw.size != POINT_COUNT) return null
+        val axisMs = axisRaw.map { it / AXIS_COUNTS_PER_MS }
+        if (axisMs[0] <= 0.0 || (0 until POINT_COUNT - 1).any { axisMs[it + 1] <= axisMs[it] } || mulActRaw.any { it <= 0 }) return null
+        val k = mulActRaw.map { it / Q14 }
+        val ref = k.filterIndexed { j, _ -> axisMs[j] in LOW_REF_FROM_MS..LOW_REF_TO_MS }.sorted()
+            .let { if (it.size < 5) return null else it[it.size / 2] }
+        val target = (ref * LOW_TARGET * Q14).roundToInt().coerceIn(0, MAX_RAW)
+        val out = mulActRaw.copyOf()
+        var changed = false
+        for (j in 0 until POINT_COUNT) if (axisMs[j] <= LOW_NODE_MAX_MS && k[j] < ref * LOW_DIP) { out[j] = target; changed = true }
+        return if (changed) out else null
     }
 
     private class Observation(val a: List<Pair<Int, Double>>, val y: Double, val w: Double)
