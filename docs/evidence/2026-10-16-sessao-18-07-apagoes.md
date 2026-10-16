@@ -16,3 +16,19 @@ Fonte: Drive `OMEGAS/Novas/OMEGAS_Sessao_2026-10-16_18-07.zip` (`events_0001.jso
 **Hipótese (não provada):** o problema é a **transição** (corte de desaceleração → retomada de injeção perto de 1,5–2 ms), dinâmica, não o valor estático da curva. Só 4 eventos, 1 carro: não generalizar.
 
 **Consequência de método:** o detector precisa registrar a janela de ±4 s em torno do evento (rpm, petrol_ms, gas_ms, MAP, corte sim/não) e comparar com as retomadas da gasolina sem apagão, na mesma faixa (MAP < 0,25 bar, 1,0–2,5 ms). Só então decidir nós/mapa.
+
+## Teste da re-escala K_novo/K_velho (3 gravações da mesma sessão)
+
+Método: razão gas_ms/petrol_ms (mediana) nos 60 s antes e 3–60 s depois de cada gravação, por faixa de petrol_ms; comparada com K_novo/K_velho dos nós gravados.
+
+| Gravação | Nós | Previsto | Medido (0,5–2,5 ms) | n antes/depois |
+|---|---|---|---|---|
+| seq 410 (21:09:47) | 0–3: 1,30 → 1,03 | ×0,79 | ×0,776 (3,121 → 2,421) | 6/6 |
+| seq 733 (21:11:30) | 0–3: 1,03 → 1,19 | ×1,16 | ×1,134 (2,409 → 2,732) | 15/7 |
+| seq 181 (21:08:37) | 2–4: +2,6% | ×1,026 | ×1,09 (2,862 → 3,121); faixa 2,5–4 ms: ×1,028 | 8/6 |
+
+**Leitura:** nas duas gravações grandes a previsão ficou dentro de ~3%; a pequena é ruidosa (n=6–8). **Limite importante:** gas_ms_diagnostic é o tempo comandado, então escalar com o K é em parte aritmética; isto NÃO prova que o motor se comporta de forma equivalente. Vale para a métrica de pares do Ledger (que usa exatamente essa razão), não para "o carro anda igual".
+
+**Decisão de método:** re-escalar os pares GNV existentes por K_novo/K_velho (por nó) em vez de apagá-los; peso reduzido e nunca como único critério para gravar; substituir por leituras novas conforme chegam. A hipótese continua válida só para a razão de ms até haver mais gravações (precisa de n ≥ 30 por faixa).
+
+**Tentativa anterior (Codex, `wip/codex-fatia1b`) NÃO mesclada:** quebrou 19 de 667 testes no CI (EquivalenceLedgerTest, RefinementCycleTest, RefinementReviewTest, LiveOnlyLearningStoreTest). Refazer em passos pequenos, cada um verde no CI.
