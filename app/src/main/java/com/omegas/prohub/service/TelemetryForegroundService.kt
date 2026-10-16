@@ -74,8 +74,13 @@ class TelemetryForegroundService : Service() {
     }
     private var autoReadSeenSessionId = 0L
     private var autoReadSeenAtMs = 0L
-    private var autoReadDoneSessionId = 0L
+    private var autoReadLastOkAtMs = 0L
     private var autoReadAttempts = 0
+    /** Quem pediu a leitura em curso: UI (botão/abertura de tela), AUTO_START ou AUTO_PERIODIC. Vai junto no evento da sessão. */
+    @Volatile private var readTrigger = "UI"
+    /** Última curva vista (factorsRaw em texto) e quando o app gravou a última curva; classificam a origem de cada mudança. */
+    @Volatile private var lastCurveRaw: String? = null
+    @Volatile private var lastAppCurveWriteMs = 0L
 
     lateinit var paths: AppPaths
         private set
@@ -192,7 +197,7 @@ class TelemetryForegroundService : Service() {
                     }
                 }
             },
-            onMapRead = { payload -> sessionRecorder.record("k_read_map", "map_k", payload, force = true) },
+            onMapRead = { payload -> sessionRecorder.record("k_read_map", "map_k", payload.put("trigger", readTrigger), force = true) },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_batch_confirmed", "map_k", JSONObject(payload.toString()).put("origin", "APP_UI_MANUAL"), force = true)
                 sessionRecorder.record("k_map_state", "map_k", kWriter.cachedMapJson().put("origin", "APP_UI_MANUAL").put("afterAdjustmentId", payload.optString("adjustmentId")), force = true)
@@ -207,9 +212,16 @@ class TelemetryForegroundService : Service() {
             serial = runtime.serialScheduler(),
             log = log,
             onBusyChanged = { stateChanged() },
+            onCurveRead = { payload ->
+                lastCurveRaw = payload.optJSONArray("factorsRaw")?.toString()
+                sessionRecorder.record("k_read_curve", "k_factor", payload.put("trigger", readTrigger), force = true)
+            },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_factor_batch_confirmed", "k_factor", JSONObject(payload.toString()).put("origin", "APP_UI_MANUAL"), force = true)
-                sessionRecorder.record("k_curve_state", "k_factor", kFactor.cachedCurveJson().put("origin", "APP_UI_MANUAL").put("afterAdjustmentId", payload.optString("adjustmentId")), force = true)
+                lastAppCurveWriteMs = System.currentTimeMillis()
+                val state = kFactor.cachedCurveJson()
+                lastCurveRaw = state.optJSONArray("factorsRaw")?.toString()
+                sessionRecorder.record("k_curve_state", "k_factor", state.put("origin", "APP_UI_MANUAL").put("afterAdjustmentId", payload.optString("adjustmentId")), force = true)
                 recordCurveExperiment(payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
@@ -222,6 +234,7 @@ class TelemetryForegroundService : Service() {
             onFreshSnapshot = { snapshot ->
                 runtime.importNativeAutoCalSnapshot(snapshot)
                 sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
+                recordCurveChangeFromSnapshot(snapshot)
             },
             onNativeCalibrationObserved = { payload ->
                 val result = runtime.notifyCalibrationAdjustment(payload)
@@ -721,33 +734,66 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    /** 12 s depois de a sessão USB estabilizar: lê a curva K e o Mapa K uma vez e grava no export da sessão (até 4 tentativas). */
+    /** Curva que a ECU mostra no snapshot (MUL_ACT) diferente da última vista = mudança; registra com a origem provável. */
+    private fun recordCurveChangeFromSnapshot(snapshot: JSONObject) {
+        try {
+            val fields = snapshot.optJSONArray("fields") ?: return
+            var mul: org.json.JSONArray? = null
+            var axis: org.json.JSONArray? = null
+            for (i in 0 until fields.length()) {
+                val f = fields.optJSONObject(i) ?: continue
+                if (f.optString("status") != "VALID") continue
+                when (f.optString("key")) {
+                    "MUL_ACT" -> mul = f.optJSONArray("rawValues")
+                    "PETR_INJ_TBP" -> axis = f.optJSONArray("rawValues")
+                }
+            }
+            val raw = mul?.takeIf { it.length() == 30 }?.toString() ?: return
+            if (raw == lastCurveRaw) return
+            val previous = lastCurveRaw
+            lastCurveRaw = raw
+            if (previous == null) return // primeira vez: o k_read_curve já registrou o ponto de partida
+            val origin = if (System.currentTimeMillis() - lastAppCurveWriteMs < 20_000L) "APP_UI_MANUAL" else "ECU_NATIVE_OR_EXTERNAL"
+            sessionRecorder.record(
+                "k_curve_state", "autocal",
+                JSONObject().put("origin", origin).put("source", "NATIVE_SNAPSHOT").put("factorsRaw", mul).put("axisRaw", axis ?: JSONObject.NULL)
+                    .put("previousFactorsRaw", org.json.JSONArray(previous)).put("snapshotHash", snapshot.optString("snapshotHash")),
+                force = true,
+            )
+        } catch (_: Exception) {
+        }
+    }
+
+    /**
+     * Leitura automática (só LER, nunca grava): 12 s depois de a sessão USB estabilizar e depois a cada 10 min com o núcleo ocioso.
+     * Cada leitura (automática ou do botão/tela) vira evento da sessão com o gatilho (trigger). Mudança de curva pela ECU é
+     * pega pelos snapshots do AutoMatch (recordCurveChangeFromSnapshot), sem custo extra na serial.
+     */
     private fun autoReadCalibrationOnce() {
         val sid = runtime.serialScheduler().currentSessionId()
-        if (sid <= 0L || sid == autoReadDoneSessionId) return
+        if (sid <= 0L) return
         val now = System.currentTimeMillis()
         if (sid != autoReadSeenSessionId) {
-            autoReadSeenSessionId = sid; autoReadSeenAtMs = now; autoReadAttempts = 0
+            autoReadSeenSessionId = sid; autoReadSeenAtMs = now; autoReadAttempts = 0; autoReadLastOkAtMs = 0L
             return
         }
-        if (now - autoReadSeenAtMs < 12_000L + autoReadAttempts * 15_000L) return
-        if (kWriter.isBusy() || kFactor.isBusy() || autoReadAttempts >= 4) return
-        autoReadAttempts += 1
+        val first = autoReadLastOkAtMs == 0L
+        val due = if (first) now - autoReadSeenAtMs >= 12_000L + autoReadAttempts * 15_000L else now - autoReadLastOkAtMs >= 600_000L
+        if (!due || kWriter.isBusy() || kFactor.isBusy() || (first && autoReadAttempts >= 4)) return
+        if (first) autoReadAttempts += 1 else autoReadLastOkAtMs = now // periódica: não insiste em falha
         autoReadExecutor.execute {
             try {
+                readTrigger = if (first) "AUTO_START" else "AUTO_PERIODIC"
                 val curve = kFactor.readCurve()
                 val map = kWriter.readFullMap()
-                if (curve.optBoolean("ok", false)) {
-                    sessionRecorder.record(
-                        "k_read_curve", "k_factor",
-                        JSONObject(curve.toString()).put("origin", "APP_AUTO_READ").put("reason", "SESSION_START"),
-                        force = true,
-                    )
+                if (first) {
+                    if (curve.optBoolean("ok", false) && map.optBoolean("ok", false)) autoReadLastOkAtMs = System.currentTimeMillis()
+                    else log.add("WARN", "AUTO-READ", "Leitura automática incompleta (curva=${curve.optBoolean("ok", false)} mapa=${map.optBoolean("ok", false)}); tentativa $autoReadAttempts")
                 }
-                if (curve.optBoolean("ok", false) && map.optBoolean("ok", false)) autoReadDoneSessionId = sid
-                else log.add("WARN", "AUTO-READ", "Leitura automática incompleta (curva=${curve.optBoolean("ok", false)} mapa=${map.optBoolean("ok", false)}); tentativa $autoReadAttempts")
             } catch (error: Exception) {
                 log.add("WARN", "AUTO-READ", "Leitura automática falhou: ${error.message}")
+            } finally {
+                readTrigger = "UI"
             }
         }
     }

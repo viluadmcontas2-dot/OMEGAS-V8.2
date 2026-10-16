@@ -876,6 +876,12 @@ Tipos principais:
 - ui_usage: contagens de uso da interface (visitas e segundos por aba, toques por controle), deltas desde o último envio; só contagens, sem valores digitados;
 - usb_raw: somente quando habilitado explicitamente;
 - k_*: leitura, escrita, ACK e confirmação do mapa K;
+- k_read_curve / k_read_map: curva K e Mapa K LIDOS por inteiro da ECU (valores completos); campo trigger = UI (botão/tela),
+  AUTO_START (12 s após conectar) ou AUTO_PERIODIC (a cada 10 min). O app lê automaticamente, mas nunca grava sozinho;
+- k_curve_state / k_map_state: estado completo depois de cada gravação (origin = APP_UI_MANUAL) ou quando a curva da ECU
+  mudou (origin = ECU_NATIVE_OR_EXTERNAL, com previousFactorsRaw): reconstrói a linha do tempo de curva e mapa;
+- autocal_native_snapshot: as 18 bandas de gasolina e GNV (MAP, ms, contagem), MUL_ACT, vetores RV e contadores, a cada
+  mudança do AutoMatch;
 - export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.
 
 Exportação ativa é incremental: cada events_XXXX.jsonl já exportado com sucesso não

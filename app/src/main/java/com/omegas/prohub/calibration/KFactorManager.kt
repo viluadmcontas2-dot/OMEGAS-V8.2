@@ -32,6 +32,8 @@ class KFactorManager(
     private val log: RingLog,
     private val onBusyChanged: (Boolean) -> Unit,
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
+    /** Curva lida por inteiro da ECU (qualquer origem: botão, abertura de tela, leitura automática). */
+    private val onCurveRead: (JSONObject) -> Unit = {},
     private val publishManualBackup: (File) -> JSONObject = {
         JSONObject().put("ok", true).put("published", false)
     },
@@ -190,6 +192,7 @@ class KFactorManager(
                 .put("hash", curveHash)
             atomicWrite(cacheFile, cache.toString(2))
             update("CURVE_SYNCED", "Curva K factor confirmada pela ECU", 100, cache)
+            try { onCurveRead(JSONObject(cache.toString())) } catch (_: Exception) {}
             JSONObject(cache.toString()).put("ok", true).put("manualOnly", true)
         } catch (error: Exception) {
             update("FAILED", error.message ?: "Falha ao ler K factor", 100)
