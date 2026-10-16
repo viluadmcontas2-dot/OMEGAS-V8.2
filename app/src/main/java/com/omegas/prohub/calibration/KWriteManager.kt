@@ -166,6 +166,13 @@ class KWriteManager(
         }
     }
 
+    /** Último Mapa K confirmado pela ECU (sem a cópia bruta allRows), para a linha do tempo da sessão. */
+    fun cachedMapJson(): JSONObject = try {
+        if (cacheFile.isFile) JSONObject(cacheFile.readText()).also { it.remove("allRows") } else JSONObject()
+    } catch (_: Exception) {
+        JSONObject()
+    }
+
     fun readFullMap(): JSONObject {
         // O projeto exige leitura manual. O monitor não deve iniciar uma leitura
         // completa escondida nem poluir o ciclo de telemetria.

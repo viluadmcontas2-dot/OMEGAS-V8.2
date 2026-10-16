@@ -650,6 +650,9 @@ class SessionRecorder(
                 "settings_changed",
                 "manual_marker",
                 "k_read_map",
+                "k_read_curve",
+                "k_curve_state",
+                "k_map_state",
                 "k_write_requested",
                 "k_batch_confirmed",
             )

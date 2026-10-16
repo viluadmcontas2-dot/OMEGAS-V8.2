@@ -61,6 +61,9 @@ class KFactorManager(
 
     fun historyJson(): String = loadHistory().toString()
 
+    /** Última curva confirmada pela ECU (leitura ou gravação com readback), para a linha do tempo da sessão. */
+    fun cachedCurveJson(): JSONObject = loadCache()
+
     /**
      * Réplica funcional do ActionResetKFactorExecute do ProgBase 4.2.0.6.
      *

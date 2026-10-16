@@ -68,6 +68,15 @@ class TelemetryForegroundService : Service() {
         Thread(runnable, "omegas-native-service").apply { isDaemon = true }
     }
 
+    /** Leitura automática da curva e do Mapa K (só LER; gravar continua exigindo ação explícita). Fora da thread do monitor. */
+    private val autoReadExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "omegas-auto-read").apply { isDaemon = true }
+    }
+    private var autoReadSeenSessionId = 0L
+    private var autoReadSeenAtMs = 0L
+    private var autoReadDoneSessionId = 0L
+    private var autoReadAttempts = 0
+
     lateinit var paths: AppPaths
         private set
     lateinit var settings: AppSettings
@@ -185,7 +194,8 @@ class TelemetryForegroundService : Service() {
             },
             onMapRead = { payload -> sessionRecorder.record("k_read_map", "map_k", payload, force = true) },
             onConfirmedBatch = { payload ->
-                sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
+                sessionRecorder.record("k_batch_confirmed", "map_k", JSONObject(payload.toString()).put("origin", "APP_UI_MANUAL"), force = true)
+                sessionRecorder.record("k_map_state", "map_k", kWriter.cachedMapJson().put("origin", "APP_UI_MANUAL").put("afterAdjustmentId", payload.optString("adjustmentId")), force = true)
                 // Mapa K mudou o gás: o GNV medido antes não vale mais; a verificação e a oferta de restaurar perdem validade.
                 refinement.mapKWritten()
                 runtime.notifyCalibrationAdjustment(payload)
@@ -198,7 +208,8 @@ class TelemetryForegroundService : Service() {
             log = log,
             onBusyChanged = { stateChanged() },
             onConfirmedBatch = { payload ->
-                sessionRecorder.record("k_factor_batch_confirmed", "k_factor", payload, force = true)
+                sessionRecorder.record("k_factor_batch_confirmed", "k_factor", JSONObject(payload.toString()).put("origin", "APP_UI_MANUAL"), force = true)
+                sessionRecorder.record("k_curve_state", "k_factor", kFactor.cachedCurveJson().put("origin", "APP_UI_MANUAL").put("afterAdjustmentId", payload.optString("adjustmentId")), force = true)
                 recordCurveExperiment(payload)
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K factor confirmada")
@@ -710,6 +721,37 @@ class TelemetryForegroundService : Service() {
         }
     }
 
+    /** 12 s depois de a sessão USB estabilizar: lê a curva K e o Mapa K uma vez e grava no export da sessão (até 4 tentativas). */
+    private fun autoReadCalibrationOnce() {
+        val sid = runtime.serialScheduler().currentSessionId()
+        if (sid <= 0L || sid == autoReadDoneSessionId) return
+        val now = System.currentTimeMillis()
+        if (sid != autoReadSeenSessionId) {
+            autoReadSeenSessionId = sid; autoReadSeenAtMs = now; autoReadAttempts = 0
+            return
+        }
+        if (now - autoReadSeenAtMs < 12_000L + autoReadAttempts * 15_000L) return
+        if (kWriter.isBusy() || kFactor.isBusy() || autoReadAttempts >= 4) return
+        autoReadAttempts += 1
+        autoReadExecutor.execute {
+            try {
+                val curve = kFactor.readCurve()
+                val map = kWriter.readFullMap()
+                if (curve.optBoolean("ok", false)) {
+                    sessionRecorder.record(
+                        "k_read_curve", "k_factor",
+                        JSONObject(curve.toString()).put("origin", "APP_AUTO_READ").put("reason", "SESSION_START"),
+                        force = true,
+                    )
+                }
+                if (curve.optBoolean("ok", false) && map.optBoolean("ok", false)) autoReadDoneSessionId = sid
+                else log.add("WARN", "AUTO-READ", "Leitura automática incompleta (curva=${curve.optBoolean("ok", false)} mapa=${map.optBoolean("ok", false)}); tentativa $autoReadAttempts")
+            } catch (error: Exception) {
+                log.add("WARN", "AUTO-READ", "Leitura automática falhou: ${error.message}")
+            }
+        }
+    }
+
     private fun autoCalTick() {
         if (stopping) return
         try {
@@ -717,6 +759,7 @@ class TelemetryForegroundService : Service() {
                 runtime.serialScheduler().currentSessionId() > 0L
             ) {
                 nativeAutoCal.tick()
+                autoReadCalibrationOnce()
             }
         } catch (error: Exception) {
             log.add("WARN", "AUTOCAL-NATIVE", "Refresh nativo: ${error.message}")
