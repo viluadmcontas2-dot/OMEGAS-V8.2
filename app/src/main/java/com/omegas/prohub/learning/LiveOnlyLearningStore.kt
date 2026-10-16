@@ -124,7 +124,6 @@ class LiveOnlyLearningStore(
         val fresh = delegate.onCalibrationAdjustment(payload)
         log.add("INFO", "LEARNING-EPOCH", "Calibração confirmada: gasolina e histórico GNV preservados; nova época em conferência")
         return decorate(fresh).put("resetPerformed", false).put("petrolBaselinePreserved", true)
-            .put("reasonCode", if (nativeObserved) "ECU_NATIVE_AUTOCAL_EPOCH" else "CONFIRMED_CALIBRATION_EPOCH")
     }
 
     @Synchronized
