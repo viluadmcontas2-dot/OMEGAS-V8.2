@@ -7,9 +7,16 @@ de gravação (dt entre quadros). Só observação: nada vira regra sem a compar
 import json, sys, glob, os, statistics as st, collections
 def med(v): return round(st.median(v), 1) if v else None
 fuels = collections.Counter(); out = collections.defaultdict(list); minutes = collections.Counter()
-for root in sorted(glob.glob(os.path.join(sys.argv[1], '*', 'session_*_x'))):
+def sessoes(raiz):
+    """Agrupa todos os events_*.jsonl achados (qualquer profundidade) pela pasta de sessão que os contém."""
+    grupos = collections.defaultdict(list)
+    for f in glob.glob(os.path.join(raiz, '**', '*.jsonl'), recursive=True):
+        parts = f.split(os.sep); chave = next((q for q in parts if q.startswith('session_')), os.path.basename(os.path.dirname(f)))
+        grupos[chave].append(f)
+    return sorted(grupos.items())
+for root, arquivos in sessoes(sys.argv[1]):
     T = []
-    for f in glob.glob(os.path.join(root, '**', '*.jsonl'), recursive=True):
+    for f in arquivos:
         for line in open(f, encoding='utf-8', errors='replace'):
             try: e = json.loads(line)
             except Exception: continue
@@ -19,7 +26,7 @@ for root in sorted(glob.glob(os.path.join(sys.argv[1], '*', 'session_*_x'))):
             T.append((t, float(r), d.get('fuel'), d.get('load_bar'), d.get('petrol_ms'), d.get('gas_ms_diagnostic'), d.get('gas_c'), d.get('water_c')))
     T.sort()
     dts = [T[i][0]-T[i-1][0] for i in range(1,len(T)) if T[i][0]-T[i-1][0] < 5000]
-    if dts: print(os.path.basename(root), '| quadros:', len(T), '| dt mediano entre quadros (ms):', med(dts), '| p10/p90:', round(sorted(dts)[len(dts)//10]), round(sorted(dts)[len(dts)*9//10]))
+    if dts: print(str(root)[:40], '| quadros:', len(T), '| dt mediano entre quadros (ms):', med(dts), '| p10/p90:', round(sorted(dts)[len(dts)//10]), round(sorted(dts)[len(dts)*9//10]))
     for i in range(1, len(T)): minutes[T[i][2]] += (T[i][0] - T[i-1][0]) / 60000 if T[i][0] - T[i-1][0] < 5000 else 0
     for x in T: fuels[x[2]] += 1
     i = 0

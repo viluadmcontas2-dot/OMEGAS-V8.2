@@ -12,3 +12,6 @@ keystore.properties
 __pycache__/
 *.pyc
 
+
+# grafo de conhecimento gerado (graphify); derivado, não versionar
+graphify-out/
