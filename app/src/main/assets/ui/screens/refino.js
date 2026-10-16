@@ -306,7 +306,7 @@
       if (hit('[data-refino-ok]')) { this.operation = { phase: 'idle' }; this.mapFix?.dismiss(); this.refresh(true); return; }
       if (hit('[data-refino-cancel]')) { this.closePreview(); return; }
       if (hit('[data-refino-confirm]')) { this.confirm(); return; }
-      if (hit('[data-refino-map-confirm]')) { this.preview = false; this.closeReview(); this.mapFix?.write('apply'); return; }
+      if (hit('[data-refino-map-confirm]')) { if (this.writeBlocked()) return; this.preview = false; this.closeReview(); this.mapFix?.write('apply'); return; }
       if (hit('[data-refino-preview]')) { this.openPreview(); return; }
       if (hit('[data-refino-manual]')) { this.toggleManual(); return; }
       if (hit('[data-refino-undo]')) {
@@ -391,9 +391,27 @@
       return null;
     }
 
-    /** Lista na tela = lista que será gravada. Mudou no Kotlin? Atualiza o cartão e avisa; sumiu? Diz por quê. */
+    /**
+     * Porta de gravação NO TOQUE (dono, 2026-10-16): a proposta pode ter sido montada antes de a ECU voltar ao automático
+     * (ex.: Reaprender GNV no AutoCal). Relê o piloto e, com a porta fechada, avisa e não dispara byte nenhum; o cartão fica.
+     * Leitura sem piloto (ponte/serviço fora) não substitui a última conhecida: desconhecido não abre nem fecha a porta.
+     */
+    writeBlocked() {
+      const fresh = this.api?.equivalence?.();
+      if (fresh?.autopilot) this.eq = fresh;
+      const gate = root.OmegasWriteGate?.check(this.eq?.autopilot);
+      if (!gate || gate.ok) return false;
+      this.store.patch({ alert: { level: 'warning', message: gate.message } });
+      return true;
+    }
+
+    /**
+     * Lista na tela = lista que será gravada. Mudou no Kotlin? Atualiza o cartão e avisa; sumiu? Diz por quê.
+     * Tick sem piloto (ponte/serviço fora por um instante) não é evidência: o cartão fica como está (o toque em Gravar relê
+     * a curva da ECU antes de qualquer byte).
+     */
     syncReview() {
-      if (!this.review) return;
+      if (!this.review || !this.eq?.autopilot) return;
       const gate = reviewGate(this.review, this.eq);
       if (gate === 'write') {
         if (this.review.blocked) { this.review = { ...this.review, blocked: false, notice: '' }; this.renderPreview(); }
@@ -458,9 +476,8 @@
     confirm() {
       const pending = this.review;
       if (!pending?.points?.length) return;
-      // Confere de novo no toque: se a lista do Kotlin mudou desde que o cartão foi desenhado, não grava.
-      const fresh = this.api?.equivalence?.() || this.eq;
-      if (fresh) this.eq = fresh;
+      // Confere de novo no toque: porta de gravação (ECU voltou ao automático?) e lista do Kotlin (mudou desde o cartão?).
+      if (this.writeBlocked()) return;
       if (reviewGate(pending, this.eq) !== 'write') { this.syncReview(); return; }
       this.preview = false;
       this.closeReview();
@@ -542,14 +559,17 @@
       let next = (pilot.next || '') + (op.phase === 'idle' && fix.phase === 'idle' ? this.gasNote(eq) : '');
       const show = { preview: false, manual: manualOffer(eq).offered, undo: false, ok: false };
       const label = {};
-      if (this.preview) {
-        // O cartão está aberto: ele tem os próprios botões; a barra fica quieta.
-      } else if (op.phase === 'reading' || op.phase === 'writing') {
+      // "Ver alterações" segue a evidência (ação do piloto, proposta para o Mapa K), nunca o cartão (dono, 2026-10-16): abrir
+      // ou fechar o cartão e trocar de aba não somem com ele; o cartão aberto cobre a barra. Só o resultado/falha de uma
+      // gravação troca a barra pelos botões de desfecho, e a proposta some quando o piloto deixa de oferecê-la.
+      const evidence = !!this.curveKind() || !!this.mapProposal();
+      if (op.phase === 'reading' || op.phase === 'writing') {
         headline = op.phase === 'reading' ? 'Conferindo a Curva K da ECU…' : 'Gravando e conferindo na ECU…'; next = 'Não desligue o carro nem tire o cabo.';
       } else if (op.phase === 'failed') {
         headline = op.message; next = 'Nada foi dado como gravado. A lista é refeita com a curva lida na hora.'; show.ok = true; label.ok = 'Tentar de novo';
       } else if (fix.phase === 'reading' || fix.phase === 'writing') {
         headline = fix.message; next = 'Não desligue o carro nem tire o cabo.';
+        show.preview = fix.phase === 'reading' && evidence; // ler o Mapa K para montar a proposta não é evidência contra ela
       } else if (fix.phase === 'done') {
         headline = 'Gravado e conferido no Mapa K'; next = 'Dirija e veja se o engasgo some. Se piorar, desfaça.'; show.undo = true; show.ok = true; label.ok = 'Pronto';
       } else if (fix.phase === 'undone') {
@@ -559,7 +579,7 @@
       } else {
         const stallInfo = describeStalls(eq.stalls);
         if (stallInfo.total > 0) next = `${stallInfo.title}. ${stallInfo.text}`.trim();
-        show.preview = !!this.curveKind() || !!this.mapProposal();
+        show.preview = evidence;
         show.undo = secondaryActions(eq).some(item => item.kind === 'undo' && item.enabled);
         label.undo = 'Desfazer última gravação';
       }

@@ -40,7 +40,7 @@
     // Curva já no alvo (tentativa anterior concluiu e só a tela perdeu a resposta): nada a fazer, sem gravar de novo.
     if (changing.every(n => raw.get(n.index) === n.targetRaw)) return { ok: true, written: 0, message: 'A curva já está como o plano pede.' };
     const stale = changing.find(n => raw.get(n.index) !== n.currentRaw);
-    if (stale) return { ok: false, stale: true, error: 'A Curva K da ECU mudou desde a leitura do plano. Nada foi gravado; refaça o plano.' };
+    if (stale) return { ok: false, stale: true, error: 'A Curva K da ECU mudou desde a leitura do plano. Nada foi gravado na curva.' };
     const write = api.writeCurve(changing.map(({ index, currentRaw, targetRaw }) => ({ index, currentRaw, targetRaw })), reason);
     if (!write?.ok || !write?.started) return { ok: false, error: write?.error || 'A gravação da curva não iniciou.' };
     const done = await waitFor(() => api.curveOperation(), { sleep, pollMs, timeoutMs });
