@@ -2,12 +2,12 @@
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
-## Último APK (2026-10-14, Vermelho)
+## Último APK (2026-10-16, Vermelho + fatias A–D)
 
-- Workflow `verde-apk-now.yml`, run `38510873623` (SUCCESS, `workflow_dispatch`), commit `785258605337d8f3c0d57991e95fc566c832c761` (ponta da `OmegasVermelho`).
-- Artifact `omegas-platina-final-785258605337d8f3c0d57991e95fc566c832c761` (id `11869543913`), 4.842.440 bytes, digest do ZIP `sha256:c5b606bac036255efa636b08ac5a288e0d831b162b025f5068bf658e4dcb73c3`; expira em 2026-10-28. SHA-256 do APK dentro do ZIP: não lido nesta sessão (UNKNOWN).
-- Cópia no Drive do dono: `OMEGAS-785258605337.apk` (4.841.657 bytes, 2026-10-14).
-- Prova: classes 1–3 no CI (contratos, JVM, replay) e 4 em render Chromium. Não provado: classe 5 (carro). `PHYSICAL_VALIDATION_CLAIMED=false`.
+- Workflow `verde-apk-now.yml`, run `38957420333` (SUCCESS, `workflow_dispatch`, testes + lint + build), commit `cf62ee5678307ec98c3d576af1cd21a0f1b585c0` (branch `claude/carregar-sessao-r7j85r`).
+- Artifact `omegas-platina-final-cf62ee56…` (id `12071047787`), 4.811.980 bytes, digest do ZIP `sha256:2e28e84b61edfc532d9adea130857f092e35c6a6e3ab11675badeac8547c6024`; expira 2026-10-30. Link: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/38957420333/artifacts/12071047787
+- **SHA-256 do APK** (`app-debug.apk`, 4.811.197 bytes): `8024bfbbef18fee47539aaf54fd2ecb24eb25a3b70d96d65afcb7fd85650623f` (confere com `omegas-platina-apk-evidence.txt`: `APK_ZIP_INTEGRITY=PASS`).
+- Contém: porta de gravação no toque, "Concluir curva", botões do Refino persistentes, Wi-Fi/Link apagados, espera de gravação 10 s → 1 s, aprendizado à prova de queda, "piorou" ≥ 3 %. Prova: classes 1–2 (CI). NÃO instalado no carro (classe 5).
 
 ## Em andamento (2026-10-16)
 
