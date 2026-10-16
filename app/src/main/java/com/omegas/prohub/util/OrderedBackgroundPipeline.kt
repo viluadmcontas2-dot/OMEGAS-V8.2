@@ -20,6 +20,11 @@ class OrderedBackgroundPipeline(
     threadPriority: Int = Thread.NORM_PRIORITY,
     private val onFailure: (sequence: Long, error: Throwable) -> Unit = { _, _ -> },
 ) : AutoCloseable {
+    companion object {
+        /** Prazo padrão da barreira: 1 s. Esperar 10 s por um worker que não drena só paralisava quem chamou; a fila continua. */
+        const val FLUSH_TIMEOUT_MS = 1_000L
+    }
+
     private val accepting = AtomicBoolean(true)
     private val submitted = AtomicLong(0L)
     private val completed = AtomicLong(0L)
@@ -73,7 +78,7 @@ class OrderedBackgroundPipeline(
     }
 
     /** Aguarda todas as tarefas aceitas antes da barreira. */
-    fun flush(timeoutMs: Long = 5_000L): Boolean {
+    fun flush(timeoutMs: Long = FLUSH_TIMEOUT_MS): Boolean {
         if (Thread.currentThread() === workerThread) return true
         val barrier = CompletableFuture<Boolean>()
         return try {
@@ -99,7 +104,7 @@ class OrderedBackgroundPipeline(
 
     override fun close() {
         if (!accepting.compareAndSet(true, false)) return
-        flush(10_000L)
+        flush(FLUSH_TIMEOUT_MS)
         executor.shutdown()
         try {
             if (!executor.awaitTermination(2L, TimeUnit.SECONDS)) executor.shutdownNow()

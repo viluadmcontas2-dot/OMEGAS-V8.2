@@ -33,6 +33,18 @@ class NativeRuntimeManager(
     private val onTelemetryEvent: (JSONObject) -> Unit,
     private val onEngineExited: (Boolean) -> Unit,
 ) {
+    companion object {
+        /**
+         * Espera padrão por uma fronteira dos pipelines. Eram 10 s: as sessões de 15–16/10 registraram
+         * "Buffer não drenou … dentro de 10000ms" antes de importar o contexto AutoCal e antes de exportar, com o
+         * agendador do serviço (o mesmo que reconecta o USB) parado esse tempo. O buffer quente tem janela curta;
+         * o que não drenou em 1 s não vai drenar esperando mais.
+         */
+        private const val FLUSH_TIMEOUT_MS = 1_000L
+        /** Exportar pode esperar um pouco mais pelo buffer, mas nunca travar: também chega pela thread do agendador e do escritor K. */
+        private const val EXPORT_FLUSH_TIMEOUT_MS = 2_000L
+    }
+
     private val snapshotLock = Any()
     private val learningSessionLock = Any()
     private val learning = DeferredLiveOnlyLearningStore(paths.runtimeRoot, log)
@@ -235,7 +247,7 @@ class NativeRuntimeManager(
     }
 
     fun exportLearning(deviceId: String): JSONObject {
-        flushLearning("antes de exportar aprendizado")
+        flushLearning("antes de exportar aprendizado", EXPORT_FLUSH_TIMEOUT_MS)
         val exported = learning.export(deviceId)
         if (!exported.optBoolean("ok", false)) return exported.put("componentRevision", 0L)
         val canonical = JSONObject(exported.toString()).apply {
@@ -480,11 +492,11 @@ class NativeRuntimeManager(
     }
 
     /**
-     * Dreno do pipeline de aprendizado antes de exportar/registrar: no máximo 1 s (dono, 16/10).
+     * Dreno do pipeline de aprendizado antes de exportar/registrar: no máximo FLUSH_TIMEOUT_MS (1 s; dono, 16/10).
      * O checkpoint que antecede a gravação pode perder o último segundo de amostras; é inofensivo,
      * e a gravação deixa de ficar "travada confirmando" enquanto o buffer não drena.
      */
-    private fun flushLearning(boundary: String, timeoutMs: Long = 1_000L): Boolean {
+    private fun flushLearning(boundary: String, timeoutMs: Long = FLUSH_TIMEOUT_MS): Boolean {
         val ok = learningPipeline.flush(timeoutMs)
         if (!ok) {
             log.add("WARN", "LEARNING-PIPELINE", "Buffer não drenou em $boundary dentro de ${timeoutMs}ms")
@@ -492,7 +504,7 @@ class NativeRuntimeManager(
         return ok
     }
 
-    private fun flushPipelines(boundary: String, timeoutMs: Long = 10_000L): Boolean {
+    private fun flushPipelines(boundary: String, timeoutMs: Long = FLUSH_TIMEOUT_MS): Boolean {
         val deliveryOk = telemetryDeliveryPipeline.flush(timeoutMs)
         // Nunca permita que uma fronteira genérica espere indefinidamente por
         // histórico em RAM. O buffer quente tem janela curta por definição.
