@@ -73,6 +73,7 @@
         this.applyAdjustment();
       }));
       document.getElementById('mapFromCurve')?.addEventListener('click', () => this.startCurveToMap());
+      document.getElementById('mapFinishCurve')?.addEventListener('click', () => this.runCurveStage());
       document.getElementById('mapReviewButton')?.addEventListener('click', () => this.writePrepared());
       document.getElementById('mapDismissResult')?.addEventListener('click', () => this.dismissResult());
     }
@@ -138,6 +139,7 @@
       if (!this.editor.hasMap() || this.reading || this.curveImport || this.root?.classList.contains('is-writing')) return;
       this.curveImport = { phase: 'map', startedAt: Date.now() };
       this.curvePlan = null;
+      this.renderCurveStage();
       const button = document.getElementById('mapFromCurve');
       if (button) button.disabled = true;
       this.startRead(false);
@@ -236,23 +238,41 @@
       return `Proposta: ${changes.length} células + ${nodes.length} pontos da curva${refinedText}${smoothed} · erro ${summary.maxRowErrorPct.toFixed(1)}%${extra ? ` · ${extra}` : ''}. Grave: mapa, depois curva.`;
     }
 
-    /** Segunda etapa: a curva refatorada, só depois do mapa confirmado pela ECU. */
+    /**
+     * Segunda etapa: a curva refatorada, só depois do mapa confirmado pela ECU. Também é o que "Concluir curva" repete:
+     * se a etapa falha (tempo limite, ECU recusou, curva mudou), o plano fica armado com `failed` — um plano novo partiria
+     * do produto já dobrado (mapa novo × curva velha) e fixaria a dobra. A releitura trata curva já no alvo como concluída.
+     */
     async runCurveStage() {
       const plan = this.curvePlan;
       const runner = root.OmegasBalanceRunner;
-      if (!plan?.armed || !plan.nodes.length || !runner) return;
+      if (!plan?.armed || plan.running || !runner) return;
+      if (!plan.nodes.length) { this.curvePlan = null; this.renderCurveStage(); return; }
+      plan.running = true;
+      this.renderCurveStage();
       text('mapSourceStatus', 'Gravando a Curva K (etapa 2 de 2)');
-      const outcome = await runner.writeCurveStage(this.api, plan.nodes, { reason: 'Curva K → Mapa K: curva refatorada' });
+      let outcome;
+      try { outcome = await runner.writeCurveStage(this.api, plan.nodes, { reason: 'Curva K → Mapa K: curva refatorada' }); }
+      catch (error) { outcome = { ok: false, error: error?.message || String(error) }; }
+      plan.running = false;
       if (outcome.ok) {
         this.curvePlan = null;
         text('mapSourceStatus', 'Mapa lido da ECU');
         this.alert('Mapa e Curva K gravados e conferidos pela ECU. A curva ficou neutra nas linhas do mapa; o AutoCal segue aprendendo o resto.');
       } else {
-        // Mapa já novo + curva antiga = correção em dobro: avisa e deixa "Concluir curva" para tentar de novo.
-        plan.armed = true;
         plan.failed = outcome.error;
-        this.alert(`O mapa foi gravado, mas a curva NÃO: ${outcome.error} Até concluir, a correção está em dobro nas linhas. Toque em Curva K → Mapa K para refazer o plano.`);
+        text('mapSourceStatus', 'Curva K pendente (etapa 2 de 2)');
+        this.alert(outcome.stale
+          ? 'O mapa foi gravado, mas a Curva K mudou desde o plano e a curva planejada NÃO foi gravada. Até concluir, a correção pode estar em dobro nas linhas do mapa. Confira a Curva K em Ajuste global; “Concluir curva” tenta de novo.'
+          : `O mapa foi gravado, mas a curva NÃO: ${outcome.error} Até concluir, a correção está em dobro nas linhas do mapa. Toque em “Concluir curva” para gravar só a curva planejada.`);
       }
+      this.renderCurveStage();
+    }
+
+    /** "Concluir curva" só existe com a etapa 2 pendente (mapa já gravado, curva planejada ainda não confirmada); `hidden` não ocupa lugar. */
+    renderCurveStage() {
+      const button = document.getElementById('mapFinishCurve');
+      if (button) button.hidden = !(this.curvePlan?.armed && this.curvePlan.failed && !this.curvePlan.running);
     }
 
     poll() {
@@ -459,6 +479,7 @@
         const snapshot = this.editor.snapshot();
         text('mapActiveCell', `${fmt(snapshot.axes.petrolBins[activeRow], 1)} ms · ${fmt(snapshot.axes.rpmBins[activeColumn], 0)} RPM`);
       }
+      this.renderCurveStage();
       this.store.patch({ map: { ...this.store.get().map, selection: count, review: this.review } });
     }
 
@@ -480,20 +501,28 @@
         return;
       }
       if (!this.review?.items?.length) return;
-      const result = this.api.writeMap(this.review.items, 0, 0, 'Ajuste manual confirmado na UI clean-slate');
+      // Proposta do Curva K → Mapa K gravada sem edição: é ela que arma a etapa 2 (curva) e passa pela porta de gravação NO
+      // TOQUE (dono, 2026-10-16: a proposta pode ter sido montada antes de a ECU voltar ao automático, ex.: Reaprender GNV).
+      // Edição manual de célula não passa pela porta. Uma etapa 2 já pendente (falhou antes) não morre por uma edição manual.
+      const plan = this.curvePlan;
+      let proposal = false;
+      if (plan && !plan.armed) {
+        const sent = new Map(this.review.items.map(item => [`${item.row}:${item.column}`, item.target]));
+        proposal = sent.size === plan.changes.length && plan.changes.every(c => sent.get(`${c.row}:${c.column}`) === c.target);
+        if (!proposal) this.curvePlan = null;
+      }
+      if (proposal) {
+        const gate = root.OmegasWriteGate?.check((root.OmegasUi || {}).AutoCalApi?.equivalence?.()?.autopilot);
+        if (gate && !gate.ok) { this.alert(gate.message); this.review = null; this.renderEditor(); return; }
+      }
+      const result = this.api.writeMap(this.review.items, 'Ajuste manual confirmado na UI clean-slate');
       if (!result?.ok || !result?.started) {
         this.alert(result?.error || 'A escrita não iniciou.');
         this.review = null;
         this.renderEditor();
         return;
       }
-      // Proposta do Curva K → Mapa K gravada sem edição: depois do mapa confirmado vem a curva (etapa 2).
-      const plan = this.curvePlan;
-      if (plan) {
-        const sent = new Map(this.review.items.map(item => [`${item.row}:${item.column}`, item.target]));
-        plan.armed = sent.size === plan.changes.length && plan.changes.every(c => sent.get(`${c.row}:${c.column}`) === c.target);
-        if (!plan.armed) this.curvePlan = null;
-      }
+      if (proposal) plan.armed = true;
       this.root?.classList.add('is-writing');
       this.lastOperationState = '';
       // A ponte guarda uma "última operação" só para Curva K, Mapa K, backup e reset: esta tela só segue a gravação que iniciou.
@@ -537,7 +566,8 @@
         this.writeStartedAt = null;
         this.editor.reset();
         const reread = () => this.startRead(true);
-        if (this.curvePlan?.armed) this.runCurveStage().then(reread, reread); else reread();
+        // Só a gravação da própria proposta puxa a etapa 2; uma etapa 2 pendente (falhou antes) espera o toque em "Concluir curva".
+        if (this.curvePlan?.armed && !this.curvePlan.failed) this.runCurveStage().then(reread, reread); else reread();
       } else if (operation.state === 'BATCH_PARTIAL_FAILED' || operation.ok === false) {
         this.root?.classList.remove('is-writing');
         this.root?.classList.add('has-result');
@@ -549,7 +579,7 @@
           result.querySelector('span').textContent = `${operation.confirmedCells || 0} células foram confirmadas antes da falha. ${failure.error || operation.error || 'Releitura obrigatória.'}`;
         }
         this.writeStartedAt = null;
-        this.curvePlan = null;
+        if (!this.curvePlan?.failed) this.curvePlan = null; // a etapa 2 pendente de antes não morre por uma gravação manual falhar
         this.editor.reset();
       }
     }

@@ -11,6 +11,8 @@
    * dela em cima da nossa (e com buffers adquiridos sob o produto antigo). Por isso toda gravação que o app PROPÕE (reforço do
    * engasgo, ajuste local, exportação para o Mapa K) só abre quando o piloto diz que a ECU terminou (`ecuDone`: AutoCal
    * desligado, máximo de AutoMatch atingido, aquisição completa nos dois combustíveis, ou "refinar por minha conta"). Edição manual na aba Curva K não passa por aqui.
+   * A porta é consultada ao montar a proposta E de novo no toque que dispara bytes (dono, 2026-10-16): entre os dois a ECU pode
+   * ter voltado ao automático (ex.: Reaprender GNV no AutoCal) e a proposta já montada gravaria sem olhar.
    * Estado desconhecido (sem piloto, ponte fora) não bloqueia: a porta só fecha quando o Kotlin diz explicitamente que não acabou.
    */
   function check(autopilot) {
