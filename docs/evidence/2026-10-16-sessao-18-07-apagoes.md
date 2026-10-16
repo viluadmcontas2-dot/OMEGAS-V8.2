@@ -40,3 +40,21 @@ Tentativa: comparar a rugosidade entre bandas vizinhas dos pares da ECU (buffers
 - **Unidades diferentes:** a razão dos buffers da ECU ficou em ≈0,93 e a razão gas_ms/petrol_ms dos quadros em ≈2,3. Os buffers da ECU parecem já normalizados; a comparação direta não vale.
 - Rugosidade ECU 0,058 × app 0,061 (n=3): sem diferença. **Nada foi provado nem refutado.**
 - Para refazer: primeiro descobrir a normalização dos buffers (PROTOCOLO-LANDI `17`–`20`) e usar a janela de aquisição completa, não 120 s fixos.
+
+## Apagões × retomada após corte (corpus inteiro + sessões 18-07 e 18-38)
+
+Definição: corte = petrol_ms < 0,3 com rpm > 900; retomada = primeiro quadro seguinte com petrol_ms ≥ 0,3; "quase-apagou" = rpm mínimo < 550 nos 3,5 s seguintes. Só retomadas com MAP < 0,45 bar e gás real (gas_ms > 0,5). Fonte: `tests/fixtures/sessoes-uteis` (≈55 sessões) + 2 sessões novas.
+
+| rpm na retomada | retomadas GNV | quase-apagou |
+|---|---|---|
+| < 1550 | 240 | 24 (10,0%) |
+| 1550–1700 | 136 | 8 (5,9%) |
+| ≥ 1700 | 635 | 4 (0,6%) |
+
+Nas 2 sessões novas: 5 de 10 retomadas quase apagaram, todas com rpm de retomada entre 1510 e 1633; as 5 que passaram retomaram em 1715–1865.
+
+**Provado (n=1011):** o risco de apagar cai ~16× entre retomar abaixo de 1550 rpm e acima de 1700 rpm, em 50+ sessões.
+
+**Não separa:** a razão gás/gasolina (≈K) no corte e na retomada é a mesma para quem apagou e quem passou (2,15 × 2,01 antes; 2,15 × 2,15 depois; petrol_ms 2,22 × 2,13). A curva toda estava em ≈1,2–1,3 nesse corpus, então **não há variação de K suficiente para provar que mais K evita o apagão** (nem que não evita). Na sessão 18-07 apagou/quase apagou com nós 0–3 em 1,30, 1,03 e 1,2.
+
+**Consequência:** o gatilho é a rotação em que a ECU volta a injetar, não só o valor da curva. Falta: (1) saber se a ECU expõe esse limiar de retomada (o app não o altera hoje); (2) um experimento controlado de K nos nós 0–3 (ex.: 3 valores, 20 retomadas cada) para medir o efeito real, só com o dono dirigindo.
