@@ -2,12 +2,12 @@
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
-## Último APK (2026-10-16, Vermelho + fatias A–D)
+## Último APK (2026-10-16 noite, Vermelho + prior dos nós baixos + sessão completa)
 
-- Workflow `verde-apk-now.yml`, run `38957420333` (SUCCESS, `workflow_dispatch`, testes + lint + build), commit `cf62ee5678307ec98c3d576af1cd21a0f1b585c0` (branch `claude/carregar-sessao-r7j85r`).
-- Artifact `omegas-platina-final-cf62ee56…` (id `12071047787`), 4.811.980 bytes, digest do ZIP `sha256:2e28e84b61edfc532d9adea130857f092e35c6a6e3ab11675badeac8547c6024`; expira 2026-10-30. Link: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/38957420333/artifacts/12071047787
-- **SHA-256 do APK** (`app-debug.apk`, 4.811.197 bytes): `8024bfbbef18fee47539aaf54fd2ecb24eb25a3b70d96d65afcb7fd85650623f` (confere com `omegas-platina-apk-evidence.txt`: `APK_ZIP_INTEGRITY=PASS`).
-- Contém: porta de gravação no toque, "Concluir curva", botões do Refino persistentes, Wi-Fi/Link apagados, espera de gravação 10 s → 1 s, aprendizado à prova de queda, "piorou" ≥ 3 %. Prova: classes 1–2 (CI). NÃO instalado no carro (classe 5).
+- Workflow `verde-apk-now.yml`, run `38980861051` (SUCCESS, testes + lint + build) e `ci.yml` run `38980864109` (SUCCESS, 668 testes), commit `d68f1f1757d47c28f447e3a76dafabb042cd7046` (branch `claude/carregar-sessao-r7j85r`).
+- Artifact `omegas-platina-final-d68f1f17…` (id `12081073034`), 4.816.588 bytes, digest do ZIP `sha256:688dca0be218206b84ee8721d2ef721c031e8bebb897118073cffab9f291659e`; expira 2026-10-30. Link: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/38980861051/artifacts/12081073034
+- **SHA-256 do APK** (`app-debug.apk`, 4.815.805 bytes): `225b2f1d570c12a120674465464648b3638c9947b25b28fa0effd37be6262483`.
+- Contém: leitura automática (só leitura) da curva K e do Mapa K ~12 s depois de a sessão USB estabilizar (`k_read_curve`, `k_read_map`); `k_curve_state`/`k_map_state` completos após cada gravação; `origin` em cada gravação; prior dos nós baixos (0,5–3 ms) no Refino. NÃO instalado no carro (classe 5).
 
 ## Em andamento (2026-10-16)
 
