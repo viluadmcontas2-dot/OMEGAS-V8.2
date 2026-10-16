@@ -33,7 +33,7 @@ class SessionRecorderPruneTest {
     )
 
     @Test
-    fun `fora da contagem so sai quem tem copia publica; abaixo do teto a sem copia fica`() {
+    fun `fora da contagem so sai quem tem copia publica, abaixo do teto a sem copia fica`() {
         val old = session("s_old", 64 * 1024, ageMinutes = 300, mirrored = false)
         val oldMirrored = session("s_old_mirrored", 64 * 1024, ageMinutes = 200, mirrored = true)
         val recent = session("s_recent", 64 * 1024, ageMinutes = 10, mirrored = false)
