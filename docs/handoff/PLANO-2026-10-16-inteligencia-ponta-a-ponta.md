@@ -44,6 +44,15 @@ A ECU aplica o AutoMatch sobre a curva viva → nossa escrita logo depois é apr
 - 2.6 Telemetria de transientes (20 Hz ±4 s em eventos) + resumo para IA por sessão (arrancadas, quedas, escritas, equivalência por célula).
 - 2.7 Apagar `k_interpolated` (sempre 0) ou calculá-lo de verdade; cursor e telas só repintam o que muda.
 
+#### Ponteiros de implementação da Fase 2 (lidos no código em 16/10)
+- Gatilho da escrita da ECU já existe: `TelemetryForegroundService` → `NativeAutoCalMonitor(onNativeCalibrationObserved = …)` recebe o payload `FACTOR_CHANGE_CONFIRMED` (~3 s após a escrita; `beforeRaw`/`afterRaw` dos 30 nós) e hoje chama `refinement.nativeCurveChanged()` → `EquivalenceLedger.resetGas(OUTSIDE_AUTOMATCH)` + `journal.interrupt(...)`. **É aqui que o app zera o GNV.** Fase 2.1 troca esse reset por re-escala com época; Fase 2.3 chama, no mesmo ponto, a proposta e a gravação automática.
+- Motor da proposta: `RefinementCycle.proposal(snapshot, index)` (alinha MUL_ACT, `AutoMatchSnapshotAnalysis.analyzeRefined`, memo por conteúdo) → `RefinementJournal.proposalFrom(analysis, indexNow, indexSince)` devolve `points[{index, currentRaw, targetRaw}]`. A suavização do serrilhado entra como etapa dentro de `analyze` (nós fora da tendência dos vizinhos, por zona), antes da margem.
+- Escritor: `KFactorManager.startBatchWrite(points, reason)` (readback final e `BATCH_CONFIRMED`; `elapsedMs` real < 1 s). O interruptor D1 vive no `RefinementAutopilot` (já tem `setManual`/`manual`); a escrita automática registra `automatic=true` no `k_factor_batch_confirmed`.
+- Travas absolutas no escritor (não na tela): 0,8 ≤ K ≤ 1,8 (`KFactorProtocol.MAX_WRITE_FACTOR` existe; falta o piso 0,8) e acoplamento com o Mapa K (célula > 200 → K ≤ 1,5) — uma função pura `withinOwnerLocks(curve, map)` testada.
+- Buffers da ECU (2.2): campos `MNFLD_PRESS_BUF`, `PETR_INJ_TBUF`, `*_GAS`, `*_GAS_PREV`, `NUM_BUF_UPD_PETR/GAS` já decodificados pelo `AutoCalProtocol`; a tela `autocal-original.js` os desenha ("Painel Acquisition"). Entram no Ledger como pares com origem `ECU`.
+- Bins da ECU (2.4): porte de `KMapEcuAxes.kt` (161 linhas) + teste (126) da CINZA (commit `188a7b6`), fiação em `KWriteManager.readEcuAxes` (`29 3D 00` RPM, `29 37 00` tempo; só leitura; falha → eixo fixo + registro).
+- Transientes (2.6): `SessionRecorder` grava `telemetry` por amostra (10 quadros crus → 1); o buffer de 20 Hz entra como evento `telemetry_burst` em volta de `engine_stall`, arrancada e `autocal_native_calibration_epoch`.
+
 ### Fase 3 — telas (mockup PNG antes, 1 por tela)
 AutoCal sem a Curva K e com o gráfico esticado (quadradinhos = buffers da ECU, explicados em uma frase); Ajuste global com cursor ao vivo e gravação ao tocar +/− ou arrastar (junção de toques 0,6 s; Gravar fica); Sessões roláveis e didáticas, "tamanho e retenção" funcionando; log enxuto.
 
