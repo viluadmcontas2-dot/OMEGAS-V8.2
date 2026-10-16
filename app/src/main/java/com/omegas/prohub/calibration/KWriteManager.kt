@@ -31,6 +31,8 @@ class KWriteManager(
     private val onBusyChanged: (Boolean) -> Unit,
     private val onConfirmedWrite: () -> Unit = {},
     private val onConfirmedBatch: (JSONObject) -> Unit = {},
+    /** Mapa K lido por inteiro pelo dono (leitura manual): vai para a sessão exportada (tipo k_read_map). */
+    private val onMapRead: (JSONObject) -> Unit = {},
 ) {
     companion object {
         const val MAP_K_ADDRESS = 0x0054
@@ -209,6 +211,12 @@ class KWriteManager(
                 .put("allRows", allRows)
             atomicWrite(cacheFile, cache.toString(2))
             try { onConfirmedWrite() } catch (_: Exception) {}
+            try {
+                onMapRead(
+                    JSONObject().put("hash", hash).put("updatedAt", now).put("sessionId", expectedSessionId)
+                        .put("axes", axes).put("rows", visibleRows).put("extraRow", extraRow),
+                )
+            } catch (_: Exception) {}
             val details = JSONObject()
                 .put("hash", hash)
                 .put("updatedAt", now)

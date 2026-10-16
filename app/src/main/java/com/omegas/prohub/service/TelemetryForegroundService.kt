@@ -183,6 +183,7 @@ class TelemetryForegroundService : Service() {
                     }
                 }
             },
+            onMapRead = { payload -> sessionRecorder.record("k_read_map", "map_k", payload, force = true) },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_batch_confirmed", "map_k", payload, force = true)
                 // Mapa K mudou o gás: o GNV medido antes não vale mais; a verificação e a oferta de restaurar perdem validade.
