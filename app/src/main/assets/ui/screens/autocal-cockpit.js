@@ -728,6 +728,8 @@
               <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
               <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
               <!-- Texto para leigo (dono, 2026-10-11): o botão diz que apaga o que já foi aprendido. -->
+              <!-- AutoMatch manual (dono, 2026-10-17): a ECU faz os 3 dela; depois, com mais aprendizado nas médias (quadradinhos), o dono manda aplicar de novo. Um toque, ACK + leitura de volta da curva. -->
+              <button type="button" id="autocalManualAutoMatch" class="autocal-reacquire-action" data-autocal-action="MANUAL_AUTOMATCH" hidden>AutoMatch manual <span class="autocal-action-note">(aplica as médias)</span></button>
               <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span></button>
               <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span></button>
               <details class="autocal-reset-menu">
@@ -1133,6 +1135,9 @@
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
         button.disabled = this.operationalPending;
       });
+      // Disponível só depois dos AutoMatches automáticos da ECU (cota atingida) e com o aprendizado ligado.
+      const manualAutoMatch = this.panel?.querySelector('#autocalManualAutoMatch');
+      if (manualAutoMatch) manualAutoMatch.hidden = !(human.autoMatchQuotaReached && human.enabled !== 0);
 
       this.renderReferenceChart(snapshot);
       this.renderBands(snapshot);

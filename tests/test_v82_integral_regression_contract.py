@@ -71,7 +71,7 @@ class V82IntegralRegressionContract(unittest.TestCase):
         self.assertIn('ENABLE_AUTO_CAL', actions)
         self.assertIn('DISABLE_AUTO_CAL', actions)
         self.assertIn('MANUAL_AUTOMATCH', actions)
-        self.assertNotIn('MANUAL_AUTOMATCH', cockpit)  # dono, 2026-10-13: Manual automatch não é exposto na tela
+        self.assertIn('MANUAL_AUTOMATCH', cockpit)  # dono, 2026-10-17 (revoga 2026-10-13): AutoMatch manual voltou, escondido até a cota da ECU
         self.assertNotIn('NATIVE_AUTOMATCH', actions)
         self.assertNotIn('NATIVE_AUTOMATCH', cockpit)
         self.assertNotIn('Continuar para confirmação Android', cockpit)

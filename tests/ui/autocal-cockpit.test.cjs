@@ -48,8 +48,11 @@ assert.equal(cockpit.includes("data-autocal-action=\"RESET_K_FACTOR\""), true);
 assert.equal(cockpit.includes("Curva K toda em 1,0"), true); // (dono, 2026-10-11: texto para leigo)
 assert.equal(cockpit.includes("data-autocal-action=\"NEUTRALIZE_LIVE_K\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"RESET_ALL\""), true);
-// Dono (2026-10-13): "Manual automatch" não fica exposto (nem se sabe o que ele faz na ECU).
-assert.equal(cockpit.includes("data-autocal-action=\"MANUAL_AUTOMATCH\""), false);
+// Dono (2026-10-17, revoga a de 2026-10-13): o AutoMatch manual VOLTA. É o jeito de aplicar as médias (quadradinhos) depois
+// que a ECU fez os AutoMatches dela: nasce escondido e só aparece com a cota automática atingida e o aprendizado ligado.
+assert.equal(cockpit.includes("data-autocal-action=\"MANUAL_AUTOMATCH\""), true);
+assert.match(cockpit, /id="autocalManualAutoMatch"[^>]*\bhidden\b/, 'nasce escondido');
+assert.match(cockpit, /manualAutoMatch\.hidden = !\(human\.autoMatchQuotaReached && human\.enabled !== 0\)/, 'só com a cota atingida e o aprendizado ligado');
 assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOCAL\""), false,
   'Finish AutoCal original é compatibilidade técnica e não pode virar CTA normal');
 assert.equal(cockpit.includes("class=\"autocal-finish-action\""), false);
@@ -68,7 +71,7 @@ assert.equal(cockpit.indexOf('data-autocal-toggle') < cockpit.indexOf('data-auto
 assert.equal(cockpit.indexOf('data-autocal-action="RESET_PETROL"') < cockpit.indexOf('class="autocal-reset-menu"'), true);
 assert.equal(cockpitCss.includes('.autocal-reacquire-action'), true);
 assert.equal(cockpitCss.includes('.autocal-reset-advanced'), false);
-assert.equal(cockpit.includes('MANUAL_AUTOMATCH'), false);
+assert.equal(cockpit.includes('MANUAL_AUTOMATCH'), true); // dono, 2026-10-17: o AutoMatch manual voltou (escondido até a cota)
 assert.equal(cockpit.includes('NATIVE_AUTOMATCH'), false);
 assert.equal(cockpit.includes('runOperational(action)'), true);
 assert.equal(cockpit.includes('setAcquisitionEnabled'), true);
