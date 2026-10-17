@@ -656,6 +656,7 @@ class SessionRecorder(
                 "ecu_command",
                 "k_write_requested",
                 "k_batch_confirmed",
+                "buffer_write_probe",
             )
             if (eventCount % 32L == 0L || critical) writer?.flush()
             if (critical) syncToDisk()

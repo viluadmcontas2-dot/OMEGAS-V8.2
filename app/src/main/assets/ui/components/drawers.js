@@ -66,6 +66,7 @@
       document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
       document.getElementById('toolExportLearning')?.addEventListener('click', () => this.api.exportLearning());
       document.getElementById('toolImportLearning')?.addEventListener('click', () => this.api.importLearning());
+      document.getElementById('toolBufferProbe')?.addEventListener('click', () => this.runBufferProbe());
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('click', event => this.handleToolClick(event));
       document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('change', event => this.handleToolChange(event));
     }
@@ -123,6 +124,61 @@
         this.logPage = 0;
         this.toolsSignature = '';
         this.renderTools(this.store.get());
+      }
+    }
+
+    // Sonda de escrita única nos pontos do GNV (dono, 2026-10-17): toque duplo (arma e confirma), sem diálogo do sistema.
+    runBufferProbe() {
+      const button = document.getElementById('toolBufferProbe');
+      const label = button?.querySelector('span');
+      const bridge = window.OmegasAutoCal;
+      if (!button || !label || !bridge?.startBufferWriteProbe) {
+        this.store.patch({ alert: { level: 'warning', message: 'Sonda indisponível neste ambiente.' } });
+        return;
+      }
+      if (this.bufferProbeRunning) return;
+      if (!this.bufferProbeArmed) {
+        this.bufferProbeArmed = true;
+        label.textContent = 'Toque de novo para escrever 1 valor';
+        clearTimeout(this.bufferProbeTimer);
+        this.bufferProbeTimer = setTimeout(() => {
+          this.bufferProbeArmed = false;
+          label.textContent = '1 valor, banda cheia, volta ao original (carro parado)';
+        }, 6000);
+        return;
+      }
+      clearTimeout(this.bufferProbeTimer);
+      this.bufferProbeArmed = false;
+      let started;
+      try { started = JSON.parse(bridge.startBufferWriteProbe()); } catch (_) { started = { ok: false, error: 'Resposta inválida da sonda' }; }
+      if (started?.ok === false) {
+        label.textContent = started.error || 'Não iniciou';
+        this.notifyResult(started, '');
+        return;
+      }
+      this.bufferProbeRunning = true;
+      label.textContent = 'Rodando…';
+      const poll = () => {
+        let status = {};
+        try { status = JSON.parse(bridge.getBufferWriteProbeStatus()); } catch (_) { status = {}; }
+        if (status.state !== 'DONE') { setTimeout(poll, 700); return; }
+        this.bufferProbeRunning = false;
+        const text = Drawers.describeBufferProbe(status);
+        label.textContent = text;
+        this.store.patch({ alert: { level: status.outcome === 'ACCEPTED_AND_HELD' || status.outcome === 'REFUSED' ? 'ok' : 'warning', message: text } });
+      };
+      setTimeout(poll, 700);
+    }
+
+    static describeBufferProbe(status) {
+      const back = status.restoreNeeded ? (status.restored ? ' Original restaurado.' : ' ATENÇÃO: original NÃO restaurado, use Reset GNV.') : '';
+      switch (status.outcome) {
+        case 'REFUSED': return 'A ECU recusou escrever nos pontos (só leitura). Nada mudou.';
+        case 'ACCEPTED_AND_HELD': return 'A ECU aceitou e o valor ficou (banda ' + status.band + ').' + back;
+        case 'ACCEPTED_THEN_OVERWRITTEN': return 'A ECU aceitou, mas desfez sozinha o valor.' + back;
+        case 'ACCEPTED_BUT_DIFFERENT': return 'A ECU aceitou, mas guardou outro valor.' + back;
+        case 'NO_STABLE_BAND': return 'Nenhuma banda do GNV está cheia ainda; nada foi escrito.';
+        default: return 'Sonda sem resultado: ' + (status.message || 'erro') + back;
       }
     }
 

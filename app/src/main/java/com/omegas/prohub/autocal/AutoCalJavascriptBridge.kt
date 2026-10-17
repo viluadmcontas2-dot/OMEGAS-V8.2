@@ -212,6 +212,15 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun clearNativeActionPreparation(): String =
         currentNativeManager()?.clearPreparation()?.toString() ?: unavailable()
 
+    /** Sonda de escrita única nos pontos do GNV (aba Ferramentas, toque duplo do dono). Uma escrita, restaura o original. */
+    @JavascriptInterface
+    fun startBufferWriteProbe(): String =
+        activityRef.get()?.serviceOrNull()?.startBufferWriteProbe() ?: unavailable()
+
+    @JavascriptInterface
+    fun getBufferWriteProbeStatus(): String =
+        activityRef.get()?.serviceOrNull()?.bufferWriteProbeStatusJson() ?: unavailable()
+
     @JavascriptInterface
     fun getIdentity(): String = JSONObject()
         .put("feature", "Auto Calibration nativa — V8.2")

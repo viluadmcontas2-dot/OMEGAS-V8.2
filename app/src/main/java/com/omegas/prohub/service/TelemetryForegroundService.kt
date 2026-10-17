@@ -105,6 +105,7 @@ class TelemetryForegroundService : Service() {
     lateinit var kWriter: KWriteManager
         private set
     lateinit var kFactor: KFactorManager
+    lateinit var bufferProbe: com.omegas.prohub.autocal.BufferWriteProbe
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
         private set
@@ -232,6 +233,9 @@ class TelemetryForegroundService : Service() {
             },
             publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
         )
+        bufferProbe = com.omegas.prohub.autocal.BufferWriteProbe(recordingSerial) { type, data ->
+            sessionRecorder.record(type, "buffer_probe", data, force = true)
+        }
         nativeAutoCal = NativeAutoCalMonitor(
             serial = recordingSerial,
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
@@ -309,6 +313,7 @@ class TelemetryForegroundService : Service() {
         try { sessionRecorder.close() } catch (_: Exception) {}
         try { nativeAutoCal.endUsbSession() } catch (_: Exception) {}
         try { kFactor.close() } catch (_: Exception) {}
+        try { bufferProbe.close() } catch (_: Exception) {}
         try { kWriter.close() } catch (_: Exception) {}
         try { runtime.close() } catch (_: Exception) {}
         try { usb.close() } catch (_: Exception) {}
@@ -431,6 +436,8 @@ class TelemetryForegroundService : Service() {
     @Synchronized fun readKFactorCurve(): String =
         if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.readCurve().toString()
     fun kFactorStatusJson(): String = kFactor.statusJson()
+    fun startBufferWriteProbe(): String = bufferProbe.start().toString()
+    fun bufferWriteProbeStatusJson(): String = bufferProbe.statusJson()
     fun kFactorHistoryJson(): String = kFactor.historyJson()
 
     @Synchronized fun saveKFactorBackup(label: String): String =
