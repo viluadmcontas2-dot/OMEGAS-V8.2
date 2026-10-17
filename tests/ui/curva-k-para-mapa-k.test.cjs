@@ -235,3 +235,27 @@ test('sem proposta (ou toda velha) o resultado é idêntico ao de antes', () => 
   assert.equal(none.applied, 0);
   assert.equal(JSON.stringify(balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells, refine: null })), JSON.stringify(balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells })));
 });
+
+test('exportação parcial (dono: não pode ser 100%): share=0,5 deixa metade do ln(K) na curva, mantém o produto e share=1 é o de sempre', () => {
+  const cells = flat(160);
+  const full = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells });
+  const same = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells, share: 1 });
+  assert.deepEqual(same.nodes.map(n => n.targetRaw), full.nodes.map(n => n.targetRaw), 'share=1 é idêntico ao padrão');
+  const half = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells, share: 0.5 });
+  assert.ok(half.summary.maxRowErrorPct < 0.5, `produto preservado: ${half.summary.maxRowErrorPct}`);
+  // a curva retém ~metade do ln(K) suavizado; as células mudam menos que na exportação total
+  const mid = half.nodes.filter(n => n.ms >= 3 && n.ms <= 12);
+  mid.forEach(n => {
+    const kept = Math.log(n.target) / Math.log(Math.max(1.0001, n.current));
+    assert.ok(Math.abs(Math.log(n.target)) > 0.2 * Math.abs(Math.log(n.current)), `nó ${n.index} ficou neutro demais: ${kept}`);
+  });
+  const sum = r => r.rows.reduce((a, row) => a + (row.cells || []).reduce((b, c) => b + Math.abs(c.target - c.current), 0), 0);
+  assert.ok(sum(half) < sum(full) * 0.75, 'o mapa muda bem menos que na exportação total');
+});
+
+test('teto de mapa: a exportação não empurra célula para cima de softMax; o excedente fica na curva', () => {
+  const cells = flat(190);
+  const out = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells, share: 1, softMax: 200 });
+  out.rows.forEach(r => (r.cells || []).forEach(c => assert.ok(c.target <= 200 || c.target <= c.current, `célula ${c.target} > 200`)));
+  assert.ok(out.summary.maxRowErrorPct < 3, `produto ainda preservado: ${out.summary.maxRowErrorPct}`);
+});

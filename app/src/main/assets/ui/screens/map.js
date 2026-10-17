@@ -202,6 +202,8 @@
         rowMs: snapshot.axes.petrolBins,
         cells: snapshot.rows,
         refine: refined && refined.applied ? refined.refine : null,
+        // Exportação PARCIAL (dono, 2026-10-16: "não pode ser 100%"): metade do ln(K) vai para o mapa e o mapa nunca sobe acima de 200.
+        share: planner.EXPORT_SHARE, softMax: planner.EXPORT_SOFT_MAX,
       });
       const summary = result.summary;
       if (!summary.rowsUsed) return 'Nenhuma linha do Mapa K cai dentro da faixa da Curva K: nada a passar para o Mapa K.';

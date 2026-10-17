@@ -23,6 +23,8 @@
   const MAP_MAX = 255;
   const LOCAL_HEADROOM = 0.15;   // folga para o ajuste local (o mesmo ±15% por gravação do LocalMapPlanner)
   const Q14 = 16384;
+  const EXPORT_SHARE = 0.5;       // fração do ln(K) exportada para o mapa pela tela (dono: "não pode ser 100%"); 1 = tudo
+  const EXPORT_SOFT_MAX = 200;    // a exportação não empurra célula acima disso (mapa alto dá erro no 1º uso do dia)
   const K_WRITE_CEILING = 1.8;   // teto de escrita da curva (regra do dono; mesmo valor do KFactorProtocol)
 
   function bracket(xs, x) {
@@ -134,7 +136,7 @@
    * @param {{tbp:number[], k:number[], rowMs:number[], cells:number[][]}} input
    *   tbp/k = curva K lida (30 nós); rowMs = Tinj de cada linha; cells = Mapa K lido (linha × coluna).
    */
-  function balance({ tbp = [], k = [], rowMs = [], cells = [], mapMin = MAP_MIN, mapMax = MAP_MAX, headroom = LOCAL_HEADROOM, smooth = true, refine = null } = {}) {
+  function balance({ tbp = [], k = [], rowMs = [], cells = [], mapMin = MAP_MIN, mapMax = MAP_MAX, headroom = LOCAL_HEADROOM, smooth = true, refine = null, share: exportShare = 1, softMax = MAP_MAX } = {}) {
     const nodes = [];
     for (let i = 0; i < Math.min(tbp.length, k.length); i += 1) nodes.push({ i, x: finite(tbp[i]), y: finite(k[i]) });
     const valid = nodes.filter(n => n.x !== null && n.x > 0 && n.y !== null && n.y > 0);
@@ -176,8 +178,13 @@
       const totalAtRow = live.map(r => cells[r.row].map(v => v * r.kOld));
       const totalAtNode = inside.map(idx => Array.from({ length: columns }, (_, c) => mapAt(rx, live.map(r => cells[r.row][c]), xs[idx]) * ysT[idx]));
       // Janela de cada célula: a com folga, ampliada só até onde a célula já estava (nunca empurra para mais longe).
-      const allowed = live.map(r => cells[r.row].map(v => [Math.max(mapMin, Math.min(winLo, v)), Math.min(mapMax, Math.max(winHi, v))]));
-      inside.forEach(idx => { nextK[idx] = 1; });
+      // softMax (dono: mapa muito alto dá erro, principalmente no 1º uso do dia): a exportação nunca EMPURRA célula para cima
+      // de softMax; célula que já passa disso não é mexida para cima (o excedente fica na curva).
+      const allowed = live.map(r => cells[r.row].map(v => [Math.max(mapMin, Math.min(winLo, v)), v > softMax ? Math.min(mapMax, v) : Math.min(softMax, mapMax, Math.max(winHi, v))]));
+      // share (0..1): fração do ln(K) da curva que vai para o mapa. 1 = tudo (curva neutra); 0,5 = metade fica na curva.
+      // Qualquer valor inicial é ponto fixo da iteração abaixo, então a curva retém (1 − share) do que tinha.
+      const keep = 1 - Math.min(1, Math.max(0, exportShare));
+      inside.forEach(idx => { nextK[idx] = Math.pow(ysT[idx], keep); });
       target = live.map(() => Array(columns).fill(0));
       for (let pass = 0; pass < 12; pass += 1) {
         live.forEach((r, ri) => {
@@ -306,5 +313,5 @@
     return { refine, applied, stale };
   }
 
-  return { balance, naiveError, refinementTargets, smoothCurve, roughness, interp, bracket, mapAt, MAP_MIN, MAP_MAX, LOCAL_HEADROOM, K_WRITE_CEILING, K_WRITE_FLOOR };
+  return { balance, naiveError, refinementTargets, smoothCurve, roughness, interp, bracket, mapAt, MAP_MIN, MAP_MAX, LOCAL_HEADROOM, K_WRITE_CEILING, K_WRITE_FLOOR, EXPORT_SHARE, EXPORT_SOFT_MAX };
 });
