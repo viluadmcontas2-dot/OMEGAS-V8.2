@@ -22,7 +22,7 @@
 
 **Original (ProgBase).** Botão `ButtonAutoMatch` (Tag=8) ao lado de "Num automatch N / [M]". `ActionAutoMatchExecute` → `CommonAction`: confere conexão → caixa de confirmação → ampulheta → envia `[04, Tag]` → sucesso: `Sleep(1000)` + `RefreshAll`; falha: caixa de erro. O `[M]` é editável (`MAX_AUTOMATCH`, `0x0165:2`, ligado a `VECT_AUTOCAL_U8_2`).
 
-**O que a ECU faz num AutoMatch (observado nos AutoMatches nativos, LANDI 17).** Copia buffers do GNV para `*_PREV`; zera buffers/contadores/zonas do GNV; reescreve `MUL_ACT` multiplicando por fator por nó com limite de passo (+25/+12/+6 %…); incrementa `NUM_AUTOMATCH_EXECUTED`; buffers da gasolina ficam. Para sozinha ao chegar em `MAX_AUTOMATCH` (3).
+**O que a ECU faz num AutoMatch (observado nos AutoMatches nativos, LANDI 17).** Copia buffers do GNV para `*_PREV`; zera buffers/contadores/zonas do GNV; reescreve `MUL_ACT` multiplicando cada nó por uma razão (K novo = K antigo × razão, OBSERVADO; é correção sobre correção). Razões repetidas (1,25/1,12/1,06; 0,88) sugerem um limite de passo, mas é INFERÊNCIA de 7 eventos: AC deu +25/+12/+6 %, LN deu +25/−12/+6 %, K passou de 1,25 (1,40/1,48). Regra DESCONHECIDA; incrementa `NUM_AUTOMATCH_EXECUTED`; buffers da gasolina ficam. Para sozinha ao chegar em `MAX_AUTOMATCH` (3).
 
 **Nosso app (já igual ao original no fluxo).** `AutoCalNativeActionManager.executeFixedAction`: envia → exige ACK → espera 1 s (`HOST_MODE_SETTLE_MS`) → relê `MUL_ACT` (testemunha) → confirma só com a leitura de volta. Botão escondido até `autoMatchQuotaReached`. Sessão grava o recibo e a curva nova.
 
