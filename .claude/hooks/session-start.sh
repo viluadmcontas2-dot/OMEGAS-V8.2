@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SessionStart (nuvem): deixa o ambiente pronto a cada sessão (REA, Superpowers, LSP, Serena).
+# SessionStart (nuvem): deixa o ambiente pronto a cada sessão (REA, LSP, Serena).
 # Tudo idempotente e centralizado em tools/cloud-setup.sh.
 set -euo pipefail
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then exit 0; fi

@@ -31,8 +31,6 @@ class StableRepositoryContract(unittest.TestCase):
             "docs/spec-kits/OMEGAS-SK-001.md",
             "docs/workunits/OMEGAS-WU-006.md",
             "docs/evidence/OMEGAS-WU-006.json",
-            "docs/superpowers/specs/2026-09-21-omegas-verde-progbase-autocal-parity-design.md",
-            "docs/superpowers/plans/2026-09-21-omegas-verde-progbase-autocal-parity.md",
         ]
         self.assertEqual([], [path for path in required if not (ROOT / path).is_file()])
 

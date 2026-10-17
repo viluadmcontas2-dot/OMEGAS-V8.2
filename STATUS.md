@@ -17,7 +17,7 @@ Fase 1 do plano (porta de gravação no toque, Curva→Mapa recuperável, persis
 Histórico (Platina, até 2026-10-02):
 ## Active control surface
 
-- Branch: `OmegasPlatina`
+- Branch: `OmegasVermelho`
 - Estado: `FINAL RELEASE CANDIDATE — PROGBASE HOST CONTRACT V2 LOCKED — SAME-SHA GATES + APK BUILD`
 - Autoridade: GitHub remoto no HEAD resolvido antes de qualquer escrita.
 

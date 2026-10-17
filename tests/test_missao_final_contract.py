@@ -7,22 +7,18 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_active_authority_is_omegas_platina():
-    assert "Branch autorizada: `OmegasPlatina`" in read("PROJECT.md")
+def test_active_authority_is_omegas_vermelho():
+    assert "Branch autorizada: `OmegasVermelho`" in read("PROJECT.md")
     assert "resolver HEAD remoto de `OmegasVermelho`" in read("AGENTS.md")  # canônica: Vermelho (dono, 2026-10-16)
-    assert "Branch: `OmegasPlatina`" in read("STATUS.md")
+    assert "Branch: `OmegasVermelho`" in read("STATUS.md")
 
 
-def test_active_push_workflows_target_platina_only():
-    for path in (
-        ".github/workflows/verde-fast-contracts.yml",
-        ".github/workflows/ci.yml",
-        ".github/workflows/autocal-blueprint-layout.yml",
-    ):
-        text = read(path)
-        assert "OmegasPlatina" in text, path
-        push_block = text.split("workflow_dispatch", 1)[0]
-        assert "OmegasVerde" not in push_block, path
+def test_only_two_workflows_exist_and_ci_targets_vermelho():
+    names = sorted(p.name for p in (ROOT / ".github" / "workflows").glob("*.yml"))
+    assert names == ["ci.yml", "verde-apk-now.yml"], names  # dono, 2026-10-17: sem automação legada
+    text = read(".github/workflows/ci.yml")
+    assert "OmegasVermelho" in text
+    assert "OmegasPlatina" not in text and "OmegasVerde" not in text
 
 
 def test_apk_workflow_is_manual_gated_and_not_push_triggered():
@@ -55,9 +51,9 @@ def test_status_keeps_gap_classification_fail_closed():
     assert "contador anterior UNKNOWN" in status
 
 if __name__ == "__main__":
-    test_active_authority_is_omegas_platina()
-    test_active_push_workflows_target_platina_only()
+    test_active_authority_is_omegas_vermelho()
+    test_only_two_workflows_exist_and_ci_targets_vermelho()
     test_apk_workflow_is_manual_gated_and_not_push_triggered()
     test_v7_predictor_suggestion_cannot_start_writer()
     test_status_keeps_gap_classification_fail_closed()
-    print("PLATINA_FINAL_MISSION_CONTRACT=PASS")
+    print("MISSAO_FINAL_CONTRACT=PASS")

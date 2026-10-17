@@ -1,13 +1,13 @@
-# OMEGAS Platina — Projeto ativo
+# OMEGAS — Projeto ativo (branch canônica: OmegasVermelho)
 
 ## Missão
 
-Entregar o OMEGAS Platina pronto para geração de APK, sem gerar APK nesta missão: AutoCal fiel ao ProgBase/ECU, moderno, claro, recuperável e seguro em multimídia 1280×720.
+Entregar o OMEGAS pronto para geração de APK, sem gerar APK nesta missão: AutoCal fiel ao ProgBase/ECU, moderno, claro, recuperável e seguro em multimídia 1280×720.
 
 ## Repositório e branch
 
 - Repositório: `viluadmcontas2-dot/OMEGAS-V8.2`
-- Branch autorizada: `OmegasPlatina`
+- Branch autorizada: `OmegasVermelho`
 - Source authority: GitHub remoto
 
 ## Plataforma
@@ -16,7 +16,7 @@ Android landscape, WebView, alvo automotivo `1280x720`, MP48/OMEGAS.
 
 ## Programa atual
 
-**OMEGAS-PLATINA-FINAL — AutoCal produto + paridade + segurança**
+**OMEGAS — AutoCal produto + paridade + segurança**
 
 Escopo ativo:
 - fidelidade de protocolo e comportamento AutoCal contra DUMP/Portmon/ECU;
