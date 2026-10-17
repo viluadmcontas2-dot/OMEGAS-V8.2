@@ -653,6 +653,7 @@ class SessionRecorder(
                 "k_read_curve",
                 "k_curve_state",
                 "k_map_state",
+                "ecu_command",
                 "k_write_requested",
                 "k_batch_confirmed",
             )
@@ -880,6 +881,7 @@ Tipos principais:
   AUTO_START (12 s após conectar) ou AUTO_PERIODIC (a cada 10 min). O app lê automaticamente, mas nunca grava sozinho;
 - k_curve_state / k_map_state: estado completo depois de cada gravação (origin = APP_UI_MANUAL) ou quando a curva da ECU
   mudou (origin = ECU_NATIVE_OR_EXTERNAL, com previousFactorsRaw): reconstrói a linha do tempo de curva e mapa;
+- ecu_command: toda ESCRITA enviada à ECU (pedido e resposta em hex, ACK, tempo, motivo); ecu_read_summary: resumo das leituras a cada 30 s;
 - autocal_native_snapshot: as 18 bandas de gasolina e GNV (MAP, ms, contagem), MUL_ACT, vetores RV e contadores, a cada
   mudança do AutoMatch;
 - export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.

@@ -182,9 +182,13 @@ class TelemetryForegroundService : Service() {
             onTelemetryEvent = ::consumeEngineEvent,
             onEngineExited = ::onEngineExited,
         )
+        // Trilha de comandos na sessão: só observa e repassa (nenhum byte muda). Escritas completas; leituras em resumo.
+        val recordingSerial = com.omegas.prohub.diagnostics.RecordingSerialScheduler(runtime.serialScheduler()) { type, source, data ->
+            sessionRecorder.record(type, source, data, force = type == "ecu_command")
+        }
         kWriter = KWriteManager(
             paths = paths,
-            serial = runtime.serialScheduler(),
+            serial = recordingSerial,
             log = log,
             isEngineRunning = { runtime.running },
             stopEngine = { true },
@@ -209,7 +213,7 @@ class TelemetryForegroundService : Service() {
         )
         kFactor = KFactorManager(
             paths = paths,
-            serial = runtime.serialScheduler(),
+            serial = recordingSerial,
             log = log,
             onBusyChanged = { stateChanged() },
             onCurveRead = { payload ->
@@ -229,7 +233,7 @@ class TelemetryForegroundService : Service() {
             publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
         )
         nativeAutoCal = NativeAutoCalMonitor(
-            serial = runtime.serialScheduler(),
+            serial = recordingSerial,
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
             onFreshSnapshot = { snapshot ->
                 runtime.importNativeAutoCalSnapshot(snapshot)
