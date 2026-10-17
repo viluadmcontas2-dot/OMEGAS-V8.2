@@ -761,11 +761,31 @@ class TelemetryForegroundService : Service() {
             sessionRecorder.record(
                 "k_curve_state", "autocal",
                 JSONObject().put("origin", origin).put("source", "NATIVE_SNAPSHOT").put("factorsRaw", mul).put("axisRaw", axis ?: JSONObject.NULL)
-                    .put("previousFactorsRaw", org.json.JSONArray(previous)).put("snapshotHash", snapshot.optString("snapshotHash")),
+                    .put("previousFactorsRaw", org.json.JSONArray(previous)).put("snapshotHash", snapshot.optString("snapshotHash"))
+                    .put("engineReview", engineReview(snapshot)),
                 force = true,
             )
         } catch (_: Exception) {
         }
+    }
+
+    /**
+     * Revisão do AutoMatch (aprender com cada um): o que o motor de equivalência do app considera o ideal para os buffers
+     * deste snapshot, nó a nó, e o erro ponderado antes/depois. Comparar com a curva nova mostra quanto a ECU acertou.
+     */
+    private fun engineReview(snapshot: JSONObject): JSONObject = try {
+        val analysis = com.omegas.prohub.autocal.AutoMatchSnapshotAnalysis.analyzeRefined(snapshot)
+        val points = analysis.optJSONArray("points") ?: org.json.JSONArray()
+        val ideal = org.json.JSONArray()
+        for (i in 0 until points.length()) ideal.put(points.getJSONObject(i).optInt("calculatedRaw"))
+        JSONObject()
+            .put("available", analysis.optBoolean("available", false))
+            .put("mode", analysis.optString("refinementMode"))
+            .put("evidenceErrorBefore", analysis.opt("evidenceErrorBefore") ?: JSONObject.NULL)
+            .put("evidenceErrorAfter", analysis.opt("evidenceErrorAfter") ?: JSONObject.NULL)
+            .put("idealFactorsRaw", ideal)
+    } catch (error: Exception) {
+        JSONObject().put("available", false).put("error", (error.message ?: error.javaClass.simpleName).take(80))
     }
 
     /**

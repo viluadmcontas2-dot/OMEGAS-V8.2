@@ -880,7 +880,7 @@ Tipos principais:
 - k_read_curve / k_read_map: curva K e Mapa K LIDOS por inteiro da ECU (valores completos); campo trigger = UI (botão/tela),
   AUTO_START (12 s após conectar) ou AUTO_PERIODIC (a cada 10 min). O app lê automaticamente, mas nunca grava sozinho;
 - k_curve_state / k_map_state: estado completo depois de cada gravação (origin = APP_UI_MANUAL) ou quando a curva da ECU
-  mudou (origin = ECU_NATIVE_OR_EXTERNAL, com previousFactorsRaw): reconstrói a linha do tempo de curva e mapa;
+  mudou (origin = ECU_NATIVE_OR_EXTERNAL, com previousFactorsRaw e engineReview = curva ideal do motor de equivalência para os buffers daquele AutoMatch): reconstrói a linha do tempo de curva e mapa;
 - ecu_command: toda ESCRITA enviada à ECU (pedido e resposta em hex, ACK, tempo, motivo); ecu_read_summary: resumo das leituras a cada 30 s;
 - autocal_native_snapshot: as 18 bandas de gasolina e GNV (MAP, ms, contagem), MUL_ACT, vetores RV e contadores, a cada
   mudança do AutoMatch;
