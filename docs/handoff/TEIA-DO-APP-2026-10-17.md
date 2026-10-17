@@ -34,4 +34,4 @@ flowchart LR
 | 6 | Apagão é na retomada pós-corte (rpm < 1550: 10%; ≥ 1700: 0,6%), não só valor de K | n=1011 | **aberto**: experimento controlado |
 | 7 | Equivalência % por nó × rpm não existe; Ledger apaga o GNV a cada gravação | AGENTS/Ledger | **aberto**: re-escala K_novo/K_velho (validada ~3% em 2 gravações) |
 | 8 | Buffers da ECU: ~10 amostras/banda, ruído ±15% | snapshot 18-38 | **aberto**: comparar curva suave do app × ECU (precisa normalização dos buffers) |
-| 9 | Repositório público contém sessões reais (GPS/identificadores?) | corpus em `tests/fixtures` | **aberto**: auditar antes de qualquer outra publicação |
+| 9 | Repositório público contém sessões reais (GPS/identificadores?) | corpus em `tests/fixtures` | **auditado**: no corpus não há GPS, deviceId, nome do aparelho, SSID nem e-mail (busca nos eventos, resumo e colunas da telemetria); só IDs de pastas do Drive, que são privadas |
