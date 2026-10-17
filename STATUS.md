@@ -2,12 +2,12 @@
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
-## Último APK (2026-10-16 noite, v2: leitura contínua + sessão completa + prior nós baixos)
+## Último APK (2026-10-17, v3: sessão completa + Curva→Mapa parcial)
 
-- Workflow `verde-apk-now.yml`, run `38981988695` (SUCCESS, testes + lint + build) e `ci.yml` run `38981978964` (SUCCESS), commit `28d43741a242032f8246c39e8df14d9542afb209` (branch `claude/carregar-sessao-r7j85r`).
-- Artifact `omegas-platina-final-28d43741…` (id `12081506978`), 4.817.944 bytes, digest do ZIP `sha256:b1c6bd658bac33397dc4c742f679ca899ea734dfee4893e078986daafa79ff6d`; expira 2026-10-30. Link: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/38981988695/artifacts/12081506978
-- **SHA-256 do APK** (`app-debug.apk`, 4.817.161 bytes): `5f50b1b905591011f8caccabf8b73ddef98573e13d480ad1ae92f52763187681` (`APK_ZIP_INTEGRITY=PASS`).
-- Contém: leitura automática (só leitura) da curva K e do Mapa K 12 s após conectar e a cada 10 min; todo `k_read_curve`/`k_read_map` com `trigger` (UI/AUTO_START/AUTO_PERIODIC); `k_curve_state`/`k_map_state` após cada gravação e quando a ECU muda a curva (origem `ECU_NATIVE_OR_EXTERNAL`); `origin` em cada gravação; README_PARA_IA atualizado; prior dos nós baixos (0,5–3 ms) no Refino. Substitui o APK `d68f1f1`. NÃO instalado no carro (classe 5).
+- Workflow `verde-apk-now.yml`, run `38995001015` (SUCCESS, testes + lint + build); `ci.yml` verde em `75a03bc` e `b1e61a5` (668+ testes); commit `1e5d749c0bd44561ad9097b08ec4ab0b80446035` (branch `claude/carregar-sessao-r7j85r`).
+- Artifact `omegas-platina-final-1e5d749c…` (id `12085749718`), 4.824.336 bytes, digest do ZIP `sha256:6e2a29498de2778be052e1d28c6617dece27226c6561931099ffba6d1ff4cf5c`; expira 2026-10-31. Link: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/38995001015/artifacts/12085749718
+- **SHA-256 do APK** (`app-debug.apk`, 4.823.553 bytes): `21fdf973f93ac911528863f39c2c87861b6b5148e7aedd4fcf5f5943099a93fb` (`APK_ZIP_INTEGRITY=PASS`).
+- Contém: leitura automática da curva K e do Mapa K (12 s e a cada 10 min, só leitura; `k_read_curve`/`k_read_map` com `trigger`); `k_curve_state`/`k_map_state` (+ `engineReview` quando a ECU muda a curva); `ecu_command` (toda escrita: hex, ACK, tempo) e `ecu_read_summary`; `origin` em cada gravação; Curva K → Mapa K PARCIAL (50% do ln K, mapa nunca empurrado acima de 200); prior dos nós baixos no Refino. Substitui `28d4374`. NÃO instalado no carro (classe 5).
 
 ## Em andamento (2026-10-16)
 
