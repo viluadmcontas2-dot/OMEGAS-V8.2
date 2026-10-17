@@ -2,12 +2,12 @@
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
-## Último APK (2026-10-17, v3: sessão completa + Curva→Mapa parcial)
+## Último APK (2026-10-17, v4: AutoMatch manual de volta + sessão completa)
 
-- Workflow `verde-apk-now.yml`, run `38995001015` (SUCCESS, testes + lint + build); `ci.yml` verde em `75a03bc` e `b1e61a5` (668+ testes); commit `1e5d749c0bd44561ad9097b08ec4ab0b80446035` (branch `claude/carregar-sessao-r7j85r`).
-- Artifact `omegas-platina-final-1e5d749c…` (id `12085749718`), 4.824.336 bytes, digest do ZIP `sha256:6e2a29498de2778be052e1d28c6617dece27226c6561931099ffba6d1ff4cf5c`; expira 2026-10-31. Link: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/38995001015/artifacts/12085749718
-- **SHA-256 do APK** (`app-debug.apk`, 4.823.553 bytes): `21fdf973f93ac911528863f39c2c87861b6b5148e7aedd4fcf5f5943099a93fb` (`APK_ZIP_INTEGRITY=PASS`).
-- Contém: leitura automática da curva K e do Mapa K (12 s e a cada 10 min, só leitura; `k_read_curve`/`k_read_map` com `trigger`); `k_curve_state`/`k_map_state` (+ `engineReview` quando a ECU muda a curva); `ecu_command` (toda escrita: hex, ACK, tempo) e `ecu_read_summary`; `origin` em cada gravação; Curva K → Mapa K PARCIAL (50% do ln K, mapa nunca empurrado acima de 200); prior dos nós baixos no Refino. Substitui `28d4374`. NÃO instalado no carro (classe 5).
+- Workflow `verde-apk-now.yml`, run `39002502126` (SUCCESS, testes + lint + build) e `ci.yml` run `39002494915` (SUCCESS), commit `a0a1953061f51480e53801448cf9916e1e4498e3` (branch `claude/carregar-sessao-r7j85r`).
+- Artifact `omegas-platina-final-a0a19530…` (id `12089269595`), 4.824.592 bytes, digest do ZIP `sha256:c9002b8cb18195ab9afa73a0d43c0531a5b18084734a7b7850c024d00a8878ef`; expira 2026-10-31. Link: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/39002502126/artifacts/12089269595
+- **SHA-256 do APK** (`app-debug.apk`, 4.823.809 bytes): `970ba72179808e2f0fc5a2124bac152f8eabf549be516fc63bac348306740970` (`APK_ZIP_INTEGRITY=PASS`).
+- Contém: botão **AutoMatch manual** no AutoCal (modo `0x08`, escondido até a cota automática da ECU; um toque, ACK + leitura de volta); tudo do v3 (leitura automática de curva e Mapa K, `k_read_*`/`k_*_state`/`engineReview`/`ecu_command`, Curva→Mapa parcial 50% e mapa ≤ 200, prior dos nós baixos). Substitui `1e5d749`. NÃO instalado no carro (classe 5).
 
 ## Em andamento (2026-10-16)
 
