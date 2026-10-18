@@ -13,7 +13,8 @@ class AutoCalRealtimeContract(unittest.TestCase):
         service = SERVICE.read_text("utf-8")
 
         self.assertIn("ACQUISITION_INTERVAL_MS = 1_000L", planner)
-        self.assertIn("autoCalTick(); renewWakeLockIfNeeded()", service)
+        self.assertIn("FrameCountTrigger(ServiceEventPolicy.AUTOCAL_TICK_FRAMES)", service)
+        self.assertRegex(service, r"if \(autoCalDue\) \{\s*autoCalTick\(\)\s*renewWakeLockIfNeeded\(\)")
         self.assertNotIn("scheduleWithFixedDelay", service)
         self.assertIn('reason = "AutoCal aquisição operacional agrupada"', monitor)
         self.assertIn('reason = "AutoCal referência agrupada"', monitor)
