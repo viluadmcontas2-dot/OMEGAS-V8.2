@@ -20,8 +20,23 @@
   let utilities = null;
   let advanced = null;
   function ensureTools() {
-    if (!utilities && ui.Drawers) utilities = new ui.Drawers(store, router, api);
-    if (!advanced && ui.AdvancedPanel) advanced = new ui.AdvancedPanel(store, api);
+    // Cada parte é independente: uma falha nas ferramentas auxiliares não pode esconder o anti-apagão.
+    if (!advanced && ui.AdvancedPanel) {
+      try { advanced = new ui.AdvancedPanel(store, api); }
+      catch (error) { console.error('[OMEGAS] Falha ao abrir Motor e combustível', error); }
+    }
+    if (!utilities && ui.Drawers) {
+      try { utilities = new ui.Drawers(store, router, api); }
+      catch (error) { console.error('[OMEGAS] Falha ao abrir App e arquivos', error); }
+    }
+  }
+
+  function toolsUnavailable(error) {
+    if (error) console.error('[OMEGAS] Ferramentas não abriram', error);
+    const host = byId('toolAdvanced');
+    if (host && !host.querySelector('[data-card="anti"]')) {
+      host.innerHTML = '<button type="button" class="tool-tile tool-open" data-tools-retry>Não foi possível abrir esta parte. Toque para tentar de novo.</button>';
+    }
   }
 
   const routeMeta = {
@@ -279,7 +294,9 @@
     const needsScience = route === 'tools';
 
     if (needsScience) {
-      const science = api.scienceSnapshotSince(scienceRevision) || {};
+      let science = {};
+      try { science = api.scienceSnapshotSince(scienceRevision) || {}; }
+      catch (error) { console.error('[OMEGAS] Leitura auxiliar indisponível', error); }
       const nextRevision = Number(science.revision || scienceRevision || 0);
       // Ciência igual (changed:false) e mesmo estado de recálculo: nada a gravar no store, nenhum redesenho.
       const refreshing = science.refreshing === true;
@@ -298,22 +315,32 @@
     }
 
     if (route === 'tools' || route === 'sessions') {
-      patch.sessionStatus = api.sessionStatus() || {};
-      patch.logs = api.logs() || [];
+      try { patch.sessionStatus = api.sessionStatus() || {}; }
+      catch (error) { console.error('[OMEGAS] Situação das gravações indisponível', error); }
+      try { patch.logs = api.logs() || []; }
+      catch (error) { console.error('[OMEGAS] Registro indisponível', error); }
       // Listar as gravações lê o disco (manifesto e tamanho de cada uma): não a cada 2 s. Só ao entrar na aba, quando
       // a gravação começa/para, quando algo pede atualização (omegas-refresh).
       const sessionsKey = `${patch.sessionStatus.recording === true}:${patch.sessionStatus.sessionId ?? ''}`;
       if (!Array.isArray(state.sessions) || sessionsKey !== toolsSessionsKey || toolsSessionsStale) {
-        patch.sessions = api.sessions() || [];
+        try { patch.sessions = api.sessions() || []; }
+        catch (error) { console.error('[OMEGAS] Lista de gravações indisponível', error); }
         toolsSessionsKey = sessionsKey;
         toolsSessionsStale = false;
       }
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if ((route === 'tools' || route === 'sessions') && !toolsEditing()) utilities?.render(updated);
-    if (route === 'tools') advanced?.refresh();
-    else if (advanced?.open) advanced.refresh(); // fora de Ferramentas: só desarma a prévia
+    if ((route === 'tools' || route === 'sessions') && !toolsEditing()) {
+      try { utilities?.render(updated); }
+      catch (error) { console.error('[OMEGAS] Ferramentas auxiliares indisponíveis', error); }
+    }
+    if (route === 'tools') {
+      try { if (advanced) advanced.refresh(); else toolsUnavailable(); }
+      catch (error) { toolsUnavailable(error); }
+    } else if (advanced?.open) {
+      try { advanced.refresh(); } catch (error) { console.error('[OMEGAS] Falha ao fechar Ferramentas', error); }
+    }
   }
 
   let toolsSessionsKey = '';
@@ -324,9 +351,16 @@
    * quadro do toque, como antes); se o operador já saiu da aba quando o script chegou, não ativa a tela errada.
    */
   function activateRoute(route, context) {
-    const pending = ui.loadRoute ? ui.loadRoute(route) : null;
+    let pending;
+    try { pending = ui.loadRoute ? ui.loadRoute(route) : null; }
+    catch (error) { if (route === 'tools') toolsUnavailable(error); return; }
     if (!pending) { enterRoute(route, context); return; }
-    pending.then(() => { if (store.get().route === route) enterRoute(route, context); });
+    if (route === 'tools') {
+      const host = byId('toolAdvanced');
+      if (host && !host.childElementCount) host.innerHTML = '<div class="tool-tile">Abrindo ferramentas…</div>';
+    }
+    pending.then(() => { if (store.get().route === route) enterRoute(route, context); })
+      .catch(error => { if (route === 'tools') toolsUnavailable(error); else console.error('[OMEGAS] Tela não abriu', error); });
   }
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
@@ -362,7 +396,13 @@
     if (route === 'tools' || route === 'sessions') {
       ensureTools();
       toolsSessionsStale = true; // entrar na aba relista as gravações
-      if (!toolsEditing()) utilities?.render(store.get());
+      // Anti-apagão aparece no próprio toque, sem depender de leituras auxiliares/arquivos.
+      if (route === 'tools') {
+        try { if (advanced) advanced.refresh(); else toolsUnavailable(); }
+        catch (error) { toolsUnavailable(error); }
+      }
+      try { if (!toolsEditing()) utilities?.render(store.get()); }
+      catch (error) { console.error('[OMEGAS] App e arquivos não abriu', error); if (route === 'tools' && !advanced) toolsUnavailable(error); }
       afterPaint(refreshContext);
     }
   }
@@ -378,6 +418,13 @@
 
   function bindGlobalEvents() {
     routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
+    byId('toolAdvanced')?.addEventListener('click', event => {
+      if (!event.target.closest('[data-tools-retry]')) return;
+      const pending = !ui.AdvancedPanel ? ui.retryRoute?.('tools') : null;
+      if (pending) pending.then(() => { if (store.get().route === 'tools') enterRoute('tools'); })
+        .catch(error => toolsUnavailable(error));
+      else enterRoute('tools');
+    });
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
 
     document.addEventListener('visibilitychange', () => {

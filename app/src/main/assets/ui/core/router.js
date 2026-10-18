@@ -17,12 +17,16 @@
     }
     const entry = { done: false, waiters: typeof onload === 'function' ? [onload] : [] };
     scripts.set(src, entry);
-    const finish = () => { entry.done = true; entry.waiters.splice(0).forEach(fn => fn()); };
+    const finish = (ok) => {
+      entry.done = ok;
+      if (!ok) scripts.delete(src); // Falha não pode ficar guardada como sucesso.
+      entry.waiters.splice(0).forEach(fn => fn());
+    };
     const script = document.createElement('script');
     script.src = src;
     script.dataset.omegasExtension = src;
-    script.onload = finish;
-    script.onerror = () => { console.error('[OMEGAS router] extensão não carregada:', src); finish(); };
+    script.onload = () => finish(true);
+    script.onerror = () => { console.error('[OMEGAS router] extensão não carregada:', src); finish(false); };
     document.head.appendChild(script);
   }
 
@@ -82,6 +86,12 @@
   ns.Router = Router;
   ns.ROUTES = ROUTES;
   ns.loadRoute = loadRoute;
+  // Nova tentativa apenas por toque do operador: não cria repetição automática.
+  ns.retryRoute = function (route) {
+    if (!ROUTE_SCRIPTS[route]) return null;
+    ROUTE_SCRIPTS[route].forEach(src => scripts.delete(src));
+    return loadRoute(route);
+  };
 
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
   loadOptionalScript('components/live-bar.js');

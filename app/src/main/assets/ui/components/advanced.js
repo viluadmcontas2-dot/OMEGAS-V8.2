@@ -92,6 +92,7 @@
       if (box) { const input = box.querySelector('input'); if (input && !input.disabled && event.target !== input) input.focus(); return; }
       const t = event.target.closest('button');
       if (!t) return;
+      if (t.matches('[data-adv-retry]')) { this.signature = ''; this.render(); return; }
       if (t.matches('[data-adv-switch]')) {
         const entry = this.param('FLAG_CONF3');
         const words = this.A.wordsOf(entry);
@@ -197,7 +198,12 @@
       const state = this.store.get();
       if (state.route !== 'tools') return;
       this.setView();
-      this.renderLayer();
+      try { this.renderLayer(); }
+      catch (error) {
+        console.error('[OMEGAS Ferramentas] Janela de confirmação indisponível', error);
+        if (this.layer) { this.layer.hidden = true; this.layer.innerHTML = ''; }
+        this.layerSignature = '';
+      }
       const active = document.activeElement;
       if (this.view === 'valores' && active && this.host.contains(active) && active.tagName === 'INPUT') { this.paintFields(); return; }
       const fv = this.flag.view();
@@ -206,14 +212,25 @@
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
       this.host.dataset.mode = this.view === 'home' ? 'home' : 'view';
-      const cards = this.M.build(this.data.params);
-      this.host.innerHTML = this.view === 'home' ? this.renderHome(cards) : this.view === 'valores' ? this.renderValues(cards) : this.renderReadOnly(cards.find(c => c.id === this.view));
-      if (this.view === 'valores') this.paintFields();
+      try {
+        const cards = this.M.build(this.data.params);
+        this.host.innerHTML = this.view === 'home' ? this.renderHome(cards) : this.view === 'valores' ? this.renderValues(cards) : this.renderReadOnly(cards.find(c => c.id === this.view));
+        if (this.view === 'valores') this.paintFields();
+      } catch (error) {
+        console.error('[OMEGAS Ferramentas] Cartões indisponíveis', error);
+        this.host.innerHTML = this.errorCard('ferramentas');
+        this.signature = '';
+      }
+    }
+
+    errorCard(id) {
+      return `<button type="button" class="tool-tile tool-open" data-card="${escapeHtml(id)}" data-adv-retry>Não foi possível abrir esta parte. Toque para tentar de novo.</button>`;
     }
 
     renderHome(cards) {
       const busy = ['preparing', 'preview', 'writing'].includes(this.flag.view().phase);
       return cards.map(card => {
+        try {
         if (card.kind === 'switch') {
           const why = this.reason('flag');
           const state = card.on === null ? 'unknown' : card.on ? 'on' : 'off';
@@ -234,6 +251,10 @@
           <span class="tile-state">${escapeHtml(card.stateText)}</span>
           <span class="tile-go">${go}</span>
         </button>`;
+        } catch (error) {
+          console.error('[OMEGAS Ferramentas] Um cartão não abriu', error);
+          return this.errorCard(card?.id || 'parte');
+        }
       }).join('');
     }
 
