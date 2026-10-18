@@ -1156,8 +1156,8 @@
       // Disponível só depois dos AutoMatches automáticos da ECU (cota atingida) e com o aprendizado ligado.
       const manualAutoMatch = this.panel?.querySelector('#autocalManualAutoMatch');
       if (manualAutoMatch) {
-        const hideManual = !(human.autoMatchQuotaReached && human.enabled !== 0);
-        if (manualAutoMatch.hidden !== hideManual) manualAutoMatch.hidden = hideManual;
+        const showManual = !!(human.autoMatchQuotaReached && human.enabled !== 0);
+        if (manualAutoMatch.hidden === showManual) manualAutoMatch.hidden = !(human.autoMatchQuotaReached && human.enabled !== 0);
         if (!manualAutoMatch.hidden) this.renderManualAutoMatchAdvice(manualAutoMatch, snapshot);
       }
 
@@ -2093,7 +2093,7 @@
       }
       if (!host) return;
       setData(host, 'level', failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral');
-      setData(host, 'reasonCode', recoveryCode);
+      if (host.dataset.reasonCode !== recoveryCode) host.dataset.reasonCode = recoveryCode;
       setData(host, 'mutationUncertain', mutationMayHaveStarted ? 'true' : 'false');
       if (host.textContent !== text) host.textContent = text;
     }

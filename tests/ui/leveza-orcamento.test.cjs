@@ -160,6 +160,10 @@ test('releitura completa SEM mudança (vigia de 2,5 s, abrir a aba) não reescre
       await page.waitForTimeout(1200);
       const r = await page.evaluate(async fn => {
         const chamar = new Function('return (' + fn + ')()');
+        // dado parado: sem a ponte nativa o app mostra telemetria de demonstração que anda com o relógio
+        window.OmegasApp.api.presentSnapshot = () => ({ ok: true, revision: 1, data: { valid: true, ageMs: 40, telemetryAgeMs: 40, sequence: 1, live: { rpm: 1500, petrol_ms: 4, load_bar: 0.5, fuel: 'GNV', unknown_raw_19: 221 } } });
+        for (let i = 0; i < 3; i++) { window.OmegasApp.scheduler.run(); await new Promise(res => requestAnimationFrame(() => setTimeout(res, 30))); }
+        chamar(); await new Promise(res => requestAnimationFrame(() => setTimeout(res, 60))); // a primeira releitura assenta o quadro parado
         const amostra = []; let identicas = 0; let nosRecriados = 0;
         const mo = new MutationObserver(list => {
           for (const m of list) {

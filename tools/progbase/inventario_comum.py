@@ -50,7 +50,9 @@ class Binario:
     def __init__(self, caminho):
         import pefile
         self.pe = pefile.PE(caminho, fast_load=True)
-        self.pe.parse_data_directories(pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE'])
+        self.pe.parse_data_directories([pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE'],
+                                        pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT'],
+                                        pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_EXPORT']])
         with open(caminho, 'rb') as fh:
             self.raw = fh.read()
         self.sha256 = hashlib.sha256(self.raw).hexdigest()

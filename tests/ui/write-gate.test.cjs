@@ -26,5 +26,10 @@ const curve = fs.readFileSync(path.join(ui, 'screens/curve.js'), 'utf8');
 assert.match(map, /startCurveToMap\(\) \{\s*const gate = root\.OmegasWriteGate\?\.check/, 'exportação Curva K→Mapa K passa pela porta');
 assert.match(refino, /mapProposal\(\) \{[\s\S]{0,260}OmegasWriteGate\.check\(this\.eq\?\.autopilot\)\.ok\) return null/, 'proposta do Refino para o Mapa K passa pela porta');
 assert.equal(/OmegasWriteGate/.test(curve), false, 'edição manual da Curva K não é bloqueada');
-assert.match(fs.readFileSync(path.join(ui, 'index.html'), 'utf8'), /core\/write-gate\.js/, 'script carregado');
+// O script chega por evento (abrir Mapa K ou Refino, core/router.js ROUTE_SCRIPTS), nunca fica de fora de quem grava.
+const lazy = fs.readFileSync(path.join(ui, 'core/router.js'), 'utf8');
+for (const rota of ['map', 'refino']) {
+  const grupo = new RegExp(rota + ": \\[[^\\]]*'core/write-gate\\.js'").test(lazy);
+  assert.ok(grupo, 'porta de gravação carregada com a aba ' + rota);
+}
 console.log('WRITE_GATE=PASS');

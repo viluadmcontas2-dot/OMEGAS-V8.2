@@ -110,75 +110,8 @@ def amarracao(b, r):
 
 
 # ---------------------------------------------------------------- interpretador abstrato
-class Sim:
-    """Interpreta um caso das tabelas. Valores simbolicos = strings (ou numeros). Entrada 'v' (double da tela)."""
-    FPU_HELP = {A_ROUND: 'trunc'}
-
-    def __init__(self, b, modo):
-        self.b, self.modo = b, modo
-        self.reg = {}
-        self.fpu = []
-        self.mem = {}
-        self.stack = []
-        self.notas = []
-        self.leituras = set()
-        self.ramos = 0
-
-    # ---- helpers
-    def rd(self, op):
-        op = op.strip()
-        if op in ('eax', 'ebx', 'ecx', 'edx', 'esi', 'edi', 'ebp', 'esp'):
-            if op == 'ebx':
-                return 'SD'
-            return self.reg.get(op, op + '?')
-        if re.fullmatch(r'-?(0x[0-9a-f]+|\d+)', op):
-            return int(op, 0)
-        m = re.match(r'(?:(dword|word|byte|qword|xword|tbyte) ptr )?\[(.*)\]$', op)
-        if m:
-            return self.rdmem(m.group(2))
-        return op + '?'
-
-    def rdmem(self, ea):
-        ea = ea.strip()
-        m = re.fullmatch(r'ebp ([+-]) (0x[0-9a-f]+)', ea)
-        if m:
-            d = int(m.group(2), 16) * (1 if m.group(1) == '+' else -1)
-            if d == 0x10 and self.modo.startswith('set'):
-                return 'v'
-            return self.mem.get(d, 'local%+d' % d)
-        m = re.fullmatch(r'ebx \+ (0x[0-9a-f]+)', ea)
-        if m:
-            off = int(m.group(1), 16)
-            self.leituras.add(off)
-            return 'SD[0x%X]' % off
-        m = re.fullmatch(r'(0x[0-9a-f]+)', ea)
-        if m:
-            return ('K', int(m.group(1), 16))
-        return ea + '?'
-
-    def const(self, a, tam):
-        b = self.b
-        o = b.va2off(a)
-        if tam == 4:
-            return struct.unpack('<f', b.raw[o:o + 4])[0]
-        if tam == 8:
-            return struct.unpack('<d', b.raw[o:o + 8])[0]
-        if tam == 10:
-            mant, ex = struct.unpack('<QH', b.raw[o:o + 10])
-            s = -1 if ex & 0x8000 else 1
-            e = (ex & 0x7FFF) - 16383
-            return s * mant / (1 << 63) * 2.0 ** e
-        raise ValueError
-
-    def fl(self, op):
-        m = re.match(r'(dword|qword|xword|tbyte) ptr \[(.*)\]$', op)
-        if not m:
-            return None
-        sz = {'dword': 4, 'qword': 8, 'xword': 10, 'tbyte': 10}[m.group(1)]
-        v = self.rdmem(m.group(2))
-        if isinstance(v, tuple) and v[0] == 'K':
-            return self.const(v[1], sz)
-        return v
+REGS = ('eax', 'ecx', 'edx', 'esi', 'edi', 'ebx')
+HELPERS_LEITURA_VETOR = (0x976D98, 0x97947C)     # le o vetor da ECU para o cache (efeito, sem valor)
 
 
 def fmt(x):
@@ -194,14 +127,131 @@ def _bin(op, a, c):
             return {'+': a + c, '-': a - c, '*': a * c, '/': a / c}[op]
         except ZeroDivisionError:
             pass
+    if op == '*' and (a == 1 or a == 1.0):
+        return c
+    if op == '*' and (c == 1 or c == 1.0):
+        return a
     return '(%s %s %s)' % (fmt(a), op, fmt(c))
 
 
-def executar(b, ini, modo, limite=160):
-    """Segue o caso a partir de `ini`. Devolve dict(estado final, passos, ok, motivo)."""
+class Sim:
+    def __init__(self, b, modo):
+        self.b, self.modo = b, modo
+        self.reg = {}
+        self.fpu = []
+        self.mem = {}
+        self.stack = []
+        self.notas = []
+        self.leituras = set()
+        self.efeitos = []
+        self.chamadas = []
+        if modo == 'set_idx':
+            self.reg['edi'] = 'i'
+        if modo == 'get_idx':
+            self.reg['esi'] = 'i'
+
+    VAL = {'set_esc': 0x10, 'set_idx': 0x14}
+
+    def ea(self, e):
+        """Endereco efetivo [a + b*k + d] -> (tipo, deslocamento, indice)."""
+        e = e.strip()
+        N = r'(0x[0-9a-f]+|\d+)'
+        m = re.fullmatch(r'ebp ([+-]) ' + N, e)
+        if m:
+            return ('ebp', int(m.group(2), 0) * (1 if m.group(1) == '+' else -1), None)
+        m = re.fullmatch(r'(e\w\w)(?: \+ (e\w\w)\*(\d))?(?: \+ ' + N + ')?', e)
+        if m and (m.group(1) == 'ebx' or self.reg.get(m.group(1)) == 'SD'):
+            idx = None
+            if m.group(2):
+                idx = '%s*%s' % (fmt(self.val(m.group(2))), m.group(3))
+            return ('sd', int(m.group(4), 0) if m.group(4) else 0, idx)
+        m = re.fullmatch(N, e)
+        if m:
+            return ('abs', int(m.group(1), 0), None)
+        m = re.fullmatch(r'(e\w\w)\*(\d) \+ ' + N, e)
+        if m:
+            return ('tab', int(m.group(3), 0), '%s*%s' % (fmt(self.val(m.group(1))), m.group(2)))
+        m2 = re.fullmatch(r'(e\w\w)(?: \+ (e\w\w)\*(\d))?(?: \+ ' + N + ')?', e)
+        if m2:
+            return ('reg', m2, None)
+        return ('?', e, None)
+
+    def val(self, op):
+        op = op.strip()
+        if op == 'ebx':
+            return 'SD'
+        if op in REGS or op in ('ebp', 'esp'):
+            return self.reg.get(op, op + '?')
+        if re.fullmatch(r'-?(0x[0-9a-f]+|\d+)', op):
+            return int(op, 0)
+        m = re.match(r'(?:(\w+) ptr )?\[(.*)\]$', op)
+        if m:
+            return self.load(m.group(2))
+        return op + '?'
+
+    def load(self, e):
+        k, d, idx = self.ea(e)
+        if k == 'ebp':
+            if d == self.VAL.get(self.modo):
+                return 'v'
+            if d == 0xc and self.modo != 'none':
+                return 'codigo'
+            return self.mem.get(d, 'local%+d' % d)
+        if k == 'sd':
+            self.leituras.add(d)
+            if idx:
+                return 'SD[0x%X + %s]' % (d, idx)
+            return 'SD[0x%X]' % d
+        if k == 'abs':
+            return ('K', d)
+        if k == 'tab':
+            return 'TAB[0x%X + %s]' % (d, idx)
+        return '?mem'
+
+    def const(self, a, tam):
+        b = self.b
+        o = b.va2off(a)
+        if tam == 4:
+            return struct.unpack('<f', b.raw[o:o + 4])[0]
+        if tam == 8:
+            return struct.unpack('<d', b.raw[o:o + 8])[0]
+        mant, ex = struct.unpack('<QH', b.raw[o:o + 10])
+        s = -1 if ex & 0x8000 else 1
+        return s * mant / (1 << 63) * 2.0 ** ((ex & 0x7FFF) - 16383)
+
+    def fl(self, op):
+        m = re.match(r'(dword|qword|xword|tbyte) ptr \[(.*)\]$', op)
+        if not m:
+            return None
+        sz = {'dword': 4, 'qword': 8, 'xword': 10, 'tbyte': 10}[m.group(1)]
+        v = self.load(m.group(2))
+        if isinstance(v, tuple) and v[0] == 'K':
+            return self.const(v[1], sz)
+        return v
+
+    def store(self, d, v):
+        m = re.match(r'(?:\w+ ptr )?\[(.*)\]$', d)
+        k, off, idx = self.ea(m.group(1))
+        if k == 'ebp':
+            self.mem[off] = v
+        elif k == 'sd':
+            self.efeitos.append('SD[0x%X%s] := %s' % (off, '+' + idx if idx else '', fmt(v)))
+
+    def setreg(self, d, v):
+        if d in REGS:
+            self.reg[d] = v
+
+
+def _int(x):
+    return isinstance(x, int)
+
+
+def executar(b, ini, modo, limite=220):
     s = Sim(b, modo)
+    tails = {'set_esc': 0x4372B8, 'set_idx': 0x437B78, 'get_esc': 0x435BFC, 'get_idx': 0x4363D5}
     a, n = ini, 0
-    res = dict(ok=False, motivo=None, ramos=0, escrita=None, valor=None, leituras=None)
+    res = dict(ok=False, motivo=None, ramos=0, escrita=None, valor=None)
+    nr = 0
     while n < limite:
         i = b.ins(a)
         if i is None:
@@ -214,40 +264,35 @@ def executar(b, ini, modo, limite=160):
             if m == 'fld':
                 x = s.fl(o)
                 if x is None:
-                    m2 = re.match(r'st\((\d)\)', o)
-                    x = s.fpu[-1 - int(m2.group(1))]
-                if x is None or isinstance(x, tuple):
-                    raise ValueError('fld')
+                    raise ValueError('fld st')
                 s.fpu.append(x)
             elif m == 'fld1':
                 s.fpu.append(1.0)
             elif m == 'fldz':
                 s.fpu.append(0.0)
             elif m == 'fild':
-                mm = re.match(r'(dword|qword|word) ptr \[(.*)\]$', o)
-                s.fpu.append(s.rdmem(mm.group(2)))
+                mm = re.match(r'(\w+) ptr \[(.*)\]$', o)
+                s.fpu.append(s.load(mm.group(2)))
             elif m in ('fmul', 'fdiv', 'fadd', 'fsub', 'fdivr', 'fsubr'):
                 opx = {'fmul': '*', 'fdiv': '/', 'fadd': '+', 'fsub': '-', 'fdivr': '/', 'fsubr': '-'}[m]
-                rev = m in ('fdivr', 'fsubr')
-                if o.startswith(('dword', 'qword')):
-                    y = s.fl(o)
-                    x = s.fpu.pop()
-                    s.fpu.append(_bin(opx, y, x) if rev else _bin(opx, x, y))
-                else:
+                if not o.startswith(('dword', 'qword')):
                     raise ValueError('forma ' + m)
+                y = s.fl(o)
+                x = s.fpu.pop()
+                s.fpu.append(_bin(opx, y, x) if m in ('fdivr', 'fsubr') else _bin(opx, x, y))
             elif m in ('fmulp', 'fdivp', 'faddp', 'fsubp', 'fdivrp', 'fsubrp'):
                 opx = {'fmulp': '*', 'fdivp': '/', 'faddp': '+', 'fsubp': '-', 'fdivrp': '/', 'fsubrp': '-'}[m]
-                st0 = s.fpu.pop()
-                st1 = s.fpu.pop()
-                # fmulp st(1): st1 = st1 op st0 (fdivp: st1/st0 ; fdivrp: st0/st1)
-                if m in ('fdivrp', 'fsubrp'):
-                    s.fpu.append(_bin(opx, st0, st1))
-                else:
-                    s.fpu.append(_bin(opx, st1, st0))
+                st0, st1 = s.fpu.pop(), s.fpu.pop()
+                s.fpu.append(_bin(opx, st0, st1) if m in ('fdivrp', 'fsubrp') else _bin(opx, st1, st0))
             elif m == 'fxch':
                 s.fpu[-1], s.fpu[-2] = s.fpu[-2], s.fpu[-1]
             elif m == 'fchs':
                 s.fpu[-1] = _bin('*', -1, s.fpu[-1])
+            elif m == 'fstp':
+                if o == 'dword ptr [esp]':
+                    s.stack[-1] = s.fpu.pop()
+                else:
+                    s.store(o, s.fpu.pop())
             elif m in ('wait', 'nop'):
                 pass
             elif m == 'call':
@@ -255,91 +300,315 @@ def executar(b, ini, modo, limite=160):
                 if t == A_ROUND:
                     s.reg['eax'] = 'trunc(%s)' % fmt(s.fpu.pop())
                     s.reg['edx'] = 'edx?'
+                elif t in HELPERS_LEITURA_VETOR:
+                    s.efeitos.append('le_vetor_da_ecu(0x%X)' % t)
+                    s.stack.clear()
+                elif t == 0x433FFC:
+                    s.reg['eax'] = 'SD[0x2980]'
+                    s.leituras.add(0x2980)
+                    s.stack.clear()
                 else:
-                    res['motivo'] = 'chamada %s' % o
-                    break
+                    args = list(reversed(s.stack))
+                    s.chamadas.append(t)
+                    s.reg['eax'] = 'f_%X(%s)' % (t, ', '.join(fmt(x) for x in args))
+                    if '0x42a8f4' in o or t in (0x42A788, 0x42A52C, 0x42A698, 0x42A8F4):
+                        pass
+                    if modo.startswith('get'):
+                        s.fpu.append(s.reg['eax'])
+                    s.stack.clear()
             elif m == 'push':
-                s.stack.append(s.rd(o))
+                s.stack.append(s.val(o))
             elif m == 'pop':
-                s.reg[o] = s.stack.pop()
+                v_ = s.stack.pop() if s.stack else 'pop?'
+                if o in REGS:
+                    s.reg[o] = v_
+            elif m == 'add' and o.startswith('esp, '):
+                k = int(o.split(', ')[1], 0)
+                if k < 0:
+                    s.stack.extend(['slot'] * (-k // 4))
+                else:
+                    for _ in range(k // 4):
+                        if s.stack:
+                            s.stack.pop()
             elif m == 'mov':
                 d, sr = [x.strip() for x in o.split(', ', 1)]
-                if d.startswith(('dword ptr', 'word ptr', 'byte ptr')):
-                    mm = re.match(r'.*\[ebp ([+-]) (0x[0-9a-f]+)\]', d)
-                    if mm:
-                        s.mem[int(mm.group(2), 16) * (1 if mm.group(1) == '+' else -1)] = s.rd(sr)
+                if '[' in d:
+                    s.store(d, s.val(sr))
                 else:
-                    if d in ('esi', 'edi', 'eax', 'ecx', 'edx'):
-                        s.reg[d] = s.rd(sr)
-                    elif d == 'ebx':
-                        pass
+                    s.setreg(d, s.val(sr))
+            elif m == 'movzx':
+                d, sr = [x.strip() for x in o.split(', ', 1)]
+                s.setreg(d, s.val(sr))
             elif m == 'lea':
                 d, sr = [x.strip() for x in o.split(', ', 1)]
-                mm = re.match(r'dword ptr \[ebx \+ (0x[0-9a-f]+)\]$|\[ebx \+ (0x[0-9a-f]+)\]$', sr)
-                if mm:
-                    s.reg[d] = 'EA[0x%X]' % int(mm.group(1) or mm.group(2), 16)
+                inner = re.match(r'(?:\w+ ptr )?\[(.*)\]$', sr).group(1)
+                k, off, idx = s.ea(inner)
+                if k == 'sd':
+                    s.setreg(d, 'EA[0x%X%s]' % (off, '+' + idx if idx else ''))
+                elif k == 'reg':
+                    mm = off
+                    r1 = s.val(mm.group(1))
+                    t = r1
+                    if mm.group(2):
+                        t = _bin('+', t, _bin('*', s.val(mm.group(2)), int(mm.group(3))))
+                    if mm.group(4):
+                        t = _bin('+', t, int(mm.group(4), 0))
+                    s.setreg(d, t)
                 else:
-                    s.reg[d] = 'lea?'
-            elif m in ('and', 'or', 'xor', 'add', 'sub', 'imul', 'shl', 'shr', 'sar', 'neg'):
+                    s.setreg(d, 'lea?')
+            elif m in ('and', 'or', 'xor', 'add', 'sub', 'imul', 'shl', 'shr', 'sar', 'neg', 'inc', 'dec'):
                 parts = [x.strip() for x in o.split(', ')]
                 d = parts[0]
                 if m == 'xor' and len(parts) > 1 and parts[0] == parts[1]:
-                    s.reg[d] = 0
-                elif m == 'neg':
-                    s.reg[d] = _bin('*', -1, s.rd(d))
+                    s.setreg(d, 0)
+                elif m in ('neg',):
+                    s.setreg(d, _bin('*', -1, s.val(d)))
+                elif m in ('inc', 'dec'):
+                    s.setreg(d, _bin('+' if m == 'inc' else '-', s.val(d), 1))
                 else:
-                    x, y = s.rd(d), s.rd(parts[1])
+                    x = s.val(d)
+                    y = s.val(parts[1]) if len(parts) > 1 else None
                     sym = {'and': '&', 'or': '|', 'xor': '^', 'add': '+', 'sub': '-', 'imul': '*', 'shl': '<<',
                            'shr': '>>', 'sar': '>>'}[m]
-                    if isinstance(x, int) and isinstance(y, int):
+                    if _int(x) and _int(y):
                         x &= 0xFFFFFFFF
                         y &= 0xFFFFFFFF
                         r_ = {'&': x & y, '|': x | y, '^': x ^ y, '+': x + y, '-': x - y, '*': x * y,
                               '<<': x << y, '>>': x >> y}[sym]
-                        s.reg[d] = r_ & 0xFFFFFFFF
+                        v_ = r_ & 0xFFFFFFFF
                     else:
-                        s.reg[d] = '(%s %s %s)' % (fmt(x), sym, fmt(y))
+                        v_ = '(%s %s %s)' % (fmt(x), sym, fmt(y))
+                    if '[' in d:
+                        s.store(d, v_)
+                    else:
+                        s.setreg(d, v_)
             elif m == 'cdq':
                 s.reg['edx'] = 'sign(eax)'
             elif m in ('idiv', 'div'):
-                dv = s.rd(o)
-                s.reg['eax'] = '(%s // %s)' % (fmt(s.reg.get('eax')), fmt(dv)) if not (
-                    isinstance(s.reg.get('eax'), int) and isinstance(dv, int)) else int(s.reg['eax'] / dv)
-            elif m == 'movzx':
-                d, sr = [x.strip() for x in o.split(', ', 1)]
-                s.reg[d] = s.rd(sr)
+                dv = s.val(o)
+                ax = s.reg.get('eax')
+                s.reg['eax'] = int(ax / dv) if _int(ax) and _int(dv) and dv else '(%s // %s)' % (fmt(ax), fmt(dv))
             elif m == 'jmp':
                 t = int(o, 16) if re.fullmatch(r'0x[0-9a-f]+', o) else None
                 if t is None:
                     res['motivo'] = 'jmp indireto'
                     break
-                if modo == 'set_esc' and t == TAILS_SET_ESC or modo == 'set_idx' and t == TAILS_SET_IDX:
-                    res.update(ok=True, escrita=dict(valor=s.reg.get('esi'), vetor=s.reg.get('eax'),
-                                                     cache=s.reg.get('edi')))
-                    break
-                if modo == 'get_esc' and t == TAB['get_esc']['tail']:
-                    res.update(ok=True, valor=s.fpu[-1] if s.fpu else None)
+                if t == tails[modo]:
+                    if modo in ('set_esc', 'set_idx'):
+                        res.update(ok=True, escrita=dict(valor=s.reg.get('esi'), vetor=s.reg.get('eax'),
+                                                         cache=(s.reg.get('edi') if modo == 'set_esc' else
+                                                                s.mem.get(-4))))
+                    else:
+                        res.update(ok=True, valor=s.fpu[-1] if s.fpu else None)
                     break
                 a = t
                 continue
-            elif m.startswith('j') and m != 'jmp':
-                s.ramos += 1
-                res['ramos'] = s.ramos
-                # segue o fall-through; o ramo alternativo fica registrado
+            elif m.startswith('j'):
+                nr += 1
                 s.notas.append('desvio %s %s em 0x%X' % (m, o, a))
             elif m == 'ret':
-                res['motivo'] = 'ret'
+                res['motivo'] = 'ret (caso sem escrita)'
                 break
             elif m in ('cmp', 'test'):
                 pass
             else:
-                res['motivo'] = 'instrucao %s %s' % (m, o)
+                res['motivo'] = 'instrucao %s %s em 0x%X' % (m, o, a)
                 break
         except Exception as e:  # noqa: BLE001
             res['motivo'] = 'erro %s em 0x%X %s %s' % (e, a, m, o)
             break
         a = nxt
+    res['ramos'] = nr
     res['leituras'] = sorted(s.leituras)
     res['notas'] = s.notas
+    res['efeitos'] = s.efeitos
+    res['chamadas'] = s.chamadas
     res['passos'] = n
     return res
+
+
+# ---------------------------------------------------------------- catalogo de codigos
+def sc_por_nome(dfm_sd):
+    """{nome: (SerialCode, classe)} do TSTREAMDATI.txt"""
+    out, cur = {}, None
+    for l in dfm_sd.split('\n'):
+        m = re.match(r'  object (\w+): (\w+)', l)
+        if m:
+            cur = [m.group(1), m.group(2)]
+            continue
+        m = re.match(r'    SerialCode = (\d+)', l)
+        if m and cur:
+            out[cur[0]] = (int(m.group(1)), cur[1])
+    return out
+
+
+def _off(txt):
+    m = re.fullmatch(r'SD\[(0x[0-9A-Fa-f]+)\]', str(txt)) if txt is not None else None
+    return int(m.group(1), 16) if m else None
+
+
+def catalogo_codigos(b, r, dfm_sd_texto):
+    campos = r.fields('TStreamDati')
+    scn = sc_por_nome(dfm_sd_texto)
+    out = {}
+    for esc, (sn, gn) in (('esc', ('set_esc', 'get_esc')), ('idx', ('set_idx', 'get_idx'))):
+        cs, cg = casos(b, sn), casos(b, gn)
+        for c in sorted(cs):
+            rs = executar(b, cs[c], sn)
+            rg = executar(b, cg[c], gn)
+            if not (rs['ok'] or rg['ok']):
+                continue
+            e = out.setdefault(c, {})
+            rec = dict(caso_set='0x%X' % cs[c], caso_get='0x%X' % cg[c])
+            if rs['ok']:
+                w = rs['escrita']
+                off = _off(w['vetor'])
+                nome = campos.get(off)
+                rec.update(vetor=nome, vetor_offset=off, serial_code=scn.get(nome, (None,))[0],
+                           classe_vetor=scn.get(nome, (None, None))[1],
+                           set_expr=fmt(w['valor']), set_cache=fmt(w['cache']), set_notas=rs['notas'],
+                           set_chamadas=['0x%X' % x for x in rs['chamadas']], set_ramos=rs['ramos'])
+            else:
+                rec.update(set_motivo=rs['motivo'])
+            if rg['ok']:
+                rec.update(get_expr=fmt(rg['valor']), get_notas=rg['notas'], get_ramos=rg['ramos'],
+                           get_chamadas=['0x%X' % x for x in rg['chamadas']], get_efeitos=rg['efeitos'])
+            else:
+                rec.update(get_motivo=rg['motivo'])
+            e[esc] = rec
+    return out
+
+
+# ---------------------------------------------------------------- varredura de metodos do formulario
+ACESSORES = {
+    0x436444: ('SetEsc', 'Set escalar por codigo (SD, codigo, double)'),
+    0x43734C: ('SetIdx', 'Set indexado por codigo (SD, codigo, indice, double)'),
+    0x434CC0: ('GetEsc', 'Get escalar por codigo (SD, codigo)'),
+    0x435C6C: ('GetIdx', 'Get indexado por codigo (SD, codigo, indice)'),
+    0x42CFB8: ('GetFlag1', 'caixa -> bit de FLAG_CONF1 (edx=caso)'),
+    0x42D300: ('SetFlag1', 'bit de FLAG_CONF1 := ecx (edx=caso)'),
+    0x42DF14: ('GetFlag2', 'bit de FLAG_CONF2 (edx=caso)'),
+    0x42E16C: ('SetFlag2', 'bit de FLAG_CONF2 := ecx (edx=caso)'),
+    0x42E754: ('GetFlag3', 'bit de FLAG_CONF3 (edx=caso)'),
+    0x42E8D8: ('SetFlag3', 'bit de FLAG_CONF3 := ecx (edx=caso)'),
+    0x42FFC8: ('GetCombo', 'valor de combo (edx=indice 0/1)'),
+    0x43074C: ('SetCombo', 'grava combo (edx=caso)'),
+    0x9244C8: ('EnviaComando', 'protocolo: comando direto (edx=id, buffer, n)'),
+}
+# alvos de acao sobre controles (Delphi/VCL): inferidos pelo uso (INFERIDO)
+ACOES_CTRL = {0x7EDFA8: 'Visible', 0x96C73C: 'Enabled', 0x7EE08C: 'Text/Caption', 0x7EE0E0: 'Caption',
+              0x7EDFFC: 'Enabled'}
+
+
+def metodo_instrucoes(b, r, ini, fim_extra=0x3000):
+    """Instrucoes alcancaveis do metodo a partir de `ini` (segue jcc/jmp para frente e para tras, ate o proximo metodo)."""
+    ms = sorted(r.methods('TFormConfig'))
+    prox = [s for s in ms if s > ini]
+    lim = (prox[0] if prox else ini + fim_extra)
+    seen, pilha, out = set(), [ini], []
+    while pilha:
+        x = pilha.pop()
+        while x not in seen and ini <= x < lim:
+            seen.add(x)
+            i = b.ins(x)
+            if i is None:
+                break
+            out.append(i)
+            if i.mnemonic == 'ret':
+                break
+            if i.mnemonic == 'jmp':
+                try:
+                    x = int(i.op_str, 16)
+                    continue
+                except ValueError:
+                    break
+            if i.mnemonic.startswith('j'):
+                try:
+                    pilha.append(int(i.op_str, 16))
+                except ValueError:
+                    pass
+            x += i.size
+    return sorted(out, key=lambda i: i.address), lim
+
+
+def _imm_reg(seq, k, reg, janela=14):
+    """Valor imediato de `reg` antes da instrucao k (constante simples) ou None."""
+    for j in range(k - 1, max(-1, k - janela), -1):
+        t = seq[j]
+        s = t.mnemonic + ' ' + t.op_str
+        m = re.fullmatch(r'mov %s, (0x[0-9a-f]+|\d+)' % reg, s)
+        if m:
+            return int(m.group(1), 0)
+        if s == 'xor %s, %s' % (reg, reg):
+            return 0
+        if s == 'or %s, 0xffffffff' % reg:
+            return -1
+        if t.mnemonic in ('call',):
+            return None
+        if re.match(r'(mov|lea|movzx|pop) %s,' % reg, s) or re.match(r'(mov|lea|movzx) %s,' % reg[1:], s):
+            return None
+    return None
+
+
+def _pushes(seq, k, janela=24):
+    """Argumentos empilhados antes da chamada k, do mais proximo (arg1) ao mais distante. Registrador -> tenta constante."""
+    args = []
+    for j in range(k - 1, max(-1, k - janela), -1):
+        t = seq[j]
+        if t.mnemonic == 'push':
+            m = re.fullmatch(r'(0x[0-9a-f]+|\d+)', t.op_str)
+            if m:
+                args.append(int(m.group(1), 0))
+            elif t.op_str in ('eax', 'ecx', 'edx', 'ebx', 'esi', 'edi'):
+                v = _imm_reg(seq, j, t.op_str)
+                args.append(v if v is not None else t.op_str)
+            else:
+                args.append(t.op_str)
+        elif t.mnemonic in ('call', 'jmp') or t.mnemonic.startswith('j'):
+            break
+    return args
+
+
+def eventos_metodo(b, r, nome_metodo, campos_form):
+    """Resumo estruturado de um metodo: acessos ao TStreamDati, comandos diretos, acoes sobre controles."""
+    ms = r.methods('TFormConfig')
+    inv = {v: k for k, v in ms.items()}
+    if nome_metodo not in inv:
+        return None
+    seq, lim = metodo_instrucoes(b, r, inv[nome_metodo])
+    ev = []
+    for k, i in enumerate(seq):
+        if i.mnemonic != 'call':
+            continue
+        try:
+            t = int(i.op_str, 16)
+        except ValueError:
+            continue
+        if t in ACESSORES:
+            nome = ACESSORES[t][0]
+            d = dict(endereco='0x%X' % i.address, funcao=nome)
+            if nome in ('GetFlag1', 'SetFlag1', 'GetFlag2', 'SetFlag2', 'GetFlag3', 'SetFlag3', 'GetCombo', 'SetCombo'):
+                d['caso'] = _imm_reg(seq, k, 'edx')
+                if nome.startswith('Set') and nome != 'SetCombo':
+                    d['valor_ecx'] = _imm_reg(seq, k, 'ecx')
+            elif nome in ('SetEsc', 'GetEsc', 'SetIdx', 'GetIdx'):
+                p = _pushes(seq, k)
+                d['codigo'] = p[1] if len(p) > 1 else None
+                if nome in ('SetIdx', 'GetIdx'):
+                    d['indice'] = p[2] if len(p) > 2 else None
+                d['pushes'] = p
+            elif nome == 'EnviaComando':
+                d['comando_id'] = _imm_reg(seq, k, 'edx')
+                d['pushes'] = _pushes(seq, k)
+            ev.append(d)
+        elif t in ACOES_CTRL:
+            # eax = controle: ultimo `mov eax,[ebx+OFF]` antes
+            ctl = None
+            for j in range(k - 1, max(-1, k - 8), -1):
+                mm = re.fullmatch(r'mov eax, dword ptr \[ebx \+ (0x[0-9a-f]+)\]', seq[j].mnemonic + ' ' + seq[j].op_str)
+                if mm:
+                    ctl = campos_form.get(int(mm.group(1), 16))
+                    break
+            ev.append(dict(endereco='0x%X' % i.address, funcao=ACOES_CTRL[t], controle=ctl,
+                           valor_edx=_imm_reg(seq, k, 'edx')))
+    return dict(metodo=nome_metodo, endereco='0x%X' % inv[nome_metodo], fim='0x%X' % lim, n_instr=len(seq), eventos=ev)

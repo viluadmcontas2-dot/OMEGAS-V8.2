@@ -91,8 +91,10 @@ test('falha de uma prévia é atômica; leitura/escrita em curso bloqueiam prepa
 test('botão carrega módulo antes da tela e possui texto explícito de prévia',()=>{
   const html=fs.readFileSync(path.join(root,'app/src/main/assets/ui/index.html'),'utf8');
   assert.match(html,/id="curveSmoothButton"[^>]*>Suavizar<\/button>/);
-  assert.ok(html.indexOf('core/curve-smoothing.js')>=0);
-  assert.ok(html.indexOf('core/curve-smoothing.js')<html.indexOf('screens/curve.js'));
+  // A tela da Curva K e o módulo de suavização chegam ao abrir a aba (core/router.js ROUTE_SCRIPTS), o módulo primeiro.
+  const router=fs.readFileSync(path.join(root,'app/src/main/assets/ui/core/router.js'),'utf8');
+  assert.ok(router.indexOf("'core/curve-smoothing.js'")>=0);
+  assert.ok(router.indexOf("'core/curve-smoothing.js'")<router.indexOf("'screens/curve.js'"));
 });
 
 test('sem curva, curva suave e restauração pendente não criam proposta',()=>{

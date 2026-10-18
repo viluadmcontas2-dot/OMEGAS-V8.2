@@ -174,6 +174,98 @@ class Codigo:
         return novas
 
 
+TRADUTOR_GETSTRING = 0x9864B0   # TTranslatorExt::GetString(int,int): idx = posição em LANG_MAIN["LBL"] (OBS-COD)
+
+
+def decodificar(cod, a, fim):
+    """Instruções visitadas em [a,fim): [(endereço, tamanho, mnemônico, op_str)] em ordem."""
+    b = cod.b
+    out = []
+    md = b.md()
+    for k in range(a - cod.t0, min(fim - cod.t0, len(cod.vis))):
+        if cod.vis[k]:
+            o = k
+            for ins in md.disasm_lite(b.code[o:o + 16], cod.t0 + k):
+                out.append(ins)
+                break
+    return out
+
+
+def literal(b, v):
+    """Texto de um literal apontado por v (UnicodeString/AnsiString Delphi com cabeçalho, ou C string) ou None."""
+    try:
+        if not b.mapeado(v) or b.cb <= v < b.ce and False:
+            return None
+        # cabeçalho Delphi: elemsize u16 @-10, len @-4
+        ln = b.u32(v - 4)
+        es = b.u16(v - 10)
+        if es in (1, 2) and 0 < ln < 400:
+            o = b.va2off(v)
+            if es == 2:
+                t = b.raw[o:o + 2 * ln].decode('utf-16le')
+                if b.raw[o + 2 * ln:o + 2 * ln + 2] == b'\0\0' and t.isprintable():
+                    return t
+            else:
+                t = b.raw[o:o + ln].decode('latin-1')
+                if b.raw[o + ln] == 0 and t.isprintable():
+                    return t
+        o = b.va2off(v)
+        e = b.raw.find(b'\0', o, o + 200)
+        if e - o >= 4:
+            t = b.raw[o:e].decode('ascii')
+            if t.isprintable():
+                return t
+    except Exception:
+        return None
+    return None
+
+
+def resumo_funcao(cod, a, fim, nomes, campos_classe, vmts, nomes_vmt):
+    """Resumo estático de uma função (OBS-COD fatos; a interpretação fica para quem lê)."""
+    b = cod.b
+    ins = decodificar(cod, a, fim)
+    chamadas, apis, strs, idx, campos, vm = set(), set(), [], [], set(), set()
+    tinha = {}
+    for k, (ad, sz, mn, op) in enumerate(ins):
+        if mn == 'call':
+            if HEX.match(op):
+                t = int(op, 16)
+                chamadas.add(t)
+                if t == TRADUTOR_GETSTRING:
+                    for (_, _, m2, o2) in reversed(ins[max(0, k - 14):k]):
+                        if m2 == 'push' and re.fullmatch(r'(0x[0-9a-f]+|\d+)', o2):
+                            idx.append(int(o2, 0))
+                            break
+                elif t in cod.thunk and isinstance(cod.thunk[t], str):
+                    apis.add(cod.thunk[t])
+            elif op.startswith('dword ptr [0x'):
+                try:
+                    nm = cod.iat.get(int(op[11:-1], 16))
+                except ValueError:
+                    nm = None
+                if nm:
+                    apis.add(nm)
+        for m in re.finditer(r'0x[0-9a-f]{5,8}', op):
+            v = int(m.group(0), 16)
+            if mn in ('push', 'mov', 'lea') and v >= 0x400000 and not (b.cb <= v < b.ce and v in vmts):
+                if v in vmts:
+                    vm.add(vmts[v])
+                else:
+                    t = literal(b, v)
+                    if t and len(t) >= 2 and t not in strs:
+                        strs.append(t)
+            if v in vmts:
+                vm.add(vmts[v])
+        m = re.search(r'\[(ebx|esi|edi) \+ (0x[0-9a-f]+)\]', op)
+        if m:
+            d = int(m.group(2), 16)
+            if d in campos_classe:
+                campos.add(campos_classe[d])
+    return {'tamanho_bytes': (ins[-1][0] + ins[-1][1] - a) if ins else 0, 'n_instrucoes': len(ins),
+            'chamadas': sorted(chamadas), 'apis': sorted(apis), 'literais': strs[:12],
+            'i18n_idx': idx, 'campos': sorted(campos), 'classes_referidas': sorted(vm)}
+
+
 def unidades(b):
     """[(nome, fim_inclusivo)] ordenado: marcadores @@X@Initialize/Finalize do PE (DERIVADO: fim de cada unidade)."""
     ini, fin = {}, {}

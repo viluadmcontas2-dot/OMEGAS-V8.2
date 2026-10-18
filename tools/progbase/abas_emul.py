@@ -189,3 +189,76 @@ class MaquinaAbas(C._Maquina):
 
     def valor(self, nome):
         return self.f64(self.controles[nome] + OFF_NUM_VALUE)
+
+
+# ====================================================================== sessões de emulação
+class Sessao:
+    """Uma máquina montada uma vez, restaurada (snapshot) antes de cada cenário."""
+
+    def __init__(self, exe, ctx=None, dfm_form=None, dfm_sd=None):
+        self.ctx = ctx or A.Ctx(exe)
+        self.exe = exe
+        self.form_idx = dfm_form or A.indexa(A.dfm_arvore())
+        self.sd_idx = dfm_sd or A.indexa(A.dfm_arvore(A.DFM_STREAM))
+        self.m = MaquinaAbas(exe, self.ctx)
+        self.m.montar_sd(self.sd_idx)
+        self.m.montar_form(self.form_idx)
+        self._ui_hooks()
+        self._snap = None
+
+    # -------------------------------------------------------------- hooks de UI (camada de janela do VCL)
+    def _ui_hooks(self):
+        m = self.m
+
+        def set_visible(mm, r, a):
+            mm.efeitos.append(('visible', mm.controle_de.get(r['eax'], hex(r['eax'])), r['edx'] & 1))
+            mm.w8(r['eax'] + OFF_VISIBLE, r['edx'] & 1)
+        m.hook(0x7EDFA8, set_visible, 0)
+        # TNumericEdit: "valor atual" = double em +0x2E0 (a função original lê o Text; aqui devolve o valor do campo)
+        m.redireciona(0x96BA2C, bytes.fromhex('DD80E0020000C3'))
+
+    # -------------------------------------------------------------- snapshot
+    def _regioes(self):
+        m = self.m
+        sec = {s.Name.rstrip(b'\0'): s for s in m.ctx.b.pe.sections}
+        d = sec[b'.data']
+        return [(m.base + d.VirtualAddress, (d.Misc_VirtualSize + 0xFFF) & ~0xFFF),
+                (C.HEAP, m._heap - C.HEAP + 0x100), (C.PILHA, C.PILHA_TAM), (C.TEB, 0x1000)]
+
+    def salvar(self):
+        self._snap = [(a, bytes(self.m.uc.mem_read(a, n))) for a, n in self._regioes()]
+        self._snap_state = (self.m._heap, dict(self.m.sentinela))
+
+    def restaurar(self):
+        for a, d in self._snap:
+            self.m.uc.mem_write(a, d)
+        m = self.m
+        m._heap = self._snap_state[0]
+        m.ecu.quadros = []
+        m.ecu.acc = bytearray()
+        m.ecu.rx = bytearray()
+        m.escritas = []
+        m.efeitos = []
+        m.erro = None
+        m.instr = 0
+        m.entradas = set()
+        m.contagem_stubs = {}
+        m._prev = None
+
+    def cenario(self):
+        if self._snap is None:
+            self.salvar()
+        self.restaurar()
+        return self.m
+
+    # -------------------------------------------------------------- execução de um handler
+    def rodar(self, m, endereco, sender, extra=None):
+        """Chama handler(Self=form, Sender, ...) e devolve dict {quadros, efeitos, erro, instr}."""
+        key = m.alloc(16)
+        m.w32(key, 13)
+        regs = {'eax': m.form, 'edx': sender, 'ecx': key}
+        regs.update(extra or {})
+        ret = m.chamar(endereco, regs)
+        r = m.resultado(ret)
+        return {'quadros': r['quadros'], 'efeitos': list(m.efeitos), 'erro': r['erro'], 'instr': r['instrucoes'],
+                'stubs': r['stubs'], 'funcoes': r['funcoes_executadas']}
