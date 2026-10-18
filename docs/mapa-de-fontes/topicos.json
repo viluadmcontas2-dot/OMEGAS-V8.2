@@ -124,9 +124,12 @@
       "repo": [
         ".github/workflows/ci.yml (job grafo)",
         "tools/mapa_de_fontes.py",
-        "docs/mapa-de-fontes/MAPA.md"
+        "docs/mapa-de-fontes/MAPA.md",
+        "tools/grafo_conhecimento.py",
+        "docs/mapa-de-fontes/entidades.json"
       ],
-      "falta": "Extração semântica de docs (LLM) não roda na CI; o grafo da CI é de código e estrutura."
+      "falta": "Extração semântica de docs (LLM) não roda na CI; o grafo da CI é de código e estrutura.",
+      "como_obter": "graphify update . && python3 tools/grafo_conhecimento.py ; depois: graphify path \"conceito:ANTI_STALLO\" \"<símbolo>\" --undirected"
     }
   ]
 }

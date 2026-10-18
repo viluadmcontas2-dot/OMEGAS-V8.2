@@ -1,0 +1,74 @@
+{
+  "entidades": [
+    {
+      "id": "ANTI_STALLO",
+      "rotulo": "ANTI_STALLO (anti-apagão da ECU)",
+      "padrao": "ANTI_STALLO|anti-stallo|un-stalling|antistallo"
+    },
+    {
+      "id": "FLAG_CONF3",
+      "rotulo": "FLAG_CONF3 (bit 0x20 = liga anti-apagão)",
+      "padrao": "FLAG_CONF3"
+    },
+    {
+      "id": "MASK_FUNCTION",
+      "rotulo": "MASK_FUNCTION (capacidades da ECU)",
+      "padrao": "MASK_FUNCTION"
+    },
+    {
+      "id": "TFormConfig",
+      "rotulo": "TFormConfig (tela de configuração do original)",
+      "padrao": "TFormConfig|TFORMCONFIG"
+    },
+    {
+      "id": "ProgBase",
+      "rotulo": "ProgBase.exe (programa original v4.2.0.6)",
+      "padrao": "ProgBase"
+    },
+    {
+      "id": "Portmon",
+      "rotulo": "Capturas Portmon (tráfego serial real)",
+      "padrao": "Portmon"
+    },
+    {
+      "id": "AutoMatch",
+      "rotulo": "AutoMatch (aprendizado nativo da ECU)",
+      "padrao": "AutoMatch"
+    },
+    {
+      "id": "AutoCal",
+      "rotulo": "AutoCal (autocalibração nativa)",
+      "padrao": "AutoCal"
+    },
+    {
+      "id": "CurvaK",
+      "rotulo": "Curva K (30 nós)",
+      "padrao": "Curva K|curva K|MUL_ACT"
+    },
+    {
+      "id": "MapaK",
+      "rotulo": "Mapa K",
+      "padrao": "Mapa K|mapa K"
+    },
+    {
+      "id": "Apagao",
+      "rotulo": "Apagões do motor em GNV",
+      "padrao": "apag[ãa]o|apagões|stall"
+    },
+    {
+      "id": "D1",
+      "rotulo": "D1 (sugestão após AutoMatch)",
+      "padrao": "\\bD1\\b|d1_decision"
+    },
+    {
+      "id": "EventosSemTempo",
+      "rotulo": "Tudo por evento, nada por tempo",
+      "padrao": "por evento|sem tempo|EVENTOS-SEM-TEMPO"
+    },
+    {
+      "id": "Graphify",
+      "rotulo": "Graphify / mapa de fontes",
+      "padrao": "graphify|Graphify|mapa de fontes|MAPA\\.md"
+    }
+  ]
+}

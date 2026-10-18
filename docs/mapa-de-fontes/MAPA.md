@@ -87,6 +87,9 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - No repo: .github/workflows/ci.yml (job grafo)
 - No repo: tools/mapa_de_fontes.py
 - No repo: docs/mapa-de-fontes/MAPA.md
+- No repo: tools/grafo_conhecimento.py
+- No repo: docs/mapa-de-fontes/entidades.json
+- **Como obter:** graphify update . && python3 tools/grafo_conhecimento.py ; depois: graphify path "conceito:ANTI_STALLO" "<símbolo>" --undirected
 - **Falta:** Extração semântica de docs (LLM) não roda na CI; o grafo da CI é de código e estrutura.
 
 ## Inventário do Drive

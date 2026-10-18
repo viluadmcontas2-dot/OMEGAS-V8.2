@@ -76,3 +76,8 @@ Leitura em português simples: é a estratégia que, com a rotação baixa (até
 
 ## Correção (tela decodificada)
 A tela do original está em `TFormConfig`, aba "Iniettori" (`docs/evidence/2026-10-18-tela-anti-stallo-original.md`). Unidades: campo 0 = rpm; 1, 3 e 4 = rpm/ciclo; **campo 2 = ms** (não é rpm). Os controles ficam `Visible=False` no desenho da tela; só a caixa "Abilitazione" é visível por padrão. Onde a caixa é gravada continua DESCONHECIDO (código Delphi).
+
+## Pesquisa na web (2026-10-18)
+- O **manual oficial público do software Omegas 2.16.4 C** ([landi.pl](https://landi.pl/assets/files/OMEGAS/MANUALE_SW_2164C_gb1.pdf), 15,8 MB; texto convertido e pesquisado) **não menciona "anti-stallo" nem "un-stalling"** (0 ocorrências): é uma função das versões novas do ProgBase (4.2.0.6), sem documentação pública. A fonte do significado é o próprio ProgBase (rótulos da tela + código), não a web.
+- O mesmo manual documenta vizinhas úteis: "Leaning number injections" (nota: útil "quando o motor para ou tende a parar ao voltar à marcha lenta por mistura rica/pobre demais" — é o `NUMERO_INIETTATE_SMAGRIMENTO`), "Return to petrol" (20 injeções de gasolina ao voltar a rpm alto) e a rpm abaixo da qual roda sempre a gasolina.
+- Buscas por "Enable un-stalling strategy", "Max RPM to enable un-stalling" e "Abilitazione anti-stallo" não retornaram página nenhuma com esses textos; só material genérico de anti-apagão (patentes e [Wikipedia: Anti-stall](https://en.wikipedia.org/wiki/Anti-stall)). **O dono relatou ter confirmado o conceito no Google; o link dele não foi recebido aqui** (citar quando vier).
