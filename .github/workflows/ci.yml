@@ -2,7 +2,7 @@ name: OMEGAS VERMELHO CI
 
 on:
   push:
-    branches: [ OmegasVermelho ]
+    branches: [ OmegasVermelho, 'claude/carregar-sessao-r7j85r' ]
   pull_request:
     branches: [ OmegasVermelho ]
   workflow_dispatch:
