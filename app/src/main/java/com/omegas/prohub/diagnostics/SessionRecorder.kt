@@ -658,6 +658,7 @@ class SessionRecorder(
                 "k_batch_confirmed",
                 "buffer_write_probe",
                 "autocal_pre_automatch_state",
+                "param_snapshot",
             )
             if (eventCount % 32L == 0L || critical) writer?.flush()
             if (critical) syncToDisk()
@@ -888,6 +889,7 @@ Tipos principais:
   mudança do AutoMatch;
 - autocal_pre_automatch_state: última leitura das bandas do GNV (contadores, zonas, buffers, MUL_ACT) logo antes de a ECU mudar a contagem de AutoMatch;
   responde "o que a ECU tinha quando decidiu?" (counterAgeMs = idade da leitura; campo desconhecido = nulo, nunca 0);
+- param_snapshot: leitura SÓ-LEITURA de ~33 parâmetros da ECU (ANTI_STALLO, troca de combustível, corte/retorno, regras de aquisição do AutoCal) uma vez por conexão; params.NOME = {address, state, values}; desconhecido = values nulo;
 - buffer_write_probe: resultado da sonda de escrita única nos pontos do GNV (só por toque do dono em Ferramentas);
 - export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.
 

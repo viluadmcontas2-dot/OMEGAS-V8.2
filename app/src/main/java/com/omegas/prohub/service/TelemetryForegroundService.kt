@@ -76,6 +76,7 @@ class TelemetryForegroundService : Service() {
     private var autoReadSeenAtMs = 0L
     private var autoReadLastOkAtMs = 0L
     private var autoReadAttempts = 0
+    @Volatile private var parametersRead = false
     /** Quem pediu a leitura em curso: UI (botão/abertura de tela), AUTO_START ou AUTO_PERIODIC. Vai junto no evento da sessão. */
     @Volatile private var readTrigger = "UI"
     /** Última curva vista (factorsRaw em texto) e quando o app gravou a última curva; classificam a origem de cada mudança. */
@@ -106,6 +107,7 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var kFactor: KFactorManager
     lateinit var bufferProbe: com.omegas.prohub.autocal.BufferWriteProbe
+    lateinit var parameterReader: com.omegas.prohub.autocal.EcuParameterReader
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
         private set
@@ -233,6 +235,7 @@ class TelemetryForegroundService : Service() {
             },
             publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
         )
+        parameterReader = com.omegas.prohub.autocal.EcuParameterReader(recordingSerial)
         bufferProbe = com.omegas.prohub.autocal.BufferWriteProbe(recordingSerial) { type, data ->
             sessionRecorder.record(type, "buffer_probe", data, force = true)
         }
@@ -808,7 +811,7 @@ class TelemetryForegroundService : Service() {
         if (sid <= 0L) return
         val now = System.currentTimeMillis()
         if (sid != autoReadSeenSessionId) {
-            autoReadSeenSessionId = sid; autoReadSeenAtMs = now; autoReadAttempts = 0; autoReadLastOkAtMs = 0L
+            autoReadSeenSessionId = sid; autoReadSeenAtMs = now; autoReadAttempts = 0; autoReadLastOkAtMs = 0L; parametersRead = false
             return
         }
         val first = autoReadLastOkAtMs == 0L
@@ -820,6 +823,15 @@ class TelemetryForegroundService : Service() {
                 readTrigger = if (first) "AUTO_START" else "AUTO_PERIODIC"
                 val curve = kFactor.readCurve()
                 val map = kWriter.readFullMap()
+                if (first && !parametersRead) {
+                    // Só leitura: ANTI_STALLO, troca de combustível, corte e regras de aquisição da ECU, uma vez por conexão.
+                    try {
+                        sessionRecorder.record("param_snapshot", "ecu_params", parameterReader.readOnce("AUTO_START"), force = true)
+                        parametersRead = true
+                    } catch (error: Exception) {
+                        log.add("WARN", "AUTO-READ", "Leitura de parâmetros falhou: ${error.message}")
+                    }
+                }
                 if (first) {
                     if (curve.optBoolean("ok", false) && map.optBoolean("ok", false)) autoReadLastOkAtMs = System.currentTimeMillis()
                     else log.add("WARN", "AUTO-READ", "Leitura automática incompleta (curva=${curve.optBoolean("ok", false)} mapa=${map.optBoolean("ok", false)}); tentativa $autoReadAttempts")
