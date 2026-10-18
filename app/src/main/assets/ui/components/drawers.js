@@ -226,7 +226,7 @@
           if (this.store.get?.()?.status?.usbConnected === false) {
             this.bufferProbePoll?.();
             this.bufferProbeRunning = false;
-            this.setProbeNote('USB desconectado: o cabo soltou. O resultado fica na gravação da viagem.');
+            this.setProbeNote('O cabo soltou. O resultado fica na gravação da viagem.');
           }
           return;
         }

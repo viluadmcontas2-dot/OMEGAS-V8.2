@@ -110,7 +110,7 @@
         if (waiting) {
           if (this.offline()) {
             off();
-            this.fail('USB desconectado: a operação foi interrompida. Releia o Mapa K ao reconectar.');
+            this.fail('O cabo soltou: a operação foi interrompida. Releia o Mapa K ao reconectar.');
           }
           return;
         }
