@@ -63,6 +63,7 @@
         this.cancelRestorePreview('');
         if (fileName) this.prepareRestore(fileName);
       });
+      document.getElementById('curveSmoothButton')?.addEventListener('click', () => this.prepareSmoothing());
       document.getElementById('curvePreparePoint')?.addEventListener('click', () => this.prepareActivePoint());
       document.querySelectorAll('[data-curve-nudge]').forEach(button => button.addEventListener('click', () => this.nudgeActive(Number(button.dataset.curveNudge) || 0)));
       document.getElementById('curveClearProposals')?.addEventListener('click', () => {
@@ -549,6 +550,39 @@
       return this.points().slice().sort((a, b) =>
         Math.abs(Number(a.petrolMs) - targetMs) - Math.abs(Number(b.petrolMs) - targetMs)
       )[0] || null;
+    }
+
+    prepareSmoothing() {
+      if (this.reading || this.writing || this.drag) return;
+      if (this.restoreContext || this.proposals.size) {
+        this.alert('Confira ou limpe a prévia atual antes de suavizar.');
+        return;
+      }
+      const points = this.points();
+      if (points.length !== 30 || points.some((point, index) => Number(point.index) !== index)) {
+        this.alert('Aguarde a leitura dos 30 pontos da Curva K.');
+        return;
+      }
+      try {
+        const result = ns.CurveSmoothing.smooth(points.map(point => point.factor));
+        if (!result.changed.length) {
+          this.alert('A curva já está suave. Nenhum ponto foi alterado.');
+          return;
+        }
+        // Validar todos antes de aceitar qualquer um: mesma prévia nativa do arrasto.
+        const previews = result.changed.map(change => this.api.previewCurvePoint(change.index, change.after));
+        const failed = previews.find(preview => !preview?.ok);
+        if (previews.some(preview => !preview?.ok)) {
+          this.alert(failed?.error || 'Não foi possível preparar a curva. Releia a ECU.');
+          return;
+        }
+        previews.forEach(preview => this.acceptPreview(preview, true));
+        this.renderChart();
+        this.renderProposalList();
+        this.alert('Confira os pontos preparados; nada foi gravado. Para aplicar, toque em Gravar na ECU.');
+      } catch (error) {
+        this.alert(error.message || 'Não foi possível suavizar a curva.');
+      }
     }
 
     prepareActivePoint() {
