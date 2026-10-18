@@ -2,6 +2,14 @@
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
+## Último APK (2026-10-18, v5: sonda de escrita + parâmetros reais + conselho do AutoMatch manual)
+
+- Workflow `verde-apk-now.yml`, run `39095634820` (SUCCESS: contratos, testes JVM, lint e build), commit `015c33b6a860a577a5523fb78520dd6fa7789e1d`; `ci.yml` run `39095595581` (SUCCESS) no commit anterior `dda66a9`, só docs de diferença.
+- Artifact `omegas-vermelho-apk-015c33b6…` (id `12124129704`), 4.847.822 bytes, digest do ZIP `sha256:6b0a83cd9affc0604cd6a6e748ec89488a64f7be98d223f9884a02f10aa7e814`. O SHA-256 do `app-debug.apk` de dentro do ZIP não foi lido por este agente (UNKNOWN até alguém baixar o artefato).
+- Contém: sonda de escrita única nos pontos do GNV (Ferramentas, toque duplo); `param_snapshot` (33 parâmetros, só leitura) por conexão; `autocal_pre_automatch_state` antes de cada AutoMatch; conselho na nota do botão AutoMatch manual (regra provisória); tudo do v4.
+- NÃO contém: re-escala do Ledger por K (evidência contra: `docs/evidence/2026-10-18-pares-do-ledger-nao-seguem-o-k.md`), nem gravação automática (D1).
+- Não validado no carro: efeito da sonda, do AutoMatch manual e dos conselhos. Detalhes: `docs/handoff/AUTOMATCH-MANUAL-2026-10-17.md`.
+
 ## Último APK (2026-10-17, v4: AutoMatch manual de volta + sessão completa)
 
 - Workflow `verde-apk-now.yml`, run `39002502126` (SUCCESS, testes + lint + build) e `ci.yml` run `39002494915` (SUCCESS), commit `a0a1953061f51480e53801448cf9916e1e4498e3` (branch `claude/carregar-sessao-r7j85r`).
