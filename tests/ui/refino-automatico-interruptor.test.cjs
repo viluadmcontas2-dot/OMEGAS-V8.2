@@ -65,9 +65,14 @@ test('a ponte nativa expõe o modo e o serviço decide só com a política', () 
   assert.match(service, /"d1_decision"/);
 });
 
-test('o serviço recusa ON e nunca chama a gravação em lote do D1', () => {
+test('não existe modo ON: a política só tem OFF e SHADOW e o serviço nunca chama a gravação em lote do D1', () => {
+  const policy = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/omegas/prohub/autocal/AutoRefinePolicy.kt'), 'utf8');
+  assert.match(policy, /enum class Mode \{ OFF, SHADOW \}/);
+  assert.match(policy, /enum class Verdict \{ SHADOW_WOULD_WRITE, SKIP \}/);
+  assert.doesNotMatch(policy, /"GRAVAR"/);
   const service = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'), 'utf8');
-  assert.match(service, /Gravação automática desativada/);
+  assert.doesNotMatch(service, /Mode\.ON\b/);
+  assert.match(service, /"Modo inválido"/);
   assert.doesNotMatch(service, /D1 · Refino automático após AutoMatch[\s\S]{0,0}startBatchWrite/);
   assert.doesNotMatch(service, /startBatchWrite\(batch, "D1/);
 });

@@ -33,7 +33,7 @@ test('texto histórico só substitui o aviso de gasolina insuficiente e não mud
 });
 test('cópia embutida deriva do JSON e carrega sem rede no WebView file', async () => {
   const api = load();
-  const d = JSON.parse(fs.readFileSync('app/src/main/assets/ui/data/gasolina-referencia.json'));
+  const d = JSON.parse(fs.readFileSync('tools/sessoes/gasolina-referencia.json'));
   const ref = await api.load();
   for (const c of d.cells) {
     const actual = ref.lookup((c.mapMin+c.mapMax)/2, Math.max(700,c.rpmMin));
@@ -42,7 +42,7 @@ test('cópia embutida deriva do JSON e carrega sem rede no WebView file', async 
   }
 });
 test('JSON real tem célula consultável e origem', () => {
-  const d = JSON.parse(fs.readFileSync('app/src/main/assets/ui/data/gasolina-referencia.json'));
+  const d = JSON.parse(fs.readFileSync('tools/sessoes/gasolina-referencia.json'));
   const c = d.cells.find(c => c.n >= 30);
   assert.equal(load().create(d).lookup((c.mapMin+c.mapMax)/2, Math.max(700,c.rpmMin)).petrolMs, c.petrolMs);
 });

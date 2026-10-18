@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
+  /** Evento que encerra uma espera de operação sem resposta final: o USB caiu. */
+  const usbOffline = () => root.OmegasApp?.store?.get?.()?.status?.usbConnected === false;
 
   // Refino OMEGAS: o "nosso AutoCal". O gráfico é O MESMO objeto do AutoCal (screens/autocal-original.js: zonas, curvas da
   // ECU, curva K, AGORA), sem o painel de aquisição à esquerda; por cima entram só os nossos pontos, a nossa curva e as marcas
@@ -526,6 +528,7 @@
     poll(onFinish) {
       let off = () => {};
       const tick = () => {
+        if (usbOffline()) { off(); this.fail('USB desconectado: a operação foi interrompida. Confira a Curva K ao reconectar.'); return; }
         const status = this.native.curveOperation() || {};
         if (status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''))) {
           return;

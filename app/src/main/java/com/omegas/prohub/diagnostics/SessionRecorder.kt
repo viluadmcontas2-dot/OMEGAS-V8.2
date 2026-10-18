@@ -891,7 +891,7 @@ Tipos principais:
 - autocal_pre_automatch_state: última leitura das bandas do GNV (contadores, zonas, buffers, MUL_ACT) logo antes de a ECU mudar a contagem de AutoMatch;
   responde "o que a ECU tinha quando decidiu?" (counterAgeMs = idade da leitura; campo desconhecido = nulo, nunca 0);
 - param_snapshot: leitura SÓ-LEITURA de ~33 parâmetros da ECU (ANTI_STALLO, troca de combustível, corte/retorno, regras de aquisição do AutoCal) uma vez por conexão; params.NOME = {address, state, values}; desconhecido = values nulo;
-- d1_decision: decisão do Refino automático depois de um AutoMatch da ECU (mode DESLIGADO/SOMBRA/LIGADO; points = o que gravaria/gravou, com as travas usadas; reason explica quando não grava; idealFactorsRaw e liveFactorsRaw para auditar);
+- d1_decision: decisão do Refino automático depois de um AutoMatch da ECU (mode OFF/SHADOW, nunca grava; points = o que sugeriria, com as travas usadas; reason explica quando não sugere; retryOnIdle = nova tentativa na borda ocupado→livre; idealFactorsRaw e liveFactorsRaw para auditar);
 - buffer_write_probe: resultado da sonda de escrita única nos pontos do GNV (só por toque do dono em Ferramentas);
 - export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.
 

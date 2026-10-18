@@ -68,7 +68,7 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 ## Gasolina × GNV × Curva K (de onde vêm os números)
 - No repo: docs/evidence/2026-10-18-quadro-gasolina-gnv-k.md
 - No repo: tools/sessoes/gerar_referencia_gasolina.py
-- No repo: app/src/main/assets/ui/data/gasolina-referencia.json
+- No repo: tools/sessoes/gasolina-referencia.json
 - No repo: app/src/main/assets/ui/core/gasoline-reference.js
 - **Falta:** Mapa K por sessão ainda não cruzado nó a nó com a gasolina.
 

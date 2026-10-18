@@ -256,6 +256,11 @@
     pollCurveToMap() {
       const pending = this.curveImport;
       if (!pending || pending.phase !== 'curve') return;
+      // Sem resposta final e o USB caiu (evento): a espera termina e nada é proposto.
+      if (this.store.get()?.status?.usbConnected === false) {
+        this.finishCurveImport('USB desconectado: a leitura da Curva K foi interrompida. Nada foi proposto.');
+        return;
+      }
       const operation = this.api.curveOperation();
       if (!operation || operation.busy) {
         return;

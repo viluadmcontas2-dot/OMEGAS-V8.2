@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT))
 from tools.sessoes import corpus
 
 ORIGIN = 'docs/evidence/2026-10-18-quadro-gasolina-gnv-k.md'
-JSON_PATH = ROOT / 'app/src/main/assets/ui/data/gasolina-referencia.json'
+JSON_PATH = ROOT / 'tools/sessoes/gasolina-referencia.json'
 DOC_PATH = ROOT / ORIGIN
 EXTRA = Path('/tmp/claude-0/-home-user/57e20309-4640-5e31-b02d-4b2faf9cf2b3/scratchpad/s1838/events_0001.jsonl')
 

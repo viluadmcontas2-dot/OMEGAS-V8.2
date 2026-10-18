@@ -1,0 +1,19 @@
+{
+  "fonte": "PortmonLOGNOVO.LOG lido com tools/sessoes/portmon_ler_vetor.py (leitura de vetor 29 lo hi ck; resposta 29 53 n dados ck; checksum_ok=True em todas)",
+  "nota": "Valores u16 crus como vieram do fio. Ligação vetor->controle da aba Iniettori: só ANTI_STALLO (EditAntiStallo0..4, DataIndex 0..4) e FLAG_CONF3 (CheckAntiStallo, bit 0x20 da palavra 0) estão amarradas no código; os demais estão aqui como contexto.",
+  "vetores": {
+    "FLAG_CONF1": {"codigo": 3, "u16": [9350, 4177], "linhas": [508, 780, 434982, 1102844]},
+    "FLAG_CONF2": {"codigo": 192, "u16": [1, 0], "linhas": [752, 434954, 1102816]},
+    "FLAG_CONF3": {"codigo": 250, "u16": [0, 0], "linhas": [808, 435010, 1102872]},
+    "ANTI_STALLO": {"codigo": 307, "u16": [1600, 100, 1500, 2, 20], "linhas": [9492, 443694, 1111556]},
+    "TIPO_INIETTORE": {"codigo": 148, "u16": [9499], "linhas": [558, 2986, 437188, 1105050]},
+    "TEMPO_MAX_CORRENTE": {"codigo": 74, "u16": [1953, 0], "linhas": [4350, 438552, 1106414]},
+    "TEMPI_EXTRAINIETTATE": {"codigo": 155, "u16": [0, 0, 39], "linhas": [6852, 441054, 1108916]},
+    "GIRI_TEMPO_CUTOFF": {"codigo": 50, "u16": [0, 977], "linhas": [4016, 438218, 1106080]},
+    "ADVANCED_PARAM_INJ": {"codigo": 219, "u16": [2300, 22, 0, 0, 337, 0], "linhas": [8178], "obs": "elemento 4 muda entre leituras: 337, 248, 255 (linhas 8178, 442380, 1110242)"},
+    "ADV_PARAM_INJ": {"codigo": 241, "u16": [0, 0, 0, 0, 0, 0, 0, 0, 300, 5000, 4, 195], "linhas": [8812, 443014, 1110876]},
+    "PARAM_VARI": {"codigo": 312, "u16": [800, 0, 0, 0, 0, 0, 0, 0, 0, 0], "linhas": [9660, 443862, 1111724]},
+    "MASK_FUNCTION": {"codigo": 194, "u16": [3455, 63491, 1, 56813, 8247, 48191, 37009, 5443, 1604, 192, 0, 0, 0, 0, 0], "linhas": [1850, 436052, 1103914]}
+  },
+  "pedidos_sem_resposta_decodificada": {"WARMUP_PARAM_INJ": 306, "VH34_PARAM_INJ": 301, "PARAMETRI_EXTRA_INJ": 414}
+}

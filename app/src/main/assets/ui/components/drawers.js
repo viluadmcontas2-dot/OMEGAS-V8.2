@@ -142,14 +142,25 @@
       if (!this.bufferProbeArmed) {
         this.bufferProbeArmed = true;
         label.textContent = 'Toque de novo para escrever 1 valor';
-        const disarm = state => {
-          if (state.route === 'tools' && state.status?.usbConnected !== false) return;
+        const disarmNow = () => {
           this.bufferProbeArmed = false;
           label.textContent = '1 valor, banda cheia, volta ao original (carro parado)';
           this.bufferProbeDisarm?.();
         };
+        // Desarma na troca de rota, no USB desconectado e em qualquer outro toque (evento, nunca prazo).
+        const disarm = state => {
+          if (state.route === 'tools' && state.status?.usbConnected !== false) return;
+          disarmNow();
+        };
+        const otherClick = event => { if (!button.contains?.(event?.target)) disarmNow(); };
         this.bufferProbeDisarm?.();
-        this.bufferProbeDisarm = this.store.subscribe(disarm);
+        const unsubscribe = this.store.subscribe(disarm);
+        document.addEventListener?.('click', otherClick, true);
+        this.bufferProbeDisarm = () => {
+          this.bufferProbeDisarm = null;
+          unsubscribe?.();
+          document.removeEventListener?.('click', otherClick, true);
+        };
         return;
       }
       this.bufferProbeDisarm?.();
@@ -166,7 +177,15 @@
       const poll = () => {
         let status = {};
         try { status = JSON.parse(bridge.getBufferWriteProbeStatus()); } catch (_) { status = {}; }
-        if (status.state !== 'DONE') return;
+        if (status.state !== 'DONE') {
+          // Sem resposta final e o USB caiu: a espera termina; o resultado (se vier) fica na sessão.
+          if (this.store.get?.()?.status?.usbConnected === false) {
+            this.bufferProbePoll?.();
+            this.bufferProbeRunning = false;
+            label.textContent = 'USB desconectado: resultado da sonda na sessão gravada';
+          }
+          return;
+        }
         this.bufferProbePoll?.();
         this.bufferProbeRunning = false;
         const text = Drawers.describeBufferProbe(status);

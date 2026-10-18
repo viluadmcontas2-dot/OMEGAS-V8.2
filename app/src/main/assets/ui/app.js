@@ -293,10 +293,10 @@
       // Listar as gravações lê o disco (manifesto e tamanho de cada uma): não a cada 2 s. Só ao entrar na aba, quando
       // a gravação começa/para, quando algo pede atualização (omegas-refresh).
       const sessionsKey = `${patch.sessionStatus.recording === true}:${patch.sessionStatus.sessionId ?? ''}`;
-      if (!Array.isArray(state.sessions) || sessionsKey !== toolsSessionsKey || toolsSessionsAt === 0) {
+      if (!Array.isArray(state.sessions) || sessionsKey !== toolsSessionsKey || toolsSessionsStale) {
         patch.sessions = api.sessions() || [];
         toolsSessionsKey = sessionsKey;
-        toolsSessionsAt = 1;
+        toolsSessionsStale = false;
       }
     }
     if (Object.keys(patch).length) store.patch(patch);
@@ -305,7 +305,8 @@
   }
 
   let toolsSessionsKey = '';
-  let toolsSessionsAt = 0;
+  /** Relistar gravações no próximo contexto (entrar na aba, omegas-refresh). */
+  let toolsSessionsStale = true;
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
   function activateRoute(route, context) {
     // Cursor em tempo real nos dois gráficos de aquisição (AutoCal e Refino, dono 2026-10-13); demais abas a 200 ms.
@@ -337,7 +338,7 @@
       return;
     }
     if (route === 'tools') {
-      toolsSessionsAt = 0; // entrar na aba relista as gravações
+      toolsSessionsStale = true; // entrar na aba relista as gravações
       if (!toolsEditing()) utilities?.render(store.get());
       afterPaint(refreshContext);
     }
@@ -371,7 +372,7 @@
     });
 
     root.addEventListener('omegas-refresh', () => {
-      toolsSessionsAt = 0; // algo mudou (gravação apagada, exportada…): relista ao atualizar
+      toolsSessionsStale = true; // algo mudou (gravação apagada, exportada…): relista ao atualizar
       afterPaint(() => {
         refreshStatus();
         refreshContext();

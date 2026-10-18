@@ -26,6 +26,8 @@
       this.editor = editor;
       this.onChange = typeof onChange === 'function' ? onChange : () => {};
       this.subscribe = env?.subscribe || (fn => globalThis.OmegasApp.scheduler.addHook('fast', fn));
+      // Evento que encerra a espera sem resposta final: USB desconectado.
+      this.offline = env?.offline || (() => globalThis.OmegasApp?.store?.get?.()?.status?.usbConnected === false);
       this.state = { phase: 'idle' };
     }
 
@@ -102,6 +104,11 @@
     poll(read, onFinish, accept = () => true) {
       let off = () => {};
       const tick = () => {
+        if (this.offline()) {
+          off();
+          this.fail('USB desconectado: a operação foi interrompida. Releia o Mapa K ao reconectar.');
+          return;
+        }
         const status = read() || {};
         const waiting = !accept(status) || status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''));
         if (waiting) {
