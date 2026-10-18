@@ -32,11 +32,13 @@ def render(topicos, inv):
             out.append(f"- **Falta:** {t['falta']}")
         out.append('')
     if inv:
-        itens = inv.get('arquivos', [])
+        itens = [i for i in inv.get('itens', inv.get('arquivos', [])) if i.get('bytes') is not None]
         grandes = [i for i in itens if not i.get('baixavel_pelo_conector', True)]
         out += ['## Inventário do Drive', f"- {len(itens)} arquivos listados; {len(grandes)} acima do limite do conector (10 MB):"]
-        for i in sorted(grandes, key=lambda x: x['caminho']):
+        for i in sorted(grandes, key=lambda x: -x['bytes'])[:25]:
             out.append(f"  - {i['caminho']} ({i.get('bytes')} bytes, id {i['id']})")
+        if len(grandes) > 25:
+            out.append(f"  - ... e mais {len(grandes) - 25} (ver drive-inventario.json)")
         dlls = [i for i in itens if str(i.get('titulo', '')).lower().endswith('.dll')]
         out.append(f"- DLLs: {len(dlls)}")
         for i in sorted(dlls, key=lambda x: x['caminho']):

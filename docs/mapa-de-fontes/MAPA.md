@@ -36,6 +36,16 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - **Como obter:** python3 tools/obter_progbase.py  (baixa pelo link direto do Drive, confere SHA-256, idempotente; o conector do Drive NÃO serve para arquivos >10 MB). Não versionar nem publicar em release do repositório público.
 - **Falta:** Decompilação do que ainda não foi lida (ex.: bit da caixa anti-stallo) está em docs/evidence/2026-10-18-anti-stallo-caixa-re.md quando o subagente concluir.
 
+## Capturas Portmon (tráfego serial real do ProgBase × ECU) e DLL do programa
+- No repo: docs/mapa-de-fontes/drive-inventario.json
+- No Drive: PortmonLOGNOVO.zip 6.029.222 bytes (baixável pelo conector): id 1idvIhV4eFGXv2VVNsU0CT6ewdtTBqNFp (pasta ARQUIVOS OMEGAS); versão de 14.170.842 bytes id 1KdnYj1CdHJTU7hHvVP4OMvrigAp58Ien (>10 MB, usar link direto)
+- No Drive: PortmonAUTOCAL.zip 15.150.667 bytes id 1RvXDA5yxU6DoPK14OSLIibYbU9uJ1nBs (>10 MB, usar link direto)
+- No Drive: PortmonAUTOCAL.LOG 162.700.984 bytes id 1KzpWOG6Ou0DRgAeA-cOVOplB8ITB87YM (pasta de outro dono, não percorrida)
+- No Drive: Resources.dll 3.289.600 bytes id 1cqhbK0bCUf4M06GidwBa_UhgIQ6XO_mm (pasta ARQUIVOS OMEGAS)
+- No Drive: firmwares .ple/.pld/.plr/.pln (47) em ARQUIVOS OMEGAS/Landi Renzo Omegas/Firmware; .s19 em Protocolo Landirenzo/firmware
+- **Como obter:** Link direto (sem conector): https://drive.usercontent.google.com/download?id=<ID>&export=download&confirm=t — funciona para arquivos compartilhados por link; conferir tamanho/SHA depois.
+- **Falta:** Inventário do Drive é MÍNIMO (a paginação do conector repete itens; ver 'nao_listadas' no JSON).
+
 ## Sessões reais (telemetria, eventos, curvas K)
 - No repo: tests/fixtures/sessoes-uteis/LEIA-ME.md
 - No repo: tests/fixtures/sessoes-uteis/drive-ids.json
@@ -75,3 +85,32 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - No repo: tools/mapa_de_fontes.py
 - No repo: docs/mapa-de-fontes/MAPA.md
 - **Falta:** Extração semântica de docs (LLM) não roda na CI; o grafo da CI é de código e estrutura.
+
+## Inventário do Drive
+- 1056 arquivos listados; 23 acima do limite do conector (10 MB):
+  - VMOMEGAS/Landirenzo.rar (1138807320 bytes, id 1A6dlpRna3ey7hCrAIQ7Bq1OFS0ZAalg4)
+  - (busca global; pasta pai 1ZAHZWfDO_lpaqUylZuOkjTqhID4YHLNn, dono viluadmcontas@gmail.com)/PortmonAUTOCAL.LOG (162700984 bytes, id 1KzpWOG6Ou0DRgAeA-cOVOplB8ITB87YM)
+  - OMEGAS/SESSOES-zipadas-por-riqueza_rank001-mais-rica.zip (128434296 bytes, id 1SLwAKF7KoCKMJRgCos-HvJqrb3-hIzT6)
+  - Apk /AZDOME_4.3.0.200.apk (122233044 bytes, id 1Pv_wfwLSk-dHuOGXxrFh77N3WD-c62UW)
+  - Projetos Carro/Copy of AZDOME_4.3.0.200.apk (122233044 bytes, id 1cz6-S_g6YCe9VDBWA8c_nYWUQJjulfml)
+  - OMEGAS/Car+Scanner+ELM+OBD2_2.1.50_APKPure.apk (60735056 bytes, id 1jrBthx-99sURNGzX1ZdcEz2HFTB7efiU)
+  - OMEGAS/DUMP.zip (21257754 bytes, id 1_ThmJg2IlYuWPUOMQPxqU5YOeqP55F_x)
+  - reverse_report/all_strings_utf16le.tsv (16332171 bytes, id 1m_OadHCwEKjicCU5xjwheKzpeOt4Z83w)
+  - ARQUIVOS OMEGAS/PortmonAUTOCAL (1).zip (15150667 bytes, id 1mzuPeWlKbV2NX0J2FuIECFYzase5kso3)
+  - OMEGAS/PortmonAUTOCAL.zip (15150667 bytes, id 1RvXDA5yxU6DoPK14OSLIibYbU9uJ1nBs)
+  - OMEGAS/Sessoes Uteis/PortmonAUTOCAL.zip (15150667 bytes, id 1Goe9C3zOVQQ28h8IsPbrhmmt4igiwewV)
+  - Protocolo Landirenzo/PortmonAUTOCAL (1) (1).zip (15150667 bytes, id 1FaoFi9XmFpovhB0oSbNoX5P80jhi1t-4)
+  - ARQUIVOS OMEGAS/PortmonLOGNOVO (1).zip (14170842 bytes, id 10s07RSG4Clg1wC0JclzL1azHKIJ7UZE0)
+  - OMEGAS/PortmonLOGNOVO.zip (14170842 bytes, id 1KdnYj1CdHJTU7hHvVP4OMvrigAp58Ien)
+  - Protocolo Landirenzo/PortmonLOGNOVO (1).zip (14170842 bytes, id 1PPBroyIZ4bgFUpNGFD9xSI4_4aMzvjmO)
+  - ARQUIVOS OMEGAS/ProgBase (3).exe (12643840 bytes, id 1VL7Nq5KD2pJB-Ohchy1JG6qVvxRo6Oga)
+  - OMEGAS/DUMP/ProgBase.exe.Dump.bin (12643840 bytes, id 1mnya31-24dyInxs77KcVRla24kRptzdP)
+  - OMEGAS/DUMP/ProgBase.exe.Dump1.bin (12643840 bytes, id 1khIP-FFt73aW2mDWArgsBNw27Q0vDqI_)
+  - OMEGAS/Progbase.exe (12643840 bytes, id 1OO6mzKKD9QLopd-wwIwjcEQn4iEg--Q1)
+  - Protocolo Landirenzo/Progbase.exe (12643840 bytes, id 1NZLR6P3CZw19j_orR6Wdy6mOFrMG0SHd)
+  - OMEGAS/DUMP/ProgBase.exe.Stri4ngs.txt (11796863 bytes, id 1DuFPDCuPRnQgahLG9jFiLRDn2SL7l7fc)
+  - OMEGAS/DUMP/ProgBase.exe.String5s.txt (11796863 bytes, id 1dBl0wEx25BOXMrCWHEM1Bbc8UhigJIly)
+  - ARQUIVOS OMEGAS/Landi Renzo Omegas(1)(1)(1).zip (10396178 bytes, id 1JJ2DmE8Z_VD3g0bu6wU5Q2sG0OJugMwx)
+- DLLs: 1
+  - ARQUIVOS OMEGAS/Resources.dll (id 1cqhbK0bCUf4M06GidwBa_UhgIQ6XO_mm, 3289600 bytes)
+- Lista completa: docs/mapa-de-fontes/drive-inventario.json
