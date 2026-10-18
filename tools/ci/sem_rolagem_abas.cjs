@@ -16,13 +16,16 @@ const { fakeBridge } = require('./_ponte_falsa.cjs');
 // Estados extras que mais crescem, por aba: [nome, toques, seletores que precisam ficar visíveis e inteiros].
 // Toque { dispatch } entrega o clique direto ao elemento (bolinha do gráfico SVG, que o AGORA pode cobrir).
 const EXTRAS = {
-  // Ferramentas > Avançado (dono, 2026-10-18): tela principal e cada aba de "Ver detalhes" também não rolam nem cortam.
+  // Ferramentas (cartões por assunto, sem abas): página 2, cartões abertos e o registro também não rolam nem cortam.
   tools: [
-    ['Avançado', ['#toolAdvancedToggle']],
-    ['Avançado: Ajustes 3', ['#toolAdvancedToggle', '[data-adv-details]']],
-    ['Avançado: Ajustes 2', ['#toolAdvancedToggle', '[data-adv-details]', '[data-adv-tab="FLAG_CONF2"]']],
-    ['Avançado: Ajustes 1', ['#toolAdvancedToggle', '[data-adv-details]', '[data-adv-tab="FLAG_CONF1"]']],
-    ['Avançado: Números', ['#toolAdvancedToggle', '[data-adv-details]', '[data-adv-tab="PARAMS"]']],
+    ['página 2', ['#toolsPageNext']],
+    ['registro do app', ['#toolsPageNext', '[data-tool-open-log]']],
+    ['anti-apagão: valores', ['[data-adv-open="valores"]']],
+    ['cartão de leitura', ['[data-adv-open="troca"]']],
+  ],
+  // Sessões é aba própria: a tela principal e o "Tamanho das gravações" aberto.
+  sessions: [
+    ['tamanho das gravações', ['.diagnostic-settings > summary']],
   ],
   autocal: [
     ['Ações avançadas', ['.autocal-reset-menu > summary']],
@@ -82,7 +85,7 @@ function measure() {
   const rr = rail?.getBoundingClientRect();
   if (!rail || !visible(rail) || rr.bottom > innerHeight + 1 || rr.height < 60) problems.push('navegação inferior não visível');
   const navButtons = [...document.querySelectorAll('.side-nav button')].filter(visible).length;
-  if (navButtons !== 5) problems.push('navegação com ' + navButtons + ' botões');
+  if (navButtons !== 6) problems.push('navegação com ' + navButtons + ' botões');
   // Barra do topo persistente: visível em TODAS as abas, com as 4 leituras inteiras e centralizadas (dono, 2026-10-13).
   const bar = document.getElementById('liveBar');
   const br = bar?.getBoundingClientRect();
@@ -104,15 +107,15 @@ function measure() {
   const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
   const failures = [];
   try {
-    for (const height of [672, 720]) {
-      const page = await browser.newPage({ viewport: { width: 1280, height } });
+    for (const [width, height] of [[1280, 672], [1280, 720], [1024, 600], [800, 480]]) {
+      const page = await browser.newPage({ viewport: { width, height } });
       const errors = [];
       page.on('pageerror', e => errors.push(String(e.message || e)));
       await page.addInitScript(fakeBridge);
       await page.goto('file://' + INDEX, { waitUntil: 'load' });
       await page.waitForTimeout(1500);
       const routes = await page.$$eval('.side-nav button[data-route]', bs => bs.map(b => b.dataset.route));
-      assert.equal(routes.length, 5, 'a navegação tem as 5 abas');
+      assert.equal(routes.length, 6, 'a navegação tem as 6 abas (Sessões é aba própria)');
       for (const route of routes) {
         for (const [label, clicks, required = []] of [['', []], ...(EXTRAS[route] || [])]) {
           await page.locator(`.side-nav button[data-route="${route}"]`).click();
@@ -127,15 +130,17 @@ function measure() {
             const problem = await page.evaluate(requiredVisible, selector);
             if (problem) result.problems.push(problem);
           }
-          const id = `${route}${label ? ' (' + label + ')' : ''}@${height}`;
-          console.log(id, result.problems.length ? 'PROBLEMA ' + result.problems.join(' | ') : 'OK');
-          if (result.problems.length) failures.push(id);
-          await page.screenshot({ path: path.join(OUT, `${route}${label ? '-' + label.replace(/\W+/g, '-') : ''}-${height}.png`) });
+          const id = `${route}${label ? ' (' + label + ')' : ''}@${width}x${height}`;
+          // Telas menores (1024x600, 800x480): só Sessões e Ferramentas foram redesenhadas; as outras entram como diagnóstico.
+          const dura = width === 1280 || route === 'sessions' || route === 'tools';
+          console.log(id, result.problems.length ? (dura ? 'PROBLEMA ' : 'diagnóstico (não redesenhada) ') + result.problems.join(' | ') : 'OK');
+          if (result.problems.length && dura) failures.push(id);
+          await page.screenshot({ path: path.join(OUT, `${route}${label ? '-' + label.replace(/\W+/g, '-') : ''}-${width}x${height}.png`) });
           // Volta ao estado normal (fecha o que abriu).
           if (clicks.length) await page.reload({ waitUntil: 'load' }).then(() => page.waitForTimeout(1200));
         }
       }
-      if (errors.length) failures.push(`erros de página @${height}: ${errors.slice(0, 3).join(' | ')}`);
+      if (errors.length) failures.push(`erros de página @${width}x${height}: ${errors.slice(0, 3).join(' | ')}`);
       await page.close();
     }
   } finally {

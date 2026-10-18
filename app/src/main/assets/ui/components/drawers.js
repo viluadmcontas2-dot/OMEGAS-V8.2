@@ -267,7 +267,7 @@
       this.autoRefineMode = next;
       this.toolsSignature = '';
       this.syncAutoRefine();
-      this.renderTools(this.store.get());
+      if (typeof this.store.get === 'function') this.renderTools(this.store.get());
     }
 
     static describeBufferProbe(status) {

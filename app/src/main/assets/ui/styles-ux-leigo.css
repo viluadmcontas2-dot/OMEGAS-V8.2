@@ -199,7 +199,7 @@
 
 /* ---------- barra do topo e navegação: legíveis de longe ---------- */
 .live-cell small { font-size: 15px; }
-.live-cell em { font-size: 14px; }
+.live-cell em { font-size: 15px; }
 .rail-status span { font-size: 18px; }
 .sess-rec .tile-state { margin-top: 0; }
 .sess-size .diagnostic-settings > summary .tile-go { margin-top: 4px; }
@@ -210,3 +210,21 @@
 .sess-size .diagnostic-settings:not([open]) .tile-go { display: inline-flex; }
 .num-box { flex: 0 0 auto; }
 @media (max-height: 640px) { .num-grid { grid-auto-rows: auto; align-content: start; } }
+@media (max-height: 520px) {
+  :root { --nav-height: 64px; }
+  .app-shell .workspace { grid-template-rows: 36px minmax(0, 1fr); }
+  .tool-back { min-height: 56px; }
+  .tool-view { gap: 6px; }
+  .tool-view > header { gap: 12px; }
+  .num-field label { font-size: 17px; white-space: nowrap; }
+  .num-box { height: 56px; }
+  .num-meta { font-size: 15px; line-height: 1.1; }
+  .screen { padding-top: 4px; padding-bottom: 4px; }
+}
+/* Legenda do gráfico do AutoCal: cabe inteira em 1280 (os itens "Curva K" e "Teto 1,8" empurravam para fora). */
+.app-shell.autocal-focus .autocal-chart-legend { gap: 6px 8px; padding-inline: 6px; }
+.app-shell.autocal-focus .autocal-chart-legend .ao-key b { font-size: 12px; }
+.app-shell.autocal-focus .autocal-chart-legend { gap: 4px 6px; }
+.app-shell.autocal-focus .autocal-chart-legend .ao-key { gap: 3px; }
+.app-shell.autocal-focus .autocal-chart-legend .ao-key svg { width: 20px; }
+@media (max-height: 520px) { .tool-switch { min-height: 56px; } #toolsDrawer .tile-line.reason { font-size: 16px; line-height: 1.1; } }

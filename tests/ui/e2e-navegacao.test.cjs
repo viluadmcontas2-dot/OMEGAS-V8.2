@@ -8,8 +8,9 @@ const assert = require('node:assert/strict');
 const T = require('./helpers/browser.cjs');
 
 const skip = T.skipReason() || false;
-const ROTAS = [['autocal', 'AutoCal'], ['refino', 'Refino'], ['map', 'Mapa K'], ['curve', 'Curva K'], ['tools', 'Ferramentas']];
-const VPS = { '360x740': T.VIEWPORTS.pequeno, '412x915': T.VIEWPORTS.grande, '1280x720': { width: 1280, height: 720 } };
+const ROTAS = [['autocal', 'AutoCal'], ['refino', 'Refino'], ['map', 'Mapa K'], ['curve', 'Curva K'], ['sessions', 'Sessões'], ['tools', 'Ferramentas']];
+// Alvo: multimídia do carro em PAISAGEM (dono, 2026-10-18): 1280x720 canônico, 1024x600 e 800x480. Retrato de celular não é alvo.
+const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });
@@ -60,35 +61,25 @@ for (const [nome, vp] of Object.entries(VPS)) {
         await T.pump(page, 12, { data: true });
         assert.equal(await page.evaluate(() => document.querySelector('.screen.active')?.dataset.screen), rota, `aba ${rotulo} ativa`);
         assert.equal(await page.locator(`.side-nav button[data-route="${rota}"]`).getAttribute('aria-current'), 'page');
-        assert.match(await page.locator('#liveBar [data-live="rpm"] b').innerText(), /^8\d\d$/, 'barra do topo com o dado da ECU emulada');
+        assert.match(await page.locator('#liveBar [data-live="rpm"] b').innerText(), /^8\d\d$/, 'barra do topo com o dado da central emulada');
         layout[rota] = await page.evaluate(medir);
         await T.shot(page, `navegacao-${nome}-${rota}`);
       }
-      // Ferramentas > Avançado e volta
+      // Ferramentas: página 2 (um cartão por função) e volta
       await T.route(app, 'tools');
-      await T.tap(page, '#toolAdvancedToggle'); await T.pump(page, 4);
-      layout['tools>avancado'] = await page.evaluate(medir);
-      await T.shot(page, `navegacao-${nome}-tools-avancado`);
-      await T.tap(page, '#toolAdvancedToggle'); await T.pump(page, 2);
+      await T.tap(page, '#toolsPageNext'); await T.pump(page, 3);
+      layout['tools>pagina2'] = await page.evaluate(medir);
+      await T.tap(page, '#toolsPagePrev'); await T.pump(page, 2);
       assert.deepEqual(app.problems.console, [], 'erros de console');
       assert.deepEqual(app.problems.page, [], 'erros de página');
       assert.deepEqual(app.problems.requests, [], 'recursos que falharam');
       const total = Object.values(layout).flat();
       t.diagnostic(`problemas de layout @${nome}: ${total.length} ` + JSON.stringify(Object.fromEntries(Object.entries(layout).map(([k, v]) => [k, v.length]))));
-      if (nome === '1280x720') assert.deepEqual(layout, Object.fromEntries(Object.keys(layout).map(k => [k, []])), 'sem rolagem nem corte no viewport canônico');
+      // 1280x720: todas as abas. 1024x600 e 800x480: Sessões e Ferramentas (telas desta rodada) duras; as demais seguem como diagnóstico (ainda não foram redesenhadas para telas menores).
+      const duras = nome === '1280x720' ? Object.keys(layout) : ['sessions', 'tools', 'tools>pagina2'];
+      assert.deepEqual(Object.fromEntries(duras.map(k => [k, layout[k]])), Object.fromEntries(duras.map(k => [k, []])), 'sem rolagem nem corte nas telas duras');
       app.layoutTotal = total.length;
     } finally { await app.context.close(); }
   });
 }
 
-for (const nome of ['360x740', '412x915']) {
-  test(`layout @${nome} sem rolagem indevida nem texto cortado (app só é desenhado para 1280x720)`,
-    { skip, todo: 'sem layout de celular em retrato: grade de 3 colunas e menu lateral estouram' }, async () => {
-      const app = await T.openApp(browser, { viewport: VPS[nome], usb: true });
-      try {
-        const falhas = {};
-        for (const [rota] of ROTAS) { await T.route(app, rota); await T.pump(app.page, 12, { data: true }); falhas[rota] = await app.page.evaluate(medir); }
-        assert.deepEqual(Object.values(falhas).flat(), []);
-      } finally { await app.context.close(); }
-    });
-}

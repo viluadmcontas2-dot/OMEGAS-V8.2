@@ -36,14 +36,14 @@ function load(initialMode = 'SHADOW') {
 }
 
 test('botão do Refino automático existe em Ferramentas', () => {
-  assert.match(read('index.html'), /id="toolAutoRefine"[\s\S]*?Refino automático/);
+  assert.match(read('components/drawers.js'), /id="toolAutoRefine"[\s\S]*?Refino automático|Refino automático<\/h3>[\s\S]*?id="toolAutoRefine"/);
 });
 
 test('texto de cada modo diz o que acontece, em português simples', () => {
   const { context } = load();
   const D = context.OmegasUi.Drawers;
   assert.match(D.describeAutoRefineMode('OFF'), /desligado/i);
-  assert.match(D.describeAutoRefineMode('SHADOW'), /sombra[\s\S]*manual/i);
+  assert.match(D.describeAutoRefineMode('SHADOW'), /ligado[\s\S]*manual/i);
   assert.doesNotMatch(D.describeAutoRefineMode('ON'), /grava sozinho/i, 'não existe modo que grave sozinho');
 });
 

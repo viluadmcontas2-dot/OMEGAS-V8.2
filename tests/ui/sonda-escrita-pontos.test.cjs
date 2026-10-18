@@ -30,7 +30,7 @@ function load() {
 }
 
 test('botão da sonda existe em Ferramentas e fala em 1 valor / carro parado', () => {
-  assert.match(read('index.html'), /id="toolBufferProbe"[\s\S]*?Testar escrita nos pontos[\s\S]*?carro parado/);
+  assert.match(read('components/drawers.js'), /id="toolBufferProbe"[\s\S]*?Testar[\s\S]*?Só com o carro parado|Teste de gravação<\/h3>\s*<p class="tile-line">Só com o carro parado/);
 });
 
 test('a ponte nativa expõe a sonda e a sessão trata o evento como crítico', () => {
@@ -56,7 +56,7 @@ test('descrições dos desfechos em português claro', () => {
   assert.match(D.describeBufferProbe({ outcome: 'REFUSED' }), /recusou.*Nada mudou/);
   assert.match(D.describeBufferProbe({ outcome: 'ACCEPTED_AND_HELD', band: 4, restoreNeeded: true, restored: true }), /aceitou e o valor ficou.*restaurado/);
   assert.match(D.describeBufferProbe({ outcome: 'ACCEPTED_THEN_OVERWRITTEN' }), /desfez sozinha/);
-  assert.match(D.describeBufferProbe({ outcome: 'ACCEPTED_BUT_DIFFERENT', restoreNeeded: true, restored: false }), /NÃO restaurado.*Reset GNV/);
+  assert.match(D.describeBufferProbe({ outcome: 'ACCEPTED_BUT_DIFFERENT', restoreNeeded: true, restored: false }), /NÃO voltou.*Reaprender GNV/);
   assert.match(D.describeBufferProbe({ outcome: 'NO_STABLE_BAND' }), /nada foi escrito/);
   assert.match(D.describeBufferProbe({ outcome: 'ERROR', message: 'cabo' }), /sem resultado: cabo/);
 });
@@ -77,7 +77,7 @@ test('toque duplo: o primeiro só arma, o segundo chama a ponte', () => {
   assert.match(label.textContent, /Toque de novo/);
   drawers.runBufferProbe();
   assert.equal(calls, 1, 'segundo toque inicia a sonda');
-  assert.equal(label.textContent, 'Rodando…');
+  assert.equal(label.textContent, 'Testando…');
   assert.equal(hooks, 1, 'acompanha o resultado pelo agendador da bridge, sem timer');
   drawers.bufferProbeRunning = false;
 });

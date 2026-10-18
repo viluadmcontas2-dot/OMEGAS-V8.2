@@ -203,7 +203,7 @@ test('sem central e sem leitura: o interruptor está desligado, nada sai e o mot
     assert.equal(await page.locator('[data-adv-switch]').isDisabled(), true);
     await T.tap(page, '[data-adv-switch]', { allowDisabled: true }); await T.pump(page, 3);
     assert.deepEqual((await T.frames(page)).log, [], 'nenhum quadro, de nenhum tipo');
-    assert.match(await U.text(page, '[data-card="anti"] .tile-line'), /Conecte a central|Esperando a leitura|Só funciona/);
+    assert.match(await U.text(page, '[data-card="anti"] .tile-line'), /Conecte a central|Aguardando a central|Só funciona/);
     assert.equal(await U.camada(page), 0);
   } finally { await app.context.close(); }
 });

@@ -65,7 +65,7 @@
 /* Ferramentas: usa os controles existentes, mas com alvos grandes e toggles reais. */
 .diagnostic-settings-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
 .diagnostic-settings-grid>label{min-width:0}
-.diagnostic-settings-grid select,.diagnostic-settings-grid input[type="number"],.log-filters select{
+.diagnostic-settings-grid select,.diagnostic-settings-grid input[type="number"]{
   min-height:40px!important;border:1px solid var(--line)!important;border-radius:8px!important;
   background:var(--surface)!important;padding:0 10px!important;color:var(--text)!important;
 }
@@ -82,7 +82,7 @@
 }
 .diagnostic-settings-grid .check-setting input[type="checkbox"]:checked{background:var(--accent)}
 .diagnostic-settings-grid .check-setting input[type="checkbox"]:checked::after{transform:translateX(17px);background:white}
-.log-filters{gap:7px!important}.log-filters select{min-width:150px}
+
 .diagnostic-settings>summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
 .diagnostic-settings [data-session-settings]{min-height:42px}
 
@@ -111,17 +111,13 @@
 
 
 /* HMI automotiva — diagnóstico e gravação sem toque de precisão. */
-.recorder-actions button,
-.diagnostic-settings > button,
-.recorded-session-list button {
+.diagnostic-settings > button,.recorded-session-list button{
   min-height: 44px;
   padding: 0 10px;
   font-size: 11px;
 }
 
-.diagnostic-settings-grid select,
-.diagnostic-settings-grid input[type="number"],
-.log-filters select {
+.diagnostic-settings-grid select,.diagnostic-settings-grid input[type="number"]{
   min-height: 44px !important;
   font-size: 11px !important;
 }

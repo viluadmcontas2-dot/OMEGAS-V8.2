@@ -45,7 +45,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       }
       assert.equal(await page.locator('[data-adv-save]').isDisabled(), true, 'Gravar valores começa desligado: nada mudou');
       const tamanhoTexto = await page.evaluate(() => Math.min(...[...document.querySelectorAll('.num-field label, .num-box input, .num-unit, .num-meta')].map(e => parseFloat(getComputedStyle(e).fontSize))));
-      assert.ok(tamanhoTexto >= 16, 'texto dos campos legível: ' + tamanhoTexto);
+      assert.ok(tamanhoTexto >= 15, 'texto dos campos legível: ' + tamanhoTexto);
       await T.shot(page, `ux-${nome}-campos-editaveis`);
       assert.deepEqual(app.problems.page.concat(app.problems.console), []);
     } finally { await app.context.close(); }
@@ -198,6 +198,6 @@ test('sem central conectada: os campos ficam desligados e o motivo está escrito
     assert.equal(await page.locator('#advField0').isDisabled(), true);
     assert.equal(await page.locator('[data-adv-save]').isDisabled(), true);
     assert.equal(await page.locator('[data-adv-factory]').isDisabled(), true);
-    assert.match(await U.text(page, '.values-view > header p'), /Conecte a central|Esperando a leitura/);
+    assert.match(await U.text(page, '.values-view > header p'), /Conecte a central|Aguardando a central/);
   } finally { await app.context.close(); }
 });

@@ -1,10 +1,8 @@
 'use strict';
 
-// Trava do dono (2026-10-11): "todo o aplicativo funciona sem rolagem nem sub-rolagem".
-// Aprender e Ferramentas: nada rola; o que não cabe vira aba interna (sem "Detalhes" — dono, 2026-10-11)
-// no mesmo lugar, ações embaixo e à esquerda, toque ≥ 48 px, texto ≥ 12 px. A medição real no Chromium
-// fica em tools/ci/sem_rolagem_abas.cjs; aqui travamos as decisões de marcação/CSS sem navegador.
-
+// Trava do dono: nada rola, alvos grandes, texto legível (reescrito em 2026-10-18 para os cartões por assunto e a aba Sessões).
+// A medição real no Chromium (3 tamanhos de multimídia, paisagem) fica em e2e-navegacao e tools/ci/sem_rolagem_abas.cjs; aqui travamos
+// as decisões de CSS/marcação e a paginação (log e sessões) sem navegador.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -13,126 +11,100 @@ const vm = require('node:vm');
 
 const UI = path.join(__dirname, '../../app/src/main/assets/ui');
 const read = file => fs.readFileSync(path.join(UI, file), 'utf8');
-const css = read('styles.css');
+const css = read('styles-ux-leigo.css');
 const html = read('index.html');
-const MARK = 'Aprender e Ferramentas sem rolagem (dono, 2026-10-11)';
-
-function block() {
-  const start = css.indexOf(MARK);
-  assert.notEqual(start, -1, 'bloco CSS "' + MARK + '" no fim de styles.css');
-  return css.slice(css.lastIndexOf('/*', start)).replace(/\/\*[\s\S]*?\*\//g, '');
+function rules(selector) {
+  const out = [];
+  for (const m of css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)) if (m[1].split(',').map(x => x.trim()).includes(selector)) out.push(m[2]);
+  assert.ok(out.length, 'regra ausente: ' + selector);
+  return out.join(';');
 }
-function rule(selector) {
-  const body = [];
-  for (const match of block().matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    if (match[1].split(',').map(item => item.trim()).includes(selector)) body.push(match[2]);
-  }
-  assert.ok(body.length, 'regra ausente: ' + selector);
-  return body.join(';');
-}
-function px(body, property) {
-  const match = body.match(new RegExp('(?:^|;|\\s)' + property + '\\s*:\\s*(\\d+)px'));
-  return match ? Number(match[1]) : null;
-}
-function section(screen) {
-  const start = html.indexOf(`data-screen="${screen}"`);
-  assert.notEqual(start, -1, screen);
-  const next = html.indexOf('data-screen="', start + 20);
-  return html.slice(start, next === -1 ? html.indexOf('</main>', start) : next);
-}
+const px = (body, prop) => { const m = body.match(new RegExp('(?:^|;|\\s)' + prop + '\\s*:\\s*(\\d+)px')); return m ? Number(m[1]) : null; };
 function load(file) {
   const context = { console, Date, Math, JSON, Intl, Set, Map, Number, String, Array, Object };
-  context.window = context;
-  context.globalThis = context;
-  context.OmegasUi = {};
-  vm.createContext(context);
-  vm.runInContext(read(file), context, { filename: file });
+  context.window = context; context.globalThis = context; context.OmegasUi = {};
+  vm.createContext(context); vm.runInContext(read(file), context, { filename: file });
   return context;
 }
 
-test('Ferramentas não rolam (overflow escondido, nunca auto/scroll)', () => {
-  assert.doesNotMatch(block(), /overflow(?:-[xy])?\s*:\s*(?:auto|scroll)/, 'o bloco novo não pode criar rolagem');
-  assert.match(rule('#toolsDrawer.screen.active'), /overflow:\s*hidden/, 'Ferramentas deixou de ser .utility-screen que rola');
-  assert.match(rule('#toolDiagnosticsWorkspace'), /overflow:\s*hidden/);
-  for (const list of ['#toolDiagnosticsWorkspace .recorded-session-list', '#toolDiagnosticsWorkspace .log-lines']) {
-    assert.match(rule(list), /max-height:\s*none/, list);
-    assert.match(rule(list), /overflow:\s*hidden/, list);
+test('Ferramentas e Sessões não rolam (overflow escondido, nunca auto/scroll)', () => {
+  assert.doesNotMatch(css, /overflow(?:-[xy])?\s*:\s*(?:auto|scroll)/, 'o CSS novo não pode criar rolagem');
+  assert.match(rules('#toolsDrawer.screen.active'), /overflow:\s*hidden/);
+  assert.match(rules('.sessions-screen.active'), /overflow:\s*hidden/);
+  assert.match(rules('.log-lines'), /overflow:\s*hidden/);
+});
+
+test('alvos de toque ≥ 56 px nos cartões, botões, interruptor e campos', () => {
+  for (const sel of ['.tool-foot-btn', '.tool-actions button', '.tool-back', '.tile-action', '.tool-switch', '.log-tools button', '.tool-log-pager button', '.recorded-session-item button', '.tool-tech > summary']) {
+    assert.ok(px(rules(sel), 'min-height') >= 56, sel);
   }
+  assert.ok(px(rules('.num-box'), 'height') >= 56);
+  assert.ok(px(rules('.sess-main'), 'min-height') >= 56);
+  assert.doesNotMatch(html + read('components/drawers.js') + read('components/advanced.js'), />\s*Abas\s*</, 'sem botão "Abas"');
 });
 
-test('ações embaixo, à esquerda, com 56 px; toque ≥ 48 px', () => {
-  assert.match(rule('#toolsDrawer'), /--foot-h:\s*60px/);
-  assert.match(rule('#toolsDrawer > .tool-actions'), /grid-row:\s*3[\s\S]*justify-content:\s*flex-start/, 'backup no rodapé, à esquerda');
-  assert.ok(px(rule('#toolsDrawer > .tool-actions > button'), 'min-height') >= 56);
-  assert.ok(px(rule('#toolDiagnosticsWorkspace details:not([open]) > summary'), 'min-height') >= 56);
-  assert.ok(px(rule('#toolDiagnosticsWorkspace .recorder-actions button'), 'min-height') >= 56);
-  for (const selector of ['#toolDiagnosticsWorkspace .recorded-session-item button', '#toolDiagnosticsWorkspace .tool-log-pager button', '#toolDiagnosticsWorkspace .log-filters select']) {
-    assert.ok(px(rule(selector), 'min-height') >= 48, selector);
-  }
-  assert.doesNotMatch(html + read('components/drawers.js'), />\s*Abas\s*</, 'sem botão "Abas"');
+test('texto de corpo ≥ 18 px nos cartões e nunca abaixo de 15 px em apoio', () => {
+  for (const sel of ['.tool-tile .tile-line', '.tool-layer-card p', '.num-help', '.read-list li', '.log-lines > div', '.empty-copy']) assert.ok(px(rules(sel), 'font-size') >= 18, sel);
+  const sizes = [...css.matchAll(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g)].map(m => Number(m[1]));
+  assert.deepEqual(sizes.filter(s => s < 15), []);
 });
 
-test('texto do bloco novo nunca abaixo de 12 px', () => {
-  const sizes = [...block().matchAll(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g)].map(match => Number(match[1]));
-  assert.ok(sizes.length > 20);
-  assert.deepEqual(sizes.filter(size => size < 12), []);
+test('Sessões é aba própria e saiu de Ferramentas', () => {
+  assert.match(html, /<button type="button" data-route="sessions"><span>Sessões<\/span><\/button>/);
+  assert.match(html, /data-screen="sessions"/);
+  const tools = html.slice(html.indexOf('id="toolsDrawer"'), html.indexOf('</main>'));
+  assert.doesNotMatch(tools, /session|Sessões/i, 'nada de sessões dentro de Ferramentas');
+  assert.match(read('core/router.js'), /ROUTES = \['autocal', 'refino', 'map', 'curve', 'sessions', 'tools'\]/);
 });
 
-test('Ferramentas: painel aberto ocupa o lugar dos cartões (CSS)', () => {
-  assert.doesNotMatch(block(), /data-cell-view|data-tolerance-view/, 'sem vistas de Detalhes (dono, 2026-10-11)');
-  assert.match(rule('#toolDiagnosticsWorkspace details[open]'), /position:\s*absolute[\s\S]*inset:\s*0/, 'disclosure aberto ocupa o lugar dos cartões');
-});
-
-function toolsHarness(open) {
-  const host = {
-    innerHTML: '',
-    childElementCount: 0,
-    querySelector: selector => (open[selector] ? { open: true } : null),
-  };
+function harness() {
+  const hosts = {};
+  const mk = id => (hosts[id] = { innerHTML: '', childElementCount: 0, querySelector: () => null, dataset: {} });
   const context = load('components/drawers.js');
-  context.document = { getElementById: id => (id === 'toolDiagnosticsWorkspace' ? host : null), activeElement: null };
+  context.document = { getElementById: id => hosts[id] || mk(id), activeElement: null };
+  mk('toolDiagnosticsWorkspace'); mk('sessionsHost');
   const drawers = Object.create(context.OmegasUi.Drawers.prototype);
   drawers.api = { batteryOptimizationStatus: () => ({ ignoringOptimizations: true }), overlayStatus: () => ({ permissionGranted: true }) };
-  drawers.logLevel = 'ALL';
-  drawers.logCategory = 'ALL';
-  drawers.logPage = 0;
-  drawers.sessionSettingsFeedback = '';
+  Object.assign(drawers, { logLevel: 'ALL', logCategory: 'ALL', logPage: 0, sessionPage: 0, view: 'log', page: 2, sessionSettingsFeedback: '', probeNote: '' });
   const state = {
-    sessionStatus: { settings: {} },
-    sessions: Array.from({ length: 9 }, (_, i) => ({ id: 'session_2026-10-11_0' + i + '-00-00', reason: 'Sessão', durationMs: 60000, bytes: 1024 })),
+    route: 'tools', sessionStatus: { settings: {} },
+    sessions: Array.from({ length: 7 }, (_, i) => ({ id: 'session_2026-10-11_0' + i + '-00-00', reason: 'Sessão', durationMs: 60000, bytes: 1024 })),
     logs: Array.from({ length: 30 }, (_, i) => ({ time: 't' + String(i).padStart(2, '0'), level: 'INFO', category: 'USB', message: 'm' + i })),
   };
-  drawers.store = { get: () => state };
-  return { host, drawers, state };
+  drawers.store = { get: () => state, patch() {} };
+  return { hosts, drawers, state };
 }
 
-test('Ferramentas: cartões + disclosures que abrem no lugar; log em páginas de 8 (as mesmas 24 linhas)', () => {
-  const { host, drawers, state } = toolsHarness({ '.tool-sessions': true });
+test('registro do app: as mesmas 24 linhas em páginas de 5, sem passar da última', () => {
+  const { hosts, drawers, state } = harness();
   drawers.renderTools(state);
-  const out = host.innerHTML;
-  for (const card of ['background-health-card', 'diagnostic-recorder-card', 'learning-portability-card']) assert.match(out, new RegExp('<section class="' + card + '"'));
-  assert.match(out, /<details class="tool-sessions" open>[\s\S]*Sessões \(9\)[\s\S]*class="recorded-session-list"/, 'lista de sessões dentro do disclosure, estado aberto preservado');
-  assert.equal((out.match(/data-export-session=/g) || []).length, 8, 'até 8 sessões, como antes');
-  assert.match(out, /<details class="diagnostic-settings" >/);
-  assert.match(out, /<details class="tool-logs live-log-console" >/);
-  assert.match(out, /Importar aprendizado<\/b> abaixo\./, 'os botões de backup estão no rodapé (abaixo)');
-  assert.equal((out.match(/<time>/g) || []).length, 8, '8 linhas por página');
-  assert.match(out, /<time>t29<\/time>/, 'página 1 começa pela mais nova');
-  assert.match(out, /Página 1 de 3/);
-
-  drawers.handleToolClick({ target: { closest: () => ({ dataset: { logPage: 'next' }, matches: selector => selector === '[data-log-page]' }) } });
-  assert.match(host.innerHTML, /Página 2 de 3/);
-  assert.match(host.innerHTML, /<time>t21<\/time>/);
-  assert.doesNotMatch(host.innerHTML, /<time>t29<\/time>/);
-  drawers.handleToolClick({ target: { closest: () => ({ dataset: { logPage: 'next' }, matches: selector => selector === '[data-log-page]' }) } });
-  drawers.handleToolClick({ target: { closest: () => ({ dataset: { logPage: 'next' }, matches: selector => selector === '[data-log-page]' }) } });
-  assert.match(host.innerHTML, /Página 3 de 3/, 'não passa da última página');
-  assert.match(host.innerHTML, /<time>t06<\/time>/, 'a 24ª linha mais nova continua alcançável');
+  const h = hosts.toolDiagnosticsWorkspace;
+  assert.equal((h.innerHTML.match(/<time>/g) || []).length, 5);
+  assert.match(h.innerHTML, /<time>t29<\/time>/, 'começa pela mais nova');
+  assert.match(h.innerHTML, /1 de 5/);
+  const next = { target: { closest: () => ({ id: '', dataset: { logPage: 'next' }, matches: s => s === '[data-log-page]' }) } };
+  for (let i = 0; i < 9; i += 1) drawers.handleToolClick(next);
+  assert.match(h.innerHTML, /5 de 5/);
+  assert.match(h.innerHTML, /<time>t06<\/time>/, 'a 24ª linha mais nova continua alcançável');
 });
 
-test('index.html: rodapé de backup de Ferramentas intacto e o cartão entra antes dele', () => {
-  const tools = section('tools');
-  for (const id of ['toolExportData', 'toolExportLearning', 'toolImportLearning']) assert.match(tools, new RegExp('id="' + id + '"'));
-  assert.match(tools, /Confere o arquivo antes; nunca grava na ECU/);
-  assert.match(read('components/drawers.js'), /this\.tools\.insertBefore\(host, footer\)/);
+test('sessões: 3 por página, "Salvar arquivo" por sessão, configuração dentro de "Tamanho das gravações"', () => {
+  const { hosts, drawers, state } = harness();
+  drawers.renderSessions(state);
+  const out = hosts.sessionsHost.innerHTML;
+  assert.equal((out.match(/data-export-session=/g) || []).length, 3);
+  assert.match(out, /Gravações salvas <span class="count">\(7\)<\/span>/);
+  assert.match(out, /<details class="diagnostic-settings" >/);
+  assert.match(out, /Começar a gravar/);
+  assert.match(out, /1 de 3/);
+  assert.doesNotMatch(out, /ECU|USB bruto|Telemetria salva|ZIP/);
+});
+
+test('Ferramentas: um cartão por função e os botões de backup mantêm os ids', () => {
+  const { hosts, drawers, state } = harness();
+  drawers.view = 'home';
+  drawers.renderTools(state);
+  const out = hosts.toolDiagnosticsWorkspace.innerHTML;
+  for (const id of ['toolExportData', 'toolExportLearning', 'toolImportLearning', 'toolAutoRefine', 'toolBufferProbe']) assert.match(out, new RegExp('id="' + id + '"'));
+  assert.equal((out.match(/class="tool-tile/g) || []).length, 8);
 });
