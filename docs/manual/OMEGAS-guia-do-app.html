@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>OMEGAS — Guia do app</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 16mm 14mm; }
+  html { font-size: 12.6pt; }
+  body { font-family: "Inter", "DejaVu Sans", sans-serif; color: #111; line-height: 1.42; margin: 0; }
+  h1 { font-size: 26pt; margin: 0 0 6pt; line-height: 1.15; }
+  h2 { font-size: 21pt; margin: 0 0 6pt; line-height: 1.15; border-bottom: 3px solid #1b4f9c; padding-bottom: 4pt; color: #1b4f9c; break-after: avoid; }
+  h3 { font-size: 15.5pt; margin: 14pt 0 4pt; color: #163d78; break-after: avoid; }
+  h4 { font-size: 13.2pt; margin: 10pt 0 3pt; break-after: avoid; }
+  p { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 6pt 0; padding-left: 20pt; }
+  li { margin-bottom: 2.5pt; }
+  table { border-collapse: collapse; width: 100%; margin: 4pt 0 9pt; font-size: 11.4pt; break-inside: auto; }
+  th, td { border: 1px solid #b8bfcc; padding: 4pt 6pt; vertical-align: top; text-align: left; }
+  th { background: #e8eef8; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
+  .section { break-before: page; }
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover .omega { font-size: 90pt; color: #1b4f9c; line-height: 1; }
+  .cover h1 { font-size: 38pt; }
+  .cover p { font-size: 15pt; }
+  .tag { display: inline-block; font-size: 9.6pt; font-weight: 700; padding: 0.5pt 6pt; border-radius: 6pt; margin-left: 3pt; vertical-align: 1pt; white-space: nowrap; }
+  .fab { background: #d9f2dd; color: #145a24; }
+  .cod { background: #dbe7fb; color: #15407f; }
+  .est { background: #fde9c8; color: #7a4a00; }
+  .box { border: 2px solid #1b4f9c; border-radius: 8pt; padding: 7pt 10pt; margin: 8pt 0; background: #f4f7fc; break-inside: avoid; }
+  .warn { border-color: #b7402a; background: #fff2ee; }
+  .warn b:first-child { color: #b7402a; }
+  .btn { display: inline-block; border: 1.5px solid #555; border-radius: 5pt; padding: 0 5pt; font-weight: 700; white-space: nowrap; }
+  .toc li { margin-bottom: 4pt; font-size: 13pt; }
+  .small { font-size: 10.6pt; color: #444; }
+  .kv td:first-child { width: 36%; font-weight: 700; background: #f6f8fb; }
+  .calc { font-family: "DejaVu Sans Mono", monospace; font-size: 11pt; background: #f3f3f3; padding: 6pt 8pt; border-radius: 5pt; margin: 4pt 0 8pt; break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ======================= CAPA ======================= -->
+<div class="cover">
+  <div class="omega">Ω</div>
+  <h1>OMEGAS<br>Guia do app para o dono do carro</h1>
+  <p>Como usar cada tela e cada botão, em linguagem simples, sem precisar saber o que é “central”, “injeção” ou “rotação”.</p>
+  <p>Inclui o passo a passo para o problema <b>“o carro apaga ao parar, ao pisar na embreagem e ao sair do lugar”</b>.</p>
+  <p class="small">Versão do app: a que está sendo gerada em 18/10/2026. Baseado no que existe nos arquivos do app, nas gravações do seu carro e no manual oficial do fabricante (Landi Renzo, software OMEGAS 2.16.4 C, 2012).</p>
+  <p class="small">Cada afirmação traz uma marca: <span class="tag fab">FABRICANTE</span> = está escrito no manual oficial · <span class="tag cod">CÓDIGO</span> = visto no app ou no programa original · <span class="tag est">ESTIMATIVA</span> = conta ou dedução nossa, ainda não provada no carro.</p>
+</div>
+
+<!-- ======================= SUMÁRIO ======================= -->
+<div class="section">
+<h2>Sumário</h2>
+<ol class="toc">
+  <li>Antes de começar: as 6 palavras que você precisa conhecer</li>
+  <li>O que está sempre na tela: barra do topo e menu lateral</li>
+  <li>Tela AutoCal (a central aprendendo sozinha)</li>
+  <li>Tela Refino (o app medindo e sugerindo)</li>
+  <li>Tela Ajuste local (Mapa K)</li>
+  <li>Tela Ajuste global (Curva K)</li>
+  <li>Tela Sessões (gravações da viagem)</li>
+  <li>Ferramentas, página 1: Motor e combustível
+    <ul><li>Anti-apagão (interruptor)</li><li>Valores do anti-apagão (os 5 números)</li><li>Saída do corte · Marcha lenta · Troca de gasolina para gás · Injetores · Volta para gasolina</li></ul></li>
+  <li>Ferramentas, página 2: App e arquivos</li>
+  <li>Passo a passo: o carro apaga ao parar e ao sair do lugar</li>
+  <li>O que ficou sem explicação (lista honesta)</li>
+</ol>
+<div class="box">
+<b>Regra de ouro do app:</b> nada é gravado na central sozinho. Todo botão que muda algo mostra “antes → depois”, pede um segundo toque, grava, lê de volta para conferir e oferece <b>Desfazer</b>. Se a conferência não bater, o app diz “não foi gravado”. <span class="tag cod">CÓDIGO</span>
+</div>
+</div>
+
+<!-- ======================= 1. PALAVRAS ======================= -->
+<div class="section">
+<h2>1. Antes de começar: as 6 palavras que você precisa conhecer</h2>
+<table class="kv">
+<tr><td>Central (ECU do GNV)</td><td>É o “cérebro” do kit de gás, uma caixinha com um computador dentro. Ela decide quanto gás abrir a cada instante. O app conversa com ela pelo cabo USB. Pense nela como um cozinheiro que segue uma receita: o app lê a receita e, só quando você manda, troca um ingrediente.</td></tr>
+<tr><td>Injeção (ms)</td><td>Cada vez que o motor precisa de combustível, um bico abre por alguns milésimos de segundo (ms). Em marcha lenta é ~2 ms; pisando fundo passa de 10 ms. É como o tempo que você segura o gatilho de uma pistola de água: mais tempo, mais combustível.</td></tr>
+<tr><td>Rotação (rpm)</td><td>Quantas voltas o motor dá por minuto. Parado, com o motor ligado, fica em torno de 850–950. Abaixo de ~400 o motor apaga. É o ponteiro do conta-giros.</td></tr>
+<tr><td>MAP (bar)</td><td>Quanto o motor está “puxando ar”. Pé fora do acelerador ≈ 0,2–0,4 bar; pé no fundo ≈ 0,9–1,0 bar. É um medidor de esforço do motor.</td></tr>
+<tr><td>Corte</td><td>Quando você solta o acelerador com o carro andando engatado, a central da gasolina para de injetar (“corte”). Ao voltar a injetar (na parada ou ao acelerar), o motor pode engasgar. É o momento mais perigoso para o apagão. <span class="tag cod">CÓDIGO</span></td></tr>
+<tr><td>Curva K e Mapa K</td><td>São os dois “ajustes de tempero” do gás. A Curva K é um ajuste geral por tempo de injeção (30 pontos). O Mapa K é um ajuste local por tempo de injeção × rotação (12 × 12 células). O AutoCal (aprendizado) mexe na Curva K; você pode mexer nos dois.</td></tr>
+</table>
+<h3>Como ler as marcas deste guia</h3>
+<ul>
+<li><span class="tag fab">FABRICANTE</span> O manual oficial Landi Renzo diz isso, com a página citada. Vale como “recomendação do fabricante”. Limite: o manual é de 2012, para uma versão anterior do programa; o que ele não cita, não quer dizer que não exista.</li>
+<li><span class="tag cod">CÓDIGO</span> Vimos no código do app ou no programa original do fabricante (ProgBase). Ex.: o valor de fábrica de cada número e a faixa aceita.</li>
+<li><span class="tag est">ESTIMATIVA</span> Conta ou dedução nossa (ex.: “1.500 ms = 1,5 segundo em qualquer rotação” é conta; “este número é a espera antes de voltar ao gás” é dedução pela ordem dos campos na tela original). Trate como hipótese a testar no carro, uma por vez.</li>
+</ul>
+<h3>O que sabemos do seu carro (gravações até 16/10/2026)</h3>
+<ul>
+<li>Em 89 gravações (177 mil leituras), o app contou <b>31 apagões ou quase-apagões</b>. 14 deles foram “rotação caindo com o motor sob carga”, ou seja, <b>soltando a embreagem para sair do lugar</b>, todos no GNV. Outros 13 foram “marcha lenta que morreu” (o motor parado estável e de repente zera), 8 deles no GNV. <span class="tag cod">CÓDIGO</span> (script <i>apagoes_parada_saida.py</i>)</li>
+<li>Risco por situação, no GNV: soltar a embreagem sob carga apagou em <b>7,2%</b> das vezes (11 de 153) e quase apagou em 95; voltar à marcha lenta apagou em 2,3% (6 de 256); sair do lugar com o motor já estável, 1,3%. Na gasolina, nas mesmas situações: 0%, 0% e 1,7%. <b>O problema é do GNV, e o pior momento é a embreagem saindo.</b></li>
+<li>Em 1.011 retomadas depois do corte: quando o motor voltou a injetar abaixo de 1.550 rpm, quase apagou em 10% das vezes; acima de 1.700 rpm, em 0,6%. <b>Retomar mais alto é 16 vezes mais seguro.</b> <span class="tag cod">CÓDIGO</span></li>
+<li>Na leitura da sua central de 12/08/2026, o <b>anti-apagão estava DESLIGADO</b> e os 5 números dele estavam de fábrica. O app relê isso toda vez que conecta. <span class="tag cod">CÓDIGO</span></li>
+</ul>
+</div>
+
+<!-- ======================= 2. BARRA E MENU ======================= -->
+<div class="section">
+<h2>2. O que está sempre na tela</h2>
+<h3>Barra do topo (leituras ao vivo)</h3>
+<p>Fica em todas as abas. Mostra o que a central está vendo agora. Quando aparece “—” é porque a leitura não chegou ou está velha (mais de 2,5 s): o app nunca mostra zero no lugar de “não sei”. <span class="tag cod">CÓDIGO</span></p>
+<table>
+<tr><th>Campo</th><th>O que é</th><th>Valores normais</th><th>Sinal de problema</th></tr>
+<tr><td><b>Tensão</b> (V)</td><td>Voltagem elétrica que chega na central. Só aparece no GNV.</td><td>13,5 a 14,0 V com o motor ligado</td><td>Acima de <b>14,1 V</b> o campo fica em alerta: o GNV pode desligar e voltar para gasolina (relato de campo seu). A escala ainda é provisória. <span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td><b>MAP</b> (bar)</td><td>Esforço do motor (ver cap. 1).</td><td>0,2–0,4 parado; até 1,0 acelerando</td><td>—</td></tr>
+<tr><td><b>Inj. gasolina</b> (ms)</td><td>Tempo de injeção da gasolina que a central do carro pediria. É a “régua” que o kit de gás usa.</td><td>~1,5–2,5 parado; 10+ pisando fundo</td><td>Zero com o carro andando = corte (normal ao soltar o pé).</td></tr>
+<tr><td><b>Rotação</b></td><td>Voltas do motor por minuto.</td><td>850–950 parado</td><td>Abaixo de ~600 parado = quase apagando.</td></tr>
+</table>
+<h3>Menu lateral (as 6 abas)</h3>
+<table>
+<tr><th>Aba</th><th>Para que serve</th><th>Grava na central?</th></tr>
+<tr><td>AutoCal</td><td>Acompanhar a central aprendendo sozinha e mandar ela reaprender.</td><td>Só com botão: reaprender, pausar/retomar, AutoMatch manual.</td></tr>
+<tr><td>Refino</td><td>O app mede por conta própria e propõe correções na Curva K e no Mapa K.</td><td>Só depois de “Ver alterações” → “Gravar”.</td></tr>
+<tr><td>Ajuste local</td><td>Editar o Mapa K célula por célula (tempo × rotação).</td><td>Só com “Gravar na ECU”.</td></tr>
+<tr><td>Ajuste global</td><td>Editar a Curva K ponto por ponto; backups; suavizar.</td><td>Só com “Gravar na ECU” / “Restaurar backup”.</td></tr>
+<tr><td>Sessões</td><td>Gravações da viagem (os dados que provam se melhorou).</td><td>Nunca.</td></tr>
+<tr><td>Ferramentas</td><td>Página 1: funções do motor (anti-apagão etc.). Página 2: cópias, aprendizado, bateria, balão, registro.</td><td>Só o anti-apagão (interruptor e 5 números), sempre com confirmação.</td></tr>
+</table>
+<p>Embaixo do menu aparece <b>“Sem central”</b> ou o nome da central e o combustível em uso (gasolina / GNV).</p>
+</div>
+
+<!-- ======================= 3. AUTOCAL ======================= -->
+<div class="section">
+<h2>3. Tela AutoCal (a central aprendendo sozinha)</h2>
+<p><b>O que é.</b> A central do GNV tem um modo de aprendizado: ela compara como o motor se comporta na gasolina e no GNV e ajusta a Curva K sozinha. É como um aluno fazendo a lição: esta tela mostra o caderno dele em tempo real. O desenho é o mesmo do programa original do fabricante. <span class="tag cod">CÓDIGO</span></p>
+<p><b>O que o fabricante recomenda para o aprendizado</b> (manual p. 44–45): motor quente (80–90 °C); segurar 3.000 rpm em ponto morto com o pé firme; depois soltar o pé e deixar em marcha lenta <b>sem ar-condicionado, sem faróis e sem mexer no volante</b>. O programa troca de combustível sozinho; a chave do comutador não importa. <span class="tag fab">FABRICANTE</span></p>
+<h3>O que você vê</h3>
+<table>
+<tr><th>Elemento</th><th>Significado</th></tr>
+<tr><td>Bolinhas “Gasolina” e “GNV” (4 cada)</td><td>As 4 zonas de esforço do motor (do pé fora ao pé no fundo). Verde = zona completa; azul = coletando; laranja = falta. Cinza = sem leitura.</td></tr>
+<tr><td>Bolinhas “Ajustes”</td><td>Quantos ajustes automáticos (AutoMatch) a central já fez dos que ela pretende fazer (normalmente 3). Cheia = feito.</td></tr>
+<tr><td>Chip ao lado do título</td><td>Combustível em uso agora.</td></tr>
+<tr><td>Gráfico grande</td><td>Eixo de baixo = tempo de injeção da gasolina (ms); eixo de cima = MAP. Bolinhas = pontos já medidos; linhas = a curva que a central montou (gasolina e GNV); ◆ AGORA = onde o motor está neste instante; faixa colorida = faixa de MAP atual; fundo verde/vermelho = zona adquirida ou não; “#3/5” = 3 de 5 pontos da zona. Linhas finas = limites de MAP que a central usa.</td></tr>
+<tr><td>Gráfico pequeno (Curva K)</td><td>Os 30 pontos da Curva K que a central está usando. Linha em 1,8 = teto de gravação do app. Ponto acima do teto fica marcado.</td></tr>
+<tr><td>“Toque numa bolinha”</td><td>Tocar num ponto medido mostra seus números e deixa pedir “Reaprender só este ponto”.</td></tr>
+<tr><td>“Contexto da aquisição”</td><td>Texto do estado (“Gasolina 2/4 zonas · GNV 1/4”), sessão atual, evidência do último ajuste da central e, em “Detalhes técnicos”, as 18 regiões. É só leitura.</td></tr>
+</table>
+<h3>Os botões (rodapé)</h3>
+<table>
+<tr><th>Botão</th><th>O que acontece ao tocar</th><th>Quando usar / não usar</th></tr>
+<tr><td><span class="btn">Pausar aprendizado</span> / <span class="btn">Retomar aprendizado</span></td><td>Liga ou desliga o modo de aprendizado da central. O app confere na central e mostra “Conferindo na ECU…”. <span class="tag cod">CÓDIGO</span></td><td>Pausar só se você quer testar um ajuste seu sem a central mexer por cima. Com o aprendizado pausado a central para de corrigir: lembre de retomar. Qualquer “reaprender” religa o aprendizado sozinho. <span class="tag cod">CÓDIGO</span></td></tr>
+<tr><td><span class="btn">Reaprender GNV (apaga o atual)</span></td><td>A central joga fora o que aprendeu do GNV e começa de novo. Faz backup antes e lê de volta.</td><td>Depois de uma mudança grande (Curva K, Mapa K, anti-apagão) para a central medir de novo com a configuração nova. Apaga mesmo: o GNV volta a ser “cru” até reaprender.</td></tr>
+<tr><td><span class="btn">Reaprender gasolina (apaga o atual)</span></td><td>Idem, para a referência da gasolina.</td><td>Raro. Só se a referência da gasolina ficou errada (ex.: mexeram no motor).</td></tr>
+<tr><td><span class="btn">AutoMatch manual (aplica as médias)</span></td><td>Só aparece depois que a central fez os ajustes automáticos dela. Pede à central aplicar de novo as médias medidas sobre a Curva K. Um toque, conferido.</td><td>Quando os quadradinhos (“faixas prontas”) encheram mais depois dos ajustes automáticos. Não usar com o motor frio ou com poucas faixas prontas.</td></tr>
+<tr><td>Ações avançadas › <span class="btn">Curva K toda em 1,0</span></td><td>Põe os 30 pontos da curva em neutro (1,0). Guarda uma cópia antes.</td><td><b>Perigoso se a curva estava fazendo uma correção grande</b> (ex.: 1,5): o motor muda de uma vez, a tensão sobe e acima de 14,1 V o GNV pode desligar. Sua solução de campo: passar a correção grande para o Mapa K (~220) e deixar a curva em 1,0. O app avisa só quando a curva está longe de 1,0. <span class="tag cod">CÓDIGO</span></td></tr>
+<tr><td>Ações avançadas › <span class="btn">Recomeçar tudo</span></td><td>Apaga TUDO que a central aprendeu (gasolina, GNV e Curva K = 1,0).</td><td>Último recurso. Depois precisa refazer o aprendizado inteiro, como o fabricante descreve (p. 44–45).</td></tr>
+<tr><td><span class="btn">Ver sessões</span></td><td>Abre a lista de gravações desta tela (exportar).</td><td>—</td></tr>
+</table>
+<div class="box warn"><b>Não fazer:</b> não tirar o cabo nem desligar o carro com “Conferindo na ECU…” na tela; não apertar “Recomeçar tudo” para resolver apagão (ele não resolve: só apaga o aprendizado). Nenhum destes botões pausa o aprendizado por si só.</div>
+</div>
+
+<!-- ======================= 4. REFINO ======================= -->
+<div class="section">
+<h2>4. Tela Refino (o app medindo e sugerindo)</h2>
+<p><b>O que é.</b> O “nosso AutoCal”: o app mede, por conta própria, quanto gás está sendo usado em relação à gasolina em cada faixa, marca onde o carro engasgou e propõe correções. Mesmo gráfico do AutoCal, com nossas marcas por cima: quadradinhos = medido por nós; ✕ = apagou; ◆ = quase apagou. <span class="tag cod">CÓDIGO</span></p>
+<p><b>Frase de estado</b> (chip ao lado do título): “ECU no automático” (a central ainda está aprendendo: o Refino espera), “Nossos pontos” (coletando), “Curva pronta” (tem proposta), “Verificando” (gravou e está medindo se melhorou), “Estável”, “Pontos pioraram”. Embaixo, uma linha diz o próximo passo e, se houver, <b>“O carro engasgou N vezes no GNV. Em X o motor apagou. Quase sempre ao soltar e voltar do acelerador, perto de 1,8 ms.”</b> Essa linha é o seu termômetro do problema.</p>
+<table>
+<tr><th>Botão</th><th>O que acontece</th><th>Observações</th></tr>
+<tr><td><span class="btn">Ver alterações</span></td><td>Abre o cartão “O que vai mudar · Nada foi enviado à ECU ainda”. Pode ter duas partes: <b>Curva K</b> (“Corrige 6 pontos entre 1,5 e 3,0 ms; ajuste médio +4,2%”) e <b>Mapa K</b> (“Reforço do GNV em 4 células (+6%), perto de 1,5–2,2 ms”). Cada parte tem o seu <span class="btn">Gravar</span>.</td><td>Só aparece quando há evidência. Se a central ainda está no automático, a porta de gravação do Mapa K fica fechada (a central aplicaria a correção por cima). Antes de gravar, o app relê a curva: se mudou, a lista é refeita e avisa.</td></tr>
+<tr><td><span class="btn">Refinar por minha conta</span> / <span class="btn">Esperar a ECU terminar</span></td><td>Você assume: as gravações liberam mesmo com a central no automático. Depois de gravar, mande a central reler o GNV (AutoCal › Reaprender GNV).</td><td>Use quando a central demora a terminar e você quer testar. Nunca grava sozinho.</td></tr>
+<tr><td><span class="btn">Desfazer última gravação</span></td><td>Volta os pontos gravados pelo Refino ao valor anterior (também conferido na central).</td><td>Só enquanto a última gravação ainda está sendo medida.</td></tr>
+<tr><td><span class="btn">Entendi</span> / <span class="btn">Pronto</span> / <span class="btn">Tentar de novo</span></td><td>Fecha o aviso de resultado.</td><td>—</td></tr>
+</table>
+<p><b>Reforço do engasgo</b> (o que o cartão propõe para o Mapa K): quando o app registrou engasgos, ele localiza a região do mapa onde eles acontecem (tempo de injeção baixo × rotação baixa) e propõe mais gás ali, em poucas células. É a correção mais direta para “apaga na parada”. <span class="tag est">ESTIMATIVA</span> (a proposta é do app; o efeito no carro é o que você vai medir nas sessões).</p>
+<p><b>Refino automático</b> (interruptor em Ferramentas › página 2): “Ligado” = depois de cada ajuste automático da central o app registra uma sugestão na sessão; “Desligado” = não sugere. Em nenhum dos dois ele grava. <span class="tag cod">CÓDIGO</span></p>
+<div class="box warn"><b>Não fazer:</b> não gravar Curva K e Mapa K para a mesma região no mesmo dia (não dá para saber qual ajudou). Não desligar o carro com “Gravando e conferindo…” na tela.</div>
+</div>
+
+<!-- ======================= 5. MAPA K ======================= -->
+<div class="section">
+<h2>5. Tela Ajuste local (Mapa K)</h2>
+<p><b>O que é.</b> Uma tabela de 12 linhas (tempo de injeção da gasolina, ms) por 12 colunas (rotação). Cada célula é um número de <b>100 a 255</b> que diz “quanto gás a mais” naquela situação: 100 é o mínimo (sem reforço); 255 é o máximo. É como um mapa de tempero: você pode pôr mais sal só num prato, sem mudar os outros. A linha técnica do mapa não é editável. <span class="tag cod">CÓDIGO</span></p>
+<p>Em cima aparece <b>AGORA</b>: a célula em que o motor está neste instante. Assim você vê, parado em marcha lenta, exatamente qual célula é a da parada.</p>
+<table>
+<tr><th>Controle</th><th>O que faz</th><th>Dicas e limites</th></tr>
+<tr><td>Tocar numa célula</td><td>Seleciona/desmarca. Tocar no título da linha ou da coluna seleciona a linha/coluna toda.</td><td>“N selecionadas” mostra a contagem.</td></tr>
+<tr><td><span class="btn">Selecionar tudo</span> / <span class="btn">Limpar</span></td><td>Marca ou desmarca as 144 células.</td><td>Evite “tudo”: correção geral é papel da Curva K.</td></tr>
+<tr><td>Como ajustar: <b>Percentual</b></td><td>Soma X% ao valor atual das células marcadas (ex.: +5% em 200 → 210).</td><td>Para apagão na parada, comece com +3 a +6% só nas células da lenta. <span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td>Como ajustar: <b>Somar valor</b></td><td>Soma X unidades (ex.: +10 em 200 → 210).</td><td>—</td></tr>
+<tr><td>Como ajustar: <b>Definir valor</b></td><td>Põe exatamente X em todas as marcadas.</td><td>Só entre 100 e 255.</td></tr>
+<tr><td>Valor e botões <span class="btn">−5</span> <span class="btn">−1</span> <span class="btn">+1</span> <span class="btn">+5</span></td><td>O número do ajuste; os botões mudam de 1 em 1 ou 5 em 5.</td><td>A célula mostra “atual→novo” enquanto você ajusta.</td></tr>
+<tr><td><span class="btn">Curva K → Mapa K</span></td><td>Lê a Curva K e propõe passar a correção dela para o mapa, linha por linha, deixando a curva neutra (1,0) nessas linhas. Grava em 2 etapas (mapa, depois curva), cada uma conferida.</td><td>É a sua solução de campo “correção grande vai para o mapa”. Se a 2ª etapa falhar, aparece <span class="btn">Concluir curva</span> para terminar; até lá a correção pode estar em dobro.</td></tr>
+<tr><td><span class="btn">Equivalência % por RPM</span> e <span class="btn">Preparar sugestão</span></td><td>Mostra uma tabela só de leitura (diferença GNV × gasolina por faixa e rotação) e, quando o app tem dados, prepara uma sugestão local no mapa.</td><td>Se diz “Ainda faltam dados confirmados”, rode mais com a gravação ligada.</td></tr>
+<tr><td><span class="btn">Gravar na ECU</span></td><td>Grava as células marcadas, espera a resposta da central e lê de volta. Mostra “N alterações confirmadas pela ECU” ou “A ECU não confirmou toda a operação”.</td><td>Um toque. Se não confirmou, o mapa é relido: nada é dado como gravado.</td></tr>
+<tr><td><span class="btn">Voltar ao aprendizado</span></td><td>Volta para a tela AutoCal.</td><td>—</td></tr>
+</table>
+<h3>Valor → efeito (uma célula de marcha lenta)</h3>
+<table>
+<tr><th>Valor</th><th>O que acontece na prática</th><th>Marca</th></tr>
+<tr><td>100</td><td>Sem reforço naquela célula: o gás segue só a Curva K.</td><td><span class="tag cod">CÓDIGO</span></td></tr>
+<tr><td>+5% a +10% sobre o atual</td><td>Um pouco mais de gás naquela situação: tende a segurar o motor na parada se ele estava pobre. É o tamanho de passo que o Refino propõe.</td><td><span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td>~220 em várias células</td><td>Correção grande: foi o que você usou no lugar de uma Curva K em 1,5.</td><td><span class="tag cod">CÓDIGO</span> (relato seu)</td></tr>
+<tr><td>255</td><td>Máximo: se precisa disso, o problema é outro (bico pequeno, pressão, vazamento). O fabricante só manda “multiplicar o mapa” quando as medianas passam de 230–240 e a mistura segue pobre, e aí manda refazer o aprendizado (p. 25).</td><td><span class="tag fab">FABRICANTE</span></td></tr>
+</table>
+<div class="box warn"><b>Não fazer:</b> não mexer em dezenas de células de uma vez; não gravar durante um “Reaprender GNV”; não corrigir no mapa o que já corrigiu na curva (dobra).</div>
+</div>
+
+<!-- ======================= 6. CURVA K ======================= -->
+<div class="section">
+<h2>6. Tela Ajuste global (Curva K)</h2>
+<p><b>O que é.</b> Uma linha com 30 pontos, um para cada tempo de injeção. Cada ponto é um <b>fator</b>: 1,00 = neutro; 1,10 = 10% mais gás; 0,90 = 10% menos. É o volume geral do rádio: mexer aqui muda todas as rotações daquele tempo de injeção de uma vez. O app só grava entre <b>0,6 e 1,8</b>. <span class="tag cod">CÓDIGO</span></p>
+<table>
+<tr><th>Controle</th><th>O que faz</th><th>Dicas e limites</th></tr>
+<tr><td>Tocar num dos 30 pontos / arrastar um ponto</td><td>Mostra “Atual” e deixa digitar o <b>Fator desejado</b> (ex.: 1,02). Arrastar só prepara a prévia.</td><td>Nada muda na central até “Gravar”.</td></tr>
+<tr><td><span class="btn">−0,05</span> <span class="btn">−0,01</span> <span class="btn">+0,01</span> <span class="btn">+0,05</span></td><td>Ajuste fino do fator.</td><td>Passos de 0,01 a 0,03 são o normal. 0,05 já é bastante.</td></tr>
+<tr><td><span class="btn">Preparar este ponto</span></td><td>Põe o ponto na lista “Pontos preparados” (a proposta).</td><td>Pode preparar vários antes de gravar. <span class="btn">Limpar</span> apaga a lista.</td></tr>
+<tr><td><span class="btn">Gravar na ECU</span></td><td>Grava os pontos preparados, confere na central e mostra “Curva K confirmada pela ECU”.</td><td>Uma confirmação só, sem “tem certeza?”.</td></tr>
+<tr><td><span class="btn">Reler ECU</span></td><td>Lê de novo os 30 pontos.</td><td>Use antes de editar, se a tela diz “ECU sem resposta”.</td></tr>
+<tr><td><span class="btn">Suavizar</span></td><td>Prepara uma curva sem “dentes” (pontos vizinhos muito diferentes). Não grava.</td><td>Confira os pontos preparados; grave só se concordar.</td></tr>
+<tr><td><span class="btn">Guardar backup</span> / lista de backups / <span class="btn">Restaurar backup</span></td><td>Salva uma cópia da curva atual; restaurar mostra o antes→depois e grava conferido.</td><td><b>Guarde backup antes de qualquer mudança.</b> Se “Já está igual”, nada a fazer.</td></tr>
+<tr><td><span class="btn">Curva K toda em 1,0</span></td><td>Faz cópia e põe tudo em neutro.</td><td>Mesmo aviso da tela AutoCal: perigoso se a curva estava longe de 1,0.</td></tr>
+</table>
+<h3>Valor → efeito (um ponto baixo, ~2 ms, região da parada)</h3>
+<table>
+<tr><th>Fator</th><th>Efeito</th><th>Marca</th></tr>
+<tr><td>0,90</td><td>10% menos gás em todas as rotações com esse tempo de injeção: motor mais pobre na parada, mais risco de apagar.</td><td><span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td>1,00</td><td>Neutro: a central usa só o que aprendeu + o Mapa K.</td><td><span class="tag cod">CÓDIGO</span></td></tr>
+<tr><td>1,05–1,15</td><td>Um pouco mais de gás. Nas suas gravações, a faixa de 1–3 ms fica ~10% “pobre” em todas as rotações: por isso os pontos baixos costumam ficar acima de 1,0.</td><td><span class="tag cod">CÓDIGO</span> (medição nas sessões)</td></tr>
+<tr><td>1,30 ou mais</td><td>Correção grande. Na sessão de 16/10 o carro apagou com os pontos baixos em 1,30, em 1,03 e em 1,20: <b>o valor da curva, sozinho, não resolveu o apagão.</b> Correção grande é melhor no Mapa K.</td><td><span class="tag cod">CÓDIGO</span></td></tr>
+<tr><td>1,80</td><td>Teto do app. Acima disso o app não grava.</td><td><span class="tag cod">CÓDIGO</span></td></tr>
+</table>
+<div class="box warn"><b>Não fazer:</b> não editar a curva enquanto a central está no automático e você espera o aprendizado dela (ela vai mexer por cima); não pular o backup.</div>
+</div>
+
+<!-- ======================= 7. SESSÕES ======================= -->
+<div class="section">
+<h2>7. Tela Sessões (gravações da viagem)</h2>
+<p><b>O que é.</b> A caixa-preta do carro: o app grava rotação, MAP, injeção, combustível e tudo que foi gravado na central. É com essas gravações que se prova se um ajuste melhorou. Começa sozinha quando a central conecta. <span class="tag cod">CÓDIGO</span></p>
+<table>
+<tr><th>Cartão / controle</th><th>O que faz</th><th>Valores</th></tr>
+<tr><td><b>Gravação</b> · <span class="btn">Começar a gravar</span> / <span class="btn">Parar de gravar</span></td><td>Liga ou para a gravação manualmente. Mostra “Gravando · 12m 30s · 3,2 MB”.</td><td>Deixe ligada sempre que for testar um ajuste.</td></tr>
+<tr><td><b>Gravações salvas</b> · <span class="btn">Salvar arquivo</span></td><td>Lista (3 por página) com data, duração e tamanho. “Salvar arquivo” exporta para compartilhar (ex.: mandar para quem analisa).</td><td>“‹ Mais novas” / “Mais antigas ›” para paginar.</td></tr>
+<tr><td><b>Tamanho das gravações › Mudar</b></td><td>Abre as opções abaixo. <span class="btn">Aplicar</span> salva.</td><td></td></tr>
+<tr><td>Salvar a cada</td><td>De quanto em quanto tempo uma leitura entra no arquivo.</td><td>0,25 s (padrão, melhor para ver apagão) a 5 s (arquivo pequeno, mas perde o momento do engasgo).</td></tr>
+<tr><td>Tamanho máximo (MB)</td><td>Quando a gravação chega nesse tamanho, ela fecha e outra começa.</td><td>64 a 1.024; padrão 256.</td></tr>
+<tr><td>Quantas guardar</td><td>Quantas gravações ficam no celular antes de apagar as mais antigas.</td><td>20 a 100; padrão 20.</td></tr>
+<tr><td>Gravar ao conectar a central</td><td>Liga a gravação sozinha ao conectar o cabo.</td><td>Deixe marcado.</td></tr>
+<tr><td>Gravar tudo do cabo (arquivo grande)</td><td>Guarda também cada byte que passou no cabo.</td><td>Só se alguém pedir para investigar o protocolo.</td></tr>
+</table>
+<h3>Como ver, numa sessão, se o apagão melhorou</h3>
+<ol>
+<li>Antes de mudar qualquer coisa, dirija um trajeto com pelo menos <b>20 paradas e saídas</b> (semáforos) no GNV, com a gravação ligada. Anote o que a tela Refino diz: “O carro engasgou N vezes no GNV. Em X o motor apagou.”</li>
+<li>Faça <b>um</b> ajuste (cap. 10). Repita o mesmo trajeto, ou outro com ~20 paradas.</li>
+<li>Compare a frase do Refino (engasgos e apagões por 20 paradas) e, se tiver quem analise, o arquivo exportado: a conta de “apagou / quase apagou por situação” é feita pelo script <i>tools/sessoes/apagoes_parada_saida.py</i>, que dá a taxa para “retorno à lenta”, “saída do lugar” e “embreagem sob carga”. <span class="tag cod">CÓDIGO</span></li>
+<li>Melhorou = menos engasgos nas mesmas situações E rotação mínima nas paradas subiu (de ~450 para 700+). Piorou ou igual = desfaça e tente o próximo item.</li>
+</ol>
+</div>
+
+<!-- ======================= 8. FERRAMENTAS P1 ======================= -->
+<div class="section">
+<h2>8. Ferramentas, página 1: Motor e combustível</h2>
+<p>Um cartão por assunto. Interruptor = liga/desliga; campo com lápis = número que você digita; “Ver ›” = só mostra, o app não muda. Todos os cartões mostram “—” até a central responder (“Esperando a leitura da central”) e dizem “Conecte a central para mudar” sem cabo. <span class="tag cod">CÓDIGO</span></p>
+
+<h3>8.1 Anti-apagão (interruptor)</h3>
+<p><b>O que é.</b> Uma função da própria central (no programa original chama-se “Abilitazione anti-stallo” / “Enable un-stalling strategy”). Quando o motor está em rotação baixa e caindo rápido, a central tira o motor do GNV por um instante (usa gasolina) para ele não apagar, e volta ao gás depois de uma espera. É como um instrutor que segura o volante só quando o carro está quase saindo da pista. <span class="tag cod">CÓDIGO</span> (rótulos da tela original) · <span class="tag est">ESTIMATIVA</span> (o efeito físico ainda não foi medido no seu carro; o manual público de 2012 não cita esta função).</p>
+<p><b>O que acontece ao tocar.</b> 1º toque: “Lendo a central…”, depois a janela “Ligar anti-apagão?” com “Desligado → Ligado · O resto continua igual”. 2º toque em <span class="btn">Ligar anti-apagão</span>: “Gravando e conferindo…” e, se a leitura de volta bater, “Pronto. Anti-apagão ligado e conferido na central”, com o botão <span class="btn">Desfazer: voltar a Desligado</span>. <span class="btn">Agora não</span> ou um toque fora da janela cancela. Trocar de aba ou tirar o cabo também cancela. <span class="tag cod">CÓDIGO</span></p>
+<p><b>Na sua central</b> (12/08/2026): <b>Desligado</b>. Das 8 vezes que o carro apagou no GNV nas gravações, em 5 a regra “deveria ter agido” se estivesse ligada; dos 14 apagões logo depois de sair do GNV, em 13. Isso é compatível com “estava desligada”, mas <b>não prova que ligar resolve</b>: só o teste no carro prova. <span class="tag cod">CÓDIGO</span></p>
+<div class="box warn"><b>Avisos:</b> “A central não aceitou” = nada mudou, tente de novo. “Não sei como ficou na central” = o cabo soltou ou a leitura de volta não veio: reconecte e olhe o estado do cartão antes de tentar de novo. O app grava a “família” inteira de interruptores onde esse bit mora, lendo antes e mudando só este; os outros continuam iguais.</div>
+
+<h3>8.2 Valores do anti-apagão (os 5 números)</h3>
+<p>Cartão “Quando ele age e quando sai”. Estado: “De fábrica” ou “Mudados”. Toque em <span class="btn">Mudar valores</span>: digite, depois <span class="btn">Gravar valores</span> (mesmo fluxo: antes → depois, 2º toque, conferência, Desfazer). <span class="btn">Restaurar fábrica</span> volta os 5 de uma vez. Valores fora da faixa são recusados antes de gravar; valores a mais de 50% do de fábrica mostram “Longe do valor de fábrica. Confira antes de gravar.” <span class="tag cod">CÓDIGO</span></p>
+<p class="small"><b>Honestidade sobre a ordem:</b> os 5 números chegam da central como uma lista. Qual número é qual foi deduzido pela numeração dos campos na tela do programa original (campo 0 = primeiro, …, campo 4 = último). É a dedução mais forte possível sem um teste no carro, mas ainda é dedução. A própria tela avisa “a ordem dos campos é inferida”. <span class="tag est">ESTIMATIVA</span></p>
+
+<h4>Número 1 — Rotação máxima para agir (rpm) · fábrica 1.600 · faixa 0 a 6.000</h4>
+<p>Só abaixo desta rotação o anti-apagão pode entrar. É a “altura da cerca”: acima dela a central não se mete. Original: “Max giri attivazione anti-stallo”. <span class="tag cod">CÓDIGO</span></p>
+<table>
+<tr><th>Valor</th><th>Efeito esperado</th></tr>
+<tr><td>800–1.000 (baixo)</td><td>Só age quando o motor já está quase na marcha lenta: pode chegar tarde, porque na embreagem saindo a rotação cai de 1.000 para 700 em poucos décimos.</td></tr>
+<tr><td>1.600 (fábrica)</td><td>Cobre a volta à lenta e a saída do lugar. Suas gravações: retomadas abaixo de 1.550 rpm é onde o risco é 16× maior; 1.600 pega essa zona.</td></tr>
+<tr><td>1.800–2.200 (alto)</td><td>Age mais cedo, também em desacelerações normais na estrada: mais trocas para gasolina, mais gasolina gasta, possíveis trancos. Primeiro passo razoável se 1.600 não bastar: 1.800. <span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td>Acima de 3.000</td><td>Sem sentido: a central ficaria trocando combustível em rodagem normal.</td></tr>
+</table>
+
+<h4>Número 2 — Queda de rotação para agir (rpm por ciclo) · fábrica 100 · faixa 0 a 1.000</h4>
+<p>Quanto a rotação precisa cair, de uma leitura da central para a seguinte (“por ciclo”), para a regra disparar. É a sensibilidade do gatilho. Original: “Delta giri attivazione”. <span class="tag cod">CÓDIGO</span></p>
+<table>
+<tr><th>Valor</th><th>Efeito esperado</th></tr>
+<tr><td>20–50 (baixo = sensível)</td><td>Dispara com queda pequena: age em quase toda desaceleração abaixo de 1.600. Mais proteção, mais gasolina e mais trocas.</td></tr>
+<tr><td>100 (fábrica)</td><td>Dispara em quedas rápidas. Nas suas gravações de apagão, as quedas entre leituras foram de 200 a 800 rpm: 100 pegaria todas as rápidas; não pegaria as “lenta que morreu devagar” (quedas de 10–35).</td></tr>
+<tr><td>300+ (alto = pouco sensível)</td><td>Só dispara em quedas violentas; pode não agir a tempo.</td></tr>
+</table>
+<p class="small">“Ciclo” = o intervalo entre duas leituras internas da central; não é documentado. <span class="tag est">ESTIMATIVA</span></p>
+
+<h4>Número 3 — Tempo antes de voltar ao gás (ms) · fábrica 1.500 · faixa 0 a 10.000</h4>
+<p>Depois que a regra agiu, quanto tempo a central espera antes de devolver o motor ao GNV. O app mostra o valor também em segundos (1.500 ms = 1,5 s). Original: “Attesa uscita gas”, unidade ms na tela. <span class="tag cod">CÓDIGO</span></p>
+<div class="calc">Conta: 1 segundo = 1.000 ms. 1.500 ms ÷ 1.000 = 1,5 s. 3.000 ms = 3 s. Não depende da rotação.</div>
+<table>
+<tr><th>Valor</th><th>Efeito esperado</th></tr>
+<tr><td>0–500 (curto)</td><td>Volta ao gás quase na hora: o motor pode engasgar de novo logo em seguida (a rotação ainda não se firmou).</td></tr>
+<tr><td>1.500 (fábrica = 1,5 s)</td><td>Tempo de a marcha lenta se estabilizar. Nas suas gravações, do início da queda até o motor morrer passam cerca de 1 a 2 s. <span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td>2.500–4.000 (longo)</td><td>Mais segurança na parada; gasta mais gasolina em cada parada e, se o anti-apagão disparar muito, o carro passa boa parte da cidade na gasolina. 2.500 é um segundo passo razoável.</td></tr>
+<tr><td>Perto de 10.000</td><td>10 s na gasolina a cada disparo: só para teste.</td></tr>
+</table>
+
+<h4>Número 4 — Folga para não ficar trocando (rpm por ciclo) · fábrica 2 · faixa 0 a 1.000</h4>
+<p>Uma “zona morta” em volta do gatilho (número 2) para a regra não ligar e desligar a cada pequena oscilação. Original: “Isteresi su soglia attivazione”. É como o termostato da geladeira, que não liga e desliga a cada 0,1 grau. <span class="tag cod">CÓDIGO</span></p>
+<table>
+<tr><th>Valor</th><th>Efeito esperado</th></tr>
+<tr><td>0</td><td>Sem folga: pode oscilar (liga/desliga seguidos).</td></tr>
+<tr><td>2 (fábrica)</td><td>Folga mínima. Dificilmente precisa mexer.</td></tr>
+<tr><td>50+</td><td>Folga grande demais: a regra pode demorar a soltar ou a entrar. Não recomendado sem motivo. <span class="tag est">ESTIMATIVA</span></td></tr>
+</table>
+
+<h4>Número 5 — Queda para parar de agir (rpm por ciclo) · fábrica 20 · faixa 0 a 1.000</h4>
+<p>Quando a queda de rotação por ciclo fica menor que isso (o motor “se firmou”), a regra entende que o perigo passou e começa a contar o tempo para voltar ao gás. Original: “Delta giri disattivazione”. <span class="tag cod">CÓDIGO</span></p>
+<table>
+<tr><th>Valor</th><th>Efeito esperado</th></tr>
+<tr><td>0–5 (muito exigente)</td><td>Só solta quando a rotação está totalmente parada: fica mais tempo na gasolina.</td></tr>
+<tr><td>20 (fábrica)</td><td>Solta assim que a queda vira pequena. Equilíbrio normal.</td></tr>
+<tr><td>100+ (pouco exigente)</td><td>Solta cedo, ainda com a rotação caindo: pode voltar ao gás e apagar. Evite subir.</td></tr>
+</table>
+<div class="box"><b>Faixa segura (resumo):</b> fábrica 1.600 · 100 · 1.500 · 2 · 20. Mexa um número por vez, de preferência nesta ordem: Rotação máxima (1.600 → 1.800), depois Tempo (1.500 → 2.500), depois Queda para agir (100 → 60). Volte ao de fábrica se não melhorou. Sinais de que está errado: carro passando a maior parte do tempo na gasolina na cidade (número 1 ou 3 altos; número 2 baixo), trancos ao desacelerar (número 2 muito baixo), apagando igual (a regra não pegou: número 1 baixo ou número 2 alto, ou o problema não é este). <span class="tag est">ESTIMATIVA</span></div>
+</div>
+
+<!-- ======================= 8.3 OUTROS CARTÕES ======================= -->
+<div class="section">
+<h2>8 (cont.). Os cartões só de leitura (“Ver ›”)</h2>
+<p>Estes cartões mostram como a central está configurada. O app <b>não muda</b> nada neles (seria preciso o programa original do instalador). Servem para você e o instalador saberem o que está ligado. <span class="tag cod">CÓDIGO</span></p>
+
+<h3>8.3 Saída do corte (quando solta o acelerador)</h3>
+<table>
+<tr><th>Linha</th><th>O que é</th><th>Na sua central (12/08)</th></tr>
+<tr><td>Saída suave do corte</td><td>“Progressões”: ao voltar do corte, a central passa de gasolina para gás aos poucos, em vez de de uma vez. Original: “Abilita progressioni”.</td><td><b>Desligado</b></td></tr>
+<tr><td>Gasolina ao sair do corte (injeções)</td><td>Quantas injeções de gasolina a central dá ao voltar do corte antes de entregar ao gás. É o “empurrão” de gasolina na retomada. O nome vem do parâmetro; o papel é deduzido. <span class="tag est">ESTIMATIVA</span></td><td><b>0</b> (nenhuma)</td></tr>
+<tr><td>Corte das injeções extras</td><td>Ignora as injeções extras curtas da gasolina ao copiá-las para o gás. O manual diz: só para centrais 194–198, usada quando há injeções extras frequentes (p. 28).</td><td><b>Ligado</b> <span class="tag fab">FABRICANTE</span></td></tr>
+</table>
+<p><b>Por que importa:</b> “Saída suave” e “Gasolina ao sair do corte” são as duas funções da central feitas exatamente para a retomada depois do corte, que é o seu caso. As duas estão desligadas/zero. Pedir ao instalador para ligar uma delas (uma por vez) é um passo legítimo. <span class="tag cod">CÓDIGO</span></p>
+
+<h4>O que significa “N injeções” em segundos (a conta)</h4>
+<div class="calc">Motor parado a ~900 rpm = 15 voltas por segundo.
+Cada cilindro injeta 1 vez a cada 2 voltas = 7,5 injeções por segundo por cilindro.
+Motor de 4 cilindros = 30 injeções por segundo no total.
+
+Se a central conta no total:     20 injeções ≈ 20 ÷ 30 ≈ 0,7 s
+Se a central conta por cilindro: 20 injeções ≈ 20 ÷ 7,5 ≈ 2,7 s
+Nossa referência: "20 injeções ≈ 1 segundo, mais ou menos".
+Em 6 cilindros, 45 injeções/s no total: 20 injeções ≈ 0,45 s.
+Acelerando a 2.000 rpm tudo é 2,2× mais rápido.</div>
+<table>
+<tr><th>Valor</th><th>Efeito esperado</th></tr>
+<tr><td>0 (como está)</td><td>Nenhuma gasolina na retomada: o motor volta direto no gás.</td></tr>
+<tr><td>5</td><td>Quase nada: segura menos de meio segundo.</td></tr>
+<tr><td>20</td><td>Padrão do fabricante para a função parecida “Volta à gasolina” na marcha lenta (p. 31): ~1 s de gasolina e volta ao gás sozinho. <span class="tag fab">FABRICANTE</span></td></tr>
+<tr><td>40–50 (máximo 50 na tela original)</td><td>~2 s ou mais: gasta mais gasolina e pode demorar a voltar ao gás; com muitas paradas, o carro roda bastante na gasolina.</td></tr>
+</table>
+<p class="small">O fabricante não diz se conta por cilindro ou no total, nem o número de cilindros do seu motor está nos arquivos: a conta acima supõe 4 cilindros. <span class="tag est">ESTIMATIVA</span></p>
+
+<h3>8.4 Marcha lenta (como o motor roda parado)</h3>
+<p>Mostra o “Modo na marcha lenta” e a “Rotação que vale como marcha lenta”. Os 3 modos existem no programa original e o fabricante os descreve assim (p. 31) <span class="tag fab">FABRICANTE</span>:</p>
+<table>
+<tr><th>Modo</th><th>O que faz</th><th>Para quem</th></tr>
+<tr><td><b>Só gás</b> (“Gas”)</td><td>Parado, o motor roda só a gás.</td><td>Padrão. <b>É o que está na sua central</b> (rotação de lenta = “não usada”). <span class="tag cod">CÓDIGO</span></td></tr>
+<tr><td><b>Segurar com gasolina na parada</b> (“Return to petrol”)</td><td>Ao cair para a marcha lenta, a central dá <b>20 injeções de gasolina</b> e depois volta ao gás sozinha.</td><td>“Usada quando o motor tende a apagar ao voltar à marcha lenta.” O fabricante diz, na página do gás no corte (p. 28–29): <b>para apagão ao voltar à lenta, prefira esta família de ajuste (Gás–Gasolina)</b>.</td></tr>
+<tr><td><b>Sempre gasolina na parada</b> (“Petrol”)</td><td>Abaixo da rotação de lenta, roda sempre a gasolina, com atraso embutido para não ficar trocando.</td><td>Mesmo caso, mais forte. Gasta gasolina em toda parada.</td></tr>
+</table>
+<p>“Rotação que vale como marcha lenta”: abaixo dela um dos dois modos acima entra; faixa 0–2.000 rpm (p. 31); o programa original grava 1.100 ao escolher um desses modos. <span class="tag cod">CÓDIGO</span> O app só mostra e sugere (“Sugestão: Segurar com gasolina na parada”); <b>não grava</b> este modo: é mudança para o instalador fazer no programa original.</p>
+
+<h3>8.5 Troca de gasolina para gás</h3>
+<table>
+<tr><th>Linha</th><th>O que é</th><th>Na sua central</th></tr>
+<tr><td>Um cilindro por vez</td><td>Troca sequencial: passa os cilindros para gás um a um, a cada 5 injeções, para a troca ser macia (p. 31). <span class="tag fab">FABRICANTE</span></td><td><b>Ligado</b></td></tr>
+<tr><td>Troca automática</td><td>Interruptor da central para trocar sozinha (depende de outras condições).</td><td>Desligado</td></tr>
+<tr><td>Troca pela temperatura da água / do gás</td><td>Só passa para gás quando o motor (ou o gás) esquenta até a temperatura configurada.</td><td>Água: Ligado · Gás: Desligado</td></tr>
+</table>
+<p class="small">Fora do app, a sua central troca para gás a partir de 1.200 rpm (o fabricante sugere 1.600 como padrão, p. 12). Trocar numa rotação baixa pode cair na zona de risco; é assunto para o instalador. <span class="tag cod">CÓDIGO</span> <span class="tag fab">FABRICANTE</span></p>
+
+<h3>8.6 Injetores</h3>
+<table>
+<tr><th>Linha</th><th>O que é</th><th>Na sua central</th></tr>
+<tr><td>Controle dos injetores</td><td>A central vigia os bicos de gás (diagnóstico).</td><td>Ligado</td></tr>
+<tr><td>Aquecimento dos injetores</td><td>Pré-aquece os bicos no frio.</td><td>Desligado</td></tr>
+<tr><td>Corrente maior na troca para gás</td><td>Abre o bico com mais força na troca e na saída do corte.</td><td>Desligado</td></tr>
+</table>
+<p class="small">Não mexer sem o instalador: errar corrente de bico pode queimá-lo. <span class="tag cod">CÓDIGO</span></p>
+
+<h3>8.7 Volta para gasolina</h3>
+<table>
+<tr><th>Linha</th><th>O que é</th><th>Na sua central</th></tr>
+<tr><td>Gasolina entra sozinha em rotação alta</td><td>Adiciona gasolina em rotação alta (falta de vazão de gás). Não é para a parada.</td><td>Desligado</td></tr>
+<tr><td>Corte da bomba de gasolina</td><td>Desliga a bomba de gasolina enquanto roda a gás.</td><td>Desligado</td></tr>
+<tr><td>Reativar a bomba na reserva</td><td>Religa a bomba quando o gás acaba.</td><td>Desligado</td></tr>
+</table>
+<p class="small">Dica de diagnóstico do fabricante (p. 19): um “apagão” no GNV pode ser a central voltando para gasolina por pressão baixa (cilindro quase vazio): aviso sonoro rápido e as duas luzes acesas no comutador. <span class="tag fab">FABRICANTE</span></p>
+<p class="small">Em qualquer cartão, “Ver detalhes técnicos” mostra os códigos internos. Não precisa deles para usar o app.</p>
+</div>
+
+<!-- ======================= 9. FERRAMENTAS P2 ======================= -->
+<div class="section">
+<h2>9. Ferramentas, página 2: App e arquivos</h2>
+<p>Toque em <span class="btn">Mais ferramentas ›</span> no rodapé. Nenhum cartão desta página grava na central (exceto o teste de gravação, que escreve e desfaz). <span class="tag cod">CÓDIGO</span></p>
+<table>
+<tr><th>Cartão</th><th>O que faz ao tocar</th><th>Quando usar</th></tr>
+<tr><td><b>Cópia de segurança</b> · <span class="btn">Salvar cópia</span></td><td>Guarda tudo do app (ajustes, aprendizado, gravações) num arquivo.</td><td>Antes de trocar de celular ou de mexer muito.</td></tr>
+<tr><td><b>Aprendizado</b> · <span class="btn">Salvar aprendizado</span></td><td>Guarda só o que o app aprendeu (medições do Refino).</td><td>Para levar para outro celular.</td></tr>
+<tr><td><b>Aprendizado de outro arquivo</b> · <span class="btn">Carregar aprendizado</span></td><td>Lê um arquivo de aprendizado e confere antes. Não grava na central.</td><td>Idem.</td></tr>
+<tr><td><b>Refino automático</b> (interruptor)</td><td>Ligado: depois de cada ajuste automático da central, o app anota uma sugestão. Desligado: não anota. <b>Nunca grava sozinho.</b></td><td>Pode deixar ligado.</td></tr>
+<tr><td><b>Teste de gravação</b> · <span class="btn">Testar</span> (2 toques)</td><td>Escreve um valor de teste numa faixa do GNV já cheia, confere se a central aceitou e segurou, e restaura o original. Resultado em palavras: “A central aceitou e o valor ficou” / “recusou (só leitura)” / “aceitou, mas desfez sozinha”.</td><td><b>Só com o carro parado.</b> Serve para saber se a central aceita escrita naqueles pontos. Se avisar “o original NÃO voltou”, use AutoCal › Reaprender GNV.</td></tr>
+<tr><td><b>Bateria</b> · <span class="btn">Permitir</span></td><td>Pede ao Android para não pausar o app em segundo plano.</td><td>Se a gravação para sozinha quando a tela apaga.</td></tr>
+<tr><td><b>Balão sobre outros apps</b> · <span class="btn">Permitir balão</span> / interruptor</td><td>Mostra as leituras (rotação, MAP…) por cima do mapa/GPS.</td><td>Para ver a rotação enquanto dirige com o Waze aberto.</td></tr>
+<tr><td><b>Registro do app</b> · Ver ›</td><td>Lista de avisos (filtros “Só erros / Só avisos / Só informações” e por assunto), <span class="btn">Salvar registro</span> (exporta) e <span class="btn">Testar o app</span> (autoteste).</td><td>Quando algo não funciona e alguém pedir o registro.</td></tr>
+</table>
+</div>
+
+<!-- ======================= 10. PASSO A PASSO ======================= -->
+<div class="section">
+<h2>10. Passo a passo: o carro apaga ao parar e ao sair do lugar</h2>
+<p><b>Diagnóstico pelas suas gravações:</b> é um problema do GNV (na gasolina não apaga), concentrado em dois momentos: (a) <b>soltar a embreagem para sair</b> (7% de apagão, 62% de quase-apagão) e (b) <b>a volta à marcha lenta / lenta que morre</b> (2%). Em quase todos, a rotação estava abaixo de 1.600 e caindo 200–800 rpm entre uma leitura e outra: exatamente a situação para a qual o anti-apagão foi feito, e ele estava desligado. <span class="tag cod">CÓDIGO</span></p>
+<div class="box"><b>Método:</b> um ajuste por vez · 20 paradas e saídas gravadas antes e depois · anote a frase do Refino (“engasgou N vezes”) · se não melhorou, desfaça antes do próximo. Nunca dois ajustes no mesmo dia.</div>
+<table>
+<tr><th>Passo</th><th>O que fazer no app</th><th>O que esperar</th><th>Marca</th></tr>
+<tr><td><b>0. Medir</b></td><td>Sessões: gravação ligada. Dirija 20 paradas/saídas no GNV. Anote o Refino: “engasgou N vezes, apagou X”.</td><td>Sua linha de base.</td><td>—</td></tr>
+<tr><td><b>1. Ligar o anti-apagão</b> (com os 5 números de fábrica)</td><td>Ferramentas › Anti-apagão › toque, confira “Desligado → Ligado”, toque de novo. Confirme “Pronto… conferido na central”.</td><td>Nas paradas e saídas, um breve uso de gasolina (1,5 s) quando a rotação despenca. Menos apagões. Se a central “não aceitou”, ela pode não ter a função ou exigir condição (motor desligado): tente com a chave ligada e o motor desligado.</td><td><span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td><b>2. Se melhorou pouco:</b> Rotação máxima 1.600 → 1.800</td><td>Valores do anti-apagão › número 1 › Gravar valores.</td><td>Age mais cedo na saída do lugar. Se o carro passar a ficar muito na gasolina, volte a 1.600.</td><td><span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td><b>3. Se ainda apaga na parada:</b> Tempo 1.500 → 2.500 ms</td><td>Número 3 (2,5 s).</td><td>Mais tempo de gasolina até a lenta firmar.</td><td><span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td><b>4. Se ainda apaga na embreagem:</b> Queda para agir 100 → 60</td><td>Número 2.</td><td>Gatilho mais sensível. Se der tranco ao desacelerar, volte a 100.</td><td><span class="tag est">ESTIMATIVA</span></td></tr>
+<tr><td><b>5. Reforço do GNV na lenta (Mapa K)</b></td><td>Refino › Ver alterações › se houver “Reforço do GNV em N células (+X%)” › Gravar no Mapa K. Ou Ajuste local: marque as células que AGORA aponta com o carro parado e com o pé saindo da embreagem, Percentual +5, Gravar.</td><td>Mais gás onde o motor engasga. Suas gravações mostram a faixa de 1–3 ms ~10% pobre.</td><td><span class="tag cod">CÓDIGO</span> (medição) · <span class="tag est">ESTIMATIVA</span> (efeito)</td></tr>
+<tr><td><b>6. Reaprender GNV</b></td><td>AutoCal › Reaprender GNV, depois rodar com o motor quente como o fabricante descreve.</td><td>A central mede de novo com a configuração nova.</td><td><span class="tag fab">FABRICANTE</span> (p. 44–45)</td></tr>
+<tr><td><b>7. Com o instalador (fora do app)</b></td><td>Pedir, um por vez: Marcha lenta = “Segurar com gasolina na parada” (o que o fabricante indica para apagão ao voltar à lenta); “Gasolina ao sair do corte” = 20; “Saída suave do corte” ligada; rotação de troca 1.200 → 1.600.</td><td>O app mostra o estado de cada um no cartão correspondente, para conferir que foi feito.</td><td><span class="tag fab">FABRICANTE</span> (p. 28–29, 31, 12)</td></tr>
+</table>
+<h3>Como saber se foi o anti-apagão que agiu</h3>
+<p>Na barra do topo, no momento da parada, o combustível muda de GNV para gasolina por ~1,5 s e volta. Nas gravações, aparece uma “saída do GNV” sem corte e com rotação baixa caindo: o script de análise classifica como “ANTI_APAGAO_CANDIDATO”. Antes de ligar, 1% das saídas do GNV tinham esse formato; se depois de ligar esse número subir bastante, a regra está agindo. <span class="tag cod">CÓDIGO</span></p>
+<div class="box warn"><b>Não fazer:</b> ligar o anti-apagão e mexer na Curva K no mesmo dia; mudar dois dos 5 números de uma vez; gravar qualquer coisa com o cabo mal encaixado; “Recomeçar tudo” como tentativa.</div>
+</div>
+
+<!-- ======================= 11. SEM EXPLICAÇÃO ======================= -->
+<div class="section">
+<h2>11. O que ficou sem explicação (lista honesta)</h2>
+<ul>
+<li><b>Efeito real do anti-apagão no seu carro:</b> nunca foi ligado com gravação. A ordem exata dos 5 números é dedução pela tela original; só um teste “muda um número, mede” fecha a dúvida.</li>
+<li><b>“Por ciclo”</b> (números 2, 4 e 5): o intervalo de leitura interno da central não está documentado.</li>
+<li><b>Se a central aceita gravar o anti-apagão com o motor ligado:</b> o programa original tem condições internas (modelo de central); o app confere por leitura de volta e avisa se não ficou.</li>
+<li><b>“Gasolina ao sair do corte”:</b> o papel do número é deduzido pelo nome; se conta por cilindro ou no total, não sabemos; o app só mostra (não grava).</li>
+<li><b>“Saída suave do corte” (progressões):</b> existem 12 números internos (4 situações × 3 colunas) cujo significado é desconhecido; o app não os mostra.</li>
+<li><b>Número de cilindros do seu motor:</b> não está nos arquivos; as contas de “injeções → segundos” supõem 4.</li>
+<li><b>Tensão na barra do topo:</b> a escala (÷16) é provisória; o alerta de 14,1 V vem do seu relato.</li>
+<li><b>Mapa K: o que “100” e “255” significam em porcentagem de gás</b> não está provado; sabe-se só que 100 é o piso, 255 o teto e que ~220 foi a sua correção grande.</li>
+<li><b>Modo da marcha lenta:</b> o app só lê e sugere; a escrita ficou pendente de propósito.</li>
+<li><b>AutoCal, detalhes técnicos:</b> “Estado raw”, “Snapshot”, “18 regiões”: são números internos para quem desenvolve; não têm efeito para o uso.</li>
+<li><b>“Equivalência % por RPM” / “Preparar sugestão”</b> no Ajuste local: só aparecem com dados suficientes; o critério exato de “suficiente” é do código em Kotlin e não foi detalhado aqui.</li>
+</ul>
+<p class="small">Fontes usadas: arquivos de tela do app (<i>components/advanced.js, drawers.js, live-bar.js; screens/autocal-cockpit.js, autocal-original.js, refino.js, map.js, curve.js; core/idle-mode.js, advanced-flags.js, anti-apagao-valores.js, cartoes-motor.js</i>); evidências de 18/10/2026 (<i>aba-avancado, anti-stallo, anti-stallo-caixa-re, anti-stallo-ligado-na-ecu, anti-stallo-quadro-de-escrita, apagoes-x-anti-stallo, catalogo-funcoes-originais, manuais-publicos, tela-anti-stallo-original, flags-do-original</i>) e de 16/10 (<i>sessao-18-07-apagoes</i>); <i>tools/sessoes/apagoes_parada_saida.py</i> (rodado em 18/10 sobre o corpus de 89 sessões); manual oficial “Software Manual Landi Renzo Omegas 2.16.4 C” (jul/2012), páginas 12, 17, 19, 25, 27, 28–29, 31, 44–45.</p>
+</div>
+
+</body>
+</html>

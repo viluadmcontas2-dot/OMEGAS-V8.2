@@ -176,8 +176,7 @@ test('sucesso só depois da leitura de volta IGUAL; mostra o valor devolvido pel
   e.emit();
   const v = e.flow.view();
   assert.equal(v.phase, 'done');
-  assert.match(v.message, /Gravado e conferido/);
-  assert.match(v.message, /0020 0000/);
+  assert.match(v.message, /Pronto\. Anti-apagão ligado e conferido na central\./);
   assert.equal(v.undo.available, true);
   assert.equal(e.hooks.size, 0, 'terminou: o gancho de dados é solto');
 });
@@ -193,9 +192,8 @@ test('leitura de volta DIVERGENTE: erro honesto, nunca "gravado"', () => {
   const v = e.flow.view();
   assert.equal(v.phase, 'error');
   assert.doesNotMatch(v.message, /Gravado e conferido/);
-  assert.match(v.message, /leitura de volta é diferente/);
-  assert.match(v.message, /esperado 0020 0000/);
-  assert.match(v.message, /veio 0000 0000/);
+  assert.match(v.message, /Não sei como ficou na central/);
+  assert.equal(v.uncertain, true);
 });
 
 test('o JS reconfere a leitura de volta: Kotlin diz CONFIRMED mas o valor lido não bate -> erro', () => {
@@ -215,7 +213,7 @@ test('o JS reconfere o quadro: prévia com quadro diferente do calculado aqui é
   e.setStatus({ ...pronto([0, 0], true), frameHex: '35 FA 00 10 00 00 00 3F' });
   e.emit();
   assert.equal(e.flow.view().phase, 'error');
-  assert.match(e.flow.view().message, /quadro/i);
+  assert.match(e.flow.view().message, /não bate.*Nada foi gravado/);
   assert.equal(e.count('confirm'), 0);
 });
 
@@ -229,7 +227,8 @@ test('ECU não confirmou (sem ACK / recusa): erro, sem sucesso', () => {
     e.setStatus({ state: 'DONE', outcome, message: 'detalhe ' + outcome });
     e.emit();
     assert.equal(e.flow.view().phase, 'error', outcome);
-    assert.match(e.flow.view().message, new RegExp('detalhe ' + outcome));
+    assert.match(e.flow.view().message, outcome === 'NOT_ACKED' ? /A central não aceitou\. Tente de novo\./ : outcome === 'CHANGED_MEANWHILE' ? /mudou na central\. Nada foi gravado/ : outcome === 'READBACK_FAILED' ? /Não sei como ficou/ : /Não consegui falar com a central/);
+    assert.doesNotMatch(e.flow.view().message, /detalhe|0x|ACK|ECU/);
   }
 });
 
@@ -269,8 +268,8 @@ test('USB cai durante a gravação: a espera termina (sem resposta final) com av
   e.flow.observe({ route: 'tools', usbConnected: false });
   const v = e.flow.view();
   assert.equal(v.phase, 'error');
-  assert.match(v.message, /USB/);
-  assert.match(v.message, /não foi conferid/);
+  assert.match(v.message, /cabo soltou/);
+  assert.match(v.message, /Não sei como ficou/);
   assert.equal(e.hooks.size, 0);
 });
 
@@ -369,7 +368,7 @@ test('estado incerto: READBACK_FAILED / READBACK_DIVERGED / valueChanged nunca d
   for (const caso of casos) {
     const v = terminar(caso);
     assert.equal(v.phase, 'error', caso.outcome);
-    assert.match(v.message, /Estado incerto — releia a ECU/, caso.outcome);
+    assert.match(v.message, /Não sei como ficou na central/, caso.outcome);
     assert.doesNotMatch(v.message, /[Nn]ada foi dado como gravado/, caso.outcome);
     assert.equal(v.uncertain, true, caso.outcome);
   }
@@ -378,13 +377,13 @@ test('estado incerto: READBACK_FAILED / READBACK_DIVERGED / valueChanged nunca d
 test('recusa limpa (NOT_ACKED sem mudança, valor intacto) segue dizendo que nada foi gravado', () => {
   const v = terminar({ outcome: 'NOT_ACKED', readback: [0, 0], valueChanged: false });
   assert.equal(v.phase, 'error');
-  assert.match(v.message, /nada foi dado como gravado/);
-  assert.doesNotMatch(v.message, /Estado incerto/);
+  assert.match(v.message, /A central não aceitou\. Tente de novo\./);
+  assert.doesNotMatch(v.message, /Não sei como ficou/);
   assert.notEqual(v.uncertain, true);
 });
 
 test('CONFIRMED que o JS não consegue reconferir também é estado incerto', () => {
   const v = terminar({ outcome: 'CONFIRMED', readback: [0x30, 0] });
-  assert.match(v.message, /Estado incerto — releia a ECU/);
+  assert.match(v.message, /Não sei como ficou na central/);
   assert.doesNotMatch(v.message, /[Nn]ada foi dado como gravado/);
 });

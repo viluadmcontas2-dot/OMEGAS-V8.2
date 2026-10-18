@@ -29,10 +29,9 @@
     const giriRaw = (p.GIRI_PER_BENZINA && p.GIRI_PER_BENZINA.state === 'OK' && Array.isArray(p.GIRI_PER_BENZINA.values) && p.GIRI_PER_BENZINA.values.length === 2) ? p.GIRI_PER_BENZINA.values : null;
     const cutoffRaw = (p.NUMERO_INJ_BENZINA_CUTOFF && p.NUMERO_INJ_BENZINA_CUTOFF.state === 'OK' && Array.isArray(p.NUMERO_INJ_BENZINA_CUTOFF.values) && p.NUMERO_INJ_BENZINA_CUTOFF.values.length === 1) ? p.NUMERO_INJ_BENZINA_CUTOFF.values[0] : null;
 
-    // Marcha lenta: o modo vem de dois fatos lidos (rotação e um bit).
-    const idleBit = bit('FLAG_CONF1', 1, 0x0400);
-    let idleMode = DASH;
-    if (giriRaw && idleBit !== null) idleMode = idleBit ? 'A gasolina' : giriRaw[0] === 0 ? 'A gás' : 'Volta à gasolina';
+    // Marcha lenta: modo lido por core/idle-mode.js (bit certo desta central: 0x0100; só leitura + sugestão).
+    const idle = ns.IdleMode ? ns.IdleMode.view(p) : { stateText: DASH, suggestionText: '' };
+    const idleMode = idle.stateText;
 
     const anti = bit('FLAG_CONF3', 0, A.ANTI_MASK);
     const values = V.valuesOf(p.ANTI_STALLO);
@@ -48,8 +47,10 @@
         rows: [row('Saída suave do corte', bit('FLAG_CONF3', 0, 0x0010)), { label: 'Gasolina ao sair do corte', text: cutoffRaw === null ? DASH : `${num(cutoffRaw)} injeções`, on: null }, row('Corte das injeções extras', bit('FLAG_CONF2', 0, 0x0001))],
         tech: [techBit('FLAG_CONF3', 0, 0x0010, 'Saída suave'), techBit('FLAG_CONF2', 0, 0x0001, 'Corte das injeções extras'), `NUMERO_INJ_BENZINA_CUTOFF · código 106 · ${cutoffInj ? cutoffInj.cells.join(' ') : DASH} (papel inferido pelo nome)`] },
       { id: 'lenta', kind: 'open', title: 'Marcha lenta', viewTitle: 'Marcha lenta', line: 'Como o motor roda parado.', on: null, stateText: idleMode, stateFor: 'Modo',
-        rows: [{ label: 'Modo na marcha lenta', text: idleMode, on: null }, { label: 'Rotação que vale como marcha lenta', text: giriRaw ? (giriRaw[0] === 0 ? 'Não usada' : num(giriRaw[0])) : DASH, on: null }],
-        tech: [`GIRI_PER_BENZINA · código 161 · ${giri ? giri.cells.join(' ') : DASH}`, techBit('FLAG_CONF1', 1, 0x0400, 'Modo da marcha lenta (inferido)')] },
+        rows: [{ label: 'Modo na marcha lenta', text: idleMode, on: null }, { label: 'Rotação que vale como marcha lenta', text: giriRaw ? (giriRaw[0] === 0 ? 'Não usada' : num(giriRaw[0])) : DASH, on: null }]
+          .concat(idle.suggestionText ? [{ label: 'Sugestão', text: 'Segurar com gasolina na parada', on: null }] : []),
+        note: idle.suggestionText || '',
+        tech: [`GIRI_PER_BENZINA · código 161 · ${giri ? giri.cells.join(' ') : DASH}`, techBit('FLAG_CONF1', 1, 0x0100, 'Modo da marcha lenta')] },
       { id: 'troca', kind: 'open', title: 'Troca de gasolina para gás', viewTitle: 'Troca de gasolina para gás', line: 'Um cilindro por vez.',
         on: bit('FLAG_CONF1', 1, 0x1000), stateText: stateOf(bit('FLAG_CONF1', 1, 0x1000)), stateFor: 'Um cilindro por vez',
         rows: [row('Um cilindro por vez', bit('FLAG_CONF1', 1, 0x1000)), row('Troca automática', bit('FLAG_CONF3', 0, 0x8000)), row('Troca pela temperatura da água', bit('FLAG_CONF1', 1, 0x0001)), row('Troca pela temperatura do gás', bit('FLAG_CONF1', 1, 0x0002))],

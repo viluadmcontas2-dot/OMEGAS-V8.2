@@ -40,7 +40,7 @@ test('toque 1 só mostra a prévia (antes→depois) e NÃO escreve; toque 2 grav
   assert.equal(r.view().phase, 'done');
   assert.deepEqual(r.writes(), [LIGAR], '(b) quadro exato');
   assert.deepEqual(r.flag3(), [0x20, 0, 0, 0], 'a ECU mudou de verdade');
-  assert.match(r.view().message, /ECU confirmou: ligado/);
+  assert.match(r.view().message, /Anti-apagão ligado e conferido na central/);
   assert.equal(r.stateText(), 'Ligado', 'a leitura de volta bate com o que a tela mostra');
 });
 
@@ -57,7 +57,7 @@ test('Desfazer: prévia e 2º toque; grava o quadro de desligar e a ECU volta ao
   assert.deepEqual(r.writes(), [DESLIGAR]);
   assert.deepEqual(r.flag3(), original);
   assert.equal(r.stateText(), 'Desligado');
-  assert.match(r.view().message, /ECU confirmou: desligado/);
+  assert.match(r.view().message, /Anti-apagão desligado e conferido na central/);
 });
 
 for (const [nome, descarta] of [
@@ -114,10 +114,10 @@ test('toque duplo muito rápido: o 2º toque grava UMA vez só (um quadro de esc
 
 test('falhas são honestas: NAK, silêncio, ACK sem aplicar e readback diferente nunca viram "Gravado"', () => {
   const casos = [
-    ['nak', /não confirmou/, [0, 0, 0, 0]],
-    ['noReply', /não confirmou/, [0, 0, 0, 0]],
-    ['ignoreWrite', /leitura de volta é diferente/, [0, 0, 0, 0]],
-    ['corruptWrite', /leitura de volta é diferente/, [0x20, 0, 0, 1]],
+    ['nak', /A central não aceitou/, [0, 0, 0, 0]],
+    ['noReply', /A central não aceitou/, [0, 0, 0, 0]],
+    ['ignoreWrite', /Não sei como ficou na central/, [0, 0, 0, 0]],
+    ['corruptWrite', /Não sei como ficou na central/, [0x20, 0, 0, 1]],
   ];
   for (const [falha, texto, ecuFinal] of casos) {
     const r = ready();
@@ -126,7 +126,7 @@ test('falhas são honestas: NAK, silêncio, ACK sem aplicar e readback diferente
     r.tap(); r.cycle();
     assert.equal(r.view().phase, 'error', falha);
     assert.match(r.view().message, texto, falha);
-    assert.doesNotMatch(r.view().message, /Gravado e conferido|ECU confirmou: ligado/, falha);
+    assert.doesNotMatch(r.view().message, /Pronto|conferido na central/, falha);
     assert.deepEqual(r.flag3(), ecuFinal, 'estado real da ECU: ' + falha);
     assert.equal(r.view().undo.available, false, 'sem Desfazer quando não confirmou: ' + falha);
   }
@@ -140,7 +140,7 @@ test('USB cai com a gravação em andamento: erro honesto, nada dado como gravad
   assert.deepEqual(r.writes(), [LIGAR], 'o quadro saiu no 2º toque; a resposta ainda não chegou');
   r.bench.unplugUsb(); r.observe();
   assert.equal(r.view().phase, 'error');
-  assert.match(r.view().message, /USB caiu/);
+  assert.match(r.view().message, /cabo soltou/);
   assert.doesNotMatch(r.view().message, /Gravado e conferido/);
 });
 

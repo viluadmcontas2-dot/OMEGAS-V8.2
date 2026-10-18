@@ -35,7 +35,7 @@
   const ROUTE_SCRIPTS = {
     map: ['core/autocal-api.js', 'map-editor.js', 'core/curve-to-map.js', 'core/balance-runner.js', 'core/write-gate.js', 'screens/map.js'],
     curve: ['core/curve-smoothing.js', 'screens/curve.js'],
-    tools: ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'core/anti-apagao-valores.js', 'core/cartoes-motor.js', 'components/drawers.js', 'components/advanced.js'],
+    tools: ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'core/anti-apagao-valores.js', 'core/idle-mode.js', 'core/cartoes-motor.js', 'components/drawers.js', 'components/advanced.js'],
     sessions: ['components/drawers.js'],
     refino: [...SHARED_AUTOCAL, 'map-editor.js', 'core/stall-region.js', 'core/write-gate.js', 'core/map-fix.js', 'core/gasoline-reference.js', 'screens/refino.js'],
   };

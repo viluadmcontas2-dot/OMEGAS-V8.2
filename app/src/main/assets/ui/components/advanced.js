@@ -272,6 +272,7 @@
       return `
         <section class="tool-view read-view" data-card="${card.id}">
           <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>${escapeHtml(card.viewTitle || card.title)}</h3><p>Só mostra como está. O app não muda isto.</p></header>
+          ${card.note ? `<p class="read-note">${escapeHtml(card.note)}</p>` : ''}
           <ul class="read-list">${card.rows.map(r => `<li data-state="${r.on === null ? 'neutral' : r.on ? 'on' : 'off'}"><span>${escapeHtml(r.label)}</span><b>${escapeHtml(r.text)}</b></li>`).join('')}</ul>
           <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>
         </section>`;

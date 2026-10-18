@@ -177,3 +177,63 @@ test('mutação: confirmação automática faz a prova "nada grava no 1º toque"
     assert.deepEqual(await U.ecuWrites(app.page), [U.LIGAR], 'o mutante grava sozinho: exatamente o que a prova real proíbe');
   } finally { await app.context.close(); require('node:fs').rmSync(dir, { recursive: true, force: true }); }
 });
+
+// ---- portados do antigo e2e-avancado-toque (a UI antiga do Avançado saiu): mesmas garantias na nova tela
+test('toque duplo RÁPIDO: do repouso só prepara; na confirmação, rajada de toques grava UMA vez', { skip }, async () => {
+  const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await U.clearLog(page);
+    await T.doubleTap(page, '[data-adv-switch]'); await T.pump(page, 4);
+    assert.deepEqual(await U.ecuWrites(page), [], 'o 2º toque caiu em "lendo": nada escrito');
+    assert.equal(await U.camada(page), 1);
+    const b = await page.locator('#toolsLayer [data-adv-confirm]').boundingBox();
+    for (let i = 0; i < 3; i += 1) await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
+    await T.pump(page, 6);
+    assert.deepEqual(await U.ecuWrites(page), [U.LIGAR], 'rajada de 3 toques = exatamente 1 quadro');
+  } finally { await app.context.close(); }
+});
+
+test('sem central e sem leitura: o interruptor está desligado, nada sai e o motivo está escrito', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    assert.equal(await page.locator('[data-adv-switch]').isDisabled(), true);
+    await T.tap(page, '[data-adv-switch]', { allowDisabled: true }); await T.pump(page, 3);
+    assert.deepEqual((await T.frames(page)).log, [], 'nenhum quadro, de nenhum tipo');
+    assert.match(await U.text(page, '[data-card="anti"] .tile-line'), /Conecte a central|Esperando a leitura|Só funciona/);
+    assert.equal(await U.camada(page), 0);
+  } finally { await app.context.close(); }
+});
+
+test('falhas honestas: silêncio, ACK sem aplicar e leitura diferente nunca viram "Pronto"', { skip }, async () => {
+  for (const [falha, re] of [['noReply', /não aceitou/], ['ignoreWrite', /Não sei como ficou/], ['corruptWrite', /Não sei como ficou/]]) {
+    const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
+    const { page } = app;
+    try {
+      await U.abrirMotor(app);
+      await page.evaluate(f => window.__bench.setFault(f), falha);
+      await T.tap(page, '[data-adv-switch]'); await T.pump(page, 4);
+      await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
+      await page.waitForSelector('#toolsLayer .adv-result[data-level="warning"]');
+      const msg = await U.text(page, '#toolsLayer');
+      assert.match(msg, re, falha);
+      assert.doesNotMatch(msg, /Pronto\./);
+      assert.equal(await page.locator('#toolsLayer [data-adv-undo-flag]').count(), 0, 'sem Desfazer sem confirmação');
+    } finally { await app.context.close(); }
+  }
+});
+
+test('500 ciclos de dados não escrevem nada na central', { skip }, async () => {
+  const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await U.abrirMotor(app);
+    await U.clearLog(page);
+    await page.evaluate(() => { for (let i = 0; i < 500; i += 1) { window.__bench.deliver(); window.OmegasApp.scheduler.run(); } });
+    await T.pump(page, 2);
+    assert.deepEqual(T.writesOf((await T.frames(page)).log), []);
+  } finally { await app.context.close(); }
+});
