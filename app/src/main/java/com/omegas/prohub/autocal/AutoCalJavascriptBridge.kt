@@ -269,6 +269,7 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
             .put("restorePoints", service.refinementJournal.restorePoints())
             .put("autopilot", service.refinementAutopilot.json())
             .put("stalls", service.stallWatch.json())
+            .put("mapSuggestion", MapSuggestionPolicy.decide(service.equivalence.attribution(), service.kWriter.cachedMapJson()))
             .toString()
     } catch (error: Exception) {
         localFailure(error.message ?: "Equivalência indisponível")

@@ -820,6 +820,8 @@ class TelemetryForegroundService : Service() {
                 }
                 record.put("verdict", decision.verdict.name).put("reason", decision.reason).put("points", points)
                     .put("floorRaw", decision.floorRaw).put("ceilingRaw", decision.ceilingRaw).put("mapMaxCell", mapMax ?: JSONObject.NULL)
+                // Sugestão do Mapa K por faixa de RPM no mesmo evento (só registra; gravar é sempre manual).
+                record.put("mapSuggestion", com.omegas.prohub.autocal.MapSuggestionPolicy.decide(equivalence.attribution(), kWriter.cachedMapJson()))
             } catch (error: Exception) {
                 record.put("verdict", "ERRO").put("reason", (error.message ?: error.javaClass.simpleName).take(120))
             }
