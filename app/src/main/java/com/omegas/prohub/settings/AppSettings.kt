@@ -33,6 +33,10 @@ class AppSettings(context: Context) {
         }
     }
 
+    /** Refino automático depois de cada AutoMatch da ECU (D1): OFF, SHADOW (só registra o que gravaria) ou ON. Padrão SHADOW. */
+    var autoRefineMode: String
+        get() = prefs.getString("autoRefineMode", "SHADOW") ?: "SHADOW"
+        set(value) = prefs.edit().putString("autoRefineMode", value).apply()
     var autoStartEngine: Boolean
         get() = prefs.getBoolean("autoStartEngine", true)
         set(value) = prefs.edit().putBoolean("autoStartEngine", value).apply()

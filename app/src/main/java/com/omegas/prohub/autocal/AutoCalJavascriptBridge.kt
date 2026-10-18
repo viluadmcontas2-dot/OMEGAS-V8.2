@@ -217,6 +217,14 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun startBufferWriteProbe(): String =
         activityRef.get()?.serviceOrNull()?.startBufferWriteProbe() ?: unavailable()
 
+    /** Modo do Refino automático depois do AutoMatch (D1): OFF, SHADOW (padrão) ou ON. */
+    @JavascriptInterface
+    fun getAutoRefineMode(): String = activityRef.get()?.serviceOrNull()?.autoRefineModeName() ?: "SHADOW"
+
+    @JavascriptInterface
+    fun setAutoRefineMode(mode: String): String =
+        activityRef.get()?.serviceOrNull()?.setAutoRefineModeName(mode) ?: unavailable()
+
     @JavascriptInterface
     fun getBufferWriteProbeStatus(): String =
         activityRef.get()?.serviceOrNull()?.bufferWriteProbeStatusJson() ?: unavailable()

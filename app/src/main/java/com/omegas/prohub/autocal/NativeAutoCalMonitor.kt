@@ -32,6 +32,8 @@ class NativeAutoCalMonitor(
     private val onNativeAutoMatchObserved: (JSONObject) -> Unit = {},
     /** Última leitura boa das bandas no instante em que a ECU mudou a contagem de AutoMatch (só registro). */
     private val onPreAutoMatchState: (JSONObject) -> Unit = {},
+    /** Cópia da última leitura completa antes do AutoMatch (buffers do GNV ainda cheios); a ECU zera o GNV logo depois. */
+    private val onPreAutoMatchSnapshot: (JSONObject) -> Unit = {},
     private val onStateChanged: () -> Unit = {},
 ) {
     private data class PendingMaturity(
@@ -221,6 +223,9 @@ class NativeAutoCalMonitor(
         if (countIncreased) {
             PreAutoMatchState.capture(latestSnapshot, probe.autoMatchCount, System.currentTimeMillis())?.let { pre ->
                 try { onPreAutoMatchState(pre) } catch (_: Exception) {}
+            }
+            if (latestSnapshot.optBoolean("available", false)) {
+                try { onPreAutoMatchSnapshot(JSONObject(latestSnapshot.toString())) } catch (_: Exception) {}
             }
         }
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.

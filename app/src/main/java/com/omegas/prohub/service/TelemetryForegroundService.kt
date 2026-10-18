@@ -77,6 +77,12 @@ class TelemetryForegroundService : Service() {
     private var autoReadLastOkAtMs = 0L
     private var autoReadAttempts = 0
     @Volatile private var parametersRead = false
+    /** Refino automático depois de cada AutoMatch da ECU (D1). Leitura + decisão + (só em LIGADO) escrita, fora das threads do USB e da tela. */
+    private val autoRefineExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "omegas-auto-refine").apply { isDaemon = true }
+    }
+    @Volatile private var preAutoMatchSnapshot: JSONObject? = null
+    @Volatile private var autoRefineLastEpoch: String? = null
     /** Quem pediu a leitura em curso: UI (botão/abertura de tela), AUTO_START ou AUTO_PERIODIC. Vai junto no evento da sessão. */
     @Volatile private var readTrigger = "UI"
     /** Última curva vista (factorsRaw em texto) e quando o app gravou a última curva; classificam a origem de cada mudança. */
@@ -257,6 +263,7 @@ class TelemetryForegroundService : Service() {
                 )
                 // A ECU trocou a Curva K sozinha: GNV antigo descartado, verificação interrompida.
                 refinement.nativeCurveChanged()
+                autoRefineAfterEcuAutoMatch(payload)
             },
             onNativeAutoMatchObserved = { payload ->
                 sessionRecorder.record(
@@ -269,6 +276,7 @@ class TelemetryForegroundService : Service() {
             onPreAutoMatchState = { payload ->
                 sessionRecorder.record("autocal_pre_automatch_state", "autocal", payload, force = true)
             },
+            onPreAutoMatchSnapshot = { snapshot -> preAutoMatchSnapshot = snapshot },
             onStateChanged = { stateChanged() },
         )
         learningArchive = LearningArchiveManager(paths, settings, runtime, kWriter, log)
@@ -320,6 +328,7 @@ class TelemetryForegroundService : Service() {
         try { nativeAutoCal.endUsbSession() } catch (_: Exception) {}
         try { kFactor.close() } catch (_: Exception) {}
         try { bufferProbe.close() } catch (_: Exception) {}
+        autoRefineExecutor.shutdownNow()
         try { kWriter.close() } catch (_: Exception) {}
         try { runtime.close() } catch (_: Exception) {}
         try { usb.close() } catch (_: Exception) {}
@@ -752,6 +761,77 @@ class TelemetryForegroundService : Service() {
     }
 
     /** Curva que a ECU mostra no snapshot (MUL_ACT) diferente da última vista = mudança; registra com a origem provável. */
+    fun autoRefineModeName(): String = settings.autoRefineMode
+
+    fun setAutoRefineModeName(mode: String): String {
+        val parsed = try { com.omegas.prohub.autocal.AutoRefinePolicy.Mode.valueOf(mode) } catch (_: Exception) {
+            return JSONObject().put("ok", false).put("error", "Modo inválido").toString()
+        }
+        settings.autoRefineMode = parsed.name
+        sessionRecorder.record("settings_changed", "auto_refine", JSONObject().put("autoRefineMode", parsed.name), force = true)
+        return JSONObject().put("ok", true).put("mode", parsed.name).toString()
+    }
+
+    /**
+     * D1 (decisão do dono, 2026-10-16): depois de cada AutoMatch da ECU, refinar a Curva K sozinho, sem teto por ponto, só dentro das
+     * travas absolutas (AutoRefinePolicy). Usa a leitura de ANTES do AutoMatch (a ECU zera o GNV logo depois), lê a curva viva e
+     * grava com ACK + leitura de volta (KFactorManager). SOMBRA registra o que gravaria; LIGADO escreve. Uma vez por AutoMatch.
+     */
+    private fun autoRefineAfterEcuAutoMatch(payload: JSONObject) {
+        val mode = try { com.omegas.prohub.autocal.AutoRefinePolicy.Mode.valueOf(settings.autoRefineMode) } catch (_: Exception) {
+            com.omegas.prohub.autocal.AutoRefinePolicy.Mode.SHADOW
+        }
+        if (mode == com.omegas.prohub.autocal.AutoRefinePolicy.Mode.OFF) return
+        val pre = preAutoMatchSnapshot
+        val count = payload.optInt("nativeAutoMatchCount", -1)
+        val epochKey = "${runtime.serialScheduler().currentSessionId()}:$count"
+        autoRefineExecutor.execute {
+            val record = JSONObject().put("mode", mode.name).put("epochKey", epochKey).put("autoMatchCount", count)
+            try {
+                val review = if (pre != null) engineReview(pre) else JSONObject().put("available", false).put("error", "SEM_LEITURA_ANTES_DO_AUTOMATCH")
+                val idealArray = review.optJSONArray("idealFactorsRaw")
+                val ideal = idealArray?.let { a -> IntArray(a.length()) { a.optInt(it) } }
+                record.put("evidenceErrorBefore", review.opt("evidenceErrorBefore") ?: JSONObject.NULL)
+                    .put("evidenceErrorAfter", review.opt("evidenceErrorAfter") ?: JSONObject.NULL)
+                    .put("idealFactorsRaw", idealArray ?: JSONObject.NULL)
+                if (kWriter.isBusy() || kFactor.isBusy()) {
+                    sessionRecorder.record("d1_decision", "auto_refine", record.put("verdict", "SKIP").put("reason", "OCUPADO"), force = true)
+                    return@execute
+                }
+                val read = kFactor.readCurve()
+                val liveArray = read.optJSONArray("factorsRaw")
+                val live = if (read.optBoolean("ok", false) && liveArray != null) IntArray(liveArray.length()) { liveArray.optInt(it) } else null
+                record.put("liveFactorsRaw", liveArray ?: JSONObject.NULL)
+                val mapMax = com.omegas.prohub.autocal.AutoRefinePolicy.maxMapCell(kWriter.cachedMapJson())
+                val decision = com.omegas.prohub.autocal.AutoRefinePolicy.decide(
+                    mode = mode,
+                    available = review.optBoolean("available", false),
+                    currentRaw = live,
+                    idealRaw = ideal,
+                    mapMaxCell = mapMax,
+                    epochKey = epochKey,
+                    lastEpochKey = autoRefineLastEpoch,
+                )
+                if (decision.reason != "MESMO_AUTOMATCH") autoRefineLastEpoch = epochKey
+                val points = org.json.JSONArray()
+                decision.points.forEach {
+                    points.put(JSONObject().put("index", it.index).put("currentRaw", it.currentRaw).put("targetRaw", it.targetRaw).put("clamped", it.clamped))
+                }
+                record.put("verdict", decision.verdict.name).put("reason", decision.reason).put("points", points)
+                    .put("floorRaw", decision.floorRaw).put("ceilingRaw", decision.ceilingRaw).put("mapMaxCell", mapMax ?: JSONObject.NULL)
+                if (decision.verdict == com.omegas.prohub.autocal.AutoRefinePolicy.Verdict.WRITE && usb.connected) {
+                    val batch = org.json.JSONArray()
+                    decision.points.forEach { batch.put(JSONObject().put("index", it.index).put("currentRaw", it.currentRaw).put("targetRaw", it.targetRaw)) }
+                    val started = kFactor.startBatchWrite(batch, "D1 · Refino automático após AutoMatch #$count")
+                    record.put("writeStarted", started.optBoolean("ok", false)).put("writeStartResult", started)
+                }
+            } catch (error: Exception) {
+                record.put("verdict", "ERRO").put("reason", (error.message ?: error.javaClass.simpleName).take(120))
+            }
+            sessionRecorder.record("d1_decision", "auto_refine", record, force = true)
+        }
+    }
+
     private fun recordCurveChangeFromSnapshot(snapshot: JSONObject) {
         try {
             val fields = snapshot.optJSONArray("fields") ?: return
