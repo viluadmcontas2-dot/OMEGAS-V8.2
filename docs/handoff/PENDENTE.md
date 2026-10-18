@@ -38,3 +38,9 @@ O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
 - Faixas do anti-apagão: máximo do DFM (OBS-COD), piso 0 (DERIVADO), ordem campo→posição INFERIDA; aviso "Longe do valor de fábrica" a ±50% (INFERIDO).
 - Kotlin (AntiStalloParamsCore/Writer + testes JUnit): compilados e rodados localmente (40 testes) com kotlinc 2.0.21; Gradle/lint só na CI.
 - Antigos testes do Avançado (avancado-painel-dom, e2e-avancado-toque) foram substituídos por ux-fluxo-toque e campos-editaveis (mesmas garantias na nova tela).
+
+## Limpeza e costura (Codex) — NÃO apagar às cegas
+- [ ] Listar com `git grep -il "platina\|vermelho\|legado\|landi\|aeb"` os .md/workflows/testes/nomes legados; para cada um: reescrever (se útil) ou remover (se obsoleto), sempre com teste de contrato atualizado (tests/test_missao_final_contract.py)
+- [ ] Mover documentação de pesquisa do fabricante para docs/progbase; app/ sem menção ao fabricante
+- [ ] Mock-up didático (CONTRATO-CODEX §9) · ECU simulada no original (§1) · guia curto (§3) · workflows novos + auditoria (§6) · marcha lenta gravável · diagnóstico inteligente · bins do Mapa K
+- [ ] Graphify: rodar `graphify update .` + tools/grafo_conhecimento.py + tools/progbase/grafo_progbase.py; INDEX.md com evidence ids (REA + MAN-); REA verify_reconstruction (bloqueado por timeout no .exe: usar CLI em segundo plano)
