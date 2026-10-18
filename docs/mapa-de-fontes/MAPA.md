@@ -12,11 +12,14 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - No repo: docs/evidence/dfm-original/TSTREAMDATI.txt
 - No repo: tools/sessoes/apagoes_x_antistallo.py
 - No repo: app/src/main/java/com/omegas/prohub/autocal/EcuParameterSnapshot.kt
+- No repo: docs/evidence/2026-10-18-anti-stallo-caixa-re.md
+- No repo: docs/evidence/2026-10-18-anti-stallo-ligado-na-ecu.md
+- No repo: tools/sessoes/portmon_ler_vetor.py
 - No PROTOCOLO-LANDI: dfm/i18n_all.json (chaves CHECKANTISTALLO, LABELANTISTALLO0..4)
 - No PROTOCOLO-LANDI: dfm/TSTREAMDATI.txt
 - No PROTOCOLO-LANDI: 22-REGISTRO-PARAMETROS.md
 - No Drive: DUMP (1SMZqx2Sd1HKooJ5GVCSuYDPvkCn6R0kH): formulários RT_RCDATA(10)__*.bin extraídos do ProgBase
-- **Falta:** Onde a caixa 'Abilitazione anti-stallo' é gravada (código CheckAntiStalloClick): só no ProgBase.exe inteiro ou captura Portmon.
+- **Falta:** A caixa é o bit 0x20 da palavra 0 de FLAG_CONF3 (SerialCode 250); no log de 12/08 está DESLIGADA. Falta confirmar hoje (leitura no app) e provar o quadro de escrita com uma captura alternando a caixa.
 
 ## ProgBase.exe (programa original) e partes extraídas
 - No repo: tools/obter_progbase.py
