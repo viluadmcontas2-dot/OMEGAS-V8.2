@@ -75,40 +75,40 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ActionAddMarkerExecute` | 0x004281FC | 28 | INFERIDO | sem fatos diretos extraíveis (28 bytes; chama 1 funções sem nome) |  |  |  |
-| `ActionNextMarkerExecute` | 0x00428B48 | 32 | INFERIDO | sem fatos diretos extraíveis (32 bytes; chama 1 funções sem nome) |  |  |  |
-| `ActionPreviousMarkerExecute` | 0x00428B68 | 42 | INFERIDO | sem fatos diretos extraíveis (42 bytes; chama 1 funções sem nome) |  |  |  |
-| `ActionRimuoviCursoreExecute` | 0x00428C68 | 200 | INFERIDO | toca ChartDrt, SeriesCursoreNeg, SeriesCursorePos |  |  |  |
-| `ActionSwitchExecute` (sem evento no DFM) | 0x004271B4 | 196 | INFERIDO | chama APIs do Windows Sleep; chama TStreamDati.TimerIOTimer; toca Timer |  | Sleep | PostMessageW |
-| `ChartDrtClickAxis` | 0x00428A98 | 27 | INFERIDO | sem fatos diretos extraíveis (27 bytes; chama 1 funções sem nome) |  |  |  |
-| `ChartDrtMouseMove` | 0x00429334 | 35 | INFERIDO | sem fatos diretos extraíveis (35 bytes; chama 1 funções sem nome) |  |  |  |
-| `ChartDrtMouseUp` | 0x00429324 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 0 funções sem nome) |  |  |  |
-| `ChartDrtZoom` | 0x00428C60 | 8 | INFERIDO | sem fatos diretos extraíveis (8 bytes; chama 0 funções sem nome) |  |  |  |
-| `CheckAutoMarkerClick` | 0x00428D30 | 33 | INFERIDO | toca CheckAutoMarker |  |  |  |
-| `EditMaxRangeEnter` | 0x00428E04 | 534 | INFERIDO | sem fatos diretos extraíveis (534 bytes; chama 11 funções sem nome) |  |  |  |
-| `EditMaxRangeExit` | 0x0042901C | 28 | INFERIDO | sem fatos diretos extraíveis (28 bytes; chama 2 funções sem nome) |  |  |  |
-| `EditRangeKeyPress` | 0x004270C8 | 68 | INFERIDO | toca ChartDrt, EditMaxRange, EditMinRange, btnAutoRange |  |  |  |
-| `EditResolutionKeyPress` | 0x00427130 | 108 | INFERIDO | toca ChartDrt, EditResolution |  |  |  |
-| `FormClose` | 0x00423858 | 226 | INFERIDO | sem fatos diretos extraíveis (226 bytes; chama 3 funções sem nome) |  |  |  |
-| `FormCloseQuery` | 0x00423848 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 0 funções sem nome) |  |  |  |
-| `FormKeyPress` | 0x0042719C | 24 | INFERIDO | sem fatos diretos extraíveis (24 bytes; chama 1 funções sem nome) |  |  |  |
-| `FormMouseWheelDown` | 0x00428C50 | 13 | INFERIDO | sem fatos diretos extraíveis (13 bytes; chama 0 funções sem nome) |  |  |  |
-| `FormMouseWheelUp` | 0x00428C40 | 13 | INFERIDO | sem fatos diretos extraíveis (13 bytes; chama 0 funções sem nome) |  |  |  |
-| `FormResize` | 0x00427278 | 87 | INFERIDO | toca ChartDrt, panelChart |  |  |  |
-| `FormShow` | 0x00428DA4 | 93 | INFERIDO | sem fatos diretos extraíveis (93 bytes; chama 4 funções sem nome) |  |  |  |
-| `GenericOmvlButtonMouseEnter` (sem evento no DFM) | 0x00429040 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
-| `GenericOmvlButtonMouseLeave` (sem evento no DFM) | 0x00429050 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
-| `MenuRimuoviMarkerClick` | 0x00428B1C | 44 | INFERIDO | toca SeriesMarkersNeg, SeriesMarkersPos |  |  |  |
-| `TimerTimer` | 0x004257E4 | 5086 | INFERIDO | chama APIs do Windows GetTickCount; chama TAebProtocol::GetPacket, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer; toca ChartDrt, SeriesAutoMarkersNeg, SeriesAutoMarkersPos, SeriesEcuMarkersNeg, SeriesEcuMarkersPos, SeriesMarkersNeg, SeriesMarkersPos, Timer |  | GetTickCount |  |
-| `btnAutoRangeClick` | 0x00429DD8 | 64 | INFERIDO | toca ChartDrt, EditMaxRange, EditMinRange, btnAutoRange |  |  |  |
-| `btnExportImageClick` | 0x00429A98 | 410 | INFERIDO | toca ChartDrt, EsportDialogDrt |  |  |  |
-| `btnLegendClick` | 0x00429F00 | 154 | INFERIDO | toca ChartDrt, ImageList1, btnLegend |  |  |  |
-| `btnLoadClick` | 0x0042996C | 300 | INFERIDO | toca ChartDrt, OpenDialogDrt, btnAutoRange, btnSave |  |  |  |
-| `btnRestoreZoomClick` | 0x00429DB4 | 33 | INFERIDO | toca ChartDrt |  |  |  |
-| `btnRunClick` | 0x004296C0 | 44 | INFERIDO | sem fatos diretos extraíveis (44 bytes; chama 4 funções sem nome) |  |  | GetTickCount |
-| `btnSaveClick` | 0x004296EC | 638 | INFERIDO | chama APIs do Windows CopyFileW; toca SaveDialogDrt |  | CopyFileW |  |
-| `btnZoomInClick` | 0x00429C34 | 50 | INFERIDO | sem fatos diretos extraíveis (50 bytes; chama 1 funções sem nome) |  |  |  |
-| `btnZoomOutClick` | 0x00429C68 | 329 | INFERIDO | toca ChartDrt, EditResolution |  |  |  |
+| `ActionAddMarkerExecute` | 0x004281FC | 28 | INFERIDO | Ao executar a ação ActionAddMarker «AddMarker»: corpo de 28 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ActionNextMarkerExecute` | 0x00428B48 | 32 | INFERIDO | Ao executar a ação ButtonNextMarker «ActionNextMarker» (+2 componentes): corpo de 32 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ActionPreviousMarkerExecute` | 0x00428B68 | 42 | INFERIDO | Ao executar a ação ButtonPrevMarker «ActionPreviousMarker» (+2 componentes): corpo de 42 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ActionRimuoviCursoreExecute` | 0x00428C68 | 200 | INFERIDO | Ao executar a ação ButtonRimuoviCursore «ActionRimuoviCursore» (+2 componentes): mexe em ChartDrt, SeriesCursoreNeg, SeriesCursorePos. |  |  |  |
+| `ActionSwitchExecute` (sem evento no DFM) | 0x004271B4 | 196 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): chama APIs Sleep; chama TStreamDati.TimerIOTimer; mexe em Timer. |  | Sleep | PostMessageW |
+| `ChartDrtClickAxis` | 0x00428A98 | 27 | INFERIDO | Ao clicar num eixo de ChartDrt: corpo de 27 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ChartDrtMouseMove` | 0x00429334 | 35 | INFERIDO | Ao mover o mouse sobre ChartDrt: corpo de 35 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ChartDrtMouseUp` | 0x00429324 | 14 | INFERIDO | Ao soltar o mouse em ChartDrt: corpo de 14 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `ChartDrtZoom` | 0x00428C60 | 8 | INFERIDO | Evento OnZoom de ChartDrt: corpo de 8 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `CheckAutoMarkerClick` | 0x00428D30 | 33 | INFERIDO | Ao clicar em CheckAutoMarker «Auto marker»: mexe em CheckAutoMarker. |  |  |  |
+| `EditMaxRangeEnter` | 0x00428E04 | 534 | INFERIDO | Ao entrar no campo EditMinRange (+2 componentes): corpo de 534 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `EditMaxRangeExit` | 0x0042901C | 28 | INFERIDO | Ao sair do campo EditMinRange (+2 componentes): corpo de 28 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `EditRangeKeyPress` | 0x004270C8 | 68 | INFERIDO | Ao digitar (filtro de teclas) em EditMinRange (+1 componentes): mexe em ChartDrt, EditMaxRange, EditMinRange, btnAutoRange. |  |  |  |
+| `EditResolutionKeyPress` | 0x00427130 | 108 | INFERIDO | Ao digitar (filtro de teclas) em EditResolution: mexe em ChartDrt, EditResolution. |  |  |  |
+| `FormClose` | 0x00423858 | 226 | INFERIDO | Ao fechar o formulário FormGraficoScope «Gráfico»: corpo de 226 bytes sem fatos diretos (chama 3 funções sem nome). |  |  |  |
+| `FormCloseQuery` | 0x00423848 | 16 | INFERIDO | Ao pedir para fechar o formulário FormGraficoScope «Gráfico»: corpo de 16 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `FormKeyPress` | 0x0042719C | 24 | INFERIDO | Ao digitar (filtro de teclas) em FormGraficoScope «Gráfico»: corpo de 24 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `FormMouseWheelDown` | 0x00428C50 | 13 | INFERIDO | Evento OnMouseWheelDown de FormGraficoScope «Gráfico»: corpo de 13 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `FormMouseWheelUp` | 0x00428C40 | 13 | INFERIDO | Evento OnMouseWheelUp de FormGraficoScope «Gráfico»: corpo de 13 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `FormResize` | 0x00427278 | 87 | INFERIDO | Ao redimensionar FormGraficoScope «Gráfico»: mexe em ChartDrt, panelChart. |  |  |  |
+| `FormShow` | 0x00428DA4 | 93 | INFERIDO | Ao exibir o formulário FormGraficoScope «Gráfico»: corpo de 93 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
+| `GenericOmvlButtonMouseEnter` (sem evento no DFM) | 0x00429040 | 14 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 14 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `GenericOmvlButtonMouseLeave` (sem evento no DFM) | 0x00429050 | 14 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 14 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `MenuRimuoviMarkerClick` | 0x00428B1C | 44 | INFERIDO | Ao clicar em MenuRimuoviMarker «Rimuovi marker»: mexe em SeriesMarkersNeg, SeriesMarkersPos. |  |  |  |
+| `TimerTimer` | 0x004257E4 | 5086 | INFERIDO | A cada tick do temporizador Timer (intervalo 20 ms): chama APIs GetTickCount; chama TAebProtocol::GetPacket, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer; mexe em ChartDrt, SeriesAutoMarkersNeg, SeriesAutoMarkersPos, SeriesEcuMarkersNeg, SeriesEcuMarkersPos, SeriesMarkersNeg. |  | GetTickCount |  |
+| `btnAutoRangeClick` | 0x00429DD8 | 64 | INFERIDO | Ao clicar em btnAutoRange «auto range»: mexe em ChartDrt, EditMaxRange, EditMinRange, btnAutoRange. |  |  |  |
+| `btnExportImageClick` | 0x00429A98 | 410 | INFERIDO | Ao clicar em btnExportImage «export»: mexe em ChartDrt, EsportDialogDrt. |  |  |  |
+| `btnLegendClick` | 0x00429F00 | 154 | INFERIDO | Ao clicar em btnLegend «legend»: mexe em ChartDrt, ImageList1, btnLegend. |  |  |  |
+| `btnLoadClick` | 0x0042996C | 300 | INFERIDO | Ao clicar em btnLoad «load» (+3 componentes): mexe em ChartDrt, OpenDialogDrt, btnAutoRange, btnSave. |  |  |  |
+| `btnRestoreZoomClick` | 0x00429DB4 | 33 | INFERIDO | Ao clicar em btnRestoreZoom «restore zoom»: mexe em ChartDrt. |  |  |  |
+| `btnRunClick` | 0x004296C0 | 44 | INFERIDO | Ao clicar em btnRun «run»: corpo de 44 bytes sem fatos diretos (chama 4 funções sem nome). |  |  | GetTickCount |
+| `btnSaveClick` | 0x004296EC | 638 | INFERIDO | Ao clicar em btnSave «save»: chama APIs CopyFileW; mexe em SaveDialogDrt. |  | CopyFileW |  |
+| `btnZoomInClick` | 0x00429C34 | 50 | INFERIDO | Ao clicar em btnZoomIn «zoom in»: corpo de 50 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `btnZoomOutClick` | 0x00429C68 | 329 | INFERIDO | Ao clicar em btnZoomOut «zoom out»: mexe em ChartDrt, EditResolution. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

@@ -20,12 +20,12 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `BitBtn1Click` | 0x005140E8 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `BtnChangeColorClick` | 0x0051420C | 101 | INFERIDO | chama TAutocalColorSettings.Create |  |  |  |
-| `CalibrationValWriteItem` | 0x005140F0 | 177 | INFERIDO | chama TAebNumber::SetInt, TAebVector::SetInt |  |  |  |
-| `FormClose` | 0x00513E68 | 640 | INFERIDO | toca CheckShowChartKLine, CheckShowChartPoint, CheckShowChartZones, CheckShowStatusMessages, RefreshTime |  |  |  |
-| `FormShow` | 0x00513DA8 | 8 | INFERIDO | sem fatos diretos extraíveis (8 bytes; chama 1 funções sem nome) |  |  |  |
-| `RefreshTimeChange` | 0x005141A4 | 104 | INFERIDO | toca LabelRefreshValue, RefreshTime |  |  |  |
+| `BitBtn1Click` | 0x005140E8 | 6 | INFERIDO | Ao clicar em BitBtn1: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `BtnChangeColorClick` | 0x0051420C | 101 | INFERIDO | Ao clicar em BtnChangeColor «Setup colors»: chama TAutocalColorSettings.Create. |  |  |  |
+| `CalibrationValWriteItem` | 0x005140F0 | 177 | INFERIDO | Evento OnWriteItem de CalibrationVal: chama TAebNumber::SetInt, TAebVector::SetInt. |  |  |  |
+| `FormClose` | 0x00513E68 | 640 | INFERIDO | Ao fechar o formulário AutoCalSettings «Autocal settings»: mexe em CheckShowChartKLine, CheckShowChartPoint, CheckShowChartZones, CheckShowStatusMessages, RefreshTime. |  |  |  |
+| `FormShow` | 0x00513DA8 | 8 | INFERIDO | Ao exibir o formulário AutoCalSettings «Autocal settings»: corpo de 8 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `RefreshTimeChange` | 0x005141A4 | 104 | INFERIDO | Quando muda o valor de RefreshTime: mexe em LabelRefreshValue, RefreshTime. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

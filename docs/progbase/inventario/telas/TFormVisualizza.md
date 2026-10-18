@@ -31,12 +31,12 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonCommutatoreClick` | 0x0050DD14 | 231 | INFERIDO | chama APIs do Windows Sleep; toca ButtonCommutatore |  | Sleep | PostMessageW |
-| `FormClose` | 0x0050DCEC | 39 | INFERIDO | sem fatos diretos extraíveis (39 bytes; chama 1 funções sem nome) |  |  |  |
-| `MenuCominciaDrtClick` (sem evento no DFM) | 0x0050D86C | 739 | INFERIDO | chama APIs do Windows GetTickCount, DrawMenuBar |  | GetTickCount, DrawMenuBar |  |
-| `MenuGraficoClick` (sem evento no DFM) | 0x0050DC08 | 187 | INFERIDO | toca OpenDialogDrt |  |  | ACTIONESCI, ACTIONSTAMPA, BUTTONANNULLA, BUTTONOK, DeleteMenu, GetSystemMenu, GetSystemMetrics |
-| `MenuTerminaDrtClick` (sem evento no DFM) | 0x0050DB50 | 184 | INFERIDO | chama APIs do Windows DrawMenuBar; toca SaveDialogDrt |  | DrawMenuBar |  |
-| `Timer1Timer` | 0x0050B408 | 7653 | INFERIDO | chama APIs do Windows GetTickCount; chama TStreamDati.TimerIOTimer; toca ImageBenzOff, ImageBenzOn, ImageCutoffOff, ImageCutoffOn, ImageGasOff, ImageGasOn, ImageSottoChiaveOff, ImageSottoChiaveOn |  | GetTickCount |  |
+| `ButtonCommutatoreClick` | 0x0050DD14 | 231 | INFERIDO | Ao clicar em ButtonCommutatore «&Comutador»: chama APIs Sleep; mexe em ButtonCommutatore. |  | Sleep | PostMessageW |
+| `FormClose` | 0x0050DCEC | 39 | INFERIDO | Ao fechar o formulário FormVisualizza «Visualização dos parâmetros do veículo»: corpo de 39 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `MenuCominciaDrtClick` (sem evento no DFM) | 0x0050D86C | 739 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): chama APIs GetTickCount, DrawMenuBar. |  | GetTickCount, DrawMenuBar |  |
+| `MenuGraficoClick` (sem evento no DFM) | 0x0050DC08 | 187 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em OpenDialogDrt. |  |  | ACTIONESCI, ACTIONSTAMPA, BUTTONANNULLA, BUTTONOK, DeleteMenu, GetSystemMenu, GetSystemMetrics |
+| `MenuTerminaDrtClick` (sem evento no DFM) | 0x0050DB50 | 184 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): chama APIs DrawMenuBar; mexe em SaveDialogDrt. |  | DrawMenuBar |  |
+| `Timer1Timer` | 0x0050B408 | 7653 | INFERIDO | A cada tick do temporizador Timer1 (intervalo 75 ms): chama APIs GetTickCount; chama TStreamDati.TimerIOTimer; mexe em ImageBenzOff, ImageBenzOn, ImageCutoffOff, ImageCutoffOn, ImageGasOff, ImageGasOn. |  | GetTickCount |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

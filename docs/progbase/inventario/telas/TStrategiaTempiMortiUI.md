@@ -34,8 +34,8 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `UpDownGasAClick` | 0x00526154 | 64 | INFERIDO | sem fatos diretos extraíveis (64 bytes; chama 4 funções sem nome) |  |  |  |
-| `UpDownPetrolAClick` | 0x00526114 | 64 | INFERIDO | sem fatos diretos extraíveis (64 bytes; chama 4 funções sem nome) |  |  |  |
+| `UpDownGasAClick` | 0x00526154 | 64 | INFERIDO | Ao clicar em UpDownGasA (+9 componentes): corpo de 64 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
+| `UpDownPetrolAClick` | 0x00526114 | 64 | INFERIDO | Ao clicar em UpDownPetrolA (+9 componentes): corpo de 64 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

@@ -33,17 +33,17 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonResetClick` | 0x004EDA24 | 126 | INFERIDO | chama TAebProtocol::IsConnect, TAebProtocol::SendCommand |  |  |  |
-| `CheckCambioAutomaticoClick` | 0x004ED8FC | 247 | INFERIDO | toca CheckCambioAutomatico, CheckEnableGear, EditGearMaxNo |  |  |  |
-| `CheckEnableGearClick` | 0x004ED8B0 | 74 | INFERIDO | chama TAebNumber::SetInt |  |  |  |
-| `CheckEnableLandiConnectClick` | 0x004ED424 | 370 | INFERIDO | toca CheckCambioAutomatico, CheckEnableGear, CheckEnableLandiConnect, DrawGridInjrTOfsTbl, EditGearMaxNo, EditInjrGasFlow, EditNormPress, EditNormTemp |  |  |  |
-| `DrawGridInjrTOfsTblDblClick` | 0x004EC8F8 | 97 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridInjrTOfsTbl |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridInjrTOfsTblDrawCell` | 0x004EC96C | 1071 | INFERIDO | chama TAebMatrix::GetDouble, TAebVector::GetDouble; toca DrawGridInjrTOfsTbl |  |  |  |
-| `DrawGridInjrTOfsTblKeyPress` | 0x004EC95C | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
-| `EditEnter` | 0x004EC8B8 | 30 | INFERIDO | sem fatos diretos extraíveis (30 bytes; chama 2 funções sem nome) |  |  |  |
-| `EditExit` | 0x004EC8D8 | 30 | INFERIDO | sem fatos diretos extraíveis (30 bytes; chama 2 funções sem nome) |  |  |  |
-| `FormKeyPress` | 0x004EC240 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
-| `TimerUpdateTimer` | 0x004EC860 | 86 | INFERIDO | chama TAebVector::GetEcuData |  |  |  |
+| `ButtonResetClick` | 0x004EDA24 | 126 | INFERIDO | Ao clicar em ButtonResetTrip «Reset trip» (+1 componentes): chama TAebProtocol::IsConnect, TAebProtocol::SendCommand. |  |  |  |
+| `CheckCambioAutomaticoClick` | 0x004ED8FC | 247 | INFERIDO | Ao clicar em CheckCambioAutomatico «Vettura con cambio automatico»: mexe em CheckCambioAutomatico, CheckEnableGear, EditGearMaxNo. |  |  |  |
+| `CheckEnableGearClick` | 0x004ED8B0 | 74 | INFERIDO | Ao clicar em CheckEnableGear «Enable gear learning»: chama TAebNumber::SetInt. |  |  |  |
+| `CheckEnableLandiConnectClick` | 0x004ED424 | 370 | INFERIDO | Ao clicar em CheckEnableLandiConnect «Enable Landi Connect communication»: mexe em CheckCambioAutomatico, CheckEnableGear, CheckEnableLandiConnect, DrawGridInjrTOfsTbl, EditGearMaxNo, EditInjrGasFlow. |  |  |  |
+| `DrawGridInjrTOfsTblDblClick` | 0x004EC8F8 | 97 | INFERIDO | Ao dar duplo clique em DrawGridInjrTOfsTbl: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridInjrTOfsTbl. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridInjrTOfsTblDrawCell` | 0x004EC96C | 1071 | INFERIDO | Ao desenhar célula de DrawGridInjrTOfsTbl: chama TAebMatrix::GetDouble, TAebVector::GetDouble; mexe em DrawGridInjrTOfsTbl. |  |  |  |
+| `DrawGridInjrTOfsTblKeyPress` | 0x004EC95C | 14 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridInjrTOfsTbl: corpo de 14 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `EditEnter` | 0x004EC8B8 | 30 | INFERIDO | Ao entrar no campo EditTankVol (+5 componentes): corpo de 30 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `EditExit` | 0x004EC8D8 | 30 | INFERIDO | Ao sair do campo EditTankVol (+5 componentes): corpo de 30 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `FormKeyPress` | 0x004EC240 | 14 | INFERIDO | Ao digitar (filtro de teclas) em FormLandiConnect: corpo de 14 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `TimerUpdateTimer` | 0x004EC860 | 86 | INFERIDO | A cada tick do temporizador TimerUpdate (intervalo 500 ms): chama TAebVector::GetEcuData. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

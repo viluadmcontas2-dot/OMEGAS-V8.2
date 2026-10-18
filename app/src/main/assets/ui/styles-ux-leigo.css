@@ -147,25 +147,64 @@
 
 /* ---------- telas mais baixas (1024x600, 800x480): menos texto, mesmos alvos grandes ---------- */
 @media (max-height: 640px) {
-  :root { --nav-height: 72px; --tile-pad: 10px; }
+  :root { --nav-height: 68px; --tile-pad: 10px; }
+  .app-shell .workspace { grid-template-rows: 40px minmax(0, 1fr); }
   .side-nav button { height: 56px; min-height: 56px; }
+  .screen { padding-top: 8px; padding-bottom: 8px; }
+  #toolsDrawer .page-intro, #sessionsScreen .page-intro { display: none; }
   #toolsDrawer .tool-tile .tile-line:not(.reason) { display: none; }
   .tool-tile h3 { font-size: 20px; }
-  .tile-state { font-size: 22px; }
+  .tile-state { font-size: 22px; width: 100%; }
+  .tile-go { display: none; }
+  .tool-open .tile-state::after { content: "›"; margin-left: auto; font-size: 30px; line-height: 1; color: #8ec2ff; }
+  .tool-view { gap: 8px; }
+  .tool-view > header > p { display: none; }
+  .tool-view > header h3 { font-size: 24px; }
+  .num-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 12px; }
+  .num-field { position: relative; gap: 2px; }
+  .num-field label { font-size: 18px; }
   .num-help { display: none; }
   .num-box { height: 56px; }
+  .num-meta { font-size: 16px; }
+  .num-error { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); padding: 0; }
+  .read-list { gap: 6px; }
+  .read-list li { min-height: 48px; padding: 4px 14px; font-size: 19px; }
   .tool-layer-card { padding: 16px 20px; gap: 10px; }
   .tool-layer-card h3 { font-size: 24px; }
   .tool-layer-card p, .layer-list li { font-size: 19px; }
   .layer-change { font-size: 28px; }
-  .sess-card { padding: 12px; }
-  .sess-card .tile-line { font-size: 18px; }
-  .recorded-session-item { min-height: 60px; }
+  .sess-card { padding: 12px; gap: 6px; }
+  .recorded-session-item { min-height: 60px; padding: 4px 10px; }
+  .recorded-session-item b { font-size: 19px; }
+  .tool-tech > summary { min-height: 56px; }
 }
 @media (max-width: 900px) {
+  .brand-block { display: none; }
+  .side-rail { padding: 6px 8px; gap: 8px; }
+  .side-nav { gap: 2px; }
+  .side-nav button { padding: 4px 2px; }
+  .side-nav button span { font-size: 16px; }
+  .rail-status span, .rail-status b { font-size: 16px; }
   .tool-grid, #toolsDrawer[data-page="1"] #toolAdvanced, #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace { gap: 8px; }
-  .num-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tool-switch { gap: 8px; padding: 0 10px 0 6px; font-size: 19px; }
+  .tool-switch .sw-track { width: 46px; height: 28px; }
+  .tool-switch .sw-track > i, .tool-switch .sw-track > u { top: 4px; left: 4px; width: 20px; height: 20px; }
+  .tool-switch[aria-checked="true"] .sw-track > i, .tool-switch[aria-checked="true"] .sw-track > u { left: 22px; }
+  .tile-action b { font-size: 19px; }
   .sessions-host { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); grid-template-rows: minmax(0, 1fr) auto; }
   .sess-size { grid-column: 1 / -1; }
-  .sess-size .diagnostic-settings > summary { flex-direction: row; align-items: center; gap: 16px; }
+  .sess-size .diagnostic-settings > summary { flex-direction: row; align-items: center; gap: 16px; min-height: 56px; padding: 8px 16px; }
+  .diagnostic-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---------- barra do topo e navegação: legíveis de longe ---------- */
+.live-cell small { font-size: 15px; }
+.live-cell em { font-size: 14px; }
+.rail-status span { font-size: 18px; }
+.sess-rec .tile-state { margin-top: 0; }
+.sess-size .diagnostic-settings > summary .tile-go { margin-top: 4px; }
+#toolsDrawer .tool-view > header h3 { font-size: 26px; line-height: 1.1; margin: 0; }
+.tool-actions button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.recorded-session-list, .log-lines { max-height: none; overflow: hidden; }
+.sess-size .diagnostic-settings[open] .tile-go { display: none; }
+.sess-size .diagnostic-settings:not([open]) .tile-go { display: inline-flex; }

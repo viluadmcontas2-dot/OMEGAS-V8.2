@@ -27,27 +27,27 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonAzzeraNumeroTagliandiEffettuatiClick` | 0x00508B44 | 483 | INFERIDO | toca LabelNumTagliandiEffettuatiData, LabelNumTagliandiEffettuatiService |  |  |  |
-| `ButtonExitClick` | 0x005078D0 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `ButtonModifyPinClick` (sem evento no DFM) | 0x00508720 | 305 | INFERIDO | toca ButtonExit, EditInsPin, EditPin, EditPin2, PanelData, PanelNewPin, PanelService |  |  |  |
-| `ButtonNewPinClick` | 0x005088E8 | 438 | INFERIDO | toca ButtonExit, EditInsPin, EditPin, EditPin2, PanelNewPin, PanelService |  |  |  |
-| `ButtonOldPinClick` | 0x0050886C | 124 | INFERIDO | toca ButtonExit, EditPin, EditPin2, PanelNewPin, PanelService |  |  |  |
-| `ButtonResetPinClick` | 0x005075B4 | 332 | INFERIDO | toca EditInsPin |  |  | CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash |
-| `CheckDisableGasClick` | 0x005085CC | 111 | INFERIDO | toca CheckDisableGas, EditPartenzeEmergenza, LabelPartenzeGasConsentite, LabelPartenzeGasEffettuate |  |  |  |
-| `CheckEnableServiceClick` (sem evento no DFM) | 0x0050843C | 95 | INFERIDO | toca CheckEnableService, EditCurrHours, MemoData |  |  |  |
-| `CheckServicePinClick` (sem evento no DFM) | 0x0050863C | 227 | INFERIDO | toca ButtonModifyPin, CheckServicePin, EditInsPin |  |  |  |
-| `EditDataChange` (sem evento no DFM) | 0x00508854 | 23 | INFERIDO | sem fatos diretos extraíveis (23 bytes; chama 0 funções sem nome) |  |  |  |
-| `EditInsPinChange` | 0x00507700 | 208 | INFERIDO | toca EditInsPin |  |  | CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash |
-| `EditPin2Change` (sem evento no DFM) | 0x00507850 | 127 | INFERIDO | toca ButtonNewPin, EditPin2 |  |  |  |
-| `EditPinChange` (sem evento no DFM) | 0x005077D0 | 127 | INFERIDO | toca EditPin, EditPin2 |  |  |  |
-| `EditPinKeyPress` | 0x00508AA0 | 32 | INFERIDO | sem fatos diretos extraíveis (32 bytes; chama 1 funções sem nome) |  |  |  |
-| `EditStandardAKeyPress` (sem evento no DFM) | 0x00506E84 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `EditStandardEnter` | 0x00506B68 | 534 | INFERIDO | sem fatos diretos extraíveis (534 bytes; chama 11 funções sem nome) |  |  |  |
-| `EditStandardExit` | 0x00506D80 | 28 | INFERIDO | sem fatos diretos extraíveis (28 bytes; chama 2 funções sem nome) |  |  |  |
-| `EditStandardKeyPress` | 0x00506D9C | 231 | INFERIDO | sem fatos diretos extraíveis (231 bytes; chama 7 funções sem nome) |  |  | GetTickCount, Sleep |
-| `FormClose` | 0x00508D28 | 1494 | INFERIDO | chama APIs do Windows CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash, CryptDestroyKey, CryptEncrypt; toca MemoData |  | CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash, CryptDestroyKey, CryptEncrypt |  |
-| `FormKeyPress` | 0x00507544 | 112 | INFERIDO | sem fatos diretos extraíveis (112 bytes; chama 0 funções sem nome) |  |  |  |
-| `MemoDataKeyPress` | 0x00508AC0 | 58 | INFERIDO | toca MemoData |  |  |  |
+| `ButtonAzzeraNumeroTagliandiEffettuatiClick` | 0x00508B44 | 483 | INFERIDO | Ao clicar em ButtonAzzeraNumeroTagliandiEffettuati «Reset»: mexe em LabelNumTagliandiEffettuatiData, LabelNumTagliandiEffettuatiService. |  |  |  |
+| `ButtonExitClick` | 0x005078D0 | 6 | INFERIDO | Ao clicar em ButtonExit «Sair»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ButtonModifyPinClick` (sem evento no DFM) | 0x00508720 | 305 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em ButtonExit, EditInsPin, EditPin, EditPin2, PanelData, PanelNewPin. |  |  |  |
+| `ButtonNewPinClick` | 0x005088E8 | 438 | INFERIDO | Ao clicar em ButtonNewPin «OK !»: mexe em ButtonExit, EditInsPin, EditPin, EditPin2, PanelNewPin, PanelService. |  |  |  |
+| `ButtonOldPinClick` | 0x0050886C | 124 | INFERIDO | Ao clicar em ButtonOldPin «Cancelar»: mexe em ButtonExit, EditPin, EditPin2, PanelNewPin, PanelService. |  |  |  |
+| `ButtonResetPinClick` | 0x005075B4 | 332 | INFERIDO | Ao clicar em ButtonResetPin «Reset»: mexe em EditInsPin. |  |  | CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash |
+| `CheckDisableGasClick` | 0x005085CC | 111 | INFERIDO | Ao clicar em CheckDisableGas «Inhibit petrol to gas switching»: mexe em CheckDisableGas, EditPartenzeEmergenza, LabelPartenzeGasConsentite, LabelPartenzeGasEffettuate. |  |  |  |
+| `CheckEnableServiceClick` (sem evento no DFM) | 0x0050843C | 95 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em CheckEnableService, EditCurrHours, MemoData. |  |  |  |
+| `CheckServicePinClick` (sem evento no DFM) | 0x0050863C | 227 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em ButtonModifyPin, CheckServicePin, EditInsPin. |  |  |  |
+| `EditDataChange` (sem evento no DFM) | 0x00508854 | 23 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 23 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `EditInsPinChange` | 0x00507700 | 208 | INFERIDO | Quando muda o valor de EditInsPin: mexe em EditInsPin. |  |  | CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash |
+| `EditPin2Change` (sem evento no DFM) | 0x00507850 | 127 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em ButtonNewPin, EditPin2. |  |  |  |
+| `EditPinChange` (sem evento no DFM) | 0x005077D0 | 127 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em EditPin, EditPin2. |  |  |  |
+| `EditPinKeyPress` | 0x00508AA0 | 32 | INFERIDO | Ao digitar (filtro de teclas) em EditInsPin (+2 componentes): corpo de 32 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `EditStandardAKeyPress` (sem evento no DFM) | 0x00506E84 | 1 | OBS-COD | Rotina publicada sem evento ligado no DFM (chamada pelo código). Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `EditStandardEnter` | 0x00506B68 | 534 | INFERIDO | Ao entrar no campo EditPartenzeEmergenza: corpo de 534 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `EditStandardExit` | 0x00506D80 | 28 | INFERIDO | Ao sair do campo EditPartenzeEmergenza: corpo de 28 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `EditStandardKeyPress` | 0x00506D9C | 231 | INFERIDO | Ao digitar (filtro de teclas) em EditPartenzeEmergenza: corpo de 231 bytes sem fatos diretos (chama 7 funções sem nome). |  |  | GetTickCount, Sleep |
+| `FormClose` | 0x00508D28 | 1494 | INFERIDO | Ao fechar o formulário FormService «Service»: chama APIs CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash, CryptDestroyKey; mexe em MemoData. |  | CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash, CryptDestroyKey, CryptEncrypt |  |
+| `FormKeyPress` | 0x00507544 | 112 | INFERIDO | Ao digitar (filtro de teclas) em FormService «Service»: corpo de 112 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `MemoDataKeyPress` | 0x00508AC0 | 58 | INFERIDO | Ao digitar (filtro de teclas) em MemoData: mexe em MemoData. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

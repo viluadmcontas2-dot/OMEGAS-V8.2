@@ -514,264 +514,264 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonAccettaClick` | 0x004A8D74 | 577 | INFERIDO | toca EditLivello1, EditLivello2, EditLivello3, EditLivello4 |  |  |  |
-| `ButtonCommutatoreClick` | 0x004B1178 | 55 | INFERIDO | chama APIs do Windows Sleep |  | Sleep | PostMessageW |
-| `ButtonDebugClick` | 0x004C8EC8 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `ButtonDoLevelClick` | 0x004C5C30 | 978 | INFERIDO | chama TFormConfig.ButtonAccettaClick; toca EditLivello1, EditLivello2, EditLivello3, EditLivello4, LabelMaxLevel, LabelMinLevel |  |  |  |
-| `ButtonMaxLevelClick` | 0x004C5ADC | 337 | INFERIDO | chama TAebProtocol::IsConnect; toca LabelMaxLevel |  |  |  |
-| `ButtonMinLevelClick` | 0x004C598C | 334 | INFERIDO | chama TAebProtocol::IsConnect; toca LabelMinLevel |  |  |  |
-| `ButtonModificaInjClick` | 0x004BC47C | 270 | INFERIDO | chama TAebProtocol::IsConnect; toca DrawGridSequenzaInj |  |  |  |
-| `ButtonModificaRifTarClick` | 0x004B10C8 | 136 | INFERIDO | chama TFormCentriCelleK.Create; toca DrawGridK, DrawGridOpenLoop |  |  |  |
-| `ButtonNuoviParametriClick` | 0x004B9000 | 443 | INFERIDO | usa textos BUTTONNUOVIPARAMETRI, BUTTONNUOVIPARAMETRI2; chama TTranslatorExt::GetString; toca ButtonNuoviParametri, DrawGridTemp, EditDeltaT, EditRPullUp, EditTMax, EditTMin | BUTTONNUOVIPARAMETRI, BUTTONNUOVIPARAMETRI2 |  | PostMessageW |
-| `ButtonResetClick` | 0x004BA188 | 94 | INFERIDO | toca TabCambio, TimerDati |  |  |  |
-| `ButtonRicercaParametriClick` | 0x004AF3A8 | 509 | INFERIDO | usa textos BUTTONRICERCAPARAMETRI1; chama APIs do Windows GetAsyncKeyState; chama TTranslatorExt::GetString; toca ButtonRicercaParametri, LabLambda, TimerDati | BUTTONRICERCAPARAMETRI1 | GetAsyncKeyState |  |
-| `ButtonSequenceAcquisitionClick` | 0x004A62A8 | 467 | INFERIDO | chama TAebProtocol::IsConnect, TAebProtocol::SendCommand; toca ButtonSequenceAcquisition, EditRpmTachimetro, LabRpmTachimetro, LabelRpmTachimetro |  |  |  |
-| `ButtonSequenzaInjClick` | 0x004BC2DC | 414 | INFERIDO | chama TAebProtocol::IsConnect; toca ComboSequenzaInj, DrawGridSequenzaInj, DrawGridSequenzaInjBenz |  |  |  |
-| `ButtonSwitchSettingsClick` | 0x004C90E0 | 1624 | INFERIDO | usa textos MESSERRORECUSWITCHCALIBRATION, MESSERRORFIRMWARESWITCHCALIBRATION, MESSERRORGIRISWITCHCALIBRATION, MESSERRORNOSWITCHCALIBRATION, MESSERRORSTARTSWITCHCALIBRATION; chama TAebProtocol::GetComFail, TAebProtocol::IsConnect, TAebProtocol::SendCommand, TTranslatorExt::GetString | MESSERRORECUSWITCHCALIBRATION, MESSERRORFIRMWARESWITCHCALIBRATION, MESSERRORGIRISWITCHCALIBRATION, MESSERRORNOSWITCHCALIBRATION, MESSERRORSTARTSWITCHCALIBRATION |  | SWITCHSETTINGSBUTTONEXIT, SWITCHSETTINGSCAPTION, SWITCHSETTINGSLABELBUZZER, SWITCHSETTINGSLABELLED, Sleep |
-| `ButtonTaraturaClick` | 0x004ACFC0 | 238 | INFERIDO | chama APIs do Windows Sleep; toca ButtonCommutatore, ButtonTaratura, StaticTaratura |  | Sleep | PostMessageW |
-| `CheckAdattaBenzinaClick` | 0x004C0E34 | 227 | INFERIDO | toca CheckAdattaBenzina, CheckAdattativita, LabCorrGas, LabelCorrGas, PanelAdatta, PanelAdattaObd |  |  | PostMessageW |
-| `CheckAdattativitaClick` | 0x004C0D50 | 227 | INFERIDO | toca CheckAdattaBenzina, CheckAdattativita, LabCorrGas, LabelCorrGas, PanelAdatta, PanelAdattaObd |  |  | PostMessageW |
-| `CheckAlimentazioneClick` | 0x004C6780 | 173 | INFERIDO | toca CheckAlimentazione |  |  | PostMessageW |
-| `CheckAntiStalloClick` | 0x004C982C | 591 | INFERIDO | toca CheckAntiStallo, EditAntiStallo0, EditAntiStallo1, EditAntiStallo2, EditAntiStallo3, EditAntiStallo4, LabAntiStallo0, LabAntiStallo1 |  |  |  |
-| `CheckAttivaPompaInRiservaClick` | 0x004CB030 | 48 | INFERIDO | toca CheckAttivaPompaInRiserva |  |  |  |
-| `CheckAzzeraBlackListObdClick` | 0x004C1ADC | 48 | INFERIDO | toca CheckAzzeraBlackListObd |  |  |  |
-| `CheckAzzeraErroriObdClick` | 0x004C1AAC | 48 | INFERIDO | toca CheckAzzeraErroriObd |  |  |  |
-| `CheckBassaPressioneClick` | 0x004BCA04 | 27 | INFERIDO | toca CheckBassaPressione |  |  |  |
-| `CheckBoxEV2NotConnectedClick` | 0x004C6710 | 111 | INFERIDO | sem fatos diretos extraíveis (111 bytes; chama 2 funções sem nome) |  |  |  |
-| `CheckBoxEnDiagDtcPowertrainClick` | 0x004CB358 | 48 | INFERIDO | toca CheckBoxEnDiagDtcPowertrain |  |  |  |
-| `CheckBoxEnableExtLedKLineClick` | 0x004CB328 | 48 | INFERIDO | toca CheckBoxEnableExtLedKLine |  |  |  |
-| `CheckCambioConSovrappClick` | 0x004C8B04 | 98 | INFERIDO | chama TValueEditEx::SetVisible; toca CheckCambioConSovrapp, EditParamProgress0, EditParamProgress1 |  |  |  |
-| `CheckConsumometroClick` | 0x004C1108 | 48 | INFERIDO | toca CheckConsumometro |  |  | PostMessageW |
-| `CheckContributiClick` | 0x004C9C1C | 467 | INFERIDO | toca CheckContributi, DrawGridContributi, LabContribBenz, LabelContribBenz, RadioContributoAltiGiri, RadioGasAltiGiri |  |  |  |
-| `CheckDeleteErrorMotoreSpentoClick` | 0x004C1BA4 | 48 | INFERIDO | toca CheckDeleteErrorMotoreSpento |  |  |  |
-| `CheckDemagModeClick` | 0x004CAE44 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `CheckDisabilitaCommutatoreClick` | 0x004C1C04 | 48 | INFERIDO | toca CheckDisabilitaCommutatore |  |  |  |
-| `CheckElettrovalvoleClick` | 0x004C5048 | 545 | INFERIDO | toca CheckElettrovalvole, EditAnticipoEV1, EditAnticipoEV2 |  |  | PostMessageW |
-| `CheckEnabledDhlpDiagnosisClick` | 0x004C975C | 123 | INFERIDO | sem fatos diretos extraíveis (123 bytes; chama 2 funções sem nome) |  |  |  |
-| `CheckFlashLubeClick` | 0x004C88AC | 151 | INFERIDO | toca CheckFlashLube, TabLambda |  |  |  |
-| `CheckFlashLubeSuTempAcquaClick` | 0x004B8C98 | 29 | INFERIDO | toca CheckFlashLubeSuTempAcqua |  |  |  |
-| `CheckFlexFuelClick` | 0x004C2C9C | 48 | INFERIDO | toca CheckFlexFuel |  |  |  |
-| `CheckGiriAlberoCammeClick` | 0x004C850C | 456 | INFERIDO | toca CheckGiriAlberoCamme, CheckGiriRuotaFonica, CheckSegnaleGiri, ComboAccensione, EditNumDenti, LabelNumDenti |  |  | GetTickCount, Sleep |
-| `CheckGiriRuotaFonicaClick` | 0x004C86D4 | 469 | INFERIDO | toca CheckGiriAlberoCamme, CheckGiriRuotaFonica, CheckSegnaleGiri, ComboAccensione, EditNumDenti, LabelNumDenti |  |  | GetTickCount, Sleep |
-| `CheckIncrementoMaxCorrenteClick` | 0x004C721C | 48 | INFERIDO | toca CheckIncrementoMaxCorrente |  |  |  |
-| `CheckInibisciEmulazioneClick` | 0x004B9280 | 72 | INFERIDO | toca CheckInibisciEmulazione |  |  | PostMessageW |
-| `CheckIniezioneContinuaClick` | 0x004BC858 | 421 | INFERIDO | toca CheckIniezioneContinua, EditIniezioneContinua, LabelIniezioneContinua, LabelSIniezioneContinua |  |  |  |
-| `CheckInjAcquisitionClick` | 0x004A61AC | 251 | INFERIDO | chama TAebProtocol::IsConnect, TAebProtocol::SendCommand; toca ButtonSequenceAcquisition, CheckInjAcquisition, EditRpmTachimetro, LabRpmTachimetro, LabelRpmTachimetro |  |  |  |
-| `CheckIstantaneoClick` | 0x004BFA68 | 56 | INFERIDO | toca CheckIstantaneo |  |  | PostMessageW |
-| `CheckMapConfiguratoClick` | 0x004BCB40 | 54 | INFERIDO | toca CheckMapConfigurato |  |  | PostMessageW |
-| `CheckObdClick` | 0x004CAE4C | 481 | INFERIDO | toca ScrollObd |  |  |  |
-| `CheckOutDiagInfoSuKLineClick` | 0x004C1B74 | 48 | INFERIDO | toca CheckOutDiagInfoSuKLine |  |  |  |
-| `CheckPartenzaGasCaldoClick` | 0x004C4FB8 | 144 | INFERIDO | toca CheckPartenzaGasCaldo, EditTempGasCaldo, LabelT4 |  |  |  |
-| `CheckParzializzaClick` | 0x004BFAA0 | 56 | INFERIDO | toca CheckParzializza |  |  | PostMessageW |
-| `CheckPassPRailClick` | 0x004BCB10 | 48 | INFERIDO | toca CheckPassPRail |  |  | PostMessageW |
-| `CheckPetrolObdConnectionClick` | 0x004C1B0C | 48 | INFERIDO | toca CheckPetrolObdConnection |  |  |  |
-| `CheckProgressioniClick` | 0x004CA544 | 519 | INFERIDO | toca CheckProgressioni, DrawGridProgressioni, EditIstantaneoValue, LabelIstantaneoValue, LabelProgressCol0, LabelProgressCol1, LabelProgressCol2, LabelProgressRow0 |  |  |  |
-| `CheckRiconoscimentoPienoClick` | 0x004CB12C | 48 | INFERIDO | toca CheckRiconoscimentoPieno |  |  |  |
-| `CheckRiscaldamentoClick` | 0x004C6A64 | 1771 | INFERIDO | usa textos LABELDURATAATTIVAZIONEINJ, LABELPICCORISCALDAMENTO; chama TTranslatorExt::GetString; toca CheckRiscaldamento, CheckboxPreheatAsyncMode, CheckboxPreheatOnlyAfterSleepMode, EditLimiteRitardoAttivWarmUp, EditMantRiscaldamento, EditPeriodoRiscaldamento, EditPiccoRiscaldamento, EditPreheatPGasTh | LABELDURATAATTIVAZIONEINJ, LABELPICCORISCALDAMENTO |  |  |
-| `CheckRitornoBenzinaClick` | 0x004A9484 | 322 | INFERIDO | toca CheckRitornoBenzina, EditRitornoBenzina, LabelRitornoBenzina, LabelS12 |  |  |  |
-| `CheckSegnaleGiriClick` | 0x004C5494 | 1092 | INFERIDO | toca ButtonSequenceAcquisition, CheckGiriAlberoCamme, CheckGiriRuotaFonica, CheckInjAcquisition, CheckSegnaleGiri, ComboAccensione, ComboSegnaleGiri, EditNumDenti |  |  | GetTickCount, Sleep |
-| `CheckSequenzaInjClick` | 0x004BC008 | 722 | INFERIDO | chama TAebNumber::SetEcuData; toca ButtonModificaInj, ButtonSequenzaInj, CheckSequenzaInj, ComboSequenzaInj, DrawGridSequenzaInj, DrawGridSequenzaInjBenz, LabelSequenzaInj, LabelSequenzaInjBenz |  |  | PostMessageW |
-| `CheckSpegniBuzzerClick` | 0x004C1C34 | 48 | INFERIDO | toca CheckSpegniBuzzer |  |  |  |
-| `CheckSplitFuelClick` | 0x004C1C64 | 1978 | INFERIDO | toca CheckSplitFuel, DrawGridSplitFuel, EditRpmForSplitFuel, LabRpmForSplitFuel, LabelCoeffSplitFuel, LabelRifSplitFuel, LabelRpmForSplitFuel |  |  |  |
-| `CheckStartAndStopClick` | 0x004C2BD8 | 195 | INFERIDO | toca CheckStartAndStop |  |  |  |
-| `CheckTagliaExtraIniettateClick` | 0x004C1BD4 | 45 | INFERIDO | toca CheckTagliaExtraIniettate |  |  |  |
-| `CheckTaglioPompaBenzinaClick` | 0x004C8B68 | 857 | INFERIDO | toca CheckAlimentazione, CheckBoxEV2NotConnected, CheckTaglioPompaBenzina, RadioGas, RadioGasAltiGiri |  |  | PostMessageW |
-| `CheckTempAcquaClick` | 0x004B8B30 | 357 | INFERIDO | toca CheckTempAcqua, DrawGridPassaggio, EditRitMin, LabelPassaggioGradi, LabelPassaggioSecondi, LabelRitardoCambio, LabelS1 |  |  | PostMessageW |
-| `CheckTempMotoreClick` | 0x004B8E88 | 374 | INFERIDO | toca ButtonNuoviParametri, CheckTempMotore, DrawGridTemp, EditDeltaT, EditRPullUp, EditTMax, EditTMin, LabDeltaT |  |  | PostMessageW |
-| `CheckTempRiduttoreClick` | 0x004B8E10 | 118 | INFERIDO | toca CheckTempGas, EditTempCambio, LabelT1, LabelTempCambio |  |  | PostMessageW |
-| `CheckTempoMaxCorrenteClick` | 0x004B0E9C | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `CheckTpsBlocKeyPress` | 0x004A8928 | 57 | INFERIDO | chama APIs do Windows SendMessageW |  | SendMessageW |  |
-| `CheckUsaCanPerObdClick` | 0x004C1B3C | 56 | INFERIDO | toca CheckUsaCanPerObd |  |  |  |
-| `CheckValvetronikClick` | 0x004C2B14 | 195 | INFERIDO | toca CheckValvetronik |  |  |  |
-| `CheckboxPreheatAsyncModeClick` | 0x004C72D0 | 421 | INFERIDO | toca CheckRiscaldamento, CheckboxPreheatAsyncMode, EditPeriodoRiscaldamento, EditPreheatSyncInjNum, LabPeriodoRiscaldamento, LabelPeriodoRiscaldamento, LabelPreheatSyncInjNum |  |  |  |
-| `CheckboxPreheatOnlyAfterSleepModeClick` | 0x004C724C | 132 | INFERIDO | toca CheckboxPreheatOnlyAfterSleepMode |  |  |  |
-| `ComboAccensioneKeyPress` | 0x004BA230 | 188 | INFERIDO | toca ComboAccensione, ComboCilindri |  |  |  |
-| `ComboCambioKeyPress` | 0x004A8FB8 | 253 | INFERIDO | toca ComboCambio |  |  | PostMessageW |
-| `ComboCarburanteKeyPress` | 0x004B96DC | 1348 | INFERIDO | chama APIs do Windows Sleep; chama TFormAttesa.Create, TFormConfig.FormResize; toca ComboCarburante, TabCambio, TabPressione, TimerDati |  | Sleep | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
-| `ComboCilindriKeyPress` | 0x004BA2EC | 284 | INFERIDO | toca CheckInjAcquisition, ComboAccensione, ComboCilindri |  |  | PostMessageW |
-| `ComboFullGroupKeyPress` | 0x004C6830 | 27 | INFERIDO | toca ComboFullGroup |  |  |  |
-| `ComboKKeyPress` | 0x004C4880 | 282 | INFERIDO | toca ComboK |  |  |  |
-| `ComboNumeroSondeKeyPress` | 0x004A9664 | 64 | INFERIDO | sem fatos diretos extraíveis (64 bytes; chama 3 funções sem nome) |  |  |  |
-| `ComboPressioneKeyPress` | 0x004AE420 | 872 | INFERIDO | usa textos COMBOPRESSIONEMISURATA0, COMBOPRESSIONEMISURATA1, COMBOPRESSIONEMISURATA2, COMBOPRESSIONEMISURATA3, LABELTIPOPRESSIONEMIS, LABELTIPOPRESSIONEMIS1; chama TTranslatorExt::GetString; toca ComboMisuratorePressione, ComboPressioneMisurata, LabelTipoPressioneMisurata | COMBOPRESSIONEMISURATA0, COMBOPRESSIONEMISURATA1, COMBOPRESSIONEMISURATA2, COMBOPRESSIONEMISURATA3, LABELTIPOPRESSIONEMIS, LABELTIPOPRESSIONEMIS1 |  | PostMessageW |
-| `ComboSegnaleGiriKeyPress` | 0x004ACDC8 | 390 | INFERIDO | toca ComboSegnaleGiri, EditSogliaGiri, LabSogliaGiri, LabelSogliaGiri |  |  |  |
-| `ComboSensoreKeyPress` | 0x004A8C60 | 86 | INFERIDO | toca ComboSensore |  |  |  |
-| `ComboSequenzaInjChange` | 0x004BBF3C | 95 | INFERIDO | toca ComboSequenzaInj, DrawGridSequenzaInj |  |  |  |
-| `ComboSequenzaInjKeyDown` | 0x004BBF9C | 106 | INFERIDO | sem fatos diretos extraíveis (106 bytes; chama 1 funções sem nome) |  |  |  |
-| `ComboSfasaturaKeyPress` | 0x004BD748 | 2188 | INFERIDO | chama TAebNumber::SetEcuData, TAebProtocol::IsConnect; toca RadioGasAltiGiri |  |  | PostMessageW |
-| `ComboSonda1KeyPress` | 0x004C2D94 | 166 | INFERIDO | toca ComboSonda1, ComboSonda2 |  |  |  |
-| `ComboTagliaIniettoriKeyPress` | 0x004C1138 | 126 | INFERIDO | toca ComboTagliaIniettori |  |  |  |
-| `ComboTagliaKeyPress` | 0x004BCD94 | 391 | INFERIDO | toca ComboTaglia |  |  | GetTickCount, Sleep |
-| `ComboTempRiduttoreKeyPress` | 0x004B9494 | 52 | INFERIDO | sem fatos diretos extraíveis (52 bytes; chama 2 funções sem nome) |  |  |  |
-| `ComboTipoIniettoreKeyPress` | 0x004BA4B4 | 2089 | INFERIDO | chama APIs do Windows Sleep; chama TFormAttesa.Create, TFormConfig.FormResize; toca ComboTipoIniettore, EditTempoMortoBenz, EditTempoMortoGas, LabelGC, LabelMsBenz, LabelMsGas, LabelTempoMortoGas, TabCambio |  | Sleep | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
-| `ComboTipoLambdaKeyPress` | 0x004A6674 | 251 | INFERIDO | toca ComboTipoLambda, EditLivEmulAlto, EditLivEmulBasso, EditRifInfCalda, EditRifInfFredda, EditRifLambda, EditRifSupCalda, EditRifSupFredda |  |  |  |
-| `ComboTipoMisuratoreKeyPress` | 0x004BEC34 | 975 | INFERIDO | chama TFormConfig.TabPressioneShow; toca ComboTipoMisuratore |  |  | PostMessageW |
-| `ComboTipoObdKeyPress` | 0x004C0F18 | 298 | INFERIDO | toca ComboTipoObd |  |  |  |
-| `ComboTurboKeyPress` | 0x004B9C44 | 1348 | INFERIDO | chama APIs do Windows Sleep; chama TFormAttesa.Create, TFormConfig.FormResize; toca ComboTurbo, TabCambio, TabPressione, TimerDati |  | Sleep | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
-| `ControlMouseDown` | 0x004C6020 | 250 | INFERIDO | sem fatos diretos extraíveis (250 bytes; chama 8 funções sem nome) |  |  |  |
-| `DrawDelayGasTempDblClick` | 0x004C42E4 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawDelayGasTemp |  | GetCursorPos, ScreenToClient |  |
-| `DrawDelayGasTempDrawCell` | 0x004C3EA4 | 1070 | INFERIDO | usa textos CHANGEDELAYCALIBR, CHANGEDELAYREFS, CHANGEDELAYSWITCH; chama TTranslatorExt::GetString; toca DrawDelayGasTemp | CHANGEDELAYCALIBR, CHANGEDELAYREFS, CHANGEDELAYSWITCH |  |  |
-| `DrawDelayGasTempKeyPress` | 0x004C42D4 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridAnticipoDblClick` | 0x004BD2E4 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridAnticipo |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridAnticipoDrawCell` | 0x004BCF1C | 967 | INFERIDO | toca DrawGridAnticipo |  |  |  |
-| `DrawGridAnticipoKeyPress` | 0x004BD348 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridAnticipoMultipointDblClick` | 0x004C3C38 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridAnticipoMultipoint |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridAnticipoMultipointDrawCell` | 0x004C3944 | 740 | INFERIDO | usa textos LABELRITEMULRICCA; chama TTranslatorExt::GetString; toca DrawGridAnticipoMultipoint | LABELRITEMULRICCA |  |  |
-| `DrawGridAnticipoMultipointKeyPress` | 0x004C3C28 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridBenzinaDblClick` | 0x004C157C | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridBenzina |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridBenzinaDrawCell` | 0x004C11B8 | 964 | INFERIDO | toca DrawGridBenzina |  |  |  |
-| `DrawGridBenzinaKeyPress` | 0x004C15E0 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridContributiDblClick` | 0x004CA288 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridContributi |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridContributiDrawCell` | 0x004C9DF0 | 1159 | INFERIDO | toca DrawGridContributi |  |  |  |
-| `DrawGridContributiKeyPress` | 0x004CA278 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridEmissioniDblClick` | 0x004B4530 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridEmissioni |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridEmissioniDrawCell` | 0x004B3F68 | 1461 | INFERIDO | usa textos LABELGIRIEMUL, LABELRIFLAMBDAEMUL, LABELRIFLAMBDAEMULUEGO, LABELRITEMULRICCA; chama TTranslatorExt::GetString; toca DrawGridEmissioni | LABELGIRIEMUL, LABELRIFLAMBDAEMUL, LABELRIFLAMBDAEMULUEGO, LABELRITEMULRICCA |  |  |
-| `DrawGridEmissioniKeyPress` | 0x004B4520 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridEmissioniMultipointDblClick` | 0x004C33E0 | 243 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; chama TFormCentriCelle.Create; toca DrawGridEmissioniMultipoint |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridEmissioniMultipointDrawCell` | 0x004C2E3C | 1426 | INFERIDO | toca DrawGridEmissioni, DrawGridEmissioniMultipoint |  |  |  |
-| `DrawGridEmissioniMultipointKeyPress` | 0x004C33D0 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridKDblClick` | 0x004B1940 | 153 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridK, RadioMapAdatta, RadioMapPetrol |  | GetCursorPos, ScreenToClient | PostMessageW |
-| `DrawGridKDrawCell` | 0x004B12EC | 1544 | INFERIDO | toca DrawGridK, RadioMapAdatta, RadioMapPetrol |  |  |  |
-| `DrawGridKKeyDown` | 0x004B2514 | 159 | INFERIDO | sem fatos diretos extraíveis (159 bytes; chama 2 funções sem nome) |  |  |  |
-| `DrawGridKKeyPress` | 0x004B18F4 | 74 | INFERIDO | toca RadioMapAdatta, RadioMapPetrol |  |  | PostMessageW |
-| `DrawGridOpenLoopDblClick` | 0x004B29E0 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridOpenLoop |  | GetCursorPos, ScreenToClient | PostMessageW |
-| `DrawGridOpenLoopDrawCell` | 0x004B25B4 | 1049 | INFERIDO | toca DrawGridOpenLoop |  |  |  |
-| `DrawGridOpenLoopKeyPress` | 0x004B29D0 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  | PostMessageW |
-| `DrawGridPassaggioDblClick` | 0x004B3128 | 38 | INFERIDO | chama APIs do Windows GetCursorPos; toca DrawGridPassaggio |  | GetCursorPos |  |
-| `DrawGridPassaggioDrawCell` | 0x004B2D64 | 75 | INFERIDO | toca DrawGridPassaggio |  |  |  |
-| `DrawGridPassaggioGasDblClick` | 0x004B3A24 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridPassaggioGas |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridPassaggioGasDrawCell` | 0x004B3660 | 945 | INFERIDO | usa textos LABELOLTRE; chama TTranslatorExt::GetString; toca DrawGridPassaggioGas | LABELOLTRE |  |  |
-| `DrawGridPassaggioGasKeyPress` | 0x004B3A14 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridPassaggioKeyPress` | 0x004B3118 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridPressAssDblClick` | 0x004B6178 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridPressAss |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridPressAssDrawCell` | 0x004B5E90 | 728 | INFERIDO | toca DrawGridPressAss |  |  |  |
-| `DrawGridPressAssKeyPress` | 0x004B6168 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridPressDiffDblClick` | 0x004B5B68 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridPressDiff |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridPressDiffDrawCell` | 0x004B5880 | 728 | INFERIDO | toca DrawGridPressDiff |  |  |  |
-| `DrawGridPressDiffKeyPress` | 0x004B5B58 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridPressPassDblClick` | 0x004B6EF4 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridPressPass |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridPressPassDrawCell` | 0x004B6B1C | 982 | INFERIDO | toca DrawGridPressPass |  |  |  |
-| `DrawGridPressPassKeyPress` | 0x004B6F58 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridProgressioniDblClick` | 0x004CA9A0 | 86 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridProgressioni |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridProgressioniDrawCell` | 0x004CA74C | 577 | INFERIDO | chama TAebMatrix::GetInt; toca DrawGridProgressioni |  |  |  |
-| `DrawGridProgressioniKeyPress` | 0x004CA990 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridSequenzaInjBenzDrawCell` | 0x004BBB88 | 930 | INFERIDO | toca DrawGridSequenzaInjBenz |  |  |  |
-| `DrawGridSequenzaInjBenzSelectCell` | 0x004BBF2C | 13 | INFERIDO | sem fatos diretos extraíveis (13 bytes; chama 0 funções sem nome) |  |  |  |
-| `DrawGridSequenzaInjDrawCell` | 0x004BB664 | 1099 | INFERIDO | toca DrawGridSequenzaInj |  |  |  |
-| `DrawGridSequenzaInjSelectCell` | 0x004BBAB0 | 213 | INFERIDO | toca ComboSequenzaInj, DrawGridSequenzaInj |  |  |  |
-| `DrawGridSplitFuelDblClick` | 0x004C2788 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridSplitFuel |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridSplitFuelDrawCell` | 0x004C2420 | 870 | INFERIDO | toca DrawGridSplitFuel |  |  |  |
-| `DrawGridSplitFuelKeyPress` | 0x004C27EC | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridTInjDefaultDblClick` | 0x004B6868 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridTInjDefault |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridTInjDefaultDrawCell` | 0x004B64A0 | 968 | INFERIDO | toca DrawGridTInjDefault |  |  |  |
-| `DrawGridTInjDefaultKeyPress` | 0x004B68CC | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridTempDblClick` | 0x004B81F4 | 174 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca ButtonNuoviParametri, DrawGridTemp |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridTempDrawCell` | 0x004B7874 | 2090 | INFERIDO | usa textos LABELINDEXTEMP, LABELNTCTEMP, LABELTEMPTEMP, LABELVOLTTEMP; chama TTranslatorExt::GetString; toca DrawGridTemp, EditDeltaT, EditRPullUp, EditTMin | LABELINDEXTEMP, LABELNTCTEMP, LABELTEMPTEMP, LABELVOLTTEMP |  |  |
-| `DrawGridTempEnter` | 0x004B868C | 23 | INFERIDO | sem fatos diretos extraíveis (23 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridTempExit` | 0x004B86A4 | 32 | INFERIDO | toca DrawGridTemp, LabelInstr |  |  |  |
-| `DrawGridTempKeyPress` | 0x004B80B0 | 324 | INFERIDO | toca ButtonNuoviParametri, DrawGridTemp |  |  |  |
-| `DrawGridTempMotDblClick` | 0x004B54F8 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridTempMot |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridTempMotDrawCell` | 0x004B5134 | 948 | INFERIDO | usa textos LABELOLTRE; chama TTranslatorExt::GetString; toca DrawGridTempMot | LABELOLTRE |  |  |
-| `DrawGridTempMotKeyPress` | 0x004B54E8 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridTempRidDblClick` | 0x004B4DAC | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridTempRid |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridTempRidDrawCell` | 0x004B49E8 | 948 | INFERIDO | usa textos LABELOLTRE; chama TTranslatorExt::GetString; toca DrawGridTempRid | LABELOLTRE |  |  |
-| `DrawGridTempRidKeyPress` | 0x004B4D9C | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridTempiLrDblClick` | 0x004BE5A8 | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridTempiLr |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridTempiLrDrawCell` | 0x004BE278 | 799 | INFERIDO | toca DrawGridTempiLr |  |  |  |
-| `DrawGridTempiLrKeyPress` | 0x004BE598 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `DrawGridTestDblClick` | 0x004B75EC | 99 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca DrawGridTest |  | GetCursorPos, ScreenToClient |  |
-| `DrawGridTestDrawCell` | 0x004B71B8 | 1074 | INFERIDO | toca DrawGridTest |  |  |  |
-| `DrawGridTestKeyPress` | 0x004B7650 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 1 funções sem nome) |  |  |  |
-| `EditAdvParamInjGasKeyPress` | 0x004C7150 | 187 | INFERIDO | sem fatos diretos extraíveis (187 bytes; chama 7 funções sem nome) |  |  |  |
-| `EditAntiStalloKeyPress` | 0x004C97D8 | 81 | INFERIDO | chama TAebVector::GetInt, TAebVector::SetInt |  |  |  |
-| `EditAperturaInjKeyPress` | 0x004ACF68 | 85 | INFERIDO | sem fatos diretos extraíveis (85 bytes; chama 2 funções sem nome) |  |  |  |
-| `EditBassaPressioneMpKeyPress` | 0x004C526C | 520 | INFERIDO | sem fatos diretos extraíveis (520 bytes; chama 9 funções sem nome) |  |  |  |
-| `EditCorrBancata2KeyPress` | 0x004C2CCC | 197 | INFERIDO | toca EditCorrBancata2 |  |  |  |
-| `EditCorrCarbMinimoKeyPress` (sem evento no DFM) | 0x0049F0E4 | 137 | INFERIDO | sem fatos diretos extraíveis (137 bytes; chama 5 funções sem nome) |  |  |  |
-| `EditCorrIntInfKeyPress` | 0x004B91BC | 193 | INFERIDO | toca EditCorrIntInf, EditCorrIntSup |  |  |  |
-| `EditCutoffKeyPress` | 0x004C82B8 | 577 | INFERIDO | toca EditGiriCutoff, EditPressioneCutoff, EditTBenzMaxCutoff, EditTInjCutoff |  |  |  |
-| `EditDeltaTInterruzioneWarmupKeyPress` | 0x004C8ECC | 182 | INFERIDO | chama TAebNumber::GetInt, TAebNumber::SetInt; toca EditDeltaTInterruzioneWarmup |  |  |  |
-| `EditFiltroEnter` | 0x004BDFD4 | 564 | INFERIDO | toca EditFiltro |  |  |  |
-| `EditFiltroExit` | 0x004BE208 | 112 | INFERIDO | toca EditFiltro |  |  |  |
-| `EditFiltroKeyPress` | 0x004B9644 | 149 | INFERIDO | toca EditFiltro |  |  |  |
-| `EditFlashLubeKeyPress` | 0x004C8948 | 406 | INFERIDO | toca EditFlashLube0, EditFlashLube1, EditFlashLube2, EditFlashLube3 |  |  |  |
-| `EditFrestEnter` | 0x004C611C | 503 | INFERIDO | toca LabFrestGasInjOffset, LabelLimite |  |  |  |
-| `EditFrestExit` | 0x004C6314 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
-| `EditGiriCambioEnter` | 0x004A98D8 | 1000 | INFERIDO | toca LabelLimite |  |  |  |
-| `EditGiriCambioExit` | 0x004A9CC0 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
-| `EditGiriKFiltroEnter` | 0x004BE90C | 430 | INFERIDO | sem fatos diretos extraíveis (430 bytes; chama 10 funções sem nome) |  |  |  |
-| `EditGiriKFiltroExit` | 0x004BEABC | 102 | INFERIDO | sem fatos diretos extraíveis (102 bytes; chama 5 funções sem nome) |  |  |  |
-| `EditGiriKFiltroKeyPress` | 0x004BEB24 | 269 | INFERIDO | toca EditGiriAltiKFiltro, EditGiriKFiltro |  |  |  |
-| `EditGiriMinimoPerBenzinaKeyPress` | 0x004BFE6C | 136 | INFERIDO | sem fatos diretos extraíveis (136 bytes; chama 5 funções sem nome) |  |  |  |
-| `EditGiriPerBenzinaKeyPress` | 0x004C04E8 | 136 | INFERIDO | sem fatos diretos extraíveis (136 bytes; chama 5 funções sem nome) |  |  |  |
-| `EditKFiltroKeyPress` | 0x004B95C0 | 130 | INFERIDO | sem fatos diretos extraíveis (130 bytes; chama 5 funções sem nome) |  |  |  |
-| `EditKMappaNeutroKeyPress` | 0x004C499C | 96 | INFERIDO | toca EditKMappaNeutro |  |  |  |
-| `EditOffsetKeyPress` | 0x004AF360 | 72 | INFERIDO | sem fatos diretos extraíveis (72 bytes; chama 4 funções sem nome) |  |  |  |
-| `EditPreheatSyncInjNumKeyPress` | 0x004C78A4 | 95 | INFERIDO | sem fatos diretos extraíveis (95 bytes; chama 5 funções sem nome) |  |  |  |
-| `EditRPullUpEnter` | 0x004B86C4 | 506 | INFERIDO | toca LabelLimite |  |  |  |
-| `EditRPullUpExit` | 0x004B88C0 | 624 | INFERIDO | toca DrawGridTemp, EditDeltaT, EditRPullUp, EditTMax, EditTMin, LabelLimite |  |  |  |
-| `EditRifLambdaKeyPress` | 0x004A6A00 | 201 | INFERIDO | sem fatos diretos extraíveis (201 bytes; chama 6 funções sem nome) |  |  |  |
-| `EditRiscaldamentoKeyPress` | 0x004C7478 | 1052 | INFERIDO | toca EditMantRiscaldamento, EditPeriodoRiscaldamento, EditPiccoRiscaldamento, EditPreheatPGasTh, EditPreheatPInjTimeTh, EditPreheatTempGasTh |  |  |  |
-| `EditRpmTachimetroKeyPress` | 0x004A647C | 502 | INFERIDO | chama TAebProtocol::IsConnect, TAebProtocol::SendCommand; toca EditRpmTachimetro, LabRpmTachimetro, LabelRpmTachimetro |  |  |  |
-| `EditScartoMinFuoriMinKeyPress` | 0x004BA1E8 | 71 | INFERIDO | sem fatos diretos extraíveis (71 bytes; chama 4 funções sem nome) |  |  |  |
-| `EditSensAdattaKeyPress` | 0x004C07D0 | 132 | INFERIDO | sem fatos diretos extraíveis (132 bytes; chama 5 funções sem nome) |  |  |  |
-| `EditSogliaGiriKeyPress` | 0x004C58DC | 140 | INFERIDO | toca EditSogliaGiri |  |  |  |
-| `EditTInjSup22KeyPress` | 0x004C3E44 | 96 | INFERIDO | toca EditTInjSup22 |  |  |  |
-| `EditTempAcquaKeyPress` | 0x004BCB78 | 479 | INFERIDO | toca EditPressRid, EditSogliaMap, EditTempAcqua |  |  |  |
-| `EditTempMotoreKeyPress` | 0x004C8F84 | 348 | INFERIDO | chama TAebNumber::GetInt, TAebNumber::SetInt; toca EditDeltaTInterruzioneWarmup, EditTempMotore |  |  |  |
-| `EditTempoBenzinaKeyPress` | 0x004C0570 | 127 | INFERIDO | sem fatos diretos extraíveis (127 bytes; chama 4 funções sem nome) |  |  |  |
-| `EditTempoMortoBenzKeyPress` | 0x004B11B0 | 162 | INFERIDO | sem fatos diretos extraíveis (162 bytes; chama 3 funções sem nome) |  |  |  |
-| `EditTipoIniettoreKeyPress` | 0x004BACE0 | 436 | INFERIDO | toca EditTipoIniettore |  |  |  |
-| `EditVH34ParamKeyPress` | 0x004CAE48 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `FormClose` | 0x00490C98 | 32 | INFERIDO | sem fatos diretos extraíveis (32 bytes; chama 1 funções sem nome) |  |  |  |
-| `FormCloseQuery` | 0x004ADE94 | 372 | INFERIDO | chama TFormConfig.ButtonNuoviParametriClick, TFormConfig.ButtonTaraturaClick; toca PageControl, TabKCoefficienti, TabTemp |  |  |  |
-| `FormDestroy` | 0x00490BB4 | 187 | INFERIDO | sem fatos diretos extraíveis (187 bytes; chama 1 funções sem nome) |  |  |  |
-| `FormKeyDown` | 0x0049EB24 | 1469 | INFERIDO | chama TFormConfig.ButtonNuoviParametriClick, TFormConfig.ButtonTaraturaClick; toca PageControl, TabKCoefficienti, TabTemp |  |  |  |
-| `FormResize` | 0x00490CB8 | 4190 | INFERIDO | toca DrawGridAnticipo, DrawGridAnticipoMultipoint, DrawGridContributi, DrawGridEmissioni, DrawGridEmissioniMultipoint, DrawGridK, DrawGridOpenLoop, DrawGridPassaggio |  |  |  |
-| `FormShow` | 0x00490028 | 1418 | INFERIDO | usa textos COMBOACCENSIONE0, COMBOACCENSIONE1, COMBOACCENSIONE2, COMBOACCENSIONE3, COMBOACCENSIONE4, COMBOACCENSIONE5; chama TTranslatorExt::GetString; toca ComboCilindri, ComboFullGroup, ComboTipoLambda | COMBOACCENSIONE0, COMBOACCENSIONE1, COMBOACCENSIONE2, COMBOACCENSIONE3, COMBOACCENSIONE4, COMBOACCENSIONE5 |  |  |
-| `ImageInjOffClick` | 0x004C81B0 | 264 | INFERIDO | chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect |  |  |  |
-| `ImageInjOnClick` | 0x004C80A8 | 262 | INFERIDO | chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect |  |  |  |
-| `LabGasClick` | 0x004C9A7C | 318 | INFERIDO | chama APIs do Windows Sleep; toca ImageCommutatore, LabGas |  | Sleep | PostMessageW |
-| `LabelDiagnosiClick` | 0x004CB060 | 165 | INFERIDO | chama TFormDiagnosi.Create; toca TimerDati |  |  |  |
-| `MenuAebBeeClick` | 0x004AE414 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `MenuComunicazioneSerialeCostruitaClick` | 0x004AE008 | 1033 | INFERIDO | chama APIs do Windows CloseHandle, CreateProcessW, WaitForSingleObject; chama TAebProtocol::Connect, TAebProtocol::Disconnect, TAebProtocol::IsConnect, TAebProtocol::OffLine, TAebProtocol::ReadPort |  | CloseHandle, CreateProcessW, WaitForSingleObject |  |
-| `MenuControlloIniettoriClick` | 0x004BA408 | 54 | INFERIDO | toca MenuControlloIniettori |  |  | PostMessageW |
-| `MenuCopiaTaraturaClick` | 0x004AD0B0 | 1031 | INFERIDO | toca DrawGridK, RadioMapAdatta, RadioMapPetrol |  |  |  |
-| `MenuEsciClick` (sem evento no DFM) | 0x004ACF60 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `MenuIncollaTaraturaClick` | 0x004AD4B8 | 2097 | INFERIDO | sem fatos diretos extraíveis (2097 bytes; chama 20 funções sem nome) |  |  |  |
-| `MenuSbloccaLimitiClick` | 0x004A95C8 | 26 | INFERIDO | toca MenuSbloccaLimiti |  |  |  |
-| `PageControlChanging` | 0x004ADD20 | 372 | INFERIDO | chama TFormConfig.ButtonNuoviParametriClick, TFormConfig.ButtonTaraturaClick; toca PageControl, TabKCoefficienti, TabTemp |  |  |  |
-| `PageControlDrawTab` | 0x0049E83C | 741 | INFERIDO | toca PageControl |  |  |  |
-| `PopupMenuGridPopup` | 0x004ADCEC | 51 | INFERIDO | toca MenuIncolla |  |  |  |
-| `RadioAdatta25Click` | 0x004C05F0 | 251 | INFERIDO | sem fatos diretos extraíveis (251 bytes; chama 3 funções sem nome) |  |  |  |
-| `RadioAdattaDirittiClick` | 0x004C06EC | 226 | INFERIDO | sem fatos diretos extraíveis (226 bytes; chama 3 funções sem nome) |  |  |  |
-| `RadioGasAltiGiriClick` | 0x004BFEF4 | 798 | INFERIDO | toca EditGiriPerBenzina, EditGiriSupBenzina, EditTempoBenzina1 |  |  | PostMessageW |
-| `RadioGasClick` | 0x004BFAD8 | 906 | INFERIDO | toca EditGiriMinimoPerBenzina, EditIniettate, EditIniettateCutoff, EditUscita, LabGiriMinimoPerBenzina, LabelGiriMinimoPerBenzina, LabelIniettate, RadioGas |  |  | PostMessageW |
-| `RadioMapClick` | 0x004B23A0 | 362 | INFERIDO | toca DrawGridK, TabKCoefficienti |  |  |  |
-| `TabAdattaShow` | 0x004C0854 | 1254 | INFERIDO | toca CheckAdattaBenzina, CheckAdattativita, CheckAzzeraBlackListObd, CheckAzzeraErroriObd, CheckDeleteErrorMotoreSpento, CheckOutDiagInfoSuKLine, CheckPetrolObdConnection, CheckUsaCanPerObd |  |  |  |
-| `TabAdvancedShow` | 0x004C9BBC | 95 | INFERIDO | toca CheckContributi |  |  |  |
-| `TabAutoCalNewShow` | 0x004CB1C4 | 314 | INFERIDO | toca AutoCalPage |  |  |  |
-| `TabBenzinaShow` | 0x004BF004 | 262 | INFERIDO | toca EditGiriMinimoPerBenzina, EditGiriPerBenzina, EditGiriSupBenzina, EditTempoBenzina1 |  |  |  |
-| `TabCalibrationShow` | 0x004C7904 | 268 | INFERIDO | toca ShapeInjA, ShapeInjB, ShapeInjC, ShapeInjD, ShapeInjE, ShapeInjF, ShapeInjG, ShapeInjH |  |  |  |
-| `TabCambioShow` | 0x004A6ACC | 2652 | INFERIDO | usa textos LABELTAGLIAGRANDE, LABELTAGLIAMEDIA, LABELTAGLIAPICCOLA; chama TTranslatorExt::GetString; toca ComboCarburante, ComboFullGroup, ComboTaglia, ComboTipoIniettore, EditTipoIniettore, LabelTaglia | LABELTAGLIAGRANDE, LABELTAGLIAMEDIA, LABELTAGLIAPICCOLA |  |  |
-| `TabConsumometroShow` | 0x004C1044 | 178 | INFERIDO | toca CheckConsumometro, ComboTagliaIniettori, EditLitriSerbatoio |  |  |  |
-| `TabDhlpAgaslevShow` | 0x004C8EC4 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `TabEmissioniShow` | 0x004A8964 | 722 | INFERIDO | toca EditCorrIntInf, EditCorrIntSup, EditLivEmulAlto, EditLivEmulBasso, EditLivEmulCutoff, EditLivEmulStabilizzato, EditNumeroIniettateSmagr, EditRitardoGiriEmulazione |  |  |  |
-| `TabEsciShow` | 0x004AE418 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `TabFrestShow` | 0x004C6324 | 52 | INFERIDO | toca EditlFrestGasNormTemp |  |  |  |
-| `TabIniezioneShow` | 0x004AB8BC | 2768 | INFERIDO | usa textos LABELDURATAATTIVAZIONEINJ, LABELPICCORISCALDAMENTO; chama TTranslatorExt::GetString; toca CheckIncrementoMaxCorrente, CheckRiscaldamento, CheckboxPreheatAsyncMode, CheckboxPreheatOnlyAfterSleepMode, EditAperturaExtra, EditAperturaInj, EditChiusuraInj, EditLimiteRitardoAttivWarmUp | LABELDURATAATTIVAZIONEINJ, LABELPICCORISCALDAMENTO |  |  |
-| `TabKCoefficientiShow` | 0x004B0EA0 | 550 | INFERIDO | toca ButtonTaratura, EditAperturaInj, PageControlK, RadioMapAdatta, RadioMapAlcol, RadioMapPetrol, TabCorrettori, TabKFactor |  |  |  |
-| `TabKFactorShow` | 0x004C49FC | 1464 | INFERIDO | toca ComboK, EditK1, EditK2, EditKMappaNeutro, EditTInj1, EditTInj2, LabelInjK, LabelK |  |  |  |
-| `TabKTempiShow` | 0x004B1254 | 150 | INFERIDO | toca EditTempoBenzExtra, EditTempoGasExtra, EditTempoMortoBenz, EditTempoMortoGas |  |  |  |
-| `TabKVarieShow` | 0x004B94C8 | 239 | INFERIDO | toca EditFiltro, EditGiriAltiKFiltro, EditGiriKFiltro, EditKFiltro, EditKFiltroGiriAlti, EditSogliaFS2 |  |  |  |
-| `TabLambdaShow` | 0x004A6770 | 653 | INFERIDO | toca CheckFlashLube, ComboNumeroSonde, ComboSonda1, ComboSonda2, ComboTipoLambda, EditRifInfCalda, EditRifInfFredda, EditRifLambda |  |  |  |
-| `TabPressioneShow` | 0x004AE788 | 2153 | INFERIDO | usa textos COMBOPRESSIONEMISURATA0, COMBOPRESSIONEMISURATA1, COMBOPRESSIONEMISURATA2, COMBOPRESSIONEMISURATA3, LABELTIPOPRESSIONEMIS, LABELTIPOPRESSIONEMIS1; chama TTranslatorExt::GetString; toca CheckMapConfigurato, ComboMisuratorePressione, ComboPressioneMisurata, ComboTipoMisuratore, EditOffset, EditOffsetDiff, EditPendenza, EditPendenzaDiff | COMBOPRESSIONEMISURATA0, COMBOPRESSIONEMISURATA1, COMBOPRESSIONEMISURATA2, COMBOPRESSIONEMISURATA3, LABELTIPOPRESSIONEMIS, LABELTIPOPRESSIONEMIS1 |  |  |
-| `TabSensoreShow` | 0x004AA5BC | 3924 | INFERIDO | usa textos CHECKALIMENTAZIONEFILODEDICATO, CHECK_STAP_ON_EV2, COMBOSENSORE1, COMBOSENSORE2; chama TFormConfig.CheckRitornoBenzinaClick, TTranslatorExt::GetString; toca CheckAlimentazione, CheckAttivaPompaInRiserva, CheckBassaPressione, CheckBoxEV2NotConnected, CheckEnabledDhlpDiagnosis, CheckPassPRail, CheckRiconoscimentoPieno, CheckRitornoBenzina | CHECKALIMENTAZIONEFILODEDICATO, CHECK_STAP_ON_EV2, COMBOSENSORE1, COMBOSENSORE2 |  |  |
-| `TabSwitchToPetrolShow` | 0x004C65A4 | 361 | INFERIDO | toca EditSwitchToPetrol0, EditSwitchToPetrol1, EditSwitchToPetrol2, EditSwitchToPetrol3, EditSwitchToPetrol4, EditSwitchToPetrol5, EditSwitchToPetrol6, EditSwitchToPetrol7 |  |  |  |
-| `TabTaraturaShow` | 0x004A9CD0 | 242 | INFERIDO | toca EditDeltaK, EditGiriAutotaratura, EditNumControlli, EditNumControlliOk, EditScartoMinAlMin, EditScartoMinFuoriMin, EditTempTaratura |  |  |  |
-| `TabTempShow` | 0x004B92C8 | 129 | INFERIDO | toca CheckFlashLubeSuTempAcqua, CheckTempAcqua, CheckTempGas, CheckTempMotore |  |  |  |
-| `TabTestShow` | 0x004BA440 | 114 | INFERIDO | toca EditTestByte, EditTestTempo, EditTestWord |  |  |  |
-| `TimerDatiTimer` | 0x004A307C | 1586 | INFERIDO | chama TStreamDati.TimerIOTimer; toca LabApMot, LabApMot2, LabApMot2Benz, LabApMotBenz, LabContribBenz, LabDeltaGiri, LabGiri, LabLambda |  |  |  |
-| `chkRitardoPassaggioInMinutiClick` | 0x004CB300 | 39 | INFERIDO | toca chkRitardoPassaggioInMinuti |  |  |  |
+| `ButtonAccettaClick` | 0x004A8D74 | 577 | INFERIDO | Ao clicar em ButtonAccetta «&Conferma»: mexe em EditLivello1, EditLivello2, EditLivello3, EditLivello4. |  |  |  |
+| `ButtonCommutatoreClick` | 0x004B1178 | 55 | INFERIDO | Ao clicar em ButtonCommutatore «&Comutador»: chama APIs Sleep. |  | Sleep | PostMessageW |
+| `ButtonDebugClick` | 0x004C8EC8 | 1 | OBS-COD | Ao clicar em ButtonDebug «Enable debug». Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `ButtonDoLevelClick` | 0x004C5C30 | 978 | INFERIDO | Ao clicar em ButtonDoLevel «Find levels»: chama TFormConfig.ButtonAccettaClick; mexe em EditLivello1, EditLivello2, EditLivello3, EditLivello4, LabelMaxLevel, LabelMinLevel. |  |  |  |
+| `ButtonMaxLevelClick` | 0x004C5ADC | 337 | INFERIDO | Ao clicar em ButtonMaxLevel «Set max level»: chama TAebProtocol::IsConnect; mexe em LabelMaxLevel. |  |  |  |
+| `ButtonMinLevelClick` | 0x004C598C | 334 | INFERIDO | Ao clicar em ButtonMinLevel «Set min level»: chama TAebProtocol::IsConnect; mexe em LabelMinLevel. |  |  |  |
+| `ButtonModificaInjClick` | 0x004BC47C | 270 | INFERIDO | Ao clicar em ButtonModificaInj «Modificação sequência injecção gás»: chama TAebProtocol::IsConnect; mexe em DrawGridSequenzaInj. |  |  |  |
+| `ButtonModificaRifTarClick` | 0x004B10C8 | 136 | INFERIDO | Ao clicar em ButtonModificaRifTar «&Modificar ref. mapa»: chama TFormCentriCelleK.Create; mexe em DrawGridK, DrawGridOpenLoop. |  |  |  |
+| `ButtonNuoviParametriClick` | 0x004B9000 | 443 | INFERIDO | Ao clicar em ButtonNuoviParametri «&Modifica parametri sensore temperatura motore»: usa textos BUTTONNUOVIPARAMETRI, BUTTONNUOVIPARAMETRI2; chama TTranslatorExt::GetString; mexe em ButtonNuoviParametri, DrawGridTemp, EditDeltaT, EditRPullUp, EditTMax, EditTMin. | BUTTONNUOVIPARAMETRI, BUTTONNUOVIPARAMETRI2 |  | PostMessageW |
+| `ButtonResetClick` | 0x004BA188 | 94 | INFERIDO | Ao clicar em ButtonReset «Redefina a central de comando e retorne aos parâmetros de base»: mexe em TabCambio, TimerDati. |  |  |  |
+| `ButtonRicercaParametriClick` | 0x004AF3A8 | 509 | INFERIDO | Ao clicar em ButtonRicercaParametri «Inicie a procura guiada dos parâmetros do mapa externo»: usa textos BUTTONRICERCAPARAMETRI1; chama APIs GetAsyncKeyState; chama TTranslatorExt::GetString; mexe em ButtonRicercaParametri, LabLambda, TimerDati. | BUTTONRICERCAPARAMETRI1 | GetAsyncKeyState |  |
+| `ButtonSequenceAcquisitionClick` | 0x004A62A8 | 467 | INFERIDO | Ao clicar em ButtonSequenceAcquisition «Sequence acquisition»: chama TAebProtocol::IsConnect, TAebProtocol::SendCommand; mexe em ButtonSequenceAcquisition, EditRpmTachimetro, LabRpmTachimetro, LabelRpmTachimetro. |  |  |  |
+| `ButtonSequenzaInjClick` | 0x004BC2DC | 414 | INFERIDO | Ao clicar em ButtonSequenzaInj «Adquirir seqüência injeção gasolina»: chama TAebProtocol::IsConnect; mexe em ComboSequenzaInj, DrawGridSequenzaInj, DrawGridSequenzaInjBenz. |  |  |  |
+| `ButtonSwitchSettingsClick` | 0x004C90E0 | 1624 | INFERIDO | Ao clicar em ButtonSwitchSettings «Switch settings»: usa textos MESSERRORECUSWITCHCALIBRATION, MESSERRORFIRMWARESWITCHCALIBRATION, MESSERRORGIRISWITCHCALIBRATION, MESSERRORNOSWITCHCALIBRATION, MESSERRORSTARTSWITCHCALIBRATION; chama TAebProtocol::GetComFail, TAebProtocol::IsConnect, TAebProtocol::SendCommand, TTranslatorExt::GetString. | MESSERRORECUSWITCHCALIBRATION, MESSERRORFIRMWARESWITCHCALIBRATION, MESSERRORGIRISWITCHCALIBRATION, MESSERRORNOSWITCHCALIBRATION, MESSERRORSTARTSWITCHCALIBRATION |  | SWITCHSETTINGSBUTTONEXIT, SWITCHSETTINGSCAPTION, SWITCHSETTINGSLABELBUZZER, SWITCHSETTINGSLABELLED, Sleep |
+| `ButtonTaraturaClick` | 0x004ACFC0 | 238 | INFERIDO | Ao clicar em ButtonTaratura «&Iniciar calibrag.»: chama APIs Sleep; mexe em ButtonCommutatore, ButtonTaratura, StaticTaratura. |  | Sleep | PostMessageW |
+| `CheckAdattaBenzinaClick` | 0x004C0E34 | 227 | INFERIDO | Ao clicar em CheckAdattaBenzina «Adaptabilidade com mapa gasolina»: mexe em CheckAdattaBenzina, CheckAdattativita, LabCorrGas, LabelCorrGas, PanelAdatta, PanelAdattaObd. |  |  | PostMessageW |
+| `CheckAdattativitaClick` | 0x004C0D50 | 227 | INFERIDO | Ao clicar em CheckAdattativita «Adaptabilidade OBD»: mexe em CheckAdattaBenzina, CheckAdattativita, LabCorrGas, LabelCorrGas, PanelAdatta, PanelAdattaObd. |  |  | PostMessageW |
+| `CheckAlimentazioneClick` | 0x004C6780 | 173 | INFERIDO | Ao clicar em CheckAlimentazione «Use of wire EV2 for STAP»: mexe em CheckAlimentazione. |  |  | PostMessageW |
+| `CheckAntiStalloClick` | 0x004C982C | 591 | INFERIDO | Ao clicar em CheckAntiStallo «Enable un-stalling strategy»: mexe em CheckAntiStallo, EditAntiStallo0, EditAntiStallo1, EditAntiStallo2, EditAntiStallo3, EditAntiStallo4. |  |  |  |
+| `CheckAttivaPompaInRiservaClick` | 0x004CB030 | 48 | INFERIDO | Ao clicar em CheckAttivaPompaInRiserva «Enable pump reactivation in reserve»: mexe em CheckAttivaPompaInRiserva. |  |  |  |
+| `CheckAzzeraBlackListObdClick` | 0x004C1ADC | 48 | INFERIDO | Ao clicar em CheckAzzeraBlackListObd «Selective reset of OBD errors»: mexe em CheckAzzeraBlackListObd. |  |  |  |
+| `CheckAzzeraErroriObdClick` | 0x004C1AAC | 48 | INFERIDO | Ao clicar em CheckAzzeraErroriObd «Reset erro OBD»: mexe em CheckAzzeraErroriObd. |  |  |  |
+| `CheckBassaPressioneClick` | 0x004BCA04 | 27 | INFERIDO | Ao clicar em CheckBassaPressione «Reversão automática por baixa pressão impostável»: mexe em CheckBassaPressione. |  |  |  |
+| `CheckBoxEV2NotConnectedClick` | 0x004C6710 | 111 | INFERIDO | Ao clicar em CheckBoxEV2NotConnected «EV2 not connected»: corpo de 111 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `CheckBoxEnDiagDtcPowertrainClick` | 0x004CB358 | 48 | INFERIDO | Ao clicar em CheckBoxEnDiagDtcPowertrain «En Diag DTC POWERTRAIN»: mexe em CheckBoxEnDiagDtcPowertrain. |  |  |  |
+| `CheckBoxEnableExtLedKLineClick` | 0x004CB328 | 48 | INFERIDO | Ao clicar em CheckBoxEnableExtLedKLine «Enable external LED on K-Line»: mexe em CheckBoxEnableExtLedKLine. |  |  |  |
+| `CheckCambioConSovrappClick` | 0x004C8B04 | 98 | INFERIDO | Ao clicar em CheckCambioConSovrapp «Cambio con sovrapposizione»: chama TValueEditEx::SetVisible; mexe em CheckCambioConSovrapp, EditParamProgress0, EditParamProgress1. |  |  |  |
+| `CheckConsumometroClick` | 0x004C1108 | 48 | INFERIDO | Ao clicar em CheckConsumometro «Habil. medidor consumo (só GPL)»: mexe em CheckConsumometro. |  |  | PostMessageW |
+| `CheckContributiClick` | 0x004C9C1C | 467 | INFERIDO | Ao clicar em CheckContributi «Enable petrol addition map»: mexe em CheckContributi, DrawGridContributi, LabContribBenz, LabelContribBenz, RadioContributoAltiGiri, RadioGasAltiGiri. |  |  |  |
+| `CheckDeleteErrorMotoreSpentoClick` | 0x004C1BA4 | 48 | INFERIDO | Ao clicar em CheckDeleteErrorMotoreSpento «Cancellazione errori OBD a motore spento»: mexe em CheckDeleteErrorMotoreSpento. |  |  |  |
+| `CheckDemagModeClick` | 0x004CAE44 | 1 | OBS-COD | Ao clicar em CheckDemagMode «Fast demag mode». Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `CheckDisabilitaCommutatoreClick` | 0x004C1C04 | 48 | INFERIDO | Ao clicar em CheckDisabilitaCommutatore «Inabil. interruptor»: mexe em CheckDisabilitaCommutatore. |  |  |  |
+| `CheckElettrovalvoleClick` | 0x004C5048 | 545 | INFERIDO | Ao clicar em CheckElettrovalvole «Gas elettrovalves opened in advance»: mexe em CheckElettrovalvole, EditAnticipoEV1, EditAnticipoEV2. |  |  | PostMessageW |
+| `CheckEnabledDhlpDiagnosisClick` | 0x004C975C | 123 | INFERIDO | Ao clicar em CheckEnabledDhlpDiagnosis «Enable gas leaks diagnosis»: corpo de 123 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `CheckFlashLubeClick` | 0x004C88AC | 151 | INFERIDO | Ao clicar em CheckFlashLube «Abilita diagnosi livello lubrificante »: mexe em CheckFlashLube, TabLambda. |  |  |  |
+| `CheckFlashLubeSuTempAcquaClick` | 0x004B8C98 | 29 | INFERIDO | Ao clicar em CheckFlashLubeSuTempAcqua «Diagnosis on the water temperature sensor for VP system»: mexe em CheckFlashLubeSuTempAcqua. |  |  |  |
+| `CheckFlexFuelClick` | 0x004C2C9C | 48 | INFERIDO | Ao clicar em CheckFlexFuel «Flex fuel»: mexe em CheckFlexFuel. |  |  |  |
+| `CheckGiriAlberoCammeClick` | 0x004C850C | 456 | INFERIDO | Ao clicar em CheckGiriAlberoCamme «camshaft»: mexe em CheckGiriAlberoCamme, CheckGiriRuotaFonica, CheckSegnaleGiri, ComboAccensione, EditNumDenti, LabelNumDenti. |  |  | GetTickCount, Sleep |
+| `CheckGiriRuotaFonicaClick` | 0x004C86D4 | 469 | INFERIDO | Ao clicar em CheckGiriRuotaFonica «flyweel»: mexe em CheckGiriAlberoCamme, CheckGiriRuotaFonica, CheckSegnaleGiri, ComboAccensione, EditNumDenti, LabelNumDenti. |  |  | GetTickCount, Sleep |
+| `CheckIncrementoMaxCorrenteClick` | 0x004C721C | 48 | INFERIDO | Ao clicar em CheckIncrementoMaxCorrente «Increase max current in gas change-over»: mexe em CheckIncrementoMaxCorrente. |  |  |  |
+| `CheckInibisciEmulazioneClick` | 0x004B9280 | 72 | INFERIDO | Ao clicar em CheckInibisciEmulazione «Desativa a emulação de rotações baixas»: mexe em CheckInibisciEmulazione. |  |  | PostMessageW |
+| `CheckIniezioneContinuaClick` | 0x004BC858 | 421 | INFERIDO | Ao clicar em CheckIniezioneContinua «Habilitaçãoretropassagem gasolina por injeção contínua»: mexe em CheckIniezioneContinua, EditIniezioneContinua, LabelIniezioneContinua, LabelSIniezioneContinua. |  |  |  |
+| `CheckInjAcquisitionClick` | 0x004A61AC | 251 | INFERIDO | Ao clicar em CheckInjAcquisition «Manual injection sequence»: chama TAebProtocol::IsConnect, TAebProtocol::SendCommand; mexe em ButtonSequenceAcquisition, CheckInjAcquisition, EditRpmTachimetro, LabRpmTachimetro, LabelRpmTachimetro. |  |  |  |
+| `CheckIstantaneoClick` | 0x004BFA68 | 56 | INFERIDO | Ao clicar em CheckIstantaneo «Mudança sequencial combust.»: mexe em CheckIstantaneo. |  |  | PostMessageW |
+| `CheckMapConfiguratoClick` | 0x004BCB40 | 54 | INFERIDO | Ao clicar em CheckMapConfigurato «Map configurado corretamente»: mexe em CheckMapConfigurato. |  |  | PostMessageW |
+| `CheckObdClick` | 0x004CAE4C | 481 | INFERIDO | Ao clicar em CheckObd05 «PID 0x05» (+12 componentes): mexe em ScrollObd. |  |  |  |
+| `CheckOutDiagInfoSuKLineClick` | 0x004C1B74 | 48 | INFERIDO | Ao clicar em CheckOutDiagInfoSuKLine «Output high-level on k-line during diagnostic error»: mexe em CheckOutDiagInfoSuKLine. |  |  |  |
+| `CheckPartenzaGasCaldoClick` | 0x004C4FB8 | 144 | INFERIDO | Ao clicar em CheckPartenzaGasCaldo «Partida gás com motor aquecido»: mexe em CheckPartenzaGasCaldo, EditTempGasCaldo, LabelT4. |  |  |  |
+| `CheckParzializzaClick` | 0x004BFAA0 | 56 | INFERIDO | Ao clicar em CheckParzializza «Deslig. dos injectores gás»: mexe em CheckParzializza. |  |  | PostMessageW |
+| `CheckPassPRailClick` | 0x004BCB10 | 48 | INFERIDO | Ao clicar em CheckPassPRail «Reversão automática a gasolina com a pressão do rail»: mexe em CheckPassPRail. |  |  | PostMessageW |
+| `CheckPetrolObdConnectionClick` | 0x004C1B0C | 48 | INFERIDO | Ao clicar em CheckPetrolObdConnection «Obd connection in petrol mode»: mexe em CheckPetrolObdConnection. |  |  |  |
+| `CheckProgressioniClick` | 0x004CA544 | 519 | INFERIDO | Ao clicar em CheckProgressioni «Enable progressions»: mexe em CheckProgressioni, DrawGridProgressioni, EditIstantaneoValue, LabelIstantaneoValue, LabelProgressCol0, LabelProgressCol1. |  |  |  |
+| `CheckRiconoscimentoPienoClick` | 0x004CB12C | 48 | INFERIDO | Ao clicar em CheckRiconoscimentoPieno «Recognition of full»: mexe em CheckRiconoscimentoPieno. |  |  |  |
+| `CheckRiscaldamentoClick` | 0x004C6A64 | 1771 | INFERIDO | Ao clicar em CheckRiscaldamento «Heating injectors»: usa textos LABELDURATAATTIVAZIONEINJ, LABELPICCORISCALDAMENTO; chama TTranslatorExt::GetString; mexe em CheckRiscaldamento, CheckboxPreheatAsyncMode, CheckboxPreheatOnlyAfterSleepMode, EditLimiteRitardoAttivWarmUp, EditMantRiscaldamento, EditPeriodoRiscaldamento. | LABELDURATAATTIVAZIONEINJ, LABELPICCORISCALDAMENTO |  |  |
+| `CheckRitornoBenzinaClick` | 0x004A9484 | 322 | INFERIDO | Ao clicar em CheckRitornoBenzina «&Automatic change-back to petrol»: mexe em CheckRitornoBenzina, EditRitornoBenzina, LabelRitornoBenzina, LabelS12. |  |  |  |
+| `CheckSegnaleGiriClick` | 0x004C5494 | 1092 | INFERIDO | Ao clicar em CheckSegnaleGiri «Tipo segnale giri»: mexe em ButtonSequenceAcquisition, CheckGiriAlberoCamme, CheckGiriRuotaFonica, CheckInjAcquisition, CheckSegnaleGiri, ComboAccensione. |  |  | GetTickCount, Sleep |
+| `CheckSequenzaInjClick` | 0x004BC008 | 722 | INFERIDO | Ao clicar em CheckSequenzaInj «Habilitação manual seqüência injeção»: chama TAebNumber::SetEcuData; mexe em ButtonModificaInj, ButtonSequenzaInj, CheckSequenzaInj, ComboSequenzaInj, DrawGridSequenzaInj, DrawGridSequenzaInjBenz. |  |  | PostMessageW |
+| `CheckSpegniBuzzerClick` | 0x004C1C34 | 48 | INFERIDO | Ao clicar em CheckSpegniBuzzer «Time limited buzzer»: mexe em CheckSpegniBuzzer. |  |  |  |
+| `CheckSplitFuelClick` | 0x004C1C64 | 1978 | INFERIDO | Ao clicar em CheckSplitFuel «Enable split fuel»: mexe em CheckSplitFuel, DrawGridSplitFuel, EditRpmForSplitFuel, LabRpmForSplitFuel, LabelCoeffSplitFuel, LabelRifSplitFuel. |  |  |  |
+| `CheckStartAndStopClick` | 0x004C2BD8 | 195 | INFERIDO | Ao clicar em CheckStartAndStop «Start && Stop»: mexe em CheckStartAndStop. |  |  |  |
+| `CheckTagliaExtraIniettateClick` | 0x004C1BD4 | 45 | INFERIDO | Ao clicar em CheckTagliaExtraIniettate «Corte extra-injecção»: mexe em CheckTagliaExtraIniettate. |  |  |  |
+| `CheckTaglioPompaBenzinaClick` | 0x004C8B68 | 857 | INFERIDO | Ao clicar em CheckTaglioPompaBenzina «Petrol pump cutting»: mexe em CheckAlimentazione, CheckBoxEV2NotConnected, CheckTaglioPompaBenzina, RadioGas, RadioGasAltiGiri. |  |  | PostMessageW |
+| `CheckTempAcquaClick` | 0x004B8B30 | 357 | INFERIDO | Ao clicar em CheckTempAcqua «Habilita mudança com temperatura da água»: mexe em CheckTempAcqua, DrawGridPassaggio, EditRitMin, LabelPassaggioGradi, LabelPassaggioSecondi, LabelRitardoCambio. |  |  | PostMessageW |
+| `CheckTempMotoreClick` | 0x004B8E88 | 374 | INFERIDO | Ao clicar em CheckTempMotore «Utiliza sensor de temperatura motor do veículo»: mexe em ButtonNuoviParametri, CheckTempMotore, DrawGridTemp, EditDeltaT, EditRPullUp, EditTMax. |  |  | PostMessageW |
+| `CheckTempRiduttoreClick` | 0x004B8E10 | 118 | INFERIDO | Ao clicar em CheckTempGas «Habilita mudança com temperatura do gás»: mexe em CheckTempGas, EditTempCambio, LabelT1, LabelTempCambio. |  |  | PostMessageW |
+| `CheckTempoMaxCorrenteClick` | 0x004B0E9C | 1 | OBS-COD | Ao clicar em CheckTempoMaxCorrente «Correção atual de manutenção com voltagem dos injetores». Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `CheckTpsBlocKeyPress` | 0x004A8928 | 57 | INFERIDO | Ao digitar (filtro de teclas) em CheckSegnaleGiri «Tipo segnale giri» (+66 componentes): chama APIs SendMessageW. |  | SendMessageW |  |
+| `CheckUsaCanPerObdClick` | 0x004C1B3C | 56 | INFERIDO | Ao clicar em CheckUsaCanPerObd «Use CAN for OBD»: mexe em CheckUsaCanPerObd. |  |  |  |
+| `CheckValvetronikClick` | 0x004C2B14 | 195 | INFERIDO | Ao clicar em CheckValvetronik «Valvetronik»: mexe em CheckValvetronik. |  |  |  |
+| `CheckboxPreheatAsyncModeClick` | 0x004C72D0 | 421 | INFERIDO | Ao clicar em CheckboxPreheatAsyncMode «Asynchronous heating injectors»: mexe em CheckRiscaldamento, CheckboxPreheatAsyncMode, EditPeriodoRiscaldamento, EditPreheatSyncInjNum, LabPeriodoRiscaldamento, LabelPeriodoRiscaldamento. |  |  |  |
+| `CheckboxPreheatOnlyAfterSleepModeClick` | 0x004C724C | 132 | INFERIDO | Ao clicar em CheckboxPreheatOnlyAfterSleepMode «Heating injectors only after sleep mode»: mexe em CheckboxPreheatOnlyAfterSleepMode. |  |  |  |
+| `ComboAccensioneKeyPress` | 0x004BA230 | 188 | INFERIDO | Ao digitar (filtro de teclas) em ComboAccensione: mexe em ComboAccensione, ComboCilindri. |  |  |  |
+| `ComboCambioKeyPress` | 0x004A8FB8 | 253 | INFERIDO | Ao digitar (filtro de teclas) em ComboCambio: mexe em ComboCambio. |  |  | PostMessageW |
+| `ComboCarburanteKeyPress` | 0x004B96DC | 1348 | INFERIDO | Ao digitar (filtro de teclas) em ComboCarburante: chama APIs Sleep; chama TFormAttesa.Create, TFormConfig.FormResize; mexe em ComboCarburante, TabCambio, TabPressione, TimerDati. |  | Sleep | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `ComboCilindriKeyPress` | 0x004BA2EC | 284 | INFERIDO | Ao digitar (filtro de teclas) em ComboCilindri: mexe em CheckInjAcquisition, ComboAccensione, ComboCilindri. |  |  | PostMessageW |
+| `ComboFullGroupKeyPress` | 0x004C6830 | 27 | INFERIDO | Ao digitar (filtro de teclas) em ComboFullGroup: mexe em ComboFullGroup. |  |  |  |
+| `ComboKKeyPress` | 0x004C4880 | 282 | INFERIDO | Ao digitar (filtro de teclas) em ComboK: mexe em ComboK. |  |  |  |
+| `ComboNumeroSondeKeyPress` | 0x004A9664 | 64 | INFERIDO | Ao digitar (filtro de teclas) em ComboNumeroSonde: corpo de 64 bytes sem fatos diretos (chama 3 funções sem nome). |  |  |  |
+| `ComboPressioneKeyPress` | 0x004AE420 | 872 | INFERIDO | Ao digitar (filtro de teclas) em ComboPressioneMisurata (+1 componentes): usa textos COMBOPRESSIONEMISURATA0, COMBOPRESSIONEMISURATA1, COMBOPRESSIONEMISURATA2, COMBOPRESSIONEMISURATA3, LABELTIPOPRESSIONEMIS; chama TTranslatorExt::GetString; mexe em ComboMisuratorePressione, ComboPressioneMisurata, LabelTipoPressioneMisurata. | COMBOPRESSIONEMISURATA0, COMBOPRESSIONEMISURATA1, COMBOPRESSIONEMISURATA2, COMBOPRESSIONEMISURATA3, LABELTIPOPRESSIONEMIS, LABELTIPOPRESSIONEMIS1 |  | PostMessageW |
+| `ComboSegnaleGiriKeyPress` | 0x004ACDC8 | 390 | INFERIDO | Ao digitar (filtro de teclas) em ComboSegnaleGiri: mexe em ComboSegnaleGiri, EditSogliaGiri, LabSogliaGiri, LabelSogliaGiri. |  |  |  |
+| `ComboSensoreKeyPress` | 0x004A8C60 | 86 | INFERIDO | Ao digitar (filtro de teclas) em ComboSensore: mexe em ComboSensore. |  |  |  |
+| `ComboSequenzaInjChange` | 0x004BBF3C | 95 | INFERIDO | Quando muda o valor de ComboSequenzaInj: mexe em ComboSequenzaInj, DrawGridSequenzaInj. |  |  |  |
+| `ComboSequenzaInjKeyDown` | 0x004BBF9C | 106 | INFERIDO | Ao pressionar tecla em ComboSequenzaInj: corpo de 106 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ComboSfasaturaKeyPress` | 0x004BD748 | 2188 | INFERIDO | Ao digitar (filtro de teclas) em ComboSfasatura: chama TAebNumber::SetEcuData, TAebProtocol::IsConnect; mexe em RadioGasAltiGiri. |  |  | PostMessageW |
+| `ComboSonda1KeyPress` | 0x004C2D94 | 166 | INFERIDO | Ao digitar (filtro de teclas) em ComboSonda1 (+1 componentes): mexe em ComboSonda1, ComboSonda2. |  |  |  |
+| `ComboTagliaIniettoriKeyPress` | 0x004C1138 | 126 | INFERIDO | Ao digitar (filtro de teclas) em ComboTagliaIniettori: mexe em ComboTagliaIniettori. |  |  |  |
+| `ComboTagliaKeyPress` | 0x004BCD94 | 391 | INFERIDO | Ao digitar (filtro de teclas) em ComboTaglia: mexe em ComboTaglia. |  |  | GetTickCount, Sleep |
+| `ComboTempRiduttoreKeyPress` | 0x004B9494 | 52 | INFERIDO | Ao digitar (filtro de teclas) em ComboTempRiduttore: corpo de 52 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `ComboTipoIniettoreKeyPress` | 0x004BA4B4 | 2089 | INFERIDO | Ao digitar (filtro de teclas) em ComboTipoIniettore: chama APIs Sleep; chama TFormAttesa.Create, TFormConfig.FormResize; mexe em ComboTipoIniettore, EditTempoMortoBenz, EditTempoMortoGas, LabelGC, LabelMsBenz, LabelMsGas. |  | Sleep | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `ComboTipoLambdaKeyPress` | 0x004A6674 | 251 | INFERIDO | Ao digitar (filtro de teclas) em ComboTipoLambda: mexe em ComboTipoLambda, EditLivEmulAlto, EditLivEmulBasso, EditRifInfCalda, EditRifInfFredda, EditRifLambda. |  |  |  |
+| `ComboTipoMisuratoreKeyPress` | 0x004BEC34 | 975 | INFERIDO | Ao digitar (filtro de teclas) em ComboTipoMisuratore: chama TFormConfig.TabPressioneShow; mexe em ComboTipoMisuratore. |  |  | PostMessageW |
+| `ComboTipoObdKeyPress` | 0x004C0F18 | 298 | INFERIDO | Ao digitar (filtro de teclas) em ComboTipoObd: mexe em ComboTipoObd. |  |  |  |
+| `ComboTurboKeyPress` | 0x004B9C44 | 1348 | INFERIDO | Ao digitar (filtro de teclas) em ComboTurbo: chama APIs Sleep; chama TFormAttesa.Create, TFormConfig.FormResize; mexe em ComboTurbo, TabCambio, TabPressione, TimerDati. |  | Sleep | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `ControlMouseDown` | 0x004C6020 | 250 | INFERIDO | Ao pressionar o mouse em LabelRitardoCambioGas «Atraso na reversão gasolina-gás com temp. Gás» (+141 componentes): corpo de 250 bytes sem fatos diretos (chama 8 funções sem nome). |  |  |  |
+| `DrawDelayGasTempDblClick` | 0x004C42E4 | 99 | INFERIDO | Ao dar duplo clique em DrawDelayGasTemp: chama APIs GetCursorPos, ScreenToClient; mexe em DrawDelayGasTemp. |  | GetCursorPos, ScreenToClient |  |
+| `DrawDelayGasTempDrawCell` | 0x004C3EA4 | 1070 | INFERIDO | Ao desenhar célula de DrawDelayGasTemp: usa textos CHANGEDELAYCALIBR, CHANGEDELAYREFS, CHANGEDELAYSWITCH; chama TTranslatorExt::GetString; mexe em DrawDelayGasTemp. | CHANGEDELAYCALIBR, CHANGEDELAYREFS, CHANGEDELAYSWITCH |  |  |
+| `DrawDelayGasTempKeyPress` | 0x004C42D4 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawDelayGasTemp: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridAnticipoDblClick` | 0x004BD2E4 | 99 | INFERIDO | Ao dar duplo clique em DrawGridAnticipo: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridAnticipo. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridAnticipoDrawCell` | 0x004BCF1C | 967 | INFERIDO | Ao desenhar célula de DrawGridAnticipo: mexe em DrawGridAnticipo. |  |  |  |
+| `DrawGridAnticipoKeyPress` | 0x004BD348 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridAnticipo: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridAnticipoMultipointDblClick` | 0x004C3C38 | 99 | INFERIDO | Ao dar duplo clique em DrawGridAnticipoMultipoint: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridAnticipoMultipoint. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridAnticipoMultipointDrawCell` | 0x004C3944 | 740 | INFERIDO | Ao desenhar célula de DrawGridAnticipoMultipoint: usa textos LABELRITEMULRICCA; chama TTranslatorExt::GetString; mexe em DrawGridAnticipoMultipoint. | LABELRITEMULRICCA |  |  |
+| `DrawGridAnticipoMultipointKeyPress` | 0x004C3C28 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridAnticipoMultipoint: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridBenzinaDblClick` | 0x004C157C | 99 | INFERIDO | Ao dar duplo clique em DrawGridBenzina: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridBenzina. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridBenzinaDrawCell` | 0x004C11B8 | 964 | INFERIDO | Ao desenhar célula de DrawGridBenzina: mexe em DrawGridBenzina. |  |  |  |
+| `DrawGridBenzinaKeyPress` | 0x004C15E0 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridBenzina: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridContributiDblClick` | 0x004CA288 | 99 | INFERIDO | Ao dar duplo clique em DrawGridContributi: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridContributi. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridContributiDrawCell` | 0x004C9DF0 | 1159 | INFERIDO | Ao desenhar célula de DrawGridContributi: mexe em DrawGridContributi. |  |  |  |
+| `DrawGridContributiKeyPress` | 0x004CA278 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridContributi: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridEmissioniDblClick` | 0x004B4530 | 99 | INFERIDO | Ao dar duplo clique em DrawGridEmissioni: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridEmissioni. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridEmissioniDrawCell` | 0x004B3F68 | 1461 | INFERIDO | Ao desenhar célula de DrawGridEmissioni: usa textos LABELGIRIEMUL, LABELRIFLAMBDAEMUL, LABELRIFLAMBDAEMULUEGO, LABELRITEMULRICCA; chama TTranslatorExt::GetString; mexe em DrawGridEmissioni. | LABELGIRIEMUL, LABELRIFLAMBDAEMUL, LABELRIFLAMBDAEMULUEGO, LABELRITEMULRICCA |  |  |
+| `DrawGridEmissioniKeyPress` | 0x004B4520 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridEmissioni: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridEmissioniMultipointDblClick` | 0x004C33E0 | 243 | INFERIDO | Ao dar duplo clique em DrawGridEmissioniMultipoint: chama APIs GetCursorPos, ScreenToClient; chama TFormCentriCelle.Create; mexe em DrawGridEmissioniMultipoint. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridEmissioniMultipointDrawCell` | 0x004C2E3C | 1426 | INFERIDO | Ao desenhar célula de DrawGridEmissioniMultipoint: mexe em DrawGridEmissioni, DrawGridEmissioniMultipoint. |  |  |  |
+| `DrawGridEmissioniMultipointKeyPress` | 0x004C33D0 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridEmissioniMultipoint: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridKDblClick` | 0x004B1940 | 153 | INFERIDO | Ao dar duplo clique em DrawGridK: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridK, RadioMapAdatta, RadioMapPetrol. |  | GetCursorPos, ScreenToClient | PostMessageW |
+| `DrawGridKDrawCell` | 0x004B12EC | 1544 | INFERIDO | Ao desenhar célula de DrawGridK: mexe em DrawGridK, RadioMapAdatta, RadioMapPetrol. |  |  |  |
+| `DrawGridKKeyDown` | 0x004B2514 | 159 | INFERIDO | Ao pressionar tecla em DrawDelayGasTemp (+23 componentes): corpo de 159 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `DrawGridKKeyPress` | 0x004B18F4 | 74 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridK: mexe em RadioMapAdatta, RadioMapPetrol. |  |  | PostMessageW |
+| `DrawGridOpenLoopDblClick` | 0x004B29E0 | 99 | INFERIDO | Ao dar duplo clique em DrawGridOpenLoop: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridOpenLoop. |  | GetCursorPos, ScreenToClient | PostMessageW |
+| `DrawGridOpenLoopDrawCell` | 0x004B25B4 | 1049 | INFERIDO | Ao desenhar célula de DrawGridOpenLoop: mexe em DrawGridOpenLoop. |  |  |  |
+| `DrawGridOpenLoopKeyPress` | 0x004B29D0 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridOpenLoop: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  | PostMessageW |
+| `DrawGridPassaggioDblClick` | 0x004B3128 | 38 | INFERIDO | Ao dar duplo clique em DrawGridPassaggio: chama APIs GetCursorPos; mexe em DrawGridPassaggio. |  | GetCursorPos |  |
+| `DrawGridPassaggioDrawCell` | 0x004B2D64 | 75 | INFERIDO | Ao desenhar célula de DrawGridPassaggio: mexe em DrawGridPassaggio. |  |  |  |
+| `DrawGridPassaggioGasDblClick` | 0x004B3A24 | 99 | INFERIDO | Ao dar duplo clique em DrawGridPassaggioGas: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridPassaggioGas. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridPassaggioGasDrawCell` | 0x004B3660 | 945 | INFERIDO | Ao desenhar célula de DrawGridPassaggioGas: usa textos LABELOLTRE; chama TTranslatorExt::GetString; mexe em DrawGridPassaggioGas. | LABELOLTRE |  |  |
+| `DrawGridPassaggioGasKeyPress` | 0x004B3A14 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridPassaggioGas: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridPassaggioKeyPress` | 0x004B3118 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridPassaggio: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridPressAssDblClick` | 0x004B6178 | 99 | INFERIDO | Ao dar duplo clique em DrawGridPressAss: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridPressAss. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridPressAssDrawCell` | 0x004B5E90 | 728 | INFERIDO | Ao desenhar célula de DrawGridPressAss: mexe em DrawGridPressAss. |  |  |  |
+| `DrawGridPressAssKeyPress` | 0x004B6168 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridPressAss: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridPressDiffDblClick` | 0x004B5B68 | 99 | INFERIDO | Ao dar duplo clique em DrawGridPressDiff: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridPressDiff. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridPressDiffDrawCell` | 0x004B5880 | 728 | INFERIDO | Ao desenhar célula de DrawGridPressDiff: mexe em DrawGridPressDiff. |  |  |  |
+| `DrawGridPressDiffKeyPress` | 0x004B5B58 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridPressDiff: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridPressPassDblClick` | 0x004B6EF4 | 99 | INFERIDO | Ao dar duplo clique em DrawGridPressPass: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridPressPass. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridPressPassDrawCell` | 0x004B6B1C | 982 | INFERIDO | Ao desenhar célula de DrawGridPressPass: mexe em DrawGridPressPass. |  |  |  |
+| `DrawGridPressPassKeyPress` | 0x004B6F58 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridPressPass: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridProgressioniDblClick` | 0x004CA9A0 | 86 | INFERIDO | Ao dar duplo clique em DrawGridProgressioni: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridProgressioni. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridProgressioniDrawCell` | 0x004CA74C | 577 | INFERIDO | Ao desenhar célula de DrawGridProgressioni: chama TAebMatrix::GetInt; mexe em DrawGridProgressioni. |  |  |  |
+| `DrawGridProgressioniKeyPress` | 0x004CA990 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridProgressioni: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridSequenzaInjBenzDrawCell` | 0x004BBB88 | 930 | INFERIDO | Ao desenhar célula de DrawGridSequenzaInjBenz: mexe em DrawGridSequenzaInjBenz. |  |  |  |
+| `DrawGridSequenzaInjBenzSelectCell` | 0x004BBF2C | 13 | INFERIDO | Evento OnSelectCell de DrawGridSequenzaInjBenz: corpo de 13 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `DrawGridSequenzaInjDrawCell` | 0x004BB664 | 1099 | INFERIDO | Ao desenhar célula de DrawGridSequenzaInj: mexe em DrawGridSequenzaInj. |  |  |  |
+| `DrawGridSequenzaInjSelectCell` | 0x004BBAB0 | 213 | INFERIDO | Evento OnSelectCell de DrawGridSequenzaInj: mexe em ComboSequenzaInj, DrawGridSequenzaInj. |  |  |  |
+| `DrawGridSplitFuelDblClick` | 0x004C2788 | 99 | INFERIDO | Ao dar duplo clique em DrawGridSplitFuel: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridSplitFuel. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridSplitFuelDrawCell` | 0x004C2420 | 870 | INFERIDO | Ao desenhar célula de DrawGridSplitFuel: mexe em DrawGridSplitFuel. |  |  |  |
+| `DrawGridSplitFuelKeyPress` | 0x004C27EC | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridSplitFuel: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridTInjDefaultDblClick` | 0x004B6868 | 99 | INFERIDO | Ao dar duplo clique em DrawGridTInjDefault: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridTInjDefault. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridTInjDefaultDrawCell` | 0x004B64A0 | 968 | INFERIDO | Ao desenhar célula de DrawGridTInjDefault: mexe em DrawGridTInjDefault. |  |  |  |
+| `DrawGridTInjDefaultKeyPress` | 0x004B68CC | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridTInjDefault: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridTempDblClick` | 0x004B81F4 | 174 | INFERIDO | Ao dar duplo clique em DrawGridTemp: chama APIs GetCursorPos, ScreenToClient; mexe em ButtonNuoviParametri, DrawGridTemp. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridTempDrawCell` | 0x004B7874 | 2090 | INFERIDO | Ao desenhar célula de DrawGridTemp: usa textos LABELINDEXTEMP, LABELNTCTEMP, LABELTEMPTEMP, LABELVOLTTEMP; chama TTranslatorExt::GetString; mexe em DrawGridTemp, EditDeltaT, EditRPullUp, EditTMin. | LABELINDEXTEMP, LABELNTCTEMP, LABELTEMPTEMP, LABELVOLTTEMP |  |  |
+| `DrawGridTempEnter` | 0x004B868C | 23 | INFERIDO | Ao entrar no campo DrawGridTemp: corpo de 23 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridTempExit` | 0x004B86A4 | 32 | INFERIDO | Ao sair do campo DrawGridTemp: mexe em DrawGridTemp, LabelInstr. |  |  |  |
+| `DrawGridTempKeyPress` | 0x004B80B0 | 324 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridTemp: mexe em ButtonNuoviParametri, DrawGridTemp. |  |  |  |
+| `DrawGridTempMotDblClick` | 0x004B54F8 | 99 | INFERIDO | Ao dar duplo clique em DrawGridTempMot: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridTempMot. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridTempMotDrawCell` | 0x004B5134 | 948 | INFERIDO | Ao desenhar célula de DrawGridTempMot: usa textos LABELOLTRE; chama TTranslatorExt::GetString; mexe em DrawGridTempMot. | LABELOLTRE |  |  |
+| `DrawGridTempMotKeyPress` | 0x004B54E8 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridTempMot: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridTempRidDblClick` | 0x004B4DAC | 99 | INFERIDO | Ao dar duplo clique em DrawGridTempRid: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridTempRid. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridTempRidDrawCell` | 0x004B49E8 | 948 | INFERIDO | Ao desenhar célula de DrawGridTempRid: usa textos LABELOLTRE; chama TTranslatorExt::GetString; mexe em DrawGridTempRid. | LABELOLTRE |  |  |
+| `DrawGridTempRidKeyPress` | 0x004B4D9C | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridTempRid: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridTempiLrDblClick` | 0x004BE5A8 | 99 | INFERIDO | Ao dar duplo clique em DrawGridTempiLr: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridTempiLr. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridTempiLrDrawCell` | 0x004BE278 | 799 | INFERIDO | Ao desenhar célula de DrawGridTempiLr: mexe em DrawGridTempiLr. |  |  |  |
+| `DrawGridTempiLrKeyPress` | 0x004BE598 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridTempiLr: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `DrawGridTestDblClick` | 0x004B75EC | 99 | INFERIDO | Ao dar duplo clique em DrawGridTest: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridTest. |  | GetCursorPos, ScreenToClient |  |
+| `DrawGridTestDrawCell` | 0x004B71B8 | 1074 | INFERIDO | Ao desenhar célula de DrawGridTest: mexe em DrawGridTest. |  |  |  |
+| `DrawGridTestKeyPress` | 0x004B7650 | 16 | INFERIDO | Ao digitar (filtro de teclas) em DrawGridTest: corpo de 16 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `EditAdvParamInjGasKeyPress` | 0x004C7150 | 187 | INFERIDO | Ao digitar (filtro de teclas) em EditCicchettoRpm (+5 componentes): corpo de 187 bytes sem fatos diretos (chama 7 funções sem nome). |  |  |  |
+| `EditAntiStalloKeyPress` | 0x004C97D8 | 81 | INFERIDO | Ao digitar (filtro de teclas) em EditAntiStallo4 (+4 componentes): chama TAebVector::GetInt, TAebVector::SetInt. |  |  |  |
+| `EditAperturaInjKeyPress` | 0x004ACF68 | 85 | INFERIDO | Ao digitar (filtro de teclas) em EditChiusuraInj (+1 componentes): corpo de 85 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `EditBassaPressioneMpKeyPress` | 0x004C526C | 520 | INFERIDO | Ao digitar (filtro de teclas) em EditBassaPressioneMp: corpo de 520 bytes sem fatos diretos (chama 9 funções sem nome). |  |  |  |
+| `EditCorrBancata2KeyPress` | 0x004C2CCC | 197 | INFERIDO | Ao digitar (filtro de teclas) em EditCorrBancata2: mexe em EditCorrBancata2. |  |  |  |
+| `EditCorrCarbMinimoKeyPress` (sem evento no DFM) | 0x0049F0E4 | 137 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 137 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `EditCorrIntInfKeyPress` | 0x004B91BC | 193 | INFERIDO | Ao digitar (filtro de teclas) em EditCorrIntInf (+1 componentes): mexe em EditCorrIntInf, EditCorrIntSup. |  |  |  |
+| `EditCutoffKeyPress` | 0x004C82B8 | 577 | INFERIDO | Ao digitar (filtro de teclas) em EditGiriCutoff (+3 componentes): mexe em EditGiriCutoff, EditPressioneCutoff, EditTBenzMaxCutoff, EditTInjCutoff. |  |  |  |
+| `EditDeltaTInterruzioneWarmupKeyPress` | 0x004C8ECC | 182 | INFERIDO | Ao digitar (filtro de teclas) em EditDeltaTInterruzioneWarmup: chama TAebNumber::GetInt, TAebNumber::SetInt; mexe em EditDeltaTInterruzioneWarmup. |  |  |  |
+| `EditFiltroEnter` | 0x004BDFD4 | 564 | INFERIDO | Ao entrar no campo EditFiltro: mexe em EditFiltro. |  |  |  |
+| `EditFiltroExit` | 0x004BE208 | 112 | INFERIDO | Ao sair do campo EditFiltro: mexe em EditFiltro. |  |  |  |
+| `EditFiltroKeyPress` | 0x004B9644 | 149 | INFERIDO | Ao digitar (filtro de teclas) em EditFiltro: mexe em EditFiltro. |  |  |  |
+| `EditFlashLubeKeyPress` | 0x004C8948 | 406 | INFERIDO | Ao digitar (filtro de teclas) em EditFlashLube0 (+3 componentes): mexe em EditFlashLube0, EditFlashLube1, EditFlashLube2, EditFlashLube3. |  |  |  |
+| `EditFrestEnter` | 0x004C611C | 503 | INFERIDO | Ao entrar no campo EditFrestGasExtraInjThd (+5 componentes): mexe em LabFrestGasInjOffset, LabelLimite. |  |  |  |
+| `EditFrestExit` | 0x004C6314 | 14 | INFERIDO | Ao sair do campo EditFrestGasExtraInjThd (+5 componentes): corpo de 14 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `EditGiriCambioEnter` | 0x004A98D8 | 1000 | INFERIDO | Ao entrar no campo EditSovrapposizione (+136 componentes): mexe em LabelLimite. |  |  |  |
+| `EditGiriCambioExit` | 0x004A9CC0 | 14 | INFERIDO | Ao sair do campo EditSovrapposizione (+136 componentes): corpo de 14 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `EditGiriKFiltroEnter` | 0x004BE90C | 430 | INFERIDO | Ao entrar no campo EditCorrIntInf (+17 componentes): corpo de 430 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
+| `EditGiriKFiltroExit` | 0x004BEABC | 102 | INFERIDO | Ao sair do campo EditCorrIntInf (+17 componentes): corpo de 102 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `EditGiriKFiltroKeyPress` | 0x004BEB24 | 269 | INFERIDO | Ao digitar (filtro de teclas) em EditGiriKFiltro (+1 componentes): mexe em EditGiriAltiKFiltro, EditGiriKFiltro. |  |  |  |
+| `EditGiriMinimoPerBenzinaKeyPress` | 0x004BFE6C | 136 | INFERIDO | Ao digitar (filtro de teclas) em EditGiriMinimoPerBenzina: corpo de 136 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `EditGiriPerBenzinaKeyPress` | 0x004C04E8 | 136 | INFERIDO | Ao digitar (filtro de teclas) em EditGiriPerBenzina: corpo de 136 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `EditKFiltroKeyPress` | 0x004B95C0 | 130 | INFERIDO | Ao digitar (filtro de teclas) em EditKFiltro: corpo de 130 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `EditKMappaNeutroKeyPress` | 0x004C499C | 96 | INFERIDO | Ao digitar (filtro de teclas) em EditKMappaNeutro: mexe em EditKMappaNeutro. |  |  |  |
+| `EditOffsetKeyPress` | 0x004AF360 | 72 | INFERIDO | Ao digitar (filtro de teclas) em EditPendenzaDiff (+3 componentes): corpo de 72 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
+| `EditPreheatSyncInjNumKeyPress` | 0x004C78A4 | 95 | INFERIDO | Ao digitar (filtro de teclas) em EditPreheatSyncInjNum (+1 componentes): corpo de 95 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `EditRPullUpEnter` | 0x004B86C4 | 506 | INFERIDO | Ao entrar no campo EditDeltaT (+3 componentes): mexe em LabelLimite. |  |  |  |
+| `EditRPullUpExit` | 0x004B88C0 | 624 | INFERIDO | Ao sair do campo EditDeltaT (+3 componentes): mexe em DrawGridTemp, EditDeltaT, EditRPullUp, EditTMax, EditTMin, LabelLimite. |  |  |  |
+| `EditRifLambdaKeyPress` | 0x004A6A00 | 201 | INFERIDO | Ao digitar (filtro de teclas) em EditSovrapposizione (+103 componentes): corpo de 201 bytes sem fatos diretos (chama 6 funções sem nome). |  |  |  |
+| `EditRiscaldamentoKeyPress` | 0x004C7478 | 1052 | INFERIDO | Ao digitar (filtro de teclas) em EditPiccoRiscaldamento (+5 componentes): mexe em EditMantRiscaldamento, EditPeriodoRiscaldamento, EditPiccoRiscaldamento, EditPreheatPGasTh, EditPreheatPInjTimeTh, EditPreheatTempGasTh. |  |  |  |
+| `EditRpmTachimetroKeyPress` | 0x004A647C | 502 | INFERIDO | Ao digitar (filtro de teclas) em EditRpmTachimetro: chama TAebProtocol::IsConnect, TAebProtocol::SendCommand; mexe em EditRpmTachimetro, LabRpmTachimetro, LabelRpmTachimetro. |  |  |  |
+| `EditScartoMinFuoriMinKeyPress` | 0x004BA1E8 | 71 | INFERIDO | Ao digitar (filtro de teclas) em EditScartoMinFuoriMin: corpo de 71 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
+| `EditSensAdattaKeyPress` | 0x004C07D0 | 132 | INFERIDO | Ao digitar (filtro de teclas) em EditSensAdatta: corpo de 132 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `EditSogliaGiriKeyPress` | 0x004C58DC | 140 | INFERIDO | Ao digitar (filtro de teclas) em EditSogliaGiri: mexe em EditSogliaGiri. |  |  |  |
+| `EditTInjSup22KeyPress` | 0x004C3E44 | 96 | INFERIDO | Ao digitar (filtro de teclas) em EditTInjSup22: mexe em EditTInjSup22. |  |  |  |
+| `EditTempAcquaKeyPress` | 0x004BCB78 | 479 | INFERIDO | Ao digitar (filtro de teclas) em EditTempAcqua (+2 componentes): mexe em EditPressRid, EditSogliaMap, EditTempAcqua. |  |  |  |
+| `EditTempMotoreKeyPress` | 0x004C8F84 | 348 | INFERIDO | Ao digitar (filtro de teclas) em EditTempMotore: chama TAebNumber::GetInt, TAebNumber::SetInt; mexe em EditDeltaTInterruzioneWarmup, EditTempMotore. |  |  |  |
+| `EditTempoBenzinaKeyPress` | 0x004C0570 | 127 | INFERIDO | Ao digitar (filtro de teclas) em EditTempoBenzina3 (+1 componentes): corpo de 127 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
+| `EditTempoMortoBenzKeyPress` | 0x004B11B0 | 162 | INFERIDO | Ao digitar (filtro de teclas) em EditTempoMortoBenz (+1 componentes): corpo de 162 bytes sem fatos diretos (chama 3 funções sem nome). |  |  |  |
+| `EditTipoIniettoreKeyPress` | 0x004BACE0 | 436 | INFERIDO | Ao digitar (filtro de teclas) em EditTipoIniettore: mexe em EditTipoIniettore. |  |  |  |
+| `EditVH34ParamKeyPress` | 0x004CAE48 | 1 | OBS-COD | Ao digitar (filtro de teclas) em EditCorrenteDiPicco (+13 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `FormClose` | 0x00490C98 | 32 | INFERIDO | Ao fechar o formulário FormConfig «Configuração do veículo»: corpo de 32 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `FormCloseQuery` | 0x004ADE94 | 372 | INFERIDO | Ao pedir para fechar o formulário FormConfig «Configuração do veículo»: chama TFormConfig.ButtonNuoviParametriClick, TFormConfig.ButtonTaraturaClick; mexe em PageControl, TabKCoefficienti, TabTemp. |  |  |  |
+| `FormDestroy` | 0x00490BB4 | 187 | INFERIDO | Evento OnDestroy de FormConfig «Configuração do veículo»: corpo de 187 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `FormKeyDown` | 0x0049EB24 | 1469 | INFERIDO | Ao pressionar tecla em FormConfig «Configuração do veículo»: chama TFormConfig.ButtonNuoviParametriClick, TFormConfig.ButtonTaraturaClick; mexe em PageControl, TabKCoefficienti, TabTemp. |  |  |  |
+| `FormResize` | 0x00490CB8 | 4190 | INFERIDO | Ao redimensionar FormConfig «Configuração do veículo»: mexe em DrawGridAnticipo, DrawGridAnticipoMultipoint, DrawGridContributi, DrawGridEmissioni, DrawGridEmissioniMultipoint, DrawGridK. |  |  |  |
+| `FormShow` | 0x00490028 | 1418 | INFERIDO | Ao exibir o formulário FormConfig «Configuração do veículo»: usa textos COMBOACCENSIONE0, COMBOACCENSIONE1, COMBOACCENSIONE2, COMBOACCENSIONE3, COMBOACCENSIONE4; chama TTranslatorExt::GetString; mexe em ComboCilindri, ComboFullGroup, ComboTipoLambda. | COMBOACCENSIONE0, COMBOACCENSIONE1, COMBOACCENSIONE2, COMBOACCENSIONE3, COMBOACCENSIONE4, COMBOACCENSIONE5 |  |  |
+| `ImageInjOffClick` | 0x004C81B0 | 264 | INFERIDO | Ao clicar em ImageInjOffF (+9 componentes): chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect. |  |  |  |
+| `ImageInjOnClick` | 0x004C80A8 | 262 | INFERIDO | Ao clicar em ImageInjOnG (+9 componentes): chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect. |  |  |  |
+| `LabGasClick` | 0x004C9A7C | 318 | INFERIDO | Ao clicar em ImageCommutatore (+1 componentes): chama APIs Sleep; mexe em ImageCommutatore, LabGas. |  | Sleep | PostMessageW |
+| `LabelDiagnosiClick` | 0x004CB060 | 165 | INFERIDO | Ao clicar em LabelDiagnosi «DIAGNOSI»: chama TFormDiagnosi.Create; mexe em TimerDati. |  |  |  |
+| `MenuAebBeeClick` | 0x004AE414 | 1 | OBS-COD | Ao clicar em MenuAebBee «Proprietà Aeb Device». Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `MenuComunicazioneSerialeCostruitaClick` | 0x004AE008 | 1033 | INFERIDO | Ao clicar em MenuComunicazioneSerialeCostruita «Comunicazione seriale costruita»: chama APIs CloseHandle, CreateProcessW, WaitForSingleObject; chama TAebProtocol::Connect, TAebProtocol::Disconnect, TAebProtocol::IsConnect, TAebProtocol::OffLine, TAebProtocol::ReadPort. |  | CloseHandle, CreateProcessW, WaitForSingleObject |  |
+| `MenuControlloIniettoriClick` | 0x004BA408 | 54 | INFERIDO | Ao clicar em MenuControlloIniettori «Abilita controllo iniettori»: mexe em MenuControlloIniettori. |  |  | PostMessageW |
+| `MenuCopiaTaraturaClick` | 0x004AD0B0 | 1031 | INFERIDO | Ao clicar em MenuCopia «&Copiar»: mexe em DrawGridK, RadioMapAdatta, RadioMapPetrol. |  |  |  |
+| `MenuEsciClick` (sem evento no DFM) | 0x004ACF60 | 6 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `MenuIncollaTaraturaClick` | 0x004AD4B8 | 2097 | INFERIDO | Ao clicar em MenuIncolla «&Colar»: corpo de 2097 bytes sem fatos diretos (chama 20 funções sem nome). |  |  |  |
+| `MenuSbloccaLimitiClick` | 0x004A95C8 | 26 | INFERIDO | Ao clicar em MenuSbloccaLimiti «Unlock limits»: mexe em MenuSbloccaLimiti. |  |  |  |
+| `PageControlChanging` | 0x004ADD20 | 372 | INFERIDO | Evento OnChanging de PageControl: chama TFormConfig.ButtonNuoviParametriClick, TFormConfig.ButtonTaraturaClick; mexe em PageControl, TabKCoefficienti, TabTemp. |  |  |  |
+| `PageControlDrawTab` | 0x0049E83C | 741 | INFERIDO | Evento OnDrawTab de PageControl: mexe em PageControl. |  |  |  |
+| `PopupMenuGridPopup` | 0x004ADCEC | 51 | INFERIDO | Ao abrir o menu de contexto PopupMenuGrid: mexe em MenuIncolla. |  |  |  |
+| `RadioAdatta25Click` | 0x004C05F0 | 251 | INFERIDO | Ao clicar em RadioAdatta25 «máx ±25%» (+2 componentes): corpo de 251 bytes sem fatos diretos (chama 3 funções sem nome). |  |  |  |
+| `RadioAdattaDirittiClick` | 0x004C06EC | 226 | INFERIDO | Ao clicar em RadioAdattaDiritti «direita» (+1 componentes): corpo de 226 bytes sem fatos diretos (chama 3 funções sem nome). |  |  |  |
+| `RadioGasAltiGiriClick` | 0x004BFEF4 | 798 | INFERIDO | Ao clicar em RadioGasAltiGiri «Gás» (+2 componentes): mexe em EditGiriPerBenzina, EditGiriSupBenzina, EditTempoBenzina1. |  |  | PostMessageW |
+| `RadioGasClick` | 0x004BFAD8 | 906 | INFERIDO | Ao clicar em RadioGas «Gás» (+2 componentes): mexe em EditGiriMinimoPerBenzina, EditIniettate, EditIniettateCutoff, EditUscita, LabGiriMinimoPerBenzina, LabelGiriMinimoPerBenzina. |  |  | PostMessageW |
+| `RadioMapClick` | 0x004B23A0 | 362 | INFERIDO | Ao clicar em RadioMapPetrol «petrol» (+2 componentes): mexe em DrawGridK, TabKCoefficienti. |  |  |  |
+| `TabAdattaShow` | 0x004C0854 | 1254 | INFERIDO | Ao exibir o formulário TabAdatta «Adaptabilidade OBD»: mexe em CheckAdattaBenzina, CheckAdattativita, CheckAzzeraBlackListObd, CheckAzzeraErroriObd, CheckDeleteErrorMotoreSpento, CheckOutDiagInfoSuKLine. |  |  |  |
+| `TabAdvancedShow` | 0x004C9BBC | 95 | INFERIDO | Ao exibir o formulário TabAdvanced «Advanced»: mexe em CheckContributi. |  |  |  |
+| `TabAutoCalNewShow` | 0x004CB1C4 | 314 | INFERIDO | Ao exibir o formulário TabAutoCalNew «Auto calibrazione»: mexe em AutoCalPage. |  |  |  |
+| `TabBenzinaShow` | 0x004BF004 | 262 | INFERIDO | Ao exibir o formulário TabBenzina «Gás/gasolina»: mexe em EditGiriMinimoPerBenzina, EditGiriPerBenzina, EditGiriSupBenzina, EditTempoBenzina1. |  |  |  |
+| `TabCalibrationShow` | 0x004C7904 | 268 | INFERIDO | Ao exibir o formulário TabCalibration «Inj calibration»: mexe em ShapeInjA, ShapeInjB, ShapeInjC, ShapeInjD, ShapeInjE, ShapeInjF. |  |  |  |
+| `TabCambioShow` | 0x004A6ACC | 2652 | INFERIDO | Ao exibir o formulário TabCambio «Mudança do gás»: usa textos LABELTAGLIAGRANDE, LABELTAGLIAMEDIA, LABELTAGLIAPICCOLA; chama TTranslatorExt::GetString; mexe em ComboCarburante, ComboFullGroup, ComboTaglia, ComboTipoIniettore, EditTipoIniettore, LabelTaglia. | LABELTAGLIAGRANDE, LABELTAGLIAMEDIA, LABELTAGLIAPICCOLA |  |  |
+| `TabConsumometroShow` | 0x004C1044 | 178 | INFERIDO | Ao exibir o formulário TabConsumometro «Medidor consumo»: mexe em CheckConsumometro, ComboTagliaIniettori, EditLitriSerbatoio. |  |  |  |
+| `TabDhlpAgaslevShow` | 0x004C8EC4 | 1 | OBS-COD | Ao exibir o formulário TabDhlpAgaslev «DHLP/AGASLEV». Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `TabEmissioniShow` | 0x004A8964 | 722 | INFERIDO | Ao exibir o formulário TabEmissioni «Emissões»: mexe em EditCorrIntInf, EditCorrIntSup, EditLivEmulAlto, EditLivEmulBasso, EditLivEmulCutoff, EditLivEmulStabilizzato. |  |  |  |
+| `TabEsciShow` | 0x004AE418 | 6 | INFERIDO | Ao exibir o formulário TabEsci «- Esc Sair»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `TabFrestShow` | 0x004C6324 | 52 | INFERIDO | Ao exibir o formulário TabFrest «Frest model»: mexe em EditlFrestGasNormTemp. |  |  |  |
+| `TabIniezioneShow` | 0x004AB8BC | 2768 | INFERIDO | Ao exibir o formulário TabIniezione «Injectores»: usa textos LABELDURATAATTIVAZIONEINJ, LABELPICCORISCALDAMENTO; chama TTranslatorExt::GetString; mexe em CheckIncrementoMaxCorrente, CheckRiscaldamento, CheckboxPreheatAsyncMode, CheckboxPreheatOnlyAfterSleepMode, EditAperturaExtra, EditAperturaInj. | LABELDURATAATTIVAZIONEINJ, LABELPICCORISCALDAMENTO |  |  |
+| `TabKCoefficientiShow` | 0x004B0EA0 | 550 | INFERIDO | Ao exibir o formulário TabKCoefficienti «Coefficienti k»: mexe em ButtonTaratura, EditAperturaInj, PageControlK, RadioMapAdatta, RadioMapAlcol, RadioMapPetrol. |  |  |  |
+| `TabKFactorShow` | 0x004C49FC | 1464 | INFERIDO | Ao exibir o formulário TabKFactor «K factor»: mexe em ComboK, EditK1, EditK2, EditKMappaNeutro, EditTInj1, EditTInj2. |  |  |  |
+| `TabKTempiShow` | 0x004B1254 | 150 | INFERIDO | Ao exibir o formulário TabKTempi «Tempos»: mexe em EditTempoBenzExtra, EditTempoGasExtra, EditTempoMortoBenz, EditTempoMortoGas. |  |  |  |
+| `TabKVarieShow` | 0x004B94C8 | 239 | INFERIDO | Ao exibir o formulário TabKVarie «Várias»: mexe em EditFiltro, EditGiriAltiKFiltro, EditGiriKFiltro, EditKFiltro, EditKFiltroGiriAlti, EditSogliaFS2. |  |  |  |
+| `TabLambdaShow` | 0x004A6770 | 653 | INFERIDO | Ao exibir o formulário TabLambda «Sonda Lambda»: mexe em CheckFlashLube, ComboNumeroSonde, ComboSonda1, ComboSonda2, ComboTipoLambda, EditRifInfCalda. |  |  |  |
+| `TabPressioneShow` | 0x004AE788 | 2153 | INFERIDO | Ao exibir o formulário TabPressione «Pressão»: usa textos COMBOPRESSIONEMISURATA0, COMBOPRESSIONEMISURATA1, COMBOPRESSIONEMISURATA2, COMBOPRESSIONEMISURATA3, LABELTIPOPRESSIONEMIS; chama TTranslatorExt::GetString; mexe em CheckMapConfigurato, ComboMisuratorePressione, ComboPressioneMisurata, ComboTipoMisuratore, EditOffset, EditOffsetDiff. | COMBOPRESSIONEMISURATA0, COMBOPRESSIONEMISURATA1, COMBOPRESSIONEMISURATA2, COMBOPRESSIONEMISURATA3, LABELTIPOPRESSIONEMIS, LABELTIPOPRESSIONEMIS1 |  |  |
+| `TabSensoreShow` | 0x004AA5BC | 3924 | INFERIDO | Ao exibir o formulário TabSensore «Livello GAS»: usa textos CHECKALIMENTAZIONEFILODEDICATO, CHECK_STAP_ON_EV2, COMBOSENSORE1, COMBOSENSORE2; chama TFormConfig.CheckRitornoBenzinaClick, TTranslatorExt::GetString; mexe em CheckAlimentazione, CheckAttivaPompaInRiserva, CheckBassaPressione, CheckBoxEV2NotConnected, CheckEnabledDhlpDiagnosis, CheckPassPRail. | CHECKALIMENTAZIONEFILODEDICATO, CHECK_STAP_ON_EV2, COMBOSENSORE1, COMBOSENSORE2 |  |  |
+| `TabSwitchToPetrolShow` | 0x004C65A4 | 361 | INFERIDO | Ao exibir o formulário TabSwitchToPetrol «Pass. gasolina»: mexe em EditSwitchToPetrol0, EditSwitchToPetrol1, EditSwitchToPetrol2, EditSwitchToPetrol3, EditSwitchToPetrol4, EditSwitchToPetrol5. |  |  |  |
+| `TabTaraturaShow` | 0x004A9CD0 | 242 | INFERIDO | Ao exibir o formulário TabTaratura «Miscelânea»: mexe em EditDeltaK, EditGiriAutotaratura, EditNumControlli, EditNumControlliOk, EditScartoMinAlMin, EditScartoMinFuoriMin. |  |  |  |
+| `TabTempShow` | 0x004B92C8 | 129 | INFERIDO | Ao exibir o formulário TabTemp «Temperatura»: mexe em CheckFlashLubeSuTempAcqua, CheckTempAcqua, CheckTempGas, CheckTempMotore. |  |  |  |
+| `TabTestShow` | 0x004BA440 | 114 | INFERIDO | Ao exibir o formulário TabTest «Dados de teste»: mexe em EditTestByte, EditTestTempo, EditTestWord. |  |  |  |
+| `TimerDatiTimer` | 0x004A307C | 1586 | INFERIDO | A cada tick do temporizador TimerDati (intervalo 75 ms): chama TStreamDati.TimerIOTimer; mexe em LabApMot, LabApMot2, LabApMot2Benz, LabApMotBenz, LabContribBenz, LabDeltaGiri. |  |  |  |
+| `chkRitardoPassaggioInMinutiClick` | 0x004CB300 | 39 | INFERIDO | Ao clicar em chkRitardoPassaggioInMinuti «Ritardo passaggio in minuti»: mexe em chkRitardoPassaggioInMinuti. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

@@ -51,35 +51,35 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonAbortClick` | 0x00919978 | 26 | INFERIDO | sem fatos diretos extraíveis (26 bytes; chama 0 funções sem nome) |  |  |  |
-| `ButtonChangePinClick` | 0x00918158 | 1267 | INFERIDO | sem fatos diretos extraíveis (1267 bytes; chama 16 funções sem nome) |  |  |  |
-| `ButtonConnectMcuClick` | 0x009199C8 | 777 | INFERIDO | sem fatos diretos extraíveis (777 bytes; chama 13 funções sem nome) |  |  |  |
-| `ButtonDisconnectMcuClick` | 0x00919CD4 | 303 | INFERIDO | sem fatos diretos extraíveis (303 bytes; chama 10 funções sem nome) |  |  |  |
-| `ButtonProgramDongleClick` | 0x00919F80 | 3409 | INFERIDO | chama APIs do Windows Sleep |  | Sleep |  |
-| `ButtonProgramMcuClick` | 0x0091AE74 | 3685 | INFERIDO | chama APIs do Windows Sleep |  | Sleep |  |
-| `ButtonReadPinClick` | 0x00917FA8 | 398 | INFERIDO | sem fatos diretos extraíveis (398 bytes; chama 11 funções sem nome) |  |  |  |
-| `ButtonRemovePinClick` | 0x0091864C | 1231 | INFERIDO | sem fatos diretos extraíveis (1231 bytes; chama 17 funções sem nome) |  |  |  |
-| `ButtonScanChannelClick` (sem evento no DFM) | 0x00915578 | 3829 | INFERIDO | sem fatos diretos extraíveis (3829 bytes; chama 16 funções sem nome) |  |  |  |
-| `ButtonScanClick` | 0x00918BF4 | 2108 | INFERIDO | sem fatos diretos extraíveis (2108 bytes; chama 29 funções sem nome) |  |  |  |
-| `ButtonScanEnergyClick` | 0x00915258 | 798 | INFERIDO | chama APIs do Windows GetTickCount |  | GetTickCount |  |
-| `ButtonSfogliaDongleClick` | 0x00919E04 | 380 | INFERIDO | sem fatos diretos extraíveis (380 bytes; chama 11 funções sem nome) |  |  |  |
-| `ButtonSfogliaMcuClick` | 0x0091ACF8 | 380 | INFERIDO | sem fatos diretos extraíveis (380 bytes; chama 11 funções sem nome) |  |  |  |
-| `ComboCanaleChange` | 0x00917E88 | 287 | INFERIDO | sem fatos diretos extraíveis (287 bytes; chama 10 funções sem nome) |  |  |  |
-| `ComboPotenzaDongleChange` | 0x00917258 | 323 | INFERIDO | sem fatos diretos extraíveis (323 bytes; chama 10 funções sem nome) |  |  |  |
-| `ComboPotenzaMcuChange` | 0x00917D24 | 323 | INFERIDO | sem fatos diretos extraíveis (323 bytes; chama 10 funções sem nome) |  |  |  |
-| `DongleExit` | 0x00916DC0 | 56 | INFERIDO | sem fatos diretos extraíveis (56 bytes; chama 2 funções sem nome) |  |  |  |
-| `EditIndirizzoDongleKeyPress` | 0x00916FA8 | 687 | INFERIDO | sem fatos diretos extraíveis (687 bytes; chama 15 funções sem nome) |  |  |  |
-| `EditIndirizzoMcuKeyPress` | 0x00917BC8 | 347 | INFERIDO | sem fatos diretos extraíveis (347 bytes; chama 12 funções sem nome) |  |  |  |
-| `EditNomeDongleKeyPress` | 0x00916DF8 | 331 | INFERIDO | sem fatos diretos extraíveis (331 bytes; chama 11 funções sem nome) |  |  |  |
-| `EditNomeMcuKeyPress` | 0x00917A14 | 331 | INFERIDO | sem fatos diretos extraíveis (331 bytes; chama 11 funções sem nome) |  |  |  |
-| `EditPinKeyPress` | 0x00918B1C | 30 | INFERIDO | sem fatos diretos extraíveis (30 bytes; chama 1 funções sem nome) |  |  |  |
-| `FormClose` | 0x00914DD0 | 144 | INFERIDO | sem fatos diretos extraíveis (144 bytes; chama 1 funções sem nome) |  |  |  |
-| `FormCloseQuery` | 0x00914DA8 | 37 | INFERIDO | sem fatos diretos extraíveis (37 bytes; chama 0 funções sem nome) |  |  |  |
-| `FormKeyPress` | 0x00914E80 | 38 | INFERIDO | sem fatos diretos extraíveis (38 bytes; chama 1 funções sem nome) |  |  |  |
-| `ListDeviceDblClick` | 0x00919994 | 50 | INFERIDO | sem fatos diretos extraíveis (50 bytes; chama 0 funções sem nome) |  |  |  |
-| `McuExit` | 0x009179DC | 56 | INFERIDO | sem fatos diretos extraíveis (56 bytes; chama 2 funções sem nome) |  |  |  |
-| `TabScansioneShow` | 0x00918B3C | 184 | INFERIDO | sem fatos diretos extraíveis (184 bytes; chama 2 funções sem nome) |  |  |  |
-| `TimerUpdateTimer` | 0x00914EA8 | 912 | INFERIDO | sem fatos diretos extraíveis (912 bytes; chama 16 funções sem nome) |  |  |  |
+| `ButtonAbortClick` | 0x00919978 | 26 | INFERIDO | Ao clicar em ButtonAbort «Interrompi» (+1 componentes): corpo de 26 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `ButtonChangePinClick` | 0x00918158 | 1267 | INFERIDO | Ao clicar em ButtonChangePin «Cambia PIN»: corpo de 1267 bytes sem fatos diretos (chama 16 funções sem nome). |  |  |  |
+| `ButtonConnectMcuClick` | 0x009199C8 | 777 | INFERIDO | Ao clicar em ButtonConnectMcu «Connetti dispositivo remoto selezionato»: corpo de 777 bytes sem fatos diretos (chama 13 funções sem nome). |  |  |  |
+| `ButtonDisconnectMcuClick` | 0x00919CD4 | 303 | INFERIDO | Ao clicar em ButtonDisconnectMcu «Disconnetti dispositivo remoto corrente»: corpo de 303 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
+| `ButtonProgramDongleClick` | 0x00919F80 | 3409 | INFERIDO | Ao clicar em ButtonProgramDongle «Programma file»: chama APIs Sleep. |  | Sleep |  |
+| `ButtonProgramMcuClick` | 0x0091AE74 | 3685 | INFERIDO | Ao clicar em ButtonProgramMcu «Programma file»: chama APIs Sleep. |  | Sleep |  |
+| `ButtonReadPinClick` | 0x00917FA8 | 398 | INFERIDO | Ao clicar em ButtonReadPin «Leggi PIN»: corpo de 398 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `ButtonRemovePinClick` | 0x0091864C | 1231 | INFERIDO | Ao clicar em ButtonRemovePin «Rimuovi PIN»: corpo de 1231 bytes sem fatos diretos (chama 17 funções sem nome). |  |  |  |
+| `ButtonScanChannelClick` (sem evento no DFM) | 0x00915578 | 3829 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 3829 bytes sem fatos diretos (chama 16 funções sem nome). |  |  |  |
+| `ButtonScanClick` | 0x00918BF4 | 2108 | INFERIDO | Ao clicar em ButtonScan «Esegui scansione»: corpo de 2108 bytes sem fatos diretos (chama 29 funções sem nome). |  |  |  |
+| `ButtonScanEnergyClick` | 0x00915258 | 798 | INFERIDO | Ao clicar em ButtonScanEnergy «Esegui scansione»: chama APIs GetTickCount. |  | GetTickCount |  |
+| `ButtonSfogliaDongleClick` | 0x00919E04 | 380 | INFERIDO | Ao clicar em ButtonSfogliaDongle «Sfoglia...»: corpo de 380 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `ButtonSfogliaMcuClick` | 0x0091ACF8 | 380 | INFERIDO | Ao clicar em ButtonSfogliaMcu «Sfoglia...»: corpo de 380 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `ComboCanaleChange` | 0x00917E88 | 287 | INFERIDO | Quando muda o valor de ComboCanale: corpo de 287 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
+| `ComboPotenzaDongleChange` | 0x00917258 | 323 | INFERIDO | Quando muda o valor de ComboPotenzaDongle: corpo de 323 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
+| `ComboPotenzaMcuChange` | 0x00917D24 | 323 | INFERIDO | Quando muda o valor de ComboPotenzaMcu: corpo de 323 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
+| `DongleExit` | 0x00916DC0 | 56 | INFERIDO | Ao sair do campo EditNomeDongle (+2 componentes): corpo de 56 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `EditIndirizzoDongleKeyPress` | 0x00916FA8 | 687 | INFERIDO | Ao digitar (filtro de teclas) em EditIndirizzoDongle: corpo de 687 bytes sem fatos diretos (chama 15 funções sem nome). |  |  |  |
+| `EditIndirizzoMcuKeyPress` | 0x00917BC8 | 347 | INFERIDO | Ao digitar (filtro de teclas) em EditIndirizzoMcu: corpo de 347 bytes sem fatos diretos (chama 12 funções sem nome). |  |  |  |
+| `EditNomeDongleKeyPress` | 0x00916DF8 | 331 | INFERIDO | Ao digitar (filtro de teclas) em EditNomeDongle: corpo de 331 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `EditNomeMcuKeyPress` | 0x00917A14 | 331 | INFERIDO | Ao digitar (filtro de teclas) em EditNomeMcu: corpo de 331 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `EditPinKeyPress` | 0x00918B1C | 30 | INFERIDO | Ao digitar (filtro de teclas) em EditPin: corpo de 30 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `FormClose` | 0x00914DD0 | 144 | INFERIDO | Ao fechar o formulário AebBeeFormLight «Wireless Communication»: corpo de 144 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `FormCloseQuery` | 0x00914DA8 | 37 | INFERIDO | Ao pedir para fechar o formulário AebBeeFormLight «Wireless Communication»: corpo de 37 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `FormKeyPress` | 0x00914E80 | 38 | INFERIDO | Ao digitar (filtro de teclas) em AebBeeFormLight «Wireless Communication»: corpo de 38 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ListDeviceDblClick` | 0x00919994 | 50 | INFERIDO | Ao dar duplo clique em ListDevice: corpo de 50 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `McuExit` | 0x009179DC | 56 | INFERIDO | Ao sair do campo EditNomeMcu (+2 componentes): corpo de 56 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `TabScansioneShow` | 0x00918B3C | 184 | INFERIDO | Ao exibir o formulário TabScansione «Gestione rete»: corpo de 184 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `TimerUpdateTimer` | 0x00914EA8 | 912 | INFERIDO | A cada tick do temporizador TimerUpdate (intervalo 100 ms): corpo de 912 bytes sem fatos diretos (chama 16 funções sem nome). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

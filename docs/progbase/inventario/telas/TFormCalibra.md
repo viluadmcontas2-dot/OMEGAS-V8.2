@@ -25,11 +25,11 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonEsciClick` | 0x00486F84 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `ButtonProseguiClick` | 0x00486F64 | 31 | INFERIDO | toca PanelMessaggio, PanelMonoplug |  |  |  |
-| `FormClose` | 0x00484678 | 296 | INFERIDO | chama TAebProtocol::SendCommand |  |  | GetTickCount, Sleep |
-| `FormKeyPress` | 0x0048693C | 724 | INFERIDO | chama TAebProtocol::SendCommand; toca LabelMessaggio, LabelOperazione, PanelMessaggio, ProgressBarCalibra |  |  |  |
-| `TimerBlinkTimer` | 0x004847A0 | 4239 | INFERIDO | chama TAebProtocol::SendCommand, TStreamDati.TimerIOTimer; toca LabLambda, LabLambda2, LabPressione, LabTempMotore, LabTempRiduttore, LabTempoIniezioneBenzina, LabTempoIniezioneGas, LabTensioneIniettori |  |  |  |
+| `ButtonEsciClick` | 0x00486F84 | 6 | INFERIDO | Ao clicar em ButtonCancella «Annulla» (+1 componentes): corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ButtonProseguiClick` | 0x00486F64 | 31 | INFERIDO | Ao clicar em ButtonProsegui «Continuar»: mexe em PanelMessaggio, PanelMonoplug. |  |  |  |
+| `FormClose` | 0x00484678 | 296 | INFERIDO | Ao fechar o formulário FormCalibra «Calibração automática da central de comando»: chama TAebProtocol::SendCommand. |  |  | GetTickCount, Sleep |
+| `FormKeyPress` | 0x0048693C | 724 | INFERIDO | Ao digitar (filtro de teclas) em FormCalibra «Calibração automática da central de comando»: chama TAebProtocol::SendCommand; mexe em LabelMessaggio, LabelOperazione, PanelMessaggio, ProgressBarCalibra. |  |  |  |
+| `TimerBlinkTimer` | 0x004847A0 | 4239 | INFERIDO | A cada tick do temporizador TimerBlink (intervalo 75 ms): chama TAebProtocol::SendCommand, TStreamDati.TimerIOTimer; mexe em LabLambda, LabLambda2, LabPressione, LabTempMotore, LabTempRiduttore, LabTempoIniezioneBenzina. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

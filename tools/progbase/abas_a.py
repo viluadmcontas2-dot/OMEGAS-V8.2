@@ -268,7 +268,14 @@ class Contexto:
             self.sd_nomes.setdefault(off, 'cache de ' + nm)
         self._ev = {}
         self._toca = {}
+        self._flag_em = None
         self._acoes = {}
+
+    def flag_emul(self):
+        if self._flag_em is None:
+            self._flag_em = self.E.Emul(self.exe, self.campos_sd, self.objs, lr=0)
+            self._flag_em.preparar(['FLAG_CONF1', 'FLAG_CONF2', 'FLAG_CONF3'])
+        return self._flag_em
 
     def toca(self, alvo):
         if alvo not in self._toca:
@@ -647,8 +654,7 @@ def quadros_flag(ctx, c, fl, log):
         mask = int(f['mascara'], 16)
         atual = bool(palavras[f['palavra']] & mask)
         for ligar in (True, False):
-            em = E.Emul(ctx.exe, ctx.campos_sd, ctx.objs, lr=0)
-            em.preparar([v])
+            em = ctx.flag_emul()
             for k, w in enumerate(palavras):
                 em.m.w32(em.m.sd + cache[v] + 4 * k, w)
             em.m.ecu.quadros.clear()
@@ -720,3 +726,278 @@ def construir_aba(ctx, aba, em, preench, log, manual_idx, ordem_aba):
         n_com_valor_do_log=sum(1 for x in controles if any(e.get('bruto') is not None for e in x.get('valor_ecu', []))
                                or x.get('valor_ecu_flags')))
     return dict(meta=meta, controles=controles)
+
+
+# ------------------------------------------------------------------ Markdown
+def _m(txt, marca):
+    return '%s `[%s]`' % (txt, marca)
+
+
+def _c(x):
+    return '`%s`' % x if x not in (None, '') else '`-`'
+
+
+def _val(v):
+    if isinstance(v, bool):
+        return 'sim' if v else 'nao'
+    return str(v)
+
+
+def _rotulo_melhor(rec):
+    r = rec.get('rotulo') or {}
+    rc = rec.get('rotulo_do_campo') or {}
+    return r, rc
+
+
+def _nome_leigo(rec):
+    r, rc = _rotulo_melhor(rec)
+    return (r.get('por') or r.get('eng') or r.get('ita') or rc.get('por') or rc.get('eng') or rc.get('ita') or rec['nome'])
+
+
+def _linhas_estado(rec, limite=14):
+    out = []
+    vistos = set()
+    for a in rec['estado']['regras']:
+        val = a['valor_imediato']
+        v = {1: 'verdadeiro', 0: 'falso'}.get(val) if val is not None else None
+        if v is None:
+            v = 'calculado' + (' por %s' % a['origem'] if a.get('origem') else '')
+        cond = a.get('condicoes', []) + a.get('condicoes_chamada', [])
+        chave = (a['propriedade'], v, tuple(cond), a['metodo'])
+        if chave in vistos:
+            continue
+        vistos.add(chave)
+        out.append('- `%s := %s` em `%s` (%s%s)%s' % (
+            a['propriedade'], v, a['endereco'], a['metodo'], (', ' + a['via']) if a.get('via') else '',
+            (' — SE ' + ' E '.join(cond)) if cond else ' — incondicional'))
+    extra = len(out) - limite
+    out = out[:limite]
+    if extra > 0:
+        out.append('- (+%d regras iguais ou parecidas; ver o JSON)' % extra)
+    return out
+
+
+def md_controle(rec, log_ok):
+    L = []
+    r, rc = _rotulo_melhor(rec)
+    titulo = _nome_leigo(rec)
+    L.append('### `%s` — %s' % (rec['nome'], titulo))
+    L.append('')
+    L.append('Tipo: **%s** (`%s`), DFM linha %s `[OBS-COD]`. Pai: `%s`.' % (rec['tipo'], rec['classe'], rec['dfm_linha'], rec['pai']))
+    L.append('')
+    L.append('**O que a pessoa vê**')
+    L.append('')
+    base = r if (r.get('ita') or r.get('eng')) else rc
+    fonte_rot = 'do proprio controle' if base is r else 'do rotulo vizinho `%s` (associacao %s)' % (rc.get('componente'), rc.get('marca_associacao'))
+    L.append('- Texto (%s): ita = "%s"; eng = "%s"; por = "%s" `[%s]`.' % (
+        fonte_rot, base.get('ita') or '-', base.get('eng') or '-', base.get('por') or '-', base.get('marca', 'DESCONHECIDO')))
+    if rec.get('unidade'):
+        L.append('- Unidade ao lado: **%s** `[OBS-COD]` (rotulo `%s`).' % (rec['unidade']['texto'], rec['unidade']['componente']))
+    g = rec['dfm']
+    L.append('- Posicao no DFM: Left=%s Top=%s Largura=%s Altura=%s; visivel de projeto: %s; habilitado de projeto: %s `[OBS-COD]` '
+             '(o programa pode mudar isso ao abrir a aba; ver "Regras").' % (
+                 g.get('Left'), g.get('Top'), g.get('Width'), g.get('Height'),
+                 _val(rec['estado']['inicial_dfm']['Visible']), _val(rec['estado']['inicial_dfm']['Enabled'])))
+    if rec.get('itens'):
+        L.append('- Opcoes da lista `[OBS-COD]`: ' + '; '.join('%d = "%s"%s' % (
+            it['indice'], it['ita'], (' / ' + it['por']) if it.get('por') and it['por'] != it['ita'] else '') for it in rec['itens']) + '.')
+    if rec.get('faixa'):
+        f = rec['faixa']
+        L.append('- Faixa permitida `[OBS-COD]`: minimo %s, maximo %s, passo (Precision) %s. %s' % (f['minimo'], f['maximo'], f['passo'], f['fonte']))
+    if rec.get('hint'):
+        h = rec['hint']
+        L.append('- Dica ao tocar (balao) `[INFERIDO]` chave `%s`: "%s".' % (h['chave'], (h.get('por') or h.get('eng') or h.get('ita') or '').replace('\\n', ' ')))
+    L.append('')
+    L.append('**O que isso faz (linguagem simples)**')
+    L.append('')
+    ex = rec['explicacao_leiga']
+    L.append('- %s `[%s]` (fonte: %s).' % (ex['texto'] or 'Sem texto: nao ha fonte publica nem prova no codigo sobre o efeito.', ex['marca'], ex['fonte']))
+    if rec.get('manual'):
+        mn = rec['manual']
+        L.append('- Manual SW 2.16.4 C, p.%d (linha %d de sw.txt): "%s" `[OBS-COD]`.' % (mn['pagina'], mn['linha'], mn['trecho'][:300]))
+    L.append('')
+    L.append('**Ligacao com a ECU e conversao**')
+    L.append('')
+    if rec.get('conversao'):
+        L.append('- Codigo de dado do formulario `[OBS-COD]`: ' + json.dumps(rec['ligacao'].get('codigo', rec['ligacao'].get('codigo_por_familia')), ensure_ascii=False) +
+                 (', indice %s' % rec['ligacao'].get('indice_dfm', rec['ligacao'].get('indice_codigo')) if ('indice_dfm' in rec['ligacao'] or 'indice_codigo' in rec['ligacao']) else '') + ' (%s).' % rec['ligacao']['campo_codigo'])
+        for cv in rec['conversao']:
+            if 'vetor' not in cv:
+                L.append('  - familia %s: %s' % (cv['familia'], cv.get('nota')))
+                continue
+            L.append('  - Familia %s: vetor **%s** (SerialCode %s, %s, %s) `[OBS-COD]`.' % (
+                cv['familia'], cv['vetor'], cv['serial_code'], cv['classe_vetor'], cv['tipo']))
+            L.append('    - tela -> ECU (setter %s): `valor_bruto = %s` com `v` = valor digitado.' % (cv['caso_set'], cv['tela_para_ecu']))
+            L.append('    - ECU -> tela (getter %s): `valor_na_tela = %s`.' % (cv['caso_get'], cv['ecu_para_tela']))
+            if cv.get('funcoes_auxiliares'):
+                L.append('    - Usa funcoes auxiliares do .exe: %s (tabelas de conversao; ver docs/progbase/abas/_funcoes_auxiliares.json) `[OBS-COD]`.' % ', '.join(cv['funcoes_auxiliares']))
+    else:
+        L.append('- Sem codigo de dado proprio na rotina de amarracao 0x48A228 (`[OBS-COD]`): o valor nao passa pelo conversor generico; ver os acessos do handler abaixo.')
+    if rec.get('flags'):
+        for f in rec['flags']:
+            L.append('- Bit de configuracao `[OBS-COD]`: **%s** (SerialCode %s), palavra %s, mascara %s, caso do setter %s, papel "%s", condicao "%s".' % (
+                f['vetor'], f['serial_code'], f['palavra'], f['mascara'], f['caso'], f.get('papel'), f['condicao']))
+    L.append('')
+    L.append('**Valor atual na ECU do dono (LOG de 12/08/2026)**')
+    L.append('')
+    anyv = False
+    for e in rec.get('valor_ecu', []):
+        if e.get('bruto') is not None:
+            anyv = True
+            L.append('- %s (SC %s): bruto %s%s; na tela: **%s** `[OBS-FIO, tela DERIVADO]` (LOG linha %s).' % (
+                e['vetor'], e['serial_code'], json.dumps(e['bruto']), (' (elemento %s = %s)' % (e['elemento'], e['bruto_elemento'])) if 'elemento' in e else '',
+                e.get('valor_na_tela', 'nao calculado'), e['linha_log']))
+        elif e.get('nota'):
+            L.append('- %s (SC %s): %s `[DESCONHECIDO]`.' % (e['vetor'], e['serial_code'], e['nota']))
+    for e in rec.get('valor_ecu_flags', []):
+        anyv = True
+        L.append('- %s palavra %s = 0x%s -> bit %s: **%s** `[OBS-FIO]` (LOG linha %s).' % (
+            e['vetor'], e['palavra'], e['palavra_valor'], e['mascara'], 'LIGADO' if e['bit_ligado'] else 'desligado', e['linha_log']))
+    if not anyv and not rec.get('valor_ecu'):
+        L.append('- Nao ha valor lido para este controle no LOG `[DESCONHECIDO]`.')
+    L.append('')
+    L.append('**Ao tocar / usar, o que o programa faz (handlers)**')
+    L.append('')
+    for ev in rec['eventos']:
+        linha = '- `%s` -> `%s` (%s) `[OBS-COD]`' % (ev['evento'], ev['handler'], ev['endereco'] or 'sem metodo publicado')
+        if ev.get('nota'):
+            linha += ': ' + ev['nota']
+        L.append(linha)
+        for a in ev.get('acessos', [])[:12]:
+            if a['funcao'] in ('Caption', 'Text', 'Visible', 'Enabled') and ev['handler'] in ('EditGiriCambioEnter', 'EditGiriCambioExit', 'EditGiriKFiltroEnter', 'EditGiriKFiltroExit'):
+                continue
+            L.append('  - %s' % _acesso_txt(a))
+    if not rec['eventos']:
+        L.append('- Sem evento ligado a este controle no DFM (so exibicao).')
+    L.append('')
+    L.append('**Comando enviado (bytes) e o que acontece entre um comando e outro**')
+    L.append('')
+    L.extend(_comando_txt(rec, log_ok))
+    L.append('')
+    L.append('**Regras de habilitar/mostrar/esconder `[OBS-COD]`**')
+    L.append('')
+    est = _linhas_estado(rec)
+    if est:
+        L.extend(est)
+    else:
+        L.append('- Nenhuma rotina da aba muda Visible/Enabled/Checked deste controle: vale o estado de projeto do DFM.')
+    L.append('')
+    return L
+
+
+def _acesso_txt(a):
+    f = a['funcao']
+    if f in ('SetEsc', 'GetEsc', 'SetIdx', 'GetIdx'):
+        cod = a.get('codigo')
+        if isinstance(cod, int):
+            return '%s codigo %s -> vetor %s (SC %s) em `%s`' % (f, cod, a.get('vetor'), a.get('serial_code'), a['endereco'])
+        return '%s com codigo vindo do campo do controle (`[ctl+0x2EC]`/`[ctl+0x330]`) em `%s` (handler generico)' % (f, a['endereco'])
+    if f.endswith(('Flag1', 'Flag2', 'Flag3')):
+        bits = ', '.join('%s palavra %s mascara %s' % (x['vetor'], x['palavra'], x['mascara']) for x in a.get('bits', [])) or 'bit nao mapeado'
+        return '%s caso %s -> %s em `%s`' % (f, a.get('caso'), bits, a['endereco'])
+    if f == 'AcessoSD':
+        t = a.get('toca', {})
+        return 'chama o metodo do TStreamDati `%s` em `%s` (le: %s; escreve: %s)' % (
+            a['alvo'], a['endereco'], ', '.join(t.get('le', [])[:6]) or '-', ', '.join(t.get('escreve', [])[:6]) or '-')
+    if f == 'EnviaComando':
+        return 'envia comando direto ao protocolo (id %s, argumentos %s) em `%s`' % (a.get('comando_id'), a.get('pushes'), a['endereco'])
+    if f in ('Visible', 'Enabled', 'Caption', 'Text'):
+        return 'muda %s de `%s` em `%s`' % (f, a.get('controle'), a['endereco'])
+    return '%s em `%s`' % (f, a['endereco'])
+
+
+def _comando_txt(rec, log_ok):
+    L = []
+    env = rec.get('envia') or {}
+    q = env.get('escrita_valor', [])
+    qf = env.get('escrita_flags', [])
+    tipo = rec['classe']
+    if q:
+        L.append('- Gravar valor (executado no Unicorn com o codigo original; `[OBS-COD]`):')
+        for x in q:
+            L.append('  - %s: tela = %s -> quadro `%s`%s.' % (x['cenario'], x['valor_tela'], ' | '.join(x['quadros']) or '(nenhum)',
+                                                              (' ERRO: ' + x['erro']) if x.get('erro') else ''))
+        L.append('  - Estrutura do quadro: `[op][SC lo][SC hi]([indice])[valor LE][checksum = soma dos bytes anteriores]`; op = 0x10+n (n = bytes depois do SC), '
+                 'p.ex. `12 05 00 17 2E` = SC 5, valor 0x17. Formato igual ao visto no LOG: `14 54 00 00 00 64 CC` (linha 48568) `[OBS-FIO]`.')
+    if qf:
+        L.append('- Mudar a caixa/bit (executado no Unicorn com as palavras ATUAIS da ECU do dono; `[OBS-COD]`):')
+        for x in qf:
+            L.append('  - %s %s (%s palavra %s mascara %s): %s -> %s, quadro `%s`.' % (
+                x['acao'], 'bit' , x['vetor'], x['palavra'], x['mascara'], ' '.join(x['palavras_antes']), ' '.join(x['palavras_depois']),
+                ' | '.join(x['quadros'])))
+        L.append('  - O ProgBase le o vetor inteiro do cache, liga/desliga so o bit e REGRAVA o vetor completo (`35 03 00 86 2C 51 10 4B` no LOG linha 31284 e o mesmo formato para FLAG_CONF1) `[OBS-FIO]`.')
+    if q or qf:
+        L.append('- Entre um comando e outro `[OBS-FIO]`: a porta ecoa o quadro enviado; a ECU responde `53 00 53` (OK); o programa limpa os buffers (PURGE) e '
+                 'volta a perguntar a telemetria (`48 01 49`, `48 08 50`...). Nao ha releitura do vetor gravado no LOG (linhas 31284-31420).')
+        L.append('- Resposta esperada: eco do quadro + `53 00 53`. Resultado esperado: o cache do programa e a ECU passam a ter o novo valor; a tela mostra o valor ja arredondado ao passo.')
+    if not q and not qf:
+        if tipo in ('TButton',):
+            L.append('- Botao: sem escrita de valor padrao. O que o handler faz esta na lista de acessos acima; bytes especificos so quando o handler chama `EnviaComando`/setter `[OBS-COD]` (nao executado aqui) -> **DESCONHECIDO** o quadro exato quando nao listado.')
+        elif tipo == 'TDrawGrid':
+            L.append('- Grade: cada celula editada chama um setter indexado (SetIdx) do handler `KeyPress`/`DblClick`; quadros por celula: `14 SC lo hi idx valor ck` (SetNumber+indice). Quadros exatos por celula: **DESCONHECIDO** (nao executados aqui).')
+        elif rec['classe'] in ('TLabel', 'TPanel', 'TGroupBox', 'TScrollBox', 'TBevel', 'TShape', 'TStaticText', 'TPageControl'):
+            L.append('- Controle so de exibicao: nao envia nada a ECU.')
+        else:
+            L.append('- Quadro exato nao calculado (controle sem conversor generico). Ver acessos do handler: **DESCONHECIDO**.')
+    return L
+
+
+def md_aba(d, log_ok=True):
+    m = d['meta']
+    L = []
+    t = m['titulo']
+    L.append('# %s — %s' % (m['aba'], t.get('por') or t.get('eng') or t.get('ita')))
+    L.append('')
+    L.append('Nome na tela: ita "%s" / eng "%s" / por "%s" `[OBS-COD]`. Aba %d de 16 do grupo D3a. '
+             'Rotina de abertura (OnShow): `%s` em `%s` `[OBS-COD]`. TabVisible de projeto: %s.' % (
+                 t.get('ita'), t.get('eng'), t.get('por'), m['ordem'], m['tab_show']['metodo'], m['tab_show']['endereco'], _val(m['tab_visible_dfm'])))
+    L.append('')
+    L.append('Legenda das marcas: `OBS-COD` = lido do DFM/codigo do ProgBase.exe (ou executado no emulador Unicorn); `OBS-FIO` = visto no Portmon da ECU do dono; '
+             '`DERIVADO` = calculado a partir dessas observacoes; `INFERIDO` = deducao; `DESCONHECIDO` = sem prova.')
+    L.append('')
+    L.append('**Resumo**: %d controles no DFM (%s); %d interativos; %d com codigo de dado e formula; %d com caixa/bit; %d com valor lido no LOG. '
+             'Fonte do .exe sha256 `%s`.' % (
+                 m['n_controles'], ', '.join('%s=%d' % kv for kv in m['por_classe'].items()), m['n_interativos'], m['n_ligados_ao_vetor'],
+                 m['n_com_flag'], m['n_com_valor_do_log'], SHA_EXE[:12] + '...'))
+    L.append('')
+    L.append('## Como o ProgBase trata estes controles (valido para a aba inteira)')
+    L.append('')
+    L.append(T.GENERICO_EDIT)
+    L.append('')
+    L.append('## Mapa de todos os controles (ordem do DFM)')
+    L.append('')
+    L.append('| # | Componente | Tipo | Rotulo (por / eng / ita) | Unidade | Vetor (SC) | Bit | Visivel no DFM |')
+    L.append('|---|---|---|---|---|---|---|---|')
+    for k, c in enumerate(d['controles']):
+        r, rc = _rotulo_melhor(c)
+        b = r if (r.get('ita') or r.get('eng')) else rc
+        vet = ', '.join(sorted({'%s (%s)' % (x['vetor'], x['serial_code']) for x in c.get('conversao', []) if x.get('vetor')})) or '-'
+        bit = ', '.join('%s[%s]&%s' % (f['vetor'], f['palavra'], f['mascara']) for f in c.get('flags', [])) or '-'
+        L.append('| %d | `%s` | %s | %s / %s / %s | %s | %s | %s | %s |' % (
+            k + 1, c['nome'], c['tipo'], b.get('por') or '-', b.get('eng') or '-', b.get('ita') or '-',
+            (c.get('unidade') or {}).get('texto', '-'), vet, bit, _val(c['estado']['inicial_dfm']['Visible'])))
+    L.append('')
+    L.append('## Controles interativos, um a um')
+    L.append('')
+    for c in d['controles']:
+        if c['classe'] in INTERATIVOS:
+            L.extend(md_controle(c, log_ok))
+    rot = [c for c in d['controles'] if c['classe'] not in INTERATIVOS and c['classe'] == 'TLabel']
+    din = [c for c in rot if c['estado']['regras']]
+    if din:
+        L.append('## Rotulos com regra de mostrar/esconder ou texto dinamico')
+        L.append('')
+        for c in din:
+            r = c['rotulo']
+            L.append('### `%s` — "%s"' % (c['nome'], r.get('por') or r.get('eng') or r.get('ita') or ''))
+            L.append('')
+            L.append('Texto: ita "%s" / eng "%s" / por "%s" `[OBS-COD]`. Estado de projeto: visivel=%s.' % (
+                r.get('ita') or '-', r.get('eng') or '-', r.get('por') or '-', _val(c['estado']['inicial_dfm']['Visible'])))
+            L.extend(_linhas_estado(c, 8))
+            L.append('')
+    L.append('## Lacunas desta aba')
+    L.append('')
+    for x in d['lacunas']:
+        L.append('- ' + x)
+    L.append('')
+    return '\n'.join(L)

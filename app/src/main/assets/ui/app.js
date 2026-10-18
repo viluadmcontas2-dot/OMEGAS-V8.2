@@ -140,7 +140,7 @@
       if (ecu) {
         const online = status.usbConnected === true;
         ecu.dataset.online = online ? 'true' : 'false';
-        setText('globalEcu', online ? 'ECU online' : 'ECU offline');
+        setText('globalEcu', online ? 'Central conectada' : 'Sem central');
       }
       const fuelNode = byId('globalFuel');
       if (fuelNode) {

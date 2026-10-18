@@ -209,6 +209,7 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
                 'aberta_por': [{'funcao': h(f), 'nome': nome_de(f)} for f in sorted(xref_vmt.get(int(c['vmt'], 16), []))] if c else [],
                 'controles': [], 'menus': [], 'acoes': [], 'dialogos': [], 'timers': [], 'handlers': {}}
         vistos_h = {}
+        gat = {}
 
         def registrar_handler(hn):
             m = metodos.get(hn.lower())
@@ -228,7 +229,7 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
                                 'classes_referidas': r['classes_referidas'], 'vazio': r['so_ret'],
                                 'saltos_externos': [nome_de(t) or h(t) for t in r['saltos_externos']]}
                 vistos_h[hn]['subfuncoes'] = alcance(a, campos_classe)
-                vistos_h[hn]['o_que_faz'] = d if d else auto_descricao(vistos_h[hn], key)
+                vistos_h[hn]['o_que_faz'] = d if d else None
             return vistos_h[hn]
         # menus
         for no, pai, cam in percorrer(arv):
@@ -243,12 +244,14 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
                         'dica': texto(no, 'Hint'), 'atalho': atalho(val(no, 'ShortCut')[0]), 'acao': act,
                         'caminho': '/'.join(cam[1:] + (no['nome'],)), 'eventos': []}
                 for pn, hn in ev:
+                    gat.setdefault(hn.lower(), []).append((no['nome'], cl_no, pn, leg_txt, trad(leg_txt), val(no, 'Interval')[0]))
                     hd = registrar_handler(hn)
                     item['eventos'].append({'evento': pn, 'handler': hn, 'endereco': hd['endereco'] if hd else None,
                                             'resolvido': hd is not None})
                 if act and act in acoes:
                     for pn, v, t in acoes[act]['props']:
                         if pn.startswith('On') and t == 7:
+                            gat.setdefault(v.lower(), []).append((no['nome'], cl_no, act + '.' + pn, leg_txt, trad(leg_txt), None))
                             hd = registrar_handler(v)
                             item['eventos'].append({'evento': act + '.' + pn, 'handler': v,
                                                     'endereco': hd['endereco'] if hd else None, 'resolvido': hd is not None})
@@ -281,30 +284,67 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
             if m['nome'] not in ligados and ml not in {k.lower() for k in ligados} and not m.get('herdado_de'):
                 registrar_handler(m['nome'])
                 vistos_h[m['nome']]['sem_evento_no_dfm'] = True
+        for hn, hd in vistos_h.items():
+            gs = gat.get(hn.lower(), [])
+            hd['gatilhos'] = [{'componente': g[0], 'classe': g[1], 'evento': g[2], 'legenda': g[3],
+                               'legenda_por': (g[4] or {}).get('por'), 'intervalo_ms': g[5]} for g in gs[:6]]
+            hd['n_gatilhos'] = len(gs)
+            if hd['o_que_faz'] is None:
+                hd['o_que_faz'] = auto_descricao(hd, gs)
         tela['handlers'] = dict(sorted(vistos_h.items()))
         telas.append(tela)
     return telas
 
 
-def auto_descricao(hd, key):
-    """Texto automático (INFERIDO), só a partir de fatos diretos do corpo da função."""
+def gatilho_texto(nome_handler, gs):
+    """Frase (PT) sobre o que dispara o handler, a partir do evento DFM e do nome do handler. OBS-COD (DFM)."""
+    if not gs:
+        n = nome_handler
+        if n.startswith('Form'):
+            return 'Evento do próprio formulário (%s), ligado em código' % n
+        return 'Rotina publicada sem evento ligado no DFM (chamada pelo código)'
+    comp, cls, ev, leg, trad_, iv = gs[0]
+    rotulo = ('«%s»' % ((trad_ or {}).get('por') or leg)) if leg else ''
+    alvo = '%s %s' % (comp, rotulo) if rotulo else comp
+    mais = ' (+%d componentes)' % (len(gs) - 1) if len(gs) > 1 else ''
+    e = ev.split('.')[-1]
+    quando = {'OnClick': 'Ao clicar em', 'OnDblClick': 'Ao dar duplo clique em', 'OnExecute': 'Ao executar a ação',
+              'OnKeyPress': 'Ao digitar (filtro de teclas) em', 'OnKeyDown': 'Ao pressionar tecla em', 'OnKeyUp': 'Ao soltar tecla em',
+              'OnEnter': 'Ao entrar no campo', 'OnExit': 'Ao sair do campo', 'OnChange': 'Quando muda o valor de',
+              'OnTimer': 'A cada tick do temporizador', 'OnShow': 'Ao exibir o formulário', 'OnClose': 'Ao fechar o formulário',
+              'OnCloseQuery': 'Ao pedir para fechar o formulário', 'OnActivate': 'Ao ativar o formulário', 'OnResize': 'Ao redimensionar',
+              'OnPaint': 'Ao pintar', 'OnDrawCell': 'Ao desenhar célula de', 'OnDrawPanel': 'Ao desenhar painel de',
+              'OnMouseMove': 'Ao mover o mouse sobre', 'OnMouseDown': 'Ao pressionar o mouse em', 'OnMouseUp': 'Ao soltar o mouse em',
+              'OnMouseEnter': 'Ao entrar com o mouse em', 'OnMouseLeave': 'Ao sair com o mouse de', 'OnPopup': 'Ao abrir o menu de contexto',
+              'OnAfterDraw': 'Após desenhar', 'OnClickSeries': 'Ao clicar numa série de', 'OnClickAxis': 'Ao clicar num eixo de',
+              'OnSelectItem': 'Ao selecionar item em', 'OnClickCheck': 'Ao marcar/desmarcar item em', 'OnGetData': 'Ao ler dado de'}
+    q = quando.get(e, 'Evento %s de' % e)
+    base = '%s %s%s' % (q, alvo, mais)
+    if e == 'OnTimer' and iv:
+        base += ' (intervalo %s ms)' % iv
+    return base
+
+
+def auto_descricao(hd, gs):
+    """Texto automático (INFERIDO): gatilho (OBS-COD) + fatos diretos do corpo da função."""
+    g = gatilho_texto(hd['nome'], gs)
     if hd['vazio']:
-        return {'texto': 'Handler vazio: o corpo é só RET (nada acontece neste evento).', 'evidencia': 'OBS-COD', 'origem': 'automatico'}
+        return {'texto': '%s. Corpo é só RET: nada acontece neste evento (OBS-COD).' % g, 'evidencia': 'OBS-COD', 'origem': 'automatico'}
     p = []
     if hd['saltos_externos'] and hd['tamanho_bytes'] <= 12:
         p.append('encaminha (jmp) para %s' % ', '.join(hd['saltos_externos'][:2]))
     if hd['mensagens']:
-        p.append('usa textos %s' % ', '.join(hd['mensagens'][:6]))
+        p.append('usa textos %s' % ', '.join(hd['mensagens'][:5]))
     if hd['apis']:
-        p.append('chama APIs do Windows %s' % ', '.join(a.split('!')[1] for a in hd['apis'][:6]))
+        p.append('chama APIs %s' % ', '.join(a.split('!')[1] for a in hd['apis'][:5]))
     nom = [c for c in hd['chamadas_nomeadas'] if not c.startswith('thunk ')]
     if nom:
-        p.append('chama %s' % ', '.join(nom[:6]))
+        p.append('chama %s' % ', '.join(nom[:5]))
     if hd['campos_tocados']:
-        p.append('toca %s' % ', '.join(hd['campos_tocados'][:8]))
+        p.append('mexe em %s' % ', '.join(hd['campos_tocados'][:6]))
     if not p:
-        p.append('sem fatos diretos extraíveis (%d bytes; chama %d funções sem nome)' % (hd['tamanho_bytes'], hd.get('n_chamadas_sem_nome', 0)))
-    return {'texto': '; '.join(p), 'evidencia': 'INFERIDO', 'origem': 'automatico'}
+        p.append('corpo de %d bytes sem fatos diretos (chama %d funções sem nome)' % (hd['tamanho_bytes'], hd.get('n_chamadas_sem_nome', 0)))
+    return {'texto': '%s: %s.' % (g, '; '.join(p)), 'evidencia': 'INFERIDO', 'origem': 'automatico'}
 
 
 def md_tela(t):

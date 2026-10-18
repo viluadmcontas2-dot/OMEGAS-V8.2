@@ -156,18 +156,34 @@ class TestModoMarchaLenta(unittest.TestCase):
             for q in self.rodar(modo)['quadros']:
                 self.assertEqual(q[-1], cks(q[:-1]), hexq(q))
 
-    def test_sem_eco_ack_o_original_nao_atualiza_o_cache(self):
-        r = self.rodar('volta', ecu_responde=False)
-        self.assertEqual(r['cache_giri'], (0, 8500))
+    def test_handler_original_nao_confere_o_resultado_da_primeira_gravacao(self):
+        # sem ECU: o 1º SetValues falha (cache do FLAG_CONF1 não muda) e MESMO ASSIM o handler segue para a rotação
+        # (0x4BFB1E..0x4BFB44 não testam AL): o original pode deixar a ECU meio configurada sem avisar.
+        r = self.rodar('gasolina', ecu_responde=False)
+        self.assertEqual(r['cache_flag1'], (0x2486, 0x1051))
+        self.assertEqual(r['cache_giri'][0], 1100)
+        self.assertTrue(r['handler_executado'])
+
+    def test_handler_e_chamada_direta_dao_os_mesmos_quadros(self):
+        for modo in ('gas', 'volta', 'gasolina'):
+            a = self.rodar(modo)
+            b = self.rodar(modo, handler=False)
+            self.assertEqual(a['quadros'], b['quadros'], modo)
+
+    def test_executa_o_handler_radiogasclick_de_verdade(self):
+        r = self.rodar('volta')
+        for f in (0x4BFAD8, 0x42D300, 0x43734C, 0x9795F0):
+            self.assertIn(f, r['funcoes_executadas'], hex(f))
 
     def test_determinismo(self):
         self.assertEqual(self.rodar('volta'), self.rodar('volta'))
 
     def test_mutacao_da_constante_1100_muda_o_quadro(self):
-        # 0x4BFB5E: push 0x40913000 (68 00 30 91 40): mudar o byte 0x91 -> 0x92 faz 2200 rpm (prova que vem do código)
+        # 0x4BFB5E: push 0x40913000 (68 00 30 91 40): o byte 0x91 fica em 0x4BFB61; 0x92 vira 2200.0 (prova que o 1100 vem do código)
         base = self.rodar('volta')
-        mut = cso.emular_modo_lenta(EXE, 'volta', self.PRONTO, self.GIRI, patches={0x4BFB62: 0x92})
+        mut = cso.emular_modo_lenta(EXE, 'volta', self.PRONTO, self.GIRI, patches={0x4BFB61: 0x92})
         self.assertNotEqual(base['quadros'][1], mut['quadros'][1])
+        self.assertEqual(hexq(mut['quadros'][1]), '14 A1 00 00 98 08 51')   # 2200 = 0x0898
 
 
 if __name__ == '__main__':

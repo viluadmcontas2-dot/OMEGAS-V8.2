@@ -34,11 +34,11 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ChartDrtClickSeries` | 0x004E6E34 | 36 | INFERIDO | sem fatos diretos extraíveis (36 bytes; chama 1 funções sem nome) |  |  |  |
-| `MenuAnnullaZoomClick` | 0x004E6A24 | 33 | INFERIDO | toca ChartDrt |  |  |  |
-| `MenuEsciClick` | 0x004E6A48 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `MenuStampaClick` | 0x004E6A50 | 52 | INFERIDO | toca ChartDrt, PrintDialog1 |  |  |  |
-| `MenuTracceClick` | 0x004E6A84 | 807 | INFERIDO | chama TFormGestioneTracce.Create; toca ChartDrt, Series1 |  |  |  |
+| `ChartDrtClickSeries` | 0x004E6E34 | 36 | INFERIDO | Ao clicar numa série de ChartDrt: corpo de 36 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `MenuAnnullaZoomClick` | 0x004E6A24 | 33 | INFERIDO | Ao clicar em MenuAnnullaZoom «&Cancelar zoom»: mexe em ChartDrt. |  |  |  |
+| `MenuEsciClick` | 0x004E6A48 | 6 | INFERIDO | Ao clicar em MenuEsci «&Sair»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `MenuStampaClick` | 0x004E6A50 | 52 | INFERIDO | Ao clicar em MenuStampa «&Imprimir»: mexe em ChartDrt, PrintDialog1. |  |  |  |
+| `MenuTracceClick` | 0x004E6A84 | 807 | INFERIDO | Ao clicar em MenuTracce «Gestione tracce»: chama TFormGestioneTracce.Create; mexe em ChartDrt, Series1. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

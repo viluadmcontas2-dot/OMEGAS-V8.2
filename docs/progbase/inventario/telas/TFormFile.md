@@ -21,17 +21,17 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonAggiornaClick` | 0x004DE1A4 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `ButtonOkClick` | 0x004D9F30 | 7251 | INFERIDO | chama APIs do Windows Sleep, SendMessageW; chama TAebProtocol::IsConnect, TFormAttesa.Create, TFormPdf.Create; toca ButtonAnnulla, EditName, EditPath |  | Sleep, SendMessageW | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
-| `EditNameKeyDown` | 0x004D9F14 | 27 | INFERIDO | chama TFormFile.ButtonOkClick |  |  |  |
-| `FormActivate` | 0x004D9968 | 1127 | INFERIDO | toca ButtonOk, EditName, EditPath, TreeViewFile |  |  |  |
-| `FormClose` | 0x004D9DD8 | 313 | INFERIDO | toca TreeViewFile |  |  |  |
-| `TreeViewFileChange` | 0x004DDBC0 | 6 | INFERIDO | chama TFormFile.TreeViewFileClick |  |  |  |
-| `TreeViewFileClick` | 0x004DDC04 | 1307 | INFERIDO | toca EditName, EditPath, TreeViewFile |  |  |  |
-| `TreeViewFileCompare` | 0x004DDAE0 | 224 | INFERIDO | sem fatos diretos extraíveis (224 bytes; chama 5 funções sem nome) |  |  |  |
-| `TreeViewFileDblClick` | 0x004DDBC8 | 59 | INFERIDO | chama TFormFile.ButtonOkClick, TFormFile.TreeViewFileClick; toca TreeViewFile |  |  |  |
-| `TreeViewFileDragDrop` | 0x004DE1A8 | 7 | INFERIDO | sem fatos diretos extraíveis (7 bytes; chama 0 funções sem nome) |  |  |  |
-| `TreeViewFileKeyDown` | 0x004DE120 | 132 | INFERIDO | chama TFormFile.TreeViewFileDblClick; toca TreeViewFile |  |  |  |
+| `ButtonAggiornaClick` | 0x004DE1A4 | 1 | OBS-COD | Ao clicar em ButtonAggiorna «A&ggiorna». Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `ButtonOkClick` | 0x004D9F30 | 7251 | INFERIDO | Ao clicar em ButtonOk «&OK !»: chama APIs Sleep, SendMessageW; chama TAebProtocol::IsConnect, TFormAttesa.Create, TFormPdf.Create; mexe em ButtonAnnulla, EditName, EditPath. |  | Sleep, SendMessageW | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `EditNameKeyDown` | 0x004D9F14 | 27 | INFERIDO | Ao pressionar tecla em EditName: chama TFormFile.ButtonOkClick. |  |  |  |
+| `FormActivate` | 0x004D9968 | 1127 | INFERIDO | Ao ativar o formulário FormFile «FormFile»: mexe em ButtonOk, EditName, EditPath, TreeViewFile. |  |  |  |
+| `FormClose` | 0x004D9DD8 | 313 | INFERIDO | Ao fechar o formulário FormFile «FormFile»: mexe em TreeViewFile. |  |  |  |
+| `TreeViewFileChange` | 0x004DDBC0 | 6 | INFERIDO | Quando muda o valor de TreeViewFile: chama TFormFile.TreeViewFileClick. |  |  |  |
+| `TreeViewFileClick` | 0x004DDC04 | 1307 | INFERIDO | Ao clicar em TreeViewFile: mexe em EditName, EditPath, TreeViewFile. |  |  |  |
+| `TreeViewFileCompare` | 0x004DDAE0 | 224 | INFERIDO | Evento OnCompare de TreeViewFile: corpo de 224 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `TreeViewFileDblClick` | 0x004DDBC8 | 59 | INFERIDO | Ao dar duplo clique em TreeViewFile: chama TFormFile.ButtonOkClick, TFormFile.TreeViewFileClick; mexe em TreeViewFile. |  |  |  |
+| `TreeViewFileDragDrop` | 0x004DE1A8 | 7 | INFERIDO | Evento OnDragDrop de TreeViewFile: corpo de 7 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `TreeViewFileKeyDown` | 0x004DE120 | 132 | INFERIDO | Ao pressionar tecla em TreeViewFile: chama TFormFile.TreeViewFileDblClick; mexe em TreeViewFile. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

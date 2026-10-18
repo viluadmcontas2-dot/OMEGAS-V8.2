@@ -19,12 +19,12 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `EditValoreKeyPress` | 0x00969E80 | 751 | INFERIDO | sem fatos diretos extraíveis (751 bytes; chama 8 funções sem nome) |  |  |  |
-| `FormClose` | 0x00969D68 | 277 | INFERIDO | sem fatos diretos extraíveis (277 bytes; chama 6 funções sem nome) |  |  |  |
-| `GetDouble` (sem evento no DFM) | 0x0096A238 | 135 | INFERIDO | sem fatos diretos extraíveis (135 bytes; chama 5 funções sem nome) |  |  |  |
-| `GetInt` (sem evento no DFM) | 0x0096A170 | 101 | INFERIDO | sem fatos diretos extraíveis (101 bytes; chama 5 funções sem nome) |  |  |  |
-| `SetDouble` (sem evento no DFM) | 0x0096A2C8 | 95 | INFERIDO | sem fatos diretos extraíveis (95 bytes; chama 4 funções sem nome) |  |  |  |
-| `SetInt` (sem evento no DFM) | 0x0096A1D8 | 93 | INFERIDO | sem fatos diretos extraíveis (93 bytes; chama 4 funções sem nome) |  |  |  |
+| `EditValoreKeyPress` | 0x00969E80 | 751 | INFERIDO | Ao digitar (filtro de teclas) em EditValore: corpo de 751 bytes sem fatos diretos (chama 8 funções sem nome). |  |  |  |
+| `FormClose` | 0x00969D68 | 277 | INFERIDO | Ao fechar o formulário FormModMappa «Modifica valore»: corpo de 277 bytes sem fatos diretos (chama 6 funções sem nome). |  |  |  |
+| `GetDouble` (sem evento no DFM) | 0x0096A238 | 135 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 135 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `GetInt` (sem evento no DFM) | 0x0096A170 | 101 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 101 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
+| `SetDouble` (sem evento no DFM) | 0x0096A2C8 | 95 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 95 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
+| `SetInt` (sem evento no DFM) | 0x0096A1D8 | 93 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 93 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

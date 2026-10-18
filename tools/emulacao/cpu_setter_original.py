@@ -231,6 +231,9 @@ class _Maquina:
         uc.reg_write(X.UC_X86_REG_EIP, r)
 
     def _hook_codigo(self, uc, addr, size, _):
+        if addr == getattr(self, '_parar_em', None):
+            uc.emu_stop()
+            return
         if addr >= STUBS and addr < STUBS + 0x1000:
             self._prev = None
             self._stub(self.stub_nome.get(addr, 'desconhecido_%x' % addr))
@@ -300,7 +303,7 @@ class _Maquina:
         return v
 
     # ---------------------------------------------------------------- execução
-    def chamar(self, addr, regs=None, pilha=()):
+    def chamar(self, addr, regs=None, pilha=(), ate=None):
         X, uc = self.X, self.uc
         esp = PILHA + PILHA_TAM - 0x100
         for v in reversed(list(pilha)):
@@ -313,6 +316,7 @@ class _Maquina:
             uc.reg_write(getattr(X, 'UC_X86_REG_' + r.upper()), v)
         self.entradas.add(addr)  # ponto de entrada chamado diretamente
         try:
+            self._parar_em = ate   # parada por hook (emu_start(until=) deixava o hook de stub perder a troca de EIP)
             uc.emu_start(addr, STOP)
         except self.uc_mod.UcError as e:
             self.erro = 'UcError: %s em eip=%#x' % (e, uc.reg_read(X.UC_X86_REG_EIP))
@@ -372,10 +376,11 @@ MODOS_LENTA = {'gas': 0, 'volta': 1, 'gasolina': 2}
 
 
 def emular_modo_lenta(exe, modo, flag1=(0x2486, 0x1051), giri=(0, 8500), buffered=1, versao_proto=2,
-                      ecu_responde=True, obj80D=0, obj80E=1, patches=None):
-    """Reproduz o que o clique em um dos três botões de 'Funcionamento al minimo' grava, na ordem do handler:
-    1) FLAG_CONF1 (bit 0x0400 da palavra 1) por 0x42D300; 2) GIRI_PER_BENZINA[0] por 0x43734C (código 0x4C).
-    Os dois vetores são montados na heap com os valores iniciais dados. Devolve os quadros na ordem em que saíram."""
+                      ecu_responde=True, obj80D=0, obj80E=1, patches=None, handler=True):
+    """Clique em um dos três botões de 'Funcionamento al minimo'. Com handler=True (padrão) executa o PRÓPRIO
+    TFormConfig.RadioGasClick (0x4BFAD8) do .exe, com o Sender de Tag 0/1/2, até 0x4BFBC8 (fim das duas gravações): a escolha
+    do botão, o bit e o 1100.0 vêm do código. Com handler=False chama direto 0x42D300 e 0x43734C (valores tirados do
+    desmontado). Os dois vetores são montados na heap com os valores iniciais dados. Quadros na ordem em que saíram."""
     if modo not in MODOS_LENTA:
         raise ValueError(modo)
     tag = MODOS_LENTA[modo]
@@ -388,24 +393,36 @@ def emular_modo_lenta(exe, modo, flag1=(0x2486, 0x1051), giri=(0, 8500), buffere
     for i, w in enumerate(flag1):
         m.w32(m.r32(v1 + 0x148) + 4 * i, w)
     lr = obj80D != 0   # família [obj+0x80D]!=0: código físico 0x57 -> GIRI_PER_BENZINA_LR (SerialCode 176) em [obj+0x464]
-    codigo = 0x57 if lr else CODIGO_GIRI
     vg = m.criar_vetor(176 if lr else 161)
     m.w32(m.sd + (0x464 if lr else 0x2A0), vg)
     for i, w in enumerate(giri):
         m.w32(m.r32(vg + 0x148) + 4 * i, w)
         m.w32(m.sd + 0x2CBC + 4 * i, w)
-    bit = 1 if tag == 2 else 0
-    rpm = 0.0 if tag == 0 else RPM_IDENTIFICACAO
-    ret1 = m.chamar(A_FLAG1_SETTER, {'eax': m.sd, 'edx': CASO_MINIMO, 'ecx': bit})
-    n1 = len(m.ecu.quadros)
-    bits = struct.unpack('<II', struct.pack('<d', rpm))  # (baixo, alto) do double empilhado como em 0x4BFB5E
-    ret2 = m.chamar(A_SET_FISICO, pilha=(m.sd, codigo, 0, bits[0], bits[1]))
-    r = m.resultado(ret2)
-    r['retorno_flag1_al'] = ret1
-    r['quadros_flag1'] = r['quadros'][:n1]
-    r['quadros_giri'] = r['quadros'][n1:]
+    if handler:
+        form = m.alloc(0x2000)                 # TFormConfig (só [ebx+0x1280] = 0: não está carregando a tela)
+        sender = m.alloc(0x40)
+        m.w32(sender + 0xC, tag)               # TComponent.Tag do botão
+        ponteiro = m.alloc(16)                 # a global 0xAEBED8 aponta para um ponteiro para o TStreamDati
+        m.w32(ponteiro, m.sd)
+        m.w32(0xAEBED8, ponteiro)
+        ret = m.chamar(0x4BFAD8, {'eax': form, 'edx': sender}, ate=0x4BFBC8)
+        n1 = len(m.ecu.quadros)
+        r = m.resultado(ret)
+        r['quadros_flag1'] = [q for q in r['quadros'] if q[0] == 0x35]
+        r['quadros_giri'] = [q for q in r['quadros'] if q[0] == 0x14]
+    else:
+        bit = 1 if tag == 2 else 0
+        rpm = 0.0 if tag == 0 else RPM_IDENTIFICACAO
+        ret1 = m.chamar(A_FLAG1_SETTER, {'eax': m.sd, 'edx': CASO_MINIMO, 'ecx': bit})
+        n1 = len(m.ecu.quadros)
+        bits = struct.unpack('<II', struct.pack('<d', rpm))  # (baixo, alto) do double empilhado como em 0x4BFB5E
+        ret2 = m.chamar(A_SET_FISICO, pilha=(m.sd, 0x57 if lr else CODIGO_GIRI, 0, bits[0], bits[1]))
+        r = m.resultado(ret2)
+        r['quadros_flag1'] = r['quadros'][:n1]
+        r['quadros_giri'] = r['quadros'][n1:]
     r['cache_flag1'] = (m.r32(m.sd + 0x2984), m.r32(m.sd + 0x2988))
     r['cache_giri'] = (m.r32(m.sd + 0x2CBC), m.r32(m.sd + 0x2CC0))
+    r['handler_executado'] = handler
     return r
 
 

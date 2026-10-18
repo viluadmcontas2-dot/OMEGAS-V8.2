@@ -420,7 +420,9 @@
         <article class="tool-tile" data-card="balao" data-state="${overlayState}">
           <h3>Balão sobre outros apps</h3>
           <p class="tile-line">Mostra as leituras por cima do mapa.</p>
-          <button type="button" class="tool-switch" role="switch" aria-checked="${overlay.visible === true ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlay.visible === true ? 'Ligado' : overlay.permissionGranted === true ? 'Desligado' : 'Pedir permissão'}</span></button>
+          ${overlay.permissionGranted === true || overlay.visible === true
+            ? `<button type="button" class="tool-switch" role="switch" aria-checked="${overlay.visible === true ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlay.visible === true ? 'Ligado' : 'Desligado'}</span></button>`
+            : `<button type="button" class="tile-action" data-tool-overlay-request><b>Permitir balão</b></button>`}
         </article>
         <button type="button" class="tool-tile tool-open" data-card="registro" data-tool-open-log data-state="${serviceHealthy ? 'on' : 'off'}">
           <h3>Registro do app</h3>
@@ -472,7 +474,7 @@
         </section>
         <section class="sess-card sess-size">
           <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
-            <summary><span class="sum-title">Tamanho das gravações</span><span class="sum-state">${finite(settings.maxSessionMb ?? status.limitMb) === null ? '' : `${Math.round(finite(settings.maxSessionMb ?? status.limitMb))} MB cada`}</span><em class="tool-disclosure-back">Voltar</em></summary>
+            <summary><span class="sum-title">Tamanho das gravações</span><span class="sum-state">${finite(settings.maxSessionMb ?? status.limitMb) === null ? '' : `${Math.round(finite(settings.maxSessionMb ?? status.limitMb))} MB cada`}</span><span class="tile-go">Mudar ›</span><em class="tool-disclosure-back">Voltar</em></summary>
             <div class="tool-disclosure-body">
               <div class="diagnostic-settings-grid">
                 <label><span>Salvar a cada</span><select data-session-telemetry>

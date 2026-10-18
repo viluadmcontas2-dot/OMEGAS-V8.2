@@ -246,7 +246,7 @@
             ${PENCIL}
             <span class="num-unit">${escapeHtml(f.unit)}</span>
           </div>
-          <p class="num-help" id="advHelp${f.index}">${escapeHtml(f.help)} <span class="num-seconds"></span></p>
+          <p class="num-help" id="advHelp${f.index}">${escapeHtml(f.help)}${f.unit === 'ms' ? ' <span class="num-seconds"></span>' : ''}</p>
           <p class="num-meta">${escapeHtml(this.V.range(f))} · Valor de fábrica: ${escapeHtml(this.V.num(f.factory))}</p>
           <p class="num-error" role="alert"></p>
         </div>`).join('');
@@ -257,9 +257,9 @@
           <div class="tool-actions">
             <button type="button" class="primary" data-adv-save disabled>Gravar valores</button>
             <button type="button" class="secondary" data-adv-factory ${why ? 'disabled' : ''}>Restaurar fábrica</button>
-            ${undo.available ? '<button type="button" class="secondary" data-adv-undo-values>Desfazer a última gravação</button>' : ''}
+            ${undo.available ? '<button type="button" class="secondary" data-adv-undo-values>Desfazer</button>' : ''}
+            <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${(cards.find(c => c.id === 'valores')?.tech || []).map(t => `<li>${escapeHtml(t)}</li>`).join('')}<li>Faixa e valor de fábrica: tela original do programa do fabricante; a ordem dos campos é inferida.</li></ul></details>
           </div>
-          <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${(cards.find(c => c.id === 'valores')?.tech || []).map(t => `<li>${escapeHtml(t)}</li>`).join('')}<li>Faixa e valor de fábrica: tela original do programa do fabricante; a ordem dos campos é inferida.</li></ul></details>
         </section>`;
     }
 

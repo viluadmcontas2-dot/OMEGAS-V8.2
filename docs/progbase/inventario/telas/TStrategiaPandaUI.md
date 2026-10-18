@@ -17,9 +17,9 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `chk_SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMAClick` | 0x00522E18 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `chk_SP_EN_STRATEGIA_MINIMOClick` | 0x00522E08 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `chk_SP_EN_STRATEGIA_RIC_CLIMAClick` | 0x00522E10 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
+| `chk_SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMAClick` | 0x00522E18 | 6 | INFERIDO | Ao clicar em chk_SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMA «SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMA»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `chk_SP_EN_STRATEGIA_MINIMOClick` | 0x00522E08 | 6 | INFERIDO | Ao clicar em chk_SP_EN_STRATEGIA_MINIMO «SP_EN_STRATEGIA_MINIMO»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `chk_SP_EN_STRATEGIA_RIC_CLIMAClick` | 0x00522E10 | 6 | INFERIDO | Ao clicar em chk_SP_EN_STRATEGIA_RIC_CLIMA «SP_EN_STRATEGIA_RIC_CLIMA»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

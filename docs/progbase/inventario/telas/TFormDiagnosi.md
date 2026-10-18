@@ -62,31 +62,31 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonAzzeraErroriClick` | 0x004D6694 | 1094 | INFERIDO | sem fatos diretos extraíveis (1094 bytes; chama 12 funções sem nome) |  |  |  |
-| `ButtonAzzeraTempiClick` | 0x004D6ADC | 375 | INFERIDO | toca LabelTBenz, LabelTGas |  |  |  |
-| `ButtonResetFFClick` | 0x004D8360 | 25 | INFERIDO | sem fatos diretos extraíveis (25 bytes; chama 1 funções sem nome) |  |  |  |
-| `CheckListBoxFFClickCheck` | 0x004D82C0 | 157 | INFERIDO | toca CheckListBoxFF |  |  |  |
-| `CheckSwitchOnDiagnosisClick` | 0x004D7E48 | 48 | INFERIDO | toca CheckSwitchOnDiagnosis |  |  |  |
-| `ComboAzioneChange` | 0x004D736C | 313 | INFERIDO | toca ComboAzione, ListDiagnosi |  |  |  |
-| `ComboAzioneEnter` | 0x004D74A8 | 52 | INFERIDO | toca ComboAzione |  |  |  |
-| `ComboAzioneKeyDown` | 0x004D7164 | 518 | INFERIDO | toca ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi |  |  |  |
-| `EditTempBassaMotEnter` | 0x004D75B0 | 178 | INFERIDO | toca ListDiagnosi |  |  |  |
-| `EditTempBassaMotKeyDown` | 0x004D74DC | 79 | INFERIDO | sem fatos diretos extraíveis (79 bytes; chama 0 funções sem nome) |  |  |  |
-| `EditTempBassaMotKeyPress` | 0x004D752C | 130 | INFERIDO | toca ListDiagnosi |  |  |  |
-| `FormActivate` | 0x004CD6A8 | 16307 | INFERIDO | usa textos BUTTONAZZERAERRORI, BUTTONAZZERATEMPI, BUTTONESCI, CHECKDIAGNOSISTARTUP, DIAGNOSICOLLEGAMENTOINIETTORI, DIAGNOSIESCLUSIONEINIETTORI; chama TTranslatorExt::GetString; toca ButtonAzzeraErrori, ButtonAzzeraTempi, ButtonEsci, CheckSwitchOnDiagnosis, ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa | BUTTONAZZERAERRORI, BUTTONAZZERATEMPI, BUTTONESCI, CHECKDIAGNOSISTARTUP, DIAGNOSICOLLEGAMENTOINIETTORI, DIAGNOSIESCLUSIONEINIETTORI |  | FF_CANSTATUS_OBD, FF_ECUFUELFUNCTIONING, FF_EV1, FF_EV2 |
-| `FormClose` | 0x004D1B18 | 366 | INFERIDO | chama TFormDiagnosi.PanelTestOffClick; toca ListDiagnosi, PanelOffElv1, PanelOffElv2, PanelOffSwitch |  |  |  |
-| `ListDiagnosiChange` (sem evento no DFM) | 0x004D6E38 | 558 | INFERIDO | toca ListDiagnosi |  |  |  |
-| `ListDiagnosiClick` | 0x004D7068 | 100 | INFERIDO | chama APIs do Windows GetCursorPos, ScreenToClient; toca ListDiagnosi |  | GetCursorPos, ScreenToClient |  |
-| `ListDiagnosiKeyDown` | 0x004D6CB8 | 384 | INFERIDO | toca ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi |  |  |  |
-| `ListDiagnosiKeyPress` | 0x004D6C54 | 97 | INFERIDO | toca ListDiagnosi |  |  |  |
-| `ListDiagnosiSelectItem` | 0x004D70CC | 152 | INFERIDO | toca ComboAzione, ListDiagnosi |  |  |  |
-| `PanelOffClick` | 0x004D7664 | 272 | INFERIDO | chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect |  |  |  |
-| `PanelOnClick` | 0x004D7774 | 274 | INFERIDO | chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect |  |  |  |
-| `PanelTestOffClick` | 0x004D7C78 | 461 | INFERIDO | usa textos MESSERRORRESETDIAGNOSYSTEST; chama TAebProtocol::IsConnect, TAebProtocol::SendCommand, TTranslatorExt::GetString; toca LabelElv1, LabelSwitch, PanelOffElv1, PanelOffElv2, PanelOffSwitch, PanelOnElv1, PanelOnElv2, PanelOnSwitch | MESSERRORRESETDIAGNOSYSTEST |  |  |
-| `PanelTestOnClick` | 0x004D7888 | 1006 | INFERIDO | usa textos LABELDIAGNOSIATTENTION, MESSERRORSETDIAGNOSYSTEST; chama APIs do Windows Sleep; chama TAebProtocol::IsConnect, TAebProtocol::SendCommand, TStreamDati.TimerIOTimer, TTranslatorExt::GetString; toca PanelOffElv1, PanelOffElv2, PanelOffSwitch, PanelOnElv1, PanelOnElv2, PanelOnSwitch | LABELDIAGNOSIATTENTION, MESSERRORSETDIAGNOSYSTEST | Sleep |  |
-| `TimerTempiTimer` | 0x004D4BDC | 6244 | INFERIDO | chama TAebProtocol::GetPacket, TAebProtocol::IsConnect; toca LabelA, LabelB, LabelC, LabelD, LabelE, LabelF, LabelG, LabelH |  |  |  |
-| `TimerTimer` | 0x004D4B20 | 186 | INFERIDO | chama APIs do Windows GetTickCount, Sleep; chama TAebProtocol::Connect, TAebProtocol::DisableErrorHandling, TAebProtocol::EnableErrorHandling, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer |  | GetTickCount, Sleep |  |
-| `TimerUpdateTimer` | 0x004D6454 | 573 | INFERIDO | toca ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi, TimerUpdate |  |  |  |
+| `ButtonAzzeraErroriClick` | 0x004D6694 | 1094 | INFERIDO | Ao clicar em ButtonAzzeraErrori «Reset e&rros»: corpo de 1094 bytes sem fatos diretos (chama 12 funções sem nome). |  |  |  |
+| `ButtonAzzeraTempiClick` | 0x004D6ADC | 375 | INFERIDO | Ao clicar em ButtonAzzeraTempi «Reset &tempos»: mexe em LabelTBenz, LabelTGas. |  |  |  |
+| `ButtonResetFFClick` | 0x004D8360 | 25 | INFERIDO | Ao clicar em ButtonResetFF «Reset»: corpo de 25 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `CheckListBoxFFClickCheck` | 0x004D82C0 | 157 | INFERIDO | Ao marcar/desmarcar item em CheckListBoxFF: mexe em CheckListBoxFF. |  |  |  |
+| `CheckSwitchOnDiagnosisClick` | 0x004D7E48 | 48 | INFERIDO | Ao clicar em CheckSwitchOnDiagnosis «Enable switch-on diagnosis»: mexe em CheckSwitchOnDiagnosis. |  |  |  |
+| `ComboAzioneChange` | 0x004D736C | 313 | INFERIDO | Quando muda o valor de ComboAzione: mexe em ComboAzione, ListDiagnosi. |  |  |  |
+| `ComboAzioneEnter` | 0x004D74A8 | 52 | INFERIDO | Ao entrar no campo ComboAzione: mexe em ComboAzione. |  |  |  |
+| `ComboAzioneKeyDown` | 0x004D7164 | 518 | INFERIDO | Ao pressionar tecla em ComboAzione: mexe em ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi. |  |  |  |
+| `EditTempBassaMotEnter` | 0x004D75B0 | 178 | INFERIDO | Ao entrar no campo EditTempAlta (+3 componentes): mexe em ListDiagnosi. |  |  |  |
+| `EditTempBassaMotKeyDown` | 0x004D74DC | 79 | INFERIDO | Ao pressionar tecla em EditTempAlta (+3 componentes): corpo de 79 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
+| `EditTempBassaMotKeyPress` | 0x004D752C | 130 | INFERIDO | Ao digitar (filtro de teclas) em EditTempAlta (+3 componentes): mexe em ListDiagnosi. |  |  |  |
+| `FormActivate` | 0x004CD6A8 | 16307 | INFERIDO | Ao ativar o formulário FormDiagnosi «Diagnóstico central de comando»: usa textos BUTTONAZZERAERRORI, BUTTONAZZERATEMPI, BUTTONESCI, CHECKDIAGNOSISTARTUP, DIAGNOSICOLLEGAMENTOINIETTORI; chama TTranslatorExt::GetString; mexe em ButtonAzzeraErrori, ButtonAzzeraTempi, ButtonEsci, CheckSwitchOnDiagnosis, ComboAzione, EditTempAlta. | BUTTONAZZERAERRORI, BUTTONAZZERATEMPI, BUTTONESCI, CHECKDIAGNOSISTARTUP, DIAGNOSICOLLEGAMENTOINIETTORI, DIAGNOSIESCLUSIONEINIETTORI |  | FF_CANSTATUS_OBD, FF_ECUFUELFUNCTIONING, FF_EV1, FF_EV2 |
+| `FormClose` | 0x004D1B18 | 366 | INFERIDO | Ao fechar o formulário FormDiagnosi «Diagnóstico central de comando»: chama TFormDiagnosi.PanelTestOffClick; mexe em ListDiagnosi, PanelOffElv1, PanelOffElv2, PanelOffSwitch. |  |  |  |
+| `ListDiagnosiChange` (sem evento no DFM) | 0x004D6E38 | 558 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em ListDiagnosi. |  |  |  |
+| `ListDiagnosiClick` | 0x004D7068 | 100 | INFERIDO | Ao clicar em ListDiagnosi: chama APIs GetCursorPos, ScreenToClient; mexe em ListDiagnosi. |  | GetCursorPos, ScreenToClient |  |
+| `ListDiagnosiKeyDown` | 0x004D6CB8 | 384 | INFERIDO | Ao pressionar tecla em ListDiagnosi: mexe em ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi. |  |  |  |
+| `ListDiagnosiKeyPress` | 0x004D6C54 | 97 | INFERIDO | Ao digitar (filtro de teclas) em ListDiagnosi: mexe em ListDiagnosi. |  |  |  |
+| `ListDiagnosiSelectItem` | 0x004D70CC | 152 | INFERIDO | Ao selecionar item em ListDiagnosi: mexe em ComboAzione, ListDiagnosi. |  |  |  |
+| `PanelOffClick` | 0x004D7664 | 272 | INFERIDO | Ao clicar em PanelOffA «Off» (+9 componentes): chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect. |  |  |  |
+| `PanelOnClick` | 0x004D7774 | 274 | INFERIDO | Ao clicar em PanelOnA «On» (+9 componentes): chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect. |  |  |  |
+| `PanelTestOffClick` | 0x004D7C78 | 461 | INFERIDO | Ao clicar em PanelOffSwitch «Off» (+2 componentes): usa textos MESSERRORRESETDIAGNOSYSTEST; chama TAebProtocol::IsConnect, TAebProtocol::SendCommand, TTranslatorExt::GetString; mexe em LabelElv1, LabelSwitch, PanelOffElv1, PanelOffElv2, PanelOffSwitch, PanelOnElv1. | MESSERRORRESETDIAGNOSYSTEST |  |  |
+| `PanelTestOnClick` | 0x004D7888 | 1006 | INFERIDO | Ao clicar em PanelOnSwitch «On» (+2 componentes): usa textos LABELDIAGNOSIATTENTION, MESSERRORSETDIAGNOSYSTEST; chama APIs Sleep; chama TAebProtocol::IsConnect, TAebProtocol::SendCommand, TStreamDati.TimerIOTimer, TTranslatorExt::GetString; mexe em PanelOffElv1, PanelOffElv2, PanelOffSwitch, PanelOnElv1, PanelOnElv2, PanelOnSwitch. | LABELDIAGNOSIATTENTION, MESSERRORSETDIAGNOSYSTEST | Sleep |  |
+| `TimerTempiTimer` | 0x004D4BDC | 6244 | INFERIDO | A cada tick do temporizador TimerTempi (intervalo 50 ms): chama TAebProtocol::GetPacket, TAebProtocol::IsConnect; mexe em LabelA, LabelB, LabelC, LabelD, LabelE, LabelF. |  |  |  |
+| `TimerTimer` | 0x004D4B20 | 186 | INFERIDO | A cada tick do temporizador Timer (intervalo 2000 ms): chama APIs GetTickCount, Sleep; chama TAebProtocol::Connect, TAebProtocol::DisableErrorHandling, TAebProtocol::EnableErrorHandling, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer. |  | GetTickCount, Sleep |  |
+| `TimerUpdateTimer` | 0x004D6454 | 573 | INFERIDO | A cada tick do temporizador TimerUpdate (intervalo 50 ms): mexe em ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

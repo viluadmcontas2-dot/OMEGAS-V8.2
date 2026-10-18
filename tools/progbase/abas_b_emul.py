@@ -32,7 +32,7 @@ VAR_SD = 0xAECFB4      # [[0xAEBED8]] -> variável global -> instância TStreamD
 
 # layout dos controles falsos (OBS-COD: lidos nos getters/setters do VCL do próprio .exe)
 OFF_VISIBLE, OFF_ENABLED = 0x69, 0x6A
-OFF_TAG = 0x30            # TComponent.FTag
+OFF_TAG = 0x0C            # TComponent.FTag (os handlers fazem `mov r,[sender+0xC]` para despachar por Tag)
 OFF_CHECK_STATE = 0x29A   # TCheckBox: cbChecked = 1 (0x758DFC)
 OFF_NUM_VALUE = 0x2E0     # TNumericEdit: double (0x96BB88 grava, 0x96BA2C lê)
 OFF_NUM_CODE = 0x2EC      # código do dado (amarração 0x48A228)
@@ -44,7 +44,7 @@ STDCALL_EXTRA = {
     'GetDC': 1, 'ReleaseDC': 2, 'SelectObject': 2, 'GetTextExtentPoint32A': 4, 'GetTextExtentPoint32W': 4,
     'GetSystemMetrics': 1, 'InvalidateRect': 3, 'GetWindowLongA': 2, 'GetKeyState': 1, 'MessageBeep': 1,
     'GetCurrentThreadId': 0, 'TlsGetValue': 1, 'InterlockedIncrement': 1, 'InterlockedDecrement': 1,
-    'GetCurrentProcessId': 0, 'GetTickCount': 0,
+    'GetCurrentProcessId': 0, 'GetTickCount': 0, 'MessageBoxA': 4, 'MessageBoxW': 4,
 }
 
 
@@ -164,6 +164,7 @@ class MaquinaAbas(C._Maquina):
         self.codigo_stub = C.STUBS + 0x5000
         self._montar_mm()
         self.uc.mem_map(0, 0x10000)      # página nula legível: objetos ausentes leem 0 em vez de derrubar a emulação
+        self.uc.mem_map(0xFFFFF000, 0x1000)   # [nil-4] de string Delphi vazia (comprimento 0)
         self.uc.hook_add(self.uc_mod.UC_HOOK_CODE, self._hook_stubs_altos, begin=C.STUBS + 0x1000, end=C.STUBS + 0x4FFF)
 
     # ------------------------------------------------------------------ hooks
@@ -314,7 +315,13 @@ class MaquinaAbas(C._Maquina):
                              'GetLocaleInfoA': 4, 'IsDBCSLeadByte': 1, 'GetThreadLocale': 0, 'CharNextA': 1,
                              'CharUpperA': 1, 'CharLowerA': 1, 'lstrlenA': 1, 'GetCPInfo': 2,
                              'GetStringTypeW': 5, 'LCMapStringA': 6, 'CompareStringA': 6, 'GetSystemDefaultLCID': 0})
-        self.api_py = {'LoadLibraryA': load, 'GetModuleHandleA': load, 'GetProcAddress': getproc,
+        self.stdcall.update({'MessageBoxA': 4, 'MessageBoxW': 4})
+        self.caixas = []
+
+        def msgbox(mm):             # MessageBoxA(hwnd, texto, titulo, tipo): guarda o texto e "clica" OK
+            mm.caixas.append(mm._cstr(arg(mm, 1)))
+            return 1
+        self.api_py = {'MessageBoxA': msgbox, 'LoadLibraryA': load, 'GetModuleHandleA': load, 'GetProcAddress': getproc,
                        'FreeLibrary': lambda mm: 1, 'MultiByteToWideChar': mb2wc, 'WideCharToMultiByte': wc2mb,
                        'GetACP': lambda mm: 1252, 'GetThreadLocale': lambda mm: 0x416,
                        'GetSystemDefaultLCID': lambda mm: 0x416, 'GetCurrentThreadId': lambda mm: 1,
@@ -425,7 +432,12 @@ class Sessao:
         self.m = MaquinaAbas(exe, self.ctx)
         self.m.montar_sd(self.sd_idx)
         self.m.montar_form(self.form_idx)
+        self.defaults = A.defaults_construtor(self.ctx)
+        for off, sz, val, _ in self.defaults:        # estado inicial do TStreamDati = o que o construtor grava
+            self.m.uc.mem_write(self.m.sd + off, (val & ((1 << (8 * sz)) - 1)).to_bytes(sz, 'little'))
         self._ui_hooks()
+        self._dll_personalizacao()
+        self._amarrar()
         self._snap = None
         self.forma = {}
         for o in self.sd_idx.values():
@@ -459,6 +471,35 @@ class Sessao:
             m.hook(ad, nada, 0)
         # TNumericEdit: "valor atual" = double em +0x2E0 (a função original lê o Text; aqui devolve o campo)
         m.redireciona(0x96BA2C, bytes.fromhex('DD80E0020000C3'))
+
+    def _amarrar(self):
+        """Roda a rotina de amarração 0x48A228 (controle -> código do dado [ctl+0x2EC] e índice [ctl+0x2F0]);
+        os controles falsos recebem exatamente o que o ProgBase grava neles na criação do formulário."""
+        m = self.m
+        m.chamar(0x48A228, {'eax': m.form})
+        self.amarracao_erro = m.erro
+        m.erro = None
+        # DataIndex do DFM vale para quem a rotina não amarra (propriedade publicada do TNumericEdit)
+        for nome, obj in m.controles.items():
+            o = self.form_idx[nome]
+            di = o.props.get('DataIndex')
+            if di is not None and m.r32(obj + OFF_NUM_DATAINDEX) == 0:
+                m.w32(obj + OFF_NUM_DATAINDEX, int(di))
+
+    def _dll_personalizacao(self):
+        """O ProgBase carrega uma DLL de personalização (_GetDefRowKMap, _GetDefColKMap, ..., ponteiros em
+        0xAECD6C..0xAECD94, preenchidos em 0x4111F8). Ela não existe aqui: cada ponteiro vira uma função cdecl em
+        Python; linhas/colunas do mapa K vêm do DFM (MAP_K: RowCount/ColCount); o resto devolve 0 (DESCONHECIDO)."""
+        m = self.m
+        mapk = self.sd_idx['MAP_K'].props
+        valores = {0xAECD7C: int(mapk.get('RowCount', 13)), 0xAECD80: int(mapk.get('ColCount', 12))}
+        for g in range(0xAECD6C, 0xAECD98, 4):
+            a_ = m.codigo_stub
+            m.codigo_stub += 16
+            m.uc.mem_write(a_, b'\xC3')
+            v = valores.get(g, 0)
+            m.hook(a_, (lambda vv: (lambda mm, r, a: vv))(v), 0)
+            m.w32(g, a_)
 
     # -------------------------------------------------------------- snapshot
     def _regioes(self):

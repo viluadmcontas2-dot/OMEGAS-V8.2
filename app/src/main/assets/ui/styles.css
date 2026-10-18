@@ -57,7 +57,7 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 /* OBD */
 .diagnostic-settings{border:1px solid var(--line-soft);border-radius:8px;margin-top:7px}.diagnostic-settings summary{min-height:36px;padding:0 9px;display:flex;align-items:center;justify-content:space-between;list-style:none;cursor:pointer}
 /* SUGESTÕES E FERRAMENTAS */
-.utility-screen{overflow:auto}.tool-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}.tool-actions>button{min-height:72px;border:1px solid var(--line);border-radius:10px;background:var(--surface);text-align:left;padding:11px}.tool-actions b,.tool-actions span{display:block}.tool-actions span{margin-top:4px;color:var(--muted);font-size:9px}.tool-diagnostics-workspace{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}.tool-diagnostics-workspace>section,.tool-diagnostics-workspace>details{margin:0}.background-health-grid,.recorder-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}.recorder-space{height:5px;background:var(--surface-3);border-radius:3px;overflow:hidden;margin:8px 0}.recorder-space i{display:block;height:100%;background:var(--accent)}.recorder-actions{display:flex;gap:6px}.diagnostic-settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;padding:8px}.diagnostic-settings-grid label{display:grid;gap:3px}.diagnostic-settings-grid input,.diagnostic-settings-grid select{height:32px;background:var(--bg);border:1px solid var(--line);border-radius:6px}.recorded-session-list,.log-lines{max-height:170px;overflow:auto}.recorded-session-list>div,.log-lines>div{padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:9px}
+.utility-screen{overflow:hidden}
 /* Aviso legível a 1 m (dono, 2026-10-11): texto ≥ 20 px, logo acima da navegação, à DIREITA: os botões ficam embaixo à
    esquerda e o aviso não pode cobri-los (nem as abas). */
 .alert-toast{position:fixed;right:16px;left:auto;bottom:calc(var(--nav-height) + 10px);z-index:50;min-width:320px;max-width:min(600px,calc(48vw - 16px));border:1px solid var(--line);border-left:6px solid var(--warn);border-radius:10px;background:var(--surface-3);box-shadow:0 10px 28px #000a;padding:14px 60px 14px 18px;text-align:left;display:none}.alert-toast.show{display:block}.alert-toast[data-level="ok"]{border-left-color:var(--ok)}.alert-toast[data-level="working"]{border-left-color:var(--accent)}.alert-toast[data-level="error"],.alert-toast[data-level="critical"]{border-left-color:var(--danger)}.alert-toast b{display:block;font-size:21px;line-height:1.3;font-weight:750}.alert-toast button{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:48px;height:48px;border:0;background:transparent;color:var(--muted);font-size:28px}
@@ -89,15 +89,6 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 
 
 
-/* Ferramentas · saúde do app: bateria e telemetria flutuante (vieram da antiga tela OBD) */
-.tool-power-rows { display: grid; gap: 8px; margin-top: 12px; }
-.tool-power-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
-.tool-power-row > div { display: grid; gap: 2px; min-width: 0; }
-.tool-power-row small { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .04em; }
-.tool-power-row b { font-size: 14px; }
-.tool-power-row span { color: var(--muted); font-size: 12px; }
-.tool-power-row button { min-height: 48px; flex: 0 0 auto; }
-.tool-logs > summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
 
 /* ===== Aprender e Ferramentas sem rolagem (dono, 2026-10-11) =====
    Nenhum estado destas duas telas rola nem sub-rola: o que não cabe vira aba interna ou "Detalhes" que troca
@@ -190,81 +181,6 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 
 
 
-/* FERRAMENTAS: três cartões (saúde, sessões, aprendizado) e o backup num rodapé embaixo, à esquerda.
-   "Sessões gravadas", "Tamanho e retenção" e o log abrem no lugar dos cartões; o título vira "Voltar". */
-#toolsDrawer { --foot-h: 60px; }
-#toolsDrawer.screen.active { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) var(--foot-h); gap: 10px; padding: 10px 16px; overflow: hidden; }
-#toolsDrawer > .page-intro { grid-row: 1; min-height: 0; padding: 0; align-items: center; }
-#toolsDrawer > .page-intro small { font-size: 12px; }
-#toolsDrawer > .page-intro h2 { margin: 2px 0 0; }
-#toolsDrawer > .page-intro > p { margin: 0; font-size: 12px; }
-#toolsDrawer > .tool-actions { grid-row: 3; display: flex; justify-content: flex-start; gap: 8px; min-width: 0; margin: 0; }
-#toolsDrawer > .tool-actions > button { flex: 0 1 auto; min-width: 0; height: var(--foot-h); min-height: 56px; padding: 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; }
-#toolsDrawer > .tool-actions b { font-size: 15px; }
-#toolsDrawer > .tool-actions span { margin-top: 3px; color: var(--muted); font-size: 12px; }
-#toolDiagnosticsWorkspace { grid-row: 2; position: relative; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch; overflow: hidden; }
-#toolDiagnosticsWorkspace > section { min-width: 0; min-height: 0; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; }
-#toolDiagnosticsWorkspace > section > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-#toolDiagnosticsWorkspace > section > header small { display: block; color: var(--dim); font-size: 12px; font-weight: 800; letter-spacing: .06em; }
-#toolDiagnosticsWorkspace > section > header h3 { margin: 3px 0 0; font-size: 17px; line-height: 1.2; }
-#toolDiagnosticsWorkspace > section > header > span { flex: 0 0 auto; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 800; }
-#toolDiagnosticsWorkspace .background-health-card[data-healthy="true"] > header > span { border-color: #2c604c; color: var(--ok); }
-#toolDiagnosticsWorkspace .diagnostic-recorder-card[data-recording="true"] > header > span { border-color: #2c604c; color: var(--ok); }
-#toolDiagnosticsWorkspace .background-health-grid,#toolDiagnosticsWorkspace .recorder-metrics{ display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: 13px; }
-#toolDiagnosticsWorkspace .background-health-grid b,#toolDiagnosticsWorkspace .recorder-metrics b{ color: var(--text); font-size: 15px; }
-
-
-#toolDiagnosticsWorkspace .tool-power-rows { margin: 0; }
-#toolDiagnosticsWorkspace .tool-power-row small { font-size: 12px; }
-#toolDiagnosticsWorkspace .recorder-space { margin: 0; height: 6px; }
-#toolDiagnosticsWorkspace .recorder-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-#toolDiagnosticsWorkspace .recorder-actions button { min-height: 56px; padding: 0 18px; border-radius: 10px; font-size: 15px; }
-#toolDiagnosticsWorkspace .tool-disclosures { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-top: auto; }
-#toolDiagnosticsWorkspace details { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
-#toolDiagnosticsWorkspace details > summary { list-style: none; cursor: pointer; }
-#toolDiagnosticsWorkspace details > summary::-webkit-details-marker { display: none; }
-#toolDiagnosticsWorkspace details:not([open]) > summary { display: flex; align-items: center; min-height: 56px; padding: 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); font-size: 15px; font-weight: 800; }
-#toolDiagnosticsWorkspace .tool-disclosure-back { display: none; }
-/* Aberto: ocupa o lugar dos três cartões; o título (com "Voltar" à esquerda) fecha. */
-#toolDiagnosticsWorkspace details[open] { position: absolute; inset: 0; z-index: 3; display: block; padding: 0 16px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; visibility: visible; }
-#toolDiagnosticsWorkspace:has(details[open]) > section { visibility: hidden; }
-#toolDiagnosticsWorkspace details[open] > summary { display: flex; align-items: center; justify-content: flex-start; gap: 14px; min-height: 60px; margin: 0 -16px 10px; padding: 0 16px; border-bottom: 1px solid var(--line-soft); font-size: 17px; font-weight: 800; }
-#toolDiagnosticsWorkspace details[open] .tool-disclosure-back { order: -1; display: inline-flex; align-items: center; min-height: 48px; padding: 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--text); font-size: 15px; font-style: normal; font-weight: 800; }
-#toolDiagnosticsWorkspace .tool-disclosure-body { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-#toolDiagnosticsWorkspace .tool-disclosure-body > p, #toolDiagnosticsWorkspace .empty-copy { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
-/* Sessões gravadas: até 8, em 4 colunas × 2 linhas (mesmo padrão do AutoCal). */
-#toolDiagnosticsWorkspace .recorded-session-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: none; overflow: hidden; }
-#toolDiagnosticsWorkspace .recorded-session-list > .empty-copy { grid-column: 1 / -1; }
-#toolDiagnosticsWorkspace .recorded-session-item { display: flex; flex-direction: column; gap: 5px; min-width: 0; min-height: 0; padding: 10px 12px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--surface-2); }
-#toolDiagnosticsWorkspace .recorded-session-header { display: flex; flex-direction: column; gap: 2px; }
-#toolDiagnosticsWorkspace .recorded-session-item b { font-size: 14px; }
-#toolDiagnosticsWorkspace .recorded-session-item span { color: var(--muted); font-size: 12px; line-height: 1.35; }
-#toolDiagnosticsWorkspace .session-fuel-bar { display: flex; height: 6px; overflow: hidden; border-radius: 999px; background: var(--surface-3); }
-#toolDiagnosticsWorkspace .fuel-segment.cng { background: var(--cng); }
-#toolDiagnosticsWorkspace .fuel-segment.petrol { background: var(--petrol); }
-#toolDiagnosticsWorkspace .recorded-session-item button { align-self: flex-start; min-height: 48px; margin-top: auto; padding: 0 16px; border: 1px solid var(--line); font-size: 14px; }
-/* Tamanho e retenção: cinco campos em três colunas e "Aplicar" à esquerda. */
-#toolDiagnosticsWorkspace .diagnostic-settings-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px 12px !important; padding: 0; }
-#toolDiagnosticsWorkspace .diagnostic-settings-grid > label { display: grid; gap: 4px; align-content: start; color: var(--muted); font-size: 13px; }
-#toolDiagnosticsWorkspace .diagnostic-settings-grid small { color: var(--muted); font-size: 12px; letter-spacing: 0; }
-#toolDiagnosticsWorkspace .diagnostic-settings-grid select, #toolDiagnosticsWorkspace .diagnostic-settings-grid input[type="number"] { min-height: 48px !important; font-size: 14px !important; }
-#toolDiagnosticsWorkspace .diagnostic-settings-grid .check-setting { min-height: 56px; color: var(--text); font-size: 14px; }
-#toolDiagnosticsWorkspace [data-session-settings] { width: auto; align-self: flex-start; min-height: 56px; padding: 0 32px; border-radius: 10px; font-size: 15px; }
-#toolDiagnosticsWorkspace .settings-feedback { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0; }
-/* Log: as mesmas 24 linhas em páginas de 8; mensagem longa em até 2 linhas (inteira em "Exportar logs"). */
-#toolDiagnosticsWorkspace .tool-log-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
-#toolDiagnosticsWorkspace .tool-log-toolbar .recorder-actions button { min-height: 48px; font-size: 14px; }
-#toolDiagnosticsWorkspace .log-filters { display: flex; gap: 8px; margin: 0; }
-#toolDiagnosticsWorkspace .log-filters select { min-height: 48px !important; font-size: 14px !important; }
-#toolDiagnosticsWorkspace .tool-log-pager { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
-#toolDiagnosticsWorkspace .tool-log-pager button { min-height: 48px; padding: 0 14px; font-size: 14px; }
-#toolDiagnosticsWorkspace .log-lines { max-height: none; overflow: hidden; }
-#toolDiagnosticsWorkspace .log-lines > div { display: grid; grid-template-columns: 74px 120px minmax(0, 1fr); align-items: baseline; gap: 10px; padding: 3px 0 3px 10px; border-bottom: 1px solid var(--line-soft); border-left: 3px solid var(--line); font-size: 12px; }
-#toolDiagnosticsWorkspace .log-lines > div[data-level="warn"] { border-left-color: var(--warn); }
-#toolDiagnosticsWorkspace .log-lines > div[data-level="error"] { border-left-color: var(--danger); }
-#toolDiagnosticsWorkspace .log-lines time { color: var(--muted); font-variant-numeric: tabular-nums; }
-#toolDiagnosticsWorkspace .log-lines b { min-width: 0; overflow-wrap: anywhere; }
-#toolDiagnosticsWorkspace .log-lines span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; line-height: 1.25; }
 
 /* Estado vazio das Sugestões */
 
@@ -277,58 +193,4 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 
 
 
-/* FERRAMENTAS > AVANÇADO (dono, 2026-10-18): mesmos cartões de Ferramentas; anti-apagão no topo; bits e códigos em "Ver detalhes". Sem rolagem. */
-#toolsDrawer > .page-intro > #toolAdvancedToggle { flex: 0 0 auto; min-height: 48px; padding: 0 22px; border-radius: 10px; font-size: 15px; }
-#toolsDrawer.advanced-open > #toolDiagnosticsWorkspace, #toolsDrawer.advanced-open > .tool-actions { display: none; }
-#toolsDrawer > #toolAdvanced { display: none; }
-#toolsDrawer.advanced-open > #toolAdvanced { grid-row: 2 / 4; display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 10px; min-height: 0; overflow: hidden; }
-#toolAdvanced[data-mode="detail"] { grid-template-columns: minmax(0, 1fr) !important; }
-#toolAdvanced > section { min-width: 0; min-height: 0; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
-#toolAdvanced > section > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-#toolAdvanced > section > header small { display: block; color: var(--dim); font-size: 12px; font-weight: 800; letter-spacing: .06em; }
-#toolAdvanced > section > header h3 { margin: 3px 0 0; font-size: 17px; line-height: 1.2; }
-#toolAdvanced > section > header > span { flex: 0 0 auto; padding: 4px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 800; }
-#toolAdvanced .adv-main > header h3 { font-size: 30px; line-height: 1.1; }
-#toolAdvanced .adv-main[data-state="on"] > header h3, #toolAdvanced .adv-main[data-state="on"] > header > span { color: var(--ok); }
-#toolAdvanced .adv-main[data-state="on"] > header > span { border-color: #2c604c; }
-#toolAdvanced .adv-what { margin: 0; color: var(--text); font-size: 15px; line-height: 1.4; }
-#toolAdvanced .adv-hint, #toolAdvanced .adv-note { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
-#toolAdvanced .adv-preview { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
-#toolAdvanced .adv-preview p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
-#toolAdvanced .adv-change { display: flex; align-items: center; gap: 10px; font-size: 18px; }
-#toolAdvanced .adv-change span { color: var(--muted); font-weight: 800; }
-#toolAdvanced .adv-change b { color: var(--ok); }
-#toolAdvanced .adv-result { margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 10px; background: var(--surface-2); font-size: 14px; line-height: 1.4; }
-#toolAdvanced .adv-result[data-level="ok"] { border-left-color: var(--ok); }
-#toolAdvanced .adv-result[data-level="warning"] { border-left-color: var(--warn); }
-#toolAdvanced .adv-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
-#toolAdvanced .adv-actions button { min-height: 56px; padding: 0 18px; border-radius: 10px; font-size: 15px; }
-#toolAdvanced .adv-actions button:disabled { opacity: .45; cursor: default; }
-#toolAdvanced .adv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-#toolAdvanced .adv-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--surface-2); }
-#toolAdvanced .adv-list li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-#toolAdvanced .adv-list b { font-size: 14px; }
-#toolAdvanced .adv-list span { color: var(--muted); font-size: 12px; line-height: 1.3; }
-#toolAdvanced .adv-list em { flex: 0 0 auto; font-style: normal; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
-#toolAdvanced .adv-list em small { color: var(--muted); font-size: 12px; font-weight: 700; }
-#toolAdvanced .adv-more { margin-top: auto; align-self: flex-start; min-height: 56px; padding: 0 20px; border-radius: 10px; font-size: 15px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; }
-#toolAdvanced .adv-more span { color: var(--muted); font-size: 12px; font-weight: 600; }
-#toolAdvanced .adv-detail > header { align-items: center; justify-content: flex-start; gap: 14px; }
-#toolAdvanced .adv-back, #toolAdvanced .adv-tabs button { min-height: 48px; padding: 0 18px; border-radius: 10px; font-size: 15px; }
-#toolAdvanced .adv-tabs { display: flex; gap: 8px; }
-#toolAdvanced .adv-caption { margin: 0; color: var(--muted); font-size: 13px; }
-#toolAdvanced .adv-caption b { color: var(--text); }
-#toolAdvanced .adv-bits { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; }
-#toolAdvanced .adv-bits li { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 10px; border: 1px solid var(--line-soft); border-left: 3px solid var(--line); border-radius: 8px; background: var(--surface-2); font-size: 13px; }
-#toolAdvanced .adv-bits li[data-state="on"] { border-left-color: var(--ok); }
-#toolAdvanced .adv-bits li > span { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
-#toolAdvanced .adv-bits li small { color: var(--muted); font-size: 12px; }
-#toolAdvanced .adv-bits li > b { flex: 0 0 auto; font-size: 13px; }
-#toolAdvanced .adv-bits li[data-state="on"] > b { color: var(--ok); }
-#toolAdvanced .adv-params { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-#toolAdvanced .adv-params > div { display: flex; flex-direction: column; gap: 8px; }
-#toolAdvanced .adv-params small { color: var(--muted); font-size: 12px; }
-#toolAdvanced .adv-params table { border-collapse: collapse; font-size: 14px; }
-#toolAdvanced .adv-params th { text-align: left; color: var(--muted); font-size: 12px; font-weight: 700; padding: 6px 10px 6px 0; }
-#toolAdvanced .adv-params td { padding: 6px 14px 6px 0; font-variant-numeric: tabular-nums; font-weight: 800; }
-#toolAdvanced .adv-raw { margin: 0; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+

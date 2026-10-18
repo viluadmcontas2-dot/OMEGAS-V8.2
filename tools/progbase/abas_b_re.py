@@ -207,3 +207,29 @@ def conserta(s):
         return s.encode('latin-1').decode('utf-8')
     except Exception:
         return s
+
+
+def defaults_construtor(ctx, ini=0x42A9E4, fim=0x42B224):
+    """Stores de constante no objeto TStreamDati feitos pelo construtor (OBS-COD): [(offset, tamanho, valor, endereço)].
+    O construtor é a rotina em 0x42A9E4 (slot DoCreate da VMT do TStreamDati); os stores imediatos
+    `mov [reg+off], imm` com off >= 0x80 caem no próprio objeto (reg = [ebx] = Self).
+    DERIVADO: assume que todos executam (a varredura é linear; ramos condicionais dentro do trecho não foram resolvidos)."""
+    out = []
+    a = ini
+    rx = re.compile(r'(byte|word|dword) ptr \[e\w\w \+ (0x[0-9a-f]+)\], (0x[0-9a-f]+|\d+)$')
+    while a < fim:
+        i = ctx.b.ins(a)
+        if i is None:
+            break
+        a += i.size
+        if i.mnemonic != 'mov':
+            continue
+        m = rx.match(i.op_str)
+        if not m:
+            continue
+        off = int(m.group(2), 16)
+        if off < 0x80 or off > 0x3EBC:
+            continue
+        sz = {'byte': 1, 'word': 2, 'dword': 4}[m.group(1)]
+        out.append((off, sz, int(m.group(3), 0), i.address))
+    return out

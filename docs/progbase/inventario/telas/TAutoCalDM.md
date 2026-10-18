@@ -18,5 +18,5 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `AUTO_CAL_ENABLEGetData` | 0x00512B8C | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `VECT_AUTOCAL_U8_2GetData` | 0x00512B90 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
+| `AUTO_CAL_ENABLEGetData` | 0x00512B8C | 1 | OBS-COD | Ao ler dado de AUTO_CAL_ENABLE (+2 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `VECT_AUTOCAL_U8_2GetData` | 0x00512B90 | 1 | OBS-COD | Ao ler dado de VECT_AUTOCAL_U8_2. Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |

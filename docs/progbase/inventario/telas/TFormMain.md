@@ -105,44 +105,44 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ActionAggiornaExecute` | 0x005035DC | 537 | INFERIDO | chama APIs do Windows CreateProcessW, FormatMessageW, GetLastError |  | CreateProcessW, FormatMessageW, GetLastError | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
-| `ActionApriConfExecute` | 0x00500314 | 712 | INFERIDO | chama APIs do Windows PostMessageW; chama TAebProtocol::IsConnect |  | PostMessageW | BUTTONANNULLA, BUTTONOK, COMBOCARBURANTE1, COMBOCARBURANTE2, IsDebuggerPresent, DeleteMenu, GetSystemMenu, GetSystemMetrics |
-| `ActionApriExecute` | 0x004FE618 | 1082 | INFERIDO | chama APIs do Windows Sleep, PostMessageW; chama TAebProtocol::IsConnect, TFormAttesa.Create; toca OpenDialog, StatusBarMain |  | Sleep, PostMessageW | FINESTRACONFIG, LABELMODELLO34568CILINDRI, LABELMODELLO34CILINDRI, DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
-| `ActionArchivioExecute` | 0x004FF6C4 | 239 | INFERIDO | sem fatos diretos extraíveis (239 bytes; chama 9 funções sem nome) |  |  | BUTTONANNULLA, BUTTONOK, COMBOCARBURANTE1, COMBOCARBURANTE2, IsDebuggerPresent, DeleteMenu, GetSystemMenu, GetSystemMetrics |
-| `ActionAzzeraIdExecute` | 0x005039A0 | 1036 | INFERIDO | chama TAebProtocol::IsConnect; toca ImageLandiConnect, LabelEcuType |  |  | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
-| `ActionBloccoNoteExecute` | 0x004FFE18 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `ActionConfExecute` | 0x004F95F4 | 8 | INFERIDO | chama TFormMain.OpenConfigWindow |  |  |  |
-| `ActionConnettiExecute` | 0x004FB840 | 24 | INFERIDO | sem fatos diretos extraíveis (24 bytes; chama 2 funções sem nome) |  |  |  |
-| `ActionCorrTaraExecute` | 0x00500DE4 | 1080 | INFERIDO | usa textos FINESTRACORRTARATURA; chama TAebProtocol::IsConnect, TFormCorrCalibra.Create, TTranslatorExt::GetString | FINESTRACORRTARATURA |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
-| `ActionDiagnosiExecute` | 0x004FFE24 | 677 | INFERIDO | usa textos FINESTRADIAGNOSI; chama TFormDiagnosi.Create, TTranslatorExt::GetString | FINESTRADIAGNOSI |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
-| `ActionDisconnettiExecute` | 0x004FB858 | 485 | INFERIDO | chama TAebProtocol::Disconnect, TAebProtocol::OffLine; toca ImageLandiConnect |  |  |  |
-| `ActionEsciExecute` | 0x004F8B74 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `ActionFileHcfExecute` | 0x004FFE1C | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `ActionProgrammaExecute` | 0x004FDBD4 | 24 | INFERIDO | sem fatos diretos extraíveis (24 bytes; chama 2 funções sem nome) |  |  | BUTTONANNULLA, BUTTONCAMBIA, BUTTONRIPROGR, LABELAGGCENTRALINA, FindClose, FindFirstFileW, FindNextFileW, IsDebuggerPresent |
-| `ActionResetCentralinaExecute` | 0x00501244 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `ActionResetDaPcExecute` | 0x00501248 | 798 | INFERIDO | chama APIs do Windows Sleep; chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::Disconnect, TAebProtocol::IsConnect, TAebProtocol::OffLine |  | Sleep | LABELSCRITTURACONFIG, DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
-| `ActionSalvaConfExecute` | 0x005000CC | 582 | INFERIDO | chama APIs do Windows PostMessageW; chama TAebProtocol::IsConnect |  | PostMessageW | BUTTONANNULLA, BUTTONOK, COMBOCARBURANTE1, COMBOCARBURANTE2, IsDebuggerPresent, DeleteMenu, GetSystemMenu, GetSystemMetrics |
-| `ActionSalvaExecute` | 0x004FEA54 | 3181 | INFERIDO | usa textos FINESTRACONFIG, LABELMODELLO34568CILINDRI, LABELMODELLO34CILINDRI; chama APIs do Windows PostMessageW; chama TFormAttesa.Create, TTranslatorExt::GetString; toca SaveDialog, StatusBarMain | FINESTRACONFIG, LABELMODELLO34568CILINDRI, LABELMODELLO34CILINDRI | PostMessageW | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
-| `ActionSalvaMappaExecute` | 0x004FFE20 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
-| `ActionTaraExecute` | 0x00500DDC | 8 | INFERIDO | chama TFormMain.OpenFormAutotaratura |  |  |  |
-| `ActionUpdateExecute` | 0x005035D4 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  | LABELAGGCENTRALINA, LABELAGGCONFIG, LABELCONNCENTRALINA, LABELPREPAGGCONFIG, FindClose, FindFirstFileW, FindNextFileW, SetLastError |
-| `ActionVisualizzaExecute` | 0x00501568 | 677 | INFERIDO | usa textos FINESTRAVISUALIZZA; chama TFormVisualizza.Create, TTranslatorExt::GetString | FINESTRAVISUALIZZA |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
-| `AfterCalibraOpenedFromAutocal` (sem evento no DFM) | 0x00500DA8 | 51 | INFERIDO | chama TFormMain.OpenConfigWindow |  |  |  |
-| `FormClose` | 0x004F35C4 | 429 | INFERIDO | chama TAebProtocol::IsConnect, TAebProtocol::ReadPort, TAebProtocol::SetWindowHandle, TAebRegistryData::SetIntData; toca ActionDisconnetti |  |  |  |
-| `FormCloseQuery` | 0x004FBDE8 | 52 | INFERIDO | sem fatos diretos extraíveis (52 bytes; chama 2 funções sem nome) |  |  |  |
-| `FormPaint` | 0x004F3C74 | 395 | INFERIDO | toca StatusBarMain |  |  |  |
-| `FormResize` | 0x005037F8 | 414 | INFERIDO | toca StatusBarMain |  |  |  |
-| `FormShow` | 0x004F3E14 | 2614 | INFERIDO | chama APIs do Windows Sleep; toca OpenDialog, SaveDialog |  | Sleep |  |
-| `ImageBeeClick` | 0x004F917C | 19 | INFERIDO | chama TAebProtocol::ShowAebBeeSettings |  |  |  |
-| `ImageLandiConnectClick` | 0x005040EC | 101 | INFERIDO | chama TFormLandiConnect.Create |  |  |  |
-| `ImageServiceClick` | 0x00503FB0 | 279 | INFERIDO | chama TAebProtocol::IsConnect, TFormService.Create; toca ActionApri |  |  |  |
-| `MenuAboutClick` | 0x004F7808 | 147 | INFERIDO | toca LabelConfig |  |  | BUTTONESCI, BUTTON_DELETE_LICENSE, BUTTON_LOAD_LICENSE, BUTTON_REQUEST_LICENSE |
-| `OpenConfigWindow` (sem evento no DFM) | 0x004F9190 | 1121 | INFERIDO | usa textos FINESTRACONFIG; chama TAebProtocol::IsConnect, TTranslatorExt::GetString | FINESTRACONFIG |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
-| `OpenFormAutotaratura` (sem evento no DFM) | 0x0050093C | 1093 | INFERIDO | usa textos FINESTRATARATURA; chama TAebProtocol::IsConnect, TFormCalibra.Create, TTranslatorExt::GetString | FINESTRATARATURA |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
-| `Plot1Click` | 0x0050417C | 160 | INFERIDO | sem fatos diretos extraíveis (160 bytes; chama 6 funções sem nome) |  |  |  |
-| `StatusBarMainDrawPanel` | 0x004FF7D4 | 1098 | INFERIDO | chama TAebProtocol::IsConnect |  |  |  |
-| `TimerExpiredTimer` | 0x004F3774 | 127 | INFERIDO | toca TimerExpired |  |  |  |
-| `TimerUpdateTimer` | 0x004F37F4 | 1113 | INFERIDO | chama APIs do Windows GetTickCount, Sleep; toca TimerUpdate |  | GetTickCount, Sleep | InternetAttemptConnect, InternetConnectW, InternetGetConnectedState, InternetOpenW |
+| `ActionAggiornaExecute` | 0x005035DC | 537 | INFERIDO | Ao clicar em BitBtnAggiorna (+1 componentes): chama APIs CreateProcessW, FormatMessageW, GetLastError. |  | CreateProcessW, FormatMessageW, GetLastError | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
+| `ActionApriConfExecute` | 0x00500314 | 712 | INFERIDO | Ao clicar em BitBtnApriConfig (+1 componentes): chama APIs PostMessageW; chama TAebProtocol::IsConnect. |  | PostMessageW | BUTTONANNULLA, BUTTONOK, COMBOCARBURANTE1, COMBOCARBURANTE2, IsDebuggerPresent, DeleteMenu, GetSystemMenu, GetSystemMetrics |
+| `ActionApriExecute` | 0x004FE618 | 1082 | INFERIDO | Ao executar a ação MenuApri «&Abrir configuração...» (+1 componentes): chama APIs Sleep, PostMessageW; chama TAebProtocol::IsConnect, TFormAttesa.Create; mexe em OpenDialog, StatusBarMain. |  | Sleep, PostMessageW | FINESTRACONFIG, LABELMODELLO34568CILINDRI, LABELMODELLO34CILINDRI, DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `ActionArchivioExecute` | 0x004FF6C4 | 239 | INFERIDO | Ao executar a ação MenuArchivio «Instruções de montagem» (+1 componentes): corpo de 239 bytes sem fatos diretos (chama 9 funções sem nome). |  |  | BUTTONANNULLA, BUTTONOK, COMBOCARBURANTE1, COMBOCARBURANTE2, IsDebuggerPresent, DeleteMenu, GetSystemMenu, GetSystemMetrics |
+| `ActionAzzeraIdExecute` | 0x005039A0 | 1036 | INFERIDO | Ao executar a ação ActionAzzeraId «ActionAzzeraId»: chama TAebProtocol::IsConnect; mexe em ImageLandiConnect, LabelEcuType. |  |  | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `ActionBloccoNoteExecute` | 0x004FFE18 | 1 | OBS-COD | Ao executar a ação MenuBloccoNote «Apri configurazione in &blocco note...» (+1 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `ActionConfExecute` | 0x004F95F4 | 8 | INFERIDO | Ao clicar em BitBtnConfig (+1 componentes): chama TFormMain.OpenConfigWindow. |  |  |  |
+| `ActionConnettiExecute` | 0x004FB840 | 24 | INFERIDO | Ao executar a ação MenuConnetti «&Ligar» (+1 componentes): corpo de 24 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `ActionCorrTaraExecute` | 0x00500DE4 | 1080 | INFERIDO | Ao clicar em BitBtnCorrTara (+1 componentes): usa textos FINESTRACORRTARATURA; chama TAebProtocol::IsConnect, TFormCorrCalibra.Create, TTranslatorExt::GetString. | FINESTRACORRTARATURA |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
+| `ActionDiagnosiExecute` | 0x004FFE24 | 677 | INFERIDO | Ao clicar em BitBtnDiagnosi (+1 componentes): usa textos FINESTRADIAGNOSI; chama TFormDiagnosi.Create, TTranslatorExt::GetString. | FINESTRADIAGNOSI |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
+| `ActionDisconnettiExecute` | 0x004FB858 | 485 | INFERIDO | Ao executar a ação MenuDisconnetti «&Desconectar» (+1 componentes): chama TAebProtocol::Disconnect, TAebProtocol::OffLine; mexe em ImageLandiConnect. |  |  |  |
+| `ActionEsciExecute` | 0x004F8B74 | 6 | INFERIDO | Ao clicar em BitBtnEsci (+2 componentes): corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ActionFileHcfExecute` | 0x004FFE1C | 1 | OBS-COD | Ao executar a ação MenuFileHcf «Salva configurazione su file hcf...» (+1 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `ActionProgrammaExecute` | 0x004FDBD4 | 24 | INFERIDO | Ao clicar em BitBtnRiprogramma (+1 componentes): corpo de 24 bytes sem fatos diretos (chama 2 funções sem nome). |  |  | BUTTONANNULLA, BUTTONCAMBIA, BUTTONRIPROGR, LABELAGGCENTRALINA, FindClose, FindFirstFileW, FindNextFileW, IsDebuggerPresent |
+| `ActionResetCentralinaExecute` | 0x00501244 | 1 | OBS-COD | Ao executar a ação MenuResetCpu «&Reset ECU» (+1 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `ActionResetDaPcExecute` | 0x00501248 | 798 | INFERIDO | Ao executar a ação ActionResetDaPc «ActionResetDaPc»: chama APIs Sleep; chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::Disconnect, TAebProtocol::IsConnect, TAebProtocol::OffLine. |  | Sleep | LABELSCRITTURACONFIG, DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `ActionSalvaConfExecute` | 0x005000CC | 582 | INFERIDO | Ao clicar em BitBtnSalvaConfig (+1 componentes): chama APIs PostMessageW; chama TAebProtocol::IsConnect. |  | PostMessageW | BUTTONANNULLA, BUTTONOK, COMBOCARBURANTE1, COMBOCARBURANTE2, IsDebuggerPresent, DeleteMenu, GetSystemMenu, GetSystemMetrics |
+| `ActionSalvaExecute` | 0x004FEA54 | 3181 | INFERIDO | Ao executar a ação MenuSalva «&Guardar configuração...» (+1 componentes): usa textos FINESTRACONFIG, LABELMODELLO34568CILINDRI, LABELMODELLO34CILINDRI; chama APIs PostMessageW; chama TFormAttesa.Create, TTranslatorExt::GetString; mexe em SaveDialog, StatusBarMain. | FINESTRACONFIG, LABELMODELLO34568CILINDRI, LABELMODELLO34CILINDRI | PostMessageW | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `ActionSalvaMappaExecute` | 0x004FFE20 | 1 | OBS-COD | Ao executar a ação MenuSalvaMappa «Salva solo mappa in configurazione...» (+1 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
+| `ActionTaraExecute` | 0x00500DDC | 8 | INFERIDO | Ao clicar em BitBtnTara (+1 componentes): chama TFormMain.OpenFormAutotaratura. |  |  |  |
+| `ActionUpdateExecute` | 0x005035D4 | 6 | INFERIDO | Ao executar a ação ActionUpdate: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  | LABELAGGCENTRALINA, LABELAGGCONFIG, LABELCONNCENTRALINA, LABELPREPAGGCONFIG, FindClose, FindFirstFileW, FindNextFileW, SetLastError |
+| `ActionVisualizzaExecute` | 0x00501568 | 677 | INFERIDO | Ao clicar em BitBtnVisualizzazione (+1 componentes): usa textos FINESTRAVISUALIZZA; chama TFormVisualizza.Create, TTranslatorExt::GetString. | FINESTRAVISUALIZZA |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
+| `AfterCalibraOpenedFromAutocal` (sem evento no DFM) | 0x00500DA8 | 51 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): chama TFormMain.OpenConfigWindow. |  |  |  |
+| `FormClose` | 0x004F35C4 | 429 | INFERIDO | Ao fechar o formulário FormMain «Initializing...»: chama TAebProtocol::IsConnect, TAebProtocol::ReadPort, TAebProtocol::SetWindowHandle, TAebRegistryData::SetIntData; mexe em ActionDisconnetti. |  |  |  |
+| `FormCloseQuery` | 0x004FBDE8 | 52 | INFERIDO | Ao pedir para fechar o formulário FormMain «Initializing...»: corpo de 52 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
+| `FormPaint` | 0x004F3C74 | 395 | INFERIDO | Ao pintar FormMain «Initializing...»: mexe em StatusBarMain. |  |  |  |
+| `FormResize` | 0x005037F8 | 414 | INFERIDO | Ao redimensionar FormMain «Initializing...»: mexe em StatusBarMain. |  |  |  |
+| `FormShow` | 0x004F3E14 | 2614 | INFERIDO | Ao exibir o formulário FormMain «Initializing...»: chama APIs Sleep; mexe em OpenDialog, SaveDialog. |  | Sleep |  |
+| `ImageBeeClick` | 0x004F917C | 19 | INFERIDO | Ao clicar em ImageBee: chama TAebProtocol::ShowAebBeeSettings. |  |  |  |
+| `ImageLandiConnectClick` | 0x005040EC | 101 | INFERIDO | Ao clicar em ImageLandiConnect: chama TFormLandiConnect.Create. |  |  |  |
+| `ImageServiceClick` | 0x00503FB0 | 279 | INFERIDO | Ao clicar em ImageServiceOff (+4 componentes): chama TAebProtocol::IsConnect, TFormService.Create; mexe em ActionApri. |  |  |  |
+| `MenuAboutClick` | 0x004F7808 | 147 | INFERIDO | Ao clicar em MenuAbout «&Informações sobre...»: mexe em LabelConfig. |  |  | BUTTONESCI, BUTTON_DELETE_LICENSE, BUTTON_LOAD_LICENSE, BUTTON_REQUEST_LICENSE |
+| `OpenConfigWindow` (sem evento no DFM) | 0x004F9190 | 1121 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): usa textos FINESTRACONFIG; chama TAebProtocol::IsConnect, TTranslatorExt::GetString. | FINESTRACONFIG |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
+| `OpenFormAutotaratura` (sem evento no DFM) | 0x0050093C | 1093 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): usa textos FINESTRATARATURA; chama TAebProtocol::IsConnect, TFormCalibra.Create, TTranslatorExt::GetString. | FINESTRATARATURA |  | MESSCONTACT, MESSDAYS, MESSEXPIRED, MESSWILLEXPIRE, IsDebuggerPresent |
+| `Plot1Click` | 0x0050417C | 160 | INFERIDO | Ao clicar em Plot1 «Gráfico»: corpo de 160 bytes sem fatos diretos (chama 6 funções sem nome). |  |  |  |
+| `StatusBarMainDrawPanel` | 0x004FF7D4 | 1098 | INFERIDO | Ao desenhar painel de StatusBarMain: chama TAebProtocol::IsConnect. |  |  |  |
+| `TimerExpiredTimer` | 0x004F3774 | 127 | INFERIDO | A cada tick do temporizador TimerExpired: mexe em TimerExpired. |  |  |  |
+| `TimerUpdateTimer` | 0x004F37F4 | 1113 | INFERIDO | A cada tick do temporizador TimerUpdate (intervalo 10000 ms): chama APIs GetTickCount, Sleep; mexe em TimerUpdate. |  | GetTickCount, Sleep | InternetAttemptConnect, InternetConnectW, InternetGetConnectedState, InternetOpenW |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

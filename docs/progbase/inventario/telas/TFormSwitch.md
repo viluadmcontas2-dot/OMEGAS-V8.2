@@ -21,15 +21,15 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonExitClick` | 0x00412B30 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
-| `ComboBuzzerEnter` | 0x00412E40 | 25 | INFERIDO | toca ComboBuzzer |  |  |  |
-| `ComboBuzzerKeyPress` | 0x00412E5C | 188 | INFERIDO | toca EditBuzzer |  |  |  |
-| `EditSwitchEnter` | 0x00412B38 | 50 | INFERIDO | sem fatos diretos extraíveis (50 bytes; chama 1 funções sem nome) |  |  |  |
-| `EditSwitchKeyPress` | 0x00412B6C | 361 | INFERIDO | toca ComboBuzzer, TrackBarLed |  |  |  |
-| `FormClose` | 0x00412AB8 | 102 | INFERIDO | chama TAebProtocol::SendCommand |  |  |  |
-| `FormKeyPress` | 0x00412B20 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
-| `TrackBarLedChange` | 0x00412CEC | 338 | INFERIDO | chama APIs do Windows GetKeyState; toca EditLed, TrackBarLed |  | GetKeyState |  |
-| `TrackBarLedEnter` | 0x00412CD8 | 19 | INFERIDO | sem fatos diretos extraíveis (19 bytes; chama 0 funções sem nome) |  |  |  |
+| `ButtonExitClick` | 0x00412B30 | 6 | INFERIDO | Ao clicar em ButtonExit «Sair»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ComboBuzzerEnter` | 0x00412E40 | 25 | INFERIDO | Ao entrar no campo ComboBuzzer: mexe em ComboBuzzer. |  |  |  |
+| `ComboBuzzerKeyPress` | 0x00412E5C | 188 | INFERIDO | Ao digitar (filtro de teclas) em ComboBuzzer: mexe em EditBuzzer. |  |  |  |
+| `EditSwitchEnter` | 0x00412B38 | 50 | INFERIDO | Ao entrar no campo EditLed (+1 componentes): corpo de 50 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `EditSwitchKeyPress` | 0x00412B6C | 361 | INFERIDO | Ao digitar (filtro de teclas) em EditLed (+1 componentes): mexe em ComboBuzzer, TrackBarLed. |  |  |  |
+| `FormClose` | 0x00412AB8 | 102 | INFERIDO | Ao fechar o formulário FormSwitch «Switch settings»: chama TAebProtocol::SendCommand. |  |  |  |
+| `FormKeyPress` | 0x00412B20 | 14 | INFERIDO | Ao digitar (filtro de teclas) em FormSwitch «Switch settings»: corpo de 14 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `TrackBarLedChange` | 0x00412CEC | 338 | INFERIDO | Quando muda o valor de TrackBarLed: chama APIs GetKeyState; mexe em EditLed, TrackBarLed. |  | GetKeyState |  |
+| `TrackBarLedEnter` | 0x00412CD8 | 19 | INFERIDO | Ao entrar no campo TrackBarLed: corpo de 19 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

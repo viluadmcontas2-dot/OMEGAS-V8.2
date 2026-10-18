@@ -5,11 +5,11 @@
 - [ ] Cartão "Anti-apagão" (ligar/desligar + 5 números editáveis, Restaurar fábrica) — fluxo: prévia, 2º toque, ACK, leitura de volta, Desfazer
 - [ ] Cartão "Marcha lenta" (Só gás / Segurar com gasolina na parada / Sempre gasolina na parada) — app só SUGERE
 - [ ] Leveza (orçamentos de nós/timers/renders) + testes e2e de toque verdes
-- [ ] CI verde → APK (verde-apk-now.yml) → STATUS.md v8
+- [ ] CI verde → APK (verde-apk-now.yml) → STATUS.md v8 → enviar APK extraído ao Drive, pasta OMEGAS (id 1eK0IISPKFeY4FRaCDrYZcSY_zPLsWoIq), nome 'OMEGAS versão nova' (limite do conector: 10 MB; se maior, avisar o dono com o link do artefato da CI)
 - [ ] Limpar menções ao fabricante/legado do app/ (comentários, textos, nomes); pesquisa fica fora do app
 
 ## Depois do APK (visão do dono: inteligência por trás, interface enxuta)
-1. Graphify didático do ProgBase (aba → controle → comando → resposta → evidência → equivalente no app)
+1. Graphify didático do ProgBase; cada nó de evidência carrega o evidence id do REA e o caminho do doc (um só índice: docs/progbase/INDEX.md → doc → evidence id → função/endereço). Teste de integridade: todo evidence id citado em docs existe no bundle exportado e todo nó do grafo aponta para um arquivo existente (aba → controle → comando → resposta → evidência → equivalente no app)
 2. Cobertura: % do original já reconstruído (funções/abas/comandos) e backlog só do que falta
 3. Perfil da central: identificar modelo/versão da ECU e só oferecer/enviar o que ela suporta (MASK_FUNCTION, NACK `CA` como sinal)
 4. Diagnóstico inteligente: analisa a sessão, acha onde apaga, sugere (nunca aplica sozinho) anti-apagão, marcha lenta, saída do corte

@@ -1,0 +1,807 @@
+{
+ "TAboutBox.AboutImageDblClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Duplo clique na imagem: alterna a visibilidade das abas ocultas (Licença/Código do usuário) e do rótulo de dias restantes. OBS-COD (campos tocados); propósito INFERIDO."
+ },
+ "TAboutBox.ButtonDeleteLicenseClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Apagar arquivo de licença atual\": remove \"\\License.dat\". Só descrição da função. OBS-COD (literal)."
+ },
+ "TAboutBox.ButtonLoadLicenseClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botão \"Carregar arquivo de licença\": abre diálogo e copia o arquivo escolhido para \"\\License.dat\" (CopyFileW). Só descrição da função. OBS-COD."
+ },
+ "TAboutBox.ButtonRequestClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botão \"Solicitar nova licença\": abre o navegador (ShellExecuteW) numa página do servidor do fabricante (…LastVersion.aspx?Mode=Ext&ProgramSelector=…&VerSw=…&UserCode=…), enviando versão e código do usuário. Só descrição da função. OBS-COD (APIs/literais)."
+ },
+ "TAboutBox.ButtonSendByMailClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botão \"Enviar por e-mail\": monta uma mensagem (MAPI) para info@serviceapplications.net com o código do usuário (assunto \"Omegas Landi Renzo User Code\"); avisa se o anexo não for encontrado. OBS-COD (literais)."
+ },
+ "TAboutBox.EditRegCodeKeyUp": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Valida/formata o código de registro conforme é digitado (campo EditRegCode). INFERIDO (nome+campo)."
+ },
+ "TAboutBox.OkButtonClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão Sair/OK: grava o código de registro digitado (EditRegCode) no registro do Windows (\\Software\\…\\RegCode) e fecha. OBS-COD (literais)."
+ },
+ "TAebBeeFormLight.ButtonChangePinClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Mudar PIN\" do dispositivo: grava novo PIN no dispositivo sem fio. INFERIDO."
+ },
+ "TAebBeeFormLight.ButtonConnectMcuClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Conecta ao dispositivo remoto selecionado. INFERIDO."
+ },
+ "TAebBeeFormLight.ButtonDisconnectMcuClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Desconecta do dispositivo remoto. INFERIDO."
+ },
+ "TAebBeeFormLight.ButtonProgramDongleClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Programar arquivo\" do dongle local: grava firmware no dongle sem fio (3409 B; usa Sleep e a classe de protocolo). Escreve no dispositivo. PERIGOSO (firmware do dongle). INFERIDO pelo nome."
+ },
+ "TAebBeeFormLight.ButtonProgramMcuClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Programar arquivo\" do dispositivo remoto (MCU) por rádio (3685 B). PERIGOSO (firmware). INFERIDO."
+ },
+ "TAebBeeFormLight.ButtonReadPinClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Ler PIN\". INFERIDO."
+ },
+ "TAebBeeFormLight.ButtonRemovePinClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Remover PIN\". INFERIDO."
+ },
+ "TAebBeeFormLight.ButtonScanClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Executar varredura\": procura dispositivos sem fio e lista em ListDevice. INFERIDO."
+ },
+ "TAebBeeFormLight.ButtonScanEnergyClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Varredura de energia por canal (mede o ruído RF; mostra \"Time: …\"). OBS-COD (literal); propósito INFERIDO."
+ },
+ "TAebBeeFormLight.ButtonSfogliaDongleClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botão \"Procurar…\" de firmware do dongle (diálogo de arquivo, filtro \"Firmware\"). OBS-COD."
+ },
+ "TAebBeeFormLight.ButtonSfogliaMcuClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botão \"Procurar…\" de firmware do dispositivo remoto. OBS-COD."
+ },
+ "TAebBeeFormLight.TimerUpdateTimer": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Atualiza os rótulos \"Energy (…)\" e \"Quality (…)\" do link sem fio. OBS-COD (literais)."
+ },
+ "TAutoCalSettings.CalibrationValWriteItem": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Grava o valor editado do vetor de calibração (TAebVector/TAebNumber::SetInt); em erro mostra \"Error!\". OBS-COD."
+ },
+ "TAutoCalSettings.FormClose": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Ao fechar grava no registro/INI as opções (showstatusmessage, showchartzones, showchartpoint, SETTINGS…). OBS-COD (literais)."
+ },
+ "TAutoCalUI.ActionAutoCalRifExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu \"Modify map refs\": abre TFormRifAutocal (referências do AutoCal). OBS-COD."
+ },
+ "TAutoCalUI.ActionAutoMatchExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
+ },
+ "TAutoCalUI.ActionChangeColorExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu \"Customize chart colors…\": abre TAutocalColorSettings. OBS-COD."
+ },
+ "TAutoCalUI.ActionDeleteSelectedPointsExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu \"Delete selected points\": remove pontos selecionados de gás/gasolina das séries do gráfico. OBS-COD (campos)."
+ },
+ "TAutoCalUI.ActionExportChartDataExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto)."
+ },
+ "TAutoCalUI.ActionExportChartPointExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto)."
+ },
+ "TAutoCalUI.ActionExportKChartExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto)."
+ },
+ "TAutoCalUI.ActionExportToKExecute": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Exporta os pontos para a tabela K (ExportToK). INFERIDO."
+ },
+ "TAutoCalUI.ActionFinishAutocalExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu/ação \"Finalizar AutoCal\": lê/escreve flags do módulo (TAebNumber GetInt/SetInt) para encerrar a calibração automática. Escreve na ECU. OBS-COD (chamadas)."
+ },
+ "TAutoCalUI.ActionGoToMinCalibrationExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
+ },
+ "TAutoCalUI.ActionResetAllExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
+ },
+ "TAutoCalUI.ActionResetGasExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
+ },
+ "TAutoCalUI.ActionResetKFactorExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu \"Reset k-factor…\": regrava o fator K (TAebVector::SetDouble). Escreve na ECU. OBS-COD."
+ },
+ "TAutoCalUI.ActionResetPetrolExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
+ },
+ "TAutoCalUI.BtnFinishAutomatchClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Finish automatch\": encerra o automatch (GetInt/SetInt em TAebNumber). OBS-COD."
+ },
+ "TAutoCalUI.SettingsImgClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Ícone de configurações: abre TAutoCalSettings (cor do gráfico, k, banda, rpm, pontos). OBS-COD."
+ },
+ "TAutoCalUI.TimerMessageSwitchToGasTimer": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Temporizador da mensagem \"mudou para gás\" (UserMessageLabel). OBS-COD (campos)."
+ },
+ "TAutocalColorSettings.Image1Click": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Imagem: carrega as cores padrão (AUTOCALSETTINGSLOADDEFCOLOR). OBS-COD."
+ },
+ "TAutocalColorSettings.OKClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "OK: salva as cores e fecha (texto AUTOCALSETTINGSSAVEEXIT). OBS-COD."
+ },
+ "TFormAggKey.FormShow": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Mostra o aviso de que a chave de hardware expirou (ou expirará em N dias) com textos MESSEXPIRED/MESSWILLEXPIRE/MESSCONTACT/MESSUPDATECODE e os botões \"Atualizar\" (MESSCHARGEKEY) e \"Depois\" (MESSBUTTLATER). Função: renovação do prazo da chave; o campo EditAgg recebe o código de renovação. OBS-COD (textos)."
+ },
+ "TFormCalibra.ButtonEsciClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botões Cancelar/Sair (6 B): fecha. OBS-COD."
+ },
+ "TFormCalibra.ButtonProseguiClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Continuar\": avança do painel de instrução (monoplug) para a calibração. OBS-COD (campos)."
+ },
+ "TFormCalibra.FormClose": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Ao fechar a calibração: envia comando de término à ECU (SendCommand). OBS-COD."
+ },
+ "TFormCalibra.FormKeyPress": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Teclas durante a calibração (724 B): permite abortar/avançar a calibração e envia comandos à ECU. INFERIDO."
+ },
+ "TFormCalibra.TimerBlinkTimer": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Laço de calibração automática (4239 B): a cada tick lê o estado da ECU (TStreamDati.TimerIO), mostra giri/lambda/pressão/temperaturas/tempos de injeção e envia comandos (TAebProtocol::SendCommand) para avançar a calibração; pisca a mensagem em PanelMessaggio. Comanda a ECU. OBS-COD (chamadas/campos)."
+ },
+ "TFormCentriCelle.ButtonOkClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "OK: valida e grava os centros das células do mapa de carburação (EditRifGiri*/NumEditRifMap*). OBS-COD (campos)."
+ },
+ "TFormCentriCelleK.ButtonOkClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "OK: valida e grava os centros das células do mapa dos coeficientes K. OBS-COD (campos)."
+ },
+ "TFormCorrCalibra.ActionDecrementaZonaExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Ação \"Decrementar zona\" (PgDn): desce a zona selecionada. OBS-COD (API/campos)."
+ },
+ "TFormCorrCalibra.ActionEsciExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Ação Sair (Esc): fecha. OBS-COD."
+ },
+ "TFormCorrCalibra.ActionIncrementaZonaExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Ação \"Incrementar zona\" (PgUp): sobe a zona de calibração selecionada na grade DrawGridK e repinta (InvalidateRect). OBS-COD (API/campos)."
+ },
+ "TFormCorrCalibra.DrawGridKDrawCell": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Desenha as células da grade K (correção de calibração) destacando a zona atual. OBS-COD."
+ },
+ "TFormCorrCalibra.TimerBlinkTimer": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Atualiza lambda/gás/aperto do motor a gasolina e pisca a célula atual (lê TStreamDati.TimerIO). OBS-COD."
+ },
+ "TFormDiagnosi.ButtonAzzeraErroriClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Zerar erros\": envia à ECU o comando de apagar a memória de falhas (1094 B; usa TAebNumber/SetEcuData e textos de confirmação). Escreve na ECU. INFERIDO pelo nome+caption."
+ },
+ "TFormDiagnosi.ButtonAzzeraTempiClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Zerar tempos\": zera os contadores de tempo a gasolina e a gás (LabelTBenz/LabelTGas passam a \"0:00\"). Escreve na ECU: INFERIDO. OBS-COD (literal \"0:00 \")."
+ },
+ "TFormDiagnosi.ButtonResetFFClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão Reset do quadro de congelamento (Freeze Frame): 25 B, chama rotina sem nome. INFERIDO."
+ },
+ "TFormDiagnosi.CheckListBoxFFClickCheck": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Marca/desmarca itens da lista de congelamento (freeze frame) a registrar. INFERIDO."
+ },
+ "TFormDiagnosi.CheckSwitchOnDiagnosisClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Caixa \"Habilitar diagnóstico ao ligar\" (switch-on diagnosis). 48 B; grava a opção na estrutura de configuração. INFERIDO."
+ },
+ "TFormDiagnosi.FormActivate": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Ao ativar a tela de Diagnóstico (16 KB): aplica traduções (BUTTONAZZERAERRORI, DIAGNOSI*…), carrega a lista de falhas (\"(Código) descrição do erro\"), códigos EPR (Open Load, Overcurrent…) e configura os painéis de teste. OBS-COD (textos/literais)."
+ },
+ "TFormDiagnosi.FormClose": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Ao fechar: desliga os testes de saída ativos (chama PanelTestOffClick) e restaura a lista. OBS-COD."
+ },
+ "TFormDiagnosi.PanelOffClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botões \"Off\" da seção \"Esclusione iniettori gas\": desliga (exclui) o injetor escolhido (GetEcuData/SetEcuData). Escreve na ECU: PERIGOSO. INFERIDO."
+ },
+ "TFormDiagnosi.PanelOnClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botões \"On\" da seção \"Esclusione iniettori gas\" (injetores A..I): lê (TAebNumber::GetEcuData) e regrava (SetEcuData) um valor da ECU ligado ao injetor escolhido, se conectado. Escreve na ECU: PERIGOSO (afeta a injeção de gás). Chamadas: OBS-COD; efeito sobre o injetor: INFERIDO pelo caption."
+ },
+ "TFormDiagnosi.PanelTestOffClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botões \"Off\" do teste de saídas: envia comando de parada do teste; falha mostra MESSERRORRESETDIAGNOSYSTEST. DERIVADO."
+ },
+ "TFormDiagnosi.PanelTestOnClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botões \"On\" do teste de saídas (Elv1, Elv2, Switch): envia comando de teste (TAebProtocol::SendCommand), mostra aviso LABELDIAGNOSIATTENTION e MESSERRORSETDIAGNOSYSTEST em caso de falha. Aciona eletroválvulas/LED da ECU: PERIGOSO. DERIVADO."
+ },
+ "TFormDiagnosi.TimerTempiTimer": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Atualização periódica (6244 B): lê pacotes da ECU (TAebProtocol::GetPacket) e atualiza os tempos por injetor A..I (gas/benzina), tensões e estados na tela. OBS-COD (chamadas/campos)."
+ },
+ "TFormDiagnosi.TimerTimer": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Temporizador de reconexão: tenta Connect/DisableErrorHandling/EnableErrorHandling quando a ECU não responde. OBS-COD."
+ },
+ "TFormDiagnosi.TimerUpdateTimer": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Atualiza o painel de edição de limites de temperatura do item selecionado de ListDiagnosi. OBS-COD (campos)."
+ },
+ "TFormFile.ButtonOkClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão OK do navegador de arquivos (7251 B): conforme o modo, abre ou salva um arquivo de configuração (.lnc, .ldc, .lec) ou PDF (TFormPdf), com TFormAttesa durante a operação; valida o nome (caracteres proibidos ./\",;). OBS-COD (literais/chamadas)."
+ },
+ "TFormFile.FormActivate": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Ao ativar: monta a árvore de arquivos (pastas ConfigCNG/ConfigLPG) e restringe nomes inválidos. OBS-COD (literais)."
+ },
+ "TFormFile.TreeViewFileClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Clique na árvore: preenche nome/pasta (EditName/EditPath); para .pdf permite visualizar. OBS-COD."
+ },
+ "TFormFile.TreeViewFileDblClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Duplo clique: equivale a OK (chama ButtonOkClick). OBS-COD."
+ },
+ "TFormGraficoDrt.MenuAnnullaZoomClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu Cancelar zoom (Ctrl+Z): restaura o zoom do gráfico. OBS-COD."
+ },
+ "TFormGraficoDrt.MenuEsciClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu Sair (Esc): fecha a janela do gráfico (6 B). OBS-COD."
+ },
+ "TFormGraficoDrt.MenuStampaClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu Imprimir (Ctrl+P): chama PrintDialog1 e imprime o gráfico (ChartDrt). OBS-COD (campos)."
+ },
+ "TFormGraficoDrt.MenuTracceClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu \"Gestão de traços\": abre TFormGestioneTracce (lista \"CheckTrack\" para mostrar/ocultar séries do gráfico). OBS-COD."
+ },
+ "TFormGraficoScope.ActionAddMarkerExecute": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Ação AddMarker (F12): adiciona marcador. 28 B. INFERIDO."
+ },
+ "TFormGraficoScope.ActionNextMarkerExecute": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Vai ao marcador seguinte. INFERIDO."
+ },
+ "TFormGraficoScope.ActionPreviousMarkerExecute": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Vai ao marcador anterior. INFERIDO."
+ },
+ "TFormGraficoScope.ActionRimuoviCursoreExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Remove o cursor (séries SeriesCursorePos/Neg). OBS-COD (campos)."
+ },
+ "TFormGraficoScope.CheckAutoMarkerClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Caixa \"Auto marker\": liga marcadores automáticos. OBS-COD (campo)."
+ },
+ "TFormGraficoScope.MenuRimuoviMarkerClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Remove o marcador selecionado (SeriesMarkersPos/Neg). OBS-COD (campos)."
+ },
+ "TFormGraficoScope.TimerTimer": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Laço de aquisição do osciloscópio (5086 B): lê pacotes (TAebProtocol::GetPacket), alimenta as séries de cursor/marcadores (automáticos, ECU) em ChartDrt. OBS-COD."
+ },
+ "TFormGraficoScope.btnAutoRangeClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"auto range\": ajusta automaticamente mín/máx do eixo. OBS-COD (campos)."
+ },
+ "TFormGraficoScope.btnExportImageClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"exportar\": exporta a imagem do gráfico (EsportDialogDrt, nome padrão \"Acquisition\"). OBS-COD."
+ },
+ "TFormGraficoScope.btnLegendClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão legenda: mostra/oculta legenda e troca a imagem do botão (ImageList1). OBS-COD."
+ },
+ "TFormGraficoScope.btnLoadClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"carregar\": abre OpenDialogDrt e carrega uma aquisição salva no gráfico. OBS-COD (campos)."
+ },
+ "TFormGraficoScope.btnRestoreZoomClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão restaurar zoom. OBS-COD (campo)."
+ },
+ "TFormGraficoScope.btnRunClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"run\": inicia/pausa a aquisição (usa GetTickCount). INFERIDO."
+ },
+ "TFormGraficoScope.btnSaveClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"salvar\": abre SaveDialogDrt e copia o arquivo temporário da aquisição para o destino (CopyFileW). OBS-COD."
+ },
+ "TFormGraficoScope.btnZoomInClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão zoom in. INFERIDO pelo nome."
+ },
+ "TFormGraficoScope.btnZoomOutClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão zoom out (reajusta resolução em EditResolution). OBS-COD (campos)."
+ },
+ "TFormLandiConnect.ButtonResetClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botões \"Reset trip\" e \"Reset totals\": enviam à ECU o comando de zerar contadores de viagem/totais (TAebProtocol::SendCommand). Escreve na ECU. OBS-COD."
+ },
+ "TFormLandiConnect.CheckCambioAutomaticoClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Caixa \"Veículo com câmbio automático\": desliga o aprendizado de marchas e o número máximo. OBS-COD (campos)."
+ },
+ "TFormLandiConnect.CheckEnableGearClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Caixa \"Habilitar aprendizado de marchas\": grava o flag na ECU (TAebNumber::SetInt). OBS-COD."
+ },
+ "TFormLandiConnect.CheckEnableLandiConnectClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Caixa \"Habilitar comunicação Landi Connect\": habilita/desabilita os campos (apr. de marchas, volume do tanque, vazão estática dos injetores, pressão/temperatura de normalização, tabela de offset dos injetores). OBS-COD (campos)."
+ },
+ "TFormLandiConnect.DrawGridInjrTOfsTblDblClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Duplo clique numa célula da tabela de offset dos injetores: edita o valor. INFERIDO."
+ },
+ "TFormLandiConnect.DrawGridInjrTOfsTblDrawCell": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Desenha a tabela de offsets dos injetores (ms) lendo TAebMatrix/TAebVector. OBS-COD."
+ },
+ "TFormLandiConnect.TimerUpdateTimer": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Atualiza periodicamente os valores lidos da ECU (TAebVector::GetEcuData). OBS-COD."
+ },
+ "TFormMain.ActionAggiornaExecute": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Atualizar programa e arquivos: lança o processo auxiliar \"CopyFiles.exe\" (CreateProcessW; erros via FormatMessageW/GetLastError) depois de executar a verificação de licença/validade (sub_501838). Botão \"Aggiorna schede e mappe\". OBS-COD (literal e APIs); propósito INFERIDO."
+ },
+ "TFormMain.ActionApriConfExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Carregar nova configuração\" (BitBtnApriConfig): se há conexão (TAebProtocol::IsConnect) abre TFormFile (sub_4D83CC, navegador de arquivos de configuração do arquivo/archivio) em modo abrir; verifica antes a validade da licença (sub_501838). OBS-COD (chamadas); propósito DERIVADO."
+ },
+ "TFormMain.ActionApriExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Abrir configuração de arquivo (menu Arquivo > Abrir; filtros .lnc/.ldc/.lec): usa OpenDialog, mostra TFormAttesa (espera), carrega o arquivo nos vetores (cadeia inclui sub_439E94, 288 KB na unidade Iodata/TStreamDati, que chama TAebMatrix/TAebNumber/TAebVector Get/SetEcuData e SetDefValue) e usa sub_4F6CC8 (título FINESTRACONFIG; atualiza StatusBarMain). Não foi confirmada escrita na ECU por este handler. Chamadas/literais: OBS-COD; leitura do fluxo: DERIVADO."
+ },
+ "TFormMain.ActionArchivioExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu \"Instruções de montagem\"/\"Archivio schede\": abre TFormFile no modo arquivo (árvore de PDFs/esquemas de montagem; a TFormFile abre .pdf pelo TFormPdf). OBS-COD (cadeia); propósito DERIVADO."
+ },
+ "TFormMain.ActionAzzeraIdExecute": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Ação oculta (Ctrl+A): lê o tipo de ECU (literais \"OMEGAS 4\", \"EVO 360\", \"EVO OBD\", \"EVO L\") e reaplica defaults/vetores (sub_439E94); atualiza LabelEcuType e ImageLandiConnect. Função de manutenção do tipo/ID da ECU: INFERIDO (nome Azzera=zerar, Id)."
+ },
+ "TFormMain.ActionBloccoNoteExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu Arquivo > \"Abrir configuração no bloco de notas\": handler vazio (só RET). OBS-COD."
+ },
+ "TFormMain.ActionConfExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botão \"Configuração do veículo\": 8 bytes, chama OpenConfigWindow (abre TFormConfig). OBS-COD."
+ },
+ "TFormMain.ActionConnettiExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Conectar à ECU (menu Conexão > Conectar, Ctrl+C). Chama sub_425514 (atualiza o estado dos controles do módulo de dados) e sub_4F9C34→sub_4F9C40 (7167 B): rotina de conexão que usa TAebProtocol::Connect/Disconnect/GetIdentification/GetComFail e lê/grava TAebNumber (EcuData); depois habilita/desabilita as ações da tela principal conforme a ECU identificada. Chamadas e rótulos: OBS-COD; propósito: DERIVADO."
+ },
+ "TFormMain.ActionCorrTaraExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Modifica calibrazione\" (correção da calibração): abre TFormCorrCalibra (título FINESTRACORRTARATURA) se conectado, após checagem de licença. OBS-COD."
+ },
+ "TFormMain.ActionDiagnosiExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Diagnóstico\": abre TFormDiagnosi (título FINESTRADIAGNOSI) após checagem de licença. OBS-COD."
+ },
+ "TFormMain.ActionDisconnettiExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Desconectar da ECU (Ctrl+D): TAebProtocol::Disconnect + OffLine, limpa vetores (TAebVector::SetEcuData) e troca o ícone ImageLandiConnect. Sem escrita de configuração. Chamadas: OBS-COD; propósito: DERIVADO."
+ },
+ "TFormMain.ActionEsciExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Sair (6 bytes): encaminha para Close do formulário principal. OBS-COD."
+ },
+ "TFormMain.ActionFileHcfExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu \"Salvar configuração em arquivo hcf\": handler vazio (só RET). OBS-COD."
+ },
+ "TFormMain.ActionProgrammaExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Reprogramar a ECU (botão \"Riprogramma\"/\"Programação\"): chama sub_4FD80C (966 B) que cria TFormAttesa (janela de espera), identifica a ECU (sub_4F95FC: FindPort, GetIdentification, Disconnect), procura arquivos de firmware/configuração (sub_501E5C: FindFirstFileW/FindNextFileW; textos \"Pesquisa/Preparação/Atualização do firmware/configuração\"), abre TFormScarica (sub_505258: botões Programação/Mudar arquivo) e grava a configuração (sub_4FBE8C: textos LABELSCRITTURACONFIG/MESSNOSCRITTURACONFIG). Operação que escreve na ECU (flash). Cadeia de chamadas: OBS-COD; leitura do fluxo: DERIVADO."
+ },
+ "TFormMain.ActionResetCentralinaExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu Conexão > Reset ECU: o handler é só RET (nada acontece) nesta versão; o reset real está em ActionResetDaPcExecute. OBS-COD."
+ },
+ "TFormMain.ActionResetDaPcExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Reset da ECU a partir do PC (ação sem menu visível): lê/escreve TAebNumber (GetEcuData/SetEcuData), mostra LABELSCRITTURACONFIG e desconecta (Disconnect/OffLine); a tabela i18n tem MESSCONFERMARESET/MESSRESETOK/MESSRESETERROR, mas o uso por este handler não foi confirmado. Provável escrita na ECU: PERIGOSO. Chamadas: OBS-COD; propósito: INFERIDO."
+ },
+ "TFormMain.ActionSalvaConfExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Salvar configuração atual\" (BitBtnSalvaConfig): abre TFormFile (navegador de arquivos) em modo salvar, se conectado. OBS-COD (chamadas); propósito DERIVADO."
+ },
+ "TFormMain.ActionSalvaExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Salvar configuração em arquivo (menu Arquivo > Salvar; filtros .lnc/.ldc/.lec/.lrc): usa SaveDialog, TFormAttesa e o texto LABELMODELLO34CILINDRI/…34568CILINDRI (escolha do modelo de 3-4 ou 3-4-5-6-8 cilindros para o arquivo); grava o arquivo com os valores correntes. Não foi confirmada escrita na ECU por este handler. OBS-COD (filtros, diálogo, APIs); propósito DERIVADO."
+ },
+ "TFormMain.ActionSalvaMappaExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu \"Salvar só o mapa na configuração\": handler vazio (só RET). OBS-COD."
+ },
+ "TFormMain.ActionTaraExecute": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botão \"Calibração automática\": chama OpenFormAutotaratura. OBS-COD."
+ },
+ "TFormMain.ActionUpdateExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Atalho de 6 bytes que encaminha para a rotina de atualização de firmware/configuração (mesma cadeia de sub_501E5C: busca arquivos com FindFirstFileW, textos LABELRICERCAAGG*/LABELPREPAGG*/LABELAGG*). Não ligado a menu visível no DFM além da ação. OBS-COD (salto/cadeia); propósito DERIVADO."
+ },
+ "TFormMain.ActionVisualizzaExecute": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Visualização\": abre TFormVisualizza (parâmetros do veículo em tempo real, título FINESTRAVISUALIZZA) após checagem de licença. OBS-COD."
+ },
+ "TFormMain.AfterCalibraOpenedFromAutocal": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Depois da tela de calibração aberta pelo AutoCal, reabre a janela de configuração (OpenConfigWindow). OBS-COD (chamada)."
+ },
+ "TFormMain.FormClose": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Ao fechar o programa: se conectado desconecta, lê a porta (ReadPort) e grava a porta COM escolhida no registro (TAebRegistryData::SetIntData \"ComPort\"). OBS-COD."
+ },
+ "TFormMain.FormCloseQuery": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Ao tentar fechar (52 B): sem fatos diretos extraíveis; provavelmente permite o fechamento. INFERIDO."
+ },
+ "TFormMain.FormPaint": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Repinta a barra de status (StatusBarMain). OBS-COD (campo tocado)."
+ },
+ "TFormMain.FormResize": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Reposiciona a barra de status ao redimensionar. OBS-COD (campo tocado)."
+ },
+ "TFormMain.FormShow": {
+  "evidencia": "DESCONHECIDO",
+  "origem": "curado",
+  "texto": "Ao exibir o formulário principal (2614 B): inicializa OpenDialog/SaveDialog (filtros de arquivo) e a interface; usa Sleep. Detalhe: DESCONHECIDO (chama sub-rotinas sem nome)."
+ },
+ "TFormMain.ImageBeeClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Clique no ícone Bee: abre TAebProtocol::ShowAebBeeSettings (janela de comunicação sem fio TAebBeeFormLight). OBS-COD."
+ },
+ "TFormMain.ImageLandiConnectClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Clique no ícone Landi Connect: abre TFormLandiConnect. OBS-COD."
+ },
+ "TFormMain.ImageServiceClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Clique nos ícones de Service (Off/On/Alert/Pswd): se conectado abre TFormService (gestão de revisões/tagliandi, com PIN). OBS-COD."
+ },
+ "TFormMain.MenuAboutClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu Ajuda > Informações: abre TAboutBox (versão, código do usuário, licença). OBS-COD."
+ },
+ "TFormMain.OpenConfigWindow": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Abre a janela de configuração (TFormConfig, título FINESTRACONFIG) depois de checar conexão (IsConnect) e a validade da licença/chave; mostra TFormAggKey se expirada. OBS-COD (textos/chamadas); propósito DERIVADO."
+ },
+ "TFormMain.OpenFormAutotaratura": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Abre TFormCalibra (calibração automática, título FINESTRATARATURA) se a ECU está conectada; senão mostra MESSNOECU; verifica a licença antes. OBS-COD; propósito DERIVADO."
+ },
+ "TFormMain.Plot1Click": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu Arquivo > Gráfico: abre TFormGraficoScope (osciloscópio de dados em tempo real). OBS-COD (xref à classe); 160 B."
+ },
+ "TFormMain.StatusBarMainDrawPanel": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Desenha os painéis da barra de status; mostra \"Serial number: …\" (ou SerialNumberNotInEcu) e o estado de conexão (IsConnect). OBS-COD (literais)."
+ },
+ "TFormMain.TimerExpiredTimer": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Temporizador de expiração (127 B): controla o aviso/estado de validade (campo TimerExpired). Propósito INFERIDO pelo nome."
+ },
+ "TFormMain.TimerUpdateTimer": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Temporizador de verificação online: monta URL do servidor do fabricante (GetLicense.aspx?ProgramSelector=…&UserCode=…), usa WININET (InternetOpen/Connect, InternetGetConnectedState) e SECUR32 (GetUserNameExW) e lê a resposta HTML (<div id=\"DivMessaggio\">). Função: consulta de licença/mensagem do fabricante. OBS-COD (APIs e literais); propósito INFERIDO."
+ },
+ "TFormModMappa.EditValoreKeyPress": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Filtra a digitação do novo valor da célula do mapa. INFERIDO."
+ },
+ "TFormModificaMappa.EditDataKeyPress": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Filtra a digitação do delta de variação da célula do mapa (677 B). INFERIDO."
+ },
+ "TFormRifAutocal.ButtonOkClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "OK: grava os limites K mín/máx e as referências do AutoCal nos vetores (TAebVector/TAebNumber Get/SetDouble; nomes \"InjT_*\"). Escreve parâmetros na ECU. OBS-COD."
+ },
+ "TFormRiferimenti.FormCloseQuery": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Ao fechar: valida as referências de mapa digitadas (\"Edit*\") e só deixa fechar se coerentes. INFERIDO."
+ },
+ "TFormScarica.ButtonCambiaClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Mudar arquivo\": abre o OpenDialogFile para escolher outro arquivo de firmware/configuração e mostra data/hora do arquivo (CreateFileW, GetFileTime, FileTimeToSystemTime). OBS-COD (APIs)."
+ },
+ "TFormService.ButtonAzzeraNumeroTagliandiEffettuatiClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Zerar\" revisões efetuadas: zera contador (LabelNumTagliandiEffettuati*) após confirmação. Escreve na ECU. INFERIDO."
+ },
+ "TFormService.ButtonModifyPinClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão \"Modificar PIN\": mostra o painel de novo PIN (PanelNewPin). OBS-COD (campos)."
+ },
+ "TFormService.ButtonNewPinClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão OK de novo PIN: usa EditPin/EditPin2 (PIN e confirmação) e volta ao painel de serviço (PanelService). OBS-COD (campos); gravação do PIN: INFERIDO."
+ },
+ "TFormService.ButtonOldPinClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Botão Cancelar do painel de novo PIN: volta ao painel de serviço. OBS-COD (campos)."
+ },
+ "TFormService.ButtonResetPinClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Reset\" do PIN: deriva chave por hash (CryptCreateHash/CryptDeriveKey/CryptEncrypt) do PIN digitado em EditInsPin (propósito: validar/limpar o PIN de serviço; INFERIDO). Descrição da função apenas. APIs: OBS-COD."
+ },
+ "TFormService.CheckDisableGasClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Caixa \"Inibir passagem a gás\": marca que a ECU deve ficar em gasolina; habilita campo \"partidas a gás permitidas\" (EditPartenzeEmergenza) e mostra efetuadas. Escreve na ECU: PERIGOSO (impede o uso do gás). OBS-COD (campos); efeito INFERIDO."
+ },
+ "TFormService.CheckEnableServiceClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Caixa \"Habilitar gestão de revisões (tagliandi)\": liga o campo \"horas a gás restantes até a revisão\" (EditCurrHours) e o memo de dados do instalador. OBS-COD (campos)."
+ },
+ "TFormService.CheckServicePinClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Caixa \"Habilitar proteção de dados com PIN\": mostra o botão \"Modificar PIN\" e o campo de PIN. OBS-COD (campos)."
+ },
+ "TFormService.EditInsPinChange": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Ao digitar o PIN: calcula o hash (CryptoAPI) e compara; quando confere, libera os painéis de dados do instalador. OBS-COD (APIs); comparação: INFERIDO."
+ },
+ "TFormService.EditStandardEnter": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Ao entrar no campo numérico (partidas de emergência): prepara o campo para edição (valor de/para a ECU). INFERIDO."
+ },
+ "TFormService.FormClose": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Ao fechar: criptografa os dados do instalador (MemoData) com CryptoAPI (hash+derivação de chave+CryptEncrypt, CryptGenRandom) e grava na ECU. Escreve na ECU. OBS-COD (APIs); destino INFERIDO."
+ },
+ "TFormSwitch.ButtonExitClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Botão Sair (6 B): fecha. OBS-COD."
+ },
+ "TFormSwitch.FormClose": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Ao fechar: envia à ECU as configurações do comutador (TAebProtocol::SendCommand). Escreve na ECU. OBS-COD."
+ },
+ "TFormSwitch.TrackBarLedChange": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Controle deslizante do brilho do LED do botão comutador: converte e mostra em EditLed e envia à ECU. OBS-COD (GetKeyState + campos)."
+ },
+ "TFormVisualizza.ButtonCommutatoreClick": {
+  "evidencia": "INFERIDO",
+  "origem": "curado",
+  "texto": "Botão \"Comutador\" (230 B): envia à ECU o comando que alterna gasolina/gás (usa Sleep e PostMessage). Escreve/comanda a ECU: PERIGOSO (muda o combustível em uso). INFERIDO pelo caption."
+ },
+ "TFormVisualizza.MenuCominciaDrtClick": {
+  "evidencia": "OBS-COD",
+  "origem": "curado",
+  "texto": "Menu \"Começar DRT\": inicia uma aquisição de dados e prepara arquivo XML (<acquisitionData dateTime=…>, formato de data ddmmyyyyhhnnss). OBS-COD (literais)."
+ },
+ "TFormVisualizza.MenuGraficoClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu \"Gráfico\": abre TFormGraficoDrt (visualização gráfica de aquisição, abre arquivo via OpenDialogDrt). OBS-COD."
+ },
+ "TFormVisualizza.MenuTerminaDrtClick": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Menu \"Terminar DRT\": encerra a aquisição e abre SaveDialogDrt para salvar o arquivo. OBS-COD (campo)."
+ },
+ "TFormVisualizza.Timer1Timer": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Atualização periódica dos parâmetros do veículo (7653 B): lê TStreamDati.TimerIO e atualiza lâmpadas (benzina/gas/cut-off/sotto chiave), lambda, temperaturas, TPS/MAP, tempos de injeção e tensão dos injetores; durante gravação DRT grava pares tempo/valor (literais \"time\", \"value\", \"par001\"…). OBS-COD."
+ },
+ "TStreamDati.TimerIOTimer": {
+  "evidencia": "DERIVADO",
+  "origem": "curado",
+  "texto": "Laço de E/S com a ECU (1415 B): chama TAebProtocol::GetPacket/GetComFail/IsConnect, lê vetores (TAebVector/TAebNumber::GetEcuData), reconecta (Connect/Disconnect/Enable-DisableErrorHandling) e publica estado a janelas via PostMessage. É o relógio de leitura de todas as telas. OBS-COD."
+ }
+}
