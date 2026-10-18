@@ -29,7 +29,7 @@ Método: razão gas_ms/petrol_ms (mediana) nos 60 s antes e 3–60 s depois de c
 
 **Leitura:** nas duas gravações grandes a previsão ficou dentro de ~3%; a pequena é ruidosa (n=6–8). **Limite importante:** gas_ms_diagnostic é o tempo comandado, então escalar com o K é em parte aritmética; isto NÃO prova que o motor se comporta de forma equivalente. Vale para a métrica de pares do Ledger (que usa exatamente essa razão), não para "o carro anda igual".
 
-**Decisão de método:** re-escalar os pares GNV existentes por K_novo/K_velho (por nó) em vez de apagá-los; peso reduzido e nunca como único critério para gravar; substituir por leituras novas conforme chegam. A hipótese continua válida só para a razão de ms até haver mais gravações (precisa de n ≥ 30 por faixa).
+**[SUPERADA em 2026-10-18 — ver `2026-10-18-pares-do-ledger-nao-seguem-o-k.md`: o par do Ledger (`petrol_ms` em GNV) não acompanha o K; a re-escala não foi implementada.]** **Decisão de método (anterior):** re-escalar os pares GNV existentes por K_novo/K_velho (por nó) em vez de apagá-los; peso reduzido e nunca como único critério para gravar; substituir por leituras novas conforme chegam. A hipótese continua válida só para a razão de ms até haver mais gravações (precisa de n ≥ 30 por faixa).
 
 **Tentativa anterior (Codex, `wip/codex-fatia1b`) NÃO mesclada:** quebrou 19 de 667 testes no CI (EquivalenceLedgerTest, RefinementCycleTest, RefinementReviewTest, LiveOnlyLearningStoreTest). Refazer em passos pequenos, cada um verde no CI.
 
