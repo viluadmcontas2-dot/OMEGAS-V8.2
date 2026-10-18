@@ -6,9 +6,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { execFileSync } = require('node:child_process');
 const T = require('./helpers/browser.cjs');
 
-test('Ferramentas desenha os cartões mesmo quando uma consulta auxiliar da central falha', () => {
+function runBridgeFailure(appSource) {
   const tasks = [];
   const host = { innerHTML: '', addEventListener() {}, contains() { return false; }, dataset: {} };
   const nodes = { toolAdvanced: host };
@@ -68,14 +69,24 @@ test('Ferramentas desenha os cartões mesmo quando uma consulta auxiliar da cent
     OmegasUi: { Store, Router, Scheduler, NativeApi, Drawers, AdvancedPanel, createInitialState: () => ({ route: 'autocal', status: {} }) },
   };
   root.window = root;
-  const app = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
-  vm.runInNewContext(app, root, { filename: 'app.js' });
+  vm.runInNewContext(appSource, root, { filename: 'app.js' });
   root.OmegasApp.router.navigate('tools');
   // No WebView, o callback assíncrono de leitura pode lançar. O painel já deve existir,
   // independentemente de quantas tarefas do agendador consigam prosseguir.
   for (const fn of tasks.splice(0, 10)) { try { fn(); } catch (_) {} }
-  assert.match(host.innerHTML, /Anti-apagão/, 'tela ficou vazia após falha na consulta auxiliar');
-  assert.match(host.innerHTML, /Marcha lenta/, 'outro cartão deve continuar visível');
+  return host.innerHTML;
+}
+
+test('RED histórico: v8 deixa Ferramentas vazia quando a consulta auxiliar falha', () => {
+  const baseline = execFileSync('git', ['show', 'eb8c9e8:app/src/main/assets/ui/app.js'], { cwd: T.ROOT, encoding: 'utf8' });
+  assert.doesNotMatch(runBridgeFailure(baseline), /Anti-apagão/, 'a regressão precisa detectar o defeito antigo');
+});
+
+test('GREEN: Ferramentas desenha cartões apesar de falha na leitura auxiliar', () => {
+  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
+  const html = runBridgeFailure(current);
+  assert.match(html, /Anti-apagão/, 'a aba Ferramentas ficou vazia');
+  assert.match(html, /Marcha lenta/, 'outro cartão deve continuar visível');
 });
 
 const skip = T.skipReason() || false;
@@ -128,7 +139,8 @@ test('cartão com defeito exibe tentar de novo e preserva os outros', { skip }, 
         c.id === 'corte' ? Object.defineProperty(c, 'title', { get() { throw Error('cartão falhou'); } }) : c);
       window.__bench.deliver();
     });
-    await T.pump(app.page, 3, { data: true });
+    await T.tap(app.page, '[data-adv-open="valores"]');
+    await T.tap(app.page, '[data-adv-back]');
     assert.match(await app.page.locator('#toolAdvanced [data-card="corte"]').innerText(), /Não foi possível abrir esta parte\. Toque para tentar de novo\./);
     assert.equal(await app.page.locator('#toolAdvanced [data-card="anti"]').count(), 1);
     assert.equal(await app.page.locator('#toolAdvanced [data-card="lenta"]').count(), 1);
