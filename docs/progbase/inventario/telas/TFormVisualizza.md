@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** tela de função (OBS-COD). Visualização em tempo real dos parâmetros do veículo e gravação de aquisição (DRT).
+
 - Instância DFM: `FormVisualizza`; unidade: `@:Visualizza`; ancestral: `TForm`; tamanho de instância: 0x74C; componentes no DFM: 85.
 - Título: "Visualizzazione parametri vettura" — eng: "Vehicle parameter display" / por: "Visualização dos parâmetros do veículo"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.ActionVisualizzaExecute` (0x00501568)

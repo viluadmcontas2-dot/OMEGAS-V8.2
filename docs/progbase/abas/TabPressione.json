@@ -1,0 +1,7252 @@
+{
+ "controles": [
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Lettura della pressione",
+    "Height": 42,
+    "Left": 38,
+    "Top": 98,
+    "Width": 457
+   },
+   "dfm_linha": 4186,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0",
+       "GetFlag1(caso 14) == 0"
+      ],
+      "controle": "LabelTipoPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AE529",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0",
+       "sub_4310E8 == 0",
+       "GetFlag1(caso 14) != 0"
+      ],
+      "controle": "LabelTipoPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AE64A",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "LabelTipoPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AEB83",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 14) == 0"
+      ],
+      "controle": "LabelTipoPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AEBF6",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 14) != 0"
+      ],
+      "controle": "LabelTipoPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AECEB",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTTIPOPRESSIONEMISURATA",
+    "eng": "MAP sensor",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Sensore MAP",
+    "marca": "INFERIDO",
+    "por": "MAP sensor"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTipoPressioneMisurata",
+   "ordem_dfm": 0,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Lettura della pressione",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Sensore di pressione gas",
+    "Height": 42,
+    "Left": 38,
+    "Top": 20,
+    "Visible": "False",
+    "Width": 457
+   },
+   "dfm_linha": 4196,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4AEA85",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": "GetCombo(caso 1)",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTTIPOMISURATORE",
+    "eng": "The function allows the type of pressure/temperature sensor installed to be set",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "La funzione permette di impostare il tipo di sensore pressione/temperatura installato",
+    "marca": "INFERIDO",
+    "por": "The function allows the type of pressure/temperature sensor installed to be set"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTipoMisuratore",
+   "ordem_dfm": 1,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Sensore di pressione gas",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Misuratore di pressione disponibile",
+    "Height": 41,
+    "Left": 38,
+    "Top": 59,
+    "Visible": "False",
+    "Width": 457
+   },
+   "dfm_linha": 4207,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelTipoMisuratorePressione",
+      "da_aba": true,
+      "endereco": "0x4AEAC1",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": "sub_48944C",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTipoMisuratorePressione",
+   "ordem_dfm": 2,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Misuratore di pressione disponibile",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Soglia di flusso subsonico",
+    "Height": 37,
+    "Left": 38,
+    "Top": 238,
+    "Visible": "False",
+    "Width": 417
+   },
+   "dfm_linha": 4216,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "LabelSogliaPress",
+      "da_aba": true,
+      "endereco": "0x4AF20D",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "LabelSogliaPress",
+      "da_aba": true,
+      "endereco": "0x4AF20D",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelSogliaPress",
+      "da_aba": false,
+      "endereco": "0x4AF20D",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelSogliaPress",
+      "da_aba": true,
+      "endereco": "0x4AF20D",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelSogliaPress",
+   "ordem_dfm": 3,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": "Subsonic flow threshold",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELSOGLIAPRESS]",
+    "ita": "Soglia di flusso subsonico",
+    "marca": "OBS-COD",
+    "por": "Limiar de fluxo subsônico"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "T. acqua (°C)",
+    "Height": 39,
+    "Left": 38,
+    "Top": 479,
+    "Width": 165
+   },
+   "dfm_linha": 4225,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "LabelTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4AF29B",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "LabelTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4AF29B",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelTempAcqua",
+      "da_aba": false,
+      "endereco": "0x4AF29B",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4AF29B",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTempAcqua",
+   "ordem_dfm": 4,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": "T.water (°C)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPACQUA]",
+    "ita": "T. acqua (°C)",
+    "marca": "OBS-COD",
+    "por": "T. água (°C)"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Soglia MAP (V)",
+    "Height": 39,
+    "Left": 299,
+    "Top": 479,
+    "Width": 180
+   },
+   "dfm_linha": 4233,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "LabelSogliaMap",
+      "da_aba": true,
+      "endereco": "0x4AF2C3",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "LabelSogliaMap",
+      "da_aba": true,
+      "endereco": "0x4AF2C3",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelSogliaMap",
+      "da_aba": false,
+      "endereco": "0x4AF2C3",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelSogliaMap",
+      "da_aba": true,
+      "endereco": "0x4AF2C3",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelSogliaMap",
+   "ordem_dfm": 5,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": "MAPthreshold (V)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELSOGLIAMAP]",
+    "ita": "Soglia MAP (V)",
+    "marca": "OBS-COD",
+    "por": "Limiar MAP (V)"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "P rid. (bar)",
+    "Height": 39,
+    "Left": 584,
+    "Top": 479,
+    "Width": 133
+   },
+   "dfm_linha": 4241,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "LabelPressRid",
+      "da_aba": true,
+      "endereco": "0x4AF2EB",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "LabelPressRid",
+      "da_aba": true,
+      "endereco": "0x4AF2EB",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelPressRid",
+      "da_aba": false,
+      "endereco": "0x4AF2EB",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelPressRid",
+      "da_aba": true,
+      "endereco": "0x4AF2EB",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelPressRid",
+   "ordem_dfm": 6,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": "P red.(bar)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELPRESSRID]",
+    "ita": "P rid. (bar)",
+    "marca": "OBS-COD",
+    "por": "P red.(bar)"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TKeyComboBox",
+   "dfm": {
+    "Height": 37,
+    "ItemIndex": 1,
+    "Left": 504,
+    "NextControl": "EditOffsetDiff",
+    "PrevControl": "ComboMisuratorePressione",
+    "Style": "csDropDownList",
+    "TabOrder": 2,
+    "Text": "differenziale",
+    "Top": 88,
+    "Width": 252
+   },
+   "dfm_linha": 4249,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 13,
+      "erro": null,
+      "estado_atual_na_ecu": true,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x2000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 13,
+      "erro": null,
+      "estado_atual_na_ecu": true,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x2000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "0486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 04 51 10 23"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "ligar",
+      "caso": 14,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0010",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2496",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 96 24 51 10 53"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 14,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0010",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "ligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": [
+     {
+      "amostras": [
+       {
+        "erro": null,
+        "opcao": 0,
+        "quadros": [],
+        "texto": "assoluta"
+       },
+       {
+        "erro": null,
+        "opcao": 1,
+        "quadros": [],
+        "texto": "differenziale"
+       }
+      ],
+      "fonte": "metodo 0x4310E8 executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboPressioneKeyPress o chama em 0x4AE5F7)",
+      "marca": "INFERIDO",
+      "metodo": "0x4310E8",
+      "tipo": "combo"
+     },
+     {
+      "amostras": [
+       {
+        "erro": null,
+        "opcao": 0,
+        "quadros": [
+         "12 14 00 C1 E7"
+        ],
+        "texto": "assoluta"
+       },
+       {
+        "erro": null,
+        "opcao": 1,
+        "quadros": [
+         "12 14 00 41 67"
+        ],
+        "texto": "differenziale"
+       }
+      ],
+      "fonte": "metodo 0x4310F8 executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboPressioneKeyPress o chama em 0x4AE60A)",
+      "marca": "INFERIDO",
+      "metodo": "0x4310F8",
+      "tipo": "combo"
+     }
+    ]
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0",
+       "chamada virtual dword ptr [edx + 0x104] != 0"
+      ],
+      "controle": "ComboPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AE477",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0",
+       "chamada virtual dword ptr [edx + 0x104] == 0"
+      ],
+      "controle": "ComboPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AE48F",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "ComboPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AE76B",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": "GetFlag1(caso 13)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "ComboPressioneMisurata",
+      "da_aba": true,
+      "endereco": "0x4AEE3D",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": "GetFlag1(caso 13)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE4A6",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE4CA",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE4E6",
+       "funcao": "GetFlag1"
+      },
+      {
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0"
+       ],
+       "controle": "LabelTipoPressioneMisurata",
+       "endereco": "0x4AE529",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0"
+       ],
+       "endereco": "0x4AE5EE",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "alvo": "0x4310E8",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AE5F7",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "cache de TIPO_ACCENS"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4310F8",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0",
+        "sub_4310E8 == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AE60A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224"
+        ],
+        "escreve": [
+         "cache de TIPO_ACCENS"
+        ],
+        "le": [
+         "TIPO_ACCENS",
+         "cache de TIPO_ACCENS"
+        ]
+       }
+      },
+      {
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_4310E8 == 0",
+        "GetFlag1(caso 14) != 0"
+       ],
+       "controle": "LabelTipoPressioneMisurata",
+       "endereco": "0x4AE64A",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE70D",
+       "funcao": "GetFlag1"
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE72D",
+       "funcao": "GetFlag1"
+      },
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) != 0"
+       ],
+       "endereco": "0x4AE73F",
+       "funcao": "GetFlag1"
+      },
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0"
+       ],
+       "endereco": "0x4AE75A",
+       "funcao": "GetFlag1"
+      }
+     ],
+     "endereco": "0x4AE420",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboPressioneKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboPressioneKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 288
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.21",
+    "marca": "OBS-COD",
+    "texto": "Define se existe sensor MAP ligado (fio vermelho/amarelo no sensor original); sem MAP, a volta a gasolina usa a tabela de pressao nos trilhos."
+   },
+   "flags": [
+    {
+     "caso": 13,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x2000",
+     "palavra": 0,
+     "papel": "seletor (TKeyComboBox)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 13,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x2000",
+     "origem": "flags-do-original.json",
+     "palavra": 0,
+     "papel": "seletor (TKeyComboBox)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "caso": 14,
+     "condicao": "sempre",
+     "fonte": "handler ComboPressioneKeyPress (SetFlag1 caso 14)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0010",
+     "origem": "handler ComboPressioneKeyPress",
+     "palavra": 0,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "caso": 31,
+     "condicao": "obj+0x80D!=0",
+     "fonte": "handler ComboPressioneKeyPress (SetFlag1 caso 31)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0080",
+     "origem": "handler ComboPressioneKeyPress",
+     "palavra": 1,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": {
+    "chave": "HINTTIPOPRESSIONEMISURATA",
+    "eng": "MAP sensor",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Sensore MAP",
+    "marca": "INFERIDO",
+    "por": "MAP sensor"
+   },
+   "itens": [
+    {
+     "eng": "differential",
+     "indice": 0,
+     "ita": "assoluta",
+     "por": "diferencial"
+    },
+    {
+     "eng": "not present",
+     "indice": 1,
+     "ita": "differenziale",
+     "por": "não presente"
+    }
+   ],
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboPressioneMisurata",
+   "ordem_dfm": 7,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTipoPressioneMisurata",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Lettura della pressione",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "combo",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": true,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x2000",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0010",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0080",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TKeyComboBox",
+   "dfm": {
+    "Height": 37,
+    "ItemIndex": 0,
+    "Left": 504,
+    "NextControl": "ComboMisuratorePressione",
+    "PrevControl": "EditPressRid",
+    "Style": "csDropDownList",
+    "TabOrder": 0,
+    "Text": "AEB025",
+    "Top": 10,
+    "Visible": "False",
+    "Width": 252
+   },
+   "dfm_linha": 4265,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 14,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0010",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2496",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 96 24 51 10 53"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 14,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0010",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "ligar",
+      "caso": 13,
+      "erro": null,
+      "estado_atual_na_ecu": true,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x2000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 13,
+      "erro": null,
+      "estado_atual_na_ecu": true,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x2000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "0486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 04 51 10 23"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "ligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": [
+     {
+      "amostras": [
+       {
+        "erro": "UcError: Invalid memory write (UC_ERR_WRITE_UNMAPPED) em eip=0x42b22a",
+        "opcao": 0,
+        "quadros": [],
+        "texto": "AEB025"
+       },
+       {
+        "erro": "UcError: Invalid memory write (UC_ERR_WRITE_UNMAPPED) em eip=0x42b22a",
+        "opcao": 1,
+        "quadros": [],
+        "texto": "BOSCH"
+       },
+       {
+        "erro": "UcError: Invalid memory write (UC_ERR_WRITE_UNMAPPED) em eip=0x42b22a",
+        "opcao": 2,
+        "quadros": [],
+        "texto": "SENSATA"
+       },
+       {
+        "erro": "UcError: Invalid memory write (UC_ERR_WRITE_UNMAPPED) em eip=0x42b22a",
+        "opcao": 3,
+        "quadros": [],
+        "texto": "LRE165"
+       }
+      ],
+      "fonte": "metodo 0x43048C executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboTipoMisuratoreKeyPress o chama em 0x4BECEB)",
+      "marca": "INFERIDO",
+      "metodo": "0x43048C",
+      "tipo": "combo"
+     },
+     {
+      "amostras": [
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x430887",
+        "opcao": 0,
+        "quadros": [],
+        "texto": "AEB025"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x430887",
+        "opcao": 1,
+        "quadros": [],
+        "texto": "BOSCH"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x430887",
+        "opcao": 2,
+        "quadros": [],
+        "texto": "SENSATA"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x430887",
+        "opcao": 3,
+        "quadros": [],
+        "texto": "LRE165"
+       }
+      ],
+      "fonte": "metodo 0x430878 executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboTipoMisuratoreKeyPress o chama em 0x4BED3E)",
+      "marca": "INFERIDO",
+      "metodo": "0x430878",
+      "tipo": "combo"
+     }
+    ]
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4BECA9",
+      "marca": "OBS-COD",
+      "metodo": "ComboTipoMisuratoreKeyPress",
+      "origem": null,
+      "propriedade": "Text",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0",
+       "sub_A4EDD0 == 0"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4BED7E",
+      "marca": "OBS-COD",
+      "metodo": "ComboTipoMisuratoreKeyPress",
+      "origem": null,
+      "propriedade": "Text",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0",
+       "sub_A4EDD0 == 0",
+       "sub_A4EDD0 == 0"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4BEE53",
+      "marca": "OBS-COD",
+      "metodo": "ComboTipoMisuratoreKeyPress",
+      "origem": null,
+      "propriedade": "Text",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0",
+       "sub_A4EDD0 == 0",
+       "sub_A4EDD0 == 0",
+       "sub_A4EDD0 == 0"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4BEF28",
+      "marca": "OBS-COD",
+      "metodo": "ComboTipoMisuratoreKeyPress",
+      "origem": null,
+      "propriedade": "Text",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetCombo(caso 1) == 0",
+       "cmp eax, -0x6c == ",
+       "sub_430470 == 0x21e"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4AE87A",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetCombo(caso 1) == 0",
+       "sub_430470 != 0x21e",
+       "sub_430470 == 0x23",
+       "sub_430470 == 0x33a"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4AE8BC",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetCombo(caso 1) == 0",
+       "sub_430470 != 0x21e",
+       "sub_430470 != 0x33a"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4AE8D2",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_430470 != 0x21e",
+       "sub_430470 != 0x33a",
+       "GetCombo(caso 1) != 0",
+       "sub_430470 == 0x23",
+       "sub_430470 == 0x33a"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4AE9D1",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_430470 != 0x21e",
+       "sub_430470 != 0x33a",
+       "GetCombo(caso 1) != 0",
+       "sub_430470 != 0x33a",
+       "sub_430470 == 0x7d",
+       "sub_430470 == 0x2ee"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4AEA13",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_430470 != 0x21e",
+       "sub_430470 != 0x33a",
+       "GetCombo(caso 1) != 0",
+       "sub_430470 != 0x33a",
+       "sub_430470 != 0x2ee",
+       "sub_430470 == 0",
+       "sub_430470 == 0x3e8"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4AEA51",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_430470 != 0x21e",
+       "sub_430470 != 0x33a",
+       "GetCombo(caso 1) != 0",
+       "sub_430470 != 0x33a",
+       "sub_430470 != 0x2ee",
+       "sub_430470 != 0x3e8"
+      ],
+      "controle": "ComboTipoMisuratore",
+      "da_aba": true,
+      "endereco": "0x4AEA64",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "controle": "ComboTipoMisuratore",
+       "endereco": "0x4BECA9",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BECEB",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "edx",
+        4,
+        35
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BECFF",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        5,
+        826
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BED12",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BED22",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BED32",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "alvo": "0x430878",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BED3E",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        0
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x430A0C",
+         "0x4316EC",
+         "0x431738",
+         "0x431AF8",
+         "0x431B7C",
+         "0x432024",
+         "0x43204C"
+        ],
+        "escreve": [],
+        "le": [
+         "TIPO_SENSORE_TEMPERATURA"
+        ]
+       }
+      },
+      {
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "ComboTipoMisuratore",
+       "endereco": "0x4BED7E",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEDC0",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        4,
+        125
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEDD4",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "edx",
+        5,
+        750
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEDE7",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEDF7",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEE07",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "alvo": "0x430878",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEE13",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        2
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x430A0C",
+         "0x4316EC",
+         "0x431738",
+         "0x431AF8",
+         "0x431B7C",
+         "0x432024",
+         "0x43204C"
+        ],
+        "escreve": [],
+        "le": [
+         "TIPO_SENSORE_TEMPERATURA"
+        ]
+       }
+      },
+      {
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "ComboTipoMisuratore",
+       "endereco": "0x4BEE53",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEE95",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "edx",
+        4,
+        0
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEEA9",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        5,
+        1000
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEEBC",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEECC",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEEDC",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "alvo": "0x430878",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEEE8",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        3
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x430A0C",
+         "0x4316EC",
+         "0x431738",
+         "0x431AF8",
+         "0x431B7C",
+         "0x432024",
+         "0x43204C"
+        ],
+        "escreve": [],
+        "le": [
+         "TIPO_SENSORE_TEMPERATURA"
+        ]
+       }
+      },
+      {
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "ComboTipoMisuratore",
+       "endereco": "0x4BEF28",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEF6A",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        4,
+        "-0x6c"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEF7E",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "edx",
+        5,
+        542
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEF91",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEFA1",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "endereco": "0x4BEFB1",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "alvo": "0x430878",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 == 0",
+        "sub_A4EDD0 != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEFBD",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        0
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x430A0C",
+         "0x4316EC",
+         "0x431738",
+         "0x431AF8",
+         "0x431B7C",
+         "0x432024",
+         "0x43204C"
+        ],
+        "escreve": [],
+        "le": [
+         "TIPO_SENSORE_TEMPERATURA"
+        ]
+       }
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEFCE",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "edx",
+        2,
+        100
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4BEFE2",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        3,
+        500
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4BEC34",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboTipoMisuratoreKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboTipoMisuratoreKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 336
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.20",
+    "marca": "OBS-COD",
+    "texto": "Tipo do sensor de pressao do gas instalado (Bosch/Sensata, LRE 165 Matrix, AEB 025...), conforme a versao do sistema."
+   },
+   "flags_todos": [
+    {
+     "caso": 14,
+     "condicao": "sempre",
+     "fonte": "handler ComboTipoMisuratoreKeyPress (SetFlag1 caso 14)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0010",
+     "origem": "handler ComboTipoMisuratoreKeyPress",
+     "palavra": 0,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "caso": 13,
+     "condicao": "sempre",
+     "fonte": "handler ComboTipoMisuratoreKeyPress (SetFlag1 caso 13)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x2000",
+     "origem": "handler ComboTipoMisuratoreKeyPress",
+     "palavra": 0,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "caso": 31,
+     "condicao": "obj+0x80D!=0",
+     "fonte": "handler ComboTipoMisuratoreKeyPress (SetFlag1 caso 31)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0080",
+     "origem": "handler ComboTipoMisuratoreKeyPress",
+     "palavra": 1,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": {
+    "chave": "HINTTIPOMISURATORE",
+    "eng": "The function allows the type of pressure/temperature sensor installed to be set",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "La funzione permette di impostare il tipo di sensore pressione/temperatura installato",
+    "marca": "INFERIDO",
+    "por": "The function allows the type of pressure/temperature sensor installed to be set"
+   },
+   "itens": [
+    {
+     "eng": null,
+     "indice": 0,
+     "ita": "AEB025",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 1,
+     "ita": "BOSCH",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 2,
+     "ita": "SENSATA",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 3,
+     "ita": "LRE165",
+     "por": null
+    }
+   ],
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboTipoMisuratore",
+   "ordem_dfm": 8,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTipoMisuratore",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Sensore di pressione gas",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelTipoMisuratore)"
+   },
+   "tipo": "combo",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0010",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "bit_ligado": true,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x2000",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0080",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TKeyComboBox",
+   "dfm": {
+    "Height": 37,
+    "ItemIndex": 1,
+    "Left": 504,
+    "NextControl": "ComboPressioneMisurata",
+    "PrevControl": "EditPendenzaDiff",
+    "Style": "csDropDownList",
+    "TabOrder": 1,
+    "Text": "differenziale",
+    "Top": 49,
+    "Visible": "False",
+    "Width": 252
+   },
+   "dfm_linha": 4287,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 14,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0010",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2496",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 96 24 51 10 53"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 14,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0010",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "ligar",
+      "caso": 13,
+      "erro": null,
+      "estado_atual_na_ecu": true,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x2000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 13,
+      "erro": null,
+      "estado_atual_na_ecu": true,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x2000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "0486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 04 51 10 23"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "ligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": [
+     {
+      "amostras": [
+       {
+        "erro": null,
+        "opcao": 0,
+        "quadros": [],
+        "texto": "assoluto"
+       },
+       {
+        "erro": null,
+        "opcao": 1,
+        "quadros": [],
+        "texto": "differenziale"
+       }
+      ],
+      "fonte": "metodo 0x4310E8 executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboPressioneKeyPress o chama em 0x4AE5F7)",
+      "marca": "INFERIDO",
+      "metodo": "0x4310E8",
+      "tipo": "combo"
+     },
+     {
+      "amostras": [
+       {
+        "erro": null,
+        "opcao": 0,
+        "quadros": [
+         "12 14 00 C1 E7"
+        ],
+        "texto": "assoluto"
+       },
+       {
+        "erro": null,
+        "opcao": 1,
+        "quadros": [
+         "12 14 00 41 67"
+        ],
+        "texto": "differenziale"
+       }
+      ],
+      "fonte": "metodo 0x4310F8 executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboPressioneKeyPress o chama em 0x4AE60A)",
+      "marca": "INFERIDO",
+      "metodo": "0x4310F8",
+      "tipo": "combo"
+     }
+    ]
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "ComboMisuratorePressione",
+      "da_aba": true,
+      "endereco": "0x4AE465",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "ComboMisuratorePressione",
+      "da_aba": true,
+      "endereco": "0x4AE4B3",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "ComboMisuratorePressione",
+      "da_aba": true,
+      "endereco": "0x4AE71E",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": "GetFlag1(caso 14)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "ComboMisuratorePressione",
+      "da_aba": true,
+      "endereco": "0x4AEDF0",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": "GetFlag1(caso 14)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE4A6",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE4CA",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE4E6",
+       "funcao": "GetFlag1"
+      },
+      {
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0"
+       ],
+       "controle": "LabelTipoPressioneMisurata",
+       "endereco": "0x4AE529",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0"
+       ],
+       "endereco": "0x4AE5EE",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "alvo": "0x4310E8",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AE5F7",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "cache de TIPO_ACCENS"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4310F8",
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0",
+        "sub_4310E8 == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AE60A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224"
+        ],
+        "escreve": [
+         "cache de TIPO_ACCENS"
+        ],
+        "le": [
+         "TIPO_ACCENS",
+         "cache de TIPO_ACCENS"
+        ]
+       }
+      },
+      {
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "sub_4310E8 == 0",
+        "GetFlag1(caso 14) != 0"
+       ],
+       "controle": "LabelTipoPressioneMisurata",
+       "endereco": "0x4AE64A",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE70D",
+       "funcao": "GetFlag1"
+      },
+      {
+       "bits": [
+        {
+         "caso": 14,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0010",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 14,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "endereco": "0x4AE72D",
+       "funcao": "GetFlag1"
+      },
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) != 0"
+       ],
+       "endereco": "0x4AE73F",
+       "funcao": "GetFlag1"
+      },
+      {
+       "bits": [
+        {
+         "caso": 13,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x2000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 13,
+       "condicoes": [
+        "ecx == 0xd",
+        "sub_754CCC == 0",
+        "GetFlag1(caso 14) == 0"
+       ],
+       "endereco": "0x4AE75A",
+       "funcao": "GetFlag1"
+      }
+     ],
+     "endereco": "0x4AE420",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboPressioneKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboPressioneKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 288
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Escolhe qual medidor de pressao esta disponivel. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "flags": [
+    {
+     "caso": 14,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0010",
+     "palavra": 0,
+     "papel": "seletor (TKeyComboBox)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 14,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0010",
+     "origem": "flags-do-original.json",
+     "palavra": 0,
+     "papel": "seletor (TKeyComboBox)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "caso": 13,
+     "condicao": "sempre",
+     "fonte": "handler ComboPressioneKeyPress (SetFlag1 caso 13)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x2000",
+     "origem": "handler ComboPressioneKeyPress",
+     "palavra": 0,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "caso": 31,
+     "condicao": "obj+0x80D!=0",
+     "fonte": "handler ComboPressioneKeyPress (SetFlag1 caso 31)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0080",
+     "origem": "handler ComboPressioneKeyPress",
+     "palavra": 1,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": null,
+   "itens": [
+    {
+     "eng": "differential",
+     "indice": 0,
+     "ita": "assoluto",
+     "por": "diferencial"
+    },
+    {
+     "eng": null,
+     "indice": 1,
+     "ita": "differenziale",
+     "por": null
+    }
+   ],
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboMisuratorePressione",
+   "ordem_dfm": 9,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTipoMisuratorePressione",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Misuratore di pressione disponibile",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "combo",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0010",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "bit_ligado": true,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x2000",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0080",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TGroupBox",
+   "dfm": {
+    "Caption": "Misuratore pressione gas",
+    "Height": 92,
+    "Left": 19,
+    "TabOrder": 3,
+    "Top": 137,
+    "Visible": "False",
+    "Width": 768
+   },
+   "dfm_linha": 4304,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "GroupMisuratorePressione",
+      "da_aba": true,
+      "endereco": "0x4AEAE9",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "GroupMisuratorePressione",
+   "ordem_dfm": 10,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Misuratore pressione gas",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "grupo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Offset",
+    "Height": 29,
+    "Left": 19,
+    "Top": 44,
+    "Width": 68
+   },
+   "dfm_linha": 4312,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelOffsetDiff",
+   "ordem_dfm": 11,
+   "pai": "GroupMisuratorePressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Offset",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Pendenza",
+    "Height": 29,
+    "Left": 382,
+    "Top": 44,
+    "Width": 112
+   },
+   "dfm_linha": 4319,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelPendenzaDiff",
+   "ordem_dfm": 12,
+   "pai": "GroupMisuratorePressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Pendenza",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "mbar",
+    "Height": 19,
+    "Left": 284,
+    "Top": 50,
+    "Width": 40
+   },
+   "dfm_linha": 4326,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelBarDiff",
+   "ordem_dfm": 13,
+   "pai": "GroupMisuratorePressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "mbar",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "mbar/V",
+    "Height": 19,
+    "Left": 657,
+    "Top": 50,
+    "Width": 56
+   },
+   "dfm_linha": 4339,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelBarVDiff",
+   "ordem_dfm": 14,
+   "pai": "GroupMisuratorePressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "mbar/V",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 562,
+    "MaxLength": 5,
+    "MaxValue": 4000.0,
+    "NextControl": "ComboMisuratorePressione",
+    "Precision": 1.0,
+    "PrevControl": "EditOffsetDiff",
+    "TabOrder": 1,
+    "Tag": 5,
+    "Text": "0",
+    "Top": 38,
+    "Width": 87
+   },
+   "dfm_linha": 4352,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "eax == 0xd"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF380",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "edx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x430470",
+       "condicoes": [
+        "eax == 0xd"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF395",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4AF360",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditOffsetKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditOffsetKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 27
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Inclinacao (ganho) da reta tensao-pressao do sensor de pressao diferencial. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 4000.0,
+    "minimo": 0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditPendenzaDiff",
+   "ordem_dfm": 15,
+   "pai": "GroupMisuratorePressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelPendenzaDiff",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Pendenza",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelPendenzaDiff)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelBarVDiff",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "mbar/V"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 189,
+    "MaxLength": 5,
+    "MaxValue": 2000.0,
+    "MinValue": -2000.0,
+    "NextControl": "EditPendenzaDiff",
+    "Precision": 1.0,
+    "PrevControl": "ComboPressioneMisurata",
+    "TabOrder": 0,
+    "Tag": 4,
+    "Text": "0",
+    "Top": 38,
+    "Width": 87
+   },
+   "dfm_linha": 4375,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "eax == 0xd"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF380",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "edx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x430470",
+       "condicoes": [
+        "eax == 0xd"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF395",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4AF360",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditOffsetKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditOffsetKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 27
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Deslocamento (offset) da reta tensao-pressao do sensor de pressao diferencial. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 2000.0,
+    "minimo": -2000.0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditOffsetDiff",
+   "ordem_dfm": 16,
+   "pai": "GroupMisuratorePressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelOffsetDiff",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Offset",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelOffsetDiff)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelBarDiff",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "mbar"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TGroupBox",
+   "dfm": {
+    "Caption": "Parametri per il MAP esterno",
+    "Height": 192,
+    "Left": 19,
+    "TabOrder": 4,
+    "Top": 277,
+    "Visible": "False",
+    "Width": 768
+   },
+   "dfm_linha": 4400,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "GroupParametri",
+      "da_aba": true,
+      "endereco": "0x4AF0DA",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "GroupParametri",
+      "da_aba": true,
+      "endereco": "0x4AF0DA",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "GroupParametri",
+      "da_aba": false,
+      "endereco": "0x4AF0DA",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "GroupParametri",
+      "da_aba": true,
+      "endereco": "0x4AF0DA",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "GroupParametri",
+   "ordem_dfm": 17,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Parametri per il MAP esterno",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "grupo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Offset",
+    "Height": 29,
+    "Left": 19,
+    "Top": 44,
+    "Width": 68
+   },
+   "dfm_linha": 4408,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelOffset",
+   "ordem_dfm": 18,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": "Offset",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELOFFSET]",
+    "ita": "Offset",
+    "marca": "OBS-COD",
+    "por": "offset"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Pendenza",
+    "Height": 29,
+    "Left": 382,
+    "Top": 44,
+    "Width": 112
+   },
+   "dfm_linha": 4415,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelPendenza",
+   "ordem_dfm": 19,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": "Slope",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELPENDENZA]",
+    "ita": "Pendenza",
+    "marca": "OBS-COD",
+    "por": "pendência"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "\"Dare solo il sotto chiave ed attendere l'apprendimento dei dati necessari...\"",
+    "Height": 29,
+    "Left": 5,
+    "Top": 161,
+    "Visible": "False",
+    "Width": 758
+   },
+   "dfm_linha": 4422,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0"
+      ],
+      "controle": "LabelProcGuidata",
+      "da_aba": true,
+      "endereco": "0x4AF827",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0"
+      ],
+      "controle": "LabelProcGuidata",
+      "da_aba": true,
+      "endereco": "0x4AF845",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": "sub_A4EDD0",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0",
+       "sub_925894 != 0",
+       "sub_925894 != 0",
+       "cmp word ptr [ebp - 0x10a], 0 == ",
+       "cmp word ptr [ebp - 0x10a], 0 == "
+      ],
+      "controle": "LabelProcGuidata",
+      "da_aba": true,
+      "endereco": "0x4AFFDA",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0",
+       "sub_925894 != 0",
+       "sub_925894 != 0",
+       "cmp word ptr [ebp - 0x10a], 0 == ",
+       "cmp word ptr [ebp - 0x10a], 0 == "
+      ],
+      "controle": "LabelProcGuidata",
+      "da_aba": true,
+      "endereco": "0x4AFFF8",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": "sub_A4EDD0",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0",
+       "sub_925894 != 0",
+       "sub_925894 != 0",
+       "cmp word ptr [ebp - 0x10a], 0 == ",
+       "cmp word ptr [ebp - 0x10a], 0 == ",
+       "sub_925894 != 0",
+       "cmp ecx, dword ptr [ebp - 0x1d8] < ",
+       "test byte ptr [ebp - 0xd4], 0x10 != "
+      ],
+      "controle": "LabelProcGuidata",
+      "da_aba": true,
+      "endereco": "0x4B0359",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0",
+       "sub_925894 != 0",
+       "sub_925894 != 0",
+       "cmp word ptr [ebp - 0x10a], 0 == ",
+       "cmp word ptr [ebp - 0x10a], 0 == ",
+       "sub_925894 != 0",
+       "cmp ecx, dword ptr [ebp - 0x1d8] < ",
+       "test byte ptr [ebp - 0xd4], 0x10 != "
+      ],
+      "controle": "LabelProcGuidata",
+      "da_aba": true,
+      "endereco": "0x4B0377",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": "sub_A4EDD0",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0"
+      ],
+      "controle": "LabelProcGuidata",
+      "da_aba": true,
+      "endereco": "0x4B0DFC",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": "sub_A4EDD0",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelProcGuidata",
+   "ordem_dfm": 20,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "\"Dare solo il sotto chiave ed attendere l'apprendimento dei dati necessari...\"",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "mbar",
+    "Height": 19,
+    "Left": 284,
+    "Top": 50,
+    "Width": 40
+   },
+   "dfm_linha": 4438,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelBar",
+   "ordem_dfm": 21,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": "mbar",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELBAR]",
+    "ita": "mbar",
+    "marca": "OBS-COD",
+    "por": "mbar"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "mbar/V",
+    "Height": 19,
+    "Left": 657,
+    "Top": 50,
+    "Width": 56
+   },
+   "dfm_linha": 4451,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelBarV",
+   "ordem_dfm": 22,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": "mbar/V",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELBARV]",
+    "ita": "mbar/V",
+    "marca": "OBS-COD",
+    "por": "mbar/V"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TButton",
+   "dfm": {
+    "Caption": "Avvia ricerca guidata parametri map esterno",
+    "Height": 32,
+    "Left": 20,
+    "TabOrder": 2,
+    "Top": 121,
+    "Width": 727
+   },
+   "dfm_linha": 4464,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0"
+      ],
+      "controle": "ButtonRicercaParametri",
+      "da_aba": true,
+      "endereco": "0x4AF547",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_A4EDD0 == 0"
+      ],
+      "controle": "ButtonRicercaParametri",
+      "da_aba": true,
+      "endereco": "0x4B0DAD",
+      "marca": "OBS-COD",
+      "metodo": "ButtonRicercaParametriClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "ButtonRicercaParametri",
+      "da_aba": true,
+      "endereco": "0x4AF095",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "ButtonRicercaParametri",
+      "da_aba": true,
+      "endereco": "0x4AF095",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "ButtonRicercaParametri",
+      "da_aba": false,
+      "endereco": "0x4AF095",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "ButtonRicercaParametri",
+      "da_aba": true,
+      "endereco": "0x4AF095",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4AF3E5",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "endereco": "0x4AF489",
+       "funcao": "GetIdx",
+       "indice": 0,
+       "pushes": [
+        "ecx",
+        61,
+        0,
+        "esi"
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "alvo": "0x42A8F4",
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF497",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "endereco": "0x4AF4B0",
+       "funcao": "GetIdx",
+       "indice": 1,
+       "pushes": [
+        "eax",
+        61,
+        1
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "endereco": "0x4AF4D9",
+       "funcao": "GetIdx",
+       "indice": 2,
+       "pushes": [
+        "ecx",
+        61,
+        2
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "ButtonRicercaParametri",
+       "endereco": "0x4AF547",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabLambda",
+       "endereco": "0x4AF5A5",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabApMot",
+       "endereco": "0x4AF5B6",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabApMotBenz",
+       "endereco": "0x4AF5C7",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabPressione",
+       "endereco": "0x4AF5D8",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabPressColl",
+       "endereco": "0x4AF5E9",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabPressDiff",
+       "endereco": "0x4AF5FA",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabTemp",
+       "endereco": "0x4AF60B",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabTempMot",
+       "endereco": "0x4AF61C",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabLivello",
+       "endereco": "0x4AF62D",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x434530",
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF63B",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_434530 != 0"
+       ],
+       "controle": "LabLambda2",
+       "endereco": "0x4AF651",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_434530 != 0"
+       ],
+       "controle": "LabApMot2",
+       "endereco": "0x4AF662",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_434530 != 0"
+       ],
+       "controle": "LabApMot2Benz",
+       "endereco": "0x4AF673",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x434530",
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF6A1",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabCutoff",
+       "endereco": "0x4AF6DE",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabGas",
+       "endereco": "0x4AF713",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "endereco": "0x4AF75A",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabelPressColl",
+       "endereco": "0x4AF767",
+       "funcao": "Visible",
+       "valor_edx": 0
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabPressColl",
+       "endereco": "0x4AF774",
+       "funcao": "Visible",
+       "valor_edx": 0
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabelPressDiff",
+       "endereco": "0x4AF781",
+       "funcao": "Visible",
+       "valor_edx": 0
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabPressDiff",
+       "endereco": "0x4AF78E",
+       "funcao": "Visible",
+       "valor_edx": 0
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabelProcGuidata",
+       "endereco": "0x4AF827",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabelProcGuidata",
+       "endereco": "0x4AF845",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4AF89C",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabGiri",
+       "endereco": "0x4AF951",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabPressione",
+       "endereco": "0x4AF9F7",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x42A788",
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "cmp dword ptr [ebp - 0xdc], 0 != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AFA60",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabTempMot",
+       "endereco": "0x4AFA9E",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabGas",
+       "endereco": "0x4AFAFE",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "test ah, 0x45 == ",
+        "test edi, edi == ",
+        "sub_925894 == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4AFBF7",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "test ah, 0x45 == ",
+        "test edi, edi == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabGiri",
+       "endereco": "0x4AFCAC",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "test ah, 0x45 == ",
+        "test edi, edi == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabPressione",
+       "endereco": "0x4AFD52",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x42A788",
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "test ah, 0x45 == ",
+        "test edi, edi == ",
+        "sub_925894 != 0",
+        "cmp dword ptr [ebp - 0xdc], 0 != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AFDBB",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "test ah, 0x45 == ",
+        "test edi, edi == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabTempMot",
+       "endereco": "0x4AFDF9",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "test ah, 0x45 == ",
+        "test edi, edi == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabGas",
+       "endereco": "0x4AFE59",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == "
+       ],
+       "controle": "LabelProcGuidata",
+       "endereco": "0x4AFFDA",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == "
+       ],
+       "controle": "LabelProcGuidata",
+       "endereco": "0x4AFFF8",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4B004F",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabGiri",
+       "endereco": "0x4B0112",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabPressione",
+       "endereco": "0x4B01B8",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x42A788",
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp dword ptr [ebp - 0xdc], 0 != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B0221",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabTempMot",
+       "endereco": "0x4B025F",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabGas",
+       "endereco": "0x4B02BF",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp ecx, dword ptr [ebp - 0x1d8] < ",
+        "test byte ptr [ebp - 0xd4], 0x10 != "
+       ],
+       "controle": "LabelProcGuidata",
+       "endereco": "0x4B0359",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp ecx, dword ptr [ebp - 0x1d8] < ",
+        "test byte ptr [ebp - 0xd4], 0x10 != "
+       ],
+       "controle": "LabelProcGuidata",
+       "endereco": "0x4B0377",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4B042B",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabGiri",
+       "endereco": "0x4B04EE",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabPressione",
+       "endereco": "0x4B0594",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x42A788",
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp dword ptr [ebp - 0xdc], 0 != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B05FD",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabTempMot",
+       "endereco": "0x4B063B",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0"
+       ],
+       "controle": "LabGas",
+       "endereco": "0x4B069B",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi == "
+       ],
+       "controle": null,
+       "endereco": "0x4B075B",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test ah, 0x45 == ",
+        "test edi, edi > "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B0947",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        2,
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test ah, 0x45 == ",
+        "test edi, edi > "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B095B",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        3,
+        "edi"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test ah, 0x45 == ",
+        "test edi, edi > "
+       ],
+       "endereco": "0x4B0972",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "comando_id": 18,
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test ah, 0x45 == ",
+        "test edi, edi > "
+       ],
+       "endereco": "0x4B0998",
+       "funcao": "EnviaComando",
+       "pushes": [
+        5,
+        "ecx"
+       ]
+      },
+      {
+       "alvo": "0x438204",
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test ah, 0x45 == ",
+        "test edi, edi > "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B09B5",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        20000
+       ],
+       "toca": {
+        "chama": [
+         "0x4382D4"
+        ],
+        "escreve": [],
+        "le": [
+         "AebConnection",
+         "TimerIO"
+        ]
+       }
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test ah, 0x45 == ",
+        "test edi, edi > "
+       ],
+       "controle": null,
+       "endereco": "0x4B0A34",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test ah, 0x45 == ",
+        "test edi, edi <= "
+       ],
+       "controle": null,
+       "endereco": "0x4B0B12",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test edi, edi <= ",
+        "test ah, 0x45 != ",
+        "test ah, 0x45 == "
+       ],
+       "controle": null,
+       "endereco": "0x4B0BF9",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0",
+        "sub_925894 != 0",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "sub_925894 != 0",
+        "test edi, edi != ",
+        "cmp word ptr [ebp - 0x10a], 0 == ",
+        "test edi, edi <= ",
+        "test ah, 0x45 != ",
+        "test ah, 0x45 != "
+       ],
+       "controle": null,
+       "endereco": "0x4B0CD7",
+       "funcao": "Text",
+       "valor_edx": null
+      },
+      {
+       "alvo": "0x430470",
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B0D38",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        2
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x430470",
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B0D58",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        3
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "ButtonRicercaParametri",
+       "endereco": "0x4B0DAD",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_A4EDD0 == 0"
+       ],
+       "controle": "LabelProcGuidata",
+       "endereco": "0x4B0DFC",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4AF3A8",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = ButtonRicercaParametriClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "ButtonRicercaParametriClick",
+     "marca": "OBS-COD",
+     "n_instr": 1821
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.21",
+    "marca": "OBS-COD",
+    "texto": "Procedimento guiado que aprende o sensor MAP original do carro: chave ligada (1 bar), troca a 3000 rpm e leitura em marcha lenta."
+   },
+   "flags_todos": [
+    {
+     "caso": 31,
+     "condicao": "obj+0x80D!=0",
+     "fonte": "handler ButtonRicercaParametriClick (SetFlag1 caso 31)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0080",
+     "origem": "handler ButtonRicercaParametriClick",
+     "palavra": 1,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": {
+    "chave": "HINTBUTTONRICERCAPARAMETRI",
+    "eng": "The function allows to set the use of the MAP sensor (absolute pressure of the intake manifold). \\\\nWhen activated, the start button of the self-learning procedure of original sensor characteristic automatically appears. \\\\nIs important to have a safe key-on, because the first part of the self-learning procedure has to be made \\\\nwithout RPM signal and the gas ECU doesn't have to switch off.",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "La funzione prevede la possibilità di impostare l'utilizzo del sensore MAP (pressione assoluta del collettore di aspirazione). \\\\nAttivandola compare automaticamente il pulsante di avvio della procedura di autoapprendimento per caratterizzare il sensore originale della vettura. \\\\nSi raccomanda di scegliere un sottochiave sicuro, poichè la prima parte dell'apprendimento avviene con motore spento e solamente key-on. \\\\nSe così non fosse la centralina non riceverebbe corrente e la procedura fallirebbe a causa dello spegnimento della ECU.",
+    "marca": "INFERIDO",
+    "por": "The function allows to set the use of the MAP sensor (absolute pressure of the intake manifold). \\\\nWhen activated, the start button of the self-learning procedure of original sensor characteristic automatically appears. \\\\nIs important to have a safe key-on, because the first part of the self-learning procedure has to be made \\\\nwithout RPM signal and the gas ECU doesn't have to switch off."
+   },
+   "manual": {
+    "chave": "Start guided search for external map parameters",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1019, pagina 21 do PDF",
+    "linha": 1019,
+    "marca": "OBS-COD",
+    "pagina": 21,
+    "trecho": "D Start guided search for external MAP parameters. LROMEGAS The MAP sensor parameterisation procedure acquires the"
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "ButtonRicercaParametri",
+   "ordem_dfm": 23,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": "Start guided search for external map parameters",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[BUTTONRICERCAPARAMETRI]",
+    "ita": "Avvia ricerca guidata parametri map esterno",
+    "marca": "OBS-COD",
+    "por": "Inicie a procura guiada dos parâmetros do mapa externo"
+   },
+   "tipo": "botao",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0080",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 562,
+    "MaxLength": 5,
+    "MaxValue": 2000.0,
+    "NextControl": "ButtonRicercaParametri",
+    "Precision": 1.0,
+    "PrevControl": "EditOffset",
+    "TabOrder": 1,
+    "Tag": 3,
+    "Text": "0",
+    "Top": 38,
+    "Width": 87
+   },
+   "dfm_linha": 4482,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "eax == 0xd"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF380",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "edx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x430470",
+       "condicoes": [
+        "eax == 0xd"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF395",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4AF360",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditOffsetKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditOffsetKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 27
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Inclinacao (ganho) da reta tensao-pressao do sensor MAP externo. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 2000.0,
+    "minimo": 0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditPendenza",
+   "ordem_dfm": 24,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelPendenza",
+    "eng": "Slope",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELPENDENZA]",
+    "ita": "Pendenza",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "pendência",
+    "via": "nome (LabelPendenza)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelBarV",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "mbar/V"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 189,
+    "MaxLength": 5,
+    "MaxValue": 2000.0,
+    "MinValue": -2000.0,
+    "NextControl": "EditPendenza",
+    "Precision": 1.0,
+    "PrevControl": "EditPendenzaDiff",
+    "TabOrder": 0,
+    "Tag": 2,
+    "Text": "0",
+    "Top": 38,
+    "Width": 87
+   },
+   "dfm_linha": 4505,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x43048C",
+       "condicoes": [
+        "eax == 0xd"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF380",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "edx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "MAP_ESTERNO"
+        ]
+       }
+      },
+      {
+       "alvo": "0x430470",
+       "condicoes": [
+        "eax == 0xd"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4AF395",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx",
+        "eax"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4AF360",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditOffsetKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditOffsetKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 27
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Deslocamento (offset) da reta tensao-pressao do sensor MAP externo. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 2000.0,
+    "minimo": -2000.0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditOffset",
+   "ordem_dfm": 25,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelOffset",
+    "eng": "Offset",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELOFFSET]",
+    "ita": "Offset",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "offset",
+    "via": "nome (LabelOffset)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelBar",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "mbar"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TCheckBox",
+   "dfm": {
+    "Caption": "Map configurato correttamente",
+    "Height": 37,
+    "Left": 23,
+    "TabOrder": 3,
+    "Top": 81,
+    "Width": 735
+   },
+   "dfm_linha": 4529,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 31,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "CheckMapConfigurato",
+      "da_aba": true,
+      "endereco": "0x4BCB54",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "CheckMapConfigurato",
+      "da_aba": true,
+      "endereco": "0x4AF356",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "CheckMapConfigurato",
+      "da_aba": true,
+      "endereco": "0x4AF356",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "CheckMapConfigurato",
+      "da_aba": false,
+      "endereco": "0x4AF356",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckMapConfigurato",
+      "da_aba": true,
+      "endereco": "0x4AEE62",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": "GetFlag1(caso 31)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "CheckMapConfigurato",
+      "da_aba": true,
+      "endereco": "0x4AF356",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 31,
+         "condicao": "obj+0x80D!=0",
+         "getter": "0x42CFB8",
+         "mascara": "0x0080",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 31,
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "endereco": "0x4BCB68",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      }
+     ],
+     "endereco": "0x4BCB40",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = CheckMapConfiguratoClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckMapConfiguratoClick",
+     "marca": "OBS-COD",
+     "n_instr": 17
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4A8928",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = CheckTpsBlocKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckTpsBlocKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 21
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Indica que o sensor MAP externo ja foi configurado corretamente. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "flags": [
+    {
+     "caso": 31,
+     "condicao": "obj+0x80D!=0",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0080",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 31,
+     "condicao": "obj+0x80D!=0",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0080",
+     "origem": "flags-do-original.json",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "CheckMapConfigurato",
+   "ordem_dfm": 26,
+   "pai": "GroupParametri",
+   "rotulo": {
+    "eng": "Map correctly configured",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[CHECKMAPCONFIGURATO]",
+    "ita": "Map configurato correttamente",
+    "marca": "OBS-COD",
+    "por": "Map configurado corretamente"
+   },
+   "tipo": "caixa de marcar",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0080",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x24E8]",
+     "caso_get": "0x4351CA",
+     "caso_set": "0x436A5C",
+     "classe_vetor": "TAebNumber",
+     "codigo": 42,
+     "ecu_para_tela": "(SD[0x24E8] * 0.01)",
+     "familia": "LR",
+     "fonte": "TStreamDati caso 0x436A5C (0x4351CA)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 106,
+     "tela_para_ecu": "trunc((v * 100))",
+     "tipo": "escalar",
+     "vetor": "SOGLIA_FLUSSO_SUBSONICO_LR"
+    },
+    {
+     "cache_sd": "EA[0x24E8]",
+     "caso_get": "0x435BAE",
+     "caso_set": "0x437266",
+     "classe_vetor": "TAebNumber",
+     "codigo": 110,
+     "ecu_para_tela": "(SD[0x24E8] * 0.01)",
+     "familia": "demais",
+     "fonte": "TStreamDati caso 0x437266 (0x435BAE)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 222,
+     "tela_para_ecu": "trunc((v * 100))",
+     "tipo": "escalar",
+     "vetor": "SOGLIA_FLUSSO_SUBSONICO"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "Left": 460,
+    "MaxValue": 1.0,
+    "Precision": 0.01,
+    "TabOrder": 5,
+    "Text": "0",
+    "Top": 233,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 4541,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 110,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 DE 00 36 26"
+      ],
+      "valor_tela": 0.54
+     },
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 110,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 DE 00 64 54"
+      ],
+      "valor_tela": 1.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "EditSogliaPress",
+      "da_aba": true,
+      "endereco": "0x4AF1F9",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "EditSogliaPress",
+      "da_aba": true,
+      "endereco": "0x4AF1F9",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditSogliaPress",
+      "da_aba": false,
+      "endereco": "0x4AF1F9",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditSogliaPress",
+      "da_aba": true,
+      "endereco": "0x4AF1F9",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Limiar de fluxo subsonico (condicao de escoamento do gas no injetor). [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 1.0,
+    "minimo": 0,
+    "passo": 0.01
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo_por_familia": {
+     "LR ([SD+0x80D]!=0)": 42,
+     "demais ([SD+0x80D]==0)": 110
+    },
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x7D8"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditSogliaPress",
+   "ordem_dfm": 27,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelSogliaPress",
+    "eng": "Subsonic flow threshold",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELSOGLIAPRESS]",
+    "ita": "Soglia di flusso subsonico",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Limiar de fluxo subsônico",
+    "via": "nome (LabelSogliaPress)"
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": [
+    {
+     "bruto": 54,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1110360 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1110360,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 222,
+     "valor_na_tela": 0.54,
+     "vetor": "SOGLIA_FLUSSO_SUBSONICO"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 202,
+    "MaxLength": 5,
+    "MaxValue": 100.0,
+    "MinValue": 40.0,
+    "Precision": 1.0,
+    "TabOrder": 6,
+    "Text": "0",
+    "Top": 476,
+    "Width": 65
+   },
+   "dfm_linha": 4557,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "EditTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4AF2AF",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "EditTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4AF2AF",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditTempAcqua",
+      "da_aba": false,
+      "endereco": "0x4AF2AF",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4AF2AF",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4bcba6 != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCBD3",
+       "funcao": "SetIdx",
+       "indice": 0,
+       "pushes": [
+        "ebx",
+        61,
+        0
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4bcba6 != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCBF9",
+       "funcao": "GetIdx",
+       "indice": 0,
+       "pushes": [
+        "eax",
+        61,
+        0
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCC6E",
+       "funcao": "SetIdx",
+       "indice": 1,
+       "pushes": [
+        "ebx",
+        61,
+        1
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCC93",
+       "funcao": "GetIdx",
+       "indice": 1,
+       "pushes": [
+        "edx",
+        61,
+        1
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "dec edx == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCD01",
+       "funcao": "SetIdx",
+       "indice": 2,
+       "pushes": [
+        "ebx",
+        61,
+        2
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "dec edx == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCD27",
+       "funcao": "GetIdx",
+       "indice": 2,
+       "pushes": [
+        "eax",
+        61,
+        2
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      }
+     ],
+     "endereco": "0x4BCB78",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditTempAcquaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditTempAcquaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 132
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BE90C",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriKFiltroEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroEnter",
+     "marca": "OBS-COD",
+     "n_instr": 153
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BEABC",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriKFiltroExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroExit",
+     "marca": "OBS-COD",
+     "n_instr": 34
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Temperatura da agua usada na verificacao do MAP. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 100.0,
+    "minimo": 40.0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTempAcqua",
+   "ordem_dfm": 28,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTempAcqua",
+    "eng": "T.water (°C)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPACQUA]",
+    "ita": "T. acqua (°C)",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "T. água (°C)",
+    "via": "nome (LabelTempAcqua)"
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 489,
+    "MaxLength": 5,
+    "MaxValue": 5.0,
+    "MinValue": 0.01,
+    "Precision": 0.01,
+    "TabOrder": 7,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 476,
+    "Width": 65
+   },
+   "dfm_linha": 4580,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "EditSogliaMap",
+      "da_aba": true,
+      "endereco": "0x4AF2D7",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "EditSogliaMap",
+      "da_aba": true,
+      "endereco": "0x4AF2D7",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditSogliaMap",
+      "da_aba": false,
+      "endereco": "0x4AF2D7",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditSogliaMap",
+      "da_aba": true,
+      "endereco": "0x4AF2D7",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4bcba6 != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCBD3",
+       "funcao": "SetIdx",
+       "indice": 0,
+       "pushes": [
+        "ebx",
+        61,
+        0
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4bcba6 != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCBF9",
+       "funcao": "GetIdx",
+       "indice": 0,
+       "pushes": [
+        "eax",
+        61,
+        0
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCC6E",
+       "funcao": "SetIdx",
+       "indice": 1,
+       "pushes": [
+        "ebx",
+        61,
+        1
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCC93",
+       "funcao": "GetIdx",
+       "indice": 1,
+       "pushes": [
+        "edx",
+        61,
+        1
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "dec edx == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCD01",
+       "funcao": "SetIdx",
+       "indice": 2,
+       "pushes": [
+        "ebx",
+        61,
+        2
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "dec edx == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCD27",
+       "funcao": "GetIdx",
+       "indice": 2,
+       "pushes": [
+        "eax",
+        61,
+        2
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      }
+     ],
+     "endereco": "0x4BCB78",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditTempAcquaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditTempAcquaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 132
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BE90C",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriKFiltroEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroEnter",
+     "marca": "OBS-COD",
+     "n_instr": 153
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BEABC",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriKFiltroExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroExit",
+     "marca": "OBS-COD",
+     "n_instr": 34
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Limiar de tensao do MAP. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0.01,
+    "passo": 0.01
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditSogliaMap",
+   "ordem_dfm": 29,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelSogliaMap",
+    "eng": "MAPthreshold (V)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELSOGLIAMAP]",
+    "ita": "Soglia MAP (V)",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Limiar MAP (V)",
+    "via": "nome (LabelSogliaMap)"
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 723,
+    "MaxLength": 5,
+    "MaxValue": 5.0,
+    "MinValue": 0.01,
+    "Precision": 0.01,
+    "TabOrder": 8,
+    "Tag": 2,
+    "Text": "0",
+    "Top": 476,
+    "Width": 65
+   },
+   "dfm_linha": 4604,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "EditPressRid",
+      "da_aba": true,
+      "endereco": "0x4AF2FF",
+      "marca": "OBS-COD",
+      "metodo": "CheckMapConfiguratoClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "CheckMapConfiguratoClick via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "ecx == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "EditPressRid",
+      "da_aba": true,
+      "endereco": "0x4AF2FF",
+      "marca": "OBS-COD",
+      "metodo": "ComboPressioneKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboPressioneKeyPress via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditPressRid",
+      "da_aba": false,
+      "endereco": "0x4AF2FF",
+      "marca": "OBS-COD",
+      "metodo": "TabCambioShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabCambioShow via sub_4AF018"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditPressRid",
+      "da_aba": true,
+      "endereco": "0x4AF2FF",
+      "marca": "OBS-COD",
+      "metodo": "TabPressioneShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "TabPressioneShow via sub_4AF018"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4bcba6 != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCBD3",
+       "funcao": "SetIdx",
+       "indice": 0,
+       "pushes": [
+        "ebx",
+        61,
+        0
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4bcba6 != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCBF9",
+       "funcao": "GetIdx",
+       "indice": 0,
+       "pushes": [
+        "eax",
+        61,
+        0
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCC6E",
+       "funcao": "SetIdx",
+       "indice": 1,
+       "pushes": [
+        "ebx",
+        61,
+        1
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCC93",
+       "funcao": "GetIdx",
+       "indice": 1,
+       "pushes": [
+        "edx",
+        61,
+        1
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "dec edx == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCD01",
+       "funcao": "SetIdx",
+       "indice": 2,
+       "pushes": [
+        "ebx",
+        61,
+        2
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      },
+      {
+       "codigo": 61,
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4bcba6 == ",
+        "dec edx == ",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4BCD27",
+       "funcao": "GetIdx",
+       "indice": 2,
+       "pushes": [
+        "eax",
+        61,
+        2
+       ],
+       "serial_code": 140,
+       "vetor": "PARAM_MAP_ESTERNO_LR"
+      }
+     ],
+     "endereco": "0x4BCB78",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditTempAcquaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditTempAcquaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 132
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BE90C",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriKFiltroEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroEnter",
+     "marca": "OBS-COD",
+     "n_instr": 153
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BEABC",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriKFiltroExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroExit",
+     "marca": "OBS-COD",
+     "n_instr": 34
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Pressao do redutor (regulador) em bar. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0.01,
+    "passo": 0.01
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditPressRid",
+   "ordem_dfm": 30,
+   "pai": "TabPressione",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelPressRid",
+    "eng": "P red.(bar)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELPRESSRID]",
+    "ita": "P rid. (bar)",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "P red.(bar)",
+    "via": "nome (LabelPressRid)"
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": []
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Edits sem codigo de dado na rotina 0x48A228 (o valor passa por metodo proprio do TStreamDati; formula nao decodificada aqui, `DESCONHECIDO`): `EditPendenzaDiff`, `EditOffsetDiff`, `EditPendenza`, `EditOffset`, `EditTempAcqua`, `EditSogliaMap`, `EditPressRid`.",
+  "Combos cujo valor e gravado por metodo proprio (sem bit nem codigo generico): `ComboTipoMisuratore`. Os vetores tocados aparecem na lista de acessos do handler; o significado de cada opcao no fio e `DESCONHECIDO` quando nao ha formula.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabPressione",
+  "handlers_analisados": [
+   "TabPressioneShow",
+   "ButtonRicercaParametriClick",
+   "ControlMouseDown",
+   "CheckMapConfiguratoClick",
+   "CheckTpsBlocKeyPress",
+   "ComboPressioneKeyPress",
+   "ComboTipoMisuratoreKeyPress",
+   "EditOffsetKeyPress",
+   "EditTempAcquaKeyPress",
+   "EditGiriKFiltroEnter",
+   "EditGiriKFiltroExit",
+   "EditRifLambdaKeyPress",
+   "EditGiriCambioEnter",
+   "EditGiriCambioExit"
+  ],
+  "n_com_flag": 3,
+  "n_com_valor_do_log": 6,
+  "n_controles": 31,
+  "n_interativos": 13,
+  "n_ligados_ao_vetor": 1,
+  "ordem": 5,
+  "por_classe": {
+   "TButton": 1,
+   "TCheckBox": 1,
+   "TGroupBox": 2,
+   "TKeyComboBox": 3,
+   "TLabel": 16,
+   "TNumericEdit": 8
+  },
+  "tab_show": {
+   "endereco": "0x4AE788",
+   "fonte": "RTTI do TFormConfig; OnShow = TabPressioneShow",
+   "marca": "OBS-COD",
+   "metodo": "TabPressioneShow"
+  },
+  "tab_visible_dfm": "False",
+  "titulo": {
+   "eng": null,
+   "fonte": "ita=Caption do DFM",
+   "ita": "Pressione",
+   "marca": "OBS-COD",
+   "por": null
+  }
+ }
+}

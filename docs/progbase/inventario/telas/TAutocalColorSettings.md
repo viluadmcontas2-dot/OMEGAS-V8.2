@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (OBS-COD). Escolha das cores das séries do gráfico do AutoCal.
+
 - Instância DFM: `AutocalColorSettings`; unidade: `@:AutoCal_ColorSettings`; ancestral: `TForm`; tamanho de instância: 0x494; componentes no DFM: 54.
 - Título: "AutocalColorSettings"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8), `TAutoCalSettings.BtnChangeColorClick` (0x0051420C), `0x005198FD` (0x005198FD), `TAutoCalUI.ActionChangeColorExecute` (0x0051AE78)

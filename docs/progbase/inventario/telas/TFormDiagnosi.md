@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** tela de função (OBS-COD). Diagnóstico da central: falhas, tempos de funcionamento, exclusão de injetores de gás e teste de saídas.
+
 - Instância DFM: `FormDiagnosi`; unidade: `@:Diagnosi`; ancestral: `TForm`; tamanho de instância: 0x6AC; componentes no DFM: 129.
 - Título: "Diagnosi centralina" — eng: "ECU diagnosis" / por: "Diagnóstico central de comando"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormConfig.LabelDiagnosiClick` (0x004CB060), `TFormMain.ActionDiagnosiExecute` (0x004FFE24)

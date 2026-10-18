@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** janela principal (OBS-COD). Janela principal: menus Arquivo/Conexão/Configurações/Ajuda/Market, barra de botões (Configuração, Visualização, Diagnóstico, Carregar/Salvar configuração, Reprogramar, Calibração, Modifica calibração, Atualizar, Sair), barra de status (porta, serial da ECU) e ícones (Bee, Landi Connect, Service).
+
 - Instância DFM: `FormMain`; unidade: `@:Main`; ancestral: `TFormMainBase`; tamanho de instância: 0x63C; componentes no DFM: 84.
 - Título: "Initializing..."
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8)

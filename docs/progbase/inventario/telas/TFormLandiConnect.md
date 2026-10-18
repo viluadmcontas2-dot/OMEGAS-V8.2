@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** tela de função (DERIVADO). Configuração do módulo Landi Connect (aprendizado de marchas, tanque, injetores) e zerar viagem/totais.
+
 - Instância DFM: `FormLandiConnect`; unidade: `@:LandiConnect`; ancestral: `TForm`; tamanho de instância: 0x48C; componentes no DFM: 40.
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.ImageLandiConnectClick` (0x005040EC)
 

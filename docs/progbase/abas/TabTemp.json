@@ -1,0 +1,4535 @@
+{
+ "controles": [
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Parametri per il sensore di temperatura motore della vettura",
+    "Height": 36,
+    "Left": 38,
+    "Top": 193,
+    "Visible": "False",
+    "Width": 750
+   },
+   "dfm_linha": 4640,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelParametriTemp",
+      "da_aba": true,
+      "endereco": "0x4B8ECB",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": "chamada virtual dword ptr [edx + 0x104]",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTPARAMETRITEMP",
+    "eng": "Parameter for the water temperature sensor of the car",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Parametri per il sensore di temperatura motore della vettura",
+    "marca": "INFERIDO",
+    "por": "Parameter for the water temperature sensor of the car"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelParametriTemp",
+   "ordem_dfm": 0,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": "Engine temperature sensor parameters",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELPARAMETRITEMP]",
+    "ita": "Parametri per il sensore di temperatura motore della vettura",
+    "marca": "OBS-COD",
+    "por": "Parâmetros para o sensor de temperatura do motor"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "R pull-up",
+    "Height": 39,
+    "Left": 38,
+    "Top": 235,
+    "Visible": "False",
+    "Width": 115
+   },
+   "dfm_linha": 4651,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelRPullUp",
+      "da_aba": true,
+      "endereco": "0x4B8EDF",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": "chamada virtual dword ptr [edx + 0x104]",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTLABELRPULLUP",
+    "eng": "Pull-up resistor",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Resistenza di pull-up",
+    "marca": "INFERIDO",
+    "por": "Pull-up resistor"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelRPullUp",
+   "ordem_dfm": 1,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "R pull-up",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Delta T",
+    "Height": 34,
+    "Left": 38,
+    "Top": 270,
+    "Visible": "False",
+    "Width": 115
+   },
+   "dfm_linha": 4662,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelDeltaT",
+      "da_aba": true,
+      "endereco": "0x4B8F1B",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTLABELDELTAT",
+    "eng": "Delta T",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Delta T",
+    "marca": "INFERIDO",
+    "por": "Delta T"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelDeltaT",
+   "ordem_dfm": 2,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Delta T",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "ohm",
+    "Height": 29,
+    "Left": 243,
+    "Top": 235,
+    "Visible": "False",
+    "Width": 51
+   },
+   "dfm_linha": 4673,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabRPullUp",
+      "da_aba": true,
+      "endereco": "0x4B8F07",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabRPullUp",
+   "ordem_dfm": 3,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "ohm",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "°C",
+    "Height": 29,
+    "Left": 243,
+    "Top": 270,
+    "Visible": "False",
+    "Width": 27
+   },
+   "dfm_linha": 4681,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabDeltaT",
+      "da_aba": true,
+      "endereco": "0x4B8F43",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabDeltaT",
+   "ordem_dfm": 4,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "°C",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "T min",
+    "Height": 39,
+    "Left": 441,
+    "Top": 235,
+    "Visible": "False",
+    "Width": 85
+   },
+   "dfm_linha": 4689,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelTMin",
+      "da_aba": true,
+      "endereco": "0x4B8F57",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTLABELTMIN",
+    "eng": "Minimum temperature",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Temperatura minima",
+    "marca": "INFERIDO",
+    "por": "Minimum temperature"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTMin",
+   "ordem_dfm": 5,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "T min",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "T max",
+    "Height": 34,
+    "Left": 441,
+    "Top": 270,
+    "Visible": "False",
+    "Width": 85
+   },
+   "dfm_linha": 4700,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelTMax",
+      "da_aba": true,
+      "endereco": "0x4B8F93",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTLABELTMAX",
+    "eng": "Maximum temperature",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Temperatura massima",
+    "marca": "INFERIDO",
+    "por": "Maximum temperature"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTMax",
+   "ordem_dfm": 6,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "T max",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "°C",
+    "Height": 29,
+    "Left": 630,
+    "Top": 235,
+    "Visible": "False",
+    "Width": 27
+   },
+   "dfm_linha": 4711,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabTMin",
+      "da_aba": true,
+      "endereco": "0x4B8F7F",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabTMin",
+   "ordem_dfm": 7,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "°C",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "°C",
+    "Height": 29,
+    "Left": 630,
+    "Top": 270,
+    "Visible": "False",
+    "Width": 27
+   },
+   "dfm_linha": 4719,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabTMax",
+      "da_aba": true,
+      "endereco": "0x4B8FBB",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabTMax",
+   "ordem_dfm": 8,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "°C",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Caratteristica sensore di temperatura motore della vettura",
+    "Height": 36,
+    "Left": 38,
+    "Top": 307,
+    "Visible": "False",
+    "Width": 750
+   },
+   "dfm_linha": 4727,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelCaratteristicaTemp",
+      "da_aba": true,
+      "endereco": "0x4B8FCF",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTCARATTERISTICATEMP",
+    "eng": "Characteristic of engine temperature sensor of the car",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Caratteristica sensore di temperatura motore della vettura",
+    "marca": "INFERIDO",
+    "por": "Characteristic of engine temperature sensor of the car"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelCaratteristicaTemp",
+   "ordem_dfm": 9,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": "Engine temperature sensor characterisics",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELCARATTERISTICATEMP]",
+    "ita": "Caratteristica sensore di temperatura motore della vettura",
+    "marca": "OBS-COD",
+    "por": "Tabela do sensor de temperatura do motor"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "INVIO: inserimento valore   SPAZIO: apprendimento valore ",
+    "Height": 121,
+    "Left": 605,
+    "Top": 350,
+    "Visible": "False",
+    "Width": 125
+   },
+   "dfm_linha": 4738,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelInstr",
+      "da_aba": true,
+      "endereco": "0x4B86BD",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridTempExit",
+      "origem": "chamada virtual dword ptr [edx + 0xa4]",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelInstr",
+   "ordem_dfm": 10,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": "RETURN: insert value SPACE: acquire value",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELINSTR]",
+    "ita": "INVIO: inserimento valore   SPAZIO: apprendimento valore ",
+    "marca": "OBS-COD",
+    "por": "VOLTAR: introduza valor ESPAÇO: aquisição do valor"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Tipo di sensore temperatura gas",
+    "Height": 42,
+    "Left": 38,
+    "Top": 20,
+    "Width": 417
+   },
+   "dfm_linha": 4754,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTLABELTEMPGAS",
+    "eng": "Temperature gas sensor type",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tipo di sensore temperatura gas",
+    "marca": "INFERIDO",
+    "por": "Temperature gas sensor type"
+   },
+   "manual": {
+    "chave": "Gas temperature sensor type",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1094, pagina 22 do PDF",
+    "linha": 1094,
+    "marca": "OBS-COD",
+    "pagina": 22,
+    "trecho": "A Gas temperature sensor type Identifies the type of gas sensor used. The 4K7 sensor is fitted as default with: the OMEGAS- EVO version with Matrix and Lovato “J-K” injec-"
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTempGas",
+   "ordem_dfm": 11,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": "Gas temperature sensor type",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPGAS]",
+    "ita": "Tipo di sensore temperatura gas",
+    "marca": "OBS-COD",
+    "por": "Tipo de sensor da temp. do gás"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TCheckBox",
+   "dfm": {
+    "Caption": "Utilizza sensore di temperatura motore della vettura",
+    "Height": 34,
+    "Left": 38,
+    "TabOrder": 4,
+    "Tag": 1,
+    "Top": 157,
+    "Visible": "False",
+    "Width": 750
+   },
+   "dfm_linha": 4764,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 10,
+      "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x976d3f",
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0004",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1055"
+      ],
+      "quadros": [
+       "35 03 00 86 24 55 10 47"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 10,
+      "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x976d3f",
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0004",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "CheckTempMotore",
+      "da_aba": true,
+      "endereco": "0x4B8E9C",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckTempMotore",
+      "da_aba": true,
+      "endereco": "0x4B8EBD",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckTempMotore",
+      "da_aba": false,
+      "endereco": "0x49064C",
+      "marca": "OBS-COD",
+      "metodo": "FormShow",
+      "origem": "GetFlag1(caso 10)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckTempMotore",
+      "da_aba": true,
+      "endereco": "0x4B932D",
+      "marca": "OBS-COD",
+      "metodo": "TabTempShow",
+      "origem": "GetFlag1(caso 10)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 10,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0004",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 10,
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "endereco": "0x4B8EB0",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelParametriTemp",
+       "endereco": "0x4B8ECB",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelRPullUp",
+       "endereco": "0x4B8EDF",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "EditRPullUp",
+       "endereco": "0x4B8EF3",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabRPullUp",
+       "endereco": "0x4B8F07",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelDeltaT",
+       "endereco": "0x4B8F1B",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "EditDeltaT",
+       "endereco": "0x4B8F2F",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabDeltaT",
+       "endereco": "0x4B8F43",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelTMin",
+       "endereco": "0x4B8F57",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "EditTMin",
+       "endereco": "0x4B8F6B",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabTMin",
+       "endereco": "0x4B8F7F",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelTMax",
+       "endereco": "0x4B8F93",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "EditTMax",
+       "endereco": "0x4B8FA7",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabTMax",
+       "endereco": "0x4B8FBB",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelCaratteristicaTemp",
+       "endereco": "0x4B8FCF",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "DrawGridTemp",
+       "endereco": "0x4B8FE3",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "ButtonNuoviParametri",
+       "endereco": "0x4B8FF7",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4B8E88",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = CheckTempMotoreClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckTempMotoreClick",
+     "marca": "OBS-COD",
+     "n_instr": 80
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4A8928",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = CheckTpsBlocKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckTpsBlocKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 21
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.23",
+    "marca": "OBS-COD",
+    "texto": "Usa o sensor de temperatura original do motor do carro em vez de um sensor extra; os parametros do sinal sao ajustados com um scanner OBD."
+   },
+   "flags": [
+    {
+     "caso": 10,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0004",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 10,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0004",
+     "origem": "flags-do-original.json",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": {
+    "chave": "HINTCHECKTEMPMOTORE",
+    "eng": "Use water temperature sensor of the car",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Utilizza sensore di temperatura motore della vettura",
+    "marca": "INFERIDO",
+    "por": "Use water temperature sensor of the car"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "CheckTempMotore",
+   "ordem_dfm": 12,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Utilizza sensore di temperatura motore della vettura",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "caixa de marcar",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0004",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TCheckBox",
+   "dfm": {
+    "Caption": "Abilita cambio con temperatura acqua",
+    "Checked": "True",
+    "Enabled": "False",
+    "Height": 34,
+    "Left": 38,
+    "TabOrder": 2,
+    "Top": 85,
+    "Visible": "False",
+    "Width": 750
+   },
+   "dfm_linha": 4785,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 8,
+      "erro": null,
+      "estado_atual_na_ecu": true,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0001",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 8,
+      "erro": null,
+      "estado_atual_na_ecu": true,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0001",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1050"
+      ],
+      "quadros": [
+       "35 03 00 86 24 50 10 42"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": "False",
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "CheckTempAcqua",
+      "da_aba": false,
+      "endereco": "0x490610",
+      "marca": "OBS-COD",
+      "metodo": "FormShow",
+      "origem": "GetFlag1(caso 8)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4B92F1",
+      "marca": "OBS-COD",
+      "metodo": "TabTempShow",
+      "origem": "GetFlag1(caso 8)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 8,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0001",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 8,
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "endereco": "0x4B8B60",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "alvo": "0x434548",
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B8B6A",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "ecx"
+       ],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "bits": [
+        {
+         "caso": 8,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0001",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 8,
+       "condicoes": [
+        "[obj+0x1280] == 0",
+        "sub_434548 == 0",
+        "eax == 0x5d"
+       ],
+       "endereco": "0x4B8B8C",
+       "funcao": "GetFlag1"
+      },
+      {
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4B8BBF",
+       "funcao": "Visible",
+       "valor_edx": 1
+      },
+      {
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4B8BD3",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4B8BF7",
+       "funcao": "Visible",
+       "valor_edx": 1
+      },
+      {
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4B8C0B",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "controle": null,
+       "endereco": "0x4B8C1F",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 8,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0001",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 8,
+       "condicoes": [
+        "[obj+0x1280] == 0",
+        "edx == 0x5d"
+       ],
+       "endereco": "0x4B8C3A",
+       "funcao": "GetFlag1"
+      },
+      {
+       "alvo": "0x431878",
+       "condicoes": [
+        "[obj+0x1280] == 0",
+        "edx == 0x5d",
+        "GetFlag1(caso 8) != 0"
+       ],
+       "ecx": 2,
+       "edx": 0,
+       "endereco": "0x4B8C50",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "STATO_DIAGNOSI",
+         "STATO_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4318F8",
+       "condicoes": [
+        "[obj+0x1280] == 0",
+        "edx == 0x5d",
+        "GetFlag1(caso 8) != 0"
+       ],
+       "ecx": 2,
+       "edx": 0,
+       "endereco": "0x4B8C64",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ABIL_DIAGNOSI",
+         "ABIL_DIAGNOSI_LR",
+         "STATO_DIAGNOSI",
+         "STATO_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x431878",
+       "condicoes": [
+        "[obj+0x1280] == 0",
+        "edx == 0x5d",
+        "GetFlag1(caso 8) == 0"
+       ],
+       "ecx": 2,
+       "edx": 0,
+       "endereco": "0x4B8C78",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "STATO_DIAGNOSI",
+         "STATO_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4318F8",
+       "condicoes": [
+        "[obj+0x1280] == 0",
+        "edx == 0x5d",
+        "GetFlag1(caso 8) == 0"
+       ],
+       "ecx": 2,
+       "edx": 0,
+       "endereco": "0x4B8C8C",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ABIL_DIAGNOSI",
+         "ABIL_DIAGNOSI_LR",
+         "STATO_DIAGNOSI",
+         "STATO_DIAGNOSI_LR"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4B8B30",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = CheckTempAcquaClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckTempAcquaClick",
+     "marca": "OBS-COD",
+     "n_instr": 108
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4A8928",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = CheckTpsBlocKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckTpsBlocKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 21
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.22",
+    "marca": "OBS-COD",
+    "texto": "Liga a troca condicionada a temperatura da agua (so disponivel se o fio laranja estiver ligado ao sensor); nao se marca na mao."
+   },
+   "flags": [
+    {
+     "caso": 8,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0001",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 8,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0001",
+     "origem": "flags-do-original.json",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": {
+    "chave": "HINTCHECKTEMPACQUA",
+    "eng": "Enable change-over with water temperature",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Abilita cambio con temperatura acqua",
+    "marca": "INFERIDO",
+    "por": "Enable change-over with water temperature"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "CheckTempAcqua",
+   "ordem_dfm": 13,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Abilita cambio con temperatura acqua",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "caixa de marcar",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": true,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0001",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TCheckBox",
+   "dfm": {
+    "Caption": "Abilita cambio con temperatura gas",
+    "Enabled": "False",
+    "Height": 34,
+    "Left": 38,
+    "TabOrder": 1,
+    "Top": 51,
+    "Width": 750
+   },
+   "dfm_linha": 4802,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 9,
+      "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x976e75",
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0002",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1053"
+      ],
+      "quadros": [
+       "35 03 00 86 24 53 10 45"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 9,
+      "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x976e75",
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0002",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": "False",
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "CheckTempGas",
+      "da_aba": true,
+      "endereco": "0x4B8E24",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempRiduttoreClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckTempGas",
+      "da_aba": false,
+      "endereco": "0x49062E",
+      "marca": "OBS-COD",
+      "metodo": "FormShow",
+      "origem": "GetFlag1(caso 9)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckTempGas",
+      "da_aba": true,
+      "endereco": "0x4B930F",
+      "marca": "OBS-COD",
+      "metodo": "TabTempShow",
+      "origem": "GetFlag1(caso 9)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 9,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0002",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 9,
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "endereco": "0x4B8E38",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 9,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0002",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 9,
+       "condicoes": [],
+       "endereco": "0x4B8E4A",
+       "funcao": "GetFlag1"
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelTempCambio",
+       "endereco": "0x4B8E57",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "EditTempCambio",
+       "endereco": "0x4B8E6B",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelT1",
+       "endereco": "0x4B8E7F",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4B8E10",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = CheckTempRiduttoreClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckTempRiduttoreClick",
+     "marca": "OBS-COD",
+     "n_instr": 29
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4A8928",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = CheckTpsBlocKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckTpsBlocKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 21
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.22",
+    "marca": "OBS-COD",
+    "texto": "Liga a troca condicionada a temperatura do gas lida no sensor da linha de baixa pressao; depende da ligacao do fio, nao se marca na mao."
+   },
+   "flags": [
+    {
+     "caso": 9,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0002",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 9,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0002",
+     "origem": "flags-do-original.json",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "CheckTempGas",
+   "ordem_dfm": 14,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Abilita cambio con temperatura gas",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "caixa de marcar",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0002",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 151,
+    "MaxLength": 4,
+    "MaxValue": 100.0,
+    "MinValue": 1.0,
+    "NextControl": "EditTMin",
+    "Precision": 1.0,
+    "PrevControl": "EditRPullUp",
+    "ReadOnly": "True",
+    "TabOrder": 6,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 265,
+    "Visible": "False",
+    "Width": 87
+   },
+   "dfm_linha": 4816,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "EditDeltaT",
+      "da_aba": true,
+      "endereco": "0x4B8F2F",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4B8815",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4B88AA",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4B86C4",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditRPullUpEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRPullUpEnter",
+     "marca": "OBS-COD",
+     "n_instr": 167
+    },
+    {
+     "acessos": [
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "jb 0x4b88f7 != ",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4B8917",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "jb 0x4b88f7 != ",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4B8942",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4B8962",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == ",
+        "dec eax == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B8982",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == ",
+        "dec eax == ",
+        "dec eax == "
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8A1F",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4B8A2A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4B8A43",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4B8A64",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B8A7F",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8A9A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8AD2",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelLimite",
+       "endereco": "0x4B8B25",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4B88C0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditRPullUpExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRPullUpExit",
+     "marca": "OBS-COD",
+     "n_instr": 169
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.23",
+    "marca": "OBS-COD",
+    "texto": "Velocidade com que o programa adquire a leitura de tensao do sensor do carro."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 100.0,
+    "minimo": 1.0,
+    "passo": 1.0
+   },
+   "hint": {
+    "chave": "HINTLABELDELTAT",
+    "eng": "Delta T",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Delta T",
+    "marca": "INFERIDO",
+    "por": "Delta T"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditDeltaT",
+   "ordem_dfm": 15,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelDeltaT",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Delta T",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelDeltaT)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabDeltaT",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "°C"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 151,
+    "MaxLength": 5,
+    "MaxValue": 5000.0,
+    "MinValue": 1.0,
+    "NextControl": "EditDeltaT",
+    "Precision": 1.0,
+    "PrevControl": "CheckTempGas",
+    "ReadOnly": "True",
+    "TabOrder": 5,
+    "Text": "0",
+    "Top": 226,
+    "Visible": "False",
+    "Width": 87
+   },
+   "dfm_linha": 4838,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "EditRPullUp",
+      "da_aba": true,
+      "endereco": "0x4B8EF3",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4B8815",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4B88AA",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4B86C4",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditRPullUpEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRPullUpEnter",
+     "marca": "OBS-COD",
+     "n_instr": 167
+    },
+    {
+     "acessos": [
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "jb 0x4b88f7 != ",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4B8917",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "jb 0x4b88f7 != ",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4B8942",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4B8962",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == ",
+        "dec eax == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B8982",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == ",
+        "dec eax == ",
+        "dec eax == "
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8A1F",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4B8A2A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4B8A43",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4B8A64",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B8A7F",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8A9A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8AD2",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelLimite",
+       "endereco": "0x4B8B25",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4B88C0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditRPullUpExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRPullUpExit",
+     "marca": "OBS-COD",
+     "n_instr": 169
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.23",
+    "marca": "OBS-COD",
+    "texto": "Valor do resistor pull-up da central de gasolina (se nao souber, deixe o padrao)."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5000.0,
+    "minimo": 1.0,
+    "passo": 1.0
+   },
+   "hint": {
+    "chave": "HINTLABELRPULLUP",
+    "eng": "Pull-up resistor",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Resistenza di pull-up",
+    "marca": "INFERIDO",
+    "por": "Pull-up resistor"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditRPullUp",
+   "ordem_dfm": 16,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelRPullUp",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "R pull-up",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelRPullUp)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabRPullUp",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "ohm"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 529,
+    "MaxLength": 4,
+    "MaxValue": 180.0,
+    "NextControl": "DrawGridTemp",
+    "Precision": 1.0,
+    "PrevControl": "EditTMin",
+    "ReadOnly": "True",
+    "TabOrder": 8,
+    "Tag": 3,
+    "Text": "0",
+    "Top": 265,
+    "Visible": "False",
+    "Width": 87
+   },
+   "dfm_linha": 4859,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "EditTMax",
+      "da_aba": true,
+      "endereco": "0x4B8FA7",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4B8815",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4B88AA",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4B86C4",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditRPullUpEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRPullUpEnter",
+     "marca": "OBS-COD",
+     "n_instr": 167
+    },
+    {
+     "acessos": [
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "jb 0x4b88f7 != ",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4B8917",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "jb 0x4b88f7 != ",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4B8942",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4B8962",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == ",
+        "dec eax == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B8982",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == ",
+        "dec eax == ",
+        "dec eax == "
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8A1F",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4B8A2A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4B8A43",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4B8A64",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B8A7F",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8A9A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8AD2",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelLimite",
+       "endereco": "0x4B8B25",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4B88C0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditRPullUpExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRPullUpExit",
+     "marca": "OBS-COD",
+     "n_instr": 169
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.23",
+    "marca": "OBS-COD",
+    "texto": "Temperatura maxima da parametrizacao do sensor do carro (sugerido 100 graus C)."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 180.0,
+    "minimo": 0,
+    "passo": 1.0
+   },
+   "hint": {
+    "chave": "HINTLABELTMAX",
+    "eng": "Maximum temperature",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Temperatura massima",
+    "marca": "INFERIDO",
+    "por": "Maximum temperature"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTMax",
+   "ordem_dfm": 17,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTMax",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "T max",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelTMax)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabTMax",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "°C"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 529,
+    "MaxLength": 4,
+    "MaxValue": 120.0,
+    "MinValue": -40.0,
+    "NextControl": "EditTMax",
+    "Precision": 1.0,
+    "PrevControl": "EditDeltaT",
+    "ReadOnly": "True",
+    "TabOrder": 7,
+    "Tag": 2,
+    "Text": "0",
+    "Top": 226,
+    "Visible": "False",
+    "Width": 87
+   },
+   "dfm_linha": 4880,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "EditTMin",
+      "da_aba": true,
+      "endereco": "0x4B8F6B",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4B8815",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4B88AA",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4B86C4",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditRPullUpEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRPullUpEnter",
+     "marca": "OBS-COD",
+     "n_instr": 167
+    },
+    {
+     "acessos": [
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "jb 0x4b88f7 != ",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4B8917",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "jb 0x4b88f7 != ",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4B8942",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "dec eax != ",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4B8962",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == ",
+        "dec eax == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B8982",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303B8",
+       "condicoes": [
+        "[obj+0x184C] != 0",
+        "sub eax, 1 < ",
+        "jb 0x4b88f7 == ",
+        "dec eax == ",
+        "dec eax == "
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8A1F",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "PARAMETRI_TEMP"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4B8A2A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4B8A43",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4B8A64",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B8A7F",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8A9A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x4303A8",
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B8AD2",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "condicoes": [],
+       "controle": "LabelLimite",
+       "endereco": "0x4B8B25",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4B88C0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditRPullUpExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRPullUpExit",
+     "marca": "OBS-COD",
+     "n_instr": 169
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.23",
+    "marca": "OBS-COD",
+    "texto": "Temperatura minima da parametrizacao do sensor do carro (sugerido: a menor lida com o motor frio no scanner OBD)."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 120.0,
+    "minimo": -40.0,
+    "passo": 1.0
+   },
+   "hint": {
+    "chave": "HINTLABELTMIN",
+    "eng": "Minimum temperature",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Temperatura minima",
+    "marca": "INFERIDO",
+    "por": "Minimum temperature"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTMin",
+   "ordem_dfm": 18,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTMin",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "T min",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelTMin)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabTMin",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "°C"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TKeyComboBox",
+   "dfm": {
+    "Enabled": "False",
+    "Height": 37,
+    "ItemIndex": 0,
+    "Left": 529,
+    "NextControl": "CheckTempGas",
+    "PrevControl": "CheckTempMotore",
+    "Style": "csDropDownList",
+    "TabOrder": 0,
+    "Text": "4k7",
+    "Top": 10,
+    "Width": 178
+   },
+   "dfm_linha": 4902,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": [
+     {
+      "amostras": [
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x430887",
+        "opcao": 0,
+        "quadros": [],
+        "texto": "4k7"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x430887",
+        "opcao": 1,
+        "quadros": [],
+        "texto": "1k"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x430887",
+        "opcao": 2,
+        "quadros": [],
+        "texto": "2k2"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x430887",
+        "opcao": 3,
+        "quadros": [],
+        "texto": "SENSATA"
+       }
+      ],
+      "fonte": "metodo 0x430878 executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboTempRiduttoreKeyPress o chama em 0x4B94BE)",
+      "marca": "INFERIDO",
+      "metodo": "0x430878",
+      "tipo": "combo"
+     }
+    ]
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": "False",
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "ComboTempRiduttore",
+      "da_aba": false,
+      "endereco": "0x49094D",
+      "marca": "OBS-COD",
+      "metodo": "FormShow",
+      "origem": "sub_430864",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "ComboTempRiduttore",
+      "da_aba": true,
+      "endereco": "0x4B93BA",
+      "marca": "OBS-COD",
+      "metodo": "TabTempShow",
+      "origem": "sub_430864",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x430878",
+       "condicoes": [
+        "eax == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B94BE",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x430A0C",
+         "0x4316EC",
+         "0x431738",
+         "0x431AF8",
+         "0x431B7C",
+         "0x432024",
+         "0x43204C"
+        ],
+        "escreve": [],
+        "le": [
+         "TIPO_SENSORE_TEMPERATURA"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4B9494",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboTempRiduttoreKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboTempRiduttoreKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 20
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.22",
+    "marca": "OBS-COD",
+    "texto": "Tipo do sensor de temperatura do gas instalado (o 4K7 e o padrao nos kits Landi e Keihin)."
+   },
+   "hint": {
+    "chave": "HINTLABELTEMPGAS",
+    "eng": "Temperature gas sensor type",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tipo di sensore temperatura gas",
+    "marca": "INFERIDO",
+    "por": "Temperature gas sensor type"
+   },
+   "itens": [
+    {
+     "eng": null,
+     "indice": 0,
+     "ita": "4k7",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 1,
+     "ita": "1k",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 2,
+     "ita": "2k2",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 3,
+     "ita": "SENSATA",
+     "por": null
+    }
+   ],
+   "manual": {
+    "chave": "Gas temperature sensor type",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1094, pagina 22 do PDF",
+    "linha": 1094,
+    "marca": "OBS-COD",
+    "pagina": 22,
+    "trecho": "A Gas temperature sensor type Identifies the type of gas sensor used. The 4K7 sensor is fitted as default with: the OMEGAS- EVO version with Matrix and Lovato “J-K” injec-"
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboTempRiduttore",
+   "ordem_dfm": 19,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTempGas",
+    "eng": "Gas temperature sensor type",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPGAS]",
+    "ita": "Tipo di sensore temperatura gas",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Tipo de sensor da temp. do gás",
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "combo",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TButton",
+   "dfm": {
+    "Caption": "&Modifica parametri sensore temperatura motore",
+    "Height": 38,
+    "Left": 40,
+    "TabOrder": 10,
+    "Top": 481,
+    "Visible": "False",
+    "Width": 667
+   },
+   "dfm_linha": 4925,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 10,
+      "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x976d3f",
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0004",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1055"
+      ],
+      "quadros": [
+       "35 03 00 86 24 55 10 47"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 10,
+      "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x976d3f",
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0004",
+      "palavra": 1,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "sub_752BC4 != 0"
+      ],
+      "controle": "ButtonNuoviParametri",
+      "da_aba": true,
+      "endereco": "0x4B9063",
+      "marca": "OBS-COD",
+      "metodo": "ButtonNuoviParametriClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_752BC4 == 0"
+      ],
+      "controle": "ButtonNuoviParametri",
+      "da_aba": true,
+      "endereco": "0x4B9139",
+      "marca": "OBS-COD",
+      "metodo": "ButtonNuoviParametriClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "ButtonNuoviParametri",
+      "da_aba": true,
+      "endereco": "0x4B8FF7",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_752BC4 != 0"
+       ],
+       "controle": "ButtonNuoviParametri",
+       "endereco": "0x4B9063",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_752BC4 == 0"
+       ],
+       "controle": "ButtonNuoviParametri",
+       "endereco": "0x4B9139",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 10,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0004",
+         "palavra": 1,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 10,
+       "condicoes": [
+        "sub_752BC4 == 0"
+       ],
+       "endereco": "0x4B9192",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      }
+     ],
+     "endereco": "0x4B9000",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = ButtonNuoviParametriClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "ButtonNuoviParametriClick",
+     "marca": "OBS-COD",
+     "n_instr": 115
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.23",
+    "marca": "OBS-COD",
+    "texto": "Abre a tela para ajustar os parametros do sensor de temperatura do motor (pull-up, delta T, Tmin e Tmax) e montar a tabela temperatura x tensao."
+   },
+   "flags_todos": [
+    {
+     "caso": 10,
+     "condicao": "sempre",
+     "fonte": "handler ButtonNuoviParametriClick (SetFlag1 caso 10)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0004",
+     "origem": "handler ButtonNuoviParametriClick",
+     "palavra": 1,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": {
+    "chave": "HINTBUTTONNUOVIPARAMETRI",
+    "eng": "Modify parameters of engine temperature sensor",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Modifica parametri sensore temperatura motore",
+    "marca": "INFERIDO",
+    "por": "Modify parameters of engine temperature sensor"
+   },
+   "manual": {
+    "chave": "&Modify temperature sensor parameters",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1135, pagina 23 do PDF",
+    "linha": 1135,
+    "marca": "OBS-COD",
+    "pagina": 23,
+    "trecho": "D By pressing “Modify temperature sensor parameters” you can set: E R pull-up: the pull-up resistance value in the petrol ECU (if you don’t know the value, you can leave the default setting)."
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "ButtonNuoviParametri",
+   "ordem_dfm": 20,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": "&Modify temperature sensor parameters",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[BUTTONNUOVIPARAMETRI]",
+    "ita": "&Modifica parametri sensore temperatura motore",
+    "marca": "OBS-COD",
+    "por": "&Modificar parâmetros do sensor da temperatura"
+   },
+   "tipo": "botao",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0004",
+     "palavra": 1,
+     "palavra_valor": "1051",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TDrawGrid",
+   "dfm": {
+    "ColCount": 4,
+    "FixedCols": 0,
+    "Height": 132,
+    "Left": 67,
+    "RowCount": 31,
+    "TabOrder": 9,
+    "Top": 342,
+    "Visible": "False",
+    "Width": 501
+   },
+   "dfm_linha": 4944,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "DrawGridTemp",
+      "da_aba": true,
+      "endereco": "0x4B8FE3",
+      "marca": "OBS-COD",
+      "metodo": "CheckTempMotoreClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x43041C",
+       "condicoes": [
+        "eax == 0x20",
+        "[obj+0x184C] != 0",
+        "cmp ecx, eax > "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B80F3",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ECU_TEMP"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4B80B0",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = DrawGridTempKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridTempKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 78
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "[obj+0x184C] != 0"
+       ],
+       "controle": null,
+       "endereco": "0x4B869D",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4B868C",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = DrawGridTempEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridTempEnter",
+     "marca": "OBS-COD",
+     "n_instr": 6
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": "LabelInstr",
+       "endereco": "0x4B86BD",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4B86A4",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = DrawGridTempExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridTempExit",
+     "marca": "OBS-COD",
+     "n_instr": 10
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B81F4",
+     "evento": "OnDblClick",
+     "fonte": "DFM OnDblClick = DrawGridTempDblClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridTempDblClick",
+     "marca": "OBS-COD",
+     "n_instr": 49
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B2514",
+     "evento": "OnKeyDown",
+     "fonte": "DFM OnKeyDown = DrawGridKKeyDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridKKeyDown",
+     "marca": "OBS-COD",
+     "n_instr": 54
+    },
+    {
+     "endereco": "0x4B7874",
+     "evento": "OnDrawCell",
+     "fonte": "DFM OnDrawCell = DrawGridTempDrawCell; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridTempDrawCell",
+     "marca": "OBS-COD",
+     "nota": "desenho das celulas da grade (exibicao); nao envia nada a ECU"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.23",
+    "marca": "OBS-COD",
+    "texto": "Tabela temperatura x tensao do sensor do carro; as tensoes devem sempre diminuir quando a temperatura sobe."
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "DrawGridTemp",
+   "ordem_dfm": 21,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "grade",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TCheckBox",
+   "dfm": {
+    "Caption": "Diagnosis on the water temperature sensor for VP system",
+    "Height": 34,
+    "Left": 38,
+    "TabOrder": 3,
+    "Top": 123,
+    "Visible": "False",
+    "Width": 750
+   },
+   "dfm_linha": 4973,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 5,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag3 0x42E8D8 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 0,
+      "palavras_antes": [
+       "0000",
+       "0000"
+      ],
+      "palavras_depois": [
+       "0080",
+       "0000"
+      ],
+      "quadros": [
+       "35 FA 00 80 00 00 00 AF"
+      ],
+      "serial_code": 250,
+      "vetor": "FLAG_CONF3"
+     },
+     {
+      "acao": "desligar",
+      "caso": 5,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag3 0x42E8D8 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0080",
+      "palavra": 0,
+      "palavras_antes": [
+       "0000",
+       "0000"
+      ],
+      "palavras_depois": [
+       "0000",
+       "0000"
+      ],
+      "quadros": [
+       "35 FA 00 00 00 00 00 2F"
+      ],
+      "serial_code": 250,
+      "vetor": "FLAG_CONF3"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "mov esi, 0xaebed8 == "
+      ],
+      "controle": "CheckFlashLubeSuTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4B8CB7",
+      "marca": "OBS-COD",
+      "metodo": "CheckFlashLubeSuTempAcquaClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "mov esi, 0xaebed8 == "
+      ],
+      "controle": "CheckFlashLubeSuTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4B8CD5",
+      "marca": "OBS-COD",
+      "metodo": "CheckFlashLubeSuTempAcquaClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckFlashLubeSuTempAcqua",
+      "da_aba": false,
+      "endereco": "0x49066A",
+      "marca": "OBS-COD",
+      "metodo": "FormShow",
+      "origem": "GetFlag3(caso 5)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckFlashLubeSuTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4B934B",
+      "marca": "OBS-COD",
+      "metodo": "TabTempShow",
+      "origem": "GetFlag3(caso 5)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckFlashLubeSuTempAcqua",
+      "da_aba": true,
+      "endereco": "0x4B93A0",
+      "marca": "OBS-COD",
+      "metodo": "TabTempShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 5,
+         "condicao": "sempre",
+         "getter": "0x42E754",
+         "mascara": "0x0080",
+         "palavra": 0,
+         "serial_code": 250,
+         "setter": "0x42E8D8",
+         "vetor": "FLAG_CONF3"
+        }
+       ],
+       "caso": 5,
+       "condicoes": [
+        "mov esi, 0xaebed8 == "
+       ],
+       "endereco": "0x4B8CC8",
+       "funcao": "SetFlag3",
+       "valor_ecx": null
+      },
+      {
+       "alvo": "0x431878",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "ecx": 2,
+       "edx": 0,
+       "endereco": "0x4B8CF0",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "STATO_DIAGNOSI",
+         "STATO_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4318F8",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "ecx": 2,
+       "edx": 0,
+       "endereco": "0x4B8D04",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ABIL_DIAGNOSI",
+         "ABIL_DIAGNOSI_LR",
+         "STATO_DIAGNOSI",
+         "STATO_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x431A40",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "ecx": 0,
+       "edx": 0,
+       "endereco": "0x4B8D13",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x431A5C",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "ecx": 0,
+       "edx": 0,
+       "endereco": "0x4B8D24",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ACTION_DIAGNOSI",
+         "ACTION_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x431A40",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "ecx": 0,
+       "edx": 1,
+       "endereco": "0x4B8D36",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x431A5C",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "ecx": 0,
+       "edx": 1,
+       "endereco": "0x4B8D4A",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ACTION_DIAGNOSI",
+         "ACTION_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x431A40",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "ecx": 0,
+       "edx": 2,
+       "endereco": "0x4B8D5C",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x431A5C",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "ecx": 0,
+       "edx": 2,
+       "endereco": "0x4B8D70",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ACTION_DIAGNOSI",
+         "ACTION_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x431878",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] == 0"
+       ],
+       "ecx": 2,
+       "edx": 0,
+       "endereco": "0x4B8D87",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "STATO_DIAGNOSI",
+         "STATO_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4318F8",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] == 0"
+       ],
+       "ecx": 2,
+       "edx": 0,
+       "endereco": "0x4B8D9B",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ABIL_DIAGNOSI",
+         "ABIL_DIAGNOSI_LR",
+         "STATO_DIAGNOSI",
+         "STATO_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x431A40",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] == 0"
+       ],
+       "ecx": 0,
+       "edx": 0,
+       "endereco": "0x4B8DAA",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x431A5C",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] == 0"
+       ],
+       "ecx": 0,
+       "edx": 0,
+       "endereco": "0x4B8DBB",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ACTION_DIAGNOSI",
+         "ACTION_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x431A40",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] == 0"
+       ],
+       "ecx": 0,
+       "edx": 1,
+       "endereco": "0x4B8DCD",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x431A5C",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] == 0"
+       ],
+       "ecx": 0,
+       "edx": 1,
+       "endereco": "0x4B8DE1",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ACTION_DIAGNOSI",
+         "ACTION_DIAGNOSI_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x431A40",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] == 0"
+       ],
+       "ecx": 0,
+       "edx": 2,
+       "endereco": "0x4B8DF3",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x431A5C",
+       "condicoes": [
+        "mov esi, 0xaebed8 == ",
+        "chamada virtual dword ptr [edx + 0x104] == 0"
+       ],
+       "ecx": 0,
+       "edx": 2,
+       "endereco": "0x4B8E07",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "ACTION_DIAGNOSI",
+         "ACTION_DIAGNOSI_LR"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4B8C98",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = CheckFlashLubeSuTempAcquaClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckFlashLubeSuTempAcquaClick",
+     "marca": "OBS-COD",
+     "n_instr": 121
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Diagnostico no sensor de temperatura da agua para o sistema VP. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "flags": [
+    {
+     "caso": 5,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42E754",
+     "marca": "OBS-COD",
+     "mascara": "0x0080",
+     "palavra": 0,
+     "papel": "caixa (Checked)",
+     "serial_code": 250,
+     "setter": "0x42E8D8",
+     "vetor": "FLAG_CONF3"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 5,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42E754",
+     "marca": "OBS-COD",
+     "mascara": "0x0080",
+     "origem": "flags-do-original.json",
+     "palavra": 0,
+     "papel": "caixa (Checked)",
+     "serial_code": 250,
+     "setter": "0x42E8D8",
+     "vetor": "FLAG_CONF3"
+    }
+   ],
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "CheckFlashLubeSuTempAcqua",
+   "ordem_dfm": 22,
+   "pai": "TabTemp",
+   "rotulo": {
+    "eng": "Diagnosis on the water temperature sensor for VP system",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[CHECKFLASHLUBESUTEMPACQUA]",
+    "ita": "Diagnosis on the water temperature sensor for VP system",
+    "marca": "OBS-COD",
+    "por": "Diagnosis on the water temperature sensor for VP system"
+   },
+   "tipo": "caixa de marcar",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102872,
+     "marca": "OBS-FIO",
+     "mascara": "0x0080",
+     "palavra": 0,
+     "palavra_valor": "0000",
+     "vetor": "FLAG_CONF3"
+    }
+   ]
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Edits sem codigo de dado na rotina 0x48A228 (o valor passa por metodo proprio do TStreamDati; formula nao decodificada aqui, `DESCONHECIDO`): `EditDeltaT`, `EditRPullUp`, `EditTMax`, `EditTMin`.",
+  "Combos cujo valor e gravado por metodo proprio (sem bit nem codigo generico): `ComboTempRiduttore`. Os vetores tocados aparecem na lista de acessos do handler; o significado de cada opcao no fio e `DESCONHECIDO` quando nao ha formula.",
+  "Grades (`TDrawGrid`): o conteudo e desenhado em `OnDrawCell`; o conteudo e os quadros por celula nao foram decodificados celula a celula: `DrawGridTemp`.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabTemp",
+  "handlers_analisados": [
+   "TabTempShow",
+   "ButtonNuoviParametriClick",
+   "ControlMouseDown",
+   "CheckFlashLubeSuTempAcquaClick",
+   "CheckTempAcquaClick",
+   "CheckTpsBlocKeyPress",
+   "CheckTempRiduttoreClick",
+   "CheckTempMotoreClick",
+   "ComboTempRiduttoreKeyPress",
+   "DrawGridTempKeyPress",
+   "DrawGridTempEnter",
+   "DrawGridTempExit",
+   "DrawGridTempDblClick",
+   "DrawGridKKeyDown",
+   "DrawGridTempDrawCell",
+   "EditRPullUpEnter",
+   "EditRPullUpExit"
+  ],
+  "n_com_flag": 4,
+  "n_com_valor_do_log": 5,
+  "n_controles": 23,
+  "n_interativos": 11,
+  "n_ligados_ao_vetor": 0,
+  "ordem": 6,
+  "por_classe": {
+   "TButton": 1,
+   "TCheckBox": 4,
+   "TDrawGrid": 1,
+   "TKeyComboBox": 1,
+   "TLabel": 12,
+   "TNumericEdit": 4
+  },
+  "tab_show": {
+   "endereco": "0x4B92C8",
+   "fonte": "RTTI do TFormConfig; OnShow = TabTempShow",
+   "marca": "OBS-COD",
+   "metodo": "TabTempShow"
+  },
+  "tab_visible_dfm": "False",
+  "titulo": {
+   "eng": null,
+   "fonte": "ita=Caption do DFM",
+   "ita": "Temperatura",
+   "marca": "OBS-COD",
+   "por": null
+  }
+ }
+}

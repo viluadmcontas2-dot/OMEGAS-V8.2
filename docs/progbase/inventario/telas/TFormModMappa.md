@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Alteração do valor de uma célula de mapa (chamada por TAebGrid/TAebVectorItems).
+
 - Instância DFM: `FormModMappa`; unidade: `@:ModificaMappa`; ancestral: `TForm`; tamanho de instância: 0x3CC; componentes no DFM: 5.
 - Título: "Modifica valore"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TAebGrid::EditValoriMappa` (0x0093DC84), `TAebVectorItems::EditValoriMappa` (0x009609F0)

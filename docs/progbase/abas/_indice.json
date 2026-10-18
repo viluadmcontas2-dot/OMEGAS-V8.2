@@ -1,0 +1,134 @@
+{
+ "abas": [
+  {
+   "aba": "TabCambio",
+   "n_com_flag": 16,
+   "n_com_valor_do_log": 33,
+   "n_controles": 106,
+   "n_interativos": 51,
+   "n_ligados_ao_vetor": 11
+  },
+  {
+   "aba": "TabLambda",
+   "n_com_flag": 1,
+   "n_com_valor_do_log": 9,
+   "n_controles": 45,
+   "n_interativos": 17,
+   "n_ligados_ao_vetor": 8
+  },
+  {
+   "aba": "TabEmissioni",
+   "n_com_flag": 1,
+   "n_com_valor_do_log": 8,
+   "n_controles": 34,
+   "n_interativos": 13,
+   "n_ligados_ao_vetor": 7
+  },
+  {
+   "aba": "TabSensore",
+   "n_com_flag": 7,
+   "n_com_valor_do_log": 10,
+   "n_controles": 59,
+   "n_interativos": 29,
+   "n_ligados_ao_vetor": 8
+  },
+  {
+   "aba": "TabPressione",
+   "n_com_flag": 3,
+   "n_com_valor_do_log": 6,
+   "n_controles": 31,
+   "n_interativos": 13,
+   "n_ligados_ao_vetor": 1
+  },
+  {
+   "aba": "TabTemp",
+   "n_com_flag": 4,
+   "n_com_valor_do_log": 5,
+   "n_controles": 23,
+   "n_interativos": 11,
+   "n_ligados_ao_vetor": 0
+  },
+  {
+   "aba": "TabKCoefficienti",
+   "n_com_flag": 1,
+   "n_com_valor_do_log": 3,
+   "n_controles": 32,
+   "n_interativos": 7,
+   "n_ligados_ao_vetor": 0
+  },
+  {
+   "aba": "TabCorrettori",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 0,
+   "n_controles": 12,
+   "n_interativos": 0,
+   "n_ligados_ao_vetor": 0
+  },
+  {
+   "aba": "TabKOpenLoop",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 0,
+   "n_controles": 1,
+   "n_interativos": 1,
+   "n_ligados_ao_vetor": 0
+  },
+  {
+   "aba": "TabKFactor",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 4,
+   "n_controles": 12,
+   "n_interativos": 6,
+   "n_ligados_ao_vetor": 4
+  },
+  {
+   "aba": "TabKTempRid",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 0,
+   "n_controles": 4,
+   "n_interativos": 1,
+   "n_ligados_ao_vetor": 0
+  },
+  {
+   "aba": "TabKTempMot",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 0,
+   "n_controles": 4,
+   "n_interativos": 1,
+   "n_ligados_ao_vetor": 0
+  },
+  {
+   "aba": "TabKPressDiff",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 0,
+   "n_controles": 4,
+   "n_interativos": 1,
+   "n_ligados_ao_vetor": 0
+  },
+  {
+   "aba": "TabPressAss",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 0,
+   "n_controles": 2,
+   "n_interativos": 1,
+   "n_ligados_ao_vetor": 0
+  },
+  {
+   "aba": "TabKTempi",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 2,
+   "n_controles": 11,
+   "n_interativos": 4,
+   "n_ligados_ao_vetor": 2
+  },
+  {
+   "aba": "TabKTempiEx",
+   "n_com_flag": 0,
+   "n_com_valor_do_log": 0,
+   "n_controles": 2,
+   "n_interativos": 1,
+   "n_ligados_ao_vetor": 0
+  }
+ ],
+ "total_controles": 382,
+ "total_interativos": 157
+}

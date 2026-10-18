@@ -1,0 +1,2148 @@
+{
+ "controles": [
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "K factor",
+    "Height": 24,
+    "Left": 103,
+    "Top": 16,
+    "Width": 76
+   },
+   "dfm_linha": 5452,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTKFACTOR",
+    "eng": "K Factor",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "K Factor",
+    "marca": "INFERIDO",
+    "por": "K Factor"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelKFactor",
+   "ordem_dfm": 0,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "K factor",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "P1",
+    "Height": 24,
+    "Left": 367,
+    "Top": 4,
+    "Visible": "False",
+    "Width": 24
+   },
+   "dfm_linha": 5461,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "LabelP1",
+      "da_aba": true,
+      "endereco": "0x4C4B6C",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "LabelP1",
+      "da_aba": true,
+      "endereco": "0x4C4CBE",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_489034",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelP1",
+   "ordem_dfm": 1,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "P1",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "T.inj.",
+    "Height": 24,
+    "Left": 288,
+    "Top": 37,
+    "Visible": "False",
+    "Width": 45
+   },
+   "dfm_linha": 5469,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "LabelTInjK",
+      "da_aba": true,
+      "endereco": "0x4C4B86",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "LabelTInjK",
+      "da_aba": true,
+      "endereco": "0x4C4D40",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTInjK",
+   "ordem_dfm": 2,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "T.inj.",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "K",
+    "Height": 24,
+    "Left": 319,
+    "Top": 68,
+    "Visible": "False",
+    "Width": 14
+   },
+   "dfm_linha": 5478,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "LabelK",
+      "da_aba": true,
+      "endereco": "0x4C4BA0",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "LabelK",
+      "da_aba": true,
+      "endereco": "0x4C4D68",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelK",
+   "ordem_dfm": 3,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "K",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "P2",
+    "Height": 24,
+    "Left": 446,
+    "Top": 4,
+    "Visible": "False",
+    "Width": 24
+   },
+   "dfm_linha": 5487,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "LabelP2",
+      "da_aba": true,
+      "endereco": "0x4C4B79",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "LabelP2",
+      "da_aba": true,
+      "endereco": "0x4C4D2C",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelP2",
+   "ordem_dfm": 4,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "P2",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "ms",
+    "Height": 24,
+    "Left": 512,
+    "Top": 37,
+    "Visible": "False",
+    "Width": 28
+   },
+   "dfm_linha": 5495,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "LabelInjK",
+      "da_aba": true,
+      "endereco": "0x4C4B93",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "LabelInjK",
+      "da_aba": true,
+      "endereco": "0x4C4D54",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelInjK",
+   "ordem_dfm": 5,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "ms",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TKeyComboBox",
+   "dfm": {
+    "Height": 32,
+    "ItemIndex": 0,
+    "Left": 102,
+    "Style": "csDropDownList",
+    "TabOrder": 0,
+    "Text": "1.00",
+    "Top": 45,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 5503,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "eax == 0xd",
+       "sub_754CCC == 0",
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C48BF",
+      "marca": "OBS-COD",
+      "metodo": "ComboKKeyPress",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "eax == 0xd",
+       "sub_754CCC == 0",
+       "SD.familia_LR[+0x80D] != 0",
+       "sub eax, 0x40 != ",
+       "sub eax, 0x15 != ",
+       "sub eax, 0x2b == "
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C4955",
+      "marca": "OBS-COD",
+      "metodo": "ComboKKeyPress",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "eax == 0xd",
+       "sub_754CCC == 0",
+       "SD.familia_LR[+0x80D] != 0",
+       "sub eax, 0x40 != ",
+       "sub eax, 0x2b == "
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C496A",
+      "marca": "OBS-COD",
+      "metodo": "ComboKKeyPress",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "eax == 0xd",
+       "sub_754CCC == 0",
+       "SD.familia_LR[+0x80D] != 0",
+       "sub eax, 0x2b == "
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C497F",
+      "marca": "OBS-COD",
+      "metodo": "ComboKKeyPress",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "eax == 0xd",
+       "sub_754CCC == 0",
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C4992",
+      "marca": "OBS-COD",
+      "metodo": "ComboKKeyPress",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0",
+       "sub eax, 0x40 != ",
+       "sub eax, 0x15 != ",
+       "sub eax, 0x2b == "
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C4A54",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0",
+       "sub eax, 0x40 != ",
+       "sub eax, 0x2b == ",
+       "sub eax, 0x15 == "
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C4A69",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0",
+       "sub eax, 0x2b == ",
+       "sub eax, 0x15 == ",
+       "sub eax, 0x40 == "
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C4A7E",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0",
+       "sub eax, 0x15 == ",
+       "sub eax, 0x40 == ",
+       "sub eax, 0x2b == "
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C4A91",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "ComboK",
+      "da_aba": true,
+      "endereco": "0x4C4A9F",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": 55,
+       "condicoes": [
+        "eax == 0xd",
+        "sub_754CCC == 0",
+        "SD.familia_LR[+0x80D] != 0",
+        "jb 0x4c48d1 != ",
+        "dec eax != ",
+        "sub eax, 1 < "
+       ],
+       "endereco": "0x4C48E3",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        55,
+        0,
+        1080033280
+       ],
+       "serial_code": 122,
+       "vetor": "K_MAPPA_NEUTRO_LR"
+      },
+      {
+       "codigo": 55,
+       "condicoes": [
+        "eax == 0xd",
+        "sub_754CCC == 0",
+        "SD.familia_LR[+0x80D] != 0",
+        "dec eax != ",
+        "sub eax, 1 < ",
+        "jb 0x4c48d1 == "
+       ],
+       "endereco": "0x4C48FE",
+       "funcao": "SetEsc",
+       "pushes": [
+        "edx",
+        55,
+        0,
+        1079328768
+       ],
+       "serial_code": 122,
+       "vetor": "K_MAPPA_NEUTRO_LR"
+      },
+      {
+       "codigo": 55,
+       "condicoes": [
+        "eax == 0xd",
+        "sub_754CCC == 0",
+        "SD.familia_LR[+0x80D] != 0",
+        "sub eax, 1 < ",
+        "jb 0x4c48d1 == ",
+        "dec eax == "
+       ],
+       "endereco": "0x4C491A",
+       "funcao": "SetEsc",
+       "pushes": [
+        "eax",
+        55,
+        0,
+        1078984704
+       ],
+       "serial_code": 122,
+       "vetor": "K_MAPPA_NEUTRO_LR"
+      },
+      {
+       "codigo": 55,
+       "condicoes": [
+        "eax == 0xd",
+        "sub_754CCC == 0",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4C492D",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        55
+       ],
+       "serial_code": 122,
+       "vetor": "K_MAPPA_NEUTRO_LR"
+      }
+     ],
+     "endereco": "0x4C4880",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboKKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboKKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 86
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.25",
+    "marca": "OBS-COD",
+    "texto": "Fator K: multiplica os valores do mapa K por 1,5 ou 2; so para quando a media do mapa passa de 230-240 apos a autocalibracao e a mistura ainda esta pobre; depois e obrigatorio refazer a autocalibracao."
+   },
+   "hint": null,
+   "itens": [
+    {
+     "eng": null,
+     "indice": 0,
+     "ita": "1.00",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 1,
+     "ita": "1.50",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 2,
+     "ita": "2.00",
+     "por": null
+    }
+   ],
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboK",
+   "ordem_dfm": 6,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelK",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "K",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelK)"
+   },
+   "tipo": "combo",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 32,
+    "Left": 102,
+    "MaxValue": 2.5,
+    "MinValue": 1.0,
+    "NextControl": "EditTInj1",
+    "Precision": 0.1,
+    "PrevControl": "EditK2",
+    "TabOrder": 1,
+    "Tag": 1,
+    "Text": "1",
+    "Top": 45,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 5523,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0",
+       "chamada virtual dword ptr [edx + 0x104] >= 0"
+      ],
+      "controle": "EditKMappaNeutro",
+      "da_aba": true,
+      "endereco": "0x4C4ABE",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_9691D4",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0",
+       "chamada virtual dword ptr [edx + 0x104] < 0"
+      ],
+      "controle": "EditKMappaNeutro",
+      "da_aba": true,
+      "endereco": "0x4C4AEC",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_9691D4",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "EditKMappaNeutro",
+      "da_aba": true,
+      "endereco": "0x4C4E5D",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": 97,
+       "condicoes": [
+        "eax == 0xd",
+        "SD.familia_LR[+0x80D] == 0"
+       ],
+       "endereco": "0x4C49CD",
+       "funcao": "SetEsc",
+       "pushes": [
+        "esi",
+        97
+       ],
+       "serial_code": 188,
+       "vetor": "K_MAPPA_NEUTRO"
+      },
+      {
+       "codigo": 97,
+       "condicoes": [
+        "eax == 0xd",
+        "SD.familia_LR[+0x80D] == 0"
+       ],
+       "endereco": "0x4C49E0",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        97
+       ],
+       "serial_code": 188,
+       "vetor": "K_MAPPA_NEUTRO"
+      }
+     ],
+     "endereco": "0x4C499C",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditKMappaNeutroKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditKMappaNeutroKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 31
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Valor K do mapa neutro (usado como referencia do mapa). [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 2.5,
+    "minimo": 1.0,
+    "passo": 0.1
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditKMappaNeutro",
+   "ordem_dfm": 7,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "codigo": -1,
+     "familia": "LR",
+     "nota": "sem codigo nesta familia (-1)"
+    },
+    {
+     "cache_sd": "(((i << 2) + SD) + 10864)",
+     "caso_get": "0x436085",
+     "caso_set": "0x437808",
+     "classe_vetor": "TAebVector",
+     "codigo": 101,
+     "ecu_para_tela": "(((SD[0x2980] * 0.00025) * 0.004) * SD[0x2A70 + i*4])",
+     "familia": "demais",
+     "fonte": "TStreamDati caso 0x437808 (0x436085)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 198,
+     "tela_para_ecu": "trunc(((v / ((SD[0x2980] * 0.00025) * 0.004)) + 0.5))",
+     "tipo": "indexado",
+     "vetor": "K_FACTOR_PARAM"
+    }
+   ],
+   "dfm": {
+    "DataIndex": 0,
+    "Height": 32,
+    "Left": 348,
+    "MaxValue": 5.0,
+    "MinValue": 1.0,
+    "NextControl": "EditK1",
+    "Precision": 0.02,
+    "PrevControl": "EditKMappaNeutro",
+    "TabOrder": 2,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 30,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 5547,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 101,
+      "erro": null,
+      "fonte": "TStreamDati.SetIdx 0x43734C executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": 0,
+      "marca": "OBS-COD",
+      "quadros": [
+       "14 C6 00 00 A1 07 82"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "EditTInj1",
+      "da_aba": true,
+      "endereco": "0x4C4BE9",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "EditTInj1",
+      "da_aba": true,
+      "endereco": "0x4C4D7C",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Primeiro ponto de tempo de injecao da curva do K de referencia. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 1.0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo_por_familia": {
+     "LR ([SD+0x80D]!=0)": -1,
+     "demais ([SD+0x80D]==0)": 101
+    },
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "indice_dfm": 0,
+    "marca": "OBS-COD",
+    "offset_campo_form": "0xA30"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTInj1",
+   "ordem_dfm": 8,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTInjK",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "T.inj.",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": [
+    {
+     "bruto": [
+      586,
+      58,
+      1172,
+      85
+     ],
+     "bruto_elemento": 586,
+     "elemento": 0,
+     "fonte": "PortmonLOGNOVO.LOG linha 1109564 (resposta ao pedido 29 (GetVector))",
+     "leitura": "29 (GetVector)",
+     "linha_log": 1109564,
+     "marca": "OBS-FIO",
+     "serial_code": 198,
+     "vetor": "K_FACTOR_PARAM"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "codigo": -1,
+     "familia": "LR",
+     "nota": "sem codigo nesta familia (-1)"
+    },
+    {
+     "cache_sd": "(((i << 2) + SD) + 10864)",
+     "caso_get": "0x436085",
+     "caso_set": "0x437808",
+     "classe_vetor": "TAebVector",
+     "codigo": 101,
+     "ecu_para_tela": "(((SD[0x2980] * 0.00025) * 0.004) * SD[0x2A70 + i*4])",
+     "familia": "demais",
+     "fonte": "TStreamDati caso 0x437808 (0x436085)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 198,
+     "tela_para_ecu": "trunc(((v / ((SD[0x2980] * 0.00025) * 0.004)) + 0.5))",
+     "tipo": "indexado",
+     "vetor": "K_FACTOR_PARAM"
+    }
+   ],
+   "dfm": {
+    "DataIndex": 1,
+    "Height": 32,
+    "Left": 348,
+    "MaxValue": 2.5,
+    "MinValue": 1.0,
+    "NextControl": "EditTInj2",
+    "Precision": 0.1,
+    "PrevControl": "EditTInj1",
+    "TabOrder": 3,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 64,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 5570,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 101,
+      "erro": null,
+      "fonte": "TStreamDati.SetIdx 0x43734C executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": 1,
+      "marca": "OBS-COD",
+      "quadros": [
+       "14 C6 00 01 33 00 0E"
+      ],
+      "valor_tela": 2.5
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "EditK1",
+      "da_aba": true,
+      "endereco": "0x4C4BF6",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "EditK1",
+      "da_aba": true,
+      "endereco": "0x4C4D90",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Valor K no primeiro ponto da curva de referencia. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 2.5,
+    "minimo": 1.0,
+    "passo": 0.1
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo_por_familia": {
+     "LR ([SD+0x80D]!=0)": -1,
+     "demais ([SD+0x80D]==0)": 101
+    },
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "indice_dfm": 1,
+    "marca": "OBS-COD",
+    "offset_campo_form": "0xA34"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditK1",
+   "ordem_dfm": 9,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelK",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "K",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (base sem indice)"
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": [
+    {
+     "bruto": [
+      586,
+      58,
+      1172,
+      85
+     ],
+     "bruto_elemento": 58,
+     "elemento": 1,
+     "fonte": "PortmonLOGNOVO.LOG linha 1109564 (resposta ao pedido 29 (GetVector))",
+     "leitura": "29 (GetVector)",
+     "linha_log": 1109564,
+     "marca": "OBS-FIO",
+     "serial_code": 198,
+     "vetor": "K_FACTOR_PARAM"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "codigo": -1,
+     "familia": "LR",
+     "nota": "sem codigo nesta familia (-1)"
+    },
+    {
+     "cache_sd": "(((i << 2) + SD) + 10864)",
+     "caso_get": "0x436085",
+     "caso_set": "0x437808",
+     "classe_vetor": "TAebVector",
+     "codigo": 101,
+     "ecu_para_tela": "(((SD[0x2980] * 0.00025) * 0.004) * SD[0x2A70 + i*4])",
+     "familia": "demais",
+     "fonte": "TStreamDati caso 0x437808 (0x436085)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 198,
+     "tela_para_ecu": "trunc(((v / ((SD[0x2980] * 0.00025) * 0.004)) + 0.5))",
+     "tipo": "indexado",
+     "vetor": "K_FACTOR_PARAM"
+    }
+   ],
+   "dfm": {
+    "DataIndex": 2,
+    "Height": 32,
+    "Left": 427,
+    "MaxValue": 5.0,
+    "MinValue": 1.0,
+    "NextControl": "EditK2",
+    "Precision": 0.02,
+    "PrevControl": "EditK1",
+    "TabOrder": 4,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 30,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 5593,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 101,
+      "erro": null,
+      "fonte": "TStreamDati.SetIdx 0x43734C executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": 2,
+      "marca": "OBS-COD",
+      "quadros": [
+       "14 C6 00 02 A1 07 84"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "EditTInj2",
+      "da_aba": true,
+      "endereco": "0x4C4C03",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "EditTInj2",
+      "da_aba": true,
+      "endereco": "0x4C4DA4",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Segundo ponto de tempo de injecao da curva do K de referencia. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 1.0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo_por_familia": {
+     "LR ([SD+0x80D]!=0)": -1,
+     "demais ([SD+0x80D]==0)": 101
+    },
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "indice_dfm": 2,
+    "marca": "OBS-COD",
+    "offset_campo_form": "0xA40"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTInj2",
+   "ordem_dfm": 10,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTInjK",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "T.inj.",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelInjK",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "ms"
+   },
+   "valor_ecu": [
+    {
+     "bruto": [
+      586,
+      58,
+      1172,
+      85
+     ],
+     "bruto_elemento": 1172,
+     "elemento": 2,
+     "fonte": "PortmonLOGNOVO.LOG linha 1109564 (resposta ao pedido 29 (GetVector))",
+     "leitura": "29 (GetVector)",
+     "linha_log": 1109564,
+     "marca": "OBS-FIO",
+     "serial_code": 198,
+     "vetor": "K_FACTOR_PARAM"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "codigo": -1,
+     "familia": "LR",
+     "nota": "sem codigo nesta familia (-1)"
+    },
+    {
+     "cache_sd": "(((i << 2) + SD) + 10864)",
+     "caso_get": "0x436085",
+     "caso_set": "0x437808",
+     "classe_vetor": "TAebVector",
+     "codigo": 101,
+     "ecu_para_tela": "(((SD[0x2980] * 0.00025) * 0.004) * SD[0x2A70 + i*4])",
+     "familia": "demais",
+     "fonte": "TStreamDati caso 0x437808 (0x436085)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 198,
+     "tela_para_ecu": "trunc(((v / ((SD[0x2980] * 0.00025) * 0.004)) + 0.5))",
+     "tipo": "indexado",
+     "vetor": "K_FACTOR_PARAM"
+    }
+   ],
+   "dfm": {
+    "DataIndex": 3,
+    "Height": 32,
+    "Left": 427,
+    "MaxValue": 2.5,
+    "MinValue": 1.0,
+    "NextControl": "EditKMappaNeutro",
+    "Precision": 0.1,
+    "PrevControl": "EditTInj2",
+    "TabOrder": 5,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 64,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 5616,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 101,
+      "erro": null,
+      "fonte": "TStreamDati.SetIdx 0x43734C executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": 3,
+      "marca": "OBS-COD",
+      "quadros": [
+       "14 C6 00 03 33 00 10"
+      ],
+      "valor_tela": 2.5
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] != 0"
+      ],
+      "controle": "EditK2",
+      "da_aba": true,
+      "endereco": "0x4C4C10",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": "sub_96BB88",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "SD.familia_LR[+0x80D] == 0"
+      ],
+      "controle": "EditK2",
+      "da_aba": true,
+      "endereco": "0x4C4DB8",
+      "marca": "OBS-COD",
+      "metodo": "TabKFactorShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Valor K no segundo ponto da curva de referencia. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 2.5,
+    "minimo": 1.0,
+    "passo": 0.1
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo_por_familia": {
+     "LR ([SD+0x80D]!=0)": -1,
+     "demais ([SD+0x80D]==0)": 101
+    },
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "indice_dfm": 3,
+    "marca": "OBS-COD",
+    "offset_campo_form": "0xA44"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditK2",
+   "ordem_dfm": 11,
+   "pai": "TabKFactor",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelK",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "K",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (base sem indice)"
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": [
+    {
+     "bruto": [
+      586,
+      58,
+      1172,
+      85
+     ],
+     "bruto_elemento": 85,
+     "elemento": 3,
+     "fonte": "PortmonLOGNOVO.LOG linha 1109564 (resposta ao pedido 29 (GetVector))",
+     "leitura": "29 (GetVector)",
+     "linha_log": 1109564,
+     "marca": "OBS-FIO",
+     "serial_code": 198,
+     "vetor": "K_FACTOR_PARAM"
+    }
+   ]
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Edits sem codigo de dado na rotina 0x48A228 (o valor passa por metodo proprio do TStreamDati; formula nao decodificada aqui, `DESCONHECIDO`): `EditKMappaNeutro`.",
+  "Combos cujo valor e gravado por metodo proprio (sem bit nem codigo generico): `ComboK`. Os vetores tocados aparecem na lista de acessos do handler; o significado de cada opcao no fio e `DESCONHECIDO` quando nao ha formula.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabKFactor",
+  "handlers_analisados": [
+   "TabKFactorShow",
+   "ComboKKeyPress",
+   "EditRifLambdaKeyPress",
+   "EditGiriCambioEnter",
+   "EditGiriCambioExit",
+   "EditKMappaNeutroKeyPress",
+   "ControlMouseDown"
+  ],
+  "n_com_flag": 0,
+  "n_com_valor_do_log": 4,
+  "n_controles": 12,
+  "n_interativos": 6,
+  "n_ligados_ao_vetor": 4,
+  "ordem": 10,
+  "por_classe": {
+   "TKeyComboBox": 1,
+   "TLabel": 6,
+   "TNumericEdit": 5
+  },
+  "tab_show": {
+   "endereco": "0x4C49FC",
+   "fonte": "RTTI do TFormConfig; OnShow = TabKFactorShow",
+   "marca": "OBS-COD",
+   "metodo": "TabKFactorShow"
+  },
+  "tab_visible_dfm": "False",
+  "titulo": {
+   "eng": null,
+   "fonte": "ita=Caption do DFM",
+   "ita": "K factor",
+   "marca": "OBS-COD",
+   "por": null
+  }
+ }
+}

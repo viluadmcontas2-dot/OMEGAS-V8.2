@@ -1,0 +1,733 @@
+{
+ "controles": [
+  {
+   "classe": "TGroupBox",
+   "dfm": {
+    "Caption": "Bancata 1",
+    "Height": 66,
+    "Left": 20,
+    "TabOrder": 0,
+    "Top": 1,
+    "Visible": "False",
+    "Width": 375
+   },
+   "dfm_linha": 5230,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "GroupBancata0",
+      "da_aba": false,
+      "endereco": "0x4A5052",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "GroupBancata0",
+   "ordem_dfm": 0,
+   "pai": "TabCorrettori",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Bancata 1",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "grupo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Lento",
+    "Height": 25,
+    "Left": 189,
+    "Top": 15,
+    "Width": 54
+   },
+   "dfm_linha": 5244,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelSlow0",
+   "ordem_dfm": 1,
+   "pai": "GroupBancata0",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Lento",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "0%",
+    "Height": 25,
+    "Left": 212,
+    "Top": 38,
+    "Visible": "False",
+    "Width": 31
+   },
+   "dfm_linha": 5259,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrSlow0",
+      "da_aba": false,
+      "endereco": "0x4A4E1C",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrSlow0",
+      "da_aba": false,
+      "endereco": "0x4A4E72",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": "sub_A4EDD0",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrSlow0",
+      "da_aba": false,
+      "endereco": "0x4A4E95",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Text",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabCorrSlow0",
+   "ordem_dfm": 2,
+   "pai": "GroupBancata0",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "0%",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Correttori",
+    "Height": 24,
+    "Left": 20,
+    "Top": 38,
+    "Width": 122
+   },
+   "dfm_linha": 5275,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelCorrettori0",
+   "ordem_dfm": 3,
+   "pai": "GroupBancata0",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Correttori",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "0%",
+    "Height": 25,
+    "Left": 313,
+    "Top": 38,
+    "Visible": "False",
+    "Width": 31
+   },
+   "dfm_linha": 5291,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrFast0",
+      "da_aba": false,
+      "endereco": "0x4A4F72",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrFast0",
+      "da_aba": false,
+      "endereco": "0x4A4FC8",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": "sub_A4EDD0",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrFast0",
+      "da_aba": false,
+      "endereco": "0x4A4FEB",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Text",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabCorrFast0",
+   "ordem_dfm": 4,
+   "pai": "GroupBancata0",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "0%",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Veloce",
+    "Height": 25,
+    "Left": 282,
+    "Top": 14,
+    "Width": 67
+   },
+   "dfm_linha": 5307,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelFast0",
+   "ordem_dfm": 5,
+   "pai": "GroupBancata0",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Veloce",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TGroupBox",
+   "dfm": {
+    "Caption": "Bancata 2",
+    "Height": 66,
+    "Left": 413,
+    "TabOrder": 1,
+    "Top": 1,
+    "Visible": "False",
+    "Width": 375
+   },
+   "dfm_linha": 5323,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "GroupBancata1",
+      "da_aba": false,
+      "endereco": "0x4A54B6",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "GroupBancata1",
+   "ordem_dfm": 6,
+   "pai": "TabCorrettori",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Bancata 2",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "grupo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Correttori",
+    "Height": 24,
+    "Left": 20,
+    "Top": 38,
+    "Width": 122
+   },
+   "dfm_linha": 5337,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelCorrettori1",
+   "ordem_dfm": 7,
+   "pai": "GroupBancata1",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Correttori",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Lento",
+    "Height": 25,
+    "Left": 189,
+    "Top": 15,
+    "Width": 54
+   },
+   "dfm_linha": 5353,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelSlow1",
+   "ordem_dfm": 8,
+   "pai": "GroupBancata1",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Lento",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "0%",
+    "Height": 25,
+    "Left": 212,
+    "Top": 38,
+    "Visible": "False",
+    "Width": 31
+   },
+   "dfm_linha": 5368,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrSlow1",
+      "da_aba": false,
+      "endereco": "0x4A527E",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrSlow1",
+      "da_aba": false,
+      "endereco": "0x4A52D5",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": "sub_A4EDD0",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrSlow1",
+      "da_aba": false,
+      "endereco": "0x4A52F8",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Text",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabCorrSlow1",
+   "ordem_dfm": 9,
+   "pai": "GroupBancata1",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "0%",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "0%",
+    "Height": 25,
+    "Left": 313,
+    "Top": 38,
+    "Visible": "False",
+    "Width": 31
+   },
+   "dfm_linha": 5384,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrFast1",
+      "da_aba": false,
+      "endereco": "0x4A53D5",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrFast1",
+      "da_aba": false,
+      "endereco": "0x4A542C",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": "sub_A4EDD0",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)"
+      ],
+      "controle": "LabCorrFast1",
+      "da_aba": false,
+      "endereco": "0x4A544F",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Text",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabCorrFast1",
+   "ordem_dfm": 10,
+   "pai": "GroupBancata1",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "0%",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Veloce",
+    "Height": 25,
+    "Left": 277,
+    "Top": 15,
+    "Width": 67
+   },
+   "dfm_linha": 5400,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelFast1",
+   "ordem_dfm": 11,
+   "pai": "GroupBancata1",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Veloce",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabCorrettori",
+  "handlers_analisados": [
+   "TabCorrettoriShow"
+  ],
+  "n_com_flag": 0,
+  "n_com_valor_do_log": 0,
+  "n_controles": 12,
+  "n_interativos": 0,
+  "n_ligados_ao_vetor": 0,
+  "ordem": 8,
+  "por_classe": {
+   "TGroupBox": 2,
+   "TLabel": 10
+  },
+  "tab_show": {
+   "endereco": null,
+   "fonte": "RTTI do TFormConfig; OnShow = None",
+   "marca": "OBS-COD",
+   "metodo": "TabCorrettoriShow"
+  },
+  "tab_visible_dfm": "False",
+  "titulo": {
+   "eng": "Fuel trim",
+   "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[TABCORRETTORI]",
+   "ita": "Correttori",
+   "marca": "OBS-COD",
+   "por": "Comp. combust."
+  }
+ }
+}

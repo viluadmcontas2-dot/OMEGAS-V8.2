@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** tela de função (DERIVADO). Gráfico de aquisição gravada (traços, zoom, imprimir).
+
 - Instância DFM: `FormGraficoDrt`; unidade: `@:GraficoDrt`; ancestral: `TForm`; tamanho de instância: 0x424; componentes no DFM: 24.
 - Título: "Grafico" — eng: "Graph" / por: "Gráfico"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormVisualizza.MenuGraficoClick` (0x0050DC08)

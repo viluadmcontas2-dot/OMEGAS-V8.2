@@ -1,0 +1,3127 @@
+{
+ "controles": [
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "0,0%",
+    "Height": 30,
+    "Left": 651,
+    "Top": 322,
+    "Width": 82
+   },
+   "dfm_linha": 4994,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "test ah, 0x41 ? ",
+       "test ah, 5 == "
+      ],
+      "condicoes_chamada": [
+       "remetente(ecx) == [form+0x46c](TabKCoefficienti)"
+      ],
+      "controle": "LabelTinjBenzPerc",
+      "da_aba": false,
+      "endereco": "0x4A1D6B",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": "TimerDatiTimer via sub_4A1AEC"
+     },
+     {
+      "condicoes": [
+       "test ah, 5 != ",
+       "test ah, 0x45 == "
+      ],
+      "condicoes_chamada": [
+       "remetente(ecx) == [form+0x46c](TabKCoefficienti)"
+      ],
+      "controle": "LabelTinjBenzPerc",
+      "da_aba": false,
+      "endereco": "0x4A1E06",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": "TimerDatiTimer via sub_4A1AEC"
+     },
+     {
+      "condicoes": [
+       "test ah, 5 != ",
+       "test ah, 0x45 != "
+      ],
+      "condicoes_chamada": [
+       "remetente(ecx) == [form+0x46c](TabKCoefficienti)"
+      ],
+      "controle": "LabelTinjBenzPerc",
+      "da_aba": false,
+      "endereco": "0x4A1E76",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": "TimerDatiTimer via sub_4A1AEC"
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTinjBenzPerc",
+   "ordem_dfm": 0,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "0,0%",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "0%",
+    "Height": 19,
+    "Left": 710,
+    "Top": 202,
+    "Width": 25
+   },
+   "dfm_linha": 5010,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 != 0"
+      ],
+      "controle": "Label0",
+      "da_aba": false,
+      "endereco": "0x4A56C0",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 == 0"
+      ],
+      "controle": "Label0",
+      "da_aba": false,
+      "endereco": "0x4A591F",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_434568 == 0",
+       "sub_4349CC == 0"
+      ],
+      "controle": "Label0",
+      "da_aba": false,
+      "endereco": "0x4A5962",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "Label0",
+   "ordem_dfm": 1,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "0%",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "30%",
+    "Height": 19,
+    "Left": 710,
+    "Top": 110,
+    "Width": 34
+   },
+   "dfm_linha": 5024,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 != 0"
+      ],
+      "controle": "LabelPiu30",
+      "da_aba": false,
+      "endereco": "0x4A56A6",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 == 0"
+      ],
+      "controle": "LabelPiu30",
+      "da_aba": false,
+      "endereco": "0x4A5905",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_434568 == 0",
+       "sub_4349CC == 0"
+      ],
+      "controle": "LabelPiu30",
+      "da_aba": false,
+      "endereco": "0x4A5948",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelPiu30",
+   "ordem_dfm": 2,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "30%",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "-30%",
+    "Height": 19,
+    "Left": 710,
+    "Top": 288,
+    "Width": 40
+   },
+   "dfm_linha": 5038,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 != 0"
+      ],
+      "controle": "LabelMeno30",
+      "da_aba": false,
+      "endereco": "0x4A56B3",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 == 0"
+      ],
+      "controle": "LabelMeno30",
+      "da_aba": false,
+      "endereco": "0x4A5912",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_434568 == 0",
+       "sub_4349CC == 0"
+      ],
+      "controle": "LabelMeno30",
+      "da_aba": false,
+      "endereco": "0x4A5955",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelMeno30",
+   "ordem_dfm": 3,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "-30%",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TPanel",
+   "dfm": {
+    "Height": 180,
+    "Left": 665,
+    "TabOrder": 8,
+    "Top": 120,
+    "Width": 38
+   },
+   "dfm_linha": 5052,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 != 0"
+      ],
+      "controle": "PanelTinjBenz",
+      "da_aba": false,
+      "endereco": "0x4A5699",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 == 0"
+      ],
+      "controle": "PanelTinjBenz",
+      "da_aba": false,
+      "endereco": "0x4A58F8",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_434568 == 0",
+       "sub_4349CC == 0"
+      ],
+      "controle": "PanelTinjBenz",
+      "da_aba": false,
+      "endereco": "0x4A593B",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "PanelTinjBenz",
+   "ordem_dfm": 4,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "painel"
+  },
+  {
+   "classe": "TShape",
+   "dfm": {
+    "Height": 10,
+    "Left": 0,
+    "Top": 90,
+    "Width": 38
+   },
+   "dfm_linha": 5061,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ShapeTinjBenz",
+   "ordem_dfm": 5,
+   "pai": "PanelTinjBenz",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "forma"
+  },
+  {
+   "classe": "TBevel",
+   "dfm": {
+    "Height": 7,
+    "Left": 0,
+    "Style": "bsRaised",
+    "Top": 90,
+    "Width": 38
+   },
+   "dfm_linha": 5069,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "Bevel0",
+   "ordem_dfm": 6,
+   "pai": "PanelTinjBenz",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "moldura"
+  },
+  {
+   "classe": "TBevel",
+   "dfm": {
+    "Height": 12,
+    "Left": 0,
+    "Style": "bsRaised",
+    "Top": 120,
+    "Width": 38
+   },
+   "dfm_linha": 5077,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "BevelMeno10",
+   "ordem_dfm": 7,
+   "pai": "PanelTinjBenz",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "moldura"
+  },
+  {
+   "classe": "TBevel",
+   "dfm": {
+    "Height": 11,
+    "Left": 0,
+    "Style": "bsRaised",
+    "Top": 30,
+    "Width": 38
+   },
+   "dfm_linha": 5085,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "Bevel20",
+   "ordem_dfm": 8,
+   "pai": "PanelTinjBenz",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "moldura"
+  },
+  {
+   "classe": "TBevel",
+   "dfm": {
+    "Height": 11,
+    "Left": 0,
+    "Style": "bsRaised",
+    "Top": 60,
+    "Width": 38
+   },
+   "dfm_linha": 5093,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "Bevel10",
+   "ordem_dfm": 9,
+   "pai": "PanelTinjBenz",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "moldura"
+  },
+  {
+   "classe": "TBevel",
+   "dfm": {
+    "Height": 11,
+    "Left": 0,
+    "Style": "bsRaised",
+    "Top": 150,
+    "Width": 38
+   },
+   "dfm_linha": 5101,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "BevelMeno20",
+   "ordem_dfm": 10,
+   "pai": "PanelTinjBenz",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "moldura"
+  },
+  {
+   "classe": "TDrawGrid",
+   "dfm": {
+    "ColCount": 13,
+    "Height": 342,
+    "Left": 14,
+    "RowCount": 13,
+    "TabOrder": 0,
+    "Top": 10,
+    "Width": 628
+   },
+   "dfm_linha": 5110,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [],
+     "endereco": "0x4B18F4",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = DrawGridKKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridKKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 30
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B1940",
+     "evento": "OnDblClick",
+     "fonte": "DFM OnDblClick = DrawGridKDblClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridKDblClick",
+     "marca": "OBS-COD",
+     "n_instr": 51
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B2514",
+     "evento": "OnKeyDown",
+     "fonte": "DFM OnKeyDown = DrawGridKKeyDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridKKeyDown",
+     "marca": "OBS-COD",
+     "n_instr": 54
+    },
+    {
+     "endereco": "0x4B12EC",
+     "evento": "OnDrawCell",
+     "fonte": "DFM OnDrawCell = DrawGridKDrawCell; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridKDrawCell",
+     "marca": "OBS-COD",
+     "nota": "desenho das celulas da grade (exibicao); nao envia nada a ECU"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.24",
+    "marca": "OBS-COD",
+    "texto": "Mapa principal de carburacao: rotacao na horizontal, tempo de injecao de gasolina na vertical e o coeficiente K em cada celula."
+   },
+   "hint": {
+    "chave": "HINTDRAWGRIDK",
+    "eng": "This table represents the main carburation map. \\\\nThe factor (named with the letter K) is given for each combination of values of engine revs-petrol injection time \\\\nwhich put inside the calculation chain allows the GAS injection times to be determined. \\\\nIt is possible to change each parameter inside the table by double-clicking the relevant box.",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Questa tabella rappresenta la mappa principale di carburazione.\\\\nPer ciascuna combinazione di valori di giri motore-tempo iniezione benzina è riportato il fattore \\\\n(denominato con la lettera K) che, inserito all'interno della catena di calcolo, permette di determinare i tempi iniezione GAS. \\\\nE' possibile modificare ciascun parametro presente all'interno della tabella cliccando due volte sulla relativa casella.",
+    "marca": "INFERIDO",
+    "por": "This table represents the main carburation map. \\\\nThe factor (named with the letter K) is given for each combination of values of engine revs-petrol injection time \\\\nwhich put inside the calculation chain allows the GAS injection times to be determined. \\\\nIt is possible to change each parameter inside the table by double-clicking the relevant box."
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "DrawGridK",
+   "ordem_dfm": 11,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "grade",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TButton",
+   "dfm": {
+    "Caption": "&Inizia taratura",
+    "Height": 32,
+    "Left": 290,
+    "TabOrder": 6,
+    "Top": 362,
+    "Width": 186
+   },
+   "dfm_linha": 5135,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 4,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0800",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2C86",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 2C 51 10 4B"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 4,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0800",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "ligar",
+      "caso": 5,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x1000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "3486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 34 51 10 53"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 5,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x1000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) != 0"
+      ],
+      "controle": "ButtonTaratura",
+      "da_aba": true,
+      "endereco": "0x4ACFF8",
+      "marca": "OBS-COD",
+      "metodo": "ButtonTaraturaClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "controle": "ButtonTaratura",
+      "da_aba": true,
+      "endereco": "0x4AD06B",
+      "marca": "OBS-COD",
+      "metodo": "ButtonTaraturaClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "condicoes_chamada": [
+       "cmp dword ptr [esp], 0 > ",
+       "cmp dword ptr [esp + 4], 0 > "
+      ],
+      "controle": "ButtonTaratura",
+      "da_aba": false,
+      "endereco": "0x4B2A85",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridOpenLoopDblClick",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": "DrawGridOpenLoopDblClick via sub_4B2A44"
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "condicoes_chamada": [
+       "edx == 0xd"
+      ],
+      "controle": "ButtonTaratura",
+      "da_aba": false,
+      "endereco": "0x4B2A85",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridOpenLoopKeyPress",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": "DrawGridOpenLoopKeyPress via sub_4B2A44"
+     },
+     {
+      "condicoes": [],
+      "controle": "ButtonTaratura",
+      "da_aba": true,
+      "endereco": "0x4B1047",
+      "marca": "OBS-COD",
+      "metodo": "TabKCoefficientiShow",
+      "origem": null,
+      "propriedade": "Caption",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 4,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0800",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 4,
+       "condicoes": [],
+       "endereco": "0x4ACFCF",
+       "funcao": "GetFlag1"
+      },
+      {
+       "bits": [
+        {
+         "caso": 4,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0800",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 4,
+       "condicoes": [
+        "GetFlag1(caso 4) != 0"
+       ],
+       "endereco": "0x4ACFE7",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "condicoes": [
+        "GetFlag1(caso 4) != 0"
+       ],
+       "controle": "ButtonTaratura",
+       "endereco": "0x4ACFF8",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "GetFlag1(caso 4) != 0"
+       ],
+       "controle": "StaticTaratura",
+       "endereco": "0x4AD005",
+       "funcao": "Visible",
+       "valor_edx": 0
+      },
+      {
+       "condicoes": [
+        "GetFlag1(caso 4) != 0"
+       ],
+       "controle": "ButtonCommutatore",
+       "endereco": "0x4AD012",
+       "funcao": "Visible",
+       "valor_edx": 0
+      },
+      {
+       "bits": [
+        {
+         "caso": 5,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x1000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 5,
+       "condicoes": [
+        "GetFlag1(caso 4) == 0",
+        "(byte[obj+0x1838] & 0x10) != 0"
+       ],
+       "endereco": "0x4AD031",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "bits": [
+        {
+         "caso": 5,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x1000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 5,
+       "condicoes": [
+        "GetFlag1(caso 4) == 0",
+        "(byte[obj+0x1838] & 0x10) == 0"
+       ],
+       "endereco": "0x4AD047",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      },
+      {
+       "bits": [
+        {
+         "caso": 4,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x0800",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 4,
+       "condicoes": [
+        "GetFlag1(caso 4) == 0"
+       ],
+       "endereco": "0x4AD05A",
+       "funcao": "SetFlag1",
+       "valor_ecx": null
+      },
+      {
+       "condicoes": [
+        "GetFlag1(caso 4) == 0"
+       ],
+       "controle": "ButtonTaratura",
+       "endereco": "0x4AD06B",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "GetFlag1(caso 4) == 0"
+       ],
+       "controle": "StaticTaratura",
+       "endereco": "0x4AD07F",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "GetFlag1(caso 4) == 0"
+       ],
+       "controle": "ButtonCommutatore",
+       "endereco": "0x4AD093",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4ACFC0",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = ButtonTaraturaClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "ButtonTaraturaClick",
+     "marca": "OBS-COD",
+     "n_instr": 59
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.25",
+    "marca": "OBS-COD",
+    "texto": "Inicia a calibracao manual ponto a ponto do mapa K."
+   },
+   "flags_todos": [
+    {
+     "caso": 4,
+     "condicao": "sempre",
+     "fonte": "handler ButtonTaraturaClick (GetFlag1 caso 4)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x0800",
+     "origem": "handler ButtonTaraturaClick",
+     "palavra": 0,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "caso": 5,
+     "condicao": "sempre",
+     "fonte": "handler ButtonTaraturaClick (SetFlag1 caso 5)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x1000",
+     "origem": "handler ButtonTaraturaClick",
+     "palavra": 0,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": {
+    "chave": "HINTBUTTONTARATURA",
+    "eng": "Start calibration",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Inizia taratura",
+    "marca": "INFERIDO",
+    "por": "Start calibration"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ButtonTaratura",
+   "ordem_dfm": 12,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "&Inizia taratura",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "botao",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x0800",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x1000",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TButton",
+   "dfm": {
+    "Caption": "&Mod. rif. mappa",
+    "Height": 32,
+    "Left": 14,
+    "TabOrder": 5,
+    "Top": 362,
+    "Visible": "False",
+    "Width": 270
+   },
+   "dfm_linha": 5153,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [],
+     "endereco": "0x4B10C8",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = ButtonModificaRifTarClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "ButtonModificaRifTarClick",
+     "marca": "OBS-COD",
+     "n_instr": 44
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.24",
+    "marca": "OBS-COD",
+    "texto": "Muda os pontos de referencia do mapa (rotacao 200 a 8000 rpm; tempos de injecao 0 a 40 ms); faca antes de calibrar."
+   },
+   "hint": {
+    "chave": "HINTBUTTONMODIFICARIFTAR",
+    "eng": "Modify map references",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Modifica i riferimenti della mappa",
+    "marca": "INFERIDO",
+    "por": "Modify map references"
+   },
+   "manual": {
+    "chave": "&Modify map refs.",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1232, pagina 24 do PDF",
+    "linha": 1232,
+    "marca": "OBS-COD",
+    "pagina": 24,
+    "trecho": "B Modify map refs.: the following mapping break points can be modified: - RPM (range: 200 - 8000) - Injection times (range: 0 - 40 ms)"
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "ButtonModificaRifTar",
+   "ordem_dfm": 13,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": "&Modify map refs.",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[BUTTONMODIFICARIFTAR]",
+    "ita": "&Mod. rif. mappa",
+    "marca": "OBS-COD",
+    "por": "&Modificar ref. mapa"
+   },
+   "tipo": "botao",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TStaticText",
+   "dfm": {
+    "Caption": "Mod. taratura",
+    "Height": 32,
+    "Left": 482,
+    "TabOrder": 7,
+    "Top": 362,
+    "Visible": "False",
+    "Width": 166
+   },
+   "dfm_linha": 5172,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) != 0"
+      ],
+      "controle": "StaticTaratura",
+      "da_aba": true,
+      "endereco": "0x4AD005",
+      "marca": "OBS-COD",
+      "metodo": "ButtonTaraturaClick",
+      "origem": "SetFlag1(caso 4)",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "controle": "StaticTaratura",
+      "da_aba": true,
+      "endereco": "0x4AD07F",
+      "marca": "OBS-COD",
+      "metodo": "ButtonTaraturaClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "condicoes_chamada": [
+       "cmp dword ptr [esp], 0 > ",
+       "cmp dword ptr [esp + 4], 0 > "
+      ],
+      "controle": "StaticTaratura",
+      "da_aba": false,
+      "endereco": "0x4B2A99",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridOpenLoopDblClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "DrawGridOpenLoopDblClick via sub_4B2A44"
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "condicoes_chamada": [
+       "edx == 0xd"
+      ],
+      "controle": "StaticTaratura",
+      "da_aba": false,
+      "endereco": "0x4B2A99",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridOpenLoopKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "DrawGridOpenLoopKeyPress via sub_4B2A44"
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": {
+    "chave": "Calibration mod.",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1256, pagina 25 do PDF",
+    "linha": 1256,
+    "marca": "OBS-COD",
+    "pagina": 25,
+    "trecho": "Note - In “Modify calibration “mode, the instantaneous cor- rection values on compensation vectors are not interpola- ted."
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "StaticTaratura",
+   "ordem_dfm": 14,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": "Calibration mod.",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[STATICTARATURA]",
+    "ita": "Mod. taratura",
+    "marca": "OBS-COD",
+    "por": "Mod.calibragem"
+   },
+   "tipo": "texto"
+  },
+  {
+   "classe": "TButton",
+   "dfm": {
+    "Caption": "&Commutatore",
+    "Height": 32,
+    "Left": 654,
+    "TabOrder": 9,
+    "Top": 362,
+    "Visible": "False",
+    "Width": 173
+   },
+   "dfm_linha": 5192,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 5,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x1000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "3486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 34 51 10 53"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     },
+     {
+      "acao": "desligar",
+      "caso": 5,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag1 0x42D300 executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x1000",
+      "palavra": 0,
+      "palavras_antes": [
+       "2486",
+       "1051"
+      ],
+      "palavras_depois": [
+       "2486",
+       "1051"
+      ],
+      "quadros": [
+       "35 03 00 86 24 51 10 43"
+      ],
+      "serial_code": 3,
+      "vetor": "FLAG_CONF1"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) != 0"
+      ],
+      "controle": "ButtonCommutatore",
+      "da_aba": true,
+      "endereco": "0x4AD012",
+      "marca": "OBS-COD",
+      "metodo": "ButtonTaraturaClick",
+      "origem": "SetFlag1(caso 4)",
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "controle": "ButtonCommutatore",
+      "da_aba": true,
+      "endereco": "0x4AD093",
+      "marca": "OBS-COD",
+      "metodo": "ButtonTaraturaClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "condicoes_chamada": [
+       "cmp dword ptr [esp], 0 > ",
+       "cmp dword ptr [esp + 4], 0 > "
+      ],
+      "controle": "ButtonCommutatore",
+      "da_aba": false,
+      "endereco": "0x4B2AAD",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridOpenLoopDblClick",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "DrawGridOpenLoopDblClick via sub_4B2A44"
+     },
+     {
+      "condicoes": [
+       "GetFlag1(caso 4) == 0"
+      ],
+      "condicoes_chamada": [
+       "edx == 0xd"
+      ],
+      "controle": "ButtonCommutatore",
+      "da_aba": false,
+      "endereco": "0x4B2AAD",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridOpenLoopKeyPress",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "DrawGridOpenLoopKeyPress via sub_4B2A44"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 5,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x1000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 5,
+       "condicoes": [],
+       "endereco": "0x4B1187",
+       "funcao": "GetFlag1"
+      },
+      {
+       "bits": [
+        {
+         "caso": 5,
+         "condicao": "sempre",
+         "getter": "0x42CFB8",
+         "mascara": "0x1000",
+         "palavra": 0,
+         "serial_code": 3,
+         "setter": "0x42D300",
+         "vetor": "FLAG_CONF1"
+        }
+       ],
+       "caso": 5,
+       "condicoes": [],
+       "endereco": "0x4B119E",
+       "funcao": "SetFlag1",
+       "valor_ecx": 0
+      }
+     ],
+     "endereco": "0x4B1178",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = ButtonCommutatoreClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "ButtonCommutatoreClick",
+     "marca": "OBS-COD",
+     "n_instr": 18
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Alterna o comutador gas/gasolina pelo programa. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "flags_todos": [
+    {
+     "caso": 5,
+     "condicao": "sempre",
+     "fonte": "handler ButtonCommutatoreClick (GetFlag1 caso 5)",
+     "getter": "0x42CFB8",
+     "marca": "OBS-COD",
+     "mascara": "0x1000",
+     "origem": "handler ButtonCommutatoreClick",
+     "palavra": 0,
+     "papel": null,
+     "serial_code": 3,
+     "setter": "0x42D300",
+     "vetor": "FLAG_CONF1"
+    }
+   ],
+   "hint": {
+    "chave": "HINTBUTTONCOMMUTATORE",
+    "eng": "Switch",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Commutatore",
+    "marca": "INFERIDO",
+    "por": "Switch"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ButtonCommutatore",
+   "ordem_dfm": 15,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": "&Switch",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[BUTTONCOMMUTATORE]",
+    "ita": "&Commutatore",
+    "marca": "OBS-COD",
+    "por": "&Comutador"
+   },
+   "tipo": "botao",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102844,
+     "marca": "OBS-FIO",
+     "mascara": "0x1000",
+     "palavra": 0,
+     "palavra_valor": "2486",
+     "vetor": "FLAG_CONF1"
+    }
+   ]
+  },
+  {
+   "classe": "TPageControl",
+   "dfm": {
+    "Height": 156,
+    "Left": 0,
+    "Style": "tsButtons",
+    "TabOrder": 10,
+    "Top": 408,
+    "Visible": "False",
+    "Width": 837
+   },
+   "dfm_linha": 5211,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "PageControlK",
+   "ordem_dfm": 16,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "abas"
+  },
+  {
+   "classe": "TRadioButton",
+   "dfm": {
+    "Caption": "petrol",
+    "Checked": "True",
+    "Height": 27,
+    "Left": 650,
+    "TabOrder": 2,
+    "Top": 37,
+    "Visible": "False",
+    "Width": 169
+   },
+   "dfm_linha": 6255,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "cmp dword ptr [esp], 0 > ",
+       "cmp dword ptr [esp + 4], 0 > "
+      ],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B199F",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDblClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "chamada virtual dword ptr [edx + 0x104] == 0",
+       "[obj+0x10] != 0",
+       "test ecx, ecx == ",
+       "sub_40487C == 0",
+       "cmp eax, dword ptr [ebx + 0x2b4] == ",
+       "test cl, cl == 0",
+       "test cl, cl != 0",
+       "cmp eax, dword ptr [ebx + 0x2b4] != "
+      ],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B15B6",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDrawCell",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "chamada virtual dword ptr [edx + 0x104] == 0",
+       "[obj+0x10] != 0",
+       "test ecx, ecx == ",
+       "sub_40487C == 0",
+       "cmp eax, dword ptr [ebx + 0x2b4] == ",
+       "test cl, cl == 0",
+       "test cl, cl == 0"
+      ],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B165A",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDrawCell",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "chamada virtual dword ptr [edx + 0x104] == 0",
+       "[obj+0x10] != 0",
+       "test ecx, ecx == ",
+       "sub_40487C == 0"
+      ],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B16DF",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDrawCell",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "eax == 0xd"
+      ],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B1907",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKKeyPress",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B0F01",
+      "marca": "OBS-COD",
+      "metodo": "TabKCoefficientiShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "[obj+0x1794] == 0"
+      ],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B0F1D",
+      "marca": "OBS-COD",
+      "metodo": "TabKCoefficientiShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_4347F8 != 0",
+       "(byte[obj+0x1700] & 0x20) == 0"
+      ],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B0F60",
+      "marca": "OBS-COD",
+      "metodo": "TabKCoefficientiShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "(byte[obj+0x1700] & 0x20) == 0",
+       "sub_4347F8 == 0"
+      ],
+      "controle": "RadioMapPetrol",
+      "da_aba": true,
+      "endereco": "0x4B0F72",
+      "marca": "OBS-COD",
+      "metodo": "TabKCoefficientiShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x42F338",
+       "condicoes": [
+        "mov ebx, eax == "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B23C2",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F340",
+       "condicoes": [
+        "mov ebx, eax == "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B23ED",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F338",
+       "condicoes": [
+        "mov ebx, eax != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B241C",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F340",
+       "condicoes": [
+        "mov ebx, eax != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B2447",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4B23A0",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = RadioMapClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "RadioMapClick",
+     "marca": "OBS-COD",
+     "n_instr": 92
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Mostra/edita o mapa K do combustivel gasolina. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "RadioMapPetrol",
+   "ordem_dfm": 17,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "petrol",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "radio",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TRadioButton",
+   "dfm": {
+    "Caption": "alcohol",
+    "Height": 27,
+    "Left": 650,
+    "TabOrder": 3,
+    "Tag": 1,
+    "Top": 64,
+    "Visible": "False",
+    "Width": 169
+   },
+   "dfm_linha": 6276,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 16,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag2 0x42E16C executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0100",
+      "palavra": 1,
+      "palavras_antes": [
+       "0001",
+       "0000"
+      ],
+      "palavras_depois": [
+       "0001",
+       "0100"
+      ],
+      "quadros": [
+       "35 C0 00 01 00 00 01 F7"
+      ],
+      "serial_code": 192,
+      "vetor": "FLAG_CONF2"
+     },
+     {
+      "acao": "desligar",
+      "caso": 16,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag2 0x42E16C executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x0100",
+      "palavra": 1,
+      "palavras_antes": [
+       "0001",
+       "0000"
+      ],
+      "palavras_depois": [
+       "0001",
+       "0000"
+      ],
+      "quadros": [
+       "35 C0 00 01 00 00 00 F6"
+      ],
+      "serial_code": 192,
+      "vetor": "FLAG_CONF2"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "RadioMapAlcol",
+      "da_aba": true,
+      "endereco": "0x4B0ED5",
+      "marca": "OBS-COD",
+      "metodo": "TabKCoefficientiShow",
+      "origem": "GetFlag2(caso 16)",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_4347F8 != 0",
+       "(byte[obj+0x1838] & 0x10) == 0",
+       "(byte[obj+0x1700] & 0x20) != 0"
+      ],
+      "controle": "RadioMapAlcol",
+      "da_aba": true,
+      "endereco": "0x4B0F4E",
+      "marca": "OBS-COD",
+      "metodo": "TabKCoefficientiShow",
+      "origem": null,
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x42F338",
+       "condicoes": [
+        "mov ebx, eax == "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B23C2",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F340",
+       "condicoes": [
+        "mov ebx, eax == "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B23ED",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F338",
+       "condicoes": [
+        "mov ebx, eax != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B241C",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F340",
+       "condicoes": [
+        "mov ebx, eax != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B2447",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4B23A0",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = RadioMapClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "RadioMapClick",
+     "marca": "OBS-COD",
+     "n_instr": 92
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Mostra/edita o mapa K do combustivel alcool. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "flags": [
+    {
+     "caso": 16,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42DF14",
+     "marca": "OBS-COD",
+     "mascara": "0x0100",
+     "palavra": 1,
+     "papel": "dependente (Visible)",
+     "serial_code": 192,
+     "setter": "0x42E16C",
+     "vetor": "FLAG_CONF2"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 16,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42DF14",
+     "marca": "OBS-COD",
+     "mascara": "0x0100",
+     "origem": "flags-do-original.json",
+     "palavra": 1,
+     "papel": "dependente (Visible)",
+     "serial_code": 192,
+     "setter": "0x42E16C",
+     "vetor": "FLAG_CONF2"
+    }
+   ],
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "RadioMapAlcol",
+   "ordem_dfm": 18,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "alcohol",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "radio",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102816,
+     "marca": "OBS-FIO",
+     "mascara": "0x0100",
+     "palavra": 1,
+     "palavra_valor": "0000",
+     "vetor": "FLAG_CONF2"
+    }
+   ]
+  },
+  {
+   "classe": "TPanel",
+   "dfm": {
+    "Height": 212,
+    "Left": 650,
+    "TabOrder": 4,
+    "Top": 100,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6298,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 != 0"
+      ],
+      "controle": "PanelObdData",
+      "da_aba": false,
+      "endereco": "0x4A568C",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_4349CC != 0",
+       "sub_434568 == 0"
+      ],
+      "controle": "PanelObdData",
+      "da_aba": false,
+      "endereco": "0x4A58EB",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "remetente(eax) == [form+0xd84](TabCalibration)",
+       "remetente(eax) == [form+0x91c](TabAdatta)",
+       "sub_434568 == 0",
+       "sub_4349CC == 0"
+      ],
+      "controle": "PanelObdData",
+      "da_aba": false,
+      "endereco": "0x4A592E",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 0,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "PanelObdData",
+   "ordem_dfm": 19,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "painel"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "OBD param 0",
+    "Height": 25,
+    "Left": 0,
+    "Top": 4,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6309,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelObdParam0",
+   "ordem_dfm": 20,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "OBD param 0",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "n.d.",
+    "Height": 21,
+    "Left": 0,
+    "Top": 25,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6326,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabObdParam0",
+   "ordem_dfm": 21,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "n.d.",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TBevel",
+   "dfm": {
+    "Height": 10,
+    "Left": 2,
+    "Top": 53,
+    "Width": 166
+   },
+   "dfm_linha": 6343,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "BevelObd1",
+   "ordem_dfm": 22,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelObdParam1",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "OBD param 1",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "moldura"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "OBD param 1",
+    "Height": 25,
+    "Left": 0,
+    "Top": 57,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6350,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelObdParam1",
+   "ordem_dfm": 23,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "OBD param 1",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "n.d.",
+    "Height": 21,
+    "Left": 0,
+    "Top": 78,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6367,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabObdParam1",
+   "ordem_dfm": 24,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "n.d.",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TBevel",
+   "dfm": {
+    "Height": 10,
+    "Left": 2,
+    "Top": 106,
+    "Width": 166
+   },
+   "dfm_linha": 6384,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "BevelObd2",
+   "ordem_dfm": 25,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelObdParam2",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "OBD param 2",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "moldura"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "OBD param 2",
+    "Height": 25,
+    "Left": 0,
+    "Top": 110,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6391,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelObdParam2",
+   "ordem_dfm": 26,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "OBD param 2",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "n.d.",
+    "Height": 21,
+    "Left": 0,
+    "Top": 131,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6408,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabObdParam2",
+   "ordem_dfm": 27,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "n.d.",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TBevel",
+   "dfm": {
+    "Height": 10,
+    "Left": 2,
+    "Top": 159,
+    "Width": 166
+   },
+   "dfm_linha": 6425,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "BevelObd3",
+   "ordem_dfm": 28,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelObdParam3",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "OBD param 3",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "moldura"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "OBD param 3",
+    "Height": 25,
+    "Left": 0,
+    "Top": 162,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6432,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelObdParam3",
+   "ordem_dfm": 29,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "OBD param 3",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "n.d.",
+    "Height": 21,
+    "Left": 0,
+    "Top": 184,
+    "Visible": "False",
+    "Width": 170
+   },
+   "dfm_linha": 6449,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabObdParam3",
+   "ordem_dfm": 30,
+   "pai": "PanelObdData",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "n.d.",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TRadioButton",
+   "dfm": {
+    "Caption": "target OBD",
+    "Height": 27,
+    "Left": 650,
+    "TabOrder": 1,
+    "Tag": 2,
+    "Top": 10,
+    "Visible": "False",
+    "Width": 169
+   },
+   "dfm_linha": 6467,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "cmp dword ptr [esp], 0 > ",
+       "cmp dword ptr [esp + 4], 0 > ",
+       "chamada virtual dword ptr [edx + 0x104] == 0"
+      ],
+      "controle": "RadioMapAdatta",
+      "da_aba": true,
+      "endereco": "0x4B19BA",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDblClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "sub_40487C != 0",
+       "test ecx, ecx != ",
+       "[obj+0x10] == 0"
+      ],
+      "controle": "RadioMapAdatta",
+      "da_aba": true,
+      "endereco": "0x4B1369",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDrawCell",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "chamada virtual dword ptr [edx + 0x104] == 0",
+       "[obj+0x10] != 0",
+       "test ecx, ecx == ",
+       "sub_40487C == 0",
+       "cmp eax, dword ptr [ebx + 0x2b4] == ",
+       "test cl, cl == 0",
+       "test cl, cl != 0",
+       "cmp eax, dword ptr [ebx + 0x2b4] != ",
+       "chamada virtual dword ptr [edx + 0x104] == 0"
+      ],
+      "controle": "RadioMapAdatta",
+      "da_aba": true,
+      "endereco": "0x4B15E1",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDrawCell",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "chamada virtual dword ptr [edx + 0x104] == 0",
+       "[obj+0x10] != 0",
+       "test ecx, ecx == ",
+       "sub_40487C == 0",
+       "cmp eax, dword ptr [ebx + 0x2b4] == ",
+       "test cl, cl == 0",
+       "test cl, cl == 0",
+       "chamada virtual dword ptr [edx + 0x104] == 0"
+      ],
+      "controle": "RadioMapAdatta",
+      "da_aba": true,
+      "endereco": "0x4B1685",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDrawCell",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "chamada virtual dword ptr [edx + 0x104] == 0",
+       "[obj+0x10] != 0",
+       "test ecx, ecx == ",
+       "sub_40487C == 0",
+       "chamada virtual dword ptr [edx + 0x104] == 0"
+      ],
+      "controle": "RadioMapAdatta",
+      "da_aba": true,
+      "endereco": "0x4B1740",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKDrawCell",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "eax == 0xd"
+      ],
+      "controle": "RadioMapAdatta",
+      "da_aba": true,
+      "endereco": "0x4B1922",
+      "marca": "OBS-COD",
+      "metodo": "DrawGridKKeyPress",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "RadioMapAdatta",
+      "da_aba": false,
+      "endereco": "0x4911B1",
+      "marca": "OBS-COD",
+      "metodo": "FormResize",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "RadioMapAdatta",
+      "da_aba": true,
+      "endereco": "0x4B0EBA",
+      "marca": "OBS-COD",
+      "metodo": "TabKCoefficientiShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "edx >= 0x32"
+      ],
+      "condicoes_chamada": [
+       "remetente(ecx) == [form+0x46c](TabKCoefficienti)"
+      ],
+      "controle": "RadioMapAdatta",
+      "da_aba": false,
+      "endereco": "0x49F473",
+      "marca": "OBS-COD",
+      "metodo": "TimerDatiTimer",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": "TimerDatiTimer via sub_49F290"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x42F338",
+       "condicoes": [
+        "mov ebx, eax == "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B23C2",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F340",
+       "condicoes": [
+        "mov ebx, eax == "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B23ED",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F338",
+       "condicoes": [
+        "mov ebx, eax != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B241C",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x42F340",
+       "condicoes": [
+        "mov ebx, eax != "
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B2447",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4B23A0",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = RadioMapClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "RadioMapClick",
+     "marca": "OBS-COD",
+     "n_instr": 92
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Mostra/edita o mapa K usado como alvo da adaptatividade OBD. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "RadioMapAdatta",
+   "ordem_dfm": 31,
+   "pai": "TabKCoefficienti",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "target OBD",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "radio",
+   "valor_ecu": []
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Grades (`TDrawGrid`): o conteudo e desenhado em `OnDrawCell`; o conteudo e os quadros por celula nao foram decodificados celula a celula: `DrawGridK`.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabKCoefficienti",
+  "handlers_analisados": [
+   "TabKCoefficientiShow",
+   "ButtonCommutatoreClick",
+   "ControlMouseDown",
+   "ButtonModificaRifTarClick",
+   "ButtonTaraturaClick",
+   "DrawGridKKeyPress",
+   "DrawGridKDblClick",
+   "DrawGridKKeyDown",
+   "DrawGridKDrawCell",
+   "RadioMapClick"
+  ],
+  "n_com_flag": 1,
+  "n_com_valor_do_log": 3,
+  "n_controles": 32,
+  "n_interativos": 7,
+  "n_ligados_ao_vetor": 0,
+  "ordem": 7,
+  "por_classe": {
+   "TBevel": 8,
+   "TButton": 3,
+   "TDrawGrid": 1,
+   "TLabel": 12,
+   "TPageControl": 1,
+   "TPanel": 2,
+   "TRadioButton": 3,
+   "TShape": 1,
+   "TStaticText": 1
+  },
+  "tab_show": {
+   "endereco": "0x4B0EA0",
+   "fonte": "RTTI do TFormConfig; OnShow = TabKCoefficientiShow",
+   "marca": "OBS-COD",
+   "metodo": "TabKCoefficientiShow"
+  },
+  "tab_visible_dfm": true,
+  "titulo": {
+   "eng": null,
+   "fonte": "ita=Caption do DFM",
+   "ita": "Coefficienti k",
+   "marca": "OBS-COD",
+   "por": null
+  }
+ }
+}

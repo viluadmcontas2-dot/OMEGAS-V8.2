@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Edita os centros das células do mapa dos coeficientes K.
+
 - Instância DFM: `FormCentriCelleK`; unidade: `@:CentriCelleK`; ancestral: `TForm`; tamanho de instância: 0x48C; componentes no DFM: 53.
 - Título: "Centri celle mappa dei coefficienti k" — eng: "Map cell centres of the k coefficients" / por: "Centros das células no mapa dos coeficientes k"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormConfig.ButtonModificaRifTarClick` (0x004B10C8)

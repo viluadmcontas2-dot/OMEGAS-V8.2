@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Referências do AutoCal (K mínimo/máximo, centros de rpm e MAP).
+
 - Instância DFM: `FormRifAutocal`; unidade: `@:CentriCelleAuto`; ancestral: `TForm`; tamanho de instância: 0x514; componentes no DFM: 83.
 - Título: "Riferimenti per l'autocalibrazione" — eng: "References for autocalibration" / por: "None"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8), `TAutoCalUI.ActionAutoCalRifExecute` (0x005187A0)

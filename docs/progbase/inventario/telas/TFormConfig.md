@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** tela de função (OBS-COD). Configuração do veículo em 33 abas (detalhe em docs/progbase/abas, outro agente).
+
 - Instância DFM: `FormConfig`; unidade: `@:Config`; ancestral: `TForm`; tamanho de instância: 0x18C4; componentes no DFM: 992.
 - Título: "Configurazione veicolo" — eng: "Vehicle configuration" / por: "Configuração do veículo"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8)

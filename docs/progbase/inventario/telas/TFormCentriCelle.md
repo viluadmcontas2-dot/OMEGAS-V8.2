@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Edita os centros (rpm/pressão) das células do mapa de carburação.
+
 - Instância DFM: `FormCentriCelle`; unidade: `@:CentriCelle`; ancestral: `TForm`; tamanho de instância: 0x44C; componentes no DFM: 37.
 - Título: "Centri celle mappa di carburazione" — eng: "Centres of carburation map cells" / por: "Centros das células no mapa de carburação"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `0x004B4594` (0x004B4594), `TFormConfig.DrawGridEmissioniMultipointDblClick` (0x004C33E0)

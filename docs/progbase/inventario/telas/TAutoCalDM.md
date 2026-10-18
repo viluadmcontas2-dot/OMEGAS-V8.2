@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** módulo de dados (OBS-COD). Vetores/escalares do AutoCal ligados a controles (AUTO_CAL_ENABLE, VECT_AUTOCAL_*, NUM_AUTOMATCH_*).
+
 - Instância DFM: `AutoCalDM`; unidade: `@:AutoCal_DM`; ancestral: `TDataModule`; tamanho de instância: 0x10C; componentes no DFM: 36.
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8)
 

@@ -1,0 +1,1280 @@
+{
+ "controles": [
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "T morto iniettore benzina",
+    "Height": 30,
+    "Left": 38,
+    "Top": 38,
+    "Width": 418
+   },
+   "dfm_linha": 5887,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTTEMPOMORTOBENZ",
+    "eng": "Petrol injector dead time",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tempo morto iniettore benzina",
+    "marca": "INFERIDO",
+    "por": "Petrol injector dead time"
+   },
+   "manual": {
+    "chave": "Petrol injector dead time",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1303, pagina 25 do PDF",
+    "linha": 1303,
+    "marca": "OBS-COD",
+    "pagina": 25,
+    "trecho": "Petrol injector dead time; Gas injector dead time : These are two characteristic parameters regarding injectors and serve to compensate for any delays the opening and closing of injectors."
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTempoMortoBenz",
+   "ordem_dfm": 0,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": "Petrol injector dead time",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPOMORTOBENZ]",
+    "ita": "T morto iniettore benzina",
+    "marca": "OBS-COD",
+    "por": "Tempo morto do injetor de gasolina"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "T morto iniettore gas",
+    "Height": 30,
+    "Left": 38,
+    "Top": 78,
+    "Width": 408
+   },
+   "dfm_linha": 5897,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTTEMPOMORTOGAS",
+    "eng": "Gas injector dead time",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tempo morto iniettore gas",
+    "marca": "INFERIDO",
+    "por": "Gas injector dead time"
+   },
+   "manual": {
+    "chave": "Gas injector dead time",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1303, pagina 25 do PDF",
+    "linha": 1303,
+    "marca": "OBS-COD",
+    "pagina": 25,
+    "trecho": "Petrol injector dead time; Gas injector dead time : These are two characteristic parameters regarding injectors and serve to compensate for any delays the opening and closing of injectors."
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTempoMortoGas",
+   "ordem_dfm": 1,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": "Gas injector dead time",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPOMORTOGAS]",
+    "ita": "T morto iniettore gas",
+    "marca": "OBS-COD",
+    "por": "Tempo morto do injetor de gás"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "ms",
+    "Height": 24,
+    "Left": 543,
+    "Top": 43,
+    "Width": 28
+   },
+   "dfm_linha": 5907,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelMsBenz",
+   "ordem_dfm": 2,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "ms",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "ms",
+    "Height": 24,
+    "Left": 541,
+    "Top": 83,
+    "Width": 28
+   },
+   "dfm_linha": 5914,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelMsGas",
+   "ordem_dfm": 3,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "ms",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "ms",
+    "Height": 24,
+    "Left": 705,
+    "Top": 40,
+    "Width": 28
+   },
+   "dfm_linha": 5921,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelMsBenzExtra",
+   "ordem_dfm": 4,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "ms",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "ms",
+    "Height": 24,
+    "Left": 705,
+    "Top": 80,
+    "Width": 28
+   },
+   "dfm_linha": 5928,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelMsGasExtra",
+   "ordem_dfm": 5,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "ms",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "extrainiettate",
+    "Height": 24,
+    "Left": 568,
+    "Top": 0,
+    "Width": 183
+   },
+   "dfm_linha": 5935,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTEXTRAINIETTATE",
+    "eng": "Dead times for extra-injections",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tempi morti per le extrainiettate",
+    "marca": "INFERIDO",
+    "por": "Dead times for extra-injections"
+   },
+   "manual": {
+    "chave": "extra-injections",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1308, pagina 25 do PDF",
+    "linha": 1308,
+    "marca": "OBS-COD",
+    "pagina": 25,
+    "trecho": "0-5”) and extra injections (range 0-5”) as in the latter case, non-linear performance from the gas injector is to be ex- pected."
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelExtraIniettate",
+   "ordem_dfm": 6,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": "extra-injections",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELEXTRAINIETTATE]",
+    "ita": "extrainiettate",
+    "marca": "OBS-COD",
+    "por": "extra-injeção"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Enabled": "False",
+    "Height": 32,
+    "Left": 461,
+    "MaxLength": 5,
+    "MaxValue": 5.0,
+    "NextControl": "EditTempoMortoGas",
+    "Precision": 0.02,
+    "PrevControl": "EditTempoGasExtra",
+    "TabOrder": 0,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 33,
+    "Width": 72
+   },
+   "dfm_linha": 5946,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": [
+     {
+      "amostras": [
+       {
+        "erro": null,
+        "quadros": [
+         "13 7D 00 87 01 18"
+        ],
+        "valor_tela": 1.0
+       },
+       {
+        "erro": null,
+        "quadros": [
+         "13 7D 00 0D 03 A0"
+        ],
+        "valor_tela": 2.0
+       }
+      ],
+      "edx": 3,
+      "fonte": "metodo original 0x4312A8 do TStreamDati executado no Unicorn (convencao assumida: eax=Self, edx=caso, double na pilha; o handler EditTempoMortoBenzKeyPress o chama em 0x4B11E3)",
+      "marca": "DERIVADO",
+      "metodo": "0x4312A8",
+      "tipo": "edit"
+     }
+    ]
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": "False",
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x4312A8",
+       "condicoes": [
+        "edx == 0xd",
+        "remetente(esi) == [form+0x530](EditTempoMortoBenz)"
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B11E3",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "TEMPO_APERTURA_INIETTORE",
+         "TEMPO_CHIUSURA_INIETTORE",
+         "TEMPO_MORTO_INIETTORI_BENZINA",
+         "TEMPO_MORTO_INIETTORI_GAS"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4312A8",
+       "condicoes": [
+        "edx == 0xd",
+        "remetente(esi) != [form+0x530](EditTempoMortoBenz)"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B1204",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "TEMPO_APERTURA_INIETTORE",
+         "TEMPO_CHIUSURA_INIETTORE",
+         "TEMPO_MORTO_INIETTORI_BENZINA",
+         "TEMPO_MORTO_INIETTORI_GAS"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4337D8",
+       "condicoes": [
+        "edx == 0xd",
+        "remetente(esi) != [form+0x530](EditTempoMortoBenz)",
+        "SD.familia_LR[+0x80D] != 0",
+        "chamada virtual dword ptr [0xaecd60] != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B1243",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "TEMPO_MORTO_INIETTORI_LR"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4B11B0",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditTempoMortoBenzKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditTempoMortoBenzKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 51
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BE90C",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriKFiltroEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroEnter",
+     "marca": "OBS-COD",
+     "n_instr": 153
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BEABC",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriKFiltroExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroExit",
+     "marca": "OBS-COD",
+     "n_instr": 34
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.25",
+    "marca": "OBS-COD",
+    "texto": "Tempo morto do injetor de gasolina: compensa o atraso de abrir/fechar; o manual recomenda nao mexer."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": {
+    "chave": "HINTTEMPOMORTOBENZ",
+    "eng": "Petrol injector dead time",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tempo morto iniettore benzina",
+    "marca": "INFERIDO",
+    "por": "Petrol injector dead time"
+   },
+   "manual": {
+    "chave": "Petrol injector dead time",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1303, pagina 25 do PDF",
+    "linha": 1303,
+    "marca": "OBS-COD",
+    "pagina": 25,
+    "trecho": "Petrol injector dead time; Gas injector dead time : These are two characteristic parameters regarding injectors and serve to compensate for any delays the opening and closing of injectors."
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTempoMortoBenz",
+   "ordem_dfm": 7,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTempoMortoBenz",
+    "eng": "Petrol injector dead time",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPOMORTOBENZ]",
+    "ita": "T morto iniettore benzina",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Tempo morto do injetor de gasolina",
+    "via": "nome (LabelTempoMortoBenz)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelMsBenz",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "ms"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Enabled": "False",
+    "Height": 32,
+    "Left": 461,
+    "MaxLength": 5,
+    "MaxValue": 5.0,
+    "NextControl": "EditTempoBenzExtra",
+    "Precision": 0.02,
+    "PrevControl": "EditTempoMortoBenz",
+    "TabOrder": 1,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 73,
+    "Width": 72
+   },
+   "dfm_linha": 5966,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": [
+     {
+      "amostras": [
+       {
+        "erro": null,
+        "quadros": [
+         "13 7E 00 87 01 19"
+        ],
+        "valor_tela": 1.0
+       },
+       {
+        "erro": null,
+        "quadros": [
+         "13 7E 00 0D 03 A1"
+        ],
+        "valor_tela": 2.0
+       }
+      ],
+      "edx": 4,
+      "fonte": "metodo original 0x4312A8 do TStreamDati executado no Unicorn (convencao assumida: eax=Self, edx=caso, double na pilha; o handler EditTempoMortoBenzKeyPress o chama em 0x4B1204)",
+      "marca": "DERIVADO",
+      "metodo": "0x4312A8",
+      "tipo": "edit"
+     }
+    ]
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": "False",
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x4312A8",
+       "condicoes": [
+        "edx == 0xd",
+        "remetente(esi) == [form+0x530](EditTempoMortoBenz)"
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4B11E3",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "TEMPO_APERTURA_INIETTORE",
+         "TEMPO_CHIUSURA_INIETTORE",
+         "TEMPO_MORTO_INIETTORI_BENZINA",
+         "TEMPO_MORTO_INIETTORI_GAS"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4312A8",
+       "condicoes": [
+        "edx == 0xd",
+        "remetente(esi) != [form+0x530](EditTempoMortoBenz)"
+       ],
+       "ecx": null,
+       "edx": 4,
+       "endereco": "0x4B1204",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "TEMPO_APERTURA_INIETTORE",
+         "TEMPO_CHIUSURA_INIETTORE",
+         "TEMPO_MORTO_INIETTORI_BENZINA",
+         "TEMPO_MORTO_INIETTORI_GAS"
+        ]
+       }
+      },
+      {
+       "alvo": "0x4337D8",
+       "condicoes": [
+        "edx == 0xd",
+        "remetente(esi) != [form+0x530](EditTempoMortoBenz)",
+        "SD.familia_LR[+0x80D] != 0",
+        "chamada virtual dword ptr [0xaecd60] != 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4B1243",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "TEMPO_MORTO_INIETTORI_LR"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4B11B0",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditTempoMortoBenzKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditTempoMortoBenzKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 51
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BE90C",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriKFiltroEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroEnter",
+     "marca": "OBS-COD",
+     "n_instr": 153
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BEABC",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriKFiltroExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroExit",
+     "marca": "OBS-COD",
+     "n_instr": 34
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.25",
+    "marca": "OBS-COD",
+    "texto": "Tempo morto do injetor de gas: compensa o atraso de abrir/fechar; o manual recomenda nao mexer."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": {
+    "chave": "HINTTEMPOMORTOGAS",
+    "eng": "Gas injector dead time",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tempo morto iniettore gas",
+    "marca": "INFERIDO",
+    "por": "Gas injector dead time"
+   },
+   "manual": {
+    "chave": "Gas injector dead time",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 1303, pagina 25 do PDF",
+    "linha": 1303,
+    "marca": "OBS-COD",
+    "pagina": 25,
+    "trecho": "Petrol injector dead time; Gas injector dead time : These are two characteristic parameters regarding injectors and serve to compensate for any delays the opening and closing of injectors."
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTempoMortoGas",
+   "ordem_dfm": 8,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTempoMortoGas",
+    "eng": "Gas injector dead time",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPOMORTOGAS]",
+    "ita": "T morto iniettore gas",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Tempo morto do injetor de gás",
+    "via": "nome (LabelTempoMortoGas)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelMsGas",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "ms"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "(((i << 2) + SD) + 11364)",
+     "caso_get": "0x435E50",
+     "caso_set": "0x437581",
+     "classe_vetor": "TAebVector",
+     "codigo": 71,
+     "ecu_para_tela": "(((SD[0x2980] * 0.00025) * 0.004) * SD[0x2C64 + i*4])",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x437581 (0x435E50)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 155,
+     "tela_para_ecu": "trunc(((v / ((SD[0x2980] * 0.00025) * 0.004)) + 0.5))",
+     "tipo": "indexado",
+     "vetor": "TEMPI_EXTRAINIETTATE"
+    }
+   ],
+   "dfm": {
+    "DataIndex": 0,
+    "Height": 32,
+    "Left": 623,
+    "MaxLength": 5,
+    "MaxValue": 5.0,
+    "NextControl": "EditTempoGasExtra",
+    "Precision": 0.02,
+    "PrevControl": "EditTempoMortoGas",
+    "TabOrder": 2,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 31,
+    "Width": 72
+   },
+   "dfm_linha": 5986,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 71,
+      "erro": null,
+      "fonte": "TStreamDati.SetIdx 0x43734C executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": 0,
+      "marca": "OBS-COD",
+      "quadros": [
+       "14 9B 00 00 A1 07 57"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BE90C",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriKFiltroEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroEnter",
+     "marca": "OBS-COD",
+     "n_instr": 153
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BEABC",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriKFiltroExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroExit",
+     "marca": "OBS-COD",
+     "n_instr": 34
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.26",
+    "marca": "OBS-COD",
+    "texto": "Tempo morto da gasolina nas extra-injecoes (0 a 5 ms); em ECU 184-188 coloque 1,4 para cortar as extra-injecoes."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 71,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "indice_dfm": 0,
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x714"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTempoBenzExtra",
+   "ordem_dfm": 9,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelMsBenz",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "ms",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelMsBenzExtra",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "ms"
+   },
+   "valor_ecu": [
+    {
+     "bruto": [
+      0,
+      0,
+      39
+     ],
+     "bruto_elemento": 0,
+     "elemento": 0,
+     "fonte": "PortmonLOGNOVO.LOG linha 1108916 (resposta ao pedido 29 (GetVector))",
+     "leitura": "29 (GetVector)",
+     "linha_log": 1108916,
+     "marca": "OBS-FIO",
+     "serial_code": 155,
+     "vetor": "TEMPI_EXTRAINIETTATE"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "(((i << 2) + SD) + 11364)",
+     "caso_get": "0x435E50",
+     "caso_set": "0x437581",
+     "classe_vetor": "TAebVector",
+     "codigo": 71,
+     "ecu_para_tela": "(((SD[0x2980] * 0.00025) * 0.004) * SD[0x2C64 + i*4])",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x437581 (0x435E50)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 155,
+     "tela_para_ecu": "trunc(((v / ((SD[0x2980] * 0.00025) * 0.004)) + 0.5))",
+     "tipo": "indexado",
+     "vetor": "TEMPI_EXTRAINIETTATE"
+    }
+   ],
+   "dfm": {
+    "DataIndex": 1,
+    "Height": 32,
+    "Left": 623,
+    "MaxLength": 5,
+    "MaxValue": 5.0,
+    "NextControl": "EditTempoMortoBenz",
+    "Precision": 0.02,
+    "PrevControl": "EditTempoBenzExtra",
+    "TabOrder": 3,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 72,
+    "Width": 72
+   },
+   "dfm_linha": 6006,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 71,
+      "erro": null,
+      "fonte": "TStreamDati.SetIdx 0x43734C executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": 1,
+      "marca": "OBS-COD",
+      "quadros": [
+       "14 9B 00 01 A1 07 58"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BE90C",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriKFiltroEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroEnter",
+     "marca": "OBS-COD",
+     "n_instr": 153
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4BEABC",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriKFiltroExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriKFiltroExit",
+     "marca": "OBS-COD",
+     "n_instr": 34
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.26",
+    "marca": "OBS-COD",
+    "texto": "Tempo morto do gas nas extra-injecoes (0 a 5 ms), onde o injetor de gas nao e linear."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 71,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "indice_dfm": 1,
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x718"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditTempoGasExtra",
+   "ordem_dfm": 10,
+   "pai": "TabKTempi",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelMsGas",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "ms",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelMsGasExtra",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "ms"
+   },
+   "valor_ecu": [
+    {
+     "bruto": [
+      0,
+      0,
+      39
+     ],
+     "bruto_elemento": 0,
+     "elemento": 1,
+     "fonte": "PortmonLOGNOVO.LOG linha 1108916 (resposta ao pedido 29 (GetVector))",
+     "leitura": "29 (GetVector)",
+     "linha_log": 1108916,
+     "marca": "OBS-FIO",
+     "serial_code": 155,
+     "vetor": "TEMPI_EXTRAINIETTATE"
+    }
+   ]
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Edits sem codigo de dado na rotina 0x48A228 (o valor passa por metodo proprio do TStreamDati; formula nao decodificada aqui, `DESCONHECIDO`): `EditTempoMortoBenz`, `EditTempoMortoGas`.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabKTempi",
+  "handlers_analisados": [
+   "TabKTempiShow",
+   "EditRifLambdaKeyPress",
+   "EditGiriKFiltroEnter",
+   "EditGiriKFiltroExit",
+   "EditTempoMortoBenzKeyPress",
+   "ControlMouseDown"
+  ],
+  "n_com_flag": 0,
+  "n_com_valor_do_log": 2,
+  "n_controles": 11,
+  "n_interativos": 4,
+  "n_ligados_ao_vetor": 2,
+  "ordem": 15,
+  "por_classe": {
+   "TLabel": 7,
+   "TNumericEdit": 4
+  },
+  "tab_show": {
+   "endereco": "0x4B1254",
+   "fonte": "RTTI do TFormConfig; OnShow = TabKTempiShow",
+   "marca": "OBS-COD",
+   "metodo": "TabKTempiShow"
+  },
+  "tab_visible_dfm": true,
+  "titulo": {
+   "eng": null,
+   "fonte": "ita=Caption do DFM",
+   "ita": "Tempi",
+   "marca": "OBS-COD",
+   "por": null
+  }
+ }
+}

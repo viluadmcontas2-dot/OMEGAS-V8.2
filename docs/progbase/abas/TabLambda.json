@@ -1,0 +1,5947 @@
+{
+ "controles": [
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Ritardo lettura",
+    "Height": 29,
+    "Left": 38,
+    "Top": 407,
+    "Visible": "False",
+    "Width": 164
+   },
+   "dfm_linha": 2238,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelRitardoLambda",
+   "ordem_dfm": 0,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Reading delay",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRITARDOLAMBDA]",
+    "ita": "Ritardo lettura",
+    "marca": "OBS-COD",
+    "por": "Reading delay"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "s",
+    "Height": 29,
+    "Left": 378,
+    "Top": 407,
+    "Visible": "False",
+    "Width": 13
+   },
+   "dfm_linha": 2246,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelS3",
+   "ordem_dfm": 1,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "s",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Tempo per ritenere sonda fredda",
+    "Height": 29,
+    "Left": 38,
+    "Top": 526,
+    "Visible": "False",
+    "Width": 373
+   },
+   "dfm_linha": 2254,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTempoSondaFredda",
+   "ordem_dfm": 2,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Time to retain cool probe",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPOSONDAFREDDA]",
+    "ita": "Tempo per ritenere sonda fredda",
+    "marca": "OBS-COD",
+    "por": "Time to retain cool probe"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "s",
+    "Height": 29,
+    "Left": 630,
+    "Top": 526,
+    "Visible": "False",
+    "Width": 13
+   },
+   "dfm_linha": 2262,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelS4",
+   "ordem_dfm": 3,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "s",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Rif. sup. raffreddarsi",
+    "Height": 29,
+    "Left": 38,
+    "Top": 483,
+    "Visible": "False",
+    "Width": 235
+   },
+   "dfm_linha": 2270,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelRifSupFredda",
+   "ordem_dfm": 4,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "High. ref. cooling",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFSUPFREDDA]",
+    "ita": "Rif. sup. raffreddarsi",
+    "marca": "OBS-COD",
+    "por": "High. ref. cooling"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "V",
+    "Height": 29,
+    "Left": 378,
+    "Top": 483,
+    "Visible": "False",
+    "Width": 16
+   },
+   "dfm_linha": 2278,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelV2",
+   "ordem_dfm": 5,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "V",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Rif. inf. raffreddarsi",
+    "Height": 29,
+    "Left": 416,
+    "Top": 483,
+    "Visible": "False",
+    "Width": 222
+   },
+   "dfm_linha": 2286,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelRifInfFredda",
+   "ordem_dfm": 6,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Low. ref. cooling",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFINFFREDDA]",
+    "ita": "Rif. inf. raffreddarsi",
+    "marca": "OBS-COD",
+    "por": "Low. ref. cooling"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "V",
+    "Height": 29,
+    "Left": 734,
+    "Top": 483,
+    "Visible": "False",
+    "Width": 16
+   },
+   "dfm_linha": 2294,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelV3",
+   "ordem_dfm": 7,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "V",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Rif. sup. scaldarsi",
+    "Height": 29,
+    "Left": 38,
+    "Top": 445,
+    "Visible": "False",
+    "Width": 206
+   },
+   "dfm_linha": 2302,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelRifSupCalda",
+   "ordem_dfm": 8,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "High. ref. warm-up",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFSUPCALDA]",
+    "ita": "Rif. sup. scaldarsi",
+    "marca": "OBS-COD",
+    "por": "High. ref. warm-up"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "V",
+    "Height": 29,
+    "Left": 378,
+    "Top": 445,
+    "Visible": "False",
+    "Width": 16
+   },
+   "dfm_linha": 2310,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelV4",
+   "ordem_dfm": 9,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "V",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Rif. inf. scaldarsi",
+    "Height": 29,
+    "Left": 416,
+    "Top": 445,
+    "Visible": "False",
+    "Width": 193
+   },
+   "dfm_linha": 2318,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelRifInfCalda",
+   "ordem_dfm": 10,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Low. ref. warm-up",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFINFCALDA]",
+    "ita": "Rif. inf. scaldarsi",
+    "marca": "OBS-COD",
+    "por": "Low. ref. warm-up"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "V",
+    "Height": 29,
+    "Left": 734,
+    "Top": 445,
+    "Visible": "False",
+    "Width": 16
+   },
+   "dfm_linha": 2326,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelV5",
+   "ordem_dfm": 11,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "V",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Tipo di sonda Lambda",
+    "Height": 29,
+    "Left": 38,
+    "Top": 96,
+    "Width": 258
+   },
+   "dfm_linha": 2334,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTTIPOLAMBDA",
+    "eng": "Type of Lambda probe",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tipo di sonda Lambda",
+    "marca": "INFERIDO",
+    "por": "Type of Lambda probe"
+   },
+   "manual": {
+    "chave": "Type of Lambda probe",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 764, pagina 16 do PDF",
+    "linha": 764,
+    "marca": "OBS-COD",
+    "pagina": 16,
+    "trecho": "C The type of lambda probe fitted to a vehicle can be set so as to have (if connected) signal verification. The following values can be set: • 0 - 1 Volt;"
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTipoLambda",
+   "ordem_dfm": 12,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Type of Lambda probe",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTIPOLAMBDA]",
+    "ita": "Tipo di sonda Lambda",
+    "marca": "OBS-COD",
+    "por": "Tipo de sonda Lambda"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Numero sonde",
+    "Height": 29,
+    "Left": 38,
+    "Top": 20,
+    "Visible": "False",
+    "Width": 168
+   },
+   "dfm_linha": 2343,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTNUMEROSONDE",
+    "eng": "Number of Lambda probes",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Numero di sensori Lambda connessi",
+    "marca": "INFERIDO",
+    "por": "Number of Lambda probes"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelNumeroSonde",
+   "ordem_dfm": 13,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Number of Lambda probes",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELNUMEROSONDE]",
+    "ita": "Numero sonde",
+    "marca": "OBS-COD",
+    "por": "Número de sondas Lambda"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "V",
+    "Height": 29,
+    "Left": 734,
+    "Top": 407,
+    "Visible": "False",
+    "Width": 16
+   },
+   "dfm_linha": 2353,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelV7",
+   "ordem_dfm": 14,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "V",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Riferimento",
+    "Height": 29,
+    "Left": 416,
+    "Top": 407,
+    "Visible": "False",
+    "Width": 133
+   },
+   "dfm_linha": 2361,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelRifLambda",
+   "ordem_dfm": 15,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Reference",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFLAMBDA]",
+    "ita": "Riferimento",
+    "marca": "OBS-COD",
+    "por": "Reference"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Correttore 2° bancata",
+    "Height": 35,
+    "Left": 38,
+    "Top": 58,
+    "Visible": "False",
+    "Width": 498
+   },
+   "dfm_linha": 2369,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "eax == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "LabelCorrBancata2",
+      "da_aba": true,
+      "endereco": "0x4A986A",
+      "marca": "OBS-COD",
+      "metodo": "ComboNumeroSondeKeyPress",
+      "origem": "sub_433918",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboNumeroSondeKeyPress via sub_4A96A4"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "eax == 0xd"
+      ],
+      "controle": "LabelCorrBancata2",
+      "da_aba": true,
+      "endereco": "0x4A986A",
+      "marca": "OBS-COD",
+      "metodo": "ComboSonda1KeyPress",
+      "origem": "sub_433918",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboSonda1KeyPress via sub_4A96A4"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "LabelCorrBancata2",
+      "da_aba": false,
+      "endereco": "0x4A986A",
+      "marca": "OBS-COD",
+      "metodo": "FormShow",
+      "origem": "sub_433918",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "FormShow via sub_4A96A4"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTCORRBANCATA2",
+    "eng": "2° bank corrector",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Correttore 2° bancata",
+    "marca": "INFERIDO",
+    "por": "2° bank corrector"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelCorrBancata2",
+   "ordem_dfm": 16,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Correttore 2° bancata",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Sonda Lambda 1 (filo viola)",
+    "Height": 29,
+    "Left": 38,
+    "Top": 134,
+    "Width": 315
+   },
+   "dfm_linha": 2380,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelTipoSonda1",
+      "da_aba": true,
+      "endereco": "0x4A68AB",
+      "marca": "OBS-COD",
+      "metodo": "TabLambdaShow",
+      "origem": "GetEsc(codigo 4)",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTTIPOSONDA1",
+    "eng": "Oxygen Sensor 1 (purple wire)",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Sonda Lambda 1 (filo viola)",
+    "marca": "INFERIDO",
+    "por": "Oxygen Sensor 1 (purple wire)"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTipoSonda1",
+   "ordem_dfm": 17,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Oxygen Sensor 1 (purple wire)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTIPOSONDA1]",
+    "ita": "Sonda Lambda 1 (filo viola)",
+    "marca": "OBS-COD",
+    "por": "Sonda Lambda 1 (fio roxo)"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Sonda Lambda 2 (filo viola/nero)",
+    "Height": 29,
+    "Left": 38,
+    "Top": 171,
+    "Width": 374
+   },
+   "dfm_linha": 2389,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "LabelTipoSonda2",
+      "da_aba": true,
+      "endereco": "0x4A6934",
+      "marca": "OBS-COD",
+      "metodo": "TabLambdaShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": {
+    "chave": "HINTTIPOSONDA2",
+    "eng": "Oxygen Sensor 2 (purple/black wire)",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Sonda Lambda 2 (filo viola/nero)",
+    "marca": "INFERIDO",
+    "por": "Oxygen Sensor 2 (purple/black wire)"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelTipoSonda2",
+   "ordem_dfm": 18,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": "Oxygen Sensor 2 (purple/black wire)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTIPOSONDA2]",
+    "ita": "Sonda Lambda 2 (filo viola/nero)",
+    "marca": "OBS-COD",
+    "por": "Sonda Lambda 2 (fio roxo/preto)"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x29A4]",
+     "caso_get": "0x434EFE",
+     "caso_set": "0x43668B",
+     "classe_vetor": "TAebNumber",
+     "codigo": 2,
+     "ecu_para_tela": "((SD[0x29A4] * 5) * 0.003921568627)",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x43668B (0x434EFE)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 5,
+     "tela_para_ecu": "trunc((((v * 255) * 0.2) + 0.5))",
+     "tipo": "escalar",
+     "vetor": "RIF_LAMBDA"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "Left": 655,
+    "MaxValue": 5.0,
+    "NextControl": "EditRifSupCalda",
+    "Precision": 0.02,
+    "PrevControl": "EditRitardoLbd",
+    "TabOrder": 7,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 402,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2398,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 2,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 05 00 1C 33"
+      ],
+      "valor_tela": 0.54902
+     },
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 2,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 05 00 FF 16"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Parametro da leitura da sonda lambda (referencia/atraso/tempo de sonda fria); o campo fica escondido nesta versao do programa [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 2,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x420"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditRifLambda",
+   "ordem_dfm": 19,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelRifLambda",
+    "eng": "Reference",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFLAMBDA]",
+    "ita": "Riferimento",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Reference",
+    "via": "nome (LabelRifLambda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelV7",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "V"
+   },
+   "valor_ecu": [
+    {
+     "bruto": 28,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1105096 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1105096,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 5,
+     "valor_na_tela": 0.54902,
+     "vetor": "RIF_LAMBDA"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x29A8]",
+     "caso_get": "0x434F22",
+     "caso_set": "0x4366BA",
+     "classe_vetor": "TAebNumber",
+     "codigo": 3,
+     "ecu_para_tela": "SD[0x29A8]",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x4366BA (0x434F22)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 6,
+     "tela_para_ecu": "trunc(v)",
+     "tipo": "escalar",
+     "vetor": "RITARDO_SONDA"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "Left": 296,
+    "MaxValue": 255.0,
+    "NextControl": "EditRifLambda",
+    "Precision": 1.0,
+    "PrevControl": "ComboSonda2",
+    "TabOrder": 6,
+    "Tag": 2,
+    "Text": "0",
+    "Top": 402,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2417,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 3,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 06 00 00 18"
+      ],
+      "valor_tela": 0.0
+     },
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 3,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 06 00 FF 17"
+      ],
+      "valor_tela": 255.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Parametro da leitura da sonda lambda (referencia/atraso/tempo de sonda fria); o campo fica escondido nesta versao do programa [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 255.0,
+    "minimo": 0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 3,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x424"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditRitardoLbd",
+   "ordem_dfm": 20,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelRitardoLambda",
+    "eng": "Reading delay",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRITARDOLAMBDA]",
+    "ita": "Ritardo lettura",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Reading delay",
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelS3",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "s"
+   },
+   "valor_ecu": [
+    {
+     "bruto": 0,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1105118 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1105118,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 6,
+     "valor_na_tela": 0.0,
+     "vetor": "RITARDO_SONDA"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x29AC]",
+     "caso_get": "0x434F3E",
+     "caso_set": "0x4366DB",
+     "classe_vetor": "TAebNumber",
+     "codigo": 4,
+     "ecu_para_tela": "SD[0x29AC]",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x4366DB (0x434F3E)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 7,
+     "tela_para_ecu": "trunc(v)",
+     "tipo": "escalar",
+     "vetor": "TEMPO_LBD_FREDDA"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "Left": 548,
+    "MaxValue": 255.0,
+    "NextControl": "ComboTipoLambda",
+    "Precision": 1.0,
+    "PrevControl": "EditRifInfFredda",
+    "TabOrder": 12,
+    "Tag": 3,
+    "Text": "0",
+    "Top": 519,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2436,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 4,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 07 00 05 1E"
+      ],
+      "valor_tela": 5.0
+     },
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 4,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 07 00 FF 18"
+      ],
+      "valor_tela": 255.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Parametro da leitura da sonda lambda (referencia/atraso/tempo de sonda fria); o campo fica escondido nesta versao do programa [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 255.0,
+    "minimo": 0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 4,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x428"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditSondaFredda",
+   "ordem_dfm": 21,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTempoSondaFredda",
+    "eng": "Time to retain cool probe",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTEMPOSONDAFREDDA]",
+    "ita": "Tempo per ritenere sonda fredda",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Time to retain cool probe",
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelS4",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "s"
+   },
+   "valor_ecu": [
+    {
+     "bruto": 5,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1105140 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1105140,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 7,
+     "valor_na_tela": 5.0,
+     "vetor": "TEMPO_LBD_FREDDA"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x29B0]",
+     "caso_get": "0x434F5A",
+     "caso_set": "0x4366FC",
+     "classe_vetor": "TAebNumber",
+     "codigo": 5,
+     "ecu_para_tela": "((SD[0x29B0] * 5) * 0.003921568627)",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x4366FC (0x434F5A)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 8,
+     "tela_para_ecu": "trunc((((v * 255) * 0.2) + 0.5))",
+     "tipo": "escalar",
+     "vetor": "RIF_SUP_LAMBDA_FREDDA"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "Left": 296,
+    "MaxValue": 5.0,
+    "NextControl": "EditRifInfFredda",
+    "Precision": 0.02,
+    "PrevControl": "EditRifInfCalda",
+    "TabOrder": 10,
+    "Tag": 4,
+    "Text": "0",
+    "Top": 479,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2455,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 5,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 08 00 1F 39"
+      ],
+      "valor_tela": 0.607843
+     },
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 5,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 08 00 FF 19"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Parametro da leitura da sonda lambda (referencia/atraso/tempo de sonda fria); o campo fica escondido nesta versao do programa [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 5,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x42C"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditRifSupFredda",
+   "ordem_dfm": 22,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelRifSupFredda",
+    "eng": "High. ref. cooling",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFSUPFREDDA]",
+    "ita": "Rif. sup. raffreddarsi",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "High. ref. cooling",
+    "via": "nome (LabelRifSupFredda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelV2",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "V"
+   },
+   "valor_ecu": [
+    {
+     "bruto": 31,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1105162 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1105162,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 8,
+     "valor_na_tela": 0.607843,
+     "vetor": "RIF_SUP_LAMBDA_FREDDA"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x29B4]",
+     "caso_get": "0x434F7E",
+     "caso_set": "0x43672B",
+     "classe_vetor": "TAebNumber",
+     "codigo": 6,
+     "ecu_para_tela": "((SD[0x29B4] * 5) * 0.003921568627)",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x43672B (0x434F7E)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 9,
+     "tela_para_ecu": "trunc((((v * 255) * 0.2) + 0.5))",
+     "tipo": "escalar",
+     "vetor": "RIF_INF_LAMBDA_FREDDA"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "Left": 655,
+    "MaxValue": 5.0,
+    "NextControl": "EditSondaFredda",
+    "Precision": 0.02,
+    "PrevControl": "EditRifSupFredda",
+    "TabOrder": 11,
+    "Tag": 5,
+    "Text": "0",
+    "Top": 478,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2474,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 6,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 09 00 0F 2A"
+      ],
+      "valor_tela": 0.294118
+     },
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 6,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 09 00 FF 1A"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Parametro da leitura da sonda lambda (referencia/atraso/tempo de sonda fria); o campo fica escondido nesta versao do programa [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 6,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x430"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditRifInfFredda",
+   "ordem_dfm": 23,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelRifInfFredda",
+    "eng": "Low. ref. cooling",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFINFFREDDA]",
+    "ita": "Rif. inf. raffreddarsi",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Low. ref. cooling",
+    "via": "nome (LabelRifInfFredda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelV3",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "V"
+   },
+   "valor_ecu": [
+    {
+     "bruto": 15,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1105184 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1105184,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 9,
+     "valor_na_tela": 0.294118,
+     "vetor": "RIF_INF_LAMBDA_FREDDA"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x29B8]",
+     "caso_get": "0x434FA2",
+     "caso_set": "0x43675A",
+     "classe_vetor": "TAebNumber",
+     "codigo": 7,
+     "ecu_para_tela": "((SD[0x29B8] * 5) * 0.003921568627)",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x43675A (0x434FA2)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 10,
+     "tela_para_ecu": "trunc((((v * 255) * 0.2) + 0.5))",
+     "tipo": "escalar",
+     "vetor": "RIF_SUP_LAMBDA_CALDA"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "Left": 296,
+    "MaxValue": 5.0,
+    "NextControl": "EditRifInfCalda",
+    "Precision": 0.02,
+    "PrevControl": "EditRifLambda",
+    "TabOrder": 8,
+    "Tag": 6,
+    "Text": "0",
+    "Top": 440,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2493,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 7,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 0A 00 1F 3B"
+      ],
+      "valor_tela": 0.607843
+     },
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 7,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 0A 00 FF 1B"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Parametro da leitura da sonda lambda (referencia/atraso/tempo de sonda fria); o campo fica escondido nesta versao do programa [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 7,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x434"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditRifSupCalda",
+   "ordem_dfm": 24,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelRifSupCalda",
+    "eng": "High. ref. warm-up",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFSUPCALDA]",
+    "ita": "Rif. sup. scaldarsi",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "High. ref. warm-up",
+    "via": "nome (LabelRifSupCalda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelV4",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "V"
+   },
+   "valor_ecu": [
+    {
+     "bruto": 31,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1105206 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1105206,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 10,
+     "valor_na_tela": 0.607843,
+     "vetor": "RIF_SUP_LAMBDA_CALDA"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x29BC]",
+     "caso_get": "0x434FC6",
+     "caso_set": "0x436789",
+     "classe_vetor": "TAebNumber",
+     "codigo": 8,
+     "ecu_para_tela": "((SD[0x29BC] * 5) * 0.003921568627)",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x436789 (0x434FC6)",
+     "funcoes_auxiliares": [],
+     "marca": "OBS-COD",
+     "serial_code": 11,
+     "tela_para_ecu": "trunc((((v * 255) * 0.2) + 0.5))",
+     "tipo": "escalar",
+     "vetor": "RIF_INF_LAMBDA_CALDA"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "Left": 655,
+    "MaxValue": 5.0,
+    "NextControl": "EditRifSupFredda",
+    "Precision": 0.02,
+    "PrevControl": "EditRifSupCalda",
+    "TabOrder": 9,
+    "Tag": 7,
+    "Text": "0",
+    "Top": 440,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2512,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 8,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 0B 00 0F 2C"
+      ],
+      "valor_tela": 0.294118
+     },
+     {
+      "cenario": "maximo da faixa do DFM",
+      "codigo": 8,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 0B 00 FF 1C"
+      ],
+      "valor_tela": 5.0
+     }
+    ],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "esi",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A45",
+       "funcao": "SetIdx",
+       "indice": "edx",
+       "pushes": [
+        "ecx",
+        "esi",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= ",
+        "[obj+0x2F0](TEMP_GAS_CALDO) >= 0"
+       ],
+       "endereco": "0x4A6A64",
+       "funcao": "GetIdx",
+       "indice": "eax",
+       "pushes": [
+        "eax",
+        "edx",
+        "eax"
+       ]
+      },
+      {
+       "codigo": "edx",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6A99",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        "edx"
+       ]
+      },
+      {
+       "codigo": "eax",
+       "condicoes": [
+        "eax == 0xd",
+        "test esi, esi >= "
+       ],
+       "endereco": "0x4A6AB1",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        "eax"
+       ]
+      }
+     ],
+     "endereco": "0x4A6A00",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditRifLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditRifLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 64
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Parametro da leitura da sonda lambda (referencia/atraso/tempo de sonda fria); o campo fica escondido nesta versao do programa [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.02
+   },
+   "hint": null,
+   "ligacao": {
+    "campo_codigo": "campo +0x2EC (DataCode do TNumericEdit)",
+    "codigo": 8,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x438"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditRifInfCalda",
+   "ordem_dfm": 25,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelRifInfCalda",
+    "eng": "Low. ref. warm-up",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELRIFINFCALDA]",
+    "ita": "Rif. inf. scaldarsi",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Low. ref. warm-up",
+    "via": "nome (LabelRifInfCalda)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabelV5",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "V"
+   },
+   "valor_ecu": [
+    {
+     "bruto": 15,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1105228 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1105228,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 11,
+     "valor_na_tela": 0.294118,
+     "vetor": "RIF_INF_LAMBDA_CALDA"
+    }
+   ]
+  },
+  {
+   "classe": "TKeyComboBox",
+   "conversao": [
+    {
+     "cache_sd": "EA[0x29A0]",
+     "caso_get": "0x434EDC",
+     "caso_set": "0x43666B",
+     "classe_vetor": "TAebNumber",
+     "codigo": 1,
+     "ecu_para_tela": "f_433FCC(SD, 10866676, 6, SD[0x29A0])",
+     "familia": "unico",
+     "fonte": "TStreamDati caso 0x43666B (0x434EDC)",
+     "funcoes_auxiliares": [
+      "0x433FCC"
+     ],
+     "marca": "OBS-COD",
+     "serial_code": 4,
+     "tela_para_ecu": "TAB[0xA5CFF4 + trunc(v)*4]",
+     "tipo": "escalar",
+     "vetor": "TIPO_LAMBDA"
+    }
+   ],
+   "dfm": {
+    "Height": 37,
+    "ItemIndex": 0,
+    "Left": 548,
+    "NextControl": "ComboSonda1",
+    "PrevControl": "EditCorrBancata2",
+    "Style": "csDropDownList",
+    "TabOrder": 2,
+    "Text": "0 - 1 Volt",
+    "Top": 89,
+    "Width": 227
+   },
+   "dfm_linha": 2531,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [
+     {
+      "cenario": "valor atual da ECU do dono",
+      "codigo": 1,
+      "erro": null,
+      "fonte": "TStreamDati.SetEsc 0x436444 executado no Unicorn (ECU = stub: eco + 53 00 53)",
+      "indice": null,
+      "marca": "OBS-COD",
+      "quadros": [
+       "12 04 00 02 18"
+      ],
+      "valor_tela": 0.0
+     }
+    ],
+    "metodos_proprios": [
+     {
+      "amostras": [
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x434032",
+        "opcao": 0,
+        "quadros": [],
+        "texto": "0 - 1 Volt"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x434032",
+        "opcao": 1,
+        "quadros": [],
+        "texto": "0 - 5 Volt"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x434032",
+        "opcao": 2,
+        "quadros": [],
+        "texto": "5 - 0 Volt"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x434032",
+        "opcao": 3,
+        "quadros": [],
+        "texto": "0.8 - 1.6 Volt"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x434032",
+        "opcao": 4,
+        "quadros": [],
+        "texto": "UEGO"
+       }
+      ],
+      "fonte": "metodo 0x43405C executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboTipoLambdaKeyPress o chama em 0x4A6765)",
+      "marca": "INFERIDO",
+      "metodo": "0x43405C",
+      "tipo": "combo"
+     }
+    ]
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "ComboTipoLambda",
+      "da_aba": true,
+      "endereco": "0x4A6797",
+      "marca": "OBS-COD",
+      "metodo": "TabLambdaShow",
+      "origem": "GetEsc(codigo 1)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": "ecx",
+       "condicoes": [
+        "eax == 0xd",
+        "sub_754CCC == 0",
+        "[obj+0x330](NUMERO_PARTENZE_EMERGENZA) >= 0"
+       ],
+       "endereco": "0x4A66C9",
+       "funcao": "SetEsc",
+       "pushes": [
+        "eax",
+        "ecx"
+       ]
+      },
+      {
+       "alvo": "0x43405C",
+       "condicoes": [
+        "eax == 0xd",
+        "sub_754CCC == 0",
+        "[obj+0x330](NUMERO_PARTENZE_EMERGENZA) >= 0",
+        "remetente(ebx) == [form+0x43c](ComboTipoLambda)"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4A6765",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42F83C",
+         "0x42FA10",
+         "0x433FCC",
+         "0x43402C",
+         "0x434044"
+        ],
+        "escreve": [],
+        "le": [
+         "cache de TIPO_LAMBDA"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4A6674",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboTipoLambdaKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboTipoLambdaKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 63
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.16",
+    "marca": "OBS-COD",
+    "texto": "Tipo da sonda lambda do carro (0-1 V, 0-5 V, 5-0 V ou 0,8-1,6 V), para a ECU poder conferir o sinal."
+   },
+   "hint": {
+    "chave": "HINTTIPOLAMBDA",
+    "eng": "Type of Lambda probe",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Tipo di sonda Lambda",
+    "marca": "INFERIDO",
+    "por": "Type of Lambda probe"
+   },
+   "itens": [
+    {
+     "eng": null,
+     "indice": 0,
+     "ita": "0 - 1 Volt",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 1,
+     "ita": "0 - 5 Volt",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 2,
+     "ita": "5 - 0 Volt",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 3,
+     "ita": "0.8 - 1.6 Volt",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 4,
+     "ita": "UEGO",
+     "por": null
+    }
+   ],
+   "ligacao": {
+    "campo_codigo": "campo +0x330 (codigo do TKeyComboBox)",
+    "codigo": 1,
+    "fonte": "TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)",
+    "marca": "OBS-COD",
+    "offset_campo_form": "0x43C"
+   },
+   "manual": {
+    "chave": "Type of Lambda probe",
+    "fonte": "sw.txt (manual SW 2.16.4 C), linha 764, pagina 16 do PDF",
+    "linha": 764,
+    "marca": "OBS-COD",
+    "pagina": 16,
+    "trecho": "C The type of lambda probe fitted to a vehicle can be set so as to have (if connected) signal verification. The following values can be set: • 0 - 1 Volt;"
+   },
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboTipoLambda",
+   "ordem_dfm": 26,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTipoLambda",
+    "eng": "Type of Lambda probe",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTIPOLAMBDA]",
+    "ita": "Tipo di sonda Lambda",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Tipo de sonda Lambda",
+    "via": "nome (LabelTipoLambda)"
+   },
+   "tipo": "combo",
+   "valor_ecu": [
+    {
+     "bruto": 2,
+     "como": "getter original 0x434CC0 executado no Unicorn com o cache preenchido pelo LOG",
+     "fonte": "PortmonLOGNOVO.LOG linha 1105074 (resposta ao pedido 09 (GetNumber))",
+     "leitura": "09 (GetNumber)",
+     "linha_log": 1105074,
+     "marca": "OBS-FIO",
+     "marca_tela": "DERIVADO",
+     "serial_code": 4,
+     "valor_na_tela": 0.0,
+     "vetor": "TIPO_LAMBDA"
+    }
+   ]
+  },
+  {
+   "classe": "TKeyComboBox",
+   "dfm": {
+    "Height": 37,
+    "ItemIndex": 0,
+    "Left": 548,
+    "NextControl": "EditCorrBancata2",
+    "PrevControl": "EditSondaFredda",
+    "Style": "csDropDownList",
+    "TabOrder": 0,
+    "Text": "1",
+    "Top": 13,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2553,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": [
+     {
+      "amostras": [
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x433942",
+        "opcao": 0,
+        "quadros": [],
+        "texto": "1"
+       },
+       {
+        "erro": "UcError: Invalid memory read (UC_ERR_READ_UNMAPPED) em eip=0x433942",
+        "opcao": 1,
+        "quadros": [],
+        "texto": "2"
+       }
+      ],
+      "fonte": "metodo 0x433938 executado no Unicorn com edx = indice da opcao (convencao assumida; o handler ComboNumeroSondeKeyPress o chama em 0x4A9692)",
+      "marca": "INFERIDO",
+      "metodo": "0x433938",
+      "tipo": "combo"
+     }
+    ]
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "ComboNumeroSonde",
+      "da_aba": true,
+      "endereco": "0x4A67B3",
+      "marca": "OBS-COD",
+      "metodo": "TabLambdaShow",
+      "origem": "sub_433918",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x433938",
+       "condicoes": [
+        "eax == 0xd",
+        "sub_754CCC == 0"
+       ],
+       "ecx": null,
+       "edx": null,
+       "endereco": "0x4A9692",
+       "funcao": "AcessoSD",
+       "pushes": [
+        "eax",
+        "eax"
+       ],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLAG_CONF1"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4A9664",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboNumeroSondeKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboNumeroSondeKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 27
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.15",
+    "marca": "OBS-COD",
+    "texto": "Quantas sondas lambda (antes do catalisador) o carro tem; com duas, os tempos e sinais sao duplicados."
+   },
+   "hint": {
+    "chave": "HINTNUMEROSONDE",
+    "eng": "Number of Lambda probes",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Numero di sensori Lambda connessi",
+    "marca": "INFERIDO",
+    "por": "Number of Lambda probes"
+   },
+   "itens": [
+    {
+     "eng": null,
+     "indice": 0,
+     "ita": "1",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 1,
+     "ita": "2",
+     "por": null
+    }
+   ],
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboNumeroSonde",
+   "ordem_dfm": 27,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelNumeroSonde",
+    "eng": "Number of Lambda probes",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELNUMEROSONDE]",
+    "ita": "Numero sonde",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Número de sondas Lambda",
+    "via": "nome (LabelNumeroSonde)"
+   },
+   "tipo": "combo",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 548,
+    "MaxValue": 20.0,
+    "MinValue": -20.0,
+    "NextControl": "ComboTipoLambda",
+    "Precision": 1.0,
+    "PrevControl": "ComboNumeroSonde",
+    "TabOrder": 1,
+    "Tag": 2,
+    "Text": "0",
+    "Top": 50,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2570,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "eax == 0xd",
+       "sub_754CCC == 0"
+      ],
+      "controle": "EditCorrBancata2",
+      "da_aba": true,
+      "endereco": "0x4A987E",
+      "marca": "OBS-COD",
+      "metodo": "ComboNumeroSondeKeyPress",
+      "origem": "sub_433918",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboNumeroSondeKeyPress via sub_4A96A4"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [
+       "eax == 0xd"
+      ],
+      "controle": "EditCorrBancata2",
+      "da_aba": true,
+      "endereco": "0x4A987E",
+      "marca": "OBS-COD",
+      "metodo": "ComboSonda1KeyPress",
+      "origem": "sub_433918",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "ComboSonda1KeyPress via sub_4A96A4"
+     },
+     {
+      "condicoes": [],
+      "condicoes_chamada": [],
+      "controle": "EditCorrBancata2",
+      "da_aba": false,
+      "endereco": "0x4A987E",
+      "marca": "OBS-COD",
+      "metodo": "FormShow",
+      "origem": "sub_433918",
+      "propriedade": "Visible",
+      "valor_imediato": null,
+      "via": "FormShow via sub_4A96A4"
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "codigo": 82,
+       "condicoes": [
+        "eax == 0xd",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4C2D0C",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ebx",
+        82
+       ],
+       "serial_code": 187,
+       "vetor": "CORRETTORE_BANCATA2_LR"
+      },
+      {
+       "codigo": 82,
+       "condicoes": [
+        "eax == 0xd",
+        "SD.familia_LR[+0x80D] != 0"
+       ],
+       "endereco": "0x4C2D1B",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        82
+       ],
+       "serial_code": 187,
+       "vetor": "CORRETTORE_BANCATA2_LR"
+      },
+      {
+       "codigo": 74,
+       "condicoes": [
+        "eax == 0xd",
+        "SD.familia_LR[+0x80D] == 0"
+       ],
+       "endereco": "0x4C2D5A",
+       "funcao": "SetIdx",
+       "indice": "ebx",
+       "pushes": [
+        "ecx",
+        74,
+        "ebx"
+       ],
+       "serial_code": 158,
+       "vetor": "CORRETTORE_BANCATA2"
+      },
+      {
+       "codigo": 74,
+       "condicoes": [
+        "eax == 0xd",
+        "SD.familia_LR[+0x80D] == 0"
+       ],
+       "endereco": "0x4C2D71",
+       "funcao": "GetIdx",
+       "indice": 0,
+       "pushes": [
+        "eax",
+        74,
+        0
+       ],
+       "serial_code": 158,
+       "vetor": "CORRETTORE_BANCATA2"
+      }
+     ],
+     "endereco": "0x4C2CCC",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditCorrBancata2KeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditCorrBancata2KeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 68
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.15",
+    "marca": "OBS-COD",
+    "texto": "Correcao (-20 a +20) da mistura do segundo banco quando os dois bancos estao levemente desequilibrados; nao tem efeito em motor de 4 cilindros."
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 20.0,
+    "minimo": -20.0,
+    "passo": 1.0
+   },
+   "hint": {
+    "chave": "HINTCORRBANCATA2",
+    "eng": "2° bank corrector",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Correttore 2° bancata",
+    "marca": "INFERIDO",
+    "por": "2° bank corrector"
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditCorrBancata2",
+   "ordem_dfm": 28,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelCorrBancata2",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Correttore 2° bancata",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelCorrBancata2)"
+   },
+   "tipo": "edit numerico",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TKeyComboBox",
+   "dfm": {
+    "Height": 37,
+    "ItemIndex": 0,
+    "Left": 548,
+    "NextControl": "ComboSonda2",
+    "PrevControl": "ComboTipoLambda",
+    "TabOrder": 3,
+    "Text": "Non connessa",
+    "Top": 129,
+    "Width": 227
+   },
+   "dfm_linha": 2589,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "ComboSonda1",
+      "da_aba": true,
+      "endereco": "0x4A6965",
+      "marca": "OBS-COD",
+      "metodo": "TabLambdaShow",
+      "origem": "sub_433A00",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x433A4C",
+       "condicoes": [
+        "eax == 0xd",
+        "remetente(ebx) == [form+0x9e8](ComboSonda1)"
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C2DC8",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ],
+        "le": [
+         "TIPI_SONDA_LAMBDA",
+         "TIPI_SONDA_LAMBDA_LR",
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x433A00",
+       "condicoes": [
+        "eax == 0xd",
+        "remetente(ebx) == [form+0x9e8](ComboSonda1)"
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C2DDA",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x433A4C",
+       "condicoes": [
+        "eax == 0xd",
+        "remetente(ebx) == [form+0x9ec](ComboSonda2)"
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C2E0C",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ],
+        "le": [
+         "TIPI_SONDA_LAMBDA",
+         "TIPI_SONDA_LAMBDA_LR",
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x433A00",
+       "condicoes": [
+        "eax == 0xd",
+        "remetente(ebx) == [form+0x9ec](ComboSonda2)"
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C2E1E",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4C2D94",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboSonda1KeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboSonda1KeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 51
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.16",
+    "marca": "OBS-COD",
+    "texto": "Lembrete de onde esta ligado o fio violeta da sonda 1: nao conectado, antes (Pre) ou depois (Post) do catalisador."
+   },
+   "hint": {
+    "chave": "HINTTIPOSONDA1",
+    "eng": "Oxygen Sensor 1 (purple wire)",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Sonda Lambda 1 (filo viola)",
+    "marca": "INFERIDO",
+    "por": "Oxygen Sensor 1 (purple wire)"
+   },
+   "itens": [
+    {
+     "eng": null,
+     "indice": 0,
+     "ita": "Non connessa",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 1,
+     "ita": "Anteriore",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 2,
+     "ita": "Posteriore",
+     "por": null
+    }
+   ],
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboSonda1",
+   "ordem_dfm": 29,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTipoSonda1",
+    "eng": "Oxygen Sensor 1 (purple wire)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTIPOSONDA1]",
+    "ita": "Sonda Lambda 1 (filo viola)",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Sonda Lambda 1 (fio roxo)",
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "combo",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TKeyComboBox",
+   "dfm": {
+    "Height": 37,
+    "ItemIndex": 0,
+    "Left": 548,
+    "NextControl": "EditRitardoLbd",
+    "PrevControl": "ComboSonda1",
+    "TabOrder": 4,
+    "Text": "Non connessa",
+    "Top": 168,
+    "Width": 227
+   },
+   "dfm_linha": 2610,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "ComboSonda2",
+      "da_aba": true,
+      "endereco": "0x4A6983",
+      "marca": "OBS-COD",
+      "metodo": "TabLambdaShow",
+      "origem": "sub_433A00",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x433A4C",
+       "condicoes": [
+        "eax == 0xd",
+        "remetente(ebx) == [form+0x9e8](ComboSonda1)"
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C2DC8",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ],
+        "le": [
+         "TIPI_SONDA_LAMBDA",
+         "TIPI_SONDA_LAMBDA_LR",
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x433A00",
+       "condicoes": [
+        "eax == 0xd",
+        "remetente(ebx) == [form+0x9e8](ComboSonda1)"
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C2DDA",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x433A4C",
+       "condicoes": [
+        "eax == 0xd",
+        "remetente(ebx) == [form+0x9ec](ComboSonda2)"
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C2E0C",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ],
+        "le": [
+         "TIPI_SONDA_LAMBDA",
+         "TIPI_SONDA_LAMBDA_LR",
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ]
+       }
+      },
+      {
+       "alvo": "0x433A00",
+       "condicoes": [
+        "eax == 0xd",
+        "remetente(ebx) == [form+0x9ec](ComboSonda2)"
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C2E1E",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": [
+         "cache de TIPI_SONDA_LAMBDA_LR"
+        ]
+       }
+      }
+     ],
+     "endereco": "0x4C2D94",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = ComboSonda1KeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "ComboSonda1KeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 51
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.16",
+    "marca": "OBS-COD",
+    "texto": "Lembrete de onde esta ligado o fio violeta/preto da sonda 2: nao conectado, antes ou depois do catalisador."
+   },
+   "hint": {
+    "chave": "HINTTIPOSONDA2",
+    "eng": "Oxygen Sensor 2 (purple/black wire)",
+    "fonte": "chave HINT+nome do componente em i18n_all.json (ControlMouseDown 0x4C6020 monta o balao; a regra exata de nome nao foi decodificada)",
+    "ita": "Sonda Lambda 2 (filo viola/nero)",
+    "marca": "INFERIDO",
+    "por": "Oxygen Sensor 2 (purple/black wire)"
+   },
+   "itens": [
+    {
+     "eng": null,
+     "indice": 0,
+     "ita": "Non connessa",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 1,
+     "ita": "Anteriore",
+     "por": null
+    },
+    {
+     "eng": null,
+     "indice": 2,
+     "ita": "Posteriore",
+     "por": null
+    }
+   ],
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "ComboSonda2",
+   "ordem_dfm": 30,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelTipoSonda2",
+    "eng": "Oxygen Sensor 2 (purple/black wire)",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELTIPOSONDA2]",
+    "ita": "Sonda Lambda 2 (filo viola/nero)",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Sonda Lambda 2 (fio roxo/preto)",
+    "via": "geometria (mesma linha, a esquerda)"
+   },
+   "tipo": "combo",
+   "valor_ecu": []
+  },
+  {
+   "classe": "TPanel",
+   "dfm": {
+    "Height": 194,
+    "Left": 0,
+    "TabOrder": 5,
+    "Top": 207,
+    "Visible": "False",
+    "Width": 825
+   },
+   "dfm_linha": 2631,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [],
+      "controle": "PanelFlashLube",
+      "da_aba": true,
+      "endereco": "0x4A69F5",
+      "marca": "OBS-COD",
+      "metodo": "TabLambdaShow",
+      "origem": null,
+      "propriedade": "Visible",
+      "valor_imediato": 1,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "PanelFlashLube",
+   "ordem_dfm": 31,
+   "pai": "TabLambda",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "painel"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Soglia livello di riserva",
+    "Height": 29,
+    "Left": 38,
+    "Top": 42,
+    "Visible": "False",
+    "Width": 262
+   },
+   "dfm_linha": 2642,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelFlashLube0",
+   "ordem_dfm": 32,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Soglia livello di riserva",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "V",
+    "Height": 29,
+    "Left": 630,
+    "Top": 42,
+    "Visible": "False",
+    "Width": 16
+   },
+   "dfm_linha": 2652,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabFlashLube0",
+   "ordem_dfm": 33,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "V",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Tempo di filtro",
+    "Height": 29,
+    "Left": 38,
+    "Top": 79,
+    "Visible": "False",
+    "Width": 167
+   },
+   "dfm_linha": 2660,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelFlashLube1",
+   "ordem_dfm": 34,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Tempo di filtro",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "s",
+    "Height": 29,
+    "Left": 630,
+    "Top": 79,
+    "Visible": "False",
+    "Width": 13
+   },
+   "dfm_linha": 2670,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabFlashLube1",
+   "ordem_dfm": 35,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "s",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Tempo basso livello per retropassaggio",
+    "Height": 29,
+    "Left": 38,
+    "Top": 117,
+    "Visible": "False",
+    "Width": 453
+   },
+   "dfm_linha": 2678,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelFlashLube2",
+   "ordem_dfm": 36,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Tempo basso livello per retropassaggio",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "h",
+    "Height": 29,
+    "Left": 630,
+    "Top": 117,
+    "Visible": "False",
+    "Width": 15
+   },
+   "dfm_linha": 2688,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabFlashLube2",
+   "ordem_dfm": 37,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "h",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Tempo alto livello per reset diagnosi ",
+    "Height": 29,
+    "Left": 38,
+    "Top": 155,
+    "Visible": "False",
+    "Width": 424
+   },
+   "dfm_linha": 2696,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelFlashLube3",
+   "ordem_dfm": 38,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Tempo alto livello per reset diagnosi ",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "h",
+    "Height": 29,
+    "Left": 630,
+    "Top": 155,
+    "Visible": "False",
+    "Width": 15
+   },
+   "dfm_linha": 2706,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabFlashLube3",
+   "ordem_dfm": 39,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "h",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TCheckBox",
+   "dfm": {
+    "Caption": "Abilita diagnosi livello lubrificante ",
+    "Height": 31,
+    "Left": 38,
+    "TabOrder": 0,
+    "Top": 0,
+    "Width": 731
+   },
+   "dfm_linha": 2714,
+   "envia": {
+    "escrita_flags": [
+     {
+      "acao": "ligar",
+      "caso": 20,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag2 0x42E16C executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x4000",
+      "palavra": 1,
+      "palavras_antes": [
+       "0001",
+       "0000"
+      ],
+      "palavras_depois": [
+       "0001",
+       "4000"
+      ],
+      "quadros": [
+       "35 C0 00 01 00 00 40 36"
+      ],
+      "serial_code": 192,
+      "vetor": "FLAG_CONF2"
+     },
+     {
+      "acao": "desligar",
+      "caso": 20,
+      "erro": null,
+      "estado_atual_na_ecu": false,
+      "fonte": "TStreamDati.SetFlag2 0x42E16C executado no Unicorn",
+      "marca": "OBS-COD",
+      "mascara": "0x4000",
+      "palavra": 1,
+      "palavras_antes": [
+       "0001",
+       "0000"
+      ],
+      "palavras_depois": [
+       "0001",
+       "0000"
+      ],
+      "quadros": [
+       "35 C0 00 01 00 00 00 F6"
+      ],
+      "serial_code": 192,
+      "vetor": "FLAG_CONF2"
+     }
+    ],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": [
+     {
+      "condicoes": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "CheckFlashLube",
+      "da_aba": true,
+      "endereco": "0x4C88C4",
+      "marca": "OBS-COD",
+      "metodo": "CheckFlashLubeClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [
+       "[obj+0x1280] == 0"
+      ],
+      "controle": "CheckFlashLube",
+      "da_aba": true,
+      "endereco": "0x4C88E5",
+      "marca": "OBS-COD",
+      "metodo": "CheckFlashLubeClick",
+      "origem": null,
+      "propriedade": "lê Checked",
+      "valor_imediato": null,
+      "via": null
+     },
+     {
+      "condicoes": [],
+      "controle": "CheckFlashLube",
+      "da_aba": true,
+      "endereco": "0x4A69A8",
+      "marca": "OBS-COD",
+      "metodo": "TabLambdaShow",
+      "origem": "GetFlag2(caso 20)",
+      "propriedade": "Checked",
+      "valor_imediato": null,
+      "via": null
+     }
+    ]
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "bits": [
+        {
+         "caso": 20,
+         "condicao": "sempre",
+         "getter": "0x42DF14",
+         "mascara": "0x4000",
+         "palavra": 1,
+         "serial_code": 192,
+         "setter": "0x42E16C",
+         "vetor": "FLAG_CONF2"
+        }
+       ],
+       "caso": 20,
+       "condicoes": [
+        "[obj+0x1280] == 0"
+       ],
+       "endereco": "0x4C88D8",
+       "funcao": "SetFlag2",
+       "valor_ecx": null
+      },
+      {
+       "codigo": 1,
+       "condicoes": [
+        "[obj+0x1280] == 0",
+        "chamada virtual dword ptr [edx + 0x104] != 0"
+       ],
+       "endereco": "0x4C88FA",
+       "funcao": "GetEsc",
+       "pushes": [
+        "ecx",
+        1
+       ],
+       "serial_code": 4,
+       "vetor": "TIPO_LAMBDA"
+      },
+      {
+       "codigo": 1,
+       "condicoes": [
+        "[obj+0x1280] == 0",
+        "chamada virtual dword ptr [edx + 0x104] != 0",
+        "test ah, 0x44 ? "
+       ],
+       "endereco": "0x4C8925",
+       "funcao": "SetEsc",
+       "pushes": [
+        "ecx",
+        1,
+        0,
+        1072693248
+       ],
+       "serial_code": 4,
+       "vetor": "TIPO_LAMBDA"
+      }
+     ],
+     "endereco": "0x4C88AC",
+     "evento": "OnClick",
+     "fonte": "DFM OnClick = CheckFlashLubeClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckFlashLubeClick",
+     "marca": "OBS-COD",
+     "n_instr": 45
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4A8928",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = CheckTpsBlocKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "CheckTpsBlocKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 21
+    },
+    {
+     "endereco": "0x4C6020",
+     "evento": "OnMouseDown",
+     "fonte": "DFM OnMouseDown = ControlMouseDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "ControlMouseDown",
+     "marca": "OBS-COD",
+     "nota": "ControlMouseDown 0x4C6020: botao esquerdo mostra o balao de dica (hint) do controle"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Liga a diagnostico do nivel de oleo/lubrificante (Flash Lube) no sistema. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "flags": [
+    {
+     "caso": 20,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42DF14",
+     "marca": "OBS-COD",
+     "mascara": "0x4000",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 192,
+     "setter": "0x42E16C",
+     "vetor": "FLAG_CONF2"
+    }
+   ],
+   "flags_todos": [
+    {
+     "caso": 20,
+     "condicao": "sempre",
+     "fonte": "docs/evidence/flags-do-original.json (flags_do_original.py)",
+     "getter": "0x42DF14",
+     "marca": "OBS-COD",
+     "mascara": "0x4000",
+     "origem": "flags-do-original.json",
+     "palavra": 1,
+     "papel": "caixa (Checked)",
+     "serial_code": 192,
+     "setter": "0x42E16C",
+     "vetor": "FLAG_CONF2"
+    }
+   ],
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "CheckFlashLube",
+   "ordem_dfm": 40,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Abilita diagnosi livello lubrificante ",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "caixa de marcar",
+   "valor_ecu": [],
+   "valor_ecu_flags": [
+    {
+     "bit_ligado": false,
+     "linha_log": 1102816,
+     "marca": "OBS-FIO",
+     "mascara": "0x4000",
+     "palavra": 1,
+     "palavra_valor": "0000",
+     "vetor": "FLAG_CONF2"
+    }
+   ]
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 548,
+    "MaxLength": 4,
+    "MaxValue": 5.0,
+    "Precision": 0.01,
+    "TabOrder": 1,
+    "Text": "0",
+    "Top": 38,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2729,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4c897b != ",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4C89AB",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4c897b != ",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4C89BA",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C8A09",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C8A1B",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C8A58",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C8A6A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4C8AAD",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4C8ABF",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4C8948",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditFlashLubeKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditFlashLubeKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 105
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Tensao-limite do nivel de reserva do lubrificante. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 5.0,
+    "minimo": 0,
+    "passo": 0.01
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditFlashLube0",
+   "ordem_dfm": 41,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelFlashLube0",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Soglia livello di riserva",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelFlashLube0)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabFlashLube0",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "V"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 548,
+    "MaxLength": 4,
+    "MaxValue": 300.0,
+    "Precision": 1.0,
+    "TabOrder": 2,
+    "Tag": 1,
+    "Text": "0",
+    "Top": 76,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2746,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4c897b != ",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4C89AB",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4c897b != ",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4C89BA",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C8A09",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C8A1B",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C8A58",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C8A6A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4C8AAD",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4C8ABF",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4C8948",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditFlashLubeKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditFlashLubeKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 105
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Tempo de filtro (segundos) antes de aceitar a leitura do nivel de lubrificante. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 300.0,
+    "minimo": 0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditFlashLube1",
+   "ordem_dfm": 42,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelFlashLube1",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Tempo di filtro",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelFlashLube1)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabFlashLube1",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "s"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 548,
+    "MaxLength": 2,
+    "MaxValue": 15.0,
+    "MinValue": 1.0,
+    "Precision": 1.0,
+    "TabOrder": 3,
+    "Tag": 2,
+    "Text": "0",
+    "Top": 113,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2764,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4c897b != ",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4C89AB",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4c897b != ",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4C89BA",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C8A09",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C8A1B",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C8A58",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C8A6A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4C8AAD",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4C8ABF",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4C8948",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditFlashLubeKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditFlashLubeKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 105
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Horas de nivel baixo antes de voltar para gasolina (retropassagem). [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 15.0,
+    "minimo": 1.0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditFlashLube2",
+   "ordem_dfm": 43,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelFlashLube2",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Tempo basso livello per retropassaggio",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelFlashLube2)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabFlashLube2",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "h"
+   },
+   "valor_ecu": []
+  },
+  {
+   "classe": "TNumericEdit",
+   "dfm": {
+    "Height": 37,
+    "Left": 548,
+    "MaxLength": 2,
+    "MaxValue": 15.0,
+    "MinValue": 1.0,
+    "Precision": 1.0,
+    "TabOrder": 4,
+    "Tag": 3,
+    "Text": "0",
+    "Top": 151,
+    "Visible": "False",
+    "Width": 72
+   },
+   "dfm_linha": 2783,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": "False",
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4c897b != ",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4C89AB",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "jb 0x4c897b != ",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < "
+       ],
+       "ecx": null,
+       "edx": 0,
+       "endereco": "0x4C89BA",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C8A09",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == "
+       ],
+       "ecx": null,
+       "edx": 1,
+       "endereco": "0x4C8A1B",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C8A58",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "dec edx != ",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 2,
+       "endereco": "0x4C8A6A",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      },
+      {
+       "alvo": "0x432D20",
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4C8AAD",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [
+         "0x42B224",
+         "0x4316EC",
+         "0x431738"
+        ],
+        "escreve": [],
+        "le": [
+         "FLASH_LUBE_PARAMETER"
+        ]
+       }
+      },
+      {
+       "alvo": "0x432D10",
+       "condicoes": [
+        "eax == 0xd",
+        "sub edx, 1 < ",
+        "jb 0x4c897b == ",
+        "dec edx == ",
+        "dec edx == "
+       ],
+       "ecx": null,
+       "edx": 3,
+       "endereco": "0x4C8ABF",
+       "funcao": "AcessoSD",
+       "pushes": [],
+       "toca": {
+        "chama": [],
+        "escreve": [],
+        "le": []
+       }
+      }
+     ],
+     "endereco": "0x4C8948",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = EditFlashLubeKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditFlashLubeKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 105
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9A35",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9ACA",
+       "funcao": "Visible",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9C17",
+       "funcao": "Caption",
+       "valor_edx": null
+      },
+      {
+       "condicoes": [
+        "sub_691B30 == 0",
+        "sub_691B30 != 0"
+       ],
+       "controle": "LabelLimite",
+       "endereco": "0x4A9CAC",
+       "funcao": "Visible",
+       "valor_edx": null
+      }
+     ],
+     "endereco": "0x4A98D8",
+     "evento": "OnEnter",
+     "fonte": "DFM OnEnter = EditGiriCambioEnter; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioEnter",
+     "marca": "OBS-COD",
+     "n_instr": 324
+    },
+    {
+     "acessos": [
+      {
+       "condicoes": [],
+       "controle": null,
+       "endereco": "0x4A9CC8",
+       "funcao": "Visible",
+       "valor_edx": 0
+      }
+     ],
+     "endereco": "0x4A9CC0",
+     "evento": "OnExit",
+     "fonte": "DFM OnExit = EditGiriCambioExit; metodo publicado na RTTI do TFormConfig",
+     "handler": "EditGiriCambioExit",
+     "marca": "OBS-COD",
+     "n_instr": 4
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Horas de nivel alto para zerar o diagnostico. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "faixa": {
+    "fonte": "DFM (MinValue/MaxValue/Precision). Enter limita ao intervalo se Min!=0 ou Max!=0 (TNumericEdit.KeyPress 0x96C170); Precision = passo de arredondamento (0x96BB88); ao entrar mostra \"(min;max)\" no LabelLimite (0x4A98D8)",
+    "marca": "OBS-COD",
+    "maximo": 15.0,
+    "minimo": 1.0,
+    "passo": 1.0
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "EditFlashLube3",
+   "ordem_dfm": 44,
+   "pai": "PanelFlashLube",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelFlashLube3",
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Tempo alto livello per reset diagnosi ",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": null,
+    "via": "nome (LabelFlashLube3)"
+   },
+   "tipo": "edit numerico",
+   "unidade": {
+    "componente": "LabFlashLube3",
+    "fonte": "rotulo vizinho a direita no DFM",
+    "marca": "OBS-COD",
+    "texto": "h"
+   },
+   "valor_ecu": []
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Edits sem codigo de dado na rotina 0x48A228 (o valor passa por metodo proprio do TStreamDati; formula nao decodificada aqui, `DESCONHECIDO`): `EditCorrBancata2`, `EditFlashLube0`, `EditFlashLube1`, `EditFlashLube2`, `EditFlashLube3`.",
+  "Combos cujo valor e gravado por metodo proprio (sem bit nem codigo generico): `ComboNumeroSonde`, `ComboSonda1`, `ComboSonda2`. Os vetores tocados aparecem na lista de acessos do handler; o significado de cada opcao no fio e `DESCONHECIDO` quando nao ha formula.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabLambda",
+  "handlers_analisados": [
+   "TabLambdaShow",
+   "CheckFlashLubeClick",
+   "CheckTpsBlocKeyPress",
+   "ControlMouseDown",
+   "ComboNumeroSondeKeyPress",
+   "ComboSonda1KeyPress",
+   "ComboTipoLambdaKeyPress",
+   "EditCorrBancata2KeyPress",
+   "EditFlashLubeKeyPress",
+   "EditGiriCambioEnter",
+   "EditGiriCambioExit",
+   "EditRifLambdaKeyPress"
+  ],
+  "n_com_flag": 1,
+  "n_com_valor_do_log": 9,
+  "n_controles": 45,
+  "n_interativos": 17,
+  "n_ligados_ao_vetor": 8,
+  "ordem": 2,
+  "por_classe": {
+   "TCheckBox": 1,
+   "TKeyComboBox": 4,
+   "TLabel": 27,
+   "TNumericEdit": 12,
+   "TPanel": 1
+  },
+  "tab_show": {
+   "endereco": "0x4A6770",
+   "fonte": "RTTI do TFormConfig; OnShow = TabLambdaShow",
+   "marca": "OBS-COD",
+   "metodo": "TabLambdaShow"
+  },
+  "tab_visible_dfm": true,
+  "titulo": {
+   "eng": "Lambda",
+   "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[TABLAMBDA]",
+   "ita": "Lambda",
+   "marca": "OBS-COD",
+   "por": "Sonda Lambda"
+  }
+ }
+}

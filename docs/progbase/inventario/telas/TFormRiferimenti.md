@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Edição das referências (eixos) de um mapa, chamada pela grade TAebGrid.
+
 - Instância DFM: `FormRiferimenti`; unidade: `@:RiferimentiMappa`; ancestral: `TForm`; tamanho de instância: 0x3D4; componentes no DFM: 5.
 - Título: "Modifica riferimenti mappa"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TAebGrid::EditRiferimentiMappa` (0x0093E36C)

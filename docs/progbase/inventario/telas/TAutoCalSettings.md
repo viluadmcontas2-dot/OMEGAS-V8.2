@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Opções do AutoCal: tempo de atualização, mostrar zonas/pontos/mensagens, valor de calibração, cores.
+
 - Instância DFM: `AutoCalSettings`; unidade: `@:AutoCal_Settings`; ancestral: `TForm`; tamanho de instância: 0x4A4; componentes no DFM: 25.
 - Título: "Autocal settings"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TAutoCalUI.SettingsImgClick` (0x00519708)

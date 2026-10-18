@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** frame (OBS-COD). Frame da calibração automática (AutoCal): gráficos de dados e K, painel de pontos, menus de reset/exportação, mensagens ao usuário (detalhe: abas 17-33).
+
 - Instância DFM: `AutoCalUI`; unidade: `@:AutoCal_UI`; ancestral: `TFrame`; tamanho de instância: 0x4EC; componentes no DFM: 98.
 - Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
 

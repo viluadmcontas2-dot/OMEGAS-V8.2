@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Configuração do comutador: LED e buzzer.
+
 - Instância DFM: `FormSwitch`; unidade: `@:CalibraSwitch`; ancestral: `TForm`; tamanho de instância: 0x404; componentes no DFM: 11.
 - Título: "Switch settings" — eng: "Switch settings" / por: "Switch settings"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormConfig.ButtonSwitchSettingsClick` (0x004C90E0)

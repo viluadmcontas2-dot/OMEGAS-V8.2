@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Variação (delta) aplicada a uma célula de mapa.
+
 - Instância DFM: `FormModificaMappa`; unidade: `@:ModMappa`; ancestral: `TForm`; tamanho de instância: 0x3CC; componentes no DFM: 5.
 - Título: "Variazione cella"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormConfig.Create` (0x00489758), `0x004ECD9C` (0x004ECD9C)

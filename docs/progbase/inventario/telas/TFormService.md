@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** tela de função (DERIVADO). Gestão de revisões (tagliandi) com PIN e dados do instalador; inibição da passagem a gás.
+
 - Instância DFM: `FormService`; unidade: `@:Service`; ancestral: `TForm`; tamanho de instância: 0x494; componentes no DFM: 36.
 - Título: "Gestione tagliandi" — eng: "Service" / por: "Service"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.ImageServiceClick` (0x00503FB0)

@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** tela de função (DERIVADO). Comunicação sem fio (Bee): rede, dongle local, dispositivo remoto, PIN, varredura, programação de firmware.
+
 - Instância DFM: `AebBeeFormLight`; unidade: `@:AebBeeLight`; ancestral: `TForm`; tamanho de instância: 0x554; componentes no DFM: 98.
 - Título: "Wireless Communication"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TAebProtocol::ShowAebBeeSettings` (0x0092215C)

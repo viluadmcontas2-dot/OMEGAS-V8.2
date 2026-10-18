@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** frame (DERIVADO). Edição dos tempos mortos de injetor gás/gasolina A..I com setas.
+
 - Instância DFM: `StrategiaTempiMortiUI`; unidade: `@:StrategiaTempiMorti_UI`; ancestral: `TFrame`; tamanho de instância: 0x4CC; componentes no DFM: 105.
 - Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
 

@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (OBS-COD). Aviso de validade da chave de hardware e campo para código de renovação (somente função descrita).
+
 - Instância DFM: `FormAggKey`; unidade: `@:AggKey`; ancestral: `TForm`; tamanho de instância: 0x3CC; componentes no DFM: 7.
 - Título: "Upgrade hardware key"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `0x00414B8C` (0x00414B8C), `0x0041A680` (0x0041A680)

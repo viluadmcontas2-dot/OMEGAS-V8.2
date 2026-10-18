@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** frame (DERIVADO). Caixas de habilitação das estratégias Panda (mínimo, reconhecimento do clima, emulação do sensor de pressão) e soglias.
+
 - Instância DFM: `StrategiaPandaUI`; unidade: `@:StrategiaPanda_UI`; ancestral: `TFrame`; tamanho de instância: 0x3BC; componentes no DFM: 46.
 - Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
 

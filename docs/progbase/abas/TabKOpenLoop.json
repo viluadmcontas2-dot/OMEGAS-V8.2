@@ -1,0 +1,133 @@
+{
+ "controles": [
+  {
+   "classe": "TDrawGrid",
+   "dfm": {
+    "ColCount": 13,
+    "Height": 97,
+    "Left": 9,
+    "RowCount": 3,
+    "TabOrder": 0,
+    "Top": 8,
+    "Width": 628
+   },
+   "dfm_linha": 5421,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [],
+     "endereco": "0x4B29D0",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = DrawGridOpenLoopKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridOpenLoopKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 7
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B29E0",
+     "evento": "OnDblClick",
+     "fonte": "DFM OnDblClick = DrawGridOpenLoopDblClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridOpenLoopDblClick",
+     "marca": "OBS-COD",
+     "n_instr": 33
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B2514",
+     "evento": "OnKeyDown",
+     "fonte": "DFM OnKeyDown = DrawGridKKeyDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridKKeyDown",
+     "marca": "OBS-COD",
+     "n_instr": 54
+    },
+    {
+     "endereco": "0x4B25B4",
+     "evento": "OnDrawCell",
+     "fonte": "DFM OnDrawCell = DrawGridOpenLoopDrawCell; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridOpenLoopDrawCell",
+     "marca": "OBS-COD",
+     "nota": "desenho das celulas da grade (exibicao); nao envia nada a ECU"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.25",
+    "marca": "OBS-COD",
+    "texto": "Tabela K em malha aberta (sem realimentacao da lambda); o quadrado vermelho em \"Correctors\" indica que esta em malha aberta."
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "DrawGridOpenLoop",
+   "ordem_dfm": 0,
+   "pai": "TabKOpenLoop",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "grade",
+   "valor_ecu": []
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Grades (`TDrawGrid`): o conteudo e desenhado em `OnDrawCell`; o conteudo e os quadros por celula nao foram decodificados celula a celula: `DrawGridOpenLoop`.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabKOpenLoop",
+  "handlers_analisados": [
+   "TabKOpenLoopShow",
+   "DrawGridOpenLoopKeyPress",
+   "DrawGridOpenLoopDblClick",
+   "DrawGridKKeyDown",
+   "DrawGridOpenLoopDrawCell"
+  ],
+  "n_com_flag": 0,
+  "n_com_valor_do_log": 0,
+  "n_controles": 1,
+  "n_interativos": 1,
+  "n_ligados_ao_vetor": 0,
+  "ordem": 9,
+  "por_classe": {
+   "TDrawGrid": 1
+  },
+  "tab_show": {
+   "endereco": null,
+   "fonte": "RTTI do TFormConfig; OnShow = None",
+   "marca": "OBS-COD",
+   "metodo": "TabKOpenLoopShow"
+  },
+  "tab_visible_dfm": "False",
+  "titulo": {
+   "eng": null,
+   "fonte": "ita=Caption do DFM",
+   "ita": "K open loop",
+   "marca": "OBS-COD",
+   "por": null
+  }
+ }
+}

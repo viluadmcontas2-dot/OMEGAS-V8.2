@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (OBS-COD). Seleção dos traços exibidos no gráfico (lista com caixas + OK/Cancelar).
+
 - Instância DFM: `FormGestioneTracce`; unidade: `@:Tracce`; ancestral: `TForm`; tamanho de instância: 0x3BC; componentes no DFM: 3.
 - Título: "Aggiungi/rimuovi tracce" — eng: "Add/remove traces" / por: "Acrescentar/remover traços"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormGraficoDrt.MenuTracceClick` (0x004E6A84)

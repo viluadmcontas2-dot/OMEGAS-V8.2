@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (OBS-COD). Sobre: produto/versão, código do usuário, licença e registro (somente função descrita).
+
 - Instância DFM: `AboutBox`; unidade: `@:About`; ancestral: `TForm`; tamanho de instância: 0x43C; componentes no DFM: 23.
 - Título: "About"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.Create` (0x004EDE60), `TFormMain.MenuAboutClick` (0x004F7808)

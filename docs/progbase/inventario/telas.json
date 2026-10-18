@@ -187,6 +187,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Sobre: produto/versão, código do usuário, licença e registro (somente função descrita).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [
     {
      "acao": null,
@@ -589,6 +591,7 @@
    "menus": [],
    "n_componentes": 23,
    "nome_instancia": "AboutBox",
+   "papel": "diálogo",
    "recurso": "TABOUTBOX",
    "rtti": true,
    "tamanho_instancia": 1084,
@@ -1092,6 +1095,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Comunicação sem fio (Bee): rede, dongle local, dispositivo remoto, PIN, varredura, programação de firmware.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [
     {
      "acao": null,
@@ -5757,6 +5762,7 @@
    "menus": [],
    "n_componentes": 98,
    "nome_instancia": "AebBeeFormLight",
+   "papel": "tela de função",
    "recurso": "TAEBBEEFORMLIGHT",
    "rtti": true,
    "tamanho_instancia": 1364,
@@ -6122,6 +6128,8 @@
      }
     }
    ],
+   "descricao": "Escolha das cores das séries do gráfico do AutoCal.",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [
     {
      "acao": null,
@@ -6572,6 +6580,7 @@
    "menus": [],
    "n_componentes": 54,
    "nome_instancia": "AutocalColorSettings",
+   "papel": "diálogo",
    "recurso": "TAUTOCALCOLORSETTINGS",
    "rtti": true,
    "tamanho_instancia": 1172,
@@ -6667,6 +6676,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Vetores/escalares do AutoCal ligados a controles (AUTO_CAL_ENABLE, VECT_AUTOCAL_*, NUM_AUTOMATCH_*).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {
     "AUTO_CAL_ENABLEGetData": {
@@ -6759,6 +6770,7 @@
    "menus": [],
    "n_componentes": 36,
    "nome_instancia": "AutoCalDM",
+   "papel": "módulo de dados",
    "recurso": "TAUTOCALDM",
    "rtti": true,
    "tamanho_instancia": 268,
@@ -6781,11 +6793,14 @@
    "bytes_dfm": 6179,
    "classe": "TAutoCalDM_EE",
    "controles": [],
+   "descricao": "Vetores do AutoCal na EEPROM (VECT_AUTOCAL_EE).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 15,
    "nome_instancia": "AutoCalDM_EE",
+   "papel": "módulo de dados",
    "recurso": "TAUTOCALDM_EE",
    "rtti": true,
    "tamanho_instancia": 164,
@@ -6905,6 +6920,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Opções do AutoCal: tempo de atualização, mostrar zonas/pontos/mensagens, valor de calibração, cores.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "BitBtn1Click": {
@@ -7198,6 +7215,7 @@
    "menus": [],
    "n_componentes": 25,
    "nome_instancia": "AutoCalSettings",
+   "papel": "diálogo",
    "recurso": "TAUTOCALSETTINGS",
    "rtti": true,
    "tamanho_instancia": 1188,
@@ -8049,6 +8067,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Frame da calibração automática (AutoCal): gráficos de dados e K, painel de pontos, menus de reset/exportação, mensagens ao usuário (detalhe: abas 17-33).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [
     {
      "acao": null,
@@ -12941,6 +12961,7 @@
    ],
    "n_componentes": 98,
    "nome_instancia": "AutoCalUI",
+   "papel": "frame",
    "recurso": "TAUTOCALUI",
    "rtti": true,
    "tamanho_instancia": 1260,
@@ -12983,11 +13004,14 @@
    "bytes_dfm": 1690,
    "classe": "TFFDataModuleSingleArray",
    "controles": [],
+   "descricao": "Módulo de dados de quadro de congelamento (freeze frame) usado pelo Diagnóstico.",
+   "descricao_evidencia": "INFERIDO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 4,
    "nome_instancia": "FFDataModuleSingleArray",
+   "papel": "módulo de dados",
    "recurso": "TFFDATAMODULESINGLEARRAY",
    "rtti": true,
    "tamanho_instancia": 1860,
@@ -13067,6 +13091,8 @@
      }
     }
    ],
+   "descricao": "Aviso de validade da chave de hardware e campo para código de renovação (somente função descrita).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {
     "FormShow": {
@@ -13122,6 +13148,7 @@
    "menus": [],
    "n_componentes": 7,
    "nome_instancia": "FormAggKey",
+   "papel": "diálogo",
    "recurso": "TFORMAGGKEY",
    "rtti": true,
    "tamanho_instancia": 972,
@@ -13180,11 +13207,14 @@
    "bytes_dfm": 988,
    "classe": "TFormAttesa",
    "controles": [],
+   "descricao": "Janela de espera com barra de progresso e animação, usada em operações longas (abrir/salvar/gravar).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 5,
    "nome_instancia": "FormAttesa",
+   "papel": "diálogo",
    "recurso": "TFORMATTESA",
    "rtti": true,
    "tamanho_instancia": 972,
@@ -13301,6 +13331,8 @@
      }
     }
    ],
+   "descricao": "Calibração automática guiada da central (roteiro com mensagens e leituras ao vivo).",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ButtonEsciClick": {
@@ -13773,6 +13805,7 @@
    "menus": [],
    "n_componentes": 58,
    "nome_instancia": "FormCalibra",
+   "papel": "tela de função",
    "recurso": "TFORMCALIBRA",
    "rtti": true,
    "tamanho_instancia": 1620,
@@ -13894,6 +13927,8 @@
      }
     }
    ],
+   "descricao": "Edita os centros (rpm/pressão) das células do mapa de carburação.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ButtonAnnullaExit": {
@@ -14150,6 +14185,7 @@
    "menus": [],
    "n_componentes": 37,
    "nome_instancia": "FormCentriCelle",
+   "papel": "diálogo",
    "recurso": "TFORMCENTRICELLE",
    "rtti": true,
    "tamanho_instancia": 1100,
@@ -14253,6 +14289,8 @@
      }
     }
    ],
+   "descricao": "Edita os centros das células do mapa dos coeficientes K.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ButtonAnnullaExit": {
@@ -14564,6 +14602,7 @@
    "menus": [],
    "n_componentes": 53,
    "nome_instancia": "FormCentriCelleK",
+   "papel": "diálogo",
    "recurso": "TFORMCENTRICELLEK",
    "rtti": true,
    "tamanho_instancia": 1164,
@@ -27120,6 +27159,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Configuração do veículo em 33 abas (detalhe em docs/progbase/abas, outro agente).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {
     "ButtonAccettaClick": {
@@ -72873,6 +72914,7 @@
    ],
    "n_componentes": 992,
    "nome_instancia": "FormConfig",
+   "papel": "tela de função",
    "recurso": "TFORMCONFIG",
    "rtti": true,
    "tamanho_instancia": 6340,
@@ -73101,6 +73143,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Correção da calibração por zonas da grade K (PgUp/PgDn).",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ActionDecrementaZonaExecute": {
@@ -73673,6 +73717,7 @@
    "menus": [],
    "n_componentes": 21,
    "nome_instancia": "FormCorrCalibra",
+   "papel": "tela de função",
    "recurso": "TFORMCORRCALIBRA",
    "rtti": true,
    "tamanho_instancia": 1316,
@@ -74535,6 +74580,8 @@
      }
     }
    ],
+   "descricao": "Diagnóstico da central: falhas, tempos de funcionamento, exclusão de injetores de gás e teste de saídas.",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {
     "ButtonAzzeraErroriClick": {
@@ -77691,6 +77738,7 @@
    "menus": [],
    "n_componentes": 129,
    "nome_instancia": "FormDiagnosi",
+   "papel": "tela de função",
    "recurso": "TFORMDIAGNOSI",
    "rtti": true,
    "tamanho_instancia": 1708,
@@ -77933,6 +77981,8 @@
      }
     }
    ],
+   "descricao": "Navegador de arquivos de configuração e de PDFs de montagem (abrir/salvar).",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ButtonAggiornaClick": {
@@ -79045,6 +79095,7 @@
    "menus": [],
    "n_componentes": 12,
    "nome_instancia": "FormFile",
+   "papel": "diálogo",
    "recurso": "TFORMFILE",
    "rtti": true,
    "tamanho_instancia": 1108,
@@ -79102,11 +79153,14 @@
      }
     }
    ],
+   "descricao": "Seleção dos traços exibidos no gráfico (lista com caixas + OK/Cancelar).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 3,
    "nome_instancia": "FormGestioneTracce",
+   "papel": "diálogo",
    "recurso": "TFORMGESTIONETRACCE",
    "rtti": true,
    "tamanho_instancia": 956,
@@ -79153,6 +79207,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Gráfico de aquisição gravada (traços, zoom, imprimir).",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [
     {
      "acao": null,
@@ -79496,6 +79552,7 @@
    ],
    "n_componentes": 24,
    "nome_instancia": "FormGraficoDrt",
+   "papel": "tela de função",
    "recurso": "TFORMGRAFICODRT",
    "rtti": true,
    "tamanho_instancia": 1060,
@@ -80134,6 +80191,8 @@
      }
     }
    ],
+   "descricao": "Osciloscópio em tempo real com marcadores, zoom, legenda, carregar/salvar/exportar.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [
     {
      "acao": null,
@@ -83174,6 +83233,7 @@
    ],
    "n_componentes": 81,
    "nome_instancia": "FormGraficoScope",
+   "papel": "tela de função",
    "recurso": "TFORMGRAFICOSCOPE",
    "rtti": true,
    "tamanho_instancia": 1844,
@@ -83246,11 +83306,14 @@
      "traducao": null
     }
    ],
+   "descricao": "DFM \"Legenda marker\" (legenda dos marcadores do osciloscópio); classe sem RTTI/VMT nem nome no executável: não usado.",
+   "descricao_evidencia": "INFERIDO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 15,
    "nome_instancia": "FormHelpScope",
+   "papel": "não usada (INFERIDO)",
    "recurso": "TFORMHELPSCOPE",
    "rtti": false,
    "tamanho_instancia": null,
@@ -83581,6 +83644,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Configuração do módulo Landi Connect (aprendizado de marchas, tanque, injetores) e zerar viagem/totais.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ButtonResetClick": {
@@ -84277,6 +84342,7 @@
    "menus": [],
    "n_componentes": 40,
    "nome_instancia": "FormLandiConnect",
+   "papel": "tela de função",
    "recurso": "TFORMLANDICONNECT",
    "rtti": true,
    "tamanho_instancia": 1164,
@@ -85098,6 +85164,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Janela principal: menus Arquivo/Conexão/Configurações/Ajuda/Market, barra de botões (Configuração, Visualização, Diagnóstico, Carregar/Salvar configuração, Reprogramar, Calibração, Modifica calibração, Atualizar, Sair), barra de status (porta, serial da ECU) e ícones (Bee, Landi Connect, Service).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [
     {
      "acao": null,
@@ -93646,6 +93714,7 @@
    ],
    "n_componentes": 84,
    "nome_instancia": "FormMain",
+   "papel": "janela principal",
    "recurso": "TFORMMAIN",
    "rtti": true,
    "tamanho_instancia": 1596,
@@ -93707,11 +93776,14 @@
    "bytes_dfm": 301,
    "classe": "TFormMainBase",
    "controles": [],
+   "descricao": "Base do formulário principal (menu de contexto vazio).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 2,
    "nome_instancia": "FormMainBase",
+   "papel": "ancestral",
    "recurso": "TFORMMAINBASE",
    "rtti": true,
    "tamanho_instancia": 964,
@@ -93729,11 +93801,14 @@
    "bytes_dfm": 584,
    "classe": "TFormMessaggio",
    "controles": [],
+   "descricao": "DFM com um rótulo de mensagem; a classe não tem RTTI/VMT nem nome no executável, e a unidade só tem Initialize/Finalize: resto de formulário não usado.",
+   "descricao_evidencia": "INFERIDO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 2,
    "nome_instancia": "FormMessaggio",
+   "papel": "não usada (INFERIDO)",
    "recurso": "TFORMMESSAGGIO",
    "rtti": false,
    "tamanho_instancia": null,
@@ -93831,6 +93906,8 @@
      }
     }
    ],
+   "descricao": "Variação (delta) aplicada a uma célula de mapa.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "EditDataKeyPress": {
@@ -93917,6 +93994,7 @@
    "menus": [],
    "n_componentes": 5,
    "nome_instancia": "FormModificaMappa",
+   "papel": "diálogo",
    "recurso": "TFORMMODIFICAMAPPA",
    "rtti": true,
    "tamanho_instancia": 972,
@@ -94014,6 +94092,8 @@
      }
     }
    ],
+   "descricao": "Alteração do valor de uma célula de mapa (chamada por TAebGrid/TAebVectorItems).",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "EditValoreKeyPress": {
@@ -94227,6 +94307,7 @@
    "menus": [],
    "n_componentes": 5,
    "nome_instancia": "FormModMappa",
+   "papel": "diálogo",
    "recurso": "TFORMMODMAPPA",
    "rtti": true,
    "tamanho_instancia": 972,
@@ -94249,11 +94330,14 @@
    "bytes_dfm": 460,
    "classe": "TFormPdf",
    "controles": [],
+   "descricao": "Visualizador de PDF (componente ActiveX TPdf) usado por TFormFile para as instruções de montagem.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 2,
    "nome_instancia": "FormPdf",
+   "papel": "diálogo",
    "recurso": "TFORMPDF",
    "rtti": true,
    "tamanho_instancia": 956,
@@ -94321,6 +94405,8 @@
      }
     }
    ],
+   "descricao": "Referências do AutoCal (K mínimo/máximo, centros de rpm e MAP).",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ButtonOkClick": {
@@ -94456,6 +94542,7 @@
    "menus": [],
    "n_componentes": 83,
    "nome_instancia": "FormRifAutocal",
+   "papel": "diálogo",
    "recurso": "TFORMRIFAUTOCAL",
    "rtti": true,
    "tamanho_instancia": 1300,
@@ -94536,6 +94623,8 @@
      }
     }
    ],
+   "descricao": "Edição das referências (eixos) de um mapa, chamada pela grade TAebGrid.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "FormCloseQuery": {
@@ -94670,6 +94759,7 @@
    "menus": [],
    "n_componentes": 5,
    "nome_instancia": "FormRiferimenti",
+   "papel": "diálogo",
    "recurso": "TFORMRIFERIMENTI",
    "rtti": true,
    "tamanho_instancia": 980,
@@ -94750,6 +94840,8 @@
      }
     }
    ],
+   "descricao": "Janela de programação da ECU: mostra arquivo escolhido (data) e botões Programação/Mudar arquivo.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [
     {
      "acao": null,
@@ -94840,6 +94932,7 @@
    "menus": [],
    "n_componentes": 9,
    "nome_instancia": "FormScarica",
+   "papel": "diálogo",
    "recurso": "TFORMSCARICA",
    "rtti": true,
    "tamanho_instancia": 980,
@@ -95143,6 +95236,8 @@
      }
     }
    ],
+   "descricao": "Gestão de revisões (tagliandi) com PIN e dados do instalador; inibição da passagem a gás.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ButtonAzzeraNumeroTagliandiEffettuatiClick": {
@@ -96768,6 +96863,7 @@
    "menus": [],
    "n_componentes": 36,
    "nome_instancia": "FormService",
+   "papel": "tela de função",
    "recurso": "TFORMSERVICE",
    "rtti": true,
    "tamanho_instancia": 1172,
@@ -96795,11 +96891,14 @@
    "bytes_dfm": 434,
    "classe": "TFormSplash",
    "controles": [],
+   "descricao": "Tela de abertura (imagem centralizada, sempre no topo), criada por TFormMain.Create.",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 2,
    "nome_instancia": "FormSplash",
+   "papel": "diálogo",
    "recurso": "TFORMSPLASH",
    "rtti": true,
    "tamanho_instancia": 956,
@@ -96817,11 +96916,14 @@
    "bytes_dfm": 392,
    "classe": "TFormStampa",
    "controles": [],
+   "descricao": "DFM maximizado com uma imagem (impressão); classe sem RTTI/VMT nem nome no executável: formulário não usado.",
+   "descricao_evidencia": "INFERIDO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 2,
    "nome_instancia": "FormStampa",
+   "papel": "não usada (INFERIDO)",
    "recurso": "TFORMSTAMPA",
    "rtti": false,
    "tamanho_instancia": null,
@@ -96993,6 +97095,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Configuração do comutador: LED e buzzer.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "ButtonExitClick": {
@@ -97584,6 +97688,7 @@
    "menus": [],
    "n_componentes": 11,
    "nome_instancia": "FormSwitch",
+   "papel": "diálogo",
    "recurso": "TFORMSWITCH",
    "rtti": true,
    "tamanho_instancia": 1028,
@@ -97675,6 +97780,8 @@
      }
     }
    ],
+   "descricao": "Visualização em tempo real dos parâmetros do veículo e gravação de aquisição (DRT).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [
     {
      "acao": null,
@@ -99008,6 +99115,7 @@
    "menus": [],
    "n_componentes": 85,
    "nome_instancia": "FormVisualizza",
+   "papel": "tela de função",
    "recurso": "TFORMVISUALIZZA",
    "rtti": true,
    "tamanho_instancia": 1868,
@@ -99055,11 +99163,14 @@
    "bytes_dfm": 7696,
    "classe": "TStrategiaPandaDM",
    "controles": [],
+   "descricao": "Dados da estratégia especial Panda (motor 169A4000).",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 22,
    "nome_instancia": "StrategiaPandaDM",
+   "papel": "módulo de dados",
    "recurso": "TSTRATEGIAPANDADM",
    "rtti": true,
    "tamanho_instancia": 196,
@@ -99082,11 +99193,14 @@
    "bytes_dfm": 82,
    "classe": "TStrategiaPandaDM_EE",
    "controles": [],
+   "descricao": "Dados EEPROM da estratégia Panda.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 1,
    "nome_instancia": "StrategiaPandaDM_EE",
+   "papel": "módulo de dados",
    "recurso": "TSTRATEGIAPANDADM_EE",
    "rtti": true,
    "tamanho_instancia": 108,
@@ -99159,6 +99273,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Caixas de habilitação das estratégias Panda (mínimo, reconhecimento do clima, emulação do sensor de pressão) e soglias.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "chk_SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMAClick": {
@@ -99306,6 +99422,7 @@
    "menus": [],
    "n_componentes": 46,
    "nome_instancia": "StrategiaPandaUI",
+   "papel": "frame",
    "recurso": "TSTRATEGIAPANDAUI",
    "rtti": true,
    "tamanho_instancia": 956,
@@ -99328,11 +99445,14 @@
    "bytes_dfm": 890,
    "classe": "TStrategiaTempiMortiDM",
    "controles": [],
+   "descricao": "Dados da estratégia de tempos mortos por injetor.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 3,
    "nome_instancia": "StrategiaTempiMortiDM",
+   "papel": "módulo de dados",
    "recurso": "TSTRATEGIATEMPIMORTIDM",
    "rtti": true,
    "tamanho_instancia": 124,
@@ -99355,11 +99475,14 @@
    "bytes_dfm": 92,
    "classe": "TStrategiaTempiMortiDM_EE",
    "controles": [],
+   "descricao": "Dados EEPROM da estratégia de tempos mortos.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {},
    "menus": [],
    "n_componentes": 1,
    "nome_instancia": "StrategiaTempiMortiDM_EE",
+   "papel": "módulo de dados",
    "recurso": "TSTRATEGIATEMPIMORTIDM_EE",
    "rtti": true,
    "tamanho_instancia": 108,
@@ -99738,6 +99861,8 @@
      "traducao": null
     }
    ],
+   "descricao": "Edição dos tempos mortos de injetor gás/gasolina A..I com setas.",
+   "descricao_evidencia": "DERIVADO",
    "dialogos": [],
    "handlers": {
     "UpDownGasAClick": {
@@ -99940,6 +100065,7 @@
    "menus": [],
    "n_componentes": 105,
    "nome_instancia": "StrategiaTempiMortiUI",
+   "papel": "frame",
    "recurso": "TSTRATEGIATEMPIMORTIUI",
    "rtti": true,
    "tamanho_instancia": 1228,
@@ -99962,6 +100088,8 @@
    "bytes_dfm": 109011,
    "classe": "TStreamDati",
    "controles": [],
+   "descricao": "Módulo de dados central: 320 campos (vetores/escalares da ECU TAebVector/TAebNumber, conexão, protocolo e o temporizador TimerIO que lê a ECU para todas as telas).",
+   "descricao_evidencia": "OBS-COD",
    "dialogos": [],
    "handlers": {
     "TimerIOTimer": {
@@ -100042,6 +100170,7 @@
    "menus": [],
    "n_componentes": 321,
    "nome_instancia": "StreamDati",
+   "papel": "módulo de dados",
    "recurso": "TSTREAMDATI",
    "rtti": true,
    "tamanho_instancia": 16060,

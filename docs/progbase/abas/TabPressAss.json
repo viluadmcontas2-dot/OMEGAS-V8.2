@@ -1,0 +1,186 @@
+{
+ "controles": [
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Correzioni pressione in funzione del rapporto P coll / P rail ",
+    "Height": 31,
+    "Left": 40,
+    "Top": 11,
+    "Width": 758
+   },
+   "dfm_linha": 5847,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelPressAss",
+   "ordem_dfm": 0,
+   "pai": "TabPressAss",
+   "rotulo": {
+    "eng": "Pressure corrections depending on P manif / P rail",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELPRESSASS]",
+    "ita": "Correzioni pressione in funzione del rapporto P coll / P rail ",
+    "marca": "OBS-COD",
+    "por": "Correções de pressão em função da relação P coll / P rail"
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TDrawGrid",
+   "dfm": {
+    "ColCount": 15,
+    "FixedCols": 0,
+    "FixedRows": 0,
+    "Height": 68,
+    "Left": 4,
+    "RowCount": 2,
+    "TabOrder": 0,
+    "Top": 40,
+    "Width": 724
+   },
+   "dfm_linha": 5855,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [],
+     "endereco": "0x4B6168",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = DrawGridPressAssKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridPressAssKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 7
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B6178",
+     "evento": "OnDblClick",
+     "fonte": "DFM OnDblClick = DrawGridPressAssDblClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridPressAssDblClick",
+     "marca": "OBS-COD",
+     "n_instr": 33
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B2514",
+     "evento": "OnKeyDown",
+     "fonte": "DFM OnKeyDown = DrawGridKKeyDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridKKeyDown",
+     "marca": "OBS-COD",
+     "n_instr": 54
+    },
+    {
+     "endereco": "0x4B5E90",
+     "evento": "OnDrawCell",
+     "fonte": "DFM OnDrawCell = DrawGridPressAssDrawCell; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridPressAssDrawCell",
+     "marca": "OBS-COD",
+     "nota": "desenho das celulas da grade (exibicao); nao envia nada a ECU"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "sem fonte (so o rotulo do componente)",
+    "marca": "INFERIDO",
+    "texto": "Correcoes de pressao em funcao da relacao pressao do coletor / pressao do trilho. [so pelo rotulo; sem fonte alem dele]"
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "DrawGridPressAss",
+   "ordem_dfm": 1,
+   "pai": "TabPressAss",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "rotulo_do_campo": {
+    "componente": "LabelPressAss",
+    "eng": "Pressure corrections depending on P manif / P rail",
+    "fonte": "ita=Caption do DFM; eng/por=i18n_all.json[LABELPRESSASS]",
+    "ita": "Correzioni pressione in funzione del rapporto P coll / P rail ",
+    "marca": "OBS-COD",
+    "marca_associacao": "INFERIDO",
+    "por": "Correções de pressão em função da relação P coll / P rail",
+    "via": "nome (LabelPressAss)"
+   },
+   "tipo": "grade",
+   "valor_ecu": []
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Grades (`TDrawGrid`): o conteudo e desenhado em `OnDrawCell`; o conteudo e os quadros por celula nao foram decodificados celula a celula: `DrawGridPressAss`.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabPressAss",
+  "handlers_analisados": [
+   "TabPressAssShow",
+   "DrawGridPressAssKeyPress",
+   "DrawGridPressAssDblClick",
+   "DrawGridKKeyDown",
+   "DrawGridPressAssDrawCell"
+  ],
+  "n_com_flag": 0,
+  "n_com_valor_do_log": 0,
+  "n_controles": 2,
+  "n_interativos": 1,
+  "n_ligados_ao_vetor": 0,
+  "ordem": 14,
+  "por_classe": {
+   "TDrawGrid": 1,
+   "TLabel": 1
+  },
+  "tab_show": {
+   "endereco": null,
+   "fonte": "RTTI do TFormConfig; OnShow = None",
+   "marca": "OBS-COD",
+   "metodo": "TabPressAssShow"
+  },
+  "tab_visible_dfm": "False",
+  "titulo": {
+   "eng": null,
+   "fonte": "ita=Caption do DFM",
+   "ita": "Pressione diff.",
+   "marca": "OBS-COD",
+   "por": null
+  }
+ }
+}

@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Navegador de arquivos de configuração e de PDFs de montagem (abrir/salvar).
+
 - Instância DFM: `FormFile`; unidade: `@:File`; ancestral: `TForm`; tamanho de instância: 0x454; componentes no DFM: 12.
 - Título: "FormFile"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.ActionArchivioExecute` (0x004FF6C4), `TFormMain.ActionSalvaConfExecute` (0x005000CC), `TFormMain.ActionApriConfExecute` (0x00500314)

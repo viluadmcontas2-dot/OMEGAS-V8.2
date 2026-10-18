@@ -1,0 +1,256 @@
+{
+ "controles": [
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "Riferimenti temperatura (°C)",
+    "Height": 31,
+    "Left": 40,
+    "Top": 11,
+    "Width": 677
+   },
+   "dfm_linha": 5711,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelRiferimentiMot",
+   "ordem_dfm": 0,
+   "pai": "TabKTempMot",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "Riferimenti temperatura (°C)",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "(°C)",
+    "Height": 37,
+    "Left": 726,
+    "Top": 45,
+    "Width": 72
+   },
+   "dfm_linha": 5719,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelGCMot",
+   "ordem_dfm": 1,
+   "pai": "TabKTempMot",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "(°C)",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TLabel",
+   "dfm": {
+    "Caption": "(±100%)",
+    "Height": 34,
+    "Left": 726,
+    "Top": 78,
+    "Width": 78
+   },
+   "dfm_linha": 5733,
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [],
+   "explicacao_leiga": {
+    "fonte": "sem fonte",
+    "marca": "DESCONHECIDO",
+    "texto": null
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "LabelPM25Mot",
+   "ordem_dfm": 2,
+   "pai": "TabKTempMot",
+   "rotulo": {
+    "eng": null,
+    "fonte": "ita=Caption do DFM",
+    "ita": "(±100%)",
+    "marca": "OBS-COD",
+    "por": null
+   },
+   "tipo": "rotulo"
+  },
+  {
+   "classe": "TDrawGrid",
+   "dfm": {
+    "ColCount": 9,
+    "FixedCols": 0,
+    "FixedRows": 0,
+    "Height": 68,
+    "Left": 11,
+    "RowCount": 2,
+    "TabOrder": 0,
+    "Top": 40,
+    "Width": 634
+   },
+   "dfm_linha": 5747,
+   "envia": {
+    "escrita_flags": [],
+    "escrita_valor": [],
+    "metodos_proprios": []
+   },
+   "estado": {
+    "inicial_dfm": {
+     "Enabled": true,
+     "Visible": true,
+     "fonte": "DFM (padrao VCL: True quando ausente)",
+     "marca": "OBS-COD"
+    },
+    "regras": []
+   },
+   "eventos": [
+    {
+     "acessos": [],
+     "endereco": "0x4B54E8",
+     "evento": "OnKeyPress",
+     "fonte": "DFM OnKeyPress = DrawGridTempMotKeyPress; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridTempMotKeyPress",
+     "marca": "OBS-COD",
+     "n_instr": 7
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B54F8",
+     "evento": "OnDblClick",
+     "fonte": "DFM OnDblClick = DrawGridTempMotDblClick; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridTempMotDblClick",
+     "marca": "OBS-COD",
+     "n_instr": 33
+    },
+    {
+     "acessos": [],
+     "endereco": "0x4B2514",
+     "evento": "OnKeyDown",
+     "fonte": "DFM OnKeyDown = DrawGridKKeyDown; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridKKeyDown",
+     "marca": "OBS-COD",
+     "n_instr": 54
+    },
+    {
+     "endereco": "0x4B5134",
+     "evento": "OnDrawCell",
+     "fonte": "DFM OnDrawCell = DrawGridTempMotDrawCell; metodo publicado na RTTI do TFormConfig",
+     "handler": "DrawGridTempMotDrawCell",
+     "marca": "OBS-COD",
+     "nota": "desenho das celulas da grade (exibicao); nao envia nada a ECU"
+    }
+   ],
+   "explicacao_leiga": {
+    "fonte": "manual SW 2.16.4 C p.24",
+    "marca": "OBS-COD",
+    "texto": "Compensacao do tempo de injecao do gas pela temperatura da agua."
+   },
+   "hint": null,
+   "manual": null,
+   "marca_dfm": "OBS-COD",
+   "nome": "DrawGridTempMot",
+   "ordem_dfm": 3,
+   "pai": "TabKTempMot",
+   "rotulo": {
+    "eng": null,
+    "fonte": null,
+    "ita": null,
+    "marca": "DESCONHECIDO",
+    "por": null
+   },
+   "tipo": "grade",
+   "valor_ecu": []
+  }
+ ],
+ "fonte": {
+  "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "gerador": "tools/progbase/abas_a.py",
+  "log": "PortmonLOGNOVO.LOG sha256 341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+  "manual": "Landi Renzo Omegas SW 2.16.4 C (sw.txt)"
+ },
+ "lacunas": [
+  "Grades (`TDrawGrid`): o conteudo e desenhado em `OnDrawCell`; o conteudo e os quadros por celula nao foram decodificados celula a celula: `DrawGridTempMot`.",
+  "Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).",
+  "A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`)."
+ ],
+ "meta": {
+  "aba": "TabKTempMot",
+  "handlers_analisados": [
+   "TabKTempMotShow",
+   "DrawGridTempMotKeyPress",
+   "DrawGridTempMotDblClick",
+   "DrawGridKKeyDown",
+   "DrawGridTempMotDrawCell"
+  ],
+  "n_com_flag": 0,
+  "n_com_valor_do_log": 0,
+  "n_controles": 4,
+  "n_interativos": 1,
+  "n_ligados_ao_vetor": 0,
+  "ordem": 12,
+  "por_classe": {
+   "TDrawGrid": 1,
+   "TLabel": 3
+  },
+  "tab_show": {
+   "endereco": null,
+   "fonte": "RTTI do TFormConfig; OnShow = None",
+   "marca": "OBS-COD",
+   "metodo": "TabKTempMotShow"
+  },
+  "tab_visible_dfm": "False",
+  "titulo": {
+   "eng": null,
+   "fonte": "ita=Caption do DFM",
+   "ita": "Temperatura acqua",
+   "marca": "OBS-COD",
+   "por": null
+  }
+ }
+}

@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** módulo de dados (OBS-COD). Módulo de dados central: 320 campos (vetores/escalares da ECU TAebVector/TAebNumber, conexão, protocolo e o temporizador TimerIO que lê a ECU para todas as telas).
+
 - Instância DFM: `StreamDati`; unidade: `@:iodata`; ancestral: `TDataModule`; tamanho de instância: 0x3EBC; componentes no DFM: 321.
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8)
 

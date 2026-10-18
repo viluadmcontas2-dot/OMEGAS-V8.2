@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** diálogo (DERIVADO). Janela de programação da ECU: mostra arquivo escolhido (data) e botões Programação/Mudar arquivo.
+
 - Instância DFM: `FormScarica`; unidade: `@:ScaricaFile`; ancestral: `TForm`; tamanho de instância: 0x3D4; componentes no DFM: 9.
 - Título: "Programmazione centralina" — eng: "Ecu programming" / por: "Programação da central de comando"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8)

@@ -2,6 +2,8 @@
 
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
+**Papel:** tela de função (DERIVADO). Calibração automática guiada da central (roteiro com mensagens e leituras ao vivo).
+
 - Instância DFM: `FormCalibra`; unidade: `@:Calibra`; ancestral: `TForm`; tamanho de instância: 0x654; componentes no DFM: 58.
 - Título: "Calibrazione automatica centralina" — eng: "Automatic ECU calibration" / por: "Calibração automática da central de comando"
 - Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.OpenFormAutotaratura` (0x0050093C)
