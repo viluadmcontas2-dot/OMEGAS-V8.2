@@ -683,6 +683,15 @@ def extrair(exe, i18n_path=None, dfm_dirs=None):
         lista = sorted(ctls.values(), key=lambda c: (not any(x.get('propriedade') == 'Checked' for x in c['acessos']),
                                                      c['nome']))
         for c in lista:
+            if c.get('classe') and not re.search(r'CheckBox|MenuItem|RadioButton', c['classe']) and \
+                    any(x.get('propriedade') == 'Checked' for x in c['acessos']):
+                # o slot virtual do GetChecked/SetChecked da RTTI só vale para caixas; noutras classes é outra
+                # propriedade no mesmo slot (INFERIDO: ItemIndex de combo)
+                for x in c['acessos']:
+                    if x.get('propriedade') == 'Checked':
+                        x['propriedade'] = 'slot vt de Checked em %s (INFERIDO: ItemIndex)' % c['classe']
+                c['papel'] = 'seletor (%s)' % c['classe']
+                continue
             c['papel'] = 'caixa (Checked)' if any(x.get('propriedade') == 'Checked' for x in c['acessos']) else \
                 'dependente (' + '/'.join(sorted({x.get('propriedade', '?') for x in c['acessos']})) + ')'
         return lista, outros

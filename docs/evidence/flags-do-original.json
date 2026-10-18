@@ -145,11 +145,11 @@
        "rotina": "TFormConfig.TabCambioShow",
        "rotina_marca": "PROVADO",
        "uso": "le",
-       "propriedade": "Checked",
+       "propriedade": "slot vt de Checked em TKeyComboBox (INFERIDO: ItemIndex)",
        "invertido": false
       }
      ],
-     "papel": "caixa (Checked)"
+     "papel": "seletor (TKeyComboBox)"
     }
    ],
    "outros_usos": [
@@ -424,7 +424,7 @@
        "rotina": "TFormConfig.ComboPressioneKeyPress",
        "rotina_marca": "PROVADO",
        "uso": "le",
-       "propriedade": "Checked",
+       "propriedade": "slot vt de Checked em TKeyComboBox (INFERIDO: ItemIndex)",
        "invertido": false
       },
       {
@@ -432,11 +432,11 @@
        "rotina": "sub_4AEACA",
        "rotina_marca": "DERIVADO",
        "uso": "le",
-       "propriedade": "Checked",
+       "propriedade": "slot vt de Checked em TKeyComboBox (INFERIDO: ItemIndex)",
        "invertido": false
       }
      ],
-     "papel": "caixa (Checked)"
+     "papel": "seletor (TKeyComboBox)"
     }
    ],
    "outros_usos": [
@@ -1511,7 +1511,7 @@
        "rotina": "TFormConfig.ComboPressioneKeyPress",
        "rotina_marca": "PROVADO",
        "uso": "le",
-       "propriedade": "Checked",
+       "propriedade": "slot vt de Checked em TKeyComboBox (INFERIDO: ItemIndex)",
        "invertido": false
       },
       {
@@ -1519,11 +1519,11 @@
        "rotina": "sub_4AEACA",
        "rotina_marca": "DERIVADO",
        "uso": "le",
-       "propriedade": "Checked",
+       "propriedade": "slot vt de Checked em TKeyComboBox (INFERIDO: ItemIndex)",
        "invertido": false
       }
      ],
-     "papel": "caixa (Checked)"
+     "papel": "seletor (TKeyComboBox)"
     }
    ],
    "outros_usos": [
@@ -2234,11 +2234,11 @@
        "rotina": "TFormConfig.TabCambioShow",
        "rotina_marca": "PROVADO",
        "uso": "le",
-       "propriedade": "Checked",
+       "propriedade": "slot vt de Checked em TKeyComboBox (INFERIDO: ItemIndex)",
        "invertido": false
       }
      ],
-     "papel": "caixa (Checked)"
+     "papel": "seletor (TKeyComboBox)"
     }
    ],
    "outros_usos": [
