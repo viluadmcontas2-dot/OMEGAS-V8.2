@@ -163,3 +163,17 @@ test('Refino e Curva K → Mapa K leem o status antes de tratar USB desconectado
   const curve = map.slice(map.indexOf('    pollCurveToMap() {'), map.indexOf('    applyCurveToMap(points) {'));
   assert.ok(curve.indexOf('curveOperation()') < curve.indexOf('usbConnected === false'), 'Curva → Mapa: status primeiro');
 });
+
+// Re-revisão 2026-10-18 (D): readKFactorCurve espera a leitura automática; exposto ao JS bloquearia a thread JavaBridge.
+test('readKFactorCurve não é exposto ao JS (nenhuma tela chama)', () => {
+  const bridgeFile = process.env.HUB_BRIDGE_FILE || path.join(ROOT, 'app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt');
+  const bridge = fs.readFileSync(bridgeFile, 'utf8');
+  const line = bridge.split('\n').find(l => /fun readKFactorCurve\(/.test(l));
+  assert.ok(line, 'função existe');
+  assert.doesNotMatch(line, /@JavascriptInterface/);
+  const before = bridge.slice(0, bridge.indexOf(line)).trimEnd().split('\n').pop();
+  assert.doesNotMatch(before, /@JavascriptInterface\s*$/);
+  for (const file of ['app.js', 'core/native-api.js', 'core/autocal-api.js', 'screens/curve.js', 'screens/map.js', 'screens/refino.js']) {
+    assert.doesNotMatch(read(file), /readKFactorCurve/, file);
+  }
+});

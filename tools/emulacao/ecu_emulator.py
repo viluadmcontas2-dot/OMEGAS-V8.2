@@ -102,6 +102,45 @@ class EcuEmulada:
             self.observar(p, r)
         return self.estado
 
+    def regenerar(self, transacoes=None):
+        """Regra do instante: antes do pedido i, o estado tem todas as transações < i; numa leitura, o
+        valor que a ECU tem no instante i é o que ela respondeu em i (observar), e o quadro é remontado
+        a partir de (ACK, dados) com checksum recalculado. Escritas NÃO são consultadas: a resposta sai
+        da regra (53 00 53). Devolve (pares_ok, pares_falha), conjuntos de (pedido, resposta)."""
+        trans = self.transacoes if transacoes is None else transacoes
+        ecu, ok, falha = EcuEmulada(), set(), set()
+        for p, r in trans:
+            if len(p) > 1 and _e_escrita(p):
+                got = ecu.responder(p)
+            else:
+                ecu.observar(p, r)
+                got = ecu.responder(p)
+            (ok if got == r else falha).add((p, r))
+        return ok, falha
+
+    def prever(self, transacoes=None):
+        """Regra estrita (sem olhar a resposta do instante): conta leituras previstas pelo estado anterior
+        + escritas. Devolve dict com acertos/erros/novos e a lista das leituras logo após escrita."""
+        trans = self.transacoes if transacoes is None else transacoes
+        ecu, tocado, cont, pos = EcuEmulada(), {}, {'ok': 0, 'mudou': 0, 'novo': 0}, []
+        for i, (p, r) in enumerate(trans):
+            if len(p) > 1 and _e_escrita(p):
+                antes = dict(ecu.estado)
+                ecu.responder(p)
+                for k, v in ecu.estado.items():
+                    if antes.get(k) != v:
+                        tocado[k] = i
+                continue
+            got = ecu.responder(p)
+            if ecu.ultimo_rotulo == NAO_MODELADO:
+                cont['novo'] += 1
+            else:
+                cont['ok' if got == r else 'mudou'] += 1
+            if p in tocado:
+                pos.append((tocado.pop(p), i, p, got == r))
+            ecu.observar(p, r)
+        return cont, pos
+
     def observar(self, p, bruta):
         """Aplica uma transação vista: leitura -> estado; escrita -> efeito (a resposta vista é ACK)."""
         p = bytes(p)
@@ -238,7 +277,9 @@ def main(argv=None):
     a = ap.parse_args(argv)
     ecu = EcuEmulada()
     ecu.carregar_captura(a.captura)
-    print(f'transações: {len(ecu.transacoes)}  pedidos no estado: {len(ecu.estado)}')
+    ok, falha = ecu.regenerar()
+    print(f'transações: {len(ecu.transacoes)}  pedidos no estado: {len(ecu.estado)}  '
+          f'pares regenerados: {len(ok)}/{len(ok) + len(falha)}')
     if a.porta:
         srv = servir(ecu, a.porta)
         print(f'ECU emulada em 127.0.0.1:{a.porta} (Ctrl+C para sair)')

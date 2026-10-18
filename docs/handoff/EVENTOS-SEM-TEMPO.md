@@ -10,13 +10,13 @@ Regra do dono: nenhuma decisão do app depende de relógio. Esperar a ECU é esp
 | AutoMatch detectado (mudança de contagem) | Enfileira releitura de curva/mapa |
 | Curva/mapa alterado pela ECU (MUL_ACT diferente) | Enfileira releitura e registra origem |
 | Escrita confirmada (ACK + readback) | **Não** enfileira releitura: a gravação já termina com leitura de volta e atualiza o cache. `KWriteManager.readFullMap` chama o mesmo `onConfirmedWrite` ao fim de toda leitura; pedir releitura ali gerava laço infinito (`CalibrationReadEvents` ignora `WRITE_CONFIRMED`; teste `CalibrationReadEventsTest`) |
-| Fim da leitura automática (AUTO_START/AutoMatch/D1) | Leitura pedida pela tela (Mapa K/Curva K) prossegue; até lá ela espera (`AutoReadGate`), sem prazo e sem "ocupado" |
+| Fim da leitura automática (AUTO_START/AutoMatch/D1) | Leitura pedida pela tela (Mapa K/Curva K) prossegue; até lá ela espera (`AutoReadGate`), sem prazo e sem "ocupado". Da espera até o fim da leitura da tela a serial fica reservada (`AutoReadGate.forUi`/`uiReadPending`): quadro válido nesse meio não abre nova leitura automática (fica pendente para o próximo quadro) |
 | A cada `AUTOCAL_TICK_FRAMES` = 4 quadros válidos aceitos | Sonda do AutoCal (`NativeAutoCalMonitor.tick`, uma transação `CMD_NATIVE_STATUS`). Conta: antes era 1 por segundo; a telemetria anda a ~4 quadros/s, então 4 quadros ≈ o ritmo antigo, sem relógio e sem roubar a serial a cada quadro |
 | A cada `FULL_SNAPSHOT_FRAMES` = 12 quadros válidos (≈ os 3 s antigos) e em cada `healthTick` | `full_snapshot` na sessão gravada |
-| Borda ocupado → livre (`KWriteManager`/`KFactorManager`) | `healthTick` (reinício do núcleo que esperava a calibração) e D1 que perdeu a serial (até 3 tentativas por AutoMatch; a época só é gasta quando a curva viva foi lida) |
+| Borda ocupado → livre (`KWriteManager`/`KFactorManager`) | `healthTick` (reinício do núcleo que esperava a calibração) e D1 que perdeu a serial (até 3 tentativas por AutoMatch; a época só é gasta quando a curva viva foi lida). Se a borda já passou quando o D1 guarda o pendente (o próprio `readCurve` do D1 gera a borda), ele roda na hora (`AutoRefineRetry`), dentro do mesmo limite de 3 |
 | Primeiro quadro válido | Devolve o saldo de reinícios automáticos do núcleo (máx. 3 por sessão USB sem quadro válido entre eles) |
-| USB passa a desconectado | Esperas JS sem resposta final terminam (sonda, MapFix, Refino, Curva K → Mapa K); sonda armada desarma (também em outro toque e na troca de rota) |
-| Rota Mapa K + amostra de status da bridge / fim da leitura do mapa | Sugestão do Mapa K redesenhada (antes só durante leitura/gravação) |
+| USB passa a desconectado | Esperas JS sem resposta final terminam (o status é lido antes: resposta final que chegou junto com a queda vale) (sonda, MapFix, Refino, Curva K → Mapa K); sonda armada desarma (também em outro toque e na troca de rota) |
+| Rota Mapa K + amostra de status da bridge / fim da leitura do mapa | Sugestão do Mapa K redesenhada (antes só durante leitura/gravação) pela ponte barata `getMapSuggestion` (memorizada por revisão + sessão + arquivo do mapa), não pela `getEquivalence` inteira |
 | Toque do operador | Única origem de gravação na ECU; o app só sugere |
 | Reconexão da ECU (USB passa a online) | Telas Curva/Mapa chamam autoSync uma vez |
 | Entrar na aba Ferramentas / gravação começa ou para / `omegas-refresh` | Relista gravações |
