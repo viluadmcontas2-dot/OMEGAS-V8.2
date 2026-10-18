@@ -74,7 +74,7 @@ def fisico_para_raw(fis, tamanho=1, sinal=False, coef=(1.0, 0.0, 0.0, 1.0), vmin
         if t == 0:
             return int(ERRO_FORMULA)
         x = (b - fis * d) / t
-    x = x - 0.5 if (sinal and x < 0) else x + 0.5
+    x = x - 0.5 if x < 0 else x + 0.5
     return int(x)  # trunc para zero
 
 
