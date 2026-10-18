@@ -108,7 +108,7 @@ test('invalidação ou falta de dados impede preparar sugestão', () => {
 test('ponte invalida a sugestão entre render e toque: não prepara alvo antigo', () => {
   const { screen, previews, context } = harness(kotlinPreview);
   screen.renderMapSuggestion({ verdict: 'SUGERIR', cells: [{ row: 3, column: 0, deltaPercent: 12 }] });
-  context.OmegasUi.AutoCalApi = { equivalence: () => ({ mapSuggestion: null }) };
+  context.OmegasUi.AutoCalApi = { mapSuggestion: () => null };
   screen.prepareMapSuggestion();
   assert.equal(previews.length, 0);
   assert.equal(screen.editor.selectionCount(), 0);
@@ -119,7 +119,7 @@ test('ponte invalida a sugestão entre render e toque: não prepara alvo antigo'
 test('sugestão redesenha fora da leitura e o botão libera quando a leitura termina', () => {
   const { screen, context } = harness(kotlinPreview);
   const suggestion = { verdict: 'SUGERIR', reason: 'RESIDUAL_LOCAL', cells: [{ row: 3, column: 0, deltaPercent: 12 }] };
-  context.OmegasUi.AutoCalApi = { equivalence: () => ({ mapSuggestion: suggestion }) };
+  context.OmegasUi.AutoCalApi = { mapSuggestion: () => suggestion };
   const button = context.document.getElementById('mapPrepareSuggestion');
   button.disabled = true;
   screen.refreshSuggestion();
@@ -141,4 +141,33 @@ test('app.js redesenha a sugestão no gancho de status da rota Mapa K', () => {
   const app = fs.readFileSync(path.join(ui, 'app.js'), 'utf8');
   const status = app.slice(app.indexOf('function refreshStatus'), app.indexOf('function toolsEditing'));
   assert.match(status, /route === 'map'[^\n]*refreshSuggestion/);
+});
+
+// Re-revisão 2026-10-18 (C): o redesenho a cada amostra de status chamava getEquivalence (índice + bandas típicas +
+// sugestão). A sugestão tem ponte própria e barata (getMapSuggestion, memorizada por revisão + sessão + mapa).
+test('redesenho da sugestão por amostra não chama a Equivalência inteira', () => {
+  const { screen, context } = harness(kotlinPreview);
+  let equivalenceCalls = 0;
+  let suggestionCalls = 0;
+  const suggestion = { verdict: 'SUGERIR', reason: 'RESIDUAL_LOCAL', cells: [{ row: 3, column: 0, deltaPercent: 12 }] };
+  context.OmegasUi.AutoCalApi = {
+    equivalence: () => { equivalenceCalls += 1; return { mapSuggestion: suggestion }; },
+    mapSuggestion: () => { suggestionCalls += 1; return suggestion; },
+  };
+  for (let i = 0; i < 5; i += 1) screen.refreshSuggestion();
+  screen.prepareMapSuggestion();
+  assert.equal(equivalenceCalls, 0, 'refresh e toque usam só a ponte da sugestão');
+  assert.equal(suggestionCalls, 6);
+  assert.equal(screen.mapSuggestion, suggestion);
+});
+
+test('AutoCalApi expõe mapSuggestion pela ponte getMapSuggestion', () => {
+  const api = fs.readFileSync(path.join(ui, 'core/autocal-api.js'), 'utf8');
+  assert.match(api, /mapSuggestion: \(\) => invoke\('getMapSuggestion'/);
+  const bridge = fs.readFileSync(path.resolve(__dirname, '../../app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt'), 'utf8');
+  const fn = bridge.slice(bridge.indexOf('fun getMapSuggestion'), bridge.indexOf('fun getMapSuggestion') + 600);
+  assert.ok(bridge.indexOf('fun getMapSuggestion') > 0, 'ponte barata existe');
+  assert.match(bridge.slice(bridge.indexOf('fun getMapSuggestion') - 40, bridge.indexOf('fun getMapSuggestion')), /@JavascriptInterface/);
+  assert.match(fn, /mapSuggestionJson\(\)/);
+  assert.doesNotMatch(fn.slice(0, fn.indexOf('catch')), /index\(\)|typicalBandsJson|denseBandsJson/);
 });

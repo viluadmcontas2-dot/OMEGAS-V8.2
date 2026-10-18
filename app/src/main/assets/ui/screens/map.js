@@ -120,14 +120,17 @@
       if (table && html !== this.lastEquivalenceHtml) { table.innerHTML = html; this.lastEquivalenceHtml = html; }
     }
 
-    /** Consulta a sugestão na ponte e redesenha (gancho de status da rota Mapa K e fim de leitura). */
+    /**
+     * Consulta a sugestão na ponte e redesenha (gancho de status da rota Mapa K e fim de leitura). Ponte própria e barata
+     * (getMapSuggestion, memorizada no serviço): a Equivalência inteira recalcularia índice e bandas a cada amostra.
+     */
     refreshSuggestion() {
-      this.renderMapSuggestion(ns.AutoCalApi?.equivalence?.()?.mapSuggestion);
+      this.renderMapSuggestion(ns.AutoCalApi?.mapSuggestion?.());
     }
 
     prepareMapSuggestion() {
       // Refaz a consulta no toque quando há ponte; o estado apresentado pode ter sido invalidado por curva/mapa novos.
-      if (ns.AutoCalApi?.equivalence) this.renderMapSuggestion(ns.AutoCalApi.equivalence()?.mapSuggestion);
+      if (ns.AutoCalApi?.mapSuggestion) this.renderMapSuggestion(ns.AutoCalApi.mapSuggestion());
       const suggestion = this.mapSuggestion;
       if (suggestion?.verdict !== 'SUGERIR' || !Array.isArray(suggestion.cells) || !suggestion.cells.length ||
           !this.editor.hasMap() || this.reading || this.curvePlan || this.curveImport || this.root?.classList.contains('is-writing')) return;
@@ -256,13 +259,12 @@
     pollCurveToMap() {
       const pending = this.curveImport;
       if (!pending || pending.phase !== 'curve') return;
-      // Sem resposta final e o USB caiu (evento): a espera termina e nada é proposto.
-      if (this.store.get()?.status?.usbConnected === false) {
-        this.finishCurveImport('USB desconectado: a leitura da Curva K foi interrompida. Nada foi proposto.');
-        return;
-      }
       const operation = this.api.curveOperation();
       if (!operation || operation.busy) {
+        // Sem resposta final e o USB caiu (evento): a espera termina e nada é proposto. Resposta final vale mesmo offline.
+        if (this.store.get()?.status?.usbConnected === false) {
+          this.finishCurveImport('USB desconectado: a leitura da Curva K foi interrompida. Nada foi proposto.');
+        }
         return;
       }
       if (!operation.ok || !Array.isArray(operation.points) || operation.points.length !== 30 ||

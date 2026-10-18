@@ -438,7 +438,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val result = Triple(rev, global, groups)
         synchronized(lock) {
             if (local != localLatch) { localLatch = local; dirty = true }
-            // Só guarda se ninguém mudou o ledger durante o cálculo (senão o próximo pedido recalcula).
+            // Guarda sempre, indexado pela revisão do início do cálculo: se o ledger mudou no meio, a chave não bate com a
+            // revisão atual e o próximo pedido recalcula (resultado velho nunca é servido).
             cachedEvidence = result
         }
         return result

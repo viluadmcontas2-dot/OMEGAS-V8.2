@@ -277,6 +277,18 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
         localFailure(error.message ?: "Equivalência indisponível")
     }
 
+    /**
+     * Só a sugestão do Mapa K (redesenho da rota Mapa K a cada amostra de status): memorizada no serviço por revisão do
+     * ledger + sessão + arquivo do mapa; não recalcula índice nem bandas. Falha vira null.
+     */
+    @JavascriptInterface
+    fun getMapSuggestion(): String = try {
+        val service = activityRef.get()?.serviceOrNull() ?: throw IllegalStateException("Serviço indisponível")
+        service.mapSuggestionJson().toString()
+    } catch (_: Exception) {
+        "null"
+    }
+
     /** Só a fase do piloto (Agora e Sugestões a cada 2–3 s): não recalcula pares nem bandas. */
     @JavascriptInterface
     fun getRefinementPhase(): String = try {

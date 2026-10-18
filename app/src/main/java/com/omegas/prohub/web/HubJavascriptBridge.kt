@@ -472,7 +472,9 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun recoverKInsertionState(): String =
         activity?.serviceOrNull()?.recoverKInsertionState() ?: unavailable()
 
-    @JavascriptInterface fun readKFactorCurve(): String = activity?.serviceOrNull()?.readKFactorCurve() ?: unavailable()
+    // Sem @JavascriptInterface: espera a leitura automática (bloquearia a thread JavaBridge) e nenhuma tela chama;
+    // a tela lê a curva por startCurveRead (executor da V7JavascriptBridge).
+    fun readKFactorCurve(): String = activity?.serviceOrNull()?.readKFactorCurve() ?: unavailable()
     @JavascriptInterface fun previewKFactorPoint(index: Int, targetFactor: Double): String =
         KFactorManualPlanner.preview(AppPaths(appContext).runtimeRoot, index, targetFactor).toString()
 

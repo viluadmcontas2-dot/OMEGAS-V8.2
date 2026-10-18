@@ -19,9 +19,10 @@
   async function waitFor(read, nextEvent, offline) {
     for (;;) {
       await nextEvent();
-      if (offline()) return { ok: false, state: 'FAILED', error: 'USB desconectado durante a operação. Confira a Curva K ao reconectar.' };
+      // Status primeiro: resposta final (ex.: curva confirmada) vale mesmo se o USB caiu logo depois.
       const status = read() || {};
       if (!(status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || '')))) return status;
+      if (offline()) return { ok: false, state: 'FAILED', error: 'USB desconectado durante a operação. Confira a Curva K ao reconectar.' };
     }
   }
 

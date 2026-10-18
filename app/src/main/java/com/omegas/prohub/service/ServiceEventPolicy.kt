@@ -1,5 +1,6 @@
 package com.omegas.prohub.service
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
@@ -84,6 +85,8 @@ internal class AutoReadGate {
     private val lock = ReentrantLock()
     private val idle = lock.newCondition()
     private var active = 0
+    /** Leituras pedidas pela tela esperando ou em curso: reservam a serial contra nova leitura automática. */
+    private val uiReads = AtomicInteger(0)
 
     fun enter() = lock.withLock { active += 1 }
 
@@ -100,4 +103,76 @@ internal class AutoReadGate {
 
     /** Acorda todos para conferirem `cancelled` (serviço parando). */
     fun wakeAll() = lock.withLock { idle.signalAll() }
+
+    /** Há leitura da tela esperando ou em curso: a leitura automática não abre outra (fica pendente para o próximo quadro). */
+    fun uiReadPending(): Boolean = uiReads.get() > 0
+
+    /**
+     * Leitura pedida pela tela: reserva a serial ANTES de esperar, espera a leitura automática terminar e roda [block].
+     * Sem a reserva, um quadro válido entre o fim da espera e o início de [block] abria nova leitura automática e a tela
+     * recebia "Outra operação K em andamento". A reserva é devolvida no fim, mesmo com erro.
+     */
+    fun <T> forUi(cancelled: () -> Boolean, block: () -> T): T {
+        uiReads.incrementAndGet()
+        try {
+            awaitIdle(cancelled)
+            return block()
+        } finally {
+            uiReads.decrementAndGet()
+        }
+    }
+}
+
+/**
+ * D1 que perdeu a serial: guarda a nova tentativa (até [max] por AutoMatch). Depois de guardar confere se a serial já está
+ * livre: a borda ocupado → livre pode ter passado ANTES (o próprio readCurve do D1 gera essa borda) e ninguém mais
+ * consumiria o pendente; então ele volta para rodar já. [take] é atômico: a borda e a oferta nunca rodam o mesmo duas vezes.
+ */
+internal class AutoRefineRetry<T : Any>(private val max: Int = ServiceEventPolicy.MAX_AUTO_REFINE_RETRIES) {
+    data class Offer<R : Any>(val accepted: Boolean, val runNow: R?)
+
+    private var epoch: String? = null
+    private var used = 0
+    private var pending: T? = null
+
+    fun offer(item: T, epochKey: String, busy: () -> Boolean): Offer<T> {
+        synchronized(this) {
+            if (epoch != epochKey) {
+                epoch = epochKey
+                used = 0
+            }
+            if (used >= max) return Offer(false, null)
+            used += 1
+            pending = item
+        }
+        // Fora do lock: a borda (outra thread) pode consumir aqui; quem pegar primeiro roda.
+        return Offer(true, if (busy()) null else take())
+    }
+
+    @Synchronized fun take(): T? {
+        val item = pending
+        pending = null
+        return item
+    }
+}
+
+/** Curva (MUL_ACT) vista no snapshot comparada com a última conhecida. */
+internal enum class CurveSnapshotChange {
+    /** Igual à última: nada a fazer. */
+    SAME,
+    /** Primeira vez: só vira o ponto de partida (o k_read_curve já registrou). */
+    BASELINE,
+    /** Curva em operação do próprio app (leitura ou lote, até onConfirmedBatch): ignorada, não é da ECU. */
+    APP_OPERATION,
+    /** Mudou com a curva livre: ECU (AutoMatch) ou externa. */
+    ECU_CHANGE;
+
+    companion object {
+        fun of(raw: String, last: String?, curveBusy: Boolean): CurveSnapshotChange = when {
+            curveBusy -> if (raw == last) SAME else APP_OPERATION
+            raw == last -> SAME
+            last == null -> BASELINE
+            else -> ECU_CHANGE
+        }
+    }
 }

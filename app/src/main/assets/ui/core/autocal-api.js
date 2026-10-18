@@ -41,6 +41,8 @@
     // Refino OMEGAS (somente leitura; a gravação usa o fluxo da Curva K).
     refinedAnalysis: () => invoke('getRefinedAnalysis', [], { ok: false, available: false }),
     equivalence: () => invoke('getEquivalence', [], { ok: false }),
+    // Só a sugestão do Mapa K (memorizada no serviço por revisão + sessão + mapa): barata, para o redesenho por amostra.
+    mapSuggestion: () => invoke('getMapSuggestion', [], null),
     // Só a fase do piloto: barata, para Agora e Sugestões (equivalence() recalcula milhares de pontos).
     refinementPhase: () => invoke('getRefinementPhase', [], { ok: false }),
     // Engasgos e apagões do GNV (StallWatch): barato, para a aba Refino local.

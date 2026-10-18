@@ -113,3 +113,53 @@ test('Refino e Curva K → Mapa K também encerram a espera sem USB', () => {
   const curve = map.slice(map.indexOf('    pollCurveToMap() {'), map.indexOf('    applyCurveToMap(points) {'));
   assert.match(curve, /usbConnected === false/);
 });
+
+// Re-revisão 2026-10-18 (E): a checagem de USB vinha antes de ler o status final, então gravação confirmada (ACK +
+// leitura de volta) seguida de queda do USB aparecia como falha. O status é lido primeiro; offline só encerra a espera
+// quando ele ainda não é final.
+test('MapFix: gravação confirmada e depois USB caiu mostra concluído', () => {
+  const context = { console, JSON, Math, Number, String, Array, Object, Map, Set };
+  context.globalThis = context;
+  vm.createContext(context);
+  vm.runInContext(read('core/map-fix.js'), context, { filename: 'map-fix.js' });
+  let tick = null;
+  let online = true;
+  let op = { busy: true, state: 'WRITING', startedAt: 5 };
+  const fix = new context.OmegasMapFix.MapFix({
+    native: { writeMap: () => ({ ok: true, started: true, startedAt: 5 }), mapWriteOperation: () => op },
+    editor: {},
+    env: { subscribe: fn => { tick = fn; return () => { tick = null; }; }, offline: () => !online },
+  });
+  fix.state = { ...fix.state, phase: 'ready', items: [{ row: 0, column: 0, target: 120 }] };
+  fix.write('apply', [{ row: 0, column: 0, target: 120 }]);
+  assert.equal(fix.state.phase, 'writing');
+  tick();
+  op = { busy: false, state: 'BATCH_CONFIRMED', readbackValid: true, startedAt: 5 };
+  online = false;
+  tick();
+  assert.equal(fix.state.phase, 'done');
+  assert.equal(tick, null);
+});
+
+test('etapa da curva: confirmada e depois USB caiu conta como gravada', async () => {
+  const runner = require(path.join(UI, 'core/balance-runner.js'));
+  let online = true;
+  let op = { ok: true, state: 'COMPLETED', points: Array.from({ length: 30 }, (_, i) => ({ index: i, factorRaw: 1 })) };
+  const api = {
+    startCurveRead: () => ({ ok: true, started: true }),
+    curveOperation: () => op,
+    writeCurve: () => { op = { busy: false, state: 'BATCH_CONFIRMED', readbackValid: true }; online = false; return { ok: true, started: true }; },
+  };
+  const outcome = await runner.writeCurveStage(api, [{ index: 0, currentRaw: 1, targetRaw: 2 }], { nextEvent: async () => {}, offline: () => !online });
+  assert.equal(outcome.ok, true, outcome.error);
+  assert.equal(outcome.written, 1);
+});
+
+test('Refino e Curva K → Mapa K leem o status antes de tratar USB desconectado', () => {
+  const refino = read('screens/refino.js');
+  const poll = refino.slice(refino.indexOf('    poll(onFinish) {'), refino.indexOf('    fail(message) {'));
+  assert.ok(poll.indexOf('curveOperation()') < poll.indexOf('usbOffline()'), 'Refino: status primeiro');
+  const map = read('screens/map.js');
+  const curve = map.slice(map.indexOf('    pollCurveToMap() {'), map.indexOf('    applyCurveToMap(points) {'));
+  assert.ok(curve.indexOf('curveOperation()') < curve.indexOf('usbConnected === false'), 'Curva → Mapa: status primeiro');
+});

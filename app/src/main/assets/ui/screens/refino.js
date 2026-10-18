@@ -528,9 +528,10 @@
     poll(onFinish) {
       let off = () => {};
       const tick = () => {
-        if (usbOffline()) { off(); this.fail('USB desconectado: a operação foi interrompida. Confira a Curva K ao reconectar.'); return; }
+        // Status primeiro: resposta final (ex.: curva confirmada) vale mesmo se o USB caiu logo depois.
         const status = this.native.curveOperation() || {};
         if (status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''))) {
+          if (usbOffline()) { off(); this.fail('USB desconectado: a operação foi interrompida. Confira a Curva K ao reconectar.'); }
           return;
         }
         off();

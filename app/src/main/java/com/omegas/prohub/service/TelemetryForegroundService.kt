@@ -88,10 +88,7 @@ class TelemetryForegroundService : Service() {
      */
     @Volatile private var preAutoMatchSnapshot: JSONObject? = null
     @Volatile private var autoRefineLastEpoch: String? = null
-    @Volatile private var pendingAutoRefine: JSONObject? = null
-    private val autoRefineRetryLock = Any()
-    private var autoRefineRetryEpoch: String? = null
-    private var autoRefineRetries = 0
+    private val autoRefineRetry = AutoRefineRetry<JSONObject>()
     /** Sugestão do Mapa K memorizada pela revisão do ledger + sessão + versão do cache do mapa (sem reler o disco à toa). */
     @Volatile private var mapSuggestionMemo: Pair<String, JSONObject>? = null
     /** Quem pediu a leitura em curso: UI (botão/abertura de tela), AUTO_START ou evento confirmado. Vai junto no evento da sessão. */
@@ -457,11 +454,8 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readCell(row, column).toString()
     @Synchronized fun readKLine(row: Int): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readLine(row).toString()
-    /** Leitura pedida pela tela: espera a leitura automática em curso terminar (evento) e só então lê. */
-    fun readKMap(): String {
-        awaitAutoRead()
-        return readKMapNow()
-    }
+    /** Leitura pedida pela tela: reserva a serial, espera a leitura automática em curso terminar (evento) e só então lê. */
+    fun readKMap(): String = awaitAutoRead { readKMapNow() }
     @Synchronized private fun readKMapNow(): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readFullMap().toString()
     @Synchronized fun recoverKInsertionState(): String =
@@ -470,17 +464,15 @@ class TelemetryForegroundService : Service() {
     fun kWriteStatusJson(): String = kWriter.statusJson()
     fun kWriteHistoryJson(): String = kWriter.historyJson()
 
-    fun readKFactorCurve(): String {
-        awaitAutoRead()
-        return readKFactorCurveNow()
-    }
+    fun readKFactorCurve(): String = awaitAutoRead { readKFactorCurveNow() }
     @Synchronized private fun readKFactorCurveNow(): String =
         if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.readCurve().toString()
 
-    /** Espera o FIM da leitura automática/D1 (sem prazo); o serviço parando libera a espera. Nunca na thread da tela. */
-    private fun awaitAutoRead() {
-        autoReadGate.awaitIdle { stopping }
-    }
+    /**
+     * Espera o FIM da leitura automática/D1 (sem prazo) e roda [read]; o serviço parando libera a espera. Nunca na thread
+     * da tela. Da espera até o fim de [read] a serial fica reservada: um quadro válido não abre nova leitura automática.
+     */
+    private fun <T> awaitAutoRead(read: () -> T): T = autoReadGate.forUi({ stopping }, read)
 
     /** Sessão serial vigente (0 = desconectado). A sugestão do Mapa K só vale com o mapa lido NESTA sessão. */
     fun currentEcuSessionId(): Long = if (usb.connected) runtime.serialScheduler().currentSessionId() else 0L
@@ -666,10 +658,7 @@ class TelemetryForegroundService : Service() {
         try {
             if (!calibrationIdle.observe(kWriter.isBusy() || kFactor.isBusy())) return
             executeOnScheduler { healthTick() }
-            pendingAutoRefine?.let { pending ->
-                pendingAutoRefine = null
-                autoRefineAfterEcuAutoMatch(pending)
-            }
+            autoRefineRetry.take()?.let { pending -> autoRefineAfterEcuAutoMatch(pending) }
         } catch (error: Exception) {
             log.add("WARN", "SERVICE", "Borda livre da calibração: ${error.message}")
         }
@@ -893,16 +882,15 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    /** O D1 perdeu a serial (outra operação ocupada ou leitura falhou): tenta de novo na próxima borda ocupado → livre. */
-    private fun retryAutoRefineOnIdle(payload: JSONObject, epochKey: String): Boolean = synchronized(autoRefineRetryLock) {
-        if (autoRefineRetryEpoch != epochKey) {
-            autoRefineRetryEpoch = epochKey
-            autoRefineRetries = 0
-        }
-        if (autoRefineRetries >= ServiceEventPolicy.MAX_AUTO_REFINE_RETRIES) return@synchronized false
-        autoRefineRetries += 1
-        pendingAutoRefine = payload
-        true
+    /**
+     * O D1 perdeu a serial (outra operação ocupada ou leitura falhou): tenta de novo na próxima borda ocupado → livre. Se
+     * a serial já está livre (a borda passou antes de o pendente ser guardado, ex.: o próprio readCurve do D1), roda já,
+     * na fila do mesmo executor (depois deste registro). Até MAX_AUTO_REFINE_RETRIES por AutoMatch: sem laço.
+     */
+    private fun retryAutoRefineOnIdle(payload: JSONObject, epochKey: String): Boolean {
+        val offer = autoRefineRetry.offer(payload, epochKey) { kWriter.isBusy() || kFactor.isBusy() }
+        offer.runNow?.let { pending -> autoRefineAfterEcuAutoMatch(pending) }
+        return offer.accepted
     }
 
     private fun runAutoRefine(
@@ -975,10 +963,17 @@ class TelemetryForegroundService : Service() {
                 }
             }
             val raw = mul?.takeIf { it.length() == 30 }?.toString() ?: return
-            if (raw == lastCurveRaw) return
             val previous = lastCurveRaw
+            when (CurveSnapshotChange.of(raw, previous, curveBusy = kFactor.isBusy())) {
+                CurveSnapshotChange.SAME -> return
+                // Leitura ou lote do próprio app em curso (o lote só atualiza lastCurveRaw em onConfirmedBatch): não é da ECU.
+                CurveSnapshotChange.APP_OPERATION -> return
+                // Primeira vez: o k_read_curve já registrou o ponto de partida.
+                CurveSnapshotChange.BASELINE -> { lastCurveRaw = raw; return }
+                CurveSnapshotChange.ECU_CHANGE -> Unit
+            }
+            if (previous == null) return
             lastCurveRaw = raw
-            if (previous == null) return // primeira vez: o k_read_curve já registrou o ponto de partida
             // A curva gravada pelo app já virou lastCurveRaw no próprio lote confirmado; diferença aqui é da ECU ou externa.
             val origin = "ECU_NATIVE_OR_EXTERNAL"
             requestCalibrationRead("ECU_CALIBRATION_CHANGED")
@@ -1020,7 +1015,8 @@ class TelemetryForegroundService : Service() {
     private fun autoReadCalibrationOnce() {
         if (!usb.connected || !runtime.running || !runtime.ready || !telemetryStore.isValid()) return
         val ticket = calibrationReads.next(
-            runtime.serialScheduler().currentSessionId(), kWriter.isBusy() || kFactor.isBusy(),
+            // Leitura da tela reservada (esperando ou em curso) conta como ocupado: o pedido fica para o próximo quadro.
+            runtime.serialScheduler().currentSessionId(), kWriter.isBusy() || kFactor.isBusy() || autoReadGate.uiReadPending(),
         ) ?: return
         autoReadGate.enter()
         try {
