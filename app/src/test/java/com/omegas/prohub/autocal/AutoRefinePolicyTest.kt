@@ -11,8 +11,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Decisão do dono (2026-10-16, D1): depois de cada AutoMatch da ECU o app pode refinar a Curva K sozinho, SEM teto por ponto,
- * só dentro das travas absolutas: 0,8 ≤ K ≤ 1,8; com Mapa K acima de 200 em alguma célula, K ≤ 1,5. Uma vez por AutoMatch.
+ * D1 (dono, 2026-10-16; revisto em 2026-10-18: o app NÃO grava sozinho): depois de cada AutoMatch da ECU o app calcula a
+ * sugestão de Curva K, SEM teto por ponto, só dentro das travas absolutas: 0,8 ≤ K ≤ 1,8; com Mapa K acima de 200 em alguma
+ * célula, K ≤ 1,5. Uma vez por AutoMatch. Só existem DESLIGADO e SOMBRA; nenhum veredito manda gravar.
  */
 class AutoRefinePolicyTest {
     private val one = 16384
@@ -21,7 +22,7 @@ class AutoRefinePolicyTest {
 
     private fun decide(
         current: IntArray? = curve(), ideal: IntArray? = curve(0 to raw(1.10), 1 to raw(1.10), 2 to raw(1.10)),
-        mode: Mode = Mode.ON, map: Int? = 180, epoch: String = "e1", last: String? = null, available: Boolean = true,
+        mode: Mode = Mode.SHADOW, map: Int? = 180, epoch: String = "e1", last: String? = null, available: Boolean = true,
     ) = AutoRefinePolicy.decide(mode, available, current, ideal, map, epoch, last)
 
     @Test fun `desligado nunca decide gravar`() {
@@ -42,19 +43,30 @@ class AutoRefinePolicyTest {
         assertEquals("CURVA_INVALIDA", decide(ideal = null).reason)
     }
 
-    @Test fun `ligado grava os nos que o motor quer mudar`() {
-        val d = decide(mode = Mode.ON)
-        assertEquals(Verdict.WRITE, d.verdict)
+    @Test fun `sombra lista os nos que o motor quer mudar sem mandar gravar`() {
+        val d = decide()
+        assertEquals(Verdict.SHADOW_WOULD_WRITE, d.verdict)
+        assertEquals("SOMBRA", d.reason)
         assertEquals(listOf(0, 1, 2), d.points.map { it.index })
         assertEquals(raw(1.10), d.points[0].targetRaw)
         assertEquals(one, d.points[0].currentRaw)
         assertFalse(d.points.any { it.clamped })
     }
 
-    @Test fun `sombra calcula o mesmo mas nao manda gravar`() {
-        val d = decide(mode = Mode.SHADOW)
-        assertEquals(Verdict.SHADOW_WOULD_WRITE, d.verdict)
-        assertEquals(3, d.points.size)
+    @Test fun `nao existe modo nem veredito de gravar`() {
+        assertEquals(listOf("OFF", "SHADOW"), Mode.values().map { it.name })
+        assertEquals(listOf("SHADOW_WOULD_WRITE", "SKIP"), Verdict.values().map { it.name })
+    }
+
+    @Test fun `leitura da curva que falhou nao consome o AutoMatch`() {
+        // D1 perdeu a corrida pela serial (curva viva = null): a época continua livre para a próxima tentativa.
+        val failed = decide(current = null)
+        assertEquals("CURVA_INVALIDA", failed.reason)
+        assertFalse(AutoRefinePolicy.consumesEpoch(failed))
+        assertFalse(AutoRefinePolicy.consumesEpoch(decide(epoch = "e1", last = "e1")))
+        assertTrue(AutoRefinePolicy.consumesEpoch(decide()))
+        assertTrue(AutoRefinePolicy.consumesEpoch(decide(available = false)))
+        assertTrue(AutoRefinePolicy.consumesEpoch(decide(ideal = curve())))
     }
 
     @Test fun `sem teto por ponto - salto grande dentro das travas passa inteiro`() {

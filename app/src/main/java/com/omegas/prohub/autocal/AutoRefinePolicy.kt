@@ -11,12 +11,12 @@ import org.json.JSONObject
  * - Travas: 0,8 ≤ K ≤ 1,8; se alguma célula do Mapa K passa de 200, K ≤ 1,5 (mapa desconhecido = o mais cauteloso, 1,5).
  * - A trava nunca inverte a direção que o motor pediu (nó fora da trava que o motor queria subir/descer mais não é puxado ao contrário).
  * - Uma vez por AutoMatch (época); mudança < 0,5 % não vale uma escrita (0,5 % é critério deste código, não do dono).
- * - SOMBRA decide igual ao LIGADO mas nunca manda gravar: serve para ver na sessão o que seria escrito antes de ligar.
- * Função pura: quem escreve na ECU é o KFactorManager (ACK + leitura de volta).
+ * - Só DESLIGADO e SOMBRA (dono, 2026-10-18: o app nunca grava sozinho): SOMBRA registra na sessão o que sugeriria.
+ * Função pura: gravar é sempre ação manual do operador (KFactorManager, ACK + leitura de volta).
  */
 object AutoRefinePolicy {
-    enum class Mode { OFF, SHADOW, ON }
-    enum class Verdict { WRITE, SHADOW_WOULD_WRITE, SKIP }
+    enum class Mode { OFF, SHADOW }
+    enum class Verdict { SHADOW_WOULD_WRITE, SKIP }
 
     data class Point(val index: Int, val currentRaw: Int, val targetRaw: Int, val clamped: Boolean)
     data class Decision(val verdict: Verdict, val reason: String, val points: List<Point>, val floorRaw: Int, val ceilingRaw: Int)
@@ -59,9 +59,15 @@ object AutoRefinePolicy {
             points += Point(i, current, target, clamped = target != ideal)
         }
         if (points.isEmpty()) return skip("NADA_A_CORRIGIR")
-        val verdict = if (mode == Mode.ON) Verdict.WRITE else Verdict.SHADOW_WOULD_WRITE
-        return Decision(verdict, if (mode == Mode.ON) "GRAVAR" else "SOMBRA", points, FLOOR_RAW, ceiling)
+        return Decision(Verdict.SHADOW_WOULD_WRITE, "SOMBRA", points, FLOOR_RAW, ceiling)
     }
+
+    /**
+     * A decisão gasta o AutoMatch (época)? Não quando nada foi de fato avaliado: DESLIGADO, MESMO_AUTOMATCH ou curva viva
+     * inválida (leitura que perdeu a serial para outra operação). Assim a nova tentativa no próximo evento ainda vale.
+     */
+    fun consumesEpoch(decision: Decision): Boolean =
+        decision.reason != "MESMO_AUTOMATCH" && decision.reason != "CURVA_INVALIDA" && decision.reason != "DESLIGADO"
 
     /** Maior célula do Mapa K lido por inteiro (linhas visíveis + linha extra); sem leitura completa = null (desconhecido, nunca 0). */
     fun maxMapCell(cache: JSONObject?): Int? {
