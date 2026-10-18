@@ -1,7 +1,6 @@
 'use strict';
 
-// D1 (dono, 2026-10-16): depois de cada AutoMatch da ECU o Refino pode gravar sozinho, dentro das travas. Um interruptor único.
-// Estados: DESLIGADO · SOMBRA (só registra na sessão o que gravaria; padrão) · LIGADO (grava). Ligar exige toque duplo.
+// D1 (dono, 2026-10-18): o app NÃO grava sozinho; AutoMatch manual continua manual. Interruptor: DESLIGADO · SOMBRA (padrão, só registra).
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -44,31 +43,17 @@ test('texto de cada modo diz o que acontece, em português simples', () => {
   const { context } = load();
   const D = context.OmegasUi.Drawers;
   assert.match(D.describeAutoRefineMode('OFF'), /desligado/i);
-  assert.match(D.describeAutoRefineMode('SHADOW'), /sombra[\s\S]*só registra/i);
-  assert.match(D.describeAutoRefineMode('ON'), /ligado[\s\S]*grava sozinho/i);
-  assert.match(D.describeAutoRefineMode('???'), /sombra/i, 'valor desconhecido cai no modo seguro');
+  assert.match(D.describeAutoRefineMode('SHADOW'), /sombra[\s\S]*manual/i);
+  assert.doesNotMatch(D.describeAutoRefineMode('ON'), /grava sozinho/i, 'não existe modo que grave sozinho');
 });
 
-test('ao abrir, mostra o modo que o app guardou', () => {
-  const { drawers, label } = load('ON');
-  drawers.syncAutoRefine();
-  assert.match(label.textContent, /grava sozinho/i);
-});
-
-test('SOMBRA → LIGADO só no segundo toque; LIGADO → DESLIGADO → SOMBRA', () => {
-  const { drawers, label, calls } = load('SHADOW');
+test('alterna só entre SOMBRA e DESLIGADO e nunca pede ON', () => {
+  const { drawers, calls } = load('SHADOW');
   drawers.syncAutoRefine();
   drawers.toggleAutoRefine();
-  assert.deepEqual(calls, [], 'primeiro toque só arma');
-  assert.match(label.textContent, /toque de novo/i);
   drawers.toggleAutoRefine();
-  assert.deepEqual(calls, ['ON']);
-  assert.match(label.textContent, /grava sozinho/i);
   drawers.toggleAutoRefine();
-  assert.deepEqual(calls, ['ON', 'OFF'], 'desligar é um toque');
-  drawers.toggleAutoRefine();
-  assert.deepEqual(calls, ['ON', 'OFF', 'SHADOW'], 'voltar à sombra é um toque');
-  clearTimeout(drawers.autoRefineTimer);
+  assert.deepEqual(calls, ['OFF', 'SHADOW', 'OFF']);
 });
 
 test('a ponte nativa expõe o modo e o serviço decide só com a política', () => {
@@ -78,4 +63,11 @@ test('a ponte nativa expõe o modo e o serviço decide só com a política', () 
   const service = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'), 'utf8');
   assert.match(service, /AutoRefinePolicy\.decide\(/);
   assert.match(service, /"d1_decision"/);
+});
+
+test('o serviço recusa ON e nunca chama a gravação em lote do D1', () => {
+  const service = fs.readFileSync(path.join(ROOT, 'app/src/main/java/com/omegas/prohub/service/TelemetryForegroundService.kt'), 'utf8');
+  assert.match(service, /Gravação automática desativada/);
+  assert.doesNotMatch(service, /D1 · Refino automático após AutoMatch[\s\S]{0,0}startBatchWrite/);
+  assert.doesNotMatch(service, /startBatchWrite\(batch, "D1/);
 });

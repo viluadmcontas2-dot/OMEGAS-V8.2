@@ -2,6 +2,8 @@
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
+## Dono 2026-10-18: o app NÃO grava sozinho (modo LIGADO do D1 removido; v6 abaixo ainda o tem, só que desligado por padrão). Próximo APK sai sem ele.
+
 ## Último APK (2026-10-18, v6: refino automático D1 em modo SOMBRA)
 
 - Workflow `verde-apk-now.yml`, run `39143498352` (SUCCESS), commit `bb7de818ef83724f92453550e66d6fb0925da8a3`.

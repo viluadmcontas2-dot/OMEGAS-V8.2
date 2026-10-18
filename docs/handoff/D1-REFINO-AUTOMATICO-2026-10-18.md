@@ -1,3 +1,5 @@
+> **ATUALIZAÇÃO 2026-10-18 (dono): o app NÃO grava sozinho.** O modo LIGADO foi removido (serviço recusa `ON`, valor antigo vira SOMBRA, bloco de escrita apagado). O D1 só calcula e registra `d1_decision`; gravar é sempre manual, e o AutoMatch manual continua manual. O texto abaixo descreve o desenho original.
+
 # D1 — Refino automático depois do AutoMatch (decisão do dono 2026-10-16, reafirmada em 2026-10-18)
 
 **Modos** (interruptor único em Ferramentas): DESLIGADO · **SOMBRA** (padrão: calcula e registra na sessão o que gravaria; nunca escreve) · LIGADO (grava sozinho). Ligar exige toque duplo.

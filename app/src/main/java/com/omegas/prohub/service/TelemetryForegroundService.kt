@@ -77,7 +77,7 @@ class TelemetryForegroundService : Service() {
     private var autoReadLastOkAtMs = 0L
     private var autoReadAttempts = 0
     @Volatile private var parametersRead = false
-    /** Refino automático depois de cada AutoMatch da ECU (D1). Leitura + decisão + (só em LIGADO) escrita, fora das threads do USB e da tela. */
+    /** Refino automático depois de cada AutoMatch da ECU (D1). Leitura + decisão registrada (nunca escreve), fora das threads do USB e da tela. */
     private val autoRefineExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-auto-refine").apply { isDaemon = true }
     }
@@ -761,11 +761,15 @@ class TelemetryForegroundService : Service() {
     }
 
     /** Curva que a ECU mostra no snapshot (MUL_ACT) diferente da última vista = mudança; registra com a origem provável. */
-    fun autoRefineModeName(): String = settings.autoRefineMode
+    /** Dono (2026-10-18): o app NÃO grava sozinho. "LIGADO" não existe mais; um valor antigo guardado vira SOMBRA. */
+    fun autoRefineModeName(): String = if (settings.autoRefineMode == "OFF") "OFF" else "SHADOW"
 
     fun setAutoRefineModeName(mode: String): String {
         val parsed = try { com.omegas.prohub.autocal.AutoRefinePolicy.Mode.valueOf(mode) } catch (_: Exception) {
             return JSONObject().put("ok", false).put("error", "Modo inválido").toString()
+        }
+        if (parsed == com.omegas.prohub.autocal.AutoRefinePolicy.Mode.ON) {
+            return JSONObject().put("ok", false).put("error", "Gravação automática desativada: gravar é sempre manual").toString()
         }
         settings.autoRefineMode = parsed.name
         sessionRecorder.record("settings_changed", "auto_refine", JSONObject().put("autoRefineMode", parsed.name), force = true)
@@ -773,14 +777,13 @@ class TelemetryForegroundService : Service() {
     }
 
     /**
-     * D1 (decisão do dono, 2026-10-16): depois de cada AutoMatch da ECU, refinar a Curva K sozinho, sem teto por ponto, só dentro das
-     * travas absolutas (AutoRefinePolicy). Usa a leitura de ANTES do AutoMatch (a ECU zera o GNV logo depois), lê a curva viva e
-     * grava com ACK + leitura de volta (KFactorManager). SOMBRA registra o que gravaria; LIGADO escreve. Uma vez por AutoMatch.
+     * D1 (decisão do dono, 2026-10-16): depois de cada AutoMatch da ECU, calcular a sugestão de Curva K dentro das travas absolutas
+     * (AutoRefinePolicy). Usa a leitura de ANTES do AutoMatch (a ECU zera o GNV logo depois) e lê a curva viva. Só registra o que sugeriria; a gravação é sempre manual (dono, 2026-10-18). Uma vez por AutoMatch.
      */
     private fun autoRefineAfterEcuAutoMatch(payload: JSONObject) {
-        val mode = try { com.omegas.prohub.autocal.AutoRefinePolicy.Mode.valueOf(settings.autoRefineMode) } catch (_: Exception) {
-            com.omegas.prohub.autocal.AutoRefinePolicy.Mode.SHADOW
-        }
+        // Nunca grava sozinho (dono, 2026-10-18): qualquer valor guardado que não seja OFF roda como SOMBRA.
+        val mode = if (settings.autoRefineMode == "OFF") com.omegas.prohub.autocal.AutoRefinePolicy.Mode.OFF
+        else com.omegas.prohub.autocal.AutoRefinePolicy.Mode.SHADOW
         if (mode == com.omegas.prohub.autocal.AutoRefinePolicy.Mode.OFF) return
         val pre = preAutoMatchSnapshot
         val count = payload.optInt("nativeAutoMatchCount", -1)
@@ -819,12 +822,6 @@ class TelemetryForegroundService : Service() {
                 }
                 record.put("verdict", decision.verdict.name).put("reason", decision.reason).put("points", points)
                     .put("floorRaw", decision.floorRaw).put("ceilingRaw", decision.ceilingRaw).put("mapMaxCell", mapMax ?: JSONObject.NULL)
-                if (decision.verdict == com.omegas.prohub.autocal.AutoRefinePolicy.Verdict.WRITE && usb.connected) {
-                    val batch = org.json.JSONArray()
-                    decision.points.forEach { batch.put(JSONObject().put("index", it.index).put("currentRaw", it.currentRaw).put("targetRaw", it.targetRaw)) }
-                    val started = kFactor.startBatchWrite(batch, "D1 · Refino automático após AutoMatch #$count")
-                    record.put("writeStarted", started.optBoolean("ok", false)).put("writeStartResult", started)
-                }
             } catch (error: Exception) {
                 record.put("verdict", "ERRO").put("reason", (error.message ?: error.javaClass.simpleName).take(120))
             }

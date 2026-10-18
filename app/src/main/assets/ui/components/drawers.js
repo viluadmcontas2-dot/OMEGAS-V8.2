@@ -172,11 +172,10 @@
       setTimeout(poll, 700);
     }
 
-    // Refino automático depois de cada AutoMatch da ECU (D1): DESLIGADO · SOMBRA (só registra) · LIGADO (grava sozinho, dentro das travas).
+    // Refino automático depois de cada AutoMatch da ECU (D1): DESLIGADO · SOMBRA (só registra). O app nunca grava sozinho (dono, 2026-10-18).
     static describeAutoRefineMode(mode) {
       if (mode === 'OFF') return 'Desligado: não faz nada depois do AutoMatch';
-      if (mode === 'ON') return 'Ligado: grava sozinho depois de cada AutoMatch, dentro das travas';
-      return 'Sombra: só registra na sessão o que gravaria';
+      return 'Sombra: só registra na sessão o que sugeriria; gravar é sempre manual';
     }
 
     syncAutoRefine() {
@@ -193,18 +192,7 @@
       const label = document.getElementById('toolAutoRefine')?.querySelector('span');
       const bridge = window.OmegasAutoCal;
       if (!label || !bridge?.setAutoRefineMode) return;
-      const mode = this.autoRefineMode || 'SHADOW';
-      // Ligar a gravação automática exige toque duplo; desligar e voltar à sombra são um toque.
-      if (mode === 'SHADOW' && !this.autoRefineArmed) {
-        this.autoRefineArmed = true;
-        label.textContent = 'Toque de novo para LIGAR a gravação automática';
-        clearTimeout(this.autoRefineTimer);
-        this.autoRefineTimer = setTimeout(() => { this.autoRefineArmed = false; this.syncAutoRefine(); }, 6000);
-        return;
-      }
-      clearTimeout(this.autoRefineTimer);
-      this.autoRefineArmed = false;
-      const next = mode === 'SHADOW' ? 'ON' : mode === 'ON' ? 'OFF' : 'SHADOW';
+      const next = (this.autoRefineMode || 'SHADOW') === 'OFF' ? 'SHADOW' : 'OFF';
       let result;
       try { result = JSON.parse(bridge.setAutoRefineMode(next)); } catch (_) { result = { ok: false, error: 'Resposta inválida' }; }
       if (result?.ok === false) { this.notifyResult(result, ''); this.syncAutoRefine(); return; }
