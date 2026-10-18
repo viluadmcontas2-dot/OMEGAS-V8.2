@@ -1,0 +1,3218 @@
+{
+ "escritas": [
+  {
+   "linha": 31284,
+   "quadro": "35 03 00 86 2C 51 10 4B"
+  },
+  {
+   "linha": 48568,
+   "quadro": "14 54 00 00 00 64 CC"
+  },
+  {
+   "linha": 48588,
+   "quadro": "14 54 00 00 01 64 CD"
+  },
+  {
+   "linha": 48608,
+   "quadro": "14 54 00 00 02 64 CE"
+  },
+  {
+   "linha": 48628,
+   "quadro": "14 54 00 00 03 64 CF"
+  },
+  {
+   "linha": 48648,
+   "quadro": "14 54 00 00 04 64 D0"
+  },
+  {
+   "linha": 48668,
+   "quadro": "14 54 00 00 05 64 D1"
+  },
+  {
+   "linha": 48688,
+   "quadro": "14 54 00 00 06 64 D2"
+  },
+  {
+   "linha": 48708,
+   "quadro": "14 54 00 00 07 64 D3"
+  },
+  {
+   "linha": 48728,
+   "quadro": "14 54 00 00 08 64 D4"
+  },
+  {
+   "linha": 48748,
+   "quadro": "14 54 00 00 09 64 D5"
+  },
+  {
+   "linha": 48768,
+   "quadro": "14 54 00 00 0A 64 D6"
+  },
+  {
+   "linha": 48788,
+   "quadro": "14 54 00 00 0B 64 D7"
+  },
+  {
+   "linha": 48808,
+   "quadro": "14 54 00 01 00 64 CD"
+  },
+  {
+   "linha": 48828,
+   "quadro": "14 54 00 01 01 64 CE"
+  },
+  {
+   "linha": 48848,
+   "quadro": "14 54 00 01 02 64 CF"
+  },
+  {
+   "linha": 48868,
+   "quadro": "14 54 00 01 03 64 D0"
+  },
+  {
+   "linha": 48888,
+   "quadro": "14 54 00 01 04 64 D1"
+  },
+  {
+   "linha": 48908,
+   "quadro": "14 54 00 01 05 64 D2"
+  },
+  {
+   "linha": 48928,
+   "quadro": "14 54 00 01 06 64 D3"
+  },
+  {
+   "linha": 48948,
+   "quadro": "14 54 00 01 07 64 D4"
+  },
+  {
+   "linha": 48968,
+   "quadro": "14 54 00 01 08 64 D5"
+  },
+  {
+   "linha": 48988,
+   "quadro": "14 54 00 01 09 64 D6"
+  },
+  {
+   "linha": 49008,
+   "quadro": "14 54 00 01 0A 64 D7"
+  },
+  {
+   "linha": 49028,
+   "quadro": "14 54 00 01 0B 64 D8"
+  },
+  {
+   "linha": 49048,
+   "quadro": "14 54 00 02 00 64 CE"
+  },
+  {
+   "linha": 49068,
+   "quadro": "14 54 00 02 01 64 CF"
+  },
+  {
+   "linha": 49088,
+   "quadro": "14 54 00 02 02 64 D0"
+  },
+  {
+   "linha": 49108,
+   "quadro": "14 54 00 02 03 64 D1"
+  },
+  {
+   "linha": 49128,
+   "quadro": "14 54 00 02 04 64 D2"
+  },
+  {
+   "linha": 49148,
+   "quadro": "14 54 00 02 05 64 D3"
+  },
+  {
+   "linha": 49168,
+   "quadro": "14 54 00 02 06 64 D4"
+  },
+  {
+   "linha": 49188,
+   "quadro": "14 54 00 02 07 64 D5"
+  },
+  {
+   "linha": 49208,
+   "quadro": "14 54 00 02 08 64 D6"
+  },
+  {
+   "linha": 49228,
+   "quadro": "14 54 00 02 09 64 D7"
+  },
+  {
+   "linha": 49248,
+   "quadro": "14 54 00 02 0A 64 D8"
+  },
+  {
+   "linha": 49268,
+   "quadro": "14 54 00 02 0B 64 D9"
+  },
+  {
+   "linha": 49288,
+   "quadro": "14 54 00 03 00 64 CF"
+  },
+  {
+   "linha": 49308,
+   "quadro": "14 54 00 03 01 64 D0"
+  },
+  {
+   "linha": 49328,
+   "quadro": "14 54 00 03 02 64 D1"
+  },
+  {
+   "linha": 49348,
+   "quadro": "14 54 00 03 03 64 D2"
+  },
+  {
+   "linha": 49368,
+   "quadro": "14 54 00 03 04 64 D3"
+  },
+  {
+   "linha": 49388,
+   "quadro": "14 54 00 03 05 64 D4"
+  },
+  {
+   "linha": 49408,
+   "quadro": "14 54 00 03 06 64 D5"
+  },
+  {
+   "linha": 49428,
+   "quadro": "14 54 00 03 07 64 D6"
+  },
+  {
+   "linha": 49448,
+   "quadro": "14 54 00 03 08 64 D7"
+  },
+  {
+   "linha": 49468,
+   "quadro": "14 54 00 03 09 64 D8"
+  },
+  {
+   "linha": 49488,
+   "quadro": "14 54 00 03 0A 64 D9"
+  },
+  {
+   "linha": 49508,
+   "quadro": "14 54 00 03 0B 64 DA"
+  },
+  {
+   "linha": 49528,
+   "quadro": "14 54 00 04 00 64 D0"
+  },
+  {
+   "linha": 49548,
+   "quadro": "14 54 00 04 01 64 D1"
+  },
+  {
+   "linha": 49568,
+   "quadro": "14 54 00 04 02 64 D2"
+  },
+  {
+   "linha": 49588,
+   "quadro": "14 54 00 04 03 64 D3"
+  },
+  {
+   "linha": 49608,
+   "quadro": "14 54 00 04 04 64 D4"
+  },
+  {
+   "linha": 49628,
+   "quadro": "14 54 00 04 05 64 D5"
+  },
+  {
+   "linha": 49648,
+   "quadro": "14 54 00 04 06 64 D6"
+  },
+  {
+   "linha": 49668,
+   "quadro": "14 54 00 04 07 64 D7"
+  },
+  {
+   "linha": 49688,
+   "quadro": "14 54 00 04 08 64 D8"
+  },
+  {
+   "linha": 49708,
+   "quadro": "14 54 00 04 09 64 D9"
+  },
+  {
+   "linha": 49728,
+   "quadro": "14 54 00 04 0A 64 DA"
+  },
+  {
+   "linha": 49748,
+   "quadro": "14 54 00 04 0B 64 DB"
+  },
+  {
+   "linha": 49768,
+   "quadro": "14 54 00 05 00 64 D1"
+  },
+  {
+   "linha": 49788,
+   "quadro": "14 54 00 05 01 64 D2"
+  },
+  {
+   "linha": 49808,
+   "quadro": "14 54 00 05 02 64 D3"
+  },
+  {
+   "linha": 49828,
+   "quadro": "14 54 00 05 03 64 D4"
+  },
+  {
+   "linha": 49848,
+   "quadro": "14 54 00 05 04 64 D5"
+  },
+  {
+   "linha": 49868,
+   "quadro": "14 54 00 05 05 64 D6"
+  },
+  {
+   "linha": 49888,
+   "quadro": "14 54 00 05 06 64 D7"
+  },
+  {
+   "linha": 49908,
+   "quadro": "14 54 00 05 07 64 D8"
+  },
+  {
+   "linha": 49928,
+   "quadro": "14 54 00 05 08 64 D9"
+  },
+  {
+   "linha": 49948,
+   "quadro": "14 54 00 05 09 64 DA"
+  },
+  {
+   "linha": 49968,
+   "quadro": "14 54 00 05 0A 64 DB"
+  },
+  {
+   "linha": 49988,
+   "quadro": "14 54 00 05 0B 64 DC"
+  },
+  {
+   "linha": 50008,
+   "quadro": "14 54 00 06 00 64 D2"
+  },
+  {
+   "linha": 50028,
+   "quadro": "14 54 00 06 01 64 D3"
+  },
+  {
+   "linha": 50048,
+   "quadro": "14 54 00 06 02 64 D4"
+  },
+  {
+   "linha": 50068,
+   "quadro": "14 54 00 06 03 64 D5"
+  },
+  {
+   "linha": 50088,
+   "quadro": "14 54 00 06 04 64 D6"
+  },
+  {
+   "linha": 50108,
+   "quadro": "14 54 00 06 05 64 D7"
+  },
+  {
+   "linha": 50128,
+   "quadro": "14 54 00 06 06 64 D8"
+  },
+  {
+   "linha": 50148,
+   "quadro": "14 54 00 06 07 64 D9"
+  },
+  {
+   "linha": 50168,
+   "quadro": "14 54 00 06 08 64 DA"
+  },
+  {
+   "linha": 50188,
+   "quadro": "14 54 00 06 09 64 DB"
+  },
+  {
+   "linha": 50208,
+   "quadro": "14 54 00 06 0A 64 DC"
+  },
+  {
+   "linha": 50228,
+   "quadro": "14 54 00 06 0B 64 DD"
+  },
+  {
+   "linha": 50248,
+   "quadro": "14 54 00 07 00 64 D3"
+  },
+  {
+   "linha": 50268,
+   "quadro": "14 54 00 07 01 64 D4"
+  },
+  {
+   "linha": 50288,
+   "quadro": "14 54 00 07 02 64 D5"
+  },
+  {
+   "linha": 50308,
+   "quadro": "14 54 00 07 03 64 D6"
+  },
+  {
+   "linha": 50328,
+   "quadro": "14 54 00 07 04 64 D7"
+  },
+  {
+   "linha": 50348,
+   "quadro": "14 54 00 07 05 64 D8"
+  },
+  {
+   "linha": 50368,
+   "quadro": "14 54 00 07 06 64 D9"
+  },
+  {
+   "linha": 50388,
+   "quadro": "14 54 00 07 07 64 DA"
+  },
+  {
+   "linha": 50408,
+   "quadro": "14 54 00 07 08 64 DB"
+  },
+  {
+   "linha": 50428,
+   "quadro": "14 54 00 07 09 64 DC"
+  },
+  {
+   "linha": 50448,
+   "quadro": "14 54 00 07 0A 64 DD"
+  },
+  {
+   "linha": 50468,
+   "quadro": "14 54 00 07 0B 64 DE"
+  },
+  {
+   "linha": 50488,
+   "quadro": "14 54 00 08 00 64 D4"
+  },
+  {
+   "linha": 50508,
+   "quadro": "14 54 00 08 01 64 D5"
+  },
+  {
+   "linha": 50528,
+   "quadro": "14 54 00 08 02 64 D6"
+  },
+  {
+   "linha": 50548,
+   "quadro": "14 54 00 08 03 64 D7"
+  },
+  {
+   "linha": 50568,
+   "quadro": "14 54 00 08 04 64 D8"
+  },
+  {
+   "linha": 50588,
+   "quadro": "14 54 00 08 05 64 D9"
+  },
+  {
+   "linha": 50608,
+   "quadro": "14 54 00 08 06 64 DA"
+  },
+  {
+   "linha": 50628,
+   "quadro": "14 54 00 08 07 64 DB"
+  },
+  {
+   "linha": 50648,
+   "quadro": "14 54 00 08 08 64 DC"
+  },
+  {
+   "linha": 50668,
+   "quadro": "14 54 00 08 09 64 DD"
+  },
+  {
+   "linha": 50688,
+   "quadro": "14 54 00 08 0A 64 DE"
+  },
+  {
+   "linha": 50708,
+   "quadro": "14 54 00 08 0B 64 DF"
+  },
+  {
+   "linha": 50728,
+   "quadro": "14 54 00 09 00 64 D5"
+  },
+  {
+   "linha": 50748,
+   "quadro": "14 54 00 09 01 64 D6"
+  },
+  {
+   "linha": 50768,
+   "quadro": "14 54 00 09 02 64 D7"
+  },
+  {
+   "linha": 50788,
+   "quadro": "14 54 00 09 03 64 D8"
+  },
+  {
+   "linha": 50808,
+   "quadro": "14 54 00 09 04 64 D9"
+  },
+  {
+   "linha": 50828,
+   "quadro": "14 54 00 09 05 64 DA"
+  },
+  {
+   "linha": 50848,
+   "quadro": "14 54 00 09 06 64 DB"
+  },
+  {
+   "linha": 50868,
+   "quadro": "14 54 00 09 07 64 DC"
+  },
+  {
+   "linha": 50888,
+   "quadro": "14 54 00 09 08 64 DD"
+  },
+  {
+   "linha": 50908,
+   "quadro": "14 54 00 09 09 64 DE"
+  },
+  {
+   "linha": 50928,
+   "quadro": "14 54 00 09 0A 64 DF"
+  },
+  {
+   "linha": 50948,
+   "quadro": "14 54 00 09 0B 64 E0"
+  },
+  {
+   "linha": 50968,
+   "quadro": "14 54 00 0A 00 64 D6"
+  },
+  {
+   "linha": 50988,
+   "quadro": "14 54 00 0A 01 64 D7"
+  },
+  {
+   "linha": 51008,
+   "quadro": "14 54 00 0A 02 64 D8"
+  },
+  {
+   "linha": 51028,
+   "quadro": "14 54 00 0A 03 64 D9"
+  },
+  {
+   "linha": 51048,
+   "quadro": "14 54 00 0A 04 64 DA"
+  },
+  {
+   "linha": 51068,
+   "quadro": "14 54 00 0A 05 64 DB"
+  },
+  {
+   "linha": 51088,
+   "quadro": "14 54 00 0A 06 64 DC"
+  },
+  {
+   "linha": 51108,
+   "quadro": "14 54 00 0A 07 64 DD"
+  },
+  {
+   "linha": 51128,
+   "quadro": "14 54 00 0A 08 64 DE"
+  },
+  {
+   "linha": 51148,
+   "quadro": "14 54 00 0A 09 64 DF"
+  },
+  {
+   "linha": 51168,
+   "quadro": "14 54 00 0A 0A 64 E0"
+  },
+  {
+   "linha": 51188,
+   "quadro": "14 54 00 0A 0B 64 E1"
+  },
+  {
+   "linha": 51208,
+   "quadro": "14 54 00 0B 00 64 D7"
+  },
+  {
+   "linha": 51228,
+   "quadro": "14 54 00 0B 01 64 D8"
+  },
+  {
+   "linha": 51248,
+   "quadro": "14 54 00 0B 02 64 D9"
+  },
+  {
+   "linha": 51268,
+   "quadro": "14 54 00 0B 03 64 DA"
+  },
+  {
+   "linha": 51288,
+   "quadro": "14 54 00 0B 04 64 DB"
+  },
+  {
+   "linha": 51308,
+   "quadro": "14 54 00 0B 05 64 DC"
+  },
+  {
+   "linha": 51328,
+   "quadro": "14 54 00 0B 06 64 DD"
+  },
+  {
+   "linha": 51348,
+   "quadro": "14 54 00 0B 07 64 DE"
+  },
+  {
+   "linha": 51368,
+   "quadro": "14 54 00 0B 08 64 DF"
+  },
+  {
+   "linha": 51388,
+   "quadro": "14 54 00 0B 09 64 E0"
+  },
+  {
+   "linha": 51408,
+   "quadro": "14 54 00 0B 0A 64 E1"
+  },
+  {
+   "linha": 51428,
+   "quadro": "14 54 00 0B 0B 64 E2"
+  },
+  {
+   "linha": 58344,
+   "quadro": "35 03 00 86 24 51 10 43"
+  },
+  {
+   "linha": 434338,
+   "quadro": "14 3D 00 00 E8 03 3C"
+  },
+  {
+   "linha": 434358,
+   "quadro": "14 3D 00 01 DC 05 33"
+  },
+  {
+   "linha": 434378,
+   "quadro": "14 3D 00 02 D0 07 2A"
+  },
+  {
+   "linha": 434398,
+   "quadro": "14 3D 00 03 C4 09 21"
+  },
+  {
+   "linha": 434418,
+   "quadro": "14 3D 00 04 B8 0B 18"
+  },
+  {
+   "linha": 434438,
+   "quadro": "14 3D 00 05 AC 0D 0F"
+  },
+  {
+   "linha": 434458,
+   "quadro": "14 3D 00 06 A0 0F 06"
+  },
+  {
+   "linha": 434478,
+   "quadro": "14 3D 00 07 94 11 FD"
+  },
+  {
+   "linha": 434498,
+   "quadro": "14 3D 00 08 88 13 F4"
+  },
+  {
+   "linha": 434518,
+   "quadro": "14 3D 00 09 7C 15 EB"
+  },
+  {
+   "linha": 434538,
+   "quadro": "14 3D 00 0A 70 17 E2"
+  },
+  {
+   "linha": 434558,
+   "quadro": "14 3D 00 0B 64 19 D9"
+  },
+  {
+   "linha": 434578,
+   "quadro": "14 37 00 00 0D 03 5B"
+  },
+  {
+   "linha": 434598,
+   "quadro": "14 37 00 01 D1 03 20"
+  },
+  {
+   "linha": 434618,
+   "quadro": "14 37 00 02 94 04 E5"
+  },
+  {
+   "linha": 434638,
+   "quadro": "14 37 00 03 57 05 AA"
+  },
+  {
+   "linha": 434658,
+   "quadro": "14 37 00 04 DE 06 33"
+  },
+  {
+   "linha": 434678,
+   "quadro": "14 37 00 05 28 09 81"
+  },
+  {
+   "linha": 434698,
+   "quadro": "14 37 00 06 35 0C 92"
+  },
+  {
+   "linha": 434718,
+   "quadro": "14 37 00 07 42 0F A3"
+  },
+  {
+   "linha": 434738,
+   "quadro": "14 37 00 08 4F 12 B4"
+  },
+  {
+   "linha": 434758,
+   "quadro": "14 37 00 09 5D 15 C6"
+  },
+  {
+   "linha": 434778,
+   "quadro": "14 37 00 0A 6A 18 D7"
+  },
+  {
+   "linha": 434798,
+   "quadro": "14 37 00 0B 77 1B E8"
+  },
+  {
+   "linha": 468896,
+   "quadro": "35 03 00 86 24 51 10 43"
+  },
+  {
+   "linha": 468916,
+   "quadro": "35 03 00 86 2C 51 10 4B"
+  },
+  {
+   "linha": 482618,
+   "quadro": "35 03 00 86 3C 51 10 5B"
+  },
+  {
+   "linha": 502274,
+   "quadro": "35 03 00 86 2C 51 10 4B"
+  },
+  {
+   "linha": 513934,
+   "quadro": "35 03 00 86 3C 51 10 5B"
+  },
+  {
+   "linha": 530558,
+   "quadro": "35 03 00 86 2C 51 10 4B"
+  },
+  {
+   "linha": 559592,
+   "quadro": "35 03 00 86 3C 51 10 5B"
+  },
+  {
+   "linha": 574394,
+   "quadro": "35 03 00 86 2C 51 10 4B"
+  },
+  {
+   "linha": 610716,
+   "quadro": "35 03 00 86 3C 51 10 5B"
+  },
+  {
+   "linha": 621654,
+   "quadro": "35 03 00 86 2C 51 10 4B"
+  },
+  {
+   "linha": 633644,
+   "quadro": "35 03 00 86 3C 51 10 5B"
+  },
+  {
+   "linha": 647566,
+   "quadro": "35 03 00 86 2C 51 10 4B"
+  },
+  {
+   "linha": 679082,
+   "quadro": "35 03 00 86 24 51 10 43"
+  },
+  {
+   "linha": 697674,
+   "quadro": "12 4A 01 00 5D"
+  },
+  {
+   "linha": 703610,
+   "quadro": "12 4A 01 01 5E"
+  },
+  {
+   "linha": 713646,
+   "quadro": "12 4A 01 00 5D"
+  },
+  {
+   "linha": 716942,
+   "quadro": "12 4A 01 01 5E"
+  },
+  {
+   "linha": 725870,
+   "quadro": "35 03 00 86 24 51 10 43"
+  },
+  {
+   "linha": 725890,
+   "quadro": "35 03 00 86 2C 51 10 4B"
+  },
+  {
+   "linha": 728392,
+   "quadro": "35 03 00 86 3C 51 10 5B"
+  },
+  {
+   "linha": 819050,
+   "quadro": "35 03 00 86 34 51 10 53"
+  },
+  {
+   "linha": 839806,
+   "quadro": "14 3D 00 00 52 03 A6"
+  },
+  {
+   "linha": 839826,
+   "quadro": "14 3D 00 01 46 05 9D"
+  },
+  {
+   "linha": 839846,
+   "quadro": "14 3D 00 02 3A 07 94"
+  },
+  {
+   "linha": 839866,
+   "quadro": "14 3D 00 03 C4 09 21"
+  },
+  {
+   "linha": 839886,
+   "quadro": "14 3D 00 04 B8 0B 18"
+  },
+  {
+   "linha": 839906,
+   "quadro": "14 3D 00 05 AC 0D 0F"
+  },
+  {
+   "linha": 839926,
+   "quadro": "14 3D 00 06 A0 0F 06"
+  },
+  {
+   "linha": 839946,
+   "quadro": "14 3D 00 07 94 11 FD"
+  },
+  {
+   "linha": 839966,
+   "quadro": "14 3D 00 08 88 13 F4"
+  },
+  {
+   "linha": 839986,
+   "quadro": "14 3D 00 09 7C 15 EB"
+  },
+  {
+   "linha": 840006,
+   "quadro": "14 3D 00 0A 70 17 E2"
+  },
+  {
+   "linha": 840026,
+   "quadro": "14 3D 00 0B 64 19 D9"
+  },
+  {
+   "linha": 840046,
+   "quadro": "14 37 00 00 0D 03 5B"
+  },
+  {
+   "linha": 840066,
+   "quadro": "14 37 00 01 D1 03 20"
+  },
+  {
+   "linha": 840086,
+   "quadro": "14 37 00 02 94 04 E5"
+  },
+  {
+   "linha": 840106,
+   "quadro": "14 37 00 03 57 05 AA"
+  },
+  {
+   "linha": 840126,
+   "quadro": "14 37 00 04 DE 06 33"
+  },
+  {
+   "linha": 840146,
+   "quadro": "14 37 00 05 28 09 81"
+  },
+  {
+   "linha": 840166,
+   "quadro": "14 37 00 06 35 0C 92"
+  },
+  {
+   "linha": 840186,
+   "quadro": "14 37 00 07 42 0F A3"
+  },
+  {
+   "linha": 840206,
+   "quadro": "14 37 00 08 4F 12 B4"
+  },
+  {
+   "linha": 840226,
+   "quadro": "14 37 00 09 5D 15 C6"
+  },
+  {
+   "linha": 840246,
+   "quadro": "14 37 00 0A 6A 18 D7"
+  },
+  {
+   "linha": 840266,
+   "quadro": "14 37 00 0B 77 1B E8"
+  },
+  {
+   "linha": 1102200,
+   "quadro": "14 3D 00 00 52 03 A6"
+  },
+  {
+   "linha": 1102220,
+   "quadro": "14 3D 00 01 46 05 9D"
+  },
+  {
+   "linha": 1102240,
+   "quadro": "14 3D 00 02 3A 07 94"
+  },
+  {
+   "linha": 1102260,
+   "quadro": "14 3D 00 03 C4 09 21"
+  },
+  {
+   "linha": 1102280,
+   "quadro": "14 3D 00 04 B8 0B 18"
+  },
+  {
+   "linha": 1102300,
+   "quadro": "14 3D 00 05 AC 0D 0F"
+  },
+  {
+   "linha": 1102320,
+   "quadro": "14 3D 00 06 A0 0F 06"
+  },
+  {
+   "linha": 1102340,
+   "quadro": "14 3D 00 07 94 11 FD"
+  },
+  {
+   "linha": 1102360,
+   "quadro": "14 3D 00 08 88 13 F4"
+  },
+  {
+   "linha": 1102380,
+   "quadro": "14 3D 00 09 7C 15 EB"
+  },
+  {
+   "linha": 1102400,
+   "quadro": "14 3D 00 0A 70 17 E2"
+  },
+  {
+   "linha": 1102420,
+   "quadro": "14 3D 00 0B 64 19 D9"
+  },
+  {
+   "linha": 1102440,
+   "quadro": "14 37 00 00 0D 03 5B"
+  },
+  {
+   "linha": 1102460,
+   "quadro": "14 37 00 01 D1 03 20"
+  },
+  {
+   "linha": 1102480,
+   "quadro": "14 37 00 02 94 04 E5"
+  },
+  {
+   "linha": 1102500,
+   "quadro": "14 37 00 03 57 05 AA"
+  },
+  {
+   "linha": 1102520,
+   "quadro": "14 37 00 04 DE 06 33"
+  },
+  {
+   "linha": 1102540,
+   "quadro": "14 37 00 05 28 09 81"
+  },
+  {
+   "linha": 1102560,
+   "quadro": "14 37 00 06 35 0C 92"
+  },
+  {
+   "linha": 1102580,
+   "quadro": "14 37 00 07 42 0F A3"
+  },
+  {
+   "linha": 1102600,
+   "quadro": "14 37 00 08 4F 12 B4"
+  },
+  {
+   "linha": 1102620,
+   "quadro": "14 37 00 09 5D 15 C6"
+  },
+  {
+   "linha": 1102640,
+   "quadro": "14 37 00 0A 6A 18 D7"
+  },
+  {
+   "linha": 1102660,
+   "quadro": "14 37 00 0B 77 1B E8"
+  }
+ ],
+ "fonte": "PortmonLOGNOVO.LOG",
+ "leituras": {
+  "100:09:": {
+   "distintas": 1,
+   "hex": "28 23",
+   "leituras": 3,
+   "linha": 1106874,
+   "n": 2
+  },
+  "106:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1106942,
+   "n": 1
+  },
+  "107:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1106964,
+   "n": 1
+  },
+  "109:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1106986,
+   "n": 1
+  },
+  "10:09:": {
+   "distintas": 1,
+   "hex": "1F",
+   "leituras": 3,
+   "linha": 1105206,
+   "n": 1
+  },
+  "110:09:": {
+   "distintas": 1,
+   "hex": "4B",
+   "leituras": 3,
+   "linha": 1107008,
+   "n": 1
+  },
+  "111:29:": {
+   "distintas": 1,
+   "hex": "90 01 58 02 20 03 E8 03",
+   "leituras": 3,
+   "linha": 1107030,
+   "n": 8
+  },
+  "112:2A:0": {
+   "distintas": 1,
+   "hex": "1A 1A 1A 1A 1A 1A 1A 1A 1A 1A 1A 1A",
+   "leituras": 3,
+   "linha": 1107066,
+   "n": 12
+  },
+  "112:2A:1": {
+   "distintas": 1,
+   "hex": "1A 1A 1A 1A 1A 1A 1A 1A 1A 1A 1A 1A",
+   "leituras": 3,
+   "linha": 1107110,
+   "n": 12
+  },
+  "112:2A:2": {
+   "distintas": 1,
+   "hex": "1A 1A 1A 1A 1A 1A 1A 1A 1A 1A 1A 1A",
+   "leituras": 3,
+   "linha": 1107154,
+   "n": 12
+  },
+  "113:2A:0": {
+   "distintas": 1,
+   "hex": "29 2D 31 33 31 31 31 31 31 31 31 31",
+   "leituras": 3,
+   "linha": 1107198,
+   "n": 12
+  },
+  "113:2A:1": {
+   "distintas": 1,
+   "hex": "2D 32 36 38 35 35 35 35 35 35 35 35",
+   "leituras": 3,
+   "linha": 1107242,
+   "n": 12
+  },
+  "113:2A:10": {
+   "distintas": 1,
+   "hex": "55 5C 63 6B 67 67 67 67 67 67 67 67",
+   "leituras": 3,
+   "linha": 1107638,
+   "n": 12
+  },
+  "113:2A:11": {
+   "distintas": 1,
+   "hex": "5A 61 67 6E 6A 6A 6A 6A 6A 6A 6A 6A",
+   "leituras": 3,
+   "linha": 1107682,
+   "n": 12
+  },
+  "113:2A:2": {
+   "distintas": 1,
+   "hex": "32 36 3A 3C 3A 3A 3A 3A 3A 3A 3A 3A",
+   "leituras": 3,
+   "linha": 1107286,
+   "n": 12
+  },
+  "113:2A:3": {
+   "distintas": 1,
+   "hex": "36 3B 3F 42 3F 3F 3F 3F 3F 3F 3F 3F",
+   "leituras": 3,
+   "linha": 1107330,
+   "n": 12
+  },
+  "113:2A:4": {
+   "distintas": 1,
+   "hex": "39 3F 44 47 44 44 44 44 44 44 44 44",
+   "leituras": 3,
+   "linha": 1107374,
+   "n": 12
+  },
+  "113:2A:5": {
+   "distintas": 1,
+   "hex": "3D 43 48 4D 4A 4A 4A 4A 4A 4A 4A 4A",
+   "leituras": 3,
+   "linha": 1107418,
+   "n": 12
+  },
+  "113:2A:6": {
+   "distintas": 1,
+   "hex": "41 47 4D 53 4F 4F 4F 4F 4F 4F 4F 4F",
+   "leituras": 3,
+   "linha": 1107462,
+   "n": 12
+  },
+  "113:2A:7": {
+   "distintas": 1,
+   "hex": "46 4D 52 5A 56 56 56 56 56 56 56 56",
+   "leituras": 3,
+   "linha": 1107506,
+   "n": 12
+  },
+  "113:2A:8": {
+   "distintas": 1,
+   "hex": "4A 52 58 61 5D 5D 5D 5D 5D 5D 5D 5D",
+   "leituras": 3,
+   "linha": 1107550,
+   "n": 12
+  },
+  "113:2A:9": {
+   "distintas": 1,
+   "hex": "50 57 5E 67 62 62 62 62 62 62 62 62",
+   "leituras": 3,
+   "linha": 1107594,
+   "n": 12
+  },
+  "114:29:": {
+   "distintas": 1,
+   "hex": "C2 01 F4 01 26 02 58 02 8A 02 BC 02 EE 02 20 03 52 03 84 03 B6 03 E8 03",
+   "leituras": 3,
+   "linha": 1107726,
+   "n": 24
+  },
+  "116:09:": {
+   "distintas": 1,
+   "hex": "32",
+   "leituras": 3,
+   "linha": 1107816,
+   "n": 1
+  },
+  "117:09:": {
+   "distintas": 1,
+   "hex": "B6",
+   "leituras": 3,
+   "linha": 1107838,
+   "n": 1
+  },
+  "118:09:": {
+   "distintas": 1,
+   "hex": "14",
+   "leituras": 3,
+   "linha": 1107860,
+   "n": 1
+  },
+  "119:09:": {
+   "distintas": 1,
+   "hex": "2D",
+   "leituras": 3,
+   "linha": 1107882,
+   "n": 1
+  },
+  "11:09:": {
+   "distintas": 1,
+   "hex": "0F",
+   "leituras": 3,
+   "linha": 1105228,
+   "n": 1
+  },
+  "120:29:": {
+   "distintas": 1,
+   "hex": "64 00 F4 01 64 00 F4 01 23 00 3A 03",
+   "leituras": 3,
+   "linha": 1107904,
+   "n": 12
+  },
+  "121:09:": {
+   "distintas": 1,
+   "hex": "00 0A",
+   "leituras": 3,
+   "linha": 1102900,
+   "n": 2
+  },
+  "123:29:": {
+   "distintas": 1,
+   "hex": "E2 04 2C 05 77 05 C3 05 0E 06 59 06 A3 06 EE 06 3A 07 85 07 D0 07 23 08 77 08 CB 08 1F 09",
+   "leituras": 3,
+   "linha": 1107948,
+   "n": 30
+  },
+  "124:0A:0": {
+   "distintas": 1,
+   "hex": "39 0A",
+   "leituras": 3,
+   "linha": 1108028,
+   "n": 2
+  },
+  "124:29:": {
+   "distintas": 1,
+   "hex": "39 0A 15 09 F9 07 E5 06 D7 05 D0 04 CF 03 D4 02 DD 01 EC 00 00 00 FD FE FF FD 06 FD 11 FC",
+   "leituras": 3,
+   "linha": 1108052,
+   "n": 30
+  },
+  "125:09:": {
+   "distintas": 1,
+   "hex": "EA 00",
+   "leituras": 3,
+   "linha": 1108132,
+   "n": 2
+  },
+  "126:09:": {
+   "distintas": 1,
+   "hex": "87 01",
+   "leituras": 3,
+   "linha": 1108156,
+   "n": 2
+  },
+  "127:29:": {
+   "distintas": 1,
+   "hex": "C7 2D C7 2D C7 2D C7 2D C7 2D C7 2D C7 2D C7 2D C7 2D C7 2D C7 2D C7 2D",
+   "leituras": 3,
+   "linha": 1103214,
+   "n": 24
+  },
+  "12:29:": {
+   "distintas": 1,
+   "hex": "F4 01 E8 03 DC 05 D0 07 C4 09 B8 0B AC 0D A0 0F 94 11 88 13 7C 15 70 17",
+   "leituras": 3,
+   "linha": 1105250,
+   "n": 24
+  },
+  "130:29:": {
+   "distintas": 1,
+   "hex": "1A 1A 1A 1A 1A 1A 1A 1A 1A 1A 1A 1A",
+   "leituras": 3,
+   "linha": 1108180,
+   "n": 12
+  },
+  "131:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1108224,
+   "n": 24
+  },
+  "134:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1102924,
+   "n": 1
+  },
+  "135:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1108314,
+   "n": 1
+  },
+  "136:09:": {
+   "distintas": 1,
+   "hex": "64",
+   "leituras": 3,
+   "linha": 1108336,
+   "n": 1
+  },
+  "137:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1108358,
+   "n": 1
+  },
+  "138:29:": {
+   "distintas": 1,
+   "hex": "12 5C 05 EC 1E",
+   "leituras": 3,
+   "linha": 1102946,
+   "n": 5
+  },
+  "139:29:": {
+   "distintas": 1,
+   "hex": "E7 E0 D8 CE C3 B7 AA 9C 8E 80 72 65 59 4E 44 3B 33 2C 26 21 1D 19 16 13 10 0E 0C 0B 0A 08",
+   "leituras": 3,
+   "linha": 1102976,
+   "n": 30
+  },
+  "13:2A:0": {
+   "distintas": 1,
+   "hex": "00 01 02 B6 B6 B6 B6 B6",
+   "leituras": 3,
+   "linha": 1105318,
+   "n": 8
+  },
+  "13:2A:1": {
+   "distintas": 1,
+   "hex": "01 02 0C 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1105354,
+   "n": 8
+  },
+  "143:2A:0": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108380,
+   "n": 4
+  },
+  "143:2A:1": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108408,
+   "n": 4
+  },
+  "143:2A:2": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108436,
+   "n": 4
+  },
+  "143:2A:3": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108464,
+   "n": 4
+  },
+  "143:2A:4": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108492,
+   "n": 4
+  },
+  "143:2A:5": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108520,
+   "n": 4
+  },
+  "143:2A:6": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108548,
+   "n": 4
+  },
+  "143:2A:7": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108576,
+   "n": 4
+  },
+  "144:09:": {
+   "distintas": 1,
+   "hex": "43",
+   "leituras": 3,
+   "linha": 1108604,
+   "n": 1
+  },
+  "145:29:": {
+   "distintas": 1,
+   "hex": "27 00 00 00",
+   "leituras": 3,
+   "linha": 1108626,
+   "n": 4
+  },
+  "146:09:": {
+   "distintas": 1,
+   "hex": "4F 12",
+   "leituras": 3,
+   "linha": 1108654,
+   "n": 2
+  },
+  "147:09:": {
+   "distintas": 1,
+   "hex": "75 00",
+   "leituras": 3,
+   "linha": 1108678,
+   "n": 2
+  },
+  "148:29:": {
+   "distintas": 1,
+   "hex": "1B 25",
+   "leituras": 4,
+   "linha": 1105050,
+   "n": 2
+  },
+  "149:2A:0": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108702,
+   "n": 4
+  },
+  "149:2A:1": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108730,
+   "n": 4
+  },
+  "149:2A:2": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108758,
+   "n": 4
+  },
+  "149:2A:3": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1108786,
+   "n": 4
+  },
+  "150:09:": {
+   "distintas": 1,
+   "hex": "F4 01",
+   "leituras": 3,
+   "linha": 1108814,
+   "n": 2
+  },
+  "151:29:": {
+   "distintas": 1,
+   "hex": "01 05 02",
+   "leituras": 3,
+   "linha": 1108838,
+   "n": 3
+  },
+  "152:29:": {
+   "distintas": 1,
+   "hex": "E8 03 D1 03 35 0C 84 1E 94 04 4F 12 18 23 84 1E",
+   "leituras": 3,
+   "linha": 1108864,
+   "n": 16
+  },
+  "155:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 27 00",
+   "leituras": 3,
+   "linha": 1108916,
+   "n": 6
+  },
+  "156:09:": {
+   "distintas": 1,
+   "hex": "23 02",
+   "leituras": 3,
+   "linha": 1108948,
+   "n": 2
+  },
+  "158:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1108972,
+   "n": 12
+  },
+  "15:09:": {
+   "distintas": 1,
+   "hex": "58",
+   "leituras": 3,
+   "linha": 1105390,
+   "n": 1
+  },
+  "160:29:": {
+   "distintas": 1,
+   "hex": "C7 2D 00 00 00 00 C7 2D",
+   "leituras": 3,
+   "linha": 1109016,
+   "n": 8
+  },
+  "161:29:": {
+   "distintas": 1,
+   "hex": "00 00 34 21",
+   "leituras": 3,
+   "linha": 1109052,
+   "n": 4
+  },
+  "163:29:": {
+   "distintas": 1,
+   "hex": "14 05",
+   "leituras": 3,
+   "linha": 1109080,
+   "n": 2
+  },
+  "16:09:": {
+   "distintas": 1,
+   "hex": "B0 04",
+   "leituras": 3,
+   "linha": 1105412,
+   "n": 2
+  },
+  "170:29:": {
+   "distintas": 1,
+   "hex": "05 24",
+   "leituras": 3,
+   "linha": 1109104,
+   "n": 2
+  },
+  "171:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1109128,
+   "n": 1
+  },
+  "172:09:": {
+   "distintas": 1,
+   "hex": "00 00",
+   "leituras": 4,
+   "linha": 1109150,
+   "n": 2
+  },
+  "17:09:": {
+   "distintas": 1,
+   "hex": "23",
+   "leituras": 3,
+   "linha": 1105436,
+   "n": 1
+  },
+  "188:09:": {
+   "distintas": 1,
+   "hex": "55",
+   "leituras": 3,
+   "linha": 1109350,
+   "n": 1
+  },
+  "189:29:": {
+   "distintas": 1,
+   "hex": "08 07 08 07 6C 07 D0 07 D0 07 D0 07 34 08 34 08 34 08 5C 08 5C 08 98 08",
+   "leituras": 3,
+   "linha": 1109372,
+   "n": 24
+  },
+  "18:09:": {
+   "distintas": 1,
+   "hex": "00 00",
+   "leituras": 3,
+   "linha": 1105458,
+   "n": 2
+  },
+  "192:29:": {
+   "distintas": 1,
+   "hex": "01 00 00 00",
+   "leituras": 3,
+   "linha": 1102816,
+   "n": 4
+  },
+  "194:29:": {
+   "distintas": 1,
+   "hex": "7F 0D 03 F8 01 00 ED DD 37 20 3F BC 91 90 43 15 44 06 C0 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1103914,
+   "n": 30
+  },
+  "195:09:": {
+   "distintas": 1,
+   "hex": "32",
+   "leituras": 3,
+   "linha": 1109462,
+   "n": 1
+  },
+  "196:29:": {
+   "distintas": 1,
+   "hex": "2A 2C 2E 30 32 34 36 38 3A 3C",
+   "leituras": 3,
+   "linha": 1109484,
+   "n": 10
+  },
+  "197:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109524,
+   "n": 10
+  },
+  "198:29:": {
+   "distintas": 1,
+   "hex": "4A 02 3A 00 94 04 55 00",
+   "leituras": 3,
+   "linha": 1109564,
+   "n": 8
+  },
+  "1:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 1,
+   "linha": 536,
+   "n": 1
+  },
+  "200:09:": {
+   "distintas": 1,
+   "hex": "F4 01",
+   "leituras": 3,
+   "linha": 1109600,
+   "n": 2
+  },
+  "201:09:": {
+   "distintas": 1,
+   "hex": "C4 09",
+   "leituras": 3,
+   "linha": 1109624,
+   "n": 2
+  },
+  "208:2A:0": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109670,
+   "n": 12
+  },
+  "208:2A:1": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109714,
+   "n": 12
+  },
+  "208:2A:10": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1110110,
+   "n": 12
+  },
+  "208:2A:11": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1110154,
+   "n": 12
+  },
+  "208:2A:2": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109758,
+   "n": 12
+  },
+  "208:2A:3": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109802,
+   "n": 12
+  },
+  "208:2A:4": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109846,
+   "n": 12
+  },
+  "208:2A:5": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109890,
+   "n": 12
+  },
+  "208:2A:6": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109934,
+   "n": 12
+  },
+  "208:2A:7": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1109978,
+   "n": 12
+  },
+  "208:2A:8": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1110022,
+   "n": 12
+  },
+  "208:2A:9": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1110066,
+   "n": 12
+  },
+  "20:09:": {
+   "distintas": 1,
+   "hex": "41",
+   "leituras": 3,
+   "linha": 1105504,
+   "n": 1
+  },
+  "213:09:": {
+   "distintas": 1,
+   "hex": "09",
+   "leituras": 3,
+   "linha": 1110198,
+   "n": 1
+  },
+  "219:29:": {
+   "distintas": 3,
+   "hex": "FC 08 16 00 00 00 00 00 FF 00 00 00",
+   "leituras": 3,
+   "linha": 1110242,
+   "n": 12
+  },
+  "21:09:": {
+   "distintas": 1,
+   "hex": "04",
+   "leituras": 3,
+   "linha": 1105482,
+   "n": 1
+  },
+  "220:29:": {
+   "distintas": 1,
+   "hex": "00 26 32 43 58 71 8D A9 FF",
+   "leituras": 3,
+   "linha": 1110286,
+   "n": 9
+  },
+  "221:29:": {
+   "distintas": 1,
+   "hex": "0F 14 19 1E 28 2D 32 32",
+   "leituras": 3,
+   "linha": 1110324,
+   "n": 8
+  },
+  "222:09:": {
+   "distintas": 1,
+   "hex": "36",
+   "leituras": 3,
+   "linha": 1110360,
+   "n": 1
+  },
+  "223:29:": {
+   "distintas": 1,
+   "hex": "3A 3D 41 44 46 48 49 4C 4E 50 51 52 53 54 55",
+   "leituras": 3,
+   "linha": 1110382,
+   "n": 15
+  },
+  "224:29:": {
+   "distintas": 1,
+   "hex": "00 00 8C 00 0E 01 CB 01 6D 02 33 03 1A 04 27 05 72 06 F7 07 D4 08 C4 09 DC 0A 1C 0C 5C 0D",
+   "leituras": 3,
+   "linha": 1110432,
+   "n": 30
+  },
+  "225:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1110512,
+   "n": 1
+  },
+  "226:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1110534,
+   "n": 8
+  },
+  "227:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1110570,
+   "n": 35
+  },
+  "22:09:": {
+   "distintas": 1,
+   "hex": "05",
+   "leituras": 3,
+   "linha": 1105526,
+   "n": 1
+  },
+  "231:29:": {
+   "distintas": 1,
+   "hex": "C3 F7 F7 F7",
+   "leituras": 3,
+   "linha": 1110682,
+   "n": 4
+  },
+  "232:29:": {
+   "distintas": 1,
+   "hex": "08 07 00 00",
+   "leituras": 3,
+   "linha": 1110710,
+   "n": 4
+  },
+  "237:29:": {
+   "distintas": 1,
+   "hex": "00 00 FF",
+   "leituras": 3,
+   "linha": 1110782,
+   "n": 3
+  },
+  "238:29:": {
+   "distintas": 1,
+   "hex": "00 32",
+   "leituras": 3,
+   "linha": 1110808,
+   "n": 2
+  },
+  "241:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2C 01 88 13 04 00 C3 00",
+   "leituras": 3,
+   "linha": 1110876,
+   "n": 24
+  },
+  "242:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1115344,
+   "n": 10
+  },
+  "243:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1115384,
+   "n": 10
+  },
+  "248:29:": {
+   "distintas": 1,
+   "hex": "A8 00 04 00 50 46 10 0E",
+   "leituras": 3,
+   "linha": 1110944,
+   "n": 8
+  },
+  "249:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1110980,
+   "n": 1
+  },
+  "250:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00",
+   "leituras": 3,
+   "linha": 1102872,
+   "n": 4
+  },
+  "276:0A:0": {
+   "distintas": 1,
+   "hex": "00 80",
+   "leituras": 3,
+   "linha": 1111046,
+   "n": 2
+  },
+  "276:0A:1": {
+   "distintas": 1,
+   "hex": "33 13",
+   "leituras": 3,
+   "linha": 1111070,
+   "n": 2
+  },
+  "27:0A:0": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1103994,
+   "n": 1
+  },
+  "27:0A:1": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104016,
+   "n": 1
+  },
+  "27:0A:10": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104214,
+   "n": 1
+  },
+  "27:0A:11": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104236,
+   "n": 1
+  },
+  "27:0A:12": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104258,
+   "n": 1
+  },
+  "27:0A:13": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104280,
+   "n": 1
+  },
+  "27:0A:14": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104302,
+   "n": 1
+  },
+  "27:0A:15": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104324,
+   "n": 1
+  },
+  "27:0A:16": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104346,
+   "n": 1
+  },
+  "27:0A:17": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104368,
+   "n": 1
+  },
+  "27:0A:18": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104390,
+   "n": 1
+  },
+  "27:0A:19": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104412,
+   "n": 1
+  },
+  "27:0A:2": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104038,
+   "n": 1
+  },
+  "27:0A:20": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104434,
+   "n": 1
+  },
+  "27:0A:21": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104456,
+   "n": 1
+  },
+  "27:0A:22": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104478,
+   "n": 1
+  },
+  "27:0A:23": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104500,
+   "n": 1
+  },
+  "27:0A:24": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104522,
+   "n": 1
+  },
+  "27:0A:25": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104544,
+   "n": 1
+  },
+  "27:0A:26": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104566,
+   "n": 1
+  },
+  "27:0A:27": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104588,
+   "n": 1
+  },
+  "27:0A:28": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104610,
+   "n": 1
+  },
+  "27:0A:29": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104632,
+   "n": 1
+  },
+  "27:0A:3": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104060,
+   "n": 1
+  },
+  "27:0A:30": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104654,
+   "n": 1
+  },
+  "27:0A:31": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104676,
+   "n": 1
+  },
+  "27:0A:32": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104698,
+   "n": 1
+  },
+  "27:0A:33": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104720,
+   "n": 1
+  },
+  "27:0A:34": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104742,
+   "n": 1
+  },
+  "27:0A:35": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104764,
+   "n": 1
+  },
+  "27:0A:36": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104786,
+   "n": 1
+  },
+  "27:0A:37": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104808,
+   "n": 1
+  },
+  "27:0A:38": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104830,
+   "n": 1
+  },
+  "27:0A:39": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104852,
+   "n": 1
+  },
+  "27:0A:4": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104082,
+   "n": 1
+  },
+  "27:0A:40": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104874,
+   "n": 1
+  },
+  "27:0A:41": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104896,
+   "n": 1
+  },
+  "27:0A:42": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104918,
+   "n": 1
+  },
+  "27:0A:43": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104940,
+   "n": 1
+  },
+  "27:0A:44": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104962,
+   "n": 1
+  },
+  "27:0A:45": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104984,
+   "n": 1
+  },
+  "27:0A:46": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1105006,
+   "n": 1
+  },
+  "27:0A:47": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1105028,
+   "n": 1
+  },
+  "27:0A:5": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104104,
+   "n": 1
+  },
+  "27:0A:6": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104126,
+   "n": 1
+  },
+  "27:0A:7": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104148,
+   "n": 1
+  },
+  "27:0A:8": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104170,
+   "n": 1
+  },
+  "27:0A:9": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1104192,
+   "n": 1
+  },
+  "28:29:": {
+   "distintas": 1,
+   "hex": "79 09 00 00 00",
+   "leituras": 3,
+   "linha": 1105548,
+   "n": 5
+  },
+  "29:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00",
+   "leituras": 974,
+   "linha": 1105630,
+   "n": 5
+  },
+  "2:09:": {
+   "distintas": 1,
+   "hex": "AC",
+   "leituras": 3,
+   "linha": 1102794,
+   "n": 1
+  },
+  "300:0A:0": {
+   "distintas": 1,
+   "hex": "03",
+   "leituras": 3,
+   "linha": 1111336,
+   "n": 1
+  },
+  "300:0A:1": {
+   "distintas": 1,
+   "hex": "0A",
+   "leituras": 3,
+   "linha": 1111358,
+   "n": 1
+  },
+  "300:0A:2": {
+   "distintas": 1,
+   "hex": "25",
+   "leituras": 3,
+   "linha": 1111380,
+   "n": 1
+  },
+  "300:0A:3": {
+   "distintas": 1,
+   "hex": "3E",
+   "leituras": 3,
+   "linha": 1111402,
+   "n": 1
+  },
+  "300:0A:4": {
+   "distintas": 1,
+   "hex": "5A",
+   "leituras": 3,
+   "linha": 1111424,
+   "n": 1
+  },
+  "303:0A:0": {
+   "distintas": 1,
+   "hex": "05",
+   "leituras": 3,
+   "linha": 1111468,
+   "n": 1
+  },
+  "303:0A:1": {
+   "distintas": 1,
+   "hex": "0A",
+   "leituras": 3,
+   "linha": 1111490,
+   "n": 1
+  },
+  "303:0A:2": {
+   "distintas": 1,
+   "hex": "03",
+   "leituras": 3,
+   "linha": 1111512,
+   "n": 1
+  },
+  "307:29:": {
+   "distintas": 1,
+   "hex": "40 06 64 00 DC 05 02 00 14 00",
+   "leituras": 3,
+   "linha": 1111556,
+   "n": 10
+  },
+  "308:2A:0": {
+   "distintas": 1,
+   "hex": "00 00 04 00 F4 01",
+   "leituras": 3,
+   "linha": 1111596,
+   "n": 6
+  },
+  "308:2A:1": {
+   "distintas": 1,
+   "hex": "14 00 04 00 F4 01",
+   "leituras": 3,
+   "linha": 1111628,
+   "n": 6
+  },
+  "308:2A:2": {
+   "distintas": 1,
+   "hex": "14 00 04 00 F4 01",
+   "leituras": 3,
+   "linha": 1111660,
+   "n": 6
+  },
+  "308:2A:3": {
+   "distintas": 1,
+   "hex": "19 00 04 00 F4 01",
+   "leituras": 3,
+   "linha": 1111692,
+   "n": 6
+  },
+  "312:29:": {
+   "distintas": 1,
+   "hex": "20 03 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1111724,
+   "n": 20
+  },
+  "31:2A:0": {
+   "distintas": 1,
+   "hex": "7B 00 00 00 00",
+   "leituras": 3,
+   "linha": 1105660,
+   "n": 5
+  },
+  "31:2A:1": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1105690,
+   "n": 5
+  },
+  "31:2A:2": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1105720,
+   "n": 5
+  },
+  "330:09:": {
+   "distintas": 1,
+   "hex": "01",
+   "leituras": 3,
+   "linha": 1112346,
+   "n": 1
+  },
+  "331:29:": {
+   "distintas": 1,
+   "hex": "00 01 00 02 00 03 00 04 00 05 00 06 00 07 00 08 00 09 00 0A 00 0B 00 0C 00 0D 00 0E 00 0F 00 10 00 11 00 12 00 13 00 14 00 16 00 18 00 1A 00 1C 00 1E 00 20 00 22 00 24 00 28 00 2C",
+   "leituras": 3,
+   "linha": 1112206,
+   "n": 60
+  },
+  "332:29:": {
+   "distintas": 1,
+   "hex": "9A 00 00 01 33 01 66 01 9A 01 CD 01 00 02 33 02 66 02 9A 02 CD 02 00 03 33 03 66 03 9A 03 CD 03 00 04 66 04",
+   "leituras": 3,
+   "linha": 1112114,
+   "n": 36
+  },
+  "334:29:": {
+   "distintas": 3,
+   "hex": "CF 04 A6 05 A8 06 59 08 47 09 7A 0C 2E 0E F6 0F 0F 11 29 13 01 15 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1113656,
+   "n": 36
+  },
+  "335:29:": {
+   "distintas": 2,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1113748,
+   "n": 36
+  },
+  "336:29:": {
+   "distintas": 3,
+   "hex": "F0 04 70 05 FC 06 CF 07 9A 08 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1113840,
+   "n": 36
+  },
+  "337:29:": {
+   "distintas": 3,
+   "hex": "F7 00 14 01 47 01 7C 01 A6 01 E6 01 1C 02 4E 02 75 02 B6 02 E6 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1113932,
+   "n": 36
+  },
+  "338:29:": {
+   "distintas": 2,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1114024,
+   "n": 36
+  },
+  "339:29:": {
+   "distintas": 3,
+   "hex": "E4 00 09 01 52 01 76 01 A4 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1114116,
+   "n": 36
+  },
+  "33:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 194,
+   "linha": 850122,
+   "n": 1
+  },
+  "340:29:": {
+   "distintas": 3,
+   "hex": "0A 00 0A 00 09 00 0A 00 0A 00 0A 00 0A 00 0A 00 05 00 0A 00 0A 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1114208,
+   "n": 36
+  },
+  "341:29:": {
+   "distintas": 3,
+   "hex": "0A 00 06 00 0A 00 0A 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1114300,
+   "n": 36
+  },
+  "342:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1114392,
+   "n": 6
+  },
+  "343:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1114424,
+   "n": 6
+  },
+  "344:29:": {
+   "distintas": 2,
+   "hex": "00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40",
+   "leituras": 3,
+   "linha": 1114456,
+   "n": 60
+  },
+  "345:29:": {
+   "distintas": 2,
+   "hex": "00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40",
+   "leituras": 3,
+   "linha": 1114596,
+   "n": 60
+  },
+  "346:09:": {
+   "distintas": 2,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1114736,
+   "n": 1
+  },
+  "347:29:": {
+   "distintas": 9,
+   "hex": "0A 00 06 00 0A 00 0A 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 26,
+   "linha": 1112620,
+   "n": 36
+  },
+  "348:29:": {
+   "distintas": 7,
+   "hex": "0A 00 0A 00 09 00 0A 00 0A 00 0A 00 0A 00 0A 00 05 00 0A 00 0A 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 28,
+   "linha": 1112988,
+   "n": 36
+  },
+  "349:29:": {
+   "distintas": 2,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 26,
+   "linha": 1112712,
+   "n": 36
+  },
+  "350:29:": {
+   "distintas": 2,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 26,
+   "linha": 1112804,
+   "n": 36
+  },
+  "351:29:": {
+   "distintas": 9,
+   "hex": "CF 04 A6 05 A8 06 59 08 47 09 7A 0C 2E 0E F6 0F 0F 11 29 13 01 15 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 28,
+   "linha": 1112896,
+   "n": 36
+  },
+  "352:29:": {
+   "distintas": 9,
+   "hex": "F7 00 14 01 47 01 7C 01 A6 01 E6 01 1C 02 4E 02 75 02 B6 02 E6 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 28,
+   "linha": 1113220,
+   "n": 36
+  },
+  "353:29:": {
+   "distintas": 2,
+   "hex": "00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40",
+   "leituras": 27,
+   "linha": 1113080,
+   "n": 60
+  },
+  "354:29:": {
+   "distintas": 19,
+   "hex": "F0 04 70 05 05 07 D4 07 9A 08 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 26,
+   "linha": 1112436,
+   "n": 36
+  },
+  "355:29:": {
+   "distintas": 14,
+   "hex": "E4 00 09 01 53 01 75 01 A4 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 26,
+   "linha": 1112528,
+   "n": 36
+  },
+  "357:0A:0": {
+   "distintas": 1,
+   "hex": "03",
+   "leituras": 3,
+   "linha": 1113422,
+   "n": 1
+  },
+  "357:0A:1": {
+   "distintas": 1,
+   "hex": "03",
+   "leituras": 3,
+   "linha": 1112368,
+   "n": 1
+  },
+  "357:0A:2": {
+   "distintas": 1,
+   "hex": "03",
+   "leituras": 3,
+   "linha": 1112390,
+   "n": 1
+  },
+  "359:0A:1": {
+   "distintas": 1,
+   "hex": "00 04",
+   "leituras": 3,
+   "linha": 1112412,
+   "n": 2
+  },
+  "361:09:": {
+   "distintas": 1,
+   "hex": "9A 00",
+   "leituras": 3,
+   "linha": 1113312,
+   "n": 2
+  },
+  "362:09:": {
+   "distintas": 1,
+   "hex": "66 04",
+   "leituras": 3,
+   "linha": 1113336,
+   "n": 2
+  },
+  "367:29:": {
+   "distintas": 3,
+   "hex": "01 00 00 00",
+   "leituras": 19,
+   "linha": 719154,
+   "n": 4
+  },
+  "368:29:": {
+   "distintas": 2,
+   "hex": "01 01 00 00",
+   "leituras": 5,
+   "linha": 687666,
+   "n": 4
+  },
+  "36:09:": {
+   "distintas": 1,
+   "hex": "81",
+   "leituras": 3,
+   "linha": 1105750,
+   "n": 1
+  },
+  "370:29:": {
+   "distintas": 1,
+   "hex": "01 03 03 01 03 03 01 03 03 01",
+   "leituras": 3,
+   "linha": 1113360,
+   "n": 10
+  },
+  "371:0A:0": {
+   "distintas": 1,
+   "hex": "04",
+   "leituras": 8,
+   "linha": 1113400,
+   "n": 1
+  },
+  "372:09:": {
+   "distintas": 2,
+   "hex": "00",
+   "leituras": 4,
+   "linha": 1113444,
+   "n": 1
+  },
+  "377:29:": {
+   "distintas": 1,
+   "hex": "FF FF FF FF FF",
+   "leituras": 3,
+   "linha": 1105578,
+   "n": 5
+  },
+  "378:09:": {
+   "distintas": 1,
+   "hex": "B8 0B",
+   "leituras": 3,
+   "linha": 1113466,
+   "n": 2
+  },
+  "379:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 21,
+   "linha": 1115322,
+   "n": 1
+  },
+  "37:29:": {
+   "distintas": 1,
+   "hex": "27 5D 8F DB",
+   "leituras": 3,
+   "linha": 1105772,
+   "n": 4
+  },
+  "380:0A:0": {
+   "distintas": 1,
+   "hex": "F4 01",
+   "leituras": 3,
+   "linha": 1114846,
+   "n": 2
+  },
+  "380:0A:1": {
+   "distintas": 1,
+   "hex": "D0 07",
+   "leituras": 3,
+   "linha": 1114870,
+   "n": 2
+  },
+  "380:0A:2": {
+   "distintas": 1,
+   "hex": "64 00",
+   "leituras": 3,
+   "linha": 1114894,
+   "n": 2
+  },
+  "380:0A:3": {
+   "distintas": 1,
+   "hex": "F4 01",
+   "leituras": 3,
+   "linha": 1114918,
+   "n": 2
+  },
+  "380:0A:4": {
+   "distintas": 1,
+   "hex": "D0 07",
+   "leituras": 3,
+   "linha": 1114942,
+   "n": 2
+  },
+  "380:0A:5": {
+   "distintas": 1,
+   "hex": "64 00",
+   "leituras": 3,
+   "linha": 1114966,
+   "n": 2
+  },
+  "380:0A:6": {
+   "distintas": 1,
+   "hex": "01 00",
+   "leituras": 3,
+   "linha": 1114990,
+   "n": 2
+  },
+  "380:0A:7": {
+   "distintas": 1,
+   "hex": "00 00",
+   "leituras": 3,
+   "linha": 1115014,
+   "n": 2
+  },
+  "380:0A:8": {
+   "distintas": 1,
+   "hex": "64 00",
+   "leituras": 3,
+   "linha": 1115038,
+   "n": 2
+  },
+  "380:0A:9": {
+   "distintas": 1,
+   "hex": "00 00",
+   "leituras": 3,
+   "linha": 1115062,
+   "n": 2
+  },
+  "381:0A:0": {
+   "distintas": 1,
+   "hex": "F4 01",
+   "leituras": 3,
+   "linha": 1115086,
+   "n": 2
+  },
+  "381:0A:1": {
+   "distintas": 1,
+   "hex": "D0 07",
+   "leituras": 3,
+   "linha": 1115110,
+   "n": 2
+  },
+  "381:0A:2": {
+   "distintas": 1,
+   "hex": "64 00",
+   "leituras": 3,
+   "linha": 1115134,
+   "n": 2
+  },
+  "381:0A:3": {
+   "distintas": 1,
+   "hex": "F4 01",
+   "leituras": 3,
+   "linha": 1115158,
+   "n": 2
+  },
+  "381:0A:4": {
+   "distintas": 1,
+   "hex": "D0 07",
+   "leituras": 3,
+   "linha": 1115182,
+   "n": 2
+  },
+  "381:0A:5": {
+   "distintas": 1,
+   "hex": "64 00",
+   "leituras": 3,
+   "linha": 1115206,
+   "n": 2
+  },
+  "381:0A:6": {
+   "distintas": 1,
+   "hex": "01 00",
+   "leituras": 3,
+   "linha": 1115230,
+   "n": 2
+  },
+  "381:0A:7": {
+   "distintas": 1,
+   "hex": "64 00",
+   "leituras": 3,
+   "linha": 1115254,
+   "n": 2
+  },
+  "382:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1112070,
+   "n": 1
+  },
+  "387:09:": {
+   "distintas": 1,
+   "hex": "90 01",
+   "leituras": 3,
+   "linha": 1113560,
+   "n": 2
+  },
+  "388:09:": {
+   "distintas": 1,
+   "hex": "C8 00",
+   "leituras": 3,
+   "linha": 1113632,
+   "n": 2
+  },
+  "389:09:": {
+   "distintas": 1,
+   "hex": "00 02",
+   "leituras": 3,
+   "linha": 1113584,
+   "n": 2
+  },
+  "390:09:": {
+   "distintas": 1,
+   "hex": "33 00",
+   "leituras": 3,
+   "linha": 1113512,
+   "n": 2
+  },
+  "391:09:": {
+   "distintas": 1,
+   "hex": "00 08",
+   "leituras": 3,
+   "linha": 1113608,
+   "n": 2
+  },
+  "392:09:": {
+   "distintas": 1,
+   "hex": "00 02",
+   "leituras": 3,
+   "linha": 1113536,
+   "n": 2
+  },
+  "395:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1113490,
+   "n": 1
+  },
+  "397:29:": {
+   "distintas": 4,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 12,
+   "linha": 715614,
+   "n": 60
+  },
+  "398:29:": {
+   "distintas": 3,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 13,
+   "linha": 719886,
+   "n": 60
+  },
+  "3:29:": {
+   "distintas": 1,
+   "hex": "86 24 51 10",
+   "leituras": 4,
+   "linha": 1102844,
+   "n": 4
+  },
+  "42:29:": {
+   "distintas": 1,
+   "hex": "00 26 32 3A 43 4D 53 58 64 FF",
+   "leituras": 3,
+   "linha": 1105844,
+   "n": 10
+  },
+  "43:29:": {
+   "distintas": 1,
+   "hex": "64 63 61 5E 5B 59 56 52 50",
+   "leituras": 3,
+   "linha": 1105884,
+   "n": 9
+  },
+  "46:2A:0": {
+   "distintas": 1,
+   "hex": "FF F0 96 69 4B 3C 2D 1E 0F",
+   "leituras": 3,
+   "linha": 1105966,
+   "n": 9
+  },
+  "46:2A:1": {
+   "distintas": 1,
+   "hex": "E1 E1 B4 96 78 5A 3C 3C 2D",
+   "leituras": 3,
+   "linha": 1106004,
+   "n": 9
+  },
+  "47:29:": {
+   "distintas": 1,
+   "hex": "E7 D7 C3 B6 A9 9B 8D 71 58",
+   "leituras": 3,
+   "linha": 1106042,
+   "n": 9
+  },
+  "4:09:": {
+   "distintas": 1,
+   "hex": "02",
+   "leituras": 3,
+   "linha": 1105074,
+   "n": 1
+  },
+  "50:29:": {
+   "distintas": 1,
+   "hex": "00 00 D1 03",
+   "leituras": 3,
+   "linha": 1106080,
+   "n": 4
+  },
+  "51:09:": {
+   "distintas": 1,
+   "hex": "00 00",
+   "leituras": 2,
+   "linha": 484,
+   "n": 2
+  },
+  "52:09:": {
+   "distintas": 1,
+   "hex": "02",
+   "leituras": 3,
+   "linha": 1106108,
+   "n": 1
+  },
+  "53:29:": {
+   "distintas": 1,
+   "hex": "00 00 32 30 38 20 30 31 20 30 38 20 32 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1106130,
+   "n": 30
+  },
+  "54:09:": {
+   "distintas": 1,
+   "hex": "FF",
+   "leituras": 3,
+   "linha": 1106210,
+   "n": 1
+  },
+  "55:29:": {
+   "distintas": 1,
+   "hex": "0D 03 D1 03 94 04 57 05 DE 06 28 09 35 0C 42 0F 4F 12 5D 15 6A 18 77 1B",
+   "leituras": 3,
+   "linha": 1103078,
+   "n": 24
+  },
+  "56:09:": {
+   "distintas": 1,
+   "hex": "0B",
+   "leituras": 3,
+   "linha": 1106232,
+   "n": 1
+  },
+  "59:09:": {
+   "distintas": 2,
+   "hex": "E5 04",
+   "leituras": 3,
+   "linha": 1106254,
+   "n": 2
+  },
+  "5:09:": {
+   "distintas": 1,
+   "hex": "1C",
+   "leituras": 3,
+   "linha": 1105096,
+   "n": 1
+  },
+  "60:09:": {
+   "distintas": 1,
+   "hex": "BA 00",
+   "leituras": 3,
+   "linha": 1106278,
+   "n": 2
+  },
+  "61:29:": {
+   "distintas": 2,
+   "hex": "52 03 46 05 3A 07 C4 09 B8 0B AC 0D A0 0F 94 11 88 13 7C 15 70 17 64 19",
+   "leituras": 3,
+   "linha": 1103146,
+   "n": 24
+  },
+  "62:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1106302,
+   "n": 1
+  },
+  "64:09:": {
+   "distintas": 1,
+   "hex": "FE",
+   "leituras": 1,
+   "linha": 270,
+   "n": 1
+  },
+  "6:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1105118,
+   "n": 1
+  },
+  "70:09:": {
+   "distintas": 1,
+   "hex": "33",
+   "leituras": 3,
+   "linha": 1106324,
+   "n": 1
+  },
+  "71:09:": {
+   "distintas": 1,
+   "hex": "29",
+   "leituras": 3,
+   "linha": 1106346,
+   "n": 1
+  },
+  "72:09:": {
+   "distintas": 1,
+   "hex": "05",
+   "leituras": 3,
+   "linha": 1106368,
+   "n": 1
+  },
+  "73:09:": {
+   "distintas": 1,
+   "hex": "64 08",
+   "leituras": 3,
+   "linha": 1106390,
+   "n": 2
+  },
+  "74:29:": {
+   "distintas": 1,
+   "hex": "A1 07 00 00",
+   "leituras": 3,
+   "linha": 1106414,
+   "n": 4
+  },
+  "75:09:": {
+   "distintas": 1,
+   "hex": "E8 03",
+   "leituras": 3,
+   "linha": 1106442,
+   "n": 2
+  },
+  "76:09:": {
+   "distintas": 1,
+   "hex": "01 04",
+   "leituras": 1,
+   "linha": 292,
+   "n": 2
+  },
+  "78:09:": {
+   "distintas": 1,
+   "hex": "00",
+   "leituras": 3,
+   "linha": 1106466,
+   "n": 1
+  },
+  "79:09:": {
+   "distintas": 1,
+   "hex": "00 00",
+   "leituras": 3,
+   "linha": 1106488,
+   "n": 2
+  },
+  "7:09:": {
+   "distintas": 1,
+   "hex": "05",
+   "leituras": 3,
+   "linha": 1105140,
+   "n": 1
+  },
+  "81:29:": {
+   "distintas": 1,
+   "hex": "F7 02 E0 02",
+   "leituras": 3,
+   "linha": 1106512,
+   "n": 4
+  },
+  "82:09:": {
+   "distintas": 1,
+   "hex": "0D 03",
+   "leituras": 3,
+   "linha": 1106540,
+   "n": 2
+  },
+  "83:09:": {
+   "distintas": 1,
+   "hex": "D1 03",
+   "leituras": 3,
+   "linha": 1106564,
+   "n": 2
+  },
+  "84:2A:0": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103282,
+   "n": 12
+  },
+  "84:2A:1": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103326,
+   "n": 12
+  },
+  "84:2A:10": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103722,
+   "n": 12
+  },
+  "84:2A:11": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103766,
+   "n": 12
+  },
+  "84:2A:12": {
+   "distintas": 3,
+   "hex": "CB CB CB CB CB CB CD CE CF D0 D1 D1",
+   "leituras": 3,
+   "linha": 1103810,
+   "n": 12
+  },
+  "84:2A:2": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103370,
+   "n": 12
+  },
+  "84:2A:3": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103414,
+   "n": 12
+  },
+  "84:2A:4": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103458,
+   "n": 12
+  },
+  "84:2A:5": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103502,
+   "n": 12
+  },
+  "84:2A:6": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103546,
+   "n": 12
+  },
+  "84:2A:7": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103590,
+   "n": 12
+  },
+  "84:2A:8": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103634,
+   "n": 12
+  },
+  "84:2A:9": {
+   "distintas": 3,
+   "hex": "A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6 A6",
+   "leituras": 3,
+   "linha": 1103678,
+   "n": 12
+  },
+  "85:09:": {
+   "distintas": 2,
+   "hex": "90 0A",
+   "leituras": 3,
+   "linha": 1106588,
+   "n": 2
+  },
+  "88:09:": {
+   "distintas": 1,
+   "hex": "38 04",
+   "leituras": 3,
+   "linha": 1106612,
+   "n": 2
+  },
+  "8:09:": {
+   "distintas": 1,
+   "hex": "1F",
+   "leituras": 3,
+   "linha": 1105162,
+   "n": 1
+  },
+  "91:09:": {
+   "distintas": 1,
+   "hex": "01 04",
+   "leituras": 1,
+   "linha": 316,
+   "n": 2
+  },
+  "92:29:": {
+   "distintas": 1,
+   "hex": "00 18 26 32 43 58 71 9B C3 FF",
+   "leituras": 3,
+   "linha": 1106636,
+   "n": 10
+  },
+  "93:29:": {
+   "distintas": 1,
+   "hex": "6B 69 67 65 64 62 61 5E 5C",
+   "leituras": 3,
+   "linha": 1106676,
+   "n": 9
+  },
+  "95:29:": {
+   "distintas": 1,
+   "hex": "2B 01 90 01 F4 01 57 02 BB 02 20 03 84 03 E8 03 4C 04 AF 04 14 05 77 05 DC 05 40 06 A3 06",
+   "leituras": 3,
+   "linha": 1106714,
+   "n": 30
+  },
+  "96:29:": {
+   "distintas": 1,
+   "hex": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "leituras": 3,
+   "linha": 1106794,
+   "n": 30
+  },
+  "9:09:": {
+   "distintas": 1,
+   "hex": "0F",
+   "leituras": 3,
+   "linha": 1105184,
+   "n": 1
+  }
+ },
+ "sha256": "341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce"
+}

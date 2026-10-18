@@ -1,0 +1,902 @@
+{
+ "BUTTONACCETTA": {
+  "eng": "&Accept",
+  "ita": "&Accetta",
+  "por": "&Aceitar"
+ },
+ "BUTTONCOMMUTATORE": {
+  "eng": "&Switch",
+  "ita": "&Commutatore",
+  "por": "&Comutador"
+ },
+ "BUTTONDOLEVEL": {
+  "eng": "Find levels",
+  "ita": "Find levels",
+  "por": "Find levels"
+ },
+ "BUTTONMAXLEVEL": {
+  "eng": "Set max level",
+  "ita": "Set max level",
+  "por": "Set max level"
+ },
+ "BUTTONMINLEVEL": {
+  "eng": "Set min level",
+  "ita": "Set min level",
+  "por": "Set min level"
+ },
+ "BUTTONMODIFICARIFTAR": {
+  "eng": "&Modify map refs.",
+  "ita": "&Mod. rif. mappa",
+  "por": "&Modificar ref. mapa"
+ },
+ "BUTTONNUOVIPARAMETRI": {
+  "eng": "&Modify temperature sensor parameters",
+  "ita": "&Modifica parametri sensore temperatura",
+  "por": "&Modificar parÃ¢metros do sensor da temperatura"
+ },
+ "BUTTONRESET": {
+  "eng": "Reset ECU and load default parameters",
+  "ita": "Azzera centralina e ritorna ai parametri di base",
+  "por": "Redefina a central de comando e retorne aos parÃ¢metros de base"
+ },
+ "BUTTONRICERCAPARAMETRI": {
+  "eng": "Start guided search for external map parameters",
+  "ita": "Avvia ricerca guidata parametri map esterno",
+  "por": "Inicie a procura guiada dos parÃ¢metros do mapa externo"
+ },
+ "CHECKALIMENTAZIONE": {
+  "eng": "Use of wire EV2 for STAP",
+  "ita": "Utilizzo filo EV2 per STAP",
+  "por": "Use of wire EV2 for STAP"
+ },
+ "CHECKBASSAPRESSIONE": {
+  "eng": "Automatic change back with low pressure setting possible",
+  "ita": "Ritorno automatico con bassa pressione impostabile",
+  "por": "ReversÃ£o automÃ¡tica por baixa pressÃ£o impostÃ¡vel"
+ },
+ "CHECKELETTROVALVOLE": {
+  "eng": "Gas electrovalves opened in advance",
+  "ita": "Maggior riempimento tubazioni gas",
+  "por": "ElectrovÃ¡lvulas gÃ¡s abertas com antecedencia"
+ },
+ "CHECKFLASHLUBESUTEMPACQUA": {
+  "eng": "Diagnosis on the water temperature sensor for VP system",
+  "ita": "Diagnosi per i sistemi VP su sensore temperatura acqua",
+  "por": "Diagnosis on the water temperature sensor for VP system"
+ },
+ "CHECKFLEXFUEL": {
+  "eng": "Flex fuel",
+  "ita": "Flex fuel",
+  "por": "Flex fuel"
+ },
+ "CHECKINIBISCIEMULAZIONE": {
+  "eng": "Disable emulation at low rpm",
+  "ita": "Disattiva emulazione per giri bassi",
+  "por": "Desativa a emulaÃ§Ã£o de rotaÃ§Ãµes baixas"
+ },
+ "CHECKMAPCONFIGURATO": {
+  "eng": "Map correctly configured",
+  "ita": "Map configurato correttamente",
+  "por": "Map configurado corretamente"
+ },
+ "CHECKPARTENZAGASCALDO": {
+  "eng": "Start on gas with hot engine",
+  "ita": "Partenza a gas a motore caldo",
+  "por": "Partida gÃ¡s com motor aquecido"
+ },
+ "CHECKRICONOSCIMENTOPIENO": {
+  "eng": "Recognition of full",
+  "ita": "Riconoscimento pieno",
+  "por": "Recognition of full"
+ },
+ "CHECKRITORNOBENZINA": {
+  "eng": "Automatic change back to petrol",
+  "ita": "Ritorno automatico a benzina",
+  "por": "Retorno automÃ¡tico para a gasolina"
+ },
+ "CHECKSTARTANDSTOP": {
+  "eng": "Start && Stop",
+  "ita": "Start && Stop",
+  "por": "Start && Stop"
+ },
+ "CHECKTAGLIOPOMPABENZINA": {
+  "eng": "Petrol pump cutting",
+  "ita": "Taglio pompa benzina",
+  "por": "Petrol pump cutting"
+ },
+ "CHECKVALVETRONIK": {
+  "eng": "Valvetronik",
+  "ita": "Valvetronik",
+  "por": "Valvetronik"
+ },
+ "COMBOCAMBIO1": {
+  "eng": "In acceleration",
+  "ita": "In accelerazione",
+  "por": "Em aceleraÃ§Ã£o"
+ },
+ "COMBOCAMBIO2": {
+  "eng": "In deceleration",
+  "ita": "In decelerazione",
+  "por": "Em desaceleraÃ§Ã£o"
+ },
+ "COMBOCAMBIO3": {
+  "eng": "Start on gas",
+  "ita": "Partenza a gas",
+  "por": "Partida a gÃ¡s"
+ },
+ "COMBOCARBURANTE1": {
+  "eng": "LPG",
+  "ita": "GPL",
+  "por": "GLP"
+ },
+ "COMBOCARBURANTE2": {
+  "eng": "CNG",
+  "ita": "Metano",
+  "por": "Metano"
+ },
+ "COMBOMISURATOREPRESSIONE1": {
+  "eng": "differential",
+  "ita": "differenziale",
+  "por": "diferencial"
+ },
+ "COMBOPRESSIONEMISURATA1": {
+  "eng": "differential",
+  "ita": "differenziale",
+  "por": "diferencial"
+ },
+ "COMBOPRESSIONEMISURATA2": {
+  "eng": "not present",
+  "ita": "non presente",
+  "por": "nÃ£o presente"
+ },
+ "COMBOSEGNALEGIRI1": {
+  "eng": "Standard",
+  "ita": "Standard",
+  "por": "PadrÃ£o"
+ },
+ "COMBOSEGNALEGIRI2": {
+  "eng": "Weak",
+  "ita": "Debole",
+  "por": "Fraco"
+ },
+ "COMBOSEGNALEGIRI3": {
+  "eng": "Custom",
+  "ita": "Custom",
+  "por": "Custom"
+ },
+ "COMBOSENSORE1": {
+  "eng": "Non standard",
+  "ita": "Non standard",
+  "por": "NÃ£o padrÃ£o"
+ },
+ "COMBOSENSORE2": {
+  "eng": "Non standard inverted",
+  "ita": "Non standard invertito",
+  "por": "NÃ£o padrÃ£o invertido"
+ },
+ "GROUPRIFSENSORE": {
+  "eng": "Non-standard level references",
+  "ita": "Riferimenti di livello non standard",
+  "por": "ReferÃªncias de nÃ­vel nÃ£o padrÃ£o"
+ },
+ "HINTACCENSIONE": {
+  "eng": "Once the right number of cylinders is set, the information is used by the ECU to correctly calculate the engine revs starting from the period read on the revs input. \\\\nSINGLE IGNITION COIL is selected if the car has a coil for each cylinder and the signal is taken from the negative or transistor of the coil. \\\\nDOUBLE IGNITION COIL is selected if the car has a coil that operates two cylinders and the signal is taken from the negative or transistor of the coil. \\\\nThe REV-COUNTER option is used if the wire is connected to the original rev-counter of the car with 4-cylinder engine",
+  "ita": "Una volta settato l'esatto numero di cilindri, l'informazione viene utilizzata dalla centralina per calcolare correttamente il regime motore a partire dal periodo letto sull'ingresso giri.\\\\nSi seleziona MONOBOBINA se la vettura ha una bobina per ogni cilindro e il segnale Ã¨ prelevato dal negativo o dal pilotaggio (transistor) della bobina. \\\\nSi seleziona BIBOBINA se la vettura ha una bobina che pilota due cilindri e il segnale Ã¨ prelevato dal negativo o dal pilotaggio (transistor) della bobina. \\\\nSi usa l'opzione CONTAGIRI nel caso in cui il filo sia collegato al contagiri originale dellâauto con motore a 4 cilindri",
+  "por": "Once the right number of cylinders is set, the information is used by the ECU to correctly calculate the engine revs starting from the period read on the revs input. \\\\nSINGLE IGNITION COIL is selected if the car has a coil for each cylinder and the signal is taken from the negative or transistor of the coil. \\\\nDOUBLE IGNITION COIL is selected if the car has a coil that operates two cylinders and the signal is taken from the negative or transistor of the coil. \\\\nThe REV-COUNTER option is used if the wire is connected to the original rev-counter of the car with 4-cylinder engine"
+ },
+ "HINTBASSAPRESSIONEMP": {
+  "eng": "Value of low pressure for change-back",
+  "ita": "Valore di bassa pressione per il ritorno",
+  "por": "Value of low pressure for change-back"
+ },
+ "HINTBUTTONACCETTA": {
+  "eng": "Confirm non-standard references",
+  "ita": "Conferma riferimenti non standard",
+  "por": "Confirm non-standard references"
+ },
+ "HINTBUTTONCOMMUTATORE": {
+  "eng": "Switch",
+  "ita": "Commutatore",
+  "por": "Switch"
+ },
+ "HINTBUTTONDOLEVEL": {
+  "eng": "Find levels",
+  "ita": "Find levels",
+  "por": "Find levels"
+ },
+ "HINTBUTTONMAXLEVEL": {
+  "eng": "Set max level",
+  "ita": "Set max level",
+  "por": "Set max level"
+ },
+ "HINTBUTTONMINLEVEL": {
+  "eng": "Set min level",
+  "ita": "Set min level",
+  "por": "Set min level"
+ },
+ "HINTBUTTONMODIFICARIFTAR": {
+  "eng": "Modify map references",
+  "ita": "Modifica i riferimenti della mappa",
+  "por": "Modify map references"
+ },
+ "HINTBUTTONNUOVIPARAMETRI": {
+  "eng": "Modify parameters of engine temperature sensor",
+  "ita": "Modifica parametri sensore temperatura motore",
+  "por": "Modify parameters of engine temperature sensor"
+ },
+ "HINTBUTTONRESET": {
+  "eng": "Reset ECU and load default parameters",
+  "ita": "Azzera centralina e ritorna ai parametri di base",
+  "por": "Reset ECU and load default parameters"
+ },
+ "HINTBUTTONRICERCAPARAMETRI": {
+  "eng": "The function allows to set the use of the MAP sensor (absolute pressure of the intake manifold). \\\\nWhen activated, the start button of the self-learning procedure of original sensor characteristic automatically appears. \\\\nIs important to have a safe key-on, because the first part of the self-learning procedure has to be made \\\\nwithout RPM signal and the gas ECU doesn't have to switch off.",
+  "ita": "La funzione prevede la possibilitÃ  di impostare l'utilizzo del sensore MAP (pressione assoluta del collettore di aspirazione). \\\\nAttivandola compare automaticamente il pulsante di avvio della procedura di autoapprendimento per caratterizzare il sensore originale della vettura. \\\\nSi raccomanda di scegliere un sottochiave sicuro, poichÃ¨ la prima parte dell'apprendimento avviene con motore spento e solamente key-on. \\\\nSe cosÃ¬ non fosse la centralina non riceverebbe corrente e la procedura fallirebbe a causa dello spegnimento della ECU.",
+  "por": "The function allows to set the use of the MAP sensor (absolute pressure of the intake manifold). \\\\nWhen activated, the start button of the self-learning procedure of original sensor characteristic automatically appears. \\\\nIs important to have a safe key-on, because the first part of the self-learning procedure has to be made \\\\nwithout RPM signal and the gas ECU doesn't have to switch off."
+ },
+ "HINTBUTTONTARATURA": {
+  "eng": "Start calibration",
+  "ita": "Inizia taratura",
+  "por": "Start calibration"
+ },
+ "HINTCAMBIO": {
+  "eng": "The function allows to select if petrol/gas changeover will be made in acceleration or deceleration. \\\\n The choice can be made based on the characteristics of the car or particular request form the owner of the car",
+  "ita": "La funzione permette di decidere se effettuare il passaggio benzina/gas durante la fase di accelerazione oppure di decelerazione. \\\\nLa scelta puÃ² essere dettata dalle caratteristiche della vettura o da particolari richieste del proprietario",
+  "por": "The function allows to select if petrol/gas changeover will be made in acceleration or deceleration. \\\\n The choice can be made based on the characteristics of the car or particular request form the owner of the car"
+ },
+ "HINTCARATTERISTICATEMP": {
+  "eng": "Characteristic of engine temperature sensor of the car",
+  "ita": "Caratteristica sensore di temperatura motore della vettura",
+  "por": "Characteristic of engine temperature sensor of the car"
+ },
+ "HINTCARBURANTE": {
+  "eng": "The function allows to select the fuel used, LPG or CNG",
+  "ita": "La funzione permette di selezionare il carburante impiegato GPL o METANO",
+  "por": "The function allows to select the fuel used, LPG or CNG"
+ },
+ "HINTCHECKBASSAPRESSIONE": {
+  "eng": "Automatic change-back with low pressure setting",
+  "ita": "Ritorno automatico con bassa pressione impostabile",
+  "por": "Automatic change-back with low pressure setting"
+ },
+ "HINTCHECKELETTROVALVOLE": {
+  "eng": "Gas elettrovalves opened in advance",
+  "ita": "Elettrovalvole gas aperte con anticipo",
+  "por": "Gas elettrovalves opened in advance"
+ },
+ "HINTCHECKPASSPRAIL": {
+  "eng": "Automatic change-back to petrol whit rail pressure",
+  "ita": "Ritorno automatico a benzina con la pressione del rail",
+  "por": "Automatic change-back to petrol whit rail pressure"
+ },
+ "HINTCHECKRITORNOBENZINA": {
+  "eng": "&Automatic change-back to petrol",
+  "ita": "&Ritorno automatico a benzina",
+  "por": "&Automatic change-back to petrol"
+ },
+ "HINTCHECKTEMPACQUA": {
+  "eng": "Enable change-over with water temperature",
+  "ita": "Abilita cambio con temperatura acqua",
+  "por": "Enable change-over with water temperature"
+ },
+ "HINTCHECKTEMPMOTORE": {
+  "eng": "Use water temperature sensor of the car",
+  "ita": "Utilizza sensore di temperatura motore della vettura",
+  "por": "Use water temperature sensor of the car"
+ },
+ "HINTCICCHETTO": {
+  "eng": "Priming time",
+  "ita": "Tempo di cicchetto",
+  "por": "Priming time"
+ },
+ "HINTCILINDRATA": {
+  "eng": "The function allows to set the displacement of the car in cm3. \\\\nOn the base of this value and number of cylinders, the software load \\\\na default configuration from which autocalibration will start.",
+  "ita": "La funzione permette di impostare la cilindrata della vettura in cm3.\\\\nIl software, sulla base di questo dato e del numero dei cilindri, calcola la cilindrata unitaria e quindi dÃ  \\\\nunâimpostazione di base alla centralina in caso di messa a punto eseguita con lâautocalibrazione.",
+  "por": "The function allows to set the displacement of the car in cm3. \\\\nOn the base of this value and number of cylinders, the software load \\\\na default configuration from which autocalibration will start."
+ },
+ "HINTCILINDRI": {
+  "eng": "The function allows to set the number of cylinders. Allowed values are 2, 3 and 4 cylinders. 5,6 or cylinders selection enabled only when connected to a 5,6, 8 cylinders ECU",
+  "ita": "Permette di settare il numero di cilindri presenti sullâauto trasformata. Il software accetta 2, 3 e 4 cilindri. \\\\nNella finestra viene visualizzata la possibilitÃ  di settare 5, 6 e 8 cilindri solo nel caso in cui si Ã¨ connessi con una centralina 8 cilindri.",
+  "por": "The function allows to set the number of cylinders. Allowed values are 2, 3 and 4 cylinders. 5,6 or cylinders selection enabled only when connected to a 5,6, 8 cylinders ECU"
+ },
+ "HINTCORRBANCATA2": {
+  "eng": "2Â° bank corrector",
+  "ita": "Correttore 2Â° bancata",
+  "por": "2Â° bank corrector"
+ },
+ "HINTDISABILITACOMMUTATORE": {
+  "eng": "Disable switch",
+  "ita": "Disabilita commutatore",
+  "por": "Disable switch"
+ },
+ "HINTDRAWGRIDK": {
+  "eng": "This table represents the main carburation map. \\\\nThe factor (named with the letter K) is given for each combination of values of engine revs-petrol injection time \\\\nwhich put inside the calculation chain allows the GAS injection times to be determined. \\\\nIt is possible to change each parameter inside the table by double-clicking the relevant box.",
+  "ita": "Questa tabella rappresenta la mappa principale di carburazione.\\\\nPer ciascuna combinazione di valori di giri motore-tempo iniezione benzina Ã¨ riportato il fattore \\\\n(denominato con la lettera K) che, inserito all'interno della catena di calcolo, permette di determinare i tempi iniezione GAS. \\\\nE' possibile modificare ciascun parametro presente all'interno della tabella cliccando due volte sulla relativa casella.",
+  "por": "This table represents the main carburation map. \\\\nThe factor (named with the letter K) is given for each combination of values of engine revs-petrol injection time \\\\nwhich put inside the calculation chain allows the GAS injection times to be determined. \\\\nIt is possible to change each parameter inside the table by double-clicking the relevant box."
+ },
+ "HINTEXTRAINIETTATE": {
+  "eng": "Dead times for extra-injections",
+  "ita": "Tempi morti per le extrainiettate",
+  "por": "Dead times for extra-injections"
+ },
+ "HINTFLEXFUEL": {
+  "eng": "Enable flex fuel",
+  "ita": "Attiva funzionalitÃ  flex fuel",
+  "por": "Enable flex fuel"
+ },
+ "HINTGIRICAMBIO": {
+  "eng": "The function allows the number of engine revs above which the gas switch takes place to be selected",
+  "ita": "La funzione permette di selezionare il numero di giri al di sopra del quale viene effettuato il cambio gas",
+  "por": "The function allows the number of engine revs above which the gas switch takes place to be selected"
+ },
+ "HINTISTANTANEOVALUE": {
+  "eng": "Number of engine cycles for petrol-gas changeover. \\\\nUse an higher value if the change-over is too rough. \\\\nIf manual gas injectors sequence is enalbled, this parameter has to be set to zero.",
+  "ita": "Numero di cicli di attesa per il passaggio sequenziale a gas dei vari cilindri. \\\\nAumentare il valore di default nel caso in cui si percepisca eccessivamente il passaggio a gas. \\\\nIn caso di sfasamento manuale della sequenza Ã¨ necessario settare il valore a 0.",
+  "por": "Number of engine cycles for petrol-gas changeover. \\\\nUse an higher value if the change-over is too rough. \\\\nIf manual gas injectors sequence is enalbled, this parameter has to be set to zero."
+ },
+ "HINTKFACTOR": {
+  "eng": "K Factor",
+  "ita": "K Factor",
+  "por": "K Factor"
+ },
+ "HINTLABELDELTAT": {
+  "eng": "Delta T",
+  "ita": "Delta T",
+  "por": "Delta T"
+ },
+ "HINTLABELRPULLUP": {
+  "eng": "Pull-up resistor",
+  "ita": "Resistenza di pull-up",
+  "por": "Pull-up resistor"
+ },
+ "HINTLABELTEMPGAS": {
+  "eng": "Temperature gas sensor type",
+  "ita": "Tipo di sensore temperatura gas",
+  "por": "Temperature gas sensor type"
+ },
+ "HINTLABELTMAX": {
+  "eng": "Maximum temperature",
+  "ita": "Temperatura massima",
+  "por": "Maximum temperature"
+ },
+ "HINTLABELTMIN": {
+  "eng": "Minimum temperature",
+  "ita": "Temperatura minima",
+  "por": "Minimum temperature"
+ },
+ "HINTNUMEROINIETTATESMAGR": {
+  "eng": "Number of gas injections for which the cut off exit strategy is activated. \\\\nThis is the number of enrich/lean injections.",
+  "ita": "Numero delle iniettate a gas per le quali viene attuata la strategia di uscita da cut-off.",
+  "por": "Number of gas injections for which the cut off exit strategy is activated. \\\\nThis is the number of enrich/lean injections."
+ },
+ "HINTNUMEROSONDE": {
+  "eng": "Number of Lambda probes",
+  "ita": "Numero di sensori Lambda connessi",
+  "por": "Number of Lambda probes"
+ },
+ "HINTPARAMETRITEMP": {
+  "eng": "Parameter for the water temperature sensor of the car",
+  "ita": "Parametri per il sensore di temperatura motore della vettura",
+  "por": "Parameter for the water temperature sensor of the car"
+ },
+ "HINTPARTENZAGASCALDO": {
+  "eng": "If the temperature of the engine when starting the car is over the set value, then start directly on gas",
+  "ita": "Se la temperatura del motore alla partenza Ã¨ superiore a quella impostata passo direttamente a gas",
+  "por": "If the temperature of the engine when starting the car is over the set value, then start directly on gas"
+ },
+ "HINTPRESSPASS": {
+  "eng": "Pressures for change-back to petrol",
+  "ita": "Pressioni per il retropassaggio benzina",
+  "por": "Pressures for change-back to petrol"
+ },
+ "HINTRITARDOCAMBIO": {
+  "eng": "Management of the petrol-gas switch delay is based on the engine water temperature. \\\\nIt can be detected by the sensor on the reducer heating pipe or directly on the original sensor of the engine. \\\\nThis delay can be managed by a string in which it is possible to associate a delay time with each given temperature. \\\\nThe ECU detects the instantaneous water temperature with the ignition on, enabling the petrol-gas switch when the set delay has elapsed and the conditions on the type of switch and on the revs threshold are verified",
+  "ita": "La gestione del ritardo per il passaggio benzina-gas avviene in base alla temperatura del liquido raffreddamento motore del veicolo. \\\\nEssa puÃ² essere rilevata dal sensore presente sul tubo riscaldamento del riduttore o direttamente sul sensore originale del motore. \\\\nTale ritardo Ã¨ gestibile per mezzo di una stringa in cui Ã¨ possibile associare a ciascuna determinata temperatura un tempo di ritardo. \\\\nLa ECU rileva al sottochiave la temperatura acqua istantanea abilitando il passaggio benzina-gas una volta che sia trascorso \\\\nil ritardo impostato e siano verificate le condizioni sul tipo di passaggio e sulla soglia giri.",
+  "por": "Management of the petrol-gas switch delay is based on the engine water temperature. \\\\nIt can be detected by the sensor on the reducer heating pipe or directly on the original sensor of the engine. \\\\nThis delay can be managed by a string in which it is possible to associate a delay time with each given temperature. \\\\nThe ECU detects the instantaneous water temperature with the ignition on, enabling the petrol-gas switch when the set delay has elapsed and the conditions on the type of switch and on the revs threshold are verified"
+ },
+ "HINTRITARDOCAMBIOGAS": {
+  "eng": "If the T-water sensor is not used, gas mode switchover is based on initial gas temperature and time delay from engine starting. \\\\nIn the table, for each gas temperature value should be set proper time delay, to obtain normal reducer pre-heating. \\\\nThe ECU detects the instantaneous gas temperature with the ignition on, enabling the petrol-gas switch once that the set delay has elapsed and the conditions on the type of switch and on the revs threshold are verified",
+  "ita": "Nel caso in cui il sensore acqua non sia collegato la gestione del ritardo per il passaggio benzina-gas \\\\navviene in base alla temperatura del gas rilevata dal sensore gas presente sul rail iniettori.\\\\nLa ECU rileva al sottochiave la temperatura gas istantanea abilitando il passaggio benzina-gas una volta che sia trascorso \\\\nil ritardo impostato e siano verificate le condizioni sul tipo di passaggio e sulla soglia giri.",
+  "por": "If the T-water sensor is not used, gas mode switchover is based on initial gas temperature and time delay from engine starting. \\\\nIn the table, for each gas temperature value should be set proper time delay, to obtain normal reducer pre-heating. \\\\nThe ECU detects the instantaneous gas temperature with the ignition on, enabling the petrol-gas switch once that the set delay has elapsed and the conditions on the type of switch and on the revs threshold are verified"
+ },
+ "HINTRITORNOBENZINA": {
+  "eng": "Time of low pressure for change-back",
+  "ita": "Tempo di bassa pressione per il ritorno",
+  "por": "Time of low pressure for change-back"
+ },
+ "HINTSEGNALEGIRI": {
+  "eng": "Type of RPM signal: \\\"standard\\\" normal signal, \\\"weak\\\" low voltage signal, \\\"custom\\\" to insert a voltage threshold",
+  "ita": "Tipo di segnale RPM: \\\"standard\\\" segnale normale, \\\"debole\\\" segnale con bassa tensione, \\\"custom\\\" per inserire una soglia di tensione",
+  "por": "Type of RPM signal: \\\"standard\\\" normal signal, \\\"weak\\\" low voltage signal, \\\"custom\\\" to insert a voltage threshold"
+ },
+ "HINTSENSORE1": {
+  "eng": "Reserve",
+  "ita": "Riserva",
+  "por": "Reserve"
+ },
+ "HINTSENSORE2": {
+  "eng": "\\\"1/4\\\"",
+  "ita": "\\\"1/4\\\"",
+  "por": "\\\"1/4\\\""
+ },
+ "HINTSENSORE3": {
+  "eng": "\\\"2/4\\\"",
+  "ita": "\\\"2/4\\\"",
+  "por": "\\\"2/4\\\""
+ },
+ "HINTSENSORE4": {
+  "eng": "\\\"3/4\\\"",
+  "ita": "\\\"3/4\\\"",
+  "por": "\\\"3/4\\\""
+ },
+ "HINTSENSORELIVELLO": {
+  "eng": "The function allows the fuel level sensor installed on the tank to be selected. \\\\nWith the âNot standardâ options it is possible to calibrate the thresholds of any sensor",
+  "ita": "La funzione permette di selezionare il sensore livello carburante installato sul serbatoio. \\\\nCon le opzioni \\\"Non standard\\\" Ã¨ possibile andare a calibrare le soglie di qualsiasi sensore",
+  "por": "The function allows the fuel level sensor installed on the tank to be selected. \\\\nWith the âNot standardâ options it is possible to calibrate the thresholds of any sensor"
+ },
+ "HINTSMAGRRIENTROCUTOFF": {
+  "eng": "The purpose of the strategy is to enrich or to lean the mixture leaving the cut-off phase. \\\\nActivation of this option is functional for providing the car with greater quickness of response \\\\nafter releasing the accelerator pedal.",
+  "ita": "La strategia ha lo scopo di arricchire o di smagrire la miscela in uscita dalla fase di cut-off. \\\\nLâattivazione di questa opzione Ã¨ funzionale a fornire alla vettura una maggiore prontezza di risposta \\\\nin seguito ai rilasci del pedale dellâacceleratore.",
+  "por": "The purpose of the strategy is to enrich or to lean the mixture leaving the cut-off phase. \\\\nActivation of this option is functional for providing the car with greater quickness of response \\\\nafter releasing the accelerator pedal."
+ },
+ "HINTSOGLIAGIRI": {
+  "eng": "Threshold of RPM signal",
+  "ita": "Soglia per il segnale giri",
+  "por": "Threshold of RPM signal"
+ },
+ "HINTSOVRAPPOSIZIONE": {
+  "eng": "It is the time in which petrol injectors and gas injectors are both opened \\\\nto allow the gas to fill the injector-manifold pipes and deplete any after-change transients, \\\\nthus preventing from shakes of the car",
+  "ita": "Rappresenta il tempo per il quale sono aperti contemporaneamente gli iniettori benzina e gli iniettori gas \\\\nal fine di permettere al gas di riempire i tubi iniettore-collettore ed esaurire eventuali transitori \\\\npostcambio evitando cosÃ¬ fastidiosi sussulti della vettura",
+  "por": "It is the time in which petrol injectors and gas injectors are both opened \\\\nto allow the gas to fill the injector-manifold pipes and deplete any after-change transients, \\\\nthus preventing from shakes of the car"
+ },
+ "HINTSPEGNIBUZZER": {
+  "eng": "Time limited buzzer",
+  "ita": "Buzzer a tempo",
+  "por": "Time limited buzzer"
+ },
+ "HINTSTARTANDSTOP": {
+  "eng": "This strategy must be enable on Start&Stop vehicles and also on vehicles in which RPM signal get loose during cutoff state. \\\\nAfter lossing of RPM signal system still operates in gas mode (green switch) until the +15V on white/red wire is present. \\\\nThe key-on signal (white/red wire) must be present even when the engine is off and ignition key is turned on. \\\\nIn case of accident the inertial sensor must disable this signal.",
+  "ita": "La strategia viene abilitata sui veicoli Start&Stop o su vetture nelle quali il segnale alle bobine venga a mancare durante lo stato di cutoff. \\\\nDopo la perdita del segnale giri il sistema rimane in modalitÃ  gas (commutatore verde) fino al mantenimento del segnale +15V sul filo bianco/rosso. \\\\nÃ indispensabile collegare il filo bianco/rosso ad un sottochiave presente anche in condizioni di vettura spenta e quadro acceso. \\\\nIn caso di urto lâinerziale deve comunque disabilitare tale segnale.",
+  "por": "This strategy must be enable on Start&Stop vehicles and also on vehicles in which RPM signal get loose during cutoff state. \\\\nAfter lossing of RPM signal system still operates in gas mode (green switch) until the +15V on white/red wire is present. \\\\nThe key-on signal (white/red wire) must be present even when the engine is off and ignition key is turned on. \\\\nIn case of accident the inertial sensor must disable this signal."
+ },
+ "HINTTEMPCAMBIO": {
+  "eng": "If gas temperature is over this value the ECU switches to gas",
+  "ita": "Se la temperatura gas Ã¨ superiore alla soglia passo direttamente a gas",
+  "por": "If gas temperature is over this value the ECU switches to gas"
+ },
+ "HINTTEMPMOTORE": {
+  "eng": "If water temperature is over this value the ECU switches to gas",
+  "ita": "Se la temperatura H2O Ã¨ superiore alla soglia passo direttamente a gas",
+  "por": "If water temperature is over this value the ECU switches to gas"
+ },
+ "HINTTEMPOMORTOBENZ": {
+  "eng": "Petrol injector dead time",
+  "ita": "Tempo morto iniettore benzina",
+  "por": "Petrol injector dead time"
+ },
+ "HINTTEMPOMORTOGAS": {
+  "eng": "Gas injector dead time",
+  "ita": "Tempo morto iniettore gas",
+  "por": "Gas injector dead time"
+ },
+ "HINTTINJBENZMAXPERCAMBIO": {
+  "eng": "This parameter is the petrol injection time value above which the switch to gas is temporarily prohibited. \\\\nIn this way abrupt switches to gas during acceleration are prevented",
+  "ita": "Questo parametro rappresenta il valore del tempo iniezione benzina al di sopra del quale il cambio a gas Ã¨ temporaneamente inibito. \\\\nConsente di evitare bruschi passaggi a gas in accelerazione",
+  "por": "This parameter is the petrol injection time value above which the switch to gas is temporarily prohibited. \\\\nIn this way abrupt switches to gas during acceleration are prevented"
+ },
+ "HINTTIPOINIETTORE": {
+  "eng": "Type of installed injectors rail",
+  "ita": "Tipologia del Rail Iniettori installato sulla vettura",
+  "por": "Type of installed injectors rail"
+ },
+ "HINTTIPOLAMBDA": {
+  "eng": "Type of Lambda probe",
+  "ita": "Tipo di sonda Lambda",
+  "por": "Type of Lambda probe"
+ },
+ "HINTTIPOMISURATORE": {
+  "eng": "The function allows the type of pressure/temperature sensor installed to be set",
+  "ita": "La funzione permette di impostare il tipo di sensore pressione/temperatura installato",
+  "por": "The function allows the type of pressure/temperature sensor installed to be set"
+ },
+ "HINTTIPOPRESSIONEMISURATA": {
+  "eng": "MAP sensor",
+  "ita": "Sensore MAP",
+  "por": "MAP sensor"
+ },
+ "HINTTIPOSONDA1": {
+  "eng": "Oxygen Sensor 1 (purple wire)",
+  "ita": "Sonda Lambda 1 (filo viola)",
+  "por": "Oxygen Sensor 1 (purple wire)"
+ },
+ "HINTTIPOSONDA2": {
+  "eng": "Oxygen Sensor 2 (purple/black wire)",
+  "ita": "Sonda Lambda 2 (filo viola/nero)",
+  "por": "Oxygen Sensor 2 (purple/black wire)"
+ },
+ "HINTTURBO": {
+  "eng": "This function allows to select the engine type (aspirated or turbo)",
+  "ita": "Questa funzione permette di selezionare il tipo di motore (aspirato o turbo) della vettura installata",
+  "por": "This function allows to select the engine type (aspirated or turbo)"
+ },
+ "HINTVALVETRONIK": {
+  "eng": "Valvetronik",
+  "ita": "Valvetronik",
+  "por": "Valvetronik"
+ },
+ "LABELACCENSIONE": {
+  "eng": "No. of cylinders",
+  "ita": "Numero cilindri",
+  "por": "NÃºmero de cilindros"
+ },
+ "LABELANTICIPOEV1": {
+  "eng": "EV1 opening advance",
+  "ita": "Anticipo apertura EV1",
+  "por": "EV1 opening advance"
+ },
+ "LABELANTICIPOEV2": {
+  "eng": "EV2 opening advance",
+  "ita": "Anticipo apertura EV2",
+  "por": "EV2 opening advance"
+ },
+ "LABELBAR": {
+  "eng": "mbar",
+  "ita": "mbar",
+  "por": "mbar"
+ },
+ "LABELBARV": {
+  "eng": "mbar/V",
+  "ita": "mbar/V",
+  "por": "mbar/V"
+ },
+ "LABELBASSAPRESSIONE": {
+  "eng": "Low pressure value for change back",
+  "ita": "Valore di bassa pressione per il ritorno",
+  "por": "Valor da baixa pressÃ£o para a reversÃ£o"
+ },
+ "LABELCAMBIO": {
+  "eng": "Type of change-over",
+  "ita": "Tipo di cambio",
+  "por": "Tipo de mudanÃ§a"
+ },
+ "LABELCARATTERISTICATEMP": {
+  "eng": "Engine temperature sensor characterisics",
+  "ita": "Caratteristica sensore di temperatura del motore",
+  "por": "Tabela do sensor de temperatura do motor"
+ },
+ "LABELCICCHETTOINJ": {
+  "eng": "Gas injection time in priming",
+  "ita": "Tempo di iniezione gas in cicchetto",
+  "por": "Gas injection time in priming"
+ },
+ "LABELCICCHETTONUM": {
+  "eng": "Number of gas injections in priming",
+  "ita": "Numero iniettate gas in cicchetto",
+  "por": "Number of gas injections in priming"
+ },
+ "LABELCICCHETTORPM": {
+  "eng": "RPM threshold for crank",
+  "ita": "Soglia giri per crank",
+  "por": "RPM threshold for crank"
+ },
+ "LABELCORRETTOREINTEGRALE": {
+  "eng": "Options",
+  "ita": "Opzioni",
+  "por": "OpÃ§Ãµes"
+ },
+ "LABELCORREZIONIPRESSIONE": {
+  "eng": "Pressure corrections (bar)",
+  "ita": "Correzioni pressione (bar)",
+  "por": "CorreÃ§Ãµes da pressÃ£o (bar)"
+ },
+ "LABELEXTRAINIETTATE": {
+  "eng": "extra-injections",
+  "ita": "extrainiettate",
+  "por": "extra-injeÃ§Ã£o"
+ },
+ "LABELFULLGROUP": {
+  "eng": "Full group",
+  "ita": "Full group",
+  "por": "Full group"
+ },
+ "LABELGIRICAMBIO": {
+  "eng": "Revs. threshold for change-over",
+  "ita": "Soglia giri per il cambio",
+  "por": "NÂº de rotaÃ§Ãµes para a mudanÃ§a"
+ },
+ "LABELINSTR": {
+  "eng": "RETURN: insert value SPACE: acquire value",
+  "ita": "INVIO: inserimento valore SPAZIO: apprendimento valore",
+  "por": "VOLTAR: introduza valor ESPAÃO: aquisiÃ§Ã£o do valor"
+ },
+ "LABELLIVEMULALTO": {
+  "eng": "High emulation level",
+  "ita": "Livello alto di emulazione",
+  "por": "NÃ­vel alto de emulaÃ§Ã£o"
+ },
+ "LABELLIVEMULBASSO": {
+  "eng": "Low emulation level",
+  "ita": "Livello basso di emulazione",
+  "por": "NÃ­vel baixo de emulaÃ§Ã£o"
+ },
+ "LABELNOTA": {
+  "eng": "Warning !!! Parameters in red can only be changed with key of-ignition off.",
+  "ita": "Attenzione !!! I parametri in rosso sono modificabili solo con sottochiave disinserito.",
+  "por": "AtenÃ§Ã£o !!! Os parÃ¢metros em vermelho podem ser modificados somente com sub-chave desligada."
+ },
+ "LABELNUMEROINIETTATESMAGR": {
+  "eng": "Leaning number of injections",
+  "ita": "Numero iniettate in smagrimento",
+  "por": "Abaixamento nÃºmero de injeÃ§Ãµes"
+ },
+ "LABELNUMEROSONDE": {
+  "eng": "Number of Lambda probes",
+  "ita": "Numero sonde lambda",
+  "por": "NÃºmero de sondas Lambda"
+ },
+ "LABELOFFSET": {
+  "eng": "Offset",
+  "ita": "Offset",
+  "por": "offset"
+ },
+ "LABELPARAMETRITEMP": {
+  "eng": "Engine temperature sensor parameters",
+  "ita": "Parametri per il sensore di temperatura del motore",
+  "por": "ParÃ¢metros para o sensor de temperatura do motor"
+ },
+ "LABELPASSAGGIOGRADI": {
+  "eng": "(Â°C)",
+  "ita": "(Â°C)",
+  "por": "(Â°C)"
+ },
+ "LABELPASSAGGIOSECONDI": {
+  "eng": "(seconds)",
+  "ita": "(sec)",
+  "por": "(seg)"
+ },
+ "LABELPENDENZA": {
+  "eng": "Slope",
+  "ita": "Pendenza",
+  "por": "pendÃªncia"
+ },
+ "LABELPERIODORIATTIVPOMPA": {
+  "eng": "Pump reactivation period",
+  "ita": "Periodo riattivazione pompa",
+  "por": "Pump reactivation period"
+ },
+ "LABELPRESSASS": {
+  "eng": "Pressure corrections depending on P manif / P rail",
+  "ita": "Correzioni pressione in funzione del rapporto P coll / P rail",
+  "por": "CorreÃ§Ãµes de pressÃ£o em funÃ§Ã£o da relaÃ§Ã£o P coll / P rail"
+ },
+ "LABELPRESSPASS": {
+  "eng": "Pressure for change back to petrol",
+  "ita": "Pressioni per il retropassaggio benzina",
+  "por": "PressÃµes para a reversÃ£o gasolina"
+ },
+ "LABELPRESSRID": {
+  "eng": "P red.(bar)",
+  "ita": "P rid.(bar)",
+  "por": "P red.(bar)"
+ },
+ "LABELRIFERIMENTI": {
+  "eng": "Temperature refs. (Â°C)",
+  "ita": "Riferimenti temperatura (Â°C)",
+  "por": "ReferÃªncias de temperatura (Â°C)"
+ },
+ "LABELRIFINFCALDA": {
+  "eng": "Low. ref. warm-up",
+  "ita": "Rif. inf. scaldarsi",
+  "por": "Low. ref. warm-up"
+ },
+ "LABELRIFINFFREDDA": {
+  "eng": "Low. ref. cooling",
+  "ita": "Rif. inf. raffreddarsi",
+  "por": "Low. ref. cooling"
+ },
+ "LABELRIFLAMBDA": {
+  "eng": "Reference",
+  "ita": "Riferimento",
+  "por": "Reference"
+ },
+ "LABELRIFSUPCALDA": {
+  "eng": "High. ref. warm-up",
+  "ita": "Rif. sup. scaldarsi",
+  "por": "High. ref. warm-up"
+ },
+ "LABELRIFSUPFREDDA": {
+  "eng": "High. ref. cooling",
+  "ita": "Rif. sup. raffreddarsi",
+  "por": "High. ref. cooling"
+ },
+ "LABELRITARDOCAMBIO": {
+  "eng": "Switch-over from petrol to gas delay",
+  "ita": "Ritardo passaggio benzina-gas",
+  "por": "Atraso na passagem gasolina/gÃ¡s"
+ },
+ "LABELRITARDOCAMBIOGAS": {
+  "eng": "Delay in petrol-gas switch over with gas temp.",
+  "ita": "Ritardo passaggio benzina-gas con temp. gas",
+  "por": "Atraso na reversÃ£o gasolina-gÃ¡s com temp. GÃ¡s"
+ },
+ "LABELRITARDOGIRIEMULAZIONE": {
+  "eng": "Start emulation delay",
+  "ita": "Ritardo per attivazione emulazione",
+  "por": "Atraso inicial de emulaÃ§Ã£o"
+ },
+ "LABELRITARDOLAMBDA": {
+  "eng": "Reading delay",
+  "ita": "Ritardo lettura",
+  "por": "Reading delay"
+ },
+ "LABELRITORNOBENZINA": {
+  "eng": "Low pressure time for change back",
+  "ita": "Tempo di bassa pressione per il ritorno",
+  "por": "Tempo de baixa pressÃ£o para retornar"
+ },
+ "LABELRPMANTICIPOPOMPA": {
+  "eng": "RPM pump activation advance in voluntary contrib.",
+  "ita": "RPM anticipo attiv. pompa per contrib. volontario",
+  "por": "RPM pump activation advance in voluntary contrib."
+ },
+ "LABELRPMATTIVPOMPA": {
+  "eng": "Pump activation RPM for automatic contribution",
+  "ita": "RPM attiv. pompa per contrib. automatico",
+  "por": "Pump activation RPM for automatic contribution"
+ },
+ "LABELSEGNALEGIRI": {
+  "eng": "Type of rev signal",
+  "ita": "Tipo di segnale giri",
+  "por": "Tipo de sinal rotaÃ§Ãµes"
+ },
+ "LABELSENSORE1": {
+  "eng": "Reserve",
+  "ita": "Riserva",
+  "por": "Reserva"
+ },
+ "LABELSENSORE2": {
+  "eng": "1/4",
+  "ita": "1/4",
+  "por": "1/4"
+ },
+ "LABELSENSORE3": {
+  "eng": "2/4",
+  "ita": "2/4",
+  "por": "2/4"
+ },
+ "LABELSENSORE4": {
+  "eng": "3/4",
+  "ita": "3/4",
+  "por": "3/4"
+ },
+ "LABELSENSORELIVELLO": {
+  "eng": "Type of GAS level sensor",
+  "ita": "Tipo di sensore livello GAS",
+  "por": "Tipo de sensor de nÃ­vel do gÃ¡s"
+ },
+ "LABELSMAGRRIENTROCUTOFF": {
+  "eng": "Exit from cutoff leaning",
+  "ita": "Smagrimento rientro da cutoff",
+  "por": "Abaixamento saÃ­da da cutoff"
+ },
+ "LABELSOGLIAMAP": {
+  "eng": "MAPthreshold (V)",
+  "ita": "Soglia MAP (V)",
+  "por": "Limiar MAP (V)"
+ },
+ "LABELSOGLIAPRESS": {
+  "eng": "Subsonic flow threshold",
+  "ita": "Soglia di flusso subsonico",
+  "por": "Limiar de fluxo subsÃ´nico"
+ },
+ "LABELSOVRAPPOSIZIONE": {
+  "eng": "Overlapping time",
+  "ita": "Tempo di sovrapposizione",
+  "por": "Tempo de sobreposiÃ§Ã£o"
+ },
+ "LABELTEMPACQUA": {
+  "eng": "T.water (Â°C)",
+  "ita": "T.acqua (Â°C)",
+  "por": "T. Ã¡gua (Â°C)"
+ },
+ "LABELTEMPCAMBIO": {
+  "eng": "Gas temperature for change-over",
+  "ita": "Temperatura gas per il cambio",
+  "por": "Temperatura do gÃ¡s para o cambio"
+ },
+ "LABELTEMPGAS": {
+  "eng": "Gas temperature sensor type",
+  "ita": "Tipo di sensore temperatura gas",
+  "por": "Tipo de sensor da temp. do gÃ¡s"
+ },
+ "LABELTEMPMOTORE": {
+  "eng": "Water temperature for change-over",
+  "ita": "Temperatura acqua per il cambio",
+  "por": "Temperatura da Ã¡gua para o cambio"
+ },
+ "LABELTEMPOATTIVPOMPA": {
+  "eng": "Minimum time for petrol pump activation",
+  "ita": "Tempo minimo attiv. pompa benzina",
+  "por": "Minimum time for petrol pump activation"
+ },
+ "LABELTEMPOMORTOBENZ": {
+  "eng": "Petrol injector dead time",
+  "ita": "T morto iniettore benzina",
+  "por": "Tempo morto do injetor de gasolina"
+ },
+ "LABELTEMPOMORTOGAS": {
+  "eng": "Gas injector dead time",
+  "ita": "T morto iniettore gas",
+  "por": "Tempo morto do injetor de gÃ¡s"
+ },
+ "LABELTEMPOSONDAFREDDA": {
+  "eng": "Time to retain cool probe",
+  "ita": "Tempo per ritenere sonda fredda",
+  "por": "Time to retain cool probe"
+ },
+ "LABELTINJBENZMAXPERCAMBIO": {
+  "eng": "Max petrol inj. time for gas change-over",
+  "ita": "Tinj benzina massimo per cambio gas",
+  "por": "T.inj gasolina mÃ¡ximo para mudanÃ§a gÃ¡s"
+ },
+ "LABELTIPOINIETTORE": {
+  "eng": "Injector type",
+  "ita": "Tipo iniettore",
+  "por": "Tipo de injetor"
+ },
+ "LABELTIPOLAMBDA": {
+  "eng": "Type of Lambda probe",
+  "ita": "Tipo di sonda Lambda",
+  "por": "Tipo de sonda Lambda"
+ },
+ "LABELTIPOSONDA1": {
+  "eng": "Oxygen Sensor 1 (purple wire)",
+  "ita": "Sonda Lambda 1 (filo viola)",
+  "por": "Sonda Lambda 1 (fio roxo)"
+ },
+ "LABELTIPOSONDA2": {
+  "eng": "Oxygen Sensor 2 (purple/black wire)",
+  "ita": "Sonda Lambda 2 (filo viola/nero)",
+  "por": "Sonda Lambda 2 (fio roxo/preto)"
+ },
+ "LABPRAIL": {
+  "eng": "P rail",
+  "ita": "P rail",
+  "por": "P rail"
+ },
+ "LABTINJPRESS": {
+  "eng": "t.inj.p",
+  "ita": "t.inj.b",
+  "por": "t.inj.gasolina"
+ },
+ "STATICTARATURA": {
+  "eng": "Calibration mod.",
+  "ita": "Mod.taratura",
+  "por": "Mod.calibragem"
+ },
+ "TABCAMBIO": {
+  "eng": "Gas change-over",
+  "ita": "Cambio GAS",
+  "por": "MudanÃ§a do gÃ¡s"
+ },
+ "TABCORRETTORI": {
+  "eng": "Fuel trim",
+  "ita": "Correttori",
+  "por": "Comp. combust."
+ },
+ "TABEMISSIONI": {
+  "eng": "Emissions",
+  "ita": "Emissioni",
+  "por": "EmissÃµes"
+ },
+ "TABLAMBDA": {
+  "eng": "Lambda",
+  "ita": "Lambda",
+  "por": "Sonda Lambda"
+ },
+ "TABSENSORE": {
+  "eng": "Gas level",
+  "ita": "Livello gas",
+  "por": "NÃ­vel do gÃ¡s"
+ }
+}
