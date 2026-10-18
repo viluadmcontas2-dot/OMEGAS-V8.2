@@ -31,6 +31,7 @@
       this.liveContext = null;
       this.curveImport = null;
       this.ensureContextChrome();
+      this.ensureSuggestionChrome();
       this.bind();
     }
 
@@ -53,6 +54,87 @@
         back.textContent = 'Voltar ao aprendizado';
         actions.prepend(back);
       }
+    }
+
+    ensureSuggestionChrome() {
+      const toolbar = this.root?.querySelector('.surface-toolbar > div');
+      if (!toolbar || document.getElementById('mapShowEquivalence')) return;
+      const status = this.root?.querySelector('.page-intro p');
+      if (status) status.id = 'mapSuggestionStatus';
+      const toggle = document.createElement('button');
+      toggle.id = 'mapShowEquivalence';
+      toggle.type = 'button';
+      toggle.className = 'quiet-button';
+      toggle.textContent = 'Equivalência % por RPM';
+      toggle.addEventListener('click', () => {
+        this.showEquivalence = !this.showEquivalence;
+        this.host.hidden = !!this.showEquivalence;
+        document.getElementById('mapEquivalence').hidden = !this.showEquivalence;
+        toggle.textContent = this.showEquivalence ? 'Voltar ao Mapa K' : 'Equivalência % por RPM';
+      });
+      toolbar.appendChild(toggle);
+      const prepare = document.createElement('button');
+      prepare.id = 'mapPrepareSuggestion';
+      prepare.type = 'button';
+      prepare.className = 'quiet-button';
+      prepare.textContent = 'Preparar sugestão';
+      prepare.disabled = true;
+      prepare.addEventListener('click', () => this.prepareMapSuggestion());
+      toolbar.appendChild(prepare);
+      const table = document.createElement('div');
+      table.id = 'mapEquivalence';
+      table.hidden = true;
+      table.style.cssText = 'min-height:0;flex:1;overflow:hidden;padding:8px';
+      table.innerHTML = this.equivalenceTable(null);
+      this.host.parentNode.appendChild(table);
+    }
+
+    /** Só apresenta números calculados pelo Kotlin. Faixas de gasolina do Ledger, não nós da curva. */
+    equivalenceTable(equivalence) {
+      const cells = Array.isArray(equivalence?.cells) ? equivalence.cells : [];
+      if (!cells.length) return '<p>Equivalência GNV × gasolina por faixa e RPM: —</p>';
+      const columns = [...new Set(cells.map(c => c.column))].filter(Number.isInteger).sort((a, b) => a - b);
+      const bands = [...new Set(cells.map(c => c.band))].filter(Number.isInteger).sort((a, b) => a - b);
+      const header = columns.map(c => `<th scope="col">${fmt(cells.find(x => x.column === c)?.rpm, 0)}</th>`).join('');
+      const rows = bands.map(b => {
+        const band = cells.find(c => c.band === b);
+        return `<tr><th scope="row">${fmt(band.fromMs, 1)}–${fmt(band.toMs, 1)}</th>` + columns.map(c => {
+          const value = finite(cells.find(x => x.band === b && x.column === c)?.errorPercent);
+          return `<td style="text-align:center;padding:8px 2px">${value === null ? '—' : fmt(value, 1) + '%'}</td>`;
+        }).join('') + '</tr>';
+      }).join('');
+      return `<table style="width:100%;table-layout:fixed;font-size:12px"><caption>Equivalente em GNV × gasolina · diferença % · somente leitura</caption><thead><tr><th scope="col">Faixa ms / RPM</th>${header}</tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    renderMapSuggestion(suggestion) {
+      this.mapSuggestion = suggestion || null;
+      const canPrepare = suggestion?.verdict === 'SUGERIR' && Array.isArray(suggestion.cells) && suggestion.cells.length > 0;
+      text('mapSuggestionStatus', canPrepare ? `Sugestão pendente: ${suggestion.cells.length} células. Prepare e confira antes de gravar.`
+        : suggestion?.verdict === 'JA_OK' ? 'Sem diferença local a corrigir nas faixas medidas.'
+          : suggestion?.reason === 'LIMITE_DO_MAPA' ? 'A correção atingiu o limite do Mapa K. Nada será preparado.'
+            : 'Ainda faltam dados confirmados para sugerir um ajuste local.');
+      const button = document.getElementById('mapPrepareSuggestion');
+      if (button) button.disabled = !canPrepare || !this.editor.hasMap() || this.reading || !!this.curvePlan || !!this.curveImport;
+      const table = document.getElementById('mapEquivalence');
+      const html = this.equivalenceTable(suggestion?.equivalence);
+      if (table && html !== this.lastEquivalenceHtml) { table.innerHTML = html; this.lastEquivalenceHtml = html; }
+    }
+
+    prepareMapSuggestion() {
+      // Refaz a consulta no toque quando há ponte; o estado apresentado pode ter sido invalidado por curva/mapa novos.
+      if (ns.AutoCalApi?.equivalence) this.renderMapSuggestion(ns.AutoCalApi.equivalence()?.mapSuggestion);
+      const suggestion = this.mapSuggestion;
+      if (suggestion?.verdict !== 'SUGERIR' || !Array.isArray(suggestion.cells) || !suggestion.cells.length ||
+          !this.editor.hasMap() || this.reading || this.curvePlan || this.curveImport || this.root?.classList.contains('is-writing')) return;
+      this.showEquivalence = false;
+      if (this.host) this.host.hidden = false;
+      const table = document.getElementById('mapEquivalence');
+      if (table) table.hidden = true;
+      text('mapShowEquivalence', 'Equivalência % por RPM');
+      // Nunca usa alvos guardados: o caminho existente pede prévia Kotlin sobre o mapa atualmente lido.
+      this.applyContext({ suggestion: { mapChanges: suggestion.cells.map(c => ({
+        row: c.row, column: c.column, deltaPercent: c.deltaPercent,
+      })) } });
     }
 
     bind() {
@@ -278,6 +360,7 @@
     }
 
     poll() {
+      this.renderMapSuggestion(ns.AutoCalApi?.equivalence?.()?.mapSuggestion);
       this.pollCurveToMap();
       if (this.reading) {
         const result = this.api.mapReadResult();
