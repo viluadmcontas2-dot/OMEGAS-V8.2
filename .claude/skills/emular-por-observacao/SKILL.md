@@ -9,7 +9,7 @@ Regra de ouro: **se não dá para rodar o original, emule o que ele observa e o 
 
 ## Receita (nesta ordem; pare quando a pergunta estiver respondida)
 
-1. **Inventário do que já existe.** Capturas (Portmon etc.), recursos do executável (formulários DFM/RCDATA), strings, ini, prints do dono. Só depois pense em abrir o binário.
+1. **Inventário do que já existe.** Comece por `docs/mapa-de-fontes/MAPA.md` (onde está cada arquivo: repo, PROTOCOLO-LANDI, Drive) — nunca peça ao dono o que está lá; `python3 tools/obter_progbase.py` baixa o ProgBase.exe e `python3 tools/baixar_drive.py <id>` qualquer arquivo da pasta OMEGAS do Drive (link direto; o conector não baixa >10 MB). Capturas (Portmon etc.), recursos do executável (formulários DFM/RCDATA), strings, ini, prints do dono. Só depois pense em abrir o binário.
 2. **Capturas → transações.** Parser que junta `WRITE` + `READ` em pares requisição/resposta (`tools/portmon_transacoes.py`; para logs com várias portas: `tools/portmon_dispositivo_ecu.py`, filtra só o dispositivo da ECU). Valide: checksum 100%, tamanho de quadro, ecos. Portmon não tem relógio: o tempo é a soma das durações.
 3. **Esquema pelos recursos.** Leitor de formulários Delphi (`tools/dfm.py`) → tabela de objetos (endereço, escala, tamanho). Isso dá nomes e unidades de graça e mostra o que é de outro módulo (ex.: `0x017C` era Estratégia Panda, não AutoCal).
 4. **Decompilar só os handlers necessários.** Ghidra headless com **projeto salvo** (`tools/ghidra/run.sh` + `DecompTargets.java`; a 1ª análise leva ~12 min, as seguintes segundos). Rode em segundo plano. Código com ponto flutuante x87 sai quebrado: desmonte com `capstone` e leia a conta (foi assim que saiu a fórmula do `ExportToK`). Procure o início da função voltando até `55 8B EC`.
@@ -30,6 +30,10 @@ Regra de ouro: **se não dá para rodar o original, emule o que ele observa e o 
 - Antes de culpar o app, ache o estado real: "gráfico trava" pode ser porta lógica (referência inutilizável), não erro de JS.
 - Clones parciais (sparse) exigem `git add --sparse`.
 - Não cite resultado sem ter rodado. Teste que não exercita o comportamento observado não é PASS.
+
+- Caixa/flag de tela Delphi sem `DataIndex` no DFM: o liga/desliga é um bit de `FLAG_CONFx`. Ache o método publicado na tabela de métodos da classe (entrada = tamanho u16, endereço u32, nome em shortstring), siga os acessos ao campo `[reg+offset]` do controle (tabela de campos: offset u32, tipo u16, nome) e os getters/setters genéricos (`0x42E754`/`0x42E8D8`, caso = índice do bit). Foi assim que o anti-stallo saiu (bit 0x20 da palavra 0 de FLAG_CONF3, cód. 250).
+- Valide todo parser de captura contra um valor já conhecido antes de confiar (ex.: ANTI_STALLO lido do log = 1600,100,1500,2,20) e confira o checksum de cada resposta.
+- Link direto do Drive devolve página HTML de login quando o arquivo não está compartilhado: confira os 4 primeiros bytes (PK/MZ) antes de usar.
 
 ## Quando ainda assim faltar dado
 
