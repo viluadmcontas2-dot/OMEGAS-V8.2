@@ -1,0 +1,7343 @@
+{
+ "fonte": {
+  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "i18n": "i18n_all.json",
+  "gerador": "tools/emulacao/flags_do_original.py"
+ },
+ "vetores_rtti_TStreamDati": {
+  "FLAG_CONF1": "0x90",
+  "FLAG_CONF2": "0x2E8",
+  "MASK_FUNCTION": "0x2EC",
+  "FLAG_CONF3": "0x39C",
+  "FLAG_CONF2_LR": "0x474"
+ },
+ "TAebVector_SetValues": "0x978F8C",
+ "rotinas": [
+  {
+   "cache": "0x2984",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "casos": 36,
+   "envio": [
+    {
+     "condicoes": [
+      "obj+0x80E!=0"
+     ],
+     "vetor": "FLAG_CONF1"
+    },
+    {
+     "condicoes": [
+      "obj+0x80E==0"
+     ],
+     "vetor": null
+    }
+   ]
+  },
+  {
+   "cache": "0x298C",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "casos": 30,
+   "envio": [
+    {
+     "condicoes": [
+      "obj+0x80D!=0",
+      "obj+0x80E!=0"
+     ],
+     "vetor": "FLAG_CONF2_LR"
+    },
+    {
+     "condicoes": [
+      "obj+0x80D!=0",
+      "obj+0x80E==0"
+     ],
+     "vetor": null
+    },
+    {
+     "condicoes": [
+      "obj+0x80D==0",
+      "obj+0x80E!=0"
+     ],
+     "vetor": "FLAG_CONF2"
+    },
+    {
+     "condicoes": [
+      "obj+0x80D==0",
+      "obj+0x80E==0"
+     ],
+     "vetor": null
+    }
+   ]
+  },
+  {
+   "cache": "0x2994",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "casos": 19,
+   "envio": [
+    {
+     "condicoes": [
+      "obj+0x80D!=0"
+     ],
+     "vetor": null
+    },
+    {
+     "condicoes": [
+      "obj+0x80D==0",
+      "obj+0x80E!=0"
+     ],
+     "vetor": "FLAG_CONF3"
+    },
+    {
+     "condicoes": [
+      "obj+0x80D==0",
+      "obj+0x80E==0"
+     ],
+     "vetor": null
+    }
+   ]
+  }
+ ],
+ "mask_function": {
+  "buffer": "0x29EC",
+  "valido": "0x2A64",
+  "predicados": 11
+ },
+ "convencao": {
+  "palavra": "índice do u16 no vetor (cópia local = 1 dword por palavra)",
+  "condicao": "'sempre' ou o caminho do código por [obj+0x80D] (0x80D!=0 => envio a FLAG_CONF2_LR)",
+  "coerente": "getter testa, setter liga (or) e desliga (and ~) o mesmo bit"
+ },
+ "flags": [
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0002",
+   "caso": 1,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0002"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0002"
+   },
+   "coerente": true,
+   "efeito_extra_setter": "0x42D41F",
+   "controles": [
+    {
+     "nome": "ComboCarburante",
+     "form": "TFormConfig",
+     "campo_offset": "0x7BC",
+     "classe": "TKeyComboBox",
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A6AF8",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x430643",
+     "rotina": "sub_4304F0",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4393DD",
+     "rotina": "sub_439358",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x46CE5A",
+     "rotina": "sub_44BE79",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x478DDF",
+     "rotina": "sub_472A37",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x47DBA2",
+     "rotina": "sub_472A37",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x485D6B",
+     "rotina": "TFormCalibra.TimerBlinkTimer",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x486250",
+     "rotina": "TFormCalibra.TimerBlinkTimer",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4AA792",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B97E6",
+     "rotina": "TFormConfig.ComboCarburanteKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4B9856",
+     "rotina": "TFormConfig.ComboCarburanteKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4B9DBE",
+     "rotina": "TFormConfig.ComboTurboKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4BA8AE",
+     "rotina": "TFormConfig.ComboTipoIniettoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4BAC22",
+     "rotina": "TFormConfig.ComboTipoIniettoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4BAF9B",
+     "rotina": "sub_4BAE94",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BCE53",
+     "rotina": "TFormConfig.ComboTagliaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4BDFF9",
+     "rotina": "TFormConfig.EditFiltroEnter",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C1CB8",
+     "rotina": "TFormConfig.CheckSplitFuelClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C21CA",
+     "rotina": "TFormConfig.CheckSplitFuelClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4D8A23",
+     "rotina": "sub_4D83CC",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4D95E8",
+     "rotina": "sub_4D83CC",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4D9C5D",
+     "rotina": "TFormFile.FormActivate",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED800",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4F6C63",
+     "rotina": "sub_4F496C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4F7659",
+     "rotina": "sub_4F6CC8",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4F8EF8",
+     "rotina": "sub_4F8BB4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4F909A",
+     "rotina": "sub_4F8BB4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4FBBFB",
+     "rotina": "sub_4FBA40",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4FF06E",
+     "rotina": "TFormMain.ActionSalvaExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x50150F",
+     "rotina": "TFormMain.ActionResetDaPcExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x502D1C",
+     "rotina": "sub_50204D",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0008",
+   "caso": 12,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0008"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0008"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0010",
+   "caso": 14,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0010"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0010"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "ComboMisuratorePressione",
+     "form": "TFormConfig",
+     "campo_offset": "0x694",
+     "classe": "TKeyComboBox",
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AE70D",
+       "rotina": "TFormConfig.ComboPressioneKeyPress",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4AEDDF",
+       "rotina": "sub_4AEACA",
+       "rotina_marca": "DERIVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48ADEA",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48D67B",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB162",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB2D6",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB3EC",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AE4CA",
+     "rotina": "TFormConfig.ComboPressioneKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4AE4E6",
+     "rotina": "TFormConfig.ComboPressioneKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AE72D",
+     "rotina": "TFormConfig.ComboPressioneKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AEBB3",
+     "rotina": "sub_4AEACA",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AEDFF",
+     "rotina": "sub_4AEACA",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AF10C",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AF1B0",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AF21B",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B1055",
+     "rotina": "TFormConfig.TabKCoefficientiShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BED12",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BEDE7",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BEEBC",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BEF91",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0020",
+   "caso": 27,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0020"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0020"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckSequenzaInj",
+     "form": "TFormConfig",
+     "campo_offset": "0xC44",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilitazione manuale sequenza iniezione",
+     "caption_eng": "Enable manual injection sequence",
+     "caption_por": "HabilitaÃ§Ã£o manual seqÃ¼Ãªncia injeÃ§Ã£o",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AC681",
+       "rotina": "TFormConfig.TabIniezioneShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4BC195",
+       "rotina": "TFormConfig.CheckSequenzaInjClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "CheckCambioConSovrapp",
+     "form": "TFormConfig",
+     "campo_offset": "0xEDC",
+     "classe": "TCheckBox",
+     "caption_ita": "Cambio con sovrapposizione",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A87D4",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": true
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4A7EA4",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AC819",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BA3C4",
+     "rotina": "TFormConfig.ComboCilindriKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BC1F7",
+     "rotina": "TFormConfig.CheckSequenzaInjClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BD855",
+     "rotina": "TFormConfig.ComboSfasaturaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BD8A6",
+     "rotina": "TFormConfig.ComboSfasaturaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4BDB0C",
+     "rotina": "TFormConfig.ComboSfasaturaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4BDD5D",
+     "rotina": "TFormConfig.ComboSfasaturaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BDE5C",
+     "rotina": "TFormConfig.ComboSfasaturaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF2DE",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF471",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF4F1",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF565",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF5D0",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C7A70",
+     "rotina": "sub_4C7A10",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C8103",
+     "rotina": "TFormConfig.ImageInjOnClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C820B",
+     "rotina": "TFormConfig.ImageInjOffClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4CA6A7",
+     "rotina": "TFormConfig.CheckProgressioniClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4D182D",
+     "rotina": "TFormDiagnosi.FormActivate",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4D76C4",
+     "rotina": "TFormDiagnosi.PanelOffClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4D77D4",
+     "rotina": "TFormDiagnosi.PanelOnClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0040",
+   "caso": 18,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0040"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0040"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x490977",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4909B0",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4909EC",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x490A25",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A7505",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A753E",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A757A",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A75B3",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A8708",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C5804",
+     "rotina": "TFormConfig.CheckSegnaleGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C689D",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C68BF",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4C68E1",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C6903",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4C698A",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0080",
+   "caso": 19,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0080"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0080"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckElettrovalvole",
+     "form": "TFormConfig",
+     "campo_offset": "0xCD0",
+     "classe": "TCheckBox",
+     "caption_ita": "Elettrovalvole gas aperte con anticipo",
+     "caption_eng": "Gas electrovalves opened in advance",
+     "caption_por": "ElectrovÃ¡lvulas gÃ¡s abertas com antecedencia",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AA340",
+       "rotina": "sub_4A9DC4",
+       "rotina_marca": "DERIVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C5099",
+       "rotina": "TFormConfig.CheckElettrovalvoleClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0100",
+   "caso": 0,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0100"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0100"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x48C5E9",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48C71B",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48C7C2",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48C85A",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A7D7F",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A7F63",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A7FF0",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A8046",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A82E9",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A9028",
+     "rotina": "TFormConfig.ComboCambioKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4A909A",
+     "rotina": "TFormConfig.ComboCambioKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4A90FE",
+     "rotina": "sub_4A90B8",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A9162",
+     "rotina": "sub_4A90B8",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A91EF",
+     "rotina": "sub_4A90B8",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A9245",
+     "rotina": "sub_4A90B8",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A929B",
+     "rotina": "sub_4A90B8",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C4ECB",
+     "rotina": "TFormConfig.TabKFactorShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0200",
+   "caso": 2,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0200"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0200"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0400",
+   "caso": 3,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0400"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0400"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0800",
+   "caso": 4,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0800"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0800"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x427224",
+     "rotina": "TFormGraficoScope.ActionSwitchExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x42726F",
+     "rotina": "TFormGraficoScope.ActionSwitchExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x49EB7F",
+     "rotina": "TFormConfig.FormKeyDown",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x49ED3C",
+     "rotina": "TFormConfig.FormKeyDown",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x49EF17",
+     "rotina": "TFormConfig.FormKeyDown",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ACFCF",
+     "rotina": "TFormConfig.ButtonTaraturaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ACFE7",
+     "rotina": "TFormConfig.ButtonTaraturaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4AD05A",
+     "rotina": "TFormConfig.ButtonTaraturaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4ADD5C",
+     "rotina": "TFormConfig.PageControlChanging",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ADED0",
+     "rotina": "TFormConfig.FormCloseQuery",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B19F4",
+     "rotina": "sub_4B19DC",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B1A0C",
+     "rotina": "sub_4B19DC",
+     "rotina_marca": "DERIVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4B2034",
+     "rotina": "sub_4B201C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B204C",
+     "rotina": "sub_4B201C",
+     "rotina_marca": "DERIVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4B2A5C",
+     "rotina": "sub_4B2A44",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B2A74",
+     "rotina": "sub_4B2A44",
+     "rotina_marca": "DERIVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4C9AE0",
+     "rotina": "TFormConfig.LabGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4C9AF0",
+     "rotina": "TFormConfig.LabGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C9B04",
+     "rotina": "TFormConfig.LabGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4C9B6C",
+     "rotina": "TFormConfig.LabGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x50DD79",
+     "rotina": "TFormVisualizza.ButtonCommutatoreClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x50DDCB",
+     "rotina": "TFormVisualizza.ButtonCommutatoreClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x1000",
+   "caso": 5,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x1000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x1000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x427202",
+     "rotina": "TFormGraficoScope.ActionSwitchExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x427214",
+     "rotina": "TFormGraficoScope.ActionSwitchExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x42723E",
+     "rotina": "TFormGraficoScope.ActionSwitchExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x427255",
+     "rotina": "TFormGraficoScope.ActionSwitchExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4AD031",
+     "rotina": "TFormConfig.ButtonTaraturaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4AD047",
+     "rotina": "TFormConfig.ButtonTaraturaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4B1187",
+     "rotina": "TFormConfig.ButtonCommutatoreClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4B119E",
+     "rotina": "TFormConfig.ButtonCommutatoreClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4C9AC0",
+     "rotina": "TFormConfig.LabGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4C9AD2",
+     "rotina": "TFormConfig.LabGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C9B1E",
+     "rotina": "TFormConfig.LabGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4C9B35",
+     "rotina": "TFormConfig.LabGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x50DD50",
+     "rotina": "TFormVisualizza.ButtonCommutatoreClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x50DD65",
+     "rotina": "TFormVisualizza.ButtonCommutatoreClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x50DD96",
+     "rotina": "TFormVisualizza.ButtonCommutatoreClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x50DDAD",
+     "rotina": "TFormVisualizza.ButtonCommutatoreClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x2000",
+   "caso": 13,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x2000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x2000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "ComboPressioneMisurata",
+     "form": "TFormConfig",
+     "campo_offset": "0x698",
+     "classe": "TKeyComboBox",
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AE75A",
+       "rotina": "TFormConfig.ComboPressioneKeyPress",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4AEE2C",
+       "rotina": "sub_4AEACA",
+       "rotina_marca": "DERIVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48AE00",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x48AE1E",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x48D772",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48D788",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB231",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB243",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB2E8",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB3FE",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB410",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB491",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AE4A6",
+     "rotina": "TFormConfig.ComboPressioneKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4AE73F",
+     "rotina": "TFormConfig.ComboPressioneKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4AEE11",
+     "rotina": "sub_4AEACA",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4AF053",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AF0A3",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AF11E",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AF1C2",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AF22D",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B1067",
+     "rotina": "TFormConfig.TabKCoefficientiShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BED22",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4BEDF7",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BEECC",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BEFA1",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x50A4D5",
+     "rotina": "sub_5096C4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x4000",
+   "caso": 6,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x4000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x4000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x4A785A",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x8000",
+   "caso": 7,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x8000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x8000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x8000",
+   "caso": 28,
+   "condicao": "obj+0x80D!=0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x8000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x8000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckInibisciEmulazione",
+     "form": "TFormConfig",
+     "campo_offset": "0x560",
+     "classe": "TCheckBox",
+     "caption_ita": "Disattiva emulazione per giri bassi",
+     "caption_eng": "Disable emulation at low rpm",
+     "caption_por": "Desativa a emulaÃ§Ã£o de rotaÃ§Ãµes baixas",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A8C44",
+       "rotina": "TFormConfig.TabEmissioniShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B929F",
+       "rotina": "TFormConfig.CheckInibisciEmulazioneClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B92B1",
+       "rotina": "TFormConfig.CheckInibisciEmulazioneClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0001",
+   "caso": 8,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0001"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0001"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckTempAcqua",
+     "form": "TFormConfig",
+     "campo_offset": "0x6D0",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilita cambio con temperatura acqua",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490601",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B8B60",
+       "rotina": "TFormConfig.CheckTempAcquaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B92E2",
+       "rotina": "TFormConfig.TabTempShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48C296",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B8B8C",
+     "rotina": "TFormConfig.CheckTempAcquaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4B8C3A",
+     "rotina": "TFormConfig.CheckTempAcquaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0002",
+   "caso": 9,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0002"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0002"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckTempGas",
+     "form": "TFormConfig",
+     "campo_offset": "0x5DC",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilita cambio con temperatura gas",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49061F",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B8E38",
+       "rotina": "TFormConfig.CheckTempRiduttoreClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B9300",
+       "rotina": "TFormConfig.TabTempShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "LabelTempCambio",
+     "form": "TFormConfig",
+     "campo_offset": "0x798",
+     "classe": "TLabel",
+     "caption_ita": "Temperatura gas per il cambio",
+     "caption_eng": "Gas temperature for change-over",
+     "caption_por": "Temperatura do gÃ¡s para o cambio",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4B8E4A",
+       "rotina": "TFormConfig.CheckTempRiduttoreClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Visible",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Visible)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48BF89",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0004",
+   "caso": 10,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0004"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0004"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckTempMotore",
+     "form": "TFormConfig",
+     "campo_offset": "0x648",
+     "classe": "TCheckBox",
+     "caption_ita": "Utilizza sensore di temperatura motore della vettura",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49063D",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B8EB0",
+       "rotina": "TFormConfig.CheckTempMotoreClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B931E",
+       "rotina": "TFormConfig.TabTempShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x43C454",
+     "rotina": "sub_439E94",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4B9192",
+     "rotina": "TFormConfig.ButtonNuoviParametriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0008",
+   "caso": 11,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0008"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0008"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0008",
+   "caso": 29,
+   "condicao": "obj+0x80D!=0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0008"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0008"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckConsumometro",
+     "form": "TFormConfig",
+     "campo_offset": "0x964",
+     "classe": "TCheckBox",
+     "caption_ita": "Attiva consumometro (solo GPL)",
+     "caption_eng": "Enable consume meter (only LPG)",
+     "caption_por": "Habil. medidor consumo (sÃ³ GPL)",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4906B5",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C105A",
+       "rotina": "TFormConfig.TabConsumometroShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1131",
+       "rotina": "TFormConfig.CheckConsumometroClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0010",
+   "caso": 15,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0010"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0010"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "MenuControlloIniettori",
+     "form": "TFormConfig",
+     "campo_offset": "0x6A4",
+     "classe": "TMenuItem",
+     "caption_ita": "Abilita controllo iniettori",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49095C",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4BA437",
+     "rotina": "TFormConfig.MenuControlloIniettoriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0020",
+   "caso": 16,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0020"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0020"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "ComboTurbo",
+     "form": "TFormConfig",
+     "campo_offset": "0x738",
+     "classe": "TKeyComboBox",
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A7DE0",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x41E7A0",
+     "rotina": "sub_41E794",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x47959E",
+     "rotina": "sub_472A37",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x485D5C",
+     "rotina": "TFormCalibra.TimerBlinkTimer",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x486241",
+     "rotina": "TFormCalibra.TimerBlinkTimer",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4B9845",
+     "rotina": "TFormConfig.ComboCarburanteKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4B9D4E",
+     "rotina": "TFormConfig.ComboTurboKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4B9DAD",
+     "rotina": "TFormConfig.ComboTurboKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4BA89D",
+     "rotina": "TFormConfig.ComboTipoIniettoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4C1CCE",
+     "rotina": "TFormConfig.CheckSplitFuelClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C1FD1",
+     "rotina": "TFormConfig.CheckSplitFuelClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C21E0",
+     "rotina": "TFormConfig.CheckSplitFuelClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4EB8C5",
+     "rotina": "sub_4EB748",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "propriedade": "Visible",
+     "invertido": false,
+     "campo": "0x3C8"
+    },
+    {
+     "chamada": "0x4FBBE6",
+     "rotina": "sub_4FBA40",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x501500",
+     "rotina": "TFormMain.ActionResetDaPcExecute",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0040",
+   "caso": 30,
+   "condicao": "obj+0x80D!=0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0040"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0040"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckBassaPressione",
+     "form": "TFormConfig",
+     "campo_offset": "0xCC0",
+     "classe": "TCheckBox",
+     "caption_ita": "Ritorno automatico con bassa pressione impostabile",
+     "caption_eng": "Automatic change back with low pressure setting possible",
+     "caption_por": "ReversÃ£o automÃ¡tica por baixa pressÃ£o impostÃ¡vel",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AAE52",
+       "rotina": "TFormConfig.TabSensoreShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4BCAC2",
+       "rotina": "TFormConfig.CheckBassaPressioneClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0080",
+   "caso": 20,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0080"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0080"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0080",
+   "caso": 31,
+   "condicao": "obj+0x80D!=0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0080"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0080"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckMapConfigurato",
+     "form": "TFormConfig",
+     "campo_offset": "0x7E8",
+     "classe": "TCheckBox",
+     "caption_ita": "Map configurato correttamente",
+     "caption_eng": "Map correctly configured",
+     "caption_por": "Map configurado corretamente",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AEE53",
+       "rotina": "sub_4AEACA",
+       "rotina_marca": "DERIVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4BCB68",
+       "rotina": "TFormConfig.CheckMapConfiguratoClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48AE36",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48BE89",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48D79E",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A7953",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB255",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB422",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB4A3",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AE5EE",
+     "rotina": "TFormConfig.ComboPressioneKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4AF130",
+     "rotina": "sub_4AF018",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AF75A",
+     "rotina": "TFormConfig.ButtonRicercaParametriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4B0972",
+     "rotina": "TFormConfig.ButtonRicercaParametriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4BED32",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4BEE07",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BEEDC",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BEFB1",
+     "rotina": "TFormConfig.ComboTipoMisuratoreKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x50CE41",
+     "rotina": "sub_50C7C7",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0080",
+   "caso": 33,
+   "condicao": "obj+0x80D==0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0080"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0080"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x4BF1CB",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BFF42",
+     "rotina": "TFormConfig.RadioGasAltiGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C0002",
+     "rotina": "TFormConfig.RadioGasAltiGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C00C2",
+     "rotina": "TFormConfig.RadioGasAltiGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0100",
+   "caso": 21,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0100"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0100"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0100",
+   "caso": 32,
+   "condicao": "obj+0x80D!=0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0100"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0100"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckPassPRail",
+     "form": "TFormConfig",
+     "campo_offset": "0xCBC",
+     "classe": "TCheckBox",
+     "caption_ita": "Ritorno automatico a benzina con la pressione del rail",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AAE70",
+       "rotina": "TFormConfig.TabSensoreShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4BCB39",
+       "rotina": "TFormConfig.CheckPassPRailClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0100",
+   "caso": 34,
+   "condicao": "obj+0x80D==0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0100"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0100"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x4BF155",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF188",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BFB1E",
+     "rotina": "TFormConfig.RadioGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BFB59",
+     "rotina": "TFormConfig.RadioGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BFB97",
+     "rotina": "TFormConfig.RadioGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0200",
+   "caso": 33,
+   "condicao": "obj+0x80D!=0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0200"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0200"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x4BF1CB",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BFF42",
+     "rotina": "TFormConfig.RadioGasAltiGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C0002",
+     "rotina": "TFormConfig.RadioGasAltiGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C00C2",
+     "rotina": "TFormConfig.RadioGasAltiGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0400",
+   "caso": 17,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0400"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0400"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0400",
+   "caso": 34,
+   "condicao": "obj+0x80D!=0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0400"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0400"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x4BF155",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF188",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BFB1E",
+     "rotina": "TFormConfig.RadioGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BFB59",
+     "rotina": "TFormConfig.RadioGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BFB97",
+     "rotina": "TFormConfig.RadioGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0800",
+   "caso": 26,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0800"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0800"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckAlimentazione",
+     "form": "TFormConfig",
+     "campo_offset": "0xCD4",
+     "classe": "TCheckBox",
+     "caption_ita": "Utilizzo filo EV2 per STAP",
+     "caption_eng": "Use of wire EV2 for STAP",
+     "caption_por": "Use of wire EV2 for STAP",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AAD3A",
+       "rotina": "TFormConfig.TabSensoreShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C67B0",
+       "rotina": "TFormConfig.CheckAlimentazioneClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4AA38E",
+     "rotina": "sub_4A9DC4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AA4E3",
+     "rotina": "sub_4A9DC4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C67CF",
+     "rotina": "TFormConfig.CheckAlimentazioneClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0800",
+   "caso": 35,
+   "condicao": "obj+0x80D!=0",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0800"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0800"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckAdattaBenzina",
+     "form": "TFormConfig",
+     "campo_offset": "0x97C",
+     "classe": "TCheckBox",
+     "caption_ita": "Adattività con mappa benzina",
+     "caption_eng": "Adaptivity with petrol map",
+     "caption_por": "Adaptabilidade com mapa gasolina",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490697",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C0890",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C0E5C",
+       "rotina": "TFormConfig.CheckAdattaBenzinaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "PanelAdatta",
+     "form": "TFormConfig",
+     "campo_offset": "0x988",
+     "classe": "TPanel",
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4C0DCB",
+       "rotina": "TFormConfig.CheckAdattativitaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Visible",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C0EAF",
+       "rotina": "TFormConfig.CheckAdattaBenzinaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Visible",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Visible)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4C0E00",
+     "rotina": "TFormConfig.CheckAdattativitaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C0EE4",
+     "rotina": "TFormConfig.CheckAdattaBenzinaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x1000",
+   "caso": 22,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x1000"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x1000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckIstantaneo",
+     "form": "TFormConfig",
+     "campo_offset": "0x868",
+     "classe": "TCheckBox",
+     "caption_ita": "Passaggio benzina gas in modo sequenziale",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4BF233",
+       "rotina": "TFormConfig.TabBenzinaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": true
+      },
+      {
+       "chamada": "0x4BFA99",
+       "rotina": "TFormConfig.CheckIstantaneoClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": true
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x2000",
+   "caso": 23,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x2000"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x2000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckParzializza",
+     "form": "TFormConfig",
+     "campo_offset": "0x86C",
+     "classe": "TCheckBox",
+     "caption_ita": "Contributo automatico benzina ad alti giri",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4BF25A",
+       "rotina": "TFormConfig.TabBenzinaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": true
+      },
+      {
+       "chamada": "0x4BFAD1",
+       "rotina": "TFormConfig.CheckParzializzaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": true
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x4000",
+   "caso": 24,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x4000"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x4000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x4C8C62",
+     "rotina": "TFormConfig.CheckTaglioPompaBenzinaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4C8DFA",
+     "rotina": "TFormConfig.CheckTaglioPompaBenzinaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF1",
+   "serial_code": 3,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x8000",
+   "caso": 25,
+   "condicao": "sempre",
+   "getter": "0x42CFB8",
+   "setter": "0x42D300",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x8000"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x8000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckAdattativita",
+     "form": "TFormConfig",
+     "campo_offset": "0x920",
+     "classe": "TCheckBox",
+     "caption_ita": "Adattività OBD",
+     "caption_eng": "OBD adaptivity",
+     "caption_por": "Adaptabilidade OBD",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490679",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C086E",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C0D78",
+       "rotina": "TFormConfig.CheckAdattativitaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "PanelAdattaObd",
+     "form": "TFormConfig",
+     "campo_offset": "0x924",
+     "classe": "TPanel",
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4C0DAC",
+       "rotina": "TFormConfig.CheckAdattativitaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Visible",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C0E90",
+       "rotina": "TFormConfig.CheckAdattaBenzinaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Visible",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Visible)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4C0DEA",
+     "rotina": "TFormConfig.CheckAdattativitaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C0ECE",
+     "rotina": "TFormConfig.CheckAdattaBenzinaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0001",
+   "caso": 0,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0001"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0001"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckTagliaExtraIniettate",
+     "form": "TFormConfig",
+     "campo_offset": "0xBC0",
+     "classe": "TCheckBox",
+     "caption_ita": "Taglio extrainiettate",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49078D",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4AC69C",
+       "rotina": "TFormConfig.TabIniezioneShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1BFA",
+       "rotina": "TFormConfig.CheckTagliaExtraIniettateClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0002",
+   "caso": 1,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0002"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0002"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckPartenzaGasCaldo",
+     "form": "TFormConfig",
+     "campo_offset": "0xA0C",
+     "classe": "TCheckBox",
+     "caption_ita": "Partenza a gas a motore caldo",
+     "caption_eng": "Start on gas with hot engine",
+     "caption_por": "Partida gÃ¡s com motor aquecido",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4907AB",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A8610",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C4FE0",
+       "rotina": "TFormConfig.CheckPartenzaGasCaldoClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0004",
+   "caso": 2,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0004"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0004"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckValvetronik",
+     "form": "TFormConfig",
+     "campo_offset": "0x9D4",
+     "classe": "TCheckBox",
+     "caption_ita": "Valvetronik",
+     "caption_eng": "Valvetronik",
+     "caption_por": "Valvetronik",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490805",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A85B6",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C2B51",
+       "rotina": "TFormConfig.CheckValvetronikClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0008",
+   "caso": 3,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0008"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0008"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0010",
+   "caso": 4,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0010"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0010"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckAzzeraErroriObd",
+     "form": "TFormConfig",
+     "campo_offset": "0x9B8",
+     "classe": "TCheckBox",
+     "caption_ita": "Reset errori OBD",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4906D3",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C08CE",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1AD5",
+       "rotina": "TFormConfig.CheckAzzeraErroriObdClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0020",
+   "caso": 5,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0020"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0020"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckDisabilitaCommutatore",
+     "form": "TFormConfig",
+     "campo_offset": "0x9BC",
+     "classe": "TCheckBox",
+     "caption_ita": "Disabilita commutatore",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4907C9",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A854A",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1C2D",
+       "rotina": "TFormConfig.CheckDisabilitaCommutatoreClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0040",
+   "caso": 6,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0040"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0040"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckRiscaldamento",
+     "form": "TFormConfig",
+     "campo_offset": "0xD18",
+     "classe": "TCheckBox",
+     "caption_ita": "Riscaldamento iniettori",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AB9A5",
+       "rotina": "TFormConfig.TabIniezioneShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C6AA3",
+       "rotina": "TFormConfig.CheckRiscaldamentoClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48E5E4",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48E65F",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48E6BD",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48E7EC",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48E88E",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48E90B",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48E9C3",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48EA52",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48EACF",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48EB61",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AB9F4",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ABB92",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ABC6E",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ABD9F",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ABEBE",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ABF72",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AC07F",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AC142",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AC205",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AC2A6",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6AC0",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6C0D",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6D1B",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6DB2",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6E2B",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6ED4",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6F5C",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6FE4",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C7049",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C70CF",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C735A",
+     "rotina": "TFormConfig.CheckboxPreheatAsyncModeClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C73F4",
+     "rotina": "TFormConfig.CheckboxPreheatAsyncModeClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0080",
+   "caso": 7,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0080"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0080"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckAzzeraBlackListObd",
+     "form": "TFormConfig",
+     "campo_offset": "0xFC8",
+     "classe": "TCheckBox",
+     "caption_ita": "Reset selettivo errori OBD",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4906F1",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C090F",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1B05",
+       "rotina": "TFormConfig.CheckAzzeraBlackListObdClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0100",
+   "caso": 8,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0100"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0100"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckSpegniBuzzer",
+     "form": "TFormConfig",
+     "campo_offset": "0x9C0",
+     "classe": "TCheckBox",
+     "caption_ita": "Buzzer a tempo",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4907E7",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A8580",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1C5D",
+       "rotina": "TFormConfig.CheckSpegniBuzzerClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0200",
+   "caso": 9,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0200"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0200"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckSplitFuel",
+     "form": "TFormConfig",
+     "campo_offset": "0x9C4",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilita split fuel",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4BF281",
+       "rotina": "TFormConfig.TabBenzinaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1C94",
+       "rotina": "TFormConfig.CheckSplitFuelClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4BC1D2",
+     "rotina": "TFormConfig.CheckSequenzaInjClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BDDAE",
+     "rotina": "TFormConfig.ComboSfasaturaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BF316",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C2365",
+     "rotina": "TFormConfig.CheckSplitFuelClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C8BCE",
+     "rotina": "TFormConfig.CheckTaglioPompaBenzinaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0400",
+   "caso": 10,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0400"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0400"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x0800",
+   "caso": 11,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0800"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0800"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x1000",
+   "caso": 12,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x1000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x1000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckStartAndStop",
+     "form": "TFormConfig",
+     "campo_offset": "0xA70",
+     "classe": "TCheckBox",
+     "caption_ita": "Start && Stop",
+     "caption_eng": "Start && Stop",
+     "caption_por": "Start && Stop",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490823",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A85D4",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C2C15",
+       "rotina": "TFormConfig.CheckStartAndStopClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x2000",
+   "caso": 13,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x2000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x2000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckSwitchOnDiagnosis",
+     "form": "TFormDiagnosi",
+     "campo_offset": "0x598",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4CDF8B",
+       "rotina": "TFormDiagnosi.FormActivate",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4D7E71",
+       "rotina": "TFormDiagnosi.CheckSwitchOnDiagnosisClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x4000",
+   "caso": 14,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x4000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x4000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckContributi",
+     "form": "TFormConfig",
+     "campo_offset": "0xFD4",
+     "classe": "TCheckBox",
+     "caption_ita": "Enable petrol addition map",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4908D7",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C9BD2",
+       "rotina": "TFormConfig.TabAdvancedShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C9C54",
+       "rotina": "TFormConfig.CheckContributiClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48ACC8",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AAB8E",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF586",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C9C9A",
+     "rotina": "TFormConfig.CheckContributiClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C9DA3",
+     "rotina": "TFormConfig.CheckContributiClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C9E46",
+     "rotina": "TFormConfig.DrawGridContributiDrawCell",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C9FAB",
+     "rotina": "TFormConfig.DrawGridContributiDrawCell",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4CA01E",
+     "rotina": "TFormConfig.DrawGridContributiDrawCell",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4CA072",
+     "rotina": "TFormConfig.DrawGridContributiDrawCell",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4CA0C3",
+     "rotina": "TFormConfig.DrawGridContributiDrawCell",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 0,
+   "mascara": "0x8000",
+   "caso": 15,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x8000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x8000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0001",
+   "caso": 21,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0001"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0001"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0002",
+   "caso": 22,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0002"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0002"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0004",
+   "caso": 23,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0004"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0004"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0008",
+   "caso": 24,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0008"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0008"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0010",
+   "caso": 25,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0010"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0010"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0020",
+   "caso": 26,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0020"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0020"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0040",
+   "caso": 27,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0040"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0040"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x490989",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4909C2",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4909FE",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x490A37",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A7517",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A7550",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A758C",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A75C5",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A871A",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C5816",
+     "rotina": "TFormConfig.CheckSegnaleGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C68AD",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C68CF",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C68F1",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4C6913",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 1"
+    },
+    {
+     "chamada": "0x4C699C",
+     "rotina": "TFormConfig.ComboFullGroupKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0080",
+   "caso": 28,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0080"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0080"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0100",
+   "caso": 16,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0100"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0100"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckFlexFuel",
+     "form": "TFormConfig",
+     "campo_offset": "0xD0C",
+     "classe": "TCheckBox",
+     "caption_ita": "Flex fuel",
+     "caption_eng": "Flex fuel",
+     "caption_por": "Flex fuel",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490841",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A85F2",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C2CC5",
+       "rotina": "TFormConfig.CheckFlexFuelClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "RadioMapAlcol",
+     "form": "TFormConfig",
+     "campo_offset": "0xD14",
+     "classe": "TRadioButton",
+     "caption_ita": "alcohol",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4B0EC8",
+       "rotina": "TFormConfig.TabKCoefficientiShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Visible",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Visible)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0200",
+   "caso": 17,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0200"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0200"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckboxPreheatOnlyAfterSleepMode",
+     "form": "TFormConfig",
+     "campo_offset": "0xD5C",
+     "classe": "TCheckBox",
+     "caption_ita": "Riscaldamento iniettori solo dopo sleep mode",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4C72C8",
+       "rotina": "TFormConfig.CheckboxPreheatOnlyAfterSleepModeClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48C94A",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ABBE3",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0400",
+   "caso": 18,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0400"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0400"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckIncrementoMaxCorrente",
+     "form": "TFormConfig",
+     "campo_offset": "0xE44",
+     "classe": "TCheckBox",
+     "caption_ita": "Incrementa max corrente al cambio gas",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AB8E9",
+       "rotina": "TFormConfig.TabIniezioneShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C7245",
+       "rotina": "TFormConfig.CheckIncrementoMaxCorrenteClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x0800",
+   "caso": 19,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0800"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0800"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckboxPreheatAsyncMode",
+     "form": "TFormConfig",
+     "campo_offset": "0xE34",
+     "classe": "TCheckBox",
+     "caption_ita": "Riscaldamento iniettori asincrono",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4C734C",
+       "rotina": "TFormConfig.CheckboxPreheatAsyncModeClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48C98A",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48E921",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48EAE5",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ABC2F",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ABF84",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AC217",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C6E3D",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C705B",
+     "rotina": "TFormConfig.CheckRiscaldamentoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C736C",
+     "rotina": "TFormConfig.CheckboxPreheatAsyncModeClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C7406",
+     "rotina": "TFormConfig.CheckboxPreheatAsyncModeClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x2000",
+   "caso": 29,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x2000"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x2000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckInjAcquisition",
+     "form": "TFormConfig",
+     "campo_offset": "0xEC0",
+     "classe": "TCheckBox",
+     "caption_ita": "Sequenza di iniezione manuale",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4908B9",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A61E4",
+       "rotina": "TFormConfig.CheckInjAcquisitionClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A862E",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF2",
+   "serial_code": 192,
+   "vetor_alternativo": "FLAG_CONF2_LR",
+   "palavra": 1,
+   "mascara": "0x4000",
+   "caso": 20,
+   "condicao": "sempre",
+   "getter": "0x42DF14",
+   "setter": "0x42E16C",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x4000"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x4000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckFlashLube",
+     "form": "TFormConfig",
+     "campo_offset": "0xE74",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilita diagnosi livello lubrificante ",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A6999",
+       "rotina": "TFormConfig.TabLambdaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C88D8",
+       "rotina": "TFormConfig.CheckFlashLubeClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0002",
+   "caso": 0,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0002"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0002"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0004",
+   "caso": 1,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0004"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0004"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckTaglioPompaBenzina",
+     "form": "TFormConfig",
+     "campo_offset": "0xEF0",
+     "classe": "TCheckBox",
+     "caption_ita": "Taglio pompa benzina",
+     "caption_eng": "Petrol pump cutting",
+     "caption_por": "Petrol pump cutting",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AAB70",
+       "rotina": "TFormConfig.TabSensoreShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C8BA8",
+       "rotina": "TFormConfig.CheckTaglioPompaBenzinaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "CheckContributi",
+     "form": "TFormConfig",
+     "campo_offset": "0xFD4",
+     "classe": "TCheckBox",
+     "caption_ita": "Enable petrol addition map",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4C9BF4",
+       "rotina": "TFormConfig.TabAdvancedShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": true
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "CheckProgressioni",
+     "form": "TFormConfig",
+     "campo_offset": "0x1000",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilita progressioni",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490913",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": true
+      },
+      {
+       "chamada": "0x4A8688",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": true
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4A9E8E",
+     "rotina": "sub_4A9DC4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AA35E",
+     "rotina": "sub_4A9DC4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AA504",
+     "rotina": "sub_4A9DC4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AAD58",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF492",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF512",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF598",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF860",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C51E9",
+     "rotina": "TFormConfig.CheckElettrovalvoleClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C8E41",
+     "rotina": "TFormConfig.CheckTaglioPompaBenzinaClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0008",
+   "caso": 2,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0008"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0008"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckPetrolObdConnection",
+     "form": "TFormConfig",
+     "campo_offset": "0x1128",
+     "classe": "TCheckBox",
+     "caption_ita": "Connessione obd in funzionameno benzina",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49070F",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C0950",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1B35",
+       "rotina": "TFormConfig.CheckPetrolObdConnectionClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4ED46F",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "DESCONHECIDO"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0010",
+   "caso": 3,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0010"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0010"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckCambioConSovrapp",
+     "form": "TFormConfig",
+     "campo_offset": "0xEDC",
+     "classe": "TCheckBox",
+     "caption_ita": "Cambio con sovrapposizione",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49089B",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A864C",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C8B2C",
+       "rotina": "TFormConfig.CheckCambioConSovrappClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "CheckProgressioni",
+     "form": "TFormConfig",
+     "campo_offset": "0x1000",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilita progressioni",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4908F5",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4A866A",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4CA570",
+       "rotina": "TFormConfig.CheckProgressioniClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "EditParamProgress0",
+     "form": "TFormConfig",
+     "campo_offset": "0xEE0",
+     "classe": "TValueEditEx",
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A87FB",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Visible",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C8B3E",
+       "rotina": "TFormConfig.CheckCambioConSovrappClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Visible",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Visible)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4A7ED2",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A8104",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4AABA0",
+     "rotina": "TFormConfig.TabSensoreShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BC1E5",
+     "rotina": "TFormConfig.CheckSequenzaInjClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BD8D7",
+     "rotina": "TFormConfig.ComboSfasaturaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BDB3D",
+     "rotina": "TFormConfig.ComboSfasaturaKeyPress",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4BF722",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BF841",
+     "rotina": "TFormConfig.TabBenzinaShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4BFE14",
+     "rotina": "TFormConfig.RadioGasClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4CA59E",
+     "rotina": "TFormConfig.CheckProgressioniClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4CA6D5",
+     "rotina": "TFormConfig.CheckProgressioniClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0020",
+   "caso": 4,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0020"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0020"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckAntiStallo",
+     "form": "TFormConfig",
+     "campo_offset": "0xF84",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilitazione anti-stallo",
+     "caption_eng": "Enable un-stalling strategy",
+     "caption_por": "Enable un-stalling strategy",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4ACA74",
+       "rotina": "TFormConfig.TabIniezioneShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C9858",
+       "rotina": "TFormConfig.CheckAntiStalloClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48AC58",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ACAD9",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ACB22",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ACC1B",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ACC99",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ACD17",
+     "rotina": "TFormConfig.TabIniezioneShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C9866",
+     "rotina": "TFormConfig.CheckAntiStalloClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C98AF",
+     "rotina": "TFormConfig.CheckAntiStalloClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C990C",
+     "rotina": "TFormConfig.CheckAntiStalloClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C9969",
+     "rotina": "TFormConfig.CheckAntiStalloClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C99C6",
+     "rotina": "TFormConfig.CheckAntiStalloClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C9A23",
+     "rotina": "TFormConfig.CheckAntiStalloClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0040",
+   "caso": 12,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0040"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0040"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckDeleteErrorMotoreSpento",
+     "form": "TFormConfig",
+     "campo_offset": "0x121C",
+     "classe": "TCheckBox",
+     "caption_ita": "Cancellazione errori OBD a motore spento",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490772",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C0A1C",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1BCD",
+       "rotina": "TFormConfig.CheckDeleteErrorMotoreSpentoClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0080",
+   "caso": 5,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0080"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0080"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckFlashLubeSuTempAcqua",
+     "form": "TFormConfig",
+     "campo_offset": "0xFC4",
+     "classe": "TCheckBox",
+     "caption_ita": "Diagnosis on the water temperature sensor for VP system",
+     "caption_eng": "Diagnosis on the water temperature sensor for VP system",
+     "caption_por": "Diagnosis on the water temperature sensor for VP system",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49065B",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B8CC8",
+       "rotina": "TFormConfig.CheckFlashLubeSuTempAcquaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4B933C",
+       "rotina": "TFormConfig.TabTempShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4D03E0",
+     "rotina": "TFormDiagnosi.FormActivate",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0100",
+   "caso": 6,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0100"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0100"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckOutDiagInfoSuKLine",
+     "form": "TFormConfig",
+     "campo_offset": "0xFCC",
+     "classe": "TCheckBox",
+     "caption_ita": "Output high-level on k-line during diagnostic error",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x490754",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C09DB",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C1B9D",
+       "rotina": "TFormConfig.CheckOutDiagInfoSuKLineClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0400",
+   "caso": 7,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0400"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0400"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckUsaCanPerObd",
+     "form": "TFormConfig",
+     "campo_offset": "0x11A8",
+     "classe": "TCheckBox",
+     "caption_ita": "Usa CAN per OBD",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49072D",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": true
+      },
+      {
+       "chamada": "0x4C0991",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": true
+      },
+      {
+       "chamada": "0x4C1B6D",
+       "rotina": "TFormConfig.CheckUsaCanPerObdClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": true
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x0800",
+   "caso": 8,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x0800"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x0800"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckAttivaPompaInRiserva",
+     "form": "TFormConfig",
+     "campo_offset": "0x11FC",
+     "classe": "TCheckBox",
+     "caption_ita": "Abilita riattivazione pompa in riserva",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AAEB7",
+       "rotina": "TFormConfig.TabSensoreShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4CB059",
+       "rotina": "TFormConfig.CheckAttivaPompaInRiservaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x1000",
+   "caso": 9,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x1000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x1000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckRiconoscimentoPieno",
+     "form": "TFormConfig",
+     "campo_offset": "0x1210",
+     "classe": "TCheckBox",
+     "caption_ita": "Riconoscimento pieno",
+     "caption_eng": "Recognition of full",
+     "caption_por": "Recognition of full",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AABF5",
+       "rotina": "TFormConfig.TabSensoreShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4CB155",
+       "rotina": "TFormConfig.CheckRiconoscimentoPienoClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x2000",
+   "caso": 10,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x2000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x2000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckGiriRuotaFonica",
+     "form": "TFormConfig",
+     "campo_offset": "0x1214",
+     "classe": "TCheckBox",
+     "caption_ita": "ruota fonica",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A76B6",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C55C6",
+       "rotina": "TFormConfig.CheckSegnaleGiriClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4C871E",
+       "rotina": "TFormConfig.CheckGiriRuotaFonicaClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4A7740",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C5504",
+     "rotina": "TFormConfig.CheckSegnaleGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    },
+    {
+     "chamada": "0x4C563C",
+     "rotina": "TFormConfig.CheckSegnaleGiriClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4C8549",
+     "rotina": "TFormConfig.CheckGiriAlberoCammeClick",
+     "rotina_marca": "PROVADO",
+     "uso": "escreve",
+     "valor": "constante 0"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x4000",
+   "caso": 11,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x4000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x4000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckEnableLandiConnect",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3E0",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED451",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    },
+    {
+     "nome": "ButtonResetTotal",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3E8",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED5E3",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "ButtonResetTrip",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3E4",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED5C5",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "CheckCambioAutomatico",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3F0",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED4B9",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "DrawGridInjrTOfsTbl",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3D0",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED512",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "EditInjrGasFlow",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3CC",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED47D",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "EditMgssMaxMnfldPress",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3C8",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED5A7",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "EditNormPress",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3D4",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED530",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "EditNormTemp",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3D8",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED54E",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    },
+    {
+     "nome": "EditTankVol",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3C0",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED49B",
+       "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4EC0D6",
+     "rotina": "sub_4EB748",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "propriedade": "Checked",
+     "invertido": false,
+     "campo": "0x3E0"
+    },
+    {
+     "chamada": "0x4EC262",
+     "rotina": "sub_4EC250",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4EC993",
+     "rotina": "TFormLandiConnect.DrawGridInjrTOfsTblDrawCell",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ECA98",
+     "rotina": "TFormLandiConnect.DrawGridInjrTOfsTblDrawCell",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ECB33",
+     "rotina": "TFormLandiConnect.DrawGridInjrTOfsTblDrawCell",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED461",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4ED4D7",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED56C",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED601",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED638",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4ED66B",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4ED685",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED6D8",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4ED70B",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4ED76E",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED7B3",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "DESCONHECIDO"
+    },
+    {
+     "chamada": "0x4ED7CD",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED95D",
+     "rotina": "TFormLandiConnect.CheckCambioAutomaticoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED9C5",
+     "rotina": "TFormLandiConnect.CheckCambioAutomaticoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 0,
+   "mascara": "0x8000",
+   "caso": 13,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 0,
+    "mascara": "0x8000"
+   },
+   "setter_bit": {
+    "palavra": 0,
+    "mascara": "0x8000"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckCambioAutomatico",
+     "form": "TFormLandiConnect",
+     "campo_offset": "0x3F0",
+     "classe": null,
+     "caption_ita": null,
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": null,
+     "acessos": [
+      {
+       "chamada": "0x4ED925",
+       "rotina": "TFormLandiConnect.CheckCambioAutomaticoClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x4EC0F7",
+     "rotina": "sub_4EB748",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "propriedade": "Checked",
+     "invertido": false,
+     "campo": "0x3F0"
+    },
+    {
+     "chamada": "0x4ED4E9",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED57E",
+     "rotina": "TFormLandiConnect.CheckEnableLandiConnectClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED937",
+     "rotina": "TFormLandiConnect.CheckCambioAutomaticoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED973",
+     "rotina": "TFormLandiConnect.CheckCambioAutomaticoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4ED9DB",
+     "rotina": "TFormLandiConnect.CheckCambioAutomaticoClick",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0002",
+   "caso": 14,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0002"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0002"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0004",
+   "caso": 15,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0004"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0004"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "chkRitardoPassaggioInMinuti",
+     "form": "TFormConfig",
+     "campo_offset": "0x1238",
+     "classe": "TCheckBox",
+     "caption_ita": "Ritardo passaggio in minuti",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A88B1",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4CB320",
+       "rotina": "TFormConfig.chkRitardoPassaggioInMinutiClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0008",
+   "caso": 16,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0008"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0008"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckBoxEnableExtLedKLine",
+     "form": "TFormConfig",
+     "campo_offset": "0x1244",
+     "classe": "TCheckBox",
+     "caption_ita": "Enable external LED on K-Line",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49085F",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4CB351",
+       "rotina": "TFormConfig.CheckBoxEnableExtLedKLineClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0010",
+   "caso": 17,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0010"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0010"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [],
+   "outros_usos": []
+  },
+  {
+   "vetor": "FLAG_CONF3",
+   "serial_code": 250,
+   "vetor_alternativo": null,
+   "palavra": 1,
+   "mascara": "0x0020",
+   "caso": 18,
+   "condicao": "sempre",
+   "getter": "0x42E754",
+   "setter": "0x42E8D8",
+   "getter_bit": {
+    "palavra": 1,
+    "mascara": "0x0020"
+   },
+   "setter_bit": {
+    "palavra": 1,
+    "mascara": "0x0020"
+   },
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "controles": [
+    {
+     "nome": "CheckBoxEnDiagDtcPowertrain",
+     "form": "TFormConfig",
+     "campo_offset": "0x1248",
+     "classe": "TCheckBox",
+     "caption_ita": "En Diag DTC POWERTRAIN",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x49087D",
+       "rotina": "TFormConfig.FormShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Checked",
+       "invertido": false
+      },
+      {
+       "chamada": "0x4CB381",
+       "rotina": "TFormConfig.CheckBoxEnDiagDtcPowertrainClick",
+       "rotina_marca": "PROVADO",
+       "uso": "escreve",
+       "propriedade": "Checked",
+       "invertido": false
+      }
+     ],
+     "papel": "caixa (Checked)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 4,
+   "mascara": "0x000C",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x434690",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 4,
+    "mascara": "0x000C"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x425248",
+     "rotina": "sub_424092",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 16,
+   "mascara": "0x0040",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x434B7C",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 16,
+    "mascara": "0x0040"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [
+    {
+     "nome": "CheckUsaCanPerObd",
+     "form": "TFormConfig",
+     "campo_offset": "0x11A8",
+     "classe": "TCheckBox",
+     "caption_ita": "Usa CAN per OBD",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4C096E",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    }
+   ],
+   "outros_usos": [
+    {
+     "chamada": "0x48F2FC",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x48FA63",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 24,
+   "mascara": "0x0001",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x4346B4",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 24,
+    "mascara": "0x0001"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [
+    {
+     "nome": "CheckRiscaldamento",
+     "form": "TFormConfig",
+     "campo_offset": "0xD18",
+     "classe": "TCheckBox",
+     "caption_ita": "Riscaldamento iniettori",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4AB9BF",
+       "rotina": "TFormConfig.TabIniezioneShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 24,
+   "mascara": "0x0004",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x4346D8",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 24,
+    "mascara": "0x0004"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x48BE9B",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x4A7961",
+     "rotina": "TFormConfig.TabCambioShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 24,
+   "mascara": "0x0008",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x4346FC",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 24,
+    "mascara": "0x0008"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [
+    {
+     "nome": "CheckAzzeraBlackListObd",
+     "form": "TFormConfig",
+     "campo_offset": "0xFC8",
+     "classe": "TCheckBox",
+     "caption_ita": "Reset selettivo errori OBD",
+     "caption_eng": null,
+     "caption_por": null,
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4C08EC",
+       "rotina": "TFormConfig.TabAdattaShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 24,
+   "mascara": "0x0040",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x434720",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 24,
+    "mascara": "0x0040"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x48C163",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "propriedade": "Enabled",
+     "invertido": false,
+     "campo": "0xA0C"
+    }
+   ]
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 24,
+   "mascara": "0x0080",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x434744",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 24,
+    "mascara": "0x0080"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [
+    {
+     "nome": "CheckValvetronik",
+     "form": "TFormConfig",
+     "campo_offset": "0x9D4",
+     "classe": "TCheckBox",
+     "caption_ita": "Valvetronik",
+     "caption_eng": "Valvetronik",
+     "caption_por": "Valvetronik",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A84EE",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 28,
+   "mascara": "0x0010",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x434768",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 28,
+    "mascara": "0x0010"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x490056",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x49016A",
+     "rotina": "TFormConfig.FormShow",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x493B66",
+     "rotina": "sub_4925B4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    },
+    {
+     "chamada": "0x493CD1",
+     "rotina": "sub_4925B4",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 28,
+   "mascara": "0x0020",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x43478C",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 28,
+    "mascara": "0x0020"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x4CDF60",
+     "rotina": "TFormDiagnosi.FormActivate",
+     "rotina_marca": "PROVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 28,
+   "mascara": "0x0040",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x4347B0",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 28,
+    "mascara": "0x0040"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [
+    {
+     "nome": "CheckStartAndStop",
+     "form": "TFormConfig",
+     "campo_offset": "0xA70",
+     "classe": "TCheckBox",
+     "caption_ita": "Start && Stop",
+     "caption_eng": "Start && Stop",
+     "caption_por": "Start && Stop",
+     "dfm": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+     "acessos": [
+      {
+       "chamada": "0x4A8509",
+       "rotina": "TFormConfig.TabCambioShow",
+       "rotina_marca": "PROVADO",
+       "uso": "le",
+       "propriedade": "Enabled",
+       "invertido": false
+      }
+     ],
+     "papel": "dependente (Enabled)"
+    }
+   ],
+   "outros_usos": []
+  },
+  {
+   "vetor": "MASK_FUNCTION",
+   "serial_code": 194,
+   "vetor_alternativo": null,
+   "palavra": 28,
+   "mascara": "0x0080",
+   "caso": null,
+   "condicao": "obj+0x2A64!=0",
+   "getter": "0x4347D4",
+   "setter": null,
+   "getter_bit": {
+    "palavra": 28,
+    "mascara": "0x0080"
+   },
+   "setter_bit": null,
+   "coerente": true,
+   "efeito_extra_setter": null,
+   "nota": "palavra = índice do BYTE no vetor (DataMask 255); só leitura (predicado de capacidade)",
+   "controles": [],
+   "outros_usos": [
+    {
+     "chamada": "0x48E386",
+     "rotina": "sub_48AC2C",
+     "rotina_marca": "DERIVADO",
+     "uso": "le",
+     "valor": "condicional"
+    }
+   ]
+  }
+ ]
+}

@@ -32,7 +32,7 @@ def por_caption(tab, caption_ita):
     achados = []
     for e in tab['flags']:
         for c in e['controles']:
-            if c.get('caption_ita') == caption_ita:
+            if c.get('caption_ita') == caption_ita and c['papel'] == 'caixa (Checked)':
                 achados.append((e, c))
     return achados
 

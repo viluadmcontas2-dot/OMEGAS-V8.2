@@ -490,20 +490,25 @@ def le_valor_setter(w, props):
 def le_controle_depois(b, a, props):
     """Depois de `call getter` em a: ('prop', campo, nome) se o resultado vai direto a uma propriedade de um
     controle; ('condicional',) se é testado; None se não reconhecido."""
-    lst = b.linear(a, 9)[1:]
+    lst = b.linear(a, 10)[1:]
+    if lst and lst[0].mnemonic == 'pop' and lst[0].op_str == 'ecx':  # cdecl: limpa o argumento
+        lst = lst[1:]
     if not lst:
         return None
     if lst[0].mnemonic in ('test', 'cmp') and lst[0].op_str.startswith('al'):
         return ('condicional',)
-    passou, campo = False, None
+    passou, campo, inv = False, None, False
     for i in lst:
         if i.mnemonic == 'mov' and i.op_str in ('edx, eax', 'dl, al'):
             passou = True
         elif i.mnemonic == 'mov' and i.op_str.startswith('eax, dword ptr [') and passou:
             campo = disp(i)
+        elif passou and ((i.mnemonic == 'cmp' and i.op_str == 'edx, 1') or
+                         (i.mnemonic == 'xor' and i.op_str in ('dl, 1', 'edx, 1'))):
+            inv = not inv
         elif i.mnemonic == 'call':
             if passou and campo is not None:
-                return ('prop', campo, props.get(('set', alvo_call(i)), 'call ' + i.op_str))
+                return ('prop', campo, props.get(('set', alvo_call(i)), 'call ' + i.op_str), inv)
             break
         elif i.mnemonic in ('ret', 'jmp') or i.mnemonic.startswith('j'):
             break
@@ -585,10 +590,10 @@ def extrair(exe, i18n_path=None, dfm_dirs=None):
             i = b.ins(a0 - back)
             if i and i.size == back + 4 and disp(i) == mask_off:
                 w = janela_ate(b, i.address, 0x30)
-                for k in reversed(w[:-1]):
-                    if k.mnemonic == 'add' and (imm_final(k) or 0) >= 0x100 and k.op_str.split(',')[0] in ('edx', 'ecx', 'eax'):
-                        cand[imm_final(k)] = cand.get(imm_final(k), 0) + 1
-                        break
+                # `add r, BUF; push r; mov x,[ebp+8]; mov y,[x+MASK]` (buffer de GetValues do vetor)
+                if len(w) >= 4 and w[-4].mnemonic == 'add' and w[-3].mnemonic == 'push' and \
+                        w[-3].op_str == w[-4].op_str.split(',')[0] and (imm_final(w[-4]) or 0) >= 0x100:
+                    cand[imm_final(w[-4])] = cand.get(imm_final(w[-4]), 0) + 1
     if cand:
         mask_buf = max(sorted(cand), key=lambda x: cand[x])
     predicados = []
@@ -649,6 +654,8 @@ def extrair(exe, i18n_path=None, dfm_dirs=None):
                 if v and v[0] == 'controle':
                     ctl = controle(cls, v[1])
                     reg.update({'propriedade': v[2], 'invertido': v[3]})
+                    if not ctl:
+                        reg['campo'] = h(v[1])
                 elif v and v[0] == 'const':
                     reg['valor'] = 'constante %d' % ((1 if v[1] else 0) ^ (1 if v[2] else 0))
                 else:
@@ -657,7 +664,9 @@ def extrair(exe, i18n_path=None, dfm_dirs=None):
                 v = le_controle_depois(b, a, props)
                 if v and v[0] == 'prop':
                     ctl = controle(cls, v[1])
-                    reg['propriedade'] = v[2]
+                    reg.update({'propriedade': v[2], 'invertido': v[3]})
+                    if not ctl:
+                        reg['campo'] = h(v[1])
                 else:
                     reg['valor'] = 'condicional' if v else 'DESCONHECIDO'
             out.setdefault(caso, []).append((ctl, reg))
@@ -726,7 +735,9 @@ def extrair(exe, i18n_path=None, dfm_dirs=None):
             ctl = None
             if v and v[0] == 'prop':
                 ctl = controle(cls, v[1])
-                reg['propriedade'] = v[2]
+                reg.update({'propriedade': v[2], 'invertido': v[3]})
+                if not ctl:
+                    reg['campo'] = h(v[1])
             else:
                 reg['valor'] = 'condicional' if v else 'DESCONHECIDO'
             pares.append((ctl, reg))
