@@ -25,3 +25,10 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
 | `ButtonCambiaClick` | 0x0050523C | 27 | INFERIDO | toca OpenDialogFile |  |  | CloseHandle, CreateFileW, FileTimeToLocalFileTime, FileTimeToSystemTime |
+
+### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+
+- `ButtonCambiaClick` (0x0050523C):
+  - sub_505AA8 (1907 B): APIs CloseHandle,CreateFileW,FileTimeToLocalFileTime,FileTimeToSystemTime; toca LabelD,LabelN,OpenDialogFile
+  -   sub_40487C (45 B)
+  -   sub_4188D0 (90 B)

@@ -13,7 +13,8 @@
 2. Cobertura: % do original já reconstruído (funções/abas/comandos) e backlog só do que falta
 3. Perfil da central: identificar modelo/versão da ECU e só oferecer/enviar o que ela suporta (MASK_FUNCTION, NACK `CA` como sinal)
 4. Diagnóstico inteligente: analisa a sessão, acha onde apaga, sugere (nunca aplica sozinho) anti-apagão, marcha lenta, saída do corte
-5. Memória entre sessões: cada marco grava aprendizados (skills em .claude/skills, este arquivo)
+5. Auditoria REA da decompilação (verify_reconstruction, audit_residual_unknowns) + cópia de docs/progbase para o Drive (PROTOCOLO-LANDI) + enxugar repo/CI/testes (ponytail-audit). Codex volta ~23:55: usar ao máximo.
+6. Memória entre sessões: cada marco grava aprendizados (skills em .claude/skills, este arquivo)
 
 ## Regras permanentes
 App nunca grava sozinho (sempre 2 toques + leitura de volta). Nada por tempo. Não burlar licença. Não versionar .exe/DLL. Sem segredos.

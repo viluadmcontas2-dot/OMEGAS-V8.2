@@ -102,5 +102,73 @@ class TestSetterOriginal(unittest.TestCase):
         self.assertEqual(r['cache_final'], (0x0020, 0x0000))
 
 
+@unittest.skipIf(FALTA, 'faltam módulos: %s' % FALTA)
+@unittest.skipUnless(EXE, 'ProgBase.exe ausente')
+class TestModoMarchaLenta(unittest.TestCase):
+    """'Funcionamento al minimo' (Gas / Rientro a benzina / Benzina): RadioGasClick 0x4BFAD8 (OBS-COD).
+    Handler: sub edx,1 (Tag 0 = Gas) / Tag 1 = RadioRientro / Tag 2 = RadioBenzina (DFM). Grava, nesta ordem,
+    FLAG_CONF1 por 0x42D300 (caso 0x22) e GIRI_PER_BENZINA[0] por 0x43734C (código 0x4C), valor 0 ou 1100.0 (0x40913000:0)."""
+    PRONTO = (0x2486, 0x1051)      # FLAG_CONF1 da ECU do dono (OBS-FIO LOG:508)
+    GIRI = (0, 8500)               # GIRI_PER_BENZINA (OBS-FIO LOG:6988)
+
+    def rodar(self, modo, flag1=None, giri=None, **kw):
+        return cso.emular_modo_lenta(EXE, modo, flag1 or self.PRONTO, giri or self.GIRI, **kw)
+
+    def test_gas_zera_a_rotacao_e_apaga_o_bit(self):
+        r = self.rodar('gas', flag1=(0x2486, 0x1151), giri=(1100, 8500))
+        self.assertEqual([hexq(q) for q in r['quadros']], ['35 03 00 86 24 51 10 43', '14 A1 00 00 00 00 B5'])
+        self.assertEqual(r['cache_flag1'], (0x2486, 0x1051))
+        self.assertEqual(r['cache_giri'], (0, 8500))
+        self.assertIsNone(r['erro'])
+
+    def test_volta_a_gasolina_1100_rpm_e_bit_apagado(self):
+        r = self.rodar('volta')
+        self.assertEqual([hexq(q) for q in r['quadros']], ['35 03 00 86 24 51 10 43', '14 A1 00 00 4C 04 05'])
+        self.assertEqual(r['cache_giri'], (1100, 8500))
+
+    def test_gasolina_1100_rpm_e_bit_0x0100_da_palavra_1(self):
+        r = self.rodar('gasolina')
+        self.assertEqual([hexq(q) for q in r['quadros']], ['35 03 00 86 24 51 11 44', '14 A1 00 00 4C 04 05'])
+        self.assertEqual(r['cache_flag1'], (0x2486, 0x1151))   # 0x1051 | 0x0100 (NÃO 0x0400: isso é só com [obj+0x80D] != 0)
+        self.assertEqual(r['cache_giri'], (1100, 8500))
+
+    def test_ordem_do_handler_flag_primeiro_depois_rotacao(self):
+        r = self.rodar('gasolina')
+        self.assertEqual([q[0] for q in r['quadros']], [0x35, 0x14])
+        self.assertEqual(len(r['quadros_flag1']), 1)
+        self.assertEqual(len(r['quadros_giri']), 1)
+
+    def test_preserva_outros_bits_e_a_segunda_palavra_de_giri(self):
+        r = self.rodar('gasolina', flag1=(0xABCD, 0x2A55), giri=(0, 7777))
+        self.assertEqual(r['cache_flag1'], (0xABCD, 0x2B55))
+        self.assertEqual(r['cache_giri'], (1100, 7777))
+        self.assertEqual(hexq(r['quadros'][1]), '14 A1 00 00 4C 04 05')   # só o elemento 0 vai no quadro
+        r = self.rodar('gas', flag1=(0xABCD, 0xFFFF), giri=(900, 7777))
+        self.assertEqual(r['cache_flag1'], (0xABCD, 0xFEFF))
+
+    def test_com_80D_ligado_o_bit_e_outro(self):
+        r = self.rodar('gasolina', obj80D=1)
+        self.assertEqual(r['cache_flag1'], (0x2486, 0x1451))   # família [obj+0x80D]!=0: bit 0x0400 e GIRI_PER_BENZINA_LR (código 176)
+        self.assertEqual(hexq(r['quadros'][1])[:8], '14 B0 00')
+
+    def test_checksum_de_todos_os_quadros(self):
+        for modo in ('gas', 'volta', 'gasolina'):
+            for q in self.rodar(modo)['quadros']:
+                self.assertEqual(q[-1], cks(q[:-1]), hexq(q))
+
+    def test_sem_eco_ack_o_original_nao_atualiza_o_cache(self):
+        r = self.rodar('volta', ecu_responde=False)
+        self.assertEqual(r['cache_giri'], (0, 8500))
+
+    def test_determinismo(self):
+        self.assertEqual(self.rodar('volta'), self.rodar('volta'))
+
+    def test_mutacao_da_constante_1100_muda_o_quadro(self):
+        # 0x4BFB5E: push 0x40913000 (68 00 30 91 40): mudar o byte 0x91 -> 0x92 faz 2200 rpm (prova que vem do código)
+        base = self.rodar('volta')
+        mut = cso.emular_modo_lenta(EXE, 'volta', self.PRONTO, self.GIRI, patches={0x4BFB62: 0x92})
+        self.assertNotEqual(base['quadros'][1], mut['quadros'][1])
+
+
 if __name__ == '__main__':
     unittest.main()

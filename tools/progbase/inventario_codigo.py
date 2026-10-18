@@ -375,7 +375,8 @@ def grupos_app(un):
     fins = sorted(u[0] for u in un)
     g1 = [f for f in fins if f < 0x600000]
     g2 = [f for f in fins if f >= 0x600000]
-    return [(0x401000, max(g1)), (min(g2) - 0x20000, max(g2))] if g2 else [(0x401000, max(g1))]
+    ini = 0x405DC0   # antes: startup/RTL (System) — INFERIDO pela densidade de helpers e pelo ponto de entrada 0x4028C0
+    return [(ini, max(g1)), (min(g2) - 0x20000, max(g2))] if g2 else [(ini, max(g1))]
 
 
 def unidade_de(a, un, fins):

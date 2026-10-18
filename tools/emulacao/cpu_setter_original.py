@@ -77,7 +77,7 @@ class _Ecu:
     @staticmethod
     def _tam(acc):
         op = acc[0]
-        if op & 0xF8 == 0x30 and (op & 7) < 7:
+        if op & 0xF8 in (0x10, 0x30) and (op & 7) < 7:   # 0x1n = SetNumber/indexado (OBS-FIO: `14 54 00 00 00 64 CC` -> `53 00 53`); 0x3n = SetVector
             return (op & 7) + 3
         return None
 
@@ -387,8 +387,10 @@ def emular_modo_lenta(exe, modo, flag1=(0x2486, 0x1051), giri=(0, 8500), buffere
     m.w32(m.sd + 0x90, v1)
     for i, w in enumerate(flag1):
         m.w32(m.r32(v1 + 0x148) + 4 * i, w)
-    vg = m.criar_vetor(161)
-    m.w32(m.sd + 0x2A0, vg)
+    lr = obj80D != 0   # família [obj+0x80D]!=0: código físico 0x57 -> GIRI_PER_BENZINA_LR (SerialCode 176) em [obj+0x464]
+    codigo = 0x57 if lr else CODIGO_GIRI
+    vg = m.criar_vetor(176 if lr else 161)
+    m.w32(m.sd + (0x464 if lr else 0x2A0), vg)
     for i, w in enumerate(giri):
         m.w32(m.r32(vg + 0x148) + 4 * i, w)
         m.w32(m.sd + 0x2CBC + 4 * i, w)
@@ -397,7 +399,7 @@ def emular_modo_lenta(exe, modo, flag1=(0x2486, 0x1051), giri=(0, 8500), buffere
     ret1 = m.chamar(A_FLAG1_SETTER, {'eax': m.sd, 'edx': CASO_MINIMO, 'ecx': bit})
     n1 = len(m.ecu.quadros)
     bits = struct.unpack('<II', struct.pack('<d', rpm))  # (baixo, alto) do double empilhado como em 0x4BFB5E
-    ret2 = m.chamar(A_SET_FISICO, pilha=(m.sd, CODIGO_GIRI, 0, bits[0], bits[1]))
+    ret2 = m.chamar(A_SET_FISICO, pilha=(m.sd, codigo, 0, bits[0], bits[1]))
     r = m.resultado(ret2)
     r['retorno_flag1_al'] = ret1
     r['quadros_flag1'] = r['quadros'][:n1]

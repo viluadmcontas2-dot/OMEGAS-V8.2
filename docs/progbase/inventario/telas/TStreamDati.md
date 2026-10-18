@@ -16,3 +16,9 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
 | `TimerIOTimer` | 0x00437C6C | 1415 | INFERIDO | chama APIs do Windows GetTickCount, Sleep, PostMessageW; chama TAebNumber::GetEcuData, TAebProtocol::Connect, TAebProtocol::DisableErrorHandling, TAebProtocol::Disconnect, TAebProtocol::EnableErrorHandling, TAebProtocol::GetComFail; toca AebConnection, MASK_INIETTORI_BENZINA, MASK_INIETTORI_BENZINA_LR, SERIAL_NUMBER |  | GetTickCount, Sleep, PostMessageW |  |
+
+### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+
+- `TimerIOTimer` (0x00437C6C):
+  - sub_40487C (45 B)
+  - sub_42B770 (196 B): APIs PostMessageW; chama TAebProtocol::Connect,TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetEcuData; toca AebConnection,STATO_DIAGNOSI,STATO_DIAGNOSI_LR

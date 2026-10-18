@@ -66,10 +66,17 @@ print("FINAL_PRE_APK_PRODUCT_CONTRACT=PASS")
 # Multimidia: sem scroll horizontal operacional e sem mini-scroll no card de revisão.
 assert "overflow-x: auto" not in css
 assert "overflow-x: scroll" not in css
-review_card_block = css.split(".autocal-review-card {", 1)[1].split("}", 1)[0]
-assert "overflow: auto" not in review_card_block
-assert "overflow: scroll" not in review_card_block
-assert "overflow: visible" in review_card_block
+# O cartão antigo (.autocal-review-card) saiu do JS e o CSS morto foi podado (leveza 2026-10-18): sem classe usada, não há
+# mini-scroll possível; se alguém a trouxer de volta, o bloco precisa existir e seguir sem rolagem própria.
+import glob as _glob
+_ui_js = "".join(open(f, encoding="utf-8").read() for f in _glob.glob("app/src/main/assets/ui/**/*.js", recursive=True))
+if ".autocal-review-card {" in css:
+    review_card_block = css.split(".autocal-review-card {", 1)[1].split("}", 1)[0]
+    assert "overflow: auto" not in review_card_block
+    assert "overflow: scroll" not in review_card_block
+    assert "overflow: visible" in review_card_block
+else:
+    assert "autocal-review-card" not in _ui_js, "classe usada no JS sem CSS"
 review_overlay_block = css.split(".autocal-review {", 1)[1].split("}", 1)[0]
 assert "overflow-y: auto" in review_overlay_block
 assert "overflow-x: hidden" in review_overlay_block

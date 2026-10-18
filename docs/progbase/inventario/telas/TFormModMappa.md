@@ -25,3 +25,18 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `GetInt` (sem evento no DFM) | 0x0096A170 | 101 | INFERIDO | sem fatos diretos extraíveis (101 bytes; chama 5 funções sem nome) |  |  |  |
 | `SetDouble` (sem evento no DFM) | 0x0096A2C8 | 95 | INFERIDO | sem fatos diretos extraíveis (95 bytes; chama 4 funções sem nome) |  |  |  |
 | `SetInt` (sem evento no DFM) | 0x0096A1D8 | 93 | INFERIDO | sem fatos diretos extraíveis (93 bytes; chama 4 funções sem nome) |  |  |  |
+
+### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+
+- `EditValoreKeyPress` (0x00969E80):
+  - sub_40487C (45 B)
+  - sub_4188D0 (90 B)
+  - sub_910F24 (19 B)
+- `FormClose` (0x00969D68):
+  - sub_40487C (45 B)
+- `GetDouble` (0x0096A238):
+  - sub_40487C (45 B)
+- `GetInt` (0x0096A170):
+  - sub_40487C (45 B)
+- `SetInt` (0x0096A1D8):
+  - sub_4080D4 (67 B)

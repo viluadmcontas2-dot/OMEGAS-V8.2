@@ -159,6 +159,30 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
         return r
 
     cdg_unidades = cdg.unidades(b)
+    faixas_app = cdg.grupos_app(cdg_unidades)
+
+    def em_app(t):
+        return any(g0 <= t < g1 for g0, g1 in faixas_app)
+
+    def alcance(a, campos_classe, prof_max=3, teto=60):
+        """Subfunções sem nome do programa alcançáveis (BFS, profundidade <= prof_max): resumo direto de cada uma."""
+        vistos, fila, out = {a}, [(a, 0)], []
+        while fila and len(out) < teto:
+            f, d = fila.pop(0)
+            if d >= prof_max:
+                continue
+            r = resumo(f, campos_classe, 2)
+            for t in r['chamadas']:
+                if t in vistos or not em_app(t) or (nome_de(t) and not nome_de(t).startswith('thunk')):
+                    continue
+                vistos.add(t)
+                rs = resumo(t, campos_classe, 2)
+                out.append({'endereco': h(t), 'profundidade': d + 1, 'tamanho_bytes': rs['tamanho_bytes'],
+                            'mensagens': rs['i18n_chaves'], 'apis': rs['apis'], 'literais': rs['literais'][:4],
+                            'chamadas_nomeadas': [c for c in rs['chamadas_nomeadas'] if not c.startswith('thunk')][:8]})
+                fila.append((t, d + 1))
+        return out
+
     telas = []
     for rec, (arv, nbytes) in arvores.items():
         cls = arv['classe']
@@ -203,6 +227,7 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
                                 'literais': r['literais'][:8], 'campos_tocados': r['campos'],
                                 'classes_referidas': r['classes_referidas'], 'vazio': r['so_ret'],
                                 'saltos_externos': [nome_de(t) or h(t) for t in r['saltos_externos']]}
+                vistos_h[hn]['subfuncoes'] = alcance(a, campos_classe)
                 vistos_h[hn]['o_que_faz'] = d if d else auto_descricao(vistos_h[hn], key)
             return vistos_h[hn]
         # menus
@@ -332,6 +357,24 @@ def md_tela(t):
                 d['texto'].replace('|', '\\|'), ', '.join(hd['mensagens'][:6]),
                 ', '.join(a.split('!')[1] for a in hd['apis'][:6]), ind))
         L.append('')
+        cad = [(n, hd) for n, hd in t['handlers'].items() if hd.get('subfuncoes')]
+        if cad:
+            L.extend(['### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)', ''])
+            for n, hd in cad:
+                L.append('- `%s` (%s):' % (n, hd['endereco']))
+                com_fato = [sf for sf in hd['subfuncoes'] if sf['mensagens'] or sf['apis'] or sf['chamadas_nomeadas']]
+                for sf in com_fato[:12]:
+                    fatos = []
+                    if sf['mensagens']:
+                        fatos.append('textos ' + ','.join(sf['mensagens'][:4]))
+                    if sf['apis']:
+                        fatos.append('APIs ' + ','.join(a.split('!')[1] for a in sf['apis'][:4]))
+                    if sf['chamadas_nomeadas']:
+                        fatos.append('chama ' + ','.join(sf['chamadas_nomeadas'][:4]))
+                    L.append('  - %ssub_%s (%d B)%s' % ('  ' * (sf['profundidade'] - 1), sf['endereco'][2:].lstrip('0'),
+                                                       sf['tamanho_bytes'], (': ' + '; '.join(fatos)) if fatos else ''))
+                L.append('  - (+%d subfunções sem fatos diretos ou fora da lista; telas.json)' % (len(hd['subfuncoes']) - min(12, len(com_fato))))
+            L.append('')
     return '\n'.join(L)
 
 

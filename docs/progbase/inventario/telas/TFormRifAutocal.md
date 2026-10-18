@@ -18,3 +18,17 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
 | `ButtonOkClick` | 0x0051B910 | 1067 | INFERIDO | chama TAebNumber::GetDouble, TAebNumber::SetDouble, TAebVector::GetDouble, TAebVector::SetDouble; toca EditKMax, EditKMin, EditRifMap0, TInjBox |  |  |  |
+
+### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+
+- `ButtonOkClick` (0x0051B910):
+  - sub_40487C (45 B)
+  - sub_96BA2C (343 B)
+  -   sub_96BD74 (19 B)
+  -   sub_981F2C (447 B)
+  -     sub_9820F0 (31 B)
+  -     sub_98211C (33 B)
+  -     sub_982150 (25 B)
+  -     sub_982174 (25 B)
+  -     sub_982198 (25 B)
+  -     sub_9821B8 (25 B)

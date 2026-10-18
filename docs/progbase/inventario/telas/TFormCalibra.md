@@ -30,3 +30,35 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `FormClose` | 0x00484678 | 296 | INFERIDO | chama TAebProtocol::SendCommand |  |  | GetTickCount, Sleep |
 | `FormKeyPress` | 0x0048693C | 724 | INFERIDO | chama TAebProtocol::SendCommand; toca LabelMessaggio, LabelOperazione, PanelMessaggio, ProgressBarCalibra |  |  |  |
 | `TimerBlinkTimer` | 0x004847A0 | 4239 | INFERIDO | chama TAebProtocol::SendCommand, TStreamDati.TimerIOTimer; toca LabLambda, LabLambda2, LabPressione, LabTempMotore, LabTempRiduttore, LabTempoIniezioneBenzina, LabTempoIniezioneGas, LabTensioneIniettori |  |  |  |
+
+### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+
+- `FormClose` (0x00484678):
+  - sub_42B244 (15 B)
+  - sub_4381F4 (7 B)
+  - sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -   sub_4382D4 (119 B): APIs GetTickCount,Sleep; chama TAebNumber::GetEcuData
+- `FormKeyPress` (0x0048693C):
+  - sub_40487C (45 B)
+  - sub_486CEC (625 B)
+  -   sub_42EC94 (65 B)
+  -   sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
+  -     sub_42F338 (7 B)
+  -     sub_42F340 (7 B)
+  -     sub_42B224 (15 B)
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -     sub_431738 (21 B)
+- `TimerBlinkTimer` (0x004847A0):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_404C94 (59 B)
+  - sub_405754 (48 B)
+  - sub_4057C0 (139 B)
+  - sub_40584C (57 B)
+  - sub_42A52C (358 B)
+  - sub_42A788 (358 B)
+  - sub_4339B8 (72 B)
+  - sub_433A00 (75 B)
+  - sub_433FFC (14 B)
+  - sub_434530 (21 B)
+  - … +7 (ver telas.json)

@@ -59,7 +59,7 @@
       const usb = state.status?.usbConnected === true ? true : state.status?.usbConnected === false ? false : undefined;
       this.flag.observe({ route: state.route, usbConnected: usb });
       this.vals.observe({ route: state.route, usbConnected: usb });
-      if (state.route !== 'tools') { this.view = 'home'; return; }
+      if (state.route !== 'tools') { if (this.view !== 'home') { this.view = 'home'; this.signature = ''; this.setView(); } return; }
       this.render();
     }
 
@@ -184,7 +184,8 @@
     }
 
     setView() {
-      if (this.screen) this.screen.dataset.view = this.view === 'home' ? 'home' : 'view';
+      if (this.host) this.host.dataset.mode = this.view === 'home' ? 'home' : 'view';
+      if (this.screen) this.screen.dataset.view = this.screen.querySelector('[data-mode="view"]') ? 'view' : 'home';
     }
 
     // ---------- desenho ----------
@@ -216,7 +217,7 @@
           return `
         <article class="tool-tile" data-card="${card.id}" data-state="${state}">
           <h3>${escapeHtml(card.title)}</h3>
-          <p class="tile-line">${escapeHtml(why || card.line)}</p>
+          <p class="tile-line${why ? ' reason' : ''}">${escapeHtml(why || card.line)}</p>
           <button type="button" class="tool-switch" role="switch" aria-checked="${card.on === true ? 'true' : 'false'}" aria-label="${escapeHtml(card.title)}: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
             <span class="sw-track" aria-hidden="true"><i></i></span><b>${escapeHtml(card.stateText)}</b>
           </button>

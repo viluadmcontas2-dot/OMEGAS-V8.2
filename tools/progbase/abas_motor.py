@@ -600,6 +600,9 @@ def eventos_metodo(b, r, nome_metodo, campos_form):
                 d['comando_id'] = _imm_reg(seq, k, 'edx')
                 d['pushes'] = _pushes(seq, k)
             ev.append(d)
+        elif 0x42A000 <= t < 0x440000 and t not in ACOES_CTRL:
+            ev.append(dict(endereco='0x%X' % i.address, funcao='AcessoSD', alvo='0x%X' % t,
+                           pushes=_pushes(seq, k), edx=_imm_reg(seq, k, 'edx'), ecx=_imm_reg(seq, k, 'ecx')))
         elif t in ACOES_CTRL:
             # eax = controle: ultimo `mov eax,[ebx+OFF]` antes
             ctl = None
@@ -786,3 +789,42 @@ def acoes_metodo(b, r, nome, nomes_pub, campos_form, campos_sd, prof=2, _visto=N
                 e['condicoes_chamada'] = conds.get(i.address, [])
                 out.append(e)
     return out
+
+
+def toca_sd(b, addr, nomes_off, limite=260):
+    """Vetores/caches do TStreamDati que a funcao `addr` le/escreve (por deslocamento [reg+OFF]; nomes_off: off->nome)."""
+    seen, pilha, lidos, escritos, subs = set(), [addr], set(), set(), set()
+    n = 0
+    while pilha and n < limite:
+        x = pilha.pop()
+        while x not in seen and n < limite:
+            seen.add(x)
+            i = b.ins(x)
+            if i is None:
+                break
+            n += 1
+            for mm in re.finditer(r'\[(?:e\w\w)(?: \+ e\w\w\*\d)? \+ (0x[0-9a-f]+)\]', i.op_str):
+                off = int(mm.group(1), 16)
+                if off in nomes_off:
+                    destino = i.op_str.split(', ')[0]
+                    (escritos if (i.mnemonic == 'mov' and mm.group(0) in destino and destino.startswith(('dword', 'byte', 'word'))) else lidos).add(nomes_off[off])
+            if i.mnemonic == 'call':
+                try:
+                    subs.add(int(i.op_str, 16))
+                except ValueError:
+                    pass
+            if i.mnemonic == 'ret':
+                break
+            if i.mnemonic == 'jmp':
+                try:
+                    x = int(i.op_str, 16)
+                    continue
+                except ValueError:
+                    break
+            if i.mnemonic.startswith('j'):
+                try:
+                    pilha.append(int(i.op_str, 16))
+                except ValueError:
+                    pass
+            x += i.size
+    return dict(le=sorted(lidos), escreve=sorted(escritos), chama=['0x%X' % a for a in sorted(subs) if 0x42A000 <= a < 0x440000][:8])

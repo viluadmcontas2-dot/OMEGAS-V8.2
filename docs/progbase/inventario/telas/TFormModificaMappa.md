@@ -21,3 +21,11 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 |---|---|---:|---|---|---|---|---|
 | `EditDataKeyPress` | 0x0050EF08 | 677 | INFERIDO | sem fatos diretos extraíveis (677 bytes; chama 8 funções sem nome) |  |  |  |
 | `FormClose` | 0x0050EDF8 | 272 | INFERIDO | sem fatos diretos extraíveis (272 bytes; chama 6 funções sem nome) |  |  |  |
+
+### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+
+- `EditDataKeyPress` (0x0050EF08):
+  - sub_40487C (45 B)
+  - sub_4188D0 (90 B)
+- `FormClose` (0x0050EDF8):
+  - sub_40487C (45 B)

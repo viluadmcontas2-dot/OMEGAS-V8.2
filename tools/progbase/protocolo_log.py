@@ -99,11 +99,13 @@ def transacoes(caminho):
             baud_dev[ev['dev']] = ev['baud']
         elif k == 'timeouts':
             rc = ev['rc']
+            if cur is not None and ev['dev'] == cur['dev']:
+                cur['rcs'].append(ev['rc'])
         elif k == 'purge':
             purge = True
         elif k == 'write':
             cur = dict(line=ev['line'], sessao=sessao, dev=ev['dev'], baud=baud_dev.get(ev['dev']), rc=rc,
-                       purge=purge, req=ev['dados'], leituras=[], resp=b'')
+                       purge=purge, req=ev['dados'], leituras=[], resp=b'', rcs=[])
             purge = False
             out.append(cur)
         elif k == 'read' and cur is not None and ev['dev'] == cur['dev']:
@@ -173,12 +175,18 @@ def matriz(trans):
     for t in trans:
         f = familia(t['req'])
         d = fam.setdefault(f, dict(total=0, classes=Counter(), exemplos={}, distintos=set(), rc=Counter(), timeouts=0,
-                                   ck_pedido_ok=0, baud=Counter(), nak_detalhes=Counter()))
+                                   ck_pedido_ok=0, baud=Counter(), nak_detalhes=Counter(), pedidos={}))
+        pr = d['pedidos'].setdefault(bytes(t['req']), dict(total=0, classes=Counter(), primeira_linha=t['line'],
+                                                           tam=Counter()))
+        pr['total'] += 1
+        pr['classes'][classificar(t)[0]] += 1
+        if classificar(t)[0] == 'ACK_53':
+            pr['tam'][t['resp'][len(t['req']) + 1]] += 1
         d['total'] += 1
         cl, det = classificar(t)
         d['classes'][cl] += 1
         d['distintos'].add(bytes(t['req']))
-        d['rc'][t['rc']] += 1
+        d['rc'][max(t['rcs']) if t['rcs'] else None] += 1
         d['baud'][t['baud']] += 1
         d['timeouts'] += timeouts_rc(t)
         if len(t['req']) > 1 and soma(t['req'][:-1]) == t['req'][-1]:
@@ -196,6 +204,11 @@ def matriz(trans):
                       rc_leitura_ms={str(k): v for k, v in sorted(d['rc'].items(), key=lambda kv: str(kv[0]))},
                       baud={str(k): v for k, v in sorted(d['baud'].items(), key=lambda kv: str(kv[0]))},
                       nak=dict(sorted(d['nak_detalhes'].items())),
+                      pedidos=[dict(req=k.hex(' ').upper(), total=v['total'], classes=dict(sorted(v['classes'].items())),
+                                    primeira_linha=v['primeira_linha'],
+                                    bytes_de_dados=dict(sorted(v['tam'].items())))
+                               for k, v in sorted(d['pedidos'].items(), key=lambda kv: (-kv[1]['total'], kv[0]))[:40]],
+                      pedidos_distintos=len(d['pedidos']),
                       exemplos=dict(sorted(d['exemplos'].items())))
     return out
 

@@ -32,3 +32,30 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `TreeViewFileDblClick` | 0x004DDBC8 | 59 | INFERIDO | chama TFormFile.ButtonOkClick, TFormFile.TreeViewFileClick; toca TreeViewFile |  |  |  |
 | `TreeViewFileDragDrop` | 0x004DE1A8 | 7 | INFERIDO | sem fatos diretos extraíveis (7 bytes; chama 0 funções sem nome) |  |  |  |
 | `TreeViewFileKeyDown` | 0x004DE120 | 132 | INFERIDO | chama TFormFile.TreeViewFileDblClick; toca TreeViewFile |  |  |  |
+
+### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+
+- `ButtonOkClick` (0x004D9F30):
+  - sub_4047FC (125 B)
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_404C94 (59 B)
+  - sub_42B234 (14 B)
+  - sub_42B964 (428 B)
+  - sub_4315B0 (316 B): APIs PostMessageW; chama TAebVector::SetEcuData
+  - sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - sub_433B98 (1074 B)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
+  - sub_48A228 (2561 B)
+  - sub_4FBA40 (933 B): APIs Sleep; chama TAebProtocol::SendCommand,TAebVector::GetEcuData; toca ButtonAnnulla,ButtonOk,EditName
+  - … +48 (ver telas.json)
+- `FormActivate` (0x004D9968):
+  - sub_40487C (45 B)
+  - sub_42CFB8 (839 B)
+  - sub_431578 (56 B)
+  - sub_4DBBF4 (65 B): toca ImageList,TreeViewFile
+- `TreeViewFileClick` (0x004DDC04):
+  - sub_4047FC (125 B)
+  - sub_40487C (45 B)
+- `TreeViewFileCompare` (0x004DDAE0):
+  - sub_40487C (45 B)

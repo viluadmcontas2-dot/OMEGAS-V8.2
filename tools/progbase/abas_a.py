@@ -267,7 +267,13 @@ class Contexto:
         for off, nm in self.cache_nome.items():
             self.sd_nomes.setdefault(off, 'cache de ' + nm)
         self._ev = {}
+        self._toca = {}
         self._acoes = {}
+
+    def toca(self, alvo):
+        if alvo not in self._toca:
+            self._toca[alvo] = M.toca_sd(self.b, alvo, self.sd_nomes)
+        return self._toca[alvo]
 
     def eventos(self, nome):
         if nome not in self._ev:
@@ -343,22 +349,28 @@ def formula_texto(rec, kind):
 
 
 def ligacao_de(ctx, c):
-    """Ligacao controle -> codigo do formulario -> vetor da ECU. Cobre a rotina de amarracao 0x48A228."""
+    """Ligacao controle -> codigo do formulario -> vetor da ECU. Cobre a rotina de amarracao 0x48A228
+    (edits: [ctl+0x2EC] codigo e [ctl+0x2F0] indice; combos: [ctl+0x330] codigo)."""
     b = ctx.bind.get(c.nome)
-    if not b or 'codigo' not in b:
+    if not b:
         return None
-    cod = b['codigo']
+    if 'codigo' in b:
+        cod, via = b['codigo'], 'campo +0x2EC (DataCode do TNumericEdit)'
+    elif 'prop330' in b:
+        cod, via = b['prop330'], 'campo +0x330 (codigo do TKeyComboBox)'
+    else:
+        return None
     idx = b.get('indice')
-    out = {'offset_campo_form': '0x%X' % cod['offset'], 'marca': 'OBS-COD', 'fonte': 'TFormConfig 0x48A228 (amarracao)'}
+    out = {'offset_campo_form': '0x%X' % cod['offset'], 'campo_codigo': via, 'marca': 'OBS-COD',
+           'fonte': 'TFormConfig 0x48A228 (rotina de amarracao dos controles aos codigos de dado)'}
     if cod['ramo']:
         out['codigo_por_familia'] = {'LR ([SD+0x80D]!=0)': cod['ramo']['familia_LR_0x80D!=0'],
                                      'demais ([SD+0x80D]==0)': cod['ramo']['demais']}
     else:
         out['codigo'] = cod['valor']
-    # DFM DataIndex/DataCode como fallback
     dfm_idx = c.p('DataIndex')
     if idx is not None:
-        out['indice_codigo'] = idx['valor'] if idx['valor'] is not None else 'registrador (ver amarracao)'
+        out['indice_codigo'] = idx['valor'] if idx['valor'] is not None else 0
     elif dfm_idx is not None:
         out['indice_dfm'] = dfm_idx
     return out
@@ -406,8 +418,8 @@ def registro_controle(ctx, em, preench, log, aba, c, pai, irmaos, ordem, manual_
     rl = achar_rotulo(c, irmaos)
     rot = rl[0] if rl else None
     if rot is not None:
-        rec['rotulo_do_campo'] = dict(componente=rot.nome, via=rl[1], marca='INFERIDO',
-                                      **rotulos(ctx.i18n, rot.nome, rot.p('Caption')))
+        rec['rotulo_do_campo'] = dict(rotulos(ctx.i18n, rot.nome, rot.p('Caption')), componente=rot.nome, via=rl[1],
+                                      marca_associacao='INFERIDO')
     un = achar_unidade(c, irmaos)
     if un is not None:
         rec['unidade'] = dict(texto=un.p('Caption'), componente=un.nome, marca='OBS-COD',
@@ -476,6 +488,8 @@ def resumo_acessos(ctx, evs):
             rec = cat.get('idx' if f.endswith('Idx') else 'esc') or {}
             d['vetor'] = rec.get('vetor')
             d['serial_code'] = rec.get('serial_code')
+        if f == 'AcessoSD':
+            d['toca'] = ctx.toca(int(e['alvo'], 16))
         if f.endswith(('Flag1', 'Flag2', 'Flag3')) and e.get('caso') is not None:
             n = f[-1]
             ach = [x for x in ctx.flags['flags'] if x['vetor'].startswith('FLAG_CONF' + n) and x['caso'] == e['caso']

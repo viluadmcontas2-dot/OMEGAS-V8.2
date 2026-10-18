@@ -41,3 +41,6 @@ Entregue o menor pedido possível ao dono (um comando, um botão, uma captura) *
 
 ## Lição: reproduzir o código byte a byte (sem rodar o programa)
 Quando o programa não roda (licença/Windows), execute só as FUNÇÕES dele numa CPU emulada (Unicorn, x86-32): mapeie o .exe, monte um objeto falso com os campos que o código lê, stube as chamadas de sistema e capture o ponto de escrita serial. Prova: o quadro sai do código executado (teste de mutação muda 1 byte e o quadro muda) e bate com o fio. Nunca modifique o executável nem contorne licença. Ver tools/emulacao/cpu_setter_original.py.
+
+## Regra: engenharia reversa sempre com REA
+Toda vez que abrir/decompilar o .exe: invoque a skill `reverse-engineer-anything` e use as ferramentas do MCP REA que couberem (`verify_reconstruction`, `build_reconstruction_obligation_ledger`, `evaluate_reconstruction_coverage`, `audit_residual_unknowns`, `compare_functions`/`compare_application_versions`, `capture_process_scenario`). Se o MCP estourar tempo no ProgBase, use o CLI (`npx -y rea-agents@6.4.0`) em segundo plano. Registre evidence ids em docs/progbase/decomp/rea-verificacao.md. Meta: nunca mais abrir o .exe — toda dúvida se resolve em docs/progbase/ (repo) e na pasta PROTOCOLO-LANDI do Drive.

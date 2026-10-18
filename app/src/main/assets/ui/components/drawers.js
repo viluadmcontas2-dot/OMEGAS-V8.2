@@ -33,6 +33,12 @@
     return `sem dados há ${Math.round(value / 1000)} s`;
   }
 
+  const LEVELS = { ALL: 'Tudo', ERROR: 'Só erros', WARN: 'Só avisos', INFO: 'Só informações' };
+  const SESSIONS_PER_PAGE = 3;
+  const LOG_PAGE_SIZE = 5;
+
+  // Ferramentas, página "App e arquivos" + tela Sessões (dono, 2026-10-18): um cartão por função, com o estado escrito
+  // (Ligado/Desligado) e UM controle com verbo. Interruptor = liga/desliga. Nada de sigla na frente; sem rolagem.
   class Drawers {
     constructor(store, router, api) {
       this.store = store;
@@ -41,8 +47,12 @@
       this.tools = document.getElementById('toolsDrawer');
       this.logLevel = 'ALL';
       this.logCategory = 'ALL';
-      // Sem rolagem (dono, 2026-10-11): o log mostra uma página por vez em vez de uma lista que rola.
+      // Sem rolagem: o registro mostra uma página por vez em vez de uma lista que rola.
       this.logPage = 0;
+      this.sessionPage = 0;
+      this.view = 'home';          // 'home' | 'log'
+      this.page = 1;               // página de Ferramentas: 1 = motor e combustível, 2 = app e arquivos
+      this.probeNote = '';
       this.sessionSettingsFeedback = '';
       this.ensureToolsExpansion();
       this.bind();
@@ -52,42 +62,60 @@
       if (!this.tools || document.getElementById('toolDiagnosticsWorkspace')) return;
       const host = document.createElement('div');
       host.id = 'toolDiagnosticsWorkspace';
-      host.className = 'tool-diagnostics-workspace';
-      // Os cartões ficam antes do rodapé de backup (ordem do DOM = ordem na tela).
-      const footer = this.tools.querySelector('.tool-actions');
-      if (footer) this.tools.insertBefore(host, footer);
-      else this.tools.appendChild(host);
+      host.className = 'tool-grid';
+      this.tools.appendChild(host);
     }
 
     bind() {
       document.querySelectorAll('[data-close-drawer]').forEach(button => button.addEventListener('click', () => {
         this.store.patch({ toolsOpen: false });
       }));
-      document.getElementById('toolExportData')?.addEventListener('click', () => this.api.exportData());
-      document.getElementById('toolExportLearning')?.addEventListener('click', () => this.api.exportLearning());
-      document.getElementById('toolImportLearning')?.addEventListener('click', () => this.api.importLearning());
-      document.getElementById('toolBufferProbe')?.addEventListener('click', () => this.runBufferProbe());
-      document.getElementById('toolAutoRefine')?.addEventListener('click', () => this.toggleAutoRefine());
+      document.querySelectorAll('[data-tools-page]').forEach(button => button.addEventListener('click', () => this.setPage(Number(button.dataset.toolsPage))));
       this.syncAutoRefine();
-      document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('click', event => this.handleToolClick(event));
-      document.getElementById('toolDiagnosticsWorkspace')?.addEventListener('change', event => this.handleToolChange(event));
+      for (const id of ['toolDiagnosticsWorkspace', 'sessionsHost']) {
+        document.getElementById(id)?.addEventListener('click', event => this.handleToolClick(event));
+        document.getElementById(id)?.addEventListener('change', event => this.handleToolChange(event));
+      }
+    }
+
+    setPage(page) {
+      this.page = page === 2 ? 2 : 1;
+      this.view = 'home';
+      if (this.tools) this.tools.dataset.page = String(this.page);
+      this.toolsSignature = '';
+      this.renderTools(this.store.get());
+      this.syncView();
+    }
+
+    /** A tela inteira está "em visão" quando qualquer página abriu um cartão (some o rodapé de páginas). */
+    syncView() {
+      if (this.tools) this.tools.dataset.view = this.tools.querySelector('[data-mode="view"]') ? 'view' : 'home';
     }
 
     handleToolClick(event) {
       const target = event.target.closest('button');
       if (!target) return;
-      if (target.matches('[data-session-start]')) {
+      if (target.id === 'toolExportData') this.api.exportData();
+      else if (target.id === 'toolExportLearning') this.api.exportLearning();
+      else if (target.id === 'toolImportLearning') this.api.importLearning();
+      else if (target.id === 'toolBufferProbe') this.runBufferProbe();
+      else if (target.id === 'toolAutoRefine') this.toggleAutoRefine();
+      else if (target.matches('[data-session-start]')) {
         const result = this.api.startSession('registro manual pela interface');
-        this.notifyResult(result, 'Gravação de diagnóstico iniciada.');
+        this.notifyResult(result, 'Gravação iniciada.');
         this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-stop]')) {
         const result = this.api.stopSession('parada manual pela interface');
-        this.notifyResult(result, 'Gravação de diagnóstico encerrada.');
+        this.notifyResult(result, 'Gravação encerrada.');
         this.refreshSessionStatus(result);
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
       } else if (target.matches('[data-export-session]')) {
         this.api.exportSession(target.dataset.exportSession || '');
+      } else if (target.matches('[data-session-page]')) {
+        this.sessionPage = Math.max(0, (this.sessionPage || 0) + (target.dataset.sessionPage === 'older' ? 1 : -1));
+        this.toolsSignature = '';
+        this.renderSessions(this.store.get());
       } else if (target.matches('[data-tool-battery-request]')) {
         this.api.requestBatteryOptimizationExemption?.();
         this.toolsSignature = '';
@@ -102,11 +130,22 @@
         this.api.setTelemetryOverlayEnabled?.(false);
         this.toolsSignature = '';
         this.renderTools(this.store.get());
+      } else if (target.matches('[data-tool-open-log]')) {
+        this.view = 'log';
+        this.logPage = 0;
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
+        this.syncView();
+      } else if (target.matches('[data-tool-back]')) {
+        this.view = 'home';
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
+        this.syncView();
       } else if (target.matches('[data-tool-export-logs]')) {
         this.api.exportLogs();
       } else if (target.matches('[data-tool-selftest]')) {
         const result = this.api.selfTest();
-        this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Autoteste concluído.' : (result?.error || 'Autoteste não concluído.') } });
+        this.store.patch({ alert: { level: result?.ok ? 'ok' : 'warning', message: result?.ok ? 'Teste do app concluído.' : (result?.error || 'O teste do app não terminou. Tente de novo.') } });
       } else if (target.matches('[data-log-page]')) {
         this.logPage = Math.max(0, (this.logPage || 0) + (target.dataset.logPage === 'next' ? 1 : -1));
         this.toolsSignature = '';
@@ -129,25 +168,30 @@
       }
     }
 
-    // Sonda de escrita única nos pontos do GNV (dono, 2026-10-17): toque duplo (arma e confirma), sem diálogo do sistema.
+    // Teste de gravação nos pontos (dono, 2026-10-17): toque duplo (arma e confirma), sem diálogo do sistema.
+    setProbeNote(text) {
+      this.probeNote = text;
+      const label = document.getElementById('toolBufferProbe')?.querySelector('span');
+      if (label) label.textContent = text;
+    }
+
     runBufferProbe() {
       const button = document.getElementById('toolBufferProbe');
-      const label = button?.querySelector('span');
       const bridge = window.OmegasAutoCal;
-      if (!button || !label || !bridge?.startBufferWriteProbe) {
-        this.store.patch({ alert: { level: 'warning', message: 'Sonda indisponível neste ambiente.' } });
+      if (!button || !bridge?.startBufferWriteProbe) {
+        this.store.patch({ alert: { level: 'warning', message: 'O teste só funciona no app, com a central.' } });
         return;
       }
       if (this.bufferProbeRunning) return;
       if (!this.bufferProbeArmed) {
         this.bufferProbeArmed = true;
-        label.textContent = 'Toque de novo para escrever 1 valor';
+        this.setProbeNote('Toque de novo para testar');
         const disarmNow = () => {
           this.bufferProbeArmed = false;
-          label.textContent = '1 valor, banda cheia, volta ao original (carro parado)';
+          this.setProbeNote('');
           this.bufferProbeDisarm?.();
         };
-        // Desarma na troca de rota, no USB desconectado e em qualquer outro toque (evento, nunca prazo).
+        // Desarma na troca de aba, no USB desconectado e em qualquer outro toque (evento, nunca prazo).
         const disarm = state => {
           if (state.route === 'tools' && state.status?.usbConnected !== false) return;
           disarmNow();
@@ -166,14 +210,14 @@
       this.bufferProbeDisarm?.();
       this.bufferProbeArmed = false;
       let started;
-      try { started = JSON.parse(bridge.startBufferWriteProbe()); } catch (_) { started = { ok: false, error: 'Resposta inválida da sonda' }; }
+      try { started = JSON.parse(bridge.startBufferWriteProbe()); } catch (_) { started = { ok: false, error: 'Resposta inválida do teste.' }; }
       if (started?.ok === false) {
-        label.textContent = started.error || 'Não iniciou';
+        this.setProbeNote(started.error || 'Não começou.');
         this.notifyResult(started, '');
         return;
       }
       this.bufferProbeRunning = true;
-      label.textContent = 'Rodando…';
+      this.setProbeNote('Testando…');
       const poll = () => {
         let status = {};
         try { status = JSON.parse(bridge.getBufferWriteProbeStatus()); } catch (_) { status = {}; }
@@ -182,62 +226,65 @@
           if (this.store.get?.()?.status?.usbConnected === false) {
             this.bufferProbePoll?.();
             this.bufferProbeRunning = false;
-            label.textContent = 'USB desconectado: resultado da sonda na sessão gravada';
+            this.setProbeNote('O cabo soltou. O resultado fica na gravação da viagem.');
           }
           return;
         }
         this.bufferProbePoll?.();
         this.bufferProbeRunning = false;
         const text = Drawers.describeBufferProbe(status);
-        label.textContent = text;
+        this.setProbeNote(text);
         this.store.patch({ alert: { level: status.outcome === 'ACCEPTED_AND_HELD' || status.outcome === 'REFUSED' ? 'ok' : 'warning', message: text } });
       };
       this.bufferProbePoll = window.OmegasApp.scheduler.addHook('fast', poll);
     }
 
-    // Refino automático depois de cada AutoMatch da ECU (D1): DESLIGADO · SOMBRA (só registra). O app nunca grava sozinho (dono, 2026-10-18).
+    // Refino automático depois de cada AutoMatch da central: Desligado · Ligado (só sugere). O app nunca grava sozinho (dono, 2026-10-18).
     static describeAutoRefineMode(mode) {
-      if (mode === 'OFF') return 'Desligado: não faz nada depois do AutoMatch';
-      return 'Sombra: só registra na sessão o que sugeriria; gravar é sempre manual';
+      if (mode === 'OFF') return 'Desligado: não sugere nada depois do AutoMatch';
+      return 'Ligado: só sugere; gravar é sempre manual';
     }
 
     syncAutoRefine() {
       const label = document.getElementById('toolAutoRefine')?.querySelector('span');
       const bridge = window.OmegasAutoCal;
-      if (!label || !bridge?.getAutoRefineMode) return;
+      if (!bridge?.getAutoRefineMode) return;
       let mode = 'SHADOW';
       try { mode = String(bridge.getAutoRefineMode()) || 'SHADOW'; } catch (_) { mode = 'SHADOW'; }
       this.autoRefineMode = mode;
-      label.textContent = Drawers.describeAutoRefineMode(mode);
+      if (label) label.textContent = mode === 'OFF' ? 'Desligado' : 'Ligado';
+      const button = document.getElementById('toolAutoRefine');
+      if (button?.setAttribute) button.setAttribute('aria-checked', mode === 'OFF' ? 'false' : 'true');
     }
 
     toggleAutoRefine() {
-      const label = document.getElementById('toolAutoRefine')?.querySelector('span');
       const bridge = window.OmegasAutoCal;
-      if (!label || !bridge?.setAutoRefineMode) return;
+      if (!bridge?.setAutoRefineMode) return;
       const next = (this.autoRefineMode || 'SHADOW') === 'OFF' ? 'SHADOW' : 'OFF';
       let result;
       try { result = JSON.parse(bridge.setAutoRefineMode(next)); } catch (_) { result = { ok: false, error: 'Resposta inválida' }; }
       if (result?.ok === false) { this.notifyResult(result, ''); this.syncAutoRefine(); return; }
       this.autoRefineMode = next;
-      label.textContent = Drawers.describeAutoRefineMode(next);
+      this.toolsSignature = '';
+      this.syncAutoRefine();
+      this.renderTools(this.store.get());
     }
 
     static describeBufferProbe(status) {
-      const back = status.restoreNeeded ? (status.restored ? ' Original restaurado.' : ' ATENÇÃO: original NÃO restaurado, use Reset GNV.') : '';
+      const back = status.restoreNeeded ? (status.restored ? ' Original restaurado.' : ' ATENÇÃO: o original NÃO voltou. Use Reaprender GNV no AutoCal.') : '';
       switch (status.outcome) {
-        case 'REFUSED': return 'A ECU recusou escrever nos pontos (só leitura). Nada mudou.';
-        case 'ACCEPTED_AND_HELD': return 'A ECU aceitou e o valor ficou (banda ' + status.band + ').' + back;
-        case 'ACCEPTED_THEN_OVERWRITTEN': return 'A ECU aceitou, mas desfez sozinha o valor.' + back;
-        case 'ACCEPTED_BUT_DIFFERENT': return 'A ECU aceitou, mas guardou outro valor.' + back;
-        case 'NO_STABLE_BAND': return 'Nenhuma banda do GNV está cheia ainda; nada foi escrito.';
+        case 'REFUSED': return 'A central recusou escrever nos pontos (só leitura). Nada mudou.';
+        case 'ACCEPTED_AND_HELD': return 'A central aceitou e o valor ficou (faixa ' + status.band + ').' + back;
+        case 'ACCEPTED_THEN_OVERWRITTEN': return 'A central aceitou, mas desfez sozinha o valor.' + back;
+        case 'ACCEPTED_BUT_DIFFERENT': return 'A central aceitou, mas guardou outro valor.' + back;
+        case 'NO_STABLE_BAND': return 'Nenhuma faixa do GNV está cheia ainda; nada foi escrito.';
         default: return 'Sonda sem resultado: ' + (status.message || 'erro') + back;
       }
     }
 
     notifyResult(result, successMessage) {
       if (result?.ok === false) {
-        this.store.patch({ alert: { level: 'warning', message: result.error || 'Operação não concluída.' } });
+        this.store.patch({ alert: { level: 'warning', message: result.error || 'Não deu certo. Tente de novo.' } });
       } else {
         this.store.patch({ alert: { level: 'ok', message: successMessage } });
       }
@@ -247,11 +294,11 @@
       if (!result || typeof result !== 'object' || result.ok === false) return;
       this.store.patch({ sessionStatus: result });
       this.toolsSignature = '';
-      this.renderTools(this.store.get());
+      this.renderSessions(this.store.get());
     }
 
     applySessionSettings() {
-      const host = document.getElementById('toolDiagnosticsWorkspace');
+      const host = document.getElementById('sessionsHost');
       if (!host) return;
       const settings = {
         telemetryEveryMs: Number(host.querySelector('[data-session-telemetry]')?.value || 250),
@@ -263,21 +310,21 @@
       const result = this.api.setSessionSettings(settings);
       const applied = result?.settings || settings;
       if (result?.ok === false) {
-        this.sessionSettingsFeedback = result.error || 'Política não aplicada.';
+        this.sessionSettingsFeedback = result.error || 'Não deu para aplicar. Tente de novo.';
       } else {
-        this.sessionSettingsFeedback = `Aplicado: ${applied.telemetryEveryMs || settings.telemetryEveryMs} ms · ${applied.maxSessionMb || settings.maxSessionMb} MB · ${applied.keepSessions || settings.keepSessions} sessões`;
+        this.sessionSettingsFeedback = `Pronto: ${applied.maxSessionMb || settings.maxSessionMb} MB por gravação · guarda ${applied.keepSessions || settings.keepSessions} gravações`;
       }
-      this.notifyResult(result, 'Política de logs atualizada.');
+      this.notifyResult(result, 'Tamanho das gravações atualizado.');
       this.refreshSessionStatus(result);
     }
 
     render(state) {
-      if (this.tools) this.tools.classList.toggle('open', state.toolsOpen === true);
-      document.body.classList.toggle('drawer-open', state.toolsOpen === true);
-      if (state.toolsOpen) this.renderTools(state);
-      const demo = document.getElementById('toolEnvironment');
-      const environment = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup, sessões e saúde do app';
-      if (demo && demo.textContent !== environment) demo.textContent = environment;
+      const route = state.route;
+      if (this.tools) this.tools.classList.toggle('open', route === 'tools');
+      document.body.classList.toggle('drawer-open', route === 'tools');
+      if (route !== 'tools' && this.view !== 'home') { this.view = 'home'; this.toolsSignature = ''; }
+      if (route === 'tools') this.renderTools(state);
+      if (route === 'sessions') this.renderSessions(state);
     }
 
     preserveSessionSettingsInteraction(host) {
@@ -287,179 +334,160 @@
       return !!(active && panel.contains(active) && ['INPUT', 'SELECT'].includes(active.tagName));
     }
 
+    // ---------- Ferramentas, página 2 ----------
     renderTools(state) {
       const host = document.getElementById('toolDiagnosticsWorkspace');
       if (!host) return;
-      if (this.preserveSessionSettingsInteraction(host)) return;
-      const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
-      const status = state.sessionStatus || {};
-      const settings = status.settings || {};
-      const sessions = Array.isArray(state.sessions) ? state.sessions : [];
       const logs = Array.isArray(state.logs) ? state.logs : [];
       const appStatus = state.status || {};
-      const learning = state.learning || {};
-      const petrolCount = Array.isArray(learning.petrol) ? learning.petrol.length : 0;
-      const cngCount = Array.isArray(learning.cng) ? learning.cng.length : 0;
-      const comparisonCount = finite(learning.comparisonCount) ?? (Array.isArray(learning.comparisons) ? learning.comparisons.length : 0);
       const categories = [...new Set(logs.map(item => String(item.category || 'OUTROS').toUpperCase()))].sort();
       const filteredLogs = logs.filter(item => {
         const level = String(item.level || '').toUpperCase();
         const category = String(item.category || 'OUTROS').toUpperCase();
         return (this.logLevel === 'ALL' || level === this.logLevel) && (this.logCategory === 'ALL' || category === this.logCategory);
       }).slice(-24).reverse();
-      // Sem rolagem (dono, 2026-10-11): as mesmas 24 linhas, em páginas de 8 que cabem na tela.
-      const LOG_PAGE_SIZE = 8;
       const logPageCount = Math.max(1, Math.ceil(filteredLogs.length / LOG_PAGE_SIZE));
       this.logPage = Math.min(Math.max(0, this.logPage || 0), logPageCount - 1);
       const pageLogs = filteredLogs.slice(this.logPage * LOG_PAGE_SIZE, (this.logPage + 1) * LOG_PAGE_SIZE);
-      const recording = status.recording === true;
-      const mb = finite(status.megabytes) || 0;
-      const limitMb = finite(status.limitMb ?? settings.maxSessionMb) || 0;
-      const fullness = limitMb > 0 ? Math.min(100, mb / limitMb * 100) : 0;
       const serviceHealthy = appStatus.serviceRunning === true && appStatus.engineStuck !== true;
-
       const battery = this.api.batteryOptimizationStatus?.() || {};
       const overlay = this.api.overlayStatus?.() || {};
-      // Só redesenha quando algo visível mudou: redesenho a cada tick fechava seletores,
-      // resetava a rolagem e engolia toques (a aba parecia travada).
+      let mode = this.autoRefineMode;
+      if (!mode) { try { mode = String(window.OmegasAutoCal?.getAutoRefineMode?.() || 'SHADOW'); } catch (_) { mode = 'SHADOW'; } this.autoRefineMode = mode; }
+      // Só redesenha quando algo visível mudou: redesenho a cada ciclo engolia toques.
       const signature = JSON.stringify([
-        appStatus.serviceRunning, appStatus.engineRunning, appStatus.engineStuck, appStatus.usbConnected,
-        Math.round((finite(appStatus.directTelemetryAgeMs) ?? -1) / 1000), battery, overlay,
-        status.recording, status.events, Math.round(mb * 10), status.droppedEvents, Math.round((finite(status.durationMs) || 0) / 10000),
-        settings, sessions.map(item => [item.id, item.bytes, item.active]), petrolCount, cngCount, comparisonCount,
-        filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.logPage, this.sessionSettingsFeedback,
+        this.view, this.page, serviceHealthy, appStatus.usbConnected, battery, overlay, mode, this.probeNote, !!window.OmegasAutoCal?.startBufferWriteProbe,
+        filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.logPage,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
       this.toolsSignature = signature;
-      const logsOpenBeforeRender = host.querySelector('.tool-logs')?.open === true;
-      const sessionsOpenBeforeRender = host.querySelector('.tool-sessions')?.open === true;
-      const batteryAction = battery.supported !== false && battery.ignoringOptimizations !== true
-        ? '<button type="button" class="secondary" data-tool-battery-request>Permitir</button>' : '';
-      const overlayAction = overlay.visible === true
-        ? '<button type="button" class="quiet-button" data-tool-overlay-disable>Desativar</button>'
-        : overlay.permissionGranted === true
-          ? '<button type="button" class="secondary" data-tool-overlay-enable>Ativar</button>'
-          : '<button type="button" class="secondary" data-tool-overlay-request>Autorizar</button>';
+      host.dataset.mode = this.view === 'home' ? 'home' : 'view';
 
-      // Sem rolagem (dono, 2026-10-11): três cartões cabem na tela; "Sessões gravadas", "Tamanho e retenção"
-      // e o log abrem no lugar dos cartões (o título vira "Voltar") em vez de esticar a tela.
-      const disclosureTitle = text => `<span>${text}</span><em class="tool-disclosure-back">Voltar</em>`;
+      if (this.view === 'log') {
+        host.innerHTML = `
+        <section class="tool-view log-view" data-card="registro">
+          <header><button type="button" class="secondary tool-back" data-tool-back><span aria-hidden="true">‹</span> Voltar</button><h3>Registro do app</h3><p>${serviceHealthy ? 'O app está funcionando.' : 'O app precisa de atenção.'}</p></header>
+          <div class="log-tools">
+            <select data-log-level aria-label="Mostrar">${Object.entries(LEVELS).map(([value, text]) => `<option value="${value}" ${this.logLevel === value ? 'selected' : ''}>${text}</option>`).join('')}</select>
+            <select data-log-category aria-label="Assunto"><option value="ALL">Todos os assuntos</option>${categories.map(value => `<option value="${escapeHtml(value)}" ${this.logCategory === value ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}</select>
+            <button type="button" class="secondary" data-tool-export-logs>Salvar registro</button>
+            <button type="button" class="secondary" data-tool-selftest>Testar o app</button>
+          </div>
+          <div class="log-lines">
+            ${pageLogs.length ? pageLogs.map(item => `<div data-level="${escapeHtml(String(item.level || 'INFO').toLowerCase())}"><time>${escapeHtml(item.time || '')}</time><b>${escapeHtml(item.category || 'LOG')}</b><span>${escapeHtml(item.message || '')}</span></div>`).join('') : '<p class="empty-copy">Nenhum aviso por enquanto.</p>'}
+          </div>
+          ${logPageCount > 1 ? `<div class="tool-log-pager"><button type="button" class="secondary" data-log-page="prev" ${this.logPage === 0 ? 'disabled' : ''}>‹ Mais novos</button><span>${this.logPage + 1} de ${logPageCount}</span><button type="button" class="secondary" data-log-page="next" ${this.logPage >= logPageCount - 1 ? 'disabled' : ''}>Mais antigos ›</button></div>` : ''}
+        </section>`;
+        return;
+      }
+
+      const refineOn = mode !== 'OFF';
+      const batteryOk = battery.ignoringOptimizations === true || battery.supported === false;
+      const overlayState = overlay.visible === true ? 'on' : 'off';
+      const overlayAttr = overlay.visible === true ? 'data-tool-overlay-disable'
+        : overlay.permissionGranted === true ? 'data-tool-overlay-enable' : 'data-tool-overlay-request';
       host.innerHTML = `
-        <section class="background-health-card" data-healthy="${serviceHealthy ? 'true' : 'false'}">
-          <header><div><small>SAÚDE DO APP</small><h3>${serviceHealthy ? 'Funcionando em segundo plano' : appStatus.serviceRunning ? 'Comunicação com a ECU exige atenção' : 'O serviço do OMEGAS não está ativo'}</h3></div><span>${serviceHealthy ? (appStatus.usbConnected ? 'OK' : 'APP OK · SEM ECU') : 'ATENÇÃO'}</span></header>
-          <div class="background-health-grid">
-            <span>ECU <b>${appStatus.usbConnected ? 'conectada' : 'desconectada'}</b></span>
-            <span>Leitura <b>${appStatus.engineRunning ? 'ativa' : 'parada'}</b></span>
-            <span>Dados da ECU <b>${ageLabel(appStatus.directTelemetryAgeMs)}</b></span>
-          </div>
-          <div class="tool-power-rows">
-            <div class="tool-power-row"><div><small>BATERIA</small><b>${battery.ignoringOptimizations === true ? 'Sem restrição do Android' : 'O Android pode pausar o app'}</b><span>Permita para sessões longas com a tela apagada.</span></div>${batteryAction}</div>
-            <div class="tool-power-row"><div><small>TELEMETRIA FLUTUANTE</small><b>${overlay.visible === true ? 'Ativa' : 'Desativada'}</b><span>Balão por cima de outros apps (mapa, música). Não aparece por cima do OMEGAS.</span></div>${overlayAction}</div>
-          </div>
-          <div class="tool-disclosures">
-            <details class="tool-logs live-log-console" ${logsOpenBeforeRender ? 'open' : ''}>
-              <summary>${disclosureTitle(`Log do sistema (${logs.length})`)}</summary>
-              <div class="tool-disclosure-body">
-                <div class="tool-log-toolbar">
-                  <div class="recorder-actions">
-                    <button type="button" class="secondary" data-tool-export-logs>Exportar logs</button>
-                    <button type="button" class="secondary" data-tool-selftest>Executar autoteste</button>
-                  </div>
-                  <div class="log-filters">
-                    <select data-log-level>
-                      ${['ALL', 'ERROR', 'WARN', 'INFO'].map(value => `<option value="${value}" ${this.logLevel === value ? 'selected' : ''}>${value === 'ALL' ? 'Todos níveis' : value}</option>`).join('')}
-                    </select>
-                    <select data-log-category>
-                      <option value="ALL">Todas categorias</option>
-                      ${categories.map(value => `<option value="${escapeHtml(value)}" ${this.logCategory === value ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}
-                    </select>
-                  </div>
-                  ${logPageCount > 1 ? `<div class="tool-log-pager"><button type="button" class="secondary" data-log-page="prev" ${this.logPage === 0 ? 'disabled' : ''}>Mais recentes</button><span>Página ${this.logPage + 1} de ${logPageCount}</span><button type="button" class="secondary" data-log-page="next" ${this.logPage >= logPageCount - 1 ? 'disabled' : ''}>Mais antigos</button></div>` : ''}
-                </div>
-                <div class="log-lines">
-                  ${pageLogs.length ? pageLogs.map(item => `<div data-level="${escapeHtml(String(item.level || 'INFO').toLowerCase())}"><time>${escapeHtml(item.time || '')}</time><b>${escapeHtml(item.category || 'LOG')}</b><span>${escapeHtml(item.message || '')}</span></div>`).join('') : '<p class="empty-copy">Nenhum evento neste filtro.</p>'}
-                </div>
-              </div>
-            </details>
-          </div>
-        </section>
+        <article class="tool-tile" data-card="copia" data-state="neutral">
+          <h3>Cópia de segurança</h3>
+          <p class="tile-line">Guarda tudo do app num arquivo.</p>
+          <button type="button" id="toolExportData" class="tile-action"><b>Salvar cópia</b></button>
+        </article>
+        <article class="tool-tile" data-card="aprendizado-salvar" data-state="neutral">
+          <h3>Aprendizado</h3>
+          <p class="tile-line">Guarda o que o app aprendeu.</p>
+          <button type="button" id="toolExportLearning" class="tile-action"><b>Salvar aprendizado</b></button>
+        </article>
+        <article class="tool-tile" data-card="aprendizado-carregar" data-state="neutral">
+          <h3>Aprendizado de outro arquivo</h3>
+          <p class="tile-line">Confere antes. Não grava na central.</p>
+          <button type="button" id="toolImportLearning" class="tile-action"><b>Carregar aprendizado</b></button>
+        </article>
+        <article class="tool-tile" data-card="refino-automatico" data-state="${refineOn ? 'on' : 'off'}">
+          <h3>Refino automático</h3>
+          <p class="tile-line">Só sugere. Nunca grava sozinho.</p>
+          <button type="button" id="toolAutoRefine" class="tool-switch" role="switch" aria-checked="${refineOn ? 'true' : 'false'}" aria-label="Refino automático"><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${refineOn ? 'Ligado' : 'Desligado'}</span></button>
+        </article>
+        <article class="tool-tile" data-card="teste-gravacao" data-state="neutral">
+          <h3>Teste de gravação</h3>
+          <p class="tile-line">Só com o carro parado.</p>
+          <button type="button" id="toolBufferProbe" class="tile-action"><b>Testar</b><span>${escapeHtml(this.probeNote)}</span></button>
+        </article>
+        <article class="tool-tile" data-card="bateria" data-state="${batteryOk ? 'on' : 'off'}">
+          <h3>Bateria</h3>
+          <p class="tile-line">${batteryOk ? 'O Android não pausa o app.' : 'O Android pode pausar o app.'}</p>
+          ${batteryOk ? '<span class="tile-state">Sem limite</span>' : '<button type="button" class="tile-action" data-tool-battery-request><b>Permitir</b></button>'}
+        </article>
+        <article class="tool-tile" data-card="balao" data-state="${overlayState}">
+          <h3>Balão sobre outros apps</h3>
+          <p class="tile-line">Mostra as leituras por cima do mapa.</p>
+          <button type="button" class="tool-switch" role="switch" aria-checked="${overlay.visible === true ? 'true' : 'false'}" aria-label="Balão sobre outros apps" ${overlayAttr}><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${overlay.visible === true ? 'Ligado' : overlay.permissionGranted === true ? 'Desligado' : 'Pedir permissão'}</span></button>
+        </article>
+        <button type="button" class="tool-tile tool-open" data-card="registro" data-tool-open-log data-state="${serviceHealthy ? 'on' : 'off'}">
+          <h3>Registro do app</h3>
+          <p class="tile-line">Avisos e teste do app.</p>
+          <span class="tile-state">${serviceHealthy ? 'Tudo certo' : 'Atenção'}</span>
+          <span class="tile-go">Ver ›</span>
+        </button>`;
+    }
 
-        <section class="diagnostic-recorder-card" data-recording="${recording ? 'true' : 'false'}">
-          <header><div><small>REGISTRO DE SESSÃO</small><h3>${recording ? 'Registrando sessão' : 'Registro parado'}</h3></div><span>${recording ? 'REGISTRANDO' : 'PARADO'}</span></header>
-          <div class="recorder-metrics">
-            <span><b>${durationLabel(status.durationMs)}</b> duração</span>
-            <span><b>${finite(status.megabytes) === null ? '—' : `${fmt(mb, 1)} MB`}</b> usados</span>
-            <span><b>${finite(status.events) === null ? '—' : Math.round(finite(status.events))}</b> eventos</span>
-          </div>
-          <div class="recorder-space"><i style="width:${fullness.toFixed(1)}%"></i></div>
-          <div class="recorder-actions">
-            <button type="button" class="${recording ? 'quiet-button' : 'primary'}" data-session-start ${recording ? 'disabled' : ''}>Registrar sessão</button>
-            <button type="button" class="${recording ? 'secondary' : 'quiet-button'}" data-session-stop ${recording ? '' : 'disabled'}>Parar</button>
-          </div>
-          <div class="tool-disclosures">
-            <details class="tool-sessions" ${sessionsOpenBeforeRender ? 'open' : ''}>
-              <summary>${disclosureTitle(`Sessões (${sessions.length})`)}</summary>
-              <div class="tool-disclosure-body">
-                <div class="recorded-session-list">
-                  ${sessions.length ? sessions.slice(0, 8).map(item => {
-                    const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
-                    const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
-                    const pctCng = (finite(item.cngTicks) || 0);
-                    const pctPet = (finite(item.petrolTicks) || 0);
-                    const totalTicks = pctCng + pctPet;
-                    const gnvPercent = totalTicks > 0 ? Math.round((pctCng / totalTicks) * 100) : 0;
-                    const gasPercent = totalTicks > 0 ? 100 - gnvPercent : 0;
-                    return `
-                    <article class="recorded-session-item">
-                      <div class="recorded-session-header">
-                        <b>${escapeHtml(item.reason || 'Sessão')}</b>
-                        <span class="session-datetime">${readableDate}</span>
-                      </div>
-                      <div class="recorded-session-meta">
-                        <span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · em andamento' : ''}${totalTicks > 0 ? ` · GNV ${gnvPercent}% · gasolina ${gasPercent}%` : ''}</span>
-                      </div>
-                      ${totalTicks > 0 ? `
-                      <div class="session-fuel-bar" title="GNV: ${gnvPercent}% | Gasolina: ${gasPercent}%">
-                        <div class="fuel-segment cng" style="width: ${gnvPercent}%;"></div>
-                        <div class="fuel-segment petrol" style="width: ${gasPercent}%;"></div>
-                      </div>
-                      ` : ''}
-                      <button type="button" class="quiet-button" data-export-session="${escapeHtml(item.id)}">Exportar ZIP</button>
-                    </article>`;
-                  }).join('') : '<p class="empty-copy">Nenhuma sessão registrada ainda. Ela começa sozinha ao conectar a ECU.</p>'}
-                </div>
-              </div>
-            </details>
-            <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
-              <summary>${disclosureTitle('Tamanho e retenção das sessões')}</summary>
-              <div class="tool-disclosure-body">
-                <div class="diagnostic-settings-grid">
-                  <label><span>Telemetria salva</span><select data-session-telemetry>
-                    ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value} ms` : `${value / 1000} s`}</option>`).join('')}
-                  </select></label>
-                  <label><span>Limite por sessão</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><small>MB</small></label>
-                  <label><span>Manter sessões</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
-                  <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Iniciar ao conectar a ECU</span></label>
-                  <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Capturar USB bruto</span></label>
-                </div>
-                <p>USB bruto aumenta bastante o tamanho. Use só para investigar falha de comunicação.</p>
-                <button type="button" class="secondary wide" data-session-settings>Aplicar</button>
-                ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
-              </div>
-            </details>
-          </div>
+    // ---------- Sessões ----------
+    renderSessions(state) {
+      const host = document.getElementById('sessionsHost');
+      if (!host) return;
+      if (this.preserveSessionSettingsInteraction(host)) return;
+      const status = state.sessionStatus || {};
+      const settings = status.settings || {};
+      const sessions = Array.isArray(state.sessions) ? state.sessions : [];
+      const recording = status.recording === true;
+      const mb = finite(status.megabytes) || 0;
+      const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
+      const pages = Math.max(1, Math.ceil(sessions.length / SESSIONS_PER_PAGE));
+      this.sessionPage = Math.min(Math.max(0, this.sessionPage || 0), pages - 1);
+      const shown = sessions.slice(this.sessionPage * SESSIONS_PER_PAGE, (this.sessionPage + 1) * SESSIONS_PER_PAGE);
+      const signature = JSON.stringify([
+        recording, status.events, Math.round(mb * 10), Math.round((finite(status.durationMs) || 0) / 10000), settings,
+        sessions.map(item => [item.id, item.bytes, item.active]), this.sessionPage, this.sessionSettingsFeedback, state.status?.usbConnected,
+      ]);
+      if (signature === this.sessionsSignature && host.childElementCount) return;
+      this.sessionsSignature = signature;
+      host.innerHTML = `
+        <section class="sess-card sess-rec" data-recording="${recording ? 'true' : 'false'}">
+          <h3>Gravação</h3>
+          <span class="tile-state" data-on="${recording ? 'true' : 'false'}">${recording ? 'Gravando' : 'Parada'}</span>
+          <p class="tile-line">${recording ? `${durationLabel(status.durationMs)} · ${finite(status.megabytes) === null ? '—' : `${fmt(mb, 1)} MB`}` : (settings.autoStartOnUsb !== false ? 'Começa sozinha quando a central conecta.' : 'Toque para começar.')}</p>
+          <button type="button" class="${recording ? 'secondary' : 'primary'} sess-main" ${recording ? 'data-session-stop' : 'data-session-start'}><b>${recording ? 'Parar de gravar' : 'Começar a gravar'}</b></button>
         </section>
-
-        <section class="learning-portability-card">
-          <header><div><small>APRENDIZADO</small><h3>O que vai no arquivo .omegas</h3></div></header>
-          <div class="learning-portability-grid">
-            <span><b>${petrolCount}</b> regiões gasolina</span>
-            <span><b>${cngCount}</b> regiões GNV</span>
-            <span><b>${comparisonCount}</b> comparações</span>
-          </div>
-          <p>Use <b>Exportar aprendizado</b> e <b>Importar aprendizado</b> abaixo. Importar confere o arquivo antes de aceitar e nunca grava na ECU. O GNV de uma calibração antiga não volta para a calibração atual.</p>
+        <section class="sess-card sess-list">
+          <h3>Gravações salvas <span class="count">(${sessions.length})</span></h3>
+          ${shown.length ? `<div class="recorded-session-list">${shown.map(item => {
+            const match = String(item.id || '').match(/session_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
+            const readableDate = match ? match[1].split('-').reverse().join('/') + ' ' + match[2].replace(/-/g, ':') : (new Date(item.createdAt || 0).toLocaleString('pt-BR'));
+            return `
+            <article class="recorded-session-item">
+              <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>
+              <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}">Salvar arquivo</button>
+            </article>`;
+          }).join('')}</div>` : '<p class="empty-copy">Nenhuma gravação ainda. Ela começa sozinha ao conectar a central.</p>'}
+          ${pages > 1 ? `<div class="tool-log-pager"><button type="button" class="secondary" data-session-page="newer" ${this.sessionPage === 0 ? 'disabled' : ''}>‹ Mais novas</button><span>${this.sessionPage + 1} de ${pages}</span><button type="button" class="secondary" data-session-page="older" ${this.sessionPage >= pages - 1 ? 'disabled' : ''}>Mais antigas ›</button></div>` : ''}
         </section>
-      `;
+        <section class="sess-card sess-size">
+          <details class="diagnostic-settings" ${settingsOpenBeforeRender ? 'open' : ''}>
+            <summary><span class="sum-title">Tamanho das gravações</span><span class="sum-state">${finite(settings.maxSessionMb ?? status.limitMb) === null ? '' : `${Math.round(finite(settings.maxSessionMb ?? status.limitMb))} MB cada`}</span><em class="tool-disclosure-back">Voltar</em></summary>
+            <div class="tool-disclosure-body">
+              <div class="diagnostic-settings-grid">
+                <label><span>Salvar a cada</span><select data-session-telemetry>
+                  ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value / 1000}`.replace('.', ',') + ' s' : `${value / 1000} s`}</option>`).join('')}
+                </select></label>
+                <label><span>Tamanho máximo (MB)</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"></label>
+                <label><span>Quantas guardar</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
+                <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Gravar ao conectar a central</span></label>
+                <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Gravar tudo do cabo (arquivo grande)</span></label>
+              </div>
+              <button type="button" class="primary" data-session-settings>Aplicar</button>
+              ${this.sessionSettingsFeedback ? `<small class="settings-feedback">${escapeHtml(this.sessionSettingsFeedback)}</small>` : ''}
+            </div>
+          </details>
+        </section>`;
     }
   }
 

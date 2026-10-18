@@ -143,3 +143,312 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `StatusBarMainDrawPanel` | 0x004FF7D4 | 1098 | INFERIDO | chama TAebProtocol::IsConnect |  |  |  |
 | `TimerExpiredTimer` | 0x004F3774 | 127 | INFERIDO | toca TimerExpired |  |  |  |
 | `TimerUpdateTimer` | 0x004F37F4 | 1113 | INFERIDO | chama APIs do Windows GetTickCount, Sleep; toca TimerUpdate |  | GetTickCount, Sleep | GetUserNameExW, InternetAttemptConnect, InternetConnectW, InternetGetConnectedState |
+
+### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+
+- `ActionAggiornaExecute` (0x005035DC):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_405784 (59 B)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
+  -   sub_48944C (154 B)
+  -   sub_4F3C50 (34 B)
+  -     sub_4047FC (125 B)
+  -     sub_404C94 (59 B)
+  - … +4 (ver telas.json)
+- `ActionApriConfExecute` (0x00500314):
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_4057C0 (139 B)
+  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_48935C (60 B)
+  - sub_4D83CC (5497 B): textos BUTTONANNULLA,BUTTONOK,COMBOCARBURANTE1,COMBOCARBURANTE2; APIs DeleteMenu,GetSystemMenu,GetSystemMetrics; chama TAboutBox.Create,TAebProtocol::IsConnect,TTranslatorExt::GetString
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_50FCF8 (23 B)
+  -   sub_40487C (45 B)
+  -   sub_41E8D0 (96 B)
+  - … +12 (ver telas.json)
+- `ActionApriExecute` (0x004FE618):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_404C94 (59 B)
+  - sub_42B964 (428 B)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
+  - sub_48A228 (2561 B)
+  - sub_4F6CC8 (2878 B): textos FINESTRACONFIG,LABELMODELLO34568CILINDRI,LABELMODELLO34CILINDRI; chama TAebProtocol::IsConnect,TTranslatorExt::GetString; toca OpenDialog,SaveDialog
+  - sub_4FBA40 (933 B): APIs Sleep; chama TAebProtocol::SendCommand,TAebVector::GetEcuData; toca ButtonAnnulla,ButtonOk,EditName
+  - sub_4FFC20 (503 B): toca ActionSalva
+  -   sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
+  -   sub_42A698 (235 B)
+  -   sub_42A8F4 (235 B)
+  - … +48 (ver telas.json)
+- `ActionArchivioExecute` (0x004FF6C4):
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_4D83CC (5497 B): textos BUTTONANNULLA,BUTTONOK,COMBOCARBURANTE1,COMBOCARBURANTE2; APIs DeleteMenu,GetSystemMenu,GetSystemMetrics; chama TAboutBox.Create,TAebProtocol::IsConnect,TTranslatorExt::GetString
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_40487C (45 B)
+  -   sub_41E8D0 (96 B)
+  -   sub_42CFB8 (839 B)
+  -   sub_405784 (59 B)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
+  -   sub_48944C (154 B)
+  - … +8 (ver telas.json)
+- `ActionAzzeraIdExecute` (0x005039A0):
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_42B964 (428 B)
+  - sub_434C78 (34 B)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_5034CC (262 B): toca StatusBarMain
+  -   sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
+  -   sub_40487C (45 B)
+  -   sub_404C94 (59 B)
+  -   sub_42A698 (235 B)
+  - … +48 (ver telas.json)
+- `ActionConnettiExecute` (0x004FB840):
+  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
+  - sub_4F9C34 (11 B)
+  -   sub_50FCF8 (23 B)
+  -   sub_4F9C40 (7167 B): chama TAebNumber::GetEcuData,TAebNumber::SetEcuData,TAebProtocol::Connect,TAebProtocol::Disconnect; toca ActionApri,ActionApriConf,ActionConf,ActionCorrTara
+  -     sub_40487C (45 B)
+  -     sub_404C40 (81 B)
+  -     sub_405754 (48 B)
+  -     sub_4057C0 (139 B)
+  -     sub_4082A0 (88 B)
+  -     sub_42B8D4 (144 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::GetIdentification
+  -     sub_42B964 (428 B)
+  -     sub_42BB40 (41 B): chama TAebNumber::SetEcuData
+  - … +24 (ver telas.json)
+- `ActionCorrTaraExecute` (0x00500DE4):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_4057C0 (139 B)
+  - sub_431578 (56 B)
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_48935C (60 B)
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_405784 (59 B)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
+  -   sub_48944C (154 B)
+  - … +7 (ver telas.json)
+- `ActionDiagnosiExecute` (0x004FFE24):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_431578 (56 B)
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_405784 (59 B)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
+  -   sub_48944C (154 B)
+  -   sub_4F3C50 (34 B)
+  -     sub_4047FC (125 B)
+  - … +5 (ver telas.json)
+- `ActionDisconnettiExecute` (0x004FB858):
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
+  - sub_433280 (132 B): chama TAebVector::SetEcuData
+  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_503DAC (513 B): chama TAebProtocol::IsConnect; toca BitBtnRiprogramma,ImageServiceOff,ImageServiceOn,ImageServiceOnAlrt
+  -   sub_50FCF8 (23 B)
+  -   sub_42A698 (235 B)
+  -   sub_42A8F4 (235 B)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
+  - … +7 (ver telas.json)
+- `ActionProgrammaExecute` (0x004FDBD4):
+  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
+  - sub_4FD80C (966 B): chama TAebProtocol::IsConnect,TFormAttesa.Create
+  -   sub_50FCF8 (23 B)
+  -   sub_40487C (45 B)
+  -   sub_404C40 (81 B)
+  -   sub_405754 (48 B)
+  -   sub_4057C0 (139 B)
+  -   sub_433240 (61 B)
+  -   sub_489034 (110 B)
+  -   sub_489320 (60 B)
+  -   sub_48935C (60 B)
+  -   sub_48944C (154 B)
+  - … +44 (ver telas.json)
+- `ActionResetDaPcExecute` (0x00501248):
+  - sub_40487C (45 B)
+  - sub_42B244 (15 B)
+  - sub_42B8D4 (144 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::GetIdentification
+  - sub_42B964 (428 B)
+  - sub_42CFB8 (839 B)
+  - sub_42FFC8 (16 B)
+  - sub_43362C (14 B)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
+  - sub_4F9C40 (7167 B): chama TAebNumber::GetEcuData,TAebNumber::SetEcuData,TAebProtocol::Connect,TAebProtocol::Disconnect; toca ActionApri,ActionApriConf,ActionConf,ActionCorrTara
+  -   sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
+  -   sub_404C40 (81 B)
+  -   sub_404C94 (59 B)
+  - … +57 (ver telas.json)
+- `ActionSalvaConfExecute` (0x005000CC):
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_4057C0 (139 B)
+  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_48935C (60 B)
+  - sub_4D83CC (5497 B): textos BUTTONANNULLA,BUTTONOK,COMBOCARBURANTE1,COMBOCARBURANTE2; APIs DeleteMenu,GetSystemMenu,GetSystemMetrics; chama TAboutBox.Create,TAebProtocol::IsConnect,TTranslatorExt::GetString
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_50FCF8 (23 B)
+  -   sub_40487C (45 B)
+  -   sub_41E8D0 (96 B)
+  - … +12 (ver telas.json)
+- `ActionSalvaExecute` (0x004FEA54):
+  - sub_4047FC (125 B)
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_404C94 (59 B)
+  - sub_42CA64 (76 B)
+  - sub_42CFB8 (839 B)
+  - sub_431578 (56 B)
+  - sub_4315B0 (316 B): APIs PostMessageW; chama TAebVector::SetEcuData
+  - sub_433B98 (1074 B)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
+  -   sub_42B224 (15 B)
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - … +48 (ver telas.json)
+- `ActionUpdateExecute` (0x005035D4):
+  - sub_501E5C (5744 B): textos LABELAGGCENTRALINA,LABELAGGCONFIG,LABELCONNCENTRALINA,LABELPREPAGGCONFIG; APIs FindClose,FindFirstFileW,FindNextFileW,SetLastError; chama TAebProtocol::Connect,TAebProtocol::Disconnect,TAebProtocol::FindPort,TAebProtocol::OffLine
+  -   sub_4047FC (125 B)
+  -   sub_40487C (45 B)
+  -   sub_404C40 (81 B)
+  -   sub_404C94 (59 B)
+  -   sub_42B8D4 (144 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::GetIdentification
+  -   sub_42BB10 (45 B): chama TAebNumber::SetEcuData
+  -   sub_42CFB8 (839 B)
+  -   sub_431578 (56 B)
+  -   sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
+  -   sub_4828E4 (390 B): toca LabelRiprogramma
+  -   sub_4F95FC (1501 B): APIs Sleep; chama TAebProtocol::Disconnect,TAebProtocol::FindPort,TAebProtocol::GetIdentification,TAebProtocol::IsConnect; toca MenuMarket
+  - … +50 (ver telas.json)
+- `ActionVisualizzaExecute` (0x00501568):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_431578 (56 B)
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_405784 (59 B)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
+  -   sub_48944C (154 B)
+  -   sub_4F3C50 (34 B)
+  -     sub_4047FC (125 B)
+  - … +5 (ver telas.json)
+- `FormClose` (0x004F35C4):
+  - sub_407D74 (168 B)
+  - sub_50E6B8 (105 B)
+- `FormCloseQuery` (0x004FBDE8):
+  - sub_48944C (154 B)
+  - sub_4FFC20 (503 B): toca ActionSalva
+  -   sub_40487C (45 B)
+  -   sub_404C40 (81 B)
+  -   sub_405754 (48 B)
+  -   sub_4057C0 (139 B)
+  -   sub_42B234 (14 B)
+  -   sub_489034 (110 B)
+  -   sub_489320 (60 B)
+  -   sub_48935C (60 B)
+- `FormShow` (0x004F3E14):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_4057C0 (139 B)
+  - sub_420180 (232 B): chama TAebRegistryData::GetIntData,TTranslatorExt::CreatePopupMenu
+  - sub_4808CC (57 B)
+  - sub_489034 (110 B)
+  - sub_489398 (60 B)
+  - sub_4893D4 (60 B)
+  - sub_489410 (60 B)
+  - sub_4F484C (287 B): toca MenuClientPers
+- `ImageServiceClick` (0x00503FB0):
+  - sub_40487C (45 B)
+  - sub_408248 (88 B)
+  - sub_503DAC (513 B): chama TAebProtocol::IsConnect; toca BitBtnRiprogramma,ImageServiceOff,ImageServiceOn,ImageServiceOnAlrt
+  -   sub_408120 (208 B)
+  -   sub_433240 (61 B)
+  -   sub_433304 (38 B)
+  -   sub_43332C (25 B)
+- `MenuAboutClick` (0x004F7808):
+  - sub_40487C (45 B)
+  - sub_480D60 (1496 B): textos BUTTONESCI,BUTTON_DELETE_LICENSE,BUTTON_LOAD_LICENSE,BUTTON_REQUEST_LICENSE; chama TAboutBox.Create,TTranslatorExt::GetString
+- `OpenConfigWindow` (0x004F9190):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_4057C0 (139 B)
+  - sub_431578 (56 B)
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_48935C (60 B)
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_405784 (59 B)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
+  -   sub_48944C (154 B)
+  - … +7 (ver telas.json)
+- `OpenFormAutotaratura` (0x0050093C):
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_405754 (48 B)
+  - sub_4057C0 (139 B)
+  - sub_431578 (56 B)
+  - sub_489034 (110 B)
+  - sub_489320 (60 B)
+  - sub_48935C (60 B)
+  - sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_405784 (59 B)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
+  -   sub_48944C (154 B)
+  - … +7 (ver telas.json)
+- `Plot1Click` (0x0050417C):
+  - sub_420448 (523 B): chama TAboutBox.Create
+  -   sub_40487C (45 B)
+  -   sub_42084C (2710 B): toca ActionAggiorna,ActionArchivio,ActionResetDaPc,ActionTara
+  -     sub_41E8D0 (96 B)
+  -     sub_4213E6 (3272 B)
+  -     sub_4236FC (332 B): chama TAebRegistryData::GetIntData
+  -     sub_4256FC (119 B): toca ChartDrt
+  -     sub_4272D0 (3882 B): textos BUTTONAVVIA,BUTTONCARICA,BUTTONESPORTA,BUTTONFERMA; chama TTranslatorExt::GetString; toca ActionFileHcf,ActionResetCentralina,ActionResetDaPc,ActionSalvaMappa
+  -     sub_429038 (5 B)
+  -     sub_50F208 (141 B)
+  -     sub_96BA2C (343 B)
+- `StatusBarMainDrawPanel` (0x004FF7D4):
+  - sub_40487C (45 B)
+  - sub_431578 (56 B)
+  - sub_431750 (53 B)
+  - sub_5034CC (262 B): toca StatusBarMain
+- `TimerExpiredTimer` (0x004F3774):
+  - sub_40487C (45 B)
+- `TimerUpdateTimer` (0x004F37F4):
+  - sub_4047FC (125 B)
+  - sub_40487C (45 B)
+  - sub_404C40 (81 B)
+  - sub_404C94 (59 B)
+  - sub_405178 (192 B)
+  - sub_4EA9F8 (772 B): APIs InternetAttemptConnect,InternetConnectW,InternetGetConnectedState,InternetOpenW
+  -   sub_403568 (1449 B)
+  -   sub_403D8C (385 B): APIs GetUserNameExW
+  -     sub_40323C (528 B): APIs GetAdaptersAddresses
+  -     sub_403458 (271 B)
+  -     sub_404FBC (412 B)
