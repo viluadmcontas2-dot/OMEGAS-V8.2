@@ -112,7 +112,8 @@ object EquivalenceAttribution {
      * serve para separar); [latched] = grupos que já eram locais (histerese). Devolve todos os grupos com o motivo.
      */
     fun classify(pairs: List<EquivalenceLedger.EvidencePair>, latched: Set<Key>): List<Group> {
-        val members = pairs.filter { it.petrolRefMs > 0.0 && it.gasPetrolMs > 0.0 }.map {
+        val members = pairs.filter { !it.ecuRef && it.rpm.isFinite() && it.rpm > 0.0 &&
+            it.petrolRefMs.isFinite() && it.petrolRefMs > 0.0 && it.gasPetrolMs.isFinite() && it.gasPetrolMs > 0.0 }.map {
             Member(it, column(it.rpm), keyOf(it.rpm, it.petrolRefMs), ln(it.gasPetrolMs / it.petrolRefMs))
         }
         var visit = 0

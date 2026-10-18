@@ -42,7 +42,7 @@ function harness(previewReply) {
     rows: Array.from({ length: 12 }, (_, r) => Array.from({ length: 12 }, (_, c) => 110 + r + c)),
     axes: { petrolBins: [2, 2.5, 3, 3.5, 4.5, 6, 8, 10, 12, 14, 16, 18], rpmBins: [850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500] },
   });
-  return { screen, previews, alerts };
+  return { screen, previews, alerts, context };
 }
 
 const plain = value => JSON.parse(JSON.stringify(value));
@@ -66,4 +66,50 @@ test('prévia Kotlin indisponível: nenhum alvo inventado no JS, aviso ao dono',
   screen.applyContext({ origin: 'refino', suggestion: { mapChanges: [{ row: 3, column: 0, deltaPercent: 12 }] } });
   assert.equal(screen.editor.changeCount(), 0);
   assert.match(alerts.join(' '), /Prévia Kotlin do Mapa K indisponível/);
+});
+
+test('sugestão pendente não prepara nem grava; toque prepara percentuais pela prévia nativa', () => {
+  const { screen, previews } = harness(kotlinPreview);
+  const suggestion = { verdict: 'SUGERIR', reason: 'RESIDUAL_LOCAL', cells: [
+    { row: 3, column: 0, deltaPercent: 12, current: 999, target: 255 },
+  ], equivalence: { cells: [{ band: 0, column: 0, rpm: 850, fromMs: 3, toMs: 4.5, errorPercent: 12 }] } };
+  screen.renderMapSuggestion(suggestion);
+  assert.equal(previews.length, 0);
+  assert.equal(screen.editor.selectionCount(), 0);
+  screen.prepareMapSuggestion();
+  assert.equal(previews.length, 1);
+  assert.equal(screen.editor.buildReview().items[0].target, 125, 'ignora alvo antigo; usa mapa presente e Kotlin');
+});
+
+test('tabela distingue zero, ausência e diferença medida; não usa residual como equivalência', () => {
+  const { screen } = harness(kotlinPreview);
+  const html = screen.equivalenceTable({ cells: [
+    { band: 0, column: 0, rpm: 850, fromMs: 3, toMs: 4.5, errorPercent: null },
+    { band: 0, column: 1, rpm: 1350, fromMs: 3, toMs: 4.5, errorPercent: 0 },
+    { band: 0, column: 2, rpm: 1850, fromMs: 3, toMs: 4.5, errorPercent: -8.2, residualPercent: 99 },
+  ] });
+  assert.match(html, /—/);
+  assert.match(html, /0,0%/);
+  assert.match(html, /-8,2%/);
+  assert.doesNotMatch(html, /99/);
+  assert.doesNotMatch(html, /button|input/);
+});
+
+test('invalidação ou falta de dados impede preparar sugestão', () => {
+  const { screen, previews } = harness(kotlinPreview);
+  screen.renderMapSuggestion({ verdict: 'SEM_EVIDENCIA', cells: [{ row: 0, column: 0, deltaPercent: 12 }] });
+  screen.prepareMapSuggestion();
+  screen.renderMapSuggestion(null);
+  screen.prepareMapSuggestion();
+  assert.equal(previews.length, 0);
+});
+
+
+test('ponte invalida a sugestão entre render e toque: não prepara alvo antigo', () => {
+  const { screen, previews, context } = harness(kotlinPreview);
+  screen.renderMapSuggestion({ verdict: 'SUGERIR', cells: [{ row: 3, column: 0, deltaPercent: 12 }] });
+  context.OmegasUi.AutoCalApi = { equivalence: () => ({ mapSuggestion: null }) };
+  screen.prepareMapSuggestion();
+  assert.equal(previews.length, 0);
+  assert.equal(screen.editor.selectionCount(), 0);
 });
