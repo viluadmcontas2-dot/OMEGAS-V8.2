@@ -104,6 +104,15 @@ class TestValoresReais(unittest.TestCase):
             self.assertEqual(a['visivel'], '1')
             self.assertIn('>%d<' % v, texto + '<')
 
+    def test_sem_capacidade_caixa_cinza_e_edits_ocultos(self):
+        with open(DFM, encoding='utf-8') as fh:
+            html = emu.render(fh.read(), emu.carregar_i18n(I18N), valores_reais(), caixa='on', capacidade=False)
+        a, _, _ = ctrl(html, 'CheckAntiStallo')
+        self.assertEqual((a['checked'], a['habilitado']), ('1', '0'))
+        self.assertIn('color:#808080', re.search(r'<div[^>]*data-nome="CheckAntiStallo"[^>]*>', html).group(0))
+        for i in range(5):
+            self.assertEqual(ctrl(html, 'EditAntiStallo%d' % i)[0]['visivel'], '0')
+
     def test_bit_da_flag_liga_a_caixa(self):
         self.assertFalse(emu.anti_stallo_marcado([0, 0]))
         self.assertTrue(emu.anti_stallo_marcado([0x20, 0]))

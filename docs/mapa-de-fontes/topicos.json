@@ -15,7 +15,10 @@
         "docs/evidence/2026-10-18-anti-stallo-caixa-re.md",
         "docs/evidence/2026-10-18-anti-stallo-ligado-na-ecu.md",
         "tools/sessoes/portmon_ler_vetor.py",
-        "docs/evidence/2026-10-18-anti-stallo-quadro-de-escrita.md"
+        "docs/evidence/2026-10-18-anti-stallo-quadro-de-escrita.md",
+        "tools/emulacao/orig_config_emulator.py",
+        "docs/evidence/2026-10-18-emulacao-tela-config.md",
+        "tests/test_orig_config_emulator.py"
       ],
       "protocolo_landi": [
         "dfm/i18n_all.json (chaves CHECKANTISTALLO, LABELANTISTALLO0..4)",

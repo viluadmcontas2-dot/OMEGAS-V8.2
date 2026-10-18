@@ -16,6 +16,9 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - No repo: docs/evidence/2026-10-18-anti-stallo-ligado-na-ecu.md
 - No repo: tools/sessoes/portmon_ler_vetor.py
 - No repo: docs/evidence/2026-10-18-anti-stallo-quadro-de-escrita.md
+- No repo: tools/emulacao/orig_config_emulator.py
+- No repo: docs/evidence/2026-10-18-emulacao-tela-config.md
+- No repo: tests/test_orig_config_emulator.py
 - No PROTOCOLO-LANDI: dfm/i18n_all.json (chaves CHECKANTISTALLO, LABELANTISTALLO0..4)
 - No PROTOCOLO-LANDI: dfm/TSTREAMDATI.txt
 - No PROTOCOLO-LANDI: 22-REGISTRO-PARAMETROS.md
