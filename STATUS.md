@@ -2,6 +2,14 @@
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
+## Último APK (2026-10-18, v6: refino automático D1 em modo SOMBRA)
+
+- Workflow `verde-apk-now.yml`, run `39143498352` (SUCCESS), commit `bb7de818ef83724f92453550e66d6fb0925da8a3`.
+- Artifact `omegas-vermelho-apk-bb7de818…` (id `12142657461`), 4.856.786 bytes, digest do ZIP `sha256:71284f041496a2d66153fe7831a6c7db969766591444bd006ec6f3cfd9a7e48a`. SHA do `app-debug.apk` interno: UNKNOWN.
+- Contém: D1 (refino automático após AutoMatch) com padrão **SOMBRA** (só calcula e registra `d1_decision`, nunca grava) e interruptor DESLIGADO/SOMBRA/LIGADO em Ferramentas (LIGADO exige toque duplo); sonda de escrita; `param_snapshot`; `autocal_pre_automatch_state`; conselho do AutoMatch manual; tudo do v5.
+- NÃO contém: correção do Mapa K por faixa de RPM, suavização separada, re-escala do Ledger.
+- Não validado no carro. Detalhes: `docs/handoff/D1-REFINO-AUTOMATICO-2026-10-18.md`.
+
 ## Último APK (2026-10-18, v5: sonda de escrita + parâmetros reais + conselho do AutoMatch manual)
 
 - Workflow `verde-apk-now.yml`, run `39095634820` (SUCCESS: contratos, testes JVM, lint e build), commit `015c33b6a860a577a5523fb78520dd6fa7789e1d`; `ci.yml` run `39095595581` (SUCCESS) no commit anterior `dda66a9`, só docs de diferença.
