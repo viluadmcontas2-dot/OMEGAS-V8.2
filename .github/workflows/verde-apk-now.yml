@@ -2,12 +2,6 @@
 name: OMEGAS VERMELHO APK (aprovação do dono)
 
 on:
-  workflow_call:
-    inputs:
-      build_apk:
-        description: 'Usar só após CI verde e autorização explícita'
-        required: true
-        type: boolean
   workflow_dispatch:
     inputs:
       build_apk:
