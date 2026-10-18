@@ -1,10 +1,12 @@
 import os, sys, unittest
+import importlib.util
+_UC = importlib.util.find_spec('unicorn') is not None
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'progbase'))
 import abas_b_re as A
 
 
-@unittest.skipUnless(A.achar_exe(), 'ProgBase.exe ausente')
+@unittest.skipUnless(A.achar_exe() and _UC, 'ProgBase.exe ou unicorn ausente')
 class AbasB(unittest.TestCase):
     def test_anti_stallo_click_quadro(self):
         import json, abas_b_emul as E, abas_b_log as L
