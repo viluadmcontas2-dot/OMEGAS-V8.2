@@ -1,0 +1,5 @@
+# Verificação REA das reconstruções — STATUS: BLOQUEADO (2026-10-18)
+
+Nenhum evidence id foi gerado nesta rodada (não inventamos ids). Motivo (OBS-FIO): `rea function` (CLI 6.4.0) devolveu `provider_timeout` em 331 s (`timeout_ms 330000`) para 0x42E8D8; `mcp__rea__open_binary` abriu o exe (sha256 8a2d297c…36f4, PE x86), mas `mcp__rea__analyze_function` estourou os 60 s do MCP. As ferramentas `verify_reconstruction`, `build_reconstruction_obligation_ledger`, `evaluate_reconstruction_coverage` exigem ids `ev_…` de observações reais (comparison_evidence_id) — logo dependem desse bundle.
+
+Âncoras prontas para quando houver bundle: ver `PROGRESSO.md` (cpu_setter_original, flags_do_original, ecu_emulator). Desconhecido: se as reconstruções (execução em CPU emulada / tabelas por RTTI / emulador por observação) passam como `structural-function` ou `behavioral` — nada foi verificado. Evidência alternativa já existente: Ghidra 12.1.4 local (`funcoes.json.gz`, pseudo-C) cobre os mesmos endereços (OBS-COD), mas NÃO é bundle REA.
