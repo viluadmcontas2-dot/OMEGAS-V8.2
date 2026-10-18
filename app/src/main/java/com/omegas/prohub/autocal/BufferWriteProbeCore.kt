@@ -17,7 +17,6 @@ internal object BufferWriteProbeCore {
     const val STEP_RAW = 8
     const val BAND_COUNT = 18
     const val SETTLE_READS = 3
-    const val SETTLE_PAUSE_MS = 500L
     const val RESTORE_ATTEMPTS = 3
 
     enum class Outcome {
@@ -47,7 +46,6 @@ internal object BufferWriteProbeCore {
         val readTimes: () -> IntArray,
         val readCounters: () -> IntArray,
         val write: (index: Int, raw: Int) -> WriteReply,
-        val pause: (Long) -> Unit,
     )
 
     class Result(
@@ -108,7 +106,7 @@ internal object BufferWriteProbeCore {
                 }
             } else {
                 repeat(SETTLE_READS) {
-                    io.pause(SETTLE_PAUSE_MS)
+                    // Cada leitura é uma resposta nova da ECU; nenhuma espera artificial.
                     readbacks += io.readTimes()[band]
                 }
                 val last = readbacks.last()

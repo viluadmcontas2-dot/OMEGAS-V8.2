@@ -253,7 +253,6 @@
       if (!pending || pending.phase !== 'curve') return;
       const operation = this.api.curveOperation();
       if (!operation || operation.busy) {
-        if (Date.now() - pending.startedAt > 20000) this.finishCurveImport('A leitura da Curva K demorou demais. Nada foi proposto.');
         return;
       }
       if (!operation.ok || !Array.isArray(operation.points) || operation.points.length !== 30 ||

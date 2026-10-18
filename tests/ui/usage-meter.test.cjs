@@ -70,12 +70,11 @@ test('envia só se houve uso, zera depois do envio aceito e mantém a aba aberta
   assert.equal(meter.taps.x, 1);
 });
 
-test('limite de chaves e janela de envio', () => {
+test('limite de chaves; envio por evento', () => {
   const meter = new Meter(() => 0);
   for (let i = 0; i < 300; i += 1) meter.tap('k' + i);
   assert.equal(Object.keys(meter.taps).length, 200);
-  assert.equal(meter.due(30_000), false);
-  assert.equal(meter.due(60_000), true);
+  assert.equal(meter.due, undefined, 'envio é por evento (rota, toque, aba oculta), não por janela de tempo');
 });
 
 test('só contagens: sem rede, sem valor digitado, sem texto de entrada; a ponte grava no log da sessão', () => {

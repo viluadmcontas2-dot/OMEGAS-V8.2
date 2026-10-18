@@ -2116,7 +2116,7 @@
   function boot() {
     const app = root.OmegasApp;
     if (!app?.store || !app?.scheduler || !ns.AutoCalApi) {
-      root.setTimeout(boot, 25);
+      root.addEventListener?.('omegas-app-ready', boot, { once: true });
       return;
     }
     if (app.autoCalCockpit) return;

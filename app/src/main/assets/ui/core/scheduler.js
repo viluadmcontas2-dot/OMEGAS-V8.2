@@ -24,6 +24,12 @@
       set.add(listener);
       return () => set.delete(listener);
     }
+    // Evento de amostragem da bridge: nenhuma espera própria por operação.
+    nextEvent() {
+      return new Promise(resolve => {
+        const off = this.addHook('fast', () => { off(); resolve(); });
+      });
+    }
     armTimer() {
       if (!this.running || this.timer) return;
       this.timer = root.setInterval(() => this.run(), this.intervalMs);

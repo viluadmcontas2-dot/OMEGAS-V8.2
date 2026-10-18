@@ -142,14 +142,17 @@
       if (!this.bufferProbeArmed) {
         this.bufferProbeArmed = true;
         label.textContent = 'Toque de novo para escrever 1 valor';
-        clearTimeout(this.bufferProbeTimer);
-        this.bufferProbeTimer = setTimeout(() => {
+        const disarm = state => {
+          if (state.route === 'tools' && state.status?.usbConnected !== false) return;
           this.bufferProbeArmed = false;
           label.textContent = '1 valor, banda cheia, volta ao original (carro parado)';
-        }, 6000);
+          this.bufferProbeDisarm?.();
+        };
+        this.bufferProbeDisarm?.();
+        this.bufferProbeDisarm = this.store.subscribe(disarm);
         return;
       }
-      clearTimeout(this.bufferProbeTimer);
+      this.bufferProbeDisarm?.();
       this.bufferProbeArmed = false;
       let started;
       try { started = JSON.parse(bridge.startBufferWriteProbe()); } catch (_) { started = { ok: false, error: 'Resposta inválida da sonda' }; }
@@ -163,13 +166,14 @@
       const poll = () => {
         let status = {};
         try { status = JSON.parse(bridge.getBufferWriteProbeStatus()); } catch (_) { status = {}; }
-        if (status.state !== 'DONE') { setTimeout(poll, 700); return; }
+        if (status.state !== 'DONE') return;
+        this.bufferProbePoll?.();
         this.bufferProbeRunning = false;
         const text = Drawers.describeBufferProbe(status);
         label.textContent = text;
         this.store.patch({ alert: { level: status.outcome === 'ACCEPTED_AND_HELD' || status.outcome === 'REFUSED' ? 'ok' : 'warning', message: text } });
       };
-      setTimeout(poll, 700);
+      this.bufferProbePoll = window.OmegasApp.scheduler.addHook('fast', poll);
     }
 
     // Refino automático depois de cada AutoMatch da ECU (D1): DESLIGADO · SOMBRA (só registra). O app nunca grava sozinho (dono, 2026-10-18).

@@ -41,8 +41,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Serviço nativo único do OMEGAS Pro Hub.
@@ -64,7 +63,7 @@ class TelemetryForegroundService : Service() {
     }
 
     private val binder = LocalBinder()
-    private val scheduler = Executors.newSingleThreadScheduledExecutor { runnable ->
+    private val scheduler = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-native-service").apply { isDaemon = true }
     }
 
@@ -72,22 +71,18 @@ class TelemetryForegroundService : Service() {
     private val autoReadExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-auto-read").apply { isDaemon = true }
     }
-    private var autoReadSeenSessionId = 0L
-    private var autoReadSeenAtMs = 0L
-    private var autoReadLastOkAtMs = 0L
-    private var autoReadAttempts = 0
-    @Volatile private var parametersRead = false
+    private val calibrationReads = CalibrationReadEvents()
     /** Refino automático depois de cada AutoMatch da ECU (D1). Leitura + decisão registrada (nunca escreve), fora das threads do USB e da tela. */
     private val autoRefineExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-auto-refine").apply { isDaemon = true }
     }
     @Volatile private var preAutoMatchSnapshot: JSONObject? = null
     @Volatile private var autoRefineLastEpoch: String? = null
-    /** Quem pediu a leitura em curso: UI (botão/abertura de tela), AUTO_START ou AUTO_PERIODIC. Vai junto no evento da sessão. */
+    /** Quem pediu a leitura em curso: UI (botão/abertura de tela), AUTO_START ou evento confirmado. Vai junto no evento da sessão. */
     @Volatile private var readTrigger = "UI"
-    /** Última curva vista (factorsRaw em texto) e quando o app gravou a última curva; classificam a origem de cada mudança. */
+    /** Última curva vista e último readback manual; origem identificada pelo conteúdo confirmado. */
     @Volatile private var lastCurveRaw: String? = null
-    @Volatile private var lastAppCurveWriteMs = 0L
+    @Volatile private var lastAppCurveWriteRaw: String? = null
 
     lateinit var paths: AppPaths
         private set
@@ -140,8 +135,7 @@ class TelemetryForegroundService : Service() {
     private lateinit var learningTolerances: LearningToleranceSettings
 
     private lateinit var notifications: NotificationController
-    private var healthTask: ScheduledFuture<*>? = null
-    private var autoCalTask: ScheduledFuture<*>? = null
+    private val frameWorkPending = AtomicBoolean(false)
     private var wakeLock: PowerManager.WakeLock? = null
     private val startedAt = System.currentTimeMillis()
     private var lastNotificationAt = 0L
@@ -204,6 +198,7 @@ class TelemetryForegroundService : Service() {
             startEngine = { true },
             onBusyChanged = { stateChanged() },
             onConfirmedWrite = {
+                requestCalibrationRead("WRITE_CONFIRMED")
                 scheduler.execute {
                     if (::learningArchive.isInitialized) {
                         learningArchive.saveInternalCheckpoint("Mapa K confirmado")
@@ -231,8 +226,9 @@ class TelemetryForegroundService : Service() {
             },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_factor_batch_confirmed", "k_factor", JSONObject(payload.toString()).put("origin", "APP_UI_MANUAL"), force = true)
-                lastAppCurveWriteMs = System.currentTimeMillis()
+                requestCalibrationRead("WRITE_CONFIRMED")
                 val state = kFactor.cachedCurveJson()
+                lastAppCurveWriteRaw = state.optJSONArray("factorsRaw")?.toString()
                 lastCurveRaw = state.optJSONArray("factorsRaw")?.toString()
                 sessionRecorder.record("k_curve_state", "k_factor", state.put("origin", "APP_UI_MANUAL").put("afterAdjustmentId", payload.optString("adjustmentId")), force = true)
                 recordCurveExperiment(payload)
@@ -252,8 +248,11 @@ class TelemetryForegroundService : Service() {
                 runtime.importNativeAutoCalSnapshot(snapshot)
                 sessionRecorder.record("autocal_native_snapshot", "autocal", snapshot, force = true)
                 recordCurveChangeFromSnapshot(snapshot)
+                if (refinement.evaluate(refinementDriving())) stateChanged()
+                observeRefinement()
             },
             onNativeCalibrationObserved = { payload ->
+                requestCalibrationRead("ECU_CALIBRATION_CHANGED")
                 val result = runtime.notifyCalibrationAdjustment(payload)
                 sessionRecorder.record(
                     "autocal_native_calibration_epoch",
@@ -266,6 +265,7 @@ class TelemetryForegroundService : Service() {
                 autoRefineAfterEcuAutoMatch(payload)
             },
             onNativeAutoMatchObserved = { payload ->
+                requestCalibrationRead("AUTO_MATCH")
                 sessionRecorder.record(
                     "autocal_native_automatch_epoch",
                     "autocal",
@@ -289,8 +289,7 @@ class TelemetryForegroundService : Service() {
             startForegroundCompat()
         }
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
-        healthTask = scheduler.scheduleWithFixedDelay(::healthTick, 200L, 3000L, TimeUnit.MILLISECONDS)
-        autoCalTask = scheduler.scheduleWithFixedDelay(::autoCalTick, 1_000L, 1_000L, TimeUnit.MILLISECONDS)
+        scheduler.execute { healthTick() }
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
     }
@@ -316,8 +315,6 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         stopping = true
         try { equivalence.flush() } catch (_: Exception) {}
-        healthTask?.cancel(true)
-        autoCalTask?.cancel(true)
         scheduler.shutdownNow()
         try { runtime.stop(3) } catch (_: Exception) {}
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
@@ -587,6 +584,7 @@ class TelemetryForegroundService : Service() {
         try {
             scheduler.execute {
                 handleUsbTransition()
+                healthTick()
                 stateChanged()
             }
         } catch (_: Exception) {
@@ -730,7 +728,7 @@ class TelemetryForegroundService : Service() {
     private fun healthTick() {
         if (stopping) return
         try {
-            // "Depois" de cada gravação = só o GNV medido a partir dela; o prazo anda com o motor no GNV (lenta inclusive).
+            // Avaliação disparada pelo estado recebido; não há relógio de recuperação do serviço.
             if (refinement.evaluate(refinementDriving())) stateChanged()
             observeRefinement()
             handleUsbTransition()
@@ -847,7 +845,9 @@ class TelemetryForegroundService : Service() {
             val previous = lastCurveRaw
             lastCurveRaw = raw
             if (previous == null) return // primeira vez: o k_read_curve já registrou o ponto de partida
-            val origin = if (System.currentTimeMillis() - lastAppCurveWriteMs < 20_000L) "APP_UI_MANUAL" else "ECU_NATIVE_OR_EXTERNAL"
+            val origin = if (raw == lastAppCurveWriteRaw) "APP_UI_MANUAL" else "ECU_NATIVE_OR_EXTERNAL"
+            lastAppCurveWriteRaw = null
+            requestCalibrationRead("ECU_CALIBRATION_CHANGED")
             sessionRecorder.record(
                 "k_curve_state", "autocal",
                 JSONObject().put("origin", origin).put("source", "NATIVE_SNAPSHOT").put("factorsRaw", mul).put("axisRaw", axis ?: JSONObject.NULL)
@@ -878,45 +878,42 @@ class TelemetryForegroundService : Service() {
         JSONObject().put("available", false).put("error", (error.message ?: error.javaClass.simpleName).take(80))
     }
 
-    /**
-     * Leitura automática (só LER, nunca grava): 12 s depois de a sessão USB estabilizar e depois a cada 10 min com o núcleo ocioso.
-     * Cada leitura (automática ou do botão/tela) vira evento da sessão com o gatilho (trigger). Mudança de curva pela ECU é
-     * pega pelos snapshots do AutoMatch (recordCurveChangeFromSnapshot), sem custo extra na serial.
-     */
+    private fun requestCalibrationRead(trigger: String) {
+        calibrationReads.request(runtime.serialScheduler().currentSessionId(), trigger)
+    }
+
+    /** Só o primeiro quadro válido da sessão ou um evento confirmado pode pedir nova leitura. */
     private fun autoReadCalibrationOnce() {
-        val sid = runtime.serialScheduler().currentSessionId()
-        if (sid <= 0L) return
-        val now = System.currentTimeMillis()
-        if (sid != autoReadSeenSessionId) {
-            autoReadSeenSessionId = sid; autoReadSeenAtMs = now; autoReadAttempts = 0; autoReadLastOkAtMs = 0L; parametersRead = false
-            return
-        }
-        val first = autoReadLastOkAtMs == 0L
-        val due = if (first) now - autoReadSeenAtMs >= 12_000L + autoReadAttempts * 15_000L else now - autoReadLastOkAtMs >= 600_000L
-        if (!due || kWriter.isBusy() || kFactor.isBusy() || (first && autoReadAttempts >= 4)) return
-        if (first) autoReadAttempts += 1 else autoReadLastOkAtMs = now // periódica: não insiste em falha
+        if (!usb.connected || !runtime.running || !runtime.ready || !telemetryStore.isValid()) return
+        val ticket = calibrationReads.next(
+            runtime.serialScheduler().currentSessionId(), kWriter.isBusy() || kFactor.isBusy(),
+        ) ?: return
         autoReadExecutor.execute {
+            var ok = false
+            fun sameSession() = usb.connected && runtime.serialScheduler().currentSessionId() == ticket.session
             try {
-                readTrigger = if (first) "AUTO_START" else "AUTO_PERIODIC"
+                if (!sameSession()) return@execute
+                readTrigger = ticket.trigger
                 val curve = kFactor.readCurve()
+                if (!sameSession()) return@execute
                 val map = kWriter.readFullMap()
-                if (first && !parametersRead) {
-                    // Só leitura: ANTI_STALLO, troca de combustível, corte e regras de aquisição da ECU, uma vez por conexão.
+                if (!sameSession()) return@execute
+                if (ticket.parameters) {
+                    // Uma tentativa por conexão; falha não vira repetição periódica.
                     try {
-                        sessionRecorder.record("param_snapshot", "ecu_params", parameterReader.readOnce("AUTO_START"), force = true)
-                        parametersRead = true
+                        val parameters = parameterReader.readOnce("AUTO_START")
+                        if (sameSession()) sessionRecorder.record("param_snapshot", "ecu_params", parameters, force = true)
                     } catch (error: Exception) {
                         log.add("WARN", "AUTO-READ", "Leitura de parâmetros falhou: ${error.message}")
                     }
                 }
-                if (first) {
-                    if (curve.optBoolean("ok", false) && map.optBoolean("ok", false)) autoReadLastOkAtMs = System.currentTimeMillis()
-                    else log.add("WARN", "AUTO-READ", "Leitura automática incompleta (curva=${curve.optBoolean("ok", false)} mapa=${map.optBoolean("ok", false)}); tentativa $autoReadAttempts")
-                }
+                ok = sameSession() && curve.optBoolean("ok", false) && map.optBoolean("ok", false)
+                if (!ok) log.add("WARN", "AUTO-READ", "Leitura incompleta; nova tentativa no próximo quadro válido")
             } catch (error: Exception) {
                 log.add("WARN", "AUTO-READ", "Leitura automática falhou: ${error.message}")
             } finally {
                 readTrigger = "UI"
+                calibrationReads.complete(ticket, ok)
             }
         }
     }
@@ -928,7 +925,6 @@ class TelemetryForegroundService : Service() {
                 runtime.serialScheduler().currentSessionId() > 0L
             ) {
                 nativeAutoCal.tick()
-                autoReadCalibrationOnce()
             }
         } catch (error: Exception) {
             log.add("WARN", "AUTOCAL-NATIVE", "Refresh nativo: ${error.message}")
@@ -937,6 +933,12 @@ class TelemetryForegroundService : Service() {
 
     private fun consumeEngineEvent(root: JSONObject) {
         val accepted = telemetryStore.updateFromEngineEvent(root) ?: return
+        autoReadCalibrationOnce()
+        if (frameWorkPending.compareAndSet(false, true)) {
+            scheduler.execute {
+                try { autoCalTick(); renewWakeLockIfNeeded() } finally { frameWorkPending.set(false) }
+            }
+        }
         val live = root.optJSONObject("live") ?: root.optJSONObject("data") ?: JSONObject()
         val cngActive = live.optString("fuel").uppercase() == "GNV"
         if (cngActive) {
@@ -987,6 +989,7 @@ class TelemetryForegroundService : Service() {
 
     private fun onEngineExited(crashed: Boolean) {
         if (crashed) healthFailures += 1
+        if (!stopping) scheduler.execute { healthTick() }
         stateChanged()
     }
 
@@ -1076,5 +1079,54 @@ class TelemetryForegroundService : Service() {
     private fun releaseWakeLock() {
         try { if (wakeLock?.isHeld == true) wakeLock?.release() } catch (_: Exception) {}
         wakeLock = null
+    }
+}
+/** Política pura: nenhum relógio; uma I/O, sessão cercada e eventos concorrentes preservados. */
+internal class CalibrationReadEvents {
+    data class Ticket(val session: Long, val revision: Long, val trigger: String, val parameters: Boolean)
+    private var session = 0L
+    private var revision = 0L
+    private var pending: String? = null
+    private var attempts = 0
+    private var parameters = false
+    private var active: Ticket? = null
+
+    private fun connect(id: Long) {
+        if (session == id) return
+        session = id
+        revision++
+        pending = "AUTO_START"
+        attempts = 0
+        parameters = false
+    }
+
+    @Synchronized fun request(id: Long, trigger: String) {
+        if (id <= 0L) return
+        connect(id)
+        // AUTO_START tem precedência até a primeira leitura da conexão.
+        if (pending != "AUTO_START") pending = trigger
+        revision++
+        attempts = 0
+    }
+
+    @Synchronized fun next(id: Long, busy: Boolean): Ticket? {
+        if (id <= 0L) return null
+        connect(id)
+        if (busy || active != null || attempts >= 4) return null
+        val trigger = pending ?: return null
+        val ticket = Ticket(session, revision, trigger, !parameters)
+        parameters = true
+        attempts++
+        active = ticket
+        // Novos eventos devem permanecer pendentes até a próxima leitura.
+        pending = null
+        return ticket
+    }
+
+    @Synchronized fun complete(ticket: Ticket, ok: Boolean) {
+        if (active != ticket) return
+        active = null
+        if (session != ticket.session || revision != ticket.revision) return
+        if (!ok) pending = ticket.trigger
     }
 }

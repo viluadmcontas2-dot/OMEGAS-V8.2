@@ -127,7 +127,7 @@ test('sem quadro novo, a idade continua andando depois de 10 s (uma atualizaçã
   assert.deepEqual(beforeTen, [9000, 9500], 'antes de 10 s continua de meio em meio segundo');
 });
 
-test('Ferramentas não relê o disco das gravações a cada ciclo (só ao entrar, ao começar/parar ou a cada 30 s)', () => {
+test('Ferramentas não relê o disco das gravações a cada ciclo (só ao entrar e ao começar/parar)', () => {
   let sessionsCalls = 0;
   let recording = false;
   const { app } = bootApp({
