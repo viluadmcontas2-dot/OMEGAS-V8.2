@@ -2,10 +2,11 @@ name: OMEGAS VERMELHO CI
 
 on:
   push:
-    branches: [ OmegasVermelho, 'claude/carregar-sessao-r7j85r' ]
+    branches: [ OmegasVermelho ]
   pull_request:
     branches: [ OmegasVermelho ]
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -83,13 +84,3 @@ jobs:
             graphify-out/GRAPH_REPORT.md
             docs/mapa-de-fontes/
           retention-days: 30
-
-  apk_autorizado_desta_correcao:
-    # Apenas uma autorização explícita, neste commit, depois de ambos os jobs verdes.
-    needs: [build_and_test, grafo]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/claude/carregar-sessao-r7j85r' && contains(github.event.head_commit.message, '[apk-autorizado-20261018]') }}
-    uses: ./.github/workflows/verde-apk-now.yml
-    with:
-      build_apk: true
-    permissions:
-      contents: read

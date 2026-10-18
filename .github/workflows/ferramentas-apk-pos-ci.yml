@@ -1,0 +1,29 @@
+# Excepcional e restrito ao commit autorizado: CI e APK em workflows distintos.
+# Sem geração de APK em ci.yml e sem agendamento automático por tempo.
+name: OMEGAS Ferramentas - APK após CI
+
+on:
+  push:
+    branches: [ 'claude/carregar-sessao-r7j85r' ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omegas-ferramentas-release-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  verificar_correcoes:
+    if: ${{ contains(github.event.head_commit.message, '[apk-autorizado-20261018]') }}
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  publicar_apk:
+    needs: verificar_correcoes
+    uses: ./.github/workflows/verde-apk-now.yml
+    with:
+      build_apk: true
+    permissions:
+      contents: read
