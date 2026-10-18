@@ -1,6 +1,6 @@
 # Catálogo de vetores e parâmetros (gerado — não editar à mão)
 
-Gerado por `tools/progbase/protocolo_vetores.py` a partir do `ProgBase.exe` (sha256 `8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4`) e da captura Portmon (sha256 `341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce`).
+Gerado por `tools/progbase/protocolo_vetores.py` a partir do `ProgBase.exe` (sha256 `8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4`) e da captura Portmon (sha256 `43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64`).
 
 - Objetos de dados: **389** (por módulo: TAUTOCALDM=35, TAUTOCALDM_EE=14, TFFDATAMODULESINGLEARRAY=3, TSTRATEGIAPANDADM=21, TSTRATEGIATEMPIMORTIDM=2, TSTREAMDATI=314).
 - Formas: elemento_de_vetor=55, matriz=27, numero=139, vetor=168. Transformações: ttFormula=33, ttNone=356.
@@ -12,7 +12,7 @@ Colunas: **SC** = SerialCode (hex, little-endian no fio v2); **tipo** = u/s + bi
 
 | SC | nome | forma | tipo | dim | conversão | un. | padrão | leitura v2 | log | fam. |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 0x0000 | `SERIAL_NUMBER` | vetor | u8 | 20 | fisico = raw (identidade) | — | [20, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 00 00 ck` | ACK 5/NAK 0 @692 | padrao |
+| 0x0000 | `SERIAL_NUMBER` | vetor | u8 | 20 | fisico = raw (identidade) | — | [20, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 00 00 ck` | ACK 9/NAK 0 @692 | padrao |
 | 0x0001 | `REGISTRO_INIT` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 01 00 ck` | ACK 1/NAK 0 @536 | padrao |
 | 0x0002 | `REGISTRO_EE` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 02 00 ck` | ACK 3/NAK 0 @434 | padrao |
 | 0x0003 | `FLAG_CONF1` | vetor | u16 | 2 | fisico = raw (identidade) | — | [2, 0.0, 0.0] | `29 03 00 ck` | ACK 4/NAK 0 @508 | padrao |
@@ -43,13 +43,13 @@ Colunas: **SC** = SerialCode (hex, little-endian no fio v2); **tipo** = u/s + bi
 | 0x0019 | `TEST_BYTE_ARRAY` | vetor | u8 | 10 | fisico = raw (identidade) | — | [10, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 19 00 ck` | não | padrao |
 | 0x001B | `NOTE_CONFIG` | vetor | u8 | 48 | fisico = raw (identidade) | — | [48, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 1B 00 ck` | não | padrao |
 | 0x001C | `ABIL_DIAGNOSI` | vetor | u8 | 5 | fisico = raw (identidade) | — | [5, 0.0, 0.0, 0.0, 0.0, 0.0] | `29 1C 00 ck` | ACK 3/NAK 0 @3484 | padrao |
-| 0x001D | `STATO_DIAGNOSI` | vetor | u8 | 5 | fisico = raw (identidade) | — | [5, 0.0, 0.0, 0.0, 0.0, 0.0] | `29 1D 00 ck` | ACK 974/NAK 0 @3566 | padrao |
+| 0x001D | `STATO_DIAGNOSI` | vetor | u8 | 5 | fisico = raw (identidade) | — | [5, 0.0, 0.0, 0.0, 0.0, 0.0] | `29 1D 00 ck` | ACK 3668/NAK 0 @3566 | padrao |
 | 0x001E | `DATA_ULTIMO_SCARICO` | numero | u16 | 1 | fisico = raw (identidade) | — | — | `09 1E 00 ck` | não | padrao |
 | 0x001F | `ACTION_DIAGNOSI` | matriz | u8 | 3x5 | fisico = raw (identidade) | — | [3, 5, 0.0, 0.0, 0.0, 0.0]… | `2A 1F 00 <linha> ck (uma por linha)` | ACK 9/NAK 0 @3596 | padrao |
 | 0x001F | `TEMPO_CICCHETTO_LR` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 1F 00 ck` | não | LR |
 | 0x0020 | `DIAGNOSI_INJ_GAS` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 20 00 ck` | não | padrao |
 | 0x0020 | `PARAM_VARI_LR` | vetor | u16 | 10 | fisico = raw (identidade) | — | [10, 800.0, 0.0, 0.0, 0.0, 0.0]… | `29 20 00 ck` | não | LR |
-| 0x0021 | `DIAGNOSI_INJ_BENZ` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 21 00 ck` | ACK 194/NAK 0 @16502 | padrao |
+| 0x0021 | `DIAGNOSI_INJ_BENZ` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 21 00 ck` | ACK 732/NAK 0 @16502 | padrao |
 | 0x0022 | `DIAGNOSI_INJ_GAS2` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 22 00 ck` | não | padrao |
 | 0x0023 | `DIAGNOSI_INJ_BENZ2` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 23 00 ck` | não | padrao |
 | 0x0024 | `TIPO_SENSORE` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 24 00 ck` | ACK 3/NAK 0 @3686 | padrao |
@@ -193,7 +193,7 @@ Colunas: **SC** = SerialCode (hex, little-endian no fio v2); **tipo** = u/s + bi
 | 0x00AA | `EMULAZIONE_POSTERIORE` | vetor | u8 | 2 | fisico = raw (identidade) | — | [2, 0.0, 0.0] | `29 AA 00 ck` | ACK 3/NAK 0 @7040 | padrao |
 | 0x00AB | `RIF_TEMP_GAS_OFFSET_LR` | vetor | u8 | 16 | fisico = raw (identidade) | — | [16, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 AB 00 ck` | não | LR |
 | 0x00AB | `TIPI_SONDA_LAMBDA` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 AB 00 ck` | ACK 3/NAK 0 @7064 | padrao |
-| 0x00AC | `MASK_INIETTORI_BENZINA` | numero | u16 | 1 | fisico = raw (identidade) | — | — | `09 AC 00 ck` | ACK 4/NAK 0 @7086 | padrao |
+| 0x00AC | `MASK_INIETTORI_BENZINA` | numero | u16 | 1 | fisico = raw (identidade) | — | — | `09 AC 00 ck` | ACK 8/NAK 0 @7086 | padrao |
 | 0x00AC | `TEMPO_MORTO_INIETTORI_LR` | vetor | s16 | 16 | fisico = raw (identidade) | — | [16, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 AC 00 ck` | não | LR |
 | 0x00AD | `GIRI_ALTI_INTERVENTO_K_FILTRO_LR` | numero | u16 | 1 | fisico = raw (identidade) | — | — | `09 AD 00 ck` | não | LR |
 | 0x00AE | `ClonedEcuRealFw0` | elemento_de_vetor | u8 | 1 | fisico = raw (identidade) | — | — | `09 AE 00 ck` | não | padrao |
@@ -317,7 +317,7 @@ Colunas: **SC** = SerialCode (hex, little-endian no fio v2); **tipo** = u/s + bi
 | 0x0147 | `MGLEV_DATA` | vetor | s16 | 3 | fisico = raw (identidade) | — | [3, 0.0, 0.0, 0.0] | `29 47 01 ck` | não | padrao |
 | 0x0148 | `MGLEV_ERR_ST` | vetor | u8 | 3 | fisico = raw (identidade) | — | [3, 0.0, 0.0, 0.0] | `29 48 01 ck` | não | padrao |
 | 0x0149 | `EGEAR_RAT_BUF_INST` | vetor | s16 | 7 | fisico = raw (identidade) | — | [7, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 49 01 ck` | ACK 0/NAK 3 @9962 | padrao |
-| 0x0162 | `PETR_INJ_TBUF` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 62 01 ck` | ACK 26/NAK 0 @10372 | padrao |
+| 0x0162 | `PETR_INJ_TBUF` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 62 01 ck` | ACK 437/NAK 0 @10372 | padrao |
 | 0x0175 | `ClonedEcuDoneGasH` | elemento_de_vetor | u16 | 1 | fisico = raw (identidade) | — | — | `09 75 01 ck` | ACK 0/NAK 3 @9984 | padrao |
 | 0x0175 | `ClonedEcuRemainingGasH` | elemento_de_vetor | u16 | 1 | fisico = raw (identidade) | — | — | `0A 75 01 01 ck` | não | padrao |
 | 0x0175 | `EN_LAMBDA_OVER_LVL_SENSOR` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 75 01 ck` | ACK 0/NAK 3 @9984 | padrao |
@@ -334,15 +334,15 @@ Colunas: **SC** = SerialCode (hex, little-endian no fio v2); **tipo** = u/s + bi
 | 0x014A | `AUTO_CAL_ENABLE` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 4A 01 ck` | ACK 3/NAK 0 @10282 | padrao |
 | 0x014B | `PETR_INJ_TBP` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 1.5, 2.0, 2.5, 3.0, 3.5]… | `29 4B 01 ck` | ACK 3/NAK 0 @10142 | padrao |
 | 0x014C | `MNFLD_PRESS_THD` | vetor | s16 | 18 | fisico = raw / 1024 | bar | [18, 0.2, 0.245, 0.29, 0.335, 0.38]… | `29 4C 01 ck` | ACK 3/NAK 0 @10050 | padrao |
-| 0x015B | `NUM_BUF_UPD_PETR` | vetor | u16 | 18 | fisico = raw (identidade) | — | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5B 01 ck` | ACK 26/NAK 0 @10556 | padrao |
-| 0x015C | `NUM_BUF_UPD_GAS` | vetor | u16 | 18 | fisico = raw (identidade) | — | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5C 01 ck` | ACK 28/NAK 0 @10924 | padrao |
-| 0x015D | `PETR_INJ_TBUF_GAS_PREV` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5D 01 ck` | ACK 26/NAK 0 @10648 | padrao |
-| 0x015E | `MNFLD_PRESS_BUF_GAS_PREV` | vetor | s16 | 18 | fisico = raw / 1024 | bar | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5E 01 ck` | ACK 26/NAK 0 @10740 | padrao |
-| 0x015F | `PETR_INJ_TBUF_GAS` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5F 01 ck` | ACK 28/NAK 0 @10832 | padrao |
-| 0x0160 | `MNFLD_PRESS_BUF_GAS` | vetor | s16 | 18 | fisico = raw / 1024 | bar | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 60 01 ck` | ACK 28/NAK 0 @11156 | padrao |
-| 0x0161 | `MUL_ACT` | vetor | u16 | 18 | fisico = raw / 16384 | fator K (adimensional) | [18, 1.0, 1.0, 1.0, 1.0, 1.0]… | `29 61 01 ck` | ACK 27/NAK 0 @11016 | padrao |
-| 0x0162 | `PETR_INJ_TBUF` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 62 01 ck` | ACK 26/NAK 0 @10372 | padrao |
-| 0x0163 | `MNFLD_PRESS_BUF` | vetor | s16 | 18 | fisico = raw / 1024 | bar | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 63 01 ck` | ACK 26/NAK 0 @10464 | padrao |
+| 0x015B | `NUM_BUF_UPD_PETR` | vetor | u16 | 18 | fisico = raw (identidade) | — | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5B 01 ck` | ACK 437/NAK 0 @10556 | padrao |
+| 0x015C | `NUM_BUF_UPD_GAS` | vetor | u16 | 18 | fisico = raw (identidade) | — | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5C 01 ck` | ACK 440/NAK 0 @10924 | padrao |
+| 0x015D | `PETR_INJ_TBUF_GAS_PREV` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5D 01 ck` | ACK 437/NAK 0 @10648 | padrao |
+| 0x015E | `MNFLD_PRESS_BUF_GAS_PREV` | vetor | s16 | 18 | fisico = raw / 1024 | bar | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5E 01 ck` | ACK 437/NAK 0 @10740 | padrao |
+| 0x015F | `PETR_INJ_TBUF_GAS` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 5F 01 ck` | ACK 440/NAK 0 @10832 | padrao |
+| 0x0160 | `MNFLD_PRESS_BUF_GAS` | vetor | s16 | 18 | fisico = raw / 1024 | bar | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 60 01 ck` | ACK 440/NAK 0 @11156 | padrao |
+| 0x0161 | `MUL_ACT` | vetor | u16 | 18 | fisico = raw / 16384 | fator K (adimensional) | [18, 1.0, 1.0, 1.0, 1.0, 1.0]… | `29 61 01 ck` | ACK 439/NAK 0 @11016 | padrao |
+| 0x0162 | `PETR_INJ_TBUF` | vetor | u16 | 18 | fisico = raw / 512 | ms | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 62 01 ck` | ACK 437/NAK 0 @10372 | padrao |
+| 0x0163 | `MNFLD_PRESS_BUF` | vetor | s16 | 18 | fisico = raw / 1024 | bar | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 63 01 ck` | ACK 437/NAK 0 @10464 | padrao |
 | 0x0165 | `VECT_AUTOCAL_U8_0` | elemento_de_vetor | u8 | 1 | fisico = raw (identidade) | — | 1.0 | `09 65 01 ck` | não | padrao |
 | 0x0165 | `VECT_AUTOCAL_U8_1` | elemento_de_vetor | u8 | 1 | fisico = raw (identidade) | — | 6.0 | `0A 65 01 01 ck` | ACK 3/NAK 0 @10304 | padrao |
 | 0x0165 | `VECT_AUTOCAL_U8_2` | elemento_de_vetor | u8 | 1 | fisico = raw (identidade) | — | 3.0 | `0A 65 01 02 ck` | ACK 3/NAK 0 @10326 | padrao |
@@ -351,11 +351,11 @@ Colunas: **SC** = SerialCode (hex, little-endian no fio v2); **tipo** = u/s + bi
 | 0x016A | `LIMIT_PRESSURE_MAX` | numero | s16 | 1 | fisico = raw / 1024 | — | 0.95 | `09 6A 01 ck` | ACK 3/NAK 0 @11272 | padrao |
 | 0x016D | `PETROL_POINT_2DELETE` | vetor | u8 | 18 | fisico = raw (identidade) | — | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 6D 01 ck` | não | padrao |
 | 0x016E | `GAS_POINT_2DELETE` | vetor | u8 | 18 | fisico = raw (identidade) | — | [18, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 6E 01 ck` | não | padrao |
-| 0x016F | `ACQUIRED_ZONES_PETROL` | vetor | u8 | 4 | fisico = raw (identidade) | — | [4, 0.0, 0.0, 0.0, 0.0] | `29 6F 01 ck` | ACK 19/NAK 0 @14236 | padrao |
-| 0x0170 | `ACQUIRED_ZONES_GAS` | vetor | u8 | 4 | fisico = raw (identidade) | — | [4, 0.0, 0.0, 0.0, 0.0] | `29 70 01 ck` | ACK 5/NAK 0 @89454 | padrao |
+| 0x016F | `ACQUIRED_ZONES_PETROL` | vetor | u8 | 4 | fisico = raw (identidade) | — | [4, 0.0, 0.0, 0.0, 0.0] | `29 6F 01 ck` | ACK 111/NAK 0 @14236 | padrao |
+| 0x0170 | `ACQUIRED_ZONES_GAS` | vetor | u8 | 4 | fisico = raw (identidade) | — | [4, 0.0, 0.0, 0.0, 0.0] | `29 70 01 ck` | ACK 325/NAK 0 @89454 | padrao |
 | 0x0172 | `CALIBRATION_VAL_1` | vetor | u8 | 10 | fisico = raw (identidade) | — | [10, 0.0, 0.0, 0.0, 0.0, 0.0]… | `29 72 01 ck` | ACK 3/NAK 0 @11296 | padrao |
 | 0x0173 | `MODULE_VERSION` | elemento_de_vetor | u8 | 1 | fisico = raw (identidade) | — | — | `09 73 01 ck` | não | padrao |
-| 0x0174 | `NUM_ATUOMATCH_EXECUTED` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 74 01 ck` | ACK 4/NAK 0 @11380 | padrao |
+| 0x0174 | `NUM_ATUOMATCH_EXECUTED` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 74 01 ck` | ACK 7/NAK 0 @11380 | padrao |
 | 0x017A | `MAX_RPM_FOR_AUTOCAL` | numero | u16 | 1 | fisico = raw (identidade) | — | 3000.0 | `09 7A 01 ck` | ACK 3/NAK 0 @11402 | padrao |
 | 0x0183 | `DIFF_ENG_SPD_THD` | numero | u16 | 1 | fisico = raw (identidade) | — | 400.0 | `09 83 01 ck` | ACK 3/NAK 0 @11496 | padrao |
 | 0x0184 | `DELTA_ENG_SPD_THD` | numero | u16 | 1 | fisico = raw (identidade) | — | 200.0 | `09 84 01 ck` | ACK 3/NAK 0 @11568 | padrao |
@@ -364,8 +364,8 @@ Colunas: **SC** = SerialCode (hex, little-endian no fio v2); **tipo** = u/s + bi
 | 0x0187 | `DIFF_PETR_TINJ_T_THD` | numero | u16 | 1 | fisico = raw / 512 | — | 4.0 | `09 87 01 ck` | ACK 3/NAK 0 @11544 | padrao |
 | 0x0188 | `DELTA_PETR_INJ_T_THD` | numero | u16 | 1 | fisico = raw / 512 | — | 1.0 | `09 88 01 ck` | ACK 3/NAK 0 @11472 | padrao |
 | 0x018B | `DISABLE_ACQ_BAND` | numero | u8 | 1 | fisico = raw (identidade) | — | — | `09 8B 01 ck` | ACK 3/NAK 0 @11426 | padrao |
-| 0x018D | `PETR_MNFLD_PRESS_RV` | vetor | s16 | 18 | fisico = raw / 1024 | — | [18, 0.2, 0.245, 0.29, 0.335, 0.38]… | `29 8D 01 ck` | ACK 12/NAK 0 @14264 | padrao |
-| 0x018E | `GAS_MNFLD_PRESS_RV` | vetor | s16 | 18 | fisico = raw / 1024 | — | [18, 1.5, 2.0, 2.5, 3.0, 3.5]… | `29 8E 01 ck` | ACK 13/NAK 0 @14404 | padrao |
+| 0x018D | `PETR_MNFLD_PRESS_RV` | vetor | s16 | 18 | fisico = raw / 1024 | — | [18, 0.2, 0.245, 0.29, 0.335, 0.38]… | `29 8D 01 ck` | ACK 218/NAK 0 @14264 | padrao |
+| 0x018E | `GAS_MNFLD_PRESS_RV` | vetor | s16 | 18 | fisico = raw / 1024 | — | [18, 1.5, 2.0, 2.5, 3.0, 3.5]… | `29 8E 01 ck` | ACK 220/NAK 0 @14404 | padrao |
 
 ## TAUTOCALDM_EE
 

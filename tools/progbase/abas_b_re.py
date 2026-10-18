@@ -233,3 +233,26 @@ def defaults_construtor(ctx, ini=0x42A9E4, fim=0x42B224):
         sz = {'byte': 1, 'word': 2, 'dword': 4}[m.group(1)]
         out.append((off, sz, int(m.group(3), 0), i.address))
     return out
+
+
+# ---------------------------------------------------------------- tabelas de despacho do TStreamDati (OBS-COD)
+# Cada uma é `cmp r, N; ja default; jmp [r*4+TAB]` (opcionalmente com tabela de bytes intermediária).
+TABELAS_SD = {
+    'set_esc': dict(fn=0x436444, tab=0x43646F, n=0x7F, byte=None, base=0),
+    'get_esc': dict(fn=0x434CC0, tab=0x434CE0, n=0x7F, byte=None, base=0),
+    'set_idx': dict(fn=0x43734C, tab=0x4373EE, n=0x6B, byte=0x437383, base=0x13),
+    'get_idx': dict(fn=0x435C6C, tab=0x435D04, n=0x6B, byte=0x435C99, base=0x13),
+}
+
+
+def caso(ctx, tabela, codigo):
+    """Endereço do tratamento do `codigo` na tabela de despacho (None se fora da faixa)."""
+    t = TABELAS_SD[tabela]
+    k = codigo - t['base']
+    if k < 0 or k >= t['n']:
+        return None
+    b = ctx.b
+    idx = k
+    if t['byte']:
+        idx = b.raw[b.va2off(t['byte'] + k)]
+    return b.u32(t['tab'] + idx * 4)

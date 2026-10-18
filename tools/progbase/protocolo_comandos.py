@@ -444,6 +444,82 @@ SENDCOMMAND_CHAMADORES = [
     ('var', '0x00412916..0x00413094', 'TFormSwitch (código vem da propriedade +0x3D8; ComboBuzzerKeyPress)'),
 ]
 
+# ---------------------------------------------------------------------------------------------------------
+# Backlog: o que o original envia e o OMEGAS não usa. classe: A = leitura/diagnóstico sem risco; B = escrita de
+# calibração; C = atuadores/teste de bancada; D = firmware/boot/baud (NUNCA no app); E = legado/sem valor.
+# prioridade: alta / media / baixa / nenhuma. Tudo é recomendação de projeto (INFERIDO), não fato do protocolo.
+# ---------------------------------------------------------------------------------------------------------
+BACKLOG = {
+    'wake': dict(classe='A', prioridade='baixa', risco='nenhum',
+                 recomendacao='Só serviria para descobrir qual adaptador tem ECU. O app já abre o USB pelo VID/PID; não precisa.'),
+    'getnumber_2': dict(classe='A', prioridade='baixa', risco='nenhum',
+                        recomendacao='Ler 1 célula de matriz sem baixar a linha. Otimização; o app lê a linha `2A`.'),
+    'getbyaddr': dict(classe='C', prioridade='baixa', risco='medio',
+                      recomendacao='Leitura de memória por endereço físico. Útil só para engenharia; não expor ao usuário.'),
+    'setbyaddr': dict(classe='D', prioridade='nenhuma', risco='alto',
+                      recomendacao='Escrita em endereço físico arbitrário. NUNCA expor.'),
+    'elemdim': dict(classe='A', prioridade='baixa', risco='nenhum',
+                    recomendacao='Descobrir o tamanho de um parâmetro. No fio é um GetNumber+idx(0); o app já conhece os tamanhos.'),
+    'cmd_12': dict(classe='B', prioridade='media', risco='baixo',
+                   recomendacao='O original manda `01 12 00` antes de todo Disconnect. Efeito desconhecido; capturar uma sessão '
+                                'só com esse comando (e comparar `48 01`/`48 0B` antes e depois) antes de decidir.'),
+    'cmd_13': dict(classe='B', prioridade='baixa', risco='desconhecido',
+                   recomendacao='Tecla na tela de Calibração (Taratura). Só se o app ganhar a tela de Taratura.'),
+    'cmd_14': dict(classe='A', prioridade='media', risco='nenhum',
+                   recomendacao='Polling da tela de Calibração (resposta constante `02 00` em 4 693/4 693). Pode ser o "estado do '
+                                'modo taratura"; capturar com o modo ligado/desligado para ver se o valor muda.'),
+    'cmd_04': dict(classe='E', prioridade='nenhuma', risco='nenhum',
+                   recomendacao='A ECU capturada responde NAK (não suportado). Ignorar.'),
+    'setduty': dict(classe='C', prioridade='baixa', risco='medio',
+                    recomendacao='Teste de saída por PWM (aciona atuador). Só com tela de diagnóstico dedicada e confirmação.'),
+    'setbaud': dict(classe='D', prioridade='nenhuma', risco='alto', recomendacao='Troca de baud para flash. Nunca no app.'),
+    'setnewbaud': dict(classe='D', prioridade='nenhuma', risco='alto', recomendacao='Troca de baud para flash. Nunca no app.'),
+    'autocal_05': dict(classe='B', prioridade='baixa', risco='desconhecido',
+                       recomendacao='Enviado após gravar dois vetores de flags por ponto; nunca visto. Capturar antes de usar.'),
+    'cancflash': dict(classe='D', prioridade='nenhuma', risco='alto', recomendacao='Apaga a flash. Nunca no app.'),
+    'exitboot_nf': dict(classe='D', prioridade='nenhuma', risco='alto', recomendacao='Sai do bootloader. Nunca no app.'),
+    'exitboot': dict(classe='D', prioridade='nenhuma', risco='alto', recomendacao='Sai do bootloader (forçado). Nunca no app.'),
+    'progflash': dict(classe='D', prioridade='nenhuma', risco='alto', recomendacao='Entra em programação de flash. Nunca no app.'),
+    'endflash': dict(classe='D', prioridade='nenhuma', risco='alto', recomendacao='Encerra programação de flash. Nunca no app.'),
+    'flash_linha': dict(classe='D', prioridade='nenhuma', risco='alto', recomendacao='Grava firmware. Nunca no app.'),
+    'v01_getnumber': dict(classe='E', prioridade='nenhuma', risco='nenhum', recomendacao='ECUs de protocolo 0/1; a capturada é v2.'),
+    'v01_getvector': dict(classe='E', prioridade='nenhuma', risco='nenhum', recomendacao='ECUs de protocolo 0/1; a capturada é v2.'),
+    'sendcommand': dict(classe='B', prioridade='media', risco='variavel',
+                        recomendacao='Os códigos 0E,10,11,13,14,15,21,26,27,28 só aparecem nas telas Calibração/Diagnóstico/Config/'
+                                     'LandiConnect. (pelo NOME do evento, INFERIDO) 0x21 = teste de saída ligar/desligar (TFormDiagnosi.PanelTestOn/OffClick); 0x27 = '
+                                     'aquisição de injetor/sequência e tacômetro (TFormConfig.CheckInjAcquisitionClick, ButtonSequenceAcquisitionClick, '
+                                     'EditRpmTachimetroKeyPress); 0x28 = botão Reset (TFormLandiConnect.ButtonResetClick). '
+                                     'Nada disso está no log; capturar cada botão antes de implementar.'),
+}
+
+# Comportamentos de enlace do original que o OMEGAS trata diferente (comparação direta, com referência no app)
+ENLACE_ORIGINAL_X_OMEGAS = [
+    dict(item='Retries', original='até 5 reenvios do mesmo quadro (6 tentativas), depois diálogo de reconexão (se ligado)',
+         omegas='sem retry cego em NAK não-retentável; reconecta pelo ciclo de vida USB (ResponseDrivenEcuEngine.kt, UsbRecoveryPolicy.kt)',
+         ref='ResponseDrivenEcuEngine.kt:25-26', classe='diferente-de-proposito'),
+    dict(item='NAK `CA 01 10` / `CA 01 08`', original='testa o bit 0x10 do 2º byte de status (qualquer outro valor com bit 0x10 = não suportado; sem o bit = retry)',
+         omegas='compara igualdade com 0x10 e 0x08; outros códigos viram EXTENDED_UNKNOWN',
+         ref='UsbProtocolReply.kt:13-23', classe='lacuna-pequena'),
+    dict(item='Purge antes de cada comando', original='IOCTL_SERIAL_PURGE (TX+RX) antes de TODO WRITE (20 290/20 290)',
+         omegas='purge antes de cada transação (purgeBefore=true por padrão)', ref='UsbSerialManager.kt:353,372', classe='igual'),
+    dict(item='Eco', original='compara o eco byte a byte; divergência -> ComFail 8 -> retry',
+         omegas='readExact(request.size) e compara o eco inteiro', ref='UsbSerialManager.kt:375-377', classe='igual'),
+    dict(item='Timeout do 1º byte da resposta', original='1000 ms (+200 do driver)', omegas='timeoutMs padrão 1800 ms',
+         ref='UsbSerialManager.kt:352', classe='diferente-de-proposito'),
+    dict(item='Tamanho máximo de resposta', original='GetPacket lê o tamanho como byte COM SINAL (<= 127 B); Get* confere n com o tamanho do objeto',
+         omegas='rejeita n > 192', ref='UsbSerialManager.kt:385', classe='lacuna-pequena'),
+    dict(item='Resposta `96` (ECU ocupada)', original='espera 400 ms e reenvia (até 5x)', omegas='sem tratamento específico',
+         ref='UsbProtocolReply.kt', classe='lacuna-nao-observada-no-fio'),
+    dict(item='Sequência de encerramento', original='`01 12 00` e depois `00 01 01` (Disconnect, uma tentativa, sem retry)',
+         omegas='só Mp48Protocol.CMD_DISCONNECT', ref='Mp48Protocol.kt:18', classe='lacuna-pequena'),
+    dict(item='Escrita com porta fechada', original='SetNumber/SetVector devolvem VERDADEIRO sem enviar nada',
+         omegas='escrita falha explicitamente; gravado só após ACK + readback (AGENTS.md)', ref='AGENTS.md invariantes',
+         classe='diferente-de-proposito'),
+    dict(item='Ordem do handshake', original='ident `00 02` -> Connect `01 00 3A` -> versão `00 25` -> (REGISTRO_EE `09 02 00`) -> ident de novo',
+         omegas='CMD_INIT_1 (`00 02 02`), CMD_INIT_2 (`01 00 3A`), depois leitura de versão', ref='ResponseDrivenEcuEngine.kt:341-369',
+         classe='igual'),
+]
+
 
 def desmontar_em(exe_bytes, pe, va):
     """Texto 'mnem ops' da instrução em `va` (capstone x86-32)."""
@@ -519,6 +595,8 @@ def montar(log=None):
     for c in COMANDOS:
         d = dict(c)
         d.pop('predicado', None)
+        if c['id'] in BACKLOG:
+            d['backlog'] = BACKLOG[c['id']]
         if contagem is not None and c['id'] in contagem:
             d['no_log'] = contagem[c['id']]
         cmds.append(d)
@@ -544,6 +622,7 @@ def montar(log=None):
         'comfail': [dict(mascara=m, significado=s, marca=k, onde=o) for m, s, k, o in COMFAIL],
         'respostas': RESPOSTAS,
         'retry': RETRY_PSEUDOCODIGO,
+        'enlace_original_x_omegas': ENLACE_ORIGINAL_X_OMEGAS,
         'sendcommand_chamadores': [dict(codigo=('0x%02X' % c) if isinstance(c, int) else c, endereco=a, dono=d)
                                    for c, a, d in SENDCOMMAND_CHAMADORES],
         'comandos': cmds,

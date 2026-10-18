@@ -390,6 +390,9 @@ class MaquinaAbas(C._Maquina):
             self.w8(obj + OFF_ENABLED, 0 if str(o.props.get('Enabled', 'True')) == 'False' else 1)
             tag = str(o.props.get('Tag', 0))
             self.w32(obj + OFF_TAG, int(tag) if tag.lstrip('-').isdigit() else 0)
+            if o.classe in ('TNumericEdit', 'TValueEditEx'):      # DataCode/DataIndex padrão = -1 (sem amarração)
+                self.w32(obj + OFF_NUM_CODE, 0xFFFFFFFF)
+                self.w32(obj + OFF_NUM_DATAINDEX, 0xFFFFFFFF)
             self.w32(form + off, obj)
             self.controles[nome] = obj
             self.controle_de[obj] = nome
@@ -490,7 +493,7 @@ class Sessao:
         for nome, obj in m.controles.items():
             o = self.form_idx[nome]
             di = o.props.get('DataIndex')
-            if di is not None and m.r32(obj + OFF_NUM_DATAINDEX) == 0:
+            if di is not None and m.r32(obj + OFF_NUM_DATAINDEX) == 0xFFFFFFFF:
                 m.w32(obj + OFF_NUM_DATAINDEX, int(di))
 
     def _dll_personalizacao(self):

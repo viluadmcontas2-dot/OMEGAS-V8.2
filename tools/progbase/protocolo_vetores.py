@@ -153,6 +153,8 @@ def _evidencia_log(item_props, forma, trans_idx):
     primeira = None
     tam = collections.Counter()
     for op, tab in trans_idx.items():
+        if op == 'W':
+            continue
         for (a, b, ex), lst in tab.items():
             if (a, b) != (lo, hi) or not casa(op, ex):
                 continue
@@ -163,8 +165,11 @@ def _evidencia_log(item_props, forma, trans_idx):
                     tam[nresp] += 1
                 elif cl == 'NAK_CA':
                     n_nak += 1
+    w = trans_idx.get('W', {}).get((lo, hi), [])
+    escritas = {'escritas_no_log': len(w), 'escritas_ack': sum(1 for x in w if x[0] == 'ACK_53'),
+                'primeira_escrita_linha': min((x[1] for x in w), default=None)}
     if n_ack + n_nak == 0:
-        return {'aparece': False}
+        return dict({'aparece': False}, **escritas)
     dl = item_props.get('DataLength', PADRAO_DATALENGTH)
     if item_props.get('_classe') == 'TAebNumber':
         esperado = dl
@@ -174,21 +179,28 @@ def _evidencia_log(item_props, forma, trans_idx):
         esperado = (item_props.get('ColCount') or item_props.get('ArrayDimension') or 1) * dl
     return {'aparece': True, 'leituras_ack': n_ack, 'leituras_nak': n_nak, 'primeira_linha': primeira,
             'tamanhos_resposta': dict(sorted(tam.items())), 'tamanho_esperado_dfm': esperado,
-            'tamanho_confere_com_dfm': (all(k == esperado for k in tam) if tam else None)}
+            'tamanho_confere_com_dfm': (all(k == esperado for k in tam) if tam else None), **escritas}
 
 
 def _indice_log(trans):
     """{op: {(lo,hi,extra): [(classe, linha, n_dados)]}} só para leituras v2 (op 09/0A/0B/29/2A)."""
     idx = collections.defaultdict(lambda: collections.defaultdict(list))
+    esc = collections.defaultdict(list)
     for t in trans:
         r = t['req']
-        if len(r) < 4 or r[0] not in (0x09, 0x0A, 0x0B, 0x29, 0x2A):
+        if len(r) < 4:
             continue
-        if len(r) != (r[0] & 7) + 3:
-            continue
-        cl, _ = plog.classificar(t)
-        n = t['resp'][len(r) + 1] if cl == 'ACK_53' else None
-        idx[r[0]][(r[1], r[2], r[3:-1].hex())].append((cl, t['line'], n))
+        if r[0] in (0x09, 0x0A, 0x0B, 0x29, 0x2A):
+            if len(r) != (r[0] & 7) + 3:
+                continue
+            cl, _ = plog.classificar(t)
+            n = t['resp'][len(r) + 1] if cl == 'ACK_53' else None
+            idx[r[0]][(r[1], r[2], r[3:-1].hex())].append((cl, t['line'], n))
+        elif 0x10 <= r[0] <= 0x16 or 0x30 <= r[0] <= 0x36:
+            esc[(r[1], r[2])].append((plog.classificar(t)[0], t['line'], r[0]))
+        elif r[0] in (0x17, 0x37) and len(r) > 4:
+            esc[(r[2], r[3])].append((plog.classificar(t)[0], t['line'], r[0]))
+    idx['W'] = esc
     return idx
 
 

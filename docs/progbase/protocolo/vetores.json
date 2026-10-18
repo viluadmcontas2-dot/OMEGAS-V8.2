@@ -1,7 +1,7 @@
 {
  "versao_esquema": 1,
  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
- "log_sha256": "341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+ "log_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
  "legenda": {
   "OBS-FIO": "visto na captura",
   "OBS-COD": "visto no executável/DFM",
@@ -119,14 +119,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 5,
+    "leituras_ack": 9,
     "leituras_nak": 0,
     "primeira_linha": 692,
     "tamanhos_resposta": {
-     "20": 5
+     "20": 9
     },
     "tamanho_esperado_dfm": 20,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -194,7 +197,10 @@
      "1": 1
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -262,7 +268,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -335,7 +344,10 @@
      "4": 4
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 19,
+    "escritas_ack": 19,
+    "primeira_escrita_linha": 31284
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -403,7 +415,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -471,7 +486,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -539,7 +557,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -607,7 +628,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -675,7 +699,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -743,7 +770,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -811,7 +841,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -879,7 +912,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -962,7 +998,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -1030,7 +1069,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -1120,7 +1162,10 @@
      "8": 6
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -1193,7 +1238,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -1261,7 +1309,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -1331,7 +1382,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -1401,7 +1455,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -1469,7 +1526,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -1537,7 +1597,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -1602,7 +1665,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -1670,7 +1736,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -1738,7 +1807,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -1806,7 +1878,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -1876,7 +1951,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -1938,7 +2016,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -1998,7 +2079,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -2071,7 +2155,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -2182,7 +2269,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -2258,7 +2348,10 @@
      "5": 3
     },
     "tamanho_esperado_dfm": 5,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -2327,14 +2420,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 974,
+    "leituras_ack": 3668,
     "leituras_nak": 0,
     "primeira_linha": 3566,
     "tamanhos_resposta": {
-     "5": 974
+     "5": 3668
     },
     "tamanho_esperado_dfm": 5,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -2394,7 +2490,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -2481,7 +2580,10 @@
      "5": 9
     },
     "tamanho_esperado_dfm": 5,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -2543,7 +2645,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -2605,7 +2710,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -2683,7 +2791,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -2746,14 +2857,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 194,
+    "leituras_ack": 732,
     "leituras_nak": 0,
     "primeira_linha": 16502,
     "tamanhos_resposta": {
-     "1": 194
+     "1": 732
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -2813,7 +2927,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -2873,7 +2990,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -2941,7 +3061,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -3016,7 +3139,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -3093,7 +3219,10 @@
     "primeira_linha": 3736,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 16,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -3170,7 +3299,10 @@
     "primeira_linha": 3758,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -3251,7 +3383,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -3334,7 +3469,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -3416,7 +3554,10 @@
      "9": 3
     },
     "tamanho_esperado_dfm": 9,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -3498,7 +3639,10 @@
      "9": 3
     },
     "tamanho_esperado_dfm": 9,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -3610,7 +3754,10 @@
     "primeira_linha": 3858,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -3684,7 +3831,10 @@
     "primeira_linha": 3880,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 5,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -3774,7 +3924,10 @@
      "9": 6
     },
     "tamanho_esperado_dfm": 9,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -3854,7 +4007,10 @@
      "9": 3
     },
     "tamanho_esperado_dfm": 9,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -3927,7 +4083,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -3987,7 +4146,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -4062,7 +4224,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -4132,7 +4297,10 @@
      "2": 2
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -4202,7 +4370,10 @@
      "2": 2
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -4272,7 +4443,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -4373,7 +4547,10 @@
      "30": 3
     },
     "tamanho_esperado_dfm": 30,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -4441,7 +4618,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -4524,7 +4704,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 36,
+    "escritas_ack": 36,
+    "primeira_escrita_linha": 434578
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -4592,7 +4775,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -4660,7 +4846,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -4728,7 +4917,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -4796,7 +4988,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -4864,7 +5059,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -4947,7 +5145,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 36,
+    "escritas_ack": 36,
+    "primeira_escrita_linha": 434338
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5015,7 +5216,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5083,7 +5287,10 @@
      "1": 1
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5143,7 +5350,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -5203,7 +5413,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -5271,7 +5484,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5339,7 +5555,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5407,7 +5626,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5475,7 +5697,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5548,7 +5773,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5616,7 +5844,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5684,7 +5915,10 @@
      "2": 1
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5744,7 +5978,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -5812,7 +6049,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5880,7 +6120,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -5955,7 +6198,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -6023,7 +6269,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -6091,7 +6340,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -6319,7 +6571,10 @@
      "12": 39
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 144,
+    "escritas_ack": 144,
+    "primeira_escrita_linha": 48568
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -6387,7 +6642,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -6453,7 +6711,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -6521,7 +6782,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -6589,7 +6853,10 @@
      "2": 1
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -6670,7 +6937,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -6753,7 +7023,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -6835,7 +7108,10 @@
      "9": 3
     },
     "tamanho_esperado_dfm": 9,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -6917,7 +7193,10 @@
      "9": 3
     },
     "tamanho_esperado_dfm": 9,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -6979,7 +7258,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -7065,7 +7347,10 @@
      "30": 3
     },
     "tamanho_esperado_dfm": 30,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -7151,7 +7436,10 @@
      "30": 3
     },
     "tamanho_esperado_dfm": 30,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -7216,7 +7504,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -7284,7 +7575,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -7402,7 +7696,10 @@
     "primeira_linha": 4834,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -7479,7 +7776,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -7565,7 +7865,10 @@
     "primeira_linha": 4856,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 15,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -7638,7 +7941,10 @@
     "primeira_linha": 4856,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -7718,7 +8024,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -7786,7 +8095,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -7856,7 +8168,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -7926,7 +8241,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -7996,7 +8314,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -8058,7 +8379,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -8126,7 +8450,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -8198,7 +8525,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -8268,7 +8598,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -8345,7 +8678,10 @@
      "8": 3
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -8426,7 +8762,10 @@
      "8": 3
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -8536,7 +8875,10 @@
      "12": 9
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -8609,7 +8951,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -8676,7 +9021,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -8894,7 +9242,10 @@
      "12": 36
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -9024,7 +9375,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -9109,7 +9463,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -9188,7 +9545,10 @@
     "primeira_linha": 5730,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 16,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -9271,7 +9631,10 @@
     "primeira_linha": 5730,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -9341,7 +9704,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -9411,7 +9777,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -9481,7 +9850,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -9551,7 +9923,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -9621,7 +9996,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -9689,7 +10067,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -9766,7 +10147,10 @@
      "12": 3
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -9834,7 +10218,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -9894,7 +10281,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -9980,7 +10370,10 @@
      "30": 3
     },
     "tamanho_esperado_dfm": 30,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10066,7 +10459,10 @@
      "30": 3
     },
     "tamanho_esperado_dfm": 30,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10134,7 +10530,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10202,7 +10601,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10285,7 +10687,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10345,7 +10750,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -10411,7 +10819,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -10494,7 +10905,10 @@
      "12": 3
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10577,7 +10991,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10650,7 +11067,10 @@
     "primeira_linha": 6228,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -10715,7 +11135,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -10783,7 +11206,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10851,7 +11277,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10919,7 +11348,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -10987,7 +11419,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11063,7 +11498,10 @@
      "5": 3
     },
     "tamanho_esperado_dfm": 5,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11164,7 +11602,10 @@
      "30": 3
     },
     "tamanho_esperado_dfm": 30,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11231,7 +11672,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -11291,7 +11735,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -11379,7 +11826,10 @@
      "4": 24
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11447,7 +11897,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11520,7 +11973,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11588,7 +12044,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11656,7 +12115,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11729,7 +12191,10 @@
      "2": 4
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11817,7 +12282,10 @@
      "4": 12
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11885,7 +12353,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -11959,7 +12430,10 @@
      "3": 3
     },
     "tamanho_esperado_dfm": 3,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -12019,7 +12493,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -12100,7 +12577,10 @@
      "16": 3
     },
     "tamanho_esperado_dfm": 16,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -12175,7 +12655,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -12248,7 +12731,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -12322,7 +12808,10 @@
      "6": 3
     },
     "tamanho_esperado_dfm": 6,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -12390,7 +12879,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -12450,7 +12942,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -12533,7 +13028,10 @@
      "12": 3
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -12615,7 +13113,10 @@
      "12": 3
     },
     "tamanho_esperado_dfm": 9,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": [
@@ -12688,7 +13189,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -12768,7 +13272,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -12845,7 +13352,10 @@
      "8": 3
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -12920,7 +13430,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -13001,7 +13514,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": [
@@ -13063,7 +13579,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -13136,7 +13655,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -13214,7 +13736,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 5,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": [
@@ -13287,7 +13812,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -13391,7 +13919,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -13451,7 +13982,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -13524,7 +14058,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -13603,7 +14140,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -13673,7 +14213,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -13736,14 +14279,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 4,
+    "leituras_ack": 8,
     "leituras_nak": 0,
     "primeira_linha": 7086,
     "tamanhos_resposta": {
-     "2": 4
+     "2": 8
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -13824,7 +14370,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -13886,7 +14435,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -13946,7 +14498,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -14009,7 +14564,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -14072,7 +14630,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -14156,7 +14717,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -14225,7 +14789,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -14292,7 +14859,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -14360,7 +14930,10 @@
     "primeira_linha": 7110,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -14422,7 +14995,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -14488,7 +15064,10 @@
     "primeira_linha": 7132,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -14556,7 +15135,10 @@
     "primeira_linha": 7132,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -14629,7 +15211,10 @@
     "primeira_linha": 7154,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -14695,7 +15280,10 @@
     "primeira_linha": 7176,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -14761,7 +15349,10 @@
     "primeira_linha": 7198,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -14827,7 +15418,10 @@
     "primeira_linha": 7220,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -14898,7 +15492,10 @@
     "primeira_linha": 7242,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -14964,7 +15561,10 @@
     "primeira_linha": 7264,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -15032,7 +15632,10 @@
     "primeira_linha": 7264,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -15102,7 +15705,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -15175,7 +15781,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": [
@@ -15260,7 +15869,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -15341,7 +15953,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -15407,7 +16022,10 @@
     "primeira_linha": 7376,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -15480,7 +16098,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -15545,7 +16166,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -15646,7 +16270,10 @@
      "30": 3
     },
     "tamanho_esperado_dfm": 30,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -15714,7 +16341,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -15795,7 +16425,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -15876,7 +16509,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -15951,7 +16587,10 @@
      "8": 3
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -16019,7 +16658,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -16087,7 +16729,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -16168,7 +16813,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -16556,7 +17204,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -16944,7 +17595,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -17019,7 +17673,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -17085,7 +17742,10 @@
     "primeira_linha": 7584,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -17301,7 +17961,10 @@
      "12": 36
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -17401,7 +18064,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -17501,7 +18167,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -17601,7 +18270,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -17701,7 +18373,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -17769,7 +18444,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -17829,7 +18507,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -17917,7 +18598,10 @@
     "primeira_linha": 8156,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -18137,7 +18821,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -18210,7 +18897,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -18283,7 +18973,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -18360,7 +19053,10 @@
      "12": 3
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -18440,7 +19136,10 @@
      "9": 3
     },
     "tamanho_esperado_dfm": 9,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -18519,7 +19218,10 @@
      "8": 3
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -18587,7 +19289,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -18673,7 +19378,10 @@
      "15": 3
     },
     "tamanho_esperado_dfm": 15,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -18759,7 +19467,10 @@
      "30": 3
     },
     "tamanho_esperado_dfm": 30,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -18827,7 +19538,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -18902,7 +19616,10 @@
      "8": 3
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -18979,7 +19696,10 @@
      "35": 3
     },
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": [
@@ -19077,7 +19797,10 @@
      "35": 3
     },
     "tamanho_esperado_dfm": 25,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": [
@@ -19148,7 +19871,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -19217,7 +19943,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -19283,7 +20012,10 @@
     "primeira_linha": 8596,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -19358,7 +20090,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -19431,7 +20166,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -19510,7 +20248,10 @@
     "primeira_linha": 8674,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -19585,7 +20326,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -19727,7 +20471,10 @@
     "primeira_linha": 8696,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 6,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -19799,7 +20546,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -19873,7 +20623,10 @@
      "3": 3
     },
     "tamanho_esperado_dfm": 3,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -19946,7 +20699,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -20012,7 +20768,10 @@
     "primeira_linha": 8768,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -20238,7 +20997,10 @@
     "primeira_linha": 8790,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 12,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -20321,7 +21083,10 @@
      "24": 3
     },
     "tamanho_esperado_dfm": 24,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -20396,7 +21161,10 @@
      "8": 3
     },
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -20464,7 +21232,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -20537,7 +21308,10 @@
      "4": 3
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -20611,7 +21385,10 @@
     "primeira_linha": 8938,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -20688,7 +21465,10 @@
     "primeira_linha": 8960,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -20762,7 +21542,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -20846,7 +21629,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -20928,7 +21714,10 @@
     "primeira_linha": 9030,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -21008,7 +21797,10 @@
     "primeira_linha": 9052,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -21088,7 +21880,10 @@
     "primeira_linha": 9074,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -21171,7 +21966,10 @@
     "primeira_linha": 9096,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -21254,7 +22052,10 @@
     "primeira_linha": 9118,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -21320,7 +22121,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -21391,7 +22195,10 @@
     "primeira_linha": 9162,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -21456,7 +22263,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -21529,7 +22339,10 @@
     "primeira_linha": 9206,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -21602,7 +22415,10 @@
     "primeira_linha": 9228,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -21675,7 +22491,10 @@
     "primeira_linha": 9250,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -21742,7 +22561,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -21818,7 +22640,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -21894,7 +22719,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -21970,7 +22798,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -22046,7 +22877,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -22140,7 +22974,10 @@
     "primeira_linha": 9382,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 20,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -22211,7 +23048,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -22277,7 +23117,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -22351,7 +23194,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -22431,7 +23277,10 @@
     "primeira_linha": 9470,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -22510,7 +23359,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -22597,7 +23449,10 @@
      "6": 12
     },
     "tamanho_esperado_dfm": 6,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -22681,7 +23536,10 @@
      "20": 3
     },
     "tamanho_esperado_dfm": 20,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -22761,7 +23619,10 @@
     "primeira_linha": 9764,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -22836,7 +23697,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -22901,7 +23765,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -22981,7 +23848,10 @@
     "primeira_linha": 9808,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -23068,7 +23938,10 @@
     "primeira_linha": 9830,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -23156,7 +24029,10 @@
     "primeira_linha": 9852,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -23260,7 +24136,10 @@
     "primeira_linha": 9874,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -23323,7 +24202,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -23394,7 +24276,10 @@
     "primeira_linha": 9918,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -23476,7 +24361,10 @@
     "primeira_linha": 9940,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -23536,7 +24424,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -23613,7 +24504,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -23683,7 +24577,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -23753,7 +24650,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -23813,7 +24713,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -23873,7 +24776,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -23939,7 +24845,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -24005,7 +24914,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -24081,7 +24993,10 @@
     "primeira_linha": 9962,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 14,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -24174,14 +25089,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 26,
+    "leituras_ack": 437,
     "leituras_nak": 0,
     "primeira_linha": 10372,
     "tamanhos_resposta": {
-     "36": 26
+     "36": 437
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -24249,7 +25167,10 @@
     "primeira_linha": 9984,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -24312,7 +25233,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -24381,7 +25305,10 @@
     "primeira_linha": 9984,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": [
@@ -24444,7 +25371,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -24520,7 +25450,10 @@
      "5": 3
     },
     "tamanho_esperado_dfm": 5,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -24588,7 +25521,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -24654,7 +25590,10 @@
     "primeira_linha": 3544,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -24731,7 +25670,10 @@
     "primeira_linha": 9720,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -24802,7 +25744,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 8,
+    "escritas_ack": 8,
+    "primeira_escrita_linha": 697674
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -24905,7 +25850,10 @@
      "60": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": []
@@ -25008,7 +25956,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -25090,14 +26041,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 26,
+    "leituras_ack": 437,
     "leituras_nak": 0,
     "primeira_linha": 10556,
     "tamanhos_resposta": {
-     "36": 26
+     "36": 437
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -25179,14 +26133,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 28,
+    "leituras_ack": 440,
     "leituras_nak": 0,
     "primeira_linha": 10924,
     "tamanhos_resposta": {
-     "36": 28
+     "36": 440
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -25279,14 +26236,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 26,
+    "leituras_ack": 437,
     "leituras_nak": 0,
     "primeira_linha": 10648,
     "tamanhos_resposta": {
-     "36": 26
+     "36": 437
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -25379,14 +26339,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 26,
+    "leituras_ack": 437,
     "leituras_nak": 0,
     "primeira_linha": 10740,
     "tamanhos_resposta": {
-     "36": 26
+     "36": 437
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -25479,14 +26442,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 28,
+    "leituras_ack": 440,
     "leituras_nak": 0,
     "primeira_linha": 10832,
     "tamanhos_resposta": {
-     "36": 28
+     "36": 440
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -25579,14 +26545,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 28,
+    "leituras_ack": 440,
     "leituras_nak": 0,
     "primeira_linha": 11156,
     "tamanhos_resposta": {
-     "36": 28
+     "36": 440
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -25682,14 +26651,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 27,
+    "leituras_ack": 439,
     "leituras_nak": 0,
     "primeira_linha": 11016,
     "tamanhos_resposta": {
-     "60": 27
+     "60": 439
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": []
@@ -25782,14 +26754,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 26,
+    "leituras_ack": 437,
     "leituras_nak": 0,
     "primeira_linha": 10372,
     "tamanhos_resposta": {
-     "36": 26
+     "36": 437
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -25884,14 +26859,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 26,
+    "leituras_ack": 437,
     "leituras_nak": 0,
     "primeira_linha": 10464,
     "tamanhos_resposta": {
-     "36": 26
+     "36": 437
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -25954,7 +26932,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -26028,7 +27009,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -26102,7 +27086,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -26187,7 +27174,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -26269,7 +27259,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -26351,7 +27344,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -26432,7 +27428,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -26513,7 +27512,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -26581,14 +27583,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 19,
+    "leituras_ack": 111,
     "leituras_nak": 0,
     "primeira_linha": 14236,
     "tamanhos_resposta": {
-     "4": 19
+     "4": 111
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -26656,14 +27661,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 5,
+    "leituras_ack": 325,
     "leituras_nak": 0,
     "primeira_linha": 89454,
     "tamanhos_resposta": {
-     "4": 5
+     "4": 325
     },
     "tamanho_esperado_dfm": 4,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -26747,7 +27755,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -26810,7 +27821,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": []
@@ -26874,14 +27888,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 4,
+    "leituras_ack": 7,
     "leituras_nak": 0,
     "primeira_linha": 11380,
     "tamanhos_resposta": {
-     "1": 4
+     "1": 7
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -26952,7 +27969,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27023,7 +28043,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27094,7 +28117,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27176,7 +28202,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27258,7 +28287,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27340,7 +28372,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27422,7 +28457,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27493,7 +28531,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27586,14 +28627,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 12,
+    "leituras_ack": 218,
     "leituras_nak": 0,
     "primeira_linha": 14264,
     "tamanhos_resposta": {
-     "60": 12
+     "60": 218
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": []
@@ -27686,14 +28730,17 @@
    },
    "log": {
     "aparece": true,
-    "leituras_ack": 13,
+    "leituras_ack": 220,
     "leituras_nak": 0,
     "primeira_linha": 14404,
     "tamanhos_resposta": {
-     "60": 13
+     "60": 220
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": []
@@ -27782,7 +28829,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27871,7 +28921,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -27960,7 +29013,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28049,7 +29105,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28138,7 +29197,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28227,7 +29289,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28316,7 +29381,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28405,7 +29473,10 @@
      "36": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28479,7 +29550,10 @@
      "6": 3
     },
     "tamanho_esperado_dfm": 6,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28553,7 +29627,10 @@
      "6": 3
     },
     "tamanho_esperado_dfm": 6,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28642,7 +29719,10 @@
      "60": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": []
@@ -28731,7 +29811,10 @@
      "60": 3
     },
     "tamanho_esperado_dfm": 36,
-    "tamanho_confere_com_dfm": false
+    "tamanho_confere_com_dfm": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "ack_com_tamanho_diferente",
    "colide_com": []
@@ -28799,7 +29882,10 @@
      "1": 3
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -28872,7 +29958,10 @@
     "primeira_linha": 12694,
     "tamanhos_resposta": {},
     "tamanho_esperado_dfm": 8,
-    "tamanho_confere_com_dfm": null
+    "tamanho_confere_com_dfm": null,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "so_nak",
    "colide_com": []
@@ -28932,7 +30021,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -29080,7 +30172,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -29143,7 +30238,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -29217,7 +30315,10 @@
      "1": 21
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29291,7 +30392,10 @@
      "1": 21
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29365,7 +30469,10 @@
      "1": 21
     },
     "tamanho_esperado_dfm": 1,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29439,7 +30546,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29520,7 +30630,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29601,7 +30714,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29682,7 +30798,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29755,7 +30874,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -29836,7 +30958,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29917,7 +31042,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -29998,7 +31126,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30079,7 +31210,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30160,7 +31294,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30241,7 +31378,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30320,7 +31460,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30399,7 +31542,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30470,7 +31616,10 @@
     }
    },
    "log": {
-    "aparece": false
+    "aparece": false,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "nao_lida",
    "colide_com": [
@@ -30549,7 +31698,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30628,7 +31780,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30707,7 +31862,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30786,7 +31944,10 @@
      "2": 3
     },
     "tamanho_esperado_dfm": 2,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": [
@@ -30878,7 +32039,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
@@ -30962,7 +32126,10 @@
      "10": 3
     },
     "tamanho_esperado_dfm": 10,
-    "tamanho_confere_com_dfm": true
+    "tamanho_confere_com_dfm": true,
+    "escritas_no_log": 0,
+    "escritas_ack": 0,
+    "primeira_escrita_linha": null
    },
    "presenca_na_ecu_capturada": "confirmada",
    "colide_com": []
