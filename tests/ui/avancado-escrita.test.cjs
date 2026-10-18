@@ -47,6 +47,12 @@ test('ordem de bytes: palavra 0 primeiro, cada palavra little-endian (eco real d
   deepEqual(A.wordsFromBytes([0x34, 0x12, 0xCD, 0xAB]), [0x1234, 0xABCD]);
 });
 
+test('caso do código original (OBS-COD, cpu-setter-original): 0C10 ABCD + marcar = 35 FA 00 30 0C CD AB E3', () => {
+  const plan = A.planAntiStallo([0x0C10, 0xABCD], true);
+  assert.equal(plan.frameHex, '35 FA 00 30 0C CD AB E3');
+  deepEqual(plan.after, [0x0C30, 0xABCD]);
+});
+
 test('desligar: só o bit 0x20 apaga (35 FA 00 00 00 00 00 2F)', () => {
   const plan = A.planAntiStallo([0x0020, 0], false);
   assert.equal(plan.frameHex, '35 FA 00 00 00 00 00 2F');

@@ -2,7 +2,7 @@
 (tools/emulacao/ecu_emulator.py) e o fluxo escrita -> ACK -> leitura de volta fecha, byte a byte.
 
 Marcas: OBS-FIO = bytes vistos no Portmon LOGNOVO (a leitura `29 FA 00 23` -> `53 04 00 00 00 00 57`);
-DERIVADO = o quadro `35 FA 00 20 00 00 00 4F` (nunca visto ao vivo, derivado do código do ProgBase);
+OBS-COD = o quadro `35 FA 00 20 00 00 00 4F` (execução emulada do setter original, 2026-10-18-cpu-setter-original.md; nunca visto ao vivo no fio);
 SINTÉTICO = estado de partida inventado só para provar a preservação dos outros bits.
 O montador de quadro do JS (core/advanced-flags.js, o mesmo que a tela usa) roda em Node; o do Kotlin
 (AutoCalProtocol.writeVectorU16) é conferido pelas mesmas constantes nos testes JUnit (checagem de texto abaixo).
@@ -22,7 +22,7 @@ UI = ROOT / 'app/src/main/assets/ui'
 LEITURA = bytes.fromhex('29FA0023')                      # leitura do vetor 250 (OBS-FIO)
 LEITURA_ZERO = LEITURA + bytes.fromhex('53040000000057')  # resposta real do LOGNOVO (OBS-FIO)
 ACK_VAZIO = bytes.fromhex('530053')
-LIGAR_ZERO = bytes.fromhex('35FA00200000004F')           # DERIVADO
+LIGAR_ZERO = bytes.fromhex('35FA00200000004F')           # OBS-COD
 
 NODE_LOADER = r"""
 const fs = require('fs'), vm = require('vm');
@@ -125,6 +125,14 @@ class FluxoNaEcuEmulada(unittest.TestCase):
         ecu2 = ecu_com_flag3([0xFFFF, 0xFFFF])
         _, _, volta2, _ = self.fluxo(ecu2, False)
         self.assertEqual(volta2, [0xFFDF, 0xFFFF])
+
+    def test_caso_do_codigo_original_0c10_abcd(self):  # OBS-COD (docs/evidence/2026-10-18-cpu-setter-original.md)
+        ecu = ecu_com_flag3([0x0C10, 0xABCD])
+        plano, resposta, volta, veredito = self.fluxo(ecu, True)
+        self.assertEqual(bytes(plano['frame']), bytes.fromhex('35FA00300CCDABE3'))
+        self.assertEqual(resposta, bytes.fromhex('35FA00300CCDABE3') + ACK_VAZIO)
+        self.assertEqual(volta, [0x0C30, 0xABCD])
+        self.assertTrue(veredito['ok'])
 
     def test_ja_ligado_nao_ha_o_que_gravar(self):
         ecu = ecu_com_flag3([0x0020, 0])

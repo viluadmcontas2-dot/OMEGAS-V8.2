@@ -54,6 +54,12 @@ class AntiStalloFlagCoreTest {
         assertFalse(plan.noop)
     }
 
+    @Test fun `caso do codigo original OBS-COD - 0C10 ABCD mais marcar gera 35 FA 00 30 0C CD AB E3`() {
+        val plan = AntiStalloFlagCore.plan(intArrayOf(0x0C10, 0xABCD), true)
+        assertEquals("35 FA 00 30 0C CD AB E3", hex(plan.frame))
+        assertArrayEquals(intArrayOf(0x0C30, 0xABCD), plan.after)
+    }
+
     @Test fun `desligar apaga so o bit 0x20`() {
         val plan = AntiStalloFlagCore.plan(intArrayOf(0x0020, 0), false)
         assertEquals("35 FA 00 00 00 00 00 2F", hex(plan.frame))
