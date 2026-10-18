@@ -25,6 +25,12 @@ Regra do dono: nenhuma decisão do app depende de relógio. Esperar a ECU é esp
 | Amostra da bridge (hook `fast`) | Operações JS pendentes (MapFix, Refino, Curva->Mapa, sonda) verificam a resposta |
 | Mudança de estado USB / criação do serviço / queda do núcleo / borda ocupado→livre | `healthTick` (reconexão, reinício do motor limitado por contagem, snapshot) |
 | Sonda de escrita: leitura de conferência | 1 readback inicial + 3 conferências; entre cada uma, `FRAMES_BETWEEN_READS` = 4 quadros de telemetria novos (pedido `48 01` dentro da unidade da sonda): a ECU roda o próprio ciclo e pode sobrescrever (`ACCEPTED_THEN_OVERWRITTEN` passa a ser detectável) |
+| Primeira leitura válida da sessão USB (mesmo `ticket.parameters` do `param_snapshot`) | Lê também `FLAG_CONF1/2/3`, `GIRI_PER_BENZINA` e `PARAM_PROGRESSIONI` (linhas `2A 34 01 0..3`) e guarda em `AdvancedParamsStore` para a aba Avançado; nenhuma releitura por tempo |
+| Abrir Ferramentas > Avançado / dado novo da bridge (`context`) | A tela só relê da ponte o que o Kotlin já tem (`getAdvancedParams`); não pede nada à ECU |
+| Toque 1 no botão do anti-apagão | `AntiStalloFlagWriter.prepare`: lê `FLAG_CONF3` ao vivo (`29 FA 00`) e monta a prévia; **não grava**. Espera pela RESPOSTA da leitura (poll no gancho `fast`, dado novo) |
+| Toque 2 (confirmação, mesmo botão) | `confirm(token)`: uma unidade `MANUAL_WRITE`: releitura, `35 FA 00 ...`, ACK, leitura de volta. Sucesso só com a leitura de volta igual; a espera é cada resposta da ECU (timeout de transação já existente, não relógio de decisão) |
+| Outro toque, troca de rota, USB caiu, "Cancelar" | Descarta a prévia (`cancelAntiStalloFlag`); USB caiu durante a gravação encerra a espera com "não foi conferida" |
+| Toque em "Desfazer" | Mesmo fluxo (prévia + toque duplo) restaurando o bit anterior guardado da última gravação confirmada na mesma sessão USB |
 
 Limite conhecido: mudança externa de Mapa K não tem notificação própria no monitor; não foi criado polling.
 
