@@ -67,8 +67,12 @@ Fonte: `protocolo-landi/dfm/i18n_all.json` (chaves `CHECKANTISTALLO`, `LABELANTI
 | (liga/desliga) | — | "Enable un-stalling strategy" / "Abilitazione anti-stallo" (`CHECKANTISTALLO`, caixa de seleção) | PROVADO que existe; onde fica gravado: DESCONHECIDO |
 | 0 | 1600 | "Max RPM to enable un-stalling" / "Max giri attivazione anti-stallo" | INFERIDO (numeração) |
 | 1 | 100 | "Delta RPM to enable un-stalling" / "Delta giri attivazione anti-stallo" | INFERIDO |
-| 2 | 1500 | "Delay to exit gas mode" / "Attesa uscita gas" (unidade DESCONHECIDA) | INFERIDO |
+| 2 | 1500 | "Delay to exit gas mode" / "Attesa uscita gas" — unidade **ms** (rótulo da tela `TFormConfig`, aba Iniettori; ver `2026-10-18-tela-anti-stallo-original.md`) | INFERIDO (ligação edit↔campo pelo DataIndex) |
 | 3 | 2 | "Hysteresys for enabling threshold" / "Isteresi su soglia attivazione" | INFERIDO |
 | 4 | 20 | "Delta RPM to disenable un-stalling" / "Delta giri disattivazione anti-stallo" | INFERIDO |
 
 Leitura em português simples: é a estratégia que, com a rotação baixa (até ~1600 rpm) e queda de rotação (~100 rpm), tira o motor do GNV para evitar o apagão e só volta depois de uma espera. Isso combina com a evidência de apagões (risco ~16× menor ao retomar acima de 1700 rpm). Ainda NÃO provado: a unidade da espera (campo 2) e qual campo é qual — só um teste mudando um campo por vez, ou um Portmon do original, fecha.
+
+
+## Correção (tela decodificada)
+A tela do original está em `TFormConfig`, aba "Iniettori" (`docs/evidence/2026-10-18-tela-anti-stallo-original.md`). Unidades: campo 0 = rpm; 1, 3 e 4 = rpm/ciclo; **campo 2 = ms** (não é rpm). Os controles ficam `Visible=False` no desenho da tela; só a caixa "Abilitazione" é visível por padrão. Onde a caixa é gravada continua DESCONHECIDO (código Delphi).
