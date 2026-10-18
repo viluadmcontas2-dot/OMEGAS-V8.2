@@ -228,3 +228,4 @@
 .app-shell.autocal-focus .autocal-chart-legend .ao-key { gap: 3px; }
 .app-shell.autocal-focus .autocal-chart-legend .ao-key svg { width: 20px; }
 @media (max-height: 520px) { .tool-switch { min-height: 56px; } #toolsDrawer .tile-line.reason { font-size: 16px; line-height: 1.1; } }
+@media (max-width: 900px) { .tool-actions button { padding: 0 12px; font-size: 19px; } .tool-actions { gap: 8px; } }

@@ -10,3 +10,9 @@ description: Use no início de cada mensagem do dono (leigo, fala rápido, erra 
 4. **Questione**: é o melhor caminho? Conflita com pedido anterior? Já existe algo pronto (no repositório, projeto público, ferramenta)? Diga a escolha e o porquê em 1-2 linhas.
 5. **Regras permanentes prevalecem**: app nunca grava sozinho; não burlar licença; nada por tempo; sem segredos.
 6. **Aja**: subagentes em paralelo, sem pedir confirmação entre etapas; resposta curta em português simples (FEITO / PRÓXIMO PASSO só se for ação do dono / OBJETIVO / FALTA).
+
+## Gestão de subagentes (obrigatório)
+- Brief curto e fechado: escopo, arquivos, prazo máximo (≤20 min para correções; ≤40 min para construção) e exigência de checkpoint: o agente escreve PROGRESSO em arquivo a cada marco.
+- Sem notícia por 15 min (arquivo de saída sem mudança): mandar ping com prioridade `now` pedindo 3 linhas de status. Sem resposta em 5 min: encerrar (TaskStop) e relançar com o checkpoint. Nunca esperar 1 h.
+- Um agente por arquivo: nunca dois agentes editando a mesma tela ao mesmo tempo.
+- Nunca o controlador faz o trabalho do agente; relança.

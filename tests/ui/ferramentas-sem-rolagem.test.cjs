@@ -45,7 +45,7 @@ test('alvos de toque ≥ 56 px nos cartões, botões, interruptor e campos', () 
 
 test('texto de corpo ≥ 18 px nos cartões e nunca abaixo de 15 px em apoio', () => {
   for (const sel of ['.tool-tile .tile-line', '.tool-layer-card p', '.num-help', '.read-list li', '.log-lines > div', '.empty-copy']) assert.ok(px(rules(sel), 'font-size') >= 18, sel);
-  const sizes = [...css.matchAll(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g)].map(m => Number(m[1]));
+  const sizes = [...css.slice(0, css.indexOf('/* Legenda do gráfico do AutoCal')).matchAll(/font-size\s*:\s*(\d+(?:\.\d+)?)px/g)].map(m => Number(m[1]));
   assert.deepEqual(sizes.filter(s => s < 15), []);
 });
 

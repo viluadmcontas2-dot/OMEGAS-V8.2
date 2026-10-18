@@ -67,7 +67,7 @@ test('acompanhamento da sonda termina quando o USB cai', () => {
   state.status = { usbConnected: false };
   hook();
   assert.equal(drawers.bufferProbeRunning, false);
-  assert.match(label.textContent, /USB desconectado/);
+  assert.match(label.textContent, /cabo soltou/);
 });
 
 test('etapa da curva (Curva K → Mapa K) termina no evento USB desconectado', async () => {
@@ -78,7 +78,7 @@ test('etapa da curva (Curva K → Mapa K) termina no evento USB desconectado', a
   const nextEvent = async () => { events += 1; if (events === 3) online = false; if (events > 50) throw new Error('espera sem fim'); };
   const outcome = await runner.writeCurveStage(api, [{ index: 0, currentRaw: 1, targetRaw: 2 }], { nextEvent, offline: () => !online });
   assert.equal(outcome.ok, false);
-  assert.match(outcome.error, /USB desconectado/);
+  assert.match(outcome.error, /cabo soltou/);
   assert.ok(events < 10);
 });
 
@@ -101,7 +101,7 @@ test('MapFix (Refino → Mapa K) termina no evento USB desconectado', () => {
   online = false;
   tick();
   assert.equal(fix.state.phase, 'failed');
-  assert.match(fix.state.message, /USB desconectado/);
+  assert.match(fix.state.message, /cabo soltou/);
   assert.equal(tick, null, 'a espera sai do agendador');
 });
 
