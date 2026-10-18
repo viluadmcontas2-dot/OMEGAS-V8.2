@@ -1,3 +1,11 @@
+# STATUS
+
+## v8 — APK "versão nova" (anti-apagão) — 2026-10-18
+- Commit: eb8c9e8 · Run APK: 39174963145 (verde) · Artefato: omegas-vermelho-apk-eb8c9e8… (id 12153747842)
+- SHA-256 do APK: 476db1ce577c332ed4228d48412a9d8ccebaab0f0625e3d620f4eee6498dbf27 (4,8 MB)
+- Novidades: botão manual do anti-apagão (prévia → 2º toque → confirmação da central → Desfazer), 5 números editáveis, cartões de Ferramentas em linguagem simples, aba Sessões, Marcha lenta (leitura+sugestão), app -52% de código no arranque.
+- Testes: 431 UI verdes locais; CI do commit em execução no momento do corte. O app continua NUNCA gravando sozinho.
+
 # OMEGAS — Status
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
