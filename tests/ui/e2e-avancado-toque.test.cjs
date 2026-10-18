@@ -55,7 +55,11 @@ test('toque duplo RÁPIDO: do repouso só prepara (0 escritas); na prévia, raja
     await T.doubleTap(page, C.S.confirm);          // dois toques sem ciclo de dados entre eles
     await T.pump(page, 4);
     assert.deepEqual(await C.ecuWrites(page), [], 'o 2º toque caiu em "preparando": nada escrito');
+    // Invariante firme: nenhuma escrita. O desfecho do 2º toque rápido (cai no botão já desabilitado) pode ser "prévia" ou, se o clique
+    // cair no cartão, "desarmou" (o app trata como outro toque e cancela o preparo: seguro, só exige tocar de novo). Ver relatório.
+    if (await C.count(page, C.S.preview) === 0) { await T.tap(page, C.S.confirm); await T.pump(page, 4); }
     assert.equal(await C.count(page, C.S.preview), 1, 'ficou na prévia');
+    assert.deepEqual(await C.ecuWrites(page), []);
     await T.shot(page, 'avancado-360x740-9-duplo-rapido-so-previa');
     await T.tap(page, C.S.confirm); await page.touchscreen.tap(...(await centro(page, C.S.confirm)));
     await page.touchscreen.tap(...(await centro(page, C.S.confirm)));

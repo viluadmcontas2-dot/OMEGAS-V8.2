@@ -566,7 +566,12 @@
       this.lastRenderKey = key;
 
       const chip = document.getElementById('refinoPhaseChip');
-      if (chip) { chip.dataset.fuelState = PHASE_TONE[phase] || 'unknown'; chip.textContent = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Pontos pioraram' : 'Sem ECU'])[1]; }
+      if (chip) {
+        const tone = PHASE_TONE[phase] || 'unknown';
+        const chipText = (PHASES.find(([k]) => k === phase) || [null, phase === 'RESTAURAR_TRECHO' ? 'Pontos pioraram' : 'Sem ECU'])[1];
+        if (chip.dataset.fuelState !== tone) chip.dataset.fuelState = tone;
+        if (chip.textContent !== chipText) chip.textContent = chipText;
+      }
 
       let headline = pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
       let next = (pilot.next || '') + (op.phase === 'idle' && fix.phase === 'idle' ? this.gasNote(eq) : '');
@@ -603,7 +608,8 @@
       for (const [name, selector] of [['preview', '[data-refino-preview]'], ['manual', '[data-refino-manual]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
         const node = document.querySelector(selector);
         if (!node) continue;
-        node.hidden = !show[name];
+        const hide = !show[name];
+        if (node.hidden !== hide) node.hidden = hide;
         if (label[name] && node.textContent !== label[name]) node.textContent = label[name];
       }
       this.renderChart();
@@ -617,7 +623,8 @@
       const text = this.gasolineReference.text(original, live.load_bar ?? live.map_bar ?? live.mapBar, live.rpm);
       const node = document.getElementById('refinoNext');
       if (node && (/sem evidência de gasolina/i.test(original) || original === 'Rode alguns minutos na gasolina para criar a referência.')) {
-        node.textContent = text + this.gasNote(this.eq || {});
+        const full = text + this.gasNote(this.eq || {});
+        if (node.textContent !== full) node.textContent = full;
       }
     }
 

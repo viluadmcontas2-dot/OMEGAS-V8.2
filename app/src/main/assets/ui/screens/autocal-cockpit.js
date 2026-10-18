@@ -1123,7 +1123,7 @@
       this.text('autocalAutoMatchEvidenceTitle', human.autoMatchEvidenceTitle);
       this.text('autocalAutoMatchEvidenceDetail', human.autoMatchEvidenceDetail);
       const autoMatchEvidence = document.getElementById('autocalAutoMatchEvidence');
-      if (autoMatchEvidence) autoMatchEvidence.dataset.state = human.autoMatchEvidenceState;
+      setData(autoMatchEvidence, 'state', human.autoMatchEvidenceState);
       this.text('autocalNativeState', 'Aquisição: ' + acquisitionLabel);
       this.text('autocalZoneSummary', human.gasZones === null ? 'Zonas GNV sem leitura' : human.gasZones + '/4 zonas GNV');
       this.text('autocalStateRaw', state.state || '—');
@@ -1138,22 +1138,26 @@
       const toggle = this.panel?.querySelector('[data-autocal-toggle]');
       if (toggle) {
         const action = AutoCalUxModel.toggleAction(human.enabled);
-        toggle.dataset.action = action || '';
-        toggle.disabled = !action || this.operationalPending;
-        toggle.textContent = this.operationalPending
+        setData(toggle, 'action', action || '');
+        const toggleOff = !action || !!this.operationalPending;
+        if (toggle.disabled !== toggleOff) toggle.disabled = toggleOff;
+        const toggleLabel = this.operationalPending
           ? 'Conferindo na ECU…'
           : action === 'DISABLE_AUTO_CAL'
             ? 'Pausar aprendizado'
             : action === 'ENABLE_AUTO_CAL' ? 'Retomar aprendizado' : 'Aguardando estado';
+        if (toggle.textContent !== toggleLabel) toggle.textContent = toggleLabel;
       }
 
       this.panel?.querySelectorAll('[data-autocal-action]').forEach(button => {
-        button.disabled = this.operationalPending;
+        const off = !!this.operationalPending;
+        if (button.disabled !== off) button.disabled = off;
       });
       // Disponível só depois dos AutoMatches automáticos da ECU (cota atingida) e com o aprendizado ligado.
       const manualAutoMatch = this.panel?.querySelector('#autocalManualAutoMatch');
       if (manualAutoMatch) {
-        manualAutoMatch.hidden = !(human.autoMatchQuotaReached && human.enabled !== 0);
+        const hideManual = !(human.autoMatchQuotaReached && human.enabled !== 0);
+        if (manualAutoMatch.hidden !== hideManual) manualAutoMatch.hidden = hideManual;
         if (!manualAutoMatch.hidden) this.renderManualAutoMatchAdvice(manualAutoMatch, snapshot);
       }
 
@@ -1175,7 +1179,7 @@
       );
       this.text('autocalSessionNext', narrative.next);
       const strip = this.panel?.querySelector('.autocal-session-strip');
-      if (strip) strip.dataset.sessionLevel = narrative.level;
+      setData(strip, 'sessionLevel', narrative.level);
 
       const host = document.getElementById('autocalSessionList');
       if (!host || !this.sessionDrawerOpen) return;
@@ -1265,7 +1269,7 @@
             '" title="Ajuste automático ' + (item.index + 1) + ': ' + (item.done ? 'feito' : 'falta') + '"></i>').join('')
           : '<i class="ao-dot" data-state="unknown" title="Contador sem leitura"></i>';
       }
-      host.setAttribute('aria-label', 'Gasolina: ' + groups.petrol.map(i => 'zona ' + (i.zone + 1) + ' ' + label[i.state]).join(', ') +
+      setAttr(host, 'aria-label', 'Gasolina: ' + groups.petrol.map(i => 'zona ' + (i.zone + 1) + ' ' + label[i.state]).join(', ') +
         '. GNV: ' + groups.gas.map(i => 'zona ' + (i.zone + 1) + ' ' + label[i.state]).join(', ') +
         '. Ajustes automáticos: ' + (matchDots.length ? matchDots.filter(i => i.done).length + ' de ' + matchDots.length : 'sem leitura') + '.');
     }
@@ -2000,7 +2004,7 @@
       const host = document.getElementById('autocalBands');
       if (!host) return;
       const bands = AutoCalUxModel.bandStrip(snapshot, this.projection);
-      host.innerHTML = bands.map(band => {
+      const html = bands.map(band => {
         const stateLabel = band.state === 'anchored' ? 'correlacionada'
           : band.state === 'mature' ? 'evento'
           : band.state === 'activity' ? 'atividade' : 'vazia';
@@ -2009,6 +2013,8 @@
           '" role="listitem" aria-pressed="false" aria-label="Região ' + (band.index + 1) + ' de 18, ' + stateLabel +
           '"><span>' + (band.index + 1) + '</span><i></i><small>' + (band.zoneAcquired ? 'zona ok' : stateLabel) + '</small></button>';
       }).join('');
+      // Mesmas 18 regiões: não refaz os botões (e o clique/seleção seguem nos mesmos nós).
+      if (this.bandsHtml !== html || host.firstChild === null) { host.innerHTML = html; this.bandsHtml = html; }
       const preferred = Number.isInteger(this.selectedBandIndex)
         ? this.selectedBandIndex
         : (bands.find(item => item.state !== 'empty')?.index ?? 0);
@@ -2023,7 +2029,7 @@
       document.querySelectorAll('[data-autocal-band-index]').forEach(node => {
         const selected = Number(node.dataset.autocalBandIndex) === index;
         node.classList.toggle('selected', selected);
-        node.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        setAttr(node, 'aria-pressed', selected ? 'true' : 'false');
       });
 
       const message = AutoCalUxModel.bandNarrative(band);
@@ -2031,22 +2037,25 @@
       const zoneText = band.zoneAcquired
         ? 'Zona ' + (band.zone + 1) + ' confirmada pela ECU'
         : 'Zona ' + (band.zone + 1) + ' ainda não confirmada pela ECU';
-      host.innerHTML = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
+      const inspected = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
+      if (this.bandInspectorHtml !== inspected || host.firstChild === null) { host.innerHTML = inspected; this.bandInspectorHtml = inspected; }
     }
 
     renderEvents(events) {
       const host = document.getElementById('autocalEvents');
       if (!host) return;
       if (!events.length) {
-        host.innerHTML = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a ECU já acumulou.</p>';
+        const empty = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a ECU já acumulou.</p>';
+        if (this.eventsHtml !== empty) { host.innerHTML = empty; this.eventsHtml = empty; }
         return;
       }
-      host.innerHTML = events.slice(-6).reverse().map(event => {
+      const html = events.slice(-6).reverse().map(event => {
         const correlated = String(event.correlationState || '') === 'CORRELATED';
         const rpm = finite(event.rpm);
         const confidence = Math.round((finite(event.correlationConfidence) || 0) * 100);
         return `<article data-state="${correlated ? 'correlated' : 'raw'}"><div><b>B${Number(event.bandIndex) + 1}</b><span>${escapeHtml(event.zone || 'zona')}</span></div><p>${correlated ? `${rpm === null ? 'RPM —' : `${Math.round(rpm).toLocaleString('pt-BR')} RPM`} · confiança ${confidence}%` : escapeHtml(event.correlationReason || 'NO_RELIABLE_CORRELATION')}</p><small>contador ${finite(event.counter) ?? '—'} · limiar ${finite(event.threshold) ?? '—'}</small></article>`;
       }).join('');
+      if (this.eventsHtml !== html) { host.innerHTML = html; this.eventsHtml = html; }
     }
 
     /** Ação aceita pela ECU: o próximo fim (Concluído/Não concluído) dela vira aviso; o estado antigo não conta. */
@@ -2083,10 +2092,10 @@
         this.store?.patch?.({ alert: { level: failed ? 'warning' : 'ok', message: text } });
       }
       if (!host) return;
-      host.dataset.level = failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral';
-      host.dataset.reasonCode = recoveryCode;
-      host.dataset.mutationUncertain = mutationMayHaveStarted ? 'true' : 'false';
-      host.textContent = text;
+      setData(host, 'level', failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral');
+      setData(host, 'reasonCode', recoveryCode);
+      setData(host, 'mutationUncertain', mutationMayHaveStarted ? 'true' : 'false');
+      if (host.textContent !== text) host.textContent = text;
     }
 
     renderUnavailable() {

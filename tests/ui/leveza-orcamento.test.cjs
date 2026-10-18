@@ -110,6 +110,7 @@ async function ciclos(page, { comDado, n = 40 }) {
     const app = window.OmegasApp; let seq = 9000;
     const quadro = () => ({ valid: true, ageMs: 40, telemetryAgeMs: 40, sequence: seq, live: { rpm: 1500 + (seq % 40) * 25, petrol_ms: +(4 + (seq % 7) * 0.1).toFixed(3), load_bar: +(0.45 + (seq % 5) * 0.01).toFixed(3), fuel: 'GNV', unknown_raw_19: 221 } });
     app.api.presentSnapshot = () => { if (comDado) seq += 1; return { ok: true, revision: seq, data: quadro() }; };
+    const agora = Date.now; if (!comDado) { const t0 = agora.call(Date); Date.now = () => t0; } // o vigia de 2,5 s é de relógio: tem teste próprio acima
     const escondida = {}; let identicas = 0; let total = 0; const amostra = [];
     const mo = new MutationObserver(list => {
       for (const m of list) {
@@ -130,6 +131,7 @@ async function ciclos(page, { comDado, n = 40 }) {
     mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeOldValue: true, characterData: true, characterDataOldValue: true });
     for (let i = 0; i < n; i++) { app.scheduler.run(); await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0))); }
     mo.takeRecords(); mo.disconnect();
+    Date.now = agora;
     return { identicas, total, escondida, amostra };
   }, { comDado, n });
 }
@@ -144,6 +146,38 @@ test('nenhum ciclo de dados reescreve o DOM com o mesmo valor, e tela escondida 
       const r = await ciclos(page, { comDado: true });
       assert.equal(r.identicas, 0, `${rota}: ${r.identicas} escritas com o mesmo valor em 40 ciclos ${r.amostra.join(' ; ')}`);
       assert.deepEqual(r.escondida, {}, `${rota}: tela escondida mexeu no DOM`);
+    }
+    assert.deepEqual(erros, []);
+  } finally { await context.close(); }
+});
+
+test('releitura completa SEM mudança (vigia de 2,5 s, abrir a aba) não reescreve o DOM com o mesmo valor nem refaz a faixa de bandas', { skip }, async () => {
+  const { context, page, erros } = await abrir();
+  try {
+    for (const [rota, chamada] of [['autocal', () => window.OmegasApp.autoCalCockpit.refresh()], ['refino', () => window.OmegasApp.refino.refresh(true)]]) {
+      await irPara(page, rota);
+      await esperarAba(page, rota);
+      await page.waitForTimeout(1200);
+      const r = await page.evaluate(async fn => {
+        const chamar = new Function('return (' + fn + ')()');
+        const amostra = []; let identicas = 0; let nosRecriados = 0;
+        const mo = new MutationObserver(list => {
+          for (const m of list) {
+            const igual = m.type === 'attributes' ? m.oldValue === m.target.getAttribute(m.attributeName)
+              : m.type === 'characterData' ? m.oldValue === m.target.data
+                : m.removedNodes.length === 1 && m.addedNodes.length === 1 && ((m.removedNodes[0].nodeType === 3 && m.addedNodes[0].nodeType === 3 && m.removedNodes[0].data === m.addedNodes[0].data)
+                  || (m.removedNodes[0].nodeType === 1 && m.addedNodes[0].nodeType === 1 && m.removedNodes[0].outerHTML === m.addedNodes[0].outerHTML));
+            if (m.type === 'childList' && m.target.id === 'autocalBands') nosRecriados += m.addedNodes.length;
+            if (igual) { identicas += 1; const n = m.target.nodeType === 1 ? m.target : m.target.parentElement; if (amostra.length < 8) amostra.push(m.type + ' ' + n.tagName + '#' + n.id + ' ' + (m.attributeName || '')); }
+          }
+        });
+        mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeOldValue: true, characterData: true, characterDataOldValue: true });
+        for (let i = 0; i < 5; i++) { chamar(); await new Promise(res => requestAnimationFrame(() => setTimeout(res, 30))); }
+        mo.takeRecords(); mo.disconnect();
+        return { identicas, nosRecriados, amostra };
+      }, chamada.toString());
+      assert.equal(r.identicas, 0, `${rota}: ${r.identicas} escritas iguais em 5 releituras: ${r.amostra.join(' ; ')}`);
+      assert.equal(r.nosRecriados, 0, `${rota}: a faixa de bandas foi refeita ${r.nosRecriados} nós com a mesma leitura`);
     }
     assert.deepEqual(erros, []);
   } finally { await context.close(); }
