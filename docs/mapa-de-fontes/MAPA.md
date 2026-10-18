@@ -15,11 +15,12 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - No repo: docs/evidence/2026-10-18-anti-stallo-caixa-re.md
 - No repo: docs/evidence/2026-10-18-anti-stallo-ligado-na-ecu.md
 - No repo: tools/sessoes/portmon_ler_vetor.py
+- No repo: docs/evidence/2026-10-18-anti-stallo-quadro-de-escrita.md
 - No PROTOCOLO-LANDI: dfm/i18n_all.json (chaves CHECKANTISTALLO, LABELANTISTALLO0..4)
 - No PROTOCOLO-LANDI: dfm/TSTREAMDATI.txt
 - No PROTOCOLO-LANDI: 22-REGISTRO-PARAMETROS.md
 - No Drive: DUMP (1SMZqx2Sd1HKooJ5GVCSuYDPvkCn6R0kH): formulários RT_RCDATA(10)__*.bin extraídos do ProgBase
-- **Falta:** A caixa é o bit 0x20 da palavra 0 de FLAG_CONF3 (SerialCode 250); no log de 12/08 está DESLIGADA. Falta confirmar hoje (leitura no app) e provar o quadro de escrita com uma captura alternando a caixa.
+- **Falta:** A caixa é o bit 0x20 da palavra 0 de FLAG_CONF3 (cód. 250); no log de 12/08 está DESLIGADA; quadro de escrita derivado do código (35 FA 00 20 00 00 00 4F), não visto ao vivo. Falta confirmar o valor hoje (leitura no app) e a decisão do dono de gravar.
 
 ## ProgBase.exe (programa original) e partes extraídas
 - No repo: tools/obter_progbase.py

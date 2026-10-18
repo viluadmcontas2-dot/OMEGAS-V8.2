@@ -342,6 +342,19 @@ class AutoCalProtocolTest {
     }
 
     @Test
+    fun `quadro de dois u16 reproduz byte a byte a escrita real do original em FLAG_CONF1`() {
+        // PortmonLOGNOVO.LOG linha 31284: ProgBase gravou FLAG_CONF1 (cod 3, 2 x u16) = 35 03 00 86 2C 51 10 4B; a ECU respondeu 53 00 53.
+        assertArrayEquals(hex("35 03 00 86 2C 51 10 4B"), AutoCalProtocol.writeVectorU16(0x0003, intArrayOf(0x2C86, 0x1051)))
+    }
+
+    @Test
+    fun `quadro previsto para ligar o anti-stallo em FLAG_CONF3 tem o mesmo formato do original`() {
+        // FLAG_CONF3 = cod 250 (0xFA), 2 x u16; a caixa "Abilitazione anti-stallo" e o bit 0x20 da palavra 0 (ProgBase 0x42E9E5: or 0x20).
+        // Com a ECU do dono lendo 0000 0000, ligar produz 0020 0000. Previsao derivada do formato visto no log (nao capturado ao vivo).
+        assertArrayEquals(hex("35 FA 00 20 00 00 00 4F"), AutoCalProtocol.writeVectorU16(0x00FA, intArrayOf(0x0020, 0x0000)))
+    }
+
+    @Test
     fun `tres u16 usam primeiro formato estendido original`() {
         assertArrayEquals(hex("37 61 08 01 34 12 CD AB 00 40 9F"), AutoCalProtocol.writeVectorU16(0x0161, intArrayOf(0x1234, 0xABCD, 0x4000)))
     }

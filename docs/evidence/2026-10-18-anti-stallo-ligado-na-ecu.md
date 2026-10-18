@@ -12,5 +12,5 @@
 ## O que NÃO está provado
 - Que a ECU esteja assim HOJE: o log é de 12/08/2026. O app passa a ler FLAG_CONF3 junto de `param_snapshot` para confirmar na próxima conexão. [PENDENTE]
 - Que ligar a caixa evite os apagões. As 5 posições (1600, 100, 1500 ms, 2, 20) são de fábrica e a ordem campo→rótulo é INFERIDA. O corpus de sessões mostra que a regra "deveria ter atuado" em 5 de 8 apagões em GNV e em 13 de 14 após sair do GNV (`2026-10-18-apagoes-x-anti-stallo.md`), o que é compatível com "regra desligada", mas não prova que ligar resolve.
-- O quadro de escrita de FLAG_CONF3 (provavelmente SetVector `0x30|n`, SerialCode 250): INFERIDO; nenhuma captura mostra o original alternando a caixa. Menor passo para provar: uma captura Portmon marcando e desmarcando só essa caixa.
+- O quadro de escrita de FLAG_CONF3: **DERIVADO do código** (não visto ao vivo): `35 FA 00 20 00 00 00 4F` para ligar a partir de 0000 0000; detalhes e prova em `2026-10-18-anti-stallo-quadro-de-escrita.md`.
 - Os outros bits de FLAG_CONF3 são desconhecidos aqui (nesta ECU são todos 0).
