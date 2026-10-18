@@ -90,6 +90,7 @@
   ns.retryRoute = function (route) {
     if (!ROUTE_SCRIPTS[route]) return null;
     ROUTE_SCRIPTS[route].forEach(src => scripts.delete(src));
+    if (route === 'tools') delete ns.AdvancedPanel; // Painel incompleto não pode impedir nova carga.
     return loadRoute(route);
   };
 

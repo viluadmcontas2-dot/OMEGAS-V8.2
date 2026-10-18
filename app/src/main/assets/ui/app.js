@@ -22,8 +22,11 @@
   function ensureTools() {
     // Cada parte é independente: uma falha nas ferramentas auxiliares não pode esconder o anti-apagão.
     if (!advanced && ui.AdvancedPanel) {
-      try { advanced = new ui.AdvancedPanel(store, api); }
-      catch (error) { console.error('[OMEGAS] Falha ao abrir Motor e combustível', error); }
+      try {
+        const panel = new ui.AdvancedPanel(store, api);
+        if (panel.flag) advanced = panel;
+        else toolsUnavailable(new Error('Parte do painel não carregou'));
+      } catch (error) { toolsUnavailable(error); }
     }
     if (!utilities && ui.Drawers) {
       try { utilities = new ui.Drawers(store, router, api); }
@@ -420,7 +423,8 @@
     routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
     byId('toolAdvanced')?.addEventListener('click', event => {
       if (!event.target.closest('[data-tools-retry]')) return;
-      const pending = !ui.AdvancedPanel ? ui.retryRoute?.('tools') : null;
+      if (advanced) { enterRoute('tools'); return; }
+      const pending = ui.retryRoute?.('tools');
       if (pending) pending.then(() => { if (store.get().route === 'tools') enterRoute('tools'); })
         .catch(error => toolsUnavailable(error));
       else enterRoute('tools');

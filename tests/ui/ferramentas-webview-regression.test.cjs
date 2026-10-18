@@ -8,9 +8,9 @@ const path = require('node:path');
 const vm = require('node:vm');
 const T = require('./helpers/browser.cjs');
 
-function runBridgeFailure(appSource) {
+function runBridgeFailure(appSource, { incompletePanel = false } = {}) {
   const tasks = [];
-  const host = { innerHTML: '', addEventListener() {}, contains() { return false; }, dataset: {} };
+  const host = { innerHTML: '', addEventListener() {}, contains() { return false; }, querySelector() { return null; }, dataset: {} };
   const nodes = { toolAdvanced: host };
   const element = id => nodes[id] || null;
   class Store {
@@ -45,6 +45,7 @@ function runBridgeFailure(appSource) {
   }
   class Drawers { render() {} }
   class AdvancedPanel {
+    constructor() { this.flag = incompletePanel ? null : {}; }
     refresh() {
       host.innerHTML = '<article class="tool-tile"><h3>Anti-apagão</h3></article>' +
         '<article class="tool-tile"><h3>Marcha lenta</h3></article>';
@@ -94,6 +95,12 @@ test('GREEN: Ferramentas desenha cartões apesar de falha na leitura auxiliar', 
   assert.match(html, /Marcha lenta/, 'outro cartão deve continuar visível');
 });
 
+test('se a carga dos cartões falhar parcialmente, a aba oferece nova tentativa', () => {
+  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
+  const html = runBridgeFailure(current, { incompletePanel: true });
+  assert.match(html, /Não foi possível abrir esta parte\. Toque para tentar de novo\./);
+});
+
 const skip = T.skipReason() || false;
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
@@ -103,6 +110,7 @@ for (const [name, viewport] of Object.entries({
   '1280x720': { width: 1280, height: 720 },
   '1024x600': { width: 1024, height: 600 },
   '800x480': { width: 800, height: 480 },
+  '1280x720-HDPI': { width: 640, height: 360 },
 })) {
   for (const usb of [false, true]) {
     test(`WebView file:// Ferramentas ${name} ${usb ? 'conectada' : 'desconectada'}: cartões têm área e o comando pode receber toque`, { skip }, async () => {
@@ -132,6 +140,22 @@ for (const [name, viewport] of Object.entries({
     });
   }
 }
+
+test('script de cartão incompleto: mostra erro e deixa tentar de novo por toque', { skip }, async () => {
+  const dir = T.mutatedUi([['core/cartoes-motor.js', 'ns.CartoesMotor = { build, stateOf };', '/* arquivo chegou incompleto */']]);
+  const app = await T.openApp(browser, { ui: dir, viewport: { width: 1280, height: 720 } });
+  try {
+    await T.tap(app.page, '.side-nav [data-route="tools"]');
+    await app.page.waitForSelector('#toolAdvanced [data-tools-retry]');
+    assert.match(await app.page.locator('#toolAdvanced').innerText(), /Não foi possível abrir esta parte/);
+    await T.tap(app.page, '#toolAdvanced [data-tools-retry]');
+    await app.page.waitForSelector('#toolAdvanced [data-tools-retry]');
+    assert.match(await app.page.locator('#toolAdvanced').innerText(), /Toque para tentar de novo/);
+  } finally {
+    await app.context.close();
+    require('node:fs').rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test('cartão com defeito exibe tentar de novo e preserva os outros', { skip }, async () => {
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 } });
