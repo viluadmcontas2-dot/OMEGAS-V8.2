@@ -2,7 +2,13 @@
 
 Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
-## Dono 2026-10-18: o app NÃO grava sozinho (modo LIGADO do D1 removido; v6 abaixo ainda o tem, só que desligado por padrão). Próximo APK sai sem ele.
+## Último APK (2026-10-18, v7: o app NÃO grava sozinho)
+
+- Decisão do dono (2026-10-18): gravar é sempre manual; o AutoMatch manual só roda por toque do operador. O modo LIGADO do D1 foi removido (serviço recusa `ON`; valor antigo vira SOMBRA).
+- `ci.yml` run `39147470313` (SUCCESS) e `verde-apk-now.yml` run `39147499050` (SUCCESS), commit `b725ed79dc6a37ec014c03ea52bc696c8ef09883`.
+- Artifact `omegas-vermelho-apk-b725ed79…` (id `12144171414`), 4.856.222 bytes, digest do ZIP `sha256:08a4ac795aeb636f55575ec39aafae2247ae6f3f740b65bb1b58bd99c3102eb3`. SHA do `app-debug.apk` interno: UNKNOWN.
+- Contém: D1 só SUGERE (`d1_decision` na sessão; interruptor SOMBRA/DESLIGADO em Ferramentas); sonda de escrita; `param_snapshot`; `autocal_pre_automatch_state`; conselho do AutoMatch manual; tudo do v6. Não validado no carro.
+- O v6 (abaixo) ainda tem o modo LIGADO: não usar.
 
 ## Último APK (2026-10-18, v6: refino automático D1 em modo SOMBRA)
 
