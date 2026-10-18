@@ -437,7 +437,76 @@ def gerar_com(b, cl, cod, nomes, arv, lbl, usos, saida):
             len(t['acoes']), len(t['controles']), len(t['dialogos']), len(t['handlers']),
             ', '.join('`%s`' % (x['nome'] or x['funcao']) for x in t['aberta_por'][:2])))
     escrever(os.path.join(saida, 'telas.md'), '\n'.join(idx))
+    gerar_menus_dialogos(b, telas, lbl, usos, nomes, cod, saida)
     return telas
+
+
+def gerar_menus_dialogos(b, telas, lbl, usos, nomes, cod, saida):
+    """menus_atalhos.md (todos os menus/ações/atalhos) e dialogos.md (diálogos de arquivo/impressão, telas modais e mensagens)."""
+    import bisect
+    L = ['# Menus, ações e atalhos do ProgBase.exe', '',
+         'Gerado por `tools/progbase/inventario_telas.py` (OBS-COD: DFM; handler resolvido pela RTTI). TFormConfig incluído só no que é menu.', '']
+    n_menu = n_atalho = 0
+    for t in telas:
+        its = [(k, it) for k in ('menus', 'acoes') for it in t[k]]
+        if not its:
+            continue
+        L += ['## %s' % t['classe'], '', '| Tipo | Caminho/componente | Legenda (ita / eng / por) | Atalho | Handler(s) |', '|---|---|---|---|---|']
+        for k, it in its:
+            tr = it['traducao'] or {}
+            leg = it['legenda'] or ''
+            if tr.get('eng') and tr['eng'] != leg:
+                leg += ' / %s / %s' % (tr['eng'], tr['por'])
+            hs = '; '.join('`%s` (%s)' % (e['handler'], e['endereco'] or '?') for e in it['eventos'])
+            L.append('| %s | %s | %s | %s | %s |' % ('menu' if k == 'menus' else 'ação', it['caminho'], leg.replace('|', '/'), it['atalho'] or '', hs))
+            n_menu += 1
+            n_atalho += 1 if it['atalho'] else 0
+        L.append('')
+    L.insert(3, '- Itens: **%d**, dos quais com atalho de teclado: **%d**.\n' % (n_menu, n_atalho))
+    escrever(os.path.join(saida, 'menus_atalhos.md'), '\n'.join(L))
+    # diálogos
+    M = ['# Caixas de diálogo, telas modais e mensagens', '',
+         'Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botões com ModalResult: OBS-COD (DFM). '
+         'Mensagens: textos de LANG_MAIN cujo índice é passado a `TTranslatorExt::GetString` dentro de funções de cada unidade (OBS-COD); '
+         'o texto só é "mensagem ao usuário" por INFERÊNCIA do prefixo MESS*/FINESTRA*.', '',
+         '## Diálogos de arquivo/impressão/cor', '', '| Tela | Componente | Classe | Filtro | Ext. padrão |', '|---|---|---|---|---|']
+    for t in telas:
+        for d_ in t['dialogos']:
+            M.append('| %s | %s | %s | %s | %s |' % (t['classe'], d_['componente'], d_['classe'], (d_.get('filtro') or '').replace('|', '/'), d_.get('extensao_padrao') or ''))
+    M += ['', '## Botões com ModalResult (telas modais)', '', '| Tela | Componente | Legenda | ModalResult |', '|---|---|---|---|']
+    for t in telas:
+        for c in t['controles']:
+            if c.get('modal_result'):
+                M.append('| %s | %s | %s | %s |' % (t['classe'], c['componente'], c['legenda'] or '', c['modal_result']))
+    starts = sorted(cod.entradas)
+    por_unid = {}
+    un = cdg_unidades_cache(b)
+    fins = [u[0] for u in un]
+    for ad, idx, fn in usos:
+        if idx is None or not (0 <= idx < len(lbl)):
+            continue
+        k = lbl[idx]['id']
+        if not re.match(r'(MESS|FINESTRA|LABELDIAGNOSIATTENTION|MSG)', k):
+            continue
+        u = cdg.unidade_de(fn, un, fins) or '(biblioteca)'
+        por_unid.setdefault(u, {}).setdefault(k, set()).add(fn)
+    M += ['', '## Mensagens e títulos de janela por unidade (chaves MESS*/FINESTRA*)', '']
+    for u in sorted(por_unid):
+        M += ['### %s' % u, '', '| Chave | por | eng | Funções (n) |', '|---|---|---|---:|']
+        for k in sorted(por_unid[u]):
+            e = next(x for x in lbl if x['id'] == k)
+            M.append('| `%s` | %s | %s | %d |' % (k, str(e.get('por', '')).replace('|', '/').replace('\n', ' ')[:110], str(e.get('eng', '')).replace('|', '/').replace('\n', ' ')[:110], len(por_unid[u][k])))
+        M.append('')
+    escrever(os.path.join(saida, 'dialogos.md'), '\n'.join(M))
+
+
+_UN = {}
+
+
+def cdg_unidades_cache(b):
+    if 'u' not in _UN:
+        _UN['u'] = cdg.unidades(b)
+    return _UN['u']
 
 
 def main():

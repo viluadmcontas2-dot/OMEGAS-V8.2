@@ -87,6 +87,9 @@
 
     // ---------- eventos ----------
     onClick(event) {
+      // Tocar no lápis, na unidade ou na borda do campo = tocar no campo (o teclado abre aí).
+      const box = event.target.closest('.num-box');
+      if (box) { const input = box.querySelector('input'); if (input && !input.disabled && event.target !== input) input.focus(); return; }
       const t = event.target.closest('button');
       if (!t) return;
       if (t.matches('[data-adv-switch]')) {
@@ -256,7 +259,7 @@
           <div class="num-grid">${fields}</div>
           <div class="tool-actions">
             <button type="button" class="primary" data-adv-save disabled>Gravar valores</button>
-            <button type="button" class="secondary" data-adv-factory ${why ? 'disabled' : ''}>Restaurar fábrica</button>
+            <button type="button" class="secondary" data-adv-factory ${why || !values || values.every((v, i) => v === this.V.FACTORY[i]) ? 'disabled' : ''}>Restaurar fábrica</button>
             ${undo.available ? '<button type="button" class="secondary" data-adv-undo-values>Desfazer</button>' : ''}
             <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${(cards.find(c => c.id === 'valores')?.tech || []).map(t => `<li>${escapeHtml(t)}</li>`).join('')}<li>Faixa e valor de fábrica: tela original do programa do fabricante; a ordem dos campos é inferida.</li></ul></details>
           </div>

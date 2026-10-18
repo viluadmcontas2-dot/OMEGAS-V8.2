@@ -18,4 +18,4 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `FormShow` | 0x0041199C | 718 | INFERIDO | Ao exibir o formulário FormAggKey «Upgrade hardware key»: usa textos MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED; chama TTranslatorExt::GetString; mexe em ButtonLater, ButtonUpgrade, LabelCodice, LabelValidita. | MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED, MESSUPDATECODE |  |  |
+| `FormShow` | 0x0041199C | 718 | OBS-COD | Mostra o aviso de que a chave de hardware expirou (ou expirará em N dias) com textos MESSEXPIRED/MESSWILLEXPIRE/MESSCONTACT/MESSUPDATECODE e os botões "Atualizar" (MESSCHARGEKEY) e "Depois" (MESSBUTTLATER). Função: renovação do prazo da chave; o campo EditAgg recebe o código de renovação. OBS-COD (textos). | MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED, MESSUPDATECODE |  |  |

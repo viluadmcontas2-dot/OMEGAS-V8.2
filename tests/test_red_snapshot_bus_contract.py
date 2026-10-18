@@ -12,7 +12,7 @@ class RedSnapshotBusContractTest(unittest.TestCase):
         self.assertIn("fun liveJson(): String", STORE)
         self.assertIn("RuntimeSnapshotBus", BRIDGE)
         self.assertIn("uiSnapshots", BRIDGE)
-        self.assertIn("telemetryStore.liveJson()", BRIDGE)
+        self.assertIn("telemetryStore.liveObject()", BRIDGE)  # mesmo estado em RAM, sem texto no meio (leveza 2026-10-18)
         self.assertIn("uiSnapshots.publishPresent", BRIDGE)
 
     def test_present_bridge_body_is_ram_only(self):
@@ -20,7 +20,7 @@ class RedSnapshotBusContractTest(unittest.TestCase):
         start = BRIDGE.index("fun getPresentSnapshot(): String")
         end = BRIDGE.index("fun getScienceSnapshotSince", start)
         body = BRIDGE[start:end]
-        self.assertIn("telemetryStore.liveJson()", body)
+        self.assertIn("telemetryStore.liveObject()", body)
         self.assertNotIn("fullEngineSnapshotJson", body)
         self.assertNotIn("getLearningMaps", body)
         self.assertNotIn("v7CalibrationStateJson", body)

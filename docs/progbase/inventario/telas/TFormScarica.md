@@ -24,7 +24,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonCambiaClick` | 0x0050523C | 27 | INFERIDO | Ao clicar em ButtonCambia «&Mudar arquivo»: mexe em OpenDialogFile. |  |  | CloseHandle, CreateFileW, FileTimeToLocalFileTime, FileTimeToSystemTime |
+| `ButtonCambiaClick` | 0x0050523C | 27 | DERIVADO | Botão "Mudar arquivo": abre o OpenDialogFile para escolher outro arquivo de firmware/configuração e mostra data/hora do arquivo (CreateFileW, GetFileTime, FileTimeToSystemTime). OBS-COD (APIs). |  |  | CloseHandle, CreateFileW, FileTimeToLocalFileTime, FileTimeToSystemTime |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

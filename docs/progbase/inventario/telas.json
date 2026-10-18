@@ -235,8 +235,8 @@
      "nome": "AboutImageDblClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao dar duplo clique em AboutImage: mexe em Copyright, LabelDaysLeft, TabLicense, TabUserCode."
+      "origem": "curado",
+      "texto": "Duplo clique na imagem: alterna a visibilidade das abas ocultas (Licença/Código do usuário) e do rótulo de dias restantes. OBS-COD (campos tocados); propósito INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -271,9 +271,9 @@
      "n_instrucoes": 203,
      "nome": "ButtonDeleteLicenseClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonDeleteLicense «Delete current license file»: corpo de 602 bytes sem fatos diretos (chama 9 funções sem nome)."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Apagar arquivo de licença atual\": remove \"\\License.dat\". Só descrição da função. OBS-COD (literal)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -314,9 +314,9 @@
      "n_instrucoes": 230,
      "nome": "ButtonLoadLicenseClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonLoadLicense «Load a license file»: chama APIs CopyFileW; mexe em OpenDialog."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botão \"Carregar arquivo de licença\": abre diálogo e copia o arquivo escolhido para \"\\License.dat\" (CopyFileW). Só descrição da função. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -363,9 +363,9 @@
      "n_instrucoes": 249,
      "nome": "ButtonRequestClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonRequest «Request a new license»: chama APIs ShellExecuteW."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botão \"Solicitar nova licença\": abre o navegador (ShellExecuteW) numa página do servidor do fabricante (…LastVersion.aspx?Mode=Ext&ProgramSelector=…&VerSw=…&UserCode=…), enviando versão e código do usuário. Só descrição da função. OBS-COD (APIs/literais)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -429,9 +429,9 @@
      "n_instrucoes": 433,
      "nome": "ButtonSendByMailClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonSendByMail «Send by mail»: mexe em MemoUserCode."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botão \"Enviar por e-mail\": monta uma mensagem (MAPI) para info@serviceapplications.net com o código do usuário (assunto \"Omegas Landi Renzo User Code\"); avisa se o anexo não for encontrado. OBS-COD (literais)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -502,8 +502,8 @@
      "nome": "EditRegCodeKeyUp",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao soltar tecla em EditRegCode: mexe em EditRegCode."
+      "origem": "curado",
+      "texto": "Valida/formata o código de registro conforme é digitado (campo EditRegCode). INFERIDO (nome+campo)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -576,9 +576,9 @@
      "n_instrucoes": 156,
      "nome": "OkButtonClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em OkButton «&Sair»: mexe em EditRegCode."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão Sair/OK: grava o código de registro digitado (EditRegCode) no registro do Windows (\\Software\\…\\RegCode) e fecha. OBS-COD (literais)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -1178,8 +1178,8 @@
      "nome": "ButtonChangePinClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonChangePin «Cambia PIN»: corpo de 1267 bytes sem fatos diretos (chama 16 funções sem nome)."
+      "origem": "curado",
+      "texto": "Botão \"Mudar PIN\" do dispositivo: grava novo PIN no dispositivo sem fio. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -1369,8 +1369,8 @@
      "nome": "ButtonConnectMcuClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonConnectMcu «Connetti dispositivo remoto selezionato»: corpo de 777 bytes sem fatos diretos (chama 13 funções sem nome)."
+      "origem": "curado",
+      "texto": "Conecta ao dispositivo remoto selecionado. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -1594,8 +1594,8 @@
      "nome": "ButtonDisconnectMcuClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonDisconnectMcu «Disconnetti dispositivo remoto corrente»: corpo de 303 bytes sem fatos diretos (chama 10 funções sem nome)."
+      "origem": "curado",
+      "texto": "Desconecta do dispositivo remoto. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -1769,8 +1769,8 @@
      "nome": "ButtonProgramDongleClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonProgramDongle «Programma file»: chama APIs Sleep."
+      "origem": "curado",
+      "texto": "Botão \"Programar arquivo\" do dongle local: grava firmware no dongle sem fio (3409 B; usa Sleep e a classe de protocolo). Escreve no dispositivo. PERIGOSO (firmware do dongle). INFERIDO pelo nome."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -2168,8 +2168,8 @@
      "nome": "ButtonProgramMcuClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonProgramMcu «Programma file»: chama APIs Sleep."
+      "origem": "curado",
+      "texto": "Botão \"Programar arquivo\" do dispositivo remoto (MCU) por rádio (3685 B). PERIGOSO (firmware). INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -2590,8 +2590,8 @@
      "nome": "ButtonReadPinClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonReadPin «Leggi PIN»: corpo de 398 bytes sem fatos diretos (chama 11 funções sem nome)."
+      "origem": "curado",
+      "texto": "Botão \"Ler PIN\". INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -2665,8 +2665,8 @@
      "nome": "ButtonRemovePinClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonRemovePin «Rimuovi PIN»: corpo de 1231 bytes sem fatos diretos (chama 17 funções sem nome)."
+      "origem": "curado",
+      "texto": "Botão \"Remover PIN\". INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -3060,8 +3060,8 @@
      "nome": "ButtonScanClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonScan «Esegui scansione»: corpo de 2108 bytes sem fatos diretos (chama 29 funções sem nome)."
+      "origem": "curado",
+      "texto": "Botão \"Executar varredura\": procura dispositivos sem fio e lista em ListDevice. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -3324,8 +3324,8 @@
      "nome": "ButtonScanEnergyClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonScanEnergy «Esegui scansione»: chama APIs GetTickCount."
+      "origem": "curado",
+      "texto": "Varredura de energia por canal (mede o ruído RF; mostra \"Time: …\"). OBS-COD (literal); propósito INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -3418,9 +3418,9 @@
      "n_instrucoes": 123,
      "nome": "ButtonSfogliaDongleClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonSfogliaDongle «Sfoglia...»: corpo de 380 bytes sem fatos diretos (chama 11 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botão \"Procurar…\" de firmware do dongle (diálogo de arquivo, filtro \"Firmware\"). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -3455,9 +3455,9 @@
      "n_instrucoes": 123,
      "nome": "ButtonSfogliaMcuClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonSfogliaMcu «Sfoglia...»: corpo de 380 bytes sem fatos diretos (chama 11 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botão \"Procurar…\" de firmware do dispositivo remoto. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -5565,9 +5565,9 @@
      "n_instrucoes": 264,
      "nome": "TimerUpdateTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerUpdate (intervalo 100 ms): corpo de 912 bytes sem fatos diretos (chama 16 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Atualiza os rótulos \"Energy (…)\" e \"Quality (…)\" do link sem fio. OBS-COD (literais)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -6236,9 +6236,9 @@
      "n_instrucoes": 84,
      "nome": "Image1Click",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em Image1: usa textos AUTOCALSETTINGSLOADDEFCOLOR; chama TTranslatorExt::GetString."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Imagem: carrega as cores padrão (AUTOCALSETTINGSLOADDEFCOLOR). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -6384,9 +6384,9 @@
      "n_instrucoes": 80,
      "nome": "OKClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em OK «OK !»: usa textos AUTOCALSETTINGSSAVEEXIT; chama TTranslatorExt::GetString."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "OK: salva as cores e fecha (texto AUTOCALSETTINGSSAVEEXIT). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -7010,9 +7010,9 @@
      "n_instrucoes": 58,
      "nome": "CalibrationValWriteItem",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Evento OnWriteItem de CalibrationVal: chama TAebNumber::SetInt, TAebVector::SetInt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Grava o valor editado do vetor de calibração (TAebVector/TAebNumber::SetInt); em erro mostra \"Error!\". OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -7058,9 +7058,9 @@
      "n_instrucoes": 216,
      "nome": "FormClose",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao fechar o formulário AutoCalSettings «Autocal settings»: mexe em CheckShowChartKLine, CheckShowChartPoint, CheckShowChartZones, CheckShowStatusMessages, RefreshTime."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Ao fechar grava no registro/INI as opções (showstatusmessage, showchartzones, showchartpoint, SETTINGS…). OBS-COD (literais)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -8115,9 +8115,9 @@
      "n_instrucoes": 92,
      "nome": "ActionAutoCalRifExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionAutoCalRif «Modify map refs» (+2 componentes): mexe em ChartKLine."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu \"Modify map refs\": abre TFormRifAutocal (referências do AutoCal). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -8514,9 +8514,9 @@
      "n_instrucoes": 5,
      "nome": "ActionAutoMatchExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonAutoMatch «Manual automatch» (+2 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -8704,9 +8704,9 @@
      "n_instrucoes": 40,
      "nome": "ActionChangeColorExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionChangeColor «Customize chart colors...» (+1 componentes): chama TAutocalColorSettings.Create."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Menu \"Customize chart colors…\": abre TAutocalColorSettings. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -8864,9 +8864,9 @@
      "n_instrucoes": 193,
      "nome": "ActionDeleteSelectedPointsExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionDeleteSelectedPoints «Delete selected points» (+1 componentes): chama APIs Sleep; mexe em GasPoint, PetrolPoint."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu \"Delete selected points\": remove pontos selecionados de gás/gasolina das séries do gráfico. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -9120,9 +9120,9 @@
      "n_instrucoes": 6,
      "nome": "ActionExportChartDataExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionExportChartData «Export to file...» (+1 componentes): corpo de 17 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -9176,9 +9176,9 @@
      "n_instrucoes": 6,
      "nome": "ActionExportChartPointExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionExportChartPoint «Export to file...» (+1 componentes): corpo de 17 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -9232,9 +9232,9 @@
      "n_instrucoes": 6,
      "nome": "ActionExportKChartExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionExportKChart «Export to file...» (+1 componentes): corpo de 17 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -9281,8 +9281,8 @@
      "nome": "ActionExportToKExecute",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionExportToK «ExportToK...»: corpo de 189 bytes sem fatos diretos (chama 9 funções sem nome)."
+      "origem": "curado",
+      "texto": "Exporta os pontos para a tabela K (ExportToK). INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -9607,9 +9607,9 @@
      "n_instrucoes": 65,
      "nome": "ActionFinishAutocalExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionFinishAutocal «FinishAutocal» (+1 componentes): chama APIs Sleep; chama TAebNumber::GetInt, TAebNumber::SetInt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu/ação \"Finalizar AutoCal\": lê/escreve flags do módulo (TAebNumber GetInt/SetInt) para encerrar a calibração automática. Escreve na ECU. OBS-COD (chamadas)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -9812,9 +9812,9 @@
      "n_instrucoes": 5,
      "nome": "ActionGoToMinCalibrationExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionGoToMinCalibration «Go to min calibration» (+1 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -9891,9 +9891,9 @@
      "n_instrucoes": 5,
      "nome": "ActionResetAllExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonResetAll «Reset all» (+4 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -10097,9 +10097,9 @@
      "n_instrucoes": 5,
      "nome": "ActionResetGasExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonResetGas «Reset gas point» (+3 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -10295,9 +10295,9 @@
      "n_instrucoes": 82,
      "nome": "ActionResetKFactorExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonResetK «Reset K» (+2 componentes): chama TAebVector::SetDouble."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu \"Reset k-factor…\": regrava o fator K (TAebVector::SetDouble). Escreve na ECU. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -10529,9 +10529,9 @@
      "n_instrucoes": 5,
      "nome": "ActionResetPetrolExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonResetPetrol «Reset petrol point» (+3 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -10903,9 +10903,9 @@
      "n_instrucoes": 10,
      "nome": "BtnFinishAutomatchClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BtnFinishAutomatch «Finish automatch»: chama TAebNumber::GetInt, TAebNumber::SetInt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Finish automatch\": encerra o automatch (GetInt/SetInt em TAebNumber). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -12196,9 +12196,9 @@
      "n_instrucoes": 55,
      "nome": "SettingsImgClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em SettingsImg: corpo de 161 bytes sem fatos diretos (chama 5 funções sem nome)."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Ícone de configurações: abre TAutoCalSettings (cor do gráfico, k, banda, rpm, pontos). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -12571,9 +12571,9 @@
      "n_instrucoes": 60,
      "nome": "TimerMessageSwitchToGasTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerMessageSwitchToGas: mexe em TimerMessageSwitchToGas, UserMessageLabel, UserMessageLabel2."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Temporizador da mensagem \"mudou para gás\" (UserMessageLabel). OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -13109,9 +13109,9 @@
      "n_instrucoes": 255,
      "nome": "FormShow",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao exibir o formulário FormAggKey «Upgrade hardware key»: usa textos MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED; chama TTranslatorExt::GetString; mexe em ButtonLater, ButtonUpgrade, LabelCodice, LabelValidita."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Mostra o aviso de que a chave de hardware expirou (ou expirará em N dias) com textos MESSEXPIRED/MESSWILLEXPIRE/MESSCONTACT/MESSUPDATECODE e os botões \"Atualizar\" (MESSCHARGEKEY) e \"Depois\" (MESSBUTTLATER). Função: renovação do prazo da chave; o campo EditAgg recebe o código de renovação. OBS-COD (textos)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -13337,9 +13337,9 @@
      "n_instrucoes": 2,
      "nome": "ButtonEsciClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonCancella «Annulla» (+1 componentes): corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botões Cancelar/Sair (6 B): fecha. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -13375,9 +13375,9 @@
      "n_instrucoes": 10,
      "nome": "ButtonProseguiClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonProsegui «Continuar»: mexe em PanelMessaggio, PanelMonoplug."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Continuar\": avança do painel de instrução (monoplug) para a calibração. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -13415,9 +13415,9 @@
      "n_instrucoes": 74,
      "nome": "FormClose",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao fechar o formulário FormCalibra «Calibração automática da central de comando»: chama TAebProtocol::SendCommand."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Ao fechar a calibração: envia comando de término à ECU (SendCommand). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -13508,8 +13508,8 @@
      "nome": "FormKeyPress",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao digitar (filtro de teclas) em FormCalibra «Calibração automática da central de comando»: chama TAebProtocol::SendCommand; mexe em LabelMessaggio, LabelOperazione, PanelMessaggio, ProgressBarCalibra."
+      "origem": "curado",
+      "texto": "Teclas durante a calibração (724 B): permite abortar/avançar a calibração e envia comandos à ECU. INFERIDO."
      },
      "saltos_externos": [
       "0x00486CEC"
@@ -13640,9 +13640,9 @@
      "n_instrucoes": 1199,
      "nome": "TimerBlinkTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerBlink (intervalo 75 ms): chama TAebProtocol::SendCommand, TStreamDati.TimerIOTimer; mexe em LabLambda, LabLambda2, LabPressione, LabTempMotore, LabTempRiduttore, LabTempoIniezioneBenzina."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Laço de calibração automática (4239 B): a cada tick lê o estado da ECU (TStreamDati.TimerIO), mostra giri/lambda/pressão/temperaturas/tempos de injeção e envia comandos (TAebProtocol::SendCommand) para avançar a calibração; pisca a mensagem em PanelMessaggio. Comanda a ECU. OBS-COD (chamadas/campos)."
      },
      "saltos_externos": [
       "0x00486855"
@@ -13960,9 +13960,9 @@
      "n_instrucoes": 153,
      "nome": "ButtonOkClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonOk «&OK !»: mexe em EditRifGiri0, NumEditRifMap0."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "OK: valida e grava os centros das células do mapa de carburação (EditRifGiri*/NumEditRifMap*). OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -14319,9 +14319,9 @@
      "n_instrucoes": 164,
      "nome": "ButtonOkClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonOk «&OK !»: mexe em EditRifGiri0, NumEditRifMap0."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "OK: valida e grava os centros das células do mapa dos coeficientes K. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -73144,9 +73144,9 @@
      "n_instrucoes": 105,
      "nome": "ActionDecrementaZonaExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonDecrementa «&Decrementar zona (PgDn)» (+1 componentes): chama APIs InvalidateRect; mexe em DrawGridK, TimerBlink."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Ação \"Decrementar zona\" (PgDn): desce a zona selecionada. OBS-COD (API/campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -73284,9 +73284,9 @@
      "n_instrucoes": 2,
      "nome": "ActionEsciExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonEsci «&Sair (Esc)» (+1 componentes): corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Ação Sair (Esc): fecha. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -73334,9 +73334,9 @@
      "n_instrucoes": 105,
      "nome": "ActionIncrementaZonaExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonIncrementa «&Incrementar zona (PgUp)» (+1 componentes): chama APIs InvalidateRect; mexe em DrawGridK, TimerBlink."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Ação \"Incrementar zona\" (PgUp): sobe a zona de calibração selecionada na grade DrawGridK e repinta (InvalidateRect). OBS-COD (API/campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -73468,9 +73468,9 @@
      "n_instrucoes": 222,
      "nome": "DrawGridKDrawCell",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao desenhar célula de DrawGridK: mexe em DrawGridK."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Desenha as células da grade K (correção de calibração) destacando a zona atual. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -73567,9 +73567,9 @@
      "n_instrucoes": 280,
      "nome": "TimerBlinkTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerBlink (intervalo 50 ms): chama TStreamDati.TimerIOTimer; mexe em LabApMotBenz, LabGas, LabLambda, LabelLambda."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Atualiza lambda/gás/aperto do motor a gasolina e pisca a célula atual (lê TStreamDati.TimerIO). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -74564,8 +74564,8 @@
      "nome": "ButtonAzzeraErroriClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonAzzeraErrori «Reset e&rros»: corpo de 1094 bytes sem fatos diretos (chama 12 funções sem nome)."
+      "origem": "curado",
+      "texto": "Botão \"Zerar erros\": envia à ECU o comando de apagar a memória de falhas (1094 B; usa TAebNumber/SetEcuData e textos de confirmação). Escreve na ECU. INFERIDO pelo nome+caption."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -74806,8 +74806,8 @@
      "nome": "ButtonAzzeraTempiClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonAzzeraTempi «Reset &tempos»: mexe em LabelTBenz, LabelTGas."
+      "origem": "curado",
+      "texto": "Botão \"Zerar tempos\": zera os contadores de tempo a gasolina e a gás (LabelTBenz/LabelTGas passam a \"0:00\"). Escreve na ECU: INFERIDO. OBS-COD (literal \"0:00 \")."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -74932,8 +74932,8 @@
      "nome": "ButtonResetFFClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonResetFF «Reset»: corpo de 25 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "origem": "curado",
+      "texto": "Botão Reset do quadro de congelamento (Freeze Frame): 25 B, chama rotina sem nome. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -74990,8 +74990,8 @@
      "nome": "CheckListBoxFFClickCheck",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao marcar/desmarcar item em CheckListBoxFF: mexe em CheckListBoxFF."
+      "origem": "curado",
+      "texto": "Marca/desmarca itens da lista de congelamento (freeze frame) a registrar. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -75068,8 +75068,8 @@
      "nome": "CheckSwitchOnDiagnosisClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em CheckSwitchOnDiagnosis «Enable switch-on diagnosis»: mexe em CheckSwitchOnDiagnosis."
+      "origem": "curado",
+      "texto": "Caixa \"Habilitar diagnóstico ao ligar\" (switch-on diagnosis). 48 B; grava a opção na estrutura de configuração. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -76006,9 +76006,9 @@
      "n_instrucoes": 4519,
      "nome": "FormActivate",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao ativar o formulário FormDiagnosi «Diagnóstico central de comando»: usa textos BUTTONAZZERAERRORI, BUTTONAZZERATEMPI, BUTTONESCI, CHECKDIAGNOSISTARTUP, DIAGNOSICOLLEGAMENTOINIETTORI; chama TTranslatorExt::GetString; mexe em ButtonAzzeraErrori, ButtonAzzeraTempi, ButtonEsci, CheckSwitchOnDiagnosis, ComboAzione, EditTempAlta."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Ao ativar a tela de Diagnóstico (16 KB): aplica traduções (BUTTONAZZERAERRORI, DIAGNOSI*…), carrega a lista de falhas (\"(Código) descrição do erro\"), códigos EPR (Open Load, Overcurrent…) e configura os painéis de teste. OBS-COD (textos/literais)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -76394,9 +76394,9 @@
      "n_instrucoes": 117,
      "nome": "FormClose",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao fechar o formulário FormDiagnosi «Diagnóstico central de comando»: chama TFormDiagnosi.PanelTestOffClick; mexe em ListDiagnosi, PanelOffElv1, PanelOffElv2, PanelOffSwitch."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Ao fechar: desliga os testes de saída ativos (chama PanelTestOffClick) e restaura a lista. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -76845,8 +76845,8 @@
      "nome": "PanelOffClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em PanelOffA «Off» (+9 componentes): chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect."
+      "origem": "curado",
+      "texto": "Botões \"Off\" da seção \"Esclusione iniettori gas\": desliga (exclui) o injetor escolhido (GetEcuData/SetEcuData). Escreve na ECU: PERIGOSO. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -77054,8 +77054,8 @@
      "nome": "PanelOnClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em PanelOnA «On» (+9 componentes): chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect."
+      "origem": "curado",
+      "texto": "Botões \"On\" da seção \"Esclusione iniettori gas\" (injetores A..I): lê (TAebNumber::GetEcuData) e regrava (SetEcuData) um valor da ECU ligado ao injetor escolhido, se conectado. Escreve na ECU: PERIGOSO (afeta a injeção de gás). Chamadas: OBS-COD; efeito sobre o injetor: INFERIDO pelo caption."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -77249,9 +77249,9 @@
      "n_instrucoes": 132,
      "nome": "PanelTestOffClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em PanelOffSwitch «Off» (+2 componentes): usa textos MESSERRORRESETDIAGNOSYSTEST; chama TAebProtocol::IsConnect, TAebProtocol::SendCommand, TTranslatorExt::GetString; mexe em LabelElv1, LabelSwitch, PanelOffElv1, PanelOffElv2, PanelOffSwitch, PanelOnElv1."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botões \"Off\" do teste de saídas: envia comando de parada do teste; falha mostra MESSERRORRESETDIAGNOSYSTEST. DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -77318,9 +77318,9 @@
      "n_instrucoes": 296,
      "nome": "PanelTestOnClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em PanelOnSwitch «On» (+2 componentes): usa textos LABELDIAGNOSIATTENTION, MESSERRORSETDIAGNOSYSTEST; chama APIs Sleep; chama TAebProtocol::IsConnect, TAebProtocol::SendCommand, TStreamDati.TimerIOTimer, TTranslatorExt::GetString; mexe em PanelOffElv1, PanelOffElv2, PanelOffSwitch, PanelOnElv1, PanelOnElv2, PanelOnSwitch."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botões \"On\" do teste de saídas (Elv1, Elv2, Switch): envia comando de teste (TAebProtocol::SendCommand), mostra aviso LABELDIAGNOSIATTENTION e MESSERRORSETDIAGNOSYSTEST em caso de falha. Aciona eletroválvulas/LED da ECU: PERIGOSO. DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -77410,9 +77410,9 @@
      "n_instrucoes": 1635,
      "nome": "TimerTempiTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerTempi (intervalo 50 ms): chama TAebProtocol::GetPacket, TAebProtocol::IsConnect; mexe em LabelA, LabelB, LabelC, LabelD, LabelE, LabelF."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Atualização periódica (6244 B): lê pacotes da ECU (TAebProtocol::GetPacket) e atualiza os tempos por injetor A..I (gas/benzina), tensões e estados na tela. OBS-COD (chamadas/campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -77466,9 +77466,9 @@
      "n_instrucoes": 67,
      "nome": "TimerTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador Timer (intervalo 2000 ms): chama APIs GetTickCount, Sleep; chama TAebProtocol::Connect, TAebProtocol::DisableErrorHandling, TAebProtocol::EnableErrorHandling, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Temporizador de reconexão: tenta Connect/DisableErrorHandling/EnableErrorHandling quando a ECU não responde. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -77659,9 +77659,9 @@
      "n_instrucoes": 150,
      "nome": "TimerUpdateTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerUpdate (intervalo 50 ms): mexe em ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Atualiza o painel de edição de limites de temperatura do item selecionado de ListDiagnosi. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -78025,9 +78025,9 @@
      "n_instrucoes": 2184,
      "nome": "ButtonOkClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonOk «&OK !»: chama APIs Sleep, SendMessageW; chama TAebProtocol::IsConnect, TFormAttesa.Create, TFormPdf.Create; mexe em ButtonAnnulla, EditName, EditPath."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão OK do navegador de arquivos (7251 B): conforme o modo, abre ou salva um arquivo de configuração (.lnc, .ldc, .lec) ou PDF (TFormPdf), com TFormAttesa durante a operação; valida o nome (caracteres proibidos ./\",;). OBS-COD (literais/chamadas)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -78740,9 +78740,9 @@
      "n_instrucoes": 334,
      "nome": "FormActivate",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao ativar o formulário FormFile «FormFile»: mexe em ButtonOk, EditName, EditPath, TreeViewFile."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Ao ativar: monta a árvore de arquivos (pastas ConfigCNG/ConfigLPG) e restringe nomes inválidos. OBS-COD (literais)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -78883,9 +78883,9 @@
      "n_instrucoes": 415,
      "nome": "TreeViewFileClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em TreeViewFile: mexe em EditName, EditPath, TreeViewFile."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Clique na árvore: preenche nome/pasta (EditName/EditPath); para .pdf permite visualizar. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -78958,9 +78958,9 @@
      "n_instrucoes": 21,
      "nome": "TreeViewFileDblClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao dar duplo clique em TreeViewFile: chama TFormFile.ButtonOkClick, TFormFile.TreeViewFileClick; mexe em TreeViewFile."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Duplo clique: equivale a OK (chama ButtonOkClick). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -79232,9 +79232,9 @@
      "n_instrucoes": 12,
      "nome": "MenuAnnullaZoomClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em MenuAnnullaZoom «&Cancelar zoom»: mexe em ChartDrt."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Menu Cancelar zoom (Ctrl+Z): restaura o zoom do gráfico. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -79267,9 +79267,9 @@
      "n_instrucoes": 2,
      "nome": "MenuEsciClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em MenuEsci «&Sair»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Menu Sair (Esc): fecha a janela do gráfico (6 B). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -79305,9 +79305,9 @@
      "n_instrucoes": 19,
      "nome": "MenuStampaClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em MenuStampa «&Imprimir»: mexe em ChartDrt, PrintDialog1."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu Imprimir (Ctrl+P): chama PrintDialog1 e imprime o gráfico (ChartDrt). OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -79347,9 +79347,9 @@
      "n_instrucoes": 241,
      "nome": "MenuTracceClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em MenuTracce «Gestione tracce»: chama TFormGestioneTracce.Create; mexe em ChartDrt, Series1."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu \"Gestão de traços\": abre TFormGestioneTracce (lista \"CheckTrack\" para mostrar/ocultar séries do gráfico). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -80216,8 +80216,8 @@
      "nome": "ActionAddMarkerExecute",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionAddMarker «AddMarker»: corpo de 28 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "origem": "curado",
+      "texto": "Ação AddMarker (F12): adiciona marcador. 28 B. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -80277,8 +80277,8 @@
      "nome": "ActionNextMarkerExecute",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonNextMarker «ActionNextMarker» (+2 componentes): corpo de 32 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "origem": "curado",
+      "texto": "Vai ao marcador seguinte. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -80338,8 +80338,8 @@
      "nome": "ActionPreviousMarkerExecute",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonPrevMarker «ActionPreviousMarker» (+2 componentes): corpo de 42 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "origem": "curado",
+      "texto": "Vai ao marcador anterior. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -80402,9 +80402,9 @@
      "n_instrucoes": 67,
      "nome": "ActionRimuoviCursoreExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ButtonRimuoviCursore «ActionRimuoviCursore» (+2 componentes): mexe em ChartDrt, SeriesCursoreNeg, SeriesCursorePos."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Remove o cursor (séries SeriesCursorePos/Neg). OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -81190,9 +81190,9 @@
      "n_instrucoes": 10,
      "nome": "CheckAutoMarkerClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em CheckAutoMarker «Auto marker»: mexe em CheckAutoMarker."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Caixa \"Auto marker\": liga marcadores automáticos. OBS-COD (campo)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -81922,9 +81922,9 @@
      "n_instrucoes": 14,
      "nome": "MenuRimuoviMarkerClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em MenuRimuoviMarker «Rimuovi marker»: mexe em SeriesMarkersNeg, SeriesMarkersPos."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Remove o marcador selecionado (SeriesMarkersPos/Neg). OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -81983,9 +81983,9 @@
      "n_instrucoes": 1251,
      "nome": "TimerTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador Timer (intervalo 20 ms): chama APIs GetTickCount; chama TAebProtocol::GetPacket, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer; mexe em ChartDrt, SeriesAutoMarkersNeg, SeriesAutoMarkersPos, SeriesEcuMarkersNeg, SeriesEcuMarkersPos, SeriesMarkersNeg."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Laço de aquisição do osciloscópio (5086 B): lê pacotes (TAebProtocol::GetPacket), alimenta as séries de cursor/marcadores (automáticos, ECU) em ChartDrt. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -82135,9 +82135,9 @@
      "n_instrucoes": 14,
      "nome": "btnAutoRangeClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnAutoRange «auto range»: mexe em ChartDrt, EditMaxRange, EditMinRange, btnAutoRange."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"auto range\": ajusta automaticamente mín/máx do eixo. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -82257,9 +82257,9 @@
      "n_instrucoes": 126,
      "nome": "btnExportImageClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnExportImage «export»: mexe em ChartDrt, EsportDialogDrt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"exportar\": exporta a imagem do gráfico (EsportDialogDrt, nome padrão \"Acquisition\"). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -82296,9 +82296,9 @@
      "n_instrucoes": 37,
      "nome": "btnLegendClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnLegend «legend»: mexe em ChartDrt, ImageList1, btnLegend."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão legenda: mostra/oculta legenda e troca a imagem do botão (ImageList1). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -82360,9 +82360,9 @@
      "n_instrucoes": 85,
      "nome": "btnLoadClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnLoad «load» (+3 componentes): mexe em ChartDrt, OpenDialogDrt, btnAutoRange, btnSave."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"carregar\": abre OpenDialogDrt e carrega uma aquisição salva no gráfico. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -82583,9 +82583,9 @@
      "n_instrucoes": 12,
      "nome": "btnRestoreZoomClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnRestoreZoom «restore zoom»: mexe em ChartDrt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão restaurar zoom. OBS-COD (campo)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -82621,8 +82621,8 @@
      "nome": "btnRunClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnRun «run»: corpo de 44 bytes sem fatos diretos (chama 4 funções sem nome)."
+      "origem": "curado",
+      "texto": "Botão \"run\": inicia/pausa a aquisição (usa GetTickCount). INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -82897,9 +82897,9 @@
      "n_instrucoes": 211,
      "nome": "btnSaveClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnSave «save»: chama APIs CopyFileW; mexe em SaveDialogDrt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"salvar\": abre SaveDialogDrt e copia o arquivo temporário da aquisição para o destino (CopyFileW). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -82943,8 +82943,8 @@
      "nome": "btnZoomInClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnZoomIn «zoom in»: corpo de 50 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "origem": "curado",
+      "texto": "Botão zoom in. INFERIDO pelo nome."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -82980,9 +82980,9 @@
      "n_instrucoes": 78,
      "nome": "btnZoomOutClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em btnZoomOut «zoom out»: mexe em ChartDrt, EditResolution."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão zoom out (reajusta resolução em EditResolution). OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -83620,9 +83620,9 @@
      "n_instrucoes": 39,
      "nome": "ButtonResetClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonResetTrip «Reset trip» (+1 componentes): chama TAebProtocol::IsConnect, TAebProtocol::SendCommand."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botões \"Reset trip\" e \"Reset totals\": enviam à ECU o comando de zerar contadores de viagem/totais (TAebProtocol::SendCommand). Escreve na ECU. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -83659,9 +83659,9 @@
      "n_instrucoes": 68,
      "nome": "CheckCambioAutomaticoClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em CheckCambioAutomatico «Vettura con cambio automatico»: mexe em CheckCambioAutomatico, CheckEnableGear, EditGearMaxNo."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Caixa \"Veículo com câmbio automático\": desliga o aprendizado de marchas e o número máximo. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -83746,9 +83746,9 @@
      "n_instrucoes": 19,
      "nome": "CheckEnableGearClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em CheckEnableGear «Enable gear learning»: chama TAebNumber::SetInt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Caixa \"Habilitar aprendizado de marchas\": grava o flag na ECU (TAebNumber::SetInt). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -83791,9 +83791,9 @@
      "n_instrucoes": 107,
      "nome": "CheckEnableLandiConnectClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em CheckEnableLandiConnect «Enable Landi Connect communication»: mexe em CheckCambioAutomatico, CheckEnableGear, CheckEnableLandiConnect, DrawGridInjrTOfsTbl, EditGearMaxNo, EditInjrGasFlow."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Caixa \"Habilitar comunicação Landi Connect\": habilita/desabilita os campos (apr. de marchas, volume do tanque, vazão estática dos injetores, pressão/temperatura de normalização, tabela de offset dos injetores). OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -83885,8 +83885,8 @@
      "nome": "DrawGridInjrTOfsTblDblClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao dar duplo clique em DrawGridInjrTOfsTbl: chama APIs GetCursorPos, ScreenToClient; mexe em DrawGridInjrTOfsTbl."
+      "origem": "curado",
+      "texto": "Duplo clique numa célula da tabela de offset dos injetores: edita o valor. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -83951,9 +83951,9 @@
      "n_instrucoes": 315,
      "nome": "DrawGridInjrTOfsTblDrawCell",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao desenhar célula de DrawGridInjrTOfsTbl: chama TAebMatrix::GetDouble, TAebVector::GetDouble; mexe em DrawGridInjrTOfsTbl."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Desenha a tabela de offsets dos injetores (ms) lendo TAebMatrix/TAebVector. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -84243,9 +84243,9 @@
      "n_instrucoes": 30,
      "nome": "TimerUpdateTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerUpdate (intervalo 500 ms): chama TAebVector::GetEcuData."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Atualiza periodicamente os valores lidos da ECU (TAebVector::GetEcuData). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -85192,8 +85192,8 @@
      "nome": "ActionAggiornaExecute",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnAggiorna (+1 componentes): chama APIs CreateProcessW, FormatMessageW, GetLastError."
+      "origem": "curado",
+      "texto": "Atualizar programa e arquivos: lança o processo auxiliar \"CopyFiles.exe\" (CreateProcessW; erros via FormatMessageW/GetLastError) depois de executar a verificação de licença/validade (sub_501838). Botão \"Aggiorna schede e mappe\". OBS-COD (literal e APIs); propósito INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -85358,9 +85358,9 @@
      "n_instrucoes": 224,
      "nome": "ActionApriConfExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnApriConfig (+1 componentes): chama APIs PostMessageW; chama TAebProtocol::IsConnect."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Carregar nova configuração\" (BitBtnApriConfig): se há conexão (TAebProtocol::IsConnect) abre TFormFile (sub_4D83CC, navegador de arquivos de configuração do arquivo/archivio) em modo abrir; verifica antes a validade da licença (sub_501838). OBS-COD (chamadas); propósito DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -85629,9 +85629,9 @@
      "n_instrucoes": 327,
      "nome": "ActionApriExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuApri «&Abrir configuração...» (+1 componentes): chama APIs Sleep, PostMessageW; chama TAebProtocol::IsConnect, TFormAttesa.Create; mexe em OpenDialog, StatusBarMain."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Abrir configuração de arquivo (menu Arquivo > Abrir; filtros .lnc/.ldc/.lec): usa OpenDialog, mostra TFormAttesa (espera), carrega o arquivo nos vetores (cadeia inclui sub_439E94, 288 KB na unidade Iodata/TStreamDati, que chama TAebMatrix/TAebNumber/TAebVector Get/SetEcuData e SetDefValue) e usa sub_4F6CC8 (título FINESTRACONFIG; atualiza StatusBarMain). Não foi confirmada escrita na ECU por este handler. Chamadas/literais: OBS-COD; leitura do fluxo: DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -86333,9 +86333,9 @@
      "n_instrucoes": 82,
      "nome": "ActionArchivioExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuArchivio «Instruções de montagem» (+1 componentes): corpo de 239 bytes sem fatos diretos (chama 9 funções sem nome)."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu \"Instruções de montagem\"/\"Archivio schede\": abre TFormFile no modo arquivo (árvore de PDFs/esquemas de montagem; a TFormFile abre .pdf pelo TFormPdf). OBS-COD (cadeia); propósito DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -86565,8 +86565,8 @@
      "nome": "ActionAzzeraIdExecute",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionAzzeraId «ActionAzzeraId»: chama TAebProtocol::IsConnect; mexe em ImageLandiConnect, LabelEcuType."
+      "origem": "curado",
+      "texto": "Ação oculta (Ctrl+A): lê o tipo de ECU (literais \"OMEGAS 4\", \"EVO 360\", \"EVO OBD\", \"EVO L\") e reaplica defaults/vetores (sub_439E94); atualiza LabelEcuType e ImageLandiConnect. Função de manutenção do tipo/ID da ECU: INFERIDO (nome Azzera=zerar, Id)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -87239,8 +87239,8 @@
      "nome": "ActionBloccoNoteExecute",
      "o_que_faz": {
       "evidencia": "OBS-COD",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuBloccoNote «Apri configurazione in &blocco note...» (+1 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD)."
+      "origem": "curado",
+      "texto": "Menu Arquivo > \"Abrir configuração no bloco de notas\": handler vazio (só RET). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -87283,9 +87283,9 @@
      "n_instrucoes": 3,
      "nome": "ActionConfExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnConfig (+1 componentes): chama TFormMain.OpenConfigWindow."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botão \"Configuração do veículo\": 8 bytes, chama OpenConfigWindow (abre TFormConfig). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -87326,9 +87326,9 @@
      "n_instrucoes": 9,
      "nome": "ActionConnettiExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuConnetti «&Ligar» (+1 componentes): corpo de 24 bytes sem fatos diretos (chama 2 funções sem nome)."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Conectar à ECU (menu Conexão > Conectar, Ctrl+C). Chama sub_425514 (atualiza o estado dos controles do módulo de dados) e sub_4F9C34→sub_4F9C40 (7167 B): rotina de conexão que usa TAebProtocol::Connect/Disconnect/GetIdentification/GetComFail e lê/grava TAebNumber (EcuData); depois habilita/desabilita as ações da tela principal conforme a ECU identificada. Chamadas e rótulos: OBS-COD; propósito: DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -87752,9 +87752,9 @@
      "n_instrucoes": 364,
      "nome": "ActionCorrTaraExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnCorrTara (+1 componentes): usa textos FINESTRACORRTARATURA; chama TAebProtocol::IsConnect, TFormCorrCalibra.Create, TTranslatorExt::GetString."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Modifica calibrazione\" (correção da calibração): abre TFormCorrCalibra (título FINESTRACORRTARATURA) se conectado, após checagem de licença. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -87923,9 +87923,9 @@
      "n_instrucoes": 239,
      "nome": "ActionDiagnosiExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnDiagnosi (+1 componentes): usa textos FINESTRADIAGNOSI; chama TFormDiagnosi.Create, TTranslatorExt::GetString."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Diagnóstico\": abre TFormDiagnosi (título FINESTRADIAGNOSI) após checagem de licença. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -88078,9 +88078,9 @@
      "n_instrucoes": 165,
      "nome": "ActionDisconnettiExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuDisconnetti «&Desconectar» (+1 componentes): chama TAebProtocol::Disconnect, TAebProtocol::OffLine; mexe em ImageLandiConnect."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Desconectar da ECU (Ctrl+D): TAebProtocol::Disconnect + OffLine, limpa vetores (TAebVector::SetEcuData) e troca o ícone ImageLandiConnect. Sem escrita de configuração. Chamadas: OBS-COD; propósito: DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -88294,9 +88294,9 @@
      "n_instrucoes": 2,
      "nome": "ActionEsciExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnEsci (+2 componentes): corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Sair (6 bytes): encaminha para Close do formulário principal. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -88338,8 +88338,8 @@
      "nome": "ActionFileHcfExecute",
      "o_que_faz": {
       "evidencia": "OBS-COD",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuFileHcf «Salva configurazione su file hcf...» (+1 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD)."
+      "origem": "curado",
+      "texto": "Menu \"Salvar configuração em arquivo hcf\": handler vazio (só RET). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -88402,9 +88402,9 @@
      "n_instrucoes": 9,
      "nome": "ActionProgrammaExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnRiprogramma (+1 componentes): corpo de 24 bytes sem fatos diretos (chama 2 funções sem nome)."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Reprogramar a ECU (botão \"Riprogramma\"/\"Programação\"): chama sub_4FD80C (966 B) que cria TFormAttesa (janela de espera), identifica a ECU (sub_4F95FC: FindPort, GetIdentification, Disconnect), procura arquivos de firmware/configuração (sub_501E5C: FindFirstFileW/FindNextFileW; textos \"Pesquisa/Preparação/Atualização do firmware/configuração\"), abre TFormScarica (sub_505258: botões Programação/Mudar arquivo) e grava a configuração (sub_4FBE8C: textos LABELSCRITTURACONFIG/MESSNOSCRITTURACONFIG). Operação que escreve na ECU (flash). Cadeia de chamadas: OBS-COD; leitura do fluxo: DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -89045,8 +89045,8 @@
      "nome": "ActionResetCentralinaExecute",
      "o_que_faz": {
       "evidencia": "OBS-COD",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuResetCpu «&Reset ECU» (+1 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD)."
+      "origem": "curado",
+      "texto": "Menu Conexão > Reset ECU: o handler é só RET (nada acontece) nesta versão; o reset real está em ActionResetDaPcExecute. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -89101,9 +89101,9 @@
      "n_instrucoes": 266,
      "nome": "ActionResetDaPcExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionResetDaPc «ActionResetDaPc»: chama APIs Sleep; chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::Disconnect, TAebProtocol::IsConnect, TAebProtocol::OffLine."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Reset da ECU a partir do PC (ação sem menu visível): lê/escreve TAebNumber (GetEcuData/SetEcuData), mostra LABELSCRITTURACONFIG e desconecta (Disconnect/OffLine); a tabela i18n tem MESSCONFERMARESET/MESSRESETOK/MESSRESETERROR, mas o uso por este handler não foi confirmado. Provável escrita na ECU: PERIGOSO. Chamadas: OBS-COD; propósito: INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -89861,9 +89861,9 @@
      "n_instrucoes": 192,
      "nome": "ActionSalvaConfExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnSalvaConfig (+1 componentes): chama APIs PostMessageW; chama TAebProtocol::IsConnect."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Salvar configuração atual\" (BitBtnSalvaConfig): abre TFormFile (navegador de arquivos) em modo salvar, se conectado. OBS-COD (chamadas); propósito DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -90134,9 +90134,9 @@
      "n_instrucoes": 1003,
      "nome": "ActionSalvaExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuSalva «&Guardar configuração...» (+1 componentes): usa textos FINESTRACONFIG, LABELMODELLO34568CILINDRI, LABELMODELLO34CILINDRI; chama APIs PostMessageW; chama TFormAttesa.Create, TTranslatorExt::GetString; mexe em SaveDialog, StatusBarMain."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Salvar configuração em arquivo (menu Arquivo > Salvar; filtros .lnc/.ldc/.lec/.lrc): usa SaveDialog, TFormAttesa e o texto LABELMODELLO34CILINDRI/…34568CILINDRI (escolha do modelo de 3-4 ou 3-4-5-6-8 cilindros para o arquivo); grava o arquivo com os valores correntes. Não foi confirmada escrita na ECU por este handler. OBS-COD (filtros, diálogo, APIs); propósito DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -90801,8 +90801,8 @@
      "nome": "ActionSalvaMappaExecute",
      "o_que_faz": {
       "evidencia": "OBS-COD",
-      "origem": "automatico",
-      "texto": "Ao executar a ação MenuSalvaMappa «Salva solo mappa in configurazione...» (+1 componentes). Corpo é só RET: nada acontece neste evento (OBS-COD)."
+      "origem": "curado",
+      "texto": "Menu \"Salvar só o mapa na configuração\": handler vazio (só RET). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -90845,9 +90845,9 @@
      "n_instrucoes": 3,
      "nome": "ActionTaraExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnTara (+1 componentes): chama TFormMain.OpenFormAutotaratura."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botão \"Calibração automática\": chama OpenFormAutotaratura. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -90898,9 +90898,9 @@
      "n_instrucoes": 2,
      "nome": "ActionUpdateExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao executar a ação ActionUpdate: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Atalho de 6 bytes que encaminha para a rotina de atualização de firmware/configuração (mesma cadeia de sub_501E5C: busca arquivos com FindFirstFileW, textos LABELRICERCAAGG*/LABELPREPAGG*/LABELAGG*). Não ligado a menu visível no DFM além da ação. OBS-COD (salto/cadeia); propósito DERIVADO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -91777,9 +91777,9 @@
      "n_instrucoes": 239,
      "nome": "ActionVisualizzaExecute",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em BitBtnVisualizzazione (+1 componentes): usa textos FINESTRAVISUALIZZA; chama TFormVisualizza.Create, TTranslatorExt::GetString."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Visualização\": abre TFormVisualizza (parâmetros do veículo em tempo real, título FINESTRAVISUALIZZA) após checagem de licença. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -91912,9 +91912,9 @@
      "n_instrucoes": 16,
      "nome": "AfterCalibraOpenedFromAutocal",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): chama TFormMain.OpenConfigWindow."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Depois da tela de calibração aberta pelo AutoCal, reabre a janela de configuração (OpenConfigWindow). OBS-COD (chamada)."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -91957,9 +91957,9 @@
      "n_instrucoes": 124,
      "nome": "FormClose",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao fechar o formulário FormMain «Initializing...»: chama TAebProtocol::IsConnect, TAebProtocol::ReadPort, TAebProtocol::SetWindowHandle, TAebRegistryData::SetIntData; mexe em ActionDisconnetti."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Ao fechar o programa: se conectado desconecta, lê a porta (ReadPort) e grava a porta COM escolhida no registro (TAebRegistryData::SetIntData \"ComPort\"). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -92012,8 +92012,8 @@
      "nome": "FormCloseQuery",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao pedir para fechar o formulário FormMain «Initializing...»: corpo de 52 bytes sem fatos diretos (chama 2 funções sem nome)."
+      "origem": "curado",
+      "texto": "Ao tentar fechar (52 B): sem fatos diretos extraíveis; provavelmente permite o fechamento. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -92103,9 +92103,9 @@
      "n_instrucoes": 109,
      "nome": "FormPaint",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao pintar FormMain «Initializing...»: mexe em StatusBarMain."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Repinta a barra de status (StatusBarMain). OBS-COD (campo tocado)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -92140,9 +92140,9 @@
      "n_instrucoes": 125,
      "nome": "FormResize",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao redimensionar FormMain «Initializing...»: mexe em StatusBarMain."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Reposiciona a barra de status ao redimensionar. OBS-COD (campo tocado)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -92182,9 +92182,9 @@
      "n_instrucoes": 850,
      "nome": "FormShow",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao exibir o formulário FormMain «Initializing...»: chama APIs Sleep; mexe em OpenDialog, SaveDialog."
+      "evidencia": "DESCONHECIDO",
+      "origem": "curado",
+      "texto": "Ao exibir o formulário principal (2614 B): inicializa OpenDialog/SaveDialog (filtros de arquivo) e a interface; usa Sleep. Detalhe: DESCONHECIDO (chama sub-rotinas sem nome)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -92288,9 +92288,9 @@
      "n_instrucoes": 6,
      "nome": "ImageBeeClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ImageBee: chama TAebProtocol::ShowAebBeeSettings."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Clique no ícone Bee: abre TAebProtocol::ShowAebBeeSettings (janela de comunicação sem fio TAebBeeFormLight). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -92325,9 +92325,9 @@
      "n_instrucoes": 35,
      "nome": "ImageLandiConnectClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ImageLandiConnect: chama TFormLandiConnect.Create."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Clique no ícone Landi Connect: abre TFormLandiConnect. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -92397,9 +92397,9 @@
      "n_instrucoes": 90,
      "nome": "ImageServiceClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ImageServiceOff (+4 componentes): chama TAebProtocol::IsConnect, TFormService.Create; mexe em ActionApri."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Clique nos ícones de Service (Off/On/Alert/Pswd): se conectado abre TFormService (gestão de revisões/tagliandi, com PIN). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -92508,9 +92508,9 @@
      "n_instrucoes": 47,
      "nome": "MenuAboutClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em MenuAbout «&Informações sobre...»: mexe em LabelConfig."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Menu Ajuda > Informações: abre TAboutBox (versão, código do usuário, licença). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -92574,9 +92574,9 @@
      "n_instrucoes": 373,
      "nome": "OpenConfigWindow",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): usa textos FINESTRACONFIG; chama TAebProtocol::IsConnect, TTranslatorExt::GetString."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Abre a janela de configuração (TFormConfig, título FINESTRACONFIG) depois de checar conexão (IsConnect) e a validade da licença/chave; mostra TFormAggKey se expirada. OBS-COD (textos/chamadas); propósito DERIVADO."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -92730,9 +92730,9 @@
      "n_instrucoes": 367,
      "nome": "OpenFormAutotaratura",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): usa textos FINESTRATARATURA; chama TAebProtocol::IsConnect, TFormCalibra.Create, TTranslatorExt::GetString."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Abre TFormCalibra (calibração automática, título FINESTRATARATURA) se a ECU está conectada; senão mostra MESSNOECU; verifica a licença antes. OBS-COD; propósito DERIVADO."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -92882,9 +92882,9 @@
      "n_instrucoes": 49,
      "nome": "Plot1Click",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em Plot1 «Gráfico»: corpo de 160 bytes sem fatos diretos (chama 6 funções sem nome)."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu Arquivo > Gráfico: abre TFormGraficoScope (osciloscópio de dados em tempo real). OBS-COD (xref à classe); 160 B."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -93070,9 +93070,9 @@
      "n_instrucoes": 365,
      "nome": "StatusBarMainDrawPanel",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao desenhar painel de StatusBarMain: chama TAebProtocol::IsConnect."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Desenha os painéis da barra de status; mostra \"Serial number: …\" (ou SerialNumberNotInEcu) e o estado de conexão (IsConnect). OBS-COD (literais)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -93136,8 +93136,8 @@
      "nome": "TimerExpiredTimer",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerExpired: mexe em TimerExpired."
+      "origem": "curado",
+      "texto": "Temporizador de expiração (127 B): controla o aviso/estado de validade (campo TimerExpired). Propósito INFERIDO pelo nome."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -93190,8 +93190,8 @@
      "nome": "TimerUpdateTimer",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerUpdate (intervalo 10000 ms): chama APIs GetTickCount, Sleep; mexe em TimerUpdate."
+      "origem": "curado",
+      "texto": "Temporizador de verificação online: monta URL do servidor do fabricante (GetLicense.aspx?ProgramSelector=…&UserCode=…), usa WININET (InternetOpen/Connect, InternetGetConnectedState) e SECUR32 (GetUserNameExW) e lê a resposta HTML (<div id=\"DivMessaggio\">). Função: consulta de licença/mensagem do fabricante. OBS-COD (APIs e literais); propósito INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -93860,8 +93860,8 @@
      "nome": "EditDataKeyPress",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao digitar (filtro de teclas) em EditData: corpo de 677 bytes sem fatos diretos (chama 8 funções sem nome)."
+      "origem": "curado",
+      "texto": "Filtra a digitação do delta de variação da célula do mapa (677 B). INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -94043,8 +94043,8 @@
      "nome": "EditValoreKeyPress",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao digitar (filtro de teclas) em EditValore: corpo de 751 bytes sem fatos diretos (chama 8 funções sem nome)."
+      "origem": "curado",
+      "texto": "Filtra a digitação do novo valor da célula do mapa. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -94361,9 +94361,9 @@
      "n_instrucoes": 309,
      "nome": "ButtonOkClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonOk «&OK !»: chama TAebNumber::GetDouble, TAebNumber::SetDouble, TAebVector::GetDouble, TAebVector::SetDouble; mexe em EditKMax, EditKMin, EditRifMap0, TInjBox."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "OK: grava os limites K mín/máx e as referências do AutoCal nos vetores (TAebVector/TAebNumber Get/SetDouble; nomes \"InjT_*\"). Escreve parâmetros na ECU. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -94567,8 +94567,8 @@
      "nome": "FormCloseQuery",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao pedir para fechar o formulário FormRiferimenti «Modifica riferimenti mappa»: corpo de 1007 bytes sem fatos diretos (chama 11 funções sem nome)."
+      "origem": "curado",
+      "texto": "Ao fechar: valida as referências de mapa digitadas (\"Edit*\") e só deixa fechar se coerentes. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -94800,9 +94800,9 @@
      "n_instrucoes": 11,
      "nome": "ButtonCambiaClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonCambia «&Mudar arquivo»: mexe em OpenDialogFile."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Mudar arquivo\": abre o OpenDialogFile para escolher outro arquivo de firmware/configuração e mostra data/hora do arquivo (CreateFileW, GetFileTime, FileTimeToSystemTime). OBS-COD (APIs)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -95175,8 +95175,8 @@
      "nome": "ButtonAzzeraNumeroTagliandiEffettuatiClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonAzzeraNumeroTagliandiEffettuati «Reset»: mexe em LabelNumTagliandiEffettuatiData, LabelNumTagliandiEffettuatiService."
+      "origem": "curado",
+      "texto": "Botão \"Zerar\" revisões efetuadas: zera contador (LabelNumTagliandiEffettuati*) após confirmação. Escreve na ECU. INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -95376,9 +95376,9 @@
      "n_instrucoes": 81,
      "nome": "ButtonModifyPinClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em ButtonExit, EditInsPin, EditPin, EditPin2, PanelData, PanelNewPin."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão \"Modificar PIN\": mostra o painel de novo PIN (PanelNewPin). OBS-COD (campos)."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -95420,8 +95420,8 @@
      "nome": "ButtonNewPinClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonNewPin «OK !»: mexe em ButtonExit, EditInsPin, EditPin, EditPin2, PanelNewPin, PanelService."
+      "origem": "curado",
+      "texto": "Botão OK de novo PIN: usa EditPin/EditPin2 (PIN e confirmação) e volta ao painel de serviço (PanelService). OBS-COD (campos); gravação do PIN: INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -95460,9 +95460,9 @@
      "n_instrucoes": 33,
      "nome": "ButtonOldPinClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonOldPin «Cancelar»: mexe em ButtonExit, EditPin, EditPin2, PanelNewPin, PanelService."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Botão Cancelar do painel de novo PIN: volta ao painel de serviço. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -95511,8 +95511,8 @@
      "nome": "ButtonResetPinClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonResetPin «Reset»: mexe em EditInsPin."
+      "origem": "curado",
+      "texto": "Botão \"Reset\" do PIN: deriva chave por hash (CryptCreateHash/CryptDeriveKey/CryptEncrypt) do PIN digitado em EditInsPin (propósito: validar/limpar o PIN de serviço; INFERIDO). Descrição da função apenas. APIs: OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -95698,8 +95698,8 @@
      "nome": "CheckDisableGasClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em CheckDisableGas «Inhibit petrol to gas switching»: mexe em CheckDisableGas, EditPartenzeEmergenza, LabelPartenzeGasConsentite, LabelPartenzeGasEffettuate."
+      "origem": "curado",
+      "texto": "Caixa \"Inibir passagem a gás\": marca que a ECU deve ficar em gasolina; habilita campo \"partidas a gás permitidas\" (EditPartenzeEmergenza) e mostra efetuadas. Escreve na ECU: PERIGOSO (impede o uso do gás). OBS-COD (campos); efeito INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -95748,9 +95748,9 @@
      "n_instrucoes": 24,
      "nome": "CheckEnableServiceClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em CheckEnableService, EditCurrHours, MemoData."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Caixa \"Habilitar gestão de revisões (tagliandi)\": liga o campo \"horas a gás restantes até a revisão\" (EditCurrHours) e o memo de dados do instalador. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -95791,9 +95791,9 @@
      "n_instrucoes": 68,
      "nome": "CheckServicePinClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em ButtonModifyPin, CheckServicePin, EditInsPin."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Caixa \"Habilitar proteção de dados com PIN\": mostra o botão \"Modificar PIN\" e o campo de PIN. OBS-COD (campos)."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -95868,8 +95868,8 @@
      "nome": "EditInsPinChange",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Quando muda o valor de EditInsPin: mexe em EditInsPin."
+      "origem": "curado",
+      "texto": "Ao digitar o PIN: calcula o hash (CryptoAPI) e compara; quando confere, libera os painéis de dados do instalador. OBS-COD (APIs); comparação: INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -96134,8 +96134,8 @@
      "nome": "EditStandardEnter",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao entrar no campo EditPartenzeEmergenza: corpo de 534 bytes sem fatos diretos (chama 11 funções sem nome)."
+      "origem": "curado",
+      "texto": "Ao entrar no campo numérico (partidas de emergência): prepara o campo para edição (valor de/para a ECU). INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -96567,8 +96567,8 @@
      "nome": "FormClose",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao fechar o formulário FormService «Service»: chama APIs CryptAcquireContextW, CryptCreateHash, CryptDeriveKey, CryptDestroyHash, CryptDestroyKey; mexe em MemoData."
+      "origem": "curado",
+      "texto": "Ao fechar: criptografa os dados do instalador (MemoData) com CryptoAPI (hash+derivação de chave+CryptEncrypt, CryptGenRandom) e grava na ECU. Escreve na ECU. OBS-COD (APIs); destino INFERIDO."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -97021,9 +97021,9 @@
      "n_instrucoes": 2,
      "nome": "ButtonExitClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonExit «Sair»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome)."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Botão Sair (6 B): fecha. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -97356,9 +97356,9 @@
      "n_instrucoes": 31,
      "nome": "FormClose",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao fechar o formulário FormSwitch «Switch settings»: chama TAebProtocol::SendCommand."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Ao fechar: envia à ECU as configurações do comutador (TAebProtocol::SendCommand). Escreve na ECU. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [],
@@ -97433,9 +97433,9 @@
      "n_instrucoes": 87,
      "nome": "TrackBarLedChange",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Quando muda o valor de TrackBarLed: chama APIs GetKeyState; mexe em EditLed, TrackBarLed."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Controle deslizante do brilho do LED do botão comutador: converte e mostra em EditLed e envia à ECU. OBS-COD (GetKeyState + campos)."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -97739,8 +97739,8 @@
      "nome": "ButtonCommutatoreClick",
      "o_que_faz": {
       "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Ao clicar em ButtonCommutatore «&Comutador»: chama APIs Sleep; mexe em ButtonCommutatore."
+      "origem": "curado",
+      "texto": "Botão \"Comutador\" (230 B): envia à ECU o comando que alterna gasolina/gás (usa Sleep e PostMessage). Escreve/comanda a ECU: PERIGOSO (muda o combustível em uso). INFERIDO pelo caption."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -98146,9 +98146,9 @@
      "n_instrucoes": 250,
      "nome": "MenuCominciaDrtClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): chama APIs GetTickCount, DrawMenuBar."
+      "evidencia": "OBS-COD",
+      "origem": "curado",
+      "texto": "Menu \"Começar DRT\": inicia uma aquisição de dados e prepara arquivo XML (<acquisitionData dateTime=…>, formato de data ddmmyyyyhhnnss). OBS-COD (literais)."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -98232,9 +98232,9 @@
      "n_instrucoes": 60,
      "nome": "MenuGraficoClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em OpenDialogDrt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu \"Gráfico\": abre TFormGraficoDrt (visualização gráfica de aquisição, abre arquivo via OpenDialogDrt). OBS-COD."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -98733,9 +98733,9 @@
      "n_instrucoes": 55,
      "nome": "MenuTerminaDrtClick",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "Rotina publicada sem evento ligado no DFM (chamada pelo código): chama APIs DrawMenuBar; mexe em SaveDialogDrt."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Menu \"Terminar DRT\": encerra a aquisição e abre SaveDialogDrt para salvar o arquivo. OBS-COD (campo)."
      },
      "saltos_externos": [],
      "sem_evento_no_dfm": true,
@@ -98823,9 +98823,9 @@
      "n_instrucoes": 2078,
      "nome": "Timer1Timer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador Timer1 (intervalo 75 ms): chama APIs GetTickCount; chama TStreamDati.TimerIOTimer; mexe em ImageBenzOff, ImageBenzOn, ImageCutoffOff, ImageCutoffOn, ImageGasOff, ImageGasOn."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Atualização periódica dos parâmetros do veículo (7653 B): lê TStreamDati.TimerIO e atualiza lâmpadas (benzina/gas/cut-off/sotto chiave), lambda, temperaturas, TPS/MAP, tempos de injeção e tensão dos injetores; durante gravação DRT grava pares tempo/valor (literais \"time\", \"value\", \"par001\"…). OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [
@@ -100012,9 +100012,9 @@
      "n_instrucoes": 431,
      "nome": "TimerIOTimer",
      "o_que_faz": {
-      "evidencia": "INFERIDO",
-      "origem": "automatico",
-      "texto": "A cada tick do temporizador TimerIO (intervalo 3000 ms): chama APIs GetTickCount, Sleep, PostMessageW; chama TAebNumber::GetEcuData, TAebProtocol::Connect, TAebProtocol::DisableErrorHandling, TAebProtocol::Disconnect, TAebProtocol::EnableErrorHandling; mexe em AebConnection, MASK_INIETTORI_BENZINA, MASK_INIETTORI_BENZINA_LR, SERIAL_NUMBER."
+      "evidencia": "DERIVADO",
+      "origem": "curado",
+      "texto": "Laço de E/S com a ECU (1415 B): chama TAebProtocol::GetPacket/GetComFail/IsConnect, lê vetores (TAebVector/TAebNumber::GetEcuData), reconecta (Connect/Disconnect/Enable-DisableErrorHandling) e publica estado a janelas via PostMessage. É o relógio de leitura de todas as telas. OBS-COD."
      },
      "saltos_externos": [],
      "subfuncoes": [

@@ -386,28 +386,22 @@ def unidade_de(a, un, fins):
     return None
 
 
-def gerar(exe, saida, cobertura=COBERTURA):
-    b = Binario(exe)
-    cl = rtti.construir(b)
-    cod, nomes, un, grupos = montar(b, cl)
+def funcoes(b, cod, nomes, un, grupos, cobertura=COBERTURA):
+    """Lista de funções descobertas: (funcs, meta). Só as das faixas do programa levam unidade."""
     fins = [u[0] for u in un]
-    ents = sorted(cod.entradas)
-    starts = ents
-    cob = {}
+    starts = sorted(cod.entradas)
+    docs = {}
     if cobertura and os.path.isfile(cobertura):
-        cob = json.load(open(cobertura, encoding='utf-8'))
-    docs = cob.get('enderecos', {})
+        docs = json.load(open(cobertura, encoding='utf-8')).get('enderecos', {})
     funcs = []
     for i, a in enumerate(starts):
         nxt = starts[i + 1] if i + 1 < len(starts) else b.ce
-        # tamanho útil = última instrução visitada contígua dentro de [a, nxt)
-        o = a - cod.t0
         fimu = a
         for k in range(a - cod.t0, min(nxt - cod.t0, len(cod.vis))):
             if cod.vis[k]:
                 fimu = cod.t0 + k
         in_app = any(g0 <= a < g1 for g0, g1 in grupos)
-        f = {'endereco': h(a), 'tamanho_ate_proximo': nxt - a, 'origem': cod.entradas[a]}
+        f = {'endereco': h(a), 'tamanho_ate_proximo': nxt - a, 'tamanho_ate_ultima_instrucao': fimu - a + 1, 'origem': cod.entradas[a]}
         if a in nomes:
             f['nome'], f['fonte_nome'] = nomes[a]
         elif a in cod.thunk:
@@ -420,27 +414,79 @@ def gerar(exe, saida, cobertura=COBERTURA):
         funcs.append(f)
     app = [f for f in funcs if f['regiao'] == 'programa']
     meta = {'exe_sha256': b.sha256, 'n_funcoes_descobertas': len(funcs), 'n_funcoes_programa': len(app),
-            'n_funcoes_biblioteca': len(funcs) - len(app),
-            'bytes_codigo_visitados': int(sum(cod.vis)) if False else None,
+            'n_funcoes_biblioteca_alcancadas': len(funcs) - len(app),
             'unidades': [{'unidade': k, 'marcador_fim': h(a)} for a, k in un],
             'faixas_programa': [[h(x), h(y)] for x, y in grupos],
-            'legenda': 'OBS-COD: entradas por descida recursiva a partir de nomes/entrada/chamadas; unidade = DERIVADO.'}
-    return b, cl, cod, funcs, meta
+            'legenda': 'OBS-COD: entradas por descida recursiva a partir de nomes/entrada/chamadas; unidade = DERIVADO (marcadores @@Unidade@Initialize).'}
+    return funcs, meta
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--exe')
-    ap.add_argument('--out', default=SAIDA)
-    a = ap.parse_args()
-    exe = achar_exe(a.exe)
-    if not exe:
-        sys.exit('ProgBase.exe não encontrado: defina PROGBASE_EXE')
-    import time
-    t = time.time()
-    b, cl, cod, funcs, meta = gerar(exe, a.out)
-    print(meta['n_funcoes_descobertas'], meta['n_funcoes_programa'], time.time() - t)
+def classificar_lacuna(b, a, n):
+    """Heurística (INFERIDO) do que há num trecho nunca alcançado pela descida recursiva."""
+    d = b.code[a - b.cb:a - b.cb + n]
+    if not d:
+        return 'vazio'
+    if sum(1 for x in d if x in (0x00, 0xCC, 0x90)) >= 0.9 * len(d):
+        return 'preenchimento'
+    pr = sum(1 for x in d if 32 <= x < 127)
+    if pr >= 0.6 * len(d):
+        return 'texto-ansi'
+    if len(d) >= 8 and sum(1 for i in range(0, len(d) - 1, 2) if 32 <= d[i] < 127 and d[i + 1] == 0) >= 0.4 * (len(d) // 2):
+        return 'texto-utf16'
+    w = [struct.unpack_from('<I', d, i)[0] for i in range(0, len(d) - 3, 4)]
+    if w and sum(1 for v in w if b.base <= v < b.base + 0x100000 * 0xE) >= 0.5 * len(w):
+        return 'tabela-de-ponteiros'
+    return 'desconhecido'
 
 
-if __name__ == '__main__':
-    main()
+def lacunas(cod, grupos, minimo=16):
+    """Trechos [a,a+n) não visitados dentro das faixas do programa: [(endereço, tamanho, classe)]."""
+    b = cod.b
+    out = []
+    for g0, g1 in grupos:
+        i = g0 - cod.t0
+        fim = g1 - cod.t0
+        while i < fim:
+            if cod.vis[i]:
+                i += 1
+                continue
+            j = i
+            while j < fim and not cod.vis[j]:
+                j += 1
+            if j - i >= minimo:
+                out.append((cod.t0 + i, j - i, classificar_lacuna(b, cod.t0 + i, j - i)))
+            i = j
+    return out
+
+
+ENDERECO = re.compile(r'(?<![0-9A-Za-z_])(?:0x)?0?0?([4-9][0-9A-Fa-f]{5})(?![0-9A-Za-z_])')
+
+
+def atualizar_cobertura(fontes, destino=COBERTURA):
+    """Varre arquivos de texto (md/json/c/txt/py) e anota quais endereços do .exe aparecem em quais fontes.
+    fontes: [(rotulo, caminho_de_arquivo_ou_pasta)]. O rótulo (sem caminho local) é o que fica no JSON."""
+    mapa = {}
+    for rotulo, caminho in fontes:
+        arquivos = []
+        if os.path.isfile(caminho):
+            arquivos = [caminho]
+        else:
+            for raiz, _, nomes in os.walk(caminho):
+                for n in nomes:
+                    if n.endswith(('.md', '.json', '.c', '.txt', '.py', '.csv')):
+                        arquivos.append(os.path.join(raiz, n))
+        for f in sorted(arquivos):
+            rel = rotulo + '/' + os.path.relpath(f, caminho).replace(os.sep, '/') if os.path.isdir(caminho) else rotulo
+            try:
+                texto = open(f, encoding='utf-8', errors='ignore').read()
+            except OSError:
+                continue
+            for m in ENDERECO.finditer(texto):
+                v = int(m.group(1), 16)
+                if 0x401000 <= v < 0xA51000:
+                    mapa.setdefault('0x%08X' % v, set()).add(rel)
+    saida = {'_leia': 'Endereços do ProgBase.exe citados em documentos/decompilações já existentes. Regenerar com '
+                      'inventario_tudo.py --atualizar-cobertura. Rótulo = fonte sem caminho local.',
+             'enderecos': {k: sorted(v)[:6] for k, v in sorted(mapa.items())}}
+    escrever_json(destino, saida)
+    return len(mapa)

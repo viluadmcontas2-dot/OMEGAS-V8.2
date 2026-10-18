@@ -1,0 +1,1157 @@
+{
+ "versao_esquema": 1,
+ "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+ "log_sha256": "341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+ "framing": {
+  "quadro_tx": "b0 b1 [carga] ck — ck = soma mod 256 de TODOS os bytes anteriores do quadro (inclui b0). b0 = classe | n, n (3 bits) = nº de bytes entre o 2º byte e o ck; n==7 => estendido (byte seguinte = n+1).",
+  "quadro_rx": "eco do quadro + ACK + n + dados + ck; ck = (ACK + n + soma(dados)) mod 256 — o eco não entra.",
+  "comprimento_do_quadro_tx": "(b0 & 7) + 3 para b0 & 7 < 7 (confere com 100 % dos 20 290 pedidos da captura)",
+  "ordem_dos_bytes": "little-endian em endereços e valores; exceção: SetEcuBaudRate/SetNewEcuBaudRate enviam ALTO primeiro",
+  "marca": "OBS-FIO + OBS-COD"
+ },
+ "timeouts": {
+  "primeiro_byte_da_resposta_ms": 1000,
+  "bytes_seguintes_ms": 0,
+  "pausa_apos_96_ms": 400,
+  "retries": 5,
+  "cancflash_ms": 8000,
+  "linha_de_flash_ms": 200,
+  "progflash_endflash_ms": 1000,
+  "espera_de_boot_ms": 2000,
+  "portmon_rc_ms": {
+   "ack": 1200,
+   "demais_bytes": 200
+  },
+  "marca": "OBS-COD (construtor RE:0x00920128) + OBS-FIO (SET_TIMEOUTS RC)"
+ },
+ "tabela_baud": {
+  "va": "0xab6020",
+  "baud_por_indice": [
+   110,
+   300,
+   1200,
+   2400,
+   4800,
+   9600,
+   19200,
+   38400,
+   57600,
+   115200
+  ],
+  "indice_padrao": 5,
+  "indice_flash": "6 (7 se a porta for TAebBee)",
+  "marca": "OBS-COD"
+ },
+ "offsets_taebprotocol": {
+  "0x40": "ponteiro da porta (TAebBee/TAebTcp); 0 = sem porta",
+  "0x44": "ComFail (máscara de erros; a camada de porta também grava nele)",
+  "0x48": "acumulador do checksum (TX/RX)",
+  "0x49": "buffer de transmissão (até ~260 B)",
+  "0x14D": "buffer de recepção",
+  "0x254": "nº de bytes no buffer de TX",
+  "0x258": "timeout 1º byte da resposta (ms) = 1000",
+  "0x25C": "pausa após 0x96 (ms) = 400",
+  "0x260": "máximo de retries = 5",
+  "0x264": "falhas consecutivas de checksum",
+  "0x26C": "flag \"baixando arquivo\"",
+  "0x28A": "evento de log (OnLog); != 0 liga as mensagens de depuração",
+  "0x294/0x298": "índice de baud (padrão 5 = 9600) normal/alternativo",
+  "0x2B0": "conectado",
+  "0x2B1": "conectando",
+  "0x2B2": "hardware legado (família 0 e versão < 2)",
+  "0x2B4": "permite trocar o baud do boot",
+  "0x2B8": "timeout do Cancflash (ms) = 8000",
+  "0x2BC": "reconexão automática (padrão 0)",
+  "0x2BD": "pula o handshake do Connect (padrão 0)",
+  "0x2BE": "modo sem reconexão (retry só se ComFail & 0x100)",
+  "0x2BF": "fecha a porta no Disconnect (padrão 1)",
+  "0x2C0": "bit 7 da versão de hardware (flash duplo)",
+  "0x2C1": "usa SetNewEcuBaudRate",
+  "0x2C4": "ProtocolVersion (0, 1 ou 2)",
+  "0x2C8": "ByteExtended = 0xFF",
+  "0x2C9": "ProtocolCommand = 0x25",
+  "0x2DC": "espera de boot (ms) = 2000",
+  "0x2E0": "usa transporte TCP (TAebTcp) em vez de serial"
+ },
+ "comfail": [
+  {
+   "mascara": "0x0001",
+   "significado": "leitura incompleta/timeout na porta",
+   "marca": "OBS-COD",
+   "onde": "gravado pela porta (RE:0x0091F29D); bloqueia novos envios (máscara 0x29)"
+  },
+  {
+   "mascara": "0x0002",
+   "significado": "NAK (CA) sem o bit 0x10 do 2º byte de status",
+   "marca": "OBS-COD",
+   "onde": "RE:0x00923A04; retry até 5"
+  },
+  {
+   "mascara": "0x0004",
+   "significado": "NAK (CA) com bit 0x10 = parâmetro/comando não suportado; ou endereço >= 0xFF com versão 0",
+   "marca": "OBS-COD",
+   "onde": "sem retry (máscara 0x44); o objeto fica \"inválido\" mas a leitura não é erro de transporte"
+  },
+  {
+   "mascara": "0x0008",
+   "significado": "eco divergente",
+   "marca": "OBS-COD",
+   "onde": "RE:0x00922FA5/0x00923393; bloqueia envios (0x29); retry"
+  },
+  {
+   "mascara": "0x0010",
+   "significado": "checksum da resposta divergente",
+   "marca": "OBS-COD",
+   "onde": "RE:0x00923B7D (VerifyCk); conta falhas consecutivas em +0x264"
+  },
+  {
+   "mascara": "0x0020",
+   "significado": "endereço >= 0x1FF com versão < 2; ou resposta inválida (0x22 = 0x20|0x02)",
+   "marca": "OBS-COD",
+   "onde": "bloqueia envios (0x29)"
+  },
+  {
+   "mascara": "0x0040",
+   "significado": "reconexão falhou",
+   "marca": "OBS-COD",
+   "onde": "sem retry (máscara 0x44)"
+  },
+  {
+   "mascara": "0x0100",
+   "significado": "pedido de retry (0x96 recebido com checksum certo, 0x102 = 0x100|0x02)",
+   "marca": "OBS-COD",
+   "onde": "única condição de retry no modo +0x2BE"
+  },
+  {
+   "mascara": "0x0400",
+   "significado": "falha ao abrir/configurar a porta",
+   "marca": "OBS-COD",
+   "onde": "gravado pela porta"
+  },
+  {
+   "mascara": "0x8000",
+   "significado": "tamanho da resposta diferente do esperado (0x8020 = 0x8000|0x20)",
+   "marca": "OBS-COD",
+   "onde": "GetNumber/GetVector/GetPacket; retorna falso SEM retry"
+  }
+ ],
+ "respostas": {
+  "ECO": {
+   "o_que_e": "O adaptador USB-serial devolve cada byte enviado (meia-duplex com eco). O original manda o quadro inteiro num único IRP_MJ_WRITE e depois lê N bytes de eco (N = tamanho do quadro) comparando byte a byte.",
+   "marca": "OBS-FIO (quadro inteiro num WRITE; eco no início da resposta) + OBS-COD (RE:0x00923608, laço de comparação em 0x009237EB..0x00923830)",
+   "tratamento": "divergência -> ComFail |= 0x08, zera o buffer, falha do comando -> Retry (RE:0x009226E4)"
+  },
+  "ACK_53": {
+   "o_que_e": "`53 n d1..dn ck`, ck = (0x53 + n + soma(d)) & 0xFF. O eco NÃO entra no checksum.",
+   "marca": "OBS-FIO (16 790 respostas, 100 % com checksum certo) + OBS-COD (ReadAck RE:0x00923860, VerifyCk RE:0x00923B30)",
+   "tratamento": "ReadAck só consome o byte 0x53; quem chama lê n, os dados e chama VerifyCk. Falha de checksum -> ComFail |= 0x10 -> Retry."
+  },
+  "NAK_CA": {
+   "o_que_e": "`CA s1 s2 ck`, ck = (0xCA + s1 + s2) & 0xFF. Na captura toda NAK é `CA 01 10 DB` (3 499 casos).",
+   "marca": "OBS-FIO (3 499 casos, todos `CA 01 10 DB`) + OBS-COD (RE:0x009239A1..0x00923A25)",
+   "tratamento": "s2 & 0x10 -> ComFail |= 0x04 (parâmetro não suportado, SEM retry; o objeto TAebNumber/Vector marca sucesso=1 e válido=0). Sem o bit 0x10 -> ComFail |= 0x02 (retry até 5). Checksum do NAK errado -> 0x22."
+  },
+  "RETRY_96": {
+   "o_que_e": "`96 b ck` (ECU ocupada).",
+   "marca": "OBS-COD (RE:0x0092392F..0x00923962); 0 ocorrências na captura -> comportamento não observado no fio",
+   "tratamento": "lê 1 byte + checksum; se ck ok: Sleep(+0x25C = 400 ms), ComFail |= 0x102 (retry); senão 0x22."
+  },
+  "OUTRO_BYTE": {
+   "o_que_e": "qualquer outro valor no lugar do ACK",
+   "marca": "OBS-COD (RE:0x00923A27..0x00923B1D); 0 ocorrências na captura",
+   "tratamento": "com reconexão automática ligada (+0x2BC) e conectado: Sleep(500), tenta Connect por até 2000 ms, Sleep(500); em qualquer caso ComFail |= 0x22 e falha. Sem reconexão automática: só ComFail |= 0x22."
+  },
+  "TIMEOUT": {
+   "o_que_e": "nenhum byte em 1000 ms (RC=1200 no SET_TIMEOUTS do Portmon: 1000 + 200 de folga da porta)",
+   "marca": "OBS-FIO (RC 1200 antes de toda leitura do ACK, RC 200 nos bytes seguintes; 2 timeouts reais, ambos em Serial1/COM sem ECU) + OBS-COD (+0x258 = 1000; a porta grava ComFail |= 1 se a leitura veio curta)",
+   "tratamento": "ComFail 0x01 -> Retry: até 5 reenvios do mesmo quadro (+0x260); depois, se +0x2BC: pergunta ao usuário (retorno 6 = Sim) e tenta Connect; senão marca desconectado e fecha a porta."
+  }
+ },
+ "retry": [
+  "Retry(self, &tentativa):                       # RE:0x009226E4",
+  "  se self.modo_sem_reconexao(+0x2BE):",
+  "      se ComFail & 0x100 e tentativa < +0x260: tentativa += 1; devolve VERDADEIRO",
+  "      devolve FALSO",
+  "  se ComFail == 0: devolve FALSO                # nada a refazer",
+  "  se ComFail & 0x44: devolve FALSO              # NAK \"não suportado\" ou reconexão falhou: sem retry",
+  "  se tentativa < +0x260 (=5): tentativa += 1; devolve VERDADEIRO",
+  "  se self.conectando(+0x2B1): devolve FALSO",
+  "  # esgotou: o enlace é dado como perdido",
+  "  conectado(+0x2B0) = FALSO; fecha a porta",
+  "  se self.reconexao_automatica(+0x2BC):          # padrão 0 (desligada)",
+  "      mostra diálogo Sim/Não (retorno 6 = Sim)",
+  "      se Sim: se Connect() ok: tentativa = 0; devolve VERDADEIRO",
+  "              senão ComFail |= 0x40",
+  "      conectado = FALSO; fecha a porta",
+  "  dispara OnConnect(conectado, ComFail)",
+  "  devolve FALSO"
+ ],
+ "sendcommand_chamadores": [
+  {
+   "codigo": "0x04",
+   "endereco": "0x0043C761",
+   "dono": "função grande RE:0x00439E94 (sem nome RTTI)"
+  },
+  {
+   "codigo": "0x0B",
+   "endereco": "0x0092929A",
+   "dono": "ScaricaFile RE:0x00928E78"
+  },
+  {
+   "codigo": "0x0E",
+   "endereco": "0x00485DEC",
+   "dono": "TFormCalibra.TimerBlinkTimer"
+  },
+  {
+   "codigo": "0x0E",
+   "endereco": "0x00486A5D",
+   "dono": "TFormCalibra.FormKeyPress"
+  },
+  {
+   "codigo": "0x10",
+   "endereco": "0x00486AAD",
+   "dono": "TFormCalibra.FormKeyPress"
+  },
+  {
+   "codigo": "0x11",
+   "endereco": "0x0043A265",
+   "dono": "função grande RE:0x00439E94"
+  },
+  {
+   "codigo": "0x12",
+   "endereco": "0x0042B8A3",
+   "dono": "RE:0x0042B834"
+  },
+  {
+   "codigo": "0x12",
+   "endereco": "0x0048031D",
+   "dono": "RE:0x00439E94"
+  },
+  {
+   "codigo": "0x12",
+   "endereco": "0x0048640B",
+   "dono": "TFormCalibra.TimerBlinkTimer"
+  },
+  {
+   "codigo": "0x12",
+   "endereco": "0x004B0998",
+   "dono": "TFormConfig.ButtonRicercaParametriClick"
+  },
+  {
+   "codigo": "0x12",
+   "endereco": "0x004FBC64",
+   "dono": "RE:0x004FBA40"
+  },
+  {
+   "codigo": "0x13",
+   "endereco": "0x00486B6A",
+   "dono": "TFormCalibra.FormKeyPress"
+  },
+  {
+   "codigo": "0x14",
+   "endereco": "0x004857ED",
+   "dono": "TFormCalibra.TimerBlinkTimer"
+  },
+  {
+   "codigo": "0x15",
+   "endereco": "0x004846EA",
+   "dono": "RE:0x00482F34"
+  },
+  {
+   "codigo": "0x15",
+   "endereco": "0x004858AD",
+   "dono": "TFormCalibra.TimerBlinkTimer"
+  },
+  {
+   "codigo": "0x15",
+   "endereco": "0x00485EAB",
+   "dono": "TFormCalibra.TimerBlinkTimer"
+  },
+  {
+   "codigo": "0x15",
+   "endereco": "0x00486C65",
+   "dono": "TFormCalibra.FormKeyPress"
+  },
+  {
+   "codigo": "0x21",
+   "endereco": "0x004D7952",
+   "dono": "TFormDiagnosi.PanelTestOnClick"
+  },
+  {
+   "codigo": "0x21",
+   "endereco": "0x004D7A36",
+   "dono": "TFormDiagnosi.PanelTestOnClick"
+  },
+  {
+   "codigo": "0x21",
+   "endereco": "0x004D7CF0",
+   "dono": "TFormDiagnosi.PanelTestOffClick"
+  },
+  {
+   "codigo": "0x24",
+   "endereco": "0x005122D6",
+   "dono": "AutoCal: ação (RE:0x00512280)"
+  },
+  {
+   "codigo": "0x24",
+   "endereco": "0x00512350",
+   "dono": "AutoCal: 01 24 05 (RE:0x00512300)"
+  },
+  {
+   "codigo": "0x26",
+   "endereco": "0x00434610",
+   "dono": "RE:0x0043457C"
+  },
+  {
+   "codigo": "0x27",
+   "endereco": "0x004A5E75",
+   "dono": "TFormConfig.TimerDatiTimer"
+  },
+  {
+   "codigo": "0x27",
+   "endereco": "0x004A628C",
+   "dono": "TFormConfig.CheckInjAcquisitionClick"
+  },
+  {
+   "codigo": "0x27",
+   "endereco": "0x004A6319",
+   "dono": "TFormConfig.ButtonSequenceAcquisitionClick"
+  },
+  {
+   "codigo": "0x27",
+   "endereco": "0x004A6548",
+   "dono": "TFormConfig.EditRpmTachimetroKeyPress"
+  },
+  {
+   "codigo": "0x27",
+   "endereco": "0x004C940E",
+   "dono": "TFormConfig.ButtonSwitchSettingsClick"
+  },
+  {
+   "codigo": "0x27",
+   "endereco": "0x004C94D3",
+   "dono": "TFormConfig.ButtonSwitchSettingsClick"
+  },
+  {
+   "codigo": "0x28",
+   "endereco": "0x004EDA8E",
+   "dono": "TFormLandiConnect.ButtonResetClick"
+  },
+  {
+   "codigo": "var",
+   "endereco": "0x00412916..0x00413094",
+   "dono": "TFormSwitch (código vem da propriedade +0x3D8; ComboBuzzerKeyPress)"
+  }
+ ],
+ "comandos": [
+  {
+   "id": "wake",
+   "nome": "Sonda de descoberta (00 a 38400 baud)",
+   "grupo": "handshake",
+   "quadro": "`00` (1 byte; sem checksum e SEM eco)",
+   "resposta_esperada": [
+    "`80` (1 byte, sem eco) = ECU presente",
+    "timeout (RC 200 ms) = nada na porta"
+   ],
+   "tratamento_original": "DESCONHECIDO: a rotina que envia este byte não foi localizada no executável (não está em TAebProtocol). Visto 2x: Serial1/COM sem ECU -> timeout (linha 32); Silabser0 -> `80` (linha 70). Depois o ProgBase fecha a porta e reabre a 9600.",
+   "rotina": "DESCONHECIDA",
+   "marca": "OBS-FIO (envio/resposta); DESCONHECIDO (rotina)",
+   "omegas": {
+    "usa": "nao",
+    "nota": "o app abre direto a 9600 e começa por `00 02 02`"
+   },
+   "no_log": {
+    "total": 2,
+    "classes": {
+     "SEM_RESPOSTA": 1,
+     "WAKE_80": 1
+    },
+    "primeira_linha": 32,
+    "exemplo": {
+     "req": "00",
+     "resp": ""
+    }
+   }
+  },
+  {
+   "id": "ident",
+   "nome": "GetIdentification",
+   "grupo": "identificacao",
+   "quadro": "`00 02 02` (b0=0 bytes de carga, b1=0x02, ck)",
+   "resposta_esperada": [
+    "`53 04 b0 b1 b2 b3 ck` (n=4) — observado `53 04 FE 4F 45 0B F4`",
+    "`53 06 ... ck` (n=6: dois bytes extras lidos)",
+    "NAK/timeout -> Retry"
+   ],
+   "tratamento_original": "RE:0x00923DA4: ReadAck; n=ReadByte; com buffer: lê 4 bytes (6 se n==6) em b0..b3(+b4,b5); sem buffer: lê e descarta n bytes; VerifyCk; falha -> Retry. O Connect de alto nível (RE:0x00927D80) interpreta b1==3 como \"ECU no bootloader\", b2=família, b3&0x7F=versão de hardware, b3&0x80=flash duplo — só em modo boot; em modo aplicação a ECU capturada devolveu FE 4F 45 0B.",
+   "rotina": "RE:0x00923DA4 (GetIdentification)",
+   "marca": "OBS-FIO (4 ocorrências, 3 ACK + 1 timeout em COM); OBS-COD (rotina)",
+   "omegas": {
+    "usa": "sim",
+    "ref": "Mp48Protocol.kt CMD_INIT_1"
+   },
+   "no_log": {
+    "total": 4,
+    "classes": {
+     "ACK_53": 3,
+     "SEM_RESPOSTA": 1
+    },
+    "primeira_linha": 108,
+    "exemplo": {
+     "req": "00 02 02",
+     "resp": ""
+    }
+   }
+  },
+  {
+   "id": "connect",
+   "nome": "Connect",
+   "grupo": "handshake",
+   "quadro": "`01 00 3A ck` (3B) — b0=1 byte de carga, b1=0x00, carga 0x3A",
+   "resposta_esperada": [
+    "`53 00 53`",
+    "NAK `CA 01 08` visto só na reconexão de outra captura (doc 17 protocolo-landi)"
+   ],
+   "tratamento_original": "RE:0x00923FDC: zera versão (+0x2C4=0); marca conectando(+0x2B1)=1; laço de Retry: envia Connect, ReadAck, ReadByte(n), VerifyCk. Sem ComFail -> conectado(+0x2B0)=1 e segue para GetProtocolVersion. Falha -> conectado=0 e, se +0x2BF, fecha a porta. Dispara OnConnect.",
+   "rotina": "RE:0x00923FDC (Connect)",
+   "marca": "OBS-FIO (4x, todas ACK); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "Mp48Protocol.kt CMD_INIT_2"
+   },
+   "no_log": {
+    "total": 4,
+    "classes": {
+     "ACK_53": 4
+    },
+    "primeira_linha": 176,
+    "exemplo": {
+     "req": "01 00 3A 3B",
+     "resp": "01 00 3A 3B 53 00 53"
+    }
+   }
+  },
+  {
+   "id": "versao",
+   "nome": "GetProtocolVersion (ProtocolCommand 0x25)",
+   "grupo": "handshake",
+   "quadro": "`00 25 25` (byte do comando = +0x2C9, padrão 0x25)",
+   "resposta_esperada": [
+    "`53 01 vv ck` — observado `53 01 02 56` (versão 2)"
+   ],
+   "tratamento_original": "dentro do Connect (RE:0x00924112..0x009241A6): lê n, aloca n dwords, lê n bytes, VerifyCk; se ok ProtocolVersion(+0x2C4) = 1º byte. Define TODO o endereçamento seguinte.",
+   "rotina": "RE:0x00923FDC (trecho GetProtocolVersion)",
+   "marca": "OBS-FIO (4x, versão 2); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "Mp48Protocol.kt CMD_IDENTIFY (nome enganoso: é a versão do protocolo)"
+   },
+   "no_log": {
+    "total": 4,
+    "classes": {
+     "ACK_53": 4
+    },
+    "primeira_linha": 196,
+    "exemplo": {
+     "req": "00 25 25",
+     "resp": "00 25 25 53 01 02 56"
+    }
+   }
+  },
+  {
+   "id": "disconnect",
+   "nome": "Disconnect",
+   "grupo": "handshake",
+   "quadro": "`00 01 01`",
+   "resposta_esperada": [
+    "`53 00 53`"
+   ],
+   "tratamento_original": "RE:0x00924324: UMA tentativa, sem Retry. Depois conectado=0, versão=0, fecha a porta se +0x2BF, dispara OnConnect(0).",
+   "rotina": "RE:0x00924324 (Disconnect)",
+   "marca": "OBS-FIO (3x); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "Mp48Protocol.kt CMD_DISCONNECT"
+   },
+   "no_log": {
+    "total": 3,
+    "classes": {
+     "ACK_53": 3
+    },
+    "primeira_linha": 340,
+    "exemplo": {
+     "req": "00 01 01",
+     "resp": "00 01 01 53 00 53"
+    }
+   }
+  },
+  {
+   "id": "getnumber",
+   "nome": "GetNumber (escalar)",
+   "grupo": "leitura",
+   "quadro": "v2: `09 lo hi ck`; v0/v1: `08 end ck` (v1: end>=0xFF vira `FF (end+1)&FF`)",
+   "resposta_esperada": [
+    "`53 n valor ck` com n == tamanho do elemento (1, 2 ou 4); valor little-endian, com sinal se Signed",
+    "NAK `CA 01 10 DB` = SerialCode inexistente nesta ECU"
+   ],
+   "tratamento_original": "RE:0x00924994. Se n != tamanho: lê e descarta n bytes, VerifyCk, ComFail |= 0x8020 e devolve FALSO SEM retry. NAK com bit 0x10 -> ComFail 4 (sem retry; TAebNumber marca válido=0). Demais falhas -> Retry (5x).",
+   "rotina": "RE:0x00924994",
+   "marca": "OBS-FIO (502 pedidos: 460 ACK, 42 NAK); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "AutoCalProtocol.kt READ_SCALAR"
+   },
+   "no_log": {
+    "total": 502,
+    "classes": {
+     "ACK_53": 460,
+     "NAK_CA": 42
+    },
+    "primeira_linha": 246,
+    "exemplo": {
+     "req": "09 33 00 3C",
+     "resp": "09 33 00 3C 53 02 00 00 55"
+    }
+   }
+  },
+  {
+   "id": "getnumber_idx",
+   "nome": "GetNumber + índice (elemento de vetor)",
+   "grupo": "leitura",
+   "quadro": "v2: `0A lo hi idx ck`; v0/v1: `09 end idx ck`",
+   "resposta_esperada": [
+    "igual ao GetNumber"
+   ],
+   "tratamento_original": "RE:0x00924C74 (mesma lógica de tamanho/retry). Atenção: mesmo quadro do GetElementDimension de vetor.",
+   "rotina": "RE:0x00924C74",
+   "marca": "OBS-FIO (299: 251 ACK, 48 NAK); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "AutoCalProtocol.kt READ_INDEXED"
+   },
+   "no_log": {
+    "total": 299,
+    "classes": {
+     "ACK_53": 251,
+     "NAK_CA": 48
+    },
+    "primeira_linha": 582,
+    "exemplo": {
+     "req": "0A 73 01 00 7E",
+     "resp": "0A 73 01 00 7E 53 01 04 58"
+    }
+   }
+  },
+  {
+   "id": "getnumber_2",
+   "nome": "GetNumber + linha + coluna (elemento de matriz)",
+   "grupo": "leitura",
+   "quadro": "v2: `0B lo hi linha coluna ck`; v0/v1: `0A end linha coluna ck` (1º byte extra = linha, 2º = coluna)",
+   "resposta_esperada": [
+    "igual ao GetNumber"
+   ],
+   "tratamento_original": "RE:0x00924F60. NOTA: o doc 06 do protocolo-landi chamava os extras de \"sub/idx\"; no código o 1º byte extra é RowIndex (+0x50) e o 2º ColIndex (+0x4C).",
+   "rotina": "RE:0x00924F60",
+   "marca": "OBS-COD; 0 ocorrências na captura (nenhum objeto lido assim)",
+   "omegas": {
+    "usa": "parcial",
+    "ref": "AebProtocolFramesV7.kt getNumber(address,row,column), sem uso comprovado em runtime"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "getvector",
+   "nome": "GetVector (vetor inteiro)",
+   "grupo": "leitura",
+   "quadro": "v2: `29 lo hi ck`; v0/v1: `28 end ck`",
+   "resposta_esperada": [
+    "`53 n d... ck`, n = dimensão x tamanho (ex. 60 = 30 x u16); NAK se SerialCode inexistente"
+   ],
+   "tratamento_original": "RE:0x00925258: lê n; se n == 4*cont... (elemento 4/2/1 B) copia; n incompatível -> ComFail 0x8020 sem retry. A dimensão esperada vem do objeto (ArrayDimension); a ECU capturada devolve 30 elementos nos vetores AutoCal cujo DFM diz 18 (vetores.json: tamanho_confere_com_dfm=false).",
+   "rotina": "RE:0x00925258",
+   "marca": "OBS-FIO (1 556: 1 502 ACK, 54 NAK); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "AutoCalProtocol.kt READ_VECTOR; Mp48Protocol.kt"
+   },
+   "no_log": {
+    "total": 1556,
+    "classes": {
+     "ACK_53": 1502,
+     "NAK_CA": 54
+    },
+    "primeira_linha": 508,
+    "exemplo": {
+     "req": "29 03 00 2C",
+     "resp": "29 03 00 2C 53 04 86 24 51 10 62"
+    }
+   }
+  },
+  {
+   "id": "getvector_row",
+   "nome": "GetVector + linha (uma linha de matriz)",
+   "grupo": "leitura",
+   "quadro": "v2: `2A lo hi linha ck`; v0/v1: `29 end linha ck`",
+   "resposta_esperada": [
+    "`53 n d... ck`, n = colunas x tamanho (ex. MAP_K: 12)"
+   ],
+   "tratamento_original": "RE:0x00925570 (igual ao GetVector).",
+   "rotina": "RE:0x00925570",
+   "marca": "OBS-FIO (207: 189 ACK, 18 NAK); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "Mp48Protocol.kt readKRow"
+   },
+   "no_log": {
+    "total": 207,
+    "classes": {
+     "ACK_53": 189,
+     "NAK_CA": 18
+    },
+    "primeira_linha": 1218,
+    "exemplo": {
+     "req": "2A 54 00 00 7E",
+     "resp": "2A 54 00 00 7E 53 0C A2 A2 A2 A2 A2 A2 A2 A2 A2 A2 A2 A2 F7"
+    }
+   }
+  },
+  {
+   "id": "getpacket",
+   "nome": "GetPacket (canal de dados em tempo real)",
+   "grupo": "leitura",
+   "quadro": "`48 canal ck`",
+   "resposta_esperada": [
+    "`53 n d... ck` — canal 01: 34 bytes (telemetria); canal 0B: 14 bytes (status AutoCal)",
+    "NAK `CA 01 10 DB` no canal 08 (3 334x) = canal não implementado nesta ECU"
+   ],
+   "tratamento_original": "RE:0x00925894: n é lido com MOVSX (byte com sinal) -> pacotes > 127 B não seriam suportados; copia min(n, buffer); n > buffer -> ComFail 0x8020 sem retry. NAK (0x10) sem retry: o 48 08 repete 3 334x porque o relógio da tela o pede sempre.",
+   "rotina": "RE:0x00925894",
+   "marca": "OBS-FIO (12 765: canal 01 x9 408, 08 x3 334 NAK, 0B x23); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "Mp48Protocol.kt CMD_TELEMETRY/CMD_SECONDARY_STATUS; AutoCalProtocol.kt CMD_NATIVE_STATUS"
+   },
+   "no_log": {
+    "total": 12765,
+    "classes": {
+     "ACK_53": 9431,
+     "NAK_CA": 3334
+    },
+    "primeira_linha": 14544,
+    "exemplo": {
+     "req": "48 0B 53",
+     "resp": "48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 01 03 65"
+    }
+   }
+  },
+  {
+   "id": "getbyaddr",
+   "nome": "GetByAddress (memória por endereço)",
+   "grupo": "leitura",
+   "quadro": "`6A flags a_lo a_hi ck` (endereço 16 bits) ou `6C flags a0 a1 a2 a3 ck` (32 bits). flags: bit7=valor 16 bits, bit5=endereço 32 bits",
+   "resposta_esperada": [
+    "`53 n valor ck` (n lido e IGNORADO; valor de 1 ou 2 bytes conforme flags, devolvido com extensão de sinal)"
+   ],
+   "tratamento_original": "RE:0x009259C4. Não confere n com o tamanho pedido.",
+   "rotina": "RE:0x009259C4",
+   "marca": "OBS-COD; 0 ocorrências na captura",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "elemdim",
+   "nome": "GetElementDimension",
+   "grupo": "leitura",
+   "quadro": "v2: número `09 lo hi`, vetor `0A lo hi 00`, matriz `0B lo hi 00 00` (v0/v1: 08/09/0A)",
+   "resposta_esperada": [
+    "igual ao GetNumber: o tamanho n da resposta é a \"dimensão\""
+   ],
+   "tratamento_original": "RE:0x00926730: lê n e descarta; devolve -1 (sem porta), -3 (endereço fora da faixa), -2 (falha). No fio é INDISTINGUÍVEL de GetNumber+idx(0).",
+   "rotina": "RE:0x00926730",
+   "marca": "OBS-COD; chamado por RE:0x0045C16D/0x0045C61A/0x0047F4D1 (tela TFormConfig); não separável no fio",
+   "omegas": {
+    "usa": "nao"
+   }
+  },
+  {
+   "id": "setnumber",
+   "nome": "SetNumber (escalar / elemento de vetor / elemento de matriz)",
+   "grupo": "escrita",
+   "quadro": "op = 0x10 | carga (carga < 7), carga = tamanho do valor (1,2,4) + 1 (v2: byte alto do endereço) + 1 (índice) ou +2 (linha+coluna). v2 sem índice, 1 B: `12 lo hi val ck`; 2 B: `13`; 4 B: `15`. Com índice: `13 lo hi idx val`; com linha+coluna: `14 lo hi linha coluna val`. carga >= 7: op `17`, depois `carga+1` (RE:0x00925BF5..0x00925C59)",
+   "resposta_esperada": [
+    "`53 00 53` (n=0, SEM byte de resultado — corrige o doc 07 do protocolo-landi)",
+    "NAK -> Retry/erro"
+   ],
+   "tratamento_original": "RE:0x00925AFC/0x00925D18/0x00925F44: ReadAck; ReadByte (n, ignorado); VerifyCk; falha -> Retry. Porta fechada ou sem Connect: devolve VERDADEIRO sem enviar nada. O quadro sozinho é AMBÍGUO: `14 lo hi a b c` = (linha,coluna,valor 1 B) OU (idx, valor 2 B); só o objeto desambigua.",
+   "rotina": "RE:0x00925AFC, 0x00925D18, 0x00925F44",
+   "marca": "OBS-FIO (op 12 x4, 14 x216; todos `53 00 53`); OBS-COD",
+   "omegas": {
+    "usa": "sim",
+    "ref": "AutoCalProtocol.kt frameWriteU8/U16, Mp48Protocol.kt writeKCell"
+   },
+   "no_log": {
+    "total": 220,
+    "classes": {
+     "ACK_53": 220
+    },
+    "primeira_linha": 48568,
+    "exemplo": {
+     "req": "14 54 00 00 00 64 CC",
+     "resp": "14 54 00 00 00 64 CC 53 00 53"
+    }
+   }
+  },
+  {
+   "id": "setvector",
+   "nome": "SetVector (vetor inteiro ou linha)",
+   "grupo": "escrita",
+   "quadro": "op = 0x30 | carga (carga < 7), carga = dim x tamanho + 1 (v2) (+1 com linha); `35 lo hi d1 d2 d3 d4 ck` p.ex. FLAG_CONF1. carga >= 7: op `37`, `carga+1`, endereço, [linha], dados",
+   "resposta_esperada": [
+    "`53 00 53`"
+   ],
+   "tratamento_original": "RE:0x0092617C (inteiro) / RE:0x009263B0 (+linha): mesmo fluxo do SetNumber.",
+   "rotina": "RE:0x0092617C, 0x009263B0",
+   "marca": "OBS-FIO (op 35 x19, todas `53 00 53`); OBS-COD; op 37 sem ocorrência na captura",
+   "omegas": {
+    "usa": "sim",
+    "ref": "AutoCalProtocol.kt WRITE_VECTOR_EXTENDED; Mp48Protocol.kt kInsertionMode"
+   },
+   "no_log": {
+    "total": 19,
+    "classes": {
+     "ACK_53": 19
+    },
+    "primeira_linha": 31284,
+    "exemplo": {
+     "req": "35 03 00 86 2C 51 10 4B",
+     "resp": "35 03 00 86 2C 51 10 4B 53 00 53"
+    }
+   }
+  },
+  {
+   "id": "setbyaddr",
+   "nome": "SetByAddress",
+   "grupo": "escrita",
+   "quadro": "`73 flags a_lo a_hi val` (8 bits/end16), `74 ... v_lo v_hi`, `75 flags a0..a3 val`, `76 flags a0..a3 v_lo v_hi`",
+   "resposta_esperada": [
+    "`53 00 53`"
+   ],
+   "tratamento_original": "RE:0x009265F8 (mesmo fluxo).",
+   "rotina": "RE:0x009265F8",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "sendcommand",
+   "nome": "SendCommand genérico (b0 = nº de bytes de carga, b1 = código)",
+   "grupo": "sistema",
+   "quadro": "`n cmd c1..cn ck` com n<7; n>=7: `07 cmd (n+1) c1..cn ck`",
+   "resposta_esperada": [
+    "`53 m d1..dm ck` (m bytes devolvidos ao chamador)"
+   ],
+   "tratamento_original": "RE:0x009244C8: ReadAck; m=ReadByte; copia min(m, buffer); *tamanho=m; VerifyCk; falha -> Retry. Usado pela interface (TFormCalibra, TFormConfig, TFormDiagnosi, TFormLandiConnect, TFormSwitch) com os códigos 04,0E,10,11,12,13,14,15,21,24,26,27,28 e a variável de TFormSwitch.",
+   "rotina": "RE:0x009244C8",
+   "marca": "OBS-COD",
+   "omegas": {
+    "usa": "parcial"
+   }
+  },
+  {
+   "id": "cmd_12",
+   "nome": "Comando 0x12 (carga 00)",
+   "grupo": "sistema",
+   "quadro": "`01 12 00 13`",
+   "resposta_esperada": [
+    "`53 00 53`"
+   ],
+   "tratamento_original": "SendCommand(0x12). Chamadores: RE:0x0042B8A3, 0x0048031D (TFormConfig/TFormMain), 0x0048640B (TFormCalibra.TimerBlinkTimer), 0x004B0998 (TFormConfig.ButtonRicercaParametriClick), 0x004FBC64. Na captura aparece sempre imediatamente antes do Disconnect `00 01 01` (linhas 434818 e 1102680). Significado: INFERIDO \"encerrar modo de edição/liberar a ECU\"; DESCONHECIDO o efeito na ECU.",
+   "rotina": "RE:0x009244C8",
+   "marca": "OBS-FIO (2x); significado INFERIDO",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 2,
+    "classes": {
+     "ACK_53": 2
+    },
+    "primeira_linha": 434818,
+    "exemplo": {
+     "req": "01 12 00 13",
+     "resp": "01 12 00 13 53 00 53"
+    }
+   }
+  },
+  {
+   "id": "cmd_13",
+   "nome": "Comando 0x13 (sem carga)",
+   "grupo": "sistema",
+   "quadro": "`00 13 13`",
+   "resposta_esperada": [
+    "`53 00 53`"
+   ],
+   "tratamento_original": "SendCommand(0x13). Chamador no código: RE:0x00486B6A (TFormCalibra.FormKeyPress = tecla na tela de calibração). Seis ocorrências na captura, em sequência com o polling da tela. Efeito DESCONHECIDO.",
+   "rotina": "RE:0x009244C8",
+   "marca": "OBS-FIO (6x); OBS-COD (chamador)",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 6,
+    "classes": {
+     "ACK_53": 6
+    },
+    "primeira_linha": 103458,
+    "exemplo": {
+     "req": "00 13 13",
+     "resp": "00 13 13 53 00 53"
+    }
+   }
+  },
+  {
+   "id": "cmd_14",
+   "nome": "Comando 0x14 (sem carga) — polling da calibração",
+   "grupo": "sistema",
+   "quadro": "`00 14 14`",
+   "resposta_esperada": [
+    "`53 02 02 00 57` (2 bytes de dados `02 00`, valor constante em 4 693/4 693)"
+   ],
+   "tratamento_original": "SendCommand(0x14). Chamador: RE:0x004857ED (TFormCalibra.TimerBlinkTimer = relógio da tela de calibração). É o comando mais frequente depois do 48 01. Significado DESCONHECIDO (resposta constante).",
+   "rotina": "RE:0x009244C8",
+   "marca": "OBS-FIO (4 693x, resposta única); OBS-COD (chamador)",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 4693,
+    "classes": {
+     "ACK_53": 4693
+    },
+    "primeira_linha": 103566,
+    "exemplo": {
+     "req": "00 14 14",
+     "resp": "00 14 14 53 02 02 00 57"
+    }
+   }
+  },
+  {
+   "id": "cmd_04",
+   "nome": "Comando 0x04 (carga 54)",
+   "grupo": "sistema",
+   "quadro": "`01 04 54 59`",
+   "resposta_esperada": [
+    "NAK `CA 01 10 DB` (3/3)"
+   ],
+   "tratamento_original": "SendCommand(0x04) (RE:0x0043C761). A ECU capturada NÃO implementa o comando: NAK com bit 0x10 -> ComFail 4, sem retry. Enviado uma vez no início de cada sessão longa (linhas 992, 435194, 1103056).",
+   "rotina": "RE:0x009244C8",
+   "marca": "OBS-FIO (3x NAK); finalidade DESCONHECIDA",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 3,
+    "classes": {
+     "NAK_CA": 3
+    },
+    "primeira_linha": 992,
+    "exemplo": {
+     "req": "01 04 54 59",
+     "resp": "01 04 54 59 CA 01 10 DB"
+    }
+   }
+  },
+  {
+   "id": "setduty",
+   "nome": "SetDuty (teste de saída por PWM)",
+   "grupo": "sistema",
+   "quadro": "`02 05 id valor ck` (valor >= 0) ou `01 05 id ck` (valor < 0)",
+   "resposta_esperada": [
+    "`53 00 53`"
+   ],
+   "tratamento_original": "RE:0x00924708 (id em dl, valor em ecx). Nome herdado do doc 12; o significado exato é INFERIDO.",
+   "rotina": "RE:0x00924708",
+   "marca": "OBS-COD; 0 ocorrências na captura",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "setbaud",
+   "nome": "SetEcuBaudRate (hardware antigo)",
+   "grupo": "sistema",
+   "quadro": "`02 03 hi lo ck`, valor = 8 000 000 / (baud x 16) em 16 bits, ALTO primeiro",
+   "resposta_esperada": [
+    "`53 00 53`"
+   ],
+   "tratamento_original": "RE:0x009247F0; usado no flash (RE:0x00928E78) e em RE:0x00927D80.",
+   "rotina": "RE:0x009247F0",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "setnewbaud",
+   "nome": "SetNewEcuBaudRate (hardware novo)",
+   "grupo": "sistema",
+   "quadro": "`02 19 hi lo ck`, valor = baud / 2 em 16 bits, ALTO primeiro; baud em [1200, 115200]",
+   "resposta_esperada": [
+    "`53 00 53`"
+   ],
+   "tratamento_original": "RE:0x009248B0 (recusa baud fora da faixa sem enviar).",
+   "rotina": "RE:0x009248B0",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "autocal_acao",
+   "nome": "Ação AutoCal (02 24 04 modo)",
+   "grupo": "acao",
+   "quadro": "`02 24 04 modo ck` — modo 1=gasolina, 2=GNV, 4=Reset all, 8=automatch manual",
+   "resposta_esperada": [
+    "`53 00 53` (a ECU executa na hora; o efeito aparece nos vetores AutoCal lidos em seguida)"
+   ],
+   "tratamento_original": "RE:0x00512280 (portão IsConnect RE:0x00512264; devolve 0 ok, 1 falha de envio, 2 sem conexão). Chamado por CommonAction RE:0x00517568, que antes pede confirmação ao usuário e depois espera 1 s (Sleep 1000) e recarrega a tela. Só o modo 04 foi visto no fio (linha 69944); 01/02/08 vêm do código/doc 17.",
+   "rotina": "RE:0x00512280",
+   "marca": "OBS-FIO (modo 04 x1); OBS-COD (envio e portão); modos 01/02/08 INFERIDO",
+   "omegas": {
+    "usa": "sim",
+    "ref": "AutoCalProtocol.kt manualAction"
+   },
+   "no_log": {
+    "total": 1,
+    "classes": {
+     "ACK_53": 1
+    },
+    "primeira_linha": 69944,
+    "exemplo": {
+     "req": "02 24 04 04 2E",
+     "resp": "02 24 04 04 2E 53 00 53"
+    }
+   }
+  },
+  {
+   "id": "autocal_05",
+   "nome": "Ação AutoCal 01 24 05",
+   "grupo": "acao",
+   "quadro": "`01 24 05 2A`",
+   "resposta_esperada": [
+    "`53 00 53` (esperado)"
+   ],
+   "tratamento_original": "RE:0x00512300, chamado por RE:0x00512858 depois de gravar dois vetores de flags por ponto (TAutoCalSettings). Nunca visto no fio.",
+   "rotina": "RE:0x00512300",
+   "marca": "OBS-COD; 0 ocorrências; efeito DESCONHECIDO",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "cancflash",
+   "nome": "Cancflash (apaga flash)",
+   "grupo": "flash",
+   "quadro": "`00 09 09`",
+   "resposta_esperada": [
+    "`53 m st ck` (st = status com sinal)"
+   ],
+   "tratamento_original": "RE:0x009282B0: troca o timeout de leitura para +0x2B8 (8000 ms), envia, lê m e st, VerifyCk, restaura; falha de todas as tentativas -> -2. Chamado só pelo download de firmware (RE:0x00929315, 0x0092A00E).",
+   "rotina": "RE:0x009282B0",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "exitboot_nf",
+   "nome": "ExitBootNotForced",
+   "grupo": "flash",
+   "quadro": "`00 0A 0A`",
+   "resposta_esperada": [
+    "`53 m st ck`"
+   ],
+   "tratamento_original": "RE:0x00928200.",
+   "rotina": "RE:0x00928200",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "exitboot",
+   "nome": "ExitBoot (forçado)",
+   "grupo": "flash",
+   "quadro": "`00 0B 0B`",
+   "resposta_esperada": [
+    "`53 m st ck`"
+   ],
+   "tratamento_original": "RE:0x00928150; também via SendCommand(0x0B) em RE:0x0092929A (limpeza após falha no download).",
+   "rotina": "RE:0x00928150",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "progflash",
+   "nome": "Progflash (entra em programação)",
+   "grupo": "flash",
+   "quadro": "`93 93` (1 byte + ck)",
+   "resposta_esperada": [
+    "`A7 A7` (byte A7 e o mesmo valor como checksum)"
+   ],
+   "tratamento_original": "RE:0x0092839C: 4 tentativas; lê 1 byte em 1000 ms, depois outro em 0 ms; exige igual e == 0xA7.",
+   "rotina": "RE:0x0092839C",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "endflash",
+   "nome": "Endflash",
+   "grupo": "flash",
+   "quadro": "`85 85`",
+   "resposta_esperada": [
+    "`53 53`"
+   ],
+   "tratamento_original": "RE:0x0092845C: 4 tentativas; ok se o byte lido == 0x53; fecha a porta e marca desconectado.",
+   "rotina": "RE:0x0092845C",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "flash_linha",
+   "nome": "Linha de firmware (S-record em texto -> binário)",
+   "grupo": "flash",
+   "quadro": "`53 31 cnt addr_hi addr_lo dados.. srec_ck` (a linha ASCII do arquivo vira bytes; 1ª letra e tipo vão como ASCII, o resto em pares hexa). EOF: `53 39 03 FF FF FE`. Sem checksum adicional do protocolo.",
+   "resposta_esperada": [
+    "`A7 A7` (linha aceita) ou `53 53`"
+   ],
+   "tratamento_original": "RE:0x009285A8 (linhas) e RE:0x00928968 (fim): até 8 tentativas por linha, resposta em 200 ms; falha -> restaura o baud, Disconnect, devolve -1000. Fluxo completo em RE:0x00928E78 (ScaricaFile).",
+   "rotina": "RE:0x009285A8, 0x00928968, 0x00928E78",
+   "marca": "OBS-COD; 0 ocorrências (a captura não tem flash)",
+   "omegas": {
+    "usa": "nao"
+   }
+  },
+  {
+   "id": "v01_getnumber",
+   "nome": "GetNumber v0/v1 (endereço de 1 byte)",
+   "grupo": "leitura",
+   "quadro": "`08 end ck` / v1 estendido `08 FF (end+1) ck`",
+   "resposta_esperada": [
+    "igual ao GetNumber v2"
+   ],
+   "tratamento_original": "mesmas rotinas; só o formato do endereço muda (RE:0x00924A58 base 8; +1 se versão >= 2). Limites: end >= 0xFF com versão 0 -> ComFail 4; end >= 0x1FF com versão < 2 -> ComFail 0x20. Corrige o doc 04: o limiar é 0xFF (não 0xFE) e não há colisão FE/1FE.",
+   "rotina": "RE:0x00924994",
+   "marca": "OBS-COD; 0 ocorrências (a ECU capturada é versão 2)",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  },
+  {
+   "id": "v01_getvector",
+   "nome": "GetVector v0/v1",
+   "grupo": "leitura",
+   "quadro": "`28 end ck`",
+   "resposta_esperada": [
+    "igual ao GetVector v2"
+   ],
+   "tratamento_original": "RE:0x00925258 com versão < 2.",
+   "rotina": "RE:0x00925258",
+   "marca": "OBS-COD; 0 ocorrências",
+   "omegas": {
+    "usa": "nao"
+   },
+   "no_log": {
+    "total": 0,
+    "classes": {},
+    "primeira_linha": null,
+    "exemplo": null
+   }
+  }
+ ]
+}

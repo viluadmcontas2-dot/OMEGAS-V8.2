@@ -437,7 +437,6 @@ class Sessao:
             self.m.uc.mem_write(self.m.sd + off, (val & ((1 << (8 * sz)) - 1)).to_bytes(sz, 'little'))
         self._ui_hooks()
         self._dll_personalizacao()
-        self._amarrar()
         self._snap = None
         self.forma = {}
         for o in self.sd_idx.values():
@@ -464,6 +463,14 @@ class Sessao:
             mm.efeitos.append(('texto', mm.controle_de.get(r['eax'], hex(r['eax'])), mm.ctx.string_em(r['edx']) if r['edx'] else ''))
             return 0
         m.hook(0x7EE0E0, set_text, 0)
+
+        def num_para_texto(mm, r, a):   # FloatToStr/IntToStr(dest, valor) cdecl: texto vazio (não afeta o dado enviado)
+            esp = mm.uc.reg_read(mm.X.UC_X86_REG_ESP)
+            dest = mm.r32(esp + 4)
+            mm.w32(dest, 0)
+            return dest
+        for ad in (0xA4ED60, 0x4080D4):
+            m.hook(ad, num_para_texto, 0)
 
         def nada(mm, r, a):
             return 0
@@ -541,6 +548,7 @@ class Sessao:
             m.w8(m.sd + 0x271D, modelo)
         for off, (sz, val) in (estado or {}).items():
             m.uc.mem_write(m.sd + off, (val & ((1 << (8 * sz)) - 1)).to_bytes(sz, 'little'))
+        self._amarrar()          # a amarração depende de [SD+0x80D] (família): roda a cada cenário
         return m
 
     # -------------------------------------------------------------- execução de um handler

@@ -21,14 +21,14 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonExitClick` | 0x00412B30 | 6 | INFERIDO | Ao clicar em ButtonExit «Sair»: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
+| `ButtonExitClick` | 0x00412B30 | 6 | OBS-COD | Botão Sair (6 B): fecha. OBS-COD. |  |  |  |
 | `ComboBuzzerEnter` | 0x00412E40 | 25 | INFERIDO | Ao entrar no campo ComboBuzzer: mexe em ComboBuzzer. |  |  |  |
 | `ComboBuzzerKeyPress` | 0x00412E5C | 188 | INFERIDO | Ao digitar (filtro de teclas) em ComboBuzzer: mexe em EditBuzzer. |  |  |  |
 | `EditSwitchEnter` | 0x00412B38 | 50 | INFERIDO | Ao entrar no campo EditLed (+1 componentes): corpo de 50 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
 | `EditSwitchKeyPress` | 0x00412B6C | 361 | INFERIDO | Ao digitar (filtro de teclas) em EditLed (+1 componentes): mexe em ComboBuzzer, TrackBarLed. |  |  |  |
-| `FormClose` | 0x00412AB8 | 102 | INFERIDO | Ao fechar o formulário FormSwitch «Switch settings»: chama TAebProtocol::SendCommand. |  |  |  |
+| `FormClose` | 0x00412AB8 | 102 | DERIVADO | Ao fechar: envia à ECU as configurações do comutador (TAebProtocol::SendCommand). Escreve na ECU. OBS-COD. |  |  |  |
 | `FormKeyPress` | 0x00412B20 | 14 | INFERIDO | Ao digitar (filtro de teclas) em FormSwitch «Switch settings»: corpo de 14 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `TrackBarLedChange` | 0x00412CEC | 338 | INFERIDO | Quando muda o valor de TrackBarLed: chama APIs GetKeyState; mexe em EditLed, TrackBarLed. |  | GetKeyState |  |
+| `TrackBarLedChange` | 0x00412CEC | 338 | DERIVADO | Controle deslizante do brilho do LED do botão comutador: converte e mostra em EditLed e envia à ECU. OBS-COD (GetKeyState + campos). |  | GetKeyState |  |
 | `TrackBarLedEnter` | 0x00412CD8 | 19 | INFERIDO | Ao entrar no campo TrackBarLed: corpo de 19 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)

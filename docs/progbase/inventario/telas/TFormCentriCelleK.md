@@ -19,7 +19,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
 | `ButtonAnnullaExit` | 0x00413E3C | 26 | INFERIDO | Ao sair do campo ButtonAnnulla «&Cancelar»: corpo de 26 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `ButtonOkClick` | 0x00413BFC | 545 | INFERIDO | Ao clicar em ButtonOk «&OK !»: mexe em EditRifGiri0, NumEditRifMap0. |  |  |  |
+| `ButtonOkClick` | 0x00413BFC | 545 | DERIVADO | OK: valida e grava os centros das células do mapa dos coeficientes K. OBS-COD (campos). |  |  |  |
 | `ButtonOkExit` | 0x00413E20 | 26 | INFERIDO | Ao sair do campo ButtonOk «&OK !»: corpo de 26 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
 | `FormShow` | 0x00413E58 | 113 | INFERIDO | Ao exibir o formulário FormCentriCelleK «Centros das células no mapa dos coeficientes k»: mexe em EditRifGiri0. |  |  |  |
 

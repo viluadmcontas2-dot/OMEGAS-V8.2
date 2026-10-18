@@ -19,7 +19,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
 | `ButtonAnnullaExit` | 0x00413724 | 12 | INFERIDO | Ao sair do campo ButtonAnnulla «&Cancelar»: corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `ButtonOkClick` | 0x00413524 | 509 | INFERIDO | Ao clicar em ButtonOk «&OK !»: mexe em EditRifGiri0, NumEditRifMap0. |  |  |  |
+| `ButtonOkClick` | 0x00413524 | 509 | DERIVADO | OK: valida e grava os centros das células do mapa de carburação (EditRifGiri*/NumEditRifMap*). OBS-COD (campos). |  |  |  |
 | `FormShow` | 0x00413730 | 100 | INFERIDO | Ao exibir o formulário FormCentriCelle «Centros das células no mapa de carburação»: corpo de 100 bytes sem fatos diretos (chama 3 funções sem nome). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)

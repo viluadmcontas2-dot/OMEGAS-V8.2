@@ -129,7 +129,7 @@ RESPOSTAS = {
     },
     'ACK_53': {
         'o_que_e': '`53 n d1..dn ck`, ck = (0x53 + n + soma(d)) & 0xFF. O eco NÃO entra no checksum.',
-        'marca': 'OBS-FIO (16 790 respostas, 100 % com checksum certo) + OBS-COD (ReadAck RE:0x00923860, VerifyCk RE:0x00923B30)',
+        'marca': 'OBS-FIO (16 788 respostas, 100 % com checksum certo) + OBS-COD (ReadAck RE:0x00923860, VerifyCk RE:0x00923B30)',
         'tratamento': 'ReadAck só consome o byte 0x53; quem chama lê n, os dados e chama VerifyCk. Falha de checksum -> '
                       'ComFail |= 0x10 -> Retry.',
     },

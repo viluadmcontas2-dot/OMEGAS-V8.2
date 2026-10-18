@@ -34,12 +34,12 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ActionDecrementaZonaExecute` | 0x004CD134 | 312 | INFERIDO | Ao executar a ação ButtonDecrementa «&Decrementar zona (PgDn)» (+1 componentes): chama APIs InvalidateRect; mexe em DrawGridK, TimerBlink. |  | InvalidateRect |  |
-| `ActionEsciExecute` | 0x004CD26C | 6 | INFERIDO | Ao executar a ação ButtonEsci «&Sair (Esc)» (+1 componentes): corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `ActionIncrementaZonaExecute` | 0x004CCFFC | 312 | INFERIDO | Ao executar a ação ButtonIncrementa «&Incrementar zona (PgUp)» (+1 componentes): chama APIs InvalidateRect; mexe em DrawGridK, TimerBlink. |  | InvalidateRect |  |
-| `DrawGridKDrawCell` | 0x004CCD08 | 754 | INFERIDO | Ao desenhar célula de DrawGridK: mexe em DrawGridK. |  |  |  |
+| `ActionDecrementaZonaExecute` | 0x004CD134 | 312 | DERIVADO | Ação "Decrementar zona" (PgDn): desce a zona selecionada. OBS-COD (API/campos). |  | InvalidateRect |  |
+| `ActionEsciExecute` | 0x004CD26C | 6 | OBS-COD | Ação Sair (Esc): fecha. OBS-COD. |  |  |  |
+| `ActionIncrementaZonaExecute` | 0x004CCFFC | 312 | DERIVADO | Ação "Incrementar zona" (PgUp): sobe a zona de calibração selecionada na grade DrawGridK e repinta (InvalidateRect). OBS-COD (API/campos). |  | InvalidateRect |  |
+| `DrawGridKDrawCell` | 0x004CCD08 | 754 | DERIVADO | Desenha as células da grade K (correção de calibração) destacando a zona atual. OBS-COD. |  |  |  |
 | `FormClose` | 0x004CC63C | 40 | INFERIDO | Ao fechar o formulário FormCorrCalibra «Modificar calibração»: corpo de 40 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
-| `TimerBlinkTimer` | 0x004CC664 | 940 | INFERIDO | A cada tick do temporizador TimerBlink (intervalo 50 ms): chama TStreamDati.TimerIOTimer; mexe em LabApMotBenz, LabGas, LabLambda, LabelLambda. |  |  | InvalidateRect |
+| `TimerBlinkTimer` | 0x004CC664 | 940 | DERIVADO | Atualiza lambda/gás/aperto do motor a gasolina e pisca a célula atual (lê TStreamDati.TimerIO). OBS-COD. |  |  | InvalidateRect |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

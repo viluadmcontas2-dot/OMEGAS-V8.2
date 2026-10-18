@@ -31,12 +31,12 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonCommutatoreClick` | 0x0050DD14 | 231 | INFERIDO | Ao clicar em ButtonCommutatore «&Comutador»: chama APIs Sleep; mexe em ButtonCommutatore. |  | Sleep | PostMessageW |
+| `ButtonCommutatoreClick` | 0x0050DD14 | 231 | INFERIDO | Botão "Comutador" (230 B): envia à ECU o comando que alterna gasolina/gás (usa Sleep e PostMessage). Escreve/comanda a ECU: PERIGOSO (muda o combustível em uso). INFERIDO pelo caption. |  | Sleep | PostMessageW |
 | `FormClose` | 0x0050DCEC | 39 | INFERIDO | Ao fechar o formulário FormVisualizza «Visualização dos parâmetros do veículo»: corpo de 39 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `MenuCominciaDrtClick` (sem evento no DFM) | 0x0050D86C | 739 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): chama APIs GetTickCount, DrawMenuBar. |  | GetTickCount, DrawMenuBar |  |
-| `MenuGraficoClick` (sem evento no DFM) | 0x0050DC08 | 187 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em OpenDialogDrt. |  |  | ACTIONESCI, ACTIONSTAMPA, BUTTONANNULLA, BUTTONOK, DeleteMenu, GetSystemMenu, GetSystemMetrics |
-| `MenuTerminaDrtClick` (sem evento no DFM) | 0x0050DB50 | 184 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): chama APIs DrawMenuBar; mexe em SaveDialogDrt. |  | DrawMenuBar |  |
-| `Timer1Timer` | 0x0050B408 | 7653 | INFERIDO | A cada tick do temporizador Timer1 (intervalo 75 ms): chama APIs GetTickCount; chama TStreamDati.TimerIOTimer; mexe em ImageBenzOff, ImageBenzOn, ImageCutoffOff, ImageCutoffOn, ImageGasOff, ImageGasOn. |  | GetTickCount |  |
+| `MenuCominciaDrtClick` (sem evento no DFM) | 0x0050D86C | 739 | OBS-COD | Menu "Começar DRT": inicia uma aquisição de dados e prepara arquivo XML (<acquisitionData dateTime=…>, formato de data ddmmyyyyhhnnss). OBS-COD (literais). |  | GetTickCount, DrawMenuBar |  |
+| `MenuGraficoClick` (sem evento no DFM) | 0x0050DC08 | 187 | DERIVADO | Menu "Gráfico": abre TFormGraficoDrt (visualização gráfica de aquisição, abre arquivo via OpenDialogDrt). OBS-COD. |  |  | ACTIONESCI, ACTIONSTAMPA, BUTTONANNULLA, BUTTONOK, DeleteMenu, GetSystemMenu, GetSystemMetrics |
+| `MenuTerminaDrtClick` (sem evento no DFM) | 0x0050DB50 | 184 | DERIVADO | Menu "Terminar DRT": encerra a aquisição e abre SaveDialogDrt para salvar o arquivo. OBS-COD (campo). |  | DrawMenuBar |  |
+| `Timer1Timer` | 0x0050B408 | 7653 | DERIVADO | Atualização periódica dos parâmetros do veículo (7653 B): lê TStreamDati.TimerIO e atualiza lâmpadas (benzina/gas/cut-off/sotto chiave), lambda, temperaturas, TPS/MAP, tempos de injeção e tensão dos injetores; durante gravação DRT grava pares tempo/valor (literais "time", "value", "par001"…). OBS-COD. |  | GetTickCount |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

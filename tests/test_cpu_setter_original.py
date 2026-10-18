@@ -179,11 +179,11 @@ class TestModoMarchaLenta(unittest.TestCase):
         self.assertEqual(self.rodar('volta'), self.rodar('volta'))
 
     def test_mutacao_da_constante_1100_muda_o_quadro(self):
-        # 0x4BFB5E: push 0x40913000 (68 00 30 91 40): o byte 0x91 fica em 0x4BFB61; 0x92 vira 2200.0 (prova que o 1100 vem do código)
+        # 0x4BFB5E: push 0x40913000 (68 00 30 91 40): o byte 0x91 fica em 0x4BFB61; 0x92 vira 1164.0 (prova que o 1100 vem do código)
         base = self.rodar('volta')
         mut = cso.emular_modo_lenta(EXE, 'volta', self.PRONTO, self.GIRI, patches={0x4BFB61: 0x92})
         self.assertNotEqual(base['quadros'][1], mut['quadros'][1])
-        self.assertEqual(hexq(mut['quadros'][1]), '14 A1 00 00 98 08 51')   # 2200 = 0x0898
+        self.assertEqual(hexq(mut['quadros'][1]), '14 A1 00 00 8C 04 45')   # 1164 = 0x048C
 
 
 if __name__ == '__main__':

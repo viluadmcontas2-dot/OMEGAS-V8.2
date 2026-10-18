@@ -25,11 +25,11 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonEsciClick` | 0x00486F84 | 6 | INFERIDO | Ao clicar em ButtonCancella «Annulla» (+1 componentes): corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `ButtonProseguiClick` | 0x00486F64 | 31 | INFERIDO | Ao clicar em ButtonProsegui «Continuar»: mexe em PanelMessaggio, PanelMonoplug. |  |  |  |
-| `FormClose` | 0x00484678 | 296 | INFERIDO | Ao fechar o formulário FormCalibra «Calibração automática da central de comando»: chama TAebProtocol::SendCommand. |  |  | GetTickCount, Sleep |
-| `FormKeyPress` | 0x0048693C | 724 | INFERIDO | Ao digitar (filtro de teclas) em FormCalibra «Calibração automática da central de comando»: chama TAebProtocol::SendCommand; mexe em LabelMessaggio, LabelOperazione, PanelMessaggio, ProgressBarCalibra. |  |  |  |
-| `TimerBlinkTimer` | 0x004847A0 | 4239 | INFERIDO | A cada tick do temporizador TimerBlink (intervalo 75 ms): chama TAebProtocol::SendCommand, TStreamDati.TimerIOTimer; mexe em LabLambda, LabLambda2, LabPressione, LabTempMotore, LabTempRiduttore, LabTempoIniezioneBenzina. |  |  |  |
+| `ButtonEsciClick` | 0x00486F84 | 6 | OBS-COD | Botões Cancelar/Sair (6 B): fecha. OBS-COD. |  |  |  |
+| `ButtonProseguiClick` | 0x00486F64 | 31 | DERIVADO | Botão "Continuar": avança do painel de instrução (monoplug) para a calibração. OBS-COD (campos). |  |  |  |
+| `FormClose` | 0x00484678 | 296 | DERIVADO | Ao fechar a calibração: envia comando de término à ECU (SendCommand). OBS-COD. |  |  | GetTickCount, Sleep |
+| `FormKeyPress` | 0x0048693C | 724 | INFERIDO | Teclas durante a calibração (724 B): permite abortar/avançar a calibração e envia comandos à ECU. INFERIDO. |  |  |  |
+| `TimerBlinkTimer` | 0x004847A0 | 4239 | DERIVADO | Laço de calibração automática (4239 B): a cada tick lê o estado da ECU (TStreamDati.TimerIO), mostra giri/lambda/pressão/temperaturas/tempos de injeção e envia comandos (TAebProtocol::SendCommand) para avançar a calibração; pisca a mensagem em PanelMessaggio. Comanda a ECU. OBS-COD (chamadas/campos). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

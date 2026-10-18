@@ -19,7 +19,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `EditValoreKeyPress` | 0x00969E80 | 751 | INFERIDO | Ao digitar (filtro de teclas) em EditValore: corpo de 751 bytes sem fatos diretos (chama 8 funções sem nome). |  |  |  |
+| `EditValoreKeyPress` | 0x00969E80 | 751 | INFERIDO | Filtra a digitação do novo valor da célula do mapa. INFERIDO. |  |  |  |
 | `FormClose` | 0x00969D68 | 277 | INFERIDO | Ao fechar o formulário FormModMappa «Modifica valore»: corpo de 277 bytes sem fatos diretos (chama 6 funções sem nome). |  |  |  |
 | `GetDouble` (sem evento no DFM) | 0x0096A238 | 135 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 135 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
 | `GetInt` (sem evento no DFM) | 0x0096A170 | 101 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 101 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |

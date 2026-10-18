@@ -62,31 +62,31 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonAzzeraErroriClick` | 0x004D6694 | 1094 | INFERIDO | Ao clicar em ButtonAzzeraErrori «Reset e&rros»: corpo de 1094 bytes sem fatos diretos (chama 12 funções sem nome). |  |  |  |
-| `ButtonAzzeraTempiClick` | 0x004D6ADC | 375 | INFERIDO | Ao clicar em ButtonAzzeraTempi «Reset &tempos»: mexe em LabelTBenz, LabelTGas. |  |  |  |
-| `ButtonResetFFClick` | 0x004D8360 | 25 | INFERIDO | Ao clicar em ButtonResetFF «Reset»: corpo de 25 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `CheckListBoxFFClickCheck` | 0x004D82C0 | 157 | INFERIDO | Ao marcar/desmarcar item em CheckListBoxFF: mexe em CheckListBoxFF. |  |  |  |
-| `CheckSwitchOnDiagnosisClick` | 0x004D7E48 | 48 | INFERIDO | Ao clicar em CheckSwitchOnDiagnosis «Enable switch-on diagnosis»: mexe em CheckSwitchOnDiagnosis. |  |  |  |
+| `ButtonAzzeraErroriClick` | 0x004D6694 | 1094 | INFERIDO | Botão "Zerar erros": envia à ECU o comando de apagar a memória de falhas (1094 B; usa TAebNumber/SetEcuData e textos de confirmação). Escreve na ECU. INFERIDO pelo nome+caption. |  |  |  |
+| `ButtonAzzeraTempiClick` | 0x004D6ADC | 375 | INFERIDO | Botão "Zerar tempos": zera os contadores de tempo a gasolina e a gás (LabelTBenz/LabelTGas passam a "0:00"). Escreve na ECU: INFERIDO. OBS-COD (literal "0:00 "). |  |  |  |
+| `ButtonResetFFClick` | 0x004D8360 | 25 | INFERIDO | Botão Reset do quadro de congelamento (Freeze Frame): 25 B, chama rotina sem nome. INFERIDO. |  |  |  |
+| `CheckListBoxFFClickCheck` | 0x004D82C0 | 157 | INFERIDO | Marca/desmarca itens da lista de congelamento (freeze frame) a registrar. INFERIDO. |  |  |  |
+| `CheckSwitchOnDiagnosisClick` | 0x004D7E48 | 48 | INFERIDO | Caixa "Habilitar diagnóstico ao ligar" (switch-on diagnosis). 48 B; grava a opção na estrutura de configuração. INFERIDO. |  |  |  |
 | `ComboAzioneChange` | 0x004D736C | 313 | INFERIDO | Quando muda o valor de ComboAzione: mexe em ComboAzione, ListDiagnosi. |  |  |  |
 | `ComboAzioneEnter` | 0x004D74A8 | 52 | INFERIDO | Ao entrar no campo ComboAzione: mexe em ComboAzione. |  |  |  |
 | `ComboAzioneKeyDown` | 0x004D7164 | 518 | INFERIDO | Ao pressionar tecla em ComboAzione: mexe em ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi. |  |  |  |
 | `EditTempBassaMotEnter` | 0x004D75B0 | 178 | INFERIDO | Ao entrar no campo EditTempAlta (+3 componentes): mexe em ListDiagnosi. |  |  |  |
 | `EditTempBassaMotKeyDown` | 0x004D74DC | 79 | INFERIDO | Ao pressionar tecla em EditTempAlta (+3 componentes): corpo de 79 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
 | `EditTempBassaMotKeyPress` | 0x004D752C | 130 | INFERIDO | Ao digitar (filtro de teclas) em EditTempAlta (+3 componentes): mexe em ListDiagnosi. |  |  |  |
-| `FormActivate` | 0x004CD6A8 | 16307 | INFERIDO | Ao ativar o formulário FormDiagnosi «Diagnóstico central de comando»: usa textos BUTTONAZZERAERRORI, BUTTONAZZERATEMPI, BUTTONESCI, CHECKDIAGNOSISTARTUP, DIAGNOSICOLLEGAMENTOINIETTORI; chama TTranslatorExt::GetString; mexe em ButtonAzzeraErrori, ButtonAzzeraTempi, ButtonEsci, CheckSwitchOnDiagnosis, ComboAzione, EditTempAlta. | BUTTONAZZERAERRORI, BUTTONAZZERATEMPI, BUTTONESCI, CHECKDIAGNOSISTARTUP, DIAGNOSICOLLEGAMENTOINIETTORI, DIAGNOSIESCLUSIONEINIETTORI |  | FF_CANSTATUS_OBD, FF_ECUFUELFUNCTIONING, FF_EV1, FF_EV2 |
-| `FormClose` | 0x004D1B18 | 366 | INFERIDO | Ao fechar o formulário FormDiagnosi «Diagnóstico central de comando»: chama TFormDiagnosi.PanelTestOffClick; mexe em ListDiagnosi, PanelOffElv1, PanelOffElv2, PanelOffSwitch. |  |  |  |
+| `FormActivate` | 0x004CD6A8 | 16307 | OBS-COD | Ao ativar a tela de Diagnóstico (16 KB): aplica traduções (BUTTONAZZERAERRORI, DIAGNOSI*…), carrega a lista de falhas ("(Código) descrição do erro"), códigos EPR (Open Load, Overcurrent…) e configura os painéis de teste. OBS-COD (textos/literais). | BUTTONAZZERAERRORI, BUTTONAZZERATEMPI, BUTTONESCI, CHECKDIAGNOSISTARTUP, DIAGNOSICOLLEGAMENTOINIETTORI, DIAGNOSIESCLUSIONEINIETTORI |  | FF_CANSTATUS_OBD, FF_ECUFUELFUNCTIONING, FF_EV1, FF_EV2 |
+| `FormClose` | 0x004D1B18 | 366 | OBS-COD | Ao fechar: desliga os testes de saída ativos (chama PanelTestOffClick) e restaura a lista. OBS-COD. |  |  |  |
 | `ListDiagnosiChange` (sem evento no DFM) | 0x004D6E38 | 558 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em ListDiagnosi. |  |  |  |
 | `ListDiagnosiClick` | 0x004D7068 | 100 | INFERIDO | Ao clicar em ListDiagnosi: chama APIs GetCursorPos, ScreenToClient; mexe em ListDiagnosi. |  | GetCursorPos, ScreenToClient |  |
 | `ListDiagnosiKeyDown` | 0x004D6CB8 | 384 | INFERIDO | Ao pressionar tecla em ListDiagnosi: mexe em ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi. |  |  |  |
 | `ListDiagnosiKeyPress` | 0x004D6C54 | 97 | INFERIDO | Ao digitar (filtro de teclas) em ListDiagnosi: mexe em ListDiagnosi. |  |  |  |
 | `ListDiagnosiSelectItem` | 0x004D70CC | 152 | INFERIDO | Ao selecionar item em ListDiagnosi: mexe em ComboAzione, ListDiagnosi. |  |  |  |
-| `PanelOffClick` | 0x004D7664 | 272 | INFERIDO | Ao clicar em PanelOffA «Off» (+9 componentes): chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect. |  |  |  |
-| `PanelOnClick` | 0x004D7774 | 274 | INFERIDO | Ao clicar em PanelOnA «On» (+9 componentes): chama TAebNumber::GetEcuData, TAebNumber::SetEcuData, TAebProtocol::IsConnect. |  |  |  |
-| `PanelTestOffClick` | 0x004D7C78 | 461 | INFERIDO | Ao clicar em PanelOffSwitch «Off» (+2 componentes): usa textos MESSERRORRESETDIAGNOSYSTEST; chama TAebProtocol::IsConnect, TAebProtocol::SendCommand, TTranslatorExt::GetString; mexe em LabelElv1, LabelSwitch, PanelOffElv1, PanelOffElv2, PanelOffSwitch, PanelOnElv1. | MESSERRORRESETDIAGNOSYSTEST |  |  |
-| `PanelTestOnClick` | 0x004D7888 | 1006 | INFERIDO | Ao clicar em PanelOnSwitch «On» (+2 componentes): usa textos LABELDIAGNOSIATTENTION, MESSERRORSETDIAGNOSYSTEST; chama APIs Sleep; chama TAebProtocol::IsConnect, TAebProtocol::SendCommand, TStreamDati.TimerIOTimer, TTranslatorExt::GetString; mexe em PanelOffElv1, PanelOffElv2, PanelOffSwitch, PanelOnElv1, PanelOnElv2, PanelOnSwitch. | LABELDIAGNOSIATTENTION, MESSERRORSETDIAGNOSYSTEST | Sleep |  |
-| `TimerTempiTimer` | 0x004D4BDC | 6244 | INFERIDO | A cada tick do temporizador TimerTempi (intervalo 50 ms): chama TAebProtocol::GetPacket, TAebProtocol::IsConnect; mexe em LabelA, LabelB, LabelC, LabelD, LabelE, LabelF. |  |  |  |
-| `TimerTimer` | 0x004D4B20 | 186 | INFERIDO | A cada tick do temporizador Timer (intervalo 2000 ms): chama APIs GetTickCount, Sleep; chama TAebProtocol::Connect, TAebProtocol::DisableErrorHandling, TAebProtocol::EnableErrorHandling, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer. |  | GetTickCount, Sleep |  |
-| `TimerUpdateTimer` | 0x004D6454 | 573 | INFERIDO | A cada tick do temporizador TimerUpdate (intervalo 50 ms): mexe em ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi. |  |  |  |
+| `PanelOffClick` | 0x004D7664 | 272 | INFERIDO | Botões "Off" da seção "Esclusione iniettori gas": desliga (exclui) o injetor escolhido (GetEcuData/SetEcuData). Escreve na ECU: PERIGOSO. INFERIDO. |  |  |  |
+| `PanelOnClick` | 0x004D7774 | 274 | INFERIDO | Botões "On" da seção "Esclusione iniettori gas" (injetores A..I): lê (TAebNumber::GetEcuData) e regrava (SetEcuData) um valor da ECU ligado ao injetor escolhido, se conectado. Escreve na ECU: PERIGOSO (afeta a injeção de gás). Chamadas: OBS-COD; efeito sobre o injetor: INFERIDO pelo caption. |  |  |  |
+| `PanelTestOffClick` | 0x004D7C78 | 461 | DERIVADO | Botões "Off" do teste de saídas: envia comando de parada do teste; falha mostra MESSERRORRESETDIAGNOSYSTEST. DERIVADO. | MESSERRORRESETDIAGNOSYSTEST |  |  |
+| `PanelTestOnClick` | 0x004D7888 | 1006 | DERIVADO | Botões "On" do teste de saídas (Elv1, Elv2, Switch): envia comando de teste (TAebProtocol::SendCommand), mostra aviso LABELDIAGNOSIATTENTION e MESSERRORSETDIAGNOSYSTEST em caso de falha. Aciona eletroválvulas/LED da ECU: PERIGOSO. DERIVADO. | LABELDIAGNOSIATTENTION, MESSERRORSETDIAGNOSYSTEST | Sleep |  |
+| `TimerTempiTimer` | 0x004D4BDC | 6244 | DERIVADO | Atualização periódica (6244 B): lê pacotes da ECU (TAebProtocol::GetPacket) e atualiza os tempos por injetor A..I (gas/benzina), tensões e estados na tela. OBS-COD (chamadas/campos). |  |  |  |
+| `TimerTimer` | 0x004D4B20 | 186 | DERIVADO | Temporizador de reconexão: tenta Connect/DisableErrorHandling/EnableErrorHandling quando a ECU não responde. OBS-COD. |  | GetTickCount, Sleep |  |
+| `TimerUpdateTimer` | 0x004D6454 | 573 | OBS-COD | Atualiza o painel de edição de limites de temperatura do item selecionado de ListDiagnosi. OBS-COD (campos). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

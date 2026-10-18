@@ -17,7 +17,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonOkClick` | 0x0051B910 | 1067 | INFERIDO | Ao clicar em ButtonOk «&OK !»: chama TAebNumber::GetDouble, TAebNumber::SetDouble, TAebVector::GetDouble, TAebVector::SetDouble; mexe em EditKMax, EditKMin, EditRifMap0, TInjBox. |  |  |  |
+| `ButtonOkClick` | 0x0051B910 | 1067 | DERIVADO | OK: grava os limites K mín/máx e as referências do AutoCal nos vetores (TAebVector/TAebNumber Get/SetDouble; nomes "InjT_*"). Escreve parâmetros na ECU. OBS-COD. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

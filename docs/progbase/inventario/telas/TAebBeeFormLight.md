@@ -52,18 +52,18 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
 | `ButtonAbortClick` | 0x00919978 | 26 | INFERIDO | Ao clicar em ButtonAbort «Interrompi» (+1 componentes): corpo de 26 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
-| `ButtonChangePinClick` | 0x00918158 | 1267 | INFERIDO | Ao clicar em ButtonChangePin «Cambia PIN»: corpo de 1267 bytes sem fatos diretos (chama 16 funções sem nome). |  |  |  |
-| `ButtonConnectMcuClick` | 0x009199C8 | 777 | INFERIDO | Ao clicar em ButtonConnectMcu «Connetti dispositivo remoto selezionato»: corpo de 777 bytes sem fatos diretos (chama 13 funções sem nome). |  |  |  |
-| `ButtonDisconnectMcuClick` | 0x00919CD4 | 303 | INFERIDO | Ao clicar em ButtonDisconnectMcu «Disconnetti dispositivo remoto corrente»: corpo de 303 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
-| `ButtonProgramDongleClick` | 0x00919F80 | 3409 | INFERIDO | Ao clicar em ButtonProgramDongle «Programma file»: chama APIs Sleep. |  | Sleep |  |
-| `ButtonProgramMcuClick` | 0x0091AE74 | 3685 | INFERIDO | Ao clicar em ButtonProgramMcu «Programma file»: chama APIs Sleep. |  | Sleep |  |
-| `ButtonReadPinClick` | 0x00917FA8 | 398 | INFERIDO | Ao clicar em ButtonReadPin «Leggi PIN»: corpo de 398 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
-| `ButtonRemovePinClick` | 0x0091864C | 1231 | INFERIDO | Ao clicar em ButtonRemovePin «Rimuovi PIN»: corpo de 1231 bytes sem fatos diretos (chama 17 funções sem nome). |  |  |  |
+| `ButtonChangePinClick` | 0x00918158 | 1267 | INFERIDO | Botão "Mudar PIN" do dispositivo: grava novo PIN no dispositivo sem fio. INFERIDO. |  |  |  |
+| `ButtonConnectMcuClick` | 0x009199C8 | 777 | INFERIDO | Conecta ao dispositivo remoto selecionado. INFERIDO. |  |  |  |
+| `ButtonDisconnectMcuClick` | 0x00919CD4 | 303 | INFERIDO | Desconecta do dispositivo remoto. INFERIDO. |  |  |  |
+| `ButtonProgramDongleClick` | 0x00919F80 | 3409 | INFERIDO | Botão "Programar arquivo" do dongle local: grava firmware no dongle sem fio (3409 B; usa Sleep e a classe de protocolo). Escreve no dispositivo. PERIGOSO (firmware do dongle). INFERIDO pelo nome. |  | Sleep |  |
+| `ButtonProgramMcuClick` | 0x0091AE74 | 3685 | INFERIDO | Botão "Programar arquivo" do dispositivo remoto (MCU) por rádio (3685 B). PERIGOSO (firmware). INFERIDO. |  | Sleep |  |
+| `ButtonReadPinClick` | 0x00917FA8 | 398 | INFERIDO | Botão "Ler PIN". INFERIDO. |  |  |  |
+| `ButtonRemovePinClick` | 0x0091864C | 1231 | INFERIDO | Botão "Remover PIN". INFERIDO. |  |  |  |
 | `ButtonScanChannelClick` (sem evento no DFM) | 0x00915578 | 3829 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): corpo de 3829 bytes sem fatos diretos (chama 16 funções sem nome). |  |  |  |
-| `ButtonScanClick` | 0x00918BF4 | 2108 | INFERIDO | Ao clicar em ButtonScan «Esegui scansione»: corpo de 2108 bytes sem fatos diretos (chama 29 funções sem nome). |  |  |  |
-| `ButtonScanEnergyClick` | 0x00915258 | 798 | INFERIDO | Ao clicar em ButtonScanEnergy «Esegui scansione»: chama APIs GetTickCount. |  | GetTickCount |  |
-| `ButtonSfogliaDongleClick` | 0x00919E04 | 380 | INFERIDO | Ao clicar em ButtonSfogliaDongle «Sfoglia...»: corpo de 380 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
-| `ButtonSfogliaMcuClick` | 0x0091ACF8 | 380 | INFERIDO | Ao clicar em ButtonSfogliaMcu «Sfoglia...»: corpo de 380 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `ButtonScanClick` | 0x00918BF4 | 2108 | INFERIDO | Botão "Executar varredura": procura dispositivos sem fio e lista em ListDevice. INFERIDO. |  |  |  |
+| `ButtonScanEnergyClick` | 0x00915258 | 798 | INFERIDO | Varredura de energia por canal (mede o ruído RF; mostra "Time: …"). OBS-COD (literal); propósito INFERIDO. |  | GetTickCount |  |
+| `ButtonSfogliaDongleClick` | 0x00919E04 | 380 | OBS-COD | Botão "Procurar…" de firmware do dongle (diálogo de arquivo, filtro "Firmware"). OBS-COD. |  |  |  |
+| `ButtonSfogliaMcuClick` | 0x0091ACF8 | 380 | OBS-COD | Botão "Procurar…" de firmware do dispositivo remoto. OBS-COD. |  |  |  |
 | `ComboCanaleChange` | 0x00917E88 | 287 | INFERIDO | Quando muda o valor de ComboCanale: corpo de 287 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
 | `ComboPotenzaDongleChange` | 0x00917258 | 323 | INFERIDO | Quando muda o valor de ComboPotenzaDongle: corpo de 323 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
 | `ComboPotenzaMcuChange` | 0x00917D24 | 323 | INFERIDO | Quando muda o valor de ComboPotenzaMcu: corpo de 323 bytes sem fatos diretos (chama 10 funções sem nome). |  |  |  |
@@ -79,7 +79,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `ListDeviceDblClick` | 0x00919994 | 50 | INFERIDO | Ao dar duplo clique em ListDevice: corpo de 50 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
 | `McuExit` | 0x009179DC | 56 | INFERIDO | Ao sair do campo EditNomeMcu (+2 componentes): corpo de 56 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
 | `TabScansioneShow` | 0x00918B3C | 184 | INFERIDO | Ao exibir o formulário TabScansione «Gestione rete»: corpo de 184 bytes sem fatos diretos (chama 2 funções sem nome). |  |  |  |
-| `TimerUpdateTimer` | 0x00914EA8 | 912 | INFERIDO | A cada tick do temporizador TimerUpdate (intervalo 100 ms): corpo de 912 bytes sem fatos diretos (chama 16 funções sem nome). |  |  |  |
+| `TimerUpdateTimer` | 0x00914EA8 | 912 | OBS-COD | Atualiza os rótulos "Energy (…)" e "Quality (…)" do link sem fio. OBS-COD (literais). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

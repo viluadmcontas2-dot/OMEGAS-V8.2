@@ -18,7 +18,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `FormCloseQuery` | 0x009744E0 | 1007 | INFERIDO | Ao pedir para fechar o formulário FormRiferimenti «Modifica riferimenti mappa»: corpo de 1007 bytes sem fatos diretos (chama 11 funções sem nome). |  |  |  |
+| `FormCloseQuery` | 0x009744E0 | 1007 | INFERIDO | Ao fechar: valida as referências de mapa digitadas ("Edit*") e só deixa fechar se coerentes. INFERIDO. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

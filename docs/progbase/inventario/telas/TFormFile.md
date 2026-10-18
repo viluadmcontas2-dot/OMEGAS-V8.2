@@ -22,14 +22,14 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
 | `ButtonAggiornaClick` | 0x004DE1A4 | 1 | OBS-COD | Ao clicar em ButtonAggiorna «A&ggiorna». Corpo é só RET: nada acontece neste evento (OBS-COD). |  |  |  |
-| `ButtonOkClick` | 0x004D9F30 | 7251 | INFERIDO | Ao clicar em ButtonOk «&OK !»: chama APIs Sleep, SendMessageW; chama TAebProtocol::IsConnect, TFormAttesa.Create, TFormPdf.Create; mexe em ButtonAnnulla, EditName, EditPath. |  | Sleep, SendMessageW | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
+| `ButtonOkClick` | 0x004D9F30 | 7251 | DERIVADO | Botão OK do navegador de arquivos (7251 B): conforme o modo, abre ou salva um arquivo de configuração (.lnc, .ldc, .lec) ou PDF (TFormPdf), com TFormAttesa durante a operação; valida o nome (caracteres proibidos ./",;). OBS-COD (literais/chamadas). |  | Sleep, SendMessageW | DeleteFileW, FindResourceW, GetTempFileNameW, GetTempPathW |
 | `EditNameKeyDown` | 0x004D9F14 | 27 | INFERIDO | Ao pressionar tecla em EditName: chama TFormFile.ButtonOkClick. |  |  |  |
-| `FormActivate` | 0x004D9968 | 1127 | INFERIDO | Ao ativar o formulário FormFile «FormFile»: mexe em ButtonOk, EditName, EditPath, TreeViewFile. |  |  |  |
+| `FormActivate` | 0x004D9968 | 1127 | DERIVADO | Ao ativar: monta a árvore de arquivos (pastas ConfigCNG/ConfigLPG) e restringe nomes inválidos. OBS-COD (literais). |  |  |  |
 | `FormClose` | 0x004D9DD8 | 313 | INFERIDO | Ao fechar o formulário FormFile «FormFile»: mexe em TreeViewFile. |  |  |  |
 | `TreeViewFileChange` | 0x004DDBC0 | 6 | INFERIDO | Quando muda o valor de TreeViewFile: chama TFormFile.TreeViewFileClick. |  |  |  |
-| `TreeViewFileClick` | 0x004DDC04 | 1307 | INFERIDO | Ao clicar em TreeViewFile: mexe em EditName, EditPath, TreeViewFile. |  |  |  |
+| `TreeViewFileClick` | 0x004DDC04 | 1307 | DERIVADO | Clique na árvore: preenche nome/pasta (EditName/EditPath); para .pdf permite visualizar. OBS-COD. |  |  |  |
 | `TreeViewFileCompare` | 0x004DDAE0 | 224 | INFERIDO | Evento OnCompare de TreeViewFile: corpo de 224 bytes sem fatos diretos (chama 5 funções sem nome). |  |  |  |
-| `TreeViewFileDblClick` | 0x004DDBC8 | 59 | INFERIDO | Ao dar duplo clique em TreeViewFile: chama TFormFile.ButtonOkClick, TFormFile.TreeViewFileClick; mexe em TreeViewFile. |  |  |  |
+| `TreeViewFileDblClick` | 0x004DDBC8 | 59 | OBS-COD | Duplo clique: equivale a OK (chama ButtonOkClick). OBS-COD. |  |  |  |
 | `TreeViewFileDragDrop` | 0x004DE1A8 | 7 | INFERIDO | Evento OnDragDrop de TreeViewFile: corpo de 7 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
 | `TreeViewFileKeyDown` | 0x004DE120 | 132 | INFERIDO | Ao pressionar tecla em TreeViewFile: chama TFormFile.TreeViewFileDblClick; mexe em TreeViewFile. |  |  |  |
 

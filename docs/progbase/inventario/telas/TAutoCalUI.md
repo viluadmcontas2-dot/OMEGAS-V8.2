@@ -91,24 +91,24 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ActionAutoCalRifExecute` | 0x005187A0 | 306 | INFERIDO | Ao executar a ação ActionAutoCalRif «Modify map refs» (+2 componentes): mexe em ChartKLine. |  |  | BUTTONANNULLA, BUTTONOK, FINESTRACENTRICELLEAUTOCAL, MESSBADRIFMAP |
-| `ActionAutoMatchExecute` | 0x005189B4 | 12 | INFERIDO | Ao executar a ação ButtonAutoMatch «Manual automatch» (+2 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome). |  |  | Sleep |
-| `ActionChangeColorExecute` | 0x0051AE78 | 111 | INFERIDO | Ao executar a ação ActionChangeColor «Customize chart colors...» (+1 componentes): chama TAutocalColorSettings.Create. |  |  |  |
-| `ActionDeleteSelectedPointsExecute` | 0x00518E6C | 562 | INFERIDO | Ao executar a ação ActionDeleteSelectedPoints «Delete selected points» (+1 componentes): chama APIs Sleep; mexe em GasPoint, PetrolPoint. |  | Sleep |  |
-| `ActionExportChartDataExecute` | 0x0051878C | 17 | INFERIDO | Ao executar a ação ActionExportChartData «Export to file...» (+1 componentes): corpo de 17 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `ActionExportChartPointExecute` | 0x00519120 | 17 | INFERIDO | Ao executar a ação ActionExportChartPoint «Export to file...» (+1 componentes): corpo de 17 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `ActionExportKChartExecute` | 0x005185FC | 17 | INFERIDO | Ao executar a ação ActionExportKChart «Export to file...» (+1 componentes): corpo de 17 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `ActionExportToKExecute` | 0x00518514 | 189 | INFERIDO | Ao executar a ação ActionExportToK «ExportToK...»: corpo de 189 bytes sem fatos diretos (chama 9 funções sem nome). |  |  |  |
-| `ActionFinishAutocalExecute` | 0x0051A390 | 195 | INFERIDO | Ao executar a ação ActionFinishAutocal «FinishAutocal» (+1 componentes): chama APIs Sleep; chama TAebNumber::GetInt, TAebNumber::SetInt. |  | Sleep |  |
-| `ActionGoToMinCalibrationExecute` | 0x005189E4 | 12 | INFERIDO | Ao executar a ação ActionGoToMinCalibration «Go to min calibration» (+1 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `ActionResetAllExecute` | 0x005189D8 | 12 | INFERIDO | Ao executar a ação ButtonResetAll «Reset all» (+4 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome). |  |  | Sleep |
-| `ActionResetGasExecute` | 0x005189CC | 12 | INFERIDO | Ao executar a ação ButtonResetGas «Reset gas point» (+3 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome). |  |  | Sleep |
-| `ActionResetKFactorExecute` | 0x0051A070 | 246 | INFERIDO | Ao clicar em ButtonResetK «Reset K» (+2 componentes): chama TAebVector::SetDouble. |  |  |  |
-| `ActionResetPetrolExecute` | 0x005189C0 | 12 | INFERIDO | Ao executar a ação ButtonResetPetrol «Reset petrol point» (+3 componentes): corpo de 12 bytes sem fatos diretos (chama 1 funções sem nome). |  |  | Sleep |
+| `ActionAutoCalRifExecute` | 0x005187A0 | 306 | DERIVADO | Menu "Modify map refs": abre TFormRifAutocal (referências do AutoCal). OBS-COD. |  |  | BUTTONANNULLA, BUTTONOK, FINESTRACENTRICELLEAUTOCAL, MESSBADRIFMAP |
+| `ActionAutoMatchExecute` | 0x005189B4 | 12 | OBS-COD | Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto). |  |  | Sleep |
+| `ActionChangeColorExecute` | 0x0051AE78 | 111 | OBS-COD | Menu "Customize chart colors…": abre TAutocalColorSettings. OBS-COD. |  |  |  |
+| `ActionDeleteSelectedPointsExecute` | 0x00518E6C | 562 | DERIVADO | Menu "Delete selected points": remove pontos selecionados de gás/gasolina das séries do gráfico. OBS-COD (campos). |  | Sleep |  |
+| `ActionExportChartDataExecute` | 0x0051878C | 17 | OBS-COD | Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto). |  |  |  |
+| `ActionExportChartPointExecute` | 0x00519120 | 17 | OBS-COD | Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto). |  |  |  |
+| `ActionExportKChartExecute` | 0x005185FC | 17 | OBS-COD | Exporta os dados da série do gráfico para arquivo (17 B: encaminha para a rotina de exportação). OBS-COD (salto). |  |  |  |
+| `ActionExportToKExecute` | 0x00518514 | 189 | INFERIDO | Exporta os pontos para a tabela K (ExportToK). INFERIDO. |  |  |  |
+| `ActionFinishAutocalExecute` | 0x0051A390 | 195 | DERIVADO | Menu/ação "Finalizar AutoCal": lê/escreve flags do módulo (TAebNumber GetInt/SetInt) para encerrar a calibração automática. Escreve na ECU. OBS-COD (chamadas). |  | Sleep |  |
+| `ActionGoToMinCalibrationExecute` | 0x005189E4 | 12 | OBS-COD | Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto). |  |  |  |
+| `ActionResetAllExecute` | 0x005189D8 | 12 | OBS-COD | Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto). |  |  | Sleep |
+| `ActionResetGasExecute` | 0x005189CC | 12 | OBS-COD | Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto). |  |  | Sleep |
+| `ActionResetKFactorExecute` | 0x0051A070 | 246 | DERIVADO | Menu "Reset k-factor…": regrava o fator K (TAebVector::SetDouble). Escreve na ECU. OBS-COD. |  |  |  |
+| `ActionResetPetrolExecute` | 0x005189C0 | 12 | OBS-COD | Atalho de 12 B que encaminha para a rotina interna do AutoCal (detalhe é da tarefa de abas 17-33/protocolo). OBS-COD (salto). |  |  | Sleep |
 | `BtnDeleteRandomPointClick` | 0x0051A27C | 274 | INFERIDO | Ao clicar em BtnDeleteRandomPoint «Cancelar»: corpo de 274 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
 | `BtnDumpClick` | 0x005184D4 | 31 | INFERIDO | Ao clicar em BtnDump «DUMP»: corpo de 31 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
 | `BtnDumpEEClick` | 0x005184F4 | 31 | INFERIDO | Ao clicar em BtnDumpEE «DUMP EE»: corpo de 31 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
-| `BtnFinishAutomatchClick` | 0x0051A454 | 31 | INFERIDO | Ao clicar em BtnFinishAutomatch «Finish automatch»: chama TAebNumber::GetInt, TAebNumber::SetInt. |  |  |  |
+| `BtnFinishAutomatchClick` | 0x0051A454 | 31 | DERIVADO | Botão "Finish automatch": encerra o automatch (GetInt/SetInt em TAebNumber). OBS-COD. |  |  |  |
 | `BtnMenuClick` | 0x0051A038 | 53 | INFERIDO | Ao clicar em BtnMenu: mexe em BtnMenu. |  |  |  |
 | `BtnMenuPanelLeftClick` | 0x0051A24C | 48 | INFERIDO | Ao clicar em BtnMenuPanelLeft: mexe em BtnMenu, BtnMenuPanelLeft. |  |  |  |
 | `BtnShowBandClick` | 0x0051A74C | 108 | INFERIDO | Ao clicar em BtnShowBand «ShowBand»: mexe em DbgEdit1. |  |  |  |
@@ -133,11 +133,11 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `DbgBtnRandomClick` | 0x005189F0 | 381 | INFERIDO | Ao clicar em DbgBtnRandom «Punti Random»: chama TAebVector::SetDouble. |  |  |  |
 | `KLineGetMarkText` | 0x005177C8 | 107 | INFERIDO | Evento OnGetMarkText de KLine: corpo de 107 bytes sem fatos diretos (chama 4 funções sem nome). |  |  |  |
 | `MenuChartDataPopup` | 0x005190A0 | 62 | INFERIDO | Ao abrir o menu de contexto MenuChartData: mexe em ActionDeleteSelectedPoints, GasPoint, PetrolPoint. |  |  |  |
-| `SettingsImgClick` | 0x00519708 | 161 | INFERIDO | Ao clicar em SettingsImg: corpo de 161 bytes sem fatos diretos (chama 5 funções sem nome). |  |  | AUTOCALCHANGECOLOR, AUTOCALSETTINGSCHARTK, AUTOCALSETTINGSDISABLEHBAND, AUTOCALSETTINGSRPMMAX |
+| `SettingsImgClick` | 0x00519708 | 161 | DERIVADO | Ícone de configurações: abre TAutoCalSettings (cor do gráfico, k, banda, rpm, pontos). OBS-COD. |  |  | AUTOCALCHANGECOLOR, AUTOCALSETTINGSCHARTK, AUTOCALSETTINGSDISABLEHBAND, AUTOCALSETTINGSRPMMAX |
 | `SettingsImgMouseEnter` | 0x005196C0 | 34 | INFERIDO | Ao entrar com o mouse em SettingsImg (+1 componentes): corpo de 34 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
 | `SettingsImgMouseLeave` | 0x005196E4 | 34 | INFERIDO | Ao sair com o mouse de SettingsImg: corpo de 34 bytes sem fatos diretos (chama 0 funções sem nome). |  |  |  |
 | `TestAreasClick` | 0x00519538 | 392 | INFERIDO | Ao clicar em TestAreas «Zone acquisite random»: mexe em AcqusitionAreas. |  |  |  |
-| `TimerMessageSwitchToGasTimer` | 0x0051A168 | 226 | INFERIDO | A cada tick do temporizador TimerMessageSwitchToGas: mexe em TimerMessageSwitchToGas, UserMessageLabel, UserMessageLabel2. |  |  |  |
+| `TimerMessageSwitchToGasTimer` | 0x0051A168 | 226 | DERIVADO | Temporizador da mensagem "mudou para gás" (UserMessageLabel). OBS-COD (campos). |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 

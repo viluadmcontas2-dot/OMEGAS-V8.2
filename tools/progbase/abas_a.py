@@ -268,6 +268,7 @@ class Contexto:
             self.sd_nomes.setdefault(off, 'cache de ' + nm)
         self._ev = {}
         self._toca = {}
+        self._todas = None
         self._flag_em = None
         self._acoes = {}
 
@@ -276,6 +277,13 @@ class Contexto:
             self._flag_em = self.E.Emul(self.exe, self.campos_sd, self.objs, lr=0)
             self._flag_em.preparar(['FLAG_CONF1', 'FLAG_CONF2', 'FLAG_CONF3'])
         return self._flag_em
+
+    def todas_acoes(self):
+        if self._todas is None:
+            self._todas = []
+            for h in sorted(self.metodos.values()):
+                self._todas.append((h, self.acoes(h)))
+        return self._todas
 
     def toca(self, alvo):
         if alvo not in self._toca:
@@ -321,6 +329,7 @@ def montar_emul(ctx, log):
     em = ctx.E.Emul(ctx.exe, ctx.campos_sd, ctx.objs, lr=0)
     nomes = sorted({rec['vetor'] for d in ctx.cat.values() for rec in d.values() if rec.get('vetor') in ctx.objs})
     em.preparar(nomes)
+    ctx.E.carregar_tabelas_temperatura(em, 0)    # curvas NTC padrao (tipo 0); tipo real da ECU: INFERIDO
     preenchidos = {}
     for c, d in ctx.cat.items():
         for kind, rec in d.items():
@@ -530,9 +539,11 @@ def eventos_do_controle(ctx, c):
 
 # ------------------------------------------------------------------ regras de estado
 def regras_estado(ctx, aba, nomes_aba):
-    """{controle: [acao...]} a partir de TabXShow + todos os handlers dos controles da aba + sub-rotinas."""
+    """{controle: [acao...]}: acoes (Visible/Enabled/Caption/Text/Checked) em TabXShow, nos handlers da aba e
+    em qualquer outro metodo publicado do TFormConfig (com sub-rotinas ate 2 niveis)."""
+    por = {}
     handlers = [aba + 'Show']
-    for nm in nomes_aba:
+    for nm in sorted(nomes_aba):
         no = acha(ctx.raiz, nm)
         if no is None:
             continue
@@ -540,15 +551,13 @@ def regras_estado(ctx, aba, nomes_aba):
             h = no.p(ev)
             if isinstance(h, str) and h not in handlers and h in ctx.metodo_end:
                 handlers.append(h)
-    por = {}
-    for h in handlers:
-        if h not in ctx.metodo_end:
-            continue
-        for a in ctx.acoes(h):
+    for h, acs in ctx.todas_acoes():
+        for a in acs:
             if a['controle'] in nomes_aba:
                 a = dict(a)
                 a['metodo'] = h
                 a['marca'] = 'OBS-COD'
+                a['da_aba'] = h in handlers
                 por.setdefault(a['controle'], []).append(a)
     return por, handlers
 
@@ -757,7 +766,7 @@ def _nome_leigo(rec):
 def _linhas_estado(rec, limite=14):
     out = []
     vistos = set()
-    for a in rec['estado']['regras']:
+    for a in sorted(rec['estado']['regras'], key=lambda x: (not x.get('da_aba', True), x['metodo'], x['endereco'])):
         val = a['valor_imediato']
         v = {1: 'verdadeiro', 0: 'falso'}.get(val) if val is not None else None
         if v is None:
@@ -767,8 +776,9 @@ def _linhas_estado(rec, limite=14):
         if chave in vistos:
             continue
         vistos.add(chave)
-        out.append('- `%s := %s` em `%s` (%s%s)%s' % (
+        out.append('- `%s := %s` em `%s` (%s%s%s)%s' % (
             a['propriedade'], v, a['endereco'], a['metodo'], (', ' + a['via']) if a.get('via') else '',
+            '' if a.get('da_aba', True) else '; metodo de OUTRA aba/tela',
             (' — SE ' + ' E '.join(cond)) if cond else ' — incondicional'))
     extra = len(out) - limite
     out = out[:limite]
@@ -880,7 +890,8 @@ def md_controle(rec, log_ok):
     if est:
         L.extend(est)
     else:
-        L.append('- Nenhuma rotina da aba muda Visible/Enabled/Checked deste controle: vale o estado de projeto do DFM.')
+        L.append('- Nenhum dos metodos publicados do TFormConfig (nem sub-rotinas ate 2 niveis) muda Visible/Enabled/Checked deste controle: vale o estado de projeto do DFM (%s) `[DERIVADO da varredura de todos os metodos; rotinas fora da RTTI nao foram varridas]`.' % (
+            'OCULTO por projeto e nenhuma rotina o mostra' if rec['estado']['inicial_dfm']['Visible'] is False else 'visivel'))
     L.append('')
     return L
 
@@ -1001,3 +1012,112 @@ def md_aba(d, log_ok=True):
         L.append('- ' + x)
     L.append('')
     return '\n'.join(L)
+
+
+# ------------------------------------------------------------------ lacunas
+def lacunas_da_aba(d):
+    L = []
+    nomes = lambda xs: ', '.join('`%s`' % x['nome'] for x in xs)
+    inter = [c for c in d['controles'] if c['classe'] in INTERATIVOS]
+    sem_conv = [c for c in inter if not c.get('conversao') and not c.get('flags') and c['classe'] in ('TNumericEdit', 'TValueEditEx')]
+    if sem_conv:
+        L.append('Edits sem codigo de dado na rotina 0x48A228 (o valor passa por metodo proprio do TStreamDati; formula nao decodificada aqui, `DESCONHECIDO`): ' + nomes(sem_conv) + '.')
+    combos = [c for c in inter if c['classe'] == 'TKeyComboBox' and not c.get('conversao') and not c.get('flags')]
+    if combos:
+        L.append('Combos cujo valor e gravado por metodo proprio (sem bit nem codigo generico): ' + nomes(combos) + '. Os vetores tocados aparecem na lista de acessos do handler; o significado de cada opcao no fio e `DESCONHECIDO` quando nao ha formula.')
+    grids = [c for c in inter if c['classe'] == 'TDrawGrid']
+    if grids:
+        L.append('Grades (`TDrawGrid`): o conteudo e desenhado em `OnDrawCell`; o conteudo e os quadros por celula nao foram decodificados celula a celula: ' + nomes(grids) + '.')
+    sem_leigo = [c for c in inter if not c['explicacao_leiga'].get('texto')]
+    if sem_leigo:
+        L.append('Sem texto leigo (sem fonte publica nem prova): ' + nomes(sem_leigo) + '.')
+    sem_log = [c for c in inter if c.get('conversao') and not any(e.get('bruto') is not None for e in c.get('valor_ecu', []))]
+    if sem_log:
+        L.append('Ligados a vetor mas sem leitura no LOG do dono (a ECU nao foi consultada nesse SerialCode): ' + nomes(sem_log) + '.')
+    L.append('Visibilidade/habilitacao: as regras listadas sao as que o codigo escreve; a combinacao final depende de dados da ECU (modelo, familia LR, MASK_FUNCTION) que o LOG so mostra em parte. O dono usa familia nao-LR (INFERIDO: o original leu SC 192, nunca 193).')
+    L.append('A associacao rotulo<->campo e por nome/geometria (`INFERIDO`), e a chave da dica (HINT...) segue o nome do componente (`INFERIDO`).')
+    return L
+
+
+# ------------------------------------------------------------------ principal
+def sha_arquivo(p):
+    h = hashlib.sha256()
+    with open(p, 'rb') as fh:
+        h.update(fh.read())
+    return h.hexdigest()
+
+
+def gerar(saida, exe, log_path, manual_path, so_abas=None):
+    import abas_log
+    log = abas_log.ler_log(log_path) if log_path else None
+    if log:
+        for k in list(log['leituras']):          # SC 0 = numero de serie/chave da ECU: nao versionar
+            if k.startswith('0:'):
+                del log['leituras'][k]
+    manual = T.carregar_manual(manual_path)
+    ctx = Contexto(exe, log, manual)
+    if ctx.sha != SHA_EXE:
+        sys.stderr.write('AVISO: sha256 do .exe difere do esperado (%s)\n' % ctx.sha)
+    em, preench = montar_emul(ctx, log)
+    os.makedirs(saida, exist_ok=True)
+    indice = []
+    for n, aba in enumerate(ABAS):
+        if so_abas and aba not in so_abas:
+            continue
+        d = construir_aba(ctx, aba, em, preench, log, manual, n + 1)
+        d['lacunas'] = lacunas_da_aba(d)
+        d['fonte'] = dict(exe_sha256=ctx.sha, dfm='docs/evidence/dfm-original/TFORMCONFIG.txt',
+                          log='PortmonLOGNOVO.LOG sha256 ' + (log['sha256'] if log else 'ausente'),
+                          manual='Landi Renzo Omegas SW 2.16.4 C (sw.txt)', gerador='tools/progbase/abas_a.py')
+        escrever(os.path.join(saida, aba + '.json'), json.dumps(d, indent=1, ensure_ascii=False, sort_keys=True) + '\n')
+        escrever(os.path.join(saida, aba + '.md'), md_aba(d) + '\n')
+        indice.append(dict(aba=aba, **{k: d['meta'][k] for k in ('n_controles', 'n_interativos', 'n_ligados_ao_vetor', 'n_com_flag', 'n_com_valor_do_log')}))
+    if not so_abas:
+        escrever(os.path.join(saida, '_indice.json'), json.dumps(dict(abas=indice, total_controles=sum(x['n_controles'] for x in indice),
+                                                                       total_interativos=sum(x['n_interativos'] for x in indice)),
+                                                                  indent=1, sort_keys=True) + '\n')
+        import abas_emul as E
+        aux = dict(
+            descricao='Funcoes auxiliares do TStreamDati usadas nas conversoes de temperatura e tabelas (executadas no Unicorn a partir do .exe) [OBS-COD].',
+            curvas=E.tabelas_temperatura(exe, ctx.campos_sd, ctx.objs),
+            amostras=E.conversoes_amostra(exe, ctx.campos_sd, ctx.objs),
+            tipo_da_curva_A='tipo vindo de [SD+0x272C] em TStreamDati.TimerIOTimer 0x43BAD4 -> 0x430A0C (qual valor a ECU do dono usa: DESCONHECIDO; usei 0 para as amostras)',
+            marca='OBS-COD')
+        escrever(os.path.join(saida, '_funcoes_auxiliares.json'), json.dumps(aux, indent=1, sort_keys=True) + '\n')
+        if log:
+            escrever(os.path.join(saida, '_log_leituras.json'), json.dumps(log, indent=1, sort_keys=True) + '\n')
+    return indice
+
+
+def escrever(caminho, texto):
+    atual = None
+    if os.path.isfile(caminho):
+        with open(caminho, encoding='utf-8') as fh:
+            atual = fh.read()
+    if atual != texto:
+        with open(caminho, 'w', encoding='utf-8', newline='\n') as fh:
+            fh.write(texto)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    ap.add_argument('--exe')
+    ap.add_argument('--log')
+    ap.add_argument('--manual')
+    ap.add_argument('--saida', default=SAIDA_PADRAO)
+    ap.add_argument('--aba', action='append')
+    a = ap.parse_args(argv)
+    exe = achar([a.exe] + EXE_CAND, 'exe')
+    if not exe:
+        print('ProgBase.exe nao encontrado (use --exe ou PROGBASE_EXE)', file=sys.stderr)
+        return 2
+    log = achar([a.log] + LOG_CAND, 'log')
+    man = achar([a.manual] + MANUAL_CAND, 'manual')
+    r = gerar(a.saida, exe, log, man, a.aba)
+    for x in r:
+        print(x['aba'], x['n_controles'], 'controles;', x['n_interativos'], 'interativos')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

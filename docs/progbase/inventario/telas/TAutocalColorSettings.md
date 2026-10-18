@@ -40,8 +40,8 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 |---|---|---:|---|---|---|---|---|
 | `ChartDataAfterDraw` | 0x0051087C | 213 | INFERIDO | Após desenhar ChartData: mexe em ChartData. |  |  |  |
 | `CheckCustomColorsClick` (sem evento no DFM) | 0x00510998 | 35 | INFERIDO | Rotina publicada sem evento ligado no DFM (chamada pelo código): mexe em PanelCustomColors. |  |  |  |
-| `Image1Click` | 0x00510AAC | 243 | INFERIDO | Ao clicar em Image1: usa textos AUTOCALSETTINGSLOADDEFCOLOR; chama TTranslatorExt::GetString. | AUTOCALSETTINGSLOADDEFCOLOR |  |  |
-| `OKClick` | 0x005109BC | 239 | INFERIDO | Ao clicar em OK «OK !»: usa textos AUTOCALSETTINGSSAVEEXIT; chama TTranslatorExt::GetString. | AUTOCALSETTINGSSAVEEXIT |  |  |
+| `Image1Click` | 0x00510AAC | 243 | DERIVADO | Imagem: carrega as cores padrão (AUTOCALSETTINGSLOADDEFCOLOR). OBS-COD. | AUTOCALSETTINGSLOADDEFCOLOR |  |  |
+| `OKClick` | 0x005109BC | 239 | DERIVADO | OK: salva as cores e fecha (texto AUTOCALSETTINGSSAVEEXIT). OBS-COD. | AUTOCALSETTINGSSAVEEXIT |  |  |
 | `_AcqusitionAreas0Click` | 0x00510954 | 66 | INFERIDO | Ao clicar em _AcqusitionAreas0 (+12 componentes): mexe em MyColorDialog. |  |  |  |
 
 ### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)

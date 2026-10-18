@@ -22,8 +22,8 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 |---|---|---:|---|---|---|---|---|
 | `BitBtn1Click` | 0x005140E8 | 6 | INFERIDO | Ao clicar em BitBtn1: corpo de 6 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
 | `BtnChangeColorClick` | 0x0051420C | 101 | INFERIDO | Ao clicar em BtnChangeColor «Setup colors»: chama TAutocalColorSettings.Create. |  |  |  |
-| `CalibrationValWriteItem` | 0x005140F0 | 177 | INFERIDO | Evento OnWriteItem de CalibrationVal: chama TAebNumber::SetInt, TAebVector::SetInt. |  |  |  |
-| `FormClose` | 0x00513E68 | 640 | INFERIDO | Ao fechar o formulário AutoCalSettings «Autocal settings»: mexe em CheckShowChartKLine, CheckShowChartPoint, CheckShowChartZones, CheckShowStatusMessages, RefreshTime. |  |  |  |
+| `CalibrationValWriteItem` | 0x005140F0 | 177 | DERIVADO | Grava o valor editado do vetor de calibração (TAebVector/TAebNumber::SetInt); em erro mostra "Error!". OBS-COD. |  |  |  |
+| `FormClose` | 0x00513E68 | 640 | OBS-COD | Ao fechar grava no registro/INI as opções (showstatusmessage, showchartzones, showchartpoint, SETTINGS…). OBS-COD (literais). |  |  |  |
 | `FormShow` | 0x00513DA8 | 8 | INFERIDO | Ao exibir o formulário AutoCalSettings «Autocal settings»: corpo de 8 bytes sem fatos diretos (chama 1 funções sem nome). |  |  |  |
 | `RefreshTimeChange` | 0x005141A4 | 104 | INFERIDO | Quando muda o valor de RefreshTime: mexe em LabelRefreshValue, RefreshTime. |  |  |  |
 
