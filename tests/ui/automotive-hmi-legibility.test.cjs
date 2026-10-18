@@ -33,13 +33,11 @@ assert.match(css, /\.source-status\s*\{[^}]*min-height:40px[^}]*font-size:11px/s
 assert.match(obd, /\.curve-point-label\s*\{[^}]*font-size:11px/s);
 assert.match(obd, /\.curve-nudge-row button\s*\{[^}]*min-height:44px/s);
 
-assert.match(refine, /\.recorder-actions button[\s\S]*min-height:\s*44px[\s\S]*font-size:\s*11px/s,
-  'ações do gravador devem ser tocáveis na multimídia');
-assert.match(refine, /\.diagnostic-settings > button[\s\S]*min-height:\s*44px[\s\S]*font-size:\s*11px/s,
-  'ação principal das configurações de diagnóstico deve ter alvo automotivo');
-assert.match(refine, /\.recorded-session-list button[\s\S]*min-height:\s*44px[\s\S]*font-size:\s*11px/s,
-  'ações de sessões gravadas não podem exigir toque de precisão');
-assert.match(refine, /\.diagnostic-settings-grid select,[\s\S]*min-height:\s*44px/s,
-  'campos diagnósticos devem manter piso automotivo de 44px');
+// Sessões e Ferramentas (2026-10-18): alvos de 56 px e texto de corpo de 18 px, definidos em styles-ux-leigo.css.
+const ux = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../app/src/main/assets/ui/styles-ux-leigo.css'), 'utf8');
+assert.match(ux, /\.sess-main\s*\{[^}]*min-height:\s*72px/s, 'gravar/parar tocável na multimídia');
+assert.match(ux, /\.sess-size \[data-session-settings\]\s*\{[^}]*min-height:\s*60px/s, 'ação principal das configurações com alvo automotivo');
+assert.match(ux, /\.recorded-session-item button\s*\{[^}]*min-height:\s*56px/s, 'ações de sessões gravadas não podem exigir toque de precisão');
+assert.match(ux, /\.diagnostic-settings-grid select,[^{]*\{[^}]*min-height:\s*56px/s, 'campos diagnósticos mantêm piso automotivo');
 
 console.log('AUTOMOTIVE_HMI_LEGIBILITY=PASS');

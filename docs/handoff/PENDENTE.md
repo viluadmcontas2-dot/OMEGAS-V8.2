@@ -28,3 +28,11 @@ Provado no emulador (tools/emulacao/cpu_setter_original.py --modo-lenta, RadioGa
 (w0/w1 do FLAG_CONF1 e GIRI[1] são preservados; GIRI vai por indexado 0x14 só no elemento 0.)
 Falta: IdleModeCore/Writer (Kotlin, ordem: rpm 0->1100 primeiro, 1100->0 bit primeiro; 2ª falha = PARTIAL + Desfazer), flow JS, ponte, testes JUnit/ECU emulada.
 O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
+
+## Depois do APK (UX leigo, 2026-10-18)
+- AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU" e "RPM"/"MAP" (teste `linguagem-leiga` marca como todo). Trocar por "central"/"Rotação".
+- 1024x600 e 800x480: só Sessões e Ferramentas foram redesenhadas; AutoCal/Mapa K/Curva K cortam conteúdo nesses tamanhos (diagnóstico em `tools/ci/sem_rolagem_abas.cjs`).
+- Marcha lenta: só leitura + sugestão; gravar o modo fica pendente (escrita não implementada).
+- Faixas do anti-apagão: máximo do DFM (OBS-COD), piso 0 (DERIVADO), ordem campo→posição INFERIDA; aviso "Longe do valor de fábrica" a ±50% (INFERIDO).
+- Kotlin (AntiStalloParamsCore/Writer + testes JUnit): compilados e rodados localmente (40 testes) com kotlinc 2.0.21; Gradle/lint só na CI.
+- Antigos testes do Avançado (avancado-painel-dom, e2e-avancado-toque) foram substituídos por ux-fluxo-toque e campos-editaveis (mesmas garantias na nova tela).
