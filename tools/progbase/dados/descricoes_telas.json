@@ -1,0 +1,217 @@
+{
+ "TAboutBox": {
+  "descricao": "Sobre: produto/versão, código do usuário, licença e registro (somente função descrita).",
+  "evidencia": "OBS-COD",
+  "papel": "diálogo"
+ },
+ "TAebBeeFormLight": {
+  "descricao": "Comunicação sem fio (Bee): rede, dongle local, dispositivo remoto, PIN, varredura, programação de firmware.",
+  "evidencia": "DERIVADO",
+  "papel": "tela de função"
+ },
+ "TAutoCalDM": {
+  "descricao": "Vetores/escalares do AutoCal ligados a controles (AUTO_CAL_ENABLE, VECT_AUTOCAL_*, NUM_AUTOMATCH_*).",
+  "evidencia": "OBS-COD",
+  "papel": "módulo de dados"
+ },
+ "TAutoCalDM_EE": {
+  "descricao": "Vetores do AutoCal na EEPROM (VECT_AUTOCAL_EE).",
+  "evidencia": "OBS-COD",
+  "papel": "módulo de dados"
+ },
+ "TAutoCalSettings": {
+  "descricao": "Opções do AutoCal: tempo de atualização, mostrar zonas/pontos/mensagens, valor de calibração, cores.",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TAutoCalUI": {
+  "descricao": "Frame da calibração automática (AutoCal): gráficos de dados e K, painel de pontos, menus de reset/exportação, mensagens ao usuário (detalhe: abas 17-33).",
+  "evidencia": "OBS-COD",
+  "papel": "frame"
+ },
+ "TAutocalColorSettings": {
+  "descricao": "Escolha das cores das séries do gráfico do AutoCal.",
+  "evidencia": "OBS-COD",
+  "papel": "diálogo"
+ },
+ "TFFDataModuleSingleArray": {
+  "descricao": "Módulo de dados de quadro de congelamento (freeze frame) usado pelo Diagnóstico.",
+  "evidencia": "INFERIDO",
+  "papel": "módulo de dados"
+ },
+ "TFormAggKey": {
+  "descricao": "Aviso de validade da chave de hardware e campo para código de renovação (somente função descrita).",
+  "evidencia": "OBS-COD",
+  "papel": "diálogo"
+ },
+ "TFormAttesa": {
+  "descricao": "Janela de espera com barra de progresso e animação, usada em operações longas (abrir/salvar/gravar).",
+  "evidencia": "OBS-COD",
+  "papel": "diálogo"
+ },
+ "TFormCalibra": {
+  "descricao": "Calibração automática guiada da central (roteiro com mensagens e leituras ao vivo).",
+  "evidencia": "DERIVADO",
+  "papel": "tela de função"
+ },
+ "TFormCentriCelle": {
+  "descricao": "Edita os centros (rpm/pressão) das células do mapa de carburação.",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormCentriCelleK": {
+  "descricao": "Edita os centros das células do mapa dos coeficientes K.",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormConfig": {
+  "descricao": "Configuração do veículo em 33 abas (detalhe em docs/progbase/abas, outro agente).",
+  "evidencia": "OBS-COD",
+  "papel": "tela de função"
+ },
+ "TFormCorrCalibra": {
+  "descricao": "Correção da calibração por zonas da grade K (PgUp/PgDn).",
+  "evidencia": "DERIVADO",
+  "papel": "tela de função"
+ },
+ "TFormDiagnosi": {
+  "descricao": "Diagnóstico da central: falhas, tempos de funcionamento, exclusão de injetores de gás e teste de saídas.",
+  "evidencia": "OBS-COD",
+  "papel": "tela de função"
+ },
+ "TFormFile": {
+  "descricao": "Navegador de arquivos de configuração e de PDFs de montagem (abrir/salvar).",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormGestioneTracce": {
+  "descricao": "Seleção dos traços exibidos no gráfico (lista com caixas + OK/Cancelar).",
+  "evidencia": "OBS-COD",
+  "papel": "diálogo"
+ },
+ "TFormGraficoDrt": {
+  "descricao": "Gráfico de aquisição gravada (traços, zoom, imprimir).",
+  "evidencia": "DERIVADO",
+  "papel": "tela de função"
+ },
+ "TFormGraficoScope": {
+  "descricao": "Osciloscópio em tempo real com marcadores, zoom, legenda, carregar/salvar/exportar.",
+  "evidencia": "DERIVADO",
+  "papel": "tela de função"
+ },
+ "TFormHelpScope": {
+  "descricao": "DFM \"Legenda marker\" (legenda dos marcadores do osciloscópio); classe sem RTTI/VMT nem nome no executável: não usado.",
+  "evidencia": "INFERIDO",
+  "papel": "não usada (INFERIDO)"
+ },
+ "TFormLandiConnect": {
+  "descricao": "Configuração do módulo Landi Connect (aprendizado de marchas, tanque, injetores) e zerar viagem/totais.",
+  "evidencia": "DERIVADO",
+  "papel": "tela de função"
+ },
+ "TFormMain": {
+  "descricao": "Janela principal: menus Arquivo/Conexão/Configurações/Ajuda/Market, barra de botões (Configuração, Visualização, Diagnóstico, Carregar/Salvar configuração, Reprogramar, Calibração, Modifica calibração, Atualizar, Sair), barra de status (porta, serial da ECU) e ícones (Bee, Landi Connect, Service).",
+  "evidencia": "OBS-COD",
+  "papel": "janela principal"
+ },
+ "TFormMainBase": {
+  "descricao": "Base do formulário principal (menu de contexto vazio).",
+  "evidencia": "OBS-COD",
+  "papel": "ancestral"
+ },
+ "TFormMessaggio": {
+  "descricao": "DFM com um rótulo de mensagem; a classe não tem RTTI/VMT nem nome no executável, e a unidade só tem Initialize/Finalize: resto de formulário não usado.",
+  "evidencia": "INFERIDO",
+  "papel": "não usada (INFERIDO)"
+ },
+ "TFormModMappa": {
+  "descricao": "Alteração do valor de uma célula de mapa (chamada por TAebGrid/TAebVectorItems).",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormModificaMappa": {
+  "descricao": "Variação (delta) aplicada a uma célula de mapa.",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormPdf": {
+  "descricao": "Visualizador de PDF (componente ActiveX TPdf) usado por TFormFile para as instruções de montagem.",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormRifAutocal": {
+  "descricao": "Referências do AutoCal (K mínimo/máximo, centros de rpm e MAP).",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormRiferimenti": {
+  "descricao": "Edição das referências (eixos) de um mapa, chamada pela grade TAebGrid.",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormScarica": {
+  "descricao": "Janela de programação da ECU: mostra arquivo escolhido (data) e botões Programação/Mudar arquivo.",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormService": {
+  "descricao": "Gestão de revisões (tagliandi) com PIN e dados do instalador; inibição da passagem a gás.",
+  "evidencia": "DERIVADO",
+  "papel": "tela de função"
+ },
+ "TFormSplash": {
+  "descricao": "Tela de abertura (imagem centralizada, sempre no topo), criada por TFormMain.Create.",
+  "evidencia": "OBS-COD",
+  "papel": "diálogo"
+ },
+ "TFormStampa": {
+  "descricao": "DFM maximizado com uma imagem (impressão); classe sem RTTI/VMT nem nome no executável: formulário não usado.",
+  "evidencia": "INFERIDO",
+  "papel": "não usada (INFERIDO)"
+ },
+ "TFormSwitch": {
+  "descricao": "Configuração do comutador: LED e buzzer.",
+  "evidencia": "DERIVADO",
+  "papel": "diálogo"
+ },
+ "TFormVisualizza": {
+  "descricao": "Visualização em tempo real dos parâmetros do veículo e gravação de aquisição (DRT).",
+  "evidencia": "OBS-COD",
+  "papel": "tela de função"
+ },
+ "TStrategiaPandaDM": {
+  "descricao": "Dados da estratégia especial Panda (motor 169A4000).",
+  "evidencia": "DERIVADO",
+  "papel": "módulo de dados"
+ },
+ "TStrategiaPandaDM_EE": {
+  "descricao": "Dados EEPROM da estratégia Panda.",
+  "evidencia": "DERIVADO",
+  "papel": "módulo de dados"
+ },
+ "TStrategiaPandaUI": {
+  "descricao": "Caixas de habilitação das estratégias Panda (mínimo, reconhecimento do clima, emulação do sensor de pressão) e soglias.",
+  "evidencia": "DERIVADO",
+  "papel": "frame"
+ },
+ "TStrategiaTempiMortiDM": {
+  "descricao": "Dados da estratégia de tempos mortos por injetor.",
+  "evidencia": "DERIVADO",
+  "papel": "módulo de dados"
+ },
+ "TStrategiaTempiMortiDM_EE": {
+  "descricao": "Dados EEPROM da estratégia de tempos mortos.",
+  "evidencia": "DERIVADO",
+  "papel": "módulo de dados"
+ },
+ "TStrategiaTempiMortiUI": {
+  "descricao": "Edição dos tempos mortos de injetor gás/gasolina A..I com setas.",
+  "evidencia": "DERIVADO",
+  "papel": "frame"
+ },
+ "TStreamDati": {
+  "descricao": "Módulo de dados central: 320 campos (vetores/escalares da ECU TAebVector/TAebNumber, conexão, protocolo e o temporizador TimerIO que lê a ECU para todas as telas).",
+  "evidencia": "OBS-COD",
+  "papel": "módulo de dados"
+ }
+}

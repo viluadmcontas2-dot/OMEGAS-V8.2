@@ -37,15 +37,14 @@ ABAS = ['TabCambio', 'TabLambda', 'TabEmissioni', 'TabSensore', 'TabPressione', 
 DFM_FORM = os.path.join(RAIZ, 'docs', 'evidence', 'dfm-original', 'TFORMCONFIG.txt')
 DFM_SD = os.path.join(RAIZ, 'docs', 'evidence', 'dfm-original', 'TSTREAMDATI.txt')
 FLAGS_JSON = os.path.join(RAIZ, 'docs', 'evidence', 'flags-do-original.json')
-I18N = ['/home/user/protocolo-landi/dfm/i18n_all.json',
-        os.path.join(RAIZ, 'docs', 'evidence', 'dfm-original', 'i18n_TFORMCONFIG.json')]
 SAIDA_PADRAO = os.path.join(RAIZ, 'docs', 'progbase', 'abas')
-EXE_CAND = [os.environ.get('PROGBASE_EXE', ''), os.path.join(os.path.expanduser('~/.cache/omegas'), 'ProgBase.exe'),
-            '/tmp/claude-0/-home-user/57e20309-4640-5e31-b02d-4b2faf9cf2b3/scratchpad/progbase/pb.exe']
-LOG_CAND = [os.environ.get('PORTMON_LOG', ''),
-            '/tmp/claude-0/-home-user/57e20309-4640-5e31-b02d-4b2faf9cf2b3/scratchpad/portmon/x/PortmonLOGNOVO.LOG']
-MANUAL_CAND = [os.environ.get('MANUAL_SW_TXT', ''),
-               '/tmp/claude-0/-home-user/57e20309-4640-5e31-b02d-4b2faf9cf2b3/scratchpad/web/sw.txt']
+# Entradas externas: variaveis de ambiente (nenhum caminho absoluto fixo); o i18n usado fica em _i18n_usado.json (versionado)
+CACHE = os.path.expanduser('~/.cache/omegas')
+I18N = [os.environ.get('I18N_ALL', ''), os.path.join(CACHE, 'i18n_all.json')]
+I18N_SNAPSHOT = os.path.join(SAIDA_PADRAO, '_i18n_usado.json')
+EXE_CAND = [os.environ.get('PROGBASE_EXE', ''), os.path.join(CACHE, 'ProgBase.exe')]
+LOG_CAND = [os.environ.get('PORTMON_LOG', ''), os.path.join(CACHE, 'PortmonLOGNOVO.LOG')]
+MANUAL_CAND = [os.environ.get('MANUAL_SW_TXT', ''), os.path.join(CACHE, 'sw.txt')]
 SHA_EXE = '8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4'
 TIPO_DE_CLASSE = {'TNumericEdit': 'edit numerico', 'TValueEditEx': 'edit numerico (ValueEditEx)', 'TEdit': 'edit',
                   'TKeyComboBox': 'combo', 'TCheckBox': 'caixa de marcar', 'TRadioButton': 'radio',
@@ -104,6 +103,34 @@ def itens_do_combo(c):
 
 def numero(x):
     return x if isinstance(x, (int, float)) else None
+
+
+class I18n:
+    """Dicionario de traducoes que registra as chaves consultadas (para gravar o subconjunto usado)."""
+
+    def __init__(self, dados):
+        self.dados, self.usadas = dados, set()
+
+    def get(self, k, d=None):
+        if k in self.dados:
+            self.usadas.add(k)
+        return self.dados.get(k, d)
+
+    def __contains__(self, k):
+        if k in self.dados:
+            self.usadas.add(k)
+        return k in self.dados
+
+    def __getitem__(self, k):
+        self.usadas.add(k)
+        return self.dados[k]
+
+    def subconjunto(self):
+        out = {}
+        for k in sorted(self.usadas):
+            ent = self.dados[k]
+            out[k] = {i: ent[i] for i in ('ita', 'eng', 'por') if ent.get(i)}
+        return out
 
 
 def tr(i18n, chave, idioma, padrao=None):
@@ -243,7 +270,14 @@ class Contexto:
         self.E = E
         self.objs = E.objetos_sd(self.sd_texto)
         i18n_path = achar(I18N, 'i18n')
-        self.i18n = D.carregar_i18n(i18n_path)
+        if i18n_path:
+            self.i18n = I18n(D.carregar_i18n(i18n_path))
+        elif os.path.isfile(I18N_SNAPSHOT):
+            with open(I18N_SNAPSHOT, encoding='utf-8') as fh:
+                self.i18n = I18n(json.load(fh))
+        else:
+            raise SystemExit('i18n_all.json nao encontrado (defina I18N_ALL) e nao ha %s' % I18N_SNAPSHOT)
+        self.i18n_externo = bool(i18n_path)
         with open(FLAGS_JSON, encoding='utf-8') as fh:
             self.flags = json.load(fh)
         self.flags_por_controle = {}
@@ -1202,6 +1236,8 @@ def gerar(saida, exe, log_path, manual_path, so_abas=None):
             amostras=E.conversoes_amostra(exe, ctx.campos_sd, ctx.objs),
             tipo_da_curva_A='tipo vindo de [SD+0x272C] em TStreamDati.TimerIOTimer 0x43BAD4 -> 0x430A0C (qual valor a ECU do dono usa: DESCONHECIDO; usei 0 para as amostras)',
             marca='OBS-COD')
+        if ctx.i18n_externo:
+            escrever(os.path.join(saida, '_i18n_usado.json'), json.dumps(ctx.i18n.subconjunto(), indent=1, sort_keys=True, ensure_ascii=False) + '\n')
         escrever(os.path.join(saida, '_funcoes_auxiliares.json'), json.dumps(aux, indent=1, sort_keys=True) + '\n')
         if log:
             escrever(os.path.join(saida, '_log_leituras.json'), json.dumps(log, indent=1, sort_keys=True) + '\n')

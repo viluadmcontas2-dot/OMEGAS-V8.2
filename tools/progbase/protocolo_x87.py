@@ -33,13 +33,14 @@ def _sinal(raw, tamanho, sinal):
 
 
 def _arredonda_precisao(x, precisao):
-    """Ao múltiplo mais próximo de `precisao` (Floor/Ceil comparados, RE:0x00975BAB..0x00975C21)."""
+    """Ao múltiplo de `precisao` mais próximo; empate vai para o MAIOR (RE:0x00975B96..0x00975C21: compara
+    (hi - x) com (x - lo); só escolhe `lo` quando (hi - x) > (x - lo)). Confirmado contra a rotina original."""
     if precisao == 0.0:
         return x
     q = x / precisao
     lo = math.floor(q) * precisao
     hi = math.ceil(q) * precisao
-    return hi if (hi - x) < (x - lo) else lo if (x - lo) < (hi - x) else hi if False else lo if abs(lo - x) <= abs(hi - x) else hi
+    return lo if (hi - x) > (x - lo) else hi
 
 
 def raw_para_fisico(raw, tamanho=1, sinal=False, coef=(1.0, 0.0, 0.0, 1.0), precisao=0.0, mascara=None,

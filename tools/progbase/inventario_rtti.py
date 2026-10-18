@@ -199,19 +199,56 @@ def construir(b):
     return dict(sorted(classes.items()))
 
 
+def eventos_dfm(cl, arvores):
+    """Anexa a cada classe de formulário/frame/módulo a lista DFM->handler: propriedades On* (identificador) ligadas a
+    métodos publicados da classe (ou de ancestral do programa), inclusive eventos das ações (TAction). OBS-COD."""
+    by_vmt = {c['vmt']: c for c in cl.values()}
+    n = 0
+    for rec, (arv, _) in arvores.items():
+        c = next((x for x in cl.values() if x['nome'] == arv['classe']), None)
+        if c is None:
+            continue
+        metodos = {}
+        cur = c
+        while cur is not None:
+            for m in cur['metodos']:
+                metodos.setdefault(m['nome'].lower(), (cur['nome'], m))
+            cur = by_vmt.get(cur['pai_vmt'])
+        out = []
+
+        def walk(no, caminho):
+            for pn, v, t in no['props']:
+                if pn.startswith('On') and t == 7:
+                    dono, m = metodos.get(v.lower(), (None, None))
+                    out.append({'componente': no['nome'], 'classe_componente': no['classe'], 'evento': pn, 'handler': v,
+                                'endereco': m['endereco'] if m else None, 'metodo_de': dono})
+            for f in no['filhos']:
+                walk(f, caminho + [no['nome']])
+        walk(arv, [])
+        c['eventos_dfm'] = sorted(out, key=lambda e: (e['componente'], e['evento']))
+        c['dfm_recurso'] = rec
+        n += len(out)
+    return n
+
+
 def gerar(exe, saida):
     b = Binario(exe)
     cl = construir(b)
+    from inventario_dfm import carregar_todos
+    arvores, _ = carregar_todos(b)
+    n_ev = eventos_dfm(cl, arvores)
     app = [c for c in cl.values() if c['app']]
     meta = {'exe_sha256': b.sha256, 'sha256_esperado_ok': b.sha256 == SHA_ESPERADO,
-            'n_classes': len(cl), 'n_classes_app': len(app),
+            'n_classes': len(cl), 'n_classes_app': len(app), 'n_eventos_dfm': n_ev,
             'legenda': 'OBS-COD: todos os campos vêm do RTTI/VMT do binário; tipo/cadeia = DERIVADO.'}
     escrever_json(os.path.join(saida, 'classes.json'), {'meta': meta, 'classes': cl})
     L = ['# Classes com RTTI do ProgBase.exe', '',
          'Gerado por `tools/progbase/inventario_rtti.py` (OBS-COD: RTTI/VMT; tipo e cadeia: DERIVADO).',
          'SHA-256 do binário: `%s`.' % b.sha256, '',
          '- Classes com RTTI: **%d** (das quais **%d** nas unidades do próprio programa, prefixo `@:`).' % (len(cl), len(app)),
-         '- Detalhe completo (campos, métodos, propriedades, vtable): `classes.json`.', '']
+         '- Eventos DFM→handler ligados a método publicado: **%d** (campo `eventos_dfm` de cada classe em `classes.json`).' % n_ev,
+         '- Detalhe completo (campos, métodos, propriedades, vtable): `classes.json`.',
+         '- A coluna Vtable conta ponteiros de código consecutivos a partir da VMT (INFERIDO; pode incluir 1-2 além do fim real).', '']
     for tipo in ('form', 'datamodule', 'frame', 'thread', 'action', 'componente', 'excecao', 'aplicacao', 'outro'):
         sel = [c for c in app if c['tipo'] == tipo]
         if not sel:

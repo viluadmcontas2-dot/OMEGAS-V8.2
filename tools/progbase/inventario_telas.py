@@ -22,6 +22,7 @@ import inventario_i18n as i18n  # noqa: E402
 import inventario_rtti as rtti  # noqa: E402
 
 DESCRICOES = os.path.join(AQUI, 'dados', 'descricoes_handlers.json')
+DESC_TELAS = os.path.join(AQUI, 'dados', 'descricoes_telas.json')
 VK = {8: 'Backspace', 9: 'Tab', 13: 'Enter', 27: 'Esc', 32: 'Space', 33: 'PgUp', 34: 'PgDn', 35: 'End', 36: 'Home',
       37: 'Left', 38: 'Up', 39: 'Right', 40: 'Down', 45: 'Ins', 46: 'Del'}
 CLASSES_DIALOGO = re.compile(r'T(Open|Save|Print|PrinterSetup|Color|Font|Find|Replace|OpenPicture|SavePicture|FileOpen|FileSave)Dialog$')
@@ -98,6 +99,7 @@ class Tradutor:
 
 
 def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
+    desc_telas = json.load(open(DESC_TELAS, encoding='utf-8')) if os.path.isfile(DESC_TELAS) else {}
     trad = Tradutor(lbl)
     starts = sorted(cod.entradas)
     import bisect
@@ -207,6 +209,8 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
                 'titulo': {'dfm': texto(arv, 'Caption'), 'traducao': trad(texto(arv, 'Caption'))},
                 'n_componentes': sum(1 for _ in percorrer(arv)), 'rtti': c is not None,
                 'aberta_por': [{'funcao': h(f), 'nome': nome_de(f)} for f in sorted(xref_vmt.get(int(c['vmt'], 16), []))] if c else [],
+                'papel': desc_telas.get(cls, {}).get('papel'), 'descricao': desc_telas.get(cls, {}).get('descricao'),
+                'descricao_evidencia': desc_telas.get(cls, {}).get('evidencia'),
                 'controles': [], 'menus': [], 'acoes': [], 'dialogos': [], 'timers': [], 'handlers': {}}
         vistos_h = {}
         gat = {}
@@ -350,6 +354,7 @@ def auto_descricao(hd, gs):
 def md_tela(t):
     L = ['# %s (recurso `%s`)' % (t['classe'], t['recurso']), '',
          'Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.', '',
+         '**Papel:** %s (%s). %s' % (t['papel'] or '?', t['descricao_evidencia'] or 'DESCONHECIDO', t['descricao'] or ''), '',
          '- Instância DFM: `%s`; unidade: `%s`; ancestral: `%s`; tamanho de instância: %s; componentes no DFM: %d.' % (
              t['nome_instancia'], t['unidade'], t['ancestral'], ('0x%X' % t['tamanho_instancia']) if t['tamanho_instancia'] else '-', t['n_componentes'])]
     tt = t['titulo']
@@ -429,11 +434,11 @@ def gerar_com(b, cl, cod, nomes, arv, lbl, usos, saida):
                                                     'telas': telas})
     idx = ['# Telas do ProgBase.exe: árvore tela → controle → handler', '',
            'Gerado por `tools/progbase/inventario_telas.py` (SHA-256 `%s`). Um arquivo por tela em `telas/`; dados completos em `telas.json`.' % b.sha256, '',
-           '| Tela | Recurso | Título | Componentes | Menus | Ações | Controles c/ evento | Diálogos | Handlers | Aberta por |', '|---|---|---|---:|---:|---:|---:|---:|---:|---|']
+           '| Tela | Papel | Título | Componentes | Menus | Ações | Controles c/ evento | Diálogos | Handlers | Aberta por |', '|---|---|---|---:|---:|---:|---:|---:|---:|---|']
     for t in telas:
         escrever(os.path.join(saida, 'telas', t['classe'] + '.md'), md_tela(t))
         idx.append('| [%s](telas/%s.md) | %s | %s | %d | %d | %d | %d | %d | %d | %s |' % (
-            t['classe'], t['classe'], t['recurso'], (t['titulo']['dfm'] or '').replace('|', '/'), t['n_componentes'], len(t['menus']),
+            t['classe'], t['classe'], t['papel'] or '?', (t['titulo']['dfm'] or '').replace('|', '/'), t['n_componentes'], len(t['menus']),
             len(t['acoes']), len(t['controles']), len(t['dialogos']), len(t['handlers']),
             ', '.join('`%s`' % (x['nome'] or x['funcao']) for x in t['aberta_por'][:2])))
     escrever(os.path.join(saida, 'telas.md'), '\n'.join(idx))

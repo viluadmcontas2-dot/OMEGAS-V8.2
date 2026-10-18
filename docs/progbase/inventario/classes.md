@@ -4,7 +4,9 @@ Gerado por `tools/progbase/inventario_rtti.py` (OBS-COD: RTTI/VMT; tipo e cadeia
 SHA-256 do binário: `8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4`.
 
 - Classes com RTTI: **1752** (das quais **101** nas unidades do próprio programa, prefixo `@:`).
+- Eventos DFM→handler ligados a método publicado: **1376** (campo `eventos_dfm` de cada classe em `classes.json`).
 - Detalhe completo (campos, métodos, propriedades, vtable): `classes.json`.
+- A coluna Vtable conta ponteiros de código consecutivos a partir da VMT (INFERIDO; pode incluir 1-2 além do fim real).
 
 ## Unidades do programa — tipo `form` (29)
 
