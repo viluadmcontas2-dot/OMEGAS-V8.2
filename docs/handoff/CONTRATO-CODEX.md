@@ -29,3 +29,10 @@ Limpar menções ao fabricante/legado em app/ (comentários/textos); pesquisa fi
 - Substituir os workflows legados (`ci.yml` "OMEGAS VERMELHO/PLATINA", `verde-apk-now.yml`) por DOIS workflows novos, limpos e sem nome legado: `ci.yml` (testes JS/Python/Kotlin/lint + grafo) e `apk.yml` (build + artefato nomeado `OMEGAS-<versão>-<sha>.apk`). Atualizar tests/test_missao_final_contract.py (só 2 workflows). Remover todo texto/nome legado dos workflows.
 - Auto-auditoria barata a cada execução: `tools/auditoria.py` (idempotente, < 30 s) que gera `docs/handoff/AUDITORIA.json` com: testes verdes/vermelhos por grupo, itens de PENDENTE.md por estado, cobertura % da decompilação (COBERTURA.md), nº de evidence ids citados × existentes, nós do grafo × arquivos existentes, último SHA/CI. O job `grafo` do ci.yml roda isso e falha se algo citado não existir. PENDENTE.md é o único ledger: nenhum item pode ser removido — só marcado FEITO (com SHA/teste) ou BLOQUEADO (com causa + menor próximo passo).
 - Contrato de não-duplicação: antes de criar arquivo/função/teste, `graphify query` + grep; se existir, reaproveitar. Checkpoint PROGRESSO*.md atualizado antes de parar qualquer agente.
+
+## 7. Velocidade do ciclo mensagem → APK (pedido do dono)
+- Testes locais só os do arquivo tocado (RED→GREEN); a suíte completa roda no GitHub (remoto, sem gastar tokens). Nunca rodar a suíte inteira localmente só para "conferir".
+- CI paralela por grupo (JS / Python / Kotlin / e2e) e cache do Gradle; APK: build enxuto (um ABI/arm64, sem debug symbols, R8), meta < 6 min.
+- Agentes: 1 por arquivo/tema, prazo máximo, checkpoint em arquivo; relatórios em ≤10 linhas; controlador não lê transcript, só o relatório.
+- Testes com criatividade: fluxo (toque a toque), esperado × inesperado (NAK, silêncio, USB caído, ECU mudou no meio), mutação (estrague a regra e o teste tem que falhar), evidência citada.
+- Medir o ciclo: tools/auditoria.py registra tempo da CI, do APK e nº de rodadas de correção por entrega; meta cair a cada versão.
