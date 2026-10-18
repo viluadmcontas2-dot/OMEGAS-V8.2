@@ -39,5 +39,5 @@ Limpar menções ao fabricante/legado em app/ (comentários/textos); pesquisa fi
 
 ## 8. Testes: o mínimo local (pedido do dono)
 - Regra: NÃO rodar testes localmente, salvo os impossíveis no GitHub (ex.: precisa do .exe/log fora do repo). Teste local permitido só: 1 arquivo, 1 vez, para provar RED→GREEN do que acabou de ser escrito. Suíte completa = só na CI.
-- Orçamento de GitHub Actions: 10.000 min/mês (repo privado). Meta: CI ≤ 6 min, APK ≤ 6 min; paralelizar por grupo; cache Gradle/npm; e2e com Chromium só em job separado disparado manualmente ou em tag.
+- GitHub Actions (repo privado, 10.000 min/mês): SEM poda de testes e sem meta fixa de minutos. Eficiência vem de DIVIDIR: um job de 20 min vira 4 jobs paralelos de 5 min (matrix por grupo), cache Gradle/npm, e nada repetido. Mesmo princípio localmente: tarefa longa = várias partes em paralelo com subagentes.
 - tools/auditoria.py registra minutos de Actions gastos por execução (via API) e alerta aos 70% do orçamento.
