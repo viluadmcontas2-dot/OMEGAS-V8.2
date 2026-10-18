@@ -37,3 +37,17 @@
 - **`SetVector` vem do original** (`TAebProtocol::SetVector`, VA `0x0092617C`, conferido contra as instruções): `0x30|n` até 5 bytes de dados, `0x37`+tamanho acima. Mas é só paridade de codificação: nenhum chamador de produção no app e nenhum uso do original nos buffers.
 - **Tela "Autocal settings" do original (editável):** `MAX_RPM_FOR_AUTOCAL` (400–8000, padrão 3000), `DELTA_ENG_SPD_THD`, `DELTA_MNFLD_PRESS_THD`, `DELTA_PETR_INJ_T_THD`, `DIFF_*` (3), `EN_CDN_T_THD`, "Disable highest acquisition band" (`0x018B`), período de atualização (200–2000 ms) e o vetor `CALIBRATION_VAL_1` de 12 itens (mínimos/soma de amostras por buffer, parado × andando, gasolina × GNV). O app **lê** esses campos e nunca os escreve. Eles controlam o que a ECU aceita como amostra boa (qualidade do aprendizado) — ponto aberto, precisa de decisão do dono e de captura de como o original grava.
 - **Sonda de escrita única (APK):** `BufferWriteProbe(Core)`, botão "Testar escrita nos pontos" em Ferramentas (toque duplo). Banda do GNV com contador 10, +8/512 ms em um ponto, quadro `14 5F 01 idx lo hi` (mesmo tipo que grava a curva K), 4 leituras, restaura o original e confere. Desfechos: recusou / aceitou e ficou / aceitou e desfez / aceitou e guardou outro valor / sem banda cheia. Sessão grava `buffer_write_probe` + `ecu_command`. Resultado real: UNKNOWN até rodar no carro.
+
+## Rodada de 2026-10-18 (TDD; cada item com teste e evidência)
+
+| Item | Estado | Evidência / teste |
+|---|---|---|
+| Estado das bandas antes de cada AutoMatch (`autocal_pre_automatch_state`) | Feito | `PreAutoMatchStateTest.kt`; corpus: gatilho "desconhecido" porque as leituras ficavam 15–217 s longe do evento |
+| Leitor de parâmetros só-leitura (`param_snapshot`, 33 parâmetros) | Feito | `EcuParameterSnapshotTest.kt`; cada endereço/largura conferido contra o download de conexão do ProgBase (PortmonLOGNOVO); 6 entradas retiradas por NACK/sem prova |
+| Conselho no botão do AutoMatch manual | Feito, regra **provisória** | `tests/ui/manual-automatch-advice.test.cjs`; mediana de 9 bandas com ≥ 3 amostras nos 14 AutoMatches da ECU |
+| Sonda de escrita única nos buffers | Feita (Ferramentas, toque duplo) | `BufferWriteProbeCoreTest.kt`; resultado real: **UNKNOWN** até rodar no carro |
+| Re-escala dos pares do Ledger por K_novo/K_velho | **NÃO feita** | `docs/evidence/2026-10-18-pares-do-ledger-nao-seguem-o-k.md` (inclinação −0,15; esperado −1) |
+| D1 (gravar sozinho após cada AutoMatch) | **NÃO feita** | decisão de 16/10 conflita com "o app nunca aplica sozinho" (17/10); aguarda o dono |
+| Equivalência % por nó × RPM; mockups 1/2/3 | Pendentes | dependem de decisão do dono / dos pares do Ledger acima |
+
+Valores reais da ECU (PortmonLOGNOVO, 12/08/2026): `ANTI_STALLO` = 1600·100·1500·2·20 (padrão de fábrica), `GIRI_MIN_CAMBIO` = 1200 rpm, `SMAGRIMENTO_RIENTRO_CUTOFF` = 100, `NUMERO_INIETTATE_SMAGRIMENTO` = 0, aquisição do AutoCal toda no padrão (400/200 rpm, 0,5/0,05 bar, 4/1 ms, 3000 rpm). O original também usa SetVector (`35 03 00 …`) em `FLAG_CONF1` (0x0003): o formato está provado no fio, mas nunca em buffers de aquisição.
