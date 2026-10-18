@@ -7,7 +7,8 @@ import org.json.JSONObject
 
 /**
  * Sugestão pura, chamada pelo consumidor nos eventos de AutoMatch/curva/dados.
- * Não conhece relógio, sessão, USB ou writer. Mesmo retrato de entrada => mesma saída.
+ * Não conhece relógio, USB ou writer; recebe a sessão serial vigente (0 = desconectado) e só confia no mapa lido NELA
+ * (o `sessionConfirmed` do cache só volta a false na próxima conexão). Mesmo retrato de entrada => mesma saída.
  * Recebe SOMENTE evidência da época vigente; mudar curva/mapa invalida os pares antigos.
  * O percentual medido é absoluto; a correção local é o residual que a curva não explica.
  * Alvos são informativos: preparar usa o mapa confirmado e passa pela prévia manual nativa.
@@ -15,11 +16,7 @@ import org.json.JSONObject
 object MapSuggestionPolicy {
     enum class Verdict { SUGERIR, SEM_EVIDENCIA, JA_OK }
 
-    fun fromPairs(pairs: List<EquivalenceLedger.EvidencePair>, currentMap: JSONObject?,
-                  latched: Set<EquivalenceAttribution.Key> = emptySet()): JSONObject =
-        decide(EquivalenceAttribution.classify(pairs.filter { !it.ecuRef }, latched), currentMap)
-
-    fun decide(groups: List<EquivalenceAttribution.Group>, currentMap: JSONObject?): JSONObject {
+    fun decide(groups: List<EquivalenceAttribution.Group>, currentMap: JSONObject?, currentSessionId: Long): JSONObject {
         val valid = groups.filter { g ->
             g.key.column in 0 until KMapPhysicalAxes.COLUMNS && g.key.band in EquivalenceLedger.BANDS.indices &&
                 g.pairs > 0 && g.petrolMs.isFinite() && g.petrolMs > 0 && g.gasMs.isFinite() && g.gasMs > 0 &&
@@ -30,6 +27,7 @@ object MapSuggestionPolicy {
         val requested = LocalMapPlanner.cells((0 until planned.length()).map { planned.getJSONObject(it) })
         val rows = currentMap?.optJSONArray("rows")
         val mapValid = currentMap?.optBoolean("sessionConfirmed", false) == true &&
+            currentSessionId > 0L && currentMap.optLong("sessionId", 0L) == currentSessionId &&
             currentMap.optBoolean("complete", false) && rows != null && rows.length() == KMapPhysicalAxes.WRITABLE_ROWS &&
             (0 until rows.length()).all { r ->
                 val row = rows.optJSONArray(r)
@@ -43,9 +41,11 @@ object MapSuggestionPolicy {
             val cell = requested.getJSONObject(i)
             val row = cell.getInt("row")
             val column = cell.getInt("column")
-            val current = rows!!.getJSONArray(row).getInt(column)
-            val target = MapKManualPlanner.target(current, "percent", cell.getDouble("deltaPercent"))
-            if (target != current) cells.put(JSONObject(cell.toString()).put("current", current).put("target", target))
+            // Célula fora da grade gravável nunca derruba a sugestão: é ignorada.
+            val current = rows?.optJSONArray(row)?.opt(column) as? Number ?: return@repeat
+            val currentValue = current.toInt()
+            val target = MapKManualPlanner.target(currentValue, "percent", cell.getDouble("deltaPercent"))
+            if (target != currentValue) cells.put(JSONObject(cell.toString()).put("current", currentValue).put("target", target))
         }
         val verdict: Verdict
         val reason: String

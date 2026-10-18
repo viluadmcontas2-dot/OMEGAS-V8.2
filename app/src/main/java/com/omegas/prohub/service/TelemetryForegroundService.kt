@@ -72,17 +72,35 @@ class TelemetryForegroundService : Service() {
         Thread(runnable, "omegas-auto-read").apply { isDaemon = true }
     }
     private val calibrationReads = CalibrationReadEvents()
-    /** Refino automático depois de cada AutoMatch da ECU (D1). Leitura + decisão registrada (nunca escreve), fora das threads do USB e da tela. */
-    private val autoRefineExecutor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "omegas-auto-refine").apply { isDaemon = true }
-    }
+    /** Leitura automática ou D1 em curso: a leitura pedida pela tela espera o fim dela (evento) em vez de dar "ocupado". */
+    private val autoReadGate = AutoReadGate()
+    /** Borda ocupado → livre do KWriteManager/KFactorManager: retoma reinício do núcleo e D1 que esperavam a serial. */
+    private val calibrationIdle = BusyEdge()
+    /** Sonda do AutoCal e `full_snapshot` por contagem de quadros válidos (sem relógio; conta em ServiceEventPolicy). */
+    private val autoCalFrames = FrameCountTrigger(ServiceEventPolicy.AUTOCAL_TICK_FRAMES)
+    private val snapshotFrames = FrameCountTrigger(ServiceEventPolicy.FULL_SNAPSHOT_FRAMES)
+    /** Reinícios automáticos do núcleo sem quadro válido entre eles: limitados por contagem, por sessão USB. */
+    private val restartBudget = EngineRestartBudget()
+    @Volatile private var restartLimitLogged = false
+    /**
+     * D1 (refino depois de cada AutoMatch da ECU): roda no MESMO executor da leitura automática, então nunca disputa a
+     * serial com ela; se perder para uma operação da tela, fica pendente e volta na borda ocupado → livre (nunca grava).
+     */
     @Volatile private var preAutoMatchSnapshot: JSONObject? = null
     @Volatile private var autoRefineLastEpoch: String? = null
+    @Volatile private var pendingAutoRefine: JSONObject? = null
+    private val autoRefineRetryLock = Any()
+    private var autoRefineRetryEpoch: String? = null
+    private var autoRefineRetries = 0
+    /** Sugestão do Mapa K memorizada pela revisão do ledger + sessão + versão do cache do mapa (sem reler o disco à toa). */
+    @Volatile private var mapSuggestionMemo: Pair<String, JSONObject>? = null
     /** Quem pediu a leitura em curso: UI (botão/abertura de tela), AUTO_START ou evento confirmado. Vai junto no evento da sessão. */
     @Volatile private var readTrigger = "UI"
-    /** Última curva vista e último readback manual; origem identificada pelo conteúdo confirmado. */
+    /**
+     * Última curva vista (leitura da ECU ou readback de gravação manual). A gravação manual já é registrada com
+     * origem APP_UI_MANUAL no próprio lote; mudança vista depois no snapshot é sempre da ECU ou externa.
+     */
     @Volatile private var lastCurveRaw: String? = null
-    @Volatile private var lastAppCurveWriteRaw: String? = null
 
     lateinit var paths: AppPaths
         private set
@@ -196,10 +214,11 @@ class TelemetryForegroundService : Service() {
             isEngineRunning = { runtime.running },
             stopEngine = { true },
             startEngine = { true },
-            onBusyChanged = { stateChanged() },
+            onBusyChanged = { onCalibrationBusyChanged() },
+            // Chamado ao fim de TODA leitura completa e de toda gravação confirmada do mapa: nunca pede releitura
+            // (a gravação já tem ACK + leitura de volta; pedir aqui fazia a leitura automática se repetir sem fim).
             onConfirmedWrite = {
-                requestCalibrationRead("WRITE_CONFIRMED")
-                scheduler.execute {
+                executeOnScheduler {
                     if (::learningArchive.isInitialized) {
                         learningArchive.saveInternalCheckpoint("Mapa K confirmado")
                     }
@@ -213,22 +232,22 @@ class TelemetryForegroundService : Service() {
                 refinement.mapKWritten()
                 runtime.notifyCalibrationAdjustment(payload)
                 learningArchive.saveInternalCheckpoint("Após escrita K confirmada")
+                mapSuggestionMemo = null
             },
         )
         kFactor = KFactorManager(
             paths = paths,
             serial = recordingSerial,
             log = log,
-            onBusyChanged = { stateChanged() },
+            onBusyChanged = { onCalibrationBusyChanged() },
             onCurveRead = { payload ->
                 lastCurveRaw = payload.optJSONArray("factorsRaw")?.toString()
                 sessionRecorder.record("k_read_curve", "k_factor", payload.put("trigger", readTrigger), force = true)
             },
             onConfirmedBatch = { payload ->
                 sessionRecorder.record("k_factor_batch_confirmed", "k_factor", JSONObject(payload.toString()).put("origin", "APP_UI_MANUAL"), force = true)
-                requestCalibrationRead("WRITE_CONFIRMED")
+                // Sem releitura automática: o lote já terminou com ACK + leitura de volta e atualizou o cache da curva.
                 val state = kFactor.cachedCurveJson()
-                lastAppCurveWriteRaw = state.optJSONArray("factorsRaw")?.toString()
                 lastCurveRaw = state.optJSONArray("factorsRaw")?.toString()
                 sessionRecorder.record("k_curve_state", "k_factor", state.put("origin", "APP_UI_MANUAL").put("afterAdjustmentId", payload.optString("adjustmentId")), force = true)
                 recordCurveExperiment(payload)
@@ -314,6 +333,7 @@ class TelemetryForegroundService : Service() {
     override fun onDestroy() {
         if (stopping) return
         stopping = true
+        autoReadGate.wakeAll()
         try { equivalence.flush() } catch (_: Exception) {}
         scheduler.shutdownNow()
         try { runtime.stop(3) } catch (_: Exception) {}
@@ -325,7 +345,7 @@ class TelemetryForegroundService : Service() {
         try { nativeAutoCal.endUsbSession() } catch (_: Exception) {}
         try { kFactor.close() } catch (_: Exception) {}
         try { bufferProbe.close() } catch (_: Exception) {}
-        autoRefineExecutor.shutdownNow()
+        autoReadExecutor.shutdownNow()
         try { kWriter.close() } catch (_: Exception) {}
         try { runtime.close() } catch (_: Exception) {}
         try { usb.close() } catch (_: Exception) {}
@@ -437,7 +457,12 @@ class TelemetryForegroundService : Service() {
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readCell(row, column).toString()
     @Synchronized fun readKLine(row: Int): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readLine(row).toString()
-    @Synchronized fun readKMap(): String =
+    /** Leitura pedida pela tela: espera a leitura automática em curso terminar (evento) e só então lê. */
+    fun readKMap(): String {
+        awaitAutoRead()
+        return readKMapNow()
+    }
+    @Synchronized private fun readKMapNow(): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.readFullMap().toString()
     @Synchronized fun recoverKInsertionState(): String =
         if (kFactor.isBusy()) calibrationBusy("K factor") else kWriter.recoverInsertionState().toString()
@@ -445,8 +470,39 @@ class TelemetryForegroundService : Service() {
     fun kWriteStatusJson(): String = kWriter.statusJson()
     fun kWriteHistoryJson(): String = kWriter.historyJson()
 
-    @Synchronized fun readKFactorCurve(): String =
+    fun readKFactorCurve(): String {
+        awaitAutoRead()
+        return readKFactorCurveNow()
+    }
+    @Synchronized private fun readKFactorCurveNow(): String =
         if (kWriter.isBusy()) calibrationBusy("mapa K") else kFactor.readCurve().toString()
+
+    /** Espera o FIM da leitura automática/D1 (sem prazo); o serviço parando libera a espera. Nunca na thread da tela. */
+    private fun awaitAutoRead() {
+        autoReadGate.awaitIdle { stopping }
+    }
+
+    /** Sessão serial vigente (0 = desconectado). A sugestão do Mapa K só vale com o mapa lido NESTA sessão. */
+    fun currentEcuSessionId(): Long = if (usb.connected) runtime.serialScheduler().currentSessionId() else 0L
+
+    /**
+     * Sugestão do Mapa K para a tela (só leitura). Memorizada pela revisão do ledger, pela sessão e pela versão do cache do
+     * mapa (tamanho + modificação do arquivo, sem lê-lo); qualquer exceção vira null sem derrubar a Equivalência.
+     */
+    fun mapSuggestionJson(): Any {
+        return try {
+            val sid = currentEcuSessionId()
+            val mapFile = File(paths.runtimeRoot, "k_map_cache.json")
+            val key = "${equivalence.revision()}|$sid|${mapFile.length()}|${mapFile.lastModified()}"
+            mapSuggestionMemo?.takeIf { it.first == key }?.let { return JSONObject(it.second.toString()) }
+            val decided = com.omegas.prohub.autocal.MapSuggestionPolicy.decide(equivalence.attribution(), kWriter.cachedMapJson(), sid)
+            mapSuggestionMemo = key to decided
+            JSONObject(decided.toString())
+        } catch (error: Exception) {
+            log.add("WARN", "REFINO", "Sugestão do Mapa K indisponível: ${error.message ?: error.javaClass.simpleName}")
+            JSONObject.NULL
+        }
+    }
     fun kFactorStatusJson(): String = kFactor.statusJson()
     fun startBufferWriteProbe(): String = bufferProbe.start().toString()
     fun bufferWriteProbeStatusJson(): String = bufferProbe.statusJson()
@@ -581,14 +637,41 @@ class TelemetryForegroundService : Service() {
 
     private fun usbStateChanged() {
         if (stopping) return
-        try {
-            scheduler.execute {
-                handleUsbTransition()
-                healthTick()
-                stateChanged()
-            }
-        } catch (_: Exception) {
+        val queued = executeOnScheduler {
+            handleUsbTransition()
+            healthTick()
             stateChanged()
+        }
+        if (!queued) stateChanged()
+    }
+
+    /** Fila do serviço sem RejectedExecutionException no encerramento (onDestroy desliga o executor antes do núcleo). */
+    private fun executeOnScheduler(task: () -> Unit): Boolean {
+        if (stopping) return false
+        return try {
+            scheduler.execute(Runnable { task() })
+            true
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            false
+        }
+    }
+
+    /**
+     * KWriteManager/KFactorManager mudaram de ocupado/livre. Na borda ocupado → livre (evento, não prazo) roda o healthTick
+     * (o reinício do núcleo que ficou barrado pela calibração) e o D1 que perdeu a serial para outra operação.
+     */
+    private fun onCalibrationBusyChanged() {
+        stateChanged()
+        if (stopping || !::kWriter.isInitialized || !::kFactor.isInitialized) return
+        try {
+            if (!calibrationIdle.observe(kWriter.isBusy() || kFactor.isBusy())) return
+            executeOnScheduler { healthTick() }
+            pendingAutoRefine?.let { pending ->
+                pendingAutoRefine = null
+                autoRefineAfterEcuAutoMatch(pending)
+            }
+        } catch (error: Exception) {
+            log.add("WARN", "SERVICE", "Borda livre da calibração: ${error.message}")
         }
     }
 
@@ -621,6 +704,9 @@ class TelemetryForegroundService : Service() {
                 log.add("INFO", "USB", "Nova geração USB detectada • $previousSessionId → $sessionId")
             }
             telemetryStore.beginSession(sessionId)
+            autoCalFrames.reset()
+            snapshotFrames.reset()
+            mapSuggestionMemo = null
             runtime.beginUsbSession(sessionId)
             kWriter.beginUsbSession(sessionId)
             kFactor.beginUsbSession(sessionId)
@@ -735,20 +821,22 @@ class TelemetryForegroundService : Service() {
             if (!usb.connected && settings.autoReconnectUsb && !monitoringPausedByUser && !enginePausedByUser && usb.hasCompatibleDevice()) {
                 connectUsb()
             }
+            // Calibração ocupada: o reinício espera a borda ocupado → livre (onCalibrationBusyChanged chama de novo).
             if (usb.connected && settings.autoStartEngine && !enginePausedByUser &&
                 !runtime.running && !runtime.stuck && !kWriter.isBusy() && !kFactor.isBusy()
             ) {
-                engineRestarts += 1
-                startEngine("recuperação automática do núcleo")
+                // Núcleo que cai sem nunca entregar quadro válido: no máximo N reinícios por sessão USB (contagem, não prazo).
+                if (restartBudget.tryConsume(usb.connectionSessionId)) {
+                    engineRestarts += 1
+                    startEngine("recuperação automática do núcleo")
+                } else if (!restartLimitLogged) {
+                    restartLimitLogged = true
+                    log.add("WARN", "ECU-NATIVE", "Núcleo reiniciado ${ServiceEventPolicy.MAX_ENGINE_RESTARTS_WITHOUT_FRAME} vezes sem quadro válido; aguardando reconexão ou reinício manual")
+                }
             }
             if (!usb.connected && runtime.running) runtime.stop(2)
-            if (sessionRecorder.statusObject().optBoolean("recording")) {
-                sessionRecorder.record(
-                    "full_snapshot",
-                    "native",
-                    try { JSONObject(fullEngineSnapshotJson()) } catch (_: Exception) { JSONObject() },
-                )
-            }
+            // Transição de estado: retrato completo na gravação (além do retrato a cada N quadros válidos).
+            recordFullSnapshotIfRecording()
             renewWakeLockIfNeeded()
             updateOverlay()
             updateNotification()
@@ -758,16 +846,23 @@ class TelemetryForegroundService : Service() {
         }
     }
 
-    /** Curva que a ECU mostra no snapshot (MUL_ACT) diferente da última vista = mudança; registra com a origem provável. */
+    private fun recordFullSnapshotIfRecording() {
+        if (sessionRecorder.statusObject().optBoolean("recording")) {
+            sessionRecorder.record(
+                "full_snapshot",
+                "native",
+                try { JSONObject(fullEngineSnapshotJson()) } catch (_: Exception) { JSONObject() },
+            )
+        }
+    }
+
     /** Dono (2026-10-18): o app NÃO grava sozinho. "LIGADO" não existe mais; um valor antigo guardado vira SOMBRA. */
     fun autoRefineModeName(): String = if (settings.autoRefineMode == "OFF") "OFF" else "SHADOW"
 
     fun setAutoRefineModeName(mode: String): String {
+        // Só OFF e SHADOW existem; "ON" (gravar sozinho) não é modo: valueOf recusa.
         val parsed = try { com.omegas.prohub.autocal.AutoRefinePolicy.Mode.valueOf(mode) } catch (_: Exception) {
             return JSONObject().put("ok", false).put("error", "Modo inválido").toString()
-        }
-        if (parsed == com.omegas.prohub.autocal.AutoRefinePolicy.Mode.ON) {
-            return JSONObject().put("ok", false).put("error", "Gravação automática desativada: gravar é sempre manual").toString()
         }
         settings.autoRefineMode = parsed.name
         sessionRecorder.record("settings_changed", "auto_refine", JSONObject().put("autoRefineMode", parsed.name), force = true)
@@ -786,7 +881,38 @@ class TelemetryForegroundService : Service() {
         val pre = preAutoMatchSnapshot
         val count = payload.optInt("nativeAutoMatchCount", -1)
         val epochKey = "${runtime.serialScheduler().currentSessionId()}:$count"
-        autoRefineExecutor.execute {
+        // Mesmo executor da leitura automática: o D1 e a releitura do AutoMatch nunca disputam a serial entre si; a tela
+        // espera os dois terminarem (autoReadGate).
+        autoReadGate.enter()
+        try {
+            autoReadExecutor.execute {
+                try { runAutoRefine(payload, mode, pre, count, epochKey) } finally { autoReadGate.exit() }
+            }
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            autoReadGate.exit()
+        }
+    }
+
+    /** O D1 perdeu a serial (outra operação ocupada ou leitura falhou): tenta de novo na próxima borda ocupado → livre. */
+    private fun retryAutoRefineOnIdle(payload: JSONObject, epochKey: String): Boolean = synchronized(autoRefineRetryLock) {
+        if (autoRefineRetryEpoch != epochKey) {
+            autoRefineRetryEpoch = epochKey
+            autoRefineRetries = 0
+        }
+        if (autoRefineRetries >= ServiceEventPolicy.MAX_AUTO_REFINE_RETRIES) return@synchronized false
+        autoRefineRetries += 1
+        pendingAutoRefine = payload
+        true
+    }
+
+    private fun runAutoRefine(
+        payload: JSONObject,
+        mode: com.omegas.prohub.autocal.AutoRefinePolicy.Mode,
+        pre: JSONObject?,
+        count: Int,
+        epochKey: String,
+    ) {
+        run {
             val record = JSONObject().put("mode", mode.name).put("epochKey", epochKey).put("autoMatchCount", count)
             try {
                 val review = if (pre != null) engineReview(pre) else JSONObject().put("available", false).put("error", "SEM_LEITURA_ANTES_DO_AUTOMATCH")
@@ -796,8 +922,9 @@ class TelemetryForegroundService : Service() {
                     .put("evidenceErrorAfter", review.opt("evidenceErrorAfter") ?: JSONObject.NULL)
                     .put("idealFactorsRaw", idealArray ?: JSONObject.NULL)
                 if (kWriter.isBusy() || kFactor.isBusy()) {
-                    sessionRecorder.record("d1_decision", "auto_refine", record.put("verdict", "SKIP").put("reason", "OCUPADO"), force = true)
-                    return@execute
+                    val retry = retryAutoRefineOnIdle(payload, epochKey)
+                    sessionRecorder.record("d1_decision", "auto_refine", record.put("verdict", "SKIP").put("reason", "OCUPADO").put("retryOnIdle", retry), force = true)
+                    return
                 }
                 val read = kFactor.readCurve()
                 val liveArray = read.optJSONArray("factorsRaw")
@@ -813,7 +940,12 @@ class TelemetryForegroundService : Service() {
                     epochKey = epochKey,
                     lastEpochKey = autoRefineLastEpoch,
                 )
-                if (decision.reason != "MESMO_AUTOMATCH") autoRefineLastEpoch = epochKey
+                // Curva viva não lida (serial ocupada por outra operação): a época NÃO é gasta; nova tentativa na borda livre.
+                if (com.omegas.prohub.autocal.AutoRefinePolicy.consumesEpoch(decision)) {
+                    autoRefineLastEpoch = epochKey
+                } else if (live == null && decision.reason == "CURVA_INVALIDA") {
+                    record.put("retryOnIdle", retryAutoRefineOnIdle(payload, epochKey))
+                }
                 val points = org.json.JSONArray()
                 decision.points.forEach {
                     points.put(JSONObject().put("index", it.index).put("currentRaw", it.currentRaw).put("targetRaw", it.targetRaw).put("clamped", it.clamped))
@@ -821,7 +953,7 @@ class TelemetryForegroundService : Service() {
                 record.put("verdict", decision.verdict.name).put("reason", decision.reason).put("points", points)
                     .put("floorRaw", decision.floorRaw).put("ceilingRaw", decision.ceilingRaw).put("mapMaxCell", mapMax ?: JSONObject.NULL)
                 // Sugestão do Mapa K por faixa de RPM no mesmo evento (só registra; gravar é sempre manual).
-                record.put("mapSuggestion", com.omegas.prohub.autocal.MapSuggestionPolicy.decide(equivalence.attribution(), kWriter.cachedMapJson()))
+                record.put("mapSuggestion", mapSuggestionJson())
             } catch (error: Exception) {
                 record.put("verdict", "ERRO").put("reason", (error.message ?: error.javaClass.simpleName).take(120))
             }
@@ -847,8 +979,8 @@ class TelemetryForegroundService : Service() {
             val previous = lastCurveRaw
             lastCurveRaw = raw
             if (previous == null) return // primeira vez: o k_read_curve já registrou o ponto de partida
-            val origin = if (raw == lastAppCurveWriteRaw) "APP_UI_MANUAL" else "ECU_NATIVE_OR_EXTERNAL"
-            lastAppCurveWriteRaw = null
+            // A curva gravada pelo app já virou lastCurveRaw no próprio lote confirmado; diferença aqui é da ECU ou externa.
+            val origin = "ECU_NATIVE_OR_EXTERNAL"
             requestCalibrationRead("ECU_CALIBRATION_CHANGED")
             sessionRecorder.record(
                 "k_curve_state", "autocal",
@@ -890,6 +1022,16 @@ class TelemetryForegroundService : Service() {
         val ticket = calibrationReads.next(
             runtime.serialScheduler().currentSessionId(), kWriter.isBusy() || kFactor.isBusy(),
         ) ?: return
+        autoReadGate.enter()
+        try {
+            launchAutoRead(ticket)
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            calibrationReads.complete(ticket, false)
+            autoReadGate.exit()
+        }
+    }
+
+    private fun launchAutoRead(ticket: CalibrationReadEvents.Ticket) {
         autoReadExecutor.execute {
             var ok = false
             fun sameSession() = usb.connected && runtime.serialScheduler().currentSessionId() == ticket.session
@@ -916,6 +1058,7 @@ class TelemetryForegroundService : Service() {
             } finally {
                 readTrigger = "UI"
                 calibrationReads.complete(ticket, ok)
+                autoReadGate.exit()
             }
         }
     }
@@ -935,11 +1078,27 @@ class TelemetryForegroundService : Service() {
 
     private fun consumeEngineEvent(root: JSONObject) {
         val accepted = telemetryStore.updateFromEngineEvent(root) ?: return
+        // Quadro válido: o núcleo voltou a entregar dados, o saldo de reinícios automáticos é devolvido.
+        if (usb.connected) restartBudget.onValidFrame(usb.connectionSessionId)
+        restartLimitLogged = false
         autoReadCalibrationOnce()
-        if (frameWorkPending.compareAndSet(false, true)) {
-            scheduler.execute {
-                try { autoCalTick(); renewWakeLockIfNeeded() } finally { frameWorkPending.set(false) }
+        // Sonda do AutoCal a cada N quadros válidos (não a cada quadro: ela é uma transação serial) e retrato da gravação
+        // a cada M quadros; contagem, sem relógio.
+        val autoCalDue = autoCalFrames.onFrame()
+        val snapshotDue = snapshotFrames.onFrame()
+        if ((autoCalDue || snapshotDue) && !stopping && frameWorkPending.compareAndSet(false, true)) {
+            val queued = executeOnScheduler {
+                try {
+                    if (autoCalDue) {
+                        autoCalTick()
+                        renewWakeLockIfNeeded()
+                    }
+                    if (snapshotDue) recordFullSnapshotIfRecording()
+                } finally {
+                    frameWorkPending.set(false)
+                }
             }
+            if (!queued) frameWorkPending.set(false)
         }
         val live = root.optJSONObject("live") ?: root.optJSONObject("data") ?: JSONObject()
         val cngActive = live.optString("fuel").uppercase() == "GNV"
@@ -991,7 +1150,7 @@ class TelemetryForegroundService : Service() {
 
     private fun onEngineExited(crashed: Boolean) {
         if (crashed) healthFailures += 1
-        if (!stopping) scheduler.execute { healthTick() }
+        executeOnScheduler { healthTick() }
         stateChanged()
     }
 

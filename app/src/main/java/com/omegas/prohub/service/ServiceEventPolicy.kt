@@ -19,6 +19,9 @@ internal object ServiceEventPolicy {
 
     /** Reinícios automáticos do núcleo sem nenhum quadro válido entre eles, por sessão USB. */
     const val MAX_ENGINE_RESTARTS_WITHOUT_FRAME = 3
+
+    /** D1 que perdeu a serial: novas tentativas por AutoMatch, cada uma numa borda ocupado → livre. */
+    const val MAX_AUTO_REFINE_RETRIES = 3
 }
 
 /** Dispara a cada [every] quadros contados. Sem relógio. */
