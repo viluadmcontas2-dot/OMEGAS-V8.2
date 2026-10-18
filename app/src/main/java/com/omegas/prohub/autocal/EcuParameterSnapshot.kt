@@ -1,5 +1,6 @@
 package com.omegas.prohub.autocal
 
+import com.omegas.prohub.ecu.Mp48Protocol
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -13,7 +14,8 @@ import org.json.JSONObject
  * `run` recebe só uma função de LEITURA: não há como escrever por aqui. Desconhecido nunca vira 0.
  */
 object EcuParameterSnapshot {
-    enum class Kind { SCALAR, VECTOR, INDEXED }
+    /** MATRIX_ROW: pedido `2A lo hi linha` (uma linha de matriz; PARAM_PROGRESSIONI, OBS-FIO no LOGNOVO). */
+    enum class Kind { SCALAR, VECTOR, INDEXED, MATRIX_ROW }
 
     class Entry(
         val name: String,
@@ -39,10 +41,27 @@ object EcuParameterSnapshot {
 
     private fun v(name: String, address: Int, count: Int, width: Int) = Entry(name, address, Kind.VECTOR, width, count)
     private fun i(name: String, address: Int, index: Int) = Entry(name, address, Kind.INDEXED, 1, 1, false, index)
+    private fun row(name: String, address: Int, index: Int, count: Int, width: Int) = Entry(name, address, Kind.MATRIX_ROW, width, count, false, index)
+
+    /** Pedido de uma linha de matriz: `2A lo hi linha cs` (mesmo formato de `Mp48Protocol.readKRow`, outro endereço). */
+    fun matrixRowRequest(address: Int, row: Int): ByteArray {
+        require(address in 0..0xFFFF && row in 0..0xFF)
+        return Mp48Protocol.frame(byteArrayOf(0x2A, (address and 0xFF).toByte(), ((address ushr 8) and 0xFF).toByte(), row.toByte()))
+    }
 
     val CATALOG: List<Entry> = listOf(
         // Anti-engasgo e troca de combustível
         v("ANTI_STALLO", 0x0133, 5, 2),
+        // Ferramentas > Avançado (2026-10-18): flags e vizinhos, lidos uma vez por conexão junto do resto (evento, nunca tempo).
+        // Formas conferidas no LOGNOVO: `29 03 00`, `29 C0 00`, `29 FA 00`, `29 A1 00`, `2A 34 01 0..3`.
+        v("FLAG_CONF1", 0x0003, 2, 2),
+        v("FLAG_CONF2", 0x00C0, 2, 2),
+        v("FLAG_CONF3", 0x00FA, 2, 2),
+        v("GIRI_PER_BENZINA", 0x00A1, 2, 2),
+        row("PARAM_PROGRESSIONI_L0", 0x0134, 0, 3, 2),
+        row("PARAM_PROGRESSIONI_L1", 0x0134, 1, 3, 2),
+        row("PARAM_PROGRESSIONI_L2", 0x0134, 2, 3, 2),
+        row("PARAM_PROGRESSIONI_L3", 0x0134, 3, 3, 2),
         s("GIRI_MIN_CAMBIO", 0x0010, 2),
         s("RITARDO_CAMBIO", 0x0011),
         v("CHANGE_OVER_CYL_DELAY", 0x00E2, 4, 2),

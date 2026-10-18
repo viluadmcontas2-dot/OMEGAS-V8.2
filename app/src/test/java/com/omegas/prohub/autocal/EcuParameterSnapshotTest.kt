@@ -84,4 +84,45 @@ class EcuParameterSnapshotTest {
         assertTrue(params.getJSONObject("GIRI_MIN_CAMBIO").isNull("values"))
         assertEquals("NACK", params.getJSONObject("GIRI_MIN_CAMBIO").getString("state"))
     }
+
+    // ---- Ferramentas > Avançado (2026-10-18): flags, progressões e giri por benzina entram no mesmo param_snapshot ----
+    @Test fun `FLAG_CONF3 FLAG_CONF1 FLAG_CONF2 decodificam duas palavras de 16 bits (valores reais do LOGNOVO)`() {
+        assertEquals(listOf(0, 0), EcuParameterSnapshot.decode(entry("FLAG_CONF3"), bytes(0, 0, 0, 0)))
+        assertEquals(listOf(0x0020, 0), EcuParameterSnapshot.decode(entry("FLAG_CONF3"), bytes(0x20, 0, 0, 0)))
+        assertEquals(listOf(0x2486, 0x1051), EcuParameterSnapshot.decode(entry("FLAG_CONF1"), bytes(0x86, 0x24, 0x51, 0x10)))
+        assertEquals(listOf(1, 0), EcuParameterSnapshot.decode(entry("FLAG_CONF2"), bytes(1, 0, 0, 0)))
+        assertEquals(250, entry("FLAG_CONF3").address)
+        assertEquals(192, entry("FLAG_CONF2").address)
+        assertEquals(3, entry("FLAG_CONF1").address)
+        assertEquals(EcuParameterSnapshot.Kind.VECTOR, entry("FLAG_CONF3").kind)
+    }
+
+    @Test fun `FLAG_CONF3 com tamanho errado e desconhecido`() {
+        assertNull(EcuParameterSnapshot.decode(entry("FLAG_CONF3"), bytes(0, 0)))
+    }
+
+    @Test fun `GIRI_PER_BENZINA le dois u16 (0 e 8500 no LOGNOVO)`() {
+        assertEquals(161, entry("GIRI_PER_BENZINA").address)
+        assertEquals(listOf(0, 8500), EcuParameterSnapshot.decode(entry("GIRI_PER_BENZINA"), bytes(0, 0, 0x34, 0x21)))
+    }
+
+    @Test fun `PARAM_PROGRESSIONI sao 4 linhas de 3 u16 lidas por 2A endereco 0x0134 (OBS-FIO)`() {
+        val rows = EcuParameterSnapshot.CATALOG.filter { it.name.startsWith("PARAM_PROGRESSIONI_L") }
+        assertEquals(listOf("PARAM_PROGRESSIONI_L0", "PARAM_PROGRESSIONI_L1", "PARAM_PROGRESSIONI_L2", "PARAM_PROGRESSIONI_L3"), rows.map { it.name })
+        assertTrue(rows.all { it.address == 0x0134 && it.kind == EcuParameterSnapshot.Kind.MATRIX_ROW && it.width == 2 && it.count == 3 })
+        assertEquals(listOf(0, 1, 2, 3), rows.map { it.index })
+        assertEquals(listOf(0, 4, 500), EcuParameterSnapshot.decode(rows[0], bytes(0, 0, 4, 0, 0xF4, 1)))
+        assertEquals(listOf(25, 4, 500), EcuParameterSnapshot.decode(rows[3], bytes(25, 0, 4, 0, 0xF4, 1)))
+    }
+
+    @Test fun `pedido 2A de linha de parametro bate com o fio`() {
+        val frame = EcuParameterSnapshot.matrixRowRequest(0x0134, 0)
+        assertEquals("2A 34 01 00 5F", frame.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) })
+        assertEquals("2A 34 01 03 62", EcuParameterSnapshot.matrixRowRequest(0x0134, 3).joinToString(" ") { "%02X".format(it.toInt() and 0xFF) })
+    }
+
+    @Test fun `NUMERO_INJ_BENZINA_CUTOFF continua no catalogo (um byte, 0x006A)`() {
+        assertEquals(0x006A, entry("NUMERO_INJ_BENZINA_CUTOFF").address)
+        assertEquals(listOf(0), EcuParameterSnapshot.decode(entry("NUMERO_INJ_BENZINA_CUTOFF"), bytes(0)))
+    }
 }

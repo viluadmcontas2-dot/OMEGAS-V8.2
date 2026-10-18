@@ -1,0 +1,238 @@
+(function (root) {
+  'use strict';
+  const ns = root.OmegasUi = root.OmegasUi || {};
+  const DATA = ns.AdvancedFlagsData || {};
+
+  // ---- Ferramentas > Avançado (dono, 2026-10-18) ----
+  // Leitura em português simples + escrita manual SÓ do bit 0x20 da palavra 0 de FLAG_CONF3 (anti-apagão).
+  // Sem relógio: esperar a ECU = esperar a resposta (gancho de dados da bridge). Desconhecido é "—", nunca 0.
+  const ANTI_ADDRESS = 250;          // FLAG_CONF3 (SerialCode 0x00FA), 2 × u16
+  const ANTI_MASK = 0x0020;          // palavra 0, caixa 'Abilitazione anti-stallo'
+  const FLAGS = ['FLAG_CONF1', 'FLAG_CONF2', 'FLAG_CONF3'];
+  const DASH = '—';
+
+  function isWord(v) { return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 0xFFFF; }
+  function wordsOf(entry) {
+    return entry && entry.state === 'OK' && Array.isArray(entry.values) && entry.values.length === 2 && entry.values.every(isWord)
+      ? entry.values.slice() : null;
+  }
+  function valuesOf(entry, count) {
+    return entry && entry.state === 'OK' && Array.isArray(entry.values) && entry.values.length === count &&
+      entry.values.every(v => typeof v === 'number' && Number.isInteger(v)) ? entry.values.slice() : null;
+  }
+  function num(v) { return v === null || v === undefined ? DASH : String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function hex4(v) { return v.toString(16).toUpperCase().padStart(4, '0'); }
+  function pair(words) { return `${hex4(words[0])} ${hex4(words[1])}`; }
+  function hexBytes(bytes) { return bytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' '); }
+
+  // ---------- leitura ----------
+  function decodeFlags(name, entry) {
+    const table = DATA[name];
+    const words = wordsOf(entry);
+    const rows = table.bits.map(bit => {
+      const known = words !== null;
+      const on = known && (words[bit.word] & bit.mask) !== 0;
+      const stateText = !known ? DASH : bit.kind === 'lista' ? (on ? 'Bit ligado' : 'Bit desligado') : (on ? 'Ligado' : 'Desligado');
+      return { word: bit.word, mask: bit.mask, label: bit.label, kind: bit.kind, control: bit.control, state: known ? (on ? 'on' : 'off') : 'unknown', stateText };
+    });
+    return {
+      name, code: table.code, read: words !== null, rows,
+      hex: words ? [`0x${hex4(words[0])}`, `0x${hex4(words[1])}`] : [DASH, DASH],
+      unknownBits: words ? 32 - rows.length : 32,
+    };
+  }
+
+  const ANTI_FIELDS = [
+    { label: 'Rotação máxima para ativar', unit: 'rpm', help: 'acima disso o anti-apagão não entra' },
+    { label: 'Queda de rotação para ativar', unit: 'rpm por ciclo', help: 'quão rápido a rotação cai para entrar' },
+    { label: 'Atraso para sair do gás', unit: 'ms', help: 'espera antes de voltar à gasolina' },
+    { label: 'Histerese', unit: 'rpm por ciclo', help: 'folga para não ligar e desligar toda hora' },
+    { label: 'Queda de rotação para desativar', unit: 'rpm por ciclo', help: 'quando a rotação se firma, ele sai' },
+  ];
+  function antiStallo(entry) {
+    const v = valuesOf(entry, 5);
+    return {
+      read: v !== null, orderInferred: true,
+      fields: ANTI_FIELDS.map((f, i) => ({ ...f, value: v ? v[i] : null, valueText: v ? num(v[i]) : DASH })),
+    };
+  }
+  function progressioni(params) {
+    const rows = [0, 1, 2, 3].map(i => {
+      const v = valuesOf((params || {})[`PARAM_PROGRESSIONI_L${i}`], 3);
+      return { index: i, cells: v ? v.map(num) : [DASH, DASH, DASH] };
+    });
+    return { rows, meaningKnown: false };
+  }
+  const SIMPLE = [
+    { name: 'GIRI_PER_BENZINA', count: 2, label: 'Rotação para rodar a gasolina', help: 'dois valores; o papel de cada um é desconhecido', unit: 'rpm (inferido pelo nome)' },
+    { name: 'NUMERO_INJ_BENZINA_CUTOFF', count: 1, label: 'Injeções a gasolina ao voltar do corte', help: 'quantas injeções antes de voltar ao gás (pelo nome)', unit: 'injeções (inferido)' },
+  ];
+  function simpleParams(params) {
+    return SIMPLE.map(s => {
+      const v = valuesOf((params || {})[s.name], s.count);
+      return { ...s, cells: v ? v.map(num) : Array(s.count).fill(DASH) };
+    });
+  }
+
+  // ---------- quadro SetVector ----------
+  function frameForVector(address, words) {
+    if (!Array.isArray(words) || !words.length || words.length > 2 || !words.every(isWord) || !(address >= 0 && address <= 0xFFFF)) {
+      throw new Error('quadro inválido');
+    }
+    const payload = [];
+    for (const w of words) payload.push(w & 0xFF, (w >>> 8) & 0xFF);
+    const body = [0x31 + payload.length, address & 0xFF, (address >>> 8) & 0xFF, ...payload];
+    return [...body, body.reduce((a, b) => a + b, 0) & 0xFF];
+  }
+  function wordsFromBytes(b) { return [b[0] | (b[1] << 8), b[2] | (b[3] << 8)]; }
+
+  function planAntiStallo(words, enable) {
+    if (!Array.isArray(words) || words.length !== 2 || !words.every(isWord)) {
+      return { ok: false, error: 'Valor atual desconhecido: leia a ECU primeiro.' };
+    }
+    const after = [enable ? (words[0] | ANTI_MASK) : (words[0] & ~ANTI_MASK & 0xFFFF), words[1]];
+    const frame = frameForVector(ANTI_ADDRESS, after);
+    return {
+      ok: true, enable, before: words.slice(), after, frame, frameHex: hexBytes(frame),
+      changedMask: words[0] ^ after[0], noop: words[0] === after[0],
+    };
+  }
+  function verifyReadback(plan, words) {
+    if (!plan || !plan.ok) return { ok: false, message: 'Sem plano.' };
+    if (!Array.isArray(words) || words.length !== 2 || !words.every(isWord)) return { ok: false, message: 'A leitura de volta não veio completa.' };
+    const ok = words[0] === plan.after[0] && words[1] === plan.after[1];
+    return { ok, message: ok ? 'ok' : `esperado ${pair(plan.after)}, veio ${pair(words)}` };
+  }
+
+  // ---------- fluxo de toque (prévia -> toque duplo -> gravar -> leitura de volta) ----------
+  function parse(text) { try { return typeof text === 'string' ? JSON.parse(text) : (text || {}); } catch (_) { return {}; } }
+
+  function createWriteFlow({ bridge, addHook, onChange }) {
+    const have = !!bridge && ['prepareAntiStalloFlag', 'confirmAntiStalloFlag', 'cancelAntiStalloFlag', 'getAntiStalloFlagStatus']
+      .every(n => typeof bridge[n] === 'function');
+    const s = { phase: 'idle', plan: null, token: null, message: '', undo: null, fromUndo: false, release: null };
+    const changed = () => { if (typeof onChange === 'function') onChange(); };
+    const unhook = () => { if (s.release) { s.release(); s.release = null; } };
+    const hook = () => { if (!s.release && typeof addHook === 'function') s.release = addHook('fast', poll); };
+    const set = (phase, message) => { s.phase = phase; if (message !== undefined) s.message = message; changed(); };
+    const fail = message => { unhook(); s.plan = null; s.token = null; set('error', message); };
+
+    function prepare(enable) {
+      const reply = parse(bridge.prepareAntiStalloFlag(enable));
+      if (reply.ok === false) { fail(reply.error || 'Não foi possível preparar.'); return; }
+      s.enable = enable;
+      s.message = '';
+      set('preparing');
+      hook();
+    }
+    function confirm() {
+      const reply = parse(bridge.confirmAntiStalloFlag(s.token));
+      if (reply.ok === false) { fail(reply.error || 'A gravação não começou.'); return; }
+      set('writing', '');
+      hook();
+    }
+    function onReady(status) {
+      const plan = planAntiStallo(status.before, s.enable);
+      if (status.enable !== s.enable || !plan.ok || plan.frameHex !== status.frameHex || !status.after ||
+          plan.after[0] !== status.after[0] || plan.after[1] !== status.after[1]) {
+        bridge.cancelAntiStalloFlag();
+        fail('O quadro preparado não confere com o calculado na tela; nada foi gravado.');
+        return;
+      }
+      unhook();
+      if (plan.noop) {
+        bridge.cancelAntiStalloFlag();
+        s.plan = null;
+        set('idle', `O anti-apagão já está ${s.enable ? 'ligado' : 'desligado'}; nada a gravar.`);
+        return;
+      }
+      s.plan = plan;
+      s.token = status.token;
+      set('preview', '');
+    }
+    function onDone(status) {
+      unhook();
+      const plan = s.plan;
+      if (status.outcome === 'CONFIRMED' || status.outcome === 'READBACK_DIVERGED') {
+        const check = verifyReadback(plan, status.readback);
+        if (status.outcome === 'CONFIRMED' && check.ok) {
+          s.undo = status.undo && status.undo.available ? { available: true, enable: status.undo.enable } : null;
+          s.plan = null; s.token = null;
+          set('done', `Gravado e conferido. ECU confirmou: ${plan.enable ? 'ligado' : 'desligado'} (leitura de volta ${pair(plan.after)}).`);
+          return;
+        }
+        fail(`A ECU respondeu, mas a leitura de volta é diferente: ${check.ok ? 'não confirmada pelo app' : check.message}. Nada foi dado como gravado.`);
+        return;
+      }
+      fail(status.message || 'A ECU não confirmou a gravação; nada foi dado como gravado.');
+    }
+    function poll() {
+      const status = parse(bridge.getAntiStalloFlagStatus());
+      if (s.phase === 'preparing') {
+        if (status.state === 'READY') onReady(status);
+        else if (status.state === 'ERROR' || (status.state === 'DONE' && status.outcome)) fail(status.message || 'Não foi possível ler a ECU.');
+      } else if (s.phase === 'writing' && status.state === 'DONE') onDone(status);
+    }
+    function cancel() {
+      if (s.phase !== 'preparing' && s.phase !== 'preview') return;
+      unhook();
+      bridge.cancelAntiStalloFlag();
+      s.plan = null; s.token = null;
+      set('idle', '');
+    }
+    const bitOn = entry => { const w = wordsOf(entry); return w ? (w[0] & ANTI_MASK) !== 0 : null; };
+
+    return {
+      view() {
+        const preview = s.plan ? { beforeHex: pair(s.plan.before), afterHex: pair(s.plan.after),
+          text: `Antes ${pair(s.plan.before)} → depois ${pair(s.plan.after)}. Só o anti-apagão muda; o resto fica igual.` } : null;
+        return { phase: s.phase, message: s.message, preview, undo: s.undo ? { available: true, enable: s.undo.enable } : { available: false },
+          buttonLabel: s.phase === 'preview' ? 'Toque de novo para gravar' : s.phase === 'preparing' ? 'Lendo a ECU…' : s.phase === 'writing' ? 'Gravando e conferindo…' : null,
+          confirmOn: s.phase === 'preview' ? (s.fromUndo ? 'undo' : 'switch') : null };
+      },
+      buttonLabel(entry) {
+        const v = this.view();
+        return v.buttonLabel || (bitOn(entry) === true ? 'Desligar anti-apagão' : 'Ligar anti-apagão');
+      },
+      canTap(entry, usbConnected) {
+        if (!have || usbConnected !== true || s.phase === 'preparing' || s.phase === 'writing') return false;
+        return s.phase === 'preview' ? !s.fromUndo : bitOn(entry) !== null;
+      },
+      tapSwitch(entry, usbConnected) {
+        if (!have || usbConnected !== true) return;
+        if (s.phase === 'preview') { if (s.fromUndo) cancel(); else confirm(); return; }
+        if (s.phase === 'preparing' || s.phase === 'writing') return;
+        const on = bitOn(entry);
+        if (on === null) return;
+        s.fromUndo = false;
+        prepare(!on);
+      },
+      tapUndo() {
+        if (!have) return;
+        if (s.phase === 'preview' && s.fromUndo) { confirm(); return; }
+        if (s.phase === 'preparing' || s.phase === 'writing' || !s.undo) return;
+        s.fromUndo = true;
+        prepare(s.undo.enable);
+      },
+      cancel,
+      otherTouch() { cancel(); },
+      observe(state) {
+        const away = state.route !== 'tools';
+        const noUsb = state.usbConnected === false;
+        if (s.phase === 'writing' && noUsb) { fail('O USB caiu antes da resposta final: a gravação não foi conferida. Reconecte e confira o estado.'); return; }
+        if (away || noUsb) cancel();
+      },
+      /** Pega o "desfazer" já guardado no nativo (a tela pode ter sido recriada). */
+      adopt() {
+        if (!have || s.undo) return;
+        const st = parse(bridge.getAntiStalloFlagStatus());
+        if (st.undo && st.undo.available) { s.undo = { available: true, enable: st.undo.enable }; changed(); }
+      },
+    };
+  }
+
+  ns.AdvancedFlags = {
+    table: DATA, FLAGS, ANTI_ADDRESS, ANTI_MASK, decodeFlags, antiStallo, progressioni, simpleParams,
+    frameForVector, wordsFromBytes, planAntiStallo, verifyReadback, createWriteFlow, hexBytes, pair, wordsOf,
+  };
+})(typeof window !== 'undefined' ? window : globalThis);

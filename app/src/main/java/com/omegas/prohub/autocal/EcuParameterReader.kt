@@ -30,6 +30,7 @@ class EcuParameterReader(private val serial: Mp48SerialScheduler) {
             Kind.SCALAR -> AutoCalProtocol.readScalar(entry.address)
             Kind.VECTOR -> AutoCalProtocol.readVector(entry.address)
             Kind.INDEXED -> AutoCalProtocol.readIndexed(entry.address, entry.index)
+            Kind.MATRIX_ROW -> EcuParameterSnapshot.matrixRowRequest(entry.address, entry.index)
         }
         val reply = unit.transaction(request, "parâmetro ${entry.name}", 900, purgeBefore = false)
         return when {
