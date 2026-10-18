@@ -63,6 +63,7 @@ class BufferWriteProbe(
                 BufferWriteProbeCore.Io(
                     readTimes = { readVector(unit, AutoCalProtocol.PETR_INJ_TBUF_GAS.address, "sonda: tempo GNV") },
                     readCounters = { readVector(unit, AutoCalProtocol.NUM_BUF_UPD_GAS.address, "sonda: contadores GNV") },
+                    awaitFrames = { count -> repeat(count) { awaitTelemetryFrame(unit) } },
                     write = { index, raw -> write(unit, index, raw) },
                 ),
             )
@@ -79,6 +80,15 @@ class BufferWriteProbe(
         return IntArray(BufferWriteProbeCore.BAND_COUNT) { i ->
             (bytes[i * 2].toInt() and 0xFF) or ((bytes[i * 2 + 1].toInt() and 0xFF) shl 8)
         }
+    }
+
+    /**
+     * Um quadro de telemetria novo (pedido 48 01, o mesmo do fluxo normal) dentro da unidade da sonda: a espera entre as
+     * leituras de conferência é contada em respostas da ECU, sem relógio. Só leitura; nenhum byte de escrita muda.
+     */
+    private fun awaitTelemetryFrame(unit: Mp48SerialUnit) {
+        val reply = unit.transaction(Mp48Protocol.CMD_TELEMETRY, "sonda: quadro de telemetria entre leituras", 900, purgeBefore = false)
+        if (!reply.ok) throw IllegalStateException(reply.error.ifBlank { "ECU não respondeu ao quadro de telemetria" })
     }
 
     private fun write(unit: Mp48SerialUnit, index: Int, raw: Int): BufferWriteProbeCore.WriteReply {

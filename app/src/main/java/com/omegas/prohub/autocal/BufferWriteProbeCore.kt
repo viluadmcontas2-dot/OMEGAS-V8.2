@@ -17,6 +17,12 @@ internal object BufferWriteProbeCore {
     const val STEP_RAW = 8
     const val BAND_COUNT = 18
     const val SETTLE_READS = 3
+    /**
+     * Quadros de telemetria entre cada leitura de conferência: a ECU precisa rodar o próprio ciclo para (talvez)
+     * sobrescrever o valor; leituras seguidas (dezenas de ms) não dariam essa chance. 4 quadros ≈ o ritmo de 1 s
+     * da telemetria (~4 quadros/s); 3 conferências ≈ 12 quadros no total.
+     */
+    const val FRAMES_BETWEEN_READS = 4
     const val RESTORE_ATTEMPTS = 3
 
     enum class Outcome {
@@ -45,6 +51,8 @@ internal object BufferWriteProbeCore {
     class Io(
         val readTimes: () -> IntArray,
         val readCounters: () -> IntArray,
+        /** Espera N quadros de telemetria NOVOS da ECU (contagem de respostas, sem relógio). */
+        val awaitFrames: (count: Int) -> Unit,
         val write: (index: Int, raw: Int) -> WriteReply,
     )
 
@@ -106,7 +114,9 @@ internal object BufferWriteProbeCore {
                 }
             } else {
                 repeat(SETTLE_READS) {
-                    // Cada leitura é uma resposta nova da ECU; nenhuma espera artificial.
+                    // Entre leituras, K quadros de telemetria novos: a ECU roda o próprio ciclo (sobrescrever é possível)
+                    // e a espera é contada em respostas dela, nunca em relógio.
+                    io.awaitFrames(FRAMES_BETWEEN_READS)
                     readbacks += io.readTimes()[band]
                 }
                 val last = readbacks.last()

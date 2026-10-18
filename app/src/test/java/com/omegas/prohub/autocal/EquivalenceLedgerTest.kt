@@ -12,7 +12,7 @@ import kotlin.math.abs
 /**
  * Ajustado (dono, 2026-10-16): a janela estável zera ao emitir uma leitura (3 quadros = 1 leitura, sem sobreposição),
  * então [drive] passa a pedir [n] LEITURAS (3·n quadros) e as contagens que antes eram 8 (10 quadros deslizando)
- * viram 10. O relógio do acumulador anda com os quadros ([now]): o cache de pares vale 2 s pelo relógio injetado.
+ * viram 10. O cache de pares vale só enquanto a revisão do ledger não muda (nenhum prazo de relógio).
  */
 class EquivalenceLedgerTest {
     private var now = 0L
@@ -39,6 +39,18 @@ class EquivalenceLedgerTest {
         assertEquals(4.5, band.getDouble("fromMs"), 0.0)
         assertEquals(10, band.getInt("samples"))
         assertEquals("uma região RPM×MAP só", 1, band.getInt("cells"))
+    }
+
+    @Test
+    fun `leituras novas valem na hora - cache so pela revisao nunca pelo relogio`() {
+        val ledger = EquivalenceLedger(null) { 0L } // relógio parado: só a revisão pode invalidar o cache
+        var t = drive(ledger, "GASOLINA", 2000.0, 0.60, 5.0, 0, 10)
+        t = drive(ledger, "GNV", 2000.0, 0.60, 5.5, t + 5_000, 5)
+        assertEquals(5, ledger.pairs().size)
+        drive(ledger, "GNV", 2000.0, 0.60, 5.5, t, 5)
+        assertEquals(10, ledger.pairs().size)
+        // mesmo retrato ⇒ mesma saída
+        assertEquals(ledger.pairs().map { it.petrolRefMs to it.gasPetrolMs }, ledger.pairs().map { it.petrolRefMs to it.gasPetrolMs })
     }
 
     @Test

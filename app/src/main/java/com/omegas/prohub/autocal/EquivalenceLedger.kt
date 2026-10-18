@@ -52,8 +52,6 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         const val IDLE_DIAGNOSTIC_RPM = 1_350.0
         val BANDS = listOf(3.0 to 4.5, 4.5 to 6.0, 6.0 to 7.5, 7.5 to 9.0, 9.0 to 12.0)
         private const val SAVE_INTERVAL_MS = 60_000L
-        /** Pares já calculados valem por este tanto mesmo com leituras novas (a tela não precisa de mais que isso). */
-        const val EVIDENCE_CACHE_MS = 2_000L
 
         /** Impressão digital da Curva K (mesma forma usada pela bridge sobre o snapshot da ECU). */
         fun fingerprint(mulActRaw: IntArray): String = JSONArray(mulActRaw.toList()).toString().hashCode().toString(16)
@@ -148,9 +146,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
     private var cachedDense: Triple<Double, Int, JSONObject>? = null
     /** Sobe a cada mudança nas leituras: os pares só são recalculados quando algo mudou. */
     private var revision = 0L
-    /** Pares da curva (sem os grupos locais) e a atribuição, por revisão; [cachedEvidenceAt] = quando foram calculados. */
+    /** Pares da curva (sem os grupos locais) e a atribuição, por revisão: valem até a próxima mudança do ledger. */
     private var cachedEvidence: Triple<Long, List<EvidencePair>, List<EquivalenceAttribution.Group>>? = null
-    private var cachedEvidenceAt = Long.MIN_VALUE / 2
     /** Motivo de o arquivo não ter sido lido (ou lido em parte); vai no índice para a tela dizer em palavras. */
     private var loadError: String? = null
     /** Grupos que já eram locais (histerese 5% entra / 4% sai). Persistido. */
@@ -415,7 +412,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
 
     /**
      * Pares e atribuição. Copia as leituras sob a trava e calcula FORA dela (a telemetria não espera o casamento de
-     * 30 mil leituras); um resultado com menos de [EVIDENCE_CACHE_MS] vale mesmo com leituras novas. Mudança
+     * 30 mil leituras); o resultado vale enquanto a revisão do ledger (incrementada em cada leitura aceita) não muda,
+     * então mesmo retrato ⇒ mesma saída, sem prazo de relógio. Mudança
      * estrutural (gravação, reset, gasolina recomeçada, referência da ECU) zera o cache na hora.
      */
     private fun evidence(): Triple<Long, List<EvidencePair>, List<EquivalenceAttribution.Group>> {
@@ -425,8 +423,7 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val ecuRef: List<Pair<Double, Double>>
         val latch: Set<EquivalenceAttribution.Key>
         synchronized(lock) {
-            val now = clock()
-            cachedEvidence?.takeIf { it.first == revision || now - cachedEvidenceAt < EVIDENCE_CACHE_MS }?.let { return it }
+            cachedEvidence?.takeIf { it.first == revision }?.let { return it }
             rev = revision
             petrolCopy = petrol.toList()
             gasCopy = gas.toList()
@@ -441,8 +438,8 @@ class EquivalenceLedger(private val file: File? = null, private val clock: () ->
         val result = Triple(rev, global, groups)
         synchronized(lock) {
             if (local != localLatch) { localLatch = local; dirty = true }
+            // Só guarda se ninguém mudou o ledger durante o cálculo (senão o próximo pedido recalcula).
             cachedEvidence = result
-            cachedEvidenceAt = clock()
         }
         return result
     }

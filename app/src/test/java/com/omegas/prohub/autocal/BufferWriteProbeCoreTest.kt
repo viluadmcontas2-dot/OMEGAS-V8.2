@@ -15,15 +15,27 @@ class BufferWriteProbeCoreTest {
         val counters: IntArray = IntArray(18) { if (it in 3..5) 10 else 0 },
         var behavior: Behavior = Behavior.ACCEPT_AND_HOLD,
     ) {
-        enum class Behavior { ACCEPT_AND_HOLD, NAK, ACCEPT_THEN_REVERT, ACCEPT_CLAMP, TRANSPORT_FAIL_WRITTEN, TRANSPORT_FAIL_NOT_WRITTEN, AUTOMATCH_DURING }
+        enum class Behavior { ACCEPT_AND_HOLD, NAK, ACCEPT_THEN_REVERT, ACCEPT_CLAMP, TRANSPORT_FAIL_WRITTEN, TRANSPORT_FAIL_NOT_WRITTEN, AUTOMATCH_DURING, OVERWRITE_AFTER_ECU_CYCLE }
         val writes = ArrayList<Pair<Int, Int>>()
         private var reads = 0
+        /** Quadros de telemetria que a ECU entregou desde a escrita da sonda (o ciclo dela anda com as respostas). */
+        var framesSinceWrite = 0
+        val frameWaits = ArrayList<Int>()
 
         fun io() = Io(
-            readTimes = { reads += 1; if (behavior == Behavior.AUTOMATCH_DURING && reads >= 3) { times.fill(0); counters.fill(0) }; if (behavior == Behavior.ACCEPT_THEN_REVERT && reads >= 3 && writes.size == 1) times[3] = 1003; times.copyOf() },
+            readTimes = {
+                reads += 1
+                if (behavior == Behavior.AUTOMATCH_DURING && reads >= 3) { times.fill(0); counters.fill(0) }
+                if (behavior == Behavior.ACCEPT_THEN_REVERT && reads >= 3 && writes.size == 1) times[3] = 1003
+                // A ECU só sobrescreve depois de rodar o próprio ciclo: precisa de quadros novos, não de leituras seguidas.
+                if (behavior == Behavior.OVERWRITE_AFTER_ECU_CYCLE && writes.size == 1 && framesSinceWrite >= ECU_CYCLE_FRAMES) times[3] = 1003
+                times.copyOf()
+            },
             readCounters = { counters.copyOf() },
+            awaitFrames = { count -> frameWaits += count; framesSinceWrite += count },
             write = { index, raw ->
                 writes += index to raw
+                framesSinceWrite = 0
                 when (behavior) {
                     Behavior.NAK -> WriteReply(false, false, "14 5F 01 04", "CA 01 08", "status 0xCA")
                     Behavior.ACCEPT_CLAMP -> { times[index] = if (raw > 1003) raw - 3 else raw; ok() }
@@ -35,6 +47,8 @@ class BufferWriteProbeCoreTest {
         )
 
         private fun ok() = WriteReply(true, false, "14 5F 01 04", "53 00 53", "ACK")
+
+        companion object { const val ECU_CYCLE_FRAMES = 6 }
     }
 
     @Test fun `sem banda cheia nao escreve nada`() {
@@ -117,5 +131,21 @@ class BufferWriteProbeCoreTest {
         val result = BufferWriteProbeCore.run(ecu.io())
         assertTrue(result.band != 0)
         assertTrue(result.target <= 0xFFFF)
+    }
+
+    @Test fun `ECU sobrescreve depois do proprio ciclo - leituras esperam quadros novos e detectam`() {
+        val ecu = FakeEcu(behavior = FakeEcu.Behavior.OVERWRITE_AFTER_ECU_CYCLE)
+        val result = BufferWriteProbeCore.run(ecu.io())
+        assertEquals(Outcome.ACCEPTED_THEN_OVERWRITTEN, result.outcome)
+        assertEquals(1011, result.readbacks.first())
+        assertEquals(1003, result.readbacks.last())
+        // entre a leitura de volta e cada leitura de conferência: K quadros de telemetria (contagem, sem relógio)
+        assertEquals(List(BufferWriteProbeCore.SETTLE_READS) { BufferWriteProbeCore.FRAMES_BETWEEN_READS }, ecu.frameWaits)
+    }
+
+    @Test fun `recusa nao espera quadros`() {
+        val ecu = FakeEcu(behavior = FakeEcu.Behavior.NAK)
+        BufferWriteProbeCore.run(ecu.io())
+        assertTrue(ecu.frameWaits.isEmpty())
     }
 }
