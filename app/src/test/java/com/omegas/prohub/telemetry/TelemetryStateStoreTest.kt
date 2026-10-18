@@ -97,4 +97,40 @@ class TelemetryStateStoreTest {
         petrolMs = 4.0,
         mapBar = 0.5,
     ).toString()
+
+    @Test
+    fun `liveObject is the same frame as liveJson without a text round trip`() {
+        val store = TelemetryStateStore()
+        store.beginSession(5L)
+        store.updateFromEngineEvent(fullEvent(5L, 1_000L, 2_000, 4.5, 0.45))
+        val obj = store.liveObject()
+        assertEquals(store.liveJson(), obj.toString())
+        assertEquals(2_000, obj.getJSONObject("live").getInt("rpm"))
+        // o objeto devolvido é do chamador: mexer nele não muda o estado guardado
+        obj.getJSONObject("live").put("rpm", 1)
+        obj.put("sequence", -1)
+        assertEquals(2_000, store.telemetryCopy().getInt("rpm"))
+        assertEquals(2_000, JSONObject(store.liveJson()).getJSONObject("live").getInt("rpm"))
+    }
+
+    @Test
+    fun `telemetryCopy is independent of the store`() {
+        val store = TelemetryStateStore()
+        store.beginSession(6L)
+        store.updateFromEngineEvent(fullEvent(6L, 1_000L, 2_000, 4.5, 0.45))
+        store.telemetryCopy().put("rpm", 7)
+        assertEquals(2_000, store.telemetryCopy().getInt("rpm"))
+    }
+
+    @Test
+    fun `rpmAndPetrolMs reads the current frame and is zero without a valid one`() {
+        val store = TelemetryStateStore()
+        assertEquals(0 to 0.0, store.rpmAndPetrolMs())
+        store.beginSession(7L)
+        assertEquals(0 to 0.0, store.rpmAndPetrolMs())
+        store.updateFromEngineEvent(fullEvent(7L, 1_000L, 2_000, 4.5, 0.45))
+        assertEquals(2_000 to 4.5, store.rpmAndPetrolMs())
+        store.invalidate("USB_DISCONNECTED")
+        assertEquals(0 to 0.0, store.rpmAndPetrolMs())
+    }
 }

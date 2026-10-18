@@ -29,6 +29,7 @@
     curve: ['AJUSTE GLOBAL', 'Ajuste global'],
     autocal: ['AUTO-CAL', 'AutoCal'],
     refino: ['REFINO', 'Refino'],
+    sessions: ['SESSÕES', 'Sessões'],
     tools: ['SISTEMA', 'Ferramentas'],
   };
 
@@ -262,6 +263,9 @@
 
   function toolsEditing() {
     const host = byId('toolDiagnosticsWorkspace');
+    const sessionsHost = byId('sessionsHost');
+    const active = document.activeElement;
+    if (sessionsHost && active && sessionsHost.contains(active) && ['INPUT', 'SELECT'].includes(active.tagName)) return true;
     return !!host && !!document.activeElement && host.contains(document.activeElement) &&
       ['INPUT', 'SELECT', 'BUTTON'].includes(document.activeElement.tagName);
   }
@@ -293,7 +297,7 @@
       }
     }
 
-    if (route === 'tools') {
+    if (route === 'tools' || route === 'sessions') {
       patch.sessionStatus = api.sessionStatus() || {};
       patch.logs = api.logs() || [];
       // Listar as gravações lê o disco (manifesto e tamanho de cada uma): não a cada 2 s. Só ao entrar na aba, quando
@@ -307,7 +311,7 @@
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
+    if ((route === 'tools' || route === 'sessions') && !toolsEditing()) utilities?.render(updated);
     if (route === 'tools') advanced?.refresh();
     else if (advanced?.open) advanced.refresh(); // fora de Ferramentas: só desarma a prévia
   }
@@ -355,7 +359,7 @@
       afterPaint(() => root.OmegasApp?.refino?.refresh?.(true));
       return;
     }
-    if (route === 'tools') {
+    if (route === 'tools' || route === 'sessions') {
       ensureTools();
       toolsSessionsStale = true; // entrar na aba relista as gravações
       if (!toolsEditing()) utilities?.render(store.get());

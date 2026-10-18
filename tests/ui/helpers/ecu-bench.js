@@ -245,7 +245,7 @@
       }
       if (!bench.usb) return antiFail('USB desconectado');
       const live = readAntiV();
-      if (!live) { bench.antiVStatus = { state: 'ERROR', message: 'Não consegui ler o módulo.' }; return antiOk(); }
+      if (!live) { bench.antiVStatus = { state: 'ERROR', message: 'Não consegui ler a central.' }; return antiOk(); }
       setAntiVParam(live);
       const after = live.slice(); keys.forEach(k => { after[Number(k)] = ch[k]; });
       const changed = after.map((v, i) => (v !== live[i] ? i : -1)).filter(i => i >= 0);
@@ -257,12 +257,12 @@
     function antiVConfirm(token) {
       const p = bench.antiVPending;
       if (!p || p.token !== token) return antiFail('Não há conferência válida; refaça o toque.');
-      if (p.noop) return antiFail('Esses números já estão assim no módulo.');
+      if (p.noop) return antiFail('Esses números já estão assim na central.');
       if (!bench.usb || p.session !== bench.session) return antiFail('O cabo USB mudou desde a conferência; refaça o toque.');
       bench.antiVPending = null; bench.antiVStatus = { state: 'WRITING' };
       const cur = readAntiV();
-      if (!cur) return finishAntiV(p, { outcome: 'ERROR', message: 'Não consegui ler o módulo antes de gravar.' });
-      if (cur.some((v, i) => v !== p.before[i])) return finishAntiV(p, { outcome: 'CHANGED_MEANWHILE', message: 'Os números do módulo mudaram.' });
+      if (!cur) return finishAntiV(p, { outcome: 'ERROR', message: 'Não consegui ler a central antes de gravar.' });
+      if (cur.some((v, i) => v !== p.before[i])) return finishAntiV(p, { outcome: 'CHANGED_MEANWHILE', message: 'Os números da central mudaram.' });
       const reply = send(p.frame);
       if (bench.hold) { bench.heldV = { p, reply }; return antiOk(); }
       return resolveV(p, reply);
@@ -270,12 +270,12 @@
     function resolveV(p, reply) {
       bench.heldV = null;
       const dec = decodeReply(p.frame, reply);
-      if (!dec.ok) { const back0 = readAntiV(); return finishAntiV(p, { outcome: 'NOT_ACKED', message: 'O módulo não confirmou.', valueChanged: !!back0 && back0.some((v, i) => v !== p.before[i]) }); }
+      if (!dec.ok) { const back0 = readAntiV(); return finishAntiV(p, { outcome: 'NOT_ACKED', message: 'A central não confirmou.', valueChanged: !!back0 && back0.some((v, i) => v !== p.before[i]) }); }
       const back = readAntiV();
       if (!back) return finishAntiV(p, { outcome: 'READBACK_FAILED', message: 'A leitura depois de gravar falhou.' });
       setAntiVParam(back);
       const same = back.every((v, i) => v === p.after[i]);
-      return finishAntiV(p, same ? { outcome: 'CONFIRMED', message: 'Gravado e conferido no módulo.', readback: back } : { outcome: 'READBACK_DIVERGED', message: 'Os números lidos são outros.', readback: back });
+      return finishAntiV(p, same ? { outcome: 'CONFIRMED', message: 'Gravado e conferido na central.', readback: back } : { outcome: 'READBACK_DIVERGED', message: 'Os números lidos são outros.', readback: back });
     }
     function finishAntiV(p, result) {
       bench.antiVStatus = { state: 'DONE', ...result, before: p.before, after: p.after, changed: p.changed, readback: result.readback || null, frameHex: H(p.frame) };

@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormSwitch`; unidade: `@:CalibraSwitch`; ancestral: `TForm`; tamanho de instância: 0x404; componentes no DFM: 11.
 - Título: "Switch settings" — eng: "Switch settings" / por: "Switch settings"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormConfig.ButtonSwitchSettingsClick` (0x004C90E0)
 
 ## Controles com evento/ação (6)
 
@@ -19,14 +19,14 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (9): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonExitClick` | 0x00412B30 | 6 | INFERIDO | Handler `ButtonExitClick`; sem fatos extraíveis automaticamente (6 bytes) |  |  |  |
-| `ComboBuzzerEnter` | 0x00412E40 | 25 | INFERIDO | Handler `ComboBuzzerEnter`; toca campos/controles: ComboBuzzer |  |  |  |
-| `ComboBuzzerKeyPress` | 0x00412E5C | 188 | INFERIDO | Handler `ComboBuzzerKeyPress`; toca campos/controles: EditBuzzer |  |  |  |
-| `EditSwitchEnter` | 0x00412B38 | 50 | INFERIDO | Handler `EditSwitchEnter`; sem fatos extraíveis automaticamente (50 bytes) |  |  |  |
-| `EditSwitchKeyPress` | 0x00412B6C | 361 | INFERIDO | Handler `EditSwitchKeyPress`; toca campos/controles: ComboBuzzer, TrackBarLed |  |  |  |
-| `FormClose` | 0x00412AB8 | 102 | INFERIDO | Handler `FormClose`; chama: TAebProtocol::SendCommand |  |  | TAebProtocol::SendCommand |
-| `FormKeyPress` | 0x00412B20 | 14 | INFERIDO | Handler `FormKeyPress`; sem fatos extraíveis automaticamente (14 bytes) |  |  |  |
-| `TrackBarLedChange` | 0x00412CEC | 338 | INFERIDO | Handler `TrackBarLedChange`; chama APIs do Windows: USER32.DLL!GetKeyState; chama: thunk -> USER32.DLL!GetKeyState; toca campos/controles: EditLed, TrackBarLed |  | USER32.DLL!GetKeyState | thunk -> USER32.DLL!GetKeyState |
-| `TrackBarLedEnter` | 0x00412CD8 | 19 | INFERIDO | Handler `TrackBarLedEnter`; sem fatos extraíveis automaticamente (19 bytes) |  |  |  |
+| `ButtonExitClick` | 0x00412B30 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
+| `ComboBuzzerEnter` | 0x00412E40 | 25 | INFERIDO | toca ComboBuzzer |  |  |  |
+| `ComboBuzzerKeyPress` | 0x00412E5C | 188 | INFERIDO | toca EditBuzzer |  |  |  |
+| `EditSwitchEnter` | 0x00412B38 | 50 | INFERIDO | sem fatos diretos extraíveis (50 bytes; chama 1 funções sem nome) |  |  |  |
+| `EditSwitchKeyPress` | 0x00412B6C | 361 | INFERIDO | toca ComboBuzzer, TrackBarLed |  |  |  |
+| `FormClose` | 0x00412AB8 | 102 | INFERIDO | chama TAebProtocol::SendCommand |  |  |  |
+| `FormKeyPress` | 0x00412B20 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
+| `TrackBarLedChange` | 0x00412CEC | 338 | INFERIDO | chama APIs do Windows GetKeyState; toca EditLed, TrackBarLed |  | GetKeyState |  |
+| `TrackBarLedEnter` | 0x00412CD8 | 19 | INFERIDO | sem fatos diretos extraíveis (19 bytes; chama 0 funções sem nome) |  |  |  |

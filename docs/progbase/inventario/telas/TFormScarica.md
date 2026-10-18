@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormScarica`; unidade: `@:ScaricaFile`; ancestral: `TForm`; tamanho de instância: 0x3D4; componentes no DFM: 9.
 - Título: "Programmazione centralina" — eng: "Ecu programming" / por: "Programação da central de comando"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8)
 
 ## Controles com evento/ação (3)
 
@@ -22,6 +22,6 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (1): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonCambiaClick` | 0x0050523C | 27 | INFERIDO | Handler `ButtonCambiaClick`; chama APIs do Windows: KERNEL32.DLL!CloseHandle, KERNEL32.DLL!CreateFileW, KERNEL32.DLL!FileTimeToLocalFileTime, KERNEL32.DLL!FileTimeToSystemTime, KERNEL32.DLL!GetFileTime; toca campos/controles: OpenDialogFile |  | KERNEL32.DLL!CloseHandle, KERNEL32.DLL!CreateFileW, KERNEL32.DLL!FileTimeToLocalFileTime, KERNEL32.DLL!FileTimeToSystemTime, KERNEL32.DLL!GetFileTime |  |
+| `ButtonCambiaClick` | 0x0050523C | 27 | INFERIDO | toca OpenDialogFile |  |  | CloseHandle, CreateFileW, FileTimeToLocalFileTime, FileTimeToSystemTime |

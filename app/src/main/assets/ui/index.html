@@ -7,6 +7,7 @@
   <title>OMEGAS V8</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="styles-calibration-obd.css">
+  <link rel="stylesheet" href="styles-ux-leigo.css">
 </head>
 <body>
   <div id="app" class="app-shell" aria-label="OMEGAS V8">
@@ -17,22 +18,23 @@
       </div>
 
       <nav class="side-nav" aria-label="Áreas do aplicativo">
-        <button type="button" data-route="autocal" class="active"><i>01</i><span>AutoCal</span></button>
-        <button type="button" data-route="refino"><i>02</i><span>Refino</span></button>
-        <button type="button" data-route="map"><i>03</i><span>Ajuste local</span></button>
-        <button type="button" data-route="curve"><i>04</i><span>Ajuste global</span></button>
-        <button type="button" data-route="tools"><i>05</i><span>Ferramentas</span></button>
+        <button type="button" data-route="autocal" class="active"><span>AutoCal</span></button>
+        <button type="button" data-route="refino"><span>Refino</span></button>
+        <button type="button" data-route="map"><span>Ajuste local</span></button>
+        <button type="button" data-route="curve"><span>Ajuste global</span></button>
+        <button type="button" data-route="sessions"><span>Sessões</span></button>
+        <button type="button" data-route="tools"><span>Ferramentas</span></button>
       </nav>
 
       <div class="rail-status">
-        <span id="globalEcu" data-online="false">ECU offline</span>
+        <span id="globalEcu" data-online="false">Sem central</span>
         <b id="globalFuel" data-fuel="—">—</b>
       </div>
     </aside>
 
     <section class="workspace">
-      <header id="liveBar" class="workspace-head live-bar" aria-label="Leituras ao vivo da ECU" aria-live="off">
-        <div class="live-cell" data-live="voltage" data-state="unknown" title="Tensão da ECU (provisório: byte 19 do canal 48 01 ÷ 16, ainda não comparado com o módulo OBD). Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>Tensão ECU</small><b>—</b><em>V</em></div>
+      <header id="liveBar" class="workspace-head live-bar" aria-label="Leituras ao vivo da central" aria-live="off">
+        <div class="live-cell" data-live="voltage" data-state="unknown" title="Tensão da central. Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>Tensão</small><b>—</b><em>V</em></div>
         <div class="live-cell" data-live="map"><small>MAP</small><b>—</b><em>bar</em></div>
         <div class="live-cell" data-live="petrol"><small>Inj. gasolina</small><b>—</b><em>ms</em></div>
         <div class="live-cell" data-live="rpm"><small>RPM</small><b>—</b></div>
@@ -118,17 +120,21 @@
           <div id="refinoScreenHost" class="autocal-cockpit-view" aria-live="polite"></div>
         </section>
 
-        <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
-          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Backup, sessões e saúde do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p><button id="toolAdvancedToggle" type="button" class="secondary">Avançado</button></div>
-          <!-- Sem rolagem (dono, 2026-10-11): os cartões (drawers.js) entram antes deste rodapé; backup embaixo, à esquerda. -->
-          <div class="tool-actions" role="toolbar" aria-label="Backup e aprendizado">
-            <button id="toolExportData" type="button"><b>Exportar backup completo</b><span>Tudo do app: calibrações salvas, aprendizado e sessões</span></button>
-            <button id="toolExportLearning" type="button"><b>Exportar aprendizado</b><span>Salva um arquivo .omegas</span></button>
-            <button id="toolImportLearning" type="button"><b>Importar aprendizado</b><span>Confere o arquivo antes; nunca grava na ECU</span></button>
-            <button id="toolAutoRefine" type="button"><b>Refino automático</b><span>Carregando…</span></button>
-            <button id="toolBufferProbe" type="button"><b>Testar escrita nos pontos</b><span>1 valor, banda cheia, volta ao original (carro parado)</span></button>
+        <section id="sessionsScreen" class="screen sessions-screen" data-screen="sessions" aria-labelledby="sessionsTitle">
+          <div class="page-intro"><div><small>SESSÕES</small><h2 id="sessionsTitle">Gravações da viagem</h2></div></div>
+          <div id="sessionsHost" class="sessions-host"></div>
+        </section>
+
+        <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" data-page="1" data-view="home" aria-labelledby="toolsTitle">
+          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Ferramentas</h2></div></div>
+          <!-- Um cartão por função, sem abas: página 1 = motor e combustível (advanced.js), página 2 = app e arquivos (drawers.js). Sem rolagem. -->
+          <section id="toolAdvanced" class="tool-grid" data-mode="home" aria-label="Motor e combustível"></section>
+          <div id="toolDiagnosticsWorkspace" class="tool-grid" data-mode="home" aria-label="App e arquivos"></div>
+          <div class="tool-foot" id="toolsFoot">
+            <button id="toolsPageNext" type="button" class="secondary tool-foot-btn" data-tools-page="2">Mais ferramentas <span aria-hidden="true">›</span></button>
+            <button id="toolsPagePrev" type="button" class="secondary tool-foot-btn" data-tools-page="1"><span aria-hidden="true">‹</span> Motor e combustível</button>
           </div>
-          <section id="toolAdvanced" class="adv-host" data-mode="main" aria-label="Avançado"></section>
+          <div id="toolsLayer" class="tool-layer" hidden></div>
         </section>
       </main>
     </section>

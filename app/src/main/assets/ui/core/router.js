@@ -1,7 +1,7 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
-  const ROUTES = ['autocal', 'refino', 'map', 'curve', 'tools'];
+  const ROUTES = ['autocal', 'refino', 'map', 'curve', 'sessions', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
 
   // Cada script carrega uma vez só. Quem pede de novo espera o mesmo carregamento (nunca insere duas tags).
@@ -35,11 +35,12 @@
   const ROUTE_SCRIPTS = {
     map: ['core/autocal-api.js', 'map-editor.js', 'core/curve-to-map.js', 'core/balance-runner.js', 'core/write-gate.js', 'screens/map.js'],
     curve: ['core/curve-smoothing.js', 'screens/curve.js'],
-    tools: ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'components/drawers.js', 'components/advanced.js'],
+    tools: ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'core/anti-apagao-valores.js', 'core/cartoes-motor.js', 'components/drawers.js', 'components/advanced.js'],
+    sessions: ['components/drawers.js'],
     refino: [...SHARED_AUTOCAL, 'map-editor.js', 'core/stall-region.js', 'core/write-gate.js', 'core/map-fix.js', 'core/gasoline-reference.js', 'screens/refino.js'],
   };
   // Se a classe da tela já existe (testes que montam os arquivos à mão), não há o que carregar.
-  const ROUTE_READY = { map: 'MapScreen', curve: 'CurveScreen', tools: 'Drawers', refino: 'RefinoScreen' };
+  const ROUTE_READY = { map: 'MapScreen', curve: 'CurveScreen', tools: 'AdvancedPanel', sessions: 'Drawers', refino: 'RefinoScreen' };
 
   /** Promessa que resolve quando a tela da rota está carregada; `null` se não há nada a esperar (já carregada). */
   function loadRoute(route) {

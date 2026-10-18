@@ -6,7 +6,7 @@
   // Espelha o Kotlin (AntiStalloParamsCore): mesma faixa, mesmo quadro. Marcas: OBS-COD = faixa MÁXIMA e valor de fábrica do DFM do
   // ProgBase (TFormConfig.EditAntiStallo0..4, TSTREAMDATI.ANTI_STALLO); DERIVADO = piso 0 (u16 sem sinal; o DFM não traz MinValue);
   // INFERIDO (forte) = qual edit é qual posição (DataIndex 0..4). Quadro: SetVector ESTENDIDO 0x37 (5 × u16 = 10 bytes > 5), não 0x3B.
-  // Sem relógio: esperar o módulo = esperar a resposta (gancho de dados da ponte).
+  // Sem relógio: esperar a central = esperar a resposta (gancho de dados da ponte).
   const ADDRESS = 307;
   const FIELDS = [
     { index: 0, label: 'Rotação máxima para agir', help: 'Só age abaixo disso.', unit: 'rotação', min: 0, max: 6000, factory: 1600 },
@@ -64,7 +64,7 @@
 
   /** Lê-modifica-escreve: só os campos de `changes` mudam; o resto é o valor lido. */
   function plan(before, changes) {
-    if (!Array.isArray(before) || before.length !== COUNT || !before.every(isU16)) return { ok: false, error: 'Valores atuais desconhecidos: espere a leitura do módulo.' };
+    if (!Array.isArray(before) || before.length !== COUNT || !before.every(isU16)) return { ok: false, error: 'Valores atuais desconhecidos: espere a leitura da central.' };
     const check = validate(changes);
     if (!check.ok) return check;
     const after = before.slice();
@@ -97,20 +97,20 @@
   }
 
   const TEXT = {
-    CONFIRMED: 'Pronto. O módulo aceitou e os números conferem.',
-    NOT_ACKED: 'O módulo não aceitou. Os números continuam como estavam. Tente de novo.',
-    UNSURE: 'Não sei como ficou no módulo. Espere a leitura voltar e confira os números antes de tentar de novo.',
-    CHANGED: 'Os números mudaram no módulo. Nada foi gravado. Toque em Gravar para conferir de novo.',
-    NO_LINK: 'Não consegui falar com o módulo. Nada foi gravado. Confira o cabo e tente de novo.',
+    CONFIRMED: 'Pronto. A central aceitou e os números conferem.',
+    NOT_ACKED: 'A central não aceitou. Os números continuam como estavam. Tente de novo.',
+    UNSURE: 'Não sei como ficou na central. Espere a leitura voltar e confira os números antes de tentar de novo.',
+    CHANGED: 'Os números mudaram na central. Nada foi gravado. Toque em Gravar para conferir de novo.',
+    NO_LINK: 'Não consegui falar com a central. Nada foi gravado. Confira o cabo e tente de novo.',
     USB_DROP: 'O cabo soltou durante a gravação. Não sei como ficou. Reconecte e confira os números.',
-    SAME: 'Esses números já estão assim no módulo. Nada a gravar.',
-    PREVIEW_MISMATCH: 'A conferência do app não bate com a do módulo. Nada foi gravado.',
+    SAME: 'Esses números já estão assim na central. Nada a gravar.',
+    PREVIEW_MISMATCH: 'A conferência do app não bate com a da central. Nada foi gravado.',
   };
 
   function parse(text) { try { return typeof text === 'string' ? JSON.parse(text) : (text || {}); } catch (_) { return {}; } }
 
   /**
-   * Fluxo de toque dos 5 números: pedir (lê o módulo e mostra antes → depois) → 2º toque confirma → ACK → leitura de volta → Desfazer.
+   * Fluxo de toque dos 5 números: pedir (lê a central e mostra antes → depois) → 2º toque confirma → ACK → leitura de volta → Desfazer.
    * Gravar, Restaurar fábrica e Desfazer usam o MESMO caminho (`request`); nada grava sem o 2º toque.
    */
   function createValuesFlow({ bridge, addHook, onChange }) {
@@ -200,6 +200,7 @@
       /** 2º toque. */
       confirm() { if (s.phase === 'preview') confirm(); },
       cancel,
+      dismiss() { if (s.phase === 'done' || s.phase === 'error') s.phase = 'idle'; if (s.phase === 'idle') { s.message = ''; s.uncertain = false; } changed(); },
       otherTouch() { cancel(); },
       observe(state) {
         const away = state.route !== 'tools';

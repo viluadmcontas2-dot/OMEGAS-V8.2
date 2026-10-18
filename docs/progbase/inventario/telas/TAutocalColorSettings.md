@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `AutocalColorSettings`; unidade: `@:AutoCal_ColorSettings`; ancestral: `TForm`; tamanho de instância: 0x494; componentes no DFM: 54.
 - Título: "AutocalColorSettings"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8), `TAutoCalSettings.BtnChangeColorClick` (0x0051420C), `0x005198FD` (0x005198FD), `TAutoCalUI.ActionChangeColorExecute` (0x0051AE78)
 
 ## Controles com evento/ação (17)
 
@@ -36,10 +36,10 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (5): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ChartDataAfterDraw` | 0x0051087C | 213 | INFERIDO | Handler `ChartDataAfterDraw`; toca campos/controles: ChartData |  |  |  |
-| `CheckCustomColorsClick` (sem evento no DFM) | 0x00510998 | 35 | INFERIDO | Handler `CheckCustomColorsClick`; toca campos/controles: PanelCustomColors |  |  |  |
-| `Image1Click` | 0x00510AAC | 243 | INFERIDO | Handler `Image1Click`; mostra/usa textos AUTOCALSETTINGSLOADDEFCOLOR; chama: TTranslatorExt::GetString | AUTOCALSETTINGSLOADDEFCOLOR |  | TTranslatorExt::GetString |
-| `OKClick` | 0x005109BC | 239 | INFERIDO | Handler `OKClick`; mostra/usa textos AUTOCALSETTINGSSAVEEXIT; chama: TTranslatorExt::GetString | AUTOCALSETTINGSSAVEEXIT |  | TTranslatorExt::GetString |
-| `_AcqusitionAreas0Click` | 0x00510954 | 66 | INFERIDO | Handler `_AcqusitionAreas0Click`; toca campos/controles: MyColorDialog |  |  |  |
+| `ChartDataAfterDraw` | 0x0051087C | 213 | INFERIDO | toca ChartData |  |  |  |
+| `CheckCustomColorsClick` (sem evento no DFM) | 0x00510998 | 35 | INFERIDO | toca PanelCustomColors |  |  |  |
+| `Image1Click` | 0x00510AAC | 243 | INFERIDO | usa textos AUTOCALSETTINGSLOADDEFCOLOR; chama TTranslatorExt::GetString | AUTOCALSETTINGSLOADDEFCOLOR |  |  |
+| `OKClick` | 0x005109BC | 239 | INFERIDO | usa textos AUTOCALSETTINGSSAVEEXIT; chama TTranslatorExt::GetString | AUTOCALSETTINGSSAVEEXIT |  |  |
+| `_AcqusitionAreas0Click` | 0x00510954 | 66 | INFERIDO | toca MyColorDialog |  |  |  |

@@ -496,8 +496,7 @@ ACESSORES = {
     0x9244C8: ('EnviaComando', 'protocolo: comando direto (edx=id, buffer, n)'),
 }
 # alvos de acao sobre controles (Delphi/VCL): inferidos pelo uso (INFERIDO)
-ACOES_CTRL = {0x7EDFA8: 'Visible', 0x96C73C: 'Enabled', 0x7EE08C: 'Text/Caption', 0x7EE0E0: 'Caption',
-              0x7EDFFC: 'Enabled'}
+ACOES_CTRL = {0x7EDFA8: 'Visible', 0x96C73C: 'Visible', 0x7EDFE0: 'Enabled', 0x7EE08C: 'Text', 0x7EE0E0: 'Caption'}
 
 
 def metodo_instrucoes(b, r, ini, fim_extra=0x3000):
@@ -612,3 +611,178 @@ def eventos_metodo(b, r, nome_metodo, campos_form):
             ev.append(dict(endereco='0x%X' % i.address, funcao=ACOES_CTRL[t], controle=ctl,
                            valor_edx=_imm_reg(seq, k, 'edx')))
     return dict(metodo=nome_metodo, endereco='0x%X' % inv[nome_metodo], fim='0x%X' % lim, n_instr=len(seq), eventos=ev)
+
+
+# ---------------------------------------------------------------- condicoes (estrutura if/else do compilador)
+NEG = {'je': 'jne', 'jne': 'je', 'jl': 'jge', 'jge': 'jl', 'jg': 'jle', 'jle': 'jg', 'jb': 'jae', 'jae': 'jb',
+       'ja': 'jbe', 'jbe': 'ja', 'js': 'jns', 'jns': 'js', 'jz': 'jnz', 'jnz': 'jz'}
+FORMA = {'je': '== 0', 'jne': '!= 0', 'jz': '== 0', 'jnz': '!= 0'}
+
+
+def _desc_chamada(seq, k, nomes):
+    """Descricao da chamada anterior ao teste em seq[k]."""
+    for j in range(k - 1, max(-1, k - 10), -1):
+        t = seq[j]
+        if t.mnemonic == 'call':
+            try:
+                a = int(t.op_str, 16)
+            except ValueError:
+                return 'chamada virtual %s' % t.op_str
+            if a in ACOES_CTRL or a == A_ROUND:
+                continue
+            if a in ACESSORES:
+                nm = ACESSORES[a][0]
+                if nm.endswith(('Flag1', 'Flag2', 'Flag3', 'Combo')):
+                    return '%s(caso %s)' % (nm, _imm_reg(seq, j, 'edx'))
+                if nm in ('GetEsc', 'GetIdx'):
+                    p = _pushes(seq, j)
+                    return '%s(codigo %s)' % (nm, p[1] if len(p) > 1 else '?')
+                return nm
+            return nomes.get(a) or 'sub_%X' % a
+        if t.mnemonic.startswith('j') or t.mnemonic == 'ret':
+            break
+    return None
+
+
+def teste_de(seq, k, nomes, campos_sd):
+    """(lhs, rhs, tipo) do cmp/test que antecede o jcc seq[k]. tipo: 'cmp' | 'and' (test lhs & rhs)."""
+    if k == 0:
+        return ('?', '?', 'cmp')
+    t = seq[k - 1]
+    s = t.mnemonic + ' ' + t.op_str
+    m = re.fullmatch(r'cmp byte ptr \[(\w+) \+ 0x(80d|80e)\], 0', s)
+    if m:
+        return ({'80d': 'SD.familia_LR[+0x80D]', '80e': 'SD.conectado[+0x80E]'}[m.group(2)], '0', 'cmp')
+    m = re.fullmatch(r'cmp (?:byte|dword) ptr \[(\w+) \+ (0x[0-9a-f]+)\], (0x[0-9a-f]+|\d+)', s)
+    if m:
+        off = int(m.group(2), 16)
+        return ('[obj+0x%X]%s' % (off, ('(' + campos_sd[off] + ')') if off in campos_sd else ''), m.group(3), 'cmp')
+    m = re.fullmatch(r'test byte ptr \[(\w+) \+ (0x[0-9a-f]+)\], (0x[0-9a-f]+|\d+)', s)
+    if m:
+        off = int(m.group(2), 16)
+        return ('byte[obj+0x%X]%s' % (off, ('(' + campos_sd[off] + ')') if off in campos_sd else ''), m.group(3), 'and')
+    if s in ('test al, al', 'test eax, eax', 'test dl, dl', 'test cl, cl'):
+        return (_desc_chamada(seq, k - 1, nomes) or s, '0', 'cmp')
+    m = re.fullmatch(r'cmp e?ax, (0x[0-9a-f]+|\d+)|cmp al, (0x[0-9a-f]+|\d+)', s)
+    if m:
+        return (_desc_chamada(seq, k - 1, nomes) or 'eax', m.group(1) or m.group(2), 'cmp')
+    m = re.fullmatch(r'cmp (e\w\w), (0x[0-9a-f]+|\d+)', s)
+    if m:
+        return (m.group(1), m.group(2), 'cmp')
+    return (s, '', 'cmp')
+
+
+REL = {'je': '==', 'jz': '==', 'jne': '!=', 'jnz': '!=', 'jl': '<', 'jge': '>=', 'jg': '>', 'jle': '<=',
+       'jb': '<', 'jae': '>=', 'ja': '>', 'jbe': '<=', 'js': '<', 'jns': '>='}
+INV = {'==': '!=', '!=': '==', '<': '>=', '>=': '<', '>': '<=', '<=': '>'}
+
+
+def render_cond(teste, jcc, tomado):
+    """Condicao para o bloco executar: tomado=False => bloco no fall-through do jcc (condicao do jcc invertida)."""
+    lhs, rhs, tipo = teste
+    rel = REL.get(jcc, '?')
+    # o bloco do fall-through roda quando o salto NAO e tomado
+    if not tomado:
+        rel = INV.get(rel, rel)
+    if tipo == 'and':
+        return '(%s & %s) %s 0' % (lhs, rhs, '!=' if rel == '!=' else '==')
+    if rhs == '0' and rel in ('==', '!=') and ('(' in lhs and lhs.endswith(')') and lhs.split('(')[0] in
+                                                  ('GetFlag1', 'GetFlag2', 'GetFlag3', 'GetCombo')) is False:
+        pass
+    return '%s %s %s' % (lhs, rel, rhs)
+
+
+def condicoes_por_endereco(seq, nomes, campos_sd):
+    """{endereco: [texto, ...]} com as condicoes ativas (regioes if/else a partir dos jcc para frente)."""
+    regioes = []         # (inicio, fim, teste, jcc, tomado)
+    out = {}
+    for k, i in enumerate(seq):
+        out[i.address] = [render_cond(r[2], r[3], r[4]) for r in regioes if r[0] <= i.address < r[1]]
+        if i.mnemonic.startswith('j') and i.mnemonic != 'jmp':
+            try:
+                alvo_ = int(i.op_str, 16)
+            except ValueError:
+                continue
+            if alvo_ > i.address:
+                regioes.append((i.address + i.size, alvo_, teste_de(seq, k, nomes, campos_sd), i.mnemonic, False))
+        elif i.mnemonic == 'jmp':
+            try:
+                alvo_ = int(i.op_str, 16)
+            except ValueError:
+                continue
+            if alvo_ > i.address + i.size:
+                fim_then = [r for r in regioes if r[1] == i.address + i.size]
+                if fim_then:
+                    r = fim_then[-1]
+                    regioes.append((i.address + i.size, alvo_, r[2], r[3], True))
+    return out
+
+
+def _origem_valor(seq, k, nomes):
+    """Descreve de onde vem o valor (edx/dl) passado a um setter de propriedade em seq[k]."""
+    for j in range(k - 1, max(-1, k - 8), -1):
+        t = seq[j]
+        sj = t.mnemonic + ' ' + t.op_str
+        if re.fullmatch(r'(mov edx, eax|mov dl, al|xor edx, edx|mov dl, \w+|setne \w+|sete \w+|and ecx, 1|and edx, 1)', sj) or t.mnemonic.startswith('set'):
+            d = _desc_chamada(seq, j, nomes)
+            if d:
+                return d
+        if re.fullmatch(r'mov e?dx, (0x[0-9a-f]+|\d+)|mov dl, (0x[0-9a-f]+|\d+)', sj):
+            return None
+    return None
+
+
+def acoes_metodo(b, r, nome, nomes_pub, campos_form, campos_sd, prof=2, _visto=None, ini=None, via=None):
+    """Acoes sobre controles (Visible/Enabled/Caption/Text/Checked) com as condicoes que as guardam."""
+    ms = r.methods('TFormConfig')
+    inv = {v: k for k, v in ms.items()}
+    a0 = ini if ini is not None else inv.get(nome)
+    if a0 is None:
+        return []
+    _visto = _visto if _visto is not None else set()
+    if a0 in _visto:
+        return []
+    _visto.add(a0)
+    seq, lim = metodo_instrucoes(b, r, a0)
+    conds = condicoes_por_endereco(seq, nomes_pub, campos_sd)
+    out = []
+    for k, i in enumerate(seq):
+        if i.mnemonic != 'call':
+            continue
+        try:
+            t = int(i.op_str, 16)
+        except ValueError:
+            # chamada virtual: Checked
+            m = re.fullmatch(r'dword ptr \[(\w+) \+ (0x10[48])\]', i.op_str)
+            if m:
+                ctl = None
+                for j in range(k - 1, max(-1, k - 8), -1):
+                    mm = re.fullmatch(r'mov eax, dword ptr \[ebx \+ (0x[0-9a-f]+)\]', seq[j].mnemonic + ' ' + seq[j].op_str)
+                    if mm:
+                        ctl = campos_form.get(int(mm.group(1), 16))
+                        break
+                if ctl:
+                    out.append(dict(endereco='0x%X' % i.address, propriedade='Checked' if m.group(2) == '0x108' else 'lê Checked',
+                                    controle=ctl, valor_imediato=None if m.group(2) == '0x108' else None,
+                                    origem=_origem_valor(seq, k, nomes_pub) if m.group(2) == '0x108' else None,
+                                    condicoes=conds.get(i.address, []), via=via))
+            continue
+        if t in ACOES_CTRL:
+            ctl = None
+            for j in range(k - 1, max(-1, k - 8), -1):
+                mm = re.fullmatch(r'mov eax, dword ptr \[ebx \+ (0x[0-9a-f]+)\]', seq[j].mnemonic + ' ' + seq[j].op_str)
+                if mm:
+                    ctl = campos_form.get(int(mm.group(1), 16))
+                    break
+            out.append(dict(endereco='0x%X' % i.address, propriedade=ACOES_CTRL[t], controle=ctl,
+                            valor_imediato=_imm_reg(seq, k, 'edx') if ACOES_CTRL[t] in ('Visible', 'Enabled') else None,
+                            origem=_origem_valor(seq, k, nomes_pub) if ACOES_CTRL[t] in ('Visible', 'Enabled') else None,
+                            condicoes=conds.get(i.address, []), via=via))
+        elif prof > 0 and 0x490028 <= t < 0x4CB358 and t not in ms:
+            sub = acoes_metodo(b, r, nome, nomes_pub, campos_form, campos_sd, prof - 1, _visto, ini=t,
+                               via='%s via sub_%X' % (nome, t))
+            for e in sub:
+                e = dict(e)
+                e['condicoes_chamada'] = conds.get(i.address, [])
+                out.append(e)
+    return out

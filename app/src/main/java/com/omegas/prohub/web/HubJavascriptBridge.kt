@@ -104,7 +104,7 @@ class HubJavascriptBridge(activity: MainActivity) {
 
     /** Quadro completo `{ok, revision, data}`: cópia latest-only do store + interpolação da célula atual. */
     private fun presentEnvelope(service: TelemetryForegroundService): JSONObject {
-        val root = try { JSONObject(service.telemetryStore.liveJson()) } catch (_: Exception) { JSONObject() }
+        val root = try { service.telemetryStore.liveObject() } catch (_: Exception) { JSONObject() }
         val live = root.optJSONObject("live") ?: JSONObject()
         val interpolation = presentGate.interpolation(
             rpm = live.optDouble("rpm", 0.0),
@@ -117,8 +117,9 @@ class HubJavascriptBridge(activity: MainActivity) {
         root.put("ok", true)
             .put("telemetryAgeMs", root.optLong("ageMs", -1L))
             .put("interpolation", interpolation)
-        uiSnapshots.publishPresent(root)
-        return uiSnapshots.presentJson()
+        // Mesmo envelope que presentJson() devolveria, sem reler o que acabou de ser publicado.
+        val revision = uiSnapshots.publishPresent(root)
+        return JSONObject().put("ok", true).put("revision", revision).put("data", root)
     }
 
     /**
@@ -353,7 +354,7 @@ class HubJavascriptBridge(activity: MainActivity) {
 
     @JavascriptInterface
     fun getLiveTelemetry(): String = activity?.serviceOrNull()?.let { service ->
-        val root = JSONObject(service.telemetryStore.liveJson())
+        val root = service.telemetryStore.liveObject()
         val live = root.optJSONObject("live") ?: JSONObject()
         val interpolation = LearningGridProjection.liveInterpolationJson(
             rpm = live.optDouble("rpm", 0.0),

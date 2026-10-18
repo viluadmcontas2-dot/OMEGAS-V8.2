@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormModificaMappa`; unidade: `@:ModMappa`; ancestral: `TForm`; tamanho de instância: 0x3CC; componentes no DFM: 5.
 - Título: "Variazione cella"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormConfig.Create` (0x00489758), `0x004ECD9C` (0x004ECD9C)
 
 ## Controles com evento/ação (4)
 
@@ -17,7 +17,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (2): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `EditDataKeyPress` | 0x0050EF08 | 677 | INFERIDO | Handler `EditDataKeyPress`; sem fatos extraíveis automaticamente (677 bytes) |  |  |  |
-| `FormClose` | 0x0050EDF8 | 272 | INFERIDO | Handler `FormClose`; sem fatos extraíveis automaticamente (272 bytes) |  |  |  |
+| `EditDataKeyPress` | 0x0050EF08 | 677 | INFERIDO | sem fatos diretos extraíveis (677 bytes; chama 8 funções sem nome) |  |  |  |
+| `FormClose` | 0x0050EDF8 | 272 | INFERIDO | sem fatos diretos extraíveis (272 bytes; chama 6 funções sem nome) |  |  |  |

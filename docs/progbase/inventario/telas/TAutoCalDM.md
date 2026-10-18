@@ -3,7 +3,7 @@
 Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD; "o que faz" automático = INFERIDO; curado = marca própria.
 
 - Instância DFM: `AutoCalDM`; unidade: `@:AutoCal_DM`; ancestral: `TDataModule`; tamanho de instância: 0x10C; componentes no DFM: 36.
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8)
 
 ## Controles com evento/ação (4)
 
@@ -16,7 +16,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (2): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `AUTO_CAL_ENABLEGetData` | 0x00512B8C | 1 | INFERIDO | Handler `AUTO_CAL_ENABLEGetData`; sem fatos extraíveis automaticamente (1 bytes) |  |  |  |
-| `VECT_AUTOCAL_U8_2GetData` | 0x00512B90 | 1 | INFERIDO | Handler `VECT_AUTOCAL_U8_2GetData`; sem fatos extraíveis automaticamente (1 bytes) |  |  |  |
+| `AUTO_CAL_ENABLEGetData` | 0x00512B8C | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |
+| `VECT_AUTOCAL_U8_2GetData` | 0x00512B90 | 1 | OBS-COD | Handler vazio: o corpo é só RET (nada acontece neste evento). |  |  |  |

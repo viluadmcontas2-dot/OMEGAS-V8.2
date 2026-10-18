@@ -8,12 +8,13 @@ class RuntimeSnapshotBus {
     private val lock = Any()
     private val presentRevision = AtomicLong(0L)
     private val scienceRevision = AtomicLong(0L)
-    private var presentData = JSONObject()
+    // Texto imutável: publicar serializa uma vez; cada leitura relê o seu próprio objeto (antes: copiar nos dois lados).
+    private var presentData = "{}"
     private var scienceData = JSONObject()
     private var scienceToken = ""
 
     fun publishPresent(payload: JSONObject): Long = synchronized(lock) {
-        presentData = JSONObject(payload.toString())
+        presentData = payload.toString()
         presentRevision.incrementAndGet()
     }
 
@@ -28,7 +29,7 @@ class RuntimeSnapshotBus {
         JSONObject()
             .put("ok", true)
             .put("revision", presentRevision.get())
-            .put("data", JSONObject(presentData.toString()))
+            .put("data", JSONObject(presentData))
     }
 
     fun scienceJsonSince(lastRevision: Long): JSONObject = synchronized(lock) {

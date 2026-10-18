@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormGraficoScope`; unidade: `@:GraficoScope`; ancestral: `TForm`; tamanho de instância: 0x734; componentes no DFM: 81.
 - Título: "Grafico" — eng: "Graph" / por: "Gráfico"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)` (0x004111F8), `TFormMain.Plot1Click` (0x0050417C)
 
 ## Menus (5)
 
@@ -73,39 +73,39 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (34): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ActionAddMarkerExecute` | 0x004281FC | 28 | INFERIDO | Handler `ActionAddMarkerExecute`; sem fatos extraíveis automaticamente (28 bytes) |  |  |  |
-| `ActionNextMarkerExecute` | 0x00428B48 | 32 | INFERIDO | Handler `ActionNextMarkerExecute`; sem fatos extraíveis automaticamente (32 bytes) |  |  |  |
-| `ActionPreviousMarkerExecute` | 0x00428B68 | 42 | INFERIDO | Handler `ActionPreviousMarkerExecute`; sem fatos extraíveis automaticamente (42 bytes) |  |  |  |
-| `ActionRimuoviCursoreExecute` | 0x00428C68 | 200 | INFERIDO | Handler `ActionRimuoviCursoreExecute`; toca campos/controles: ChartDrt, SeriesCursoreNeg, SeriesCursorePos |  |  |  |
-| `ActionSwitchExecute` (sem evento no DFM) | 0x004271B4 | 196 | INFERIDO | Handler `ActionSwitchExecute`; chama APIs do Windows: KERNEL32.DLL!Sleep, USER32.DLL!PostMessageW; chama: TStreamDati.TimerIOTimer, thunk -> KERNEL32.DLL!Sleep; toca campos/controles: Timer |  | KERNEL32.DLL!Sleep, USER32.DLL!PostMessageW | TStreamDati.TimerIOTimer, thunk -> KERNEL32.DLL!Sleep |
-| `ChartDrtClickAxis` | 0x00428A98 | 27 | INFERIDO | Handler `ChartDrtClickAxis`; sem fatos extraíveis automaticamente (27 bytes) |  |  |  |
-| `ChartDrtMouseMove` | 0x00429334 | 35 | INFERIDO | Handler `ChartDrtMouseMove`; sem fatos extraíveis automaticamente (35 bytes) |  |  |  |
-| `ChartDrtMouseUp` | 0x00429324 | 14 | INFERIDO | Handler `ChartDrtMouseUp`; sem fatos extraíveis automaticamente (14 bytes) |  |  |  |
-| `ChartDrtZoom` | 0x00428C60 | 8 | INFERIDO | Handler `ChartDrtZoom`; sem fatos extraíveis automaticamente (8 bytes) |  |  |  |
-| `CheckAutoMarkerClick` | 0x00428D30 | 33 | INFERIDO | Handler `CheckAutoMarkerClick`; toca campos/controles: CheckAutoMarker |  |  |  |
-| `EditMaxRangeEnter` | 0x00428E04 | 534 | INFERIDO | Handler `EditMaxRangeEnter`; sem fatos extraíveis automaticamente (534 bytes) |  |  |  |
-| `EditMaxRangeExit` | 0x0042901C | 28 | INFERIDO | Handler `EditMaxRangeExit`; sem fatos extraíveis automaticamente (28 bytes) |  |  |  |
-| `EditRangeKeyPress` | 0x004270C8 | 68 | INFERIDO | Handler `EditRangeKeyPress`; toca campos/controles: ChartDrt, EditMaxRange, EditMinRange, btnAutoRange |  |  |  |
-| `EditResolutionKeyPress` | 0x00427130 | 108 | INFERIDO | Handler `EditResolutionKeyPress`; toca campos/controles: ChartDrt, EditResolution |  |  |  |
-| `FormClose` | 0x00423858 | 226 | INFERIDO | Handler `FormClose`; sem fatos extraíveis automaticamente (226 bytes) |  |  |  |
-| `FormCloseQuery` | 0x00423848 | 16 | INFERIDO | Handler `FormCloseQuery`; sem fatos extraíveis automaticamente (16 bytes) |  |  |  |
-| `FormKeyPress` | 0x0042719C | 24 | INFERIDO | Handler `FormKeyPress`; sem fatos extraíveis automaticamente (24 bytes) |  |  |  |
-| `FormMouseWheelDown` | 0x00428C50 | 13 | INFERIDO | Handler `FormMouseWheelDown`; sem fatos extraíveis automaticamente (13 bytes) |  |  |  |
-| `FormMouseWheelUp` | 0x00428C40 | 13 | INFERIDO | Handler `FormMouseWheelUp`; sem fatos extraíveis automaticamente (13 bytes) |  |  |  |
-| `FormResize` | 0x00427278 | 87 | INFERIDO | Handler `FormResize`; toca campos/controles: ChartDrt, panelChart |  |  |  |
-| `FormShow` | 0x00428DA4 | 93 | INFERIDO | Handler `FormShow`; sem fatos extraíveis automaticamente (93 bytes) |  |  |  |
-| `GenericOmvlButtonMouseEnter` (sem evento no DFM) | 0x00429040 | 14 | INFERIDO | Handler `GenericOmvlButtonMouseEnter`; sem fatos extraíveis automaticamente (14 bytes) |  |  |  |
-| `GenericOmvlButtonMouseLeave` (sem evento no DFM) | 0x00429050 | 14 | INFERIDO | Handler `GenericOmvlButtonMouseLeave`; sem fatos extraíveis automaticamente (14 bytes) |  |  |  |
-| `MenuRimuoviMarkerClick` | 0x00428B1C | 44 | INFERIDO | Handler `MenuRimuoviMarkerClick`; toca campos/controles: SeriesMarkersNeg, SeriesMarkersPos |  |  |  |
-| `TimerTimer` | 0x004257E4 | 5086 | INFERIDO | Handler `TimerTimer`; chama APIs do Windows: KERNEL32.DLL!GetTickCount; chama: TAebProtocol::GetPacket, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer, thunk -> KERNEL32.DLL!GetTickCount; toca campos/controles: ChartDrt, SeriesAutoMarkersNeg, SeriesAutoMarkersPos, SeriesEcuMarkersNeg, SeriesEcuMarkersPos, SeriesMarkersNeg, SeriesMarkersPos, Timer |  | KERNEL32.DLL!GetTickCount | TAebProtocol::GetPacket, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer, thunk -> KERNEL32.DLL!GetTickCount |
-| `btnAutoRangeClick` | 0x00429DD8 | 64 | INFERIDO | Handler `btnAutoRangeClick`; toca campos/controles: ChartDrt, EditMaxRange, EditMinRange, btnAutoRange |  |  |  |
-| `btnExportImageClick` | 0x00429A98 | 410 | INFERIDO | Handler `btnExportImageClick`; toca campos/controles: ChartDrt, EsportDialogDrt |  |  |  |
-| `btnLegendClick` | 0x00429F00 | 154 | INFERIDO | Handler `btnLegendClick`; toca campos/controles: ChartDrt, ImageList1, btnLegend |  |  |  |
-| `btnLoadClick` | 0x0042996C | 300 | INFERIDO | Handler `btnLoadClick`; toca campos/controles: ChartDrt, OpenDialogDrt, btnAutoRange, btnSave |  |  |  |
-| `btnRestoreZoomClick` | 0x00429DB4 | 33 | INFERIDO | Handler `btnRestoreZoomClick`; toca campos/controles: ChartDrt |  |  |  |
-| `btnRunClick` | 0x004296C0 | 44 | INFERIDO | Handler `btnRunClick`; chama APIs do Windows: KERNEL32.DLL!GetTickCount |  | KERNEL32.DLL!GetTickCount |  |
-| `btnSaveClick` | 0x004296EC | 638 | INFERIDO | Handler `btnSaveClick`; chama APIs do Windows: KERNEL32.DLL!CopyFileW; chama: thunk -> KERNEL32.DLL!CopyFileW; toca campos/controles: SaveDialogDrt |  | KERNEL32.DLL!CopyFileW | thunk -> KERNEL32.DLL!CopyFileW |
-| `btnZoomInClick` | 0x00429C34 | 50 | INFERIDO | Handler `btnZoomInClick`; sem fatos extraíveis automaticamente (50 bytes) |  |  |  |
-| `btnZoomOutClick` | 0x00429C68 | 329 | INFERIDO | Handler `btnZoomOutClick`; toca campos/controles: ChartDrt, EditResolution |  |  |  |
+| `ActionAddMarkerExecute` | 0x004281FC | 28 | INFERIDO | sem fatos diretos extraíveis (28 bytes; chama 1 funções sem nome) |  |  |  |
+| `ActionNextMarkerExecute` | 0x00428B48 | 32 | INFERIDO | sem fatos diretos extraíveis (32 bytes; chama 1 funções sem nome) |  |  |  |
+| `ActionPreviousMarkerExecute` | 0x00428B68 | 42 | INFERIDO | sem fatos diretos extraíveis (42 bytes; chama 1 funções sem nome) |  |  |  |
+| `ActionRimuoviCursoreExecute` | 0x00428C68 | 200 | INFERIDO | toca ChartDrt, SeriesCursoreNeg, SeriesCursorePos |  |  |  |
+| `ActionSwitchExecute` (sem evento no DFM) | 0x004271B4 | 196 | INFERIDO | chama APIs do Windows Sleep; chama TStreamDati.TimerIOTimer; toca Timer |  | Sleep | PostMessageW |
+| `ChartDrtClickAxis` | 0x00428A98 | 27 | INFERIDO | sem fatos diretos extraíveis (27 bytes; chama 1 funções sem nome) |  |  |  |
+| `ChartDrtMouseMove` | 0x00429334 | 35 | INFERIDO | sem fatos diretos extraíveis (35 bytes; chama 1 funções sem nome) |  |  |  |
+| `ChartDrtMouseUp` | 0x00429324 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 0 funções sem nome) |  |  |  |
+| `ChartDrtZoom` | 0x00428C60 | 8 | INFERIDO | sem fatos diretos extraíveis (8 bytes; chama 0 funções sem nome) |  |  |  |
+| `CheckAutoMarkerClick` | 0x00428D30 | 33 | INFERIDO | toca CheckAutoMarker |  |  |  |
+| `EditMaxRangeEnter` | 0x00428E04 | 534 | INFERIDO | sem fatos diretos extraíveis (534 bytes; chama 11 funções sem nome) |  |  |  |
+| `EditMaxRangeExit` | 0x0042901C | 28 | INFERIDO | sem fatos diretos extraíveis (28 bytes; chama 2 funções sem nome) |  |  |  |
+| `EditRangeKeyPress` | 0x004270C8 | 68 | INFERIDO | toca ChartDrt, EditMaxRange, EditMinRange, btnAutoRange |  |  |  |
+| `EditResolutionKeyPress` | 0x00427130 | 108 | INFERIDO | toca ChartDrt, EditResolution |  |  |  |
+| `FormClose` | 0x00423858 | 226 | INFERIDO | sem fatos diretos extraíveis (226 bytes; chama 3 funções sem nome) |  |  |  |
+| `FormCloseQuery` | 0x00423848 | 16 | INFERIDO | sem fatos diretos extraíveis (16 bytes; chama 0 funções sem nome) |  |  |  |
+| `FormKeyPress` | 0x0042719C | 24 | INFERIDO | sem fatos diretos extraíveis (24 bytes; chama 1 funções sem nome) |  |  |  |
+| `FormMouseWheelDown` | 0x00428C50 | 13 | INFERIDO | sem fatos diretos extraíveis (13 bytes; chama 0 funções sem nome) |  |  |  |
+| `FormMouseWheelUp` | 0x00428C40 | 13 | INFERIDO | sem fatos diretos extraíveis (13 bytes; chama 0 funções sem nome) |  |  |  |
+| `FormResize` | 0x00427278 | 87 | INFERIDO | toca ChartDrt, panelChart |  |  |  |
+| `FormShow` | 0x00428DA4 | 93 | INFERIDO | sem fatos diretos extraíveis (93 bytes; chama 4 funções sem nome) |  |  |  |
+| `GenericOmvlButtonMouseEnter` (sem evento no DFM) | 0x00429040 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
+| `GenericOmvlButtonMouseLeave` (sem evento no DFM) | 0x00429050 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
+| `MenuRimuoviMarkerClick` | 0x00428B1C | 44 | INFERIDO | toca SeriesMarkersNeg, SeriesMarkersPos |  |  |  |
+| `TimerTimer` | 0x004257E4 | 5086 | INFERIDO | chama APIs do Windows GetTickCount; chama TAebProtocol::GetPacket, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer; toca ChartDrt, SeriesAutoMarkersNeg, SeriesAutoMarkersPos, SeriesEcuMarkersNeg, SeriesEcuMarkersPos, SeriesMarkersNeg, SeriesMarkersPos, Timer |  | GetTickCount |  |
+| `btnAutoRangeClick` | 0x00429DD8 | 64 | INFERIDO | toca ChartDrt, EditMaxRange, EditMinRange, btnAutoRange |  |  |  |
+| `btnExportImageClick` | 0x00429A98 | 410 | INFERIDO | toca ChartDrt, EsportDialogDrt |  |  |  |
+| `btnLegendClick` | 0x00429F00 | 154 | INFERIDO | toca ChartDrt, ImageList1, btnLegend |  |  |  |
+| `btnLoadClick` | 0x0042996C | 300 | INFERIDO | toca ChartDrt, OpenDialogDrt, btnAutoRange, btnSave |  |  |  |
+| `btnRestoreZoomClick` | 0x00429DB4 | 33 | INFERIDO | toca ChartDrt |  |  |  |
+| `btnRunClick` | 0x004296C0 | 44 | INFERIDO | sem fatos diretos extraíveis (44 bytes; chama 4 funções sem nome) |  |  | GetTickCount |
+| `btnSaveClick` | 0x004296EC | 638 | INFERIDO | chama APIs do Windows CopyFileW; toca SaveDialogDrt |  | CopyFileW |  |
+| `btnZoomInClick` | 0x00429C34 | 50 | INFERIDO | sem fatos diretos extraíveis (50 bytes; chama 1 funções sem nome) |  |  |  |
+| `btnZoomOutClick` | 0x00429C68 | 329 | INFERIDO | toca ChartDrt, EditResolution |  |  |  |

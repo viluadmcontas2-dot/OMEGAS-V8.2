@@ -1204,13 +1204,14 @@ class TelemetryForegroundService : Service() {
 
     private fun updateOverlay() {
         if (!::overlay.isInitialized || (!overlay.requestedEnabled() && !overlay.visible())) return
-        val hub = status()
+        // A cada quadro: só RPM e injeção, direto do estado (status() montaria o HubStatus inteiro para usar dois números).
+        val (rpm, petrolMs) = telemetryStore.rpmAndPetrolMs()
         overlay.update(
             TelemetryOverlayController.Snapshot(
                 cell = "—",
                 stft = null,
-                petrolMs = hub.petrolMs.takeIf { it > 0.0 },
-                rpm = hub.rpm.toDouble().takeIf { it > 0.0 },
+                petrolMs = petrolMs.takeIf { it > 0.0 },
+                rpm = rpm.toDouble().takeIf { it > 0.0 },
             ),
         )
     }

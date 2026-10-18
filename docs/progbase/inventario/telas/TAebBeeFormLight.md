@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `AebBeeFormLight`; unidade: `@:AebBeeLight`; ancestral: `TForm`; tamanho de instância: 0x554; componentes no DFM: 98.
 - Título: "Wireless Communication"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TAebProtocol::ShowAebBeeSettings` (0x0092215C)
 
 ## Controles com evento/ação (24)
 
@@ -49,34 +49,34 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (29): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonAbortClick` | 0x00919978 | 26 | INFERIDO | Handler `ButtonAbortClick`; sem fatos extraíveis automaticamente (26 bytes) |  |  |  |
-| `ButtonChangePinClick` | 0x00918158 | 1267 | INFERIDO | Handler `ButtonChangePinClick`; sem fatos extraíveis automaticamente (1267 bytes) |  |  |  |
-| `ButtonConnectMcuClick` | 0x009199C8 | 777 | INFERIDO | Handler `ButtonConnectMcuClick`; sem fatos extraíveis automaticamente (777 bytes) |  |  |  |
-| `ButtonDisconnectMcuClick` | 0x00919CD4 | 303 | INFERIDO | Handler `ButtonDisconnectMcuClick`; sem fatos extraíveis automaticamente (303 bytes) |  |  |  |
-| `ButtonProgramDongleClick` | 0x00919F80 | 3409 | INFERIDO | Handler `ButtonProgramDongleClick`; chama APIs do Windows: KERNEL32.DLL!Sleep; chama: thunk -> KERNEL32.DLL!Sleep |  | KERNEL32.DLL!Sleep | thunk -> KERNEL32.DLL!Sleep |
-| `ButtonProgramMcuClick` | 0x0091AE74 | 3685 | INFERIDO | Handler `ButtonProgramMcuClick`; chama APIs do Windows: KERNEL32.DLL!Sleep; chama: thunk -> KERNEL32.DLL!Sleep |  | KERNEL32.DLL!Sleep | thunk -> KERNEL32.DLL!Sleep |
-| `ButtonReadPinClick` | 0x00917FA8 | 398 | INFERIDO | Handler `ButtonReadPinClick`; sem fatos extraíveis automaticamente (398 bytes) |  |  |  |
-| `ButtonRemovePinClick` | 0x0091864C | 1231 | INFERIDO | Handler `ButtonRemovePinClick`; sem fatos extraíveis automaticamente (1231 bytes) |  |  |  |
-| `ButtonScanChannelClick` (sem evento no DFM) | 0x00915578 | 3829 | INFERIDO | Handler `ButtonScanChannelClick`; sem fatos extraíveis automaticamente (3829 bytes) |  |  |  |
-| `ButtonScanClick` | 0x00918BF4 | 2108 | INFERIDO | Handler `ButtonScanClick`; sem fatos extraíveis automaticamente (2108 bytes) |  |  |  |
-| `ButtonScanEnergyClick` | 0x00915258 | 798 | INFERIDO | Handler `ButtonScanEnergyClick`; chama APIs do Windows: KERNEL32.DLL!GetTickCount; chama: thunk -> KERNEL32.DLL!GetTickCount |  | KERNEL32.DLL!GetTickCount | thunk -> KERNEL32.DLL!GetTickCount |
-| `ButtonSfogliaDongleClick` | 0x00919E04 | 380 | INFERIDO | Handler `ButtonSfogliaDongleClick`; sem fatos extraíveis automaticamente (380 bytes) |  |  |  |
-| `ButtonSfogliaMcuClick` | 0x0091ACF8 | 380 | INFERIDO | Handler `ButtonSfogliaMcuClick`; sem fatos extraíveis automaticamente (380 bytes) |  |  |  |
-| `ComboCanaleChange` | 0x00917E88 | 287 | INFERIDO | Handler `ComboCanaleChange`; sem fatos extraíveis automaticamente (287 bytes) |  |  |  |
-| `ComboPotenzaDongleChange` | 0x00917258 | 323 | INFERIDO | Handler `ComboPotenzaDongleChange`; sem fatos extraíveis automaticamente (323 bytes) |  |  |  |
-| `ComboPotenzaMcuChange` | 0x00917D24 | 323 | INFERIDO | Handler `ComboPotenzaMcuChange`; sem fatos extraíveis automaticamente (323 bytes) |  |  |  |
-| `DongleExit` | 0x00916DC0 | 56 | INFERIDO | Handler `DongleExit`; sem fatos extraíveis automaticamente (56 bytes) |  |  |  |
-| `EditIndirizzoDongleKeyPress` | 0x00916FA8 | 687 | INFERIDO | Handler `EditIndirizzoDongleKeyPress`; sem fatos extraíveis automaticamente (687 bytes) |  |  |  |
-| `EditIndirizzoMcuKeyPress` | 0x00917BC8 | 347 | INFERIDO | Handler `EditIndirizzoMcuKeyPress`; sem fatos extraíveis automaticamente (347 bytes) |  |  |  |
-| `EditNomeDongleKeyPress` | 0x00916DF8 | 331 | INFERIDO | Handler `EditNomeDongleKeyPress`; sem fatos extraíveis automaticamente (331 bytes) |  |  |  |
-| `EditNomeMcuKeyPress` | 0x00917A14 | 331 | INFERIDO | Handler `EditNomeMcuKeyPress`; sem fatos extraíveis automaticamente (331 bytes) |  |  |  |
-| `EditPinKeyPress` | 0x00918B1C | 30 | INFERIDO | Handler `EditPinKeyPress`; sem fatos extraíveis automaticamente (30 bytes) |  |  |  |
-| `FormClose` | 0x00914DD0 | 144 | INFERIDO | Handler `FormClose`; sem fatos extraíveis automaticamente (144 bytes) |  |  |  |
-| `FormCloseQuery` | 0x00914DA8 | 37 | INFERIDO | Handler `FormCloseQuery`; sem fatos extraíveis automaticamente (37 bytes) |  |  |  |
-| `FormKeyPress` | 0x00914E80 | 38 | INFERIDO | Handler `FormKeyPress`; sem fatos extraíveis automaticamente (38 bytes) |  |  |  |
-| `ListDeviceDblClick` | 0x00919994 | 50 | INFERIDO | Handler `ListDeviceDblClick`; sem fatos extraíveis automaticamente (50 bytes) |  |  |  |
-| `McuExit` | 0x009179DC | 56 | INFERIDO | Handler `McuExit`; sem fatos extraíveis automaticamente (56 bytes) |  |  |  |
-| `TabScansioneShow` | 0x00918B3C | 184 | INFERIDO | Handler `TabScansioneShow`; sem fatos extraíveis automaticamente (184 bytes) |  |  |  |
-| `TimerUpdateTimer` | 0x00914EA8 | 912 | INFERIDO | Handler `TimerUpdateTimer`; sem fatos extraíveis automaticamente (912 bytes) |  |  |  |
+| `ButtonAbortClick` | 0x00919978 | 26 | INFERIDO | sem fatos diretos extraíveis (26 bytes; chama 0 funções sem nome) |  |  |  |
+| `ButtonChangePinClick` | 0x00918158 | 1267 | INFERIDO | sem fatos diretos extraíveis (1267 bytes; chama 16 funções sem nome) |  |  |  |
+| `ButtonConnectMcuClick` | 0x009199C8 | 777 | INFERIDO | sem fatos diretos extraíveis (777 bytes; chama 13 funções sem nome) |  |  |  |
+| `ButtonDisconnectMcuClick` | 0x00919CD4 | 303 | INFERIDO | sem fatos diretos extraíveis (303 bytes; chama 10 funções sem nome) |  |  |  |
+| `ButtonProgramDongleClick` | 0x00919F80 | 3409 | INFERIDO | chama APIs do Windows Sleep |  | Sleep |  |
+| `ButtonProgramMcuClick` | 0x0091AE74 | 3685 | INFERIDO | chama APIs do Windows Sleep |  | Sleep |  |
+| `ButtonReadPinClick` | 0x00917FA8 | 398 | INFERIDO | sem fatos diretos extraíveis (398 bytes; chama 11 funções sem nome) |  |  |  |
+| `ButtonRemovePinClick` | 0x0091864C | 1231 | INFERIDO | sem fatos diretos extraíveis (1231 bytes; chama 17 funções sem nome) |  |  |  |
+| `ButtonScanChannelClick` (sem evento no DFM) | 0x00915578 | 3829 | INFERIDO | sem fatos diretos extraíveis (3829 bytes; chama 16 funções sem nome) |  |  |  |
+| `ButtonScanClick` | 0x00918BF4 | 2108 | INFERIDO | sem fatos diretos extraíveis (2108 bytes; chama 29 funções sem nome) |  |  |  |
+| `ButtonScanEnergyClick` | 0x00915258 | 798 | INFERIDO | chama APIs do Windows GetTickCount |  | GetTickCount |  |
+| `ButtonSfogliaDongleClick` | 0x00919E04 | 380 | INFERIDO | sem fatos diretos extraíveis (380 bytes; chama 11 funções sem nome) |  |  |  |
+| `ButtonSfogliaMcuClick` | 0x0091ACF8 | 380 | INFERIDO | sem fatos diretos extraíveis (380 bytes; chama 11 funções sem nome) |  |  |  |
+| `ComboCanaleChange` | 0x00917E88 | 287 | INFERIDO | sem fatos diretos extraíveis (287 bytes; chama 10 funções sem nome) |  |  |  |
+| `ComboPotenzaDongleChange` | 0x00917258 | 323 | INFERIDO | sem fatos diretos extraíveis (323 bytes; chama 10 funções sem nome) |  |  |  |
+| `ComboPotenzaMcuChange` | 0x00917D24 | 323 | INFERIDO | sem fatos diretos extraíveis (323 bytes; chama 10 funções sem nome) |  |  |  |
+| `DongleExit` | 0x00916DC0 | 56 | INFERIDO | sem fatos diretos extraíveis (56 bytes; chama 2 funções sem nome) |  |  |  |
+| `EditIndirizzoDongleKeyPress` | 0x00916FA8 | 687 | INFERIDO | sem fatos diretos extraíveis (687 bytes; chama 15 funções sem nome) |  |  |  |
+| `EditIndirizzoMcuKeyPress` | 0x00917BC8 | 347 | INFERIDO | sem fatos diretos extraíveis (347 bytes; chama 12 funções sem nome) |  |  |  |
+| `EditNomeDongleKeyPress` | 0x00916DF8 | 331 | INFERIDO | sem fatos diretos extraíveis (331 bytes; chama 11 funções sem nome) |  |  |  |
+| `EditNomeMcuKeyPress` | 0x00917A14 | 331 | INFERIDO | sem fatos diretos extraíveis (331 bytes; chama 11 funções sem nome) |  |  |  |
+| `EditPinKeyPress` | 0x00918B1C | 30 | INFERIDO | sem fatos diretos extraíveis (30 bytes; chama 1 funções sem nome) |  |  |  |
+| `FormClose` | 0x00914DD0 | 144 | INFERIDO | sem fatos diretos extraíveis (144 bytes; chama 1 funções sem nome) |  |  |  |
+| `FormCloseQuery` | 0x00914DA8 | 37 | INFERIDO | sem fatos diretos extraíveis (37 bytes; chama 0 funções sem nome) |  |  |  |
+| `FormKeyPress` | 0x00914E80 | 38 | INFERIDO | sem fatos diretos extraíveis (38 bytes; chama 1 funções sem nome) |  |  |  |
+| `ListDeviceDblClick` | 0x00919994 | 50 | INFERIDO | sem fatos diretos extraíveis (50 bytes; chama 0 funções sem nome) |  |  |  |
+| `McuExit` | 0x009179DC | 56 | INFERIDO | sem fatos diretos extraíveis (56 bytes; chama 2 funções sem nome) |  |  |  |
+| `TabScansioneShow` | 0x00918B3C | 184 | INFERIDO | sem fatos diretos extraíveis (184 bytes; chama 2 funções sem nome) |  |  |  |
+| `TimerUpdateTimer` | 0x00914EA8 | 912 | INFERIDO | sem fatos diretos extraíveis (912 bytes; chama 16 funções sem nome) |  |  |  |

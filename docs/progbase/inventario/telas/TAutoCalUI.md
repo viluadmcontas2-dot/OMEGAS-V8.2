@@ -89,52 +89,52 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (47): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ActionAutoCalRifExecute` | 0x005187A0 | 306 | INFERIDO | Handler `ActionAutoCalRifExecute`; mostra/usa textos BUTTONANNULLA, BUTTONOK, FINESTRACENTRICELLEAUTOCAL, MESSBADRIFMAP, MESSBADRIFTEMPI; toca campos/controles: ChartKLine | BUTTONANNULLA, BUTTONOK, FINESTRACENTRICELLEAUTOCAL, MESSBADRIFMAP, MESSBADRIFTEMPI |  |  |
-| `ActionAutoMatchExecute` | 0x005189B4 | 12 | INFERIDO | Handler `ActionAutoMatchExecute`; chama APIs do Windows: KERNEL32.DLL!Sleep |  | KERNEL32.DLL!Sleep |  |
-| `ActionChangeColorExecute` | 0x0051AE78 | 111 | INFERIDO | Handler `ActionChangeColorExecute`; chama: TAutocalColorSettings.vmt[0x38] |  |  | TAutocalColorSettings.vmt[0x38] |
-| `ActionDeleteSelectedPointsExecute` | 0x00518E6C | 562 | INFERIDO | Handler `ActionDeleteSelectedPointsExecute`; chama APIs do Windows: KERNEL32.DLL!Sleep; chama: thunk -> KERNEL32.DLL!Sleep; toca campos/controles: GasPoint, PetrolPoint |  | KERNEL32.DLL!Sleep | thunk -> KERNEL32.DLL!Sleep |
-| `ActionExportChartDataExecute` | 0x0051878C | 17 | INFERIDO | Handler `ActionExportChartDataExecute`; sem fatos extraíveis automaticamente (17 bytes) |  |  |  |
-| `ActionExportChartPointExecute` | 0x00519120 | 17 | INFERIDO | Handler `ActionExportChartPointExecute`; sem fatos extraíveis automaticamente (17 bytes) |  |  |  |
-| `ActionExportKChartExecute` | 0x005185FC | 17 | INFERIDO | Handler `ActionExportKChartExecute`; sem fatos extraíveis automaticamente (17 bytes) |  |  |  |
-| `ActionExportToKExecute` | 0x00518514 | 189 | INFERIDO | Handler `ActionExportToKExecute`; sem fatos extraíveis automaticamente (189 bytes) |  |  |  |
-| `ActionFinishAutocalExecute` | 0x0051A390 | 195 | INFERIDO | Handler `ActionFinishAutocalExecute`; chama APIs do Windows: KERNEL32.DLL!Sleep; chama: TAebNumber::GetInt, TAebNumber::SetInt, thunk -> KERNEL32.DLL!Sleep |  | KERNEL32.DLL!Sleep | TAebNumber::GetInt, TAebNumber::SetInt, thunk -> KERNEL32.DLL!Sleep |
-| `ActionGoToMinCalibrationExecute` | 0x005189E4 | 12 | INFERIDO | Handler `ActionGoToMinCalibrationExecute`; sem fatos extraíveis automaticamente (12 bytes) |  |  |  |
-| `ActionResetAllExecute` | 0x005189D8 | 12 | INFERIDO | Handler `ActionResetAllExecute`; chama APIs do Windows: KERNEL32.DLL!Sleep |  | KERNEL32.DLL!Sleep |  |
-| `ActionResetGasExecute` | 0x005189CC | 12 | INFERIDO | Handler `ActionResetGasExecute`; chama APIs do Windows: KERNEL32.DLL!Sleep |  | KERNEL32.DLL!Sleep |  |
-| `ActionResetKFactorExecute` | 0x0051A070 | 246 | INFERIDO | Handler `ActionResetKFactorExecute`; chama: TAebVector::SetDouble |  |  | TAebVector::SetDouble |
-| `ActionResetPetrolExecute` | 0x005189C0 | 12 | INFERIDO | Handler `ActionResetPetrolExecute`; chama APIs do Windows: KERNEL32.DLL!Sleep |  | KERNEL32.DLL!Sleep |  |
-| `BtnDeleteRandomPointClick` | 0x0051A27C | 274 | INFERIDO | Handler `BtnDeleteRandomPointClick`; sem fatos extraíveis automaticamente (274 bytes) |  |  |  |
-| `BtnDumpClick` | 0x005184D4 | 31 | INFERIDO | Handler `BtnDumpClick`; sem fatos extraíveis automaticamente (31 bytes) |  |  |  |
-| `BtnDumpEEClick` | 0x005184F4 | 31 | INFERIDO | Handler `BtnDumpEEClick`; sem fatos extraíveis automaticamente (31 bytes) |  |  |  |
-| `BtnFinishAutomatchClick` | 0x0051A454 | 31 | INFERIDO | Handler `BtnFinishAutomatchClick`; chama: TAebNumber::GetInt, TAebNumber::SetInt |  |  | TAebNumber::GetInt, TAebNumber::SetInt |
-| `BtnMenuClick` | 0x0051A038 | 53 | INFERIDO | Handler `BtnMenuClick`; toca campos/controles: BtnMenu |  |  |  |
-| `BtnMenuPanelLeftClick` | 0x0051A24C | 48 | INFERIDO | Handler `BtnMenuPanelLeftClick`; toca campos/controles: BtnMenu, BtnMenuPanelLeft |  |  |  |
-| `BtnShowBandClick` | 0x0051A74C | 108 | INFERIDO | Handler `BtnShowBandClick`; toca campos/controles: DbgEdit1 |  |  |  |
-| `ChartDataAfterDraw` | 0x0051A998 | 527 | INFERIDO | Handler `ChartDataAfterDraw`; toca campos/controles: ChartData |  |  |  |
-| `ChartDataClickAxis` | 0x0051A008 | 45 | INFERIDO | Handler `ChartDataClickAxis`; toca campos/controles: ActionAutoCalRif |  |  |  |
-| `ChartDataClickSeries` | 0x00518C3C | 292 | INFERIDO | Handler `ChartDataClickSeries`; toca campos/controles: CursorLimitMAP_MAX, CursorLimitMAP_MIN, DbgEdit1, GasPoint, PetrolPoint |  |  |  |
-| `ChartDataDblClick` | 0x00518E3C | 45 | INFERIDO | Handler `ChartDataDblClick`; toca campos/controles: GasPoint, PetrolPoint |  |  |  |
-| `ChartDataKeyDown` | 0x0051939C | 380 | INFERIDO | Handler `ChartDataKeyDown`; toca campos/controles: ChartData, CursorLimitMAP_MAX, CursorLimitMAP_MIN, DbgEdit1, Resetpetrolpoint2 |  |  |  |
-| `ChartDataKeyUp` | 0x00519528 | 14 | INFERIDO | Handler `ChartDataKeyUp`; sem fatos extraíveis automaticamente (14 bytes) |  |  |  |
-| `ChartDataMouseMove` | 0x00517F60 | 1071 | INFERIDO | Handler `ChartDataMouseMove`; toca campos/controles: ChartData |  |  |  |
-| `ChartDataMouseUp` | 0x00519134 | 14 | INFERIDO | Handler `ChartDataMouseUp`; sem fatos extraíveis automaticamente (14 bytes) |  |  |  |
-| `ChartKLineClickSeries` | 0x005176D0 | 154 | INFERIDO | Handler `ChartKLineClickSeries`; toca campos/controles: KLine |  |  |  |
-| `ChartKLineDblClick` | 0x00517834 | 143 | INFERIDO | Handler `ChartKLineDblClick`; toca campos/controles: ChartKLine, KLine |  |  |  |
-| `ChartKLineDragOver` | 0x005178CC | 167 | INFERIDO | Handler `ChartKLineDragOver`; toca campos/controles: ChartKLine, KLine |  |  |  |
-| `ChartKLineEndDrag` | 0x00517980 | 95 | INFERIDO | Handler `ChartKLineEndDrag`; chama: TAebVector::SetDouble; toca campos/controles: ChartKLine, KLine |  |  | TAebVector::SetDouble |
-| `ChartKLineKeyDown` | 0x005179E0 | 970 | INFERIDO | Handler `ChartKLineKeyDown`; chama: TAebVector::SetDouble; toca campos/controles: KLine |  |  | TAebVector::SetDouble |
-| `ChartKLineKeyUp` | 0x00517DD0 | 21 | INFERIDO | Handler `ChartKLineKeyUp`; sem fatos extraíveis automaticamente (21 bytes) |  |  |  |
-| `ChartKLineMouseDown` | 0x00517DE8 | 150 | INFERIDO | Handler `ChartKLineMouseDown`; toca campos/controles: ChartKLine, KLine |  |  |  |
-| `ChartKLineMouseMove` | 0x00517E80 | 222 | INFERIDO | Handler `ChartKLineMouseMove`; toca campos/controles: ChartKLine, KLine |  |  |  |
-| `ChartPointMouseMove` | 0x00518390 | 323 | INFERIDO | Handler `ChartPointMouseMove`; chama: TAebVector::GetInt; toca campos/controles: ChartPoint |  |  | TAebVector::GetInt |
-| `CheckAutoCalEnableBeforeSetData` | 0x0051A474 | 166 | INFERIDO | Handler `CheckAutoCalEnableBeforeSetData`; sem fatos extraíveis automaticamente (166 bytes) |  |  |  |
-| `DbgBtnRandomClick` | 0x005189F0 | 381 | INFERIDO | Handler `DbgBtnRandomClick`; chama: TAebVector::SetDouble |  |  | TAebVector::SetDouble |
-| `KLineGetMarkText` | 0x005177C8 | 107 | INFERIDO | Handler `KLineGetMarkText`; sem fatos extraíveis automaticamente (107 bytes) |  |  |  |
-| `MenuChartDataPopup` | 0x005190A0 | 62 | INFERIDO | Handler `MenuChartDataPopup`; toca campos/controles: ActionDeleteSelectedPoints, GasPoint, PetrolPoint |  |  |  |
-| `SettingsImgClick` | 0x00519708 | 161 | INFERIDO | Handler `SettingsImgClick`; mostra/usa textos AUTOCALCHANGECOLOR, AUTOCALSETTINGSCHARTK, AUTOCALSETTINGSDISABLEHBAND, AUTOCALSETTINGSRPMMAX, AUTOCALSETTINGSSHOWPOINT, AUTOCALSETTINGSSHOWSTATUS | AUTOCALCHANGECOLOR, AUTOCALSETTINGSCHARTK, AUTOCALSETTINGSDISABLEHBAND, AUTOCALSETTINGSRPMMAX, AUTOCALSETTINGSSHOWPOINT, AUTOCALSETTINGSSHOWSTATUS |  |  |
-| `SettingsImgMouseEnter` | 0x005196C0 | 34 | INFERIDO | Handler `SettingsImgMouseEnter`; sem fatos extraíveis automaticamente (34 bytes) |  |  |  |
-| `SettingsImgMouseLeave` | 0x005196E4 | 34 | INFERIDO | Handler `SettingsImgMouseLeave`; sem fatos extraíveis automaticamente (34 bytes) |  |  |  |
-| `TestAreasClick` | 0x00519538 | 392 | INFERIDO | Handler `TestAreasClick`; toca campos/controles: AcqusitionAreas |  |  |  |
-| `TimerMessageSwitchToGasTimer` | 0x0051A168 | 226 | INFERIDO | Handler `TimerMessageSwitchToGasTimer`; toca campos/controles: TimerMessageSwitchToGas, UserMessageLabel, UserMessageLabel2 |  |  |  |
+| `ActionAutoCalRifExecute` | 0x005187A0 | 306 | INFERIDO | toca ChartKLine |  |  | BUTTONANNULLA, BUTTONOK, FINESTRACENTRICELLEAUTOCAL, MESSBADRIFMAP |
+| `ActionAutoMatchExecute` | 0x005189B4 | 12 | INFERIDO | sem fatos diretos extraíveis (12 bytes; chama 1 funções sem nome) |  |  | Sleep |
+| `ActionChangeColorExecute` | 0x0051AE78 | 111 | INFERIDO | chama TAutocalColorSettings.Create |  |  |  |
+| `ActionDeleteSelectedPointsExecute` | 0x00518E6C | 562 | INFERIDO | chama APIs do Windows Sleep; toca GasPoint, PetrolPoint |  | Sleep |  |
+| `ActionExportChartDataExecute` | 0x0051878C | 17 | INFERIDO | sem fatos diretos extraíveis (17 bytes; chama 1 funções sem nome) |  |  |  |
+| `ActionExportChartPointExecute` | 0x00519120 | 17 | INFERIDO | sem fatos diretos extraíveis (17 bytes; chama 1 funções sem nome) |  |  |  |
+| `ActionExportKChartExecute` | 0x005185FC | 17 | INFERIDO | sem fatos diretos extraíveis (17 bytes; chama 1 funções sem nome) |  |  |  |
+| `ActionExportToKExecute` | 0x00518514 | 189 | INFERIDO | sem fatos diretos extraíveis (189 bytes; chama 9 funções sem nome) |  |  |  |
+| `ActionFinishAutocalExecute` | 0x0051A390 | 195 | INFERIDO | chama APIs do Windows Sleep; chama TAebNumber::GetInt, TAebNumber::SetInt |  | Sleep |  |
+| `ActionGoToMinCalibrationExecute` | 0x005189E4 | 12 | INFERIDO | sem fatos diretos extraíveis (12 bytes; chama 1 funções sem nome) |  |  |  |
+| `ActionResetAllExecute` | 0x005189D8 | 12 | INFERIDO | sem fatos diretos extraíveis (12 bytes; chama 1 funções sem nome) |  |  | Sleep |
+| `ActionResetGasExecute` | 0x005189CC | 12 | INFERIDO | sem fatos diretos extraíveis (12 bytes; chama 1 funções sem nome) |  |  | Sleep |
+| `ActionResetKFactorExecute` | 0x0051A070 | 246 | INFERIDO | chama TAebVector::SetDouble |  |  |  |
+| `ActionResetPetrolExecute` | 0x005189C0 | 12 | INFERIDO | sem fatos diretos extraíveis (12 bytes; chama 1 funções sem nome) |  |  | Sleep |
+| `BtnDeleteRandomPointClick` | 0x0051A27C | 274 | INFERIDO | sem fatos diretos extraíveis (274 bytes; chama 0 funções sem nome) |  |  |  |
+| `BtnDumpClick` | 0x005184D4 | 31 | INFERIDO | sem fatos diretos extraíveis (31 bytes; chama 1 funções sem nome) |  |  |  |
+| `BtnDumpEEClick` | 0x005184F4 | 31 | INFERIDO | sem fatos diretos extraíveis (31 bytes; chama 1 funções sem nome) |  |  |  |
+| `BtnFinishAutomatchClick` | 0x0051A454 | 31 | INFERIDO | chama TAebNumber::GetInt, TAebNumber::SetInt |  |  |  |
+| `BtnMenuClick` | 0x0051A038 | 53 | INFERIDO | toca BtnMenu |  |  |  |
+| `BtnMenuPanelLeftClick` | 0x0051A24C | 48 | INFERIDO | toca BtnMenu, BtnMenuPanelLeft |  |  |  |
+| `BtnShowBandClick` | 0x0051A74C | 108 | INFERIDO | toca DbgEdit1 |  |  |  |
+| `ChartDataAfterDraw` | 0x0051A998 | 527 | INFERIDO | toca ChartData |  |  |  |
+| `ChartDataClickAxis` | 0x0051A008 | 45 | INFERIDO | toca ActionAutoCalRif |  |  |  |
+| `ChartDataClickSeries` | 0x00518C3C | 292 | INFERIDO | toca CursorLimitMAP_MAX, CursorLimitMAP_MIN, DbgEdit1, GasPoint, PetrolPoint |  |  |  |
+| `ChartDataDblClick` | 0x00518E3C | 45 | INFERIDO | toca GasPoint, PetrolPoint |  |  |  |
+| `ChartDataKeyDown` | 0x0051939C | 380 | INFERIDO | toca ChartData, CursorLimitMAP_MAX, CursorLimitMAP_MIN, DbgEdit1, Resetpetrolpoint2 |  |  |  |
+| `ChartDataKeyUp` | 0x00519528 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
+| `ChartDataMouseMove` | 0x00517F60 | 1071 | INFERIDO | toca ChartData |  |  |  |
+| `ChartDataMouseUp` | 0x00519134 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
+| `ChartKLineClickSeries` | 0x005176D0 | 154 | INFERIDO | toca KLine |  |  |  |
+| `ChartKLineDblClick` | 0x00517834 | 143 | INFERIDO | toca ChartKLine, KLine |  |  |  |
+| `ChartKLineDragOver` | 0x005178CC | 167 | INFERIDO | toca ChartKLine, KLine |  |  |  |
+| `ChartKLineEndDrag` | 0x00517980 | 95 | INFERIDO | chama TAebVector::SetDouble; toca ChartKLine, KLine |  |  |  |
+| `ChartKLineKeyDown` | 0x005179E0 | 970 | INFERIDO | chama TAebVector::SetDouble; toca KLine |  |  |  |
+| `ChartKLineKeyUp` | 0x00517DD0 | 21 | INFERIDO | sem fatos diretos extraíveis (21 bytes; chama 0 funções sem nome) |  |  |  |
+| `ChartKLineMouseDown` | 0x00517DE8 | 150 | INFERIDO | toca ChartKLine, KLine |  |  |  |
+| `ChartKLineMouseMove` | 0x00517E80 | 222 | INFERIDO | toca ChartKLine, KLine |  |  |  |
+| `ChartPointMouseMove` | 0x00518390 | 323 | INFERIDO | chama TAebVector::GetInt; toca ChartPoint |  |  |  |
+| `CheckAutoCalEnableBeforeSetData` | 0x0051A474 | 166 | INFERIDO | sem fatos diretos extraíveis (166 bytes; chama 5 funções sem nome) |  |  |  |
+| `DbgBtnRandomClick` | 0x005189F0 | 381 | INFERIDO | chama TAebVector::SetDouble |  |  |  |
+| `KLineGetMarkText` | 0x005177C8 | 107 | INFERIDO | sem fatos diretos extraíveis (107 bytes; chama 4 funções sem nome) |  |  |  |
+| `MenuChartDataPopup` | 0x005190A0 | 62 | INFERIDO | toca ActionDeleteSelectedPoints, GasPoint, PetrolPoint |  |  |  |
+| `SettingsImgClick` | 0x00519708 | 161 | INFERIDO | sem fatos diretos extraíveis (161 bytes; chama 5 funções sem nome) |  |  | AUTOCALCHANGECOLOR, AUTOCALSETTINGSCHARTK, AUTOCALSETTINGSDISABLEHBAND, AUTOCALSETTINGSRPMMAX |
+| `SettingsImgMouseEnter` | 0x005196C0 | 34 | INFERIDO | sem fatos diretos extraíveis (34 bytes; chama 0 funções sem nome) |  |  |  |
+| `SettingsImgMouseLeave` | 0x005196E4 | 34 | INFERIDO | sem fatos diretos extraíveis (34 bytes; chama 0 funções sem nome) |  |  |  |
+| `TestAreasClick` | 0x00519538 | 392 | INFERIDO | toca AcqusitionAreas |  |  |  |
+| `TimerMessageSwitchToGasTimer` | 0x0051A168 | 226 | INFERIDO | toca TimerMessageSwitchToGas, UserMessageLabel, UserMessageLabel2 |  |  |  |

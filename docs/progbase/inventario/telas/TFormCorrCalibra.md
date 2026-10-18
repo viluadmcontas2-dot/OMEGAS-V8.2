@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormCorrCalibra`; unidade: `@:CorrCalibra`; ancestral: `TForm`; tamanho de instância: 0x524; componentes no DFM: 21.
 - Título: "Modifica calibrazione" — eng: "Modify calibration" / por: "Modificar calibração"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.ActionCorrTaraExecute` (0x00500DE4)
 
 ## Ações (3)
 
@@ -32,11 +32,11 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (6): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ActionDecrementaZonaExecute` | 0x004CD134 | 312 | INFERIDO | Handler `ActionDecrementaZonaExecute`; chama APIs do Windows: USER32.DLL!InvalidateRect; chama: thunk -> USER32.DLL!InvalidateRect; toca campos/controles: DrawGridK, TimerBlink |  | USER32.DLL!InvalidateRect | thunk -> USER32.DLL!InvalidateRect |
-| `ActionEsciExecute` | 0x004CD26C | 6 | INFERIDO | Handler `ActionEsciExecute`; sem fatos extraíveis automaticamente (6 bytes) |  |  |  |
-| `ActionIncrementaZonaExecute` | 0x004CCFFC | 312 | INFERIDO | Handler `ActionIncrementaZonaExecute`; chama APIs do Windows: USER32.DLL!InvalidateRect; chama: thunk -> USER32.DLL!InvalidateRect; toca campos/controles: DrawGridK, TimerBlink |  | USER32.DLL!InvalidateRect | thunk -> USER32.DLL!InvalidateRect |
-| `DrawGridKDrawCell` | 0x004CCD08 | 754 | INFERIDO | Handler `DrawGridKDrawCell`; toca campos/controles: DrawGridK |  |  |  |
-| `FormClose` | 0x004CC63C | 40 | INFERIDO | Handler `FormClose`; sem fatos extraíveis automaticamente (40 bytes) |  |  |  |
-| `TimerBlinkTimer` | 0x004CC664 | 940 | INFERIDO | Handler `TimerBlinkTimer`; chama APIs do Windows: USER32.DLL!InvalidateRect; chama: TStreamDati.TimerIOTimer; toca campos/controles: LabApMotBenz, LabGas, LabLambda, LabelLambda |  | USER32.DLL!InvalidateRect | TStreamDati.TimerIOTimer |
+| `ActionDecrementaZonaExecute` | 0x004CD134 | 312 | INFERIDO | chama APIs do Windows InvalidateRect; toca DrawGridK, TimerBlink |  | InvalidateRect |  |
+| `ActionEsciExecute` | 0x004CD26C | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
+| `ActionIncrementaZonaExecute` | 0x004CCFFC | 312 | INFERIDO | chama APIs do Windows InvalidateRect; toca DrawGridK, TimerBlink |  | InvalidateRect |  |
+| `DrawGridKDrawCell` | 0x004CCD08 | 754 | INFERIDO | toca DrawGridK |  |  |  |
+| `FormClose` | 0x004CC63C | 40 | INFERIDO | sem fatos diretos extraíveis (40 bytes; chama 2 funções sem nome) |  |  |  |
+| `TimerBlinkTimer` | 0x004CC664 | 940 | INFERIDO | chama TStreamDati.TimerIOTimer; toca LabApMotBenz, LabGas, LabLambda, LabelLambda |  |  | InvalidateRect |

@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormVisualizza`; unidade: `@:Visualizza`; ancestral: `TForm`; tamanho de instância: 0x74C; componentes no DFM: 85.
 - Título: "Visualizzazione parametri vettura" — eng: "Vehicle parameter display" / por: "Visualização dos parâmetros do veículo"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.ActionVisualizzaExecute` (0x00501568)
 
 ## Controles com evento/ação (3)
 
@@ -29,11 +29,11 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (6): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `ButtonCommutatoreClick` | 0x0050DD14 | 231 | INFERIDO | Handler `ButtonCommutatoreClick`; chama APIs do Windows: KERNEL32.DLL!Sleep, USER32.DLL!PostMessageW; chama: thunk -> KERNEL32.DLL!Sleep; toca campos/controles: ButtonCommutatore |  | KERNEL32.DLL!Sleep, USER32.DLL!PostMessageW | thunk -> KERNEL32.DLL!Sleep |
-| `FormClose` | 0x0050DCEC | 39 | INFERIDO | Handler `FormClose`; sem fatos extraíveis automaticamente (39 bytes) |  |  |  |
-| `MenuCominciaDrtClick` (sem evento no DFM) | 0x0050D86C | 739 | INFERIDO | Handler `MenuCominciaDrtClick`; chama APIs do Windows: KERNEL32.DLL!GetTickCount, USER32.DLL!DrawMenuBar; chama: thunk -> KERNEL32.DLL!GetTickCount, thunk -> USER32.DLL!DrawMenuBar |  | KERNEL32.DLL!GetTickCount, USER32.DLL!DrawMenuBar | thunk -> KERNEL32.DLL!GetTickCount, thunk -> USER32.DLL!DrawMenuBar |
-| `MenuGraficoClick` (sem evento no DFM) | 0x0050DC08 | 187 | INFERIDO | Handler `MenuGraficoClick`; mostra/usa textos ACTIONESCI, ACTIONSTAMPA, BUTTONANNULLA, BUTTONOK, FINESTRAGESTIONETRACCE, FINESTRAGRAFICO; chama APIs do Windows: USER32.DLL!DeleteMenu, USER32.DLL!GetSystemMenu, USER32.DLL!GetSystemMetrics; toca campos/controles: OpenDialogDrt | ACTIONESCI, ACTIONSTAMPA, BUTTONANNULLA, BUTTONOK, FINESTRAGESTIONETRACCE, FINESTRAGRAFICO | USER32.DLL!DeleteMenu, USER32.DLL!GetSystemMenu, USER32.DLL!GetSystemMetrics |  |
-| `MenuTerminaDrtClick` (sem evento no DFM) | 0x0050DB50 | 184 | INFERIDO | Handler `MenuTerminaDrtClick`; chama APIs do Windows: USER32.DLL!DrawMenuBar; chama: thunk -> USER32.DLL!DrawMenuBar; toca campos/controles: SaveDialogDrt |  | USER32.DLL!DrawMenuBar | thunk -> USER32.DLL!DrawMenuBar |
-| `Timer1Timer` | 0x0050B408 | 7653 | INFERIDO | Handler `Timer1Timer`; chama APIs do Windows: KERNEL32.DLL!GetTickCount; chama: TStreamDati.TimerIOTimer, thunk -> KERNEL32.DLL!GetTickCount; toca campos/controles: ImageBenzOff, ImageBenzOn, ImageCutoffOff, ImageCutoffOn, ImageGasOff, ImageGasOn, ImageSottoChiaveOff, ImageSottoChiaveOn |  | KERNEL32.DLL!GetTickCount | TStreamDati.TimerIOTimer, thunk -> KERNEL32.DLL!GetTickCount |
+| `ButtonCommutatoreClick` | 0x0050DD14 | 231 | INFERIDO | chama APIs do Windows Sleep; toca ButtonCommutatore |  | Sleep | PostMessageW |
+| `FormClose` | 0x0050DCEC | 39 | INFERIDO | sem fatos diretos extraíveis (39 bytes; chama 1 funções sem nome) |  |  |  |
+| `MenuCominciaDrtClick` (sem evento no DFM) | 0x0050D86C | 739 | INFERIDO | chama APIs do Windows GetTickCount, DrawMenuBar |  | GetTickCount, DrawMenuBar |  |
+| `MenuGraficoClick` (sem evento no DFM) | 0x0050DC08 | 187 | INFERIDO | toca OpenDialogDrt |  |  | ACTIONESCI, ACTIONSTAMPA, BUTTONANNULLA, BUTTONOK, DeleteMenu, GetSystemMenu, GetSystemMetrics |
+| `MenuTerminaDrtClick` (sem evento no DFM) | 0x0050DB50 | 184 | INFERIDO | chama APIs do Windows DrawMenuBar; toca SaveDialogDrt |  | DrawMenuBar |  |
+| `Timer1Timer` | 0x0050B408 | 7653 | INFERIDO | chama APIs do Windows GetTickCount; chama TStreamDati.TimerIOTimer; toca ImageBenzOff, ImageBenzOn, ImageCutoffOff, ImageCutoffOn, ImageGasOff, ImageGasOn, ImageSottoChiaveOff, ImageSottoChiaveOn |  | GetTickCount |  |

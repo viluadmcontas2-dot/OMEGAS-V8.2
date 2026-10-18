@@ -4,4 +4,4 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormSplash`; unidade: `@:Splash`; ancestral: `TForm`; tamanho de instância: 0x3BC; componentes no DFM: 2.
 - Título: "FormSplash"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TFormMain.Create` (0x004EDE60)

@@ -48,6 +48,10 @@ STDCALL_EXTRA = {
 }
 
 
+# funções de VCL/RTL "de janela" sem efeito sobre a lógica (cada uma conferida no disassembly) -- ver docs
+NOOPS = [0x7C8840, 0x7AED4C]    # TTimer.SetEnabled; TScreen.GetFormCount (0 forms)
+
+
 class EcuDono(C._Ecu):
     """ECU falsa: responde às leituras com o que a ECU do dono respondeu no log (OBS-FIO) e guarda as escritas.
 
@@ -79,7 +83,7 @@ class EcuDono(C._Ecu):
     @staticmethod
     def _tam(acc):
         op = acc[0]
-        if op in (0x09, 0x29):
+        if op in (0x09, 0x29, 0x01):
             return 4
         if op in (0x0A, 0x2A):
             return 5
@@ -105,6 +109,9 @@ class EcuDono(C._Ecu):
             if not self.responde:
                 continue
             op, sc = q[0], q[1] | (q[2] << 8)
+            if op == 0x01:            # SetParameter do sistema: no log a ECU respondeu NACK (CA) a `01 04 54 59` (OBS-FIO)
+                self.rx += bytes([0x53, 0x00, 0x53])
+                continue
             dl, dim = self.forma.get(sc, (1, 1))
             if op in (0x09, 0x29, 0x0A, 0x2A):
                 self.lidos.append((op, sc, q[3] if n == 5 else None))
@@ -147,6 +154,7 @@ class MaquinaAbas(C._Maquina):
         self.controles = {}      # nome -> endereço
         self.controle_de = {}    # endereço -> nome
         self.redirs = {}
+        self.ordem = []
         self.api_py = {}
         self.chamador_erro = 0
         self.pilha_erro = []
@@ -155,6 +163,7 @@ class MaquinaAbas(C._Maquina):
         self.uc.mem_map(C.STUBS + 0x1000, 0x6000)
         self.codigo_stub = C.STUBS + 0x5000
         self._montar_mm()
+        self.uc.mem_map(0, 0x10000)      # página nula legível: objetos ausentes leem 0 em vez de derrubar a emulação
         self.uc.hook_add(self.uc_mod.UC_HOOK_CODE, self._hook_stubs_altos, begin=C.STUBS + 0x1000, end=C.STUBS + 0x4FFF)
 
     # ------------------------------------------------------------------ hooks
@@ -178,6 +187,12 @@ class MaquinaAbas(C._Maquina):
         uc.reg_write(X.UC_X86_REG_EAX, (r or 0) & 0xFFFFFFFF)
         uc.reg_write(X.UC_X86_REG_ESP, esp + 4 + 4 * nargs)
         uc.reg_write(X.UC_X86_REG_EIP, ret)
+
+    def _hook_codigo(self, uc, addr, size, _):
+        n = len(self.entradas)
+        super()._hook_codigo(uc, addr, size, _)
+        if len(self.entradas) != n:
+            self.ordem.append(addr)
 
     def _hook_stubs_altos(self, uc, addr, size, _):
         self._prev = None
@@ -269,8 +284,41 @@ class MaquinaAbas(C._Maquina):
         def getproc(mm):
             esp = mm.uc.reg_read(mm.X.UC_X86_REG_ESP)
             return mm.mm_funcs.get(mm._cstr(mm.r32(esp + 8)), 0)
+        def arg(mm, k):
+            return mm.r32(mm.uc.reg_read(mm.X.UC_X86_REG_ESP) + 4 + 4 * k)
+
+        def mb2wc(mm):          # MultiByteToWideChar(cp, flags, src, cb, dst, cch): só ASCII/Latin-1
+            src, cb, dst, cch = arg(mm, 2), arg(mm, 3), arg(mm, 4), arg(mm, 5)
+            cb = cb if cb < 0x80000000 else len(mm._cstr(src)) + 1
+            if cch == 0:
+                return cb
+            n = min(cb, cch)
+            mm.uc.mem_write(dst, b''.join(struct.pack('<H', b) for b in bytes(mm.uc.mem_read(src, n))))
+            return n
+
+        def wc2mb(mm):          # WideCharToMultiByte(cp, flags, src, cch, dst, cb, def, used)
+            src, cch, dst, cb = arg(mm, 2), arg(mm, 3), arg(mm, 4), arg(mm, 5)
+            if cch >= 0x80000000:
+                cch, p = 0, src
+                while mm.uc.mem_read(p, 2) != b'\0\0':
+                    cch += 1
+                    p += 2
+                cch += 1
+            if cb == 0:
+                return cch
+            w = bytes(mm.uc.mem_read(src, 2 * cch))
+            n = min(cch, cb)
+            mm.uc.mem_write(dst, bytes(w[2 * i] if w[2 * i + 1] == 0 else 63 for i in range(n)))
+            return n
+        self.stdcall.update({'MultiByteToWideChar': 6, 'WideCharToMultiByte': 8, 'GetACP': 0, 'GetCurrentThreadId': 0,
+                             'GetLocaleInfoA': 4, 'IsDBCSLeadByte': 1, 'GetThreadLocale': 0, 'CharNextA': 1,
+                             'CharUpperA': 1, 'CharLowerA': 1, 'lstrlenA': 1, 'GetCPInfo': 2,
+                             'GetStringTypeW': 5, 'LCMapStringA': 6, 'CompareStringA': 6, 'GetSystemDefaultLCID': 0})
         self.api_py = {'LoadLibraryA': load, 'GetModuleHandleA': load, 'GetProcAddress': getproc,
-                       'FreeLibrary': lambda mm: 1}
+                       'FreeLibrary': lambda mm: 1, 'MultiByteToWideChar': mb2wc, 'WideCharToMultiByte': wc2mb,
+                       'GetACP': lambda mm: 1252, 'GetThreadLocale': lambda mm: 0x416,
+                       'GetSystemDefaultLCID': lambda mm: 0x416, 'GetCurrentThreadId': lambda mm: 1,
+                       'IsDBCSLeadByte': lambda mm: 0}
 
     # ------------------------------------------------------------------ montagem
     def montar_sd(self, dfm_sd):
@@ -281,6 +329,14 @@ class MaquinaAbas(C._Maquina):
         self.w32(VAR_SD, sd)
         self.w32(sd + 0x6C, self.conexao)
         vmts = c.rtti.vmts
+        for nome, o in dfm_sd.items():       # componentes que não são vetores: objeto vazio com a VMT real
+            off = c.inv_sd.get(nome)
+            if off is not None and o.classe in ('TTimer', 'TAebRegistryData', 'TTranslatorExt', 'TAebStrings', 'TAebProtocol') \
+                    and o.classe in vmts and nome != 'AebConnection':
+                ob = self.alloc(0x400)
+                self.w32(ob, vmts[o.classe])
+                self.w32(sd + off, ob)
+        self.w32(sd + c.inv_sd['AebConnection'], self.conexao)
         for nome, o in dfm_sd.items():
             off = c.inv_sd.get(nome)
             if off is None or o.classe not in ('TAebVector', 'TAebNumber', 'TAebMatrix'):
@@ -386,6 +442,21 @@ class Sessao:
             mm.efeitos.append(('visible', mm.controle_de.get(r['eax'], hex(r['eax'])), r['edx'] & 1))
             mm.w8(r['eax'] + OFF_VISIBLE, r['edx'] & 1)
         m.hook(0x7EDFA8, set_visible, 0)
+
+        def perform(mm, r, a):          # TControl.Perform(Msg, WParam, LParam): sem janelas => nada
+            mm.efeitos.append(('perform', mm.controle_de.get(r['eax'], hex(r['eax'])), hex(r['edx'])))
+            return 0
+        m.hook(0x7EF5F4, perform, 1)
+
+        def set_text(mm, r, a):         # TControl.SetText(string)
+            mm.efeitos.append(('texto', mm.controle_de.get(r['eax'], hex(r['eax'])), mm.ctx.string_em(r['edx']) if r['edx'] else ''))
+            return 0
+        m.hook(0x7EE0E0, set_text, 0)
+
+        def nada(mm, r, a):
+            return 0
+        for ad in NOOPS:
+            m.hook(ad, nada, 0)
         # TNumericEdit: "valor atual" = double em +0x2E0 (a função original lê o Text; aqui devolve o campo)
         m.redireciona(0x96BA2C, bytes.fromhex('DD80E0020000C3'))
 

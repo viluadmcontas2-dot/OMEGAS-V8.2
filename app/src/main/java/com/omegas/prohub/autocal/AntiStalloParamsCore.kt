@@ -17,7 +17,7 @@ import org.json.JSONObject
  * Por isso o quadro é `37 33 0C 01 ...`, e não `3B`. O montador é o mesmo do original (`AutoCalProtocol.writeVectorU16`).
  *
  * Regras: só os campos pedidos mudam (os outros vêm da leitura ao vivo); nunca aceita valor fora da faixa; o sucesso só existe
- * depois da LEITURA DE VOLTA igual aos 5 números esperados; esperar o módulo = esperar a resposta (nenhum relógio aqui).
+ * depois da LEITURA DE VOLTA igual aos 5 números esperados; esperar a central = esperar a resposta (nenhum relógio aqui).
  */
 internal object AntiStalloParamsCore {
     const val ADDRESS = 0x0133
@@ -46,7 +46,7 @@ internal object AntiStalloParamsCore {
     class WriteReply(val acked: Boolean, val transportFailed: Boolean, val replyHex: String, val detail: String)
 
     class Io(
-        /** Lê ANTI_STALLO (`29 33 01`): os 5 números. Lança se o módulo não respondeu. */
+        /** Lê ANTI_STALLO (`29 33 01`): os 5 números. Lança se a central não respondeu. */
         val read: () -> IntArray,
         val write: (frame: ByteArray) -> WriteReply,
     )
@@ -91,15 +91,15 @@ internal object AntiStalloParamsCore {
 
     fun readbackMatches(plan: Plan, readback: IntArray): Boolean = valid(readback) && readback.contentEquals(plan.after)
 
-    private const val UNCERTAIN = "Não sei como ficou no módulo."
+    private const val UNCERTAIN = "Não sei como ficou na central."
 
     fun execute(io: Io, plan: Plan): Result {
-        if (plan.noop) return Result(Outcome.NOTHING_TO_DO, "Esses números já estão assim no módulo. Nada foi enviado.", plan.before)
+        if (plan.noop) return Result(Outcome.NOTHING_TO_DO, "Esses números já estão assim na central. Nada foi enviado.", plan.before)
         val current = try { io.read() } catch (error: Exception) {
-            return Result(Outcome.ERROR, "Não consegui ler o módulo antes de gravar. Nada foi enviado. Confira o cabo e tente de novo.", null)
+            return Result(Outcome.ERROR, "Não consegui ler a central antes de gravar. Nada foi enviado. Confira o cabo e tente de novo.", null)
         }
         if (!valid(current) || !current.contentEquals(plan.before)) {
-            return Result(Outcome.CHANGED_MEANWHILE, "Os números do módulo mudaram desde a conferência. Nada foi gravado. Refaça a conferência.", if (valid(current)) current else null)
+            return Result(Outcome.CHANGED_MEANWHILE, "Os números da central mudaram desde a conferência. Nada foi gravado. Refaça a conferência.", if (valid(current)) current else null)
         }
         val frame = plan.frame
         val reply = try { io.write(frame) } catch (error: Exception) {
@@ -117,16 +117,16 @@ internal object AntiStalloParamsCore {
             val changed = !back.contentEquals(plan.before)
             return Result(
                 Outcome.NOT_ACKED,
-                (if (changed) "$UNCERTAIN " else "") + "O módulo não confirmou a gravação. " + (if (changed) "Os números mudaram mesmo assim; confira a tela." else "Os números continuam como estavam. Tente de novo."),
+                (if (changed) "$UNCERTAIN " else "") + "A central não confirmou a gravação. " + (if (changed) "Os números mudaram mesmo assim; confira a tela." else "Os números continuam como estavam. Tente de novo."),
                 back, valueChanged = changed, frame = frame, reply = reply,
             )
         }
         return if (readbackMatches(plan, back)) {
-            Result(Outcome.CONFIRMED, "Gravado e conferido no módulo.", back, true, frame, reply)
+            Result(Outcome.CONFIRMED, "Gravado e conferido na central.", back, true, frame, reply)
         } else {
             Result(
                 Outcome.READBACK_DIVERGED,
-                "$UNCERTAIN O módulo aceitou, mas os números lidos depois são outros. Confira a tela antes de tentar de novo.",
+                "$UNCERTAIN A central aceitou, mas os números lidos depois são outros. Confira a tela antes de tentar de novo.",
                 back, !back.contentEquals(plan.before), frame, reply,
             )
         }

@@ -362,6 +362,51 @@ def calibrar_flag_conf1(exe, valores=(0x2C86, 0x1051), buffered=1, versao_proto=
     return r
 
 
+# ---- função 'Marcha lenta' (Gás / Rientro a benzina / Benzina): RadioGasClick 0x4BFAD8 (OBS-COD, 2026-10-18) ----
+A_FLAG1_SETTER = 0x42D300     # TStreamDati.Set de FLAG_CONF1 (edx = caso 0x22 -> bit 0x0400 da palavra 1)
+A_SET_FISICO = 0x43734C       # (obj, código, índice, double): código 0x4C -> GIRI_PER_BENZINA[índice]
+CASO_MINIMO, CODIGO_GIRI = 0x22, 0x4C
+RPM_IDENTIFICACAO = 1100.0    # constante 0x40913000_00000000 empilhada em RadioGasClick (tags 1 e 2)
+# Tag do DFM: RadioGas = 0 (padrão), RadioRientro = 1, RadioBenzina = 2. O handler faz `sub edx,1; jb -> tag 0; je -> tag 1; dec; je -> tag 2`.
+MODOS_LENTA = {'gas': 0, 'volta': 1, 'gasolina': 2}
+
+
+def emular_modo_lenta(exe, modo, flag1=(0x2486, 0x1051), giri=(0, 8500), buffered=1, versao_proto=2,
+                      ecu_responde=True, obj80D=0, obj80E=1, patches=None):
+    """Reproduz o que o clique em um dos três botões de 'Funcionamento al minimo' grava, na ordem do handler:
+    1) FLAG_CONF1 (bit 0x0400 da palavra 1) por 0x42D300; 2) GIRI_PER_BENZINA[0] por 0x43734C (código 0x4C).
+    Os dois vetores são montados na heap com os valores iniciais dados. Devolve os quadros na ordem em que saíram."""
+    if modo not in MODOS_LENTA:
+        raise ValueError(modo)
+    tag = MODOS_LENTA[modo]
+    m = _Maquina(exe, patches, ecu_responde)
+    m.montar((0, 0), versao_proto, buffered, obj80D, obj80E)
+    m.w32(m.sd + 0x2984, flag1[0])
+    m.w32(m.sd + 0x2988, flag1[1])
+    v1 = m.criar_vetor(3)
+    m.w32(m.sd + 0x90, v1)
+    for i, w in enumerate(flag1):
+        m.w32(m.r32(v1 + 0x148) + 4 * i, w)
+    vg = m.criar_vetor(161)
+    m.w32(m.sd + 0x2A0, vg)
+    for i, w in enumerate(giri):
+        m.w32(m.r32(vg + 0x148) + 4 * i, w)
+        m.w32(m.sd + 0x2CBC + 4 * i, w)
+    bit = 1 if tag == 2 else 0
+    rpm = 0.0 if tag == 0 else RPM_IDENTIFICACAO
+    ret1 = m.chamar(A_FLAG1_SETTER, {'eax': m.sd, 'edx': CASO_MINIMO, 'ecx': bit})
+    n1 = len(m.ecu.quadros)
+    bits = struct.unpack('<II', struct.pack('<d', rpm))  # (baixo, alto) do double empilhado como em 0x4BFB5E
+    ret2 = m.chamar(A_SET_FISICO, pilha=(m.sd, CODIGO_GIRI, 0, bits[0], bits[1]))
+    r = m.resultado(ret2)
+    r['retorno_flag1_al'] = ret1
+    r['quadros_flag1'] = r['quadros'][:n1]
+    r['quadros_giri'] = r['quadros'][n1:]
+    r['cache_flag1'] = (m.r32(m.sd + 0x2984), m.r32(m.sd + 0x2988))
+    r['cache_giri'] = (m.r32(m.sd + 0x2CBC), m.r32(m.sd + 0x2CC0))
+    return r
+
+
 def _hex(b):
     return bytes(b).hex(' ').upper()
 
@@ -376,6 +421,9 @@ def main(argv=None):
     ap.add_argument('--sem-ecu', action='store_true')
     ap.add_argument('--obj80D', type=int, default=0)
     ap.add_argument('--patch', action='append', default=[], help='ENDERECO=BYTE (só na memória emulada)')
+    ap.add_argument('--modo-lenta', choices=sorted(MODOS_LENTA), help='clique em Gas / Rientro a benzina / Benzina (FLAG_CONF1 + GIRI_PER_BENZINA)')
+    ap.add_argument('--flag1', default='2486:1051')
+    ap.add_argument('--giri', default='0:8500', help='G0:G1 decimais (GIRI_PER_BENZINA inicial)')
     ap.add_argument('--calibracao', action='store_true', help='FLAG_CONF1 2C86:1051 contra o fio')
     ap.add_argument('--json', action='store_true')
     a = ap.parse_args(argv)
@@ -384,6 +432,14 @@ def main(argv=None):
         print('ProgBase.exe não encontrado (use --exe ou PROGBASE_EXE)', file=sys.stderr)
         return 2
     patches = {int(p.split('=')[0], 16): int(p.split('=')[1], 16) for p in a.patch}
+    if a.modo_lenta:
+        f1 = tuple(int(x, 16) for x in a.flag1.split(':'))
+        g = tuple(int(x) for x in a.giri.split(':'))
+        r = emular_modo_lenta(exe, a.modo_lenta, f1, g, a.buffered, a.versao_proto, not a.sem_ecu, a.obj80D, 1, patches)
+        for q in r['quadros']:
+            print('quadro:', _hex(q))
+        print('cache FLAG_CONF1: %04X %04X  cache GIRI: %d %d  erro: %s' % (r['cache_flag1'] + r['cache_giri'] + (r['erro'],)))
+        return 0
     if a.calibracao:
         r = calibrar_flag_conf1(exe, buffered=a.buffered, versao_proto=a.versao_proto)
     else:

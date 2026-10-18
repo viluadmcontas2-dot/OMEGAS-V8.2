@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Liga a escrita manual dos 5 números do anti-apagão (AntiStalloParamsCore) à porta serial. Espelho de AntiStalloFlagWriter.
  * SÓ roda por toque do dono: `prepare(changes)` (valida a faixa, lê ANTI_STALLO ao vivo e guarda a prévia), depois
- * `confirm(token)` (2º toque). Nada aqui dispara sozinho: nenhum laço nem relógio de decisão; esperar o módulo = esperar a
+ * `confirm(token)` (2º toque). Nada aqui dispara sozinho: nenhum laço nem relógio de decisão; esperar a central = esperar a
  * resposta de cada transação. Escrita pelo agendador MANUAL_WRITE (registrada na sessão). Só usa `AutoCalProtocol.readVector/writeVectorU16`.
  *
  * `changes` = objeto JSON `{"índice": valor}` com inteiros; os campos que não aparecem ficam como a leitura ao vivo.
@@ -108,7 +108,7 @@ class AntiStalloParamsWriter(
                         .put("noop", plan.noop),
                 )
             } catch (error: Exception) {
-                publish(JSONObject().put("state", "ERROR").put("message", "Não consegui ler o módulo. Nada foi enviado. Confira o cabo e tente de novo."))
+                publish(JSONObject().put("state", "ERROR").put("message", "Não consegui ler a central. Nada foi enviado. Confira o cabo e tente de novo."))
             } finally {
                 if (!published) running.set(false)
             }
@@ -122,7 +122,7 @@ class AntiStalloParamsWriter(
     fun confirm(token: String): JSONObject {
         val ready = synchronized(lock) { pending }
         if (ready == null || ready.token != token) return fail("Não há conferência válida; refaça o toque.")
-        if (ready.plan.noop) return fail("Esses números já estão assim no módulo.")
+        if (ready.plan.noop) return fail("Esses números já estão assim na central.")
         if (!serial.isConnected() || currentSessionOrZero() != ready.session) return fail("O cabo USB mudou desde a conferência; refaça o toque.")
         if (busy()) return fail(CALIBRATION_BUSY) // a prévia continua válida: nada mudou
         if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
@@ -140,7 +140,7 @@ class AntiStalloParamsWriter(
                 ) { unit -> AntiStalloParamsCore.execute(io(unit), ready.plan) }
                 finish(ready, result) { publish(it) }
             } catch (error: Exception) {
-                val message = "O módulo está ocupado ou o cabo soltou. Nada foi dado como gravado. Confira o cabo e tente de novo."
+                val message = "A central está ocupada ou o cabo soltou. Nada foi dado como gravado. Confira o cabo e tente de novo."
                 record("anti_stallo_params_write", JSONObject().put("outcome", "ERROR").put("message", message).put("origin", "APP_UI_MANUAL"))
                 publish(JSONObject().put("state", "DONE").put("outcome", "ERROR").put("message", message))
             } finally {
@@ -152,7 +152,7 @@ class AntiStalloParamsWriter(
         return JSONObject().put("ok", true).put("started", true)
     }
 
-    /** Descarta a prévia (outro toque, troca de aba, USB caiu). Não mexe no módulo. */
+    /** Descarta a prévia (outro toque, troca de aba, USB caiu). Não mexe na central. */
     fun cancel(): JSONObject {
         synchronized(lock) {
             if (status.optString("state") == "READY") status = JSONObject().put("state", "IDLE")
@@ -181,7 +181,7 @@ class AntiStalloParamsWriter(
                 undoValues = plan.before.copyOf()
                 undoSession = ready.session
             } else if (result.outcome == AntiStalloParamsCore.Outcome.READBACK_FAILED || result.outcome == AntiStalloParamsCore.Outcome.READBACK_DIVERGED || result.valueChanged) {
-                // O módulo pode já não estar no estado que o "Desfazer" supõe: não oferecer desfazer sobre valor incerto.
+                // A central pode já não estar no estado que o "Desfazer" supõe: não oferecer desfazer sobre valor incerto.
                 undoValues = null
             }
         }
@@ -207,7 +207,7 @@ class AntiStalloParamsWriter(
 
     private fun readValues(unit: Mp48SerialUnit): IntArray {
         val reply = unit.transaction(AutoCalProtocol.readVector(AntiStalloParamsCore.ADDRESS), "anti-apagão: ler ANTI_STALLO", 900, purgeBefore = false)
-        if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) throw IllegalStateException(reply.error.ifBlank { "módulo não respondeu à leitura de ANTI_STALLO" })
+        if (!reply.ok || reply.status != Mp48Protocol.STATUS_ACK) throw IllegalStateException(reply.error.ifBlank { "central não respondeu à leitura de ANTI_STALLO" })
         return AntiStalloParamsCore.valuesFromPayload(IntArray(reply.payload.size) { reply.payload[it].toInt() and 0xFF })
             ?: throw IllegalStateException("ANTI_STALLO veio com ${reply.payload.size} bytes (esperado 10)")
     }

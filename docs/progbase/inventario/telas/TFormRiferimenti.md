@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormRiferimenti`; unidade: `@:RiferimentiMappa`; ancestral: `TForm`; tamanho de instância: 0x3D4; componentes no DFM: 5.
 - Título: "Modifica riferimenti mappa"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `TAebGrid::EditRiferimentiMappa` (0x0093E36C)
 
 ## Controles com evento/ação (3)
 
@@ -16,6 +16,6 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (1): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `FormCloseQuery` | 0x009744E0 | 1007 | INFERIDO | Handler `FormCloseQuery`; sem fatos extraíveis automaticamente (1007 bytes) |  |  |  |
+| `FormCloseQuery` | 0x009744E0 | 1007 | INFERIDO | sem fatos diretos extraíveis (1007 bytes; chama 11 funções sem nome) |  |  |  |

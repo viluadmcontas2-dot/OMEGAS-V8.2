@@ -4,7 +4,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 - Instância DFM: `FormAggKey`; unidade: `@:AggKey`; ancestral: `TForm`; tamanho de instância: 0x3CC; componentes no DFM: 7.
 - Título: "Upgrade hardware key"
-- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).
+- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): `0x00414B8C` (0x00414B8C), `0x0041A680` (0x0041A680)
 
 ## Controles com evento/ação (3)
 
@@ -16,6 +16,6 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 
 ## Handlers (1): o que cada um faz
 
-| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |
+| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
-| `FormShow` | 0x0041199C | 718 | INFERIDO | Handler `FormShow`; mostra/usa textos MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED, MESSUPDATECODE; chama: TTranslatorExt::GetString; toca campos/controles: ButtonLater, ButtonUpgrade, LabelCodice, LabelValidita | MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED, MESSUPDATECODE |  | TTranslatorExt::GetString |
+| `FormShow` | 0x0041199C | 718 | INFERIDO | usa textos MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED, MESSUPDATECODE; chama TTranslatorExt::GetString; toca ButtonLater, ButtonUpgrade, LabelCodice, LabelValidita | MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED, MESSUPDATECODE |  |  |

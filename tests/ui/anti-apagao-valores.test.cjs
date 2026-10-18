@@ -1,6 +1,6 @@
 'use strict';
 // Os 5 números do anti-apagão (ANTI_STALLO, 307): lógica pura do JS (faixa, quadro, ler-modificar-escrever, fluxo de toque).
-// Espelha tests/ui/avancado-escrita.test.cjs. Sem relógio: esperar o módulo = o gancho de dados da ponte.
+// Espelha tests/ui/avancado-escrita.test.cjs. Sem relógio: esperar a central = o gancho de dados da ponte.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -127,7 +127,7 @@ function ambiente(opcoes = {}) {
 }
 const pronto = (before, changes, token = 'tk1') => { const p = V.plan(before, changes); return { state: 'READY', token, before, after: p.after, changed: p.changed, frameHex: p.frameHex, noop: p.noop }; };
 
-test('1º toque só PEDE (lê o módulo e mostra antes → depois); nada é gravado', () => {
+test('1º toque só PEDE (lê a central e mostra antes → depois); nada é gravado', () => {
   const e = ambiente();
   assert.equal(e.flow.ask('edit', { 0: 1700 }, true), true);
   same(e.chamadas, [['prepare', '{"0":1700}']]);
@@ -183,7 +183,7 @@ test('prévia que não bate com o cálculo da tela é descartada (nada gravado)'
   assert.equal(e.flow.view().phase, 'error'); assert.equal(e.count('cancel'), 1); assert.equal(e.count('confirm'), 0);
 });
 
-test('mesmo valor que o módulo já tem: avisa e não pede confirmação', () => {
+test('mesmo valor que a central já tem: avisa e não pede confirmação', () => {
   const e = ambiente();
   e.flow.ask('edit', { 0: 1600 }, true); e.setStatus(pronto(F, { 0: 1600 })); e.emit();
   assert.equal(e.flow.view().phase, 'idle'); assert.match(e.flow.view().message, /já estão assim/);
@@ -196,7 +196,7 @@ test('falhas: texto humano (o que houve + o que fazer), sem sigla', () => {
     [{ outcome: 'READBACK_FAILED' }, /Não sei como ficou/, true],
     [{ outcome: 'READBACK_DIVERGED', readback: [1, 1, 1, 1, 1] }, /Não sei como ficou/, true],
     [{ outcome: 'CHANGED_MEANWHILE' }, /mudaram.*Nada foi gravado/s, false],
-    [{ outcome: 'ERROR' }, /Não consegui falar com o módulo/, false],
+    [{ outcome: 'ERROR' }, /Não consegui falar com a central/, false],
   ];
   for (const [status, re, incerto] of casos) {
     const e = ambiente();

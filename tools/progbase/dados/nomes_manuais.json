@@ -1,0 +1,4 @@
+{
+ "_leia": "Nomes dados à mão a funções sem símbolo. Chave = endereço (hex); evidencia = OBS-COD | DERIVADO | INFERIDO.",
+ "0x004111F8": {"nome": "WinMain_CriaFormularios (Application.CreateForm de TFormMain, TStreamDati, TFormConfig, módulos de dados e telas)", "evidencia": "DERIVADO"}
+}

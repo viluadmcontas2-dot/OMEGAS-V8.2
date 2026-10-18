@@ -113,8 +113,13 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
             if k < 0:
                 break
             pos = k + 1
-            if k >= 1 and cod.vis[k - 1] and b.code[k - 1] in (0x68, 0xB8, 0xB9, 0xBA, 0xBB, 0xBE, 0xBF):
+            ad = None
+            if k >= 1 and cod.vis[k - 1] and b.code[k - 1] in (0x68, 0xA1, 0xB8, 0xB9, 0xBA, 0xBB, 0xBE, 0xBF):
                 ad = b.cb + k - 1
+            elif k >= 2 and cod.vis[k - 2] and (b.code[k - 2] == 0x8B and b.code[k - 1] in (0x05, 0x0D, 0x15, 0x1D, 0x35, 0x3D)
+                                                 or b.code[k - 2] == 0xFF and b.code[k - 1] == 0x35):
+                ad = b.cb + k - 2
+            if ad is not None:
                 j = bisect.bisect_right(starts, ad) - 1
                 if j >= 0:
                     xref_vmt.setdefault(vm, set()).add(starts[j])
@@ -196,7 +201,8 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
                                 'apis': r['apis'], 'apis_indiretas': r['apis_indiretas'],
                                 'mensagens': r['i18n_chaves'], 'mensagens_indiretas': r['i18n_chaves_indiretas'],
                                 'literais': r['literais'][:8], 'campos_tocados': r['campos'],
-                                'classes_referidas': r['classes_referidas']}
+                                'classes_referidas': r['classes_referidas'], 'vazio': r['so_ret'],
+                                'saltos_externos': [nome_de(t) or h(t) for t in r['saltos_externos']]}
                 vistos_h[hn]['o_que_faz'] = d if d else auto_descricao(vistos_h[hn], key)
             return vistos_h[hn]
         # menus
@@ -256,20 +262,23 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
 
 
 def auto_descricao(hd, key):
+    """Texto automático (INFERIDO), só a partir de fatos diretos do corpo da função."""
+    if hd['vazio']:
+        return {'texto': 'Handler vazio: o corpo é só RET (nada acontece neste evento).', 'evidencia': 'OBS-COD', 'origem': 'automatico'}
     p = []
-    n = hd['nome']
-    p.append('Handler `%s`' % n)
-    if hd['mensagens'] or hd['mensagens_indiretas']:
-        p.append('mostra/usa textos %s' % ', '.join((hd['mensagens'] + hd['mensagens_indiretas'])[:6]))
-    api = hd['apis'] + hd['apis_indiretas']
-    if api:
-        p.append('chama APIs do Windows: %s' % ', '.join(api[:6]))
-    if hd['chamadas_nomeadas']:
-        p.append('chama: %s' % ', '.join(hd['chamadas_nomeadas'][:6]))
+    if hd['saltos_externos'] and hd['tamanho_bytes'] <= 12:
+        p.append('encaminha (jmp) para %s' % ', '.join(hd['saltos_externos'][:2]))
+    if hd['mensagens']:
+        p.append('usa textos %s' % ', '.join(hd['mensagens'][:6]))
+    if hd['apis']:
+        p.append('chama APIs do Windows %s' % ', '.join(a.split('!')[1] for a in hd['apis'][:6]))
+    nom = [c for c in hd['chamadas_nomeadas'] if not c.startswith('thunk ')]
+    if nom:
+        p.append('chama %s' % ', '.join(nom[:6]))
     if hd['campos_tocados']:
-        p.append('toca campos/controles: %s' % ', '.join(hd['campos_tocados'][:8]))
-    if len(p) == 1:
-        p.append('sem fatos extraíveis automaticamente (%d bytes)' % hd['tamanho_bytes'])
+        p.append('toca %s' % ', '.join(hd['campos_tocados'][:8]))
+    if not p:
+        p.append('sem fatos diretos extraíveis (%d bytes; chama %d funções sem nome)' % (hd['tamanho_bytes'], hd.get('n_chamadas_sem_nome', 0)))
     return {'texto': '; '.join(p), 'evidencia': 'INFERIDO', 'origem': 'automatico'}
 
 
@@ -314,13 +323,14 @@ def md_tela(t):
     tab('Temporizadores', t['timers'], cols + [('Intervalo ms', lambda i: i.get('intervalo_ms') or '')])
     if t['handlers']:
         L.extend(['## Handlers (%d): o que cada um faz' % len(t['handlers']), '',
-                  '| Handler | Endereço | Bytes | Evidência | O que faz | Textos (chaves i18n) | APIs | Chama |', '|---|---|---:|---|---|---|---|---|'])
+                  '| Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |', '|---|---|---:|---|---|---|---|---|'])
         for n, hd in t['handlers'].items():
             d = hd['o_que_faz']
+            ind = ', '.join((hd['mensagens_indiretas'][:4] + [a.split('!')[1] for a in hd['apis_indiretas'][:4]]))
             L.append('| `%s`%s | %s | %d | %s | %s | %s | %s | %s |' % (
                 n, ' (sem evento no DFM)' if hd.get('sem_evento_no_dfm') else '', hd['endereco'], hd['tamanho_bytes'], d['evidencia'],
-                d['texto'].replace('|', '\\|'), ', '.join((hd['mensagens'] + hd['mensagens_indiretas'])[:6]),
-                ', '.join((hd['apis'] + hd['apis_indiretas'])[:5]), ', '.join(hd['chamadas_nomeadas'][:5])))
+                d['texto'].replace('|', '\\|'), ', '.join(hd['mensagens'][:6]),
+                ', '.join(a.split('!')[1] for a in hd['apis'][:6]), ind))
         L.append('')
     return '\n'.join(L)
 

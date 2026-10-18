@@ -47,4 +47,19 @@ class RuntimeSnapshotBusTest {
         copy.getJSONObject("data").put("fuel", "PETROL")
         assertEquals("GNV", bus.presentJson().getJSONObject("data").getString("fuel"))
     }
+
+    @Test
+    fun `publisher cannot mutate the published snapshot and each read is its own copy`() {
+        val bus = RuntimeSnapshotBus()
+        val payload = JSONObject().put("fuel", "GNV").put("nested", JSONObject().put("a", 1))
+        val revision = bus.publishPresent(payload)
+        payload.put("fuel", "PETROL")
+        payload.getJSONObject("nested").put("a", 2)
+        val first = bus.presentJson()
+        first.getJSONObject("data").getJSONObject("nested").put("a", 3)
+        val second = bus.presentJson()
+        assertEquals("GNV", second.getJSONObject("data").getString("fuel"))
+        assertEquals(1, second.getJSONObject("data").getJSONObject("nested").getInt("a"))
+        assertEquals(revision, second.getLong("revision"))
+    }
 }

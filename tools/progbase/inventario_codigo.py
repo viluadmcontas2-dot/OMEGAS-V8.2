@@ -21,6 +21,7 @@ from inventario_comum import Binario, RAIZ, SAIDA, achar_exe, escrever, escrever
 import inventario_rtti as rtti  # noqa: E402
 
 COBERTURA = os.path.join(RAIZ, 'tools', 'progbase', 'dados', 'cobertura_externa.json')
+NOMES_MANUAIS = os.path.join(RAIZ, 'tools', 'progbase', 'dados', 'nomes_manuais.json')
 HEX = re.compile(r'^0x[0-9a-f]+$')
 TERMINA = {'ret', 'retn', 'jmp', 'int3', 'ud2', 'hlt'}
 PROLOGOS = (b'\x55\x8b\xec', b'\x53\x56', b'\x56\x57', b'\x53\x8b', b'\x56\x8b', b'\x57\x8b', b'\x83\xc4', b'\x33\xc0', b'\x8b\x44\x24',
@@ -225,6 +226,7 @@ def resumo_funcao(cod, a, fim, nomes, campos_classe, vmts, nomes_vmt):
     b = cod.b
     ins = decodificar(cod, a, fim)
     chamadas, apis, strs, idx, campos, vm = set(), set(), [], [], set(), set()
+    saltos = []
     tinha = {}
     for k, (ad, sz, mn, op) in enumerate(ins):
         if mn == 'call':
@@ -245,6 +247,11 @@ def resumo_funcao(cod, a, fim, nomes, campos_classe, vmts, nomes_vmt):
                     nm = None
                 if nm:
                     apis.add(nm)
+        if mn == 'jmp' and HEX.match(op):
+            t = int(op, 16)
+            if not (a <= t < fim):
+                chamadas.add(t)
+                saltos.append(t)
         for m in re.finditer(r'0x[0-9a-f]{5,8}', op):
             v = int(m.group(0), 16)
             if v in vmts:
@@ -260,7 +267,8 @@ def resumo_funcao(cod, a, fim, nomes, campos_classe, vmts, nomes_vmt):
                 campos.add(campos_classe[d])
     return {'tamanho_bytes': (ins[-1][0] + ins[-1][1] - a) if ins else 0, 'n_instrucoes': len(ins),
             'chamadas': sorted(chamadas), 'apis': sorted(apis), 'literais': strs[:12],
-            'i18n_idx': idx, 'campos': sorted(campos), 'classes_referidas': sorted(vm)}
+            'i18n_idx': idx, 'campos': sorted(campos), 'classes_referidas': sorted(vm), 'saltos_externos': sorted(set(saltos)),
+            'so_ret': bool(ins) and len(ins) == 1 and ins[0][2] in ('ret', 'retn')}
 
 
 def usos_traducao(cod):
@@ -331,10 +339,18 @@ def fonte_nomes(b, cl):
             continue
         pai = by_vmt.get(c['pai_vmt'])
         pv = pai['vtable'] if pai else []
+        comp = 'TComponent' in c['cadeia']
         for i, a in enumerate(c['vtable']):
             if i < len(pv) and pv[i] == a:
                 continue
-            poe(int(a, 16), '%s.vmt[0x%X]' % (c['nome'], 4 * i), 'vtable')
+            if i == 14 and comp:   # slot 0x38: construtor virtual de TComponent (prólogo test dl,dl/ClassCreate verificado)
+                poe(int(a, 16), '%s.Create' % c['nome'], 'vtable-ctor')
+            else:
+                poe(int(a, 16), '%s.vmt[0x%X]' % (c['nome'], 4 * i), 'vtable')
+    if os.path.isfile(NOMES_MANUAIS):
+        for k, v in json.load(open(NOMES_MANUAIS, encoding='utf-8')).items():
+            if not k.startswith('_'):
+                nomes[int(k, 16)] = (v['nome'], 'manual-' + v['evidencia'])
     return nomes
 
 

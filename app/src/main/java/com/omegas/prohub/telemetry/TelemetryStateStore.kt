@@ -131,21 +131,31 @@ class TelemetryStateStore(private val historyLimit: Int = 720) {
             .toString()
     }
 
-    /** Snapshot mínimo para a WebView; não serializa o histórico. */
-    fun liveJson(): String = synchronized(lock) {
+    /**
+     * Quadro mínimo para a WebView (sem histórico) já como objeto: quem vai serializar ou ler direto não paga
+     * serializar + reler texto. Cópias rasas (o estado só troca objetos inteiros, nunca mexe por dentro), então o
+     * chamador pode alterar o topo do resultado sem tocar no estado guardado.
+     */
+    fun liveObject(): JSONObject = synchronized(lock) {
         JSONObject()
             .put("sequence", sequence.get())
             .put("updatedAt", telemetryUpdatedAt)
             .put("ageMs", if (telemetryUpdatedAt == 0L) -1 else System.currentTimeMillis() - telemetryUpdatedAt)
             .put("valid", valid)
             .put("sessionId", sessionId)
-            .put("live", JSONObject(telemetry.toString()))
-            .put("runtime", JSONObject(runtime.toString()))
-            .toString()
+            .put("live", copyObject(telemetry))
+            .put("runtime", copyObject(runtime))
     }
 
+    fun liveJson(): String = synchronized(lock) { liveObject().toString() }
+
     fun telemetryCopy(): JSONObject = synchronized(lock) {
-        if (valid) JSONObject(telemetry.toString()) else JSONObject()
+        if (valid) copyObject(telemetry) else JSONObject()
+    }
+
+    /** RPM e injeção de gasolina do quadro atual sem copiar nada; 0 e 0,0 quando não há quadro válido. */
+    fun rpmAndPetrolMs(): Pair<Int, Double> = synchronized(lock) {
+        if (valid) telemetry.optInt("rpm", 0) to telemetry.optDouble("petrol_ms", 0.0) else 0 to 0.0
     }
 
     /** Sequência atual sem copiar nada: toda mudança de estado (quadro, runtime, GPS, sessão) a incrementa. */

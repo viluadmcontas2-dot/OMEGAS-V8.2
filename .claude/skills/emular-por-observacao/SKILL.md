@@ -38,3 +38,6 @@ Regra de ouro: **se não dá para rodar o original, emule o que ele observa e o 
 ## Quando ainda assim faltar dado
 
 Entregue o menor pedido possível ao dono (um comando, um botão, uma captura) **depois** de ter preparado tudo, e diga exatamente o que a captura vai provar. Registre o resto como DESCONHECIDO.
+
+## Lição: reproduzir o código byte a byte (sem rodar o programa)
+Quando o programa não roda (licença/Windows), execute só as FUNÇÕES dele numa CPU emulada (Unicorn, x86-32): mapeie o .exe, monte um objeto falso com os campos que o código lê, stube as chamadas de sistema e capture o ponto de escrita serial. Prova: o quadro sai do código executado (teste de mutação muda 1 byte e o quadro muda) e bate com o fio. Nunca modifique o executável nem contorne licença. Ver tools/emulacao/cpu_setter_original.py.

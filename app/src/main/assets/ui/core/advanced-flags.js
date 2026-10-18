@@ -88,7 +88,7 @@
 
   function planAntiStallo(words, enable) {
     if (!Array.isArray(words) || words.length !== 2 || !words.every(isWord)) {
-      return { ok: false, error: 'Valor atual desconhecido: leia a ECU primeiro.' };
+      return { ok: false, error: 'Valor atual desconhecido: espere a leitura da central.' };
     }
     const after = [enable ? (words[0] | ANTI_MASK) : (words[0] & ~ANTI_MASK & 0xFFFF), words[1]];
     const frame = frameForVector(ANTI_ADDRESS, after);
@@ -117,11 +117,19 @@
     const hook = () => { if (!s.release && typeof addHook === 'function') s.release = addHook('fast', poll); };
     const set = (phase, message) => { s.phase = phase; if (message !== undefined) s.message = message; changed(); };
     const fail = (message, uncertain) => { unhook(); s.plan = null; s.token = null; s.uncertain = uncertain === true; set('error', message); };
-    const UNCERTAIN = 'Estado incerto — releia a ECU.';
+    // Texto de tela em linguagem simples (o que houve + o que fazer). O texto técnico do nativo (ACK, status 0xCA...) nunca vai à tela.
+    const HUMAN = {
+      unsure: 'Não sei como ficou na central. Espere a leitura voltar e confira o estado antes de tentar de novo.',
+      refused: 'A central não aceitou. Tente de novo.',
+      changed: 'O estado mudou na central. Nada foi gravado. Toque de novo para conferir.',
+      noLink: 'Não consegui falar com a central. Nada foi gravado. Confira o cabo e tente de novo.',
+      usbDrop: 'O cabo soltou durante a gravação. Não sei como ficou. Reconecte e confira o estado.',
+      mismatch: 'A conferência do app não bate com a da central. Nada foi gravado.',
+    };
 
     function prepare(enable) {
       const reply = parse(bridge.prepareAntiStalloFlag(enable));
-      if (reply.ok === false) { fail(reply.error || 'Não foi possível preparar.'); return; }
+      if (reply.ok === false) { fail(reply.error || HUMAN.noLink); return; }
       s.enable = enable;
       s.message = '';
       s.uncertain = false;
@@ -130,7 +138,7 @@
     }
     function confirm() {
       const reply = parse(bridge.confirmAntiStalloFlag(s.token));
-      if (reply.ok === false) { fail(reply.error || 'A gravação não começou.'); return; }
+      if (reply.ok === false) { fail(reply.error || HUMAN.noLink); return; }
       set('writing', '');
       hook();
     }
@@ -139,14 +147,14 @@
       if (status.enable !== s.enable || !plan.ok || plan.frameHex !== status.frameHex || !status.after ||
           plan.after[0] !== status.after[0] || plan.after[1] !== status.after[1]) {
         bridge.cancelAntiStalloFlag();
-        fail('O quadro preparado não confere com o calculado na tela; nada foi gravado.');
+        fail(HUMAN.mismatch);
         return;
       }
       unhook();
       if (plan.noop) {
         bridge.cancelAntiStalloFlag();
         s.plan = null;
-        set('idle', `O anti-apagão já está ${s.enable ? 'ligado' : 'desligado'}; nada a gravar.`);
+        set('idle', `O anti-apagão já está ${s.enable ? 'ligado' : 'desligado'}. Nada a gravar.`);
         return;
       }
       s.plan = plan;
@@ -161,24 +169,24 @@
         if (status.outcome === 'CONFIRMED' && check.ok) {
           s.undo = status.undo && status.undo.available ? { available: true, enable: status.undo.enable } : null;
           s.plan = null; s.token = null;
-          set('done', `Gravado e conferido. ECU confirmou: ${plan.enable ? 'ligado' : 'desligado'} (leitura de volta ${pair(plan.after)}).`);
+          set('done', `Pronto. Anti-apagão ${plan.enable ? 'ligado' : 'desligado'} e conferido na central.`);
           return;
         }
-        fail(`${UNCERTAIN} A ECU respondeu, mas a leitura de volta é diferente: ${check.ok ? 'não confirmada pelo app' : check.message}.`, true);
+        fail(HUMAN.unsure, true);
         return;
       }
       // Sem ACK com o valor intacto = recusa limpa; leitura de volta falha ou valor mudado = o app não sabe o que a ECU tem.
       if (status.outcome === 'READBACK_FAILED' || status.valueChanged === true) {
-        fail(`${UNCERTAIN} ${status.message || 'A gravação não foi conferida.'}`, true);
+        fail(HUMAN.unsure, true);
         return;
       }
-      fail(status.message || 'A ECU não confirmou a gravação; nada foi dado como gravado.');
+      fail(status.outcome === 'CHANGED_MEANWHILE' ? HUMAN.changed : status.outcome === 'NOT_ACKED' ? HUMAN.refused : HUMAN.noLink);
     }
     function poll() {
       const status = parse(bridge.getAntiStalloFlagStatus());
       if (s.phase === 'preparing') {
         if (status.state === 'READY') onReady(status);
-        else if (status.state === 'ERROR' || (status.state === 'DONE' && status.outcome)) fail(status.message || 'Não foi possível ler a ECU.');
+        else if (status.state === 'ERROR' || (status.state === 'DONE' && status.outcome)) fail(HUMAN.noLink);
       } else if (s.phase === 'writing' && status.state === 'DONE') onDone(status);
     }
     function cancel() {
@@ -195,7 +203,7 @@
         const preview = s.plan ? { beforeHex: pair(s.plan.before), afterHex: pair(s.plan.after),
           text: `Antes ${pair(s.plan.before)} → depois ${pair(s.plan.after)}. Só o anti-apagão muda; o resto fica igual.` } : null;
         return { phase: s.phase, message: s.message, uncertain: s.uncertain, preview, undo: s.undo ? { available: true, enable: s.undo.enable } : { available: false },
-          buttonLabel: s.phase === 'preview' ? 'Toque de novo para gravar' : s.phase === 'preparing' ? 'Lendo a ECU…' : s.phase === 'writing' ? 'Gravando e conferindo…' : null,
+          buttonLabel: s.phase === 'preview' ? 'Toque de novo para gravar' : s.phase === 'preparing' ? 'Lendo a central…' : s.phase === 'writing' ? 'Gravando e conferindo…' : null,
           confirmOn: s.phase === 'preview' ? (s.fromUndo ? 'undo' : 'switch') : null };
       },
       buttonLabel(entry) {
@@ -223,11 +231,13 @@
         prepare(s.undo.enable);
       },
       cancel,
+      /** Fecha o aviso de resultado (Pronto / erro / já está assim). O "desfazer" guardado continua. */
+      dismiss() { if (s.phase === 'done' || s.phase === 'error') s.phase = 'idle'; if (s.phase === 'idle') { s.message = ''; s.uncertain = false; } changed(); },
       otherTouch() { cancel(); },
       observe(state) {
         const away = state.route !== 'tools';
         const noUsb = state.usbConnected === false;
-        if (s.phase === 'writing' && noUsb) { fail('O USB caiu antes da resposta final: a gravação não foi conferida. Reconecte e confira o estado.'); return; }
+        if (s.phase === 'writing' && noUsb) { fail(HUMAN.usbDrop, true); return; }
         if (away || noUsb) cancel();
       },
       /** Pega o "desfazer" já guardado no nativo (a tela pode ter sido recriada). */

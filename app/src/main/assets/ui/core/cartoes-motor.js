@@ -1,0 +1,70 @@
+(function (root) {
+  'use strict';
+  const ns = root.OmegasUi = root.OmegasUi || {};
+
+  // Ferramentas, página "Motor e combustível": um cartão por ASSUNTO, em palavras do dono (2026-10-18). Só texto e estado; sem
+  // bit, código ou hexadecimal na frente. O que é técnico (palavra, máscara, código) vai em `tech` ("Ver detalhes técnicos").
+  // Desconhecido é "—", nunca desligado. Marcas: OBS-COD = bit da caixa no ProgBase (advanced-flags-data.js); INFERIDO = o modo da
+  // marcha lenta (rotação 0 + bit 0x0400 apagado = "A gás", visto em RE 0x4BFB1E/0x43763A).
+  const DASH = '—';
+
+  function stateOf(on) { return on === null ? DASH : on ? 'Ligado' : 'Desligado'; }
+
+  function build(params) {
+    const A = ns.AdvancedFlags;
+    const V = ns.AntiApagaoValores;
+    const p = params || {};
+    const bit = (flag, word, mask) => {
+      const w = A.wordsOf(p[flag]);
+      return w ? (w[word] & mask) !== 0 : null;
+    };
+    const row = (label, on) => ({ label, text: stateOf(on), on });
+    const techBit = (flag, word, mask, label) => {
+      const w = A.wordsOf(p[flag]);
+      return `${label}: ${flag} · palavra ${word} · máscara 0x${mask.toString(16).toUpperCase().padStart(4, '0')} · ${w ? ((w[word] & mask) !== 0 ? 'bit ligado' : 'bit desligado') : 'não lido'}`;
+    };
+    const num = v => (v === null || v === undefined ? DASH : String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '.'));
+    const giri = A.simpleParams(p).find(x => x.name === 'GIRI_PER_BENZINA');
+    const cutoffInj = A.simpleParams(p).find(x => x.name === 'NUMERO_INJ_BENZINA_CUTOFF');
+    const giriRaw = (p.GIRI_PER_BENZINA && p.GIRI_PER_BENZINA.state === 'OK' && Array.isArray(p.GIRI_PER_BENZINA.values) && p.GIRI_PER_BENZINA.values.length === 2) ? p.GIRI_PER_BENZINA.values : null;
+    const cutoffRaw = (p.NUMERO_INJ_BENZINA_CUTOFF && p.NUMERO_INJ_BENZINA_CUTOFF.state === 'OK' && Array.isArray(p.NUMERO_INJ_BENZINA_CUTOFF.values) && p.NUMERO_INJ_BENZINA_CUTOFF.values.length === 1) ? p.NUMERO_INJ_BENZINA_CUTOFF.values[0] : null;
+
+    // Marcha lenta: o modo vem de dois fatos lidos (rotação e um bit).
+    const idleBit = bit('FLAG_CONF1', 1, 0x0400);
+    let idleMode = DASH;
+    if (giriRaw && idleBit !== null) idleMode = idleBit ? 'A gasolina' : giriRaw[0] === 0 ? 'A gás' : 'Volta à gasolina';
+
+    const anti = bit('FLAG_CONF3', 0, A.ANTI_MASK);
+    const values = V.valuesOf(p.ANTI_STALLO);
+    const valuesState = values ? (values.every((v, i) => v === V.FACTORY[i]) ? 'De fábrica' : 'Mudados') : DASH;
+
+    const cards = [
+      { id: 'anti', kind: 'switch', title: 'Anti-apagão', line: 'Evita o motor apagar ao tirar o pé.', on: anti, stateText: stateOf(anti), rows: [], tech: [techBit('FLAG_CONF3', 0, A.ANTI_MASK, 'Anti-apagão')] },
+      { id: 'valores', kind: 'values', title: 'Valores do anti-apagão', line: 'Quando ele age e quando sai.', on: null, stateText: valuesState,
+        rows: V.FIELDS.map(f => ({ label: f.label, text: values ? `${num(values[f.index])} ${f.unit}` : DASH, on: null })),
+        tech: [`ANTI_STALLO · código ${V.ADDRESS} · 5 números de 16 bits: ${values ? values.join(' ') : 'não lido'}`] },
+      { id: 'corte', kind: 'open', title: 'Saída do corte', viewTitle: 'Saída do corte (quando solta o acelerador)', line: 'Quando você solta o acelerador.',
+        on: bit('FLAG_CONF3', 0, 0x0010), stateText: stateOf(bit('FLAG_CONF3', 0, 0x0010)), stateFor: 'Saída suave',
+        rows: [row('Saída suave do corte', bit('FLAG_CONF3', 0, 0x0010)), { label: 'Gasolina ao sair do corte', text: cutoffRaw === null ? DASH : `${num(cutoffRaw)} injeções`, on: null }, row('Corte das injeções extras', bit('FLAG_CONF2', 0, 0x0001))],
+        tech: [techBit('FLAG_CONF3', 0, 0x0010, 'Saída suave'), techBit('FLAG_CONF2', 0, 0x0001, 'Corte das injeções extras'), `NUMERO_INJ_BENZINA_CUTOFF · código 106 · ${cutoffInj ? cutoffInj.cells.join(' ') : DASH} (papel inferido pelo nome)`] },
+      { id: 'lenta', kind: 'open', title: 'Marcha lenta', viewTitle: 'Marcha lenta', line: 'Como o motor roda parado.', on: null, stateText: idleMode, stateFor: 'Modo',
+        rows: [{ label: 'Modo na marcha lenta', text: idleMode, on: null }, { label: 'Rotação que vale como marcha lenta', text: giriRaw ? (giriRaw[0] === 0 ? 'Não usada' : num(giriRaw[0])) : DASH, on: null }],
+        tech: [`GIRI_PER_BENZINA · código 161 · ${giri ? giri.cells.join(' ') : DASH}`, techBit('FLAG_CONF1', 1, 0x0400, 'Modo da marcha lenta (inferido)')] },
+      { id: 'troca', kind: 'open', title: 'Troca de gasolina para gás', viewTitle: 'Troca de gasolina para gás', line: 'Um cilindro por vez.',
+        on: bit('FLAG_CONF1', 1, 0x1000), stateText: stateOf(bit('FLAG_CONF1', 1, 0x1000)), stateFor: 'Um cilindro por vez',
+        rows: [row('Um cilindro por vez', bit('FLAG_CONF1', 1, 0x1000)), row('Troca automática', bit('FLAG_CONF3', 0, 0x8000)), row('Troca pela temperatura da água', bit('FLAG_CONF1', 1, 0x0001)), row('Troca pela temperatura do gás', bit('FLAG_CONF1', 1, 0x0002))],
+        tech: [techBit('FLAG_CONF1', 1, 0x1000, 'Um cilindro por vez'), techBit('FLAG_CONF3', 0, 0x8000, 'Troca automática'), techBit('FLAG_CONF1', 1, 0x0001, 'Temperatura da água'), techBit('FLAG_CONF1', 1, 0x0002, 'Temperatura do gás')] },
+      { id: 'injetores', kind: 'open', title: 'Injetores', viewTitle: 'Injetores', line: 'Controle e aquecimento.',
+        on: bit('FLAG_CONF1', 1, 0x0010), stateText: stateOf(bit('FLAG_CONF1', 1, 0x0010)), stateFor: 'Controle',
+        rows: [row('Controle dos injetores', bit('FLAG_CONF1', 1, 0x0010)), row('Aquecimento dos injetores', bit('FLAG_CONF2', 0, 0x0040)), row('Corrente maior na troca para gás', bit('FLAG_CONF2', 1, 0x0400))],
+        tech: [techBit('FLAG_CONF1', 1, 0x0010, 'Controle'), techBit('FLAG_CONF2', 0, 0x0040, 'Aquecimento'), techBit('FLAG_CONF2', 1, 0x0400, 'Corrente maior')] },
+      { id: 'volta', kind: 'open', title: 'Volta para gasolina', viewTitle: 'Volta para gasolina', line: 'Gasolina entra sozinha com o motor alto.',
+        on: bit('FLAG_CONF1', 1, 0x2000), stateText: stateOf(bit('FLAG_CONF1', 1, 0x2000)), stateFor: 'Entrada automática',
+        rows: [row('Gasolina entra sozinha em rotação alta', bit('FLAG_CONF1', 1, 0x2000)), row('Corte da bomba de gasolina', bit('FLAG_CONF3', 0, 0x0004)), row('Reativar a bomba na reserva', bit('FLAG_CONF3', 0, 0x0800))],
+        tech: [techBit('FLAG_CONF1', 1, 0x2000, 'Entrada automática'), techBit('FLAG_CONF3', 0, 0x0004, 'Corte da bomba'), techBit('FLAG_CONF3', 0, 0x0800, 'Reativar a bomba')] },
+    ];
+    return cards;
+  }
+
+  ns.CartoesMotor = { build, stateOf };
+})(typeof window !== 'undefined' ? window : globalThis);

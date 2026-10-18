@@ -2,68 +2,68 @@
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
 
-  // Ferramentas > Avançado (dono, 2026-10-18). Mesmo visual dos cartões de Ferramentas. Anti-apagão no topo; bits e códigos em "Ver detalhes".
-  // Sem relógio: a tela relê o que a ponte já tem a cada ciclo de dados; a gravação só acontece no toque duplo do dono.
+  // Ferramentas, página "Motor e combustível" (dono, 2026-10-18): um cartão por assunto, em palavras simples.
+  // Cada cartão: título, uma linha, o estado escrito (Ligado/Desligado) e UM controle. Interruptor = liga/desliga; campo com lápis = número que
+  // o dono pode digitar; botão com verbo = ação. Nada grava no 1º toque: o app lê a central, mostra "antes → depois" e só grava no 2º toque,
+  // confere lendo de volta e oferece Desfazer. Sem relógio: a tela relê o que a ponte já tem a cada ciclo de dados.
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   }
-  const DETAIL_TABS = [['FLAG_CONF1', 'Ajustes 1'], ['FLAG_CONF2', 'Ajustes 2'], ['FLAG_CONF3', 'Ajustes 3'], ['PARAMS', 'Números']];
-  const WHY_DISABLED = {
-    nobridge: 'Indisponível neste ambiente (simulação). Só funciona no app com a ECU.',
-    nousb: 'Conecte a ECU para ligar ou desligar.',
-    unread: 'Esperando a leitura da ECU (—). O botão libera quando o valor chegar.',
+  const WHY = {
+    nobridge: 'Só funciona no app, com a central.',
+    nousb: 'Conecte a central para mudar.',
+    unread: 'Esperando a leitura da central.',
   };
+  const PENCIL = '<svg class="pencil" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zm17.7-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>';
 
   class AdvancedPanel {
     constructor(store, api) {
       this.store = store;
       this.api = api;
       this.A = ns.AdvancedFlags;
+      this.V = ns.AntiApagaoValores;
+      this.M = ns.CartoesMotor;
       this.screen = document.getElementById('toolsDrawer');
       this.host = document.getElementById('toolAdvanced');
-      this.toggle = document.getElementById('toolAdvancedToggle');
-      this.open = false;
-      this.detail = null;      // null = tela principal; 'FLAG_CONF1'..'PARAMS' = Ver detalhes
+      this.layer = document.getElementById('toolsLayer');
+      this.open = true;          // a página 1 de Ferramentas existe sempre; só desenha quando a aba está à vista
+      this.view = 'home';        // 'home' | 'valores' | id de um cartão de leitura
       this.data = { read: false, params: {} };
+      this.drafts = {};          // índice -> texto digitado
       this.signature = '';
-      if (!this.host || !this.toggle || !this.A) return;
-      this.flow = this.A.createWriteFlow({
-        bridge: new Proxy({}, { get: (_, name) => (root.OmegasAutoCal ? root.OmegasAutoCal[name] : undefined) }), // ponte lida na hora do uso
-        addHook: (name, fn) => root.OmegasApp?.scheduler?.addHook?.(name, fn) || (() => {}),
-        onChange: () => { this.loadData(); this.render(); },
-      });
-      this.toggle.addEventListener('click', () => this.setOpen(!this.open));
+      this.layerSignature = '';
+      if (!this.host || !this.A || !this.V || !this.M) return;
+      const bridge = new Proxy({}, { get: (_, name) => (root.OmegasAutoCal ? root.OmegasAutoCal[name] : undefined) }); // ponte lida na hora do uso
+      const addHook = (name, fn) => root.OmegasApp?.scheduler?.addHook?.(name, fn) || (() => {});
+      this.flag = this.A.createWriteFlow({ bridge, addHook, onChange: () => { this.loadData(); this.render(); } });
+      this.vals = this.V.createValuesFlow({ bridge, addHook, onChange: () => { this.loadData(); this.render(); } });
       this.host.addEventListener('click', event => this.onClick(event));
-      // Qualquer toque fora dos botões de gravar/desfazer desarma a prévia (evento, nunca prazo).
+      this.host.addEventListener('input', event => this.onInput(event));
+      this.layer?.addEventListener('click', event => this.onClick(event));
+      // Um toque fora da janela de confirmação desarma a prévia (evento, nunca prazo). Toque DENTRO da janela (até no cartão, fora dos
+      // botões) não cancela: o 2º toque do toque duplo pode cair no cartão sem estragar a confirmação.
       document.addEventListener('click', event => {
-        const inside = this.open && this.host.contains(event.target);
-        const second = inside && (event.target.closest('[data-adv-confirm]') || (this.flow.view().confirmOn === 'undo' && event.target.closest('[data-adv-undo]')));
-        if (!second) this.flow.otherTouch();
+        if (this.layer && this.layer.contains(event.target)) return;
+        this.flag.otherTouch();
+        this.vals.otherTouch();
       }, true);
+      this.flag.adopt();
+      this.vals.adopt();
     }
 
-    setOpen(open) {
-      this.open = open === true;
-      if (!this.open) { this.flow.cancel(); this.detail = null; }
-      this.screen?.classList.toggle('advanced-open', this.open);
-      this.toggle.textContent = this.open ? 'Voltar às ferramentas' : 'Avançado';
-      const title = document.getElementById('toolsTitle');
-      if (title) title.textContent = this.open ? 'Anti-apagão e ajustes lidos da ECU' : 'Backup, sessões e saúde do app';
-      if (this.open) { this.flow.adopt(); this.refresh(); }
-      this.signature = '';
-      this.render();
-    }
-
-    /** Chamado pelo ciclo de dados da aba Ferramentas (app.js). */
+    /** Chamado pelo ciclo de dados (app.js). */
     refresh() {
-      if (!this.open || !this.flow) return;
+      if (!this.host || !this.flag) return;
       this.loadData();
       const state = this.store.get();
-      this.flow.observe({ route: state.route, usbConnected: state.status?.usbConnected === true ? true : state.status?.usbConnected === false ? false : undefined });
+      const usb = state.status?.usbConnected === true ? true : state.status?.usbConnected === false ? false : undefined;
+      this.flag.observe({ route: state.route, usbConnected: usb });
+      this.vals.observe({ route: state.route, usbConnected: usb });
+      if (state.route !== 'tools') { this.view = 'home'; return; }
       this.render();
     }
 
-    /** Lê da ponte o que a ECU já respondeu (sem pedir nada à ECU). */
+    /** Lê da ponte o que a central já respondeu (sem pedir nada). */
     loadData() {
       const bridge = root.OmegasAutoCal;
       let data = { read: false, params: {} };
@@ -75,117 +75,263 @@
 
     usb() { return this.store.get().status?.usbConnected === true; }
     param(name) { return (this.data.params || {})[name]; }
+    hasBridge() { const b = root.OmegasAutoCal; return !!b && typeof b.prepareAntiStalloFlag === 'function' && typeof b.prepareAntiStalloValues === 'function'; }
 
-    onClick(event) {
-      const button = event.target.closest('button');
-      if (!button) return;
-      if (button.matches('[data-adv-confirm]')) this.flow.tapSwitch(this.param('FLAG_CONF3'), this.usb());
-      else if (button.matches('[data-adv-undo]')) this.flow.tapUndo();
-      else if (button.matches('[data-adv-cancel]')) this.flow.cancel();
-      else if (button.matches('[data-adv-details]')) { this.detail = button.dataset.advDetails || 'FLAG_CONF3'; this.signature = ''; this.render(); }
-      else if (button.matches('[data-adv-tab]')) { this.detail = button.dataset.advTab; this.signature = ''; this.render(); }
-      else if (button.matches('[data-adv-back]')) { this.detail = null; this.signature = ''; this.render(); }
-    }
-
-    disabledReason(entry) {
-      if (!this.flow.canTap(entry, this.usb())) {
-        const bridge = root.OmegasAutoCal;
-        if (!bridge || typeof bridge.prepareAntiStalloFlag !== 'function') return WHY_DISABLED.nobridge;
-        if (!this.usb()) return WHY_DISABLED.nousb;
-        if (!this.A.wordsOf(entry)) return WHY_DISABLED.unread;
-      }
+    reason(kind) {
+      if (!this.hasBridge()) return WHY.nobridge;
+      if (!this.usb()) return WHY.nousb;
+      if (kind === 'flag' && !this.A.wordsOf(this.param('FLAG_CONF3'))) return WHY.unread;
+      if (kind === 'values' && !this.V.valuesOf(this.param('ANTI_STALLO'))) return WHY.unread;
       return '';
     }
 
+    // ---------- eventos ----------
+    onClick(event) {
+      const t = event.target.closest('button');
+      if (!t) return;
+      if (t.matches('[data-adv-switch]')) {
+        const entry = this.param('FLAG_CONF3');
+        const words = this.A.wordsOf(entry);
+        if (!words || this.reason('flag')) return;
+        this.vals.cancel();
+        this.flag.tapSwitch(entry, this.usb());
+      } else if (t.matches('[data-adv-confirm]')) {
+        const kind = t.dataset.advConfirm;
+        if (kind === 'values') this.vals.confirm();
+        else if (this.flag.view().confirmOn === 'undo') this.flag.tapUndo();
+        else this.flag.tapSwitch(this.param('FLAG_CONF3'), this.usb());
+      } else if (t.matches('[data-adv-cancel]')) { this.flag.cancel(); this.vals.cancel(); this.dismissLayers(); }
+      else if (t.matches('[data-adv-close]')) { this.flag.dismiss(); this.vals.dismiss(); }
+      else if (t.matches('[data-adv-undo-flag]')) { this.flag.dismiss(); this.flag.tapUndo(); }
+      else if (t.matches('[data-adv-undo-values]')) {
+        const undo = this.vals.view().undo;
+        if (undo.available) { this.vals.dismiss(); this.vals.ask('undo', this.diff(undo.values), this.usb()); }
+      } else if (t.matches('[data-adv-save]')) this.askSave();
+      else if (t.matches('[data-adv-factory]')) {
+        const current = this.V.valuesOf(this.param('ANTI_STALLO'));
+        const changes = this.V.factoryChanges(current);
+        this.flag.cancel();
+        if (Object.keys(changes).length) this.vals.ask('factory', changes, this.usb());
+      } else if (t.matches('[data-adv-open]')) { this.view = t.dataset.advOpen; if (this.view === 'valores') this.resetDrafts(); this.setView(); }
+      else if (t.matches('[data-adv-back]')) { this.view = 'home'; this.setView(); }
+      this.signature = '';
+      this.render();
+    }
+
+    dismissLayers() { this.flag.dismiss(); this.vals.dismiss(); }
+
+    onInput(event) {
+      const input = event.target.closest('input[data-adv-field]');
+      if (!input) return;
+      this.drafts[input.dataset.advField] = input.value;
+      this.paintFields();
+    }
+
+    resetDrafts() {
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      this.drafts = {};
+      this.V.FIELDS.forEach(f => { this.drafts[f.index] = values ? this.V.num(values[f.index]) : ''; });
+    }
+
+    /** O que o dono digitou que difere do valor lido (só campos válidos). */
+    pendingChanges() {
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const out = { changes: {}, invalid: false, errors: {} };
+      this.V.FIELDS.forEach(f => {
+        const text = this.drafts[f.index];
+        if (text === undefined) return;
+        const parsed = this.V.parseInput(text);
+        if (!parsed.ok) { out.invalid = true; out.errors[f.index] = parsed.error; return; }
+        const check = this.V.validate({ [f.index]: parsed.value });
+        if (!check.ok) { out.invalid = true; out.errors[f.index] = `Use um valor ${this.V.range(f).toLowerCase()}.`; return; }
+        if (values && parsed.value !== values[f.index]) out.changes[f.index] = parsed.value;
+      });
+      return out;
+    }
+
+    diff(target) {
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const out = {};
+      this.V.FIELDS.forEach(f => { if (!values || target[f.index] !== values[f.index]) out[f.index] = target[f.index]; });
+      return out;
+    }
+
+    askSave() {
+      const p = this.pendingChanges();
+      if (p.invalid || !Object.keys(p.changes).length || this.reason('values')) return;
+      this.flag.cancel();
+      this.vals.ask('edit', p.changes, this.usb());
+    }
+
+    /** Atualiza erro, aviso e botão sem refazer o HTML (o foco do campo digitado não pode se perder). */
+    paintFields() {
+      const p = this.pendingChanges();
+      this.V.FIELDS.forEach(f => {
+        const box = this.host.querySelector(`[data-field="${f.index}"]`);
+        if (!box) return;
+        const err = p.errors[f.index];
+        box.dataset.invalid = err ? 'true' : 'false';
+        box.dataset.changed = f.index in p.changes ? 'true' : 'false';
+        const input = box.querySelector('input');
+        if (input) input.setAttribute('aria-invalid', err ? 'true' : 'false');
+        const msg = box.querySelector('.num-error');
+        if (msg) msg.textContent = err || '';
+        const sec = box.querySelector('.num-seconds');
+        if (sec) { const parsed = this.V.parseInput(this.drafts[f.index]); sec.textContent = parsed.ok ? `= ${this.V.secondsText(parsed.value)}` : ''; }
+      });
+      const save = this.host.querySelector('[data-adv-save]');
+      if (save) save.disabled = p.invalid || !Object.keys(p.changes).length || !!this.reason('values');
+    }
+
+    setView() {
+      if (this.screen) this.screen.dataset.view = this.view === 'home' ? 'home' : 'view';
+    }
+
+    // ---------- desenho ----------
     render() {
-      if (!this.open || !this.host) return;
-      const view = this.flow.view();
-      const entry = this.param('FLAG_CONF3');
-      const signature = JSON.stringify([view, this.data, this.detail, this.usb(), this.flow.buttonLabel(entry)]);
+      if (!this.host || !this.flag) return;
+      const state = this.store.get();
+      if (state.route !== 'tools') return;
+      this.setView();
+      this.renderLayer();
+      const active = document.activeElement;
+      if (this.view === 'valores' && active && this.host.contains(active) && active.tagName === 'INPUT') { this.paintFields(); return; }
+      const fv = this.flag.view();
+      const vv = this.vals.view();
+      const signature = JSON.stringify([this.view, this.data, this.usb(), this.hasBridge(), fv.phase, vv.phase, vv.undo, this.view === 'valores' ? this.drafts : null]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
-      this.host.dataset.mode = this.detail ? 'detail' : 'main';
-      this.host.innerHTML = this.detail ? this.renderDetail() : this.renderMain(view, entry);
+      this.host.dataset.mode = this.view === 'home' ? 'home' : 'view';
+      const cards = this.M.build(this.data.params);
+      this.host.innerHTML = this.view === 'home' ? this.renderHome(cards) : this.view === 'valores' ? this.renderValues(cards) : this.renderReadOnly(cards.find(c => c.id === this.view));
+      if (this.view === 'valores') this.paintFields();
     }
 
-    renderMain(view, entry) {
-      const A = this.A;
-      const words = A.wordsOf(entry);
-      const on = words ? (words[0] & A.ANTI_MASK) !== 0 : null;
-      const stateText = on === null ? '—' : on ? 'Ligado' : 'Desligado';
-      const busy = view.phase === 'preparing' || view.phase === 'writing';
-      const reason = this.disabledReason(entry);
-      const canTap = !reason && !busy;
-      const confirming = view.confirmOn === 'switch';
-      const undoConfirming = view.confirmOn === 'undo';
-      const target = on === null ? '' : on ? 'Desligado' : 'Ligado';
-      const preview = view.preview ? `
-        <div class="adv-preview" data-testid="adv-preview">
-          <div class="adv-change"><span>${escapeHtml(on === null ? '—' : stateText)}</span><i aria-hidden="true">→</i><b>${escapeHtml(undoConfirming ? (on ? 'Desligado' : 'Ligado') : target)}</b></div>
-          <p>${escapeHtml(view.preview.text)}</p>
-        </div>` : '';
-      const level = view.phase === 'done' ? 'ok' : view.phase === 'error' ? 'warning' : '';
-      const message = view.message ? `<p class="adv-result" data-level="${level || 'info'}">${escapeHtml(view.message)}</p>` : '';
-      const hint = reason && !view.message ? `<p class="adv-hint">${escapeHtml(reason)}</p>` : '';
-      const fields = A.antiStallo(this.param('ANTI_STALLO'));
-      const simple = A.simpleParams(this.data.params);
-      return `
-        <section class="adv-card adv-main" data-state="${on === null ? 'unknown' : on ? 'on' : 'off'}">
-          <header><div><small>ANTI-APAGÃO</small><h3>${escapeHtml(stateText)}</h3></div><span>${on === null ? 'NÃO LIDO' : 'LIDO DA ECU'}</span></header>
-          <p class="adv-what">Evita o motor apagar quando você tira o pé.</p>
-          ${preview}${message}${hint}
-          <div class="adv-actions">
-            <button type="button" class="primary" data-adv-confirm ${canTap || confirming ? '' : 'disabled'}>${escapeHtml(this.flow.buttonLabel(entry))}</button>
-            ${confirming ? '<button type="button" class="quiet-button" data-adv-cancel>Cancelar</button>' : ''}
-            <button type="button" class="secondary" data-adv-undo ${(view.undo.available && !busy && this.usb()) || undoConfirming ? '' : 'disabled'}>${undoConfirming ? 'Toque de novo para desfazer' : 'Desfazer'}</button>
-            ${undoConfirming ? '<button type="button" class="quiet-button" data-adv-cancel>Cancelar</button>' : ''}
+    renderHome(cards) {
+      const busy = ['preparing', 'preview', 'writing'].includes(this.flag.view().phase);
+      return cards.map(card => {
+        if (card.kind === 'switch') {
+          const why = this.reason('flag');
+          const state = card.on === null ? 'unknown' : card.on ? 'on' : 'off';
+          return `
+        <article class="tool-tile" data-card="${card.id}" data-state="${state}">
+          <h3>${escapeHtml(card.title)}</h3>
+          <p class="tile-line">${escapeHtml(why || card.line)}</p>
+          <button type="button" class="tool-switch" role="switch" aria-checked="${card.on === true ? 'true' : 'false'}" aria-label="${escapeHtml(card.title)}: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
+            <span class="sw-track" aria-hidden="true"><i></i></span><b>${escapeHtml(card.stateText)}</b>
+          </button>
+        </article>`;
+        }
+        const go = card.kind === 'values' ? `Mudar valores ${PENCIL}` : 'Ver ›';
+        return `
+        <button type="button" class="tool-tile tool-open" data-card="${card.id}" data-adv-open="${card.id}" data-state="${card.on === null ? (card.stateText === '—' ? 'unknown' : 'neutral') : card.on ? 'on' : 'off'}">
+          <h3>${escapeHtml(card.title)}</h3>
+          <p class="tile-line">${escapeHtml(card.line)}</p>
+          <span class="tile-state">${escapeHtml(card.stateText)}</span>
+          <span class="tile-go">${go}</span>
+        </button>`;
+      }).join('');
+    }
+
+    renderValues(cards) {
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const why = this.reason('values');
+      const undo = this.vals.view().undo;
+      const fields = this.V.FIELDS.map(f => `
+        <div class="num-field" data-field="${f.index}" data-invalid="false" data-changed="false">
+          <label for="advField${f.index}">${escapeHtml(f.label)}</label>
+          <div class="num-box">
+            <input id="advField${f.index}" type="text" inputmode="numeric" pattern="[0-9.]*" autocomplete="off" data-adv-field="${f.index}" value="${escapeHtml(this.drafts[f.index] ?? (values ? this.V.num(values[f.index]) : ''))}" ${values ? '' : 'disabled'} aria-describedby="advHelp${f.index}">
+            ${PENCIL}
+            <span class="num-unit">${escapeHtml(f.unit)}</span>
           </div>
-        </section>
-        <section class="adv-card adv-fields">
-          <header><div><small>AJUSTES DO ANTI-APAGÃO</small><h3>Quando ele entra e sai</h3></div></header>
-          <ul class="adv-list">${fields.fields.map(f => `
-            <li><div><b>${escapeHtml(f.label)}</b><span>${escapeHtml(f.help)}</span></div><em>${escapeHtml(f.valueText)}${f.valueText === '—' ? '' : ` <small>${escapeHtml(f.unit)}</small>`}</em></li>`).join('')}
-          </ul>
-          <p class="adv-note">Nomes de cada campo: inferidos da tela do programa original; a ECU não os rotula.</p>
-        </section>
-        <section class="adv-card adv-others">
-          <header><div><small>OUTROS AJUSTES LIDOS</small><h3>Só para consulta</h3></div></header>
-          <ul class="adv-list">${simple.map(p => `
-            <li><div><b>${escapeHtml(p.label)}</b><span>${escapeHtml(p.help)}</span></div><em>${p.cells.map(escapeHtml).join(' · ')}</em></li>`).join('')}
-          </ul>
-          <button type="button" class="secondary adv-more" data-adv-details="FLAG_CONF3">Ver detalhes<span>bits, códigos e números lidos</span></button>
+          <p class="num-help" id="advHelp${f.index}">${escapeHtml(f.help)} <span class="num-seconds"></span></p>
+          <p class="num-meta">${escapeHtml(this.V.range(f))} · Valor de fábrica: ${escapeHtml(this.V.num(f.factory))}</p>
+          <p class="num-error" role="alert"></p>
+        </div>`).join('');
+      return `
+        <section class="tool-view values-view" data-card="valores">
+          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p>${escapeHtml(why || 'Toque num número, digite o novo valor e toque em Gravar.')}</p></header>
+          <div class="num-grid">${fields}</div>
+          <div class="tool-actions">
+            <button type="button" class="primary" data-adv-save disabled>Gravar valores</button>
+            <button type="button" class="secondary" data-adv-factory ${why ? 'disabled' : ''}>Restaurar fábrica</button>
+            ${undo.available ? '<button type="button" class="secondary" data-adv-undo-values>Desfazer a última gravação</button>' : ''}
+          </div>
+          <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${(cards.find(c => c.id === 'valores')?.tech || []).map(t => `<li>${escapeHtml(t)}</li>`).join('')}<li>Faixa e valor de fábrica: tela original do programa do fabricante; a ordem dos campos é inferida.</li></ul></details>
         </section>`;
     }
 
-    renderDetail() {
-      const A = this.A;
-      const tabs = DETAIL_TABS.map(([key, label]) => `<button type="button" class="${this.detail === key ? 'primary' : 'secondary'}" data-adv-tab="${key}">${label}</button>`).join('');
-      let body;
-      if (this.detail === 'PARAMS') {
-        const prog = A.progressioni(this.data.params);
-        const anti = A.antiStallo(this.param('ANTI_STALLO'));
-        body = `
-          <div class="adv-params">
-            <div><b>Progressões</b><small>código 308 · 4 linhas de 3 números · o que cada coluna significa é desconhecido</small>
-              <table><tbody>${prog.rows.map(r => `<tr><th>linha ${r.index + 1}</th>${r.cells.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-            <div><b>Anti-apagão (código 307)</b><small>5 números de 16 bits, na ordem lida</small>
-              <p class="adv-raw">${anti.fields.map(f => escapeHtml(f.valueText)).join(' · ')}</p>
-              <small>Rotação para gasolina (código 161) e injeções no corte (código 106) estão na tela anterior.</small></div>
-          </div>`;
-      } else {
-        const v = A.decodeFlags(this.detail, this.param(this.detail));
-        body = `
-          <p class="adv-caption"><b>${escapeHtml(v.name)}</b> · código ${v.code} · palavra 0: ${escapeHtml(v.hex[0])} · palavra 1: ${escapeHtml(v.hex[1])}</p>
-          <ul class="adv-bits">${v.rows.map(r => `
-            <li data-state="${r.state}"><span>${escapeHtml(r.label)}<small>palavra ${r.word} · bit 0x${r.mask.toString(16).toUpperCase().padStart(4, '0')}</small></span><b>${escapeHtml(r.stateText)}</b></li>`).join('')}
-          </ul>
-          <p class="adv-note">${v.unknownBits} dos 32 bits não têm função conhecida: aparecem como desconhecido (—), nunca como desligado.</p>`;
-      }
+    renderReadOnly(card) {
+      if (!card) return '';
+      const tech = card.tech.map(t => `<li>${escapeHtml(t)}</li>`).join('');
       return `
-        <section class="adv-card adv-detail">
-          <header><button type="button" class="secondary adv-back" data-adv-back>Voltar</button><div class="adv-tabs">${tabs}</div></header>
-          ${body}
+        <section class="tool-view read-view" data-card="${card.id}">
+          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>${escapeHtml(card.viewTitle || card.title)}</h3><p>Só mostra como está. O app não muda isto.</p></header>
+          <ul class="read-list">${card.rows.map(r => `<li data-state="${r.on === null ? 'neutral' : r.on ? 'on' : 'off'}"><span>${escapeHtml(r.label)}</span><b>${escapeHtml(r.text)}</b></li>`).join('')}</ul>
+          <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>
         </section>`;
+    }
+
+    /** Janela de confirmação e de resultado (cobre a tela; só os botões dela respondem). */
+    renderLayer() {
+      if (!this.layer) return;
+      const fv = this.flag.view();
+      const vv = this.vals.view();
+      const words = this.A.wordsOf(this.param('FLAG_CONF3'));
+      const on = words ? (words[0] & this.A.ANTI_MASK) !== 0 : null;
+      const sig = JSON.stringify([fv.phase, fv.message, fv.confirmOn, fv.undo, vv.phase, vv.message, vv.kind, vv.plan, vv.undo, on]);
+      if (sig === this.layerSignature) return;
+      this.layerSignature = sig;
+      let html = '';
+      let flagBusy = fv.phase !== 'idle' || fv.message;
+      let valsBusy = vv.phase !== 'idle' || vv.message;
+      if (valsBusy) html = this.layerValues(vv); else if (flagBusy) html = this.layerFlag(fv, on);
+      this.layer.hidden = !html;
+      this.layer.innerHTML = html;
+      if (html) { const first = this.layer.querySelector('button:not([disabled])'); if (first && document.activeElement && !this.layer.contains(document.activeElement)) first.focus({ preventScroll: true }); }
+    }
+
+    layerCard(title, body, buttons, level) {
+      return `<div class="tool-layer-card" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}" data-level="${level || ''}"><h3>${escapeHtml(title)}</h3>${body}<div class="tool-actions">${buttons}</div></div>`;
+    }
+
+    layerFlag(fv, on) {
+      const undoing = fv.confirmOn === 'undo';
+      const target = undoing ? (on ? 'Desligado' : 'Ligado') : (on ? 'Desligado' : 'Ligado');
+      const verb = target === 'Ligado' ? 'Ligar anti-apagão' : 'Desligar anti-apagão';
+      if (fv.phase === 'preparing') return this.layerCard('Lendo a central…', '<p>Só leitura. Nada foi gravado.</p>', '<button type="button" class="secondary" data-adv-cancel>Agora não</button>');
+      if (fv.phase === 'preview') {
+        return this.layerCard(`${verb}?`, `<p class="layer-change"><span>${on ? 'Ligado' : 'Desligado'}</span><i aria-hidden="true">→</i><b>${target}</b></p><p>O resto continua igual.</p>`,
+          `<button type="button" class="primary" data-adv-confirm="flag">${verb}</button><button type="button" class="secondary" data-adv-cancel>Agora não</button>`);
+      }
+      if (fv.phase === 'writing') return this.layerCard('Gravando e conferindo…', '<p>Não desconecte o cabo.</p>', '<button type="button" class="secondary" disabled>Aguarde</button>');
+      if (fv.phase === 'done') {
+        const undo = fv.undo.available ? `<button type="button" class="secondary" data-adv-undo-flag>Desfazer: voltar a ${fv.undo.enable ? 'Ligado' : 'Desligado'}</button>` : '';
+        return this.layerCard('Pronto', `<p class="adv-result" data-level="ok">${escapeHtml(fv.message)}</p>`, `<button type="button" class="primary" data-adv-close>Fechar</button>${undo}`, 'ok');
+      }
+      return this.layerCard(fv.phase === 'error' ? 'Não foi gravado' : 'Aviso', `<p class="adv-result" data-level="${fv.phase === 'error' ? 'warning' : 'info'}">${escapeHtml(fv.message)}</p>`, '<button type="button" class="primary" data-adv-close>Fechar</button>', fv.phase === 'error' ? 'warning' : '');
+    }
+
+    layerValues(vv) {
+      const V = this.V;
+      const title = vv.kind === 'factory' ? 'Restaurar valores de fábrica?' : vv.kind === 'undo' ? 'Desfazer a última gravação?' : 'Gravar estes valores?';
+      const verb = vv.kind === 'factory' ? 'Restaurar fábrica' : vv.kind === 'undo' ? 'Desfazer' : 'Gravar valores';
+      if (vv.phase === 'preparing') return this.layerCard('Lendo a central…', '<p>Só leitura. Nada foi gravado.</p>', '<button type="button" class="secondary" data-adv-cancel>Agora não</button>');
+      if (vv.phase === 'preview' && vv.plan) {
+        const lines = vv.plan.changed.map(i => {
+          const f = V.FIELDS[i];
+          const far = V.farFromFactory(i, vv.plan.after[i]) ? '<em>Longe do valor de fábrica. Confira antes de gravar.</em>' : '';
+          return `<li><span>${escapeHtml(f.label)}</span><b>${escapeHtml(V.num(vv.plan.before[i]))} <i aria-hidden="true">→</i> ${escapeHtml(V.num(vv.plan.after[i]))} ${escapeHtml(f.unit)}</b>${far}</li>`;
+        }).join('');
+        return this.layerCard(title, `<ul class="layer-list">${lines}</ul>`,
+          `<button type="button" class="primary" data-adv-confirm="values">${verb}</button><button type="button" class="secondary" data-adv-cancel>Agora não</button>`);
+      }
+      if (vv.phase === 'writing') return this.layerCard('Gravando e conferindo…', '<p>Não desconecte o cabo.</p>', '<button type="button" class="secondary" disabled>Aguarde</button>');
+      if (vv.phase === 'done') {
+        return this.layerCard('Pronto', `<p class="adv-result" data-level="ok">${escapeHtml(vv.message)}</p>`, '<button type="button" class="primary" data-adv-close>Fechar</button>', 'ok');
+      }
+      return this.layerCard(vv.phase === 'error' ? 'Não foi gravado' : 'Aviso', `<p class="adv-result" data-level="${vv.phase === 'error' ? 'warning' : 'info'}">${escapeHtml(vv.message)}</p>`, '<button type="button" class="primary" data-adv-close>Fechar</button>', vv.phase === 'error' ? 'warning' : '');
     }
   }
 
