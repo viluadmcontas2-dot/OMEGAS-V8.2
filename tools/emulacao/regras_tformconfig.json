@@ -48,7 +48,7 @@
     {"id": "G03", "generica": true, "classes": ["TEdit", "TNumericEdit", "TValueEditEx", "TMaskEdit", "TKeyComboBox", "TComboBox"],
      "prop": "Texto", "de": {"desconhecido": true},
      "marca": "DESCONHECIDO", "fonte": "valor vem da ECU em execucao; sem regra ou valor dado mostra '-' (Text do DFM e so placeholder de projeto)"},
-    {"id": "G04", "generica": true, "classes": ["TCheckBox", "TRadioButton"], "prop": "Checked",
+    {"id": "G04", "generica": true, "classes": ["TCheckBox", "TRadioButton", "TAebCheckBox"], "prop": "Checked",
      "de": {"desconhecido": true},
      "marca": "DESCONHECIDO", "fonte": "estado vem de bit de FLAG_CONFx; sem regra mapeada -> caixa '?' tracejada"},
     {"id": "G05", "generica": true, "prop": "Visible", "de": {"dfm": true},
