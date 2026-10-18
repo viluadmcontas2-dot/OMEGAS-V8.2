@@ -120,6 +120,11 @@
       if (table && html !== this.lastEquivalenceHtml) { table.innerHTML = html; this.lastEquivalenceHtml = html; }
     }
 
+    /** Consulta a sugestão na ponte e redesenha (gancho de status da rota Mapa K e fim de leitura). */
+    refreshSuggestion() {
+      this.renderMapSuggestion(ns.AutoCalApi?.equivalence?.()?.mapSuggestion);
+    }
+
     prepareMapSuggestion() {
       // Refaz a consulta no toque quando há ponte; o estado apresentado pode ter sido invalidado por curva/mapa novos.
       if (ns.AutoCalApi?.equivalence) this.renderMapSuggestion(ns.AutoCalApi.equivalence()?.mapSuggestion);
@@ -359,8 +364,8 @@
     }
 
     poll() {
-      this.renderMapSuggestion(ns.AutoCalApi?.equivalence?.()?.mapSuggestion);
       this.pollCurveToMap();
+      const wasReading = this.reading;
       if (this.reading) {
         const result = this.api.mapReadResult();
         if (!result?.busy && result?.state !== 'READING') {
@@ -384,6 +389,8 @@
         }
       }
       this.pollWrite();
+      // Leitura acabou de terminar: a sugestão é redesenhada já com o mapa novo e o botão liberado.
+      if (wasReading && !this.reading) this.refreshSuggestion();
     }
 
     buildGrid() {

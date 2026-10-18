@@ -57,7 +57,6 @@ class RefinementAutopilot(private val file: File? = null, private val clock: () 
         const val PROPOSAL_EXIT_EMPTY_TICKS = 3
         const val MIN_BAND_SAMPLES = RefinementJournal.MIN_BAND_SAMPLES
         const val MIN_STABLE_BANDS = 3
-        private const val MAX_TICK_MS = 10_000L
         /** Fases que merecem avisar o motorista uma vez. */
         val ALERT_PHASES = setOf("PROPOSTA_PRONTA", "RESTAURAR_TRECHO", "ESTAVEL")
     }

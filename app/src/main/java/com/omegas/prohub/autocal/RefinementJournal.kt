@@ -84,7 +84,6 @@ class RefinementJournal(private val file: File? = null, private val clock: () ->
         const val VERIFY_GIVE_UP_SAMPLES = 500
         /** Leituras novas da MUL_ACT ainda com a curva de antes da gravação toleradas como atrasadas. */
         const val STALE_READS_MAX = 1
-        private const val MAX_TICK_MS = 10_000L
         private const val SAVE_EVERY_MS = 60_000L
         const val STATUS_VERIFYING = "VERIFICANDO"
 

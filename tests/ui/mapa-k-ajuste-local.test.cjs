@@ -113,3 +113,32 @@ test('ponte invalida a sugestão entre render e toque: não prepara alvo antigo'
   assert.equal(previews.length, 0);
   assert.equal(screen.editor.selectionCount(), 0);
 });
+
+// Revisão 2026-10-18 (achado 7): a sugestão era redesenhada só dentro do poll() da leitura/gravação, e ANTES de a leitura
+// terminar (botão ficava desabilitado). Agora: redesenho pelo gancho de status da rota Mapa K e logo após a leitura.
+test('sugestão redesenha fora da leitura e o botão libera quando a leitura termina', () => {
+  const { screen, context } = harness(kotlinPreview);
+  const suggestion = { verdict: 'SUGERIR', reason: 'RESIDUAL_LOCAL', cells: [{ row: 3, column: 0, deltaPercent: 12 }] };
+  context.OmegasUi.AutoCalApi = { equivalence: () => ({ mapSuggestion: suggestion }) };
+  const button = context.document.getElementById('mapPrepareSuggestion');
+  button.disabled = true;
+  screen.refreshSuggestion();
+  assert.equal(button.disabled, false, 'tela parada também mostra a sugestão nova');
+
+  button.disabled = true;
+  Object.assign(screen, { buildGrid() {}, renderGrid() {}, renderEditor() {}, applyContext() {}, continueCurveToMap() {} });
+  screen.api.mapReadResult = () => ({ ok: true, state: 'COMPLETED', busy: false,
+    rows: Array.from({ length: 12 }, () => Array(12).fill(150)),
+    axes: { petrolBins: [2, 2.5, 3, 3.5, 4.5, 6, 8, 10, 12, 14, 16, 18], rpmBins: [850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500] } });
+  screen.api.mapWriteOperation = () => ({});
+  screen.reading = true;
+  screen.poll();
+  assert.equal(screen.reading, false);
+  assert.equal(button.disabled, false, 'no fim da leitura a sugestão é redesenhada já com a leitura concluída');
+});
+
+test('app.js redesenha a sugestão no gancho de status da rota Mapa K', () => {
+  const app = fs.readFileSync(path.join(ui, 'app.js'), 'utf8');
+  const status = app.slice(app.indexOf('function refreshStatus'), app.indexOf('function toolsEditing'));
+  assert.match(status, /route === 'map'[^\n]*refreshSuggestion/);
+});

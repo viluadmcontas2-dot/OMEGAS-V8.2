@@ -244,6 +244,8 @@
     const status = api.status() || {};
     const route = store.get().route;
     autoSyncEcu(route, status.usbConnected === true);
+    // Sugestão do Mapa K: redesenhada pela amostra de status da rota (não só durante leitura/gravação).
+    if (route === 'map' && instances.map && !instances.map.reading) instances.map.refreshSuggestion?.();
     const signature = JSON.stringify({ status, demo: api.isDemo() });
     if (signature !== previousStatusSignature) {
       previousStatusSignature = signature;
