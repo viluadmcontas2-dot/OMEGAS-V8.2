@@ -238,6 +238,18 @@
         ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: () => { this.render(true); if (this.preview) this.renderPreview(); }, env: { setTimeout: root.setTimeout.bind(root) } })
         : null;
       this.inject();
+      // Consulta histórica isolada: não alimenta piloto, gráfico, propostas ou escrita.
+      const historicalReady = () => ns.GasolineReference.load().then(reference => {
+        this.gasolineReference = reference;
+        this.renderHistoricalReference();
+      });
+      if (ns.GasolineReference) historicalReady();
+      else if (document.createElement && document.head) {
+        const script = document.createElement('script');
+        script.src = 'core/gasoline-reference.js';
+        script.onload = historicalReady;
+        document.head.appendChild(script);
+      }
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
         if (this.store.get().route !== 'refino') return;
         this.ticks += 1;
@@ -249,6 +261,7 @@
       // Ao entrar na aba, desenha na hora (sem esperar o próximo tick).
       let lastRoute = null;
       this.store.subscribe(state => {
+        if (state.route === 'refino') this.renderHistoricalReference();
         if (state.route === lastRoute) return;
         lastRoute = state.route;
         if (state.route !== 'refino') return;
@@ -585,6 +598,7 @@
       }
       setText('refinoHeadline', headline);
       setText('refinoNext', next);
+      this.renderHistoricalReference();
       label.manual = manualOffer(eq).label;
       for (const [name, selector] of [['preview', '[data-refino-preview]'], ['manual', '[data-refino-manual]'], ['undo', '[data-refino-undo]'], ['ok', '[data-refino-ok]']]) {
         const node = document.querySelector(selector);
@@ -593,6 +607,18 @@
         if (label[name] && node.textContent !== label[name]) node.textContent = label[name];
       }
       this.renderChart();
+    }
+
+    /** Abrir a tela, receber telemetria ou terminar a carga do JSON: nenhum timer novo. */
+    renderHistoricalReference() {
+      if (this.store.get().route !== 'refino' || !this.gasolineReference || this.operation.phase !== 'idle' || (this.mapFix && this.mapFix.state.phase !== 'idle')) return;
+      const original = this.eq?.autopilot?.next || '';
+      const live = this.store.get().telemetry || {};
+      const text = this.gasolineReference.text(original, live.load_bar ?? live.map_bar ?? live.mapBar, live.rpm);
+      const node = document.getElementById('refinoNext');
+      if (node && (/sem evidência de gasolina/i.test(original) || original === 'Rode alguns minutos na gasolina para criar a referência.')) {
+        node.textContent = text + this.gasNote(this.eq || {});
+      }
     }
 
     /** Por que nossos pontos de GNV recomeçaram (inteiros ou só onde a gravação mexeu). */
