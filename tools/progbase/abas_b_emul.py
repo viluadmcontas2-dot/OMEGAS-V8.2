@@ -536,6 +536,18 @@ class Sessao:
         m.contagem_stubs = {}
         m._prev = None
 
+    def estado_dono(self):
+        """Estado do TStreamDati que o ProgBase teria com a ECU do dono (OBS-FIO do log):
+        modelo = 2º byte da identificação (`53 04 FE 4F 45 0B`) = 0x4F; MASK_FUNCTION (SC 194) nos 30 dwords de
+        [SD+0x29EC] e [SD+0x2A64]=1 (máscara válida). Sem log, só o modelo."""
+        est = {0x271D: (1, 0x4F)}
+        mf = self.tab_ecu.get(194, {}).get('vetor')
+        if mf:
+            for i, b in enumerate(mf[:30]):
+                est[0x29EC + 4 * i] = (4, b)
+            est[0x2A64] = (1, 1)
+        return est
+
     def cenario(self, lr=False, modelo=None, estado=None):
         """Volta ao estado inicial. lr=True liga [SD+0x80D] (família "LR"); modelo grava [SD+0x271D];
         estado = {offset: (tamanho, valor)} grava campos do TStreamDati."""

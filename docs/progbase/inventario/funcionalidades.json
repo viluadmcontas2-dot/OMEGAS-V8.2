@@ -1,0 +1,662 @@
+[
+ {
+  "app_tem": "parcial",
+  "base_app": "O app conecta por USB (MP48) e lê telemetria (STATUS.md); identificação completa (versão/tipo/serial) como no original não está documentada no app. INFERIDO.",
+  "categoria": "util_leigo",
+  "evidencia": [
+   "H:TFormMain.ActionConnettiExecute",
+   "H:TFormMain.ActionDisconnettiExecute",
+   "H:TFormMain.StatusBarMainDrawPanel",
+   "H:TFormMain.ActionAzzeraIdExecute"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ActionConnettiExecute` (0x004FB840)",
+   "`TFormMain.ActionDisconnettiExecute` (0x004FB858)",
+   "`TFormMain.StatusBarMainDrawPanel` (0x004FF7D4)",
+   "`TFormMain.ActionAzzeraIdExecute` (0x005039A0)"
+  ],
+  "id": "F01",
+  "marca": "OBS-COD",
+  "nome": "Conectar/desconectar e identificar a ECU (versão, tipo OMEGAS 4/EVO 360/EVO OBD/EVO L, número de série na barra de status)",
+  "o_que_e": "Conexão serial, identificação (GetIdentification/GetComFail) e mensagens de erro de conexão (MESSNOCONN, MESSERRCONN, MESSCHECKCONNECTION).",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormMain"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "instalacao",
+  "evidencia": [
+   "H:TFormMain.ActionApriExecute",
+   "H:TFormMain.ActionSalvaExecute",
+   "C:TFormMain.OpenDialog",
+   "C:TFormMain.SaveDialog"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ActionApriExecute` (0x004FE618)",
+   "`TFormMain.ActionSalvaExecute` (0x004FEA54)",
+   "componente `TFormMain.OpenDialog`",
+   "componente `TFormMain.SaveDialog`"
+  ],
+  "id": "F02",
+  "marca": "OBS-COD",
+  "nome": "Abrir e salvar configuração completa em arquivo (.lnc, .ldc, .lec, .lrc) com escolha do modelo de cilindros",
+  "o_que_e": "Backup/restauração da configuração inteira da ECU em arquivo próprio do fabricante.",
+  "observacao": "",
+  "risco": "Abrir só lê arquivo; aplicar na ECU é outro passo (F03).",
+  "tela": "TFormMain"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "perigoso",
+  "evidencia": [
+   "H:TFormMain.ActionApriConfExecute",
+   "H:TFormMain.ActionSalvaConfExecute",
+   "H:TFormFile.ButtonOkClick",
+   "H:TFormFile.FormActivate"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ActionApriConfExecute` (0x00500314)",
+   "`TFormMain.ActionSalvaConfExecute` (0x005000CC)",
+   "`TFormFile.ButtonOkClick` (0x004D9F30)",
+   "`TFormFile.FormActivate` (0x004D9968)"
+  ],
+  "id": "F03",
+  "marca": "DERIVADO",
+  "nome": "Carregar para a ECU / salvar da ECU a configuração pelo \"arquivo\" de configurações (árvore ConfigCNG/ConfigLPG)",
+  "o_que_e": "Navegador de configurações pré-prontas por tipo de combustível; ao confirmar, grava os parâmetros na ECU (com tela de espera TFormAttesa).",
+  "observacao": "",
+  "risco": "Escreve a configuração inteira da ECU: pode deixar o carro sem funcionar se o arquivo for errado.",
+  "tela": "TFormFile"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "perigoso",
+  "evidencia": [
+   "H:TFormMain.ActionProgrammaExecute",
+   "H:TFormMain.ActionUpdateExecute",
+   "H:TFormScarica.ButtonCambiaClick",
+   "I:MESSISTRUZPROG",
+   "I:MESSBATTLOW",
+   "I:MESSPROGOK",
+   "I:MESSPROGKO"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ActionProgrammaExecute` (0x004FDBD4)",
+   "`TFormMain.ActionUpdateExecute` (0x005035D4)",
+   "`TFormScarica.ButtonCambiaClick` (0x0050523C)",
+   "texto `MESSISTRUZPROG`",
+   "texto `MESSBATTLOW`",
+   "texto `MESSPROGOK`",
+   "texto `MESSPROGKO`"
+  ],
+  "id": "F04",
+  "marca": "OBS-COD",
+  "nome": "Reprogramar a ECU / atualizar firmware (busca de arquivos, preparação, gravação, tentativa novamente, aviso de bateria baixa)",
+  "o_que_e": "Fluxo de flash da ECU: conecta, identifica, procura firmware/configuração, grava e confirma; pede desligar a bateria 12V e religar em 10 s para entrar em boot.",
+  "observacao": "",
+  "risco": "Pode inutilizar (brickar) a ECU se interrompido; exige bateria boa e arquivo correto.",
+  "tela": "TFormScarica"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "perigoso",
+  "evidencia": [
+   "H:TFormMain.ActionResetDaPcExecute",
+   "H:TFormMain.ActionResetCentralinaExecute",
+   "I:MESSCONFERMARESET",
+   "I:MESSRESETOK",
+   "I:MESSRESETERROR"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ActionResetDaPcExecute` (0x00501248)",
+   "`TFormMain.ActionResetCentralinaExecute` (0x00501244)",
+   "texto `MESSCONFERMARESET`",
+   "texto `MESSRESETOK`",
+   "texto `MESSRESETERROR`"
+  ],
+  "id": "F05",
+  "marca": "INFERIDO",
+  "nome": "Reset geral da ECU a partir do PC",
+  "o_que_e": "Apaga/redefine os dados da ECU (a pergunta de confirmação existe na tabela de textos). O item de menu \"Reset ECU\" está vazio (só RET); a rotina real é uma ação sem menu.",
+  "observacao": "",
+  "risco": "Apaga calibração e configuração.",
+  "tela": "TFormMain"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "util_leigo",
+  "evidencia": [
+   "H:TFormDiagnosi.FormActivate",
+   "H:TFormDiagnosi.ButtonAzzeraErroriClick",
+   "H:TFormDiagnosi.ButtonAzzeraTempiClick",
+   "C:TFormDiagnosi.ListDiagnosi"
+  ],
+  "evidencia_resolvida": [
+   "`TFormDiagnosi.FormActivate` (0x004CD6A8)",
+   "`TFormDiagnosi.ButtonAzzeraErroriClick` (0x004D6694)",
+   "`TFormDiagnosi.ButtonAzzeraTempiClick` (0x004D6ADC)",
+   "componente `TFormDiagnosi.ListDiagnosi`"
+  ],
+  "id": "F06",
+  "marca": "OBS-COD",
+  "nome": "Diagnóstico: lista de falhas (\"(Código) descrição do erro\"), apagar erros, zerar tempos a gasolina/gás",
+  "o_que_e": "Leitura das falhas da ECU com descrição, apagar a memória de falhas, contadores de tempo de funcionamento a gasolina e a gás.",
+  "observacao": "",
+  "risco": "Ler é seguro; apagar falhas some com o histórico.",
+  "tela": "TFormDiagnosi"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "avancado",
+  "evidencia": [
+   "H:TFormDiagnosi.CheckSwitchOnDiagnosisClick",
+   "H:TFormDiagnosi.CheckListBoxFFClickCheck",
+   "H:TFormDiagnosi.ButtonResetFFClick"
+  ],
+  "evidencia_resolvida": [
+   "`TFormDiagnosi.CheckSwitchOnDiagnosisClick` (0x004D7E48)",
+   "`TFormDiagnosi.CheckListBoxFFClickCheck` (0x004D82C0)",
+   "`TFormDiagnosi.ButtonResetFFClick` (0x004D8360)"
+  ],
+  "id": "F07",
+  "marca": "INFERIDO",
+  "nome": "Diagnóstico de ligação (switch-on diagnosis) e quadro de congelamento (freeze frame)",
+  "o_que_e": "Habilita o diagnóstico na ignição e escolhe quais variáveis congelar quando ocorre uma falha.",
+  "observacao": "",
+  "risco": "Escreve opções na ECU.",
+  "tela": "TFormDiagnosi"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "perigoso",
+  "evidencia": [
+   "H:TFormDiagnosi.PanelOnClick",
+   "H:TFormDiagnosi.PanelOffClick",
+   "H:TFormDiagnosi.TimerTempiTimer"
+  ],
+  "evidencia_resolvida": [
+   "`TFormDiagnosi.PanelOnClick` (0x004D7774)",
+   "`TFormDiagnosi.PanelOffClick` (0x004D7664)",
+   "`TFormDiagnosi.TimerTempiTimer` (0x004D4BDC)"
+  ],
+  "id": "F08",
+  "marca": "DERIVADO",
+  "nome": "Exclusão (liga/desliga) de cada injetor de gás A..I e leitura dos tempos por injetor",
+  "o_que_e": "Desativa individualmente um injetor para teste; mostra tempos de injeção por cilindro.",
+  "observacao": "",
+  "risco": "Desligar injetor altera a mistura e pode danificar o motor se esquecido.",
+  "tela": "TFormDiagnosi"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "perigoso",
+  "evidencia": [
+   "H:TFormDiagnosi.PanelTestOnClick",
+   "H:TFormDiagnosi.PanelTestOffClick",
+   "H:TFormDiagnosi.FormClose",
+   "I:MESSERRORSETDIAGNOSYSTEST",
+   "I:LABELDIAGNOSIATTENTION"
+  ],
+  "evidencia_resolvida": [
+   "`TFormDiagnosi.PanelTestOnClick` (0x004D7888)",
+   "`TFormDiagnosi.PanelTestOffClick` (0x004D7C78)",
+   "`TFormDiagnosi.FormClose` (0x004D1B18)",
+   "texto `MESSERRORSETDIAGNOSYSTEST`",
+   "texto `LABELDIAGNOSIATTENTION`"
+  ],
+  "id": "F09",
+  "marca": "DERIVADO",
+  "nome": "Teste de saídas: eletroválvulas 1 e 2 e saída do comutador (On/Off)",
+  "o_que_e": "Aciona as saídas da ECU para teste de bancada/instalação; ao fechar a tela desliga os testes.",
+  "observacao": "",
+  "risco": "Acionar válvula de gás com motor parado/ligado: risco de vazamento.",
+  "tela": "TFormDiagnosi"
+ },
+ {
+  "app_tem": "parcial",
+  "base_app": "O app tem cartões do motor e telemetria ao vivo (assets/ui/core/cartoes-motor.js; Mp48TelemetryScale.kt); cobertura de todos os campos do original não verificada. INFERIDO.",
+  "categoria": "util_leigo",
+  "evidencia": [
+   "H:TFormVisualizza.Timer1Timer",
+   "H:TFormMain.ActionVisualizzaExecute"
+  ],
+  "evidencia_resolvida": [
+   "`TFormVisualizza.Timer1Timer` (0x0050B408)",
+   "`TFormMain.ActionVisualizzaExecute` (0x00501568)"
+  ],
+  "id": "F10",
+  "marca": "OBS-COD",
+  "nome": "Visualização em tempo real dos parâmetros do veículo (rpm, lambda 1/2, MAP, TPS, temperaturas água/gás, pressão, tempos de injeção, tensão dos injetores, estados benzina/gás/cut-off/sob chave)",
+  "o_que_e": "Painel de instrumentos do carro com todos os sensores lidos pela ECU.",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormVisualizza"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "perigoso",
+  "evidencia": [
+   "H:TFormVisualizza.ButtonCommutatoreClick"
+  ],
+  "evidencia_resolvida": [
+   "`TFormVisualizza.ButtonCommutatoreClick` (0x0050DD14)"
+  ],
+  "id": "F11",
+  "marca": "INFERIDO",
+  "nome": "Comutador manual gasolina/gás pelo PC",
+  "o_que_e": "Botão \"Comutador\" que força a troca de combustível.",
+  "observacao": "",
+  "risco": "Muda o combustível em uso com o carro ligado.",
+  "tela": "TFormVisualizza"
+ },
+ {
+  "app_tem": "parcial",
+  "base_app": "O app grava sessões (SessionRecorder.kt) em formato próprio; o formato DRT (.txt, XML acquisitionData) do original não é lido/gravado. INFERIDO.",
+  "categoria": "avancado",
+  "evidencia": [
+   "H:TFormVisualizza.MenuCominciaDrtClick",
+   "H:TFormVisualizza.MenuTerminaDrtClick",
+   "H:TFormVisualizza.MenuGraficoClick",
+   "C:TFormVisualizza.SaveDialogDrt",
+   "C:TFormVisualizza.OpenDialogDrt"
+  ],
+  "evidencia_resolvida": [
+   "`TFormVisualizza.MenuCominciaDrtClick` (0x0050D86C)",
+   "`TFormVisualizza.MenuTerminaDrtClick` (0x0050DB50)",
+   "`TFormVisualizza.MenuGraficoClick` (0x0050DC08)",
+   "componente `TFormVisualizza.SaveDialogDrt`",
+   "componente `TFormVisualizza.OpenDialogDrt`"
+  ],
+  "id": "F12",
+  "marca": "OBS-COD",
+  "nome": "Gravar aquisição em tempo real (DRT) em arquivo e reabrir em gráfico",
+  "o_que_e": "Gravação dos parâmetros ao vivo em arquivo de texto/XML com data e hora.",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormVisualizza"
+ },
+ {
+  "app_tem": "parcial",
+  "base_app": "O app tem gráficos do AutoCal, mas não um osciloscópio genérico de canais escolhidos. INFERIDO.",
+  "categoria": "avancado",
+  "evidencia": [
+   "H:TFormMain.Plot1Click",
+   "H:TFormGraficoScope.TimerTimer",
+   "H:TFormGraficoScope.btnSaveClick",
+   "H:TFormGraficoScope.btnLoadClick",
+   "H:TFormGraficoScope.btnExportImageClick",
+   "H:TFormGraficoScope.btnAutoRangeClick",
+   "H:TFormGraficoScope.ActionAddMarkerExecute"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.Plot1Click` (0x0050417C)",
+   "`TFormGraficoScope.TimerTimer` (0x004257E4)",
+   "`TFormGraficoScope.btnSaveClick` (0x004296EC)",
+   "`TFormGraficoScope.btnLoadClick` (0x0042996C)",
+   "`TFormGraficoScope.btnExportImageClick` (0x00429A98)",
+   "`TFormGraficoScope.btnAutoRangeClick` (0x00429DD8)",
+   "`TFormGraficoScope.ActionAddMarkerExecute` (0x004281FC)"
+  ],
+  "id": "F13",
+  "marca": "OBS-COD",
+  "nome": "Osciloscópio de sinais (gráfico em tempo real) com marcadores, zoom, faixa automática, legenda, carregar/salvar/exportar imagem",
+  "o_que_e": "Gráfico de qualquer variável lida da ECU contra o tempo, com marcadores (manuais, automáticos e da ECU).",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormGraficoScope"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "avancado",
+  "evidencia": [
+   "H:TFormGraficoDrt.MenuTracceClick",
+   "H:TFormGraficoDrt.MenuStampaClick",
+   "C:TFormGraficoDrt.PrintDialog1"
+  ],
+  "evidencia_resolvida": [
+   "`TFormGraficoDrt.MenuTracceClick` (0x004E6A84)",
+   "`TFormGraficoDrt.MenuStampaClick` (0x004E6A50)",
+   "componente `TFormGraficoDrt.PrintDialog1`"
+  ],
+  "id": "F14",
+  "marca": "OBS-COD",
+  "nome": "Gerir quais traços aparecem no gráfico e imprimir o gráfico",
+  "o_que_e": "Lista de traços com caixas de seleção e impressão (diálogo de impressão do Windows).",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormGraficoDrt"
+ },
+ {
+  "app_tem": "parcial",
+  "base_app": "O app tem AutoCal (nova calibração) e edição de Curva K/Mapa K; o roteiro guiado antigo \"Calibrazione automatica centralina\" e a edição por zonas com setas não existem como tal. INFERIDO.",
+  "categoria": "instalacao",
+  "evidencia": [
+   "H:TFormMain.OpenFormAutotaratura",
+   "H:TFormCalibra.TimerBlinkTimer",
+   "H:TFormCorrCalibra.ActionIncrementaZonaExecute",
+   "H:TFormCorrCalibra.ActionDecrementaZonaExecute",
+   "H:TFormCorrCalibra.DrawGridKDrawCell"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.OpenFormAutotaratura` (0x0050093C)",
+   "`TFormCalibra.TimerBlinkTimer` (0x004847A0)",
+   "`TFormCorrCalibra.ActionIncrementaZonaExecute` (0x004CCFFC)",
+   "`TFormCorrCalibra.ActionDecrementaZonaExecute` (0x004CD134)",
+   "`TFormCorrCalibra.DrawGridKDrawCell` (0x004CCD08)"
+  ],
+  "id": "F15",
+  "marca": "OBS-COD",
+  "nome": "Calibração automática antiga da central (tela TFormCalibra) e correção por zonas (TFormCorrCalibra: PgUp/PgDn)",
+  "o_que_e": "Roteiro guiado de calibração com leitura de lambda/pressão/temperaturas e ajuste de zona a zona da grade K.",
+  "observacao": "",
+  "risco": "Escreve calibração na ECU.",
+  "tela": "TFormCalibra"
+ },
+ {
+  "app_tem": "parcial",
+  "base_app": "O app edita Mapa K e Curva K; edição dos eixos (centros) não verificada. INFERIDO.",
+  "categoria": "avancado",
+  "evidencia": [
+   "H:TFormCentriCelle.ButtonOkClick",
+   "H:TFormCentriCelleK.ButtonOkClick",
+   "H:TFormRifAutocal.ButtonOkClick",
+   "H:TAutoCalUI.ActionAutoCalRifExecute"
+  ],
+  "evidencia_resolvida": [
+   "`TFormCentriCelle.ButtonOkClick` (0x00413524)",
+   "`TFormCentriCelleK.ButtonOkClick` (0x00413BFC)",
+   "`TFormRifAutocal.ButtonOkClick` (0x0051B910)",
+   "`TAutoCalUI.ActionAutoCalRifExecute` (0x005187A0)"
+  ],
+  "id": "F16",
+  "marca": "OBS-COD",
+  "nome": "Editar centros das células dos mapas (rpm × carga) e referências de mapa do AutoCal (K mín/máx)",
+  "o_que_e": "Define em quais rpm/pressões ficam as células dos mapas.",
+  "observacao": "",
+  "risco": "Escreve na ECU; muda o significado de todas as células.",
+  "tela": "TFormCentriCelle"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "instalacao",
+  "evidencia": [
+   "H:TFormLandiConnect.CheckEnableLandiConnectClick",
+   "H:TFormLandiConnect.CheckEnableGearClick",
+   "H:TFormLandiConnect.ButtonResetClick",
+   "H:TFormLandiConnect.DrawGridInjrTOfsTblDrawCell"
+  ],
+  "evidencia_resolvida": [
+   "`TFormLandiConnect.CheckEnableLandiConnectClick` (0x004ED424)",
+   "`TFormLandiConnect.CheckEnableGearClick` (0x004ED8B0)",
+   "`TFormLandiConnect.ButtonResetClick` (0x004EDA24)",
+   "`TFormLandiConnect.DrawGridInjrTOfsTblDrawCell` (0x004EC96C)"
+  ],
+  "id": "F17",
+  "marca": "OBS-COD",
+  "nome": "Landi Connect: telemetria/consumo, aprendizado de marchas, volume do tanque, vazão estática e offset dos injetores, zerar trip/totais",
+  "o_que_e": "Configuração do módulo de comunicação Landi Connect (consumo/nível) e da tabela de offsets dos injetores.",
+  "observacao": "",
+  "risco": "Escreve na ECU.",
+  "tela": "TFormLandiConnect"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "instalacao",
+  "evidencia": [
+   "H:TFormMain.ImageServiceClick",
+   "H:TFormService.CheckEnableServiceClick",
+   "H:TFormService.CheckServicePinClick",
+   "H:TFormService.ButtonNewPinClick",
+   "H:TFormService.ButtonAzzeraNumeroTagliandiEffettuatiClick",
+   "H:TFormService.FormClose"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ImageServiceClick` (0x00503FB0)",
+   "`TFormService.CheckEnableServiceClick` (0x0050843C)",
+   "`TFormService.CheckServicePinClick` (0x0050863C)",
+   "`TFormService.ButtonNewPinClick` (0x005088E8)",
+   "`TFormService.ButtonAzzeraNumeroTagliandiEffettuatiClick` (0x00508B44)",
+   "`TFormService.FormClose` (0x00508D28)"
+  ],
+  "id": "F18",
+  "marca": "OBS-COD",
+  "nome": "Gestão de revisões (tagliandi) com PIN: horas a gás até a revisão, revisões feitas, dados do instalador, inibir passagem a gás",
+  "o_que_e": "Lembrete de revisão pago pelo instalador, protegido por PIN (CryptoAPI) e com dados do instalador cifrados.",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormService"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "perigoso",
+  "evidencia": [
+   "H:TFormService.CheckDisableGasClick",
+   "H:TFormService.EditStandardKeyPress"
+  ],
+  "evidencia_resolvida": [
+   "`TFormService.CheckDisableGasClick` (0x005085CC)",
+   "`TFormService.EditStandardKeyPress` (0x00506D9C)"
+  ],
+  "id": "F19",
+  "marca": "INFERIDO",
+  "nome": "Inibir a passagem de gasolina para gás (e número de partidas a gás permitidas) por PIN",
+  "o_que_e": "Trava o carro em gasolina (modo de revisão vencida/emergência).",
+  "observacao": "",
+  "risco": "Impede o uso do gás: o dono pode ficar sem GNV.",
+  "tela": "TFormService"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "util_leigo",
+  "evidencia": [
+   "H:TFormSwitch.TrackBarLedChange",
+   "H:TFormSwitch.ComboBuzzerKeyPress",
+   "H:TFormSwitch.FormClose"
+  ],
+  "evidencia_resolvida": [
+   "`TFormSwitch.TrackBarLedChange` (0x00412CEC)",
+   "`TFormSwitch.ComboBuzzerKeyPress` (0x00412E5C)",
+   "`TFormSwitch.FormClose` (0x00412AB8)"
+  ],
+  "id": "F20",
+  "marca": "OBS-COD",
+  "nome": "Configuração do comutador: brilho do LED e som do buzzer",
+  "o_que_e": "Ajusta o LED do botão do comutador e o buzzer.",
+  "observacao": "",
+  "risco": "Baixo.",
+  "tela": "TFormSwitch"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "perigoso",
+  "evidencia": [
+   "H:TFormMain.ImageBeeClick",
+   "H:TAebBeeFormLight.ButtonScanClick",
+   "H:TAebBeeFormLight.ButtonProgramDongleClick",
+   "H:TAebBeeFormLight.ButtonProgramMcuClick",
+   "H:TAebBeeFormLight.ButtonChangePinClick"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ImageBeeClick` (0x004F917C)",
+   "`TAebBeeFormLight.ButtonScanClick` (0x00918BF4)",
+   "`TAebBeeFormLight.ButtonProgramDongleClick` (0x00919F80)",
+   "`TAebBeeFormLight.ButtonProgramMcuClick` (0x0091AE74)",
+   "`TAebBeeFormLight.ButtonChangePinClick` (0x00918158)"
+  ],
+  "id": "F21",
+  "marca": "INFERIDO",
+  "nome": "Comunicação sem fio Bee: varredura de rede e energia por canal, PIN, potência, conectar a dispositivo remoto, programar firmware do dongle e do MCU",
+  "o_que_e": "Gerenciador do adaptador sem fio (dongle) e dos módulos remotos, incluindo gravação de firmware por rádio.",
+  "observacao": "",
+  "risco": "Gravar firmware do dongle/MCU pode inutilizá-lo.",
+  "tela": "TAebBeeFormLight"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "avancado",
+  "evidencia": [
+   "H:TStrategiaPandaUI.chk_SP_EN_STRATEGIA_MINIMOClick",
+   "H:TStrategiaTempiMortiUI.UpDownGasAClick",
+   "H:TStrategiaTempiMortiUI.UpDownPetrolAClick",
+   "I:LANG_ID__SP__TITLE"
+  ],
+  "evidencia_resolvida": [
+   "`TStrategiaPandaUI.chk_SP_EN_STRATEGIA_MINIMOClick` (0x00522E08)",
+   "`TStrategiaTempiMortiUI.UpDownGasAClick` (0x00526154)",
+   "`TStrategiaTempiMortiUI.UpDownPetrolAClick` (0x00526114)",
+   "texto `LANG_ID__SP__TITLE`"
+  ],
+  "id": "F22",
+  "marca": "DERIVADO",
+  "nome": "Estratégias especiais de motor (Panda: habilitar mínimo, reconhecimento do clima, emulação do sensor de pressão; Tempi Morti: tempos mortos por injetor gás/gasolina)",
+  "o_que_e": "Telas embutidas (frames) de estratégias para o motor 169A4000: soglias de início/fim da estratégia e tempos mortos.",
+  "observacao": "",
+  "risco": "Escreve na ECU.",
+  "tela": "TStrategiaPandaUI"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "O app está em português; seleção de idioma não encontrada no app. INFERIDO.",
+  "categoria": "util_leigo",
+  "evidencia": [
+   "C:TFormMain.MenuSelLingua",
+   "I:__OPT_MENU_LANG"
+  ],
+  "evidencia_resolvida": [
+   "componente `TFormMain.MenuSelLingua`",
+   "texto `__OPT_MENU_LANG`"
+  ],
+  "id": "F23",
+  "marca": "OBS-COD",
+  "nome": "Troca de idioma (26 idiomas)",
+  "o_que_e": "Menu Configurações > Idioma com 26 idiomas (LANG_MAIN).",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormMain"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Busca por palavras-chave em app/src/main (assets/ui e java) não achou superfície de UI/protocolo equivalente; STATUS.md não a lista. INFERIDO.",
+  "categoria": "util_leigo",
+  "evidencia": [
+   "H:TFormMain.ActionArchivioExecute",
+   "H:TFormFile.TreeViewFileClick"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ActionArchivioExecute` (0x004FF6C4)",
+   "`TFormFile.TreeViewFileClick` (0x004DDC04)"
+  ],
+  "id": "F24",
+  "marca": "DERIVADO",
+  "nome": "Arquivo de instruções de montagem / esquemas em PDF dentro do programa",
+  "o_que_e": "Navegador de PDFs de montagem (TFormPdf com a biblioteca PDF embutida).",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormFile"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Não se aplica ao app (sem licença por PC). INFERIDO.",
+  "categoria": "instalacao",
+  "evidencia": [
+   "H:TAboutBox.ButtonRequestClick",
+   "H:TAboutBox.ButtonLoadLicenseClick",
+   "H:TAboutBox.ButtonDeleteLicenseClick",
+   "H:TAboutBox.OkButtonClick",
+   "H:TFormAggKey.FormShow",
+   "H:TFormMain.TimerUpdateTimer"
+  ],
+  "evidencia_resolvida": [
+   "`TAboutBox.ButtonRequestClick` (0x00482254)",
+   "`TAboutBox.ButtonLoadLicenseClick` (0x00481D40)",
+   "`TAboutBox.ButtonDeleteLicenseClick` (0x00481FF8)",
+   "`TAboutBox.OkButtonClick` (0x004813DC)",
+   "`TFormAggKey.FormShow` (0x0041199C)",
+   "`TFormMain.TimerUpdateTimer` (0x004F37F4)"
+  ],
+  "id": "F25",
+  "marca": "OBS-COD",
+  "nome": "Licença/registro, chave de hardware e consulta online (SÓ descrição; nada é contornado)",
+  "o_que_e": "O programa exige licença por PC (arquivo License.dat e código de registro no registro do Windows), mostra aviso de expiração da chave de hardware e consulta o servidor do fabricante.",
+  "observacao": "",
+  "risco": "",
+  "tela": "TAboutBox"
+ },
+ {
+  "app_tem": "nao",
+  "base_app": "Não se aplica ao app (atualização por APK). INFERIDO.",
+  "categoria": "instalacao",
+  "evidencia": [
+   "H:TFormMain.ActionAggiornaExecute"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ActionAggiornaExecute` (0x005035DC)"
+  ],
+  "id": "F26",
+  "marca": "OBS-COD",
+  "nome": "Atualizar programa e cartões/mapas (executa CopyFiles.exe)",
+  "o_que_e": "Lança utilitário auxiliar que copia arquivos de atualização.",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormMain"
+ },
+ {
+  "app_tem": "parcial",
+  "base_app": "O app tem editor de mapa (map-editor.js). Diálogos específicos do original não verificados. INFERIDO.",
+  "categoria": "avancado",
+  "evidencia": [
+   "H:TFormModMappa.EditValoreKeyPress",
+   "H:TFormModificaMappa.EditDataKeyPress",
+   "H:TFormRiferimenti.FormCloseQuery"
+  ],
+  "evidencia_resolvida": [
+   "`TFormModMappa.EditValoreKeyPress` (0x00969E80)",
+   "`TFormModificaMappa.EditDataKeyPress` (0x0050EF08)",
+   "`TFormRiferimenti.FormCloseQuery` (0x009744E0)"
+  ],
+  "id": "F27",
+  "marca": "OBS-COD",
+  "nome": "Pré-visualizar/editar célula de mapa (variação percentual, valor, referências) por diálogo",
+  "o_que_e": "Pequenos diálogos chamados pelo editor de mapa para alterar valor/variação/referências.",
+  "observacao": "",
+  "risco": "",
+  "tela": "TFormModMappa"
+ },
+ {
+  "app_tem": "parcial",
+  "base_app": "O app lê 33 parâmetros (param_snapshot) e grava só o anti-apagão (aba Avançado); as demais abas não existem no app. Detalhe das abas: docs/progbase/abas (outro agente).",
+  "categoria": "avancado",
+  "evidencia": [
+   "H:TFormMain.ActionConfExecute",
+   "H:TFormMain.OpenConfigWindow"
+  ],
+  "evidencia_resolvida": [
+   "`TFormMain.ActionConfExecute` (0x004F95F4)",
+   "`TFormMain.OpenConfigWindow` (0x004F9190)"
+  ],
+  "id": "F28",
+  "marca": "OBS-COD",
+  "nome": "Configuração do veículo em 33 abas (TFormConfig)",
+  "o_que_e": "Janela principal de parametrização: cambio, lambda, sensores, temperaturas, injetores, mapas K, etc.",
+  "observacao": "",
+  "risco": "Escreve parâmetros da ECU.",
+  "tela": "TFormConfig"
+ }
+]
