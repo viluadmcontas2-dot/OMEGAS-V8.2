@@ -17,7 +17,7 @@ env:
 
 concurrency:
   group: omegas-vermelho-apk-gated-${{ github.sha }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verify-build-publish:
@@ -51,11 +51,11 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          python3 -B tools/run_checks.py
+          python3 -B tools/run_checks.py 2>&1 | tee "${{ runner.temp }}/w6-contracts.log"
           ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
             -PomegasAbis=armeabi-v7a \
             --no-daemon \
-            --stacktrace
+            --stacktrace 2>&1 | tee "${{ runner.temp }}/w6-gradle.log"
 
       - name: Verify and hash APK
         id: apk
@@ -105,3 +105,15 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/w6-*.log
+            app/build/reports/
+            app/build/test-results/
+            build/reports/
+          if-no-files-found: warn
+          retention-days: 14
