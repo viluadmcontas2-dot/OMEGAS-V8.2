@@ -24,7 +24,7 @@ function rig({ writeState = 'BATCH_CONFIRMED', readbackValid = true, previewOk =
     mapWriteOperation: () => ({ ok: true, state: writeState, readbackValid, busy: false, startedAt: log.writes.length }),
   };
   const states = [];
-  const fix = new MapFix({ native, editor, onChange: s => states.push(s.phase), env: { setTimeout: fn => { timers.push(fn); return timers.length; }, now: () => 0 } });
+  const fix = new MapFix({ native, editor, onChange: s => states.push(s.phase), env: { subscribe: fn => { timers.push(fn); return () => { const i = timers.indexOf(fn); if (i >= 0) timers.splice(i, 1); }; } } });
   const flush = () => { while (timers.length) timers.shift()(); };
   return { fix, native, log, states, flush };
 }

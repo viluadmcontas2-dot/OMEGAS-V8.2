@@ -13,22 +13,19 @@
    *   (ACK + leitura de volta pela ponte); 6) "Desfazer" grava os valores de antes, também conferido.
    * Nenhuma conta de Mapa K é feita aqui; nada é gravado sem o toque. Estados: idle · reading · ready · writing · done · undone · failed.
    */
-  const POLL_MS = 300;
-  const TIMEOUT_MS = 60000;
   const finite = value => value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value);
 
   class MapFix {
     /**
      * @param native  ponte (startMapRead, mapReadResult, previewMapAdjustment, writeMap, mapWriteOperation)
      * @param editor  OmegasMapEditor.MapEditor (reset/load/snapshot/clearSelection/toggle/selectedCells/setTargetOverrides/buildReview)
-     * @param env     {setTimeout, now} para teste
+     * @param env     {subscribe} para teste
      */
     constructor({ native, editor, onChange, env }) {
       this.native = native;
       this.editor = editor;
       this.onChange = typeof onChange === 'function' ? onChange : () => {};
-      this.setTimeout = env?.setTimeout || (typeof setTimeout === 'function' ? setTimeout.bind(globalThis) : null);
-      this.now = env?.now || (() => Date.now());
+      this.subscribe = env?.subscribe || (fn => globalThis.OmegasApp.scheduler.addHook('fast', fn));
       this.state = { phase: 'idle' };
     }
 
@@ -103,22 +100,21 @@
     dismiss() { if (!this.busy) this.set({ phase: 'idle' }); }
 
     poll(read, onFinish, accept = () => true) {
-      const started = this.now();
+      let off = () => {};
       const tick = () => {
         const status = read() || {};
         const waiting = !accept(status) || status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''));
         if (waiting) {
-          if (this.now() - started > TIMEOUT_MS) { this.fail('Tempo limite aguardando a ECU.'); return; }
-          this.setTimeout(tick, POLL_MS);
           return;
         }
+        off();
         onFinish(status);
       };
-      this.setTimeout(tick, POLL_MS);
+      off = this.subscribe(tick);
     }
 
     fail(message) { this.set({ phase: 'failed', message: String(message || 'Falha') }); }
   }
 
-  return { MapFix, POLL_MS, TIMEOUT_MS };
+  return { MapFix };
 });

@@ -232,19 +232,12 @@
     if (route === 'curve' && instances.curve && (instances.curve.reading || instances.curve.writing)) instances.curve.poll();
   }
 
-  // Mapa K e Curva K se atualizam sozinhos: ao reconectar a ECU e a cada 15 s (leitura silenciosa) — sem botão Reler.
-  const AUTO_SYNC_MS = 15000;
+  // Reconexão é evento; entrar na aba já solicita a leitura daquela tela.
   let lastUsb = null;
-  let lastAutoSync = 0;
   function autoSyncEcu(route, online) {
-    const justConnected = online && lastUsb === false;
+    const justConnected = online && lastUsb !== true;
     lastUsb = online;
-    if (!online || (route !== 'curve' && route !== 'map')) return;
-    const screen = instances[route];
-    const now = Date.now();
-    if (!screen || typeof screen.autoSync !== 'function' || (!justConnected && now - lastAutoSync < AUTO_SYNC_MS)) return;
-    lastAutoSync = now;
-    screen.autoSync(justConnected);
+    if (justConnected && (route === 'curve' || route === 'map')) instances[route]?.autoSync?.(true);
   }
 
   function refreshStatus() {
@@ -296,13 +289,12 @@
       patch.sessionStatus = api.sessionStatus() || {};
       patch.logs = api.logs() || [];
       // Listar as gravações lê o disco (manifesto e tamanho de cada uma): não a cada 2 s. Só ao entrar na aba, quando
-      // a gravação começa/para, a cada 30 s ou quando algo pede atualização (omegas-refresh).
+      // a gravação começa/para, quando algo pede atualização (omegas-refresh).
       const sessionsKey = `${patch.sessionStatus.recording === true}:${patch.sessionStatus.sessionId ?? ''}`;
-      const now = Date.now();
-      if (!Array.isArray(state.sessions) || sessionsKey !== toolsSessionsKey || now - toolsSessionsAt > 30000) {
+      if (!Array.isArray(state.sessions) || sessionsKey !== toolsSessionsKey || toolsSessionsAt === 0) {
         patch.sessions = api.sessions() || [];
         toolsSessionsKey = sessionsKey;
-        toolsSessionsAt = now;
+        toolsSessionsAt = 1;
       }
     }
     if (Object.keys(patch).length) store.patch(patch);
@@ -411,4 +403,5 @@
 
   root.OmegasApp = { api, store, router, scheduler, screens: instances };
   initialize();
+  if (typeof root.dispatchEvent === 'function' && typeof Event === 'function') root.dispatchEvent(new Event('omegas-app-ready'));
 })(typeof window !== 'undefined' ? window : globalThis);

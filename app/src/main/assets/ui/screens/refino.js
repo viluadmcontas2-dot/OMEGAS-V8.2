@@ -32,8 +32,6 @@
     undo: 'Refino OMEGAS: desfazer última gravação',
   };
   const TITLES = { apply: 'Gravar curva refinada', restore: 'Restaurar pontos que pioraram', undo: 'Desfazer última gravação' };
-  const POLL_MS = 300;
-  const OPERATION_TIMEOUT_MS = 90000;
   // Dados do Refino a cada tick de status (1 s): antes 2 s + 5 amostras por faixa somavam ~3 s até o ponto aparecer (dono, 2026-10-13).
   const DATA_EVERY_TICKS = 1;
 
@@ -235,7 +233,7 @@
       this.lastRenderKey = '';
       // Gravar no Mapa K sem sair da tela (core/map-fix.js): o mesmo fluxo para engasgo e para diferença por RPM.
       this.mapFix = root.OmegasMapFix && root.OmegasMapEditor
-        ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: () => { this.render(true); if (this.preview) this.renderPreview(); }, env: { setTimeout: root.setTimeout.bind(root) } })
+        ? new root.OmegasMapFix.MapFix({ native: this.native, editor: new root.OmegasMapEditor.MapEditor(), onChange: () => { this.render(true); if (this.preview) this.renderPreview(); }, env: { subscribe: fn => this.scheduler.addHook('fast', fn) } })
         : null;
       this.inject();
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
@@ -334,7 +332,7 @@
             ? 'Certo: o Refino volta a esperar a ECU terminar.'
             : 'Você assumiu o Refino. Agora dá para gravar mesmo com a ECU no automático. Depois de gravar, mande a ECU reler o GNV (AutoCal › Reaprender GNV).' }
         : { level: 'warning', message: result.error || 'Não foi possível mudar. Nada foi alterado.' } });
-      root.setTimeout(() => this.refresh(true), 800);
+      this.refresh(true);
     }
 
     openPreview(undo) {
@@ -513,19 +511,17 @@
     }
 
     poll(onFinish) {
-      const started = Date.now();
+      let off = () => {};
       const tick = () => {
         const status = this.native.curveOperation() || {};
         if (status.busy === true || /QUEUED|READING|WRITING/.test(String(status.state || ''))) {
-          if (Date.now() - started > OPERATION_TIMEOUT_MS) { this.fail('Tempo limite aguardando a ECU.'); return; }
-          
-          root.setTimeout(tick, POLL_MS);
           return;
         }
+        off();
         if (status.ok === false || /FAILED|TIMEOUT/.test(String(status.state || ''))) { this.fail(status.error || 'A ECU recusou a operação.'); return; }
         onFinish(status);
       };
-      root.setTimeout(tick, POLL_MS);
+      off = this.scheduler.addHook('fast', tick);
     }
 
     fail(message) {
@@ -686,7 +682,7 @@
   function boot() {
     const app = root.OmegasApp;
     if (!app?.store || !app?.scheduler || !app?.api || !ns.AutoCalApi || !ns.AutoCalUxModel || !ns.AutoCalOriginal) {
-      root.setTimeout(boot, 50);
+      root.addEventListener?.('omegas-app-ready', boot, { once: true });
       return;
     }
     if (app.refino) return;

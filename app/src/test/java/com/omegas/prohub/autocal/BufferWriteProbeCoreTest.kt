@@ -20,7 +20,7 @@ class BufferWriteProbeCoreTest {
         private var reads = 0
 
         fun io() = Io(
-            readTimes = { reads += 1; if (behavior == Behavior.ACCEPT_THEN_REVERT && reads >= 3 && writes.size == 1) times[3] = 1003; times.copyOf() },
+            readTimes = { reads += 1; if (behavior == Behavior.AUTOMATCH_DURING && reads >= 3) { times.fill(0); counters.fill(0) }; if (behavior == Behavior.ACCEPT_THEN_REVERT && reads >= 3 && writes.size == 1) times[3] = 1003; times.copyOf() },
             readCounters = { counters.copyOf() },
             write = { index, raw ->
                 writes += index to raw
@@ -32,7 +32,6 @@ class BufferWriteProbeCoreTest {
                     else -> { times[index] = raw; ok() }
                 }
             },
-            pause = { if (behavior == Behavior.AUTOMATCH_DURING) { times.fill(0); counters.fill(0) } },
         )
 
         private fun ok() = WriteReply(true, false, "14 5F 01 04", "53 00 53", "ACK")
@@ -49,6 +48,7 @@ class BufferWriteProbeCoreTest {
         val ecu = FakeEcu()
         val result = BufferWriteProbeCore.run(ecu.io())
         assertEquals(Outcome.ACCEPTED_AND_HELD, result.outcome)
+        assertEquals(1 + BufferWriteProbeCore.SETTLE_READS, result.readbacks.size)
         assertEquals(3, result.band)
         assertEquals(1003, result.original)
         assertEquals(1011, result.target)

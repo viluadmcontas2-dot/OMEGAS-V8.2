@@ -155,7 +155,8 @@ class NativeAutoCalContract(unittest.TestCase):
         self.assertIn('refreshAcquisitionGroup(currentSession, probe)', self.monitor)
         self.assertIn('refreshReferenceGroup(currentSession, probe)', self.monitor)
         self.assertGreaterEqual(self.monitor.count('NativeAutoCalEpochGuard.sameEpoch(beforeEpoch, afterEpoch)'), 2)
-        self.assertIn('scheduleWithFixedDelay(::healthTick, 200L, 3000L', self.service)
+        self.assertNotIn('scheduleWithFixedDelay', self.service)
+        self.assertIn('scheduler.execute { healthTick() }', self.service)
 
     def test_native_maturity_is_read_only_banded_monotonic_and_deduplicated(self):
         self.assertIn('AutoCalProtocol.NUM_BUF_UPD_GAS', self.monitor)

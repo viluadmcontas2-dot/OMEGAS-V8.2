@@ -120,10 +120,10 @@ const noWait = () => Promise.resolve();
 test('etapa da curva: grava, confere e, repetida, não regrava (sem dobrar)', async () => {
   const out = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells: flat(160) });
   const ecu = fakeEcu(K.map(v => Math.round(v * 16384)));
-  const first = await writeCurveStage(ecu, nodesOf(out), { sleep: noWait });
+  const first = await writeCurveStage(ecu, nodesOf(out), { nextEvent: noWait });
   assert.equal(first.ok, true);
   assert.equal(ecu.state.writes, 1);
-  const second = await writeCurveStage(ecu, nodesOf(out), { sleep: noWait });
+  const second = await writeCurveStage(ecu, nodesOf(out), { nextEvent: noWait });
   assert.equal(second.ok, true);
   assert.equal(second.written, 0);
   assert.equal(ecu.state.writes, 1, 'a segunda tentativa vê a curva já no alvo e não grava');
@@ -133,12 +133,12 @@ test('etapa da curva: curva mudou desde o plano → não grava; falha de ECU →
   const out = balance({ tbp: TBP, k: K, rowMs: ROWS_MS, cells: flat(160) });
   const raw = K.map(v => Math.round(v * 16384));
   const drifted = fakeEcu(raw, { drift: true });
-  const a = await writeCurveStage(drifted, nodesOf(out), { sleep: noWait });
+  const a = await writeCurveStage(drifted, nodesOf(out), { nextEvent: noWait });
   assert.equal(a.ok, false);
   assert.equal(a.stale, true);
   assert.equal(drifted.state.writes, 0);
   const failing = fakeEcu(raw, { failWrite: true });
-  const b = await writeCurveStage(failing, nodesOf(out), { sleep: noWait });
+  const b = await writeCurveStage(failing, nodesOf(out), { nextEvent: noWait });
   assert.equal(b.ok, false);
   assert.match(b.error, /NAK/);
 });

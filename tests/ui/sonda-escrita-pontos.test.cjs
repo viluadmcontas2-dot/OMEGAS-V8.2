@@ -69,13 +69,15 @@ test('toque duplo: o primeiro só arma, o segundo chama a ponte', () => {
     getBufferWriteProbeStatus: () => JSON.stringify({ state: 'DONE', outcome: 'REFUSED' }),
   };
   const drawers = Object.create(context.OmegasUi.Drawers.prototype);
-  drawers.store = { patch() {} };
+  let hooks = 0;
+  context.OmegasApp = { scheduler: { addHook: () => { hooks += 1; return () => {}; } } };
+  drawers.store = { patch() {}, subscribe: () => () => {} };
   drawers.runBufferProbe();
   assert.equal(calls, 0, 'primeiro toque não escreve');
   assert.match(label.textContent, /Toque de novo/);
   drawers.runBufferProbe();
   assert.equal(calls, 1, 'segundo toque inicia a sonda');
   assert.equal(label.textContent, 'Rodando…');
-  clearTimeout(drawers.bufferProbeTimer);
+  assert.equal(hooks, 1, 'acompanha o resultado pelo agendador da bridge, sem timer');
   drawers.bufferProbeRunning = false;
 });

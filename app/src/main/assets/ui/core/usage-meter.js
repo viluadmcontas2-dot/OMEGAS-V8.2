@@ -15,7 +15,6 @@
    * deltas desde o último envio), que já viaja com a sessão para o Drive. Serve para decidir o que podar e, no futuro,
    * para análise do produto. Não cria timer: o envio pega carona nos ganchos do agendador e nos eventos de visibilidade.
    */
-  const FLUSH_EVERY_MS = 60_000;
   const MAX_KEYS = 200;
 
   const slug = text => String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32);
@@ -88,14 +87,13 @@
       }
       return ok;
     }
-    due(at = this.now()) { return at - this.lastFlushAt >= FLUSH_EVERY_MS; }
   }
 
   function boot(root) {
     if (!root.document || root.OmegasUsageMeterBooted) return;
     const attach = () => {
       const app = root.OmegasApp;
-      if (!app?.store || !app?.scheduler) { root.setTimeout(attach, 50); return; }
+      if (!app?.store || !app?.scheduler) { root.addEventListener?.('omegas-app-ready', attach, { once: true }); return; }
       root.OmegasUsageMeterBooted = true;
       const meter = new Meter();
       app.usage = meter;
@@ -108,14 +106,13 @@
         if (state.route === last) return;
         last = state.route;
         meter.route(state.route);
-        if (meter.due()) meter.flush(send);
+        meter.flush(send);
       }, true);
-      root.document.addEventListener('click', event => meter.tap(controlKey(event.target)), true);
-      app.scheduler.addHook('context', () => { if (meter.due()) meter.flush(send); });
+      root.document.addEventListener('click', event => { meter.tap(controlKey(event.target)); meter.flush(send); }, true);
       root.document.addEventListener('visibilitychange', () => { if (root.document.hidden) meter.flush(send); });
     };
     attach();
   }
 
-  return { Meter, controlKey, slug, boot, FLUSH_EVERY_MS };
+  return { Meter, controlKey, slug, boot };
 });

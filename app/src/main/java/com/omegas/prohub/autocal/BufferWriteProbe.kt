@@ -64,7 +64,6 @@ class BufferWriteProbe(
                     readTimes = { readVector(unit, AutoCalProtocol.PETR_INJ_TBUF_GAS.address, "sonda: tempo GNV") },
                     readCounters = { readVector(unit, AutoCalProtocol.NUM_BUF_UPD_GAS.address, "sonda: contadores GNV") },
                     write = { index, raw -> write(unit, index, raw) },
-                    pause = { Thread.sleep(it) },
                 ),
             )
         }
