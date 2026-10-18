@@ -78,10 +78,13 @@ function runBridgeFailure(appSource) {
 
 test('RED histórico: v8 deixa Ferramentas vazia quando a consulta auxiliar falha', () => {
   const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
-  const immediatePaint = "try { if (advanced) advanced.refresh(); else toolsUnavailable(); }";
-  assert.ok(current.includes(immediatePaint), 'seam de pintura imediata mudou');
-  const baseline = current.replace(immediatePaint, '// RED: tela não é pintada no toque');
-  assert.doesNotMatch(runBridgeFailure(baseline), /Anti-apagão/, 'a regressão precisa detectar o defeito antigo');
+  const immediatePaint = "if (route === 'tools') {\n        try { if (advanced) advanced.refresh(); else toolsUnavailable(); }";
+  const safeRead = "try { science = api.scienceSnapshotSince(scienceRevision) || {}; }\n      catch (error) { console.error('[OMEGAS] Leitura auxiliar indisponível', error); }";
+  assert.ok(current.includes(immediatePaint) && current.includes(safeRead), 'seam de pintura/leitura mudou');
+  const baseline = current
+    .replace(immediatePaint, "if (route === 'tools') {\n        try { /* RED: tela aguardava a leitura */ }")
+    .replace(safeRead, "science = api.scienceSnapshotSince(scienceRevision) || {};");
+  assert.doesNotMatch(runBridgeFailure(baseline), /Anti-apagão/, 'o mutante reproduz a aba vazia');
 });
 
 test('GREEN: Ferramentas desenha cartões apesar de falha na leitura auxiliar', () => {
