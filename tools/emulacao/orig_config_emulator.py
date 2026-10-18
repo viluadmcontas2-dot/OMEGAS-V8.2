@@ -21,7 +21,7 @@ import sys
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.normpath(os.path.join(AQUI, '..', '..'))
 DFM_PADRAO = os.path.join(RAIZ, 'docs', 'evidence', 'dfm-original', 'TFORMCONFIG.txt')
-I18N_PADRAO = '/home/user/protocolo-landi/dfm/i18n_all.json'
+I18N_PADRAO = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'docs', 'evidence', 'dfm-original', 'i18n_TFORMCONFIG.json')
 Y0_PADRAO, Y1_PADRAO = 1020, 1420          # faixa do PanelSubInjection mostrada
 BIT_ANTI_STALLO = 0x20                     # palavra 0 de FLAG_CONF3
 COR_HABILITADA, COR_DESABILITADA = 0x9B0000, 0x808080   # BGR (Delphi TColor)

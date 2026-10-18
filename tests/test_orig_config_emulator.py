@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(ROOT, 'tools', 'emulacao'))
 import orig_config_emulator as emu  # noqa: E402
 
 DFM = os.path.join(ROOT, 'docs', 'evidence', 'dfm-original', 'TFORMCONFIG.txt')
-I18N = '/home/user/protocolo-landi/dfm/i18n_all.json'
+I18N = os.path.join(ROOT, 'docs', 'evidence', 'dfm-original', 'i18n_TFORMCONFIG.json')
 FIXTURE = os.path.join(ROOT, 'tests', 'fixtures', 'config-iniettori-lognovo-v1.json')
 LOG = os.environ.get('PORTMON_LOGNOVO', '/tmp/claude-0/-home-user/57e20309-4640-5e31-b02d-4b2faf9cf2b3/'
                      'scratchpad/portmon/x/PortmonLOGNOVO.LOG')
