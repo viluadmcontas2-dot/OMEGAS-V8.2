@@ -16,6 +16,8 @@
 5. Auditoria REA da decompilação (verify_reconstruction, audit_residual_unknowns) + cópia de docs/progbase para o Drive (PROTOCOLO-LANDI) + enxugar repo/CI/testes (ponytail-audit). Codex volta ~23:55: usar ao máximo.
 6. Memória entre sessões: cada marco grava aprendizados (skills em .claude/skills, este arquivo)
 
+- [ ] Workflows novos sem legado (ci.yml + apk.yml) + tools/auditoria.py + AUDITORIA.json no job grafo (CONTRATO-CODEX §6)
+
 ## Regras permanentes
 App nunca grava sozinho (sempre 2 toques + leitura de volta). Nada por tempo. Não burlar licença. Não versionar .exe/DLL. Sem segredos.
 

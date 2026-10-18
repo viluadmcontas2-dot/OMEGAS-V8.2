@@ -24,3 +24,8 @@ Limpar menções ao fabricante/legado em app/ (comentários/textos); pesquisa fi
 3. Nunca mais abrir o .exe: tudo destrinchado, versionado, com evidence ids coerentes, grafo e artefato explorável.
 4. Pensar como 2026: usar telemetria para automatizar o que no original é manual, sem encher o app de função inútil.
 5. Economizar tokens: Codex ao máximo com inteligência; checkpoints para nunca refazer.
+
+## 6. Workflows e auto-auditoria (pedido do dono)
+- Substituir os workflows legados (`ci.yml` "OMEGAS VERMELHO/PLATINA", `verde-apk-now.yml`) por DOIS workflows novos, limpos e sem nome legado: `ci.yml` (testes JS/Python/Kotlin/lint + grafo) e `apk.yml` (build + artefato nomeado `OMEGAS-<versão>-<sha>.apk`). Atualizar tests/test_missao_final_contract.py (só 2 workflows). Remover todo texto/nome legado dos workflows.
+- Auto-auditoria barata a cada execução: `tools/auditoria.py` (idempotente, < 30 s) que gera `docs/handoff/AUDITORIA.json` com: testes verdes/vermelhos por grupo, itens de PENDENTE.md por estado, cobertura % da decompilação (COBERTURA.md), nº de evidence ids citados × existentes, nós do grafo × arquivos existentes, último SHA/CI. O job `grafo` do ci.yml roda isso e falha se algo citado não existir. PENDENTE.md é o único ledger: nenhum item pode ser removido — só marcado FEITO (com SHA/teste) ou BLOQUEADO (com causa + menor próximo passo).
+- Contrato de não-duplicação: antes de criar arquivo/função/teste, `graphify query` + grep; se existir, reaproveitar. Checkpoint PROGRESSO*.md atualizado antes de parar qualquer agente.
