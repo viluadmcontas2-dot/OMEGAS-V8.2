@@ -90,6 +90,7 @@ test('abrir cada aba carrega a tela dela (evento) e ela funciona; trocar antes d
       const depois = await scriptsCarregados(page);
       for (const f of POR_ABA[rota]) assert.ok(depois.includes(f), `${f} deveria carregar ao abrir a aba ${rota}`);
       assert.equal(await page.evaluate(() => window.OmegasApp.store.get().route), rota);
+      if (rota === 'map' || rota === 'refino') assert.equal(await page.evaluate(() => typeof window.OmegasWriteGate?.check), 'function', 'porta de gravação ativa na aba ' + rota);
       assert.equal(await page.evaluate(() => document.querySelectorAll('.screen.active').length), 1, 'uma tela ativa só');
     }
     // abre e sai na hora: nenhuma tela de aba que já saiu pode "puxar" a rota de volta nem estourar erro
@@ -229,8 +230,8 @@ test('200 trocas de aba: nós, ouvintes e timers voltam ao mesmo lugar (sem vaza
   } finally { await context.close(); }
 });
 
-test('celular pequeno 360x740: mesmo orçamento de arranque', { skip }, async () => {
-  const { context, page, erros } = await abrir({ width: 360, height: 740 });
+for (const vp of [{ width: 360, height: 740 }, { width: 1024, height: 600 }]) test(`${vp.width}x${vp.height}: mesmo orçamento de arranque`, { skip }, async () => {
+  const { context, page, erros } = await abrir(vp);
   try {
     const srcs = await scriptsCarregados(page);
     assert.ok(srcs.length <= ORCAMENTO.scriptsNoArranque, `scripts: ${srcs.length}`);

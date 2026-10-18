@@ -106,7 +106,7 @@ def construir(b, cl, cod, nomes, arvores, lbl, usos_i18n, desc):
     # xrefs a VMT de classes do programa: quem cria/usa a classe
     xref_vmt = {}
     for vm in vmt_form:
-        pat = struct.pack('<I', vm)
+        pat = struct.pack('<I', vm - 88)   # BCB: __classid(T) = endereço de vmt-88 (OBS-COD)
         pos = 0
         while True:
             k = b.code.find(pat, pos)
@@ -283,7 +283,7 @@ def md_tela(t):
         tr = tt['traducao']
         L.append('- Título: "%s"%s' % (tt['dfm'], (' — eng: "%s" / por: "%s"' % (tr['eng'], tr['por'])) if tr else ''))
     if t['aberta_por']:
-        L.append('- Aberta/criada por (xref à VMT, OBS-COD): %s' % ', '.join('`%s` (%s)' % (x['nome'] or x['funcao'], x['funcao']) for x in t['aberta_por']))
+        L.append('- Aberta/criada por (xref ao ponteiro de classe vmt-88, OBS-COD): %s' % ', '.join('`%s` (%s)' % (x['nome'] or x['funcao'], x['funcao']) for x in t['aberta_por']))
     else:
         L.append('- Aberta/criada por: nenhuma referência direta à VMT encontrada (DESCONHECIDO: criada por tabela/Application.CreateForm indireto).')
     L.append('')

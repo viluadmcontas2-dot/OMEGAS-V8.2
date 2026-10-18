@@ -95,6 +95,9 @@ test('botão carrega módulo antes da tela e possui texto explícito de prévia'
   const router=fs.readFileSync(path.join(root,'app/src/main/assets/ui/core/router.js'),'utf8');
   assert.ok(router.indexOf("'core/curve-smoothing.js'")>=0);
   assert.ok(router.indexOf("'core/curve-smoothing.js'")<router.indexOf("'screens/curve.js'"));
+  const grupo=/\n    curve: \[([^\]]*)\]/.exec(router);assert.ok(grupo,'grupo da aba curve');
+  assert.ok(grupo[1].indexOf('core/curve-smoothing.js')>=0&&grupo[1].indexOf('core/curve-smoothing.js')<grupo[1].indexOf('screens/curve.js'),'módulo dentro do grupo da aba, antes da tela');
+  assert.doesNotMatch(html,/curve-smoothing\.js|screens\/curve\.js/,'nada da Curva K no arranque');
 });
 
 test('sem curva, curva suave e restauração pendente não criam proposta',()=>{

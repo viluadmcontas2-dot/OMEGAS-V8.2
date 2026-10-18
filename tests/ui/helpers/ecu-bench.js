@@ -23,7 +23,7 @@
   function tamanhoPedido(buf) {
     if (!buf.length) return null;
     const low = buf[0] & 7;
-    if (low === 7) return buf.length < 2 ? null : buf[1] + 3;
+    if (low === 7) return buf.length < 3 ? null : buf[2] + 3; // estendido: 37, end. baixo, n+1, end. alto (decompilação do original)
     return low + 3;
   }
   function classify(frame) {
@@ -74,7 +74,7 @@
     applyWrite(p) {
       const op = p[0];
       let aLo, aHi, corpo;
-      if ((op & 7) === 7) { aLo = p[2]; aHi = p[3]; corpo = p.slice(4, -1); } else { aLo = p[1]; aHi = p[2]; corpo = p.slice(3, -1); }
+      if ((op & 7) === 7) { aLo = p[1]; aHi = p[3]; corpo = p.slice(4, -1); } else { aLo = p[1]; aHi = p[2]; corpo = p.slice(3, -1); }
       if (this.faults.corruptWrite) corpo = corpo.map((b, i) => (i === corpo.length - 1 ? b ^ 0x01 : b));
       const kVet = H(pedido(0x29, aLo, aHi));
       if (op >= 0x30 && op <= 0x37) {
@@ -227,6 +227,62 @@
       if (result.outcome === 'CONFIRMED') { bench.antiUndo = (p.before[0] & 0x20) !== 0; bench.antiUndoSession = p.session; }
       return antiOk();
     }
+    // ---- anti-apagão, os 5 números (AntiStalloParamsWriter + AntiStalloParamsCore)
+    const ANTI_V_MAX = [6000, 1000, 10000, 1000, 1000];
+    const antiVFrame = v => { const payload = v.flatMap(x => [x & 255, x >> 8]); const body = [0x37, 0x33, payload.length + 2, 0x01, ...payload]; return [...body, sum(body)]; };
+    const readAntiV = () => { const r = read(pedido(0x29, 0x33, 0x01)); const w = words(r.payload); return r.ok && w.length === 5 ? w : null; };
+    const setAntiVParam = v => { bench.params.ANTI_STALLO = { state: 'OK', values: v.slice() }; };
+    bench.antiVPending = null; bench.antiVStatus = { state: 'IDLE' }; bench.antiVUndo = null; bench.antiVUndoSession = 0; bench.heldV = null;
+    function antiVPrepare(changesJson) {
+      let ch; try { ch = JSON.parse(changesJson); } catch (_) { return antiFail('Pedido inválido.'); }
+      const keys = Object.keys(ch || {});
+      if (!keys.length) return antiFail('Nenhum número foi informado.');
+      for (const k of keys) {
+        const i = Number(k);
+        if (!/^\d+$/.test(k) || i > 4) return antiFail('Esse campo não existe.');
+        if (!Number.isInteger(ch[k])) return antiFail('O valor tem que ser um número inteiro.');
+        if (ch[k] < 0 || ch[k] > ANTI_V_MAX[i]) return antiFail(`O valor tem que ficar entre 0 e ${ANTI_V_MAX[i]}.`);
+      }
+      if (!bench.usb) return antiFail('USB desconectado');
+      const live = readAntiV();
+      if (!live) { bench.antiVStatus = { state: 'ERROR', message: 'Não consegui ler o módulo.' }; return antiOk(); }
+      setAntiVParam(live);
+      const after = live.slice(); keys.forEach(k => { after[Number(k)] = ch[k]; });
+      const changed = after.map((v, i) => (v !== live[i] ? i : -1)).filter(i => i >= 0);
+      const token = 'tv' + (++bench.opN);
+      bench.antiVPending = { token, before: live, after, changed, session: bench.session, frame: antiVFrame(after), noop: !changed.length };
+      bench.antiVStatus = { state: 'READY', token, before: live, after, changed, frameHex: H(antiVFrame(after)), noop: !changed.length };
+      return antiOk();
+    }
+    function antiVConfirm(token) {
+      const p = bench.antiVPending;
+      if (!p || p.token !== token) return antiFail('Não há conferência válida; refaça o toque.');
+      if (p.noop) return antiFail('Esses números já estão assim no módulo.');
+      if (!bench.usb || p.session !== bench.session) return antiFail('O cabo USB mudou desde a conferência; refaça o toque.');
+      bench.antiVPending = null; bench.antiVStatus = { state: 'WRITING' };
+      const cur = readAntiV();
+      if (!cur) return finishAntiV(p, { outcome: 'ERROR', message: 'Não consegui ler o módulo antes de gravar.' });
+      if (cur.some((v, i) => v !== p.before[i])) return finishAntiV(p, { outcome: 'CHANGED_MEANWHILE', message: 'Os números do módulo mudaram.' });
+      const reply = send(p.frame);
+      if (bench.hold) { bench.heldV = { p, reply }; return antiOk(); }
+      return resolveV(p, reply);
+    }
+    function resolveV(p, reply) {
+      bench.heldV = null;
+      const dec = decodeReply(p.frame, reply);
+      if (!dec.ok) { const back0 = readAntiV(); return finishAntiV(p, { outcome: 'NOT_ACKED', message: 'O módulo não confirmou.', valueChanged: !!back0 && back0.some((v, i) => v !== p.before[i]) }); }
+      const back = readAntiV();
+      if (!back) return finishAntiV(p, { outcome: 'READBACK_FAILED', message: 'A leitura depois de gravar falhou.' });
+      setAntiVParam(back);
+      const same = back.every((v, i) => v === p.after[i]);
+      return finishAntiV(p, same ? { outcome: 'CONFIRMED', message: 'Gravado e conferido no módulo.', readback: back } : { outcome: 'READBACK_DIVERGED', message: 'Os números lidos são outros.', readback: back });
+    }
+    function finishAntiV(p, result) {
+      bench.antiVStatus = { state: 'DONE', ...result, before: p.before, after: p.after, changed: p.changed, readback: result.readback || null, frameHex: H(p.frame) };
+      if (result.outcome === 'CONFIRMED') { bench.antiVUndo = p.before.slice(); bench.antiVUndoSession = p.session; }
+      return antiOk();
+    }
+    bench.releaseValuesWrite = () => { if (bench.heldV) resolveV(bench.heldV.p, bench.heldV.reply); };
     /** Termina uma gravação segurada (hold): a resposta da ECU chega agora. */
     bench.releaseWrite = () => { if (bench.held) resolveWrite(bench.held.p, bench.held.reply); };
 
@@ -348,6 +404,11 @@
       cancelAntiStalloFlag: () => { if (bench.antiStatus.state === 'READY') bench.antiStatus = { state: 'IDLE' }; bench.antiPending = null; return json({ ok: true }); },
       getAntiStalloFlagStatus: () => json({ ...bench.antiStatus, busy: false,
         undo: bench.antiUndo !== null && bench.antiUndoSession === bench.session && bench.usb ? { available: true, enable: bench.antiUndo } : { available: false } }),
+      prepareAntiStalloValues: json => antiVPrepare(String(json)),
+      confirmAntiStalloValues: token => antiVConfirm(String(token)),
+      cancelAntiStalloValues: () => { if (bench.antiVStatus.state === 'READY') bench.antiVStatus = { state: 'IDLE' }; bench.antiVPending = null; return json({ ok: true }); },
+      getAntiStalloValuesStatus: () => json({ ...bench.antiVStatus, busy: false,
+        undo: bench.antiVUndo && bench.antiVUndoSession === bench.session && bench.usb ? { available: true, values: bench.antiVUndo } : { available: false } }),
       prepareNativeAction: action => {
         if (!(action in ACTION_MODE)) return json({ ok: false, error: 'Ação não exposta nesta bancada: ' + action });
         bench.actionPrepared = { id: 'prep' + (++bench.prepN), action };
