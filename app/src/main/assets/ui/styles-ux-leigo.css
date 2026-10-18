@@ -208,3 +208,5 @@
 .recorded-session-list, .log-lines { max-height: none; overflow: hidden; }
 .sess-size .diagnostic-settings[open] .tile-go { display: none; }
 .sess-size .diagnostic-settings:not([open]) .tile-go { display: inline-flex; }
+.num-box { flex: 0 0 auto; }
+@media (max-height: 640px) { .num-grid { grid-auto-rows: auto; align-content: start; } }
