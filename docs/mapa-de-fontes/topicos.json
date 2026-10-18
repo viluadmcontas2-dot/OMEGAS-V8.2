@@ -13,14 +13,31 @@
         "tools/sessoes/apagoes_x_antistallo.py",
         "app/src/main/java/com/omegas/prohub/autocal/EcuParameterSnapshot.kt"
       ],
-      "protocolo_landi": ["dfm/i18n_all.json (chaves CHECKANTISTALLO, LABELANTISTALLO0..4)", "dfm/TSTREAMDATI.txt", "22-REGISTRO-PARAMETROS.md"],
-      "drive": ["DUMP (1SMZqx2Sd1HKooJ5GVCSuYDPvkCn6R0kH): formulários RT_RCDATA(10)__*.bin extraídos do ProgBase"],
+      "protocolo_landi": [
+        "dfm/i18n_all.json (chaves CHECKANTISTALLO, LABELANTISTALLO0..4)",
+        "dfm/TSTREAMDATI.txt",
+        "22-REGISTRO-PARAMETROS.md"
+      ],
+      "drive": [
+        "DUMP (1SMZqx2Sd1HKooJ5GVCSuYDPvkCn6R0kH): formulários RT_RCDATA(10)__*.bin extraídos do ProgBase"
+      ],
       "falta": "Onde a caixa 'Abilitazione anti-stallo' é gravada (código CheckAntiStalloClick): só no ProgBase.exe inteiro ou captura Portmon."
     },
     {
       "assunto": "ProgBase.exe (programa original) e partes extraídas",
-      "repo": [".claude/skills/emular-por-observacao/SKILL.md"],
-      "protocolo_landi": ["reverse/ghidra/*.c (handlers decompilados)", "tools/dfm.py", "tools/orig_emulator.py", "tools/ecu_emulator.py (se existir)", "00-LEIA-ME.md"],
+      "repo": [
+        "tools/obter_progbase.py",
+        "docs/mapa-de-fontes/progbase.json",
+        "tests/test_obter_progbase.py",
+        ".claude/skills/emular-por-observacao/SKILL.md"
+      ],
+      "protocolo_landi": [
+        "reverse/ghidra/*.c (handlers decompilados)",
+        "tools/dfm.py",
+        "tools/orig_emulator.py",
+        "tools/ecu_emulator.py (se existir)",
+        "00-LEIA-ME.md"
+      ],
       "drive": [
         "Progbase.exe 12,6 MB: id 1NZLR6P3CZw19j_orR6Wdy6mOFrMG0SHd (NÃO baixável pelo conector, >10 MB)",
         "Progbase.exe (cópia): id 1OO6mzKKD9QLopd-wwIwjcEQn4iEg--Q1",
@@ -28,11 +45,17 @@
         "DUMP/ (id 1SMZqx2Sd1HKooJ5GVCSuYDPvkCn6R0kH): formulários .bin, Resources_StringTable.txt (21 KB, baixável), ExportFunctions.txt (83 KB, baixável)",
         "ProgBase.exe.Dump.bin, Stri4ngs.txt, String5s.txt: ~12 MB cada, NÃO baixáveis"
       ],
-      "falta": "Para decompilar qualquer handler novo: o .exe precisa estar na máquina (zip ~5 MB resolve)."
+      "falta": "Decompilação do que ainda não foi lida (ex.: bit da caixa anti-stallo) está em docs/evidence/2026-10-18-anti-stallo-caixa-re.md quando o subagente concluir.",
+      "como_obter": "python3 tools/obter_progbase.py  (baixa pelo link direto do Drive, confere SHA-256, idempotente; o conector do Drive NÃO serve para arquivos >10 MB). Não versionar nem publicar em release do repositório público."
     },
     {
       "assunto": "Sessões reais (telemetria, eventos, curvas K)",
-      "repo": ["tests/fixtures/sessoes-uteis/LEIA-ME.md", "tests/fixtures/sessoes-uteis/drive-ids.json", "tools/sessoes/corpus.py", "docs/evidence/2026-10-18-quadro-gasolina-gnv-k.md"],
+      "repo": [
+        "tests/fixtures/sessoes-uteis/LEIA-ME.md",
+        "tests/fixtures/sessoes-uteis/drive-ids.json",
+        "tools/sessoes/corpus.py",
+        "docs/evidence/2026-10-18-quadro-gasolina-gnv-k.md"
+      ],
       "drive": [
         "Sessoes Uteis (1P4gTYUxCRetkdFD10aCjYHGIko33t3-J) e pacotes por riqueza (ids em drive-ids.json)",
         "Novas (1-I_WZ-dSRblOtSN4BpiUxI1SLqODykJz): 2026-10-16 13-42 (5,6 MB, limite do conector), 18-07, 18-38 (já analisada), aprendizado .omegas das 14-53, archive.zip"
@@ -41,25 +64,50 @@
     },
     {
       "assunto": "Gasolina × GNV × Curva K (de onde vêm os números)",
-      "repo": ["docs/evidence/2026-10-18-quadro-gasolina-gnv-k.md", "tools/sessoes/gerar_referencia_gasolina.py", "app/src/main/assets/ui/data/gasolina-referencia.json", "app/src/main/assets/ui/core/gasoline-reference.js"],
+      "repo": [
+        "docs/evidence/2026-10-18-quadro-gasolina-gnv-k.md",
+        "tools/sessoes/gerar_referencia_gasolina.py",
+        "app/src/main/assets/ui/data/gasolina-referencia.json",
+        "app/src/main/assets/ui/core/gasoline-reference.js"
+      ],
       "falta": "Mapa K por sessão ainda não cruzado nó a nó com a gasolina."
     },
     {
       "assunto": "AutoMatch manual, buffers e sonda de escrita",
-      "repo": ["docs/handoff/AUTOMATCH-MANUAL-2026-10-17.md", "docs/handoff/D1-REFINO-AUTOMATICO-2026-10-18.md", "app/src/main/java/com/omegas/prohub/autocal/BufferWriteProbeCore.kt"]
+      "repo": [
+        "docs/handoff/AUTOMATCH-MANUAL-2026-10-17.md",
+        "docs/handoff/D1-REFINO-AUTOMATICO-2026-10-18.md",
+        "app/src/main/java/com/omegas/prohub/autocal/BufferWriteProbeCore.kt"
+      ]
     },
     {
       "assunto": "Tudo por evento (nada por tempo) e regras do dono",
-      "repo": ["docs/handoff/EVENTOS-SEM-TEMPO.md", "docs/handoff/FECHAMENTO-2026-10-18.md", "tests/test_sem_tempo_como_gatilho.py", "AGENTS.md"]
+      "repo": [
+        "docs/handoff/EVENTOS-SEM-TEMPO.md",
+        "docs/handoff/FECHAMENTO-2026-10-18.md",
+        "tests/test_sem_tempo_como_gatilho.py",
+        "AGENTS.md"
+      ]
     },
     {
       "assunto": "Emulação por observação (receita)",
-      "repo": [".claude/skills/emular-por-observacao/SKILL.md"],
-      "protocolo_landi": ["tools/dfm.py", "tools/portmon_transacoes.py", "tools/orig_emulator.py", "tools/capture_state.py"]
+      "repo": [
+        ".claude/skills/emular-por-observacao/SKILL.md"
+      ],
+      "protocolo_landi": [
+        "tools/dfm.py",
+        "tools/portmon_transacoes.py",
+        "tools/orig_emulator.py",
+        "tools/capture_state.py"
+      ]
     },
     {
       "assunto": "Grafo de conhecimento (graphify)",
-      "repo": [".github/workflows/ci.yml (job grafo)", "tools/mapa_de_fontes.py", "docs/mapa-de-fontes/MAPA.md"],
+      "repo": [
+        ".github/workflows/ci.yml (job grafo)",
+        "tools/mapa_de_fontes.py",
+        "docs/mapa-de-fontes/MAPA.md"
+      ],
       "falta": "Extração semântica de docs (LLM) não roda na CI; o grafo da CI é de código e estrutura."
     }
   ]

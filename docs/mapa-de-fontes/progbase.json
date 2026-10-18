@@ -1,0 +1,10 @@
+{
+  "nome": "ProgBase.exe (programa original da Landi Renzo, v4.2.0.6)",
+  "bytes": 12643840,
+  "sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "origens": [
+    {"tipo": "drive", "id": "1OO6mzKKD9QLopd-wwIwjcEQn4iEg--Q1", "url": "https://drive.usercontent.google.com/download?id=1OO6mzKKD9QLopd-wwIwjcEQn4iEg--Q1&export=download&confirm=t"},
+    {"tipo": "drive", "id": "1NZLR6P3CZw19j_orR6Wdy6mOFrMG0SHd", "url": "https://drive.usercontent.google.com/download?id=1NZLR6P3CZw19j_orR6Wdy6mOFrMG0SHd&export=download&confirm=t"}
+  ],
+  "aviso": "Binário de terceiros: NÃO versionar nem publicar em release do repositório público. Baixe com tools/obter_progbase.py (confere tamanho e SHA-256; idempotente)."
+}

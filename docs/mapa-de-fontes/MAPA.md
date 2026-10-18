@@ -19,6 +19,9 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - **Falta:** Onde a caixa 'Abilitazione anti-stallo' é gravada (código CheckAntiStalloClick): só no ProgBase.exe inteiro ou captura Portmon.
 
 ## ProgBase.exe (programa original) e partes extraídas
+- No repo: tools/obter_progbase.py
+- No repo: docs/mapa-de-fontes/progbase.json
+- No repo: tests/test_obter_progbase.py
 - No repo: .claude/skills/emular-por-observacao/SKILL.md
 - No PROTOCOLO-LANDI: reverse/ghidra/*.c (handlers decompilados)
 - No PROTOCOLO-LANDI: tools/dfm.py
@@ -30,7 +33,8 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - No Drive: ProgBase (3).exe: id 1VL7Nq5KD2pJB-Ohchy1JG6qVvxRo6Oga
 - No Drive: DUMP/ (id 1SMZqx2Sd1HKooJ5GVCSuYDPvkCn6R0kH): formulários .bin, Resources_StringTable.txt (21 KB, baixável), ExportFunctions.txt (83 KB, baixável)
 - No Drive: ProgBase.exe.Dump.bin, Stri4ngs.txt, String5s.txt: ~12 MB cada, NÃO baixáveis
-- **Falta:** Para decompilar qualquer handler novo: o .exe precisa estar na máquina (zip ~5 MB resolve).
+- **Como obter:** python3 tools/obter_progbase.py  (baixa pelo link direto do Drive, confere SHA-256, idempotente; o conector do Drive NÃO serve para arquivos >10 MB). Não versionar nem publicar em release do repositório público.
+- **Falta:** Decompilação do que ainda não foi lida (ex.: bit da caixa anti-stallo) está em docs/evidence/2026-10-18-anti-stallo-caixa-re.md quando o subagente concluir.
 
 ## Sessões reais (telemetria, eventos, curvas K)
 - No repo: tests/fixtures/sessoes-uteis/LEIA-ME.md

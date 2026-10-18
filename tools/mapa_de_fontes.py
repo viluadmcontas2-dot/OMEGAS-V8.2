@@ -26,6 +26,8 @@ def render(topicos, inv):
         for chave, rotulo in (('repo', 'No repo'), ('protocolo_landi', 'No PROTOCOLO-LANDI'), ('drive', 'No Drive')):
             for item in t.get(chave, []):
                 out.append(f"- {rotulo}: {item}")
+        if t.get('como_obter'):
+            out.append(f"- **Como obter:** {t['como_obter']}")
         if t.get('falta'):
             out.append(f"- **Falta:** {t['falta']}")
         out.append('')
