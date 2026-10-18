@@ -31,13 +31,13 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - No PROTOCOLO-LANDI: tools/orig_emulator.py
 - No PROTOCOLO-LANDI: tools/ecu_emulator.py (se existir)
 - No PROTOCOLO-LANDI: 00-LEIA-ME.md
-- No Drive: Progbase.exe 12,6 MB: id 1NZLR6P3CZw19j_orR6Wdy6mOFrMG0SHd (NÃO baixável pelo conector, >10 MB)
+- No Drive: Progbase.exe 12,6 MB: id 1NZLR6P3CZw19j_orR6Wdy6mOFrMG0SHd (>10 MB: o conector não baixa; link direto funciona e tools/obter_progbase.py baixa e confere)
 - No Drive: Progbase.exe (cópia): id 1OO6mzKKD9QLopd-wwIwjcEQn4iEg--Q1
 - No Drive: ProgBase (3).exe: id 1VL7Nq5KD2pJB-Ohchy1JG6qVvxRo6Oga
 - No Drive: DUMP/ (id 1SMZqx2Sd1HKooJ5GVCSuYDPvkCn6R0kH): formulários .bin, Resources_StringTable.txt (21 KB, baixável), ExportFunctions.txt (83 KB, baixável)
 - No Drive: ProgBase.exe.Dump.bin, Stri4ngs.txt, String5s.txt: ~12 MB cada, NÃO baixáveis
 - **Como obter:** python3 tools/obter_progbase.py  (baixa pelo link direto do Drive, confere SHA-256, idempotente; o conector do Drive NÃO serve para arquivos >10 MB). Não versionar nem publicar em release do repositório público.
-- **Falta:** Decompilação do que ainda não foi lida (ex.: bit da caixa anti-stallo) está em docs/evidence/2026-10-18-anti-stallo-caixa-re.md quando o subagente concluir.
+- **Falta:** A caixa do anti-stallo já foi decifrada (docs/evidence/2026-10-18-anti-stallo-caixa-re.md). Para decompilar outro handler: python3 tools/obter_progbase.py e seguir a receita da skill emular-por-observacao.
 
 ## Capturas Portmon (tráfego serial real do ProgBase × ECU) e DLL do programa
 - No repo: docs/mapa-de-fontes/drive-inventario.json
