@@ -7,9 +7,14 @@ on:
     branches: [ OmegasVermelho ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Prove source identity
@@ -26,8 +31,23 @@ jobs:
           cache: gradle
       - run: chmod +x gradlew
       - name: Fast contracts
-        run: python3 -B tools/run_checks.py
+        shell: bash
+        run: python3 -B tools/run_checks.py 2>&1 | tee "${{ runner.temp }}/w6-contracts.log"
       - name: JVM unit tests
-        run: ./gradlew testDebugUnitTest
+        shell: bash
+        run: ./gradlew testDebugUnitTest 2>&1 | tee "${{ runner.temp }}/w6-unit-tests.log"
       - name: Android lint
-        run: ./gradlew lintDebug
+        shell: bash
+        run: ./gradlew lintDebug 2>&1 | tee "${{ runner.temp }}/w6-lint.log"
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/w6-*.log
+            app/build/reports/
+            app/build/test-results/
+            build/reports/
+          if-no-files-found: warn
+          retention-days: 14
