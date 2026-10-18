@@ -568,13 +568,14 @@ def _pushes(seq, k, janela=24):
     return args
 
 
-def eventos_metodo(b, r, nome_metodo, campos_form):
+def eventos_metodo(b, r, nome_metodo, campos_form, nomes_pub=None, campos_sd=None):
     """Resumo estruturado de um metodo: acessos ao TStreamDati, comandos diretos, acoes sobre controles."""
     ms = r.methods('TFormConfig')
     inv = {v: k for k, v in ms.items()}
     if nome_metodo not in inv:
         return None
     seq, lim = metodo_instrucoes(b, r, inv[nome_metodo])
+    conds = condicoes_por_endereco(seq, nomes_pub or {}, campos_sd or {}, campos_form)
     ev = []
     for k, i in enumerate(seq):
         if i.mnemonic != 'call':
@@ -613,6 +614,8 @@ def eventos_metodo(b, r, nome_metodo, campos_form):
                     break
             ev.append(dict(endereco='0x%X' % i.address, funcao=ACOES_CTRL[t], controle=ctl,
                            valor_edx=_imm_reg(seq, k, 'edx')))
+    for e in ev:
+        e['condicoes'] = conds.get(int(e['endereco'], 16), [])
     return dict(metodo=nome_metodo, endereco='0x%X' % inv[nome_metodo], fim='0x%X' % lim, n_instr=len(seq), eventos=ev)
 
 
@@ -647,7 +650,7 @@ def _desc_chamada(seq, k, nomes):
     return None
 
 
-def teste_de(seq, k, nomes, campos_sd):
+def teste_de(seq, k, nomes, campos_sd, campos_form=None):
     """(lhs, rhs, tipo) do cmp/test que antecede o jcc seq[k]. tipo: 'cmp' | 'and' (test lhs & rhs)."""
     if k == 0:
         return ('?', '?', 'cmp')
@@ -669,6 +672,9 @@ def teste_de(seq, k, nomes, campos_sd):
     m = re.fullmatch(r'cmp e?ax, (0x[0-9a-f]+|\d+)|cmp al, (0x[0-9a-f]+|\d+)', s)
     if m:
         return (_desc_chamada(seq, k - 1, nomes) or 'eax', m.group(1) or m.group(2), 'cmp')
+    m = re.fullmatch(r'cmp (e\w\w), dword ptr \[e\w\w \+ (0x[0-9a-f]+)\]', s)
+    if m and campos_form and int(m.group(2), 16) in campos_form:
+        return ('remetente(%s)' % m.group(1), '[form+%s](%s)' % (m.group(2), campos_form[int(m.group(2), 16)]), 'cmp')
     m = re.fullmatch(r'cmp (e\w\w), (0x[0-9a-f]+|\d+)', s)
     if m:
         return (m.group(1), m.group(2), 'cmp')
@@ -695,7 +701,7 @@ def render_cond(teste, jcc, tomado):
     return '%s %s %s' % (lhs, rel, rhs)
 
 
-def condicoes_por_endereco(seq, nomes, campos_sd):
+def condicoes_por_endereco(seq, nomes, campos_sd, campos_form=None):
     """{endereco: [texto, ...]} com as condicoes ativas (regioes if/else a partir dos jcc para frente)."""
     regioes = []         # (inicio, fim, teste, jcc, tomado)
     out = {}
@@ -707,7 +713,7 @@ def condicoes_por_endereco(seq, nomes, campos_sd):
             except ValueError:
                 continue
             if alvo_ > i.address:
-                regioes.append((i.address + i.size, alvo_, teste_de(seq, k, nomes, campos_sd), i.mnemonic, False))
+                regioes.append((i.address + i.size, alvo_, teste_de(seq, k, nomes, campos_sd, campos_form), i.mnemonic, False))
         elif i.mnemonic == 'jmp':
             try:
                 alvo_ = int(i.op_str, 16)
@@ -747,7 +753,7 @@ def acoes_metodo(b, r, nome, nomes_pub, campos_form, campos_sd, prof=2, _visto=N
         return []
     _visto.add(a0)
     seq, lim = metodo_instrucoes(b, r, a0)
-    conds = condicoes_por_endereco(seq, nomes_pub, campos_sd)
+    conds = condicoes_por_endereco(seq, nomes_pub, campos_sd, campos_form)
     out = []
     for k, i in enumerate(seq):
         if i.mnemonic != 'call':
@@ -828,3 +834,32 @@ def toca_sd(b, addr, nomes_off, limite=260):
                     pass
             x += i.size
     return dict(le=sorted(lidos), escreve=sorted(escritos), chama=['0x%X' % a for a in sorted(subs) if 0x42A000 <= a < 0x440000][:8])
+
+
+def retornos(b, addr, limite=400):
+    """Imediatos dos `ret N` alcancaveis de addr (N=8 => recebe um double na pilha)."""
+    seen, pilha, out, n = set(), [addr], set(), 0
+    while pilha and n < limite:
+        x = pilha.pop()
+        while x not in seen and n < limite:
+            seen.add(x)
+            i = b.ins(x)
+            if i is None:
+                break
+            n += 1
+            if i.mnemonic == 'ret':
+                out.add(int(i.op_str, 0) if i.op_str else 0)
+                break
+            if i.mnemonic == 'jmp':
+                try:
+                    x = int(i.op_str, 16)
+                    continue
+                except ValueError:
+                    break
+            if i.mnemonic.startswith('j'):
+                try:
+                    pilha.append(int(i.op_str, 16))
+                except ValueError:
+                    pass
+            x += i.size
+    return out

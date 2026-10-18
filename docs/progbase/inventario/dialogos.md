@@ -56,7 +56,6 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 | `MESSBUTTOK` | Recarregar agora | Reload now | 1 |
 | `MESSCHARGEKEY` | lhe permitirá recarregar a sua chave hardware por um ulterior período de tempo. | will allow you to reload your hardware key for a further period of time. | 1 |
 | `MESSCONTACT` | Contactar o mais rapidamente possível o seu revendedor de software, comunicando-lhe o seguinte código: | Apply to your software dealer as soon as possible, by giving him this code: | 1 |
-| `MESSERRORGIRISWITCHCALIBRATION` | Impossible to set the switch parameters, \nrun the car and try again. | Impossible to set the switch parameters, \nrun the car and try again. | 1 |
 | `MESSEXPIRED` | A validade da chave hardware venceu e não é mais possível usar este programa. | The validity of the hardware key has expired and it is no more possible to use it with this program. | 1 |
 | `MESSUPDATECODE` | Você receberá imediatamente um novo código a ser inserido no espaço abaixo que | You will immediately receive a new code to be inserted in the empty space below that | 1 |
 
@@ -64,12 +63,9 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 
 | Chave | por | eng | Funções (n) |
 |---|---|---|---:|
-| `FINESTRACENTRICELLEAUTOCAL` |  | References for autocalibration | 1 |
 | `MESSAUTOCALCONFIRMRESET` |  | Do you confirm selected operation? | 1 |
 | `MESSAUTOCALDELETEPOINTS` |  | Delete selected points? | 1 |
 | `MESSAUTOCALERRORSENDCOMMAND` |  | Send command error. \nVerify connection and rety | 1 |
-| `MESSBADRIFMAP` | Atenção: o sinal MAP não é correcto! | Warning: MAP refs. incorrect! | 1 |
-| `MESSBADRIFTEMPI` | Atenção: as referências dos tempos injeção não estão corretas! | Caution: The injection time references are not correct! | 1 |
 | `MESSECUDISCONNECTED` | A central está desconectada porque a conexão não está correta. \nImpossível conectar-se. | Ecu is disconnected since it doesn't reply properly. \nConnection is not available. | 1 |
 | `MESSEXPORTKTOMAP` |  | Export on k-map? | 1 |
 
@@ -101,8 +97,22 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 | `MESSTEMPGASTAR` | Temperatura do gás muito baixa. | Gas temperature too low. | 1 |
 | `MESSTERMINATATAR` | Calibração automática terminada corretamente. \nYou now need to check the calibration on the road and at full  | Autocalibration completed correctly. \nYou now need to check the calibration on the road and at full load. | 1 |
 | `MESSVERIFICATAR` | Verificação da calibração automática em andamento... | Verifying autocalibration... | 1 |
+| `MESS_DELETE_LICENSE` | Delete current license file? | Delete current license file? | 1 |
+| `MESS_ERROR_DELETE_LICENSE` | Error in deleting license file. \nVerify and retry. | Error in deleting license file. \nVerify and retry. | 1 |
+| `MESS_ERROR_INSTALL_CODE` | Unlock code not valid. \nVerify and retry. | Unlock code not valid. \nVerify and retry. | 1 |
+| `MESS_ERROR_INSTALL_LICENSE` | Error in installing license file. \nVerify and retry. | Error in installing license file. \nVerify and retry. | 1 |
+| `MESS_ERROR_LINK_BROWSER` | Error in opening internet link for registration. \nVerify your default web browser. | Error in opening internet link for registration. \nVerify your default web browser. | 1 |
+| `MESS_OK_DELETE_LICENSE` | License file successfully deleted. | License file successfully deleted. | 1 |
+| `MESS_OK_INSTALL_LICENSE` | Close and restart the program \nfor using new license. | Close and restart the program \nfor using new license. | 1 |
+| `MESS_OVER_WRITE_LICENSE` | Overwrite old license file? | Overwrite old license file? | 1 |
 
 ### Calibraswitch
+
+| Chave | por | eng | Funções (n) |
+|---|---|---|---:|
+| `MESSERRORGIRISWITCHCALIBRATION` | Impossible to set the switch parameters, \nrun the car and try again. | Impossible to set the switch parameters, \nrun the car and try again. | 1 |
+
+### Centricelle
 
 | Chave | por | eng | Funções (n) |
 |---|---|---|---:|
@@ -110,7 +120,15 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 | `MESSBADRIFGIRI` | Atenção: as referências das rotações não estão correctas | Warning: incorrect REVS. refs.! | 1 |
 | `MESSBADRIFMAP` | Atenção: o sinal MAP não é correcto! | Warning: MAP refs. incorrect! | 1 |
 
-### Centricelle
+### Centricelleauto
+
+| Chave | por | eng | Funções (n) |
+|---|---|---|---:|
+| `FINESTRACENTRICELLEAUTOCAL` |  | References for autocalibration | 1 |
+| `MESSBADRIFMAP` | Atenção: o sinal MAP não é correcto! | Warning: MAP refs. incorrect! | 1 |
+| `MESSBADRIFTEMPI` | Atenção: as referências dos tempos injeção não estão corretas! | Caution: The injection time references are not correct! | 1 |
+
+### Centricellek
 
 | Chave | por | eng | Funções (n) |
 |---|---|---|---:|
@@ -155,7 +173,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 | `MESSCONFIGRESIDDEFAULT` | A modificação realizada gerou uma configuração para a qual NÃO foram encontrados parâmetros de base certos. Co | Configuration change generated a configuration for which the correct basic parameters have NOT been found. Con | 1 |
 | `MESSCONFIGRESIDDEFAULT1` | desta configuração de base. Os parâmetros atualmente configurados são completamente análogos aos anteriores ob | existence of such a basic configuration. The parameters currently set are entirely similar to those prior to t | 1 |
 | `MESSCONTINUA` | Continuar? | Continue? | 1 |
-| `MESSECUDISCONNECTED` | A central está desconectada porque a conexão não está correta. \nImpossível conectar-se. | Ecu is disconnected since it doesn't reply properly. \nConnection is not available. | 2 |
+| `MESSECUDISCONNECTED` | A central está desconectada porque a conexão não está correta. \nImpossível conectar-se. | Ecu is disconnected since it doesn't reply properly. \nConnection is not available. | 1 |
 | `MESSELETTROVALVOLA` | Atenção!!! Com esta estratégia habilitada \nnão interromper a bomba de gasolina!!! | Warning!!! With this strategy running \ndo not cut off the petrol pump | 1 |
 | `MESSERRORECUSWITCHCALIBRATION` | Impossible to set the switch parameters, \nECU not connected. | Impossible to set the switch parameters, \nECU not connected. | 1 |
 | `MESSERRORELIVELLOACQUISITO` | Impossible to acquire current level. \nECU must be connected with car running in petrol. \nCheck and try again | Impossible to acquire current level. \nECU must be connected with car running in petrol. \nCheck and try again | 1 |
@@ -184,19 +202,17 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 | `MESSTERMINAACQUISIZIONESEQUENZAINIEZIONE` | Stop acquisition | Stop acquisition | 1 |
 | `MESSTERMINATARATURA` | &Terminar calibrag. | &End calibration | 1 |
 
+### Corrcalibra
+
+| Chave | por | eng | Funções (n) |
+|---|---|---|---:|
+| `MESSECUDISCONNECTED` | A central está desconectada porque a conexão não está correta. \nImpossível conectar-se. | Ecu is disconnected since it doesn't reply properly. \nConnection is not available. | 1 |
+
 ### Diagnosi
 
 | Chave | por | eng | Funções (n) |
 |---|---|---|---:|
-| `FINESTRACARICACONF` | Selecione a configuração para ser carregada na central de comando | Select the configuration to load in ECU | 1 |
-| `FINESTRACARICADATI` | Carregando os dados da central de comando | Loading data from ECU | 1 |
-| `FINESTRACARICAPDF` | Instruções de montagem | Installation instructions | 1 |
-| `FINESTRACONFIG` | Configuração do veículo | Vehicle configuration | 1 |
-| `FINESTRASALVADATI` | Guarde os dados da central no arquivo | Save ECU data to file | 1 |
-| `FINESTRASALVAFILE` | Salve a configuração com o nome... | Save configuration with name... | 1 |
-| `FINESTRASCARICADATI` | Descarregando os dados na central de comando | Downloading data to ECU | 1 |
 | `LABELDIAGNOSIATTENTION` | Estes testes devem ser realizados com o motor ligado funcionando a gasolina | This tests are to be executed with engine running in petrol mode | 2 |
-| `MESSCOMPLETATO` | Completado | Completed | 1 |
 | `MESSCONFERMATEMPI` | Tem certeza de querer efetuar a operação solicitada? | Confirm the requested operation? | 1 |
 | `MESSDIAGNOSISWITCHON0` | (201) High pressure solenoid valve in short circuit or cut wire | (201) High pressure solenoid valve in short circuit or disconnected | 1 |
 | `MESSDIAGNOSISWITCHON1` | (202) Predisposition | (202) Predisposition | 1 |
@@ -241,17 +257,24 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 | `MESSERRORE` | ERRO | ERROR | 1 |
 | `MESSERRORRESETDIAGNOSYSTEST` | Impossível concluir o teste de diagnóstico. \nVerifique a conexão e tente novamente. | Impossible to complete this diagnosis test. \nVerify connection and retry. | 1 |
 | `MESSERRORSETDIAGNOSYSTEST` | Impossível realizar o teste de diagnóstico. \nVerifique a conexão e tente novamente. | Impossible to run this diagnosis test. \nVerify connection and retry. | 1 |
-| `MESSNOFILE` | Nenhum arquivo na memória | No file in memory! | 1 |
-| `MESSNOFOUNDFILE` | ATENÇÃO: problemas na abertura do arquivo | WARNING: problems in opening file. | 1 |
 | `MESSOK` | OK ! | OK | 1 |
-| `MESSOVERWRITE` | Este arquivo já existe. Quer modificar? | The file already exists. Overwrite? | 1 |
-| `MESSSALVAFILE` | Salvar os dados na memória em um arquivo? | Save stored data on a file? | 1 |
 
 ### File
 
 | Chave | por | eng | Funções (n) |
 |---|---|---|---:|
-| `FINESTRACARICAPDF` | Instruções de montagem | Installation instructions | 1 |
+| `FINESTRACARICACONF` | Selecione a configuração para ser carregada na central de comando | Select the configuration to load in ECU | 1 |
+| `FINESTRACARICADATI` | Carregando os dados da central de comando | Loading data from ECU | 1 |
+| `FINESTRACARICAPDF` | Instruções de montagem | Installation instructions | 2 |
+| `FINESTRACONFIG` | Configuração do veículo | Vehicle configuration | 1 |
+| `FINESTRASALVADATI` | Guarde os dados da central no arquivo | Save ECU data to file | 1 |
+| `FINESTRASALVAFILE` | Salve a configuração com o nome... | Save configuration with name... | 1 |
+| `FINESTRASCARICADATI` | Descarregando os dados na central de comando | Downloading data to ECU | 1 |
+| `MESSCOMPLETATO` | Completado | Completed | 1 |
+| `MESSNOFILE` | Nenhum arquivo na memória | No file in memory! | 1 |
+| `MESSNOFOUNDFILE` | ATENÇÃO: problemas na abertura do arquivo | WARNING: problems in opening file. | 1 |
+| `MESSOVERWRITE` | Este arquivo já existe. Quer modificar? | The file already exists. Overwrite? | 1 |
+| `MESSSALVAFILE` | Salvar os dados na memória em um arquivo? | Save stored data on a file? | 1 |
 
 ### Graficodrt
 
@@ -271,12 +294,6 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 | `MESSBADFILE` | Formato de arquivo inválido | File format not valid | 1 |
 | `MESSBADFILEVERSION` |  | File version not compatible. | 1 |
 
-### Httpthread
-
-| Chave | por | eng | Funções (n) |
-|---|---|---|---:|
-| `MESS_ERROR_LOAD_LANDI_CONNECT` | Error in loading some settings\nfrom Landi Connect device | Error in loading some settings\nfrom Landi Connect device | 1 |
-
 ### Iodata
 
 | Chave | por | eng | Funções (n) |
@@ -285,14 +302,12 @@ Gerado por `tools/progbase/inventario_telas.py`. Componentes de diálogo e botõ
 | `MESSCONTINUA` | Continuar? | Continue? | 1 |
 | `MESSERRCONN` | Impossível conectar | Impossible to connect. | 1 |
 | `MESSRIPROVA` | Tentar novamente? | Try again? | 1 |
-| `MESS_DELETE_LICENSE` | Delete current license file? | Delete current license file? | 1 |
-| `MESS_ERROR_DELETE_LICENSE` | Error in deleting license file. \nVerify and retry. | Error in deleting license file. \nVerify and retry. | 1 |
-| `MESS_ERROR_INSTALL_CODE` | Unlock code not valid. \nVerify and retry. | Unlock code not valid. \nVerify and retry. | 1 |
-| `MESS_ERROR_INSTALL_LICENSE` | Error in installing license file. \nVerify and retry. | Error in installing license file. \nVerify and retry. | 1 |
-| `MESS_ERROR_LINK_BROWSER` | Error in opening internet link for registration. \nVerify your default web browser. | Error in opening internet link for registration. \nVerify your default web browser. | 1 |
-| `MESS_OK_DELETE_LICENSE` | License file successfully deleted. | License file successfully deleted. | 1 |
-| `MESS_OK_INSTALL_LICENSE` | Close and restart the program \nfor using new license. | Close and restart the program \nfor using new license. | 1 |
-| `MESS_OVER_WRITE_LICENSE` | Overwrite old license file? | Overwrite old license file? | 1 |
+
+### Landiconnect
+
+| Chave | por | eng | Funções (n) |
+|---|---|---|---:|
+| `MESS_ERROR_LOAD_LANDI_CONNECT` | Error in loading some settings\nfrom Landi Connect device | Error in loading some settings\nfrom Landi Connect device | 1 |
 
 ### Main
 

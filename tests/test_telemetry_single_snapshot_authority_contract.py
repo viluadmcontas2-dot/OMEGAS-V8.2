@@ -8,7 +8,7 @@ SERVICE = (ROOT / "app/src/main/java/com/omegas/prohub/service/TelemetryForegrou
 assert "updateFullSnapshot" not in STORE
 assert "private var fullSnapshot" not in STORE
 assert "fun fullJson(" not in STORE
-assert "service.telemetryStore.liveJson()" in BRIDGE
+assert "service.telemetryStore.liveObject()" in BRIDGE
 assert "runtime.fullSnapshotJson()" in SERVICE
 
 print("TELEMETRY_SINGLE_SNAPSHOT_AUTHORITY=PASS")

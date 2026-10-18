@@ -1,0 +1,2813 @@
+=== p.1 ===
+                    SOFTWARE MANUAL
+                   LANDI RENZO OMEGAS
+                              for
+                 LRE 184 -188 -194 -198 - EVO
+                            ECUs
+
+                        Version 2.16.4 C
+2012-07 *1* gb
+
+=== p.2 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+ UPDATES
+     Rev.                Date                   Description of change                       Performed by               Approved by
+
+
+
+       1         July 2012              Page 5 ref.       1                                   I.Martinelli
+       0         November 2011          First issue                                           I.Martinelli
+
+
+                                                     Index                 3      Notes
+                                                                           4      Software
+                                                                           4         Minimum computer requirements for software
+                                                                                     installation
+                                                                          4          Software distribution
+                                                                          4          Software installation
+                                                                          4          Software operation
+                                                                          5          Error codes software program
+                                                                          6       Software initial view
+                                                                          9       F1 Vehicle configuration
+                                                                          9          F1 Gas change over
+                                                                         15          F2 Lambda
+                                                                         17          F3 Emissions
+                                                                         18          F4 Gas level
+                                                                         20          F5 Pressure
+                                                                         22          F6 Temperature
+                                                                         24          F7 K insertion
+                                                                         27          F8 Injectors
+                                                                         30          F9 Gas/petrol
+                                                                         33          F10 Adaptivity
+                                                                         37          F11 Exit
+                                                                         38       F2 Dispaly
+                                                                         41       F3 Diagnosis
+                                                                         44       F4 Automatic calibration
+                                                                         46               Calibration fine tuning.
+                                                                         48       F5 Modify calibration
+                                                                         50       F6 Save current configuration
+                                                                         51       F7 Load New configuration
+                                                                         52       F8 ECU Programming
+                                                                         53       F9 Update cards and maps
+                                                                         54       F10 Exit
+
+
+
+
+The materials and documents of any nature contained and published in this Manual are for information and promotional purposes
+only and, unless otherwise stated, are the sole property of Landi Renzo S.p.A. or its successors in title who retain worldwide copyright
+for the entire duration of the protection offered by law; any other use that has not been expressly granted is forbidden. The Manual
+and the materials contained therein cannot be reproduced, published, transmitted, distributed, publicly displayed, removed, cancel-
+led, added to, modified, used to create derivative works, sold or acquired. Any other use of the material in this Manual, including
+reproduction for purposes other than those it was intended for, modification, distribution or publishing is forbidden without the written
+permission of Landi Renzo S.p.A.
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+2                                                                                                                 LANDI RENZO S.p.A.
+
+=== p.3 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                         NOTES
+                                                                         The software program described in this manual applies to
+                                                                         different types of ECU.
+                                                                         The software automatically recognises the connected ECU
+                                                                         by means of firmware that is loaded by the manufacturer
+                                                                         during the initial programming stage.
+
+                                                                         Certain program windows and functions are only visible/
+                                                                         available on some versions of ECUs. In such cases, the
+                                                                         words LROMEGAS or OMEGAS-EVO appear alongside
+                                                                         the function as do the customised icons that identify this
+                                                                         latest version.
+
+                                                                         As regards the LROMEGAS LRE184 -188 ECUs, refer also
+                                                                         to previous software manuals “Omegas 2.6.4” or earlier.
+
+
+                                                                         The OMEGAS-EVO version can be installed on 2-3-4 nor-
+                                                                         mally aspirated and turbocharged cylinder engines.
+                                                                         The MAP sensor that comes with the unit must always be
+                                                                         fitted.
+                                                                         At present, the combined injectors are series “AEB”
+                                                                         The field of application is described in the “Component In-
+                                                                         stallation Manual”.
+
+                                                                         A range of minimum/maximum settings is available for se-
+                                                                         lection.
+                                                                         WARNING if you enter a value that is outside the range, the
+                                                                         maximum or minimum applicable value will be saved, not
+                                                                         the previously set value and no warning window will appear.
+
+                                                                         The boxes and drop-down menu open together when you
+                                                                         press the button for the box.
+
+                                                                         To activate any changes made to the program, press “En-
+                                                                         ter”.
+                                                                         The parameters in “RED” can be changed only if the ignition
+                                                                         is OFF as the software string at the bottom of the “F1 Ve-
+                                                                         hicle Configuration window; “F1 Gas change over” reminds
+                                                                         us.
+                                                                         To correctly save changes to the parameters in “RED” made
+                                                                         with the engine running, you need to:
+                                                                         - switch the engine off;
+                                                                         - wait until the switch is OFF (if delayed ignition);
+                                                                         - re-start the engine.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+3                                                                                                                 LANDI RENZO S.p.A.
+
+=== p.4 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+SOFTWARE
+    MINIMUM COMPUTER REQUIREMENTS FOR SOFTWARE INSTALLATION
+    Operating system - Windows 98 2nd edition or later;
+    RAM - At least 16 Mbyte;
+    Hard disk - At least 20 Mbyte free at time of installation;
+    Screen resolution - 800 x 600 or better;
+    Internet Explorer version 5.5 or better.
+
+    SOFTWARE DISTRIBUTION
+    LANDI RENZO S.p.A. distributes the software (and future up-dates) through the website “www.landi.it/private area/
+    download software programs” or on a CD.
+
+    SOFTWARE INSTALLATION
+    To install the calibration program, put the CD in the reader and wait for the installation wizard to appear.
+    If the installation program does not start, select “Start” from the “Application Bar”. Select “run” and enter: “D:\setup.
+    exe” (where D indicates the CD reader).
+    During installation you will be asked which directory you want to use for installation. We recommend that you use
+    the preset directory.
+    When installation is complete, an icon will appear on the desktop.
+
+    SOFTWARE OPERATION
+    The calibration software needs a specific hardware key and can be opened without being directly connected to the
+    ECU.
+    To connect to the ECU, the computer and ECU must be properly connected with a modular adaptor. Depending on
+    the characteristics of the computer, use the appropriate module: version for Serial/USB port; version for serial RS232
+    port; WIRELESS SERIAL KIT; USB/RS232 adaptor.
+    The ECU must also be powered with a 12 volt battery (Red/Black wire) and an earth connection (Black wire) and with
+    12V with the ignition ON (dashboard lights ON - engine OFF).
+    Open the program by selecting the specific icon on the computer screen.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+4                                                                                                                 LANDI RENZO S.p.A.
+
+=== p.5 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+                                          SOFTWARE PROGRAM FAULT CODES
+
+    ERROR						                                                       DESCRIPTION
+
+PROGRAMMING
+           P01          Cannot connect to ECU on COM or USB ports, cannot find a connected control unit.
+                        The ECU is not communicating or the communication pathway is not complete.
+           P02          The ECU connected is incompatible due to hardware or firmware.
+           P03          Error opening the programming file.
+           P04          Error in decryption of the programming file.
+                        (The reprogramming procedure requires the presence of Internet Explorer 5.5 or higher, with at
+                        least 128-bit cryptography).
+           P05          Incorrect programming voltage.
+           P06          Error in flash cancellation.
+           P07          Error during initialisation (BAD_PREPARATION).
+           P08          Error during initialisation (BAD_ERASE).
+           P09          Error in start programming phase.
+           P10          Null dimension in input data.
+           P11          Incorrect encryption mode.
+           P12          Generic programming error.
+         P13 (1-6)      Firmware isn’t correct for the ECU connected.
+        from P1000      Error in record programming (ERR.CODE-1000). Firmware writing was not successful, the pro-
+                        gramming must be repeated.
+
+HARDWARE KEY
+
+           H01           Error reading/writing hardware key.
+    1      H02
+           H03           Key with expired data or number of accesses.
+           H04           Data not compatible with internal data of key.
+
+CONNECTION
+           C01          Cannot connect to ECU on COM or USB ports, cannot find a connected control unit.
+                        The control unit is not communicating or the communication pathway is not complete.
+           C02          Error loading control unit identification data.
+           C03          The firmware of the connected ECU is not compatible with the program installed on the PC.
+           C04          The program installed on the PC is not compatible with the control unit firmware.
+    1      C05          ECU in boot mode, you must reprogram it with a suitable FW
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+5                                                                                                                 LANDI RENZO S.p.A.
+
+=== p.6 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+Software initial view
+
+
+
+              A
+
+
+
+
+                                                                                                                          C
+
+    B
+
+
+
+
+                          D                                      E                            F                      G
+
+
+
+
+A         Drop-down command bar
+B         Keyboard
+C         Language selection bar
+D         Computer/ECU communication status bar
+E         Name of program currently in use
+F         Version of hardware loaded
+G         Type of fuel
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+6                                                                                                                 LANDI RENZO S.p.A.
+
+=== p.7 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                          A Drop-down command bar
+
+                                                                         Drop-down “File” menu
+                                                                         • Open configuration: Same function as “F7” - allows an
+                                                                            existing configuration to be loaded on the PC with the
+                                                                            additional option of searching for it in all the files on the
+                                                                            PC;
+                                                                         • Save configuration: Same function as “F6” - allows the
+                                                                            configuration currently being used on the PC with the
+                                                                            additional option of saving it in all the files on the PC;
+                                                                         • Print configuration: lets you print a copy of the current
+                                                                            configuration;
+                                                                         • Print corrections: lets you print details of changes made
+                                                                            to this configuration since the last data save was made.
+                                                                         • Print diagnosis: lets you print the diagnosis page;
+                                                                         • Installation instructions: If loaded on PC, this system
+                                                                            displays vehicle-specific screenshots for installing the
+                                                                            gas system.
+                                                                         • Exit: same function as “F10” to exit the program.
+
+
+                                                                         Drop-down “Connection” menu
+                                                                         • Connect: connects the PC with the ECU, the connection
+                                                                            bar opens and when the connection has been made,
+                                                                            the bar “D” changes status and colour;
+                                                                         • Disconnect: disconnects the PC from the ECU;
+
+                                                                         Drop-down “Help” menu
+                                                                         • Information about...: a second window appears with in-
+                                                                            formation about the version of the software currently in
+                                                                            use
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+7                                                                                                                 LANDI RENZO S.p.A.
+
+=== p.8 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+                            B
+                                                                          B Keyboard
+                                                                         For accessing the various functions or using the mouse to
+                                                                         select them.
+
+                                                                          C Language selection bar
+                                                                         Click on the flag of the language you want to use.
+
+                                                                          D Computer/ECU communication status bar Shows whe-
+                                                                         ther the ECU is connected or not to the calibration software.
+                                                                         It is important to remember that any settings made when the
+                                                                         ECU is not connected will be lost on reconnection unless
+                                                                         they have been saved beforehand to a configuration file.
+                                                                         On connection (“Ctrl”+ “C” or from the drop-down “Connec-
+                                                                         tion” menu - “Connect”), the SW will automatically try to con-
+                                                                         nect with the ECU.
+                                                                         If the PC fails to connect, an error software string appears.
+                                                                         At this point, check:
+                                                                         - the interface serial connection.
+                                                                         - that the ECU has an electrical supply,
+             C                                                           - that the ignition has not been turned OFF for more than 1
+                                                                         hour,
+                                                                         to connect, you will need to turn the ignition ON for a few
+                                                                         seconds or start the engine.
+                                                                          Once the connection has been made, the left side of the bar
+                                                                         will change description and colour.
+
+                                                                          E The middle of the bar shows the name of the file loaded
+                                                                         on the ECU F and the version of the software it is using.
+
+                                                                          G The right side of the bar shows the type of fuel selected
+                                                                         when the program was saved.
+
+
+
+
+                              D
+
+                                                                            E                                 F        G
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+8                                                                                                                 LANDI RENZO S.p.A.
+
+=== p.9 ===
+                                                                                                     Manuale software OMEGAS 2.16.4 C
+
+
+
+
+           F1 Gas change-over
+
+
+                                                               B                                                     C
+                                                               D                                                     E
+                      A                                                                                       F
+                                                                                                                    G
+                                                                                                                    H
+                                                                                                                    I
+                                                                                                                    J
+                                                                                                              K
+                                                                                                              L
+                                                                                                              M
+
+                          N                                           O
+                          P                                           Q
+
+
+
+
+                                                                                                                               LROMEGAS
+                                                                                           R
+
+              V
+                                                                                                         S
+
+
+
+                                                                                                         T
+
+
+
+                                                                                                          U
+                                                                                        OMEGAS-EVO
+
+
+
+
+                                                           R
+
+
+
+
+                                                                          NOTE
+                                                                          To activate any changes made to the program, press “En-
+                                                                          ter”.
+                                                                          The parameters in red can only be modified with the “KEY
+                                                                          OFF”.
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+9                                                                                                                 LANDI RENZO S.p.A.
+
+=== p.10 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                  A Keyboard
+                                 For accessing the various functions or using the mouse to select them.
+
+
+                    A
+                                  V Input signal bar
+                                 Petrol/Gas: signals from switch;
+                                 Revs: RPM;
+                                 Level: signals from fuel level indicator;
+                                 Tinj. Gas: injection time for gas injector;
+                                 Tinj. Petrol: injection time for petrol injector;
+                                 T. water: temperature of coolant in radiator in °C.
+                                 T. gas: temperature of gas in °C;
+                                 Press. diff: gas pressure measured at injectors;
+                                 Press.: absolute pressure (gas pressure added to intake manifold pressure);
+                                 Lambda: lambda probe value
+                                 MAP: Manifold Absolute Pressure signal value.
+
+
+
+
+                         V
+
+
+
+
+                                                                          B Fuel type: select LPG/Methane depending on the type
+                          B                                              of fuel used.
+                                                                          C Engine: select Aspirated or Turbo depending on the
+                                                                         engine in question.
+                                                    C
+                                                                          D    Injector type: Matrix, Keihin, Landi, OMEGAS- EVO
+                                                                         only - AEB, Lovato J, Lovato K.
+                        D                                                Detection of type of injector connected to the ECU is perfor-
+                                                                         med automatically thanks to the wiring system used. AEB
+                                                                         injectors can be detected by the ECU thanks to the firmware
+                                                                         loaded on the ECU during programming at the factory.
+                                                          D              Note
+                                                                         Injectors of a different make cannot be fitted without chan-
+                                                                         ging the wiring and program settings.
+
+                                                                          E Size: must be selected based on the type of injector
+                                                                         installed on the vehicle (combined function only with Landi
+                                                                         or Keihin injectors).
+                                                                         There are three Landi-Med types:
+                             E                                           - Small: from 0 to 18.5 kW/cylinder
+                                                                         - Medium: from 15 to 27.5 kW/cylinder
+                                                                         - Large: from 25 to 40 kW/cylinder
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+10                                                                                                                LANDI RENZO S.p.A.
+
+=== p.11 ===
+                                                                                                     Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                                    F Displacement: (range 900-8000cc.): enter the cubic
+                               F                                                   capacity in cm3. Given the cubic capacity and the number
+                                                                                   of cylinders, the software calculates the capacity of each
+                                                                                   cylinder then feeds the ECU with a basic carburretion map
+                                                                                   that helps optimise the system during auto-calibration.
+
+                                                                                    G Type of rev signal: Standard/Weak .
+                                                                                   Leave the “Standard” setting with signals that fluctuate from
+                                                                                   5V to 12V. Select “Weak” for signals that vary from 2V to 5V.
+                                                                                   Note
+                                   G                                               The WEAK setting must be selected when rpm signals are
+                                                                                   sent to the ignition coil amplifier transistor. Use STANDARD
+                                                                                   for connection to the negative pole of the ignition coil with
+                                                                                   two wires.
+                                                                                   Although either of the above settings can be used in the
+                                                                                   event of connecting to the tachometer, the WEAK SIGNAL
+                                                                                   setting is preferable.
+                                                                                   With signals of less than 2V, an extra signal amplifier will
+                                                                                   have to be fitted.
+
+
+                                         1                                          G   When you untick the function, a message appears in-
+                                                                      OMEGAS-EVO
+
+
+
+
+                                                                                   forming you that the “brown” wire must remain disconnec-
+                                                                                   ted and the engine speed in rpm will be calculated using
+                                                                                   injection times 1 . The “Ignition type”    I function will not
+                                                                                   work .
+                                        G
+
+                                         I                                         With LANDIRENZO OMEGAS, this function is only availa-
+                                                                      LROMEGAS
+
+
+
+
+                                                                                   ble the Red/Yellow wire is connected and if the parameters
+                                                                                   on the vehicle MAP system are set.
+                                                                                   Note - we recommend that you leave this function enabled
+                                                                                   for both systems.
+
+                                   H                                                H     N° of cylinders: automatically acquires the type of
+                                                                                   ECU connected. Select the matching number of cylinders
+                                                                                   in the engine: 2, 3, 4 cylinders, or 4 cyl with 2 injectors, 5,
+                                                                                   6, 8 cylinders.
+                                                                                   Note - the 4 cylinders with 2 injectors (per cylinder) setting
+                                                                                   only applies to ECU model “198”.
+
+                                                                                    I Ignition type: Single coil, dual coil, tachometer, tacho-
+                                                                                   meter 2; this information is used by ECUs to correctly cal-
+                                                                                   culate the engine regime starting from the time the engine
+                                                                                   speed data is input.
+                                                                                   Select SINGLE COIL if the engine has a coil for every cylin-
+                                   I
+                                                                                   der and if the signal is taken from the negative or transistor
+                                                                                   on the coil.
+                                                                                   Select DOUBLE COIL if the engine has a coil that feeds
+                                                                                   two cylinders and if the signal is taken from the negative or
+                                                                                   transistor on the coil.
+                                                                                   Note: you may need to make this selection for some engi-
+                                                                                   nes with one coil per cylinder.
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+11                                                                                                                     LANDI RENZO S.p.A.
+
+=== p.12 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                         Use Rev-counter for other cases.
+                                                                         Select Rev-counter 2 if the revs displayed in the “Revs” set-
+                                                                         ting are double the actual speed.
+
+
+                                    J                                        J Type of change over:
+                                                                         •   In acceleration, the number of engine revs must exce-
+                                                                             ed the previously set threshold which is mentioned later
+                                                                             (Rev threshold for change-over);
+                                                                         • In deceleration, the system must recognise an engine
+                                                                             speed that is greater than the value set in “Fuel change
+                                                                             rpm threshold” and the petrol cut-off condition
+                                                                         Note - The choice of these headings may be dictated by the
+                                                                         characteristics of the engine.
+
+                                                                             K Rev threshold for change-over: (range 550-3000
+                                                                         rpm): minimum rpm above which fuel change occurs. De-
+                                                                         fault setting 1600rpm.
+
+                                                                             LWater temperature for change-over: (range 40-90
+                                                                         °C) Together with the fuel change rpm threshold, this pa-
+                                                                         rameter is evaluated by the ECU for changing the fuel feed
+                                                                         from petrol to gas.
+
+                                         K                                   M Start on gas with hot engine (range 50-90°C): select
+                                              L                          the heading and set the water temperature above which the
+                                                                         engine will be fed directly with gas at start-up.
+                                        M
+                                                                             N Valvetronik: with this parameter enabled, the system
+                   N                                         O
+                                                                         continues to operate despite the loss of rpm signals reco-
+                                                                         gnising only the ignition ON as the operating condition (15).
+                                                                         Page 14
+                                                                         Allows rpm signals to be read even while connected to the
+                                                                         ignition coil in cut-off when there are no rpm signals.
+                                                                         The program displays the connection to power supply war-
+                                                                         ning message.
+
+                                                                             O Start & Stop: with this parameter enabled, the system
+                                                  N                      continues to operate despite the loss of rpm signals reco-
+                                                       O                 gnising only the ignition ON as the operating condition (15).
+                                                                         Allows rpm signals to be read even while connected to the
+                                                                         ignition coil in “Stop” mode when there are no rpm signals.
+                                                                         This function allows the engine to start in gas mode after an
+                                                                         “S & S” thus avoiding delays.
+                                                                         The program displays the connection to power supply war-
+                                                                         ning message.
+
+                                                                         Note - for Valvetronic/Start & Stop - is normal for the sy-
+                                                                         stem to enable the safety function when there are no rpm
+                                                                         readings. In this case to prevent the solenoids (tank and
+                                                                         regulator) from remaining open in the event of a crash, you
+                                                                         need to connect the ignition wire (15) to the petrol pump
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+12                                                                                                                LANDI RENZO S.p.A.
+
+=== p.13 ===
+                                                                                                    Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                                 power supply switch or to a disabled ignition wire from the
+                                                                                 inertia switch.
+                      P                              Q
+                                                                                  P Disable switch: this function forces the engine to run
+
+
+
+
+                                                                      LROMEGAS
+                                                                                 on just gas with the exception of starting the engine from
+                                             R                                   cold, in cases of saved diagnostic errors and in the event
+                                                                                 of running out of fuel. In the last two cases, the buzzer will
+                                                                                 sound continuously unless the “Buzzer Timer” is enabled.
+
+                                                                                  Q Buzzer timing: with this function activated, the buzzer
+
+
+
+
+                                                                      LROMEGAS
+                                                                                 sounds for just 5 seconds when the system changes back
+                                                                                 to petrol after running out of gas or on diagnosis of a fault.
+                                 R
+                                                                                  R Change-over from petrol gas delay (range 35 - 240“);
+                                                                      EVO
+                                                                                 this is the minimum threshold for the change from petrol to
+                                                                                 gas after starting the engine.
+
+                                                                                  R Change-over from petrol gas delay with water T:
+                                                                      LROMEGAS
+
+
+
+
+                                                                                 The table shows how the delays in changing from petrol to
+                                                                                 vary with coolant temperature.
+                                                                                 the change in fuel source occurs when, once the set time
+                                                                                 has elapsed, the following conditions are available:
+                                                                                 “Type of change over”; “Rev threshold for change-over”;
+                                                                                 ”Water temperature for change-over”.
+                                                                                 This delay can be managed by means of a message that
+                                                                                 lets you associate a delay of between 5 and 300 seconds
+                                                                                 with a determined temperature.
+                                                                                 At start-up, the ECU detects the temperature of the engine
+                                                                                 coolant.
+                                                                                 To change the settings, press the message cells “(sec)”, a
+                                                                                 modification window will appear then select the mode you
+                                                                                 want:
+                                                                                 - Absolute, the written value is that which appears in the cell;
+                                                                                 - Linear, the written value (positive or negative) will be ad-
+                                                                                 ded to or subtracted from the value in the cell;
+                                                                                 - Percentual, the written value (positive or negative) will be
+                                                                                 added to or subtracted from the value expressed as a per-
+                                         S                                       centage in the cell;
+
+                                                                                  S Delay in petrol-gas passage from with gas temp:
+                             T                                                   If the water temperature sensor is not connected, mana-
+                                                                                 gement of delays in changing from petrol to gas take place
+                                                         U                       based on the temperature of the gas detected by the gas
+                                                                                 sensor
+                                                                                 on the injector rail (for engines with Landi and Matrix injec-
+                                                                                 tors); on the sensor placed in series to the low pressure gas
+                                                                                 pipe (for the OMEGAS - EVO system) or on the sensor on
+                                                                                 the gas filter (for systems with Keihin injectors). When the
+                                                                                 ignition is switched on, the ECU detects gas temperature
+                                                                                 and enables the passage from petrol to gas once the preset
+                                                                                 time delay has elapsed and once the conditions related to
+                                                                                 “Type of change over” and “Revs threshold for change-
+                                                                                 over” have been verified.
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+13                                                                                                                   LANDI RENZO S.p.A.
+
+=== p.14 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                         Press the message cells “(sec)”, a modification window will
+                                                                         appear then select the mode you want:
+                                                                         - Absolute, the written value is that which appears in the cell;
+                                                                         - Linear, the written value (positive or negative) will be ad-
+                                                                         ded to or subtracted from the value in the cell;
+                                                                         - Percentual, the written value (positive or negative) will be
+                                                                         added to or subtracted from the value expressed as a per-
+                                                                         centage in the cell.
+
+                                                                          T Overlapping times (range 0 - 2”);
+                                                                         Overlap occurs when the petrol injectors and gas solenoids
+                                                                         are open at the same time. The purpose of this occurrence
+                                                                         is to allow gas to flow into the regulator/injectors and to pre-
+                                                                         vent any post-change irregularities in the engine.
+                                                                         Note - It is usually not necessary to change the setting from
+                                                                         “0” except in sporadic cases.
+
+
+                                                                          U Reset ECU and go to main parameters:
+                                                                         This command cancels all previously set parameters. The
+                                                                         ECU asks for confirmation before proceeding.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+14                                                                                                                LANDI RENZO S.p.A.
+
+=== p.15 ===
+                                                                                                    Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F2 Lambda
+
+                                                                                                         A
+                                                                                                         B   OMEGAS-EVO
+
+                                                                                                                        C
+                                                                                                                        D   OMEGAS-EVO
+
+
+
+
+                                                                                                                        A
+
+
+                                                                  A
+
+
+
+
+                                                                                    A One or more (where applicable) pre-catalyser lambda
+                                                                                   probes can be configured. With two lambda probes, petrol
+                                                                                   and gas injector times and signals from the probes will be
+                                                                                   doubled.
+
+                                                                                    B Fuel trim bank 2 (range -20;+20).
+                                                                      OMEGAS-EVO
+
+
+
+
+                                                                                   If you select “2” lambda probes for a vehicle with 2 such
+                                                                                   forward probes, a message appears that lets you linearly
+                                                                                   change the gas mix for the second bank in the event that
+                                                                                   the two banks are slightly out of balance (condition displa-
+                                                                                   yed by OBD correctors).
+                                                                                   Modifying this parameter on 6 or 8 cylinder engine, changes
+                                                                                   the mix to the gas injectors that are connected by means of
+                                                                                   cabling “E-F-G-H” identified by the red band.
+                                                                                   On 4-cylinder engines (even if fitted with 2 pre-catalyser
+                                                                                   Lambda probes), the system has no effect.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+15                                                                                                                   LANDI RENZO S.p.A.
+
+=== p.16 ===
+                                                                                                     Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                                    C The type of lambda probe fitted to a vehicle can be set
+                                                                                   so as to have (if connected) signal verification.
+                                                                                   The following values can be set:
+                                                                                   • 0 - 1 Volt;
+                                                                                   • 0 - 5 Volt;
+                                                                                   • 5 - 0 Volt;
+                                                                                   • 0.8 - 1.6 Volt.
+
+                                                                                    D This window serves as a reminder about the “VIOLET”
+
+
+
+
+                                                                      OMEGAS-EVO
+                                                                                   wire connection.
+                                                                                   Select “Not connected” when the “VIOLET” wire is not con-
+                                                                                   nected.
+                                                                                   Select “Pre” when the “VIOLET” wire is connected to the
+                                                                                   pre-catalyser probe.
+                                                                                   Select “Post” when the “VIOLET” wire is connected to the
+                                                                                   post-catalyser probe.
+
+                                                                                   Note - if you connect the “VIOLET” wire to the probe and do
+                                                                                   not set one of the two parameters (Front-Rear), the Lambda
+                                                                                   heading in the bottom bar will always show “n.a.”
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+16                                                                                                                     LANDI RENZO S.p.A.
+
+=== p.17 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F3 Emissions
+
+
+
+
+                                                                                   A
+                                                                                   B
+
+
+
+
+                                                                          A Exit cut-off leaning (range: -100;100), parameter as-
+                                                                         sociated with “Leaning number injections”.
+                                                                         The number is expressed as a percentage of the lean/rich
+                                                                         mapping system readings when the ECU exits from the en-
+                                                                         gine cut-off stage.
+
+                                                                          B     Leaning number injections (range: 0; 255), this is
+                                                                         the number of injectors undergoing percentage changes
+                                                                         compared with mapping system values..
+                                                                         Note - this function can be useful when the engine stops or
+                                                                         tends to stop on when going back to idle due to a mixture
+                                                                         that is too rich or too lean. It can also be used to rectify
+                                                                         emissions in the event of excessive “HC”.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+17                                                                                                                LANDI RENZO S.p.A.
+
+=== p.18 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F4 Gas level
+
+
+                                                                                                                                 A
+
+
+
+
+                                                                                     B
+
+
+
+
+                                                                                                                    OMEGAS-EVO
+                                                                                     C
+                                                                                     D
+
+                                                                                     E
+
+
+
+
+                                                                                                                   LROMEGAS
+                                                                          A Type of gas level sensor: This allows you to set the
+                                                                         type of gas sensor that has been fitted.
+                                                                         The following gas level sensors can be set:
+                                                                         • A.E.B.;
+                                                                         • 0 - 90 ohm;
+                                                                         • Landi Renzo;
+                                                                         • Sensata HD
+                                                                         • Non standard;
+                                                                         • Non-standard inverted.
+                                                                         “Landi Renzo” default setting.
+                                                                         For preset sensors: The fuel level thresholds have already
+                                                                         been loaded in the program for AEB, 0-90ohm, Landi Renzo
+                                                                         and Sensata HD sensors.
+                                                                         Selecting NON STANDARD” or “NON STANDARD INVER-
+                                                                         TED” lets you customise the settings by the type of gas level
+                                                                         sensor used and select suitable thresholds in ascending or
+                                                                         descending order.
+                                                                         To save the value you have selected, press “Enter” (as men-
+                                                                         tioned earlier in “Notes” on page 3). When you have com-
+                                                                         pleted the sequence press “Accept””.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+18                                                                                                                LANDI RENZO S.p.A.
+
+=== p.19 ===
+                                                                                                     Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                                    B Automatic change back to petrol: the following mes-
+                                                                                   sage appears when you select this item: “Low pressure
+                                                                                   time for change back” (range 0;20“). It is possible to set
+                                                                                   the time that must elapse before switching to petrol when
+                                                                                   the pressure drops below the value set in “Pressure for
+                                                                                   change back to petrol”.
+                                                                                   Note - by not selecting “Automatic return to petrol” when
+                                                                                   the gas tank is empty, the engine will run irregularly until it
+                                                                                   cuts out.
+
+                                                                                    C    Low pressure value for change back: (range 0.4;2
+
+
+
+
+                                                                      OMEGAS-EVO
+                                                                                   bar), the threshold value is the level below which the ECU
+                                                                                   activates returning to running on petrol with subsequent
+                                                                                   warnings from the buzzer (intermittent fast buzzer) and di-
+                                                                                   splay (petrol and gas LEDs lit).
+                                                                                   The Low pressure value for change back parameter can
+                                                                                   be set independently of the previous item.
+                                                       1
+                                                                                    D Gas electrovalvesopened in advance: when you tick
+                                                                      OMEGAS-EVO
+
+
+
+
+                                                                                   this item, a window appears 1 to remind you that the
+                                                                                   petrol pump will not be shut off as the solenoids will open
+                                                                                   about 5 seconds before the injectors start, This will prevent
+                                                                                   any post-change irregularities in the engine.
+                                                                                   Note - This strategy might create problems resulting from
+                                                                                   the possible use of timing advance processors during the
+                                                                                   changeover from petrol to gas.
+
+                                                                                    E     Pressure for change back to petrol:
+                                                                      LROMEGAS
+
+
+
+
+                                                                                   The return to petrol can be set to activate if a drop in pres-
+                                                                                   sure is detected at the injectors based on injection times.
+                                                                                   If you select the box for the pressure that matches the injec-
+                                                                                   tion time you want, a window appears to let you change the
+                                                                                   value in the following modes:
+                                                                                   - Absolute, sets the desired value;
+                                                                                   - Linear, adds or subtracts the value you enter from that
+                                                                                   shown in the table;
+                                                                                   - Percentage, adds or subtracts the percentage value you
+                                                                                   enter from that shown in the table;
+                                                                                   Function can be used with “Landi” and “Keihin” injectors but
+                                                                                   not with “Matrix” injectors.
+
+
+
+
+                                                              E
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+19                                                                                                                     LANDI RENZO S.p.A.
+
+=== p.20 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F5 Pressure
+
+                                                                                                 B
+                                                                                              OMEGAS-EVO
+
+
+
+
+                                                                                                                   LROMEGAS
+                                                                                A
+
+
+                                                                                C
+
+
+
+
+                                                                         Select the type of gas pressure sensor fitted to the gas
+                                                                         system:
+
+                                                                           A  Omegas versions with Landi injectors: Bosch or
+                                                                         Sensata sensors can be identified by the brand name stam-
+                                                                         ped on the sensor casing.
+
+                                                                           B Omegas versions with Matrix injectors: LRE 165 (by
+                                                                         default); used exclusively on gas systems that have Matrix
+                                                                         injectors and feature only 2 couplings.
+
+                                                                           C Omegas versions with Keihin injectors: this messa-
+                                                                         ge does not appear.
+
+                                                                           B Omegas-Evo versions with AEB injectors: AEB 025
+                                                                         (by default); this sensor can be identified by its four cou-
+                                                                         plings (gas inlet/outlet - intake manifold vacuum inlet/outlet).
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+20                                                                                                                LANDI RENZO S.p.A.
+
+=== p.21 ===
+                                                                                                   Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                                  C MAP sensor:
+                                                                                 Select “not present” if the corresponding “Red/Yellow” wire
+                                                                                 does not connect to the original vehicle sensor.
+                                                                                 In this case, as the MAP is not configured, the value of the
+                                                                                 differential pressure is not consistent, and so the petrol/gas/
+                                                                                 petrol passage is managed using the table of pressure at
+                                                                                 the injector rails.
+                                                                                 Use the “Present” setting if the “Red/Yellow” wire has been
+                                                                                 connected to the vehicle’s original MAP sensor.
+         D                                                                       In this case, it must acquire the original engine sensor’s
+                                                                                 characteristics, obtained by following the guide.
+
+                                                                                  D Start guided search for external MAP parameters.
+
+                                                                      LROMEGAS
+                                                                                 The MAP sensor parameterisation procedure acquires the
+                                                                                 characteristics of the original engine sensor.
+
+                                                                                 Press D “Start guided search for external MAP para-
+                                                                                 meters” and follow the instructions:
+                                                                                  1 - WITH THE KEY ON, the gas ECU reads the voltage
+                                                                                 from the sensor and associates it with 1 bar (atmospheric
+     1                                                                           pressure)
+                                                                                  2 - At 3000 rpm, the change from petrol to gas takes
+                                                                                 place
+                                                                                  3 - At IDLE, the gas ECU reads the voltage from the sen-
+                                                                                 sor and associates it with the MAP pressure
+                                                                                 (= Gas pressure at injector unit – P regulator).
+     2                                                                           Note - the ECU must be correctly mapped on gas.
+
+                                                                                 Following the MAP learning procedure: the return to petrol
+                                                                                 will take place based on the low pressure differential value
+                                                                                 for the return set in “F4 gas level” reference “C” instead of
+                                                                                 on the pressure vector for the change to petrol in “F4 gas
+                                                                                 level” reference “D”.
+
+     3                                                                           Note - This strategy allows the limiting of wrong “Low pres-
+                                                                                 sure” diagnoses that can occur on some types of engines,
+                                                                                 especially turbo engines.
+
+Note
+The procedure is performed with gas-powered engi-
+nes at3000RPM and at idle. In the learning process,                              THE OMEGAS-EVO VERSION DOES NOT NEED ANY
+the software measures the differential pressure                                  MANUAL CONFIGURATION AS THE MAP SENSOR FIT-
+which is equal to the regulator calibration pressure:                            TED HAS ALREADY BEEN PARAMETERISED.
+Press.diff = Press.gas - MAP
+The software program then obtains the MAP by re-
+versing the formula:
+MAP = Press.gas - Press diff.
+and saves the corresponding value in volts.
+It obtains the MAP characteristics from the slope
+and intersection of the straight line between the two
+points recorded at 3000 RPM and at idle.
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+21                                                                                                                   LANDI RENZO S.p.A.
+
+=== p.22 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F6 Temperature
+
+                                                                                                                       A
+
+                                                                                                B
+
+                                                                                          C
+
+
+
+                                                                                                                           E
+
+
+
+
+                                                                                                                           F
+
+
+
+                                                                                                                  D
+
+
+
+
+                                                                       A Gas temperature sensor type
+                                                                      Identifies the type of gas sensor used.
+                                                                      The 4K7 sensor is fitted as default with:
+                                                                      the OMEGAS- EVO version with Matrix and Lovato “J-K” injec-
+                                                                      tors. The 4K7 sensor is fitted as default with Landi and Keihin
+                                                                      injector settings
+
+                                                                       B Enable change-over with gas temperature: the option
+                                                                      of enabling/disabling the function.
+                                                                      If this control system is enabled, the change in fuel will only be
+                                                                      possible if the gas temperature detected at the gas temperatu-
+                                                                      re sensor fitted to the low pressure line is higher than that set
+                                                                      on the “F1 gas change-over” page.
+
+                                                                      Enable fuel change-over with water temperature: this op-
+                                                                      tion is available if the matching (Orange) wire is connected to
+                                                                      the optional temperature sensor or to the original engine sen-
+                                                                      sor (see Use vehicle’s engine temperature sensor).
+                                                                      The changeover in fuel will only be possible if the temperatu-
+                                                                      re set on the “F1 Gas change-over” - Water temperature for
+                                                                      change-over” page is exceeded.
+                                                                      Notes - these two parameters cannot be set manually but are
+                                                                      linked to the connection of the wire that detects temperature.
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+22                                                                                                                    LANDI RENZO S.p.A.
+
+=== p.23 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                       C Use vehicle’s engine temperature sensor: if you want to use the
+                                                      original engine temperature sensor, you can set the signal parameters with
+                                                      the OBD tester connected to the diagnosis socket and create a Temperatu-
+                                                      re/Voltage table for the sensor.
+
+
+
+
+                                                       D      By pressing “Modify temperature sensor parameters” you can set:
+
+                                                       E R pull-up: the pull-up resistance value in the petrol ECU (if you don’t
+                                                      know the value, you can leave the default setting).
+                                                      Delta T: speed with which you wish to acquire the voltage reading on the
+                                                      vehicle sensor.
+                                                      Tmin, Tmax: minimum and maximum values for setting the parameterisa-
+                                                      tion of the vehicle sensor (we suggest setting the minimum reading detec-
+                                                      ted with the OBD tester with the engine cold and setting the maximum value
+                                                      at 100°C).
+
+                                                       F Condition: cold engine turned OFF with KEY ON.
+                                                      1. position the cursor on the “VOLT. MEAS. (V)” cell matching the tempe-
+                                                          rature reading taken from the OBD tester. The blue cell will show the
+                                                          instantaneous reading in Volts read by the ECU;
+                                                        Start the engine on petrol.
+                                                      2. press the space bar when the temperature read by the OBD tester
+                                                          matches the temperature of the highlighted cell;
+                                                      3. once this value has been acquired, the cell below changes colour. Wait
+                                                          until the next temperature on the OBD tester is reached then press the
+                                                          space bar again.
+                                                      4. repeat the operation until the maximum engine temperature has been
+   3,600
+                                                          reached.
+                                                      5. any cells below that cannot be reached in automatic mode must be
+                                                          manually completed with values in Volts that are lower than the value
+                                   4                      present in the last automatically saved cell. Double click on the cell and
+                                                           the following message appears: 4 .
+
+
+
+
+                                                                                                                           F
+
+
+
+
+                                                       D Complete “End modification of temperature sensor parameters”
+                                                      that lets you exit the temperature sensor program.
+                                                      NOTE - Make sure that the values in Volts always decrease with increases
+                                                      in temperature before ending the procedure.
+
+  D
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+23                                                                                                                LANDI RENZO S.p.A.
+
+=== p.24 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F7 K insertion
+
+
+
+
+                               A
+
+
+
+                                                                                                                                   H
+
+
+
+
+                               B
+                                                                                              C
+                        LROMEGAS
+
+
+
+
+                                   D     E         F           G
+
+                                                                          F
+                                                            OMEGAS-EVO
+
+
+
+
+                                                                           A This is the main carburretion map and the three main
+                                                                         variables are:
+                                                                         - RPM in X coordinate
+                                                                         - Petrol Tinj in Y coordinate
+                                                                         - K Coefficient in the cells
+                                                                         The gas injection time computing sequence is obtained
+                                                                         from:
+                                                                         • petrol injection time;
+                                                                         • petrol injector in-between time;
+                                                                         • gas injector in-between time;
+                                                                         • K coefficient of map;
+                                                                         • gas pressure compensation;
+                                                                         • water temperature compensation;
+                                                                         • gas temperature compensation.
+
+                                                                           B Modify map refs.: the following mapping break points
+                                                                         can be modified:
+                                                                         - RPM (range: 200 - 8000)
+                                                                         - Injection times (range: 0 - 40 ms)
+                                                                         To optimise fuel mix mapping, we recommend limiting the
+                                                                         values to suit the characteristics of the engine by identifying
+                                                                         the maximum engine speed and maximum petrol injection
+                                                                         time.
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+24                                                                                                                LANDI RENZO S.p.A.
+
+=== p.25 ===
+                                                                                                    Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                                 Note - Carry out these modifications before calibrating the
+                                                                                 system. Variations to parameters following calibration may
+                                                                                 cause incorrect carburretion.
+                        C
+                                                                                    C Start calibration: This key lets you start manual point
+                                                                                 to point calibration. This calibration system is explained in
+                                                                                 section “F4 Automatic calibration” paragraph “Manual cali-
+                                                                                 bration”.
+                                                                                 Note - In “Modify calibration “mode, the instantaneous cor-
+                                                                                 rection values on compensation vectors are not interpola-
+                                                                                 ted.
+
+                                                                                    D Fuel trim: This drop-down menu is only visible on ECU
+
+
+                                                                      LROMEGAS
+                                                                                 version 194-198 and with specific wiring connected to the
+                                                                                 vehicle K line or CAN.
+                                                                                 This menu shows the “Fast” and “Slow” connectors for the
+                                                                                 petrol ECU diagnosis system and enables the “OBD adap-
+                                                                                 tivity” function (in “F11 Adaptivity”) shows the correction va-
+                                                                                 lue of the gas ECU compared with the mapping value.
+                                                                                 A red square around the word “Correctors” indicates that it
+                                                                                 is in OPEN LOOP.
+                                                                                 There is a more detailed explanation in “F10 Adaptivity”.
+
+                                                                                    E   K factor: lets you multiply the map K values by 1.5 or
+                                                                      LROMEGAS
+
+
+
+
+                                                                                 2 (compared with previous software versions where a spe-
+                                                                                 cific firmware version had to be used). This system can be
+                                                                                 applied when the median values of the mapping system ap-
+                                                                                 pear very high (over 230-240) following auto-calibration and
+                                                                                 despite this, the fuel mix remains lean. Following application
+                                                                                 of this strategy, auto-calibration MUST be repeated.
+                                                                                 Note
+                                                                                 Use of this strategy is only advised if you are already using
+                                                                                 the biggest injector size available. Otherwise, use a bigger
+                                                                                 size of injector and make sure that the installation is perfor-
+                                                                                 med correctly.
+                                                                                 OMEGAS - EVO Setting of the multiplication factor oc-
+                                                                       OMEGAS-EVO
+
+
+
+
+                                                                                 curs automatically during auto-calibration and can neither
+                                                                                 be seen nor manually modified. It is however necessary to
+                                                                                 check that the injectors installed are the correct size, based
+          F                                                                      on power output/engine capacity.
+
+                                                                                    F Times
+                                                                                 Petrol injector dead time; Gas injector dead time : These
+                                                                                 are two characteristic parameters regarding injectors and
+                                                                                 serve to compensate for any delays the opening and closing
+                                                                                 of injectors.
+                                                                                 It is possible to differentiate between main injections (range
+                                                                                 0-5”) and extra injections (range 0-5”) as in the latter case,
+                                                                                 non-linear performance from the gas injector is to be ex-
+                                                                                 pected.
+
+                                                                                 Note - we recommend that you leave the petrol and gas in-
+                                                                                 between injection times unchanged. With 184-188 ECUs, to
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+25                                                                                                                   LANDI RENZO S.p.A.
+
+=== p.26 ===
+                                                                                                   Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                                 cut off the extra injections, set “1.4” in the boxes for “extra
+                                                                                 injections” and “petrol in-between injection time” and “0” in
+                                                                                 the “minimum gas extra injection time (ref “B”) “F8 Injectors”
+                                                                                 window.
+                                                                                 The “Cut off extra injections” function can be enabled in
+                                                                                 194-198 ECUs - see “F8 Injectors” window.
+
+                                                                                   G Tip IN
+                         G
+
+
+
+
+                                                                      LROMEGAS
+                                                                                 The two functions “RPM for filtering” (range 0; 9000 rpm);
+                                                                                 “Leaning during acceleration” (range -50 %; 15 %) are
+                                                                                 correlated. Until reaching the programmed engine speed,
+                                                                                 the “K” map values vary in proportion to the set leaning va-
+                                                                                 lue.
+                                                                                 Note This strategy is used when the map values do not allow
+                                                                                 for a linear delivery of power under acceleration (transitory),
+                                                                                 contrary to the speed and constant load function where the
+                                                                                 map values are correct, e.g. in order to make acceleration
+                                                                                 linear on methane-powered engines.
+                H
+                                                                                  H Correction bar: allows the progress of correction to-
+                                                                                 wards optimal fuel mix to be displayed, in other words: the
+                                                                                 bar shows the variation in petrol injection time (acquired be-
+                                                                                 fore changeover) while running on gas.
+                                                                                 The bar is BLUE when running on gas and RED on petrol.
+                                                                                 Use of the correction bar is explained in more detail in the
+                                                                                 paragraph entitled “Fine-tuning carburretion mapping” in
+                                                                                 “F4 Automatic calibration”.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+26                                                                                                                   LANDI RENZO S.p.A.
+
+=== p.27 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F8 Injectors
+
+
+
+
+                                                                                                                   A
+
+                                                                                                                   B
+                                                                  C
+
+                                                                                                                        D
+
+
+
+
+                                                                                                                            LROMEGAS
+                                                                                                                    E
+                                                                                                                    F
+
+
+
+
+                                                                                                                                       OMEGAS-EVO
+                                                                                                        G
+
+
+
+                                                                         The ECU uses the Peak and Hold technique to command
+                                                                         the injectors. This consists of supplying a high voltage (12V)
+                                                                         for a few milliseconds, after which power to the injector is
+                                                                         cut off then restored through a maintenance current for the
+                                                                         remainder of the injection time.
+                                                                         Injectors that need saturation commands are not compati-
+                                                                         ble with LR OMEGAS and OMEGAS-EVO ECUs.
+
+
+                                                                          A Gas injector minimum opening time (range 0-20m”):
+                                                                         This is the minimum time that a gas injector remains open.
+                                                                         If the computing sequence generates a time that is lower
+                                                                         than the minimum time, it is replaced with this value. Setting
+                                                                         a medium/high value might result in the wrong fuel mix at
+                                                                         idle.
+                                                                         Note -
+                                                                         In automatic mode, the default setting changes in line with
+                                                                         the type of injector selected in “F1 Gas change”, “Injector
+                                                                         type”.
+                                                                         1.5 ms Matrix injectors
+                                                                         2.0 ms Landi injectors
+                                                                         2.5 ms Keihin injectors
+                                                                         3.2 ms AEB injectors
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+27                                                                                                                LANDI RENZO S.p.A.
+
+=== p.28 ===
+                                                                                                    Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                                  B Gas extra-injection minimum opening time (range
+                                                                                 0-20m”): This is the minimum time that a gas injector re-
+                                                                                 mains open during extra injection. If the computing sequen-
+                                                                                 ce generates a time that is lower than the minimum time, it
+                                                                                 is replaced with this value. If you want the strategy to take
+                                                                                 effect, the time to set must be equal to or greater than the
+                                                                                 “Gas extra-injection minimum opening time”.
+                                                                                 Note - With 184-188 ECUs, set “1.4” in the “extra injections”
+                                                                                 “F7 box to disable the extra injection function. Drop-down
+                                                                                 menu - “petrol in-between injection time” in F7 K entry” and
+                                                                                 set “0” in this cell.
+
+                                                                                  C Extra injection cutting: (for 194-198 ECUs) this fun-
+                                                                                 ction is enabled when there are frequent extra petrol injec-
+                                                                                 tions that compromise the efficiency of the gas system.
+                                   D
+                                                                                  D Anticipo fasatura iniettori gas: permette di anticipa-
+                                                                                 re l’iniezione gas di un ciclo rispetto alla sequenza abituale
+                                                                                 d’accensione con lettura iniezioni: A=1; C=3; D=4; B=2
+                                                                                  lettura iniezione benzina:    1 3 4 2
+                                                                                                                ↓ ↓ ↓ ↓
+                                                                                  comando iniezione gas:        A C D B
+
+                                                                                 Anticipa di 1: il segnale iniezione sull’iniettore benzina “
+                                                                                 A” serve per gestire l’iniettate dell’iniettore gas C (che in se-
+                                                                                 quenza viene dopo); così come il segnale iniezione sull’iniet-
+                                                                                 tore benzina “ C” serve per gestire l’iniettate dell’iniettore
+                                                                                 gas “D”, e così via.
+                                                                                  lettura iniezione benzina:    1 3 4 2
+                                                                                                                ↓ ↓ ↓ ↓
+                                                                                  comando iniezione gas:        C D B A
+
+                                                                                 Anticipa di 2: la sequenza diventerà:
+                                                                                  lettura iniezione benzina:    1 3 4 2
+                                                                                                                ↓ ↓ ↓ ↓
+                                                                                  comando iniezione gas:        D B A C
+
+                                                                                 Tale funzione non è disponibile su centraline 5-6-8 cilindri.
+
+                                                                                  E Giri per pilotaggio gas in cutoff (range 0; 2200 rpm):
+                                                                      LROMEGAS
+
+
+
+
+                                                                                 è la soglia giri al di sotto della quale, durante il cutoff ben-
+                                                                                 zina (condizione necessaria), si inizia ad iniettare a gas in
+                                                                                 assenza di iniettate benzina.
+                                                                                 Nota: funzione abbinata a: “Tempo di attivazione inj gas
+                                                                                 in cutoff”
+
+                                                                                   F Tempo di attivazione inj gas in cutoff (range 0; 4 m”):
+                                                                     LROMEGAS
+
+
+
+
+                                                                                 è il tempo di iniezione gas applicato su tutti gli iniettori du-
+                                                                                 rante il cutoff benzina ( ovviamente sotto al valore impistato
+                                                                                 in Giri per pilotaggio gas in cutoff ).
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+28                                                                                                                    LANDI RENZO S.p.A.
+
+=== p.29 ===
+                                                                                                     Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                                    Note
+                                                                                   - non utilizzare questa strategia in presenza di sonde Lam-
+                                                                                   bda pilotate in corrente;
+                                                                                   - Per risolvere problemi di spegnimento (durante il rientro
+                                                                                   al minimo) preferire a questa strategia le impostazioni Gas
+                                          G                                        - Benzina
+
+                                                                                    G Enrichment in acceleration: (range -50; 50): the ma-
+
+
+
+
+                                                                      OMEGAS-EVO
+                                                                                   ximum default setting (50) leaves the fuel mix mapping
+                                                                                   unaltered (corresponding with the window “Tip IN” in “F7 K
+                                                                                   insertion” for Omegas ECUs).
+                                                                                   Lowering this value decreases the petrol injection times
+                                                                                   read during transitory states compared with the standard
+                                                                                   values that are used to define gas injection times.
+                                                                                   Note - this strategy is useful for engines running on metha-
+                                                                                   ne that, under acceleration, do not have optimal power di-
+                                                                                   stribution characteristics (due to an over-rich mix).
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+29                                                                                                                   LANDI RENZO S.p.A.
+
+=== p.30 ===
+                                                                                                  Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F9 Gas/petrol
+
+
+                                                                                                  A
+                                                                                                  B
+
+
+
+                                C                        D                                    E
+
+
+
+
+                                G                        H                                    L
+
+
+
+                                                         O
+
+
+
+
+                                                                                                                      F
+
+
+
+                                                                                          H
+
+                                                                                                                                  I
+                                                                                                                          J
+                                                                                                                          K
+
+
+                                                                                                                  L
+
+
+                                                                                                                                  M
+                                                                                                                          N
+
+                                                     O
+                                                                                RPM for Split fuel activation                 P
+
+
+                                                                                                                          Q
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+30                                                                                                                    LANDI RENZO S.p.A.
+
+=== p.31 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                          A Sequential fuel changeover: this function allows the
+                                                                         switch from petrol to gas to be performed gradually. The
+                                                                         petrol/gas injectors will be gradually deactivated one by one
+                                                                         every 5 injections. This strategy allows a smooth passage
+                                                                         from petrol to gas.
+       A
+                                                                          B Automatic petrol contribution at high rpm: this ena-
+                                                                         bles the function when gas injection times exceed the maxi-
+       B                                                                 mum time needed for injection. any missing gas is supple-
+                                                                         mented by petrol.
+                                                                         Some program versions have this function enabled by de-
+                                                                         fault.
+
+                                                                         Operation at idle:
+                                                                          C Gas: At idle speed, the runs on just gas.
+
+                                                                          D Return to petrol: on returning to high rpm, the system
+                                                            E            feeds the engine with 20 injections of petrol then goes back
+                                                                         to gas automatically.
+               C                             D
+                                                                          E Petrol: under the rpm settings set below, the engine
+               F                                                         will always be powered with petrol. The strategy has an in-
+                                                                         built delay system to prevent continuous changes in fuel.
+                                                                         These two strategies are usually implemented when the en-
+                                                                         gine has a tendency to cut out on returning to idle.
+
+                                                                         Each of the above functions enables:
+                                                                          F “RPM for idle identifying” (range 0;2000 rpm) the en-
+                                                                         gine speed below which one of the two above-mentioned
+                                                                         strategies cuts in.
+
+                                                                         Operation at high rpm:
+                                                                          G Gas: When running at high engine speeds, the engine
+                                  H                                      is powered by just gas.
+           G
+                              I                                           H Petrol addition: If you select this item, the three mes-
+                                                        J                sages under “I-J-K” will be activated and the engine will be
+                                                        K                powered by gas with the addition of petrol.
+
+                                                                          I    RPM for petrol addition (range 100;9000) and
+                                                                          J   Petrol inj. time for petrol addition (range 0;30m”):
+                                                                         these are interconnected and are the rpm range inside
+                                                                         which the engine receives additional petrol once the pre-
+                                                                         set petrol injection time threshold has been exceeded (the
+                                                                         squares in the image show an example of the application in
+                                                                         operation).
+                                                                          K Amount of petrol addition (range 0;30m”): The value
+                                                                         set is the time that both the petrol and gas injectors are
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+31                                                                                                                LANDI RENZO S.p.A.
+
+=== p.32 ===
+                                                                                                    Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                     L             open at the same time. Needless to say, this time cannot be
+                                                                                   longer than the petrol injection time.
+
+                                                                                    L Petrol: If you select this item, the two software messa-
+                                                                               M
+                                                                    N              ges will be activated and the engine will be powered exclu-
+                                                                                   sively by petrol.
+
+                                                                                    M Rpm for petrol operation (range 100:9000)
+                                                                                    N Petrol inj. time for petrol operation (range 0;30m”):
+                                                                                   these are interconnected and are the rpm range inside
+                                                                                   which the engine runs exclusively on petrol once the preset
+                                                                                   petrol injection time threshold has been exceeded.
+
+                                                                                    O Enable split fuel: enabling this function, a drop-down
+                                   O                  P
+                                               RPM for Split fuel activation
+                                                                                   menu appears with:
+                                                                                    P RPM for split fuel activation (range 400:8000) that
+                                                                                   allows you to set the range of rpm above which the function
+                                                                        Q          cuts in.
+                                                                                   When you press the message cell
+           5
+                                                                                    Q 0-25%, a modification window appears in which,      7
+                                                                with reference to gas pressure, you can set the percentage
+                                 7                              of petrol you want to inject to replace gas (range 0-25%).
+                                                                The ECU reads the pressure and up-dates the percentage
+                                                                of the “split” to apply every 20ms.
+                                                                Note - the value of the percentage entered is the number of
+                                                                petrol injections to an individual cylinder for every 100 ove-
+                                                                rall injections to that same cylinder. The ECU injects petrol
+ cyclically to one cylinder at a time. With this parameterisation and the maximum “split” percentage, a cylinder will always
+ be supplied with petrol.
+ The example shows settings of 19 and 25% of the “split” percentage
+ In the “Enter values” section, select
+ - Absolute, the written value is that which appears in the cell;
+ - Linear, the written value will be added to or subtracted from the value in the cell if it is not “0”;
+ - Percentual, the written value will be added to or subtracted from the percentage value in the cell if it is not “0”;
+
+ Example
+ with a setting of 10%, only one cylinder at a time is gradually supplied with petrol (red square) for 10 injections, then just
+ gas is injected for the remaining 90 injections to each individual cylinder;
+                        N° of injections
+cylinder
+
+
+
+
+                            n°iniettate
+                            N° of injections
+             cilindro
+           cylinder
+
+
+
+
+                                                                                                            With a setting of 25% one cylin-
+                                                                                                            der will always be running on gas.
+
+
+
+
+ This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+ 32                                                                                                                  LANDI RENZO S.p.A.
+
+=== p.33 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+       F1 Vehicle configuration
+           F10 Adaptivity
+This page can only be used with LR OMEGAS version 194-198 ECUs and with cabling that is dedicated to this
+type of ECU connected to the OBD socket.
+
+
+
+
+                                                         A
+
+                                                                                                                   B
+
+
+
+
+                                                                                           C
+
+                                                                                           D
+
+
+                                                                         E
+
+
+
+
+•    The Omegas 2.16.3 program (or later) manages calibration using data from the engine management system K
+     line or CAN. This allows the ECU to adapt over time (within certain limits) to changes in conditions to the installed
+     system.
+•    At the moment, auto-adaptivity can be used with petrol ECUs fitted with an OBD connection (from EURO on) that
+     have standard FAST and SLOW integrators i.e. with reference to zero and that have upper limits of ±25% and ±50%.
+•    Once the electrical connections have been made, The PC software displays the fast and slow petrol ECU “correc-
+     tors” (see section “F7 Enter K) thus avoiding the use of a second device for showing these parameters.
+•    The vehicle must be correctly mapped without auto-adaptivity with the auto-calibration procedure and correct car-
+     burretion must also be confirmed.
+
+Electrical connections:
+Use the cables available in the gas wiring harness for the connections based on the type of line present on the vehicle
+(connection types 1-2-3, line K; connection type 6-7-8-9, CAN).
+The wires to have electrical connections are easily identified near the original vehicle OBD connector.
+Connect the corresponding wire to the OBD socket after which you need to set the type of connection so that the gas
+ECU can receive data from the petrol system. The OBD tester can supply information about the type of connection to
+be made.
+The OBD tester shows:
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+33                                                                                                                LANDI RENZO S.p.A.
+
+=== p.34 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+Type 1 connection			  connect the wire(s) to: pin 7 (K Line)
+Type 2 connection					              “        pin 7 (Init K-line)
+Type 3 connection			 		             “        pin 7 (Init K-line)
+Type 4 connection 						                     not compatible
+Type 5 connection 						                     not compatible
+Type 6 connection					              “        CAN-H pin6, CAN-L pin14
+Type 7 connection					              “        CAN-H pin6, CAN-L pin14
+Type 8 connection					              “        CAN-H pin6, CAN-L pin14
+Type 9 connection					              “        CAN-H pin6, CAN-L pin14
+
+
+
+
+                                                                             A    OBD adaptivity: enables/disables auto-adaptivity
+                                                                           function. The program however allows this function to be
+                                                                           enabled/disabled without having to disconnect the speci-
+                                                                           fic wiring.
+
+                                                                                  B Type of OBD connection
+                                                                                 With this function enabled, the software automatically
+                     A                                                           starts looking for the type of connection.
+                                                                                 Once a connection has been made, the green confir-
+                                                                                 mation symbol       1   appears. If automatic connection
+                     B
+                                                                                 fails, the red error symbol will be displayed 2 .
+                                                                                 If communication is not automatically recognised, it
+                                                                                 can be made manually.
+                                                                                 The type of connection can be detected when using
+                                                                                 the diagnostic tester to test the connection.
+                                                        2                        Manually select the suitable connection from the pro-
+                                                                                 gram drop-down menu.
+
+                                                                  1
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+34                                                                                                                LANDI RENZO S.p.A.
+
+=== p.35 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                       The OBD tester shows:
+                                                       Type 1 connection                       set:       1 ISO9141-2
+                                                       Type 2 connection		                     “          2 KWP – 2000 Fast Init
+                                                       Type 3 connection		                     “          3 KWP – 2000 Slow Init
+                                                       Type 6 connection		                     “          6 CAN standard - 250 kbps
+                                                       Type 7 connection		                     “          7 CAN extended - 250 kbps
+                                                       Type 8 connection		                     “          8 CAN standard - 500 kbps
+                                                       Type 9 connection		                     “          9 CAN extended - 500 kbps
+
+                                                       NOTE
+                                                       To program the “type of OBD connection”, the diagnostic tester must be
+                                                       disconnected from the EOBD socket.
+
+                                                       Type of petrol trimmers
+                                                       Procedure to identify if the petrol ECU correctors are “right”            C    or
+                                                       “inverted” D
+                                                       Conditions:
+                                                       • adaptivity disabled and ECU correctly calibrated;
+                                                       • positions itself at idle with engine running on gas;
+                                                       • decrease the area on the map where the ball is hovering by 5-10
+                                                           points;
+                                                       • Check if the petrol ECU fast and slow correctors go to positive values
+                                                           shift to “straight” (as shown by the words: if carburretion is lean then
+                                                           positive correctors); if they go to negative values shift to “inverted” (as
+                                                           shown by the words: of carburretion is lean, then negative correctors);
+                                                       • ONCE THE TYPE OF CORRECTOR HAS BEEN IDENTIFIED, RE-
+                                                           SET THE AREA OF THE MAP THAT WAS PREVIOUSLY CHANGED
+                                                           BACK TO THE ORIGINAL VALUES.
+                                                         E Adaptivity sensitivity (range 100;200): Increasing the value decrea-
+                                                       ses the time that the ECU takes to handle the correction in adaptivity.
+                                                       Note - we recommend that you leave the default settings unaltered.
+
+
+
+
+                       C
+
+
+                       D
+
+
+
+
+                                      E
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+35                                                                                                                LANDI RENZO S.p.A.
+
+=== p.36 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                         Operation
+
+                                           E                             Once the electrical adaptivity connections have been made,
+                                                                         the adaptivity function will not work if “OBD (A) Adaptivity”
+                                                                         is not selected. The window will up-date asking you to se-
+                                                                         lect the type of petrol corrector (“C” or “D”) and displays the
+                                                                         adaptivity sensitivity (“E”).
+                                                                         Once connected, the software in the “F7 Insertion K” drop-
+                                                                         down window “Correctors” (in “F1 vehicle configuration”) will
+                                                                         show the fast and slow correctors of the petrol ECU. This
+                                                                         delay is to avoid conflicts if an OBD diagnostic tester is con-
+                                                                         nected at the same time as it will always have precedence
+                                                                         over OBD communication with the gas ECU.
+
+                                                                         Note
+                                                                         If after the idle area has been modified, the petrol correctors
+                                                                         do not change, this implies the presence of other hidden pe-
+                                                                         trol connectors that take on the change that has been made.
+                                                                         In this case, change the modified idle setting back to its ori-
+                                                                         ginal value, wait a few minutes then repeat the idle area
+                                                                         modification (decrease by 5-10 points). Note that the fast
+                                                                         petrol corrector will shift by a few pints for several seconds
+                                                                         and will then return to its original value: if the shift is towards
+                                                                         the positive sign, this means that the correctors are straight.
+                                                                         Otherwise they are inverted.
+
+                                                                         SI SCONSIGLIA L’UTILIZZO DI QUESTA FUNZIONE
+                                                                         QUANDO I CORRETTORI BENZINA MOSTRANO UNO
+                                                                         SCOSTAMENTO ANOMALO RISPETTO ALL’OTTIMALE,
+                                                                         GIA’ PRIMA DELLA CONVERSIONE A GAS
+
+                                                                         Auto-adaptivity
+                                                                         When the coefficient (gas corrector “E”) is activated for the
+                                                                         first time, it will only shift by a few percentage points and
+                                                                         only over time and when necessary will it take on different
+                                                                         values to change the gas mapping and thus the gas ECU.
+
+                                                                         There are two gas correctors: one acts at idle and the other
+                                                                         at other engine speeds. Depending of the area of mapping
+                                                                         involved, the corrector in use at that moment will be applied.
+                                                                         There is also an Open Loop state in which the square around
+                                                                         the word “Correctors” (“n”) is coloured red. In this state, the
+                                                                         gas corrector remains locked at the value detected at the
+                                                                         time the Open Loop state began.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+36                                                                                                                LANDI RENZO S.p.A.
+
+=== p.37 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+        F1 Vehicle configuration
+            F11 Esc Exit
+                                                                         Use EXIT to leave the program. This will allow the calibra-
+                                                                         tion carried out to be loaded to the ECU. Always exit the
+                                                                         screenshot using indicated keys and NEVER with the “x”
+                                                                         at the top right of the screen except under extreme circum-
+                                                                         stances such as the program freezing.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+37                                                                                                                LANDI RENZO S.p.A.
+
+=== p.38 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+             H
+                                                                                                                   B
+                                                        Key on
+
+                                                                                                                   C
+                               A
+
+
+                                                                                                                   D
+
+
+
+
+                               E                                                                                   F
+
+
+
+
+                                                                                       G
+
+
+
+
+                    This page is a fast, easy guide to the most important control parameters during gas operation.
+
+                    - rpm A shown should correspond with the real number of engine revolutions (if this is not the case,
+                    check/modify the setting in “ F1 Gas change - Type of ignition“;
+
+                    - the following warning lights B come on:
+                    “key on” shows that the ignition system is ON;
+                    “Cut-off” shows the engine cut-off status;
+                    “Gas- Petrol” shows what type of fuel the engine is using at that moment;
+
+                    - pressure C shows the current gas pressure (aspirated engines 0.95 bar LPG and 2 bar METHANE;
+                    turbo engines 1.1 bar LPG and 2.5 bar METHANE);
+                    Note - when running on petrol, the gas pressure shown is not accurate.
+
+                    - “Gas injection time, Petrol injection time ” D , show the current injection times of Two Fuels;
+                    “Level” shows the amount of fuel remaining in the petrol tank/gas tank subdivided into 256 points. This
+                    value is not shown in terms of litres or pressure but is a conversion of the value received from the fuel
+                    level sensor converted into binary code.
+
+                    - E MAP; F Water temperature, Gas temperature, Voltage for gas injectors; G Lambda: are
+                    current displays of the parameters described.
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+38                                                                                                                LANDI RENZO S.p.A.
+
+=== p.39 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                          H Acquisition: this function is used to detect any malfun-
+                                                                         ctions in the gas system.
+                                                                          The drop-down menu lets you set:
+                                                                         - Start saving
+                                                                         - End saving
+                                                                         - Display graph
+
+                                                                         Start saving: A “GREEN” light indicates that the program
+                                                                         has started the acquisition procedure (function available
+                                                                         whether the engine is switched off or running). Reproduces
+                                                                         the malfunction condition more than once.
+                                                                         Once you have acquired sufficient data, press “Start sa-
+                                                                         ving”. The program will ask if you want to save the acquisi-
+                                                                         tion that will be saved to the “Acquisition” file.
+                                                                         Display graph: lets you open the saved acquisition or other
+                                                                         previously created files.
+
+                                                                         the graph displayed shows all the traces made by signals
+                                                                         available:
+                                                                          - RPM: RPM x 1000.
+                                                                         - Lambda: Lambda probe value in volts (measured on the
+                                                                         VIOLET wire).
+                                                                         - Gas inj. T: gas injector opening time
+                                                                         - Petrol Inj T: Petrol injector opening time.
+                                                                         - Petrol inj. time filter: “filtered” time:
+                                                                         - Pressure: value in bar of the pressure differential between
+                                                                         the intake manifold and the gas.
+                                                                          - Gas T x 10: value of gas temperature detected by specific
+                                                                         sensor multiplied by 10.
+                                                                         - Water Temp x 10: value of water temperature detected by
+                                                                         specific sensor multiplied by 10.
+                                                                         - Gas inj. T 2: gas injector opening time on possible 2nd
+                                                                         bank.
+                                                                         - Petrol Inj. time 2: petrol injector opening time on possible
+                                                                         2nd bank.
+                                                                         - Petrol inj. time filter 2: “filtered” petrol injector opening time.
+                                                                         - MAP : value in bar of the vacuum at the intake manifold.
+                                                                         Pressing “Graph” causes a drop-down menu to appear with
+                                                                         a 1 “Trace management”, function that lets you select
+                                                                         the specific parameters that may help you identify a fault.
+                                                                         Identifying a fault with a graph such as that in Fig.2 would
+                                                                         not be easy.
+                                                                         Selecting only indispensible parameters makes the graph
+                                                                         much clearer (Fig.3) and you can also zoom in on specific
+                                                                         parts of the graph using the mouse. Graphs can be printed.
+
+
+                                                              1
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+39                                                                                                                LANDI RENZO S.p.A.
+
+=== p.40 ===
+                                                                                                Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                           4 Trace references.
+     2
+                                                                           5 Zoom section.
+                                                                           6    Print option.
+
+
+
+
+                                                                     4
+
+     3
+
+
+
+
+     5
+
+
+
+
+                                          6
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+40                                                                                                                LANDI RENZO S.p.A.
+
+=== p.41 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                                    B                  C
+
+
+
+
+    A
+
+
+
+
+           E                        F                             G
+
+
+                                                                                                                  D
+
+
+
+
+                                                                                                                                         LROMEGAS
+                                                                                                                            OMEGAS-EVO
+
+
+
+
+The operational diagnosis page shows possible component and system malfunctions that can occur while the engine is
+running on gas. If an “error” is displayed, once you have resolved the problem that caused it, you can reset using the
+“reset error” button D .
+The detectable malfunctions are as follows:
+
+•       ECU SELF-DIAGNOSIS: an error message appears if a voltage greater than 6 volts is detected for more than 150
+        seconds downstream of the ECU internal relay with the ignition OFF. This situation matches a “stuck” relay. A dia-
+        gnostic error message also appears if a voltage of less than 6 volts is detected for more than 5 seconds downstream
+        of the relay with the engine running.
+
+•       GAS INJECTORS: an error message appears for a specific injector if open or short circuit situations are detected
+        consecutively for a certain number of injections (10) on that injector’s coil.
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+41                                                                                                                LANDI RENZO S.p.A.
+
+=== p.42 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+•    LOW PRESSURE: while operating on gas, an error is saved if the gas levels drops below reserve (1 or more LEDs
+     lit on the switch) and if the pressure reading stays at a level of less than 250 mV (value that only applies if the sensor
+     is disconnected) for a certain time (3 seconds).
+
+•    HIGH PRESSURE: while running on gas, an error message appears if the pressure reading stays at a lower level
+     that that of the last correction vector value + 300 mbar for a certain time (5 seconds).
+
+•    ENGINE TEMP. NOT CONNECTED: only available of the “Enable fuel change with water temperature” function
+     has been enabled on the Temperature page. The diagnosis function activates if no signal comes from the vehicle or
+     optional temperature sensor for 10 seconds.
+
+•    LOW ENGINE TEMP: the diagnosis function activates if the ECU reads a temperature that is lower than the value
+     set alongside the software string for 10 seconds.
+
+•    HIGH ENGINE TEMP: The diagnosis function activates if the ECU reads a temperature that is higher than the value
+     set alongside the software string for 10 seconds.
+
+•    GAS TEMPERATURE NOT CONNECTED: the diagnosis function activates if no signal is detected coming from the
+     gas temperature sensor on the gas low pressure line for 10 seconds.
+
+•    LOW GAS TEMP.: the diagnosis function activates if the ECU reads a gas temperature that is lower than the value
+     set alongside the software string for 10 seconds.
+
+•    HIGH GAS TEMP: the diagnosis function activates if the ECU reads a gas temperature that is higher than the value
+     set alongside the software string for 10 seconds.
+
+•    SYSTEM’S SOLENOID VALVES EV1: an open or short circuit on the gas interception solenoid coil or corresponding
+     wiring can be diagnosed with the engine running on gas. The fault is signalled when the power consumption mea-
+     sured does not fall within the designated operating range for 5 seconds.
+
+•    EV2 VALVE: an open or short circuit on the multivalve solenoid or tank coil(s) or corresponding wiring can be dia-
+     gnosed with the engine running on gas. The fault is signalled when the power consumption measured does not fall
+     within the designated operating range for 5 seconds.
+
+•    SENSOR POWER AND SWITCH: an error is signalled if the ECU does not detect the connection to the switch and
+     sensors while running on gas. The fault is signalled when the power consumption measured does not fall within the
+     designated operating range for 5 seconds.
+
+The “STATUS” column shows the matching malfunction.
+
+The “reset errors” actions are as follows:
+None - With the function enabled, the switch does not signal any malfunctions.
+Switch to petrol - With this function enabled, the switch signals an error (with the buzzer and rapid flashes of the green
+LED ) and changes to petrol automatically. The next time the engine is started, the system will try to change to gas and
+if the error is no longer present, the engine will run normally.
+Only petrol - With this function enabled, the switch signals an error (with the buzzer and rapid flashes of the green LED)
+and changes to petrol automatically. To go back to normal driving on gas, you will need to resolve the problem and reset
+the error in “DIAGNOSIS”.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+42                                                                                                                LANDI RENZO S.p.A.
+
+=== p.43 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+The Diagnosis page for OMEGAS-EVO ECUs works in the same way as LR OMEGAS version where the “Status”
+and “Action” columns and the “Reset errors” button have identical functions. The
+REGULATOR SOLENOID
+error is a diagnosis that provides information about possible malfunctions (the regulator and tank multivalve solenoids
+are commanded by a single ECU output).
+Diagnoses about:
+GAS INJECTORS
+GAS PRESSURE SENSORS
+MAP SENSORS
+GAS TEMPERATURE SENSORS
+CHANGEOVER SWITCH PRESENT
+have the same functions as LR Omegas versions. The program detects electrical conductivity and open or short circuits
+on wiring and relative components.
+The diagnosis regarding:
+GAS TEMPERATURE TOO COLD
+is programmable (range -40 + 175).
+Note - we recommend setting this value at a temperature that suits the type of fuel used with a minimum value of ~
+0°C for LPG and ~ -20 for Methane. We recommend that you do not go lower than this threshold. For LPG this would
+prevent gas being injected in its liquid state while for Methane, it would prevent making the system work at the limits of
+temperature. In addition, if diagnosis is enabled, you need to set a lower value than that in “F1”, “F1 Gas change”, “Delay
+in Petrol-Gas change with gas temperature”. Setting a higher value could cause an error to be saved at the moment of
+fuel change to gas.
+
+                                                                           E Operating times
+                                                                         Time on petrol, Time on gas: separately count the ope-
+                                                                         rating times of the engine running on petrol and on gas.
+                      E
+                                                                         Display of the times is to 1/3 of an hour.
+                                                                         You can reset the saved time by pressing “Reset time” or by
+                                                                         re-programming the ECU with the new firmware.
+
+
+                                                                           F Gas injector cut-out
+                                                                         When you select “Off”, the corresponding cylinder will be
+                                                                         fed just petrol.
+                               F                                         This function enables different checks to be carried out.
+                                                                         - It allows the correct petrol injector cut-out sequence - gas
+                                                                         injector connection to be checked.
+                                                                         - It allows possible injector malfunctions to be identified wi-
+                                                                         thout having to manually intervene on injector/intake ma-
+                                                                         nifold connecting pipes. To identify which injector might be
+                                                                         creating the problem, press the “Off” squares in sequence.
+                                                                         Using this method, the “Off” cylinder is fed with just petrol
+                                                                         thus allowing you to identify the faulty injector
+
+                                                                         WARNING before exiting this screenshot, make sure
+                                                                         that all the buttons are “On”. The program does auto-
+                                                                         matically reset the original conditions.
+                                                  G
+                                                                          G Petrol injector connection
+                                                                         Shows the petrol injector reading error and individual injec-
+                                                                         tion time.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+43                                                                                                                LANDI RENZO S.p.A.
+
+=== p.44 ===
+                                                                                                Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                        • The guided procedure allows simple calibration of the ECU.
+                                                                        • When the initial parameters were entered in “F1 Gas chan-
+                                                                        ge”, the program loaded a base map in the ECU.
+                                                                        • If a calibration history obtained from a similar engine is avai-
+                                                                        lable (same manufacturer and cubic capacity), loading this
+                                                                        calibration data into the ECU will lead to much simpler auto-
+                                                                        calibration.
+                                                                        • Procedure:
+             Has the engine temperature reached 80-90 °C?               • Press “SEND” on the bar (or “Enter” on the keyboard) to
+                                                                        start AUTO-CALIBRATION” .
+                                                                        • The only thing that will stop auto-calibration at this stage
+                   Continue                Cancel                       is if the “ignition (15)” or “rpm” signal is cut off. Resolve the
+                                                                        problem and re-start the procedure.
+                                                                        • Another message can appear if the water temperature sen-
+                                                                        sor signals that operating temperature has not been reached.
+                                                                        For the sake of simplicity, it is better to wait until such tempe-
+                                                                        rature is reached.
+
+       The program will ask you to:
+       • stabilise the engine speed at 3000 rpm with the vehicle in neutral; the position of the petrol–gas switch is irrele-
+          vant as the software will take care of changing fuel thus testing the outcome of the calibration. To speed up the
+LROMEGAS
+
+
+
+
+          procedure, it is very important during this stage to ensure that the accelerator pedal is kept steady. The automatic
+          calibration stage serves to set the ECU baseline and therefore to facilitate any later manual calibration operations.
+       • the program instructs you to release the accelerator pedal and leave the engine at idle.
+
+
+
+
+ This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+ 44                                                                                                                LANDI RENZO S.p.A.
+
+=== p.45 ===
+                                                                                                 Manuale software OMEGAS 2.16.4 C
+
+
+
+             Here again, it is very important to keep the accelerator pedal in a steady position, to make sure that the air-conditio-
+             ning and lights are off and to avoid turning the steering wheel or use any other function that might affect the idle speed.
+             Auto-calibration correctly completed. You can now exit the function.
+
+             NOTE - to carry out calibration, the program loads a baseline map to the ECU. If you have problems keeping the ac-
+             celerator pedal steady during auto-calibration, you can try again starting from a previously created map not from the
+             base version or you can change the parameters set in “F9 Auto-calibration”.
+
+             The program will ask you to:
+             • leave the engine at idle, to make sure that the air-conditioning and lights are off and to avoid turning the steering
+OMEGAS-EVO
+
+
+
+
+                wheel or use any other function that might affect the idle speed or injection times.
+             • Auto-calibration correctly completed. You can now exit the function.
+
+             NOTE - to carry out calibration, the program loads a baseline map to the ECU. If you have problems keeping the ac-
+             celerator pedal steady during auto-calibration, you can try again starting from a previously created map not from the
+             base version.
+
+
+
+
+  This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+  45                                                                                                                LANDI RENZO S.p.A.
+
+=== p.46 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+Calibration fine tuning.
+                                                                                              Once auto-calibration has been comple-
+                                                                                              ted, we advise that you check the OBD
+                                                                                              correctors (fast and slow) do not change
+                                                                                              the fuel mix so as to bring the petrol ECU
+                                                                                              in line.
+                                                                                              With 194-198 model ECUs, the “fast” and
+                                                                                              “slow” OBD correctors A can be displa-
+                                                                                              yed (in “F7 Enter K” “Correctors” drop-
+                                                                                              down menu). With 184-188 or OMEGAS
+                                                                                              EVO models, you need to connect the
+                                                                                              OBD tester OBD to the diagnostic socket
+                                                          C                                   and set it to display the correctors.
+                                                                                              Check that the OBD correctors stay at ap-
+                                                    A                                         proximately the same values in determi-
+                                                                                              ned fixed points on the mapping when the
+                                                                                              engine is running on gas and on petrol.
+                                                                                              WARNING
+                                                                                              To determine corrector shifts, it is impor-
+                                                                                              tant to remain as stable as possible within
+                                                                                              a mapping cell. It goes without saying that
+                                                                                              during these checks, variations in engine
+                                                                                              speed or engine load do not provide accu-
+                                                                                              rate data.
+                                                                                              Another check to perform is that the petrol
+                                                                                              injection times stay at approximately the
+                                                                                              same values whether engine is running on
+                                                                                              gas or petrol (ref. B ).
+                                                                                              If these values do not match, manually
+                                                                                              adjust the mapping.
+                                                                                  D           When you press “Start calibration”         C
+                                                                                              the “Switch” button appears D . This al-
+                                                                                              lows you to change directly from petrol to
+                                                                                              gas and vice versa without having to wait
+                                                                                              for the usual programmed time. Each time
+                                                                                              you press “Switch”, the corrector bar starts
+                                                                                              from the optimal value “0%” then shifts to
+                                                                                              positive or negative.
+                                                                                              Keeping the rpm and engine load stable
+                                                                                              at various mapping points, press “Switch”.
+                                                                                                                  the corrector bar E
+                                                                                                                  starts from the optimal
+            E                                                                                                     value “0%” then shifts to
+                                                                                                                  positive or negative.
+                                                                                                                  Keeping the rpm and en-
+                                                                                                                  gine load stable at various
+                                                                                                                  mapping points, press
+                                                                                                                  “Switch”.
+                                                                                                                  In the first few seconds,
+                                                                                                                  you will notice a shift in
+                                                                                                                  petrol injection times and
+                                                                                                                  in the correctors.
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+46                                                                                                                LANDI RENZO S.p.A.
+
+=== p.47 ===
+                                                                                                      Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                                     Double clicking on an individual cell lets you modify the
+                                                                                     mapping values.
+                                                                                     Selecting “Absolute” mode, the number you enter is the
+                                                                                     number that will appear in the cell.
+                                                                                     Selecting “Linear” mode, the number you enter is the
+                                                                                     number that will be added to that currently in the cell.
+                                                                                     Selecting “Percentual” mode, the number you enter is
+                                                                                     the percentage increase that will be added to the number
+                                                                                     currently in the cell.
+
+                                                                                     WARNING
+                                                                                     In “Absolute” mode, the program suggests an estimated
+                                                                                     value of the correction to make, we advise you to think
+                                                                                     carefully about whether to accept this proposed figure or
+                                                                                     to just slightly change the value to be entered.
+
+                                                                                    If you want to change the fuel mix in “transitory fuel mix
+                                                                                    states”, you will have to make select other cells at the
+                                                                                    same time F . In this case, we advise you to select “Per-
+                                                                                    centual” mode so that you can correct the mapping better.
+
+                                                                                   We would remind you that changing large areas of the
+                                                                                   mapping is the same as modifying the “4x4” mapping (F5
+                  F                                                                Change calibration) where the cells of the main map are
+                                                                                   grouped in “3 x 3” . G .
+                                                                                    With every gas-petrol-gas change, the fuel mix bar E
+                                                                                   takes a second to stabilise then show the average percen-
+                                                                                   tage of the last 10 injections. The correct fuel mix should
+                                                                                   show a value near 0% for a few seconds and then, over
+                                                                                   time, the instability of the position of the ball inside the sin-
+                                                                                   gle cell caused by interpolation of the cells alongside brings
+                                                                                   this value to implausible shifts. To check whether the cor-
+                                                                                   rection is acceptable, select “gas-petrol-gas” again.
+
+                                                                                   WHEN YOU ARE SURE THAT THE FUEL MIX IS COR-
+                                                                      OMEGAS-EVO
+
+
+
+
+                                                                                   RECT, RUN THE ENGINE AT IDLE AND CHECK THAT
+                                                                                   THE GAS INJECTION TIME IS BETWEEN 4.5-6ms AS
+                                                                                   SPECIFIED IN THE OMEGAS-EVO INSTALLATION MA-
+                                                                                   NUAL.
+              G
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+47                                                                                                                      LANDI RENZO S.p.A.
+
+=== p.48 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                         Pay close attention to the correct fuel mix in the “OPEN
+                                                                         LOOP” area (especially the part related to high engine spe-
+                                                                         eds).
+                                                                         With the Lambda probe under power, replicate the satura-
+                                                                         tion value (in Volts) of the Lambda probe in petrol mode
+                                                                         while the engine is running on gas.
+                                                                         With the linear Lambda probe, use the values of the “Fast”
+                                                                         and “Slow” correctors (or OBD tester) to replicate while run-
+                                                                         ning on gas.
+
+                                                                         The “Start calibration” button has changed function and
+                                                                         become “End calibration”. When you press this button,
+                                                                         a message will inform you that the calibration process will
+                                                                         end.
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+48                                                                                                                LANDI RENZO S.p.A.
+
+=== p.49 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                       B                                              C
+
+     A                                         D                          A
+
+
+
+                                                                          This additional function allows significant changes to be
+                                                                          made to the mapping system in the ECU.
+                                                                          Each cell in this map corresponds to 9 cells in the main
+                                                                          map “F1- F7 Enter K”
+
+                                                                          When running on gas, the RED box corresponds to the
+                                                                          area that is currently in use. When you press this box, it
+                                                                          turns BLUE.
+
+                                                                          A
+                                                                       To increase or decrease the percentage correction,
+                                                                 use the “Increase area (Page Up) or Decrease area (Page
+                              Down) keys. After modification, the cells turn YELLOW.
+                              To perform a complete diagnosis of the vehicle, it may be useful to use the OBD tester and
+                              connect to the Lambda probe.
+
+                              The page also shows:
+
+                               B    Fuel in use
+                               C Petrol injection times and Lambda probe voltage
+
+                               D WARNING: Use EXIT to leave the program. This will allow the calibration carried out to
+                              be loaded to the ECU. Always exit the screenshot using indicated keys and NEVER with the
+                               X at the top right of the screen except under extreme circumstances such as the program
+                              freezing.
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+49                                                                                                                LANDI RENZO S.p.A.
+
+=== p.50 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                                                                           A
+
+
+
+
+                                                                                                                   A
+                               B
+
+
+
+
+                           C
+
+
+
+
+                                      D
+
+
+
+ A Using SAVE CURRENT CONFIGURATION allows you to save the actual file regardless of the type of fuel in use.
+The program automatically recognises the type of ECU connected and saves the file in the relative 3 or 4 cylinder folder
+or, in the case of LANDIRENZO Omega only, the 5, 6 or 8 cylinder folder.
+Selection of the type of CNG or LPG fuel in “F1- F1 GAS CHANGE”, will affect the saving of the files in the relative folder.
+Vehicle makes that are not on the list can be loaded to the appropriate folder on your PC.
+
+
+ B You can use up to 50 characters to name the calibration you have created. We suggest using an easily identifiable
+procedure such as:
+make of vehicle, cubic capacity, year of manufacture, type of engine (brief or detailed), type of injectors (possibly injec-
+tor/nozzle size), type of fuel, operator code/vehicle registration number etc. The date and time the data was entered will
+also be automatically saved by the system.
+
+
+
+ C D If you want to save mapping data in a specific folder, select the make of vehicle before pressing “OK” otherwise
+this data will be saved in the shared “Config” folder. LPG - Config. CNG.
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+50                                                                                                                LANDI RENZO S.p.A.
+
+=== p.51 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+  A
+
+
+ B
+
+
+
+
+                                                                         The Load New Configuration function allows you to load
+                                                                         previously saved calibrations regardless of the type of fuel
+                                                                         in use. The system automatically detects the type of ECU
+                                                                         connected be they 2, 3, 4, or (for LANDIRENZO Omegas
+                                                                         only) 5, 6, 8 cylinder versions.
+
+                                                                         The program automatically shows only the files containing
+                                                                         at least one calibration.
+
+                                                                         Once the calibration data has been loaded, you can go ahe-
+                                                                         ad and check that system and/or customisations operate
+                                                                         correctly.
+
+                                                                         You can also visualise the configurations on the PC without
+                                                                         being connected to an ECU as well as modify and save the
+                                                                         data.
+
+                                                                         Files
+                                                                          A 5-6-8 cylinder
+                                                                          B 2-3-4 cylinder
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+51                                                                                                                LANDI RENZO S.p.A.
+
+=== p.52 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                         B
+
+
+
+
+                                                                                   A
+                B
+
+
+
+
+                                                                         Up-dating ECU program software
+
+                                                                          A Select the folder for the connected ECU:
+                                                                         - 3-4 cylinder
+                                                                         - 5-6-8 cylinder
+            B                                                            - EVO
+
+
+                                                                          B Firmware is differentiated by name or file extension:
+                                                                         LRE 184_ ... - LRE 194_ ... (*.plr) for 3-4 cylinder ECUs
+                                                                         LRE 188_ ... - LRE 198_ ... (*.pln) for 5-6-8 cylinder ECUs
+                                                                         EVO_ ... (*.ple) for LR EVO ECUs.
+
+
+                                                                         Note - we recommend that you use the latest version of
+                                                                         firmware available for every model of ECU (firmware na-
+                                                                         mes are represented by alphanumeric codes in ascen-
+                                                                         ding order).
+
+                                                                          C When you select the program, the next window shows
+                                                                         the name of the file and the time and date it was created.
+                                         C
+                                                                          D Use one of the two keys to confirm programming or to
+                                                                         change the file. Use “Exit” to leave.
+                     D
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+52                                                                                                                LANDI RENZO S.p.A.
+
+=== p.53 ===
+                                                                                               Manuale software OMEGAS 2.16.4 C
+
+
+
+
+                                                                                                       This guide helps you load your PC
+                                                                                                       with new engine calibrations or in-
+                                                                                                       stallation charts for specific makes
+                                                                                                       of vehicle.
+
+                                                                                                       Use the usual channels (internet
+                                                                                                       websites, e-mail, etc...) to downlo-
+                                                                                                       ad new programs made available
+                                                                                                       by the LR technical office.
+
+                                                                                                      As an alternative to this procedure,
+                                                                                                      you can manually load calibrations
+                                                                                                      and programs.
+                                                                                                      Open the main hard disk file on
+                                                                                                      your PC.
+                                                                                     Select the following folders in this order:
+                                                                                     - Programs
+                                                                                     - Landi Renzo
+                                                                                     - Landi Renzo Omegas
+                                                                                     Load the respective folders:
+                                                                                     - Config CNG and Config LPG with the calibra-
+                                                                                     tions and installation charts.
+                                                                                     - Firmware for specific programs with the exten-
+                                                                                     sion “*.plr; *.pln; *.ple”.
+
+
+
+
+                                                                                    Note - the “Acquisition” folder saves the acquisi-
+                                                                                    tions made (see F2 Visualisation - Acquisitions).
+
+
+
+
+This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+53                                                                                                                LANDI RENZO S.p.A.
+
+=== p.54 ===
+                                                                                                                     Manuale software OMEGAS 2.16.4 C
+
+
+
+                                                                                               Closing the software program.
+                                                                                               Do not disconnect the interface cable before the program
+                                                                                               closes.
+
+
+
+
+                      NOTES
+MANUALE_SW_2164C_gb
+
+
+
+
+                      This document is the property of LANDI RENZO. It cannot be distributed or copied without prior written approval
+
+                      54                                                                                                                LANDI RENZO S.p.A.
+
+=== p.55 ===
+

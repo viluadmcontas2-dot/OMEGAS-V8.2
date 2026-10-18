@@ -480,7 +480,7 @@ def gerar_menus_dialogos(b, telas, lbl, usos, nomes, cod, saida):
                 M.append('| %s | %s | %s | %s |' % (t['classe'], c['componente'], c['legenda'] or '', c['modal_result']))
     starts = sorted(cod.entradas)
     por_unid = {}
-    un = cdg_unidades_cache(b)
+    un = cdg_unidades_cache(b, cod)
     fins = [u[0] for u in un]
     for ad, idx, fn in usos:
         if idx is None or not (0 <= idx < len(lbl)):
@@ -503,9 +503,9 @@ def gerar_menus_dialogos(b, telas, lbl, usos, nomes, cod, saida):
 _UN = {}
 
 
-def cdg_unidades_cache(b):
+def cdg_unidades_cache(b, cod=None):
     if 'u' not in _UN:
-        _UN['u'] = cdg.unidades(b)
+        _UN["u"] = cdg.unidades(b, cod)
     return _UN['u']
 
 

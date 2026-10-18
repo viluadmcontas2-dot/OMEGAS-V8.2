@@ -37,6 +37,8 @@ OFF_CHECK_STATE = 0x29A   # TCheckBox: cbChecked = 1 (0x758DFC)
 OFF_NUM_VALUE = 0x2E0     # TNumericEdit: double (0x96BB88 grava, 0x96BA2C lê)
 OFF_NUM_CODE = 0x2EC      # código do dado (amarração 0x48A228)
 OFF_NUM_DATAINDEX = 0x2F0
+OFF_COMBO_ITEMS = 0x2CC   # TCustomComboBox.FItems (0x754C5C: `mov eax,[ebx+0x2cc]`)
+OFF_COMBO_INDEX = 0x2E8   # TCustomComboBox.FItemIndex (0x754C76 grava -1)
 
 # argumentos (stdcall) das APIs que o código das abas pode tocar; sem tabela => erro explícito
 STDCALL_EXTRA = {
@@ -49,7 +51,30 @@ STDCALL_EXTRA = {
 
 
 # funções de VCL/RTL "de janela" sem efeito sobre a lógica (cada uma conferida no disassembly) -- ver docs
-NOOPS = [0x7C8840, 0x7AED4C]    # TTimer.SetEnabled; TScreen.GetFormCount (0 forms)
+NOOPS = {0x7C8840: 0, 0x7AED4C: 0,     # TTimer.SetEnabled; TScreen.GetFormCount (0 forms)
+         0x784328: 0, 0x784770: 0, 0x785534: 1,   # TDrawGrid: ColCount/RowCount/CellRect (só geometria da grade)
+         0x78F508: 0, 0x7A612C: 0,        # Font.Color de controle; rolagem do ScrollBox
+         0x7ED630: 0, 0x7ED668: 0,        # TControl.SetTop/SetLeft (geometria)
+         0x754C5C: 0}                     # TCustomComboBox.Clear (lista de itens)
+
+
+# APIs de janela/recurso que o código das abas toca: devolvem 0 (nenhuma janela real existe aqui)
+APIS_NULAS = {'LoadStringW': 4, 'LoadStringA': 4, 'GetWindowTextA': 3, 'SetWindowTextA': 2, 'GetClientRect': 2,
+              'UpdateWindow': 1, 'ShowWindow': 2, 'EnableWindow': 2, 'SetFocus': 1, 'GetParent': 1,
+              'IsWindowVisible': 1, 'IsWindowEnabled': 1, 'RedrawWindow': 4, 'SetWindowPos': 7, 'MoveWindow': 6,
+              'GetWindowRect': 2, 'ScreenToClient': 2, 'ClientToScreen': 2, 'CreateFontIndirectA': 1,
+              'DeleteObject': 1, 'GetStockObject': 1, 'SetBkMode': 2, 'GetWindowThreadProcessId': 2,
+              'PostMessageW': 4, 'SetTimer': 4, 'KillTimer': 2, 'GetKeyboardState': 1, 'FindWindowA': 2,
+              'GetSysColor': 1, 'GetDlgCtrlID': 1, 'GetActiveWindow': 0, 'SetActiveWindow': 1,
+              'SendMessageTimeoutA': 7, 'GetForegroundWindow': 0, 'SystemParametersInfoA': 4,
+              'InvalidateRgn': 3, 'ValidateRect': 2, 'BeginPaint': 2, 'EndPaint': 2, 'GetTextMetricsA': 2,
+              'GetCursorPos': 1, 'SetCursor': 1, 'LoadCursorA': 2, 'SetCapture': 1, 'ReleaseCapture': 0,
+              'GetFileAttributesA': 1, 'GetCurrentDirectoryA': 2, 'GetTempPathA': 2, 'FindClose': 1,
+              'GetVersionExA': 1, 'GetLocalTime': 1, 'GetSystemTime': 1, 'QueryPerformanceCounter': 1,
+              'QueryPerformanceFrequency': 1, 'SetEvent': 1, 'ResetEvent': 1, 'CreateEventA': 4,
+              'WaitForSingleObject': 2, 'CreateMutexA': 3, 'ReleaseMutex': 1, 'InitializeCriticalSection': 1,
+              'DeleteCriticalSection': 1, 'TlsAlloc': 0, 'TlsSetValue': 2, 'SetLastError': 1,
+              'GetProcessHeap': 0, 'HeapAlloc': 3, 'HeapFree': 3, 'VirtualAlloc': 4, 'VirtualFree': 3}
 
 
 class EcuDono(C._Ecu):
@@ -316,6 +341,7 @@ class MaquinaAbas(C._Maquina):
                              'CharUpperA': 1, 'CharLowerA': 1, 'lstrlenA': 1, 'GetCPInfo': 2,
                              'GetStringTypeW': 5, 'LCMapStringA': 6, 'CompareStringA': 6, 'GetSystemDefaultLCID': 0})
         self.stdcall.update({'MessageBoxA': 4, 'MessageBoxW': 4})
+        self.stdcall.update(APIS_NULAS)
         self.caixas = []
 
         def msgbox(mm):             # MessageBoxA(hwnd, texto, titulo, tipo): guarda o texto e "clica" OK
@@ -390,6 +416,11 @@ class MaquinaAbas(C._Maquina):
             self.w8(obj + OFF_ENABLED, 0 if str(o.props.get('Enabled', 'True')) == 'False' else 1)
             tag = str(o.props.get('Tag', 0))
             self.w32(obj + OFF_TAG, int(tag) if tag.lstrip('-').isdigit() else 0)
+            if o.classe in ('TComboBox', 'TKeyComboBox') and 'TStringList' in c.rtti.vmts:
+                it = self.alloc(0x80)                 # TStringList vazia (campos zerados = lista vazia válida)
+                self.w32(it, c.rtti.vmts['TStringList'])
+                self.w32(obj + OFF_COMBO_ITEMS, it)
+                self.w32(obj + OFF_COMBO_INDEX, 0xFFFFFFFF)
             if o.classe in ('TNumericEdit', 'TValueEditEx'):      # DataCode/DataIndex padrão = -1 (sem amarração)
                 self.w32(obj + OFF_NUM_CODE, 0xFFFFFFFF)
                 self.w32(obj + OFF_NUM_DATAINDEX, 0xFFFFFFFF)
@@ -477,8 +508,8 @@ class Sessao:
 
         def nada(mm, r, a):
             return 0
-        for ad in NOOPS:
-            m.hook(ad, nada, 0)
+        for ad, na in NOOPS.items():
+            m.hook(ad, nada, na)
         # TNumericEdit: "valor atual" = double em +0x2E0 (a função original lê o Text; aqui devolve o campo)
         m.redireciona(0x96BA2C, bytes.fromhex('DD80E0020000C3'))
 
@@ -578,3 +609,36 @@ class Sessao:
         return {'quadros': r['quadros'], 'efeitos': list(m.efeitos), 'erro': r['erro'], 'instr': r['instrucoes'],
                 'stubs': r['stubs'], 'funcoes': r['funcoes_executadas'],
                 'lidos': list(m.ecu.lidos), 'escritas_ecu': list(m.ecu.escritas_ecu), 'caixas': list(m.caixas)}
+
+
+def quadros_da_pilha(m, n=48):
+    """Endereços de retorno plausíveis na pilha (cada um precedido de `call`): [(retorno, alvo_do_call|None)]."""
+    X = m.X
+    esp = m.uc.reg_read(X.UC_X86_REG_ESP)
+    out = []
+    for k in range(n):
+        v = m.r32(esp + 4 * k)
+        if 0x401000 <= v < 0xB00000:
+            for tam in (5, 6, 2, 3):
+                ins = m.ctx.b.ins(v - tam)
+                if ins is not None and ins.mnemonic == 'call' and ins.address + ins.size == v:
+                    try:
+                        alvo = int(ins.op_str, 16)
+                    except ValueError:
+                        alvo = None
+                    out.append((v, alvo))
+                    break
+    return out
+
+
+def nargs_de(ctx, entrada, limite=400):
+    """Nº de bytes/4 que a função limpa da pilha: primeiro `ret N` visto a partir da entrada (N=0 se `ret`)."""
+    a = entrada
+    for _ in range(limite):
+        i = ctx.b.ins(a)
+        if i is None:
+            return None
+        if i.mnemonic == 'ret':
+            return int(i.op_str, 0) // 4 if i.op_str else 0
+        a += i.size
+    return None

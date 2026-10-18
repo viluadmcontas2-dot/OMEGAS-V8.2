@@ -1,0 +1,394 @@
+{
+ "fonte": "Software Manual Landi Renzo Omegas 2.16.4 C (2012-07) — FONTE-A",
+ "limite": "manual de 2012 para ECUs LRE 184-198/EVO; o ProgBase atual é mais novo (ausência no manual NÃO prova ausência no programa)",
+ "marca": "OBS-DOC",
+ "paginas": {
+  "MAN-2.16.4-p001": {
+   "indice_pdf": 1,
+   "numeracao": "INFERIDO",
+   "pagina": 1,
+   "primeira_linha_texto": "SOFTWARE MANUAL",
+   "sha256": "d010f8ef0da4bf1bb1c67269279cd9d23dc870a2be88edb5047717136e82e890"
+  },
+  "MAN-2.16.4-p002": {
+   "indice_pdf": 2,
+   "numeracao": "rodape",
+   "pagina": 2,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "73da1cd563fd2f2b4789f8236c70fd205d42bf08bb662d608fbf0f0f255861be"
+  },
+  "MAN-2.16.4-p003": {
+   "indice_pdf": 3,
+   "numeracao": "rodape",
+   "pagina": 3,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "6d0c6aa5ce97a5708c228f5f0c4b2fcf5061893ad03d25ba2e253f1f38e340b3"
+  },
+  "MAN-2.16.4-p004": {
+   "indice_pdf": 4,
+   "numeracao": "rodape",
+   "pagina": 4,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "f726f90638e4dfe4934c75249141cedfd11e3912e274256994655f4a0baa706b"
+  },
+  "MAN-2.16.4-p005": {
+   "indice_pdf": 5,
+   "numeracao": "rodape",
+   "pagina": 5,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "feefedccbce69d134f38f0593811efb1d8f7aedbb4386cdf6c461c11e14d3f91"
+  },
+  "MAN-2.16.4-p006": {
+   "indice_pdf": 6,
+   "numeracao": "rodape",
+   "pagina": 6,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "3143c3d433c3e4b8ed0c83a5595adac7a0ec9b0966f3034f4fce71f8d90fa0e3"
+  },
+  "MAN-2.16.4-p007": {
+   "indice_pdf": 7,
+   "numeracao": "rodape",
+   "pagina": 7,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "121728ba70b9b70598b0be666c61a1b7964f075061984e75831c7fbd11510cae"
+  },
+  "MAN-2.16.4-p008": {
+   "indice_pdf": 8,
+   "numeracao": "rodape",
+   "pagina": 8,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "9faea9b84e1a3e3fab644fd79f1e0a22a9e65a0cd0b6ad3bf81a26831ba105d0"
+  },
+  "MAN-2.16.4-p009": {
+   "indice_pdf": 9,
+   "numeracao": "rodape",
+   "pagina": 9,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "762443cbf5553329c7321769a7316ecab6912473507875de43f81362d579fc47"
+  },
+  "MAN-2.16.4-p010": {
+   "indice_pdf": 10,
+   "numeracao": "rodape",
+   "pagina": 10,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "ec8ae2c25fcc5816ffc25f7c8a1eeb35690fd4993215014139fde6908729e696"
+  },
+  "MAN-2.16.4-p011": {
+   "indice_pdf": 11,
+   "numeracao": "rodape",
+   "pagina": 11,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "17e8d39bebe590558c6fbb4ffc9157a3f3a6b42b053f584f9d30a05807829501"
+  },
+  "MAN-2.16.4-p012": {
+   "indice_pdf": 12,
+   "numeracao": "rodape",
+   "pagina": 12,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "69402d458fd1b571522411c6b36073025e38363634bacf216987dbab0577a07a"
+  },
+  "MAN-2.16.4-p013": {
+   "indice_pdf": 13,
+   "numeracao": "rodape",
+   "pagina": 13,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "1dc244cce24480c1eac7599cf36a0d3fd406dcbf67b2c322a881b45ac4ef4558"
+  },
+  "MAN-2.16.4-p014": {
+   "indice_pdf": 14,
+   "numeracao": "rodape",
+   "pagina": 14,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "079d1206b15058679adf340b8662c84baa92526819358de8e77ad3cd27b8c8f8"
+  },
+  "MAN-2.16.4-p015": {
+   "indice_pdf": 15,
+   "numeracao": "rodape",
+   "pagina": 15,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "382752cb8cf75580e1521420f1bb614df80d60e6033d433c9e94b7d4ac71db24"
+  },
+  "MAN-2.16.4-p016": {
+   "indice_pdf": 16,
+   "numeracao": "rodape",
+   "pagina": 16,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "f690e152add585bdbdcf94ab372c77e236b001ed6848ab893ba136a41526a6b9"
+  },
+  "MAN-2.16.4-p017": {
+   "indice_pdf": 17,
+   "numeracao": "rodape",
+   "pagina": 17,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "87a1d2faaf2b80b19f3d48c43c8f53a8947dd955eb3b98632d75b80cc696ba38"
+  },
+  "MAN-2.16.4-p018": {
+   "indice_pdf": 18,
+   "numeracao": "rodape",
+   "pagina": 18,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "a80d660e197ab846609b011cb39053bc17b1fe5aae07f9d9c0239d5395f0bd53"
+  },
+  "MAN-2.16.4-p019": {
+   "indice_pdf": 19,
+   "numeracao": "rodape",
+   "pagina": 19,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "5d21807498ece1153665cbdff00d1b7336a6c2620b48407e0371f982b05b2e99"
+  },
+  "MAN-2.16.4-p020": {
+   "indice_pdf": 20,
+   "numeracao": "rodape",
+   "pagina": 20,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "62d7b0ea8af10d598bed8fc51284556ac9cea8b858f34885afe6b77491e9b142"
+  },
+  "MAN-2.16.4-p021": {
+   "indice_pdf": 21,
+   "numeracao": "rodape",
+   "pagina": 21,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "d7924e034a057cc38a942638dc94a9354e98431d442fe7bcb6a1bc1f62f69c6a"
+  },
+  "MAN-2.16.4-p022": {
+   "indice_pdf": 22,
+   "numeracao": "rodape",
+   "pagina": 22,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "24fbc1852495f95865c9a3f341e88581922987c3f6961d99a7dc077f7a1063ef"
+  },
+  "MAN-2.16.4-p023": {
+   "indice_pdf": 23,
+   "numeracao": "rodape",
+   "pagina": 23,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "9897414b8a11c795510620503176f27a8a7f7e3c01a11d093040be0913ed385b"
+  },
+  "MAN-2.16.4-p024": {
+   "indice_pdf": 24,
+   "numeracao": "rodape",
+   "pagina": 24,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "30ac23246740c728be919650a1f550343ebe49a566c6a44826f8e89e554d271e"
+  },
+  "MAN-2.16.4-p025": {
+   "indice_pdf": 25,
+   "numeracao": "rodape",
+   "pagina": 25,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "a8d992aba0ba1f639e285c43afdc4a468df56f25f365097e89fc3e5b21feedae"
+  },
+  "MAN-2.16.4-p026": {
+   "indice_pdf": 26,
+   "numeracao": "rodape",
+   "pagina": 26,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "4f1c276c107d2a9e35bac6d88bb368d3382f081a0847a582f0846c54dc5152a2"
+  },
+  "MAN-2.16.4-p027": {
+   "indice_pdf": 27,
+   "numeracao": "rodape",
+   "pagina": 27,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "0b555c0f46dca0ed8623e6adac6cb1497f7aa1b2b61ab65c5dc078b4a855ded7"
+  },
+  "MAN-2.16.4-p028": {
+   "indice_pdf": 28,
+   "numeracao": "rodape",
+   "pagina": 28,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "88df83b8e50aacc4d631c41e2398a2601873cc0acab4c971902b460a4a4786af"
+  },
+  "MAN-2.16.4-p029": {
+   "indice_pdf": 29,
+   "numeracao": "rodape",
+   "pagina": 29,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "8d8018c5c55ea66f295b6ada135959428a1018bed40f02e4178c3fbf88781646"
+  },
+  "MAN-2.16.4-p030": {
+   "indice_pdf": 30,
+   "numeracao": "rodape",
+   "pagina": 30,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "13fe5fd30cb940580c8b49c491d1047fcbab29c8caffc769fe9446a2eeff6d72"
+  },
+  "MAN-2.16.4-p031": {
+   "indice_pdf": 31,
+   "numeracao": "rodape",
+   "pagina": 31,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "ecd100db6a521fb5143b35924a0def9f93e1db4fdb4d5302b59be722c3eaf180"
+  },
+  "MAN-2.16.4-p032": {
+   "indice_pdf": 32,
+   "numeracao": "rodape",
+   "pagina": 32,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "53404ecdc535e219f32e04f3c65d0ec56ab4e938c1a8cb448badcf5654ddc8df"
+  },
+  "MAN-2.16.4-p033": {
+   "indice_pdf": 33,
+   "numeracao": "rodape",
+   "pagina": 33,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "0566b67a85b6fcf485d566b1ca46278a0c0c1c56198d95428d99ee3261fba661"
+  },
+  "MAN-2.16.4-p034": {
+   "indice_pdf": 34,
+   "numeracao": "rodape",
+   "pagina": 34,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "f378b01a59c5e4bc94d307f699f9514d09059d524ba986d260bada5a0f5f2f78"
+  },
+  "MAN-2.16.4-p035": {
+   "indice_pdf": 35,
+   "numeracao": "rodape",
+   "pagina": 35,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "71609cc8dc5c3fa72a8e27a880ac13b913f25c98633d1b940f376aec25e345b8"
+  },
+  "MAN-2.16.4-p036": {
+   "indice_pdf": 36,
+   "numeracao": "rodape",
+   "pagina": 36,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "cf04da5c08bfe6c50b2e60e5adde4d441135d63aba7f3a9e3ac9cb3e4a93666a"
+  },
+  "MAN-2.16.4-p037": {
+   "indice_pdf": 37,
+   "numeracao": "rodape",
+   "pagina": 37,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "fd8f0ebe7c2a5359a1b1d8a858d39bfc806544a8b3a1f1dc5dbd0b66c613f541"
+  },
+  "MAN-2.16.4-p038": {
+   "indice_pdf": 38,
+   "numeracao": "rodape",
+   "pagina": 38,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "cafa57baf98b0aca710d61b92e6b12496a3875c98dec797cc1a03d4a594bcf85"
+  },
+  "MAN-2.16.4-p039": {
+   "indice_pdf": 39,
+   "numeracao": "rodape",
+   "pagina": 39,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "c27fdd7ae39833e781319f9960d05bdfcdb55d0547e77a3b720b08e63bf0c02f"
+  },
+  "MAN-2.16.4-p040": {
+   "indice_pdf": 40,
+   "numeracao": "rodape",
+   "pagina": 40,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "cf58e3869cd5996dbc5c8524fb745df360ee7b26e6fd2d6630160c9160868ff0"
+  },
+  "MAN-2.16.4-p041": {
+   "indice_pdf": 41,
+   "numeracao": "rodape",
+   "pagina": 41,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "4e41bcc87eb99160f1b5c06141db62b39fb88c462034196a2e8e5dc3b9c97aa8"
+  },
+  "MAN-2.16.4-p042": {
+   "indice_pdf": 42,
+   "numeracao": "rodape",
+   "pagina": 42,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "f91e7d61d1dceaac3bc7216ebd11849a94e72793dc64003927f01fd527bbc6f6"
+  },
+  "MAN-2.16.4-p043": {
+   "indice_pdf": 43,
+   "numeracao": "rodape",
+   "pagina": 43,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "cb49c1c8e62fc7e0fbbaf0a9277678a30407deb0c8ca7442f7a9ea881fb41f2d"
+  },
+  "MAN-2.16.4-p044": {
+   "indice_pdf": 44,
+   "numeracao": "rodape",
+   "pagina": 44,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "080bd45c5d8de0f4c88ff7bead02e5bb4f66dd8d4c319d5479dfe2f557f2362d"
+  },
+  "MAN-2.16.4-p045": {
+   "indice_pdf": 45,
+   "numeracao": "rodape",
+   "pagina": 45,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "00338d0ee58261e297aec9d54cb08b8ab0bc73f46dbe351fb0def878a083652f"
+  },
+  "MAN-2.16.4-p046": {
+   "indice_pdf": 46,
+   "numeracao": "rodape",
+   "pagina": 46,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "9629837bebaa357476b3ad6a499852fbc379bebe5db5365178a5d595f176e57a"
+  },
+  "MAN-2.16.4-p047": {
+   "indice_pdf": 47,
+   "numeracao": "rodape",
+   "pagina": 47,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "2b63af7245f4002e54992f60243ce5228deddd0239e76f0f1b359c564e325562"
+  },
+  "MAN-2.16.4-p048": {
+   "indice_pdf": 48,
+   "numeracao": "rodape",
+   "pagina": 48,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "232c26a775e2fb665f3dfdc41967db11c6f191b222a1aafe5355dc1ecfa83814"
+  },
+  "MAN-2.16.4-p049": {
+   "indice_pdf": 49,
+   "numeracao": "rodape",
+   "pagina": 49,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "c6816cd5deb375a7e9e60eb335448fd98ea0504a78b63ef42aa375472ee88e6d"
+  },
+  "MAN-2.16.4-p050": {
+   "indice_pdf": 50,
+   "numeracao": "rodape",
+   "pagina": 50,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "2fe3430a4ae25dfeb12ca54479b4e2d9cd1f1777bf48492c43b8aff2b64eb357"
+  },
+  "MAN-2.16.4-p051": {
+   "indice_pdf": 51,
+   "numeracao": "rodape",
+   "pagina": 51,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "6cf5f6350efa7f8f127c595664ddff810717507bf05f267a523c9e59f111049b"
+  },
+  "MAN-2.16.4-p052": {
+   "indice_pdf": 52,
+   "numeracao": "rodape",
+   "pagina": 52,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "f2d0a5e99e6bdce217886a049885fa5ba14799c3041c4122190d8c4af4120736"
+  },
+  "MAN-2.16.4-p053": {
+   "indice_pdf": 53,
+   "numeracao": "rodape",
+   "pagina": 53,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "ecaeac221f3ee9205a5ce02313e0996208c3b8b98636d118c499a789a6c793c4"
+  },
+  "MAN-2.16.4-p054": {
+   "indice_pdf": 54,
+   "numeracao": "rodape",
+   "pagina": 54,
+   "primeira_linha_texto": "Manuale software OMEGAS 2.16.4 C",
+   "sha256": "7843df9752b0e27878ad397e1ab8b0dc140421fe7fd7ea9581ab633f90ad9635"
+  },
+  "MAN-2.16.4-p055": {
+   "indice_pdf": 55,
+   "numeracao": "INFERIDO",
+   "pagina": 55,
+   "primeira_linha_texto": "",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ },
+ "pdf_bytes": 15852900,
+ "url": "https://landi.pl/assets/files/OMEGAS/MANUALE_SW_2164C_gb1.pdf"
+}

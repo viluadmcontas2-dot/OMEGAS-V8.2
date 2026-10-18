@@ -190,3 +190,40 @@ def conversoes_amostra(exe, rtti_campos, objs, temps=(-20, 0, 20, 40, 60, 80, 90
             lin.append(dict(graus_C=t, bruto=bruto, graus_de_volta=round(volta, 2), erro=em.m.erro))
         res[nome] = lin
     return res
+
+
+def parse_quadro(q, indexado):
+    """Decodifica um quadro de SetNumber/SetVector (v2): {op, sc, indice, valor, dados}. None se nao for de escrita."""
+    if len(q) < 4:
+        return None
+    op = q[0]
+    sc = q[1] | (q[2] << 8)
+    dados = bytes(q[3:-1])
+    if op & 0xF8 == 0x10:
+        if indexado and dados:
+            return dict(op=op, sc=sc, indice=dados[0], valor=int.from_bytes(dados[1:], 'little'))
+        return dict(op=op, sc=sc, indice=None, valor=int.from_bytes(dados, 'little'))
+    if op & 0xF8 == 0x30:
+        return dict(op=op, sc=sc, indice=None, valor=None, dados=dados.hex(' ').upper())
+    return None
+
+
+def chamar_registros(em, addr, eax=None, edx=None, ecx=None, pilha=()):
+    """Chama um metodo do TStreamDati (convencao Borland: eax=Self, edx, ecx; resto na pilha) e devolve os quadros."""
+    m = em.m
+    m.ecu.quadros.clear()
+    m.erro = None
+    regs = {'eax': m.sd if eax is None else eax}
+    if edx is not None:
+        regs['edx'] = edx
+    if ecx is not None:
+        regs['ecx'] = ecx
+    ret = m.chamar(addr, regs, pilha)
+    return dict(quadros=[bytes(q) for q in m.ecu.quadros], erro=m.erro, retorno_al=ret)
+
+
+def todos_vetores(em, objs, campos_sd):
+    nomes = [n for n, o in sorted(objs.items()) if o['classe'] in ('TAebNumber', 'TAebVector') and
+             n in em.nome_off and 'SerialCode' in o['props']]
+    em.preparar(nomes)
+    return nomes

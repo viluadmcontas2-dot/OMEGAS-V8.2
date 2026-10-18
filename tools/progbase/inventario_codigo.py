@@ -305,16 +305,27 @@ def usos_traducao(cod):
     return out
 
 
-def unidades(b):
-    """[(nome, fim_inclusivo)] ordenado: marcadores @@X@Initialize/Finalize do PE (DERIVADO: fim de cada unidade)."""
+def unidades(b, cod=None):
+    """[(fim_exclusivo, nome)] ordenado. Cada unidade termina logo após a sua função Finalize
+    (marcadores @@Unidade@Initialize/Finalize do PE) — DERIVADO. Unidades sem marcador (sem seção de
+    inicialização) ficam fundidas na unidade marcada seguinte."""
     ini, fin = {}, {}
     for s in b.pe.DIRECTORY_ENTRY_EXPORT.symbols:
         n = s.name.decode()
         m = re.match(r'^@@(\w+)@(Initialize|Finalize)$', n)
         if m:
             (ini if m.group(2) == 'Initialize' else fin)[m.group(1)] = b.base + s.address
-    out = sorted((fin.get(k, v) + 0x20, k) for k, v in ini.items())
-    return out
+    starts = sorted(cod.entradas) if cod is not None else None
+    out = []
+    for k, v in ini.items():
+        f = fin.get(k, v)
+        if starts:
+            j = bisect.bisect_right(starts, f)
+            fim = starts[j] if j < len(starts) else f + 0x10
+        else:
+            fim = f + 0x10
+        out.append((fim, k))
+    return sorted(out)
 
 
 def fonte_nomes(b, cl):
@@ -360,7 +371,7 @@ def montar(b, cl):
     raizes = [(b.pe.OPTIONAL_HEADER.AddressOfEntryPoint + b.base, 'entrada')]
     raizes += [(a, 'nome') for a in sorted(nomes) if b.cb <= a < b.ce]
     cod.descer(raizes)
-    un = unidades(b)
+    un = unidades(b, cod)
     fins = [u[0] for u in un]
     lo = b.base + 0x1000
     # lacunas só dentro das unidades do programa (evita ruído de dados da RTL)
@@ -380,7 +391,7 @@ def grupos_app(un):
 
 
 def unidade_de(a, un, fins):
-    k = bisect.bisect_left(fins, a)
+    k = bisect.bisect_right(fins, a)
     if k < len(un):
         return un[k][1]
     return None

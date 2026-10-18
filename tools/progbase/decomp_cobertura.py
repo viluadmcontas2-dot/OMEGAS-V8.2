@@ -67,6 +67,13 @@ def main():
     L += ['', '### 40 maiores lacunas entre funções', '', '| Início (aprox.) | Bytes |', '|---|---|']
     for g, a in sorted(gaps, reverse=True)[:40]:
         L.append(f'| 0x{a:08X} | {g} |')
+    lac = os.path.join(DEC, 'lacunas.json')
+    if os.path.exists(lac):
+        lj = json.load(open(lac))
+        L += ['', '### Lacunas classificadas por conteúdo (`lacunas.json`, INFERIDO)', '', '| Estado Ghidra : conteúdo | Faixas | Bytes |', '|---|---|---|']
+        for k, v in lj['por_classe'].items():
+            L.append(f'| {k} | {v["lacunas"]} | {v["bytes"]} |')
+        L += ['', 'Observação (OBS-FIO da execução do Ghidra): ~3,9 mil faixas (941 KB) de instruções desmontadas sem função foram submetidas a `CriarFuncoesOrfas.java`; só ~25 KB viraram corpo de função e o restante voltou a "indefinido" — indício de que eram dados (literais Delphi) desmontados por varredura, não código (INFERIDO). O grosso do "resto" indefinido (≈2,25 MB) é o maior item do backlog para triagem: literais, tabelas de salto e talvez código só alcançado por ponteiro.']
     open(os.path.join(DEC, 'COBERTURA.md'), 'w', encoding='utf-8').write('\n'.join(L) + '\n')
     # funcoes-app.md: nome, propósito, chamadores
     M = ['# Funções das units do programa (prefixo @ no RTTI)', '',

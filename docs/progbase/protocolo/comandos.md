@@ -1,6 +1,6 @@
 # Comandos do protocolo AEB/MP48 (gerado — não editar à mão)
 
-Gerado por `tools/progbase/protocolo_comandos.py`. Executável analisado: sha256 `8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4` · captura Portmon sha256 `341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce`.
+Gerado por `tools/progbase/protocolo_comandos.py`. Executável analisado: sha256 `8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4` · captura Portmon sha256 `43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64`.
 
 ## Quadro e checksum (OBS-FIO + OBS-COD)
 
@@ -26,7 +26,7 @@ Gerado por `tools/progbase/protocolo_comandos.py`. Executável analisado: sha256
 ### ACK_53
 
 - O que é: `53 n d1..dn ck`, ck = (0x53 + n + soma(d)) & 0xFF. O eco NÃO entra no checksum.
-- Marca: OBS-FIO (16 790 respostas, 100 % com checksum certo) + OBS-COD (ReadAck RE:0x00923860, VerifyCk RE:0x00923B30)
+- Marca: OBS-FIO (16 788 respostas, 100 % com checksum certo) + OBS-COD (ReadAck RE:0x00923860, VerifyCk RE:0x00923B30)
 - Tratamento: ReadAck só consome o byte 0x53; quem chama lê n, os dados e chama VerifyCk. Falha de checksum -> ComFail |= 0x10 -> Retry.
 
 ### NAK_CA
@@ -99,15 +99,15 @@ Retry(self, &tentativa):                       # RE:0x009226E4
 | `connect` | Connect | `01 00 3A ck` (3B) — b0=1 byte de carga, b1=0x00, carga 0x3A | `53 00 53`<br>NAK `CA 01 08` visto só na reconexão de outra captura (doc 17 protocolo-landi) | 4 (linha 176) | sim |
 | `versao` | GetProtocolVersion (ProtocolCommand 0x25) | `00 25 25` (byte do comando = +0x2C9, padrão 0x25) | `53 01 vv ck` — observado `53 01 02 56` (versão 2) | 4 (linha 196) | sim |
 | `disconnect` | Disconnect | `00 01 01` | `53 00 53` | 3 (linha 340) | sim |
-| `getnumber` | GetNumber (escalar) | v2: `09 lo hi ck`; v0/v1: `08 end ck` (v1: end>=0xFF vira `FF (end+1)&FF`) | `53 n valor ck` com n == tamanho do elemento (1, 2 ou 4); valor little-endian, com sinal se Signed<br>NAK `CA 01 10 DB` = SerialCode inexistente nesta ECU | 502 (linha 246) | sim |
+| `getnumber` | GetNumber (escalar) | v2: `09 lo hi ck`; v0/v1: `08 end ck` (v1: end>=0xFF vira `FF (end+1)&FF`) | `53 n valor ck` com n == tamanho do elemento (1, 2 ou 4); valor little-endian, com sinal se Signed<br>NAK `CA 01 10 DB` = SerialCode inexistente nesta ECU | 1047 (linha 246) | sim |
 | `getnumber_idx` | GetNumber + índice (elemento de vetor) | v2: `0A lo hi idx ck`; v0/v1: `09 end idx ck` | igual ao GetNumber | 299 (linha 582) | sim |
 | `getnumber_2` | GetNumber + linha + coluna (elemento de matriz) | v2: `0B lo hi linha coluna ck`; v0/v1: `0A end linha coluna ck` (1º byte extra = linha, 2º = coluna) | igual ao GetNumber | 0 | parcial |
-| `getvector` | GetVector (vetor inteiro) | v2: `29 lo hi ck`; v0/v1: `28 end ck` | `53 n d... ck`, n = dimensão x tamanho (ex. 60 = 30 x u16); NAK se SerialCode inexistente | 1556 (linha 508) | sim |
+| `getvector` | GetVector (vetor inteiro) | v2: `29 lo hi ck`; v0/v1: `28 end ck` | `53 n d... ck`, n = dimensão x tamanho (ex. 60 = 30 x u16); NAK se SerialCode inexistente | 8782 (linha 508) | sim |
 | `getvector_row` | GetVector + linha (uma linha de matriz) | v2: `2A lo hi linha ck`; v0/v1: `29 end linha ck` | `53 n d... ck`, n = colunas x tamanho (ex. MAP_K: 12) | 207 (linha 1218) | sim |
-| `getpacket` | GetPacket (canal de dados em tempo real) | `48 canal ck` | `53 n d... ck` — canal 01: 34 bytes (telemetria); canal 0B: 14 bytes (status AutoCal)<br>NAK `CA 01 10 DB` no canal 08 (3 334x) = canal não implementado nesta ECU | 12765 (linha 14544) | sim |
+| `getpacket` | GetPacket (canal de dados em tempo real) | `48 canal ck` | `53 n d... ck` — canal 01: 34 bytes (telemetria); canal 0B: 14 bytes (status AutoCal)<br>NAK `CA 01 10 DB` no canal 08 (3 334x) = canal não implementado nesta ECU | 24224 (linha 14544) | sim |
 | `getbyaddr` | GetByAddress (memória por endereço) | `6A flags a_lo a_hi ck` (endereço 16 bits) ou `6C flags a0 a1 a2 a3 ck` (32 bits). flags: bit7=valor 16 bits, bit5=endereço 32 bits | `53 n valor ck` (n lido e IGNORADO; valor de 1 ou 2 bytes conforme flags, devolvido com extensão de sinal) | 0 | nao |
 | `elemdim` | GetElementDimension | v2: número `09 lo hi`, vetor `0A lo hi 00`, matriz `0B lo hi 00 00` (v0/v1: 08/09/0A) | igual ao GetNumber: o tamanho n da resposta é a "dimensão" | — | nao |
-| `setnumber` | SetNumber (escalar / elemento de vetor / elemento de matriz) | op = 0x10 | carga (carga < 7), carga = tamanho do valor (1,2,4) + 1 (v2: byte alto do endereço) + 1 (índice) ou +2 (linha+coluna). v2 sem índice, 1 B: `12 lo hi val ck`; 2 B: `13`; 4 B: `15`. Com índice: `13 lo hi idx val`; com linha+coluna: `14 lo hi linha coluna val`. carga >= 7: op `17`, depois `carga+1` (RE:0x00925BF5..0x00925C59) | `53 00 53` (n=0, SEM byte de resultado — corrige o doc 07 do protocolo-landi)<br>NAK -> Retry/erro | 220 (linha 48568) | sim |
+| `setnumber` | SetNumber (escalar / elemento de vetor / elemento de matriz) | op = 0x10 | carga (carga < 7), carga = tamanho do valor (1,2,4) + 1 (v2: byte alto do endereço) + 1 (índice) ou +2 (linha+coluna). v2 sem índice, 1 B: `12 lo hi val ck`; 2 B: `13`; 4 B: `15`. Com índice: `13 lo hi idx val`; com linha+coluna: `14 lo hi linha coluna val`. carga >= 7: op `17`, depois `carga+1` (RE:0x00925BF5..0x00925C59) | `53 00 53` (n=0, SEM byte de resultado — corrige o doc 07 do protocolo-landi)<br>NAK -> Retry/erro | 224 (linha 48568) | sim |
 | `setvector` | SetVector (vetor inteiro ou linha) | op = 0x30 | carga (carga < 7), carga = dim x tamanho + 1 (v2) (+1 com linha); `35 lo hi d1 d2 d3 d4 ck` p.ex. FLAG_CONF1. carga >= 7: op `37`, `carga+1`, endereço, [linha], dados | `53 00 53` | 19 (linha 31284) | sim |
 | `setbyaddr` | SetByAddress | `73 flags a_lo a_hi val` (8 bits/end16), `74 ... v_lo v_hi`, `75 flags a0..a3 val`, `76 flags a0..a3 v_lo v_hi` | `53 00 53` | 0 | nao |
 | `sendcommand` | SendCommand genérico (b0 = nº de bytes de carga, b1 = código) | `n cmd c1..cn ck` com n<7; n>=7: `07 cmd (n+1) c1..cn ck` | `53 m d1..dm ck` (m bytes devolvidos ao chamador) | — | parcial |
@@ -174,7 +174,7 @@ Retry(self, &tentativa):                       # RE:0x009226E4
 - Grupo: leitura · Rotina: RE:0x00924994
 - Marca: OBS-FIO (502 pedidos: 460 ACK, 42 NAK); OBS-COD
 - Tratamento no original: RE:0x00924994. Se n != tamanho: lê e descarta n bytes, VerifyCk, ComFail |= 0x8020 e devolve FALSO SEM retry. NAK com bit 0x10 -> ComFail 4 (sem retry; TAebNumber marca válido=0). Demais falhas -> Retry (5x).
-- Captura: 502 ocorrências {'ACK_53': 460, 'NAK_CA': 42}; primeira na linha 246: `09 33 00 3C` -> `09 33 00 3C 53 02 00 00 55`
+- Captura: 1047 ocorrências {'ACK_53': 1005, 'NAK_CA': 42}; primeira na linha 246: `09 33 00 3C` -> `09 33 00 3C 53 02 00 00 55`
 - OMEGAS: sim — AutoCalProtocol.kt READ_SCALAR
 
 ### `getnumber_idx` — GetNumber + índice (elemento de vetor)
@@ -197,7 +197,7 @@ Retry(self, &tentativa):                       # RE:0x009226E4
 - Grupo: leitura · Rotina: RE:0x00925258
 - Marca: OBS-FIO (1 556: 1 502 ACK, 54 NAK); OBS-COD
 - Tratamento no original: RE:0x00925258: lê n; se n == 4*cont... (elemento 4/2/1 B) copia; n incompatível -> ComFail 0x8020 sem retry. A dimensão esperada vem do objeto (ArrayDimension); a ECU capturada devolve 30 elementos nos vetores AutoCal cujo DFM diz 18 (vetores.json: tamanho_confere_com_dfm=false).
-- Captura: 1556 ocorrências {'ACK_53': 1502, 'NAK_CA': 54}; primeira na linha 508: `29 03 00 2C` -> `29 03 00 2C 53 04 86 24 51 10 62`
+- Captura: 8782 ocorrências {'ACK_53': 8728, 'NAK_CA': 54}; primeira na linha 508: `29 03 00 2C` -> `29 03 00 2C 53 04 86 24 51 10 62`
 - OMEGAS: sim — AutoCalProtocol.kt READ_VECTOR; Mp48Protocol.kt
 
 ### `getvector_row` — GetVector + linha (uma linha de matriz)
@@ -213,7 +213,7 @@ Retry(self, &tentativa):                       # RE:0x009226E4
 - Grupo: leitura · Rotina: RE:0x00925894
 - Marca: OBS-FIO (12 765: canal 01 x9 408, 08 x3 334 NAK, 0B x23); OBS-COD
 - Tratamento no original: RE:0x00925894: n é lido com MOVSX (byte com sinal) -> pacotes > 127 B não seriam suportados; copia min(n, buffer); n > buffer -> ComFail 0x8020 sem retry. NAK (0x10) sem retry: o 48 08 repete 3 334x porque o relógio da tela o pede sempre.
-- Captura: 12765 ocorrências {'ACK_53': 9431, 'NAK_CA': 3334}; primeira na linha 14544: `48 0B 53` -> `48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 01 03 65`
+- Captura: 24224 ocorrências {'ACK_53': 20884, 'ECO_DIVERGENTE': 1, 'NAK_CA': 3334, 'SEM_RESPOSTA': 5}; primeira na linha 14544: `48 0B 53` -> `48 0B 53 53 0E 00 00 00 00 00 00 00 00 00 00 00 00 01 03 65`
 - OMEGAS: sim — Mp48Protocol.kt CMD_TELEMETRY/CMD_SECONDARY_STATUS; AutoCalProtocol.kt CMD_NATIVE_STATUS
 
 ### `getbyaddr` — GetByAddress (memória por endereço)
@@ -235,7 +235,7 @@ Retry(self, &tentativa):                       # RE:0x009226E4
 - Grupo: escrita · Rotina: RE:0x00925AFC, 0x00925D18, 0x00925F44
 - Marca: OBS-FIO (op 12 x4, 14 x216; todos `53 00 53`); OBS-COD
 - Tratamento no original: RE:0x00925AFC/0x00925D18/0x00925F44: ReadAck; ReadByte (n, ignorado); VerifyCk; falha -> Retry. Porta fechada ou sem Connect: devolve VERDADEIRO sem enviar nada. O quadro sozinho é AMBÍGUO: `14 lo hi a b c` = (linha,coluna,valor 1 B) OU (idx, valor 2 B); só o objeto desambigua.
-- Captura: 220 ocorrências {'ACK_53': 220}; primeira na linha 48568: `14 54 00 00 00 64 CC` -> `14 54 00 00 00 64 CC 53 00 53`
+- Captura: 224 ocorrências {'ACK_53': 224}; primeira na linha 48568: `14 54 00 00 00 64 CC` -> `14 54 00 00 00 64 CC 53 00 53`
 - OMEGAS: sim — AutoCalProtocol.kt frameWriteU8/U16, Mp48Protocol.kt writeKCell
 
 ### `setvector` — SetVector (vetor inteiro ou linha)

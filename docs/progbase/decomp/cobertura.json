@@ -1,22 +1,22 @@
 {
- "alvos_decompilacao": 2849,
- "bytes_app": 934885,
- "bytes_com_unidade": 2619957,
- "bytes_em_funcoes_ghidra": 4148478,
+ "alvos_decompilacao": 2850,
+ "bytes_app": 934950,
+ "bytes_com_unidade": 2637386,
+ "bytes_em_funcoes_ghidra": 4172893,
  "bytes_funcoes_nomeadas": 1341264,
  "bytes_nomeados_por_rtti": 1175139,
- "bytes_text_sem_funcao": 2470658,
- "funcoes": 26035,
+ "bytes_text_sem_funcao": 2446243,
+ "funcoes": 29927,
  "funcoes_gigantes_fora_do_alvo": [
   "0x00439E94"
  ],
  "marca": "OBS-COD (contagens) ; INFERIDO (unidade por intervalo)",
- "n_funcoes_app": 2328,
+ "n_funcoes_app": 2329,
  "n_nomeadas": 9818,
  "n_publicados": 565,
- "n_sem_nome": 16217,
- "pct_text_com_unidade": 39.58,
- "pct_text_em_funcoes": 62.67,
+ "n_sem_nome": 20109,
+ "pct_text_com_unidade": 39.84,
+ "pct_text_em_funcoes": 63.04,
  "pct_text_nomeado": 20.26,
  "text_bytes_virtuais": 6619136
 }

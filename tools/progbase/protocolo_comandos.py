@@ -515,9 +515,9 @@ ENLACE_ORIGINAL_X_OMEGAS = [
     dict(item='Escrita com porta fechada', original='SetNumber/SetVector devolvem VERDADEIRO sem enviar nada',
          omegas='escrita falha explicitamente; gravado só após ACK + readback (AGENTS.md)', ref='AGENTS.md invariantes',
          classe='diferente-de-proposito'),
-    dict(item='Ordem do handshake', original='ident `00 02` -> Connect `01 00 3A` -> versão `00 25` -> (REGISTRO_EE `09 02 00`) -> ident de novo',
-         omegas='CMD_INIT_1 (`00 02 02`), CMD_INIT_2 (`01 00 3A`), depois leitura de versão', ref='ResponseDrivenEcuEngine.kt:341-369',
-         classe='igual'),
+    dict(item='Ordem do handshake', original='abertura 4 (linha 148): ident `00 02` -> Connect `01 00 3A` -> versão `00 25` -> ident; aberturas 5-7: já começam em Connect -> versão -> `09 02 00` (REGISTRO_EE) -> ident',
+         omegas='CMD_INIT_1 (`00 02 02`), CMD_INIT_2 (`01 00 3A`), `00 25` "opcional" (falha só gera aviso; a versão lida NÃO muda o endereçamento: o app assume v2)', ref='ResponseDrivenEcuEngine.kt:341-381',
+         classe='lacuna-pequena'),
 ]
 
 

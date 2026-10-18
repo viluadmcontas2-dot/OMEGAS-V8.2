@@ -1,7 +1,7 @@
 {
  "versao_esquema": 1,
  "exe_sha256": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
- "log_sha256": "341542e8790594e0ee640d2e80d131214f63c98199f16e36b061760fecdba1ce",
+ "log_sha256": "43a632724182c72cbd4f386ea0f7421e01d38242b48b919705671751e9eb8a64",
  "framing": {
   "quadro_tx": "b0 b1 [carga] ck — ck = soma mod 256 de TODOS os bytes anteriores do quadro (inclui b0). b0 = classe | n, n (3 bits) = nº de bytes entre o 2º byte e o ck; n==7 => estendido (byte seguinte = n+1).",
   "quadro_rx": "eco do quadro + ACK + n + dados + ck; ck = (ACK + n + soma(dados)) mod 256 — o eco não entra.",
@@ -143,7 +143,7 @@
   },
   "ACK_53": {
    "o_que_e": "`53 n d1..dn ck`, ck = (0x53 + n + soma(d)) & 0xFF. O eco NÃO entra no checksum.",
-   "marca": "OBS-FIO (16 790 respostas, 100 % com checksum certo) + OBS-COD (ReadAck RE:0x00923860, VerifyCk RE:0x00923B30)",
+   "marca": "OBS-FIO (16 788 respostas, 100 % com checksum certo) + OBS-COD (ReadAck RE:0x00923860, VerifyCk RE:0x00923B30)",
    "tratamento": "ReadAck só consome o byte 0x53; quem chama lê n, os dados e chama VerifyCk. Falha de checksum -> ComFail |= 0x10 -> Retry."
   },
   "NAK_CA": {
@@ -185,6 +185,78 @@
   "      conectado = FALSO; fecha a porta",
   "  dispara OnConnect(conectado, ComFail)",
   "  devolve FALSO"
+ ],
+ "enlace_original_x_omegas": [
+  {
+   "item": "Retries",
+   "original": "até 5 reenvios do mesmo quadro (6 tentativas), depois diálogo de reconexão (se ligado)",
+   "omegas": "sem retry cego em NAK não-retentável; reconecta pelo ciclo de vida USB (ResponseDrivenEcuEngine.kt, UsbRecoveryPolicy.kt)",
+   "ref": "ResponseDrivenEcuEngine.kt:25-26",
+   "classe": "diferente-de-proposito"
+  },
+  {
+   "item": "NAK `CA 01 10` / `CA 01 08`",
+   "original": "testa o bit 0x10 do 2º byte de status (qualquer outro valor com bit 0x10 = não suportado; sem o bit = retry)",
+   "omegas": "compara igualdade com 0x10 e 0x08; outros códigos viram EXTENDED_UNKNOWN",
+   "ref": "UsbProtocolReply.kt:13-23",
+   "classe": "lacuna-pequena"
+  },
+  {
+   "item": "Purge antes de cada comando",
+   "original": "IOCTL_SERIAL_PURGE (TX+RX) antes de TODO WRITE (20 290/20 290)",
+   "omegas": "purge antes de cada transação (purgeBefore=true por padrão)",
+   "ref": "UsbSerialManager.kt:353,372",
+   "classe": "igual"
+  },
+  {
+   "item": "Eco",
+   "original": "compara o eco byte a byte; divergência -> ComFail 8 -> retry",
+   "omegas": "readExact(request.size) e compara o eco inteiro",
+   "ref": "UsbSerialManager.kt:375-377",
+   "classe": "igual"
+  },
+  {
+   "item": "Timeout do 1º byte da resposta",
+   "original": "1000 ms (+200 do driver)",
+   "omegas": "timeoutMs padrão 1800 ms",
+   "ref": "UsbSerialManager.kt:352",
+   "classe": "diferente-de-proposito"
+  },
+  {
+   "item": "Tamanho máximo de resposta",
+   "original": "GetPacket lê o tamanho como byte COM SINAL (<= 127 B); Get* confere n com o tamanho do objeto",
+   "omegas": "rejeita n > 192",
+   "ref": "UsbSerialManager.kt:385",
+   "classe": "lacuna-pequena"
+  },
+  {
+   "item": "Resposta `96` (ECU ocupada)",
+   "original": "espera 400 ms e reenvia (até 5x)",
+   "omegas": "sem tratamento específico",
+   "ref": "UsbProtocolReply.kt",
+   "classe": "lacuna-nao-observada-no-fio"
+  },
+  {
+   "item": "Sequência de encerramento",
+   "original": "`01 12 00` e depois `00 01 01` (Disconnect, uma tentativa, sem retry)",
+   "omegas": "só Mp48Protocol.CMD_DISCONNECT",
+   "ref": "Mp48Protocol.kt:18",
+   "classe": "lacuna-pequena"
+  },
+  {
+   "item": "Escrita com porta fechada",
+   "original": "SetNumber/SetVector devolvem VERDADEIRO sem enviar nada",
+   "omegas": "escrita falha explicitamente; gravado só após ACK + readback (AGENTS.md)",
+   "ref": "AGENTS.md invariantes",
+   "classe": "diferente-de-proposito"
+  },
+  {
+   "item": "Ordem do handshake",
+   "original": "ident `00 02` -> Connect `01 00 3A` -> versão `00 25` -> (REGISTRO_EE `09 02 00`) -> ident de novo",
+   "omegas": "CMD_INIT_1 (`00 02 02`), CMD_INIT_2 (`01 00 3A`), depois leitura de versão",
+   "ref": "ResponseDrivenEcuEngine.kt:341-369",
+   "classe": "igual"
+  }
  ],
  "sendcommand_chamadores": [
   {
@@ -360,6 +432,12 @@
     "usa": "nao",
     "nota": "o app abre direto a 9600 e começa por `00 02 02`"
    },
+   "backlog": {
+    "classe": "A",
+    "prioridade": "baixa",
+    "risco": "nenhum",
+    "recomendacao": "Só serviria para descobrir qual adaptador tem ECU. O app já abre o USB pelo VID/PID; não precisa."
+   },
    "no_log": {
     "total": 2,
     "classes": {
@@ -502,9 +580,9 @@
     "ref": "AutoCalProtocol.kt READ_SCALAR"
    },
    "no_log": {
-    "total": 502,
+    "total": 1047,
     "classes": {
-     "ACK_53": 460,
+     "ACK_53": 1005,
      "NAK_CA": 42
     },
     "primeira_linha": 246,
@@ -557,6 +635,12 @@
     "usa": "parcial",
     "ref": "AebProtocolFramesV7.kt getNumber(address,row,column), sem uso comprovado em runtime"
    },
+   "backlog": {
+    "classe": "A",
+    "prioridade": "baixa",
+    "risco": "nenhum",
+    "recomendacao": "Ler 1 célula de matriz sem baixar a linha. Otimização; o app lê a linha `2A`."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -580,9 +664,9 @@
     "ref": "AutoCalProtocol.kt READ_VECTOR; Mp48Protocol.kt"
    },
    "no_log": {
-    "total": 1556,
+    "total": 8782,
     "classes": {
-     "ACK_53": 1502,
+     "ACK_53": 8728,
      "NAK_CA": 54
     },
     "primeira_linha": 508,
@@ -637,10 +721,12 @@
     "ref": "Mp48Protocol.kt CMD_TELEMETRY/CMD_SECONDARY_STATUS; AutoCalProtocol.kt CMD_NATIVE_STATUS"
    },
    "no_log": {
-    "total": 12765,
+    "total": 24224,
     "classes": {
-     "ACK_53": 9431,
-     "NAK_CA": 3334
+     "ACK_53": 20884,
+     "ECO_DIVERGENTE": 1,
+     "NAK_CA": 3334,
+     "SEM_RESPOSTA": 5
     },
     "primeira_linha": 14544,
     "exemplo": {
@@ -663,6 +749,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "C",
+    "prioridade": "baixa",
+    "risco": "medio",
+    "recomendacao": "Leitura de memória por endereço físico. Útil só para engenharia; não expor ao usuário."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -683,6 +775,12 @@
    "marca": "OBS-COD; chamado por RE:0x0045C16D/0x0045C61A/0x0047F4D1 (tela TFormConfig); não separável no fio",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "A",
+    "prioridade": "baixa",
+    "risco": "nenhum",
+    "recomendacao": "Descobrir o tamanho de um parâmetro. No fio é um GetNumber+idx(0); o app já conhece os tamanhos."
    }
   },
   {
@@ -702,9 +800,9 @@
     "ref": "AutoCalProtocol.kt frameWriteU8/U16, Mp48Protocol.kt writeKCell"
    },
    "no_log": {
-    "total": 220,
+    "total": 224,
     "classes": {
-     "ACK_53": 220
+     "ACK_53": 224
     },
     "primeira_linha": 48568,
     "exemplo": {
@@ -754,6 +852,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Escrita em endereço físico arbitrário. NUNCA expor."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -774,6 +878,12 @@
    "marca": "OBS-COD",
    "omegas": {
     "usa": "parcial"
+   },
+   "backlog": {
+    "classe": "B",
+    "prioridade": "media",
+    "risco": "variavel",
+    "recomendacao": "Os códigos 0E,10,11,13,14,15,21,26,27,28 só aparecem nas telas Calibração/Diagnóstico/Config/LandiConnect. (pelo NOME do evento, INFERIDO) 0x21 = teste de saída ligar/desligar (TFormDiagnosi.PanelTestOn/OffClick); 0x27 = aquisição de injetor/sequência e tacômetro (TFormConfig.CheckInjAcquisitionClick, ButtonSequenceAcquisitionClick, EditRpmTachimetroKeyPress); 0x28 = botão Reset (TFormLandiConnect.ButtonResetClick). Nada disso está no log; capturar cada botão antes de implementar."
    }
   },
   {
@@ -789,6 +899,12 @@
    "marca": "OBS-FIO (2x); significado INFERIDO",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "B",
+    "prioridade": "media",
+    "risco": "baixo",
+    "recomendacao": "O original manda `01 12 00` antes de todo Disconnect. Efeito desconhecido; capturar uma sessão só com esse comando (e comparar `48 01`/`48 0B` antes e depois) antes de decidir."
    },
    "no_log": {
     "total": 2,
@@ -816,6 +932,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "B",
+    "prioridade": "baixa",
+    "risco": "desconhecido",
+    "recomendacao": "Tecla na tela de Calibração (Taratura). Só se o app ganhar a tela de Taratura."
+   },
    "no_log": {
     "total": 6,
     "classes": {
@@ -841,6 +963,12 @@
    "marca": "OBS-FIO (4 693x, resposta única); OBS-COD (chamador)",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "A",
+    "prioridade": "media",
+    "risco": "nenhum",
+    "recomendacao": "Polling da tela de Calibração (resposta constante `02 00` em 4 693/4 693). Pode ser o \"estado do modo taratura\"; capturar com o modo ligado/desligado para ver se o valor muda."
    },
    "no_log": {
     "total": 4693,
@@ -868,6 +996,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "E",
+    "prioridade": "nenhuma",
+    "risco": "nenhum",
+    "recomendacao": "A ECU capturada responde NAK (não suportado). Ignorar."
+   },
    "no_log": {
     "total": 3,
     "classes": {
@@ -894,6 +1028,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "C",
+    "prioridade": "baixa",
+    "risco": "medio",
+    "recomendacao": "Teste de saída por PWM (aciona atuador). Só com tela de diagnóstico dedicada e confirmação."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -915,6 +1055,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Troca de baud para flash. Nunca no app."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -935,6 +1081,12 @@
    "marca": "OBS-COD; 0 ocorrências",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Troca de baud para flash. Nunca no app."
    },
    "no_log": {
     "total": 0,
@@ -984,6 +1136,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "B",
+    "prioridade": "baixa",
+    "risco": "desconhecido",
+    "recomendacao": "Enviado após gravar dois vetores de flags por ponto; nunca visto. Capturar antes de usar."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -1004,6 +1162,12 @@
    "marca": "OBS-COD; 0 ocorrências",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Apaga a flash. Nunca no app."
    },
    "no_log": {
     "total": 0,
@@ -1026,6 +1190,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Sai do bootloader. Nunca no app."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -1046,6 +1216,12 @@
    "marca": "OBS-COD; 0 ocorrências",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Sai do bootloader (forçado). Nunca no app."
    },
    "no_log": {
     "total": 0,
@@ -1068,6 +1244,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Entra em programação de flash. Nunca no app."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -1089,6 +1271,12 @@
    "omegas": {
     "usa": "nao"
    },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Encerra programação de flash. Nunca no app."
+   },
    "no_log": {
     "total": 0,
     "classes": {},
@@ -1109,6 +1297,12 @@
    "marca": "OBS-COD; 0 ocorrências (a captura não tem flash)",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "D",
+    "prioridade": "nenhuma",
+    "risco": "alto",
+    "recomendacao": "Grava firmware. Nunca no app."
    }
   },
   {
@@ -1124,6 +1318,12 @@
    "marca": "OBS-COD; 0 ocorrências (a ECU capturada é versão 2)",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "E",
+    "prioridade": "nenhuma",
+    "risco": "nenhum",
+    "recomendacao": "ECUs de protocolo 0/1; a capturada é v2."
    },
    "no_log": {
     "total": 0,
@@ -1145,6 +1345,12 @@
    "marca": "OBS-COD; 0 ocorrências",
    "omegas": {
     "usa": "nao"
+   },
+   "backlog": {
+    "classe": "E",
+    "prioridade": "nenhuma",
+    "risco": "nenhum",
+    "recomendacao": "ECUs de protocolo 0/1; a capturada é v2."
    },
    "no_log": {
     "total": 0,

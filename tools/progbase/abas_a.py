@@ -268,6 +268,7 @@ class Contexto:
             self.sd_nomes.setdefault(off, 'cache de ' + nm)
         self._ev = {}
         self._toca = {}
+        self._ret = {}
         self._todas = None
         self._flag_em = None
         self._acoes = {}
@@ -285,6 +286,11 @@ class Contexto:
                 self._todas.append((h, self.acoes(h)))
         return self._todas
 
+    def retornos(self, alvo):
+        if alvo not in self._ret:
+            self._ret[alvo] = M.retornos(self.b, alvo)
+        return self._ret[alvo]
+
     def toca(self, alvo):
         if alvo not in self._toca:
             self._toca[alvo] = M.toca_sd(self.b, alvo, self.sd_nomes)
@@ -292,7 +298,7 @@ class Contexto:
 
     def eventos(self, nome):
         if nome not in self._ev:
-            self._ev[nome] = M.eventos_metodo(self.b, self.r, nome, self.campos_form)
+            self._ev[nome] = M.eventos_metodo(self.b, self.r, nome, self.campos_form, self.nomes_pub, self.sd_nomes)
         return self._ev[nome]
 
     def acoes(self, nome):
@@ -327,10 +333,13 @@ def bruto_do_log(log, sc, nome_vetor, ctx, indice=None):
 def montar_emul(ctx, log):
     """Emulador com TODOS os vetores do catalogo criados e o cache preenchido com o LOG (ECU do dono)."""
     em = ctx.E.Emul(ctx.exe, ctx.campos_sd, ctx.objs, lr=0)
-    nomes = sorted({rec['vetor'] for d in ctx.cat.values() for rec in d.values() if rec.get('vetor') in ctx.objs})
-    em.preparar(nomes)
+    ctx.E.todos_vetores(em, ctx.objs, ctx.campos_sd)
     ctx.E.carregar_tabelas_temperatura(em, 0)    # curvas NTC padrao (tipo 0); tipo real da ECU: INFERIDO
     preenchidos = {}
+    base = bruto_do_log(log, 121, 'BASE_TEMPI_GLOBALE', ctx)
+    if base:     # [SD+0x2980] = base de tempo (formulas multiplicam por 0.00025*0.004): INFERIDO como BASE_TEMPI_GLOBALE (SC 121)
+        em.m.w32(em.m.sd + 0x2980, base[0][0])
+        preenchidos[('base_tempi', 'esc')] = (0x2980, base[0][0], base[1])
     for c, d in ctx.cat.items():
         for kind, rec in d.items():
             nome = rec.get('vetor')
@@ -510,7 +519,8 @@ def resumo_acessos(ctx, evs):
             n = f[-1]
             ach = [x for x in ctx.flags['flags'] if x['vetor'].startswith('FLAG_CONF' + n) and x['caso'] == e['caso']
                    and x['vetor'] in ('FLAG_CONF1', 'FLAG_CONF2', 'FLAG_CONF2_LR', 'FLAG_CONF3')]
-            d['bits'] = [dict(vetor=x['vetor'], palavra=x['palavra'], mascara=x['mascara'], condicao=x['condicao']) for x in ach]
+            d['bits'] = [dict(vetor=x['vetor'], serial_code=x['serial_code'], caso=x['caso'], palavra=x['palavra'],
+                              mascara=x['mascara'], condicao=x['condicao'], getter=x['getter'], setter=x['setter']) for x in ach]
         out.append(d)
     return out
 
@@ -602,6 +612,96 @@ def entrada_log(ctx, log, c, lig, em, preench):
 
 
 # ------------------------------------------------------------------ quadros de escrita
+def flags_do_controle(rec):
+    """Bits do controle: os do JSON de flags + os que os handlers usam (Set/GetFlagN com caso constante)."""
+    out, vistos = [], set()
+    for f in rec.get('flags', []):
+        k = (f['vetor'], f['palavra'], f['mascara'])
+        if k not in vistos:
+            vistos.add(k)
+            out.append(dict(f, origem='flags-do-original.json'))
+    for ev in rec.get('eventos', []):
+        for a in ev.get('acessos', []):
+            for x in a.get('bits', []):
+                k = (x['vetor'], x['palavra'], x['mascara'])
+                if k in vistos or x['vetor'] not in ('FLAG_CONF1', 'FLAG_CONF2', 'FLAG_CONF3'):
+                    continue
+                vistos.add(k)
+                out.append(dict(vetor=x['vetor'], serial_code=x['serial_code'], palavra=x['palavra'], mascara=x['mascara'],
+                                caso=x['caso'], condicao=x['condicao'], getter=x['getter'], setter=x['setter'], papel=None,
+                                marca='OBS-COD', fonte='handler %s (%s caso %s)' % (ev['handler'], a['funcao'], a.get('caso')),
+                                origem='handler ' + ev['handler']))
+    return out
+
+
+def valores_teste(c):
+    t = c.p('Text')
+    try:
+        base = float(str(t).replace(',', '.'))
+    except ValueError:
+        base = 1.0
+    if base <= 0:
+        base = 1.0
+    mx = c.p('MaxValue')
+    v2 = base * 2
+    if isinstance(mx, (int, float)) and mx and v2 > mx:
+        v2 = mx / 2 if mx / 2 != base else base / 2
+    if v2 == base:
+        v2 = base + 1
+    return base, v2
+
+
+def _excluido_por_remetente(conds, nome):
+    """Handler compartilhado: ramo 'remetente == [form+OFF](OUTRO)' nao vale para este controle (e o inverso para ele)."""
+    for t in conds:
+        m = re.search(r'remetente\(\w+\) (==|!=) \[form\+0x[0-9a-f]+\]\((\w+)\)', t)
+        if m:
+            ig = m.group(2) == nome
+            if (m.group(1) == '==' and not ig) or (m.group(1) == '!=' and ig):
+                return True
+    return False
+
+
+def quadros_acessosd(ctx, em, c, rec):
+    """Edits/combos cujo handler chama metodos proprios do TStreamDati: executa o metodo original com dois valores
+    (edits: edx = caso constante do handler, valor na pilha) ou com cada opcao (combos: edx = indice)."""
+    E = ctx.E
+    out = []
+    feitos = set()
+    for ev in rec.get('eventos', []):
+        if ev['evento'] != 'OnKeyPress':
+            continue
+        for a in ev.get('acessos', []):
+            if a['funcao'] not in ('AcessoSD', 'SetCombo'):
+                continue
+            if _excluido_por_remetente(a.get('condicoes', []), c.nome):
+                continue
+            alvo = int(a['alvo'], 16) if a['funcao'] == 'AcessoSD' else 0x43074C
+            rets = ctx.retornos(alvo)
+            if rec['classe'] in ('TNumericEdit', 'TValueEditEx', 'TEdit') and 8 in rets and a.get('edx') is not None:
+                if (alvo, a['edx']) in feitos:
+                    continue
+                feitos.add((alvo, a['edx']))
+                v1, v2 = valores_teste(c)
+                res = []
+                for v in (v1, v2):
+                    lo, hi = struct.unpack('<II', struct.pack('<d', float(v)))
+                    r = E.chamar_registros(em, alvo, edx=a['edx'], pilha=(lo, hi))
+                    res.append(dict(valor_tela=v, quadros=[q.hex(' ').upper() for q in r['quadros']], erro=r['erro']))
+                out.append(dict(tipo='edit', metodo='0x%X' % alvo, edx=a['edx'], amostras=res, marca='DERIVADO',
+                                fonte='metodo original 0x%X do TStreamDati executado no Unicorn (convencao assumida: eax=Self, edx=caso, double na pilha; o handler %s o chama em %s)' % (alvo, ev['handler'], a['endereco'])))
+            elif rec['classe'] == 'TKeyComboBox' and rets <= {0} and a.get('edx') in (None, 0) and rec.get('itens'):
+                if (alvo, 'combo') in feitos:
+                    continue
+                feitos.add((alvo, 'combo'))
+                res = []
+                for it in rec['itens']:
+                    r = E.chamar_registros(em, alvo, edx=it['indice'])
+                    res.append(dict(opcao=it['indice'], texto=it['ita'], quadros=[q.hex(' ').upper() for q in r['quadros']], erro=r['erro']))
+                out.append(dict(tipo='combo', metodo='0x%X' % alvo, amostras=res, marca='INFERIDO',
+                                fonte='metodo 0x%X executado no Unicorn com edx = indice da opcao (convencao assumida; o handler %s o chama em %s)' % (alvo, ev['handler'], a['endereco'])))
+    return out
+
 def quadros_exemplo(ctx, em, c, rec, lig, log):
     """Quadros de SetNumber/SetVector que o ProgBase enviaria ao gravar o valor ATUAL da ECU do dono (round-trip) e um
     valor alternativo (min+passo, quando houver faixa), executando o setter original no Unicorn."""
@@ -701,9 +801,9 @@ def construir_aba(ctx, aba, em, preench, log, manual_idx, ordem_aba):
             regras=estado.get(c.nome, []))
         if rec['classe'] in INTERATIVOS:
             rec['valor_ecu'] = entrada_log(ctx, log, c, lig, em, preench)
-            if rec.get('flags') and log:
+            if log and flags_do_controle(rec):
                 st = []
-                for f in rec['flags']:
+                for f in flags_do_controle(rec):
                     ent = log['leituras'].get('%d:29:' % f['serial_code'])
                     if ent:
                         dados = bytes(int(x, 16) for x in ent['hex'].split())
@@ -714,9 +814,13 @@ def construir_aba(ctx, aba, em, preench, log, manual_idx, ordem_aba):
                                            palavra_valor='%04X' % pal[f['palavra']], linha_log=ent['linha'],
                                            marca='OBS-FIO'))
                 rec['valor_ecu_flags'] = st
+            fl_all = flags_do_controle(rec)
+            if fl_all:
+                rec['flags_todos'] = fl_all
             rec['envia'] = dict(
                 escrita_valor=quadros_exemplo(ctx, em, c, rec, lig, log) if rec['classe'] in ('TNumericEdit', 'TValueEditEx', 'TEdit') or lig else [],
-                escrita_flags=quadros_flag(ctx, c, rec.get('flags', []), log))
+                escrita_flags=quadros_flag(ctx, c, fl_all, log),
+                metodos_proprios=quadros_acessosd(ctx, em, c, rec))
         rec['explicacao_leiga'] = T.explicar(c, rec, manual_idx, ctx.i18n)
         rec['manual'] = T.citar_manual(manual_idx, rec)
         controles.append(rec)
@@ -767,17 +871,20 @@ def _linhas_estado(rec, limite=14):
     out = []
     vistos = set()
     for a in sorted(rec['estado']['regras'], key=lambda x: (not x.get('da_aba', True), x['metodo'], x['endereco'])):
+        if a['propriedade'].startswith('lê'):
+            continue
         val = a['valor_imediato']
         v = {1: 'verdadeiro', 0: 'falso'}.get(val) if val is not None else None
         if v is None:
             v = 'calculado' + (' por %s' % a['origem'] if a.get('origem') else '')
-        cond = a.get('condicoes', []) + a.get('condicoes_chamada', [])
+        cond = [x.replace('edx == 0xd', 'tecla == Enter').replace('edx != 0xd', 'tecla != Enter')
+                for x in a.get('condicoes', []) + a.get('condicoes_chamada', [])]
         chave = (a['propriedade'], v, tuple(cond), a['metodo'])
         if chave in vistos:
             continue
         vistos.add(chave)
         out.append('- `%s := %s` em `%s` (%s%s%s)%s' % (
-            a['propriedade'], v, a['endereco'], a['metodo'], (', ' + a['via']) if a.get('via') else '',
+            {'Checked': 'Checked/ItemIndex'}.get(a['propriedade'], a['propriedade']), v, a['endereco'], a['metodo'], (', ' + a['via']) if a.get('via') else '',
             '' if a.get('da_aba', True) else '; metodo de OUTRA aba/tela',
             (' — SE ' + ' E '.join(cond)) if cond else ' — incondicional'))
     extra = len(out) - limite
@@ -843,10 +950,10 @@ def md_controle(rec, log_ok):
                 L.append('    - Usa funcoes auxiliares do .exe: %s (tabelas de conversao; ver docs/progbase/abas/_funcoes_auxiliares.json) `[OBS-COD]`.' % ', '.join(cv['funcoes_auxiliares']))
     else:
         L.append('- Sem codigo de dado proprio na rotina de amarracao 0x48A228 (`[OBS-COD]`): o valor nao passa pelo conversor generico; ver os acessos do handler abaixo.')
-    if rec.get('flags'):
-        for f in rec['flags']:
-            L.append('- Bit de configuracao `[OBS-COD]`: **%s** (SerialCode %s), palavra %s, mascara %s, caso do setter %s, papel "%s", condicao "%s".' % (
-                f['vetor'], f['serial_code'], f['palavra'], f['mascara'], f['caso'], f.get('papel'), f['condicao']))
+    if rec.get('flags_todos'):
+        for f in rec['flags_todos']:
+            L.append('- Bit de configuracao `[OBS-COD]`: **%s** (SerialCode %s), palavra %s, mascara %s, caso do setter %s, papel "%s", condicao "%s"; origem: %s.' % (
+                f['vetor'], f['serial_code'], f['palavra'], f['mascara'], f['caso'], f.get('papel'), f['condicao'], f.get('origem')))
     L.append('')
     L.append('**Valor atual na ECU do dono (LOG de 12/08/2026)**')
     L.append('')
@@ -913,7 +1020,7 @@ def _acesso_txt(a):
     if f == 'EnviaComando':
         return 'envia comando direto ao protocolo (id %s, argumentos %s) em `%s`' % (a.get('comando_id'), a.get('pushes'), a['endereco'])
     if f in ('Visible', 'Enabled', 'Caption', 'Text'):
-        return 'muda %s de `%s` em `%s`' % (f, a.get('controle'), a['endereco'])
+        return 'muda %s de %s em `%s`' % (f, ('`%s`' % a['controle']) if a.get('controle') else 'um controle nao identificado pela analise estatica', a['endereco'])
     return '%s em `%s`' % (f, a['endereco'])
 
 
@@ -933,15 +1040,27 @@ def _comando_txt(rec, log_ok):
     if qf:
         L.append('- Mudar a caixa/bit (executado no Unicorn com as palavras ATUAIS da ECU do dono; `[OBS-COD]`):')
         for x in qf:
-            L.append('  - %s %s (%s palavra %s mascara %s): %s -> %s, quadro `%s`.' % (
-                x['acao'], 'bit' , x['vetor'], x['palavra'], x['mascara'], ' '.join(x['palavras_antes']), ' '.join(x['palavras_depois']),
-                ' | '.join(x['quadros'])))
+            L.append('  - %s bit (%s palavra %s mascara %s): %s -> %s, quadro %s.' % (
+                x['acao'], x['vetor'], x['palavra'], x['mascara'], ' '.join(x['palavras_antes']), ' '.join(x['palavras_depois']),
+                ('`' + ' | '.join(x['quadros']) + '`') if x['quadros'] else '**nenhum (o bit ja estava nesse estado: o programa nao regrava)**'))
         L.append('  - O ProgBase le o vetor inteiro do cache, liga/desliga so o bit e REGRAVA o vetor completo (`35 03 00 86 2C 51 10 4B` no LOG linha 31284 e o mesmo formato para FLAG_CONF1) `[OBS-FIO]`.')
-    if q or qf:
+    mp = env.get('metodos_proprios', [])
+    for x in mp:
+        if x['tipo'] == 'edit':
+            L.append('- Metodo proprio `%s` (caso %s) executado no Unicorn `[%s]`:' % (x['metodo'], x['edx'], x['marca']))
+            for s in x['amostras']:
+                L.append('  - tela = %s -> quadro(s) `%s`%s.' % (s['valor_tela'], ' | '.join(s['quadros']) or '(nenhum)', (' ERRO ' + s['erro']) if s.get('erro') else ''))
+        else:
+            L.append('- Cada opcao da lista chama o metodo `%s` `[%s]` (convencao assumida):' % (x['metodo'], x['marca']))
+            for s in x['amostras']:
+                L.append('  - opcao %d "%s" -> quadro(s) `%s`%s.' % (s['opcao'], s['texto'], ' | '.join(s['quadros']) or '(nenhum)', (' ERRO ' + s['erro']) if s.get('erro') else ''))
+    if mp:
+        L.append('  - Estrutura: igual a acima. Fonte: ' + mp[0]['fonte'])
+    if q or qf or mp:
         L.append('- Entre um comando e outro `[OBS-FIO]`: a porta ecoa o quadro enviado; a ECU responde `53 00 53` (OK); o programa limpa os buffers (PURGE) e '
                  'volta a perguntar a telemetria (`48 01 49`, `48 08 50`...). Nao ha releitura do vetor gravado no LOG (linhas 31284-31420).')
         L.append('- Resposta esperada: eco do quadro + `53 00 53`. Resultado esperado: o cache do programa e a ECU passam a ter o novo valor; a tela mostra o valor ja arredondado ao passo.')
-    if not q and not qf:
+    if not q and not qf and not mp:
         if tipo in ('TButton',):
             L.append('- Botao: sem escrita de valor padrao. O que o handler faz esta na lista de acessos acima; bytes especificos so quando o handler chama `EnviaComando`/setter `[OBS-COD]` (nao executado aqui) -> **DESCONHECIDO** o quadro exato quando nao listado.')
         elif tipo == 'TDrawGrid':

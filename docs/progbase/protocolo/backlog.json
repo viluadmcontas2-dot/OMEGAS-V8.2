@@ -1,0 +1,4772 @@
+{
+ "versao_esquema": 1,
+ "criterio": "app_menciona = o nome ou o SerialCode (>= 0x100) aparece em app/src/main (*.kt, *.js, *.json, *.html)",
+ "comandos_nao_usados": [
+  {
+   "id": "wake",
+   "nome": "Sonda de descoberta (00 a 38400 baud)",
+   "quadro": "`00` (1 byte; sem checksum e SEM eco)",
+   "usa": "nao",
+   "no_log": 2,
+   "classe": "A",
+   "prioridade": "baixa",
+   "risco": "nenhum",
+   "recomendacao": "Só serviria para descobrir qual adaptador tem ECU. O app já abre o USB pelo VID/PID; não precisa."
+  },
+  {
+   "id": "getnumber_2",
+   "nome": "GetNumber + linha + coluna (elemento de matriz)",
+   "quadro": "v2: `0B lo hi linha coluna ck`; v0/v1: `0A end linha coluna ck` (1º byte extra = linha, 2º = coluna)",
+   "usa": "parcial",
+   "no_log": 0,
+   "classe": "A",
+   "prioridade": "baixa",
+   "risco": "nenhum",
+   "recomendacao": "Ler 1 célula de matriz sem baixar a linha. Otimização; o app lê a linha `2A`."
+  },
+  {
+   "id": "getbyaddr",
+   "nome": "GetByAddress (memória por endereço)",
+   "quadro": "`6A flags a_lo a_hi ck` (endereço 16 bits) ou `6C flags a0 a1 a2 a3 ck` (32 bits). flags: bit7=valor 16 bits, bit5=endereço 32 bits",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "C",
+   "prioridade": "baixa",
+   "risco": "medio",
+   "recomendacao": "Leitura de memória por endereço físico. Útil só para engenharia; não expor ao usuário."
+  },
+  {
+   "id": "elemdim",
+   "nome": "GetElementDimension",
+   "quadro": "v2: número `09 lo hi`, vetor `0A lo hi 00`, matriz `0B lo hi 00 00` (v0/v1: 08/09/0A)",
+   "usa": "nao",
+   "no_log": null,
+   "classe": "A",
+   "prioridade": "baixa",
+   "risco": "nenhum",
+   "recomendacao": "Descobrir o tamanho de um parâmetro. No fio é um GetNumber+idx(0); o app já conhece os tamanhos."
+  },
+  {
+   "id": "setbyaddr",
+   "nome": "SetByAddress",
+   "quadro": "`73 flags a_lo a_hi val` (8 bits/end16), `74 ... v_lo v_hi`, `75 flags a0..a3 val`, `76 flags a0..a3 v_lo v_hi`",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Escrita em endereço físico arbitrário. NUNCA expor."
+  },
+  {
+   "id": "sendcommand",
+   "nome": "SendCommand genérico (b0 = nº de bytes de carga, b1 = código)",
+   "quadro": "`n cmd c1..cn ck` com n<7; n>=7: `07 cmd (n+1) c1..cn ck`",
+   "usa": "parcial",
+   "no_log": null,
+   "classe": "B",
+   "prioridade": "media",
+   "risco": "variavel",
+   "recomendacao": "Os códigos 0E,10,11,13,14,15,21,26,27,28 só aparecem nas telas Calibração/Diagnóstico/Config/LandiConnect. (pelo NOME do evento, INFERIDO) 0x21 = teste de saída ligar/desligar (TFormDiagnosi.PanelTestOn/OffClick); 0x27 = aquisição de injetor/sequência e tacômetro (TFormConfig.CheckInjAcquisitionClick, ButtonSequenceAcquisitionClick, EditRpmTachimetroKeyPress); 0x28 = botão Reset (TFormLandiConnect.ButtonResetClick). Nada disso está no log; capturar cada botão antes de implementar."
+  },
+  {
+   "id": "cmd_12",
+   "nome": "Comando 0x12 (carga 00)",
+   "quadro": "`01 12 00 13`",
+   "usa": "nao",
+   "no_log": 2,
+   "classe": "B",
+   "prioridade": "media",
+   "risco": "baixo",
+   "recomendacao": "O original manda `01 12 00` antes de todo Disconnect. Efeito desconhecido; capturar uma sessão só com esse comando (e comparar `48 01`/`48 0B` antes e depois) antes de decidir."
+  },
+  {
+   "id": "cmd_13",
+   "nome": "Comando 0x13 (sem carga)",
+   "quadro": "`00 13 13`",
+   "usa": "nao",
+   "no_log": 6,
+   "classe": "B",
+   "prioridade": "baixa",
+   "risco": "desconhecido",
+   "recomendacao": "Tecla na tela de Calibração (Taratura). Só se o app ganhar a tela de Taratura."
+  },
+  {
+   "id": "cmd_14",
+   "nome": "Comando 0x14 (sem carga) — polling da calibração",
+   "quadro": "`00 14 14`",
+   "usa": "nao",
+   "no_log": 4693,
+   "classe": "A",
+   "prioridade": "media",
+   "risco": "nenhum",
+   "recomendacao": "Polling da tela de Calibração (resposta constante `02 00` em 4 693/4 693). Pode ser o \"estado do modo taratura\"; capturar com o modo ligado/desligado para ver se o valor muda."
+  },
+  {
+   "id": "cmd_04",
+   "nome": "Comando 0x04 (carga 54)",
+   "quadro": "`01 04 54 59`",
+   "usa": "nao",
+   "no_log": 3,
+   "classe": "E",
+   "prioridade": "nenhuma",
+   "risco": "nenhum",
+   "recomendacao": "A ECU capturada responde NAK (não suportado). Ignorar."
+  },
+  {
+   "id": "setduty",
+   "nome": "SetDuty (teste de saída por PWM)",
+   "quadro": "`02 05 id valor ck` (valor >= 0) ou `01 05 id ck` (valor < 0)",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "C",
+   "prioridade": "baixa",
+   "risco": "medio",
+   "recomendacao": "Teste de saída por PWM (aciona atuador). Só com tela de diagnóstico dedicada e confirmação."
+  },
+  {
+   "id": "setbaud",
+   "nome": "SetEcuBaudRate (hardware antigo)",
+   "quadro": "`02 03 hi lo ck`, valor = 8 000 000 / (baud x 16) em 16 bits, ALTO primeiro",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Troca de baud para flash. Nunca no app."
+  },
+  {
+   "id": "setnewbaud",
+   "nome": "SetNewEcuBaudRate (hardware novo)",
+   "quadro": "`02 19 hi lo ck`, valor = baud / 2 em 16 bits, ALTO primeiro; baud em [1200, 115200]",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Troca de baud para flash. Nunca no app."
+  },
+  {
+   "id": "autocal_05",
+   "nome": "Ação AutoCal 01 24 05",
+   "quadro": "`01 24 05 2A`",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "B",
+   "prioridade": "baixa",
+   "risco": "desconhecido",
+   "recomendacao": "Enviado após gravar dois vetores de flags por ponto; nunca visto. Capturar antes de usar."
+  },
+  {
+   "id": "cancflash",
+   "nome": "Cancflash (apaga flash)",
+   "quadro": "`00 09 09`",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Apaga a flash. Nunca no app."
+  },
+  {
+   "id": "exitboot_nf",
+   "nome": "ExitBootNotForced",
+   "quadro": "`00 0A 0A`",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Sai do bootloader. Nunca no app."
+  },
+  {
+   "id": "exitboot",
+   "nome": "ExitBoot (forçado)",
+   "quadro": "`00 0B 0B`",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Sai do bootloader (forçado). Nunca no app."
+  },
+  {
+   "id": "progflash",
+   "nome": "Progflash (entra em programação)",
+   "quadro": "`93 93` (1 byte + ck)",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Entra em programação de flash. Nunca no app."
+  },
+  {
+   "id": "endflash",
+   "nome": "Endflash",
+   "quadro": "`85 85`",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Encerra programação de flash. Nunca no app."
+  },
+  {
+   "id": "flash_linha",
+   "nome": "Linha de firmware (S-record em texto -> binário)",
+   "quadro": "`53 31 cnt addr_hi addr_lo dados.. srec_ck` (a linha ASCII do arquivo vira bytes; 1ª letra e tipo vão como ASCII, o resto em pares hexa). EOF: `53 39 03 FF FF FE`. Sem checksum adicional do protocolo.",
+   "usa": "nao",
+   "no_log": null,
+   "classe": "D",
+   "prioridade": "nenhuma",
+   "risco": "alto",
+   "recomendacao": "Grava firmware. Nunca no app."
+  },
+  {
+   "id": "v01_getnumber",
+   "nome": "GetNumber v0/v1 (endereço de 1 byte)",
+   "quadro": "`08 end ck` / v1 estendido `08 FF (end+1) ck`",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "E",
+   "prioridade": "nenhuma",
+   "risco": "nenhum",
+   "recomendacao": "ECUs de protocolo 0/1; a capturada é v2."
+  },
+  {
+   "id": "v01_getvector",
+   "nome": "GetVector v0/v1",
+   "quadro": "`28 end ck`",
+   "usa": "nao",
+   "no_log": 0,
+   "classe": "E",
+   "prioridade": "nenhuma",
+   "risco": "nenhum",
+   "recomendacao": "ECUs de protocolo 0/1; a capturada é v2."
+  }
+ ],
+ "comandos_por_classe": {
+  "A": 4,
+  "B": 4,
+  "C": 2,
+  "D": 9,
+  "E": 3
+ },
+ "enlace": [
+  {
+   "item": "Retries",
+   "original": "até 5 reenvios do mesmo quadro (6 tentativas), depois diálogo de reconexão (se ligado)",
+   "omegas": "sem retry cego em NAK não-retentável; reconecta pelo ciclo de vida USB (ResponseDrivenEcuEngine.kt, UsbRecoveryPolicy.kt)",
+   "ref": "ResponseDrivenEcuEngine.kt:25-26",
+   "classe": "diferente-de-proposito"
+  },
+  {
+   "item": "NAK `CA 01 10` / `CA 01 08`",
+   "original": "testa o bit 0x10 do 2º byte de status (qualquer outro valor com bit 0x10 = não suportado; sem o bit = retry)",
+   "omegas": "compara igualdade com 0x10 e 0x08; outros códigos viram EXTENDED_UNKNOWN",
+   "ref": "UsbProtocolReply.kt:13-23",
+   "classe": "lacuna-pequena"
+  },
+  {
+   "item": "Purge antes de cada comando",
+   "original": "IOCTL_SERIAL_PURGE (TX+RX) antes de TODO WRITE (20 290/20 290)",
+   "omegas": "purge antes de cada transação (purgeBefore=true por padrão)",
+   "ref": "UsbSerialManager.kt:353,372",
+   "classe": "igual"
+  },
+  {
+   "item": "Eco",
+   "original": "compara o eco byte a byte; divergência -> ComFail 8 -> retry",
+   "omegas": "readExact(request.size) e compara o eco inteiro",
+   "ref": "UsbSerialManager.kt:375-377",
+   "classe": "igual"
+  },
+  {
+   "item": "Timeout do 1º byte da resposta",
+   "original": "1000 ms (+200 do driver)",
+   "omegas": "timeoutMs padrão 1800 ms",
+   "ref": "UsbSerialManager.kt:352",
+   "classe": "diferente-de-proposito"
+  },
+  {
+   "item": "Tamanho máximo de resposta",
+   "original": "GetPacket lê o tamanho como byte COM SINAL (<= 127 B); Get* confere n com o tamanho do objeto",
+   "omegas": "rejeita n > 192",
+   "ref": "UsbSerialManager.kt:385",
+   "classe": "lacuna-pequena"
+  },
+  {
+   "item": "Resposta `96` (ECU ocupada)",
+   "original": "espera 400 ms e reenvia (até 5x)",
+   "omegas": "sem tratamento específico",
+   "ref": "UsbProtocolReply.kt",
+   "classe": "lacuna-nao-observada-no-fio"
+  },
+  {
+   "item": "Sequência de encerramento",
+   "original": "`01 12 00` e depois `00 01 01` (Disconnect, uma tentativa, sem retry)",
+   "omegas": "só Mp48Protocol.CMD_DISCONNECT",
+   "ref": "Mp48Protocol.kt:18",
+   "classe": "lacuna-pequena"
+  },
+  {
+   "item": "Escrita com porta fechada",
+   "original": "SetNumber/SetVector devolvem VERDADEIRO sem enviar nada",
+   "omegas": "escrita falha explicitamente; gravado só após ACK + readback (AGENTS.md)",
+   "ref": "AGENTS.md invariantes",
+   "classe": "diferente-de-proposito"
+  },
+  {
+   "item": "Ordem do handshake",
+   "original": "ident `00 02` -> Connect `01 00 3A` -> versão `00 25` -> (REGISTRO_EE `09 02 00`) -> ident de novo",
+   "omegas": "CMD_INIT_1 (`00 02 02`), CMD_INIT_2 (`01 00 3A`), depois leitura de versão",
+   "ref": "ResponseDrivenEcuEngine.kt:341-369",
+   "classe": "igual"
+  }
+ ],
+ "parametros": {
+  "lido_e_usado": {
+   "total": 27,
+   "itens": [
+    {
+     "nome": "FLAG_CONF1",
+     "sc": "0x0003",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 4,
+     "escritas_do_original": 19
+    },
+    {
+     "nome": "GIRI_MIN_CAMBIO",
+     "sc": "0x0010",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_CAMBIO",
+     "sc": "0x0011",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SMAGRIMENTO_EXTRA",
+     "sc": "0x0016",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_TEMPO_CUTOFF",
+     "sc": "0x0032",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_RITORNO_BENZINA",
+     "sc": "0x003E",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_CORRENTE_CUTOFF",
+     "sc": "0x0049",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAP_K",
+     "sc": "0x0054",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 13,
+      "colunas": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 39,
+     "escritas_do_original": 144
+    },
+    {
+     "nome": "GIRI_SUP_BENZINA",
+     "sc": "0x0064",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "NUMERO_INJ_BENZINA_CUTOFF",
+     "sc": "0x006A",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_GIRI_EMULAZIONE_HIGH",
+     "sc": "0x006B",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CORR_ARRICCHIMENTO",
+     "sc": "0x0074",
+     "forma": "numero",
+     "tipo": "s8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIT_EMUL_RICCA",
+     "sc": "0x0083",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_GIRI_EMULAZIONE",
+     "sc": "0x0087",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SMAGRIMENTO_RIENTRO_CUTOFF",
+     "sc": "0x0088",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "NUMERO_INIETTATE_SMAGRIMENTO",
+     "sc": "0x0089",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPI_EXTRAINIETTATE",
+     "sc": "0x009B",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 3
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_MAX_EXTRAINJ_BENZ",
+     "sc": "0x009C",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_PER_BENZINA",
+     "sc": "0x00A1",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "FLAG_CONF2",
+     "sc": "0x00C0",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RPM_FOR_SPLIT_FUEL",
+     "sc": "0x00C8",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_PASSAGGIO",
+     "sc": "0x00DD",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "FLAG_CONF3",
+     "sc": "0x00FA",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ANTI_STALLO",
+     "sc": "0x0133",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_PROGRESSIONI",
+     "sc": "0x0134",
+     "forma": "matriz",
+     "tipo": "u16",
+     "dim": {
+      "linhas": 4,
+      "colunas": 3
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 12,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_VARI",
+     "sc": "0x0138",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PETR_INJ_TBUF",
+     "sc": "0x0162",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 18
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 437,
+     "escritas_do_original": 0
+    }
+   ]
+  },
+  "lido_e_nao_usado": {
+   "total": 142,
+   "itens": [
+    {
+     "nome": "SERIAL_NUMBER",
+     "sc": "0x0000",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 20
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 9,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "REGISTRO_INIT",
+     "sc": "0x0001",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 1,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "REGISTRO_EE",
+     "sc": "0x0002",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_LAMBDA",
+     "sc": "0x0004",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_LAMBDA",
+     "sc": "0x0005",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_SONDA",
+     "sc": "0x0006",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_LBD_FREDDA",
+     "sc": "0x0007",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_SUP_LAMBDA_FREDDA",
+     "sc": "0x0008",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_INF_LAMBDA_FREDDA",
+     "sc": "0x0009",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_SUP_LAMBDA_CALDA",
+     "sc": "0x000A",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_INF_LAMBDA_CALDA",
+     "sc": "0x000B",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_GIRI",
+     "sc": "0x000C",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SEQUENZA_INIEZIONE",
+     "sc": "0x000D",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 2,
+      "colunas": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 6,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMP_GAS_CAMBIO_LR",
+     "sc": "0x000F",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMP_RID_CAMBIO",
+     "sc": "0x000F",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEST_WORD",
+     "sc": "0x0012",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_ACCENS",
+     "sc": "0x0014",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MODELLO_HARDWARE",
+     "sc": "0x0015",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TAGLIA_INIETTORE_LR",
+     "sc": "0x0016",
+     "forma": "numero",
+     "tipo": "s8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ABIL_DIAGNOSI",
+     "sc": "0x001C",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "STATO_DIAGNOSI",
+     "sc": "0x001D",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3668,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ACTION_DIAGNOSI",
+     "sc": "0x001F",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 3,
+      "colunas": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 9,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DIAGNOSI_INJ_BENZ",
+     "sc": "0x0021",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 732,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_SENSORE",
+     "sc": "0x0024",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_SENSORE",
+     "sc": "0x0025",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_TEMP_GAS_LR",
+     "sc": "0x002A",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_TEMP_RID",
+     "sc": "0x002A",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_TEMP_GAS_LR",
+     "sc": "0x002B",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 9
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_TEMP_RID",
+     "sc": "0x002B",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 9
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_DELAY_GAS_TEMP",
+     "sc": "0x002E",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 2,
+      "colunas": 9
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 6,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_DELAY_GAS_TEMP",
+     "sc": "0x002F",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 9
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SUB_CLIENT_CODE",
+     "sc": "0x0033",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 2,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_CUTOFF_LR",
+     "sc": "0x0033",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 2,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_INIEZIONE",
+     "sc": "0x0034",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "IDENTIFICATIVO",
+     "sc": "0x0035",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 30
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_INIEZIONE_CONTINUA",
+     "sc": "0x0036",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPI_PER_K",
+     "sc": "0x0037",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 36
+    },
+    {
+     "nome": "CORRENTE_MANTENIMENTO",
+     "sc": "0x0038",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_GAS",
+     "sc": "0x003B",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_BENZINA",
+     "sc": "0x003C",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_PER_K",
+     "sc": "0x003D",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 36
+    },
+    {
+     "nome": "CODICE_CLIENTE",
+     "sc": "0x0040",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 1,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_RICCO_FORZATO",
+     "sc": "0x0046",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "LIVELLO_EMUL_ALTO",
+     "sc": "0x0047",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "LIVELLO_EMUL_BASSO",
+     "sc": "0x0048",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_MAX_CORRENTE",
+     "sc": "0x004A",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CILINDRATA",
+     "sc": "0x004B",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MINIMA_VERSIONE_INTERFACCIA",
+     "sc": "0x004C",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 1,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "AVVIAMENTI_EMERGENZA",
+     "sc": "0x004E",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_INJ",
+     "sc": "0x004F",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMP_DIAGNOSI",
+     "sc": "0x0051",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_CHIUSURA_INIETTORE",
+     "sc": "0x0052",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_APERTURA_INIETTORE",
+     "sc": "0x0053",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_GAS_PARZIALE",
+     "sc": "0x0055",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_TAGLIANDI",
+     "sc": "0x0058",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "WARNING_VERSIONE_INTERFACCIA",
+     "sc": "0x005B",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 1,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_TEMP_GAS",
+     "sc": "0x005C",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_TEMP_RID_LR",
+     "sc": "0x005C",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_TEMP_GAS",
+     "sc": "0x005D",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 9
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_TEMP_RID_LR",
+     "sc": "0x005D",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 9
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_PRESS_COLL",
+     "sc": "0x005F",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 15
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_PRESS_COLL",
+     "sc": "0x0060",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 15
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_FLUSSO_SUBSONICO_LR",
+     "sc": "0x006A",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TAGLIA_INIETTORI_LR",
+     "sc": "0x006B",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_SOVRAPPOSIZIONE",
+     "sc": "0x006D",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_CICCHETTO",
+     "sc": "0x006E",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_MAP_SONDA_LAMBDA",
+     "sc": "0x006F",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_PASSAGGIO_GAS_LR",
+     "sc": "0x006F",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAP_RIF_SONDA_LAMBDA",
+     "sc": "0x0070",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 3,
+      "colunas": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 9,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_FILTRO_BENZINA",
+     "sc": "0x0071",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 12,
+      "colunas": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 36,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAP_FILTRO_BENZINA",
+     "sc": "0x0072",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_CONNESSIONE_OBD_LR",
+     "sc": "0x0074",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMP_GAS_CAMBIO",
+     "sc": "0x0075",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMP_RID_CAMBIO_LR",
+     "sc": "0x0075",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "IMPEDENZA_INIETTORI",
+     "sc": "0x0076",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "VAL_PERC_HOLDING_CURRENT",
+     "sc": "0x0077",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAP_ESTERNO",
+     "sc": "0x0078",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 6
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "BASE_TEMPI_GLOBALE",
+     "sc": "0x0079",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_PRESS_DIFF",
+     "sc": "0x007B",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 15
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_PRESS_DIFF",
+     "sc": "0x007C",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 15
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_MORTO_INIETTORI_BENZINA",
+     "sc": "0x007D",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_MORTO_INIETTORI_GAS",
+     "sc": "0x007E",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPI_K_OPENLOOP",
+     "sc": "0x007F",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_SONDA_LAMBDA",
+     "sc": "0x0082",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_SENSORE_TEMPERATURA",
+     "sc": "0x0086",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAMETRI_TEMP",
+     "sc": "0x008A",
+     "forma": "vetor",
+     "tipo": "s8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ECU_TEMP",
+     "sc": "0x008B",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 30
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TINJ_3000RPM",
+     "sc": "0x008F",
+     "forma": "matriz",
+     "tipo": "u16",
+     "dim": {
+      "linhas": 8,
+      "colunas": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 24,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMP_AUTOTARATURA",
+     "sc": "0x0090",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SCARTO_MINIMO_TARATURA",
+     "sc": "0x0091",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "T_INJ_BENZ_MAX_CAMBIO",
+     "sc": "0x0092",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SPOSTAMENTO_TARATURA",
+     "sc": "0x0093",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_INIETTORE",
+     "sc": "0x0094",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 4,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_CORR_TARATURA",
+     "sc": "0x0095",
+     "forma": "matriz",
+     "tipo": "s8",
+     "dim": {
+      "linhas": 4,
+      "colunas": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 12,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_AUTOTARATURA",
+     "sc": "0x0096",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_AUTOTARATURA",
+     "sc": "0x0097",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 3
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TINJ_FILTRO",
+     "sc": "0x0098",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CORRETTORE_BANCATA2",
+     "sc": "0x009E",
+     "forma": "vetor",
+     "tipo": "s8",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPERATURA_ACQUA_AVVIO_LR",
+     "sc": "0x009E",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 9
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPI_PER_BENZINA",
+     "sc": "0x00A0",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SEQUENZA_INJ_BENZ_LR",
+     "sc": "0x00A1",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "INIETTATE_PER_BENZINA",
+     "sc": "0x00A3",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_MAP_ANTICIPO_LR",
+     "sc": "0x00A3",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "EMULAZIONE_POSTERIORE",
+     "sc": "0x00AA",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPI_SONDA_LAMBDA",
+     "sc": "0x00AB",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MASK_INIETTORI_BENZINA",
+     "sc": "0x00AC",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 8,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "K_MAPPA_NEUTRO",
+     "sc": "0x00BC",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CONFIGURA_ADATTA_LR",
+     "sc": "0x00BD",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 2
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_RETROPASSAGGIO",
+     "sc": "0x00BD",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MASK_FUNCTION",
+     "sc": "0x00C2",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 30
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMP_GAS_CALDO",
+     "sc": "0x00C3",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_PRESS_SPLIT_FUEL",
+     "sc": "0x00C4",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_PRESS_SPLIT_FUEL",
+     "sc": "0x00C5",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "K_FACTOR_PARAM",
+     "sc": "0x00C6",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "OVER_PRESSURE_DIAGNOSYS",
+     "sc": "0x00C9",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_CONTRIBUTI_BENZINA",
+     "sc": "0x00D0",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 12,
+      "colunas": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 36,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "NUMERO_PARTENZE_EMERGENZA",
+     "sc": "0x00D5",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ADVANCED_PARAM_INJ",
+     "sc": "0x00DB",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 6
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPERATURA_ACQUA_AVVIO",
+     "sc": "0x00DC",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 9
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_FLUSSO_SUBSONICO",
+     "sc": "0x00DE",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_PRESS_ASS",
+     "sc": "0x00DF",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 15
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_PRESS_ASS",
+     "sc": "0x00E0",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 15
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TAGLIA_INIETTORE",
+     "sc": "0x00E1",
+     "forma": "numero",
+     "tipo": "s8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CHANGE_OVER_CILYNDER_DELAY",
+     "sc": "0x00E2",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "FREST_PARAMETER_LR",
+     "sc": "0x00E3",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 6
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SERVICE_DATA",
+     "sc": "0x00E3",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 25
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ADVANCED_TEMP_RID",
+     "sc": "0x00E7",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ADVANCED_PRESS_BACK",
+     "sc": "0x00E8",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAMETRI_TAGLIANDI",
+     "sc": "0x00ED",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 3
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPI_ANTICIPI_EV",
+     "sc": "0x00EE",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ADV_PARAM_INJ",
+     "sc": "0x00F1",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "FLASH_LUBE_PARAMETER",
+     "sc": "0x00F8",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "NUM_DENTI_ALBERO_CAMME",
+     "sc": "0x00F9",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "LO_PASS_FILT_CON_SLOW",
+     "sc": "0x0114",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_LED_1",
+     "sc": "0x012C",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_LED_2",
+     "sc": "0x012C",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_LED_3",
+     "sc": "0x012C",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_LED_4",
+     "sc": "0x012C",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ANTICIPO_INTERRUZIONE_WARMUP",
+     "sc": "0x012F",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DELTA_T_RAIL_BLOCCO_DHLP",
+     "sc": "0x012F",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ABIL_FREEZEFRAME",
+     "sc": "0x0179",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SequenzaAutomaticaAcquisita",
+     "sc": "0x017E",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 3,
+     "escritas_do_original": 0
+    }
+   ]
+  },
+  "so_nak": {
+   "total": 53,
+   "itens": [
+    {
+     "nome": "GIRI_ANTICIPO",
+     "sc": "0x0026",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_ANTICIPO",
+     "sc": "0x0027",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_ANTICIPO",
+     "sc": "0x002C",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 5,
+      "colunas": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAP_ANTICIPO",
+     "sc": "0x002D",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAP_DELAY_LAMBDA",
+     "sc": "0x0067",
+     "forma": "matriz",
+     "tipo": "u16",
+     "dim": {
+      "linhas": 4,
+      "colunas": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_PRESS_ASS_LR",
+     "sc": "0x0068",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 15
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMP_ACQUA_MONOFUEL",
+     "sc": "0x0068",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_MAP_BENZINA_LR",
+     "sc": "0x0073",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SGANCIO_FILTRO_BENZINA",
+     "sc": "0x0073",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_DELAY_LAMBDA",
+     "sc": "0x0084",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "LAMBDA_OFFSET",
+     "sc": "0x00B0",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MASK_INIETTORI_BENZINA_LR",
+     "sc": "0x00B2",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_CAMBIO_HIGH",
+     "sc": "0x00B2",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CHANGE_OVER",
+     "sc": "0x00B3",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SMAGRIMENTO_MIN",
+     "sc": "0x00B4",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_CARBURANTE",
+     "sc": "0x00B5",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SMP_CALIBRATO",
+     "sc": "0x00B6",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CONFIGURA_ADATTA",
+     "sc": "0x00B9",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CORRETTORE_BANCATA2_LR",
+     "sc": "0x00BB",
+     "forma": "numero",
+     "tipo": "s8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPO_CONNESSIONE_OBD",
+     "sc": "0x00BB",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SPLIT_FUEL",
+     "sc": "0x00BF",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_ATTIVAZIONE_INIETTORI",
+     "sc": "0x00CF",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_RIF_TRANSITORI_BENZINA",
+     "sc": "0x00D7",
+     "forma": "matriz",
+     "tipo": "u16",
+     "dim": {
+      "linhas": 3,
+      "colunas": 6
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_CORRETTORE_GAS",
+     "sc": "0x00E6",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIE_SESTANTI",
+     "sc": "0x00E9",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_ADATTA",
+     "sc": "0x00EB",
+     "forma": "matriz",
+     "tipo": "s8",
+     "dim": {
+      "linhas": 12,
+      "colunas": 6
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_GIRI_ADATTATIVITA_WORD",
+     "sc": "0x00EF",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAP_FLEX",
+     "sc": "0x00F0",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 13,
+      "colunas": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TAGLIO_POMPA_BENZINA",
+     "sc": "0x010C",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "OBD_PARAMETER_PID",
+     "sc": "0x010D",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_INSUL_DIAG_MIN_TANK_LVL_THD",
+     "sc": "0x0123",
+     "forma": "elemento_de_vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "LO_PRESS_INSUL_DIAG_FALL_THD",
+     "sc": "0x0124",
+     "forma": "elemento_de_vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_INSUL_DIAG_AFT_CRK_DLY",
+     "sc": "0x0125",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_INSUL_DIAG_PRESS_ZNT",
+     "sc": "0x0125",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_INSUL_DIAG_PRESS_ZNT_OUT",
+     "sc": "0x0125",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_INSUL_DIAG_WAT_TEMP_LO_THD",
+     "sc": "0x0127",
+     "forma": "elemento_de_vetor",
+     "tipo": "s8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_PROGRESS_1",
+     "sc": "0x012B",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_PROGRESS_2",
+     "sc": "0x012B",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_PROGRESS_3",
+     "sc": "0x012B",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "VH34_PARAM_INJ",
+     "sc": "0x012D",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 20
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "WARMUP_PARAM_INJ",
+     "sc": "0x0132",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "INJR_GAS_FLOW",
+     "sc": "0x0139",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "NORM_PRESS",
+     "sc": "0x013B",
+     "forma": "numero",
+     "tipo": "s16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "INJR_TOFS_PTR_H",
+     "sc": "0x013C",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 4
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "INJR_TOFS_PTR_V",
+     "sc": "0x013D",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "INJR_TOFS_TBL",
+     "sc": "0x013E",
+     "forma": "matriz",
+     "tipo": "s16",
+     "dim": {
+      "linhas": 4,
+      "colunas": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GEAR_RAT_ADPY_EN",
+     "sc": "0x013F",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MGSS_MAX_MNFLD_PRESS",
+     "sc": "0x0140",
+     "forma": "numero",
+     "tipo": "s16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "EGEAR_RAT_BUF_INST",
+     "sc": "0x0149",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 7
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ClonedEcuDoneGasH",
+     "sc": "0x0175",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "EN_LAMBDA_OVER_LVL_SENSOR",
+     "sc": "0x0175",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PREHEAT_SYNC_INJ_NUM",
+     "sc": "0x0190",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAMETRI_EXTRA_INJ",
+     "sc": "0x019E",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 5
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    }
+   ]
+  },
+  "nao_lido_na_captura": {
+   "total": 92,
+   "itens": [
+    {
+     "nome": "DIAGNOSI_SWITCHON_LR",
+     "sc": "0x000D",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SEQUENZA_INIEZIONE_BENZINA",
+     "sc": "0x000E",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 8
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CS_PCB_WORD_ARRAY",
+     "sc": "0x0013",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEST_BYTE",
+     "sc": "0x0017",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEST_TEMPO",
+     "sc": "0x0018",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEST_BYTE_ARRAY",
+     "sc": "0x0019",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "NOTE_CONFIG",
+     "sc": "0x001B",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 48
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DATA_ULTIMO_SCARICO",
+     "sc": "0x001E",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_CICCHETTO_LR",
+     "sc": "0x001F",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DIAGNOSI_INJ_GAS",
+     "sc": "0x0020",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_VARI_LR",
+     "sc": "0x0020",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 10
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DIAGNOSI_INJ_GAS2",
+     "sc": "0x0022",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DIAGNOSI_INJ_BENZ2",
+     "sc": "0x0023",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ACTION_DIAGNOSI_LR",
+     "sc": "0x0031",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 3,
+      "colunas": 3
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_CUTOFF_LR",
+     "sc": "0x0032",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "STATO_DIAGNOSI_LR",
+     "sc": "0x0039",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ABIL_DIAGNOSI_LR",
+     "sc": "0x003A",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 5
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CODICE_MODELLO",
+     "sc": "0x0041",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CODICE_PERSONALIZZAZIONE",
+     "sc": "0x0042",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DIAGNOSI_INJ_GAS_LR",
+     "sc": "0x004D",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPI_SECONDI",
+     "sc": "0x0056",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 3
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DIAGNOSI_INJ_BENZ_LR",
+     "sc": "0x005E",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_DA_ERRORE",
+     "sc": "0x0061",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_RETROPASSAGGIO_LR",
+     "sc": "0x0067",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 12
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "COEFF_PRESS_ASS_LR",
+     "sc": "0x0069",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 15
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "LITRI_SERBATOIO_LR",
+     "sc": "0x006C",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPERATURA_GAS_AVVIO_LR",
+     "sc": "0x006E",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 9
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_GIRI_BENZINA_LR",
+     "sc": "0x0070",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ADATTA_PARAMETRI_K_LR",
+     "sc": "0x0071",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAP_BENZINA_LR",
+     "sc": "0x0072",
+     "forma": "matriz",
+     "tipo": "u16",
+     "dim": {
+      "linhas": 8,
+      "colunas": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "K_MAPPA_NEUTRO_LR",
+     "sc": "0x007A",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_FUORI_STABILIZZATO",
+     "sc": "0x0080",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "K_FILTRO",
+     "sc": "0x0081",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 3
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CORRETTORE_INTEGRALE",
+     "sc": "0x0085",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_MAP_ESTERNO_LR",
+     "sc": "0x008C",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 4
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_INTERVENTO_K_FILTRO",
+     "sc": "0x008D",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": true,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_BASSA_RETROPAS_LR",
+     "sc": "0x0098",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEST_WORD_ARRAY",
+     "sc": "0x0099",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEST_TEMPO_ARRAY",
+     "sc": "0x009A",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_MAX_INJ_BENZ_LR",
+     "sc": "0x009D",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RITARDO_PASSAGGIO_LR",
+     "sc": "0x009F",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SEQUENZA_INJ_LR",
+     "sc": "0x00A0",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 2,
+      "colunas": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_INIEZIONE_CONTINUA_LR",
+     "sc": "0x00A2",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_GIRI_ANTICIPO_LR",
+     "sc": "0x00A4",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_ANTICIPO_LR",
+     "sc": "0x00A5",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 5,
+      "colunas": 8
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TIPI_SONDA_LAMBDA_LR",
+     "sc": "0x00A7",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIF_TEMP_GAS_OFFSET_LR",
+     "sc": "0x00AB",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 16
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPO_MORTO_INIETTORI_LR",
+     "sc": "0x00AC",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 16
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_ALTI_INTERVENTO_K_FILTRO_LR",
+     "sc": "0x00AD",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ClonedEcuRealFw0",
+     "sc": "0x00AE",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ClonedEcuRealFw1",
+     "sc": "0x00AE",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "K_FILTRO_GIRI_ALTI_LR",
+     "sc": "0x00AE",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "CONTROL_CODE",
+     "sc": "0x00AF",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 18
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TEMPI_PER_BENZINA_LR",
+     "sc": "0x00AF",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 4
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_PER_BENZINA_LR",
+     "sc": "0x00B0",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GIRI_SUP_BENZINA_LR",
+     "sc": "0x00B1",
+     "forma": "numero",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "IDENT_OBD",
+     "sc": "0x00BE",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 16
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "FLAG_CONF2_LR",
+     "sc": "0x00C1",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 2
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PETROL_MAP",
+     "sc": "0x00CB",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 18
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PETROL_RPM_MAP_INJ",
+     "sc": "0x00CC",
+     "forma": "matriz",
+     "tipo": "u16",
+     "dim": {
+      "linhas": 18,
+      "colunas": 18
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PETROL_RPM_MAP_NUM",
+     "sc": "0x00CD",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 18,
+      "colunas": 18
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PETROL_RPM",
+     "sc": "0x00CE",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_TRANSITORI_POSITIVI",
+     "sc": "0x00D1",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 6,
+      "colunas": 6
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_TRANSITORI_NEGATIVI",
+     "sc": "0x00D2",
+     "forma": "matriz",
+     "tipo": "u8",
+     "dim": {
+      "linhas": 6,
+      "colunas": 6
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_CORREZIONI_ACCELERAZIONE",
+     "sc": "0x00D3",
+     "forma": "matriz",
+     "tipo": "s8",
+     "dim": {
+      "linhas": 6,
+      "colunas": 6
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_CORREZIONI_DECELERAZIONE",
+     "sc": "0x00D4",
+     "forma": "matriz",
+     "tipo": "s8",
+     "dim": {
+      "linhas": 6,
+      "colunas": 6
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SOGLIA_LETTURA_GIRI_LR",
+     "sc": "0x00D6",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MAPPA_DIFFERENZE_K",
+     "sc": "0x00D8",
+     "forma": "matriz",
+     "tipo": "s8",
+     "dim": {
+      "linhas": 13,
+      "colunas": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "AUTO_CALIBR_BYTE_ARRAY",
+     "sc": "0x00D9",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "AUTO_CALIBR_WORD_ARRAY",
+     "sc": "0x00DA",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 10
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "FREST_BREAKPOINT_LR",
+     "sc": "0x00E4",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 6
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "FREST_COEFFICIENT_LR",
+     "sc": "0x00E5",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 6
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "RIGHE_MAPPAK_CALIBRATE",
+     "sc": "0x00EA",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 12
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "SWITCH_TO_PETROL_PARAM_LR",
+     "sc": "0x00EC",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 9
+     },
+     "familia": "LR",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "LO_PASS_FILT_CON_FAST",
+     "sc": "0x0114",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PRESS_INSUL_DIAG_WAT_TEMP_HI_THD",
+     "sc": "0x0127",
+     "forma": "elemento_de_vetor",
+     "tipo": "s8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "PARAM_PROGRESS_0",
+     "sc": "0x012B",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ISTERESI_RIACCENSIONE",
+     "sc": "0x012C",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DELTA_AD_PER_WARMUP",
+     "sc": "0x012F",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "TANK_VOL",
+     "sc": "0x0139",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "NORM_TEMP",
+     "sc": "0x013A",
+     "forma": "elemento_de_vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "GEAR_MAX_NO",
+     "sc": "0x013F",
+     "forma": "elemento_de_vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "DHLP_TANK_PRESS",
+     "sc": "0x0141",
+     "forma": "numero",
+     "tipo": "s16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MDSB_INFO",
+     "sc": "0x0142",
+     "forma": "vetor",
+     "tipo": "u32",
+     "dim": {
+      "n": 14
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "EGEAR_RAT_BUF",
+     "sc": "0x0143",
+     "forma": "vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 7
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MECO_INDEX",
+     "sc": "0x0144",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 7
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MGLEV_DIAG_ERR",
+     "sc": "0x0145",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MGLEV_TANK_PRESS",
+     "sc": "0x0146",
+     "forma": "numero",
+     "tipo": "s16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MGLEV_DATA",
+     "sc": "0x0147",
+     "forma": "vetor",
+     "tipo": "s16",
+     "dim": {
+      "n": 3
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "MGLEV_ERR_ST",
+     "sc": "0x0148",
+     "forma": "vetor",
+     "tipo": "u8",
+     "dim": {
+      "n": 3
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ClonedEcuRemainingGasH",
+     "sc": "0x0175",
+     "forma": "elemento_de_vetor",
+     "tipo": "u16",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    },
+    {
+     "nome": "ClonedEcuIsBlocked",
+     "sc": "0x0176",
+     "forma": "numero",
+     "tipo": "u8",
+     "dim": {
+      "n": 1
+     },
+     "familia": "padrao",
+     "somente_leitura": false,
+     "app_menciona": false,
+     "leituras_ack": 0,
+     "escritas_do_original": 0
+    }
+   ]
+  }
+ }
+}
