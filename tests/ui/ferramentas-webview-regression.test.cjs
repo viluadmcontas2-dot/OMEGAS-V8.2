@@ -6,7 +6,6 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const { execFileSync } = require('node:child_process');
 const T = require('./helpers/browser.cjs');
 
 function runBridgeFailure(appSource) {
@@ -78,7 +77,10 @@ function runBridgeFailure(appSource) {
 }
 
 test('RED histórico: v8 deixa Ferramentas vazia quando a consulta auxiliar falha', () => {
-  const baseline = execFileSync('git', ['show', 'eb8c9e8:app/src/main/assets/ui/app.js'], { cwd: T.ROOT, encoding: 'utf8' });
+  const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
+  const immediatePaint = "try { if (advanced) advanced.refresh(); else toolsUnavailable(); }";
+  assert.ok(current.includes(immediatePaint), 'seam de pintura imediata mudou');
+  const baseline = current.replace(immediatePaint, '// RED: tela não é pintada no toque');
   assert.doesNotMatch(runBridgeFailure(baseline), /Anti-apagão/, 'a regressão precisa detectar o defeito antigo');
 });
 
