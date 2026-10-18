@@ -36,9 +36,11 @@ def tamanho_pedido(buf):
         return None
     low = buf[0] & 7
     if low == 7:
-        if len(buf) < 2:
+        # Forma estendida do SetVector (decompilação de TAebProtocol.SetVector, OBS-COD): 37, end. baixo, n+1, end. alto, dados, soma.
+        # O terceiro byte é o comprimento; o antigo `buf[1] + 3` lia o endereço baixo como tamanho (nenhuma captura tem 0x37).
+        if len(buf) < 3:
             return None
-        return buf[1] + 3
+        return buf[2] + 3
     return low + 3
 
 
@@ -193,8 +195,8 @@ class EcuEmulada:
     def _aplicar_escrita(self, p):
         """Atualiza o estado; devolve o rótulo da regra usada."""
         op = p[0]
-        if op & 7 == 7:                       # forma estendida: op, len, a_lo, a_hi, dados, ck (DERIVADO)
-            a_lo, a_hi, corpo, rot = p[2], p[3], p[4:-1], 'DERIVADO'
+        if op & 7 == 7:                       # forma estendida: op, a_lo, len, a_hi, dados, ck (OBS-COD: decompilação do SetVector)
+            a_lo, a_hi, corpo, rot = p[1], p[3], p[4:-1], 'OBS-COD'
         else:
             a_lo, a_hi, corpo, rot = p[1], p[2], p[3:-1], 'OBS-FIO'
         k_vet = pedido(0x29, a_lo, a_hi)

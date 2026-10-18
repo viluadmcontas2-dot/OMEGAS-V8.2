@@ -245,6 +245,22 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getAntiStalloFlagStatus(): String = activityRef.get()?.serviceOrNull()?.antiStalloFlagStatusJson() ?: unavailable()
 
+    /** Anti-apagão, os 5 números: 1º toque. `changesJson` = {"índice": valor}. Valida a faixa, lê o módulo e monta a prévia; NÃO grava. */
+    @JavascriptInterface
+    fun prepareAntiStalloValues(changesJson: String): String =
+        activityRef.get()?.serviceOrNull()?.prepareAntiStalloValues(changesJson) ?: unavailable()
+
+    /** 2º toque (confirmação do dono): só grava com o token da prévia; ACK + leitura de volta. */
+    @JavascriptInterface
+    fun confirmAntiStalloValues(token: String): String =
+        activityRef.get()?.serviceOrNull()?.confirmAntiStalloValues(token) ?: unavailable()
+
+    @JavascriptInterface
+    fun cancelAntiStalloValues(): String = activityRef.get()?.serviceOrNull()?.cancelAntiStalloValues() ?: unavailable()
+
+    @JavascriptInterface
+    fun getAntiStalloValuesStatus(): String = activityRef.get()?.serviceOrNull()?.antiStalloValuesStatusJson() ?: unavailable()
+
     @JavascriptInterface
     fun getBufferWriteProbeStatus(): String =
         activityRef.get()?.serviceOrNull()?.bufferWriteProbeStatusJson() ?: unavailable()

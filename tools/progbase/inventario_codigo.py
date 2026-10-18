@@ -194,7 +194,7 @@ def decodificar(cod, a, fim):
 def literal(b, v):
     """Texto de um literal apontado por v (UnicodeString/AnsiString Delphi com cabeçalho, ou C string) ou None."""
     try:
-        if not b.mapeado(v) or b.cb <= v < b.ce and False:
+        if not b.mapeado(v):
             return None
         # cabeçalho Delphi: elemsize u16 @-10, len @-4
         ln = b.u32(v - 4)
@@ -247,15 +247,12 @@ def resumo_funcao(cod, a, fim, nomes, campos_classe, vmts, nomes_vmt):
                     apis.add(nm)
         for m in re.finditer(r'0x[0-9a-f]{5,8}', op):
             v = int(m.group(0), 16)
-            if mn in ('push', 'mov', 'lea') and v >= 0x400000 and not (b.cb <= v < b.ce and v in vmts):
-                if v in vmts:
-                    vm.add(vmts[v])
-                else:
-                    t = literal(b, v)
-                    if t and len(t) >= 2 and t not in strs:
-                        strs.append(t)
             if v in vmts:
                 vm.add(vmts[v])
+            elif mn in ('push', 'mov', 'lea') and v >= 0x400000:
+                t = literal(b, v)
+                if t and len(t) >= 2 and t not in strs:
+                    strs.append(t)
         m = re.search(r'\[(ebx|esi|edi) \+ (0x[0-9a-f]+)\]', op)
         if m:
             d = int(m.group(2), 16)
@@ -264,6 +261,40 @@ def resumo_funcao(cod, a, fim, nomes, campos_classe, vmts, nomes_vmt):
     return {'tamanho_bytes': (ins[-1][0] + ins[-1][1] - a) if ins else 0, 'n_instrucoes': len(ins),
             'chamadas': sorted(chamadas), 'apis': sorted(apis), 'literais': strs[:12],
             'i18n_idx': idx, 'campos': sorted(campos), 'classes_referidas': sorted(vm)}
+
+
+def usos_traducao(cod):
+    """[(endereço do call, idx, entrada da função)] das chamadas a TTranslatorExt::GetString(int,int) com
+    índice imediato (push imm antes do call). idx = posição em LANG_MAIN['LBL'] (OBS-COD)."""
+    b = cod.b
+    starts = sorted(cod.entradas)
+    out, cache = [], {}
+    for m in re.finditer(rb'\xe8', b.code):
+        o = m.start()
+        if o + 5 > len(b.code) or not cod.vis[o]:
+            continue
+        t = (b.cb + o + 5 + struct.unpack('<i', b.code[o + 1:o + 5])[0]) & 0xFFFFFFFF
+        if t != TRADUTOR_GETSTRING:
+            continue
+        ad = b.cb + o
+        k = bisect.bisect_right(starts, ad) - 1
+        fn = starts[k] if k >= 0 else None
+        if fn is None:
+            continue
+        if fn not in cache:
+            nxt = starts[k + 1] if k + 1 < len(starts) else b.ce
+            cache[fn] = decodificar(cod, fn, nxt)
+        ins = cache[fn]
+        pos = next((i for i, x in enumerate(ins) if x[0] == ad), None)
+        if pos is None:
+            continue
+        idx = None
+        for (_, _, m2, o2) in reversed(ins[max(0, pos - 14):pos]):
+            if m2 == 'push' and re.fullmatch(r'(0x[0-9a-f]+|\d+)', o2):
+                idx = int(o2, 0)
+                break
+        out.append((ad, idx, fn))
+    return out
 
 
 def unidades(b):

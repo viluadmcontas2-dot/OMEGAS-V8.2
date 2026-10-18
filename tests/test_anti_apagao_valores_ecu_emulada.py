@@ -18,11 +18,9 @@ sys.path.insert(0, str(ROOT))
 from tools.emulacao.ecu_emulator import ACK, EcuEmulada, montar_quadro, pedido, soma, tamanho_pedido  # noqa: E402
 
 UI = ROOT / 'app/src/main/assets/ui'
-LEITURA = bytes.fromhex('29330100')[:3]
-LEITURA = LEITURA + bytes([soma(LEITURA)])            # 29 33 01 5D
+LEITURA = pedido(0x29, 0x33, 0x01)                    # 29 33 01 5D
 ACK_VAZIO = bytes.fromhex('530053')
 FABRICA = [1600, 100, 1500, 2, 20]
-QUADRO_FABRICA_1700 = bytes.fromhex('37330C01A4066400DC050200140 0'.replace(' ', '')) + bytes([0])  # soma calculada abaixo
 
 NODE_LOADER = r"""
 const fs = require('fs'), vm = require('vm');

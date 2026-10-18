@@ -126,6 +126,7 @@ class TelemetryForegroundService : Service() {
     /** Ferramentas > Avançado: último param_snapshot da sessão e escrita manual do anti-apagão (só por toque). */
     val advancedParams = com.omegas.prohub.autocal.AdvancedParamsStore()
     lateinit var antiStalloWriter: com.omegas.prohub.autocal.AntiStalloFlagWriter
+    lateinit var antiStalloParamsWriter: com.omegas.prohub.autocal.AntiStalloParamsWriter
     lateinit var parameterReader: com.omegas.prohub.autocal.EcuParameterReader
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
@@ -272,6 +273,18 @@ class TelemetryForegroundService : Service() {
                 advancedParams.markUnknown(session, "FLAG_CONF3", com.omegas.prohub.autocal.AntiStalloFlagCore.ADDRESS, trigger)
             },
         )
+        // Anti-apagão, os 5 números (ANTI_STALLO). Mesma regra do escritor da caixa: só por toque do dono, prévia + 2º toque + leitura de volta.
+        antiStalloParamsWriter = com.omegas.prohub.autocal.AntiStalloParamsWriter(
+            serial = recordingSerial,
+            record = { type, data -> sessionRecorder.record(type, "anti_stallo_params", data, force = true) },
+            onRead = { session, values, trigger ->
+                advancedParams.replaceVector(session, "ANTI_STALLO", com.omegas.prohub.autocal.AntiStalloParamsCore.ADDRESS, values, trigger)
+            },
+            busy = { kWriter.isBusy() || kFactor.isBusy() || bufferProbe.statusJson().let { runCatching { JSONObject(it).optBoolean("busy", false) }.getOrDefault(false) } },
+            onUnknown = { session, trigger ->
+                advancedParams.markUnknown(session, "ANTI_STALLO", com.omegas.prohub.autocal.AntiStalloParamsCore.ADDRESS, trigger)
+            },
+        )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = recordingSerial,
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
@@ -358,6 +371,7 @@ class TelemetryForegroundService : Service() {
         try { kFactor.close() } catch (_: Exception) {}
         try { bufferProbe.close() } catch (_: Exception) {}
         try { antiStalloWriter.close() } catch (_: Exception) {}
+        try { antiStalloParamsWriter.close() } catch (_: Exception) {}
         autoReadExecutor.shutdownNow()
         try { kWriter.close() } catch (_: Exception) {}
         try { runtime.close() } catch (_: Exception) {}
@@ -522,6 +536,11 @@ class TelemetryForegroundService : Service() {
     fun confirmAntiStalloFlag(token: String): String = antiStalloWriter.confirm(token).toString()
     fun cancelAntiStalloFlag(): String = antiStalloWriter.cancel().toString()
     fun antiStalloFlagStatusJson(): String = antiStalloWriter.statusJson()
+    // Anti-apagão, os 5 números: mesmo fluxo (prévia → 2º toque → leitura de volta → desfazer).
+    fun prepareAntiStalloValues(changesJson: String): String = antiStalloParamsWriter.prepare(changesJson).toString()
+    fun confirmAntiStalloValues(token: String): String = antiStalloParamsWriter.confirm(token).toString()
+    fun cancelAntiStalloValues(): String = antiStalloParamsWriter.cancel().toString()
+    fun antiStalloValuesStatusJson(): String = antiStalloParamsWriter.statusJson()
     fun kFactorHistoryJson(): String = kFactor.historyJson()
 
     @Synchronized fun saveKFactorBackup(label: String): String =
