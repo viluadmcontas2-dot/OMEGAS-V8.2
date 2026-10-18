@@ -23,8 +23,11 @@ import re
 import struct
 import sys
 
-import capstone
-import pefile
+try:  # só a extração do .exe precisa deles; ler o JSON versionado não
+    import capstone
+    import pefile
+except ImportError:  # pragma: no cover
+    capstone = pefile = None
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(AQUI, '..', '..'))
