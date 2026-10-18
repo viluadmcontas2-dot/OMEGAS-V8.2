@@ -1,0 +1,608 @@
+object FormLandiConnect: TFormLandiConnect
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  ClientHeight = 592
+  ClientWidth = 794
+  Color = clWhite
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = 10158080
+  Font.Height = -21
+  Font.Name = 'Tahoma'
+  Font.Style = [fsBold]
+  KeyPreview = True
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  OnKeyPress = FormKeyPress
+  PixelsPerInch = 96
+  TextHeight = 25
+  object ImageLogo: TImage
+    Left = 0
+    Top = 0
+    Width = 794
+    Height = 140
+    Align = alTop
+    Picture.Data = <binary 120603B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    ExplicitLeft = 8
+    ExplicitTop = 8
+    ExplicitWidth = 800
+  end
+  object PageControl: TPageControl
+    Left = 0
+    Top = 144
+    Width = 794
+    Height = 449
+    ActivePage = TabStandard
+    MultiLine = True
+    Style = tsButtons
+    TabOrder = 0
+    object TabStandard: TTabSheet
+      Caption = 'Standard'
+      TabVisible = False
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
+      object ImageLedRed0: TImage
+        Left = 232
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedRed1: TImage
+        Left = 263
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedRed2: TImage
+        Left = 294
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedRed3: TImage
+        Left = 325
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedRed4: TImage
+        Left = 356
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedRed5: TImage
+        Left = 387
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedRed6: TImage
+        Left = 418
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedYellow0: TImage
+        Left = 232
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedYellow1: TImage
+        Left = 263
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedYellow2: TImage
+        Left = 294
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedYellow3: TImage
+        Left = 325
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedYellow4: TImage
+        Left = 356
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedYellow5: TImage
+        Left = 387
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedYellow6: TImage
+        Left = 418
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedGreen0: TImage
+        Left = 232
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedGreen1: TImage
+        Left = 263
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedGreen2: TImage
+        Left = 294
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedGreen3: TImage
+        Left = 325
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedGreen4: TImage
+        Left = 356
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedGreen5: TImage
+        Left = 387
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object ImageLedGreen6: TImage
+        Left = 418
+        Top = 246
+        Width = 32
+        Height = 32
+        Picture.Data = <binary 26700B 055449636f6e000001000800101000000100080068050000…>
+        Stretch = True
+        Transparent = True
+        Visible = False
+      end
+      object EditTankVol: TValueEditEx
+        Left = 500
+        Top = 90
+        Width = 81
+        Height = 33
+        EditLabel.Left = 100
+        EditLabel.Top = 94
+        EditLabel.Width = 183
+        EditLabel.Height = 25
+        EditLabel.LabelSpacing = 400
+        EditLabel.Enabled = False
+        EditLabel.FocusControl = EditTankVol
+        EditLabel.Transparent = True
+        EditLabel.Caption = 'Volume serbatoio'
+        Resizer.ResizingBorder = 8
+        Resizer.ResizingMode = [raHorizontal,raMove]
+        Resizer.GridDimension = 10
+        Resizer.FixDblClick = True
+        Value = StreamDati.TANK_VOL
+        AutoSize = False
+        Color = cl3DLight
+        Ctl3D = True
+        Enabled = False
+        ParentCtl3D = False
+        TabOrder = 1
+        OnEnter = EditEnter
+        OnExit = EditExit
+        ShapePenWidth = 2
+        UseUnitLabel = True
+        UnitLabel.Left = 591
+        UnitLabel.Top = 94
+        UnitLabel.Width = 36
+        UnitLabel.Height = 25
+        UnitLabel.Caption = 'litri'
+        UnitLabel.Color = clWhite
+        UnitLabel.Enabled = False
+        UnitLabel.Font.Charset = DEFAULT_CHARSET
+        UnitLabel.Font.Color = 10158080
+        UnitLabel.Font.Height = -21
+        UnitLabel.Font.Name = 'Tahoma'
+        UnitLabel.Font.Style = [fsBold]
+        UnitLabel.ParentColor = False
+        UnitLabel.ParentFont = False
+        UnitLabel.Layout = tlCenter
+      end
+      object EditGearMaxNo: TValueEditEx
+        Left = 500
+        Top = 201
+        Width = 81
+        Height = 33
+        EditLabel.Left = 100
+        EditLabel.Top = 205
+        EditLabel.Width = 279
+        EditLabel.Height = 25
+        EditLabel.LabelSpacing = 400
+        EditLabel.Enabled = False
+        EditLabel.FocusControl = EditGearMaxNo
+        EditLabel.Transparent = True
+        EditLabel.Caption = 'Numero massimo di marce'
+        Resizer.ResizingBorder = 8
+        Resizer.ResizingMode = [raHorizontal,raMove]
+        Resizer.GridDimension = 10
+        Resizer.FixDblClick = True
+        Value = StreamDati.GEAR_MAX_NO
+        AutoSize = False
+        Color = cl3DLight
+        Ctl3D = True
+        Enabled = False
+        ParentCtl3D = False
+        TabOrder = 4
+        OnEnter = EditEnter
+        OnExit = EditExit
+        ShapePenWidth = 2
+      end
+      object EditMgssMaxMnfldPress: TValueEditEx
+        Left = 500
+        Top = 295
+        Width = 81
+        Height = 33
+        EditLabel.Left = 100
+        EditLabel.Top = 299
+        EditLabel.Width = 350
+        EditLabel.Height = 25
+        EditLabel.LabelSpacing = 400
+        EditLabel.Enabled = False
+        EditLabel.FocusControl = EditMgssMaxMnfldPress
+        EditLabel.Transparent = True
+        EditLabel.Caption = 'Massima pressione in aspirazione'
+        Resizer.ResizingBorder = 8
+        Resizer.ResizingMode = [raHorizontal,raMove]
+        Resizer.GridDimension = 10
+        Resizer.FixDblClick = True
+        Value = StreamDati.MGSS_MAX_MNFLD_PRESS
+        AutoSize = False
+        Color = cl3DLight
+        Ctl3D = True
+        Enabled = False
+        ParentCtl3D = False
+        TabOrder = 5
+        OnEnter = EditEnter
+        OnExit = EditExit
+        ShapePenWidth = 2
+        UseUnitLabel = True
+        UnitLabel.Left = 591
+        UnitLabel.Top = 299
+        UnitLabel.Width = 35
+        UnitLabel.Height = 25
+        UnitLabel.Caption = 'bar'
+        UnitLabel.Enabled = False
+        UnitLabel.Font.Charset = DEFAULT_CHARSET
+        UnitLabel.Font.Color = 10158080
+        UnitLabel.Font.Height = -21
+        UnitLabel.Font.Name = 'Tahoma'
+        UnitLabel.Font.Style = [fsBold]
+        UnitLabel.ParentFont = False
+        UnitLabel.Layout = tlCenter
+      end
+      object CheckEnableLandiConnect: TCheckBox
+        Left = 100
+        Top = 40
+        Width = 629
+        Height = 30
+        Cursor = crHandPoint
+        Caption = 'Enable Landi Connect communication'
+        TabOrder = 0
+        OnClick = CheckEnableLandiConnectClick
+      end
+      object ButtonResetTrip: TBitBtn
+        Tag = 2
+        Left = 158
+        Top = 345
+        Width = 180
+        Height = 49
+        Cursor = crHandPoint
+        Caption = 'Reset trip'
+        Enabled = False
+        TabOrder = 6
+        OnClick = ButtonResetClick
+      end
+      object ButtonResetTotal: TBitBtn
+        Tag = 3
+        Left = 452
+        Top = 345
+        Width = 180
+        Height = 49
+        Cursor = crHandPoint
+        Caption = 'Reset totals'
+        Enabled = False
+        TabOrder = 7
+        OnClick = ButtonResetClick
+      end
+      object CheckEnableGear: TCheckBox
+        Left = 100
+        Top = 170
+        Width = 481
+        Height = 30
+        Cursor = crHandPoint
+        Caption = 'Abilita apprendimento marce'
+        Enabled = False
+        TabOrder = 3
+        OnClick = CheckEnableGearClick
+      end
+      object CheckCambioAutomatico: TCheckBox
+        Left = 100
+        Top = 133
+        Width = 481
+        Height = 30
+        Cursor = crHandPoint
+        Caption = 'Vettura con cambio automatico'
+        Enabled = False
+        TabOrder = 2
+        OnClick = CheckCambioAutomaticoClick
+      end
+    end
+    object TabAdvanced: TTabSheet
+      Caption = 'Advanced'
+      ImageIndex = 1
+      TabVisible = False
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
+      object LabelInjrTOfsTbl: TLabel
+        Left = 100
+        Top = 68
+        Width = 210
+        Height = 25
+        Caption = 'Offset iniettori (ms)'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clMedGray
+        Font.Height = -21
+        Font.Name = 'Tahoma'
+        Font.Style = [fsBold]
+        ParentFont = False
+      end
+      object EditInjrGasFlow: TValueEditEx
+        Left = 500
+        Top = 30
+        Width = 81
+        Height = 33
+        EditLabel.Left = 100
+        EditLabel.Top = 34
+        EditLabel.Width = 247
+        EditLabel.Height = 25
+        EditLabel.LabelSpacing = 400
+        EditLabel.Enabled = False
+        EditLabel.FocusControl = EditInjrGasFlow
+        EditLabel.Transparent = True
+        EditLabel.Caption = 'Portata statica iniettori'
+        Resizer.ResizingBorder = 8
+        Resizer.ResizingMode = [raHorizontal,raMove]
+        Resizer.GridDimension = 10
+        Resizer.FixDblClick = True
+        Value = StreamDati.INJR_GAS_FLOW
+        AutoSize = False
+        Color = cl3DLight
+        Ctl3D = True
+        Enabled = False
+        ParentCtl3D = False
+        TabOrder = 0
+        OnEnter = EditEnter
+        OnExit = EditExit
+        ShapePenWidth = 2
+        UseUnitLabel = True
+        UnitLabel.Left = 591
+        UnitLabel.Top = 34
+        UnitLabel.Width = 76
+        UnitLabel.Height = 25
+        UnitLabel.Caption = 'mg/ms'
+        UnitLabel.Enabled = False
+        UnitLabel.Font.Charset = DEFAULT_CHARSET
+        UnitLabel.Font.Color = 10158080
+        UnitLabel.Font.Height = -21
+        UnitLabel.Font.Name = 'Tahoma'
+        UnitLabel.Font.Style = [fsBold]
+        UnitLabel.ParentFont = False
+        UnitLabel.Layout = tlCenter
+      end
+      object DrawGridInjrTOfsTbl: TDrawGrid
+        Left = 140
+        Top = 98
+        Width = 494
+        Height = 162
+        Color = cl3DLight
+        ColCount = 6
+        Ctl3D = False
+        DefaultColWidth = 81
+        DefaultRowHeight = 31
+        Enabled = False
+        FixedColor = 2862656
+        FixedCols = 0
+        FixedRows = 0
+        ParentCtl3D = False
+        TabOrder = 1
+        OnDblClick = DrawGridInjrTOfsTblDblClick
+        OnDrawCell = DrawGridInjrTOfsTblDrawCell
+        OnKeyPress = DrawGridInjrTOfsTblKeyPress
+      end
+      object EditNormPress: TValueEditEx
+        Left = 500
+        Top = 269
+        Width = 81
+        Height = 33
+        EditLabel.Left = 100
+        EditLabel.Top = 273
+        EditLabel.Width = 302
+        EditLabel.Height = 25
+        EditLabel.LabelSpacing = 400
+        EditLabel.Enabled = False
+        EditLabel.FocusControl = EditNormPress
+        EditLabel.Transparent = True
+        EditLabel.Caption = 'Pressione di normalizzazione'
+        Resizer.ResizingBorder = 8
+        Resizer.ResizingMode = [raHorizontal,raMove]
+        Resizer.GridDimension = 10
+        Resizer.FixDblClick = True
+        Value = StreamDati.NORM_PRESS
+        AutoSize = False
+        Color = cl3DLight
+        Ctl3D = True
+        Enabled = False
+        ParentCtl3D = False
+        TabOrder = 2
+        OnEnter = EditEnter
+        OnExit = EditExit
+        ShapePenWidth = 2
+        UseUnitLabel = True
+        UnitLabel.Left = 591
+        UnitLabel.Top = 273
+        UnitLabel.Width = 35
+        UnitLabel.Height = 25
+        UnitLabel.Caption = 'bar'
+        UnitLabel.Enabled = False
+        UnitLabel.Font.Charset = DEFAULT_CHARSET
+        UnitLabel.Font.Color = 10158080
+        UnitLabel.Font.Height = -21
+        UnitLabel.Font.Name = 'Tahoma'
+        UnitLabel.Font.Style = [fsBold]
+        UnitLabel.ParentFont = False
+        UnitLabel.Layout = tlCenter
+      end
+      object EditNormTemp: TValueEditEx
+        Left = 500
+        Top = 308
+        Width = 81
+        Height = 33
+        EditLabel.Left = 100
+        EditLabel.Top = 312
+        EditLabel.Width = 337
+        EditLabel.Height = 25
+        EditLabel.LabelSpacing = 400
+        EditLabel.Enabled = False
+        EditLabel.FocusControl = EditNormTemp
+        EditLabel.Transparent = True
+        EditLabel.Caption = 'Temperatura di normalizzazione'
+        Resizer.ResizingBorder = 8
+        Resizer.ResizingMode = [raHorizontal,raMove]
+        Resizer.GridDimension = 10
+        Resizer.FixDblClick = True
+        Value = StreamDati.NORM_TEMP
+        AutoSize = False
+        Color = cl3DLight
+        Ctl3D = True
+        Enabled = False
+        ParentCtl3D = False
+        TabOrder = 3
+        OnEnter = EditEnter
+        OnExit = EditExit
+        ShapePenWidth = 2
+        UseUnitLabel = True
+        UnitLabel.Left = 591
+        UnitLabel.Top = 312
+        UnitLabel.Width = 15
+        UnitLabel.Height = 25
+        UnitLabel.Caption = 'K'
+        UnitLabel.Enabled = False
+        UnitLabel.Font.Charset = DEFAULT_CHARSET
+        UnitLabel.Font.Color = 10158080
+        UnitLabel.Font.Height = -21
+        UnitLabel.Font.Name = 'Tahoma'
+        UnitLabel.Font.Style = [fsBold]
+        UnitLabel.ParentFont = False
+        UnitLabel.Layout = tlCenter
+      end
+    end
+  end
+  object TimerUpdate: TTimer
+    Interval = 500
+    OnTimer = TimerUpdateTimer
+    Left = 524
+    Top = 390
+  end
+end

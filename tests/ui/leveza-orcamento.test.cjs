@@ -110,17 +110,19 @@ async function ciclos(page, { comDado, n = 40 }) {
     const app = window.OmegasApp; let seq = 9000;
     const quadro = () => ({ valid: true, ageMs: 40, telemetryAgeMs: 40, sequence: seq, live: { rpm: 1500 + (seq % 40) * 25, petrol_ms: +(4 + (seq % 7) * 0.1).toFixed(3), load_bar: +(0.45 + (seq % 5) * 0.01).toFixed(3), fuel: 'GNV', unknown_raw_19: 221 } });
     app.api.presentSnapshot = () => { if (comDado) seq += 1; return { ok: true, revision: seq, data: quadro() }; };
-    const escondida = {}; let identicas = 0; let total = 0;
+    const escondida = {}; let identicas = 0; let total = 0; const amostra = [];
     const mo = new MutationObserver(list => {
       for (const m of list) {
         total += 1;
+        const alvo0 = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        if (amostra.length < 6) amostra.push(m.type + ' ' + (alvo0 ? alvo0.tagName + '#' + alvo0.id + '.' + (alvo0.getAttribute('class') || '') : '?') + ' ' + (m.attributeName || ''));
         const alvo = m.target.nodeType === 1 ? m.target : m.target.parentElement;
         const tela = alvo && alvo.closest && alvo.closest('[data-screen]');
         if (tela && !tela.classList.contains('active')) escondida[tela.dataset.screen] = (escondida[tela.dataset.screen] || 0) + 1;
         const igual = m.type === 'attributes' ? m.oldValue === m.target.getAttribute(m.attributeName)
           : m.type === 'characterData' ? m.oldValue === m.target.data
             : m.removedNodes.length === 1 && m.addedNodes.length === 1 && m.removedNodes[0].nodeType === 3 && m.addedNodes[0].nodeType === 3 && m.removedNodes[0].data === m.addedNodes[0].data;
-        if (igual) identicas += 1;
+        if (igual) { identicas += 1; if (amostra.length < 12) amostra.push('IGUAL:' + (m.removedNodes[0] ? (m.removedNodes[0].data || m.removedNodes[0].outerHTML || '').slice(0, 60) : m.attributeName)); }
       }
     });
     for (let i = 0; i < 4; i++) { app.scheduler.run(); await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0))); } // assenta o primeiro quadro
@@ -128,7 +130,7 @@ async function ciclos(page, { comDado, n = 40 }) {
     mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeOldValue: true, characterData: true, characterDataOldValue: true });
     for (let i = 0; i < n; i++) { app.scheduler.run(); await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0))); }
     mo.takeRecords(); mo.disconnect();
-    return { identicas, total, escondida };
+    return { identicas, total, escondida, amostra };
   }, { comDado, n });
 }
 
@@ -140,7 +142,7 @@ test('nenhum ciclo de dados reescreve o DOM com o mesmo valor, e tela escondida 
       await esperarAba(page, rota);
       await page.waitForTimeout(700);
       const r = await ciclos(page, { comDado: true });
-      assert.equal(r.identicas, 0, `${rota}: ${r.identicas} escritas com o mesmo valor em 40 ciclos`);
+      assert.equal(r.identicas, 0, `${rota}: ${r.identicas} escritas com o mesmo valor em 40 ciclos ${r.amostra.join(' ; ')}`);
       assert.deepEqual(r.escondida, {}, `${rota}: tela escondida mexeu no DOM`);
     }
     assert.deepEqual(erros, []);
@@ -156,7 +158,7 @@ test('sem dado novo, nenhuma aba mexe no DOM (gráficos não redesenham sem muda
       await page.waitForTimeout(700);
       const r = await ciclos(page, { comDado: false });
       // O status/contexto (1 s / 2 s) pode repetir a leitura, mas não escreve nada diferente: tolerância 0 mutação.
-      assert.equal(r.total, 0, `${rota}: ${r.total} mutações em 40 ciclos sem dado novo`);
+      assert.equal(r.total, 0, `${rota}: ${r.total} mutações em 40 ciclos sem dado novo: ${r.amostra.join(' ; ')}`);
     }
   } finally { await context.close(); }
 });

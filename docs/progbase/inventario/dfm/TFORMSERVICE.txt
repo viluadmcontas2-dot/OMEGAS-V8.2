@@ -1,0 +1,513 @@
+object FormService: TFormService
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsDialog
+  Caption = 'Gestione tagliandi'
+  ClientHeight = 447
+  ClientWidth = 404
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = 10158080
+  Font.Height = -19
+  Font.Name = 'Arial'
+  Font.Style = []
+  KeyPreview = True
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  OnClose = FormClose
+  OnKeyPress = FormKeyPress
+  PixelsPerInch = 96
+  TextHeight = 22
+  object PanelPin: TPanel
+    Left = 8
+    Top = 8
+    Width = 385
+    Height = 90
+    BevelOuter = bvNone
+    TabOrder = 0
+    object LabelInsPin: TLabel
+      Left = 18
+      Top = 33
+      Width = 108
+      Height = 22
+      Caption = 'Inserisci PIN'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object EditInsPin: TEdit
+      Left = 171
+      Top = 28
+      Width = 80
+      Height = 32
+      Alignment = taCenter
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -21
+      Font.Name = 'Arial'
+      Font.Style = []
+      MaxLength = 4
+      ParentFont = False
+      PasswordChar = '*'
+      TabOrder = 0
+      Text = '0000'
+      OnChange = EditInsPinChange
+      OnKeyPress = EditPinKeyPress
+    end
+    object ButtonResetPin: TButton
+      Left = 272
+      Top = 29
+      Width = 77
+      Height = 31
+      Cursor = crHandPoint
+      Caption = 'Reset'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 1
+      Visible = False
+      WordWrap = True
+      OnClick = ButtonResetPinClick
+    end
+  end
+  object PanelData: TPanel
+    Left = 8
+    Top = 104
+    Width = 385
+    Height = 281
+    BevelOuter = bvNone
+    TabOrder = 3
+    object LabelData: TLabel
+      Left = 18
+      Top = 145
+      Width = 128
+      Height = 22
+      Caption = 'Dati installatore'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelHours: TLabel
+      Left = 18
+      Top = 23
+      Width = 264
+      Height = 22
+      Caption = 'Ore a gas rimanenti al tagliando'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabCurrHours: TLabel
+      Left = 261
+      Top = 55
+      Width = 10
+      Height = 22
+      Caption = 'h'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelTagliandiEffettuatiData: TLabel
+      Left = 18
+      Top = 105
+      Width = 157
+      Height = 22
+      Caption = 'Tagliandi effettuati:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelNumTagliandiEffettuatiData: TLabel
+      Left = 222
+      Top = 105
+      Width = 11
+      Height = 22
+      Caption = '0'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelCurrHours: TStaticText
+      Left = 171
+      Top = 54
+      Width = 80
+      Height = 31
+      Alignment = taRightJustify
+      AutoSize = False
+      BevelKind = bkFlat
+      Caption = '0'
+      TabOrder = 0
+    end
+    object LabelCurrData: TStaticText
+      Left = 18
+      Top = 177
+      Width = 351
+      Height = 75
+      AutoSize = False
+      BevelKind = bkFlat
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -21
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 1
+    end
+  end
+  object PanelService: TPanel
+    Left = 8
+    Top = 456
+    Width = 385
+    Height = 377
+    BevelOuter = bvNone
+    TabOrder = 1
+    Visible = False
+    object LabelMemoData: TLabel
+      Left = 18
+      Top = 139
+      Width = 128
+      Height = 22
+      Caption = 'Dati installatore'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelEditHours: TLabel
+      Left = 18
+      Top = 40
+      Width = 264
+      Height = 22
+      Caption = 'Ore a gas rimanenti al tagliando'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelTagliandiEffettuatiService: TLabel
+      Left = 18
+      Top = 110
+      Width = 157
+      Height = 22
+      Caption = 'Tagliandi effettuati:'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelNumTagliandiEffettuatiService: TLabel
+      Left = 218
+      Top = 110
+      Width = 11
+      Height = 22
+      Caption = '0'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelPartenzeGasConsentite: TLabel
+      Left = 16
+      Top = 267
+      Width = 218
+      Height = 22
+      Caption = 'Partenze a gas consentite'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+      Visible = False
+    end
+    object LabelPartenzeGasEffettuate: TLabel
+      Left = 276
+      Top = 267
+      Width = 16
+      Height = 22
+      Caption = '0/'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+      Visible = False
+    end
+    object MemoData: TMemo
+      Left = 18
+      Top = 167
+      Width = 351
+      Height = 56
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -21
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 2
+      OnKeyPress = MemoDataKeyPress
+    end
+    object CheckEnableService: TCheckBox
+      Left = 16
+      Top = 13
+      Width = 351
+      Height = 26
+      Cursor = crHandPoint
+      BiDiMode = bdLeftToRight
+      Caption = 'Abilita gestione tagliandi'
+      ParentBiDiMode = False
+      TabOrder = 0
+    end
+    object CheckDisableGas: TCheckBox
+      Left = 16
+      Top = 232
+      Width = 351
+      Height = 26
+      Cursor = crHandPoint
+      BiDiMode = bdLeftToRight
+      Caption = 'Inibisci passaggio a gas'
+      ParentBiDiMode = False
+      TabOrder = 3
+      OnClick = CheckDisableGasClick
+    end
+    object CheckServicePin: TCheckBox
+      Left = 16
+      Top = 301
+      Width = 351
+      Height = 26
+      Cursor = crHandPoint
+      BiDiMode = bdLeftToRight
+      Caption = 'Abilita protezione dati con PIN'
+      ParentBiDiMode = False
+      TabOrder = 4
+    end
+    object EditCurrHours: TNumericEdit
+      Tag = 1
+      Left = 171
+      Top = 69
+      Width = 80
+      Height = 30
+      Cursor = crHandPoint
+      Alignment = taRightJustify
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      MaxLength = 5
+      ParentFont = False
+      TabOrder = 1
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 20000.0
+      MinValue = 360.0
+      ShapePenWidth = 2
+      UseUnitLabel = True
+      UnitLabel.Left = 261
+      UnitLabel.Top = 73
+      UnitLabel.Width = 10
+      UnitLabel.Height = 22
+      UnitLabel.Caption = 'h'
+      UnitLabel.Color = clWhite
+      UnitLabel.Font.Charset = DEFAULT_CHARSET
+      UnitLabel.Font.Color = 10158080
+      UnitLabel.Font.Height = -19
+      UnitLabel.Font.Name = 'Arial'
+      UnitLabel.Font.Style = []
+      UnitLabel.ParentColor = False
+      UnitLabel.ParentFont = False
+      UnitLabel.Transparent = True
+      UnitLabel.Layout = tlCenter
+    end
+    object ButtonModifyPin: TButton
+      Left = 32
+      Top = 333
+      Width = 133
+      Height = 31
+      Cursor = crHandPoint
+      Caption = 'Modifica PIN'
+      Enabled = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 5
+    end
+    object ButtonAzzeraNumeroTagliandiEffettuati: TButton
+      Left = 292
+      Top = 108
+      Width = 77
+      Height = 31
+      Cursor = crHandPoint
+      Caption = 'Azzera'
+      Enabled = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 6
+      Visible = False
+      WordWrap = True
+      OnClick = ButtonAzzeraNumeroTagliandiEffettuatiClick
+    end
+    object EditPartenzeEmergenza: TNumericEdit
+      Tag = 1
+      Left = 302
+      Top = 264
+      Width = 65
+      Height = 30
+      Cursor = crHandPoint
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 7
+      Text = '0'
+      OnEnter = EditStandardEnter
+      OnExit = EditStandardExit
+      OnKeyPress = EditStandardKeyPress
+      Precision = 1.0
+      MaxValue = 255.0
+      ShapePenWidth = 2
+    end
+  end
+  object PanelNewPin: TPanel
+    Left = 52
+    Top = 450
+    Width = 305
+    Height = 179
+    BevelOuter = bvNone
+    TabOrder = 4
+    Visible = False
+    object LabelPin: TLabel
+      Left = 29
+      Top = 23
+      Width = 108
+      Height = 22
+      Caption = 'Inserisci PIN'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object LabelPin2: TLabel
+      Left = 29
+      Top = 74
+      Width = 121
+      Height = 22
+      Caption = 'Conferma PIN'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -19
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object EditPin: TEdit
+      Left = 171
+      Top = 20
+      Width = 80
+      Height = 30
+      Alignment = taCenter
+      MaxLength = 4
+      PasswordChar = '*'
+      TabOrder = 0
+      OnKeyPress = EditPinKeyPress
+    end
+    object EditPin2: TEdit
+      Left = 171
+      Top = 71
+      Width = 80
+      Height = 30
+      Alignment = taCenter
+      MaxLength = 4
+      PasswordChar = '*'
+      TabOrder = 1
+      OnKeyPress = EditPinKeyPress
+    end
+    object ButtonNewPin: TButton
+      Left = 47
+      Top = 125
+      Width = 100
+      Height = 31
+      Cursor = crHandPoint
+      Caption = 'OK'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 2
+      WordWrap = True
+      OnClick = ButtonNewPinClick
+    end
+    object ButtonOldPin: TButton
+      Left = 161
+      Top = 125
+      Width = 100
+      Height = 31
+      Cursor = crHandPoint
+      Caption = 'Cancella'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = 10158080
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 3
+      WordWrap = True
+      OnClick = ButtonOldPinClick
+    end
+  end
+  object ButtonExit: TButton
+    Left = 144
+    Top = 391
+    Width = 128
+    Height = 40
+    Cursor = crHandPoint
+    Caption = 'Esci'
+    TabOrder = 2
+    OnClick = ButtonExitClick
+  end
+end

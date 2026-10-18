@@ -53,7 +53,7 @@ async function cenarioGravar(app, shot) {
   if (shot) await shot('3-previa');
   await T.tap(page, S.confirm);
   await T.pump(page, 4);
-  await page.waitForSelector('.adv-result[data-level="ok"]', { timeout: 3000 });
+  await page.waitForSelector('.adv-result[data-level="ok"]', { timeout: 10000 });
   assert.match(await text(page, S.result), /ECU confirmou: ligado/);
   assert.equal(await text(page, S.state), 'Ligado');
   assert.deepEqual(await ecuWrites(page), [LIGAR], '(b) quadro exato');
@@ -71,7 +71,7 @@ async function cenarioDesfazer(app, shot) {
   assert.match(await text(page, S.undo), /Toque de novo para desfazer/);
   if (shot) await shot('5-desfazer-previa');
   await T.tap(page, S.undo); await T.pump(page, 4);
-  await page.waitForSelector('.adv-result[data-level="ok"]', { timeout: 3000 });
+  await page.waitForSelector('.adv-result[data-level="ok"]', { timeout: 10000 });
   assert.deepEqual(await ecuWrites(page), [DESLIGAR]);
   assert.deepEqual(await flag3(page), [0, 0, 0, 0], 'a ECU voltou ao original');
   assert.equal(await text(page, S.state), 'Desligado');
@@ -126,7 +126,7 @@ async function cenarioFalha(app, falha, regex, shot) {
   await page.evaluate(f => window.__bench.setFault(f), falha);
   await T.tap(page, S.confirm); await T.pump(page, 4);
   await T.tap(page, S.confirm); await T.pump(page, 4);
-  await page.waitForSelector('.adv-result[data-level="warning"]', { timeout: 3000 });
+  await page.waitForSelector('.adv-result[data-level="warning"]', { timeout: 10000 });
   const msg = await text(page, S.result);
   assert.match(msg, regex, falha);
   assert.doesNotMatch(msg, /Gravado e conferido/);

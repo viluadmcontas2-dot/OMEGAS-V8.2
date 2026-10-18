@@ -1,0 +1,518 @@
+object FormCentriCelle: TFormCentriCelle
+  Left = 255
+  Top = 12
+  BorderStyle = bsDialog
+  Caption = 'Centri celle mappa di carburazione'
+  ClientHeight = 319
+  ClientWidth = 541
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -16
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Style = [fsBold]
+  OldCreateOrder = False
+  Position = poScreenCenter
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 20
+  object GroupRifGiri: TGroupBox
+    Left = 8
+    Top = 8
+    Width = 281
+    Height = 241
+    Caption = 'Colonne dei GIRI (rpm)'
+    TabOrder = 0
+    TabStop = True
+    object Label5: TLabel
+      Left = 19
+      Top = 35
+      Width = 10
+      Height = 20
+      Caption = '1'
+    end
+    object Label6: TLabel
+      Left = 19
+      Top = 67
+      Width = 10
+      Height = 20
+      Caption = '2'
+    end
+    object Label7: TLabel
+      Left = 19
+      Top = 99
+      Width = 10
+      Height = 20
+      Caption = '3'
+    end
+    object Label8: TLabel
+      Left = 19
+      Top = 131
+      Width = 10
+      Height = 20
+      Caption = '4'
+    end
+    object Label9: TLabel
+      Left = 19
+      Top = 163
+      Width = 10
+      Height = 20
+      Caption = '5'
+    end
+    object Label10: TLabel
+      Left = 19
+      Top = 195
+      Width = 10
+      Height = 20
+      Caption = '6'
+    end
+    object Label11: TLabel
+      Left = 152
+      Top = 35
+      Width = 10
+      Height = 20
+      Caption = '7'
+    end
+    object Label12: TLabel
+      Left = 152
+      Top = 67
+      Width = 10
+      Height = 20
+      Caption = '8'
+    end
+    object Label13: TLabel
+      Left = 152
+      Top = 99
+      Width = 10
+      Height = 20
+      Caption = '9'
+    end
+    object Label14: TLabel
+      Left = 148
+      Top = 131
+      Width = 20
+      Height = 20
+      Caption = '10'
+    end
+    object Label15: TLabel
+      Left = 148
+      Top = 163
+      Width = 20
+      Height = 20
+      Caption = '11'
+    end
+    object Label16: TLabel
+      Left = 148
+      Top = 195
+      Width = 20
+      Height = 20
+      Caption = '12'
+    end
+    object EditRifGiri0: TNumericEdit
+      Left = 55
+      Top = 32
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 0
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 0
+      NextControl = EditRifGiri1
+      PrevControl = ButtonAnnulla
+    end
+    object EditRifGiri1: TNumericEdit
+      Left = 55
+      Top = 64
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 1
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 1
+      NextControl = EditRifGiri2
+      PrevControl = EditRifGiri0
+    end
+    object EditRifGiri2: TNumericEdit
+      Left = 55
+      Top = 96
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 2
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 2
+      NextControl = EditRifGiri3
+      PrevControl = EditRifGiri1
+    end
+    object EditRifGiri3: TNumericEdit
+      Left = 55
+      Top = 128
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 3
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 3
+      NextControl = EditRifGiri4
+      PrevControl = EditRifGiri2
+    end
+    object EditRifGiri4: TNumericEdit
+      Left = 55
+      Top = 160
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 4
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 4
+      NextControl = EditRifGiri5
+      PrevControl = EditRifGiri3
+    end
+    object EditRifGiri5: TNumericEdit
+      Left = 55
+      Top = 192
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 5
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 5
+      NextControl = EditRifGiri6
+      PrevControl = EditRifGiri4
+    end
+    object EditRifGiri6: TNumericEdit
+      Left = 188
+      Top = 32
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 6
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 6
+      NextControl = EditRifGiri7
+      PrevControl = EditRifGiri5
+    end
+    object EditRifGiri7: TNumericEdit
+      Left = 188
+      Top = 64
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 7
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 7
+      NextControl = EditRifGiri8
+      PrevControl = EditRifGiri6
+    end
+    object EditRifGiri8: TNumericEdit
+      Left = 188
+      Top = 96
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 8
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 8
+      NextControl = EditRifGiri9
+      PrevControl = EditRifGiri7
+    end
+    object EditRifGiri9: TNumericEdit
+      Left = 188
+      Top = 128
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 9
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 9
+      NextControl = EditRifGiri10
+      PrevControl = EditRifGiri8
+    end
+    object EditRifGiri10: TNumericEdit
+      Left = 188
+      Top = 160
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 10
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 10
+      NextControl = EditRifGiri11
+      PrevControl = EditRifGiri9
+    end
+    object EditRifGiri11: TNumericEdit
+      Left = 188
+      Top = 192
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 4
+      ParentFont = False
+      TabOrder = 11
+      Text = '0'
+      Precision = 1.0
+      MaxValue = 8000.0
+      MinValue = 200.0
+      Validation = False
+      DataIndex = 11
+      NextControl = NumEditRifMap0
+      PrevControl = EditRifGiri10
+    end
+  end
+  object ButtonOk: TButton
+    Left = 189
+    Top = 267
+    Width = 94
+    Height = 34
+    Caption = '&OK'
+    TabOrder = 2
+    OnClick = ButtonOkClick
+  end
+  object ButtonAnnulla: TButton
+    Left = 289
+    Top = 267
+    Width = 91
+    Height = 34
+    Cancel = True
+    Caption = '&Annulla'
+    ModalResult = 2
+    TabOrder = 3
+    OnExit = ButtonAnnullaExit
+  end
+  object GroupRifMap: TGroupBox
+    Left = 303
+    Top = 8
+    Width = 226
+    Height = 241
+    Caption = 'Righe del MAP (bar)'
+    TabOrder = 1
+    TabStop = True
+    Visible = False
+    object LabelInj1: TLabel
+      Left = 48
+      Top = 33
+      Width = 10
+      Height = 20
+      Caption = '1'
+    end
+    object LabelInj2: TLabel
+      Left = 48
+      Top = 65
+      Width = 10
+      Height = 20
+      Caption = '2'
+    end
+    object LabelInj3: TLabel
+      Left = 48
+      Top = 97
+      Width = 10
+      Height = 20
+      Caption = '3'
+    end
+    object LabelInj4: TLabel
+      Left = 48
+      Top = 129
+      Width = 10
+      Height = 20
+      Caption = '4'
+    end
+    object NumEditRifMap0: TNumericEdit
+      Left = 72
+      Top = 30
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 6
+      ParentFont = False
+      TabOrder = 0
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 3.0
+      Validation = False
+      DataIndex = 0
+      NextControl = NumEditRifMap1
+      PrevControl = EditRifGiri11
+    end
+    object NumEditRifMap1: TNumericEdit
+      Left = 72
+      Top = 62
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 6
+      ParentFont = False
+      TabOrder = 1
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 3.0
+      Validation = False
+      DataIndex = 1
+      NextControl = NumEditRifMap2
+      PrevControl = NumEditRifMap0
+    end
+    object NumEditRifMap2: TNumericEdit
+      Left = 72
+      Top = 94
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 6
+      ParentFont = False
+      TabOrder = 2
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 3.0
+      Validation = False
+      DataIndex = 2
+      NextControl = NumEditRifMap3
+      PrevControl = NumEditRifMap1
+    end
+    object NumEditRifMap3: TNumericEdit
+      Left = 72
+      Top = 126
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      MaxLength = 6
+      ParentFont = False
+      TabOrder = 3
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 3.0
+      Validation = False
+      DataIndex = 3
+      NextControl = ButtonOk
+      PrevControl = NumEditRifMap2
+    end
+  end
+end

@@ -1,0 +1,37 @@
+object StrategiaTempiMortiDM: TStrategiaTempiMortiDM
+  OldCreateOrder = False
+  Height = 805
+  Width = 908
+  object ADV_OFFSET_INJ_PETROL: TAebVector
+    DataMask = 255
+    SerialCode = 242
+    Signed = True
+    FileSection = 'Iniezione'
+    FileKeyName = 'Prt0010'
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 398
+    Top = 96
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ADV_OFFSET_INJ_GAS: TAebVector
+    DataMask = 255
+    SerialCode = 243
+    Signed = True
+    FileSection = 'Iniezione'
+    FileKeyName = 'Prt0011'
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 416
+    Top = 216
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+end

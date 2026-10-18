@@ -1,0 +1,668 @@
+object FormMain: TFormMain
+  Left = 0
+  Top = 0
+  Width = 1024
+  Height = 732
+  AutoScroll = True
+  Caption = 'Initializing...'
+  Color = clWhite
+  Constraints.MaxHeight = 901
+  Constraints.MaxWidth = 1311
+  Constraints.MinHeight = 704
+  Constraints.MinWidth = 1024
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = 10158080
+  Font.Height = -41
+  Font.Name = 'Times New Roman'
+  Font.Style = [fsBold]
+  KeyPreview = True
+  Menu = MainMenu
+  OldCreateOrder = True
+  Position = poMainFormCenter
+  WindowState = wsMaximized
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnPaint = FormPaint
+  OnResize = FormResize
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 47
+  object LabelRiprogramma: TLabel
+    Tag = 6
+    Left = 210
+    Top = 440
+    Width = 657
+    Height = 60
+    AutoSize = False
+    Caption = 'Programmazione centralina'
+    Transparent = True
+  end
+  object LabelConfig: TLabel
+    Left = 210
+    Top = 20
+    Width = 579
+    Height = 60
+    AutoSize = False
+    Caption = 'Configurazione vettura'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = 10158080
+    Font.Height = -41
+    Font.Name = 'Times New Roman'
+    Font.Style = [fsBold]
+    ParentFont = False
+    Transparent = True
+  end
+  object LabelTermina: TLabel
+    Tag = 7
+    Left = 210
+    Top = 560
+    Width = 579
+    Height = 60
+    AutoSize = False
+    Caption = 'Esci'
+    Transparent = True
+  end
+  object LabelDiagnosi: TLabel
+    Tag = 3
+    Left = 210
+    Top = 140
+    Width = 579
+    Height = 60
+    AutoSize = False
+    Caption = 'Diagnosi'
+    Transparent = True
+  end
+  object LabelSalva: TLabel
+    Tag = 4
+    Left = 210
+    Top = 320
+    Width = 657
+    Height = 60
+    AutoSize = False
+    Caption = 'Salva configurazione attuale'
+    Transparent = True
+    Visible = False
+  end
+  object LabelCarica: TLabel
+    Tag = 5
+    Left = 210
+    Top = 380
+    Width = 657
+    Height = 60
+    AutoSize = False
+    Caption = 'Carica nuova configurazione'
+    Transparent = True
+  end
+  object LabelVisualizza: TLabel
+    Tag = 1
+    Left = 210
+    Top = 80
+    Width = 335
+    Height = 60
+    AutoSize = False
+    Caption = 'Visualizzazione'
+    Transparent = True
+  end
+  object LabelTara: TLabel
+    Tag = 3
+    Left = 210
+    Top = 200
+    Width = 657
+    Height = 60
+    AutoSize = False
+    Caption = 'Calibrazione automatica'
+    Transparent = True
+    Visible = False
+  end
+  object LabelCorrTara: TLabel
+    Tag = 3
+    Left = 210
+    Top = 260
+    Width = 657
+    Height = 60
+    AutoSize = False
+    Caption = 'Modifica calibrazione'
+    Transparent = True
+    Visible = False
+  end
+  object LabelAggiorna: TLabel
+    Tag = 6
+    Left = 210
+    Top = 500
+    Width = 579
+    Height = 60
+    AutoSize = False
+    Caption = 'Aggiorna schede e mappe'
+    Transparent = True
+    Visible = False
+  end
+  object LabelEcuType: TLabel
+    Tag = 2
+    Left = 659
+    Top = 8
+    Width = 70
+    Height = 19
+    Cursor = crHandPoint
+    Alignment = taRightJustify
+    Caption = 'OMEGAS'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clNavy
+    Font.Height = -17
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentFont = False
+    Transparent = True
+    Layout = tlCenter
+    Visible = False
+  end
+  object StatusBarMain: TStatusBar
+    Left = 0
+    Top = 662
+    Width = 1008
+    Height = 31
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = [fsBold]
+    Panels = <{Style=psOwnerDraw; Text='Centralina non connessa'; Width=220} {Style=psOwnerDraw; Text='Config:'; Width=450} {Width=230} {Text='GPL'; Width=40}>
+    UseSystemFont = False
+    OnDrawPanel = StatusBarMainDrawPanel
+    ExplicitTop = 642
+  end
+  object BitBtnConfig: TBitBtn
+    Left = 40
+    Top = 15
+    Width = 145
+    Height = 59
+    Cursor = crHandPoint
+    BiDiMode = bdLeftToRight
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 3130B 360c0000424d360c00000000000036000000280000002000…>
+    ParentBiDiMode = False
+    ParentFont = False
+    Spacing = 16
+    TabOrder = 0
+    OnClick = ActionConfExecute
+  end
+  object BitBtnVisualizzazione: TBitBtn
+    Left = 40
+    Top = 75
+    Width = 145
+    Height = 59
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 962B be030000424dbe0300000000000076000000280000003200…>
+    ParentFont = False
+    Spacing = 16
+    TabOrder = 1
+    OnClick = ActionVisualizzaExecute
+  end
+  object BitBtnDiagnosi: TBitBtn
+    Left = 40
+    Top = 135
+    Width = 145
+    Height = 58
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 962B be030000424dbe0300000000000076000000280000003200…>
+    ParentFont = False
+    Spacing = 16
+    TabOrder = 2
+    OnClick = ActionDiagnosiExecute
+  end
+  object BitBtnApriConfig: TBitBtn
+    Left = 40
+    Top = 375
+    Width = 145
+    Height = 59
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 2106B 36080000424d360800000000000036040000280000002000…>
+    ParentFont = False
+    Spacing = 18
+    TabOrder = 5
+    OnClick = ActionApriConfExecute
+  end
+  object BitBtnRiprogramma: TBitBtn
+    Left = 40
+    Top = 435
+    Width = 145
+    Height = 59
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 2106B 36080000424d360800000000000036040000280000002000…>
+    ParentFont = False
+    Spacing = 15
+    TabOrder = 6
+    OnClick = ActionProgrammaExecute
+  end
+  object BitBtnEsci: TBitBtn
+    Left = 40
+    Top = 555
+    Width = 145
+    Height = 59
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 2106B 36080000424d360800000000000036040000280000002000…>
+    ParentFont = False
+    Spacing = 16
+    TabOrder = 8
+    OnClick = ActionEsciExecute
+  end
+  object BitBtnTara: TBitBtn
+    Left = 40
+    Top = 195
+    Width = 145
+    Height = 59
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 2106B 36080000424d360800000000000036040000280000002000…>
+    ParentFont = False
+    Spacing = 16
+    TabOrder = 3
+    Visible = False
+    OnClick = ActionTaraExecute
+  end
+  object BitBtnCorrTara: TBitBtn
+    Left = 40
+    Top = 255
+    Width = 145
+    Height = 59
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 2106B 36080000424d360800000000000036040000280000002000…>
+    ParentFont = False
+    Spacing = 16
+    TabOrder = 4
+    Visible = False
+    OnClick = ActionCorrTaraExecute
+  end
+  object BitBtnAggiorna: TBitBtn
+    Left = 40
+    Top = 495
+    Width = 145
+    Height = 58
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 4118B 12100000424d121000000000000036000000280000002600…>
+    ParentFont = False
+    Spacing = 15
+    TabOrder = 7
+    Visible = False
+    OnClick = ActionAggiornaExecute
+  end
+  object BitBtnSalvaConfig: TBitBtn
+    Left = 40
+    Top = 315
+    Width = 145
+    Height = 59
+    Cursor = crHandPoint
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clBlack
+    Font.Height = -41
+    Font.Name = 'Arial'
+    Font.Style = []
+    Glyph.Data = <binary 2106B 36080000424d360800000000000036040000280000002000…>
+    ParentFont = False
+    Spacing = 18
+    TabOrder = 10
+    OnClick = ActionSalvaConfExecute
+  end
+  object Panel1: TPanel
+    Left = 914
+    Top = 0
+    Width = 94
+    Height = 662
+    Align = alRight
+    AutoSize = True
+    BevelOuter = bvNone
+    Padding.Left = 10
+    Padding.Top = 10
+    Padding.Right = 10
+    ParentColor = True
+    TabOrder = 11
+    ExplicitHeight = 642
+    object ImageLandiConnect: TImage
+      Left = 10
+      Top = 88
+      Width = 74
+      Height = 60
+      Cursor = crHandPoint
+      Picture.Data = <binary 6653B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      Visible = False
+      OnClick = ImageLandiConnectClick
+    end
+    object ImageBee: TImage
+      Left = 10
+      Top = 154
+      Width = 74
+      Height = 74
+      Cursor = crHandPoint
+      Picture.Data = <binary 9457B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      Visible = False
+      OnClick = ImageBeeClick
+    end
+    object ImageServiceOff: TImage
+      Left = 10
+      Top = 8
+      Width = 74
+      Height = 74
+      Cursor = crHandPoint
+      Picture.Data = <binary 6905B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      Visible = False
+      OnClick = ImageServiceClick
+    end
+    object ImageServiceOn: TImage
+      Left = 10
+      Top = 8
+      Width = 74
+      Height = 74
+      Cursor = crHandPoint
+      Picture.Data = <binary 7738B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      Visible = False
+      OnClick = ImageServiceClick
+    end
+    object ImageServiceOnAlrt: TImage
+      Left = 10
+      Top = 8
+      Width = 74
+      Height = 74
+      Cursor = crHandPoint
+      Picture.Data = <binary 8272B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      Visible = False
+      OnClick = ImageServiceClick
+    end
+    object ImageServiceOnPswd: TImage
+      Left = 10
+      Top = 8
+      Width = 74
+      Height = 74
+      Cursor = crHandPoint
+      Picture.Data = <binary 8514B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      Visible = False
+      OnClick = ImageServiceClick
+    end
+    object ImageServiceOnPswdAlrt: TImage
+      Left = 10
+      Top = 8
+      Width = 74
+      Height = 74
+      Cursor = crHandPoint
+      Picture.Data = <binary 8979B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      Visible = False
+      OnClick = ImageServiceClick
+    end
+  end
+  object MainMenu: TMainMenu
+    Left = 816
+    Top = 168
+    object MenuFile: TMenuItem
+      Caption = '&File'
+      object MenuApri: TMenuItem
+        Action = ActionApri
+        Caption = '&Apri configurazione...'
+      end
+      object MenuBloccoNote: TMenuItem
+        Action = ActionBloccoNote
+        Caption = 'Apri configurazione in &blocco note...'
+      end
+      object MenuSalva: TMenuItem
+        Action = ActionSalva
+        Caption = '&Salva configurazione...'
+      end
+      object MenuSalvaMappa: TMenuItem
+        Action = ActionSalvaMappa
+      end
+      object MenuFileHcf: TMenuItem
+        Action = ActionFileHcf
+      end
+      object N3: TMenuItem
+        Caption = '-'
+      end
+      object Plot1: TMenuItem
+        Caption = 'Graph'
+        OnClick = Plot1Click
+      end
+      object N4: TMenuItem
+        Caption = '-'
+      end
+      object MenuArchivio: TMenuItem
+        Action = ActionArchivio
+        Caption = 'Istruzioni di montaggio'
+      end
+      object N1: TMenuItem
+        Caption = '-'
+      end
+      object MenuEsci: TMenuItem
+        Action = ActionEsci
+        Caption = 'Esci'
+      end
+    end
+    object MenuCpu: TMenuItem
+      Caption = '&Connessione'
+      object MenuConnetti: TMenuItem
+        Action = ActionConnetti
+      end
+      object MenuDisconnetti: TMenuItem
+        Action = ActionDisconnetti
+      end
+      object N2: TMenuItem
+        Caption = '-'
+      end
+      object MenuResetCpu: TMenuItem
+        Action = ActionResetCentralina
+      end
+      object N5: TMenuItem
+        Caption = '-'
+      end
+      object MenuClientPers: TMenuItem
+        Caption = 'Personalizzazione'
+        Visible = False
+      end
+    end
+    object MenuConfig: TMenuItem
+      Caption = 'Impostazioni'
+      Visible = False
+      object MenuSelLingua: TMenuItem
+        Caption = 'Lingua'
+      end
+    end
+    object MenuAiuto: TMenuItem
+      Caption = '&Aiuto'
+      object MenuAbout: TMenuItem
+        Caption = '&Informazioni su...'
+        OnClick = MenuAboutClick
+      end
+    end
+    object MenuMarket: TMenuItem
+      Caption = 'Market'
+      Visible = False
+    end
+  end
+  object MainActionList: TActionList
+    Left = 816
+    Top = 216
+    object ActionArchivio: TAction
+      Caption = 'Archivio schede'
+      OnExecute = ActionArchivioExecute
+    end
+    object ActionVisualizza: TAction
+      Category = 'Strumenti'
+      ImageIndex = 2
+      OnExecute = ActionVisualizzaExecute
+    end
+    object ActionConf: TAction
+      Category = 'Strumenti'
+      ImageIndex = 3
+      OnExecute = ActionConfExecute
+    end
+    object ActionDiagnosi: TAction
+      Category = 'Strumenti'
+      ImageIndex = 6
+      OnExecute = ActionDiagnosiExecute
+    end
+    object ActionEsci: TAction
+      Category = 'File'
+      ImageIndex = 9
+      OnExecute = ActionEsciExecute
+    end
+    object ActionApri: TAction
+      Category = 'File'
+      Caption = '&Apri'
+      Visible = False
+      OnExecute = ActionApriExecute
+    end
+    object ActionSalva: TAction
+      Category = 'File'
+      Caption = '&Salva'
+      Visible = False
+      OnExecute = ActionSalvaExecute
+    end
+    object ActionConnetti: TAction
+      Category = 'Centralina'
+      Caption = '&Connetti'
+      Hint = 'Connetti la centralina'
+      ImageIndex = 0
+      ShortCut = 16451
+      OnExecute = ActionConnettiExecute
+    end
+    object ActionDisconnetti: TAction
+      Category = 'Centralina'
+      Caption = '&Disconnetti'
+      Enabled = False
+      Hint = 'Disconnetti la centralina'
+      ImageIndex = 1
+      ShortCut = 16452
+      OnExecute = ActionDisconnettiExecute
+    end
+    object ActionProgramma: TAction
+      Category = 'Centralina'
+      OnExecute = ActionProgrammaExecute
+    end
+    object ActionBloccoNote: TAction
+      Category = 'File'
+      Caption = 'Apri configurazione in &blocco note'
+      Visible = False
+      OnExecute = ActionBloccoNoteExecute
+    end
+    object ActionSalvaConf: TAction
+      Category = 'File'
+      OnExecute = ActionSalvaConfExecute
+    end
+    object ActionApriConf: TAction
+      Category = 'File'
+      OnExecute = ActionApriConfExecute
+    end
+    object ActionUpdate: TAction
+      Category = 'Centralina'
+      OnExecute = ActionUpdateExecute
+    end
+    object ActionAggiorna: TAction
+      OnExecute = ActionAggiornaExecute
+    end
+    object ActionResetCentralina: TAction
+      Category = 'Centralina'
+      Caption = '&Reset centralina'
+      Enabled = False
+      Visible = False
+      OnExecute = ActionResetCentralinaExecute
+    end
+    object ActionTara: TAction
+      Caption = 'ActionTara'
+      OnExecute = ActionTaraExecute
+    end
+    object ActionCorrTara: TAction
+      Caption = 'ActionCorrTara'
+      OnExecute = ActionCorrTaraExecute
+    end
+    object ActionResetDaPc: TAction
+      Caption = 'ActionResetDaPc'
+      OnExecute = ActionResetDaPcExecute
+    end
+    object ActionFileHcf: TAction
+      Category = 'File'
+      Caption = 'Salva configurazione su file hcf...'
+      Visible = False
+      OnExecute = ActionFileHcfExecute
+    end
+    object ActionSalvaMappa: TAction
+      Category = 'File'
+      Caption = 'Salva solo mappa in configurazione...'
+      Visible = False
+      OnExecute = ActionSalvaMappaExecute
+    end
+    object ActionAzzeraId: TAction
+      Category = 'Centralina'
+      Caption = 'ActionAzzeraId'
+      ShortCut = 16449
+      OnExecute = ActionAzzeraIdExecute
+    end
+  end
+  object SaveDialog: TSaveDialog
+    Options = [ofOverwritePrompt,ofHideReadOnly,ofEnableSizing]
+    Title = 'Salva file di configurazione'
+    Left = 816
+    Top = 264
+  end
+  object OpenDialog: TOpenDialog
+    Options = [ofHideReadOnly,ofPathMustExist,ofFileMustExist,ofEnableSizing]
+    Title = 'Apri file di configurazione'
+    Left = 816
+    Top = 296
+  end
+  object PrintDialog: TPrintDialog
+    Options = [poPrintToFile,poPageNums]
+    Left = 816
+    Top = 360
+  end
+  object TimerExpired: TTimer
+    Enabled = False
+    OnTimer = TimerExpiredTimer
+    Left = 814
+    Top = 418
+  end
+  object TimerUpdate: TTimer
+    Enabled = False
+    Interval = 10000
+    OnTimer = TimerUpdateTimer
+    Left = 814
+    Top = 466
+  end
+end

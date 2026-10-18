@@ -1,0 +1,262 @@
+object FormGraficoDrt: TFormGraficoDrt
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu,biMaximize]
+  Caption = 'Grafico'
+  ClientHeight = 686
+  ClientWidth = 1008
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Style = []
+  Menu = MainMenu1
+  OldCreateOrder = False
+  PixelsPerInch = 96
+  TextHeight = 16
+  object ChartDrt: TChart
+    Left = 0
+    Top = 0
+    Width = 1008
+    Height = 686
+    Gradient.EndColor = 12615935
+    MarginBottom = 1
+    MarginLeft = 1
+    MarginRight = 1
+    MarginTop = 1
+    Title.Font.Height = -13
+    Title.Font.Style = [fsBold]
+    Title.Text.Strings = ('Grafico dati in tempo reale')
+    OnClickSeries = ChartDrtClickSeries
+    BottomAxis.LabelsFormat.Font.Style = [fsBold]
+    BottomAxis.Title.Caption = 'Tempo (s)'
+    LeftAxis.ExactDateTime = False
+    LeftAxis.LabelsFormat.Font.Style = [fsBold]
+    View3D = False
+    Align = alClient
+    Color = 15395562
+    TabOrder = 0
+    DefaultCanvas = 'TGDIPlusCanvas'
+    ColorPaletteIndex = 13
+    object Series1: TLineSeries
+      Marks.Style = smsValue
+      Title = 'Giri'
+      Brush.BackColor = clDefault
+      Dark3D = False
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series5: TLineSeries
+      SeriesColor = clSilver
+      Title = 'Lambda'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series6: TLineSeries
+      SeriesColor = clGray
+      Title = 'T inj. gas'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series7: TLineSeries
+      SeriesColor = clFuchsia
+      Title = 'T inj. benz.'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series3: TLineSeries
+      SeriesColor = clAqua
+      Title = 'T inj. benz. filter'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series9: TLineSeries
+      SeriesColor = 8454143
+      Title = 'Pressione'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series11: TLineSeries
+      SeriesColor = clLime
+      Title = 'T. riduttore'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series2: TLineSeries
+      SeriesColor = clLime
+      Title = 'T. motore'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series14: TLineSeries
+      SeriesColor = clGray
+      Title = 'T inj. gas 2'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series13: TLineSeries
+      SeriesColor = clTeal
+      Title = 'T inj. benz. 2'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series4: TLineSeries
+      SeriesColor = 16711808
+      Title = 'T inj. benz. filter 2'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series12: TLineSeries
+      SeriesColor = 8421440
+      Title = 'Lambda 2'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+    object Series8: TLineSeries
+      SeriesColor = 33023
+      Title = 'MAP'
+      Brush.BackColor = clDefault
+      LinePen.Width = 2
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+    end
+  end
+  object MainMenu1: TMainMenu
+    Left = 760
+    Top = 488
+    object MenuGraficoDrt: TMenuItem
+      Caption = '&Grafico'
+      object MenuTracce: TMenuItem
+        Caption = 'Gestione tracce'
+        OnClick = MenuTracceClick
+      end
+      object MenuStampa: TMenuItem
+        Caption = '&Stampa'
+        ShortCut = 16464
+        OnClick = MenuStampaClick
+      end
+      object N2: TMenuItem
+        Caption = '-'
+      end
+      object MenuAnnullaZoom: TMenuItem
+        Caption = '&Annulla zoom'
+        ShortCut = 16474
+        OnClick = MenuAnnullaZoomClick
+      end
+      object N1: TMenuItem
+        Caption = '-'
+      end
+      object MenuEsci: TMenuItem
+        Caption = '&Esci'
+        ShortCut = 27
+        OnClick = MenuEsciClick
+      end
+    end
+  end
+  object PrintDialog1: TPrintDialog
+    Left = 728
+    Top = 488
+  end
+end

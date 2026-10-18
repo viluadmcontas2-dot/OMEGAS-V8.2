@@ -1,0 +1,759 @@
+object AutocalColorSettings: TAutocalColorSettings
+  Left = 0
+  Top = 0
+  AutoSize = True
+  BorderIcons = [biSystemMenu,biMaximize]
+  BorderWidth = 10
+  Caption = 'AutocalColorSettings'
+  ClientHeight = 544
+  ClientWidth = 865
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  PixelsPerInch = 96
+  TextHeight = 13
+  object ChartData: TChart
+    AlignWithMargins = True
+    Left = 111
+    Top = 3
+    Width = 457
+    Height = 404
+    Cursor = crCross
+    AllowPanning = pmNone
+    Legend.Visible = False
+    Title.Text.Strings = ('TChart')
+    Title.Visible = False
+    BottomAxis.Automatic = False
+    BottomAxis.AutomaticMaximum = False
+    BottomAxis.AutomaticMinimum = False
+    BottomAxis.Maximum = 18.0
+    BottomAxis.Minimum = 1.0
+    BottomAxis.MinorTickCount = 1
+    BottomAxis.Title.Caption = 'Petrol injection time'
+    LeftAxis.Automatic = False
+    LeftAxis.AutomaticMaximum = False
+    LeftAxis.AutomaticMinimum = False
+    LeftAxis.AxisValuesFormat = '#,##0.00'
+    LeftAxis.ExactDateTime = False
+    LeftAxis.Increment = 0.05
+    LeftAxis.Maximum = 1.01
+    LeftAxis.Minimum = 0.1
+    LeftAxis.RoundFirstLabel = False
+    LeftAxis.Title.Caption = 'MAP'
+    Panning.MouseWheel = pmwNone
+    RightAxis.Automatic = False
+    RightAxis.AutomaticMaximum = False
+    RightAxis.AutomaticMinimum = False
+    RightAxis.Visible = False
+    TopAxis.Automatic = False
+    TopAxis.AutomaticMaximum = False
+    TopAxis.AutomaticMinimum = False
+    TopAxis.Visible = False
+    View3D = False
+    View3DOptions.Orthogonal = False
+    View3DOptions.ZoomText = ztNo
+    View3DWalls = False
+    Zoom.Allow = False
+    OnAfterDraw = ChartDataAfterDraw
+    BevelOuter = bvNone
+    BorderWidth = 1
+    Color = clWhite
+    TabOrder = 0
+    DefaultCanvas = 'TGDIPlusCanvas'
+    PrintMargins = (15, 9, 15, 9)
+    ColorPaletteIndex = 13
+    object AcqusitionAreas: THorizAreaSeries
+      Gradient.Direction = gdRightLeft
+      AreaChartBrush.Color = clGray
+      AreaChartBrush.BackColor = clDefault
+      AreaChartBrush.Gradient.Direction = gdRightLeft
+      AreaLinesPen.Style = psDot
+      AreaLinesPen.Width = 3
+      DrawArea = True
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.Visible = False
+      Transparency = 50
+      XValues.Name = 'X'
+      XValues.Order = loNone
+      YValues.Name = 'Y'
+      YValues.Order = loAscending
+      Data = <binary 165B 030800000000000000000000000000000000003240000000…>
+    end
+    object RunAxes: TPointSeries
+      Title = 'RunAxes'
+      ClickableLine = False
+      Pointer.Brush.Color = clRed
+      Pointer.HorizSize = 800
+      Pointer.InflateMargins = True
+      Pointer.Pen.Color = clGray
+      Pointer.Pen.Width = 2
+      Pointer.Style = psCross
+      Pointer.VertSize = 400
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 37B 01020000000000000000000840666666666666ee3f000000…>
+    end
+    object PetrolLine: TLineSeries
+      SeriesColor = clRed
+      Shadow.Visible = False
+      Title = 'PetrolLine'
+      Brush.BackColor = clDefault
+      ClickableLine = False
+      LinePen.Width = 4
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 37B 0102000000000000000000f03f0000000000000000000000…>
+    end
+    object GasLine: TLineSeries
+      SeriesColor = 8454016
+      Shadow.Visible = False
+      Title = 'GasLine'
+      Brush.BackColor = clDefault
+      ClickableLine = False
+      LinePen.Width = 4
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 37B 010200000000000000000000000000000000000000000000…>
+    end
+    object PetrolPoint: TPointSeries
+      Legend.Visible = False
+      Marks.Style = smsLabelValue
+      ShowInLegend = False
+      Title = 'PetrolPoint'
+      ClickableLine = False
+      Pointer.Brush.Color = 8421631
+      Pointer.Brush.Style = bsCross
+      Pointer.HorizSize = 6
+      Pointer.InflateMargins = True
+      Pointer.Style = psCircle
+      Pointer.VertSize = 6
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+    end
+    object GasPointPrev: TPointSeries
+      Legend.Visible = False
+      ShowInLegend = False
+      Title = 'GasPointPrev'
+      ClickableLine = False
+      Pointer.Brush.Color = 8454016
+      Pointer.HorizSize = 6
+      Pointer.InflateMargins = True
+      Pointer.Shadow.Transparency = 59
+      Pointer.Style = psCircle
+      Pointer.Transparency = 70
+      Pointer.VertSize = 6
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+    end
+    object GasPoint: TPointSeries
+      Legend.Visible = False
+      ShowInLegend = False
+      Title = 'GasPoint'
+      ClickableLine = False
+      Pointer.Brush.Color = 8454016
+      Pointer.HorizSize = 6
+      Pointer.InflateMargins = True
+      Pointer.Style = psCircle
+      Pointer.VertSize = 6
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+    end
+    object RunPoint: TPointSeries
+      Title = 'RunPoint'
+      ClickableLine = False
+      Pointer.Brush.Color = clRed
+      Pointer.InflateMargins = True
+      Pointer.Pen.Width = 0
+      Pointer.Style = psDiamond
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 21B 01010000000000000000002840cdccccccccccec3f>
+    end
+    object CursorLimitMAP_MIN: TLineSeries
+      Legend.Text = 'Pressure limit min'
+      LegendTitle = 'Pressure limit min'
+      Marks.BackColor = clYellow
+      Marks.Color = clYellow
+      SeriesColor = clBlue
+      Title = 'CursorLimitMAP_MIN'
+      Brush.BackColor = clDefault
+      ClickTolerance = 4
+      LinePen.Style = psDash
+      LinePen.Width = 4
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 37B 010200000000000000000000009a9999999999c93f000000…>
+    end
+    object CursorLimitMAP_MAX: TLineSeries
+      Legend.Text = 'Pressure limit min'
+      LegendTitle = 'Pressure limit min'
+      SeriesColor = clRed
+      Title = 'CursorLimitMAP_MAX'
+      Brush.BackColor = clDefault
+      ClickTolerance = 4
+      LinePen.Style = psDash
+      LinePen.Width = 4
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 37B 010200000000000000000000009a9999999999e93f000000…>
+    end
+    object CurrentBand: THorizAreaSeries
+      Gradient.Direction = gdRightLeft
+      SeriesColor = clFuchsia
+      Title = 'CurrentBand'
+      AreaChartBrush.Color = clGray
+      AreaChartBrush.BackColor = clDefault
+      AreaChartBrush.Gradient.Direction = gdRightLeft
+      AreaLinesPen.Visible = False
+      DrawArea = True
+      LinePen.Color = 16777088
+      LinePen.Style = psDot
+      LinePen.Width = 0
+      LinePen.SmallDots = True
+      LinePen.Visible = False
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.Visible = False
+      Transparency = 80
+      XValues.Name = 'X'
+      XValues.Order = loNone
+      YValues.Name = 'Y'
+      YValues.Order = loAscending
+      Data = <binary 69B 01040000003d0ad7a3703dda3f00000000000000003d0ad7…>
+    end
+    object PetrolCurve: TLineSeries
+      SeriesColor = clRed
+      Shadow.Visible = False
+      Title = 'PetrolCurve'
+      Brush.BackColor = clDefault
+      ClickableLine = False
+      LinePen.Width = 2
+      Pointer.InflateMargins = True
+      Pointer.Style = psStar
+      Pointer.Visible = True
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+    end
+    object GasCurve: TLineSeries
+      SeriesColor = 8454016
+      Shadow.Visible = False
+      Title = 'GasCurve'
+      Brush.BackColor = clDefault
+      ClickableLine = False
+      LinePen.Width = 2
+      Pointer.InflateMargins = True
+      Pointer.Style = psDiagCross
+      Pointer.Visible = True
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+    end
+  end
+  object OK: TButton
+    Left = 472
+    Top = 519
+    Width = 75
+    Height = 25
+    Caption = 'OK'
+    TabOrder = 1
+    OnClick = OKClick
+  end
+  object Cancel: TButton
+    Left = 279
+    Top = 519
+    Width = 75
+    Height = 25
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 2
+  end
+  object PanelCustomColors: TPanel
+    Left = 583
+    Top = 3
+    Width = 282
+    Height = 404
+    BevelOuter = bvNone
+    BorderStyle = bsSingle
+    Ctl3D = False
+    ParentCtl3D = False
+    TabOrder = 3
+    object Label10: TLabel
+      Left = 30
+      Top = 253
+      Width = 99
+      Height = 13
+      Caption = 'CursorLimitMAP_MIN'
+    end
+    object Label11: TLabel
+      Left = 28
+      Top = 287
+      Width = 101
+      Height = 13
+      Caption = 'CursorLimitMAP_MAX'
+    end
+    object Label12: TLabel
+      Left = 68
+      Top = 318
+      Width = 61
+      Height = 13
+      Caption = 'CurrentBand'
+    end
+    object Label2: TLabel
+      Left = 52
+      Top = 30
+      Width = 77
+      Height = 13
+      Caption = 'AcqusitionAreas'
+    end
+    object Label3: TLabel
+      Left = 86
+      Top = 61
+      Width = 43
+      Height = 13
+      Caption = 'RunAxes'
+    end
+    object Label4: TLabel
+      Left = 82
+      Top = 92
+      Width = 47
+      Height = 13
+      Caption = 'PetrolLine'
+    end
+    object Label5: TLabel
+      Left = 92
+      Top = 126
+      Width = 37
+      Height = 13
+      Caption = 'GasLine'
+    end
+    object Label6: TLabel
+      Left = 77
+      Top = 157
+      Width = 52
+      Height = 13
+      Caption = 'PetrolPoint'
+    end
+    object Label7: TLabel
+      Left = 65
+      Top = 188
+      Width = 64
+      Height = 13
+      Caption = 'GasPointPrev'
+    end
+    object Label8: TLabel
+      Left = 87
+      Top = 222
+      Width = 42
+      Height = 13
+      Caption = 'GasPoint'
+    end
+    object Label1: TLabel
+      Left = 103
+      Top = 349
+      Width = 25
+      Height = 13
+      Caption = 'KLine'
+    end
+    object Text: TLabel
+      Left = 104
+      Top = 382
+      Width = 22
+      Height = 13
+      Caption = 'Text'
+    end
+    object Label9: TLabel
+      Left = 144
+      Top = 7
+      Width = 22
+      Height = 13
+      Caption = 'ACQ'
+    end
+    object Label13: TLabel
+      Left = 173
+      Top = 7
+      Width = 29
+      Height = 13
+      Caption = 'NACQ'
+    end
+    object Image1: TImage
+      Left = 223
+      Top = 349
+      Width = 49
+      Height = 50
+      Hint = 'Reset default'
+      Picture.Data = <binary 262222B 07544269746d617042000400424d42000400000000004200…>
+      Proportional = True
+      Transparent = True
+      OnClick = Image1Click
+    end
+    object _AcqusitionAreas0: TPanel
+      Left = 144
+      Top = 24
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 0
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _AcqusitionAreas1: TPanel
+      Left = 175
+      Top = 24
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 1
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _CurrentBand: TPanel
+      Left = 144
+      Top = 312
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 2
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _CursorLimitMAP_MAX: TPanel
+      Left = 144
+      Top = 281
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 3
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _CursorLimitMAP_MIN: TPanel
+      Left = 144
+      Top = 247
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 4
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _GasLine: TPanel
+      Left = 144
+      Top = 120
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 5
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _GasPoint: TPanel
+      Left = 144
+      Top = 216
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 6
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _GasPointPrev: TPanel
+      Left = 144
+      Top = 182
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 7
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _PetrolLine: TPanel
+      Left = 144
+      Top = 86
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 8
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _PetrolPoint: TPanel
+      Left = 144
+      Top = 151
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 9
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _RunAxes: TPanel
+      Left = 144
+      Top = 55
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 10
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _KLine: TPanel
+      Left = 144
+      Top = 343
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 11
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+    object _Text: TPanel
+      Left = 144
+      Top = 374
+      Width = 25
+      Height = 25
+      BorderStyle = bsSingle
+      TabOrder = 12
+      StyleElements = []
+      OnClick = _AcqusitionAreas0Click
+    end
+  end
+  object ChartPoint: TChart
+    AlignWithMargins = True
+    Left = 3
+    Top = 3
+    Width = 102
+    Height = 404
+    Cursor = crCross
+    AllowPanning = pmNone
+    Legend.Visible = False
+    Title.Text.Strings = ('TChart')
+    Title.Visible = False
+    BottomAxis.Automatic = False
+    BottomAxis.AutomaticMaximum = False
+    BottomAxis.AutomaticMinimum = False
+    BottomAxis.Maximum = 0.9
+    BottomAxis.Minimum = -0.9
+    BottomAxis.Title.Caption = 'Acquisition'
+    LeftAxis.Automatic = False
+    LeftAxis.AutomaticMaximum = False
+    LeftAxis.AutomaticMinimum = False
+    LeftAxis.AxisValuesFormat = '#,##0.00'
+    LeftAxis.LabelsSeparation = 20
+    LeftAxis.Maximum = 1.01
+    LeftAxis.Minimum = 0.1
+    LeftAxis.RoundFirstLabel = False
+    LeftAxis.TickOnLabelsOnly = False
+    LeftAxis.Title.Visible = False
+    Panning.MouseWheel = pmwNone
+    RightAxis.Automatic = False
+    RightAxis.AutomaticMaximum = False
+    RightAxis.AutomaticMinimum = False
+    RightAxis.Visible = False
+    TopAxis.Automatic = False
+    TopAxis.AutomaticMaximum = False
+    TopAxis.AutomaticMinimum = False
+    TopAxis.Visible = False
+    View3D = False
+    View3DWalls = False
+    Zoom.Allow = False
+    BevelOuter = bvNone
+    BorderWidth = 2
+    Color = clWhite
+    TabOrder = 4
+    DefaultCanvas = 'TGDIPlusCanvas'
+    ColorPaletteIndex = 13
+    object NRunAxes: TPointSeries
+      Title = 'NRunAxes'
+      ClickableLine = False
+      Pointer.HorizSize = 200
+      Pointer.InflateMargins = True
+      Pointer.Pen.Color = clGray
+      Pointer.Pen.Width = 2
+      Pointer.Pen.JoinStyle = jsMitter
+      Pointer.Style = psCross
+      Pointer.VertSize = 1
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 21B 0101000000333333333333d3bf0000000000000000>
+    end
+    object NumPetrPt: TBubbleSeries
+      ColorEachPoint = False
+      Marks.Frame.Visible = False
+      Title = 'NumPetrPt'
+      ClickableLine = False
+      Pointer.Brush.Color = 8421631
+      Pointer.HorizSize = 7
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 7
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      RadiusValues.Name = 'Radius'
+      RadiusValues.Order = loNone
+      Data = <binary 437B 0112000000333333333333d3bfb81e85eb51b8be3f7b14ae…>
+    end
+    object NumGasPt: TBubbleSeries
+      ColorEachPoint = False
+      Marks.Frame.Visible = False
+      Title = 'NumGasPt'
+      ClickableLine = False
+      Pointer.Brush.Color = 8454016
+      Pointer.HorizSize = 7
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.VertSize = 7
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      RadiusValues.Name = 'Radius'
+      RadiusValues.Order = loNone
+      Data = <binary 437B 0112000000333333333333d33fb81e85eb51b8be3f7b14ae…>
+    end
+  end
+  object ChartKLine: TChart
+    AlignWithMargins = True
+    Left = 111
+    Top = 413
+    Width = 457
+    Height = 96
+    Cursor = crCross
+    AllowPanning = pmNone
+    Legend.Visible = False
+    Title.Text.Strings = ('TChart')
+    Title.Visible = False
+    BottomAxis.Automatic = False
+    BottomAxis.AutomaticMaximum = False
+    BottomAxis.AutomaticMinimum = False
+    BottomAxis.Labels = False
+    BottomAxis.LabelsFormat.Visible = False
+    BottomAxis.Maximum = 18.0
+    BottomAxis.Minimum = 1.0
+    BottomAxis.TickOnLabelsOnly = False
+    BottomAxis.Title.Caption = 'Tempi di iniezione'
+    BottomAxis.Title.Visible = False
+    LeftAxis.Automatic = False
+    LeftAxis.AutomaticMaximum = False
+    LeftAxis.AutomaticMinimum = False
+    LeftAxis.AxisValuesFormat = '#,##0.00'
+    LeftAxis.ExactDateTime = False
+    LeftAxis.Increment = 0.1
+    LeftAxis.Maximum = 1.6
+    LeftAxis.Minimum = 0.4
+    LeftAxis.RoundFirstLabel = False
+    LeftAxis.Title.Caption = 'K'
+    Panning.MouseWheel = pmwNone
+    RightAxis.Automatic = False
+    RightAxis.AutomaticMaximum = False
+    RightAxis.AutomaticMinimum = False
+    RightAxis.Visible = False
+    TopAxis.Automatic = False
+    TopAxis.AutomaticMaximum = False
+    TopAxis.AutomaticMinimum = False
+    TopAxis.Visible = False
+    View3D = False
+    View3DWalls = False
+    Zoom.Allow = False
+    BevelOuter = bvNone
+    BorderWidth = 1
+    Color = clWhite
+    TabOrder = 5
+    DefaultCanvas = 'TGDIPlusCanvas'
+    PrintMargins = (15, 37, 15, 37)
+    ColorPaletteIndex = 13
+    object KRunAxes: TPointSeries
+      Title = 'RunAxes'
+      ClickableLine = False
+      Pointer.Brush.Color = clGray
+      Pointer.HorizSize = 1
+      Pointer.InflateMargins = True
+      Pointer.Pen.Color = clGray
+      Pointer.Pen.Width = 2
+      Pointer.Style = psCross
+      Pointer.VertSize = 400
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 21B 0101000000000000000000f03f0000000000000000>
+    end
+    object KLine: TLineSeries
+      Legend.Visible = False
+      Marks.Margins.Left = 10
+      Marks.Margins.Right = 10
+      Marks.Style = smsValue
+      Marks.Arrow.Color = 16744448
+      Marks.Callout.Style = psDonut
+      Marks.Callout.Arrow.Color = 16744448
+      Marks.Callout.Length = 15
+      SeriesColor = 16744448
+      Shadow.Visible = False
+      ShowInLegend = False
+      Title = 'KLine'
+      ValueFormat = '#,##0.000'
+      Brush.BackColor = clDefault
+      ClickTolerance = 10
+      DrawStyle = dsCurve
+      LinePen.Color = 16744448
+      LinePen.Width = 4
+      Pointer.HorizSize = 3
+      Pointer.InflateMargins = True
+      Pointer.Style = psCircle
+      Pointer.VertSize = 3
+      Pointer.Visible = True
+      XValues.Name = 'X'
+      XValues.Order = loAscending
+      YValues.Name = 'Y'
+      YValues.Order = loNone
+      Data = <binary 293B 0112000000000000000000f03f000000000000f03f000000…>
+    end
+  end
+  object MyColorDialog: TColorDialog
+    Options = [cdFullOpen,cdAnyColor]
+    Left = 352
+    Top = 424
+  end
+end

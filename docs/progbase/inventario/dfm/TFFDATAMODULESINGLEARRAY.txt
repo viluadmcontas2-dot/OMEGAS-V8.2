@@ -1,0 +1,44 @@
+object FFDataModuleSingleArray: TFFDataModuleSingleArray
+  OldCreateOrder = False
+  Height = 366
+  Width = 446
+  object FF_Version: TAebNumber
+    DataMask = 255
+    SerialCode = 376
+    Type = ntVectorElement
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    ReadOnly = True
+    Left = 48
+    Top = 56
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object FF_ErrorCodeType: TAebNumber
+    DataMask = 255
+    SerialCode = 376
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 272
+    Top = 88
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object FF_FullBuffer: TAebVector
+    DataMask = 255
+    SerialCode = 376
+    DisableLimits = True
+    ArrayDimension = 82
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    ReadOnly = True
+    Left = 176
+    Top = 48
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (82, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+end

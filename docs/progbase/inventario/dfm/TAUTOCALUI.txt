@@ -1,0 +1,1189 @@
+object AutoCalUI: TAutoCalUI
+  AlignWithMargins = True
+  Left = 0
+  Top = 0
+  Width = 755
+  Height = 933
+  AutoSize = True
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -19
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ParentFont = False
+  TabOrder = 0
+  object PanelBackground: TPanelImage
+    AlignWithMargins = True
+    Left = 4
+    Top = 4
+    Width = 747
+    Height = 925
+    Margins.Left = 4
+    Margins.Top = 4
+    Margins.Right = 4
+    Margins.Bottom = 4
+    Align = alTop
+    BevelOuter = bvNone
+    Color = clWhite
+    ParentBackground = False
+    TabOrder = 0
+    PictureTopLeft.Data = <binary 343B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    PictureTopCenter.Data = <binary 123B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    PictureTopRight.Data = <binary 341B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    PictureCenterLeft.Data = <binary 123B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    PictureCenterRight.Data = <binary 123B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    PictureBottomLeft.Data = <binary 346B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    PictureBottomCenter.Data = <binary 123B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    PictureBottomRight.Data = <binary 329B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+    AlphaValue = 255
+    object UserMessageLabel: TLabel
+      Left = 0
+      Top = 49
+      Width = 747
+      Height = 23
+      Align = alTop
+      Alignment = taCenter
+      AutoSize = False
+      Caption = 'AAAAAAAAAAAAAAAAAAAAAAAAAAA'
+      Color = clYellow
+      ParentColor = False
+      Transparent = False
+      Visible = False
+      ExplicitLeft = 13
+      ExplicitTop = 36
+    end
+    object PanelTop: TPanel
+      AlignWithMargins = True
+      Left = 3
+      Top = 3
+      Width = 741
+      Height = 43
+      Align = alTop
+      BevelOuter = bvNone
+      BorderWidth = 2
+      ParentColor = True
+      TabOrder = 0
+      object SettingsImg: TImage
+        AlignWithMargins = True
+        Left = 698
+        Top = 5
+        Width = 38
+        Height = 33
+        Cursor = crHandPoint
+        Align = alRight
+        Center = True
+        ParentShowHint = False
+        Picture.Data = <binary 54754B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+        Proportional = True
+        ShowHint = False
+        Transparent = True
+        OnClick = SettingsImgClick
+        OnMouseEnter = SettingsImgMouseEnter
+        OnMouseLeave = SettingsImgMouseLeave
+        ExplicitTop = 4
+      end
+      object SettingsImgOut: TImage
+        Left = 632
+        Top = 4
+        Width = 40
+        Height = 36
+        Center = True
+        Picture.Data = <binary 54754B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+        Proportional = True
+        Transparent = True
+        Visible = False
+        OnMouseEnter = SettingsImgMouseEnter
+      end
+      object SettingsImgOver: TImage
+        Left = 634
+        Top = 4
+        Width = 38
+        Height = 36
+        Center = True
+        Picture.Data = <binary 43726B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+        Proportional = True
+        Transparent = True
+        Visible = False
+      end
+      object Panel3: TPanel
+        Left = 11
+        Top = 1
+        Width = 260
+        Height = 41
+        BevelOuter = bvNone
+        ParentColor = True
+        TabOrder = 2
+        object UserMessageLabel2: TLabel
+          Left = 240
+          Top = 8
+          Width = 560
+          Height = 30
+          Alignment = taCenter
+          AutoSize = False
+          Caption = 'BBBBBBBBBBBBBBBBBBBBBBBBB'
+          Color = clYellow
+          ParentColor = False
+          Transparent = False
+          Visible = False
+        end
+        object CheckAutoCalEnable: TAebCheckBox
+          Left = 0
+          Top = 4
+          Width = 240
+          Height = 30
+          OnBeforeSetData = CheckAutoCalEnableBeforeSetData
+          Resizer.ResizingBorder = 8
+          Resizer.ResizingMode = [raHorizontal,raMove]
+          Resizer.GridDimension = 10
+          Resizer.FixDblClick = True
+          Value = AutoCalDM.AUTO_CAL_ENABLE
+          CheckedValue = 1.0
+          ValueChecked = 1.0
+          Transparent = True
+          Caption = 'Abilita autocalibrazione__'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -19
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+        end
+      end
+      object BtnMenu: TBitBtn
+        AlignWithMargins = True
+        Left = 651
+        Top = 5
+        Width = 41
+        Height = 33
+        Align = alRight
+        Glyph.Data = <binary 2710B 920a0000424d920a00000000000042000000280000001e00…>
+        PopupMenu = MenuAutoCal
+        TabOrder = 0
+        OnClick = BtnMenuClick
+      end
+      object Panel2: TPanel
+        Left = 248
+        Top = 2
+        Width = 400
+        Height = 39
+        Align = alRight
+        BevelOuter = bvNone
+        TabOrder = 1
+        object LabelNumAutoMatch: TLabel
+          Left = 59
+          Top = 6
+          Width = 135
+          Height = 23
+          Caption = 'Num automatch'
+        end
+        object LabNumAutoMatch: TLabel
+          Left = 200
+          Top = 6
+          Width = 45
+          Height = 30
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = '0 /'
+        end
+        object ButtonAutoMatch: TButton
+          Tag = 8
+          AlignWithMargins = True
+          Left = 299
+          Top = 3
+          Width = 98
+          Height = 33
+          Cursor = crHandPoint
+          Action = ActionAutoMatch
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+          WordWrap = True
+        end
+        object EditNumAutomatch: TValueEditEx
+          Left = 252
+          Top = 3
+          Width = 41
+          Height = 31
+          EditLabel.Left = 172
+          EditLabel.Top = 7
+          EditLabel.Width = 6
+          EditLabel.Height = 23
+          EditLabel.FocusControl = EditNumAutomatch
+          EditLabel.Transparent = True
+          EditLabel.Caption = ''
+          Resizer.ResizingBorder = 8
+          Resizer.ResizingMode = [raHorizontal,raMove]
+          Resizer.GridDimension = 10
+          Resizer.FixDblClick = True
+          Value = AutoCalDM.VECT_AUTOCAL_U8_2
+          AutoSize = False
+          TabOrder = 1
+          ShapePenWidth = 2
+        end
+      end
+    end
+    object PanelBottom: TPanel
+      AlignWithMargins = True
+      Left = 3
+      Top = 728
+      Width = 741
+      Height = 187
+      Align = alTop
+      AutoSize = True
+      BevelOuter = bvNone
+      Color = clGreen
+      TabOrder = 1
+      object PanelDbg: TPanel
+        AlignWithMargins = True
+        Left = 3
+        Top = 3
+        Width = 735
+        Height = 181
+        Align = alTop
+        BevelOuter = bvNone
+        BorderStyle = bsSingle
+        Ctl3D = False
+        ParentBackground = False
+        ParentCtl3D = False
+        TabOrder = 0
+        Visible = False
+        object DbgOut: TMemo
+          AlignWithMargins = True
+          Left = 6
+          Top = 6
+          Width = 522
+          Height = 167
+          Margins.Left = 6
+          Margins.Top = 6
+          Margins.Right = 6
+          Margins.Bottom = 6
+          Align = alLeft
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          ReadOnly = True
+          ScrollBars = ssBoth
+          TabOrder = 0
+        end
+        object BtnDump: TButton
+          Left = 537
+          Top = 48
+          Width = 75
+          Height = 25
+          Caption = 'DUMP'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 1
+          OnClick = BtnDumpClick
+        end
+        object BtnDumpEE: TButton
+          Left = 537
+          Top = 17
+          Width = 75
+          Height = 25
+          Caption = 'DUMP EE'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 2
+          OnClick = BtnDumpEEClick
+        end
+        object DbgBtnRandom: TButton
+          Left = 537
+          Top = 79
+          Width = 87
+          Height = 25
+          Caption = 'Punti Random'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 3
+          OnClick = DbgBtnRandomClick
+        end
+        object DbgEdit1: TEdit
+          Left = 537
+          Top = 142
+          Width = 48
+          Height = 29
+          TabOrder = 4
+        end
+        object TestAreas: TButton
+          Left = 537
+          Top = 110
+          Width = 143
+          Height = 25
+          Caption = 'Zone acquisite random'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 5
+          OnClick = TestAreasClick
+        end
+        object BtnDeleteRandomPoint: TButton
+          Left = 630
+          Top = 79
+          Width = 75
+          Height = 25
+          Caption = 'Cancella'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 6
+          OnClick = BtnDeleteRandomPointClick
+        end
+        object BtnFinishAutomatch: TButton
+          Left = 630
+          Top = 48
+          Width = 75
+          Height = 25
+          Caption = 'Finish automatch'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 7
+          OnClick = BtnFinishAutomatchClick
+        end
+        object BtnShowBand: TButton
+          Left = 630
+          Top = 17
+          Width = 75
+          Height = 25
+          Caption = 'ShowBand'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 8
+          OnClick = BtnShowBandClick
+        end
+        object DbgEdit2: TEdit
+          Left = 596
+          Top = 141
+          Width = 48
+          Height = 29
+          TabOrder = 9
+        end
+      end
+    end
+    object PanelActions: TGridPanel
+      AlignWithMargins = True
+      Left = 4
+      Top = 76
+      Width = 739
+      Height = 645
+      Margins.Left = 4
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 4
+      Align = alTop
+      BevelOuter = bvNone
+      Color = clWhite
+      ColumnCollection = <{Value=20.0} {Value=80.0}>
+      ControlCollection = <{Column=0; Control=ChartPoint; Row=0} {Column=1; Control=ChartData; Row=0} {Column=0; Control=Panel1; Row=1} {Column=1; Control=ChartKLine; Row=1}>
+      ParentBackground = False
+      RowCollection = <{Value=75.004413} {Value=24.995587} {SizeStyle=ssAuto}>
+      TabOrder = 2
+      object ChartPoint: TChart
+        AlignWithMargins = True
+        Left = 3
+        Top = 3
+        Width = 141
+        Height = 477
+        Cursor = crCross
+        AllowPanning = pmNone
+        Legend.Visible = False
+        Title.Text.Strings = ('TChart')
+        Title.Visible = False
+        BottomAxis.Automatic = False
+        BottomAxis.AutomaticMaximum = False
+        BottomAxis.AutomaticMinimum = False
+        BottomAxis.Maximum = 0.9
+        BottomAxis.Minimum = -0.9
+        BottomAxis.Title.Caption = 'Acquisition'
+        LeftAxis.Automatic = False
+        LeftAxis.AutomaticMaximum = False
+        LeftAxis.AutomaticMinimum = False
+        LeftAxis.AxisValuesFormat = '#,##0.00'
+        LeftAxis.LabelsSeparation = 20
+        LeftAxis.Maximum = 1.01
+        LeftAxis.Minimum = 0.1
+        LeftAxis.RoundFirstLabel = False
+        LeftAxis.TickOnLabelsOnly = False
+        LeftAxis.Title.Visible = False
+        Panning.MouseWheel = pmwNone
+        RightAxis.Automatic = False
+        RightAxis.AutomaticMaximum = False
+        RightAxis.AutomaticMinimum = False
+        RightAxis.Visible = False
+        TopAxis.Automatic = False
+        TopAxis.AutomaticMaximum = False
+        TopAxis.AutomaticMinimum = False
+        TopAxis.Visible = False
+        View3D = False
+        View3DWalls = False
+        Zoom.Allow = False
+        Align = alClient
+        BevelOuter = bvNone
+        BorderWidth = 2
+        Color = clWhite
+        TabOrder = 0
+        Anchors = []
+        OnMouseMove = ChartPointMouseMove
+        DefaultCanvas = 'TGDIPlusCanvas'
+        ColorPaletteIndex = 13
+        object NRunAxes: TPointSeries
+          SeriesColor = 8421631
+          Title = 'NRunAxes'
+          ClickableLine = False
+          Pointer.HorizSize = 200
+          Pointer.InflateMargins = True
+          Pointer.Pen.Color = clGray
+          Pointer.Pen.Width = 2
+          Pointer.Pen.JoinStyle = jsMitter
+          Pointer.Style = psDiagCross
+          Pointer.VertSize = 1
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 21B 0101000000333333333333d3bf0000000000000000>
+        end
+        object NumPetrPt: TBubbleSeries
+          ColorEachPoint = False
+          Marks.Frame.Visible = False
+          Title = 'NumPetrPt'
+          ClickableLine = False
+          Pointer.Brush.Color = 8421631
+          Pointer.HorizSize = 9
+          Pointer.InflateMargins = True
+          Pointer.Style = psRectangle
+          Pointer.VertSize = 9
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          RadiusValues.Name = 'Radius'
+          RadiusValues.Order = loNone
+          Data = <binary 437B 0112000000333333333333d3bfb81e85eb51b8be3f7b14ae…>
+        end
+        object NumGasPt: TBubbleSeries
+          ColorEachPoint = False
+          Marks.Frame.Visible = False
+          Title = 'NumGasPt'
+          ClickableLine = False
+          Pointer.Brush.Color = 8454016
+          Pointer.HorizSize = 9
+          Pointer.InflateMargins = True
+          Pointer.Style = psRectangle
+          Pointer.VertSize = 9
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          RadiusValues.Name = 'Radius'
+          RadiusValues.Order = loNone
+          Data = <binary 437B 0112000000333333333333d33fb81e85eb51b8be3f7b14ae…>
+        end
+      end
+      object ChartData: TChart
+        AlignWithMargins = True
+        Left = 150
+        Top = 3
+        Width = 586
+        Height = 477
+        Cursor = crCross
+        AllowPanning = pmNone
+        Legend.Visible = False
+        Title.Text.Strings = ('TChart')
+        Title.Visible = False
+        OnClickAxis = ChartDataClickAxis
+        OnClickSeries = ChartDataClickSeries
+        BottomAxis.Automatic = False
+        BottomAxis.AutomaticMaximum = False
+        BottomAxis.AutomaticMinimum = False
+        BottomAxis.Maximum = 18.0
+        BottomAxis.Minimum = 1.0
+        BottomAxis.MinorTickCount = 1
+        BottomAxis.Title.Caption = 'Petrol injection time'
+        LeftAxis.Automatic = False
+        LeftAxis.AutomaticMaximum = False
+        LeftAxis.AutomaticMinimum = False
+        LeftAxis.AxisValuesFormat = '#,##0.00'
+        LeftAxis.ExactDateTime = False
+        LeftAxis.Increment = 0.05
+        LeftAxis.Maximum = 1.01
+        LeftAxis.Minimum = 0.1
+        LeftAxis.RoundFirstLabel = False
+        LeftAxis.Title.Caption = 'MAP'
+        Panning.MouseWheel = pmwNone
+        RightAxis.Automatic = False
+        RightAxis.AutomaticMaximum = False
+        RightAxis.AutomaticMinimum = False
+        RightAxis.Visible = False
+        TopAxis.Automatic = False
+        TopAxis.AutomaticMaximum = False
+        TopAxis.AutomaticMinimum = False
+        TopAxis.Visible = False
+        View3D = False
+        View3DOptions.Orthogonal = False
+        View3DOptions.ZoomText = ztNo
+        View3DWalls = False
+        Zoom.Allow = False
+        OnAfterDraw = ChartDataAfterDraw
+        Align = alClient
+        BevelOuter = bvNone
+        BorderWidth = 1
+        Color = clWhite
+        PopupMenu = MenuChartData
+        TabOrder = 1
+        Anchors = []
+        OnDblClick = ChartDataDblClick
+        OnKeyDown = ChartDataKeyDown
+        OnKeyUp = ChartDataKeyUp
+        OnMouseMove = ChartDataMouseMove
+        OnMouseUp = ChartDataMouseUp
+        DefaultCanvas = 'TGDIPlusCanvas'
+        PrintMargins = (15, 9, 15, 9)
+        ColorPaletteIndex = 13
+        object PollingPetrol: TShape
+          Left = 520
+          Top = 24
+          Width = 12
+          Height = 9
+          Brush.Color = clRed
+          Pen.Style = psClear
+          Shape = stCircle
+          Visible = False
+        end
+        object PollingGas: TShape
+          Left = 544
+          Top = 24
+          Width = 12
+          Height = 9
+          Brush.Color = clLime
+          Pen.Style = psClear
+          Shape = stCircle
+          Visible = False
+        end
+        object AcqusitionAreas: THorizAreaSeries
+          Gradient.Direction = gdRightLeft
+          AreaChartBrush.Color = clGray
+          AreaChartBrush.BackColor = clDefault
+          AreaChartBrush.Gradient.Direction = gdRightLeft
+          AreaLinesPen.Style = psDot
+          AreaLinesPen.Width = 3
+          DrawArea = True
+          Pointer.InflateMargins = True
+          Pointer.Style = psRectangle
+          Pointer.Visible = False
+          Transparency = 50
+          XValues.Name = 'X'
+          XValues.Order = loNone
+          YValues.Name = 'Y'
+          YValues.Order = loAscending
+          Data = <binary 165B 030800000000000000000000000000000000003240000000…>
+        end
+        object RunAxes: TPointSeries
+          Title = 'RunAxes'
+          ClickableLine = False
+          Pointer.Brush.Color = clRed
+          Pointer.HorizSize = 800
+          Pointer.InflateMargins = True
+          Pointer.Pen.Color = clGray
+          Pointer.Pen.Width = 2
+          Pointer.Style = psCross
+          Pointer.VertSize = 400
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 21B 0101000000000000000000f03f0000000000000000>
+        end
+        object PetrolLine: TLineSeries
+          SeriesColor = clRed
+          Shadow.Visible = False
+          Title = 'PetrolLine'
+          Brush.BackColor = clDefault
+          ClickableLine = False
+          LinePen.Width = 4
+          Pointer.InflateMargins = True
+          Pointer.Style = psRectangle
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 37B 0102000000000000000000f03f0000000000000000000000…>
+        end
+        object GasLine: TLineSeries
+          SeriesColor = 8454016
+          Shadow.Visible = False
+          Title = 'GasLine'
+          Brush.BackColor = clDefault
+          ClickableLine = False
+          LinePen.Width = 4
+          Pointer.InflateMargins = True
+          Pointer.Style = psRectangle
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 37B 0102000000000000000000f03f0000000000000000000000…>
+        end
+        object PetrolPoint: TPointSeries
+          Legend.Visible = False
+          Marks.Style = smsLabelValue
+          ShowInLegend = False
+          Title = 'PetrolPoint'
+          ClickableLine = False
+          Pointer.Brush.Color = 8421631
+          Pointer.Brush.Style = bsCross
+          Pointer.HorizSize = 6
+          Pointer.InflateMargins = True
+          Pointer.Style = psCircle
+          Pointer.VertSize = 6
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+        end
+        object GasPointPrev: TPointSeries
+          Legend.Visible = False
+          ShowInLegend = False
+          Title = 'GasPointPrev'
+          ClickableLine = False
+          Pointer.Brush.Color = 8454016
+          Pointer.HorizSize = 6
+          Pointer.InflateMargins = True
+          Pointer.Shadow.Transparency = 59
+          Pointer.Style = psCircle
+          Pointer.Transparency = 70
+          Pointer.VertSize = 6
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+        end
+        object GasPoint: TPointSeries
+          Legend.Visible = False
+          ShowInLegend = False
+          Title = 'GasPoint'
+          ClickableLine = False
+          Pointer.Brush.Color = 8454016
+          Pointer.HorizSize = 6
+          Pointer.InflateMargins = True
+          Pointer.Style = psCircle
+          Pointer.VertSize = 6
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+        end
+        object RunPoint: TPointSeries
+          Title = 'RunPoint'
+          ClickableLine = False
+          Pointer.Brush.Color = clRed
+          Pointer.InflateMargins = True
+          Pointer.Pen.Width = 0
+          Pointer.Style = psDiamond
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 21B 0101000000000000000000f03f0000000000000000>
+        end
+        object CursorLimitMAP_MIN: TLineSeries
+          Legend.Text = 'Pressure limit min'
+          LegendTitle = 'Pressure limit min'
+          Marks.BackColor = clYellow
+          Marks.Color = clYellow
+          SeriesColor = clBlue
+          Title = 'CursorLimitMAP_MIN'
+          Brush.BackColor = clDefault
+          ClickTolerance = 4
+          LinePen.Style = psDash
+          LinePen.Width = 4
+          Pointer.InflateMargins = True
+          Pointer.Style = psRectangle
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 37B 010200000000000000000000009a9999999999c93f000000…>
+        end
+        object CursorLimitMAP_MAX: TLineSeries
+          Legend.Text = 'Pressure limit min'
+          LegendTitle = 'Pressure limit min'
+          SeriesColor = clRed
+          Title = 'CursorLimitMAP_MAX'
+          Brush.BackColor = clDefault
+          ClickTolerance = 4
+          LinePen.Style = psDash
+          LinePen.Width = 4
+          Pointer.InflateMargins = True
+          Pointer.Style = psRectangle
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 37B 010200000000000000000000009a9999999999e93f000000…>
+        end
+        object CurrentBand: THorizAreaSeries
+          Gradient.Direction = gdRightLeft
+          SeriesColor = clFuchsia
+          Title = 'CurrentBand'
+          AreaChartBrush.Color = clGray
+          AreaChartBrush.BackColor = clDefault
+          AreaChartBrush.Gradient.Direction = gdRightLeft
+          AreaLinesPen.Visible = False
+          DrawArea = True
+          LinePen.Color = 16777088
+          LinePen.Style = psDot
+          LinePen.Width = 0
+          LinePen.SmallDots = True
+          LinePen.Visible = False
+          Pointer.InflateMargins = True
+          Pointer.Style = psRectangle
+          Pointer.Visible = False
+          Transparency = 80
+          XValues.Name = 'X'
+          XValues.Order = loNone
+          YValues.Name = 'Y'
+          YValues.Order = loAscending
+          Data = <binary 69B 01040000003d0ad7a3703dda3f00000000000000003d0ad7…>
+        end
+        object PetrolCurve: TLineSeries
+          SeriesColor = clRed
+          Shadow.Visible = False
+          Title = 'PetrolCurve'
+          Brush.BackColor = clDefault
+          ClickableLine = False
+          LinePen.Width = 2
+          Pointer.InflateMargins = True
+          Pointer.Style = psStar
+          Pointer.Visible = True
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+        end
+        object GasCurve: TLineSeries
+          SeriesColor = 8454016
+          Shadow.Visible = False
+          Title = 'GasCurve'
+          Brush.BackColor = clDefault
+          ClickableLine = False
+          LinePen.Width = 2
+          Pointer.InflateMargins = True
+          Pointer.Style = psDiagCross
+          Pointer.Visible = True
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 293B 0112000000000000000000f03f0000000000000000000000…>
+        end
+      end
+      object Panel1: TPanel
+        Left = 0
+        Top = 483
+        Width = 147
+        Height = 161
+        Align = alClient
+        BevelOuter = bvNone
+        Color = clWhite
+        ParentBackground = False
+        TabOrder = 2
+        object ButtonResetAll: TButton
+          Tag = 4
+          AlignWithMargins = True
+          Left = 10
+          Top = 62
+          Width = 129
+          Height = 28
+          Cursor = crHandPoint
+          Margins.Left = 10
+          Margins.Top = 0
+          Margins.Right = 8
+          Action = ActionResetAll
+          Align = alTop
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 0
+        end
+        object ButtonResetGas: TButton
+          Tag = 2
+          AlignWithMargins = True
+          Left = 10
+          Top = 31
+          Width = 129
+          Height = 28
+          Cursor = crHandPoint
+          Margins.Left = 10
+          Margins.Top = 0
+          Margins.Right = 8
+          Action = ActionResetGas
+          Align = alTop
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 1
+        end
+        object ButtonResetPetrol: TButton
+          Tag = 1
+          AlignWithMargins = True
+          Left = 10
+          Top = 0
+          Width = 129
+          Height = 28
+          Cursor = crHandPoint
+          Margins.Left = 10
+          Margins.Top = 0
+          Margins.Right = 8
+          Action = ActionResetPetrol
+          Align = alTop
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 2
+        end
+        object BtnMenuPanelLeft: TBitBtn
+          AlignWithMargins = True
+          Left = 10
+          Top = 124
+          Width = 129
+          Height = 28
+          Margins.Left = 10
+          Margins.Top = 0
+          Margins.Right = 8
+          Align = alTop
+          Glyph.Data = <binary 2710B 920a0000424d920a00000000000042000000280000001e00…>
+          PopupMenu = MenuAutoCal
+          TabOrder = 3
+          Visible = False
+          OnClick = BtnMenuPanelLeftClick
+        end
+        object ButtonResetK: TButton
+          Tag = 4
+          AlignWithMargins = True
+          Left = 10
+          Top = 93
+          Width = 129
+          Height = 28
+          Cursor = crHandPoint
+          Margins.Left = 10
+          Margins.Top = 0
+          Margins.Right = 8
+          Action = ActionResetAll
+          Align = alTop
+          Caption = 'Reset K'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Tahoma'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 4
+          OnClick = ActionResetKFactorExecute
+        end
+      end
+      object ChartKLine: TChart
+        AlignWithMargins = True
+        Left = 150
+        Top = 486
+        Width = 586
+        Height = 155
+        Cursor = crCross
+        AllowPanning = pmNone
+        Legend.Visible = False
+        Title.Text.Strings = ('TChart')
+        Title.Visible = False
+        OnClickSeries = ChartKLineClickSeries
+        BottomAxis.Automatic = False
+        BottomAxis.AutomaticMaximum = False
+        BottomAxis.AutomaticMinimum = False
+        BottomAxis.Labels = False
+        BottomAxis.LabelsFormat.Visible = False
+        BottomAxis.Maximum = 18.0
+        BottomAxis.Minimum = 1.0
+        BottomAxis.TickOnLabelsOnly = False
+        BottomAxis.Title.Caption = 'Tempi di iniezione'
+        BottomAxis.Title.Visible = False
+        LeftAxis.Automatic = False
+        LeftAxis.AutomaticMaximum = False
+        LeftAxis.AutomaticMinimum = False
+        LeftAxis.AxisValuesFormat = '#,##0.00'
+        LeftAxis.ExactDateTime = False
+        LeftAxis.Increment = 0.1
+        LeftAxis.Maximum = 1.6
+        LeftAxis.Minimum = 0.4
+        LeftAxis.RoundFirstLabel = False
+        LeftAxis.Title.Caption = 'K'
+        Panning.MouseWheel = pmwNone
+        RightAxis.Automatic = False
+        RightAxis.AutomaticMaximum = False
+        RightAxis.AutomaticMinimum = False
+        RightAxis.Visible = False
+        TopAxis.Automatic = False
+        TopAxis.AutomaticMaximum = False
+        TopAxis.AutomaticMinimum = False
+        TopAxis.Visible = False
+        View3D = False
+        View3DWalls = False
+        Zoom.Allow = False
+        Align = alClient
+        BevelOuter = bvNone
+        BorderWidth = 1
+        Color = clWhite
+        PopupMenu = MenuChartK
+        OnDragOver = ChartKLineDragOver
+        OnEndDrag = ChartKLineEndDrag
+        TabOrder = 3
+        Anchors = []
+        OnDblClick = ChartKLineDblClick
+        OnKeyDown = ChartKLineKeyDown
+        OnKeyUp = ChartKLineKeyUp
+        OnMouseDown = ChartKLineMouseDown
+        OnMouseMove = ChartKLineMouseMove
+        DefaultCanvas = 'TGDIPlusCanvas'
+        PrintMargins = (15, 37, 15, 37)
+        ColorPaletteIndex = 13
+        object KRunAxes: TPointSeries
+          Title = 'RunAxes'
+          ClickableLine = False
+          Pointer.Brush.Color = clGray
+          Pointer.HorizSize = 1
+          Pointer.InflateMargins = True
+          Pointer.Pen.Color = clGray
+          Pointer.Pen.Width = 2
+          Pointer.Style = psCross
+          Pointer.VertSize = 400
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 21B 0101000000000000000000f03f0000000000000000>
+        end
+        object KLine: TLineSeries
+          Legend.Visible = False
+          Marks.Margins.Left = 10
+          Marks.Margins.Right = 10
+          Marks.Style = smsValue
+          Marks.Arrow.Color = 16744448
+          Marks.Callout.Style = psDonut
+          Marks.Callout.Arrow.Color = 16744448
+          Marks.Callout.Length = 15
+          SeriesColor = 16744448
+          Shadow.Visible = False
+          ShowInLegend = False
+          Title = 'KLine'
+          ValueFormat = '#,##0.000'
+          OnGetMarkText = KLineGetMarkText
+          Brush.BackColor = clDefault
+          ClickTolerance = 10
+          DrawStyle = dsCurve
+          LinePen.Color = 16744448
+          LinePen.Width = 4
+          Pointer.HorizSize = 3
+          Pointer.InflateMargins = True
+          Pointer.Style = psCircle
+          Pointer.VertSize = 3
+          Pointer.Visible = True
+          XValues.Name = 'X'
+          XValues.Order = loAscending
+          YValues.Name = 'Y'
+          YValues.Order = loNone
+          Data = <binary 293B 0112000000000000000000f03f0000000000448640abaaaa…>
+        end
+      end
+    end
+  end
+  object AzioniAutoCal: TActionList
+    Left = 528
+    Top = 112
+    object ActionExportToK: TAction
+      Caption = 'ExportToK...'
+      OnExecute = ActionExportToKExecute
+    end
+    object ActionPreview: TAction
+      Caption = 'Chart preview'
+    end
+    object ActionExportKChart: TAction
+      Caption = 'Export to file...'
+      OnExecute = ActionExportKChartExecute
+    end
+    object ActionExportChartData: TAction
+      Caption = 'Export to file...'
+      OnExecute = ActionExportChartDataExecute
+    end
+    object ActionAutoCalRif: TAction
+      Caption = 'Modify map refs'
+      OnExecute = ActionAutoCalRifExecute
+    end
+    object ActionAutoMatch: TAction
+      Caption = 'Manual automatch'
+      OnExecute = ActionAutoMatchExecute
+    end
+    object ActionResetPetrol: TAction
+      Caption = 'Reset petrol point'
+      OnExecute = ActionResetPetrolExecute
+    end
+    object ActionResetGas: TAction
+      Caption = 'Reset gas point'
+      OnExecute = ActionResetGasExecute
+    end
+    object ActionResetAll: TAction
+      Caption = 'Reset all'
+      OnExecute = ActionResetAllExecute
+    end
+    object ActionGoToMinCalibration: TAction
+      Caption = 'Go to min calibration'
+      OnExecute = ActionGoToMinCalibrationExecute
+    end
+    object ActionDeleteSelectedPoints: TAction
+      Caption = 'Delete selected points'
+      OnExecute = ActionDeleteSelectedPointsExecute
+    end
+    object ActionExportChartPoint: TAction
+      Caption = 'Export to file...'
+      OnExecute = ActionExportChartPointExecute
+    end
+    object SettingsAutocal: TAction
+      Caption = 'Settings'
+    end
+    object ActionResetKFactor: TAction
+      Caption = 'Reset k-factor...'
+      OnExecute = ActionResetKFactorExecute
+    end
+    object ActionFinishAutocal: TAction
+      Caption = 'FinishAutocal'
+      Enabled = False
+      OnExecute = ActionFinishAutocalExecute
+    end
+    object ActionChangeColor: TAction
+      Caption = 'Customize chart colors...'
+      OnExecute = ActionChangeColorExecute
+    end
+  end
+  object MenuChartK: TPopupMenu
+    Left = 467
+    Top = 88
+    object ExportKchart1: TMenuItem
+      Action = ActionExportKChart
+    end
+    object Resetkfactor1: TMenuItem
+      Action = ActionResetKFactor
+    end
+  end
+  object SaveDialogChart: TSaveDialog
+    Filter = 'Bitmap image|*.bmp|Windows metafile|*.wmf'
+    Left = 408
+    Top = 72
+  end
+  object MenuChartData: TPopupMenu
+    OnPopup = MenuChartDataPopup
+    Left = 352
+    Top = 224
+    object Exporttofile1: TMenuItem
+      Action = ActionExportChartData
+    end
+    object Deleteselectedpoints1: TMenuItem
+      Action = ActionDeleteSelectedPoints
+    end
+    object Resetpetrolpoint1: TMenuItem
+      Action = ActionResetPetrol
+    end
+    object Resetgaspoint1: TMenuItem
+      Action = ActionResetGas
+    end
+    object Resetall1: TMenuItem
+      Action = ActionResetAll
+    end
+    object Modifymaprefs2: TMenuItem
+      Action = ActionAutoCalRif
+    end
+    object Customizechartcolors1: TMenuItem
+      Action = ActionChangeColor
+    end
+  end
+  object MenuChartPoint: TPopupMenu
+    Left = 356
+    Top = 112
+    object Exporttofile2: TMenuItem
+      Action = ActionExportChartPoint
+    end
+  end
+  object MenuAutoCal: TPopupMenu
+    Left = 463
+    Top = 146
+    object Modifymaprefs1: TMenuItem
+      Action = ActionAutoCalRif
+    end
+    object Gotomincalibration1: TMenuItem
+      Action = ActionGoToMinCalibration
+    end
+    object Manualautomatch1: TMenuItem
+      Action = ActionAutoMatch
+    end
+    object Resetpetrolpoint2: TMenuItem
+      Action = ActionResetPetrol
+    end
+    object Resetgaspoint2: TMenuItem
+      Action = ActionResetGas
+    end
+    object Resetall2: TMenuItem
+      Action = ActionResetAll
+    end
+    object FinishAutocal1: TMenuItem
+      Action = ActionFinishAutocal
+    end
+  end
+  object TimerMessageSwitchToGas: TTimer
+    Enabled = False
+    OnTimer = TimerMessageSwitchToGasTimer
+    Left = 614
+    Top = 126
+  end
+end

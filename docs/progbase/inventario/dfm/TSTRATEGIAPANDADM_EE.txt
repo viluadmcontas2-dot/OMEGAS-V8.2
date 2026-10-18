@@ -1,0 +1,5 @@
+object StrategiaPandaDM_EE: TStrategiaPandaDM_EE
+  OldCreateOrder = False
+  Height = 827
+  Width = 557
+end

@@ -1,0 +1,4218 @@
+object StreamDati: TStreamDati
+  OldCreateOrder = True
+  Height = 1548
+  Width = 1137
+  object TimerIO: TTimer
+    Enabled = False
+    Interval = 3000
+    OnTimer = TimerIOTimer
+    Left = 10
+    Top = 10
+  end
+  object AebConnection: TAebConnection
+    Communication = AebProtocol
+    AutoLoadLibrary = True
+    Left = 76
+    Top = 10
+  end
+  object AebProtocol: TAebProtocol
+    Left = 390
+    Top = 10
+  end
+  object AebRegistryData: TAebRegistryData
+    Tag = 1
+    StringDataList.Strings = ('MainPath=""', 'LanguageName=""')
+    IntegerDataList.Strings = ('ComPort=0', 'Language=0', 'WinColor=-1', 'WinPosition=0', 'Zoom=100', 'AskLicense=0')
+    Left = 160
+    Top = 10
+  end
+  object Translator: TTranslatorExt
+    Left = 1066
+    Top = 18
+  end
+  object SERIAL_NUMBER: TAebVector
+    DataMask = 255
+    ArrayDimension = 20
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (20, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object REGISTRO_INIT: TAebNumber
+    DataMask = 255
+    SerialCode = 1
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object REGISTRO_EE: TAebNumber
+    DataMask = 255
+    SerialCode = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object FLAG_CONF1: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 3
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object TIPO_LAMBDA: TAebNumber
+    DataMask = 255
+    SerialCode = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_LAMBDA: TAebNumber
+    DataMask = 255
+    SerialCode = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RITARDO_SONDA: TAebNumber
+    DataMask = 255
+    SerialCode = 6
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_LBD_FREDDA: TAebNumber
+    DataMask = 255
+    SerialCode = 7
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_SUP_LAMBDA_FREDDA: TAebNumber
+    DataMask = 255
+    SerialCode = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_INF_LAMBDA_FREDDA: TAebNumber
+    DataMask = 255
+    SerialCode = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_SUP_LAMBDA_CALDA: TAebNumber
+    DataMask = 255
+    SerialCode = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_INF_LAMBDA_CALDA: TAebNumber
+    DataMask = 255
+    SerialCode = 11
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_GIRI: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 12
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SEQUENZA_INIEZIONE: TAebMatrix
+    DataMask = 255
+    SerialCode = 13
+    ColCount = 8
+    RowCount = 2
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 660
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SEQUENZA_INIEZIONE_BENZINA: TAebVector
+    DataMask = 255
+    SerialCode = 14
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMP_RID_CAMBIO: TAebNumber
+    DataMask = 255
+    SerialCode = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object GIRI_MIN_CAMBIO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 16
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PREHEAT_SYNC_INJ_NUM: TAebNumber
+    DataMask = 255
+    SerialCode = 400
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 820
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RITARDO_CAMBIO: TAebNumber
+    DataMask = 255
+    SerialCode = 17
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEST_WORD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CS_PCB_WORD_ARRAY: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 19
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 960
+    Top = 60
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object TIPO_ACCENS: TAebNumber
+    DataMask = 255
+    SerialCode = 20
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MODELLO_HARDWARE: TAebNumber
+    DataMask = 255
+    SerialCode = 21
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SMAGRIMENTO_EXTRA: TAebNumber
+    DataMask = 255
+    SerialCode = 22
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEST_BYTE: TAebNumber
+    DataMask = 255
+    SerialCode = 23
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEST_TEMPO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 24
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEST_BYTE_ARRAY: TAebVector
+    DataMask = 255
+    SerialCode = 25
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object NOTE_CONFIG: TAebVector
+    DataMask = 255
+    SerialCode = 27
+    ArrayDimension = 48
+    RowIndex = -1
+    ColIndex = -1
+    SingleElementAccess = True
+    Connection = AebConnection
+    Left = 310
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (48, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ABIL_DIAGNOSI: TAebVector
+    DataMask = 255
+    SerialCode = 28
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ABIL_FREEZEFRAME: TAebVector
+    DataMask = 255
+    SerialCode = 377
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 469
+    Top = 14
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 255.0, 255.0, 255.0, 255.0, 255.0)
+  end
+  object STATO_DIAGNOSI: TAebVector
+    DataMask = 255
+    SerialCode = 29
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object DATA_ULTIMO_SCARICO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 30
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object ACTION_DIAGNOSI: TAebMatrix
+    DataMask = 255
+    SerialCode = 31
+    ColCount = 5
+    RowCount = 3
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 510
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object DIAGNOSI_INJ_GAS: TAebNumber
+    DataMask = 255
+    SerialCode = 32
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object DIAGNOSI_INJ_BENZ: TAebNumber
+    DataMask = 255
+    SerialCode = 33
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object DIAGNOSI_INJ_GAS2: TAebNumber
+    DataMask = 255
+    SerialCode = 34
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object DIAGNOSI_INJ_BENZ2: TAebNumber
+    DataMask = 255
+    SerialCode = 35
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TIPO_SENSORE: TAebNumber
+    DataMask = 255
+    SerialCode = 36
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_SENSORE: TAebVector
+    DataMask = 255
+    SerialCode = 37
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object GIRI_ANTICIPO: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 38
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_ANTICIPO: TAebVector
+    DataMask = 255
+    SerialCode = 39
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 110
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIF_TEMP_RID: TAebVector
+    DataMask = 255
+    SerialCode = 42
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_TEMP_RID: TAebVector
+    DataMask = 255
+    SerialCode = 43
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_ANTICIPO: TAebMatrix
+    DataMask = 255
+    SerialCode = 44
+    ColCount = 8
+    RowCount = 5
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 110
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAP_ANTICIPO: TAebVector
+    DataMask = 255
+    SerialCode = 45
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_DELAY_GAS_TEMP: TAebMatrix
+    DataMask = 255
+    SerialCode = 46
+    ColCount = 9
+    RowCount = 2
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 210
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIF_DELAY_GAS_TEMP: TAebVector
+    DataMask = 255
+    SerialCode = 47
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object GIRI_TEMPO_CUTOFF: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 50
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object SUB_CLIENT_CODE: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 51
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TIPO_INIEZIONE: TAebNumber
+    DataMask = 255
+    SerialCode = 52
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object IDENTIFICATIVO: TAebVector
+    DataMask = 255
+    SerialCode = 53
+    ArrayDimension = 30
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (30, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_INIEZIONE_CONTINUA: TAebNumber
+    DataMask = 255
+    SerialCode = 54
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPI_PER_K: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 55
+    Signed = True
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object CORRENTE_MANTENIMENTO: TAebNumber
+    DataMask = 255
+    SerialCode = 56
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_GAS: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 59
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_BENZINA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 60
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object GIRI_PER_K: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 61
+    Signed = True
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_RITORNO_BENZINA: TAebNumber
+    DataMask = 255
+    SerialCode = 62
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CODICE_CLIENTE: TAebNumber
+    DataMask = 255
+    SerialCode = 64
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CODICE_MODELLO: TAebNumber
+    DataMask = 255
+    SerialCode = 65
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CODICE_PERSONALIZZAZIONE: TAebNumber
+    DataMask = 255
+    SerialCode = 66
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SOGLIA_RICCO_FORZATO: TAebNumber
+    DataMask = 255
+    SerialCode = 70
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object LIVELLO_EMUL_ALTO: TAebNumber
+    DataMask = 255
+    SerialCode = 71
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object LIVELLO_EMUL_BASSO: TAebNumber
+    DataMask = 255
+    SerialCode = 72
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_CORRENTE_CUTOFF: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 73
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_MAX_CORRENTE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 74
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object CILINDRATA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 75
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MINIMA_VERSIONE_INTERFACCIA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 76
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object AVVIAMENTI_EMERGENZA: TAebNumber
+    DataMask = 255
+    SerialCode = 78
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAM_INJ: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 79
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMP_DIAGNOSI: TAebVector
+    DataMask = 255
+    SerialCode = 81
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_CHIUSURA_INIETTORE: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 82
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_APERTURA_INIETTORE: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 83
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MAP_K: TAebMatrix
+    DataMask = 255
+    SerialCode = 84
+    ColCount = 12
+    RowCount = 13
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 760
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (13, 12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_GAS_PARZIALE: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 85
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPI_SECONDI: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 86
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_TAGLIANDI: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 88
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object WARNING_VERSIONE_INTERFACCIA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 91
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 960
+    Top = 210
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_TEMP_GAS: TAebVector
+    DataMask = 255
+    SerialCode = 92
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_TEMP_GAS: TAebVector
+    DataMask = 255
+    SerialCode = 93
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIF_PRESS_COLL: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 95
+    ArrayDimension = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_PRESS_COLL: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 96
+    Signed = True
+    ArrayDimension = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_DA_ERRORE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 97
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object GIRI_SUP_BENZINA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 100
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MAP_DELAY_LAMBDA: TAebMatrix
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 103
+    ColCount = 12
+    RowCount = 4
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 309
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMP_ACQUA_MONOFUEL: TAebVector
+    DataMask = 255
+    SerialCode = 104
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 359
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object NUMERO_INJ_BENZINA_CUTOFF: TAebNumber
+    DataMask = 255
+    SerialCode = 106
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 409
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RITARDO_GIRI_EMULAZIONE_HIGH: TAebNumber
+    DataMask = 255
+    SerialCode = 107
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 459
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_SOVRAPPOSIZIONE: TAebNumber
+    DataMask = 255
+    SerialCode = 109
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_CICCHETTO: TAebNumber
+    DataMask = 255
+    SerialCode = 110
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_MAP_SONDA_LAMBDA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 111
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAP_RIF_SONDA_LAMBDA: TAebMatrix
+    DataMask = 255
+    SerialCode = 112
+    ColCount = 12
+    RowCount = 3
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 660
+    Top = 260
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_FILTRO_BENZINA: TAebMatrix
+    DataMask = 255
+    SerialCode = 113
+    ColCount = 12
+    RowCount = 12
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 10
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAP_FILTRO_BENZINA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 114
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SGANCIO_FILTRO_BENZINA: TAebVector
+    DataMask = 255
+    SerialCode = 115
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object CORR_ARRICCHIMENTO: TAebNumber
+    DataMask = 255
+    SerialCode = 116
+    Signed = True
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMP_GAS_CAMBIO: TAebNumber
+    DataMask = 255
+    SerialCode = 117
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object IMPEDENZA_INIETTORI: TAebNumber
+    DataMask = 255
+    SerialCode = 118
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object VAL_PERC_HOLDING_CURRENT: TAebNumber
+    DataMask = 255
+    SerialCode = 119
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MAP_ESTERNO: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 120
+    Signed = True
+    ArrayDimension = 6
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object BASE_TEMPI_GLOBALE: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 121
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_PRESS_DIFF: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 123
+    ArrayDimension = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_PRESS_DIFF: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 124
+    Signed = True
+    ArrayDimension = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_MORTO_INIETTORI_BENZINA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 125
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_MORTO_INIETTORI_GAS: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 126
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPI_K_OPENLOOP: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 127
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_FUORI_STABILIZZATO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 128
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object K_FILTRO: TAebVector
+    DataMask = 255
+    SerialCode = 129
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object RIF_SONDA_LAMBDA: TAebVector
+    DataMask = 255
+    SerialCode = 130
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIT_EMUL_RICCA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 131
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIF_DELAY_LAMBDA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 132
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object CORRETTORE_INTEGRALE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 133
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 960
+    Top = 310
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object TIPO_SENSORE_TEMPERATURA: TAebNumber
+    DataMask = 255
+    SerialCode = 134
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RITARDO_GIRI_EMULAZIONE: TAebNumber
+    DataMask = 255
+    SerialCode = 135
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SMAGRIMENTO_RIENTRO_CUTOFF: TAebNumber
+    DataMask = 255
+    SerialCode = 136
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object NUMERO_INIETTATE_SMAGRIMENTO: TAebNumber
+    DataMask = 255
+    SerialCode = 137
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAMETRI_TEMP: TAebVector
+    DataMask = 255
+    SerialCode = 138
+    Signed = True
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ECU_TEMP: TAebVector
+    DataMask = 255
+    SerialCode = 139
+    ArrayDimension = 30
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (30, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object GIRI_INTERVENTO_K_FILTRO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 141
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TINJ_3000RPM: TAebMatrix
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 143
+    ColCount = 2
+    RowCount = 8
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 360
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMP_AUTOTARATURA: TAebNumber
+    DataMask = 255
+    SerialCode = 144
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SCARTO_MINIMO_TARATURA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 145
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object T_INJ_BENZ_MAX_CAMBIO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 146
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SPOSTAMENTO_TARATURA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 147
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TIPO_INIETTORE: TAebVector
+    DataMask = 255
+    SerialCode = 148
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object MAPPA_CORR_TARATURA: TAebMatrix
+    DataMask = 255
+    SerialCode = 149
+    Signed = True
+    ColCount = 4
+    RowCount = 4
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 660
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object GIRI_AUTOTARATURA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 150
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAM_AUTOTARATURA: TAebVector
+    DataMask = 255
+    SerialCode = 151
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object TINJ_FILTRO: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 152
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEST_WORD_ARRAY: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 153
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEST_TEMPO_ARRAY: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 154
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 360
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPI_EXTRAINIETTATE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 155
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_MAX_EXTRAINJ_BENZ: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 156
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CORRETTORE_BANCATA2: TAebVector
+    DataMask = 255
+    SerialCode = 158
+    Signed = True
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPI_PER_BENZINA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 160
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object GIRI_PER_BENZINA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 161
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object INIETTATE_PER_BENZINA: TAebVector
+    DataMask = 255
+    SerialCode = 163
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object EMULAZIONE_POSTERIORE: TAebVector
+    DataMask = 255
+    SerialCode = 170
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object TIPI_SONDA_LAMBDA: TAebNumber
+    DataMask = 255
+    SerialCode = 171
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MASK_INIETTORI_BENZINA: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 172
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CONTROL_CODE: TAebVector
+    DataMask = 255
+    SerialCode = 175
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object LAMBDA_OFFSET: TAebNumber
+    DataMask = 255
+    SerialCode = 176
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RITARDO_CAMBIO_HIGH: TAebNumber
+    DataMask = 255
+    SerialCode = 178
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CHANGE_OVER: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 179
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object SMAGRIMENTO_MIN: TAebNumber
+    DataMask = 255
+    SerialCode = 180
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TIPO_CARBURANTE: TAebNumber
+    DataMask = 255
+    SerialCode = 181
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SMP_CALIBRATO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 182
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CONFIGURA_ADATTA: TAebVector
+    DataMask = 255
+    SerialCode = 185
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 410
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object TIPO_CONNESSIONE_OBD: TAebNumber
+    DataMask = 255
+    SerialCode = 187
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object K_MAPPA_NEUTRO: TAebNumber
+    DataMask = 255
+    SerialCode = 188
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PRESS_RETROPASSAGGIO: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 189
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object IDENT_OBD: TAebVector
+    DataMask = 255
+    SerialCode = 190
+    ArrayDimension = 16
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (16, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SPLIT_FUEL: TAebNumber
+    DataMask = 255
+    SerialCode = 191
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object FLAG_CONF2: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 192
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object MASK_FUNCTION: TAebVector
+    DataMask = 255
+    SerialCode = 194
+    ArrayDimension = 30
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (30, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMP_GAS_CALDO: TAebNumber
+    DataMask = 255
+    SerialCode = 195
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_PRESS_SPLIT_FUEL: TAebVector
+    DataMask = 255
+    SerialCode = 196
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_PRESS_SPLIT_FUEL: TAebVector
+    DataMask = 255
+    SerialCode = 197
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object K_FACTOR_PARAM: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 198
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RPM_FOR_SPLIT_FUEL: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 200
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object OVER_PRESSURE_DIAGNOSYS: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 201
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PETROL_MAP: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 203
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETROL_RPM_MAP_INJ: TAebMatrix
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 204
+    ColCount = 18
+    RowCount = 18
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 710
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETROL_RPM_MAP_NUM: TAebMatrix
+    DataMask = 255
+    SerialCode = 205
+    ColCount = 18
+    RowCount = 18
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 760
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETROL_RPM: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 206
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RITARDO_ATTIVAZIONE_INIETTORI: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 207
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 460
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MAPPA_CONTRIBUTI_BENZINA: TAebMatrix
+    DataMask = 255
+    SerialCode = 208
+    ColCount = 12
+    RowCount = 12
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 10
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_TRANSITORI_POSITIVI: TAebMatrix
+    DataMask = 255
+    SerialCode = 209
+    ColCount = 6
+    RowCount = 6
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 60
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_TRANSITORI_NEGATIVI: TAebMatrix
+    DataMask = 255
+    SerialCode = 210
+    ColCount = 6
+    RowCount = 6
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 110
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_CORREZIONI_ACCELERAZIONE: TAebMatrix
+    DataMask = 255
+    SerialCode = 211
+    Signed = True
+    ColCount = 6
+    RowCount = 6
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 160
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_CORREZIONI_DECELERAZIONE: TAebMatrix
+    DataMask = 255
+    SerialCode = 212
+    Signed = True
+    ColCount = 6
+    RowCount = 6
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 210
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object NUMERO_PARTENZE_EMERGENZA: TAebNumber
+    DataMask = 255
+    SerialCode = 213
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MAPPA_RIF_TRANSITORI_BENZINA: TAebMatrix
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 215
+    ColCount = 6
+    RowCount = 3
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 310
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_DIFFERENZE_K: TAebMatrix
+    DataMask = 255
+    SerialCode = 216
+    Signed = True
+    ColCount = 12
+    RowCount = 13
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 360
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (13, 12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object AUTO_CALIBR_BYTE_ARRAY: TAebVector
+    DataMask = 255
+    SerialCode = 217
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object AUTO_CALIBR_WORD_ARRAY: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 218
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ADVANCED_PARAM_INJ: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 219
+    ArrayDimension = 6
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 52
+    Top = 936
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPERATURA_ACQUA_AVVIO: TAebVector
+    DataMask = 255
+    SerialCode = 220
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RITARDO_PASSAGGIO: TAebVector
+    DataMask = 255
+    SerialCode = 221
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SOGLIA_FLUSSO_SUBSONICO: TAebNumber
+    DataMask = 255
+    SerialCode = 222
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_PRESS_ASS: TAebVector
+    DataMask = 255
+    SerialCode = 223
+    ArrayDimension = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_PRESS_ASS: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 224
+    Signed = True
+    ArrayDimension = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TAGLIA_INIETTORE: TAebNumber
+    DataMask = 255
+    SerialCode = 225
+    Signed = True
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CHANGE_OVER_CILYNDER_DELAY: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 226
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SERVICE_DATA: TAebVector
+    DataMask = 255
+    SerialCode = 227
+    ArrayDimension = 25
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SOGLIA_CORRETTORE_GAS: TAebNumber
+    DataMask = 255
+    SerialCode = 230
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 960
+    Top = 510
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object ADVANCED_TEMP_RID: TAebVector
+    DataMask = 255
+    SerialCode = 231
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ADVANCED_PRESS_BACK: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 232
+    Signed = True
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object SOGLIE_SESTANTI: TAebVector
+    DataMask = 255
+    SerialCode = 233
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIGHE_MAPPAK_CALIBRATE: TAebVector
+    DataMask = 255
+    SerialCode = 234
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_ADATTA: TAebMatrix
+    DataMask = 255
+    SerialCode = 235
+    Signed = True
+    ColCount = 6
+    RowCount = 12
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 210
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PARAMETRI_TAGLIANDI: TAebVector
+    DataMask = 255
+    SerialCode = 237
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object TEMPI_ANTICIPI_EV: TAebVector
+    DataMask = 255
+    SerialCode = 238
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object SOGLIA_GIRI_ADATTATIVITA_WORD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 239
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MAP_FLEX: TAebMatrix
+    DataMask = 255
+    SerialCode = 240
+    ColCount = 12
+    RowCount = 13
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 410
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (13, 12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ADV_PARAM_INJ: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 241
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 100
+    Top = 936
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object FLASH_LUBE_PARAMETER: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 248
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object NUM_DENTI_ALBERO_CAMME: TAebNumber
+    DataMask = 255
+    SerialCode = 249
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object FLAG_CONF3: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 250
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object TAGLIO_POMPA_BENZINA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 268
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object OBD_PARAMETER_PID: TAebVector
+    DataMask = 255
+    SerialCode = 269
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 560
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object DIAGNOSI_SWITCHON_LR: TAebVector
+    DataMask = 255
+    SerialCode = 13
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMP_GAS_CAMBIO_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TAGLIA_INIETTORE_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 22
+    Signed = True
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_CICCHETTO_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 31
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_TEMP_GAS_LR: TAebVector
+    DataMask = 255
+    SerialCode = 42
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_TEMP_GAS_LR: TAebVector
+    DataMask = 255
+    SerialCode = 43
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ACTION_DIAGNOSI_LR: TAebMatrix
+    DataMask = 255
+    SerialCode = 49
+    ColCount = 3
+    RowCount = 3
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 360
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object GIRI_CUTOFF_LR: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 50
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_CUTOFF_LR: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 51
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object STATO_DIAGNOSI_LR: TAebVector
+    DataMask = 255
+    SerialCode = 57
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ABIL_DIAGNOSI_LR: TAebVector
+    DataMask = 255
+    SerialCode = 58
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object DIAGNOSI_INJ_GAS_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 77
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_TEMP_RID_LR: TAebVector
+    DataMask = 255
+    SerialCode = 92
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_TEMP_RID_LR: TAebVector
+    DataMask = 255
+    SerialCode = 93
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object DIAGNOSI_INJ_BENZ_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 94
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PRESS_RETROPASSAGGIO_LR: TAebVector
+    DataMask = 255
+    SerialCode = 103
+    ArrayDimension = 12
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (12, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIF_PRESS_ASS_LR: TAebVector
+    DataMask = 255
+    SerialCode = 104
+    ArrayDimension = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object COEFF_PRESS_ASS_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 105
+    Signed = True
+    ArrayDimension = 15
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SOGLIA_FLUSSO_SUBSONICO_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 106
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TAGLIA_INIETTORI_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 107
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object LITRI_SERBATOIO_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 108
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 110
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPERATURA_GAS_AVVIO_LR: TAebVector
+    DataMask = 255
+    SerialCode = 110
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RITARDO_PASSAGGIO_GAS_LR: TAebVector
+    DataMask = 255
+    SerialCode = 111
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIF_GIRI_BENZINA_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 112
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ADATTA_PARAMETRI_K_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 113
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object MAP_BENZINA_LR: TAebMatrix
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 114
+    ColCount = 8
+    RowCount = 8
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 360
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIF_MAP_BENZINA_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 115
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TIPO_CONNESSIONE_OBD_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 116
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMP_RID_CAMBIO_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 117
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object K_MAPPA_NEUTRO_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 122
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAM_MAP_ESTERNO_LR: TAebVector
+    DataMask = 255
+    SerialCode = 140
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PRESS_BASSA_RETROPAS_LR: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 152
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPO_MAX_INJ_BENZ_LR: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 157
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPERATURA_ACQUA_AVVIO_LR: TAebVector
+    DataMask = 255
+    SerialCode = 158
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RITARDO_PASSAGGIO_LR: TAebVector
+    DataMask = 255
+    SerialCode = 159
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SEQUENZA_INJ_LR: TAebMatrix
+    DataMask = 255
+    SerialCode = 160
+    ColCount = 8
+    RowCount = 2
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 860
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SEQUENZA_INJ_BENZ_LR: TAebVector
+    DataMask = 255
+    SerialCode = 161
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_INIEZIONE_CONTINUA_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 162
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 960
+    Top = 680
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_MAP_ANTICIPO_LR: TAebVector
+    DataMask = 255
+    SerialCode = 163
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 10
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object RIF_GIRI_ANTICIPO_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 164
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 60
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MAPPA_ANTICIPO_LR: TAebMatrix
+    DataMask = 255
+    SerialCode = 165
+    ColCount = 8
+    RowCount = 5
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 110
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TIPI_SONDA_LAMBDA_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 167
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 160
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object RIF_TEMP_GAS_OFFSET_LR: TAebVector
+    DataMask = 255
+    SerialCode = 171
+    ArrayDimension = 16
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 210
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (16, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object TEMPO_MORTO_INIETTORI_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 172
+    Signed = True
+    ArrayDimension = 16
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 260
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (16, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object GIRI_ALTI_INTERVENTO_K_FILTRO_LR: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 173
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 310
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object K_FILTRO_GIRI_ALTI_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 174
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 360
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object TEMPI_PER_BENZINA_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 175
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 410
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object GIRI_PER_BENZINA_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 176
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object GIRI_SUP_BENZINA_LR: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 177
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 510
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MASK_INIETTORI_BENZINA_LR: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 178
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 560
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object CONFIGURA_ADATTA_LR: TAebVector
+    DataMask = 255
+    SerialCode = 189
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 610
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object FLAG_CONF2_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 193
+    ArrayDimension = 2
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 660
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (2, 0.0, 0.0)
+  end
+  object SOGLIA_LETTURA_GIRI_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 214
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 710
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object FREST_PARAMETER_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 227
+    ArrayDimension = 6
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 760
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object FREST_BREAKPOINT_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 228
+    Signed = True
+    ArrayDimension = 6
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 810
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object FREST_COEFFICIENT_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 229
+    ArrayDimension = 6
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 860
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object SWITCH_TO_PETROL_PARAM_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 236
+    ArrayDimension = 9
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 910
+    Top = 730
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (9, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PARAM_PROGRESS_0: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 299
+    OldReadFileMode = True
+    FileSection = 'Cambio'
+    FileKeyName = 'CambioConSovrapp'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 4.0
+    Connection = AebConnection
+    Left = 11
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAM_PROGRESS_1: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 299
+    OldReadFileMode = True
+    FileSection = 'Cambio'
+    FileKeyName = 'CambioConSovrapp'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = 500.0
+    Connection = AebConnection
+    Left = 60
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAM_PROGRESS_2: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 299
+    OldReadFileMode = True
+    FileSection = 'Cambio'
+    FileKeyName = 'CambioConSovrapp'
+    Type = ntVectorElement
+    RowIndex = 2
+    ColIndex = -1
+    DefaultValue = 100.0
+    Connection = AebConnection
+    Left = 110
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAM_PROGRESS_3: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 299
+    OldReadFileMode = True
+    FileSection = 'Cambio'
+    FileKeyName = 'CambioConSovrapp'
+    Type = ntVectorElement
+    RowIndex = 3
+    ColIndex = -1
+    DefaultValue = 100.0
+    Connection = AebConnection
+    Left = 160
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object LO_PRESS_INSUL_DIAG_FALL_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 292
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.001
+    ValueMin = -32.0
+    ValueMax = 31.999
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'VectDhlpLoPress'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = 0.15
+    Connection = AebConnection
+    Left = 310
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object PRESS_INSUL_DIAG_AFT_CRK_DLY: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 293
+    Transformation = ttFormula
+    Precision = 0.001
+    ValueMax = 63.999
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'VectDhlpTime'
+    Type = ntVectorElement
+    RowIndex = 2
+    ColIndex = -1
+    DefaultValue = 5.0
+    Connection = AebConnection
+    Left = 360
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object PRESS_INSUL_DIAG_MIN_TANK_LVL_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 291
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.001
+    ValueMin = -128.0
+    ValueMax = 127.996
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'VectDhlpPerc'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = 20.0
+    Connection = AebConnection
+    Left = 260
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 256.0)
+    ConversionTable = (0)
+  end
+  object PRESS_INSUL_DIAG_PRESS_ZNT: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 293
+    Transformation = ttFormula
+    Precision = 0.001
+    ValueMax = 63.999
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'VectDhlpTime'
+    Type = ntVectorElement
+    RowIndex = 3
+    ColIndex = -1
+    DefaultValue = 1.0
+    Connection = AebConnection
+    Left = 410
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object PRESS_INSUL_DIAG_PRESS_ZNT_OUT: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 293
+    Transformation = ttFormula
+    Precision = 0.001
+    ValueMax = 63.999
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'VectDhlpTime'
+    Type = ntVectorElement
+    RowIndex = 4
+    ColIndex = -1
+    DefaultValue = 5.0
+    Connection = AebConnection
+    Left = 460
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object PRESS_INSUL_DIAG_WAT_TEMP_HI_THD: TAebNumber
+    DataMask = 255
+    SerialCode = 295
+    Signed = True
+    Precision = 1.0
+    ValueMin = -128.0
+    ValueMax = 127.0
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'VectDhlpTempC'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 20.0
+    Connection = AebConnection
+    Left = 510
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PRESS_INSUL_DIAG_WAT_TEMP_LO_THD: TAebNumber
+    DataMask = 255
+    SerialCode = 295
+    Signed = True
+    Precision = 1.0
+    ValueMin = -128.0
+    ValueMax = 127.0
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'VectDhlpTempC'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = -128.0
+    Connection = AebConnection
+    Left = 560
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object LO_PASS_FILT_CON_FAST: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 276
+    Transformation = ttFormula
+    Precision = 0.0001
+    ValueMax = 1.9999
+    OldReadFileMode = True
+    FileSection = 'Agaslev'
+    FileKeyName = 'VectAgaslevKFilter'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 1.0
+    Connection = AebConnection
+    Left = 60
+    Top = 858
+    Coeffs = (1.0, 0.0, 0.0, 32768.0)
+    ConversionTable = (0)
+  end
+  object LO_PASS_FILT_CON_SLOW: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 276
+    Transformation = ttFormula
+    Precision = 0.0001
+    ValueMax = 1.9999
+    OldReadFileMode = True
+    FileSection = 'Agaslev'
+    FileKeyName = 'VectAgaslevKFilter'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = 0.015
+    Connection = AebConnection
+    Left = 110
+    Top = 858
+    Coeffs = (1.0, 0.0, 0.0, 32768.0)
+    ConversionTable = (0)
+  end
+  object ISTERESI_RIACCENSIONE: TAebNumber
+    DataMask = 255
+    SerialCode = 300
+    Precision = 1.0
+    ValueMax = 255.0
+    OldReadFileMode = True
+    FileSection = 'RiaccLed'
+    FileKeyName = 'VectRiaccLed'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 3.0
+    Connection = AebConnection
+    Left = 159
+    Top = 858
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SOGLIA_LED_1: TAebNumber
+    DataMask = 255
+    SerialCode = 300
+    Precision = 1.0
+    ValueMax = 255.0
+    OldReadFileMode = True
+    FileSection = 'RiaccLed'
+    FileKeyName = 'VectRiaccLed'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = 12.0
+    Connection = AebConnection
+    Left = 210
+    Top = 858
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SOGLIA_LED_2: TAebNumber
+    DataMask = 255
+    SerialCode = 300
+    Precision = 1.0
+    ValueMax = 255.0
+    OldReadFileMode = True
+    FileSection = 'RiaccLed'
+    FileKeyName = 'VectRiaccLed'
+    Type = ntVectorElement
+    RowIndex = 2
+    ColIndex = -1
+    DefaultValue = 37.0
+    Connection = AebConnection
+    Left = 260
+    Top = 858
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SOGLIA_LED_3: TAebNumber
+    DataMask = 255
+    SerialCode = 300
+    Precision = 1.0
+    ValueMax = 255.0
+    OldReadFileMode = True
+    FileSection = 'RiaccLed'
+    FileKeyName = 'VectRiaccLed'
+    Type = ntVectorElement
+    RowIndex = 3
+    ColIndex = -1
+    DefaultValue = 62.0
+    Connection = AebConnection
+    Left = 310
+    Top = 858
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SOGLIA_LED_4: TAebNumber
+    DataMask = 255
+    SerialCode = 300
+    Precision = 1.0
+    ValueMax = 255.0
+    OldReadFileMode = True
+    FileSection = 'RiaccLed'
+    FileKeyName = 'VectRiaccLed'
+    Type = ntVectorElement
+    RowIndex = 4
+    ColIndex = -1
+    DefaultValue = 87.0
+    Connection = AebConnection
+    Left = 359
+    Top = 858
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object AebStrings: TAebStrings
+    Strings.Strings = ('AebStrings')
+    Left = 260
+    Top = 10
+  end
+  object DELTA_AD_PER_WARMUP: TAebNumber
+    DataMask = 255
+    SerialCode = 303
+    Precision = 1.0
+    ValueMax = 255.0
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'ParametriVari'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 5.0
+    Connection = AebConnection
+    Left = 611
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object ANTICIPO_INTERRUZIONE_WARMUP: TAebNumber
+    DataMask = 255
+    SerialCode = 303
+    Precision = 1.0
+    ValueMin = 5.0
+    ValueMax = 15.0
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'ParametriVari'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = 15.0
+    Connection = AebConnection
+    Left = 660
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object DELTA_T_RAIL_BLOCCO_DHLP: TAebNumber
+    DataMask = 255
+    SerialCode = 303
+    Precision = 1.0
+    ValueMin = 2.0
+    ValueMax = 20.0
+    OldReadFileMode = True
+    FileSection = 'Dhlp'
+    FileKeyName = 'ParametriVari'
+    Type = ntVectorElement
+    RowIndex = 2
+    ColIndex = -1
+    DefaultValue = 3.0
+    Connection = AebConnection
+    Left = 709
+    Top = 808
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object VH34_PARAM_INJ: TAebVector
+    DataMask = 255
+    SerialCode = 301
+    ArrayDimension = 20
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 149
+    Top = 936
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (20, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object WARMUP_PARAM_INJ: TAebVector
+    DataMask = 255
+    SerialCode = 306
+    ArrayDimension = 8
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 198
+    Top = 936
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PARAM_PROGRESSIONI: TAebMatrix
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 308
+    Precision = 1.0
+    OldReadFileMode = True
+    FileSection = 'ProgressParam'
+    FileKeyName = 'Value'
+    ColCount = 3
+    RowCount = 4
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 328
+    Top = 936
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 3, 0.0, 4.0, 500.0, 20.0, 4.0, 500.0, 20.0, 4.0, 500.0, 25.0, 4.0, 500.0)
+  end
+  object ANTI_STALLO: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 307
+    OldReadFileMode = True
+    FileSection = 'AntiStallo'
+    FileKeyName = 'Param'
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 460
+    Top = 859
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 1600.0, 100.0, 1500.0, 2.0, 20.0)
+  end
+  object CORRETTORE_BANCATA2_LR: TAebNumber
+    DataMask = 255
+    SerialCode = 187
+    Signed = True
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 959
+    Top = 630
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAM_VARI: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 312
+    Precision = 1.0
+    FileSection = 'ParamVari'
+    FileKeyName = 'Value'
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 436
+    Top = 936
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 800.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PARAM_VARI_LR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 32
+    Precision = 1.0
+    FileSection = 'ParamVari'
+    FileKeyName = 'Value'
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 524
+    Top = 936
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 800.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MGLEV_ERR_ST: TAebVector
+    DataMask = 255
+    SerialCode = 328
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 874
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object DHLP_TANK_PRESS: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 321
+    Signed = True
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 52
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MDSB_INFO: TAebVector
+    DataLength = 4
+    DataMask = -1
+    SerialCode = 322
+    ArrayDimension = 14
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 138
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (14, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object EGEAR_RAT_BUF: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 323
+    ArrayDimension = 7
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 218
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MECO_INDEX: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 324
+    Signed = True
+    ArrayDimension = 7
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 506
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MGLEV_DIAG_ERR: TAebNumber
+    DataMask = 255
+    SerialCode = 325
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 596
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MGLEV_TANK_PRESS: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 326
+    Signed = True
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 700
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MGLEV_DATA: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 327
+    Signed = True
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 794
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object TANK_VOL: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 313
+    Transformation = ttFormula
+    Precision = 1.0
+    ValueMax = 200.0
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'TankVol'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 40.0
+    Connection = AebConnection
+    Left = 49
+    Top = 1051
+    Coeffs = (1000.0, 0.0, 0.0, 32768.0)
+    ConversionTable = (0)
+  end
+  object GEAR_MAX_NO: TAebNumber
+    DataMask = 255
+    SerialCode = 319
+    Precision = 1.0
+    ValueMax = 7.0
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'GearMaxNo'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 5.0
+    Connection = AebConnection
+    Left = 120
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object GEAR_RAT_ADPY_EN: TAebNumber
+    DataMask = 255
+    SerialCode = 319
+    Precision = 1.0
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'GearRatAdpyEn'
+    Type = ntVectorElement
+    RowIndex = 2
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 215
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MGSS_MAX_MNFLD_PRESS: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 320
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.01
+    ValueMin = -32.0
+    ValueMax = 31.999
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'MgssMaxMnfldPress'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 1.0
+    Connection = AebConnection
+    Left = 338
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object NORM_TEMP: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 314
+    Signed = True
+    Precision = 1.0
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'NormTemp'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 293.0
+    Connection = AebConnection
+    Left = 441
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object NORM_PRESS: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 315
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.01
+    ValueMin = -32.0
+    ValueMax = 31.999
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'NormPress'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 1.95
+    Connection = AebConnection
+    Left = 511
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object INJR_GAS_FLOW: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 313
+    Transformation = ttFormula
+    Precision = 0.01
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'InjrGasFlow'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 592
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 4096.0)
+    ConversionTable = (0)
+  end
+  object INJR_TOFS_PTR_H: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 316
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.01
+    ValueMin = -32.0
+    ValueMax = 31.999
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'InjrTOfsPtrH'
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 687
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 1.3, 1.95, 3.0, 5.5)
+  end
+  object INJR_TOFS_PTR_V: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 317
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.01
+    ValueMin = -32.0
+    ValueMax = 31.999
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'InjrTOfsPtrV'
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 785
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 8.0, 10.0, 12.0, 14.0, 16.0)
+  end
+  object INJR_TOFS_TBL: TAebMatrix
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 318
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.01
+    OldReadFileMode = True
+    FileSection = 'LandiConnect'
+    FileKeyName = 'InjrTOfsTbl'
+    ColCount = 5
+    RowCount = 4
+    Type = mtMatrix
+    Connection = AebConnection
+    Left = 876
+    Top = 1051
+    Coeffs = (1.0, 0.0, 0.0, 4096.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 5, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55, -0.55)
+  end
+  object EGEAR_RAT_BUF_INST: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 329
+    Signed = True
+    ArrayDimension = 7
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 338
+    Top = 1004
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETR_INJ_TBUF: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 354
+    Transformation = ttFormula
+    Precision = 0.01
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 282
+    Top = 1219
+    Coeffs = (1.0, 0.0, 0.0, 512.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object EN_LAMBDA_OVER_LVL_SENSOR: TAebNumber
+    DataMask = 255
+    SerialCode = 373
+    Precision = 1.0
+    ValueMax = 1.0
+    OldReadFileMode = True
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 556
+    Top = 1202
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object ClonedEcuRealFw0: TAebNumber
+    DataMask = 255
+    SerialCode = 174
+    Type = ntVectorElement
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 969
+    Top = 1160
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object ClonedEcuRealFw1: TAebNumber
+    DataMask = 255
+    SerialCode = 174
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 969
+    Top = 1208
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object ClonedEcuDoneGasH: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 373
+    Type = ntVectorElement
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 969
+    Top = 1256
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object ClonedEcuIsBlocked: TAebNumber
+    DataMask = 255
+    SerialCode = 374
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 968
+    Top = 1352
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object ClonedEcuRemainingGasH: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 373
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 969
+    Top = 1304
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SequenzaAutomaticaAcquisita: TAebNumber
+    DataMask = 255
+    SerialCode = 382
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 472
+    Top = 1336
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PARAMETRI_EXTRA_INJ: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 414
+    FileSection = 'PARAMETRI_EXTRA_INJ'
+    FileKeyName = 'Value'
+    ArrayDimension = 5
+    RowIndex = -1
+    ColIndex = -1
+    Connection = AebConnection
+    Left = 164
+    Top = 1371
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (5, 55.0, 400.0, 0.0, 200.0, 3500.0)
+  end
+end

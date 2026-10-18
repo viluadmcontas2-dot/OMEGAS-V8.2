@@ -1,0 +1,226 @@
+object AutoCalDM_EE: TAutoCalDM_EE
+  OldCreateOrder = False
+  Height = 429
+  Width = 687
+  object PETR_INJ_TBUF_GAS_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 334
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 82
+    Top = 51
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETR_INJ_TBUF_GAS_PREV_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 335
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 82
+    Top = 115
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETR_INJ_TBUF_PETR_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 336
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 82
+    Top = 171
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MNFLD_PRESS_BUF_GAS_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 337
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 266
+    Top = 155
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MNFLD_PRESS_BUF_GAS_PREV_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 338
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 266
+    Top = 107
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MNFLD_PRESS_BUF_PETR_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 339
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 266
+    Top = 59
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object BUF_UPD_GAS_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 340
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 266
+    Top = 227
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object BUF_UPD_PETR_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 341
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 268
+    Top = 275
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object VECT_EE_S16: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 342
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 420
+    Top = 43
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object VECT_EE_U16: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 343
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 3
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 420
+    Top = 99
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (3, 0.0, 0.0, 0.0)
+  end
+  object MUL_ACT_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 344
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 580
+    Top = 187
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MUL_PREV_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 345
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 580
+    Top = 115
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MUL_UPD_CALL_CNTR_EE: TAebNumber
+    DataMask = 255
+    SerialCode = 346
+    Precision = 1.0
+    OldReadFileMode = True
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 580
+    Top = 43
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object VECT_AUTOCAL_EE: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 356
+    Precision = 1.0
+    OldReadFileMode = True
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 583
+    Top = 245
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+end

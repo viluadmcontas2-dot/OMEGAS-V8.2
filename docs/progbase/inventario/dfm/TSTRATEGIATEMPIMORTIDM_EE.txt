@@ -1,0 +1,5 @@
+object StrategiaTempiMortiDM_EE: TStrategiaTempiMortiDM_EE
+  OldCreateOrder = False
+  Height = 827
+  Width = 557
+end

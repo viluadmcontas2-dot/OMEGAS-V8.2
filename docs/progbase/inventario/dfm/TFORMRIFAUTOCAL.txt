@@ -1,0 +1,891 @@
+object FormRifAutocal: TFormRifAutocal
+  Left = 169
+  Top = 17
+  BorderStyle = bsDialog
+  Caption = "Riferimenti per l'autocalibrazione"
+  ClientHeight = 601
+  ClientWidth = 576
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -16
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Style = [fsBold]
+  OldCreateOrder = False
+  Position = poScreenCenter
+  PixelsPerInch = 96
+  TextHeight = 20
+  object GroupRifInj: TGroupBox
+    Left = 214
+    Top = 8
+    Width = 200
+    Height = 585
+    Caption = 'T. inj (ms)'
+    TabOrder = 1
+    TabStop = True
+    object LabelInj0: TLabel
+      Left = 50
+      Top = 30
+      Width = 10
+      Height = 20
+      Caption = '1'
+    end
+    object LabelInj1: TLabel
+      Left = 50
+      Top = 60
+      Width = 10
+      Height = 20
+      Caption = '2'
+    end
+    object LabelInj2: TLabel
+      Left = 50
+      Top = 90
+      Width = 10
+      Height = 20
+      Caption = '3'
+    end
+    object LabelInj3: TLabel
+      Left = 50
+      Top = 120
+      Width = 10
+      Height = 20
+      Caption = '4'
+    end
+    object LabelInj4: TLabel
+      Left = 50
+      Top = 150
+      Width = 10
+      Height = 20
+      Caption = '5'
+    end
+    object LabelInj5: TLabel
+      Left = 50
+      Top = 180
+      Width = 10
+      Height = 20
+      Caption = '6'
+    end
+    object LabelInj6: TLabel
+      Left = 50
+      Top = 210
+      Width = 10
+      Height = 20
+      Caption = '7'
+    end
+    object LabelInj11: TLabel
+      Left = 50
+      Top = 360
+      Width = 20
+      Height = 20
+      Caption = '12'
+    end
+    object LabelInj10: TLabel
+      Left = 50
+      Top = 330
+      Width = 20
+      Height = 20
+      Caption = '11'
+    end
+    object LabelInj9: TLabel
+      Left = 50
+      Top = 300
+      Width = 20
+      Height = 20
+      Caption = '10'
+    end
+    object LabelInj8: TLabel
+      Left = 50
+      Top = 270
+      Width = 10
+      Height = 20
+      Caption = '9'
+    end
+    object LabelInj7: TLabel
+      Left = 50
+      Top = 240
+      Width = 10
+      Height = 20
+      Caption = '8'
+    end
+    object LabelInj12: TLabel
+      Left = 50
+      Top = 390
+      Width = 20
+      Height = 20
+      Caption = '13'
+    end
+    object LabelInj13: TLabel
+      Left = 50
+      Top = 420
+      Width = 20
+      Height = 20
+      Caption = '14'
+    end
+    object LabelInj14: TLabel
+      Left = 50
+      Top = 450
+      Width = 20
+      Height = 20
+      Caption = '15'
+    end
+    object LabelInj15: TLabel
+      Left = 50
+      Top = 480
+      Width = 20
+      Height = 20
+      Caption = '16'
+    end
+    object LabelInj16: TLabel
+      Left = 50
+      Top = 510
+      Width = 20
+      Height = 20
+      Caption = '17'
+    end
+    object LabelInj17: TLabel
+      Left = 50
+      Top = 540
+      Width = 20
+      Height = 20
+      Caption = '18'
+    end
+    object EditRifInj0: TNumericEdit
+      Left = 90
+      Top = 30
+      Width = 65
+      Height = 28
+      TabOrder = 0
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj1
+      PrevControl = EditRifMap17
+      ShapePenWidth = 2
+    end
+    object EditRifInj1: TNumericEdit
+      Left = 90
+      Top = 60
+      Width = 65
+      Height = 28
+      TabOrder = 1
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj2
+      PrevControl = EditRifInj0
+      ShapePenWidth = 2
+    end
+    object EditRifInj2: TNumericEdit
+      Left = 90
+      Top = 90
+      Width = 65
+      Height = 28
+      TabOrder = 2
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj3
+      PrevControl = EditRifInj1
+      ShapePenWidth = 2
+    end
+    object EditRifInj3: TNumericEdit
+      Left = 90
+      Top = 120
+      Width = 65
+      Height = 28
+      TabOrder = 3
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj4
+      PrevControl = EditRifInj2
+      ShapePenWidth = 2
+    end
+    object EditRifInj4: TNumericEdit
+      Left = 90
+      Top = 150
+      Width = 65
+      Height = 28
+      TabOrder = 4
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj5
+      PrevControl = EditRifInj3
+      ShapePenWidth = 2
+    end
+    object EditRifInj5: TNumericEdit
+      Left = 90
+      Top = 180
+      Width = 65
+      Height = 28
+      TabOrder = 5
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj6
+      PrevControl = EditRifInj4
+      ShapePenWidth = 2
+    end
+    object EditRifInj6: TNumericEdit
+      Left = 90
+      Top = 210
+      Width = 65
+      Height = 28
+      TabOrder = 6
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj7
+      PrevControl = EditRifInj5
+      ShapePenWidth = 2
+    end
+    object EditRifInj7: TNumericEdit
+      Left = 90
+      Top = 240
+      Width = 65
+      Height = 28
+      TabOrder = 7
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj8
+      PrevControl = EditRifInj6
+      ShapePenWidth = 2
+    end
+    object EditRifInj8: TNumericEdit
+      Left = 90
+      Top = 270
+      Width = 65
+      Height = 28
+      TabOrder = 8
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj9
+      PrevControl = EditRifInj7
+      ShapePenWidth = 2
+    end
+    object EditRifInj9: TNumericEdit
+      Left = 90
+      Top = 300
+      Width = 65
+      Height = 28
+      TabOrder = 9
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj10
+      PrevControl = EditRifInj8
+      ShapePenWidth = 2
+    end
+    object EditRifInj10: TNumericEdit
+      Left = 90
+      Top = 330
+      Width = 65
+      Height = 28
+      TabOrder = 10
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj11
+      PrevControl = EditRifInj9
+      ShapePenWidth = 2
+    end
+    object EditRifInj11: TNumericEdit
+      Left = 90
+      Top = 360
+      Width = 65
+      Height = 28
+      TabOrder = 11
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj12
+      PrevControl = EditRifInj10
+      ShapePenWidth = 2
+    end
+    object EditRifInj12: TNumericEdit
+      Left = 90
+      Top = 390
+      Width = 65
+      Height = 28
+      TabOrder = 12
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj13
+      PrevControl = EditRifInj11
+      ShapePenWidth = 2
+    end
+    object EditRifInj13: TNumericEdit
+      Left = 90
+      Top = 420
+      Width = 65
+      Height = 28
+      TabOrder = 13
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj14
+      PrevControl = EditRifInj12
+      ShapePenWidth = 2
+    end
+    object EditRifInj14: TNumericEdit
+      Left = 90
+      Top = 450
+      Width = 65
+      Height = 28
+      TabOrder = 14
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj15
+      PrevControl = EditRifInj13
+      ShapePenWidth = 2
+    end
+    object EditRifInj15: TNumericEdit
+      Left = 90
+      Top = 480
+      Width = 65
+      Height = 28
+      TabOrder = 15
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj16
+      PrevControl = EditRifInj14
+      ShapePenWidth = 2
+    end
+    object EditRifInj16: TNumericEdit
+      Left = 90
+      Top = 510
+      Width = 65
+      Height = 28
+      TabOrder = 16
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      NextControl = EditRifInj17
+      PrevControl = EditRifInj15
+      ShapePenWidth = 2
+    end
+    object EditRifInj17: TNumericEdit
+      Left = 90
+      Top = 540
+      Width = 65
+      Height = 28
+      TabOrder = 17
+      Text = '0'
+      Precision = 0.01
+      MaxValue = 40.0
+      Validation = False
+      PrevControl = EditRifInj16
+      ShapePenWidth = 2
+    end
+    object TInjBox: TScrollBox
+      AlignWithMargins = True
+      Left = 5
+      Top = 25
+      Width = 190
+      Height = 555
+      Align = alClient
+      BevelInner = bvNone
+      BevelOuter = bvNone
+      BorderStyle = bsNone
+      TabOrder = 18
+      ExplicitLeft = 22
+      ExplicitTop = 30
+      ExplicitWidth = 178
+      ExplicitHeight = 546
+    end
+  end
+  object GroupRifMap: TGroupBox
+    Left = 8
+    Top = 8
+    Width = 200
+    Height = 585
+    Caption = 'MAP (bar)'
+    TabOrder = 0
+    TabStop = True
+    object LabelMap0: TLabel
+      Left = 50
+      Top = 30
+      Width = 10
+      Height = 20
+      Caption = '1'
+    end
+    object LabelMap1: TLabel
+      Left = 50
+      Top = 60
+      Width = 10
+      Height = 20
+      Caption = '2'
+    end
+    object LabelMap2: TLabel
+      Left = 50
+      Top = 90
+      Width = 10
+      Height = 20
+      Caption = '3'
+    end
+    object LabelMap3: TLabel
+      Left = 50
+      Top = 120
+      Width = 10
+      Height = 20
+      Caption = '4'
+    end
+    object LabelMap4: TLabel
+      Left = 50
+      Top = 150
+      Width = 10
+      Height = 20
+      Caption = '5'
+    end
+    object LabelMap5: TLabel
+      Left = 50
+      Top = 180
+      Width = 10
+      Height = 20
+      Caption = '6'
+    end
+    object LabelMap6: TLabel
+      Left = 50
+      Top = 210
+      Width = 10
+      Height = 20
+      Caption = '7'
+    end
+    object LabelMap7: TLabel
+      Left = 50
+      Top = 240
+      Width = 10
+      Height = 20
+      Caption = '8'
+    end
+    object LabelMap11: TLabel
+      Left = 50
+      Top = 360
+      Width = 20
+      Height = 20
+      Caption = '12'
+    end
+    object LabelMap10: TLabel
+      Left = 50
+      Top = 330
+      Width = 20
+      Height = 20
+      Caption = '11'
+    end
+    object LabelMap9: TLabel
+      Left = 50
+      Top = 300
+      Width = 20
+      Height = 20
+      Caption = '10'
+    end
+    object LabelMap8: TLabel
+      Left = 50
+      Top = 270
+      Width = 10
+      Height = 20
+      Caption = '9'
+    end
+    object LabelMap12: TLabel
+      Left = 50
+      Top = 390
+      Width = 20
+      Height = 20
+      Caption = '13'
+    end
+    object LabelMap14: TLabel
+      Left = 50
+      Top = 450
+      Width = 20
+      Height = 20
+      Caption = '15'
+    end
+    object LabelMap13: TLabel
+      Left = 50
+      Top = 420
+      Width = 20
+      Height = 20
+      Caption = '14'
+    end
+    object LabelMap15: TLabel
+      Left = 50
+      Top = 480
+      Width = 20
+      Height = 20
+      Caption = '16'
+    end
+    object LabelMap16: TLabel
+      Left = 50
+      Top = 510
+      Width = 20
+      Height = 20
+      Caption = '17'
+    end
+    object LabelMap17: TLabel
+      Left = 50
+      Top = 540
+      Width = 20
+      Height = 20
+      Caption = '18'
+    end
+    object EditRifMap0: TNumericEdit
+      Left = 90
+      Top = 30
+      Width = 65
+      Height = 28
+      TabOrder = 0
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap1
+      PrevControl = ButtonAnnulla
+      ShapePenWidth = 2
+    end
+    object EditRifMap1: TNumericEdit
+      Left = 90
+      Top = 60
+      Width = 65
+      Height = 28
+      TabOrder = 1
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap2
+      PrevControl = EditRifMap0
+      ShapePenWidth = 2
+    end
+    object EditRifMap2: TNumericEdit
+      Left = 90
+      Top = 90
+      Width = 65
+      Height = 28
+      TabOrder = 2
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap3
+      PrevControl = EditRifMap1
+      ShapePenWidth = 2
+    end
+    object EditRifMap3: TNumericEdit
+      Left = 90
+      Top = 120
+      Width = 65
+      Height = 28
+      TabOrder = 3
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap4
+      PrevControl = EditRifMap2
+      ShapePenWidth = 2
+    end
+    object EditRifMap4: TNumericEdit
+      Left = 90
+      Top = 150
+      Width = 65
+      Height = 28
+      TabOrder = 4
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap5
+      PrevControl = EditRifMap3
+      ShapePenWidth = 2
+    end
+    object EditRifMap5: TNumericEdit
+      Left = 90
+      Top = 180
+      Width = 65
+      Height = 28
+      TabOrder = 5
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap6
+      PrevControl = EditRifMap4
+      ShapePenWidth = 2
+    end
+    object EditRifMap6: TNumericEdit
+      Left = 90
+      Top = 210
+      Width = 65
+      Height = 28
+      TabOrder = 6
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap7
+      PrevControl = EditRifMap5
+      ShapePenWidth = 2
+    end
+    object EditRifMap7: TNumericEdit
+      Left = 90
+      Top = 240
+      Width = 65
+      Height = 28
+      TabOrder = 7
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap8
+      PrevControl = EditRifMap6
+      ShapePenWidth = 2
+    end
+    object EditRifMap8: TNumericEdit
+      Left = 90
+      Top = 270
+      Width = 65
+      Height = 28
+      TabOrder = 8
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap9
+      PrevControl = EditRifMap7
+      ShapePenWidth = 2
+    end
+    object EditRifMap9: TNumericEdit
+      Left = 90
+      Top = 300
+      Width = 65
+      Height = 28
+      TabOrder = 9
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap10
+      PrevControl = EditRifMap8
+      ShapePenWidth = 2
+    end
+    object EditRifMap10: TNumericEdit
+      Left = 90
+      Top = 330
+      Width = 65
+      Height = 28
+      TabOrder = 10
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap11
+      PrevControl = EditRifMap9
+      ShapePenWidth = 2
+    end
+    object EditRifMap11: TNumericEdit
+      Left = 90
+      Top = 360
+      Width = 65
+      Height = 28
+      TabOrder = 11
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap12
+      PrevControl = EditRifMap10
+      ShapePenWidth = 2
+    end
+    object EditRifMap17: TNumericEdit
+      Left = 90
+      Top = 540
+      Width = 65
+      Height = 28
+      TabOrder = 17
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifInj0
+      PrevControl = EditRifMap16
+      ShapePenWidth = 2
+    end
+    object EditRifMap16: TNumericEdit
+      Left = 90
+      Top = 510
+      Width = 65
+      Height = 28
+      TabOrder = 16
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap17
+      PrevControl = EditRifMap15
+      ShapePenWidth = 2
+    end
+    object EditRifMap15: TNumericEdit
+      Left = 90
+      Top = 480
+      Width = 65
+      Height = 28
+      TabOrder = 15
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap16
+      PrevControl = EditRifMap14
+      ShapePenWidth = 2
+    end
+    object EditRifMap14: TNumericEdit
+      Left = 90
+      Top = 450
+      Width = 65
+      Height = 28
+      TabOrder = 14
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap15
+      PrevControl = EditRifMap13
+      ShapePenWidth = 2
+    end
+    object EditRifMap13: TNumericEdit
+      Left = 90
+      Top = 420
+      Width = 65
+      Height = 28
+      TabOrder = 13
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap14
+      PrevControl = EditRifMap12
+      ShapePenWidth = 2
+    end
+    object EditRifMap12: TNumericEdit
+      Left = 90
+      Top = 390
+      Width = 65
+      Height = 28
+      TabOrder = 12
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 4.0
+      Validation = False
+      NextControl = EditRifMap13
+      PrevControl = EditRifMap11
+      ShapePenWidth = 2
+    end
+  end
+  object ButtonOk: TButton
+    Left = 420
+    Top = 500
+    Width = 146
+    Height = 49
+    Cursor = crHandPoint
+    Caption = '&OK'
+    TabOrder = 2
+    OnClick = ButtonOkClick
+  end
+  object ButtonAnnulla: TButton
+    Left = 420
+    Top = 555
+    Width = 146
+    Height = 38
+    Cursor = crHandPoint
+    Cancel = True
+    Caption = '&Annulla'
+    ModalResult = 2
+    TabOrder = 3
+  end
+  object GroupK: TGroupBox
+    Left = 420
+    Top = 8
+    Width = 146
+    Height = 110
+    Caption = 'K'
+    TabOrder = 4
+    TabStop = True
+    object LabelMin: TLabel
+      Left = 10
+      Top = 30
+      Width = 28
+      Height = 20
+      Caption = 'Min'
+    end
+    object LabelMax: TLabel
+      Left = 10
+      Top = 60
+      Width = 32
+      Height = 20
+      Caption = 'Max'
+    end
+    object EditKMin: TNumericEdit
+      Left = 56
+      Top = 30
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 0
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 1.0
+      MinValue = 0.1
+      NextControl = EditKMax
+      PrevControl = EditRifInj17
+      ShapePenWidth = 2
+    end
+    object EditKMax: TNumericEdit
+      Left = 56
+      Top = 60
+      Width = 65
+      Height = 28
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = 'Microsoft Sans Serif'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 1
+      Text = '0'
+      Precision = 0.001
+      MaxValue = 10.0
+      MinValue = 1.0
+      NextControl = ButtonOk
+      PrevControl = EditKMin
+      ShapePenWidth = 2
+    end
+  end
+end

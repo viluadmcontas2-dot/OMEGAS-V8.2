@@ -1,0 +1,25 @@
+object FormStampa: TFormStampa
+  Left = 43
+  Top = 83
+  Caption = 'FormStampa'
+  ClientHeight = 363
+  ClientWidth = 722
+  Color = clWhite
+  TransparentColorValue = clWhite
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -16
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Style = [fsBold]
+  OldCreateOrder = False
+  WindowState = wsMaximized
+  PixelsPerInch = 96
+  TextHeight = 20
+  object PrintImage: TImage
+    Left = -6
+    Top = -3
+    Width = 720
+    Height = 358
+    AutoSize = True
+  end
+end

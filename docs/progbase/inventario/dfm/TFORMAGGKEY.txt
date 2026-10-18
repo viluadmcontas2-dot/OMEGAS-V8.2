@@ -1,0 +1,116 @@
+object FormAggKey: TFormAggKey
+  Left = 183
+  Top = 97
+  BorderIcons = []
+  Caption = 'Upgrade hardware key'
+  ClientHeight = 270
+  ClientWidth = 442
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poScreenCenter
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object LabelValidita: TLabel
+    Left = 8
+    Top = 8
+    Width = 425
+    Height = 49
+    Alignment = taCenter
+    AutoSize = False
+    Caption = 'La validità della chiave hardware è scaduta e non è più possibile usarla con questo programma. Contatta il più presto possibile il tuo rivenditore di software, comunicandogli questo codice:'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    WordWrap = True
+  end
+  object LabelCodice: TLabel
+    Left = 8
+    Top = 112
+    Width = 425
+    Height = 49
+    Alignment = taCenter
+    AutoSize = False
+    Caption = 'Riceverai immediatamente un nuovo codice da inserire nello spazio vuoto qui sotto che ti permetterà di ricaricare la tua chiave hardware per un ulteriore periodo di tempo.'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentFont = False
+    WordWrap = True
+  end
+  object EditAgg: TEdit
+    Left = 96
+    Top = 176
+    Width = 249
+    Height = 36
+    Color = clWhite
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Courier New'
+    Font.Style = [fsBold]
+    MaxLength = 16
+    ParentFont = False
+    TabOrder = 0
+  end
+  object ButtonUpgrade: TButton
+    Left = 8
+    Top = 224
+    Width = 209
+    Height = 33
+    Caption = 'Ricarica ora'
+    Default = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -16
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ModalResult = 1
+    ParentFont = False
+    TabOrder = 1
+  end
+  object ButtonLater: TButton
+    Left = 224
+    Top = 224
+    Width = 209
+    Height = 33
+    Caption = 'Continua a lavorare'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -16
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ModalResult = 2
+    ParentFont = False
+    TabOrder = 2
+  end
+  object EditKey: TEdit
+    Left = 96
+    Top = 72
+    Width = 249
+    Height = 35
+    BevelInner = bvNone
+    BevelOuter = bvNone
+    BorderStyle = bsNone
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Courier New'
+    Font.Style = [fsBold]
+    MaxLength = 16
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 3
+  end
+end

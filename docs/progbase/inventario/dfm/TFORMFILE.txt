@@ -1,0 +1,176 @@
+object FormFile: TFormFile
+  Left = 0
+  Top = 0
+  Anchors = [akLeft,akTop,akRight,akBottom]
+  BorderIcons = [biSystemMenu,biMaximize]
+  Caption = 'FormFile'
+  ClientHeight = 706
+  ClientWidth = 1008
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -24
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  OnActivate = FormActivate
+  OnClose = FormClose
+  PixelsPerInch = 96
+  TextHeight = 29
+  object LabelFile: TLabel
+    Left = 20
+    Top = 10
+    Width = 437
+    Height = 42
+    AutoSize = False
+    Caption = 'Nome del file da salvare'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = []
+    ParentFont = False
+  end
+  object LabelConfig: TLabel
+    Left = 456
+    Top = 10
+    Width = 517
+    Height = 42
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = '(Configurazione veicolo: 3-4 cilindri - lpg)'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = []
+    ParentFont = False
+  end
+  object ButtonAnnulla: TButton
+    Left = 510
+    Top = 652
+    Width = 170
+    Height = 38
+    Cancel = True
+    Caption = '&Annulla'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = []
+    ModalResult = 2
+    ParentFont = False
+    TabOrder = 3
+  end
+  object ButtonOk: TButton
+    Left = 334
+    Top = 652
+    Width = 157
+    Height = 38
+    Caption = '&OK'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 2
+    OnClick = ButtonOkClick
+  end
+  object EditName: TEdit
+    Left = 20
+    Top = 51
+    Width = 965
+    Height = 37
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = []
+    MaxLength = 28
+    ParentFont = False
+    TabOrder = 0
+    OnKeyDown = EditNameKeyDown
+  end
+  object ButtonAggiorna: TButton
+    Left = 695
+    Top = 652
+    Width = 170
+    Height = 38
+    Caption = 'A&ggiorna'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 4
+    Visible = False
+    OnClick = ButtonAggiornaClick
+  end
+  object TreeViewFile: TTreeView
+    Left = 20
+    Top = 152
+    Width = 965
+    Height = 487
+    Cursor = crHandPoint
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clBlack
+    Font.Height = -20
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = [fsBold]
+    HideSelection = False
+    Images = ImageList
+    Indent = 53
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 1
+    OnChange = TreeViewFileChange
+    OnClick = TreeViewFileClick
+    OnCompare = TreeViewFileCompare
+    OnDblClick = TreeViewFileDblClick
+    OnDragDrop = TreeViewFileDragDrop
+    OnKeyDown = TreeViewFileKeyDown
+  end
+  object AnimateFind: TAnimate
+    Left = 446
+    Top = 304
+    Width = 80
+    Height = 50
+    Color = clWhite
+    CommonAVI = aviFindFolder
+    ParentColor = False
+    StopFrame = 27
+    Visible = False
+  end
+  object EditPath: TEdit
+    Left = 20
+    Top = 101
+    Width = 965
+    Height = 37
+    TabStop = False
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -24
+    Font.Name = 'Microsoft Sans Serif'
+    Font.Style = []
+    MaxLength = 50
+    ParentFont = False
+    TabOrder = 6
+    Visible = False
+  end
+  object ImageListPath: TImageList
+    Left = 72
+    Top = 656
+    Bitmap = <binary 12838B 494c010108000900780010001000ffffffffff10ffffffff…>
+  end
+  object ImageList: TImageList
+    DrawingStyle = dsTransparent
+    Height = 30
+    Width = 50
+    Left = 40
+    Top = 656
+    Bitmap = <binary 48082B 494c010107000001b00032001e00fffffffffe00ffffffff…>
+  end
+end

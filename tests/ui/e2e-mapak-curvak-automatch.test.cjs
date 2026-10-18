@@ -155,7 +155,7 @@ test('Curva K → Mapa K só propõe: nenhum quadro de escrita até o toque em G
 
 // ---------------------------------------------------------------- mutações (app carregado com o código estragado)
 test('mutação: AutoMatch enviado sozinho quando a cota atinge -> o cenário de 500 ciclos FALHA', { skip }, async () => {
-  const dir = T.mutatedUi([['screens/autocal-cockpit.js', 'if (!manualAutoMatch.hidden) this.renderManualAutoMatchAdvice(manualAutoMatch, snapshot);', "if (!manualAutoMatch.hidden) { this.renderManualAutoMatchAdvice(manualAutoMatch, snapshot); if (!this.__auto) { this.__auto = true; this.prepare('MANUAL_AUTOMATCH'); } }"]]);
+  const dir = T.mutatedUi([['screens/autocal-cockpit.js', 'if (!manualAutoMatch.hidden) this.renderManualAutoMatchAdvice(manualAutoMatch, snapshot);', "if (!manualAutoMatch.hidden) { this.renderManualAutoMatchAdvice(manualAutoMatch, snapshot); if (window.__bench && window.__bench.usb && !this.__auto) { this.__auto = true; this.prepare('MANUAL_AUTOMATCH'); } }"]]);
   const app = await T.openApp(browser, { ui: dir, usb: true, bench: { quota: true } });
   try {
     await assert.rejects(() => cenarioAutoMatch(app, null));

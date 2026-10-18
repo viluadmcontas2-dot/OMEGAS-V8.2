@@ -1,0 +1,596 @@
+object AutoCalDM: TAutoCalDM
+  OldCreateOrder = False
+  Height = 782
+  Width = 787
+  object MNFLD_PRESS_THD: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 332
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.001
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'MnfldPressThd'
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 370
+    Top = 24
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.2, 0.245, 0.29, 0.335, 0.38, 0.425, 0.47, 0.515, 0.56, 0.605, 0.65, 0.695, 0.74, 0.785, 0.83, 0.87, 0.91, 0.95)
+  end
+  object PETR_INJ_TBP: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 331
+    Transformation = ttFormula
+    Precision = 0.01
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'PetrInjTBp'
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 474
+    Top = 25
+    Coeffs = (1.0, 0.0, 0.0, 512.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 18.0)
+  end
+  object AUTO_CAL_ENABLE: TAebNumber
+    DataMask = 255
+    SerialCode = 330
+    Precision = 1.0
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'AutoCalEnable'
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    OnGetData = AUTO_CAL_ENABLEGetData
+    Left = 257
+    Top = 25
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object VECT_AUTOCAL_U8_1: TAebNumber
+    DataMask = 255
+    SerialCode = 357
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = 6.0
+    Connection = StreamDati.AebConnection
+    Left = 88
+    Top = 128
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object VECT_AUTOCAL_U8_2: TAebNumber
+    DataMask = 255
+    SerialCode = 357
+    ValueMin = 1.0
+    ValueMax = 99.0
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'MaxAutomatch'
+    Type = ntVectorElement
+    RowIndex = 2
+    ColIndex = -1
+    DefaultValue = 3.0
+    Connection = StreamDati.AebConnection
+    OnGetData = VECT_AUTOCAL_U8_2GetData
+    Left = 88
+    Top = 184
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object EN_CDN_T_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 359
+    Transformation = ttFormula
+    Precision = 0.001
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'EnCdnTThd'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    DefaultValue = 1.0
+    Connection = StreamDati.AebConnection
+    Left = 66
+    Top = 367
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object PETR_INJ_TBUF: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 354
+    Transformation = ttFormula
+    Precision = 0.01
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 562
+    Top = 23
+    Coeffs = (1.0, 0.0, 0.0, 512.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MNFLD_PRESS_BUF: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 355
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.001
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 658
+    Top = 23
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object NUM_BUF_UPD_PETR: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 347
+    Precision = 1.0
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 258
+    Top = 79
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETR_INJ_TBUF_GAS_PREV: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 349
+    Transformation = ttFormula
+    Precision = 0.01
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 394
+    Top = 79
+    Coeffs = (1.0, 0.0, 0.0, 512.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MNFLD_PRESS_BUF_GAS_PREV: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 350
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.001
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 562
+    Top = 79
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETR_INJ_TBUF_GAS: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 351
+    Transformation = ttFormula
+    Precision = 0.01
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 706
+    Top = 79
+    Coeffs = (1.0, 0.0, 0.0, 512.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object NUM_BUF_UPD_GAS: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 348
+    Precision = 1.0
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 258
+    Top = 127
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MUL_ACT: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 353
+    Transformation = ttFormula
+    Precision = 0.001
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'AutoCalMulAct'
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 394
+    Top = 136
+    Coeffs = (1.0, 0.0, 0.0, 16384.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+  end
+  object MNFLD_PRESS_BUF_GAS: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 352
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.001
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 562
+    Top = 142
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object LIMIT_PRESSURE_MIN: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 361
+    Signed = True
+    Transformation = ttFormula
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'PressureMin'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 0.05
+    Connection = StreamDati.AebConnection
+    Left = 250
+    Top = 226
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object GAS_POINT_2DELETE: TAebVector
+    DataMask = 255
+    SerialCode = 366
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Left = 250
+    Top = 287
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object PETROL_POINT_2DELETE: TAebVector
+    DataMask = 255
+    SerialCode = 365
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Left = 386
+    Top = 287
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object LIMIT_PRESSURE_MAX: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 362
+    Signed = True
+    Transformation = ttFormula
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'PressureMax'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 0.95
+    Connection = StreamDati.AebConnection
+    Left = 386
+    Top = 226
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object ACQUIRED_ZONES_PETROL: TAebVector
+    DataMask = 255
+    SerialCode = 367
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 250
+    Top = 367
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object ACQUIRED_ZONES_GAS: TAebVector
+    DataMask = 255
+    SerialCode = 368
+    OldReadFileMode = True
+    ReadOnly = True
+    ArrayDimension = 4
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 386
+    Top = 367
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (4, 0.0, 0.0, 0.0, 0.0)
+  end
+  object CALIBRATION_VAL_1: TAebVector
+    DataMask = 255
+    SerialCode = 370
+    FileSection = 'AutoCal'
+    FileKeyName = 'CALIBRATION_VAL_1'
+    ArrayDimension = 10
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 248
+    Top = 456
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+    DefaultValue = (10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  end
+  object MODULE_VERSION: TAebNumber
+    DataMask = 255
+    SerialCode = 371
+    FileSection = 'AutoCal'
+    FileKeyName = 'MODULE_VERSION'
+    ReadOnly = True
+    Type = ntVectorElement
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 88
+    Top = 8
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object VECT_AUTOCAL_U8_0: TAebNumber
+    DataMask = 255
+    SerialCode = 357
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'AUTOCAL_IDLE_MIN_BUF_PETR_THD'
+    Type = ntVectorElement
+    ColIndex = -1
+    DefaultValue = 1.0
+    Connection = StreamDati.AebConnection
+    OnGetData = AUTO_CAL_ENABLEGetData
+    Left = 89
+    Top = 73
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object NUM_ATUOMATCH_EXECUTED: TAebNumber
+    DataMask = 255
+    SerialCode = 372
+    Precision = 1.0
+    OldReadFileMode = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'NumAutomatchExecuted'
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    OnGetData = AUTO_CAL_ENABLEGetData
+    Left = 65
+    Top = 425
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object MAX_RPM_FOR_AUTOCAL: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 378
+    ValueMin = 400.0
+    ValueMax = 8000.0
+    FileSection = 'AutoCal'
+    FileKeyName = 'MaxRPMForAutocal'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 3000.0
+    Connection = StreamDati.AebConnection
+    Left = 64
+    Top = 480
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object PETR_MNFLD_PRESS_RV: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 397
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.001
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 578
+    Top = 456
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 0.2, 0.245, 0.29, 0.335, 0.38, 0.425, 0.47, 0.515, 0.56, 0.605, 0.65, 0.695, 0.74, 0.785, 0.83, 0.87, 0.91, 0.95)
+  end
+  object GAS_MNFLD_PRESS_RV: TAebVector
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 398
+    Signed = True
+    Transformation = ttFormula
+    Precision = 0.001
+    OldReadFileMode = True
+    ArrayDimension = 18
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 698
+    Top = 457
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+    DefaultValue = (18, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 18.0)
+  end
+  object DISABLE_ACQ_BAND: TAebNumber
+    DataMask = 255
+    SerialCode = 395
+    FileSection = 'AutoCal'
+    FileKeyName = 'DISABLE_ACQ_BAND'
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 64
+    Top = 536
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object DELTA_MNFLD_PRESS_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 390
+    Transformation = ttFormula
+    Precision = 0.001
+    FileSection = 'AutoCal'
+    FileKeyName = 'DELTA_MNFLD_PRESS_THD'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 0.05
+    Connection = StreamDati.AebConnection
+    Left = 192
+    Top = 664
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object DELTA_PETR_INJ_T_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 392
+    Transformation = ttFormula
+    FileSection = 'AutoCal'
+    FileKeyName = 'DELTA_PETR_INJ_T_THD'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 1.0
+    Connection = StreamDati.AebConnection
+    Left = 328
+    Top = 664
+    Coeffs = (1.0, 0.0, 0.0, 512.0)
+    ConversionTable = (0)
+  end
+  object DIFF_ENG_SPD_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 387
+    DisableLimits = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'DIFF_ENG_SPD_THD'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 400.0
+    Connection = StreamDati.AebConnection
+    Left = 64
+    Top = 616
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object DIFF_MNFLD_PRESS_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 389
+    Transformation = ttFormula
+    DisableLimits = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'DIFF_MNFLD_PRESS_THD'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 0.5
+    Connection = StreamDati.AebConnection
+    Left = 192
+    Top = 616
+    Coeffs = (1.0, 0.0, 0.0, 1024.0)
+    ConversionTable = (0)
+  end
+  object DIFF_PETR_TINJ_T_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 391
+    Transformation = ttFormula
+    DisableLimits = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'DIFF_PETR_TINJ_T_THD'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 4.0
+    Connection = StreamDati.AebConnection
+    Left = 328
+    Top = 616
+    Coeffs = (1.0, 0.0, 0.0, 512.0)
+    ConversionTable = (0)
+  end
+  object DELTA_ENG_SPD_THD: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 388
+    DisableLimits = True
+    FileSection = 'AutoCal'
+    FileKeyName = 'DELTA_ENG_SPD_THD'
+    RowIndex = -1
+    ColIndex = -1
+    DefaultValue = 200.0
+    Connection = StreamDati.AebConnection
+    Left = 64
+    Top = 664
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+end

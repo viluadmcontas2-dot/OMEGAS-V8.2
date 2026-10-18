@@ -1,0 +1,367 @@
+object StrategiaPandaDM: TStrategiaPandaDM
+  OldCreateOrder = False
+  Height = 805
+  Width = 908
+  object SP_SogliaInnescoGiri: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'rpm'
+    ValueMin = 500.0
+    ValueMax = 2000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaInnescoGiri'
+    Type = ntVectorElement
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 392
+    Top = 64
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaInnescoTInj: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'msec'
+    ValueMin = 2000.0
+    ValueMax = 6000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaInnescoTInj'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 392
+    Top = 144
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaInnescoMAP: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'mbar'
+    ValueMin = 100.0
+    ValueMax = 600.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaInnescoMAP'
+    Type = ntVectorElement
+    RowIndex = 2
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 392
+    Top = 208
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaDisinnescoGiri: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'rpm'
+    ValueMin = 500.0
+    ValueMax = 2000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaDisinnescoGiri'
+    Type = ntVectorElement
+    RowIndex = 3
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 400
+    Top = 288
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaDisinnescoTInj: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'msec'
+    ValueMin = 2000.0
+    ValueMax = 8000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaDisinnescoTInj'
+    Type = ntVectorElement
+    RowIndex = 4
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 400
+    Top = 368
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaDisinnescoMAP: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'mbar'
+    ValueMin = 100.0
+    ValueMax = 600.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaDisinnescoMAP'
+    Type = ntVectorElement
+    RowIndex = 5
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 400
+    Top = 448
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_TempoInterventoEmulazione: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'sec'
+    ValueMin = 1.0
+    ValueMax = 10.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_TempoInterventoEmulazione'
+    Type = ntVectorElement
+    RowIndex = 6
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 400
+    Top = 520
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_ValoreDiEmulazioneSensPress: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'mVolt'
+    ValueMax = 5000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_ValoreDiEmulazioneSensPress'
+    Type = ntVectorElement
+    RowIndex = 7
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 400
+    Top = 583
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaMAPperEmulazioneContinuativa: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'mbar'
+    ValueMin = 100.0
+    ValueMax = 500.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaMAPperEmulazioneContinuativa'
+    Type = ntVectorElement
+    RowIndex = 8
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 432
+    Top = 655
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaAriaCondizionataON: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 380
+    MeasureUnit = 'mVolt'
+    ValueMax = 5000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaAriaCondizionataON'
+    Type = ntVectorElement
+    RowIndex = 9
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 432
+    Top = 727
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaInnescoGiri_CO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 381
+    MeasureUnit = 'rpm'
+    ValueMin = 500.0
+    ValueMax = 2000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaInnescoGiri_CO'
+    Type = ntVectorElement
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 664
+    Top = 64
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaInnescoTInj_CO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 381
+    MeasureUnit = 'msec'
+    ValueMin = 2000.0
+    ValueMax = 6000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaInnescoTInj_CO'
+    Type = ntVectorElement
+    RowIndex = 1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 664
+    Top = 144
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaInnescoMAP_CO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 381
+    MeasureUnit = 'mbar'
+    ValueMin = 100.0
+    ValueMax = 600.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaInnescoMAP_CO'
+    Type = ntVectorElement
+    RowIndex = 2
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 664
+    Top = 208
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaDisinnescoGiri_CO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 381
+    MeasureUnit = 'rpm'
+    ValueMin = 500.0
+    ValueMax = 2000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaDisinnescoGiri_CO'
+    Type = ntVectorElement
+    RowIndex = 3
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 672
+    Top = 288
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaDisinnescoTInj_CO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 381
+    MeasureUnit = 'msec'
+    ValueMin = 2000.0
+    ValueMax = 8000.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaDisinnescoTInj_CO'
+    Type = ntVectorElement
+    RowIndex = 4
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 672
+    Top = 368
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaDisinnescoMAP_CO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 381
+    MeasureUnit = 'mbar'
+    ValueMin = 100.0
+    ValueMax = 600.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaDisinnescoMAP_CO'
+    Type = ntVectorElement
+    RowIndex = 5
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 672
+    Top = 448
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_TempoInterventoEmulazione_CO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 381
+    MeasureUnit = 'sec'
+    ValueMin = 1.0
+    ValueMax = 10.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_TempoInterventoEmulazione_CO'
+    Type = ntVectorElement
+    RowIndex = 6
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 672
+    Top = 520
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_SogliaMAPperEmulazioneContinuativa_CO: TAebNumber
+    DataLength = 2
+    DataMask = 65535
+    SerialCode = 381
+    MeasureUnit = 'mbar'
+    ValueMin = 100.0
+    ValueMax = 500.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_SogliaMAPperEmulazioneContinuativa_CO'
+    Type = ntVectorElement
+    RowIndex = 7
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 704
+    Top = 655
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_EN_STRATEGIA_MINIMO: TAebNumber
+    DataMask = 1
+    SerialCode = 379
+    ValueMax = 255.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_EN_STRATEGIA_MINIMO'
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 120
+    Top = 32
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_EN_STRATEGIA_RIC_CLIMA: TAebNumber
+    DataMask = 2
+    SerialCode = 379
+    ValueMax = 255.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_EN_STRATEGIA_RIC_CLIMA'
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 120
+    Top = 104
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+  object SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMA: TAebNumber
+    DataMask = 4
+    SerialCode = 379
+    ValueMax = 255.0
+    FileSection = 'STRATEGIA_PANDA'
+    FileKeyName = 'SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMA'
+    RowIndex = -1
+    ColIndex = -1
+    Connection = StreamDati.AebConnection
+    Left = 120
+    Top = 184
+    Coeffs = (1.0, 0.0, 0.0, 1.0)
+    ConversionTable = (0)
+  end
+end

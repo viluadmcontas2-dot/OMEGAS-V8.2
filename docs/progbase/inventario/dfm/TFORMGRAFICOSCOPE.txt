@@ -1,0 +1,1157 @@
+object FormGraficoScope: TFormGraficoScope
+  Left = 0
+  Top = 0
+  Caption = 'Grafico'
+  ClientHeight = 693
+  ClientWidth = 1008
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clBlack
+  Font.Height = -16
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  Menu = MainMenu
+  OldCreateOrder = False
+  Position = poDesigned
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnKeyPress = FormKeyPress
+  OnMouseWheelDown = FormMouseWheelDown
+  OnMouseWheelUp = FormMouseWheelUp
+  OnResize = FormResize
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 19
+  object panelChart: TPanelImage
+    Left = 0
+    Top = 61
+    Width = 1008
+    Height = 531
+    Align = alClient
+    BevelOuter = bvNone
+    Color = 14732184
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clBlack
+    Font.Height = -19
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentBackground = False
+    ParentFont = False
+    TabOrder = 0
+    AlphaValue = 255
+    object ChartDrt: TChart
+      Left = 6
+      Top = 12
+      Width = 967
+      Height = 499
+      AllowPanning = pmHorizontal
+      BackWall.Color = clBlack
+      BackWall.Shadow.Color = clBlack
+      Gradient.EndColor = 12615935
+      Legend.Bevel = bvSpace
+      Legend.BevelWidth = 1
+      Legend.Brush.Color = clNone
+      Legend.CheckBoxes = True
+      Legend.Color = clBlack
+      Legend.ColorWidth = 10
+      Legend.DividingLines.Color = clNone
+      Legend.Emboss.Color = clWhite
+      Legend.Font.Charset = ANSI_CHARSET
+      Legend.Font.Color = clWhite
+      Legend.Font.Name = 'Tahoma'
+      Legend.Shadow.HorizSize = 0
+      Legend.Shadow.VertSize = 0
+      Legend.Symbol.Width = 10
+      Legend.TopPos = 15
+      MarginBottom = 0
+      PrintProportional = False
+      Title.Font.Height = -13
+      Title.Font.Style = [fsBold]
+      Title.Text.Strings = ('')
+      Title.Transparent = False
+      Title.Visible = False
+      Title.AdjustFrame = False
+      OnClickAxis = ChartDrtClickAxis
+      OnZoom = ChartDrtZoom
+      BottomAxis.AxisValuesFormat = '#,000.0'
+      BottomAxis.LabelsFormat.Font.Charset = ANSI_CHARSET
+      BottomAxis.LabelsFormat.Font.Height = -13
+      BottomAxis.LabelsFormat.Font.Name = 'Tahoma'
+      BottomAxis.LabelsSeparation = 80
+      BottomAxis.MinorTickCount = 0
+      BottomAxis.RoundFirstLabel = False
+      BottomAxis.TickOnLabelsOnly = False
+      BottomAxis.Title.Visible = False
+      BottomAxis.Title.Color = clBlack
+      DepthAxis.Title.Color = clBlack
+      DepthTopAxis.Title.Color = clBlack
+      LeftAxis.Axis.Color = clDefault
+      LeftAxis.Axis.Visible = False
+      LeftAxis.LabelsFormat.Font.Charset = ANSI_CHARSET
+      LeftAxis.LabelsFormat.Font.Height = -13
+      LeftAxis.LabelsFormat.Font.Name = 'Tahoma'
+      LeftAxis.LabelsSeparation = 50
+      LeftAxis.MinorTickCount = 4
+      LeftAxis.TickLength = 6
+      LeftAxis.Title.Color = clBlack
+      RightAxis.Title.Color = clBlack
+      TopAxis.Title.Color = clBlack
+      View3D = False
+      BevelOuter = bvNone
+      Color = 14732184
+      TabOrder = 0
+      OnMouseMove = ChartDrtMouseMove
+      OnMouseUp = ChartDrtMouseUp
+      DefaultCanvas = 'TGDIPlusCanvas'
+      PrintMargins = (15, 24, 15, 24)
+      ColorPaletteIndex = 13
+      object Series1: TLineSeries
+        Cursor = crHandPoint
+        Depth = 10
+        Marks.Emboss.Color = 8553090
+        Marks.Shadow.Color = 8553090
+        SeriesColor = 6787015
+        Title = 'GIRI x 1000'
+        Brush.BackColor = clDefault
+        Dark3D = False
+        LinePen.Color = 6787015
+        LinePen.Width = 2
+        Pointer.Brush.Gradient.EndColor = 8454143
+        Pointer.Gradient.EndColor = 8454143
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series5: TLineSeries
+        SeriesColor = 16744576
+        Title = 'LAMBDA'
+        Brush.BackColor = clDefault
+        LinePen.Color = 16744576
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series6: TLineSeries
+        SeriesColor = 65408
+        Title = 'Tempo inj GAS'
+        Brush.BackColor = clDefault
+        LinePen.Color = 65408
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series7: TLineSeries
+        Cursor = crHandPoint
+        Depth = 14
+        SeriesColor = clRed
+        Title = 'Tempo inj BENZ'
+        Brush.BackColor = clDefault
+        LinePen.Color = clRed
+        LinePen.Width = 2
+        Pointer.Brush.Gradient.EndColor = clFuchsia
+        Pointer.Gradient.EndColor = clFuchsia
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series9: TLineSeries
+        SeriesColor = clAqua
+        Title = 'Pressione GAS'
+        Brush.BackColor = clDefault
+        LinePen.Color = clAqua
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series3: TLineSeries
+        SeriesColor = clYellow
+        Title = 'Pressione MAP'
+        Brush.BackColor = clDefault
+        LinePen.Color = clYellow
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series11: TLineSeries
+        Title = 'T RID x 10'
+        Brush.BackColor = clDefault
+        LinePen.Color = 10708548
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series2: TLineSeries
+        SeriesColor = 16744448
+        Title = 'T GAS x 10'
+        Brush.BackColor = clDefault
+        LinePen.Color = 16744448
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series18: TLineSeries
+        SeriesColor = clFuchsia
+        Title = 'Livello'
+        Brush.BackColor = clDefault
+        Dark3D = False
+        LinePen.Color = clFuchsia
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series4: TLineSeries
+        SeriesColor = clGray
+        Title = 'Corr.Slow'
+        Brush.BackColor = clDefault
+        Dark3D = False
+        LinePen.Color = clGray
+        LinePen.Style = psDash
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series8: TLineSeries
+        Marks.Shadow.Color = 8487297
+        SeriesColor = 8388863
+        Title = 'Corr.Fast'
+        Brush.BackColor = clDefault
+        Dark3D = False
+        LinePen.Color = 8388863
+        LinePen.Style = psDash
+        LinePen.Width = 2
+        Pointer.Brush.Gradient.EndColor = 8388863
+        Pointer.Gradient.EndColor = 8388863
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series10: TLineSeries
+        SeriesColor = clBlue
+        Title = 'Ox.Sens'
+        Brush.BackColor = clDefault
+        Dark3D = False
+        LinePen.Color = clBlue
+        LinePen.Style = psDash
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series12: TLineSeries
+        SeriesColor = clPurple
+        Title = 'LAMBDA 2'
+        Brush.BackColor = clDefault
+        LinePen.Color = clPurple
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series13: TLineSeries
+        SeriesColor = clSilver
+        Title = 'Tempo inj BENZ 2'
+        Brush.BackColor = clDefault
+        LinePen.Color = clSilver
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series14: TLineSeries
+        SeriesColor = clTeal
+        Title = 'Tempo inj GAS 2'
+        Brush.BackColor = clDefault
+        LinePen.Color = clTeal
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series15: TLineSeries
+        SeriesColor = 4227200
+        Title = 'Corr.Slow 2'
+        Brush.BackColor = clDefault
+        Dark3D = False
+        LinePen.Color = 4227200
+        LinePen.Style = psDash
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series16: TLineSeries
+        SeriesColor = 16744703
+        Title = 'Corr.Fast 2'
+        Brush.BackColor = clBlack
+        Dark3D = False
+        LinePen.Color = 16744703
+        LinePen.Style = psDash
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object Series17: TLineSeries
+        SeriesColor = 8404992
+        Title = 'Ox.Sens 2'
+        Brush.BackColor = clDefault
+        Dark3D = False
+        LinePen.Color = 8404992
+        LinePen.Style = psDash
+        LinePen.Width = 2
+        Pointer.InflateMargins = True
+        Pointer.Style = psRectangle
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Y'
+        YValues.Order = loNone
+      end
+      object SeriesDummyPos: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 198
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = clMaroon
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8947848
+        MarksOnBar = True
+        Shadow.Color = 8947848
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesDummyNeg: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 198
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = clMaroon
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8882055
+        Shadow.Color = 8882055
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesMarkersPos: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 198
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = clMaroon
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8947848
+        MarksOnBar = True
+        Shadow.Color = 8947848
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesMarkersNeg: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 198
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = clMaroon
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8882055
+        Shadow.Color = 8882055
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesCursorePos: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 4227327
+        Marks.Emboss.Color = 8553090
+        Marks.Shadow.Color = 8882055
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = 4227327
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8947848
+        Shadow.Color = 8947848
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesCursoreNeg: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 4227327
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = 4227327
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8947848
+        Shadow.Color = 8947848
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesAutoMarkersPos: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 3835211
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = 3835211
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8947848
+        Shadow.Color = 8947848
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesAutoMarkersNeg: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 3835211
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = 3835211
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8882055
+        Shadow.Color = 8882055
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesEcuMarkersPos: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 12615680
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = 12615680
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8882055
+        Shadow.Color = 8882055
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+      object SeriesEcuMarkersNeg: TBarSeries
+        Legend.Visible = False
+        BarPen.Color = 12615680
+        Marks.Emboss.Color = 8487297
+        Marks.Shadow.Color = 8750469
+        Marks.Visible = False
+        Marks.Arrow.Visible = False
+        Marks.Callout.Arrow.Visible = False
+        SeriesColor = 12615680
+        ShowInLegend = False
+        BarWidthPercent = 1
+        Emboss.Color = 8947848
+        Shadow.Color = 8947848
+        Shadow.Visible = False
+        XValues.Name = 'X'
+        XValues.Order = loAscending
+        YValues.Name = 'Bar'
+        YValues.Order = loNone
+        Data = <binary 53B 000600000000000000000000000000000000000000000000…>
+      end
+    end
+    object ProgressBar1: TProgressBar
+      AlignWithMargins = True
+      Left = 3
+      Top = 3
+      Width = 1002
+      Height = 33
+      Align = alTop
+      TabOrder = 1
+      Visible = False
+    end
+  end
+  object panelTop: TGridPanel
+    AlignWithMargins = True
+    Left = 3
+    Top = 3
+    Width = 1002
+    Height = 55
+    Align = alTop
+    Alignment = taLeftJustify
+    BevelOuter = bvNone
+    ColumnCollection = <{SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=10.0} {SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=10.0} {SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=10.0} {SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=53.0} {SizeStyle=ssAbsolute; Value=10.0} {Value=100.0}>
+    ControlCollection = <{Column=0; Control=btnRun; Row=0} {Column=1; Control=SpeedButton1; Row=0} {Column=2; Control=btnLoad; Row=0} {Column=3; Control=btnSave; Row=0} {Column=4; Control=btnExportImage; Row=0} {Column=5; Control=SpeedButton4; Row=0} {Column=6; Control=btnZoomIn; Row=0} {Column=7; Control=btnZoomOut; Row=0} {Column=8; Control=btnRestoreZoom; Row=0} {Column=9; Control=SpeedButton8; Row=0} {Column=10; Control=btnAutoRange; Row=0} {Column=11; Control=btnLegend; Row=0} {Column=13; Control=panelParams; Row=0} {Column=12; Control=SpeedButton2; Row=0}>
+    RowCollection = <{Value=100.0}>
+    TabOrder = 1
+    object btnRun: TSpeedButton
+      Left = 0
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Run'
+      Align = alClient
+      Caption = 'run'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnRunClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object SpeedButton1: TSpeedButton
+      Left = 53
+      Top = 0
+      Width = 10
+      Height = 55
+      Align = alClient
+      Visible = False
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object btnLoad: TSpeedButton
+      Left = 63
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Load'
+      Align = alClient
+      Caption = 'load'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnLoadClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object btnSave: TSpeedButton
+      Left = 116
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Save'
+      Align = alClient
+      Caption = 'save'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnSaveClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object btnExportImage: TSpeedButton
+      Left = 169
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Export Image'
+      Align = alClient
+      Caption = 'export'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnExportImageClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object SpeedButton4: TSpeedButton
+      Left = 222
+      Top = 0
+      Width = 10
+      Height = 55
+      Align = alClient
+      Visible = False
+      OnClick = btnLoadClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object btnZoomIn: TSpeedButton
+      Left = 232
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Zoom-In'
+      Align = alClient
+      Caption = 'zoom in'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnZoomInClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object btnZoomOut: TSpeedButton
+      Left = 285
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Zoom-Out'
+      Align = alClient
+      Caption = 'zoom out'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnZoomOutClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object btnRestoreZoom: TSpeedButton
+      Left = 338
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Restore Zoom'
+      Align = alClient
+      Caption = 'restore zoom'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnRestoreZoomClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object SpeedButton8: TSpeedButton
+      Left = 391
+      Top = 0
+      Width = 10
+      Height = 55
+      Align = alClient
+      Visible = False
+      OnClick = btnLoadClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object btnAutoRange: TSpeedButton
+      Left = 401
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Auto Range'
+      Align = alClient
+      Caption = 'auto range'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnAutoRangeClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object btnLegend: TSpeedButton
+      Tag = 1
+      Left = 454
+      Top = 0
+      Width = 53
+      Height = 55
+      Hint = 'Legend'
+      Align = alClient
+      Caption = 'legend'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = btnLegendClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+    object panelParams: TGridPanel
+      Left = 517
+      Top = 0
+      Width = 485
+      Height = 55
+      Align = alClient
+      BevelOuter = bvNone
+      ColumnCollection = <{SizeStyle=ssAbsolute; Value=50.0} {SizeStyle=ssAbsolute; Value=50.0} {SizeStyle=ssAbsolute; Value=50.0} {SizeStyle=ssAbsolute; Value=50.0} {SizeStyle=ssAbsolute; Value=150.0} {SizeStyle=ssAbsolute; Value=50.0} {Value=100.0}>
+      ControlCollection = <{Column=0; Control=LabelMinRange; Row=0} {Column=1; Control=EditMinRange; Row=0} {Column=2; Control=LabelMaxRange; Row=0} {Column=3; Control=EditMaxRange; Row=0} {Column=4; Control=LabelResolution; Row=0} {Column=5; Control=EditResolution; Row=0}>
+      RowCollection = <{Value=100.0}>
+      TabOrder = 0
+      object LabelMinRange: TLabel
+        AlignWithMargins = True
+        Left = 3
+        Top = 3
+        Width = 40
+        Height = 17
+        Align = alClient
+        Caption = 'Y Min'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -14
+        Font.Name = 'Courier New'
+        Font.Style = []
+        ParentFont = False
+        Layout = tlCenter
+      end
+      object EditMinRange: TNumericEdit
+        Tag = 1
+        AlignWithMargins = True
+        Left = 50
+        Top = 10
+        Width = 50
+        Height = 35
+        Cursor = crHandPoint
+        Margins.Left = 0
+        Margins.Top = 10
+        Margins.Right = 0
+        Margins.Bottom = 10
+        CustomHint = BalloonHint
+        ParentCustomHint = False
+        Align = alClient
+        Alignment = taRightJustify
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -22
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 0
+        Text = '0'
+        OnEnter = EditMaxRangeEnter
+        OnExit = EditMaxRangeExit
+        OnKeyPress = EditRangeKeyPress
+        Precision = 0.01
+        MinValue = -100.0
+        NextControl = EditMinRange
+        ShapePenWidth = 2
+      end
+      object LabelMaxRange: TLabel
+        AlignWithMargins = True
+        Left = 103
+        Top = 3
+        Width = 40
+        Height = 17
+        Align = alClient
+        Caption = 'Y Max'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -14
+        Font.Name = 'Courier New'
+        Font.Style = []
+        ParentFont = False
+        Layout = tlCenter
+      end
+      object EditMaxRange: TNumericEdit
+        Tag = 1
+        AlignWithMargins = True
+        Left = 150
+        Top = 10
+        Width = 50
+        Height = 35
+        Cursor = crHandPoint
+        Margins.Left = 0
+        Margins.Top = 10
+        Margins.Right = 0
+        Margins.Bottom = 10
+        CustomHint = BalloonHint
+        ParentCustomHint = False
+        Align = alClient
+        Alignment = taRightJustify
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -22
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+        Text = '15'
+        OnEnter = EditMaxRangeEnter
+        OnExit = EditMaxRangeExit
+        OnKeyPress = EditRangeKeyPress
+        Precision = 0.01
+        MaxValue = 100.0
+        ShapePenWidth = 2
+      end
+      object LabelResolution: TLabel
+        AlignWithMargins = True
+        Left = 203
+        Top = 3
+        Width = 144
+        Height = 17
+        Align = alClient
+        Caption = 'X Resolution [sec]'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -14
+        Font.Name = 'Courier New'
+        Font.Style = []
+        ParentFont = False
+        Layout = tlCenter
+      end
+      object EditResolution: TNumericEdit
+        AlignWithMargins = True
+        Left = 350
+        Top = 10
+        Width = 50
+        Height = 35
+        Cursor = crHandPoint
+        Margins.Left = 0
+        Margins.Top = 10
+        Margins.Right = 0
+        Margins.Bottom = 10
+        ParentCustomHint = False
+        Align = alClient
+        Alignment = taRightJustify
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -22
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+        Text = '30'
+        OnEnter = EditMaxRangeEnter
+        OnExit = EditMaxRangeExit
+        OnKeyPress = EditResolutionKeyPress
+        Precision = 1.0
+        MaxValue = 600.0
+        MinValue = 0.1
+        ShapePenWidth = 2
+      end
+    end
+    object SpeedButton2: TSpeedButton
+      Left = 507
+      Top = 0
+      Width = 10
+      Height = 55
+      Align = alClient
+      Visible = False
+      OnClick = btnLoadClick
+      ExplicitLeft = 16
+      ExplicitTop = 16
+      ExplicitWidth = 23
+      ExplicitHeight = 22
+    end
+  end
+  object panelTest: TPanel
+    Left = 0
+    Top = 592
+    Width = 1008
+    Height = 101
+    Align = alBottom
+    BevelOuter = bvNone
+    Color = 13421772
+    ParentBackground = False
+    TabOrder = 2
+    Visible = False
+    object ButtonPrevMarker: TButtonImage
+      Left = 23
+      Top = 24
+      Width = 90
+      Height = 50
+      Cursor = crHandPoint
+      Action = ActionPreviousMarker
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlack
+      Font.Height = -19
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+      PictureSelected.Data = <binary 6509B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureNotSelected.Data = <binary 6291B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureFocused.Data = <binary 6509B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      CaptionLeft = 80
+      CaptionTop = 16
+      AlphaBlendValue = 255
+    end
+    object ButtonNextMarker: TButtonImage
+      Left = 135
+      Top = 24
+      Width = 90
+      Height = 50
+      Cursor = crHandPoint
+      Action = ActionNextMarker
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlack
+      Font.Height = -19
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 1
+      PictureSelected.Data = <binary 6818B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureNotSelected.Data = <binary 6612B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureFocused.Data = <binary 6818B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      CaptionLeft = 80
+      CaptionTop = 16
+      AlphaBlendValue = 255
+    end
+    object ButtonRimuoviCursore: TButtonImage
+      Left = 275
+      Top = 24
+      Width = 90
+      Height = 50
+      Cursor = crHandPoint
+      Action = ActionRimuoviCursore
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlack
+      Font.Height = -19
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+      PictureSelected.Data = <binary 5979B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureNotSelected.Data = <binary 5838B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureFocused.Data = <binary 5979B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      CaptionLeft = 80
+      CaptionTop = 16
+      AlphaBlendValue = 255
+    end
+    object CheckAutoMarker: TCheckBox
+      Left = 475
+      Top = 47
+      Width = 120
+      Height = 26
+      Cursor = crHandPoint
+      BiDiMode = bdLeftToRight
+      Caption = 'Auto marker'
+      ParentBiDiMode = False
+      TabOrder = 3
+      Visible = False
+      OnClick = CheckAutoMarkerClick
+    end
+  end
+  object PrintDialog: TPrintDialog
+    Left = 960
+    Top = 465
+  end
+  object OpenDialogDrt: TOpenDialog
+    DefaultExt = 'txt'
+    Filter = 'Grafico dati in tempo reale|*.txt'
+    Options = [ofHideReadOnly,ofPathMustExist,ofFileMustExist,ofEnableSizing]
+    Title = 'Apri file dati in tempo reale'
+    Left = 960
+    Top = 497
+  end
+  object SaveDialogDrt: TSaveDialog
+    DefaultExt = 'txt'
+    Filter = 'Acquisizioni in tempo reale|*.txt'
+    Options = [ofOverwritePrompt,ofHideReadOnly,ofEnableSizing]
+    Title = 'Salva acquisizione con nome...'
+    Left = 928
+    Top = 497
+  end
+  object Timer: TTimer
+    Enabled = False
+    Interval = 20
+    OnTimer = TimerTimer
+    Left = 928
+    Top = 465
+  end
+  object ScopeActionList: TActionList
+    Left = 896
+    Top = 466
+    object ActionAddMarker: TAction
+      Caption = 'AddMarker'
+      ShortCut = 123
+      OnExecute = ActionAddMarkerExecute
+    end
+    object ActionZoomIn: TAction
+    end
+    object ActionZoomOut: TAction
+    end
+    object ActionUndoZoom: TAction
+      Caption = 'ActionUndoZoom'
+    end
+    object ActionNextMarker: TAction
+      Caption = 'ActionNextMarker'
+      OnExecute = ActionNextMarkerExecute
+    end
+    object ActionPreviousMarker: TAction
+      Caption = 'ActionPreviousMarker'
+      OnExecute = ActionPreviousMarkerExecute
+    end
+    object ActionRimuoviCursore: TAction
+      Caption = 'ActionRimuoviCursore'
+      OnExecute = ActionRimuoviCursoreExecute
+    end
+    object ActionTestEcuMarker: TAction
+      Caption = 'ActionTestEcuMarker'
+    end
+    object ActionApriHelp: TAction
+      Caption = 'ActionApriHelp'
+    end
+  end
+  object MainMenu: TMainMenu
+    Left = 896
+    Top = 496
+    object MenuRimuoviMarker: TMenuItem
+      Caption = 'Rimuovi marker'
+      Enabled = False
+      Visible = False
+      OnClick = MenuRimuoviMarkerClick
+    end
+    object MenuRimuoviCursore: TMenuItem
+      Action = ActionRimuoviCursore
+      Caption = 'Rimuovi Cursore'
+      Enabled = False
+      Visible = False
+    end
+    object MenuMarker: TMenuItem
+      Caption = 'Marker'
+      Enabled = False
+      Visible = False
+      object MenuPreviousMarker: TMenuItem
+        Action = ActionPreviousMarker
+        Caption = 'Marker precedente'
+      end
+      object MenuMarkerSuccessivo: TMenuItem
+        Action = ActionNextMarker
+        Caption = 'Marker successivo'
+      end
+    end
+  end
+  object EsportDialogDrt: TSaveDialog
+    DefaultExt = 'hcf'
+    Filter = 'File bitmap |*.bmp'
+    Options = [ofOverwritePrompt,ofHideReadOnly,ofEnableSizing]
+    Title = 'Salva file di configurazione...'
+    Left = 867
+    Top = 497
+  end
+  object BalloonHint: TBalloonHint
+    Style = bhsStandard
+    Delay = 200
+    HideAfter = 2000
+    Left = 866
+    Top = 466
+  end
+  object ImageList1: TImageList
+    Height = 48
+    Width = 48
+    Left = 836
+    Top = 466
+    Bitmap = <binary 147538B 494c01010c001c00440030003000fffffffffe00ffffffff…>
+  end
+end

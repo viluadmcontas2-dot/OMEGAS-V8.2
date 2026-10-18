@@ -1,0 +1,29 @@
+object FormSplash: TFormSplash
+  Left = 187
+  Top = 135
+  BorderIcons = []
+  BorderStyle = bsNone
+  Caption = 'FormSplash'
+  ClientHeight = 258
+  ClientWidth = 399
+  Color = clWhite
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Microsoft Sans Serif'
+  Font.Style = []
+  FormStyle = fsStayOnTop
+  OldCreateOrder = True
+  Position = poScreenCenter
+  Visible = True
+  PixelsPerInch = 96
+  TextHeight = 13
+  object SplashImage: TImage
+    Left = 0
+    Top = 0
+    Width = 399
+    Height = 258
+    Center = True
+    Transparent = True
+  end
+end

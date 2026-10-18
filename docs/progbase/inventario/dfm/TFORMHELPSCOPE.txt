@@ -1,0 +1,198 @@
+object FormHelpScope: TFormHelpScope
+  Left = 200
+  Top = 140
+  BorderStyle = bsDialog
+  Caption = 'Legenda marker'
+  ClientHeight = 300
+  ClientWidth = 795
+  Color = 13421772
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clBlack
+  Font.Height = -16
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  PixelsPerInch = 96
+  TextHeight = 19
+  object PanelContainer: TPanel
+    Left = 0
+    Top = 0
+    Width = 795
+    Height = 300
+    Align = alClient
+    BevelOuter = bvNone
+    TabOrder = 0
+    object ButtonEsci: TButtonImage
+      Left = 536
+      Top = 236
+      Width = 245
+      Height = 51
+      Cursor = crHandPoint
+      Cancel = True
+      Caption = 'Esci'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -19
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ModalResult = 2
+      ParentFont = False
+      TabOrder = 1
+      PictureSelected.Data = <binary 15675B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureNotSelected.Data = <binary 8381B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureFocused.Data = <binary 15675B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      CaptionLeft = 80
+      CaptionTop = 16
+      AlphaBlendValue = 255
+    end
+    object PanelLegenda: TPanelImage
+      Left = 14
+      Top = 16
+      Width = 767
+      Height = 214
+      BevelOuter = bvNone
+      Color = clWhite
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlack
+      Font.Height = -19
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentBackground = False
+      ParentFont = False
+      TabOrder = 2
+      Touch.ParentTabletOptions = False
+      Touch.TabletOptions = [toPressAndHold]
+      PictureTopLeft.Data = <binary 343B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureTopCenter.Data = <binary 123B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureTopRight.Data = <binary 341B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureCenterLeft.Data = <binary 123B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureCenterRight.Data = <binary 123B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureBottomLeft.Data = <binary 346B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureBottomCenter.Data = <binary 123B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureBottomRight.Data = <binary 329B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      AlphaValue = 255
+      object ImageAzzurro: TImage
+        Left = 20
+        Top = 163
+        Width = 28
+        Height = 28
+        Picture.Data = <binary 4366B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      end
+      object LabelMarker: TLabel
+        Left = 59
+        Top = 94
+        Width = 367
+        Height = 23
+        Caption = 'Marker posizionati manualmente (tasto F12)'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -19
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
+      object LabelCursore: TLabel
+        Left = 59
+        Top = 58
+        Width = 203
+        Height = 23
+        Caption = 'Cursore (click su asse X)'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -19
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
+      object LabelAutoMarker: TLabel
+        Left = 59
+        Top = 130
+        Width = 590
+        Height = 23
+        Caption = 'Marker generati a seguito di modifica di parametri (mappa e split fuel)'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -19
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
+      object LabelEcuMarker: TLabel
+        Left = 59
+        Top = 166
+        Width = 610
+        Height = 23
+        Caption = 'Marker generati su eventi centralina (extra-iniettate e contributi benzina)'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -19
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentFont = False
+      end
+      object LineaOrizzontale: TShape
+        Left = 0
+        Top = 38
+        Width = 768
+        Height = 2
+        Pen.Color = 2498529
+      end
+      object LabelLegendaMarker: TLabel
+        Left = 282
+        Top = 5
+        Width = 447
+        Height = 29
+        AutoSize = False
+        Caption = 'LEGENDA MARKER'
+        Color = clWhite
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlack
+        Font.Height = -24
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        ParentColor = False
+        ParentFont = False
+        Transparent = False
+        Layout = tlCenter
+      end
+      object ImageVerde: TImage
+        Left = 20
+        Top = 127
+        Width = 28
+        Height = 28
+        Picture.Data = <binary 4368B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      end
+      object ImageRosso: TImage
+        Left = 20
+        Top = 92
+        Width = 28
+        Height = 28
+        Picture.Data = <binary 4361B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      end
+      object ImageArancio: TImage
+        Left = 20
+        Top = 55
+        Width = 28
+        Height = 28
+        Picture.Data = <binary 4365B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      end
+    end
+    object LogoLegenda: TButtonImage
+      Left = 225
+      Top = 3
+      Width = 51
+      Height = 51
+      Cursor = crHandPoint
+      Cancel = True
+      ModalResult = 1
+      TabOrder = 0
+      PictureSelected.Data = <binary 6313B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureNotSelected.Data = <binary 6313B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      PictureFocused.Data = <binary 6313B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>
+      CaptionLeft = 60
+      CaptionTop = 25
+      AlphaBlendValue = 255
+    end
+  end
+end
