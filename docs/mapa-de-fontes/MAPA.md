@@ -41,12 +41,14 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 
 ## Capturas Portmon (tráfego serial real do ProgBase × ECU) e DLL do programa
 - No repo: docs/mapa-de-fontes/drive-inventario.json
+- No repo: tools/baixar_drive.py
+- No repo: tests/test_baixar_drive.py
 - No Drive: PortmonLOGNOVO.zip 6.029.222 bytes (baixável pelo conector): id 1idvIhV4eFGXv2VVNsU0CT6ewdtTBqNFp (pasta ARQUIVOS OMEGAS); versão de 14.170.842 bytes id 1KdnYj1CdHJTU7hHvVP4OMvrigAp58Ien (>10 MB, usar link direto)
 - No Drive: PortmonAUTOCAL.zip 15.150.667 bytes id 1RvXDA5yxU6DoPK14OSLIibYbU9uJ1nBs (>10 MB, usar link direto)
 - No Drive: PortmonAUTOCAL.LOG 162.700.984 bytes id 1KzpWOG6Ou0DRgAeA-cOVOplB8ITB87YM (pasta de outro dono, não percorrida)
 - No Drive: Resources.dll 3.289.600 bytes id 1cqhbK0bCUf4M06GidwBa_UhgIQ6XO_mm (pasta ARQUIVOS OMEGAS)
 - No Drive: firmwares .ple/.pld/.plr/.pln (47) em ARQUIVOS OMEGAS/Landi Renzo Omegas/Firmware; .s19 em Protocolo Landirenzo/firmware
-- **Como obter:** Link direto (sem conector): https://drive.usercontent.google.com/download?id=<ID>&export=download&confirm=t — funciona para arquivos compartilhados por link; conferir tamanho/SHA depois.
+- **Como obter:** python3 tools/baixar_drive.py <ID> --nome ARQ [--bytes N --sha256 H] (idempotente; recusa página de login). Dono liberou 'qualquer um com o link' na pasta OMEGAS em 2026-10-18: TESTADO — PortmonLOGNOVO.zip 14.170.842 B e PortmonAUTOCAL.zip 15.150.667 B baixam (conteúdo: 149.911.521 e 162.700.984 B). A cópia em 'ARQUIVOS OMEGAS' (id 1idvIh…) fica fora da pasta OMEGAS e ainda pede login: use os ids da raiz OMEGAS.
 - **Falta:** Inventário do Drive é MÍNIMO (a paginação do conector repete itens; ver 'nao_listadas' no JSON).
 
 ## Sessões reais (telemetria, eventos, curvas K)

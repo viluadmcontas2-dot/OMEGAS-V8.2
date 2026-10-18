@@ -54,7 +54,9 @@
     {
       "assunto": "Capturas Portmon (tráfego serial real do ProgBase × ECU) e DLL do programa",
       "repo": [
-        "docs/mapa-de-fontes/drive-inventario.json"
+        "docs/mapa-de-fontes/drive-inventario.json",
+        "tools/baixar_drive.py",
+        "tests/test_baixar_drive.py"
       ],
       "drive": [
         "PortmonLOGNOVO.zip 6.029.222 bytes (baixável pelo conector): id 1idvIhV4eFGXv2VVNsU0CT6ewdtTBqNFp (pasta ARQUIVOS OMEGAS); versão de 14.170.842 bytes id 1KdnYj1CdHJTU7hHvVP4OMvrigAp58Ien (>10 MB, usar link direto)",
@@ -63,7 +65,7 @@
         "Resources.dll 3.289.600 bytes id 1cqhbK0bCUf4M06GidwBa_UhgIQ6XO_mm (pasta ARQUIVOS OMEGAS)",
         "firmwares .ple/.pld/.plr/.pln (47) em ARQUIVOS OMEGAS/Landi Renzo Omegas/Firmware; .s19 em Protocolo Landirenzo/firmware"
       ],
-      "como_obter": "Link direto (sem conector): https://drive.usercontent.google.com/download?id=<ID>&export=download&confirm=t — funciona para arquivos compartilhados por link; conferir tamanho/SHA depois.",
+      "como_obter": "python3 tools/baixar_drive.py <ID> --nome ARQ [--bytes N --sha256 H] (idempotente; recusa página de login). Dono liberou 'qualquer um com o link' na pasta OMEGAS em 2026-10-18: TESTADO — PortmonLOGNOVO.zip 14.170.842 B e PortmonAUTOCAL.zip 15.150.667 B baixam (conteúdo: 149.911.521 e 162.700.984 B). A cópia em 'ARQUIVOS OMEGAS' (id 1idvIh…) fica fora da pasta OMEGAS e ainda pede login: use os ids da raiz OMEGAS.",
       "falta": "Inventário do Drive é MÍNIMO (a paginação do conector repete itens; ver 'nao_listadas' no JSON)."
     },
     {
