@@ -1080,6 +1080,21 @@
     }
 
 
+    // Conselho do AutoMatch manual: só muda a nota e o título do botão (sem mexer no layout); quem decide é o dono.
+    renderManualAutoMatchAdvice(button, snapshot) {
+      const note = button.querySelector('.autocal-action-note');
+      if (!note || !ns.ManualAutoMatchAdvice) return;
+      const analysis = this.api?.refinedAnalysis?.() || {};
+      const advice = ns.ManualAutoMatchAdvice.advise({
+        counters: vector(snapshot, 'NUM_BUF_UPD_GAS'),
+        errorBefore: finite(analysis.evidenceErrorBefore),
+        quotaReached: true,
+        enabled: 1,
+      });
+      note.textContent = advice.shortNote;
+      button.title = `${advice.reason} ${advice.basis}`;
+    }
+
     render() {
       const snapshot = this.snapshot || {};
       const state = this.state || {};
@@ -1137,7 +1152,10 @@
       });
       // Disponível só depois dos AutoMatches automáticos da ECU (cota atingida) e com o aprendizado ligado.
       const manualAutoMatch = this.panel?.querySelector('#autocalManualAutoMatch');
-      if (manualAutoMatch) manualAutoMatch.hidden = !(human.autoMatchQuotaReached && human.enabled !== 0);
+      if (manualAutoMatch) {
+        manualAutoMatch.hidden = !(human.autoMatchQuotaReached && human.enabled !== 0);
+        if (!manualAutoMatch.hidden) this.renderManualAutoMatchAdvice(manualAutoMatch, snapshot);
+      }
 
       this.renderReferenceChart(snapshot);
       this.renderBands(snapshot);
