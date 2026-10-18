@@ -99,6 +99,7 @@
           <!-- Rodapé único (dono, 2026-10-11): os botões da Curva K ficam embaixo, à esquerda, ao alcance da mão. -->
           <div class="curve-footbar" role="toolbar" aria-label="Ações da Curva K">
             <button id="curveReadButton" type="button" class="secondary">Reler ECU</button>
+            <button id="curveSmoothButton" type="button" class="secondary" title="Prepara uma curva mais suave para você conferir. Não grava na ECU.">Suavizar</button>
             <button id="curveBackupSave" type="button" class="secondary">Guardar backup</button>
             <select id="curveBackupSelect" aria-label="Backups da Curva K"><option value="">Backups</option></select>
             <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Restaurar backup</button>
@@ -147,6 +148,7 @@
   <script src="core/scheduler.js" defer></script>
   <script src="components/drawers.js" defer></script>
   <script src="screens/map.js" defer></script>
+  <script src="core/curve-smoothing.js" defer></script>
   <script src="screens/curve.js" defer></script>
   <script src="app.js" defer></script>
 </body>
