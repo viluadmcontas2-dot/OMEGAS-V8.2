@@ -657,6 +657,7 @@ class SessionRecorder(
                 "k_write_requested",
                 "k_batch_confirmed",
                 "buffer_write_probe",
+                "autocal_pre_automatch_state",
             )
             if (eventCount % 32L == 0L || critical) writer?.flush()
             if (critical) syncToDisk()
@@ -885,6 +886,9 @@ Tipos principais:
 - ecu_command: toda ESCRITA enviada à ECU (pedido e resposta em hex, ACK, tempo, motivo); ecu_read_summary: resumo das leituras a cada 30 s;
 - autocal_native_snapshot: as 18 bandas de gasolina e GNV (MAP, ms, contagem), MUL_ACT, vetores RV e contadores, a cada
   mudança do AutoMatch;
+- autocal_pre_automatch_state: última leitura das bandas do GNV (contadores, zonas, buffers, MUL_ACT) logo antes de a ECU mudar a contagem de AutoMatch;
+  responde "o que a ECU tinha quando decidiu?" (counterAgeMs = idade da leitura; campo desconhecido = nulo, nunca 0);
+- buffer_write_probe: resultado da sonda de escrita única nos pontos do GNV (só por toque do dono em Ferramentas);
 - export_boundary: ponto imutável usado quando a sessão foi exportada ainda ativa.
 
 Exportação ativa é incremental: cada events_XXXX.jsonl já exportado com sucesso não

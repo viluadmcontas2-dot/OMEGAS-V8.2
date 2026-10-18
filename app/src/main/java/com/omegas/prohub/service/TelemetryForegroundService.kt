@@ -263,6 +263,9 @@ class TelemetryForegroundService : Service() {
                     force = true,
                 )
             },
+            onPreAutoMatchState = { payload ->
+                sessionRecorder.record("autocal_pre_automatch_state", "autocal", payload, force = true)
+            },
             onStateChanged = { stateChanged() },
         )
         learningArchive = LearningArchiveManager(paths, settings, runtime, kWriter, log)
