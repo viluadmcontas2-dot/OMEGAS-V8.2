@@ -521,6 +521,7 @@ class Sessao:
         m._heap, m.mm_topo = self._snap_state
         m.ecu = EcuDono(self.tab_ecu, self.forma)
         m.escritas = []
+        m.caixas = []
         m.efeitos = []
         m.erro = None
         m.instr = 0
@@ -528,11 +529,19 @@ class Sessao:
         m.contagem_stubs = {}
         m._prev = None
 
-    def cenario(self):
+    def cenario(self, lr=False, modelo=None, estado=None):
+        """Volta ao estado inicial. lr=True liga [SD+0x80D] (família "LR"); modelo grava [SD+0x271D];
+        estado = {offset: (tamanho, valor)} grava campos do TStreamDati."""
         if self._snap is None:
             self.salvar()
         self.restaurar()
-        return self.m
+        m = self.m
+        m.w8(m.sd + 0x80D, 1 if lr else 0)
+        if modelo is not None:
+            m.w8(m.sd + 0x271D, modelo)
+        for off, (sz, val) in (estado or {}).items():
+            m.uc.mem_write(m.sd + off, (val & ((1 << (8 * sz)) - 1)).to_bytes(sz, 'little'))
+        return m
 
     # -------------------------------------------------------------- execução de um handler
     def rodar(self, m, endereco, sender, extra=None):
@@ -545,4 +554,4 @@ class Sessao:
         r = m.resultado(ret)
         return {'quadros': r['quadros'], 'efeitos': list(m.efeitos), 'erro': r['erro'], 'instr': r['instrucoes'],
                 'stubs': r['stubs'], 'funcoes': r['funcoes_executadas'],
-                'lidos': list(m.ecu.lidos), 'escritas_ecu': list(m.ecu.escritas_ecu)}
+                'lidos': list(m.ecu.lidos), 'escritas_ecu': list(m.ecu.escritas_ecu), 'caixas': list(m.caixas)}

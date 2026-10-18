@@ -143,3 +143,50 @@ class Emul:
 
     def cache(self, off):
         return self.m.r32(self.m.sd + off)
+
+
+def carregar_tabelas_temperatura(em, tipo=0):
+    """Chama as rotinas originais que preenchem as curvas dos sensores de temperatura (0x430A0C tipo 0..5; 0x430DFC padrao)."""
+    em.m.chamar(0x430A0C, pilha=(em.m.sd, tipo))
+    em.m.chamar(0x430DFC, pilha=(em.m.sd, 0))
+
+
+def _g(m, a):
+    return struct.unpack('<i', bytes(m.uc.mem_read(a, 4)))[0]
+
+
+def tabelas_temperatura(exe, rtti_campos, objs):
+    """Curvas NTC do ProgBase (OBS-COD, executando o original): por tipo 0..5 (tabela A) e a padrao (tabela B)."""
+    out = {'A_0xA5CE64': {}, 'B_0xA5CF2C': None}
+    for tipo in range(6):
+        em = Emul(exe, rtti_campos, objs)
+        em.m.chamar(0x430A0C, pilha=(em.m.sd, tipo))
+        m = em.m
+        n, off, st = _g(m, 0xAECFB8), _g(m, 0xAECFBC), _g(m, 0xAECFC0)
+        out['A_0xA5CE64'][str(tipo)] = dict(pontos=n, temperatura_inicial_C=off, passo_C=st,
+                                            bruto=[_g(m, 0xA5CE64 + 4 * k) for k in range(n)])
+    em = Emul(exe, rtti_campos, objs)
+    em.m.chamar(0x430DFC, pilha=(em.m.sd, 0))
+    m = em.m
+    n, off, st = _g(m, 0xAECFCC), _g(m, 0xAECFD0), _g(m, 0xAECFD4)
+    out['B_0xA5CF2C'] = dict(pontos=n, temperatura_inicial_C=off, passo_C=st, bruto=[_g(m, 0xA5CF2C + 4 * k) for k in range(n)])
+    return out
+
+
+def conversoes_amostra(exe, rtti_campos, objs, temps=(-20, 0, 20, 40, 60, 80, 90, 100, 120)):
+    """Executa os conversores originais 0x42A698/0x42A8F4 (graus -> bruto) e 0x42A52C/0x42A788 (bruto -> graus)."""
+    res = {}
+    for nome, fset, fget in (('A (0x42A698 / 0x42A52C)', 0x42A698, 0x42A52C), ('B (0x42A8F4 / 0x42A788)', 0x42A8F4, 0x42A788)):
+        em = Emul(exe, rtti_campos, objs)
+        carregar_tabelas_temperatura(em, 0)
+        lin = []
+        for t in temps:
+            bits = struct.unpack('<I', struct.pack('<f', float(t)))[0]
+            em.m.erro = None
+            raw = em.m.chamar(fset, pilha=(bits,))
+            import unicorn.x86_const as X
+            bruto = em.m.uc.reg_read(X.UC_X86_REG_EAX)
+            volta = em._chamar_st0(fget, (bruto,))
+            lin.append(dict(graus_C=t, bruto=bruto, graus_de_volta=round(volta, 2), erro=em.m.erro))
+        res[nome] = lin
+    return res
