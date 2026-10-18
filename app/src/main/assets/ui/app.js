@@ -17,6 +17,7 @@
   const router = new ui.Router(store);
   const instances = {};
   const utilities = ui.Drawers ? new ui.Drawers(store, router, api) : null;
+  const advanced = ui.AdvancedPanel ? new ui.AdvancedPanel(store, api) : null;
 
   const routeMeta = {
     map: ['AJUSTE LOCAL', 'Ajuste local'],
@@ -302,6 +303,8 @@
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
     if (route === 'tools' && !toolsEditing()) utilities?.render(updated);
+    if (route === 'tools') advanced?.refresh();
+    else if (advanced?.open) advanced.refresh(); // fora de Ferramentas: só desarma a prévia
   }
 
   let toolsSessionsKey = '';

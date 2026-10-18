@@ -119,7 +119,7 @@
         </section>
 
         <section id="toolsDrawer" class="screen utility-screen" data-screen="tools" aria-labelledby="toolsTitle">
-          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Backup, sessões e saúde do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p></div>
+          <div class="page-intro"><div><small>FERRAMENTAS</small><h2 id="toolsTitle">Backup, sessões e saúde do app</h2></div><p id="toolEnvironment">Detectando ambiente…</p><button id="toolAdvancedToggle" type="button" class="secondary">Avançado</button></div>
           <!-- Sem rolagem (dono, 2026-10-11): os cartões (drawers.js) entram antes deste rodapé; backup embaixo, à esquerda. -->
           <div class="tool-actions" role="toolbar" aria-label="Backup e aprendizado">
             <button id="toolExportData" type="button"><b>Exportar backup completo</b><span>Tudo do app: calibrações salvas, aprendizado e sessões</span></button>
@@ -128,6 +128,7 @@
             <button id="toolAutoRefine" type="button"><b>Refino automático</b><span>Carregando…</span></button>
             <button id="toolBufferProbe" type="button"><b>Testar escrita nos pontos</b><span>1 valor, banda cheia, volta ao original (carro parado)</span></button>
           </div>
+          <section id="toolAdvanced" class="adv-host" data-mode="main" aria-label="Avançado"></section>
         </section>
       </main>
     </section>
@@ -142,11 +143,14 @@
   <script src="core/write-gate.js" defer></script>
   <script src="core/map-fix.js" defer></script>
   <script src="core/usage-meter.js" defer></script>
+  <script src="core/advanced-flags-data.js" defer></script>
+  <script src="core/advanced-flags.js" defer></script>
   <script src="core/native-api.js" defer></script>
   <script src="core/store.js" defer></script>
   <script src="core/router.js" defer></script>
   <script src="core/scheduler.js" defer></script>
   <script src="components/drawers.js" defer></script>
+  <script src="components/advanced.js" defer></script>
   <script src="screens/map.js" defer></script>
   <script src="core/curve-smoothing.js" defer></script>
   <script src="screens/curve.js" defer></script>

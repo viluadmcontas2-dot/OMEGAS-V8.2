@@ -225,6 +225,26 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     fun setAutoRefineMode(mode: String): String =
         activityRef.get()?.serviceOrNull()?.setAutoRefineModeName(mode) ?: unavailable()
 
+    /** Ferramentas > Avançado: parâmetros lidos na sessão (só leitura). Não lido = `read:false`, a tela mostra "—". */
+    @JavascriptInterface
+    fun getAdvancedParams(): String = activityRef.get()?.serviceOrNull()?.advancedParamsJson() ?: unavailable()
+
+    /** Anti-apagão (bit 0x20 de FLAG_CONF3): 1º toque. Lê a ECU e monta a prévia; NÃO grava. */
+    @JavascriptInterface
+    fun prepareAntiStalloFlag(enable: Boolean): String =
+        activityRef.get()?.serviceOrNull()?.prepareAntiStalloFlag(enable) ?: unavailable()
+
+    /** 2º toque (confirmação do dono): só grava com o token da prévia; ACK + leitura de volta. */
+    @JavascriptInterface
+    fun confirmAntiStalloFlag(token: String): String =
+        activityRef.get()?.serviceOrNull()?.confirmAntiStalloFlag(token) ?: unavailable()
+
+    @JavascriptInterface
+    fun cancelAntiStalloFlag(): String = activityRef.get()?.serviceOrNull()?.cancelAntiStalloFlag() ?: unavailable()
+
+    @JavascriptInterface
+    fun getAntiStalloFlagStatus(): String = activityRef.get()?.serviceOrNull()?.antiStalloFlagStatusJson() ?: unavailable()
+
     @JavascriptInterface
     fun getBufferWriteProbeStatus(): String =
         activityRef.get()?.serviceOrNull()?.bufferWriteProbeStatusJson() ?: unavailable()

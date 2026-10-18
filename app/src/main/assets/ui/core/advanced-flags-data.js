@@ -42,10 +42,10 @@
     FLAG_CONF3: { code: 250, bits: [
       { word: 0, mask: 0x0004, kase: 1, control: "CheckTaglioPompaBenzina", kind: "caixa", label: "Corte da bomba de gasolina" },
       { word: 0, mask: 0x0008, kase: 2, control: "CheckPetrolObdConnection", kind: "caixa", label: "Conexão OBD quando roda a gasolina" },
-      { word: 0, mask: 0x0010, kase: 3, control: "CheckCambioConSovrapp", kind: "caixa", label: "Troca com sobreposição (o mesmo bit de «Abilita progressioni»)" },
+      { word: 0, mask: 0x0010, kase: 3, control: "CheckCambioConSovrapp", kind: "caixa", label: "Troca com sobreposição (= progressões)" },
       { word: 0, mask: 0x0020, kase: 4, control: "CheckAntiStallo", kind: "caixa", label: "Anti-apagão (anti-stallo)" },
       { word: 0, mask: 0x0040, kase: 12, control: "CheckDeleteErrorMotoreSpento", kind: "caixa", label: "Apagar erros OBD com o motor desligado" },
-      { word: 0, mask: 0x0080, kase: 5, control: "CheckFlashLubeSuTempAcqua", kind: "caixa", label: "Diagnóstico do sensor de temperatura da água (sistema VP)" },
+      { word: 0, mask: 0x0080, kase: 5, control: "CheckFlashLubeSuTempAcqua", kind: "caixa", label: "Diagnóstico da temperatura da água (sistema VP)" },
       { word: 0, mask: 0x0100, kase: 6, control: "CheckOutDiagInfoSuKLine", kind: "caixa", label: "Nível alto na linha K em erro de diagnóstico" },
       { word: 0, mask: 0x0400, kase: 7, control: "CheckUsaCanPerObd", kind: "caixa", label: "Usar CAN para o OBD" },
       { word: 0, mask: 0x0800, kase: 8, control: "CheckAttivaPompaInRiserva", kind: "caixa", label: "Reativar a bomba na reserva" },

@@ -16,6 +16,14 @@ const { fakeBridge } = require('./_ponte_falsa.cjs');
 // Estados extras que mais crescem, por aba: [nome, toques, seletores que precisam ficar visíveis e inteiros].
 // Toque { dispatch } entrega o clique direto ao elemento (bolinha do gráfico SVG, que o AGORA pode cobrir).
 const EXTRAS = {
+  // Ferramentas > Avançado (dono, 2026-10-18): tela principal e cada aba de "Ver detalhes" também não rolam nem cortam.
+  tools: [
+    ['Avançado', ['#toolAdvancedToggle']],
+    ['Avançado: Ajustes 3', ['#toolAdvancedToggle', '[data-adv-details]']],
+    ['Avançado: Ajustes 2', ['#toolAdvancedToggle', '[data-adv-details]', '[data-adv-tab="FLAG_CONF2"]']],
+    ['Avançado: Ajustes 1', ['#toolAdvancedToggle', '[data-adv-details]', '[data-adv-tab="FLAG_CONF1"]']],
+    ['Avançado: Números', ['#toolAdvancedToggle', '[data-adv-details]', '[data-adv-tab="PARAMS"]']],
+  ],
   autocal: [
     ['Ações avançadas', ['.autocal-reset-menu > summary']],
     // Dono (2026-10-11): ao tocar num ponto, "Reaprender este ponto" aparece inteiro (antes ia para uma 2ª linha cortada).

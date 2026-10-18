@@ -123,6 +123,9 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var kFactor: KFactorManager
     lateinit var bufferProbe: com.omegas.prohub.autocal.BufferWriteProbe
+    /** Ferramentas > Avançado: último param_snapshot da sessão e escrita manual do anti-apagão (só por toque). */
+    val advancedParams = com.omegas.prohub.autocal.AdvancedParamsStore()
+    lateinit var antiStalloWriter: com.omegas.prohub.autocal.AntiStalloFlagWriter
     lateinit var parameterReader: com.omegas.prohub.autocal.EcuParameterReader
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
@@ -257,6 +260,13 @@ class TelemetryForegroundService : Service() {
         bufferProbe = com.omegas.prohub.autocal.BufferWriteProbe(recordingSerial) { type, data ->
             sessionRecorder.record(type, "buffer_probe", data, force = true)
         }
+        antiStalloWriter = com.omegas.prohub.autocal.AntiStalloFlagWriter(
+            serial = recordingSerial,
+            record = { type, data -> sessionRecorder.record(type, "anti_stallo_flag", data, force = true) },
+            onFlagRead = { session, words, trigger ->
+                advancedParams.replaceVector(session, "FLAG_CONF3", com.omegas.prohub.autocal.AntiStalloFlagCore.ADDRESS, words, trigger)
+            },
+        )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = recordingSerial,
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
@@ -342,6 +352,7 @@ class TelemetryForegroundService : Service() {
         try { nativeAutoCal.endUsbSession() } catch (_: Exception) {}
         try { kFactor.close() } catch (_: Exception) {}
         try { bufferProbe.close() } catch (_: Exception) {}
+        try { antiStalloWriter.close() } catch (_: Exception) {}
         autoReadExecutor.shutdownNow()
         try { kWriter.close() } catch (_: Exception) {}
         try { runtime.close() } catch (_: Exception) {}
@@ -498,6 +509,14 @@ class TelemetryForegroundService : Service() {
     fun kFactorStatusJson(): String = kFactor.statusJson()
     fun startBufferWriteProbe(): String = bufferProbe.start().toString()
     fun bufferWriteProbeStatusJson(): String = bufferProbe.statusJson()
+    // Ferramentas > Avançado. Escrita só por toque do dono (prévia + confirmação); nada aqui dispara sozinho.
+    fun advancedParamsJson(): String = advancedParams.json(
+        if (usb.connected) runtime.serialScheduler().currentSessionId() else 0L,
+    ).toString()
+    fun prepareAntiStalloFlag(enable: Boolean): String = antiStalloWriter.prepare(enable).toString()
+    fun confirmAntiStalloFlag(token: String): String = antiStalloWriter.confirm(token).toString()
+    fun cancelAntiStalloFlag(): String = antiStalloWriter.cancel().toString()
+    fun antiStalloFlagStatusJson(): String = antiStalloWriter.statusJson()
     fun kFactorHistoryJson(): String = kFactor.historyJson()
 
     @Synchronized fun saveKFactorBackup(label: String): String =
@@ -1042,7 +1061,10 @@ class TelemetryForegroundService : Service() {
                     // Uma tentativa por conexão; falha não vira repetição periódica.
                     try {
                         val parameters = parameterReader.readOnce("AUTO_START")
-                        if (sameSession()) sessionRecorder.record("param_snapshot", "ecu_params", parameters, force = true)
+                        if (sameSession()) {
+                            sessionRecorder.record("param_snapshot", "ecu_params", parameters, force = true)
+                            advancedParams.update(ticket.session, parameters)
+                        }
                     } catch (error: Exception) {
                         log.add("WARN", "AUTO-READ", "Leitura de parâmetros falhou: ${error.message}")
                     }

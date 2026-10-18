@@ -108,8 +108,9 @@
   function parse(text) { try { return typeof text === 'string' ? JSON.parse(text) : (text || {}); } catch (_) { return {}; } }
 
   function createWriteFlow({ bridge, addHook, onChange }) {
-    const have = !!bridge && ['prepareAntiStalloFlag', 'confirmAntiStalloFlag', 'cancelAntiStalloFlag', 'getAntiStalloFlagStatus']
+    const haveBridge = () => !!bridge && ['prepareAntiStalloFlag', 'confirmAntiStalloFlag', 'cancelAntiStalloFlag', 'getAntiStalloFlagStatus']
       .every(n => typeof bridge[n] === 'function');
+    // A ponte é conferida na hora do uso (pode ser injetada depois da tela).
     const s = { phase: 'idle', plan: null, token: null, message: '', undo: null, fromUndo: false, release: null };
     const changed = () => { if (typeof onChange === 'function') onChange(); };
     const unhook = () => { if (s.release) { s.release(); s.release = null; } };
@@ -195,11 +196,11 @@
         return v.buttonLabel || (bitOn(entry) === true ? 'Desligar anti-apagão' : 'Ligar anti-apagão');
       },
       canTap(entry, usbConnected) {
-        if (!have || usbConnected !== true || s.phase === 'preparing' || s.phase === 'writing') return false;
+        if (!haveBridge() || usbConnected !== true || s.phase === 'preparing' || s.phase === 'writing') return false;
         return s.phase === 'preview' ? !s.fromUndo : bitOn(entry) !== null;
       },
       tapSwitch(entry, usbConnected) {
-        if (!have || usbConnected !== true) return;
+        if (!haveBridge() || usbConnected !== true) return;
         if (s.phase === 'preview') { if (s.fromUndo) cancel(); else confirm(); return; }
         if (s.phase === 'preparing' || s.phase === 'writing') return;
         const on = bitOn(entry);
@@ -208,7 +209,7 @@
         prepare(!on);
       },
       tapUndo() {
-        if (!have) return;
+        if (!haveBridge()) return;
         if (s.phase === 'preview' && s.fromUndo) { confirm(); return; }
         if (s.phase === 'preparing' || s.phase === 'writing' || !s.undo) return;
         s.fromUndo = true;
@@ -224,7 +225,7 @@
       },
       /** Pega o "desfazer" já guardado no nativo (a tela pode ter sido recriada). */
       adopt() {
-        if (!have || s.undo) return;
+        if (!haveBridge() || s.undo) return;
         const st = parse(bridge.getAntiStalloFlagStatus());
         if (st.undo && st.undo.available) { s.undo = { available: true, enable: st.undo.enable }; changed(); }
       },

@@ -11,7 +11,7 @@ O que é STUB (não executa código do .exe): as chamadas da KERNEL32 (WriteFile
 preenchidas na IAT) e o próprio ECU (eco + ACK '53 00 53'). Os objetos (TStreamDati, TAebVector, conexão,
 protocolo, porta, lock) são montados na heap emulada com os campos mínimos lidos pelo código; cada campo
 está documentado em docs/evidence/2026-10-18-cpu-setter-original.md. Nada do .exe é modificado.
-Determinístico. Precisa de unicorn, capstone-free (só pefile e unicorn)."""
+Determinístico. Precisa de unicorn e pefile (capstone não é usado)."""
 import argparse
 import hashlib
 import json
