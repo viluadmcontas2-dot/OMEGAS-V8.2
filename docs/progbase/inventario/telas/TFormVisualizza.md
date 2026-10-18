@@ -38,56 +38,28 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `MenuTerminaDrtClick` (sem evento no DFM) | 0x0050DB50 | 184 | INFERIDO | chama APIs do Windows DrawMenuBar; toca SaveDialogDrt |  | DrawMenuBar |  |
 | `Timer1Timer` | 0x0050B408 | 7653 | INFERIDO | chama APIs do Windows GetTickCount; chama TStreamDati.TimerIOTimer; toca ImageBenzOff, ImageBenzOn, ImageCutoffOff, ImageCutoffOn, ImageGasOff, ImageGasOn, ImageSottoChiaveOff, ImageSottoChiaveOn |  | GetTickCount |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ButtonCommutatoreClick` (0x0050DD14):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `MenuCominciaDrtClick` (0x0050D86C):
-  - sub_40487C (45 B)
-  - sub_4E6484 (48 B)
-  - sub_4E64B4 (48 B)
-  - sub_4E64E4 (48 B)
-  - sub_50D524 (162 B)
+  - (+4 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `MenuGraficoClick` (0x0050DC08):
-  - sub_40487C (45 B)
   - sub_4DF6FC (22084 B): textos ACTIONESCI,ACTIONSTAMPA,BUTTONANNULLA,BUTTONOK; APIs DeleteMenu,GetSystemMenu,GetSystemMetrics; chama TAboutBox.Create,TTranslatorExt::GetString
-  -   sub_4047FC (125 B)
-  -   sub_4E4EDF (482 B)
-  -   sub_4E4F0B (438 B)
-  -   sub_4E4FDF (226 B)
-  -   sub_4E5040 (129 B)
-  -   sub_4E50C4 (61 B)
-  -   sub_4E5194 (46 B)
-  -   sub_4E51C4 (69 B)
-  -   sub_4E520C (83 B)
-  -   sub_4E5260 (666 B)
-  - … +38 (ver telas.json)
+  - (+47 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `MenuTerminaDrtClick` (0x0050DB50):
-  - sub_40487C (45 B)
-  - sub_50D524 (162 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `Timer1Timer` (0x0050B408):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_404C94 (59 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_40584C (57 B)
-  - sub_42A52C (358 B)
-  - sub_42A788 (358 B)
-  - sub_42CFB8 (839 B)
-  - sub_4339B8 (72 B)
-  - sub_433A00 (75 B)
-  - sub_433FFC (14 B)
-  - … +13 (ver telas.json)
+  - (+19 subfunções sem fatos diretos ou fora da lista; telas.json)

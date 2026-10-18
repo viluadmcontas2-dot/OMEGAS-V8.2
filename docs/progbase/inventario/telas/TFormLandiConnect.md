@@ -45,31 +45,24 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `FormKeyPress` | 0x004EC240 | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
 | `TimerUpdateTimer` | 0x004EC860 | 86 | INFERIDO | chama TAebVector::GetEcuData |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `CheckCambioAutomaticoClick` (0x004ED8FC):
-  - sub_42E754 (385 B)
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckEnableLandiConnectClick` (0x004ED424):
-  - sub_42E754 (385 B)
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridInjrTOfsTblDblClick` (0x004EC8F8):
-  - sub_4ECD9C (1656 B): chama TAebMatrix::GetDouble,TAebMatrix::SetDouble,TAebVector::GetDouble,TAebVector::SetDouble; toca DrawGridInjrTOfsTbl
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_40487C (45 B)
+  - sub_4ECD9C (1656 B): chama TAebMatrix::GetDouble,TAebMatrix::SetDouble,TAebVector::GetDouble,TAebVector::SetDouble
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridInjrTOfsTblDrawCell` (0x004EC96C):
-  - sub_40487C (45 B)
-  - sub_42E754 (385 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridInjrTOfsTblKeyPress` (0x004EC95C):
-  - sub_4ECD9C (1656 B): chama TAebMatrix::GetDouble,TAebMatrix::SetDouble,TAebVector::GetDouble,TAebVector::SetDouble; toca DrawGridInjrTOfsTbl
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_40487C (45 B)
+  - sub_4ECD9C (1656 B): chama TAebMatrix::GetDouble,TAebMatrix::SetDouble,TAebVector::GetDouble,TAebVector::SetDouble
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TimerUpdateTimer` (0x004EC860):
-  - sub_4EC250 (1549 B): chama TAebNumber::GetInt; toca ImageLedGreen0,ImageLedGreen1,ImageLedGreen2,ImageLedGreen3
-  -   sub_42E754 (385 B)
+  - sub_4EC250 (1549 B): chama TAebNumber::GetInt
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)

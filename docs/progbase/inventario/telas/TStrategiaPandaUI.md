@@ -21,11 +21,14 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `chk_SP_EN_STRATEGIA_MINIMOClick` | 0x00522E08 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
 | `chk_SP_EN_STRATEGIA_RIC_CLIMAClick` | 0x00522E10 | 6 | INFERIDO | sem fatos diretos extraíveis (6 bytes; chama 1 funções sem nome) |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `chk_SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMAClick` (0x00522E18):
-  - sub_522E20 (1772 B): chama TValueEditEx::SetVisible; toca chk_SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMA,chk_SP_EN_STRATEGIA_MINIMO,chk_SP_EN_STRATEGIA_RIC_CLIMA,edit_SP_SogliaAriaCondizionataON
+  - sub_522E20 (1772 B): chama TValueEditEx::SetVisible
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `chk_SP_EN_STRATEGIA_MINIMOClick` (0x00522E08):
-  - sub_522E20 (1772 B): chama TValueEditEx::SetVisible; toca chk_SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMA,chk_SP_EN_STRATEGIA_MINIMO,chk_SP_EN_STRATEGIA_RIC_CLIMA,edit_SP_SogliaAriaCondizionataON
+  - sub_522E20 (1772 B): chama TValueEditEx::SetVisible
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `chk_SP_EN_STRATEGIA_RIC_CLIMAClick` (0x00522E10):
-  - sub_522E20 (1772 B): chama TValueEditEx::SetVisible; toca chk_SP_EN_STRATEGIA_EMU_SENS_PRESS_CLIMA,chk_SP_EN_STRATEGIA_MINIMO,chk_SP_EN_STRATEGIA_RIC_CLIMA,edit_SP_SogliaAriaCondizionataON
+  - sub_522E20 (1772 B): chama TValueEditEx::SetVisible
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)

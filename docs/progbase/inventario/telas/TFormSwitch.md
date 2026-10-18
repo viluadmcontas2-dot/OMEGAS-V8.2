@@ -31,36 +31,16 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `TrackBarLedChange` | 0x00412CEC | 338 | INFERIDO | chama APIs do Windows GetKeyState; toca EditLed, TrackBarLed |  | GetKeyState |  |
 | `TrackBarLedEnter` | 0x00412CD8 | 19 | INFERIDO | sem fatos diretos extraíveis (19 bytes; chama 0 funções sem nome) |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ComboBuzzerKeyPress` (0x00412E5C):
   - sub_412FBC (254 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditSwitchEnter` (0x00412B38):
-  - sub_96B924 (79 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditSwitchKeyPress` (0x00412B6C):
-  - sub_40487C (45 B)
   - sub_412FBC (254 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  -     sub_982174 (25 B)
-  -     sub_982198 (25 B)
-  - … +1 (ver telas.json)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TrackBarLedChange` (0x00412CEC):
-  - sub_40487C (45 B)
   - sub_412FBC (254 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
-  - sub_96B97C (174 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  -     sub_982174 (25 B)
-  -     sub_982198 (25 B)
-  -     sub_9821B8 (25 B)
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)

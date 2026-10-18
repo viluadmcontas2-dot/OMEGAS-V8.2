@@ -19,8 +19,3 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | Handler | Endereço | Bytes | Evidência | O que faz | Textos diretos | APIs diretas | Indireto (via subfunções) |
 |---|---|---:|---|---|---|---|---|
 | `FormShow` | 0x0041199C | 718 | INFERIDO | usa textos MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED, MESSUPDATECODE; chama TTranslatorExt::GetString; toca ButtonLater, ButtonUpgrade, LabelCodice, LabelValidita | MESSBUTTLATER, MESSBUTTOK, MESSCHARGEKEY, MESSCONTACT, MESSEXPIRED, MESSUPDATECODE |  |  |
-
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
-
-- `FormShow` (0x0041199C):
-  - sub_40487C (45 B)

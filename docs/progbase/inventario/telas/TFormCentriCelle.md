@@ -22,19 +22,10 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `ButtonOkClick` | 0x00413524 | 509 | INFERIDO | toca EditRifGiri0, NumEditRifMap0 |  |  |  |
 | `FormShow` | 0x00413730 | 100 | INFERIDO | sem fatos diretos extraíveis (100 bytes; chama 3 funções sem nome) |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ButtonOkClick` (0x00413524):
-  - sub_40487C (45 B)
   - sub_42F768 (92 B): chama TAebVector::SetEcuData
   - sub_42FBAC (142 B): chama TAebVector::SetEcuData
-  - sub_96B924 (79 B)
-  - sub_96BA2C (343 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  - … +4 (ver telas.json)
+  - (+12 subfunções sem fatos diretos ou fora da lista; telas.json)

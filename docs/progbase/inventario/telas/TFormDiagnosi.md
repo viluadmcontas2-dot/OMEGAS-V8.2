@@ -88,162 +88,98 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `TimerTimer` | 0x004D4B20 | 186 | INFERIDO | chama APIs do Windows GetTickCount, Sleep; chama TAebProtocol::Connect, TAebProtocol::DisableErrorHandling, TAebProtocol::EnableErrorHandling, TAebProtocol::IsConnect, TStreamDati.TimerIOTimer |  | GetTickCount, Sleep |  |
 | `TimerUpdateTimer` | 0x004D6454 | 573 | INFERIDO | toca ComboAzione, EditTempAlta, EditTempAltaMot, EditTempBassa, EditTempBassaMot, ListDiagnosi, TimerUpdate |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ButtonAzzeraErroriClick` (0x004D6694):
-  - sub_40487C (45 B)
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_4318F8 (244 B): chama TAebVector::SetEcuData; toca MenuCopia,MenuIncolla
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_48944C (154 B)
-  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ComboAzione,LabelOkA,LabelOkB,LabelOkC
-  -   sub_42B224 (15 B)
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  - sub_4318F8 (244 B): chama TAebVector::SetEcuData
+  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - … +10 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -   sub_431C38 (50 B): chama TAebVector::GetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonAzzeraTempiClick` (0x004D6ADC):
-  - sub_40487C (45 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonResetFFClick` (0x004D8360):
-  - sub_51EE7C (95 B)
   -   sub_51ECAC (29 B): chama TAebNumber::SetInt
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckListBoxFFClickCheck` (0x004D82C0):
   - sub_4319EC (84 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckSwitchOnDiagnosisClick` (0x004D7E48):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboAzioneChange` (0x004D736C):
-  - sub_431A5C (153 B): chama TAebMatrix::SetEcuData; toca Image1
-  - sub_48944C (154 B)
-  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ComboAzione,LabelOkA,LabelOkB,LabelOkC
-  -   sub_42B224 (15 B)
+  - sub_431A5C (153 B): chama TAebMatrix::SetEcuData
+  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4047FC (125 B)
-  -   sub_40487C (45 B)
-  -   sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
+  -   sub_431878 (110 B): chama TAebVector::GetEcuData
   -   sub_431C38 (50 B): chama TAebVector::GetEcuData
-  -   sub_434CC0 (834 B)
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - … +5 (ver telas.json)
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboAzioneEnter` (0x004D74A8):
-  - sub_48944C (154 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboAzioneKeyDown` (0x004D7164):
-  - sub_48944C (154 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditTempBassaMotKeyPress` (0x004D752C):
-  - sub_431AF8 (124 B)
   - sub_431B7C (186 B): chama TAebVector::SetEcuData
-  - sub_48944C (154 B)
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  - … +9 (ver telas.json)
+  - (+18 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormActivate` (0x004CD6A8):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_42DF14 (599 B)
-  - sub_42E754 (385 B)
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_431A40 (27 B)
-  - sub_431AF8 (124 B)
-  - sub_43400C (7 B)
-  - sub_43478C (34 B)
-  - sub_434B10 (34 B)
-  - sub_434CC0 (834 B)
-  - … +26 (ver telas.json)
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  - sub_4D7E78 (1045 B): textos FF_TAB_EN,FF_TAB_VIEW; chama TTranslatorExt::GetString
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -   sub_51DB24 (4247 B): textos FF_CANSTATUS_OBD,FF_ECUFUELFUNCTIONING,FF_EV1,FF_EV2; chama TTranslatorExt::GetString
+  - (+30 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormClose` (0x004D1B18):
-  - sub_4381F4 (7 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ListDiagnosiChange` (0x004D6E38):
-  - sub_40487C (45 B)
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_4318F8 (244 B): chama TAebVector::SetEcuData; toca MenuCopia,MenuIncolla
-  - sub_48944C (154 B)
-  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ComboAzione,LabelOkA,LabelOkB,LabelOkC
-  -   sub_42B224 (15 B)
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  - sub_4318F8 (244 B): chama TAebVector::SetEcuData
+  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4047FC (125 B)
   -   sub_431C38 (50 B): chama TAebVector::GetEcuData
-  -   sub_434CC0 (834 B)
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - … +5 (ver telas.json)
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ListDiagnosiKeyDown` (0x004D6CB8):
-  - sub_48944C (154 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ListDiagnosiKeyPress` (0x004D6C54):
-  - sub_48944C (154 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `PanelOffClick` (0x004D7664):
-  - sub_42CFB8 (839 B)
-  - sub_43481C (34 B)
-  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ComboAzione,LabelOkA,LabelOkB,LabelOkC
-  -   sub_4047FC (125 B)
-  -   sub_40487C (45 B)
-  -   sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
+  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
+  -   sub_431878 (110 B): chama TAebVector::GetEcuData
   -   sub_431C38 (50 B): chama TAebVector::GetEcuData
-  -   sub_434CC0 (834 B)
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_48944C (154 B)
-  -     sub_42A788 (358 B)
-  -     sub_433FCC (47 B)
-  - … +3 (ver telas.json)
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `PanelOnClick` (0x004D7774):
-  - sub_42CFB8 (839 B)
-  - sub_43481C (34 B)
-  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ComboAzione,LabelOkA,LabelOkB,LabelOkC
-  -   sub_4047FC (125 B)
-  -   sub_40487C (45 B)
-  -   sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
+  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
+  -   sub_431878 (110 B): chama TAebVector::GetEcuData
   -   sub_431C38 (50 B): chama TAebVector::GetEcuData
-  -   sub_434CC0 (834 B)
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_48944C (154 B)
-  -     sub_42A788 (358 B)
-  -     sub_433FCC (47 B)
-  - … +3 (ver telas.json)
-- `PanelTestOffClick` (0x004D7C78):
-  - sub_40487C (45 B)
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `PanelTestOnClick` (0x004D7888):
-  - sub_40487C (45 B)
-  - sub_4381FC (6 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TimerTempiTimer` (0x004D4BDC):
-  - sub_40487C (45 B)
-  - sub_433FFC (14 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TimerTimer` (0x004D4B20):
-  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ComboAzione,LabelOkA,LabelOkB,LabelOkC
-  - sub_4D8290 (48 B)
-  -   sub_4047FC (125 B)
-  -   sub_40487C (45 B)
-  -   sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
+  - sub_4D1C88 (11926 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
+  -   sub_431878 (110 B): chama TAebVector::GetEcuData
   -   sub_431C38 (50 B): chama TAebVector::GetEcuData
-  -   sub_434CC0 (834 B)
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_48944C (154 B)
-  -   sub_51ED04 (373 B)
-  -     sub_42A788 (358 B)
-  -     sub_433FCC (47 B)
-  - … +5 (ver telas.json)
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TimerUpdateTimer` (0x004D6454):
-  - sub_48944C (154 B)
-  - sub_96C73C (114 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)

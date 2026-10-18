@@ -773,2439 +773,1289 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `TimerDatiTimer` | 0x004A307C | 1586 | INFERIDO | chama TStreamDati.TimerIOTimer; toca LabApMot, LabApMot2, LabApMot2Benz, LabApMotBenz, LabContribBenz, LabDeltaGiri, LabGiri, LabLambda |  |  |  |
 | `chkRitardoPassaggioInMinutiClick` | 0x004CB300 | 39 | INFERIDO | toca chkRitardoPassaggioInMinuti |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ButtonAccettaClick` (0x004A8D74):
-  - sub_40487C (45 B)
   - sub_4306C0 (116 B): chama TAebVector::SetEcuData
-  - sub_434440 (21 B)
-  - sub_96B924 (79 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+4 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonCommutatoreClick` (0x004B1178):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonDoLevelClick` (0x004C5C30):
-  - sub_40487C (45 B)
-  - sub_434440 (21 B)
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96B97C (174 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - … +14 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonMaxLevelClick` (0x004C5ADC):
-  - sub_40487C (45 B)
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  - … +3 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonMinLevelClick` (0x004C598C):
-  - sub_40487C (45 B)
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  - … +3 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonModificaInjClick` (0x004BC47C):
-  - sub_40487C (45 B)
-  - sub_433AEC (26 B)
-  - sub_433B08 (144 B): chama TAebMatrix::SetEcuData; toca EditRifSupCalda
-  -   sub_42B224 (15 B)
+  - sub_433B08 (144 B): chama TAebMatrix::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonModificaRifTarClick` (0x004B10C8):
-  - sub_49F170 (277 B)
-  -   sub_42ED90 (36 B)
-  -   sub_42EE14 (100 B)
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
-  -     sub_433FFC (14 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonNuoviParametriClick` (0x004B9000):
-  - sub_40487C (45 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonRicercaParametriClick` (0x004AF3A8):
-  - sub_40487C (45 B)
-  - sub_42A8F4 (235 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_4B0E45 (88 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonSequenceAcquisitionClick` (0x004A62A8):
-  - sub_40487C (45 B)
-  - sub_96C73C (114 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonSequenzaInjClick` (0x004BC2DC):
-  - sub_40487C (45 B)
   - sub_434218 (261 B): chama TAebProtocol::GetComFail,TAebVector::GetEcuData
   - sub_434320 (285 B): chama TAebVector::GetEcuData
-  - sub_4BC72C (297 B)
-  -   sub_433B08 (144 B): chama TAebMatrix::SetEcuData; toca EditRifSupCalda
-  -   sub_4048AC (68 B)
-  -   sub_433AEC (26 B)
-  -   sub_4BC58C (415 B)
-  -     sub_42B224 (15 B)
+  -   sub_433B08 (144 B): chama TAebMatrix::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_43400C (7 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonSwitchSettingsClick` (0x004C90E0):
-  - sub_40487C (45 B)
-  - sub_412430 (1643 B): textos MESSERRORGIRISWITCHCALIBRATION,SWITCHSETTINGSBUTTONEXIT,SWITCHSETTINGSCAPTION,SWITCHSETTINGSLABELBUZZER; APIs Sleep; chama TAboutBox.Create,TAebProtocol::SendCommand,TTranslatorExt::GetString; toca LabelV2,MenuComunicazioneSerialeCostruita,PageControl,TabCambio
-  - sub_434AC8 (34 B)
-  -   sub_96B924 (79 B)
-  -   sub_96B97C (174 B)
-  -     sub_4080D4 (67 B)
-  -     sub_96BD74 (19 B)
-  -     sub_981F2C (447 B)
+  - sub_412430 (1643 B): textos MESSERRORGIRISWITCHCALIBRATION,SWITCHSETTINGSBUTTONEXIT,SWITCHSETTINGSCAPTION,SWITCHSETTINGSLABELBUZZER; APIs Sleep; chama TAboutBox.Create,TAebProtocol::SendCommand,TTranslatorExt::GetString
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonTaraturaClick` (0x004ACFC0):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckAdattaBenzinaClick` (0x004C0E34):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckAdattativitaClick` (0x004C0D50):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckAlimentazioneClick` (0x004C6780):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_4318F8 (244 B): chama TAebVector::SetEcuData; toca MenuCopia,MenuIncolla
-  - sub_434BA0 (34 B)
-  - sub_4A9DC4 (2036 B): toca CheckAlimentazione,CheckElettrovalvole,EditAnticipoEV1,EditAnticipoEV2
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  - sub_4318F8 (244 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +41 (ver telas.json)
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  - (+38 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckAntiStalloClick` (0x004C982C):
-  - sub_42E754 (385 B)
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  - sub_434AEC (34 B)
-  - sub_96C73C (114 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckAttivaPompaInRiservaClick` (0x004CB030):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckAzzeraBlackListObdClick` (0x004C1ADC):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckAzzeraErroriObdClick` (0x004C1AAC):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckBoxEV2NotConnectedClick` (0x004C6710):
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_4318F8 (244 B): chama TAebVector::SetEcuData; toca MenuCopia,MenuIncolla
-  -   sub_42B224 (15 B)
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  - sub_4318F8 (244 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckBoxEnDiagDtcPowertrainClick` (0x004CB358):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckBoxEnableExtLedKLineClick` (0x004CB328):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckCambioConSovrappClick` (0x004C8B04):
-  - sub_42E754 (385 B)
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckConsumometroClick` (0x004C1108):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
   -   sub_431C9C (105 B): chama TAebVector::SetEcuData
-  - … +21 (ver telas.json)
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckContributiClick` (0x004C9C1C):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_42DF14 (599 B)
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_489034 (110 B)
-  - sub_4893D4 (60 B)
-  - sub_489410 (60 B)
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckDeleteErrorMotoreSpentoClick` (0x004C1BA4):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckDisabilitaCommutatoreClick` (0x004C1C04):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckElettrovalvoleClick` (0x004C5048):
-  - sub_40487C (45 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_42E754 (385 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_4A9DC4 (2036 B): toca CheckAlimentazione,CheckElettrovalvole,EditAnticipoEV1,EditAnticipoEV2
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
-  - … +46 (ver telas.json)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+42 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckEnabledDhlpDiagnosisClick` (0x004C975C):
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_4318F8 (244 B): chama TAebVector::SetEcuData; toca MenuCopia,MenuIncolla
-  -   sub_42B224 (15 B)
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  - sub_4318F8 (244 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckFlashLubeClick` (0x004C88AC):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - … +3 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckFlexFuelClick` (0x004C2C9C):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckGiriAlberoCammeClick` (0x004C850C):
   - sub_42B834 (160 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96B97C (174 B)
-  - sub_96C73C (114 B)
   -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
-  - … +17 (ver telas.json)
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4382D4 (119 B): APIs GetTickCount,Sleep; chama TAebNumber::GetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckGiriRuotaFonicaClick` (0x004C86D4):
   - sub_42B834 (160 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96B97C (174 B)
-  - sub_96C73C (114 B)
   -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
-  - … +17 (ver telas.json)
-- `CheckIncrementoMaxCorrenteClick` (0x004C721C):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
-  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-- `CheckInibisciEmulazioneClick` (0x004B9280):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
-  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
-  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
-- `CheckIniezioneContinuaClick` (0x004BC858):
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96BB88 (321 B)
-  - sub_96C73C (114 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_96BD74 (19 B)
-  - … +12 (ver telas.json)
-- `CheckInjAcquisitionClick` (0x004A61AC):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_96C73C (114 B)
-  -   sub_42B224 (15 B)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4382D4 (119 B): APIs GetTickCount,Sleep; chama TAebNumber::GetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckIncrementoMaxCorrenteClick` (0x004C721C):
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-- `CheckIstantaneoClick` (0x004BFA68):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckInibisciEmulazioneClick` (0x004B9280):
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
   -   sub_431C9C (105 B): chama TAebVector::SetEcuData
-  - … +21 (ver telas.json)
-- `CheckMapConfiguratoClick` (0x004BCB40):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_4AF018 (840 B): toca ButtonRicercaParametri,CheckMapConfigurato,EditPressRid,EditSogliaMap
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckIniezioneContinuaClick` (0x004BC858):
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckInjAcquisitionClick` (0x004A61AC):
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckIstantaneoClick` (0x004BFA68):
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +27 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckMapConfiguratoClick` (0x004BCB40):
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+27 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckObdClick` (0x004CAE4C):
-  - sub_434568 (20 B)
   - sub_43457C (274 B): chama TAebProtocol::Connect,TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebProtocol::SendCommand
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckOutDiagInfoSuKLineClick` (0x004C1B74):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckPartenzaGasCaldoClick` (0x004C4FB8):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_96C73C (114 B)
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckParzializzaClick` (0x004BFAA0):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
   -   sub_431C9C (105 B): chama TAebVector::SetEcuData
-  - … +21 (ver telas.json)
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckPassPRailClick` (0x004BCB10):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
   -   sub_431C9C (105 B): chama TAebVector::SetEcuData
-  - … +21 (ver telas.json)
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckPetrolObdConnectionClick` (0x004C1B0C):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckProgressioniClick` (0x004CA544):
-  - sub_42CFB8 (839 B)
-  - sub_42E754 (385 B)
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  - sub_43481C (34 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96BB88 (321 B)
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  - … +11 (ver telas.json)
+  - (+19 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckRiconoscimentoPienoClick` (0x004CB12C):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckRiscaldamentoClick` (0x004C6A64):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_42DF14 (599 B)
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_432CAC (16 B)
-  - sub_434840 (34 B)
-  - sub_434A80 (34 B)
-  - sub_489034 (110 B)
-  - sub_489398 (60 B)
-  - sub_4893D4 (60 B)
-  - … +6 (ver telas.json)
-- `CheckRitornoBenzinaClick` (0x004A9484):
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96B97C (174 B)
-  - sub_96C73C (114 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
-  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4080D4 (67 B)
-  - … +13 (ver telas.json)
-- `CheckSegnaleGiriClick` (0x004C5494):
-  - sub_40487C (45 B)
-  - sub_42B834 (160 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
-  - sub_42CFB8 (839 B)
-  - sub_42DF14 (599 B)
-  - sub_42E754 (385 B)
-  - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  - sub_4310E8 (14 B)
-  - sub_4310F8 (103 B): chama TAebNumber::SetEcuData
-  - sub_4348AC (34 B)
-  - sub_4348F4 (34 B)
-  - sub_434AA4 (34 B)
-  - sub_434CC0 (834 B)
-  - … +16 (ver telas.json)
-- `CheckSequenzaInjClick` (0x004BC008):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  - sub_433AEC (26 B)
-  - sub_43414C (110 B)
-  - sub_4341BC (89 B)
-  - sub_43481C (34 B)
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  - … +29 (ver telas.json)
-- `CheckSpegniBuzzerClick` (0x004C1C34):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+12 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckRitornoBenzinaClick` (0x004A9484):
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckSegnaleGiriClick` (0x004C5494):
+  - sub_42B834 (160 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
+  - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
+  - sub_4310F8 (103 B): chama TAebNumber::SetEcuData
+  -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4382D4 (119 B): APIs GetTickCount,Sleep; chama TAebNumber::GetEcuData
+  - (+18 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckSequenzaInjClick` (0x004BC008):
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
+  - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  - (+29 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `CheckSpegniBuzzerClick` (0x004C1C34):
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckSplitFuelClick` (0x004C1C64):
-  - sub_42CFB8 (839 B)
-  - sub_42DF14 (599 B)
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_42FFC8 (16 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   - sub_432A74 (100 B): chama TAebVector::SetEcuData
   - sub_432B1C (184 B): chama TAebVector::SetEcuData
-  - sub_4A1880 (80 B)
-  - sub_96C73C (114 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_432AD8 (47 B)
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckStartAndStopClick` (0x004C2BD8):
-  - sub_40487C (45 B)
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckTagliaExtraIniettateClick` (0x004C1BD4):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckTaglioPompaBenzinaClick` (0x004C8B68):
-  - sub_40487C (45 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_42E754 (385 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_4318F8 (244 B): chama TAebVector::SetEcuData; toca MenuCopia,MenuIncolla
-  - sub_43400C (7 B)
-  - sub_434A14 (34 B)
-  - sub_434A38 (34 B)
-  - sub_434BA0 (34 B)
-  - sub_434BC4 (34 B)
-  - … +47 (ver telas.json)
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  - sub_4318F8 (244 B): chama TAebVector::SetEcuData
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  - (+43 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckTempAcquaClick` (0x004B8B30):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_4318F8 (244 B): chama TAebVector::SetEcuData; toca MenuCopia,MenuIncolla
-  - sub_434548 (14 B)
-  - sub_96C73C (114 B)
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  - sub_4318F8 (244 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +26 (ver telas.json)
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  - (+26 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckTempMotoreClick` (0x004B8E88):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_96C73C (114 B)
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckTempRiduttoreClick` (0x004B8E10):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_96C73C (114 B)
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  - … +23 (ver telas.json)
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+23 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckUsaCanPerObdClick` (0x004C1B3C):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckValvetronikClick` (0x004C2B14):
-  - sub_40487C (45 B)
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckboxPreheatAsyncModeClick` (0x004C72D0):
-  - sub_42DF14 (599 B)
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_432CAC (16 B)
-  - sub_432CBC (84 B): chama TAebVector::SetEcuData; toca LabelTinjBenzPerc
-  - sub_48944C (154 B)
-  - sub_96C73C (114 B)
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
+  - sub_432CBC (84 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckboxPreheatOnlyAfterSleepModeClick` (0x004C724C):
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
-  - sub_432CAC (16 B)
-  - sub_432CBC (84 B): chama TAebVector::SetEcuData; toca LabelTinjBenzPerc
-  -   sub_42B224 (15 B)
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
+  - sub_432CBC (84 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboAccensioneKeyPress` (0x004BA230):
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -     sub_42B224 (15 B)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboCambioKeyPress` (0x004A8FB8):
-  - sub_40487C (45 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_43074C (41 B)
-  - sub_4A90B8 (957 B): toca EditCicchetto,EditCicchettoInj,EditCicchettoNum,EditCicchettoRpm
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
-  - … +37 (ver telas.json)
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+36 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboCarburanteKeyPress` (0x004B96DC):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_42FFC8 (16 B)
-  - sub_43362C (14 B)
-  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  - sub_48944C (154 B)
-  - sub_49F170 (277 B)
-  - sub_49F804 (216 B)
-  - sub_4A0378 (199 B)
-  - sub_4A0820 (199 B)
-  - sub_4A1458 (80 B)
-  - … +54 (ver telas.json)
-- `ComboCilindriKeyPress` (0x004BA2EC):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_43414C (110 B)
-  - sub_4341BC (89 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
-  - … +24 (ver telas.json)
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  - (+51 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `ComboCilindriKeyPress` (0x004BA2EC):
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_433B08 (144 B): chama TAebMatrix::SetEcuData
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+24 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboKKeyPress` (0x004C4880):
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  -     sub_42B224 (15 B)
-  - … +2 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboNumeroSondeKeyPress` (0x004A9664):
   - sub_433938 (128 B): chama TAebVector::SetEcuData
-  - sub_4A96A4 (563 B): toca EditCorrBancata2,LabApMot,LabApMot2,LabApMot2Benz
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_433918 (29 B)
-  -   sub_434530 (21 B)
-  -   sub_434CC0 (834 B)
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_96B97C (174 B)
-  -   sub_96C73C (114 B)
-  -     sub_42A788 (358 B)
-  - … +7 (ver telas.json)
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+15 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboPressioneKeyPress` (0x004AE420):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_4310E8 (14 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   - sub_4310F8 (103 B): chama TAebNumber::SetEcuData
-  - sub_4AF018 (840 B): toca ButtonRicercaParametri,CheckMapConfigurato,EditPressRid,EditSogliaMap
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +30 (ver telas.json)
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+29 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboSegnaleGiriKeyPress` (0x004ACDC8):
   - sub_43109C (73 B): chama TAebNumber::SetEcuData
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96BB88 (321 B)
-  - sub_96C73C (114 B)
-  -   sub_42B224 (15 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +7 (ver telas.json)
+  - (+15 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboSensoreKeyPress` (0x004A8C60):
-  - sub_4304F0 (411 B): chama TAebNumber::SetEcuData; toca EditCorrBancata2
-  - sub_4A8CB8 (186 B): toca EditLivello1,EditLivello2,EditLivello3,EditLivello4
-  -   sub_42B224 (15 B)
-  -   sub_42CFB8 (839 B)
+  - sub_4304F0 (411 B): chama TAebNumber::SetEcuData
   -   sub_4306C0 (116 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4304E8 (7 B)
-  -   sub_43068C (51 B)
-  -   sub_96B97C (174 B)
-  -     sub_434440 (21 B)
-  -     sub_4080D4 (67 B)
-  - … +2 (ver telas.json)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboSfasaturaKeyPress` (0x004BD748):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_42E16C (1512 B): chama TAebVector::SetEcuData; toca ButtonTaratura
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  - sub_42E16C (1512 B): chama TAebVector::SetEcuData
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  - sub_433AEC (26 B)
-  - sub_433B08 (144 B): chama TAebMatrix::SetEcuData; toca EditRifSupCalda
-  - sub_43414C (110 B)
-  - sub_4341BC (89 B)
+  - sub_433B08 (144 B): chama TAebMatrix::SetEcuData
   - sub_434218 (261 B): chama TAebProtocol::GetComFail,TAebVector::GetEcuData
   - sub_434320 (285 B): chama TAebVector::GetEcuData
-  - sub_43481C (34 B)
-  - … +33 (ver telas.json)
-- `ComboSonda1KeyPress` (0x004C2D94):
-  - sub_433A00 (75 B)
-  - sub_433A4C (160 B): chama TAebNumber::SetEcuData; toca LabelLivEmulBasso
-  - sub_4A96A4 (563 B): toca EditCorrBancata2,LabApMot,LabApMot2,LabApMot2Benz
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_433918 (29 B)
-  -   sub_434530 (21 B)
-  -   sub_434CC0 (834 B)
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  - (+32 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `ComboSonda1KeyPress` (0x004C2D94):
+  - sub_433A4C (160 B): chama TAebNumber::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_96B97C (174 B)
-  -   sub_96C73C (114 B)
-  - … +8 (ver telas.json)
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboTagliaIniettoriKeyPress` (0x004C1138):
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  -     sub_42B224 (15 B)
-  - … +2 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboTagliaKeyPress` (0x004BCD94):
   - sub_42B834 (160 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
-  - sub_42CFB8 (839 B)
-  - sub_42FFC8 (16 B)
-  - sub_43362C (14 B)
-  - sub_43363C (110 B): chama TAebNumber::SetEcuData; toca TimerDati
-  - sub_43400C (7 B)
+  - sub_43363C (110 B): chama TAebNumber::SetEcuData
   - sub_439358 (2592 B): chama TAebMatrix::SetDefValue,TAebVector::SetDefValue
   -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
   -     sub_4382D4 (119 B): APIs GetTickCount,Sleep; chama TAebNumber::GetEcuData
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboTempRiduttoreKeyPress` (0x004B9494):
   - sub_430878 (403 B): chama TAebNumber::SetEcuData
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_432024 (38 B)
   -   sub_43204C (129 B): chama TAebVector::SetEcuData
-  -   sub_432420 (63 B)
-  -   sub_432464 (178 B): chama TAebVector::SetEcuData; toca MainMenu1
-  -   sub_434CC0 (834 B)
-  - … +9 (ver telas.json)
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -     sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboTipoIniettoreKeyPress` (0x004BA4B4):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
   - sub_42B834 (160 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
-  - sub_42CFB8 (839 B)
-  - sub_42FFC8 (16 B)
   - sub_42FFD8 (84 B): chama TAebVector::SetEcuData
-  - sub_43362C (14 B)
-  - sub_43400C (7 B)
   - sub_439358 (2592 B): chama TAebMatrix::SetDefValue,TAebVector::SetDefValue
-  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  - sub_489034 (110 B)
-  - … +48 (ver telas.json)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  -   sub_42C4B4 (564 B): APIs DeleteFileW
+  -   sub_42C708 (647 B): APIs DeleteFileW,FindResourceW,GetTempFileNameW,GetTempPathW
+  -   sub_42C990 (212 B): APIs DeleteFileW
+  -   sub_43834C (4108 B): APIs FindResourceW,LoadResource,LockResource,SizeofResource
+  -   sub_439DDC (184 B): APIs SendMessageW
+  - (+48 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboTipoLambdaKeyPress` (0x004A6674):
-  - sub_43405C (237 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
   -   sub_42F83C (275 B): chama TAebVector::SetEcuData
   -   sub_42FA10 (307 B): chama TAebMatrix::SetEcuData
-  -   sub_433FCC (47 B)
-  -   sub_43402C (21 B)
-  -   sub_434044 (21 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -     sub_42B224 (15 B)
-  - … +2 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboTipoMisuratoreKeyPress` (0x004BEC34):
-  - sub_40487C (45 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   - sub_43048C (91 B): chama TAebVector::SetEcuData
   - sub_430878 (403 B): chama TAebNumber::SetEcuData
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
-  - … +24 (ver telas.json)
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  - (+23 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboTipoObdKeyPress` (0x004C0F18):
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  -     sub_42B224 (15 B)
-  - … +2 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboTurboKeyPress` (0x004B9C44):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_42FFC8 (16 B)
-  - sub_43362C (14 B)
-  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  - sub_48944C (154 B)
-  - sub_49F170 (277 B)
-  - sub_49F804 (216 B)
-  - sub_4A0378 (199 B)
-  - sub_4A0820 (199 B)
-  - sub_4A1458 (80 B)
-  - … +54 (ver telas.json)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  - (+51 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawDelayGasTempDblClick` (0x004C42E4):
-  - sub_4C4348 (1317 B)
-  -   sub_404C40 (81 B)
-  -   sub_405754 (48 B)
-  -   sub_4057C0 (139 B)
-  -   sub_431F34 (54 B)
   -   sub_431F6C (181 B): chama TAebMatrix::SetEcuData
-  -   sub_432024 (38 B)
   -   sub_43204C (129 B): chama TAebVector::SetEcuData
-  -   sub_489034 (110 B)
-  -   sub_489320 (60 B)
-  -   sub_48935C (60 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  - … +6 (ver telas.json)
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+12 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawDelayGasTempDrawCell` (0x004C3EA4):
-  - sub_40487C (45 B)
-  - sub_431F34 (54 B)
-  - sub_432024 (38 B)
-  -   sub_42A52C (358 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawDelayGasTempKeyPress` (0x004C42D4):
-  - sub_4C4348 (1317 B)
-  -   sub_404C40 (81 B)
-  -   sub_405754 (48 B)
-  -   sub_4057C0 (139 B)
-  -   sub_431F34 (54 B)
   -   sub_431F6C (181 B): chama TAebMatrix::SetEcuData
-  -   sub_432024 (38 B)
   -   sub_43204C (129 B): chama TAebVector::SetEcuData
-  -   sub_489034 (110 B)
-  -   sub_489320 (60 B)
-  -   sub_48935C (60 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  - … +6 (ver telas.json)
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+12 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridAnticipoDblClick` (0x004BD2E4):
-  - sub_4BD358 (991 B): toca DrawGridAnticipo,TimerDati
-  -   sub_431D08 (53 B)
-  -   sub_431D58 (178 B): chama TAebVector::SetEcuData; toca ComboNumeroSonde
-  -   sub_431E24 (16 B)
-  -   sub_431E34 (97 B): chama TAebVector::SetEcuData; toca TabEmissioni
-  -   sub_431E98 (26 B)
-  -   sub_431EB4 (128 B): chama TAebMatrix::SetEcuData; toca LabelLivEmulAlto
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_431D58 (178 B): chama TAebVector::SetEcuData
+  -   sub_431E34 (97 B): chama TAebVector::SetEcuData
+  -   sub_431EB4 (128 B): chama TAebMatrix::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  - … +2 (ver telas.json)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridAnticipoDrawCell` (0x004BCF1C):
-  - sub_40487C (45 B)
-  - sub_431D08 (53 B)
-  - sub_431E24 (16 B)
-  - sub_431E98 (26 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridAnticipoKeyPress` (0x004BD348):
-  - sub_4BD358 (991 B): toca DrawGridAnticipo,TimerDati
-  -   sub_431D08 (53 B)
-  -   sub_431D58 (178 B): chama TAebVector::SetEcuData; toca ComboNumeroSonde
-  -   sub_431E24 (16 B)
-  -   sub_431E34 (97 B): chama TAebVector::SetEcuData; toca TabEmissioni
-  -   sub_431E98 (26 B)
-  -   sub_431EB4 (128 B): chama TAebMatrix::SetEcuData; toca LabelLivEmulAlto
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_431D58 (178 B): chama TAebVector::SetEcuData
+  -   sub_431E34 (97 B): chama TAebVector::SetEcuData
+  -   sub_431EB4 (128 B): chama TAebMatrix::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  - … +2 (ver telas.json)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridAnticipoMultipointDblClick` (0x004C3C38):
-  - sub_4C3C9C (405 B): toca DrawGridAnticipoMultipoint,DrawGridEmissioni,TimerDati
-  -   sub_42FC4C (16 B)
   -   sub_42FC5C (97 B): chama TAebVector::SetEcuData
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_4080D4 (67 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridAnticipoMultipointDrawCell` (0x004C3944):
-  - sub_40487C (45 B)
-  - sub_42FC4C (16 B)
-  - sub_4A6168 (67 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridAnticipoMultipointKeyPress` (0x004C3C28):
-  - sub_4C3C9C (405 B): toca DrawGridAnticipoMultipoint,DrawGridEmissioni,TimerDati
-  -   sub_42FC4C (16 B)
   -   sub_42FC5C (97 B): chama TAebVector::SetEcuData
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_4080D4 (67 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridBenzinaDblClick` (0x004C157C):
-  - sub_4C15F0 (1196 B)
-  -   sub_432F00 (47 B)
-  -   sub_432F44 (184 B): chama TAebVector::SetEcuData; toca LabelV5
-  -   sub_43300C (16 B)
-  -   sub_43301C (107 B): chama TAebVector::SetEcuData; toca LabelRifSupCalda
-  -   sub_433088 (104 B)
-  -   sub_43310C (271 B): chama TAebMatrix::SetEcuData; toca LabelRifInfCalda
-  -   sub_4A0820 (199 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432F44 (184 B): chama TAebVector::SetEcuData
+  -   sub_43301C (107 B): chama TAebVector::SetEcuData
+  -   sub_43310C (271 B): chama TAebMatrix::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +4 (ver telas.json)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridBenzinaDrawCell` (0x004C11B8):
-  - sub_40487C (45 B)
-  - sub_432F00 (47 B)
-  - sub_43300C (16 B)
-  - sub_433088 (104 B)
-  -   sub_433FFC (14 B)
+  - (+4 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridBenzinaKeyPress` (0x004C15E0):
-  - sub_4C15F0 (1196 B)
-  -   sub_432F00 (47 B)
-  -   sub_432F44 (184 B): chama TAebVector::SetEcuData; toca LabelV5
-  -   sub_43300C (16 B)
-  -   sub_43301C (107 B): chama TAebVector::SetEcuData; toca LabelRifSupCalda
-  -   sub_433088 (104 B)
-  -   sub_43310C (271 B): chama TAebMatrix::SetEcuData; toca LabelRifInfCalda
-  -   sub_4A0820 (199 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432F44 (184 B): chama TAebVector::SetEcuData
+  -   sub_43301C (107 B): chama TAebVector::SetEcuData
+  -   sub_43310C (271 B): chama TAebMatrix::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +4 (ver telas.json)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridContributiDblClick` (0x004CA288):
-  - sub_4CA2EC (583 B): toca DrawGridContributi,TimerDati
-  -   sub_42F22C (40 B)
   -   sub_42F254 (217 B): chama TAebMatrix::SetEcuData
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_4080D4 (67 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridContributiDrawCell` (0x004C9DF0):
-  - sub_40487C (45 B)
-  - sub_4080D4 (67 B)
-  - sub_42DF14 (599 B)
-  - sub_42ED90 (36 B)
-  - sub_42EE14 (100 B)
-  - sub_42F22C (40 B)
-  -   sub_42F340 (7 B)
-  -   sub_42F338 (7 B)
-  -   sub_433FFC (14 B)
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridContributiKeyPress` (0x004CA278):
-  - sub_4CA2EC (583 B): toca DrawGridContributi,TimerDati
-  -   sub_42F22C (40 B)
   -   sub_42F254 (217 B): chama TAebMatrix::SetEcuData
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_4080D4 (67 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridEmissioniDblClick` (0x004B4530):
-  - sub_4B4594 (1050 B): chama TFormCentriCelle.Create; toca DrawGridEmissioni,TimerDati
-  -   sub_42F7C4 (94 B)
+  - sub_4B4594 (1050 B): chama TFormCentriCelle.Create
   -   sub_42F83C (275 B): chama TAebVector::SetEcuData
-  -   sub_42FC4C (16 B)
   -   sub_42FC5C (97 B): chama TAebVector::SetEcuData
-  -   sub_434044 (21 B)
-  -   sub_49F804 (216 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  - … +4 (ver telas.json)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridEmissioniDrawCell` (0x004B3F68):
-  - sub_40487C (45 B)
-  - sub_42F758 (16 B)
-  - sub_42F7C4 (94 B)
-  - sub_42FC4C (16 B)
-  - sub_434044 (21 B)
-  - sub_4A6168 (67 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridEmissioniKeyPress` (0x004B4520):
-  - sub_4B4594 (1050 B): chama TFormCentriCelle.Create; toca DrawGridEmissioni,TimerDati
-  -   sub_42F7C4 (94 B)
+  - sub_4B4594 (1050 B): chama TFormCentriCelle.Create
   -   sub_42F83C (275 B): chama TAebVector::SetEcuData
-  -   sub_42FC4C (16 B)
   -   sub_42FC5C (97 B): chama TAebVector::SetEcuData
-  -   sub_434044 (21 B)
-  -   sub_49F804 (216 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  - … +4 (ver telas.json)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridEmissioniMultipointDblClick` (0x004C33E0):
-  - sub_49F804 (216 B)
-  - sub_4C34D4 (1118 B)
-  -   sub_42F758 (16 B)
-  -   sub_42FB68 (47 B)
-  -   sub_42F7C4 (94 B)
   -   sub_42F83C (275 B): chama TAebVector::SetEcuData
-  -   sub_42F974 (131 B)
   -   sub_42FA10 (307 B): chama TAebMatrix::SetEcuData
-  -   sub_434044 (21 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
-  - … +4 (ver telas.json)
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+12 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridEmissioniMultipointDrawCell` (0x004C2E3C):
-  - sub_40487C (45 B)
-  - sub_42F758 (16 B)
-  - sub_42F7C4 (94 B)
-  - sub_42F974 (131 B)
-  - sub_42FB68 (47 B)
-  - sub_434044 (21 B)
-  - sub_4A6168 (67 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridEmissioniMultipointKeyPress` (0x004C33D0):
-  - sub_4C34D4 (1118 B)
-  -   sub_42F7C4 (94 B)
   -   sub_42F83C (275 B): chama TAebVector::SetEcuData
-  -   sub_42F974 (131 B)
   -   sub_42FA10 (307 B): chama TAebMatrix::SetEcuData
-  -   sub_434044 (21 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_4080D4 (67 B)
-  - … +1 (ver telas.json)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridKDblClick` (0x004B1940):
-  - sub_4B19DC (865 B): toca ButtonCommutatore,ButtonTaratura,DrawGridK,StaticTaratura
-  - sub_4B1D60 (683 B): toca DrawGridK,TimerDati
-  - sub_4B201C (865 B): toca ButtonCommutatore,ButtonTaratura,DrawGridK,StaticTaratura
-  -   sub_42CFB8 (839 B)
-  -   sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42EC94 (65 B)
+  -   sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_404C40 (81 B)
-  -   sub_405754 (48 B)
-  -   sub_42F6A8 (30 B)
   -   sub_42F6C8 (143 B): chama TAebMatrix::SetEcuData
-  - … +30 (ver telas.json)
+  -   sub_42F174 (181 B): chama TAebMatrix::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -     sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -     sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -     sub_43204C (129 B): chama TAebVector::SetEcuData
+  -     sub_432464 (178 B): chama TAebVector::SetEcuData
+  -     sub_43255C (178 B): chama TAebVector::SetEcuData
+  -     sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -     sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  - (+28 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridKDrawCell` (0x004B12EC):
-  - sub_40487C (45 B)
-  - sub_4080D4 (67 B)
-  - sub_42EC94 (65 B)
-  - sub_42ED90 (36 B)
-  - sub_42EE14 (100 B)
-  - sub_42F130 (65 B)
-  - sub_42F6A8 (30 B)
-  - sub_4A6168 (67 B)
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
-  -   sub_433FFC (14 B)
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridKKeyPress` (0x004B18F4):
-  - sub_4B19DC (865 B): toca ButtonCommutatore,ButtonTaratura,DrawGridK,StaticTaratura
-  - sub_4B1D60 (683 B): toca DrawGridK,TimerDati
-  - sub_4B201C (865 B): toca ButtonCommutatore,ButtonTaratura,DrawGridK,StaticTaratura
-  -   sub_42CFB8 (839 B)
-  -   sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42EC94 (65 B)
+  -   sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_404C40 (81 B)
-  -   sub_405754 (48 B)
-  -   sub_42F6A8 (30 B)
   -   sub_42F6C8 (143 B): chama TAebMatrix::SetEcuData
-  - … +30 (ver telas.json)
+  -   sub_42F174 (181 B): chama TAebMatrix::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -     sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -     sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -     sub_43204C (129 B): chama TAebVector::SetEcuData
+  -     sub_432464 (178 B): chama TAebVector::SetEcuData
+  -     sub_43255C (178 B): chama TAebVector::SetEcuData
+  -     sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -     sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  - (+28 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridOpenLoopDblClick` (0x004B29E0):
-  - sub_4B2A44 (784 B): toca ButtonCommutatore,ButtonTaratura,DrawGridOpenLoop,StaticTaratura
-  -   sub_42CFB8 (839 B)
-  -   sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42EC94 (65 B)
+  -   sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
-  -   sub_42EF74 (100 B)
   -   sub_42EFF4 (282 B): chama TAebVector::SetEcuData
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42A788 (358 B)
-  -     sub_42A8F4 (235 B)
-  -     sub_42B224 (15 B)
-  - … +25 (ver telas.json)
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -     sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -     sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -     sub_43204C (129 B): chama TAebVector::SetEcuData
+  -     sub_432464 (178 B): chama TAebVector::SetEcuData
+  -     sub_43255C (178 B): chama TAebVector::SetEcuData
+  -     sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -     sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -     sub_43734C (2164 B): chama TAebVector::SetEcuData
+  - (+24 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridOpenLoopDrawCell` (0x004B25B4):
-  - sub_40487C (45 B)
-  - sub_42EC94 (65 B)
-  - sub_42ED90 (36 B)
-  - sub_42EF74 (100 B)
-  - sub_4A6168 (67 B)
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
-  -   sub_433FFC (14 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridOpenLoopKeyPress` (0x004B29D0):
-  - sub_4B2A44 (784 B): toca ButtonCommutatore,ButtonTaratura,DrawGridOpenLoop,StaticTaratura
-  -   sub_42CFB8 (839 B)
-  -   sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42EC94 (65 B)
+  -   sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
-  -   sub_42EF74 (100 B)
   -   sub_42EFF4 (282 B): chama TAebVector::SetEcuData
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42A788 (358 B)
-  -     sub_42A8F4 (235 B)
-  -     sub_42B224 (15 B)
-  - … +25 (ver telas.json)
-- `DrawGridPassaggioDrawCell` (0x004B2D64):
-  - sub_40487C (45 B)
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -     sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -     sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -     sub_43204C (129 B): chama TAebVector::SetEcuData
+  -     sub_432464 (178 B): chama TAebVector::SetEcuData
+  -     sub_43255C (178 B): chama TAebVector::SetEcuData
+  -     sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -     sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -     sub_43734C (2164 B): chama TAebVector::SetEcuData
+  - (+24 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPassaggioGasDblClick` (0x004B3A24):
-  - sub_4B3A88 (1229 B)
-  -   sub_432E8C (16 B)
-  -   sub_432E9C (97 B): chama TAebVector::SetEcuData; toca LabelV3
-  -   sub_433560 (63 B)
-  -   sub_4335A4 (133 B): chama TAebVector::SetEcuData; toca LabelRifInfFredda
-  -   sub_48944C (154 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432E9C (97 B): chama TAebVector::SetEcuData
+  -   sub_4335A4 (133 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_42A52C (358 B)
-  -     sub_42A698 (235 B)
-  - … +1 (ver telas.json)
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPassaggioGasDrawCell` (0x004B3660):
-  - sub_40487C (45 B)
-  - sub_432E8C (16 B)
-  - sub_433560 (63 B)
-  -   sub_42A52C (358 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPassaggioGasKeyPress` (0x004B3A14):
-  - sub_4B3A88 (1229 B)
-  -   sub_432E8C (16 B)
-  -   sub_432E9C (97 B): chama TAebVector::SetEcuData; toca LabelV3
-  -   sub_433560 (63 B)
-  -   sub_4335A4 (133 B): chama TAebVector::SetEcuData; toca LabelRifInfFredda
-  -   sub_48944C (154 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432E9C (97 B): chama TAebVector::SetEcuData
+  -   sub_4335A4 (133 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_42A52C (358 B)
-  -     sub_42A698 (235 B)
-  - … +1 (ver telas.json)
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPassaggioKeyPress` (0x004B3118):
-  - sub_4B318C (1218 B)
-  -   sub_432DF8 (16 B)
-  -   sub_432E08 (129 B): chama TAebVector::SetEcuData; toca EditRifInfFredda
-  -   sub_433470 (63 B)
-  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData; toca EditRifSupFredda
-  -   sub_48944C (154 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432E08 (129 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_42A788 (358 B)
-  -     sub_42A8F4 (235 B)
-  - … +1 (ver telas.json)
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressAssDblClick` (0x004B6178):
-  - sub_4B61DC (691 B): toca DrawGridPressAss,TimerDati
-  -   sub_432838 (28 B)
-  -   sub_432868 (208 B): chama TAebVector::SetEcuData; toca LabelTempoSondaFredda
-  -   sub_43294C (47 B)
-  -   sub_432990 (200 B): chama TAebVector::SetEcuData; toca LabelS3
-  -   sub_4A161C (80 B)
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432868 (208 B): chama TAebVector::SetEcuData
+  -   sub_432990 (200 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressAssDrawCell` (0x004B5E90):
-  - sub_40487C (45 B)
-  - sub_432838 (28 B)
-  - sub_43294C (47 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressAssKeyPress` (0x004B6168):
-  - sub_4B61DC (691 B): toca DrawGridPressAss,TimerDati
-  -   sub_432838 (28 B)
-  -   sub_432868 (208 B): chama TAebVector::SetEcuData; toca LabelTempoSondaFredda
-  -   sub_43294C (47 B)
-  -   sub_432990 (200 B): chama TAebVector::SetEcuData; toca LabelS3
-  -   sub_4A161C (80 B)
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432868 (208 B): chama TAebVector::SetEcuData
+  -   sub_432990 (200 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressDiffDblClick` (0x004B5B68):
-  - sub_4B5BCC (691 B): toca DrawGridPressDiff,TimerDati
-  -   sub_432610 (59 B)
   -   sub_432670 (231 B): chama TAebVector::SetEcuData
-  -   sub_43277C (47 B)
   -   sub_4327C0 (114 B): chama TAebVector::SetEcuData
-  -   sub_4A1458 (80 B)
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressDiffDrawCell` (0x004B5880):
-  - sub_40487C (45 B)
-  - sub_432610 (59 B)
-  - sub_43277C (47 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressDiffKeyPress` (0x004B5B58):
-  - sub_4B5BCC (691 B): toca DrawGridPressDiff,TimerDati
-  -   sub_432610 (59 B)
   -   sub_432670 (231 B): chama TAebVector::SetEcuData
-  -   sub_43277C (47 B)
   -   sub_4327C0 (114 B): chama TAebVector::SetEcuData
-  -   sub_4A1458 (80 B)
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressPassDblClick` (0x004B6EF4):
-  - sub_4B6F68 (575 B): toca DrawGridPressPass,PanelBarra,TimerDati
-  -   sub_4320D0 (47 B)
   -   sub_432114 (168 B): chama TAebVector::SetEcuData
-  -   sub_4321C8 (53 B)
-  -   sub_432218 (178 B): chama TAebVector::SetEcuData; toca LabelRitardoLambda
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432218 (178 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressPassDrawCell` (0x004B6B1C):
-  - sub_40487C (45 B)
-  - sub_42EE14 (100 B)
-  - sub_4320D0 (47 B)
-  - sub_4321C8 (53 B)
-  -   sub_42F338 (7 B)
-  -   sub_433FFC (14 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridPressPassKeyPress` (0x004B6F58):
-  - sub_4B6F68 (575 B): toca DrawGridPressPass,PanelBarra,TimerDati
-  -   sub_4320D0 (47 B)
   -   sub_432114 (168 B): chama TAebVector::SetEcuData
-  -   sub_4321C8 (53 B)
-  -   sub_432218 (178 B): chama TAebVector::SetEcuData; toca LabelRitardoLambda
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432218 (178 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridProgressioniDblClick` (0x004CA9A0):
   - sub_4CA9F8 (1082 B): chama TAebMatrix::GetInt,TAebMatrix::SetInt
-  -   sub_404C40 (81 B)
-  -   sub_405754 (48 B)
-  -   sub_4057C0 (139 B)
-  -   sub_489034 (110 B)
-  -   sub_489320 (60 B)
-  -   sub_48935C (60 B)
-  -   sub_489398 (60 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_4080D4 (67 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridProgressioniDrawCell` (0x004CA74C):
-  - sub_40487C (45 B)
-  - sub_4080D4 (67 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridProgressioniKeyPress` (0x004CA990):
   - sub_4CA9F8 (1082 B): chama TAebMatrix::GetInt,TAebMatrix::SetInt
-  -   sub_404C40 (81 B)
-  -   sub_405754 (48 B)
-  -   sub_4057C0 (139 B)
-  -   sub_489034 (110 B)
-  -   sub_489320 (60 B)
-  -   sub_48935C (60 B)
-  -   sub_489398 (60 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_4080D4 (67 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridSequenzaInjBenzDrawCell` (0x004BBB88):
-  - sub_40487C (45 B)
-  - sub_4048AC (68 B)
-  - sub_433AEC (26 B)
-  - sub_434CC0 (834 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridSequenzaInjDrawCell` (0x004BB664):
-  - sub_40487C (45 B)
-  - sub_4048AC (68 B)
-  - sub_434CC0 (834 B)
-  - sub_4BC58C (415 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_43400C (7 B)
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridSequenzaInjSelectCell` (0x004BBAB0):
-  - sub_434CC0 (834 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridSplitFuelDblClick` (0x004C2788):
-  - sub_4C27FC (774 B): toca DrawGridSplitFuel,TimerDati
-  -   sub_432A64 (16 B)
   -   sub_432A74 (100 B): chama TAebVector::SetEcuData
-  -   sub_432AD8 (47 B)
   -   sub_432B1C (184 B): chama TAebVector::SetEcuData
-  -   sub_48944C (154 B)
-  -   sub_4A1880 (80 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  - … +2 (ver telas.json)
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridSplitFuelDrawCell` (0x004C2420):
-  - sub_40487C (45 B)
-  - sub_432A64 (16 B)
-  - sub_432AD8 (47 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridSplitFuelKeyPress` (0x004C27EC):
-  - sub_4C27FC (774 B): toca DrawGridSplitFuel,TimerDati
-  -   sub_432A64 (16 B)
   -   sub_432A74 (100 B): chama TAebVector::SetEcuData
-  -   sub_432AD8 (47 B)
   -   sub_432B1C (184 B): chama TAebVector::SetEcuData
-  -   sub_48944C (154 B)
-  -   sub_4A1880 (80 B)
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  - … +2 (ver telas.json)
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTInjDefaultDblClick` (0x004B6868):
-  - sub_4B68DC (557 B): toca DrawGridTInjDefault,TimerDati
-  -   sub_43002C (109 B)
   -   sub_4300B8 (218 B): chama TAebMatrix::SetEcuData
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_433FFC (14 B)
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTInjDefaultDrawCell` (0x004B64A0):
-  - sub_40487C (45 B)
-  - sub_43002C (109 B)
-  -   sub_433FFC (14 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTInjDefaultKeyPress` (0x004B68CC):
-  - sub_4B68DC (557 B): toca DrawGridTInjDefault,TimerDati
-  -   sub_43002C (109 B)
   -   sub_4300B8 (218 B): chama TAebMatrix::SetEcuData
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_433FFC (14 B)
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempDblClick` (0x004B81F4):
-  - sub_4B82A4 (951 B): toca DrawGridTemp,EditRPullUp,TimerDati
-  -   sub_43040C (16 B)
   -   sub_43041C (84 B): chama TAebVector::SetEcuData
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_96B924 (79 B)
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_40487C (45 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempDrawCell` (0x004B7874):
-  - sub_40487C (45 B)
-  - sub_4080D4 (67 B)
-  - sub_43040C (16 B)
-  - sub_96B924 (79 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempKeyPress` (0x004B80B0):
   - sub_43041C (84 B): chama TAebVector::SetEcuData
-  - sub_4B82A4 (951 B): toca DrawGridTemp,EditRPullUp,TimerDati
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_43040C (16 B)
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -   sub_96B924 (79 B)
-  -     sub_40487C (45 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempMotDblClick` (0x004B54F8):
-  - sub_4B555C (786 B)
-  -   sub_432384 (16 B)
-  -   sub_432394 (138 B): chama TAebVector::SetEcuData; toca TabCambio
-  -   sub_432518 (63 B)
-  -   sub_43255C (178 B): chama TAebVector::SetEcuData; toca PageControl
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432394 (138 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_42A788 (358 B)
-  -     sub_42A8F4 (235 B)
-  -     sub_4080D4 (67 B)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempMotDrawCell` (0x004B5134):
-  - sub_40487C (45 B)
-  - sub_432384 (16 B)
-  - sub_432518 (63 B)
-  -   sub_42A788 (358 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempMotKeyPress` (0x004B54E8):
-  - sub_4B555C (786 B)
-  -   sub_432384 (16 B)
-  -   sub_432394 (138 B): chama TAebVector::SetEcuData; toca TabCambio
-  -   sub_432518 (63 B)
-  -   sub_43255C (178 B): chama TAebVector::SetEcuData; toca PageControl
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_432394 (138 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_42A788 (358 B)
-  -     sub_42A8F4 (235 B)
-  -     sub_4080D4 (67 B)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempRidDblClick` (0x004B4DAC):
-  - sub_4B4E10 (786 B)
-  -   sub_4322E8 (16 B)
-  -   sub_4322F8 (138 B): chama TAebVector::SetEcuData; toca MenuDiagnosiProg
-  -   sub_432420 (63 B)
-  -   sub_432464 (178 B): chama TAebVector::SetEcuData; toca MainMenu1
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_4322F8 (138 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_42A52C (358 B)
-  -     sub_42A698 (235 B)
-  -     sub_4080D4 (67 B)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempRidDrawCell` (0x004B49E8):
-  - sub_40487C (45 B)
-  - sub_4322E8 (16 B)
-  - sub_432420 (63 B)
-  -   sub_42A52C (358 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempRidKeyPress` (0x004B4D9C):
-  - sub_4B4E10 (786 B)
-  -   sub_4322E8 (16 B)
-  -   sub_4322F8 (138 B): chama TAebVector::SetEcuData; toca MenuDiagnosiProg
-  -   sub_432420 (63 B)
-  -   sub_432464 (178 B): chama TAebVector::SetEcuData; toca MainMenu1
-  -   sub_50ECB0 (149 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42B224 (15 B)
+  -   sub_4322F8 (138 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_42A52C (358 B)
-  -     sub_42A698 (235 B)
-  -     sub_4080D4 (67 B)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempiLrDblClick` (0x004BE5A8):
-  - sub_4BE60C (750 B): toca DrawGridTempiLr,TimerDati
-  -   sub_4336AC (44 B)
-  -   sub_4336DC (146 B): chama TAebVector::SetEcuData; toca LabelV10
-  -   sub_433770 (74 B)
-  -   sub_4337D8 (288 B): chama TAebVector::SetEcuData; toca LabelV11
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42A52C (358 B)
-  -     sub_42A698 (235 B)
-  -     sub_42B224 (15 B)
+  -   sub_4336DC (146 B): chama TAebVector::SetEcuData
+  -   sub_4337D8 (288 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_433FFC (14 B)
-  - … +1 (ver telas.json)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempiLrDrawCell` (0x004BE278):
-  - sub_40487C (45 B)
-  - sub_4336AC (44 B)
-  - sub_433770 (74 B)
-  -   sub_42A52C (358 B)
-  -   sub_433FFC (14 B)
+  - (+4 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTempiLrKeyPress` (0x004BE598):
-  - sub_4BE60C (750 B): toca DrawGridTempiLr,TimerDati
-  -   sub_4336AC (44 B)
-  -   sub_4336DC (146 B): chama TAebVector::SetEcuData; toca LabelV10
-  -   sub_433770 (74 B)
-  -   sub_4337D8 (288 B): chama TAebVector::SetEcuData; toca LabelV11
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42A52C (358 B)
-  -     sub_42A698 (235 B)
-  -     sub_42B224 (15 B)
+  -   sub_4336DC (146 B): chama TAebVector::SetEcuData
+  -   sub_4337D8 (288 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  -     sub_433FFC (14 B)
-  - … +1 (ver telas.json)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTestDblClick` (0x004B75EC):
-  - sub_4B7660 (514 B): toca DrawGridTest,TimerDati
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42A52C (358 B)
-  -     sub_42A788 (358 B)
-  -     sub_433FFC (14 B)
-  -     sub_42A698 (235 B)
-  -     sub_42A8F4 (235 B)
-  -     sub_42B224 (15 B)
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  - … +1 (ver telas.json)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTestDrawCell` (0x004B71B8):
-  - sub_40487C (45 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridTestKeyPress` (0x004B7650):
-  - sub_4B7660 (514 B): toca DrawGridTest,TimerDati
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_50ED48 (173 B): toca MenuTest,PanelBarra,TimerDati
-  -     sub_42A52C (358 B)
-  -     sub_42A788 (358 B)
-  -     sub_433FFC (14 B)
-  -     sub_42A698 (235 B)
-  -     sub_42A8F4 (235 B)
-  -     sub_42B224 (15 B)
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
-  - … +1 (ver telas.json)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditAdvParamInjGasKeyPress` (0x004C7150):
-  - sub_432BE4 (16 B)
   - sub_432BF4 (84 B): chama TAebVector::SetEcuData
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  - … +7 (ver telas.json)
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditAntiStalloKeyPress` (0x004C97D8):
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  -     sub_982174 (25 B)
-  -     sub_982198 (25 B)
-  -     sub_9821B8 (25 B)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditAperturaInjKeyPress` (0x004ACF68):
   - sub_4312A8 (593 B): chama TAebNumber::SetEcuData
-  - sub_96BA2C (343 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_40487C (45 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  -     sub_982174 (25 B)
-  - … +2 (ver telas.json)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditBassaPressioneMpKeyPress` (0x004C526C):
   - sub_432670 (231 B): chama TAebVector::SetEcuData
-  - sub_43277C (47 B)
   - sub_4327C0 (114 B): chama TAebVector::SetEcuData
-  - sub_4A1458 (80 B)
-  - sub_96BA2C (343 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_40487C (45 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditCorrBancata2KeyPress` (0x004C2CCC):
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A52C (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  - … +15 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditCorrCarbMinimoKeyPress` (0x0049F0E4):
-  - sub_42F348 (27 B)
-  - sub_42F568 (215 B)
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42EC94 (65 B)
   -   sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
   -   sub_42F364 (135 B): chama TAebMatrix::SetEcuData
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  - … +9 (ver telas.json)
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+18 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditCorrIntInfKeyPress` (0x004B91BC):
-  - sub_42FCC0 (16 B)
   - sub_42FCD0 (84 B): chama TAebVector::SetEcuData
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_40487C (45 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  - … +4 (ver telas.json)
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditCutoffKeyPress` (0x004C82B8):
-  - sub_42FD24 (124 B)
   - sub_42FDBC (165 B): chama TAebVector::SetEcuData
-  - sub_432D74 (16 B)
-  - sub_432D84 (116 B): chama TAebVector::SetEcuData; toca PanelTinjBenz,ShapeTinjBenz
-  - sub_434CC0 (834 B)
+  - sub_432D84 (116 B): chama TAebVector::SetEcuData
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  - … +22 (ver telas.json)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  - (+25 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditDeltaTInterruzioneWarmupKeyPress` (0x004C8ECC):
-  - sub_42A788 (358 B)
-  - sub_42A8F4 (235 B)
-  - sub_434CC0 (834 B)
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_40487C (45 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  - … +6 (ver telas.json)
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditFiltroEnter` (0x004BDFD4):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
-  - sub_96BCD0 (42 B)
-  - sub_96BCFC (118 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditFiltroKeyPress` (0x004B9644):
-  - sub_431514 (16 B)
   - sub_431524 (84 B): chama TAebVector::SetEcuData
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  - … +4 (ver telas.json)
+  - (+14 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditFlashLubeKeyPress` (0x004C8948):
-  - sub_432D10 (16 B)
   - sub_432D20 (84 B): chama TAebVector::SetEcuData
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  - … +7 (ver telas.json)
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditFrestEnter` (0x004C611C):
-  - sub_40487C (45 B)
-  - sub_96BCD0 (42 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditGiriCambioEnter` (0x004A98D8):
-  - sub_40487C (45 B)
-  - sub_96BCD0 (42 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditGiriKFiltroEnter` (0x004BE90C):
-  - sub_40487C (45 B)
-  - sub_96BCD0 (42 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditGiriKFiltroKeyPress` (0x004BEB24):
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_40487C (45 B)
-  - … +13 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditGiriMinimoPerBenzinaKeyPress` (0x004BFE6C):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  - … +9 (ver telas.json)
+  - (+18 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditGiriPerBenzinaKeyPress` (0x004C04E8):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  - … +9 (ver telas.json)
+  - (+18 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditKFiltroKeyPress` (0x004B95C0):
-  - sub_431514 (16 B)
   - sub_431524 (84 B): chama TAebVector::SetEcuData
-  - sub_96B97C (174 B)
-  - sub_96BA2C (343 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -   sub_40487C (45 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+14 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditKMappaNeutroKeyPress` (0x004C499C):
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_40487C (45 B)
-  - … +13 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditOffsetKeyPress` (0x004AF360):
-  - sub_430470 (27 B)
   - sub_43048C (91 B): chama TAebVector::SetEcuData
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  - … +4 (ver telas.json)
+  - (+14 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditPreheatSyncInjNumKeyPress` (0x004C78A4):
-  - sub_432CAC (16 B)
-  - sub_432CBC (84 B): chama TAebVector::SetEcuData; toca LabelTinjBenzPerc
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42B224 (15 B)
+  - sub_432CBC (84 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_40487C (45 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  - … +4 (ver telas.json)
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditRPullUpEnter` (0x004B86C4):
-  - sub_40487C (45 B)
-  - sub_96BCD0 (42 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditRPullUpExit` (0x004B88C0):
-  - sub_4303A8 (16 B)
   - sub_4303B8 (84 B): chama TAebVector::SetEcuData
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  - … +4 (ver telas.json)
+  - (+14 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditRifLambdaKeyPress` (0x004A6A00):
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A52C (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  - … +15 (ver telas.json)
-- `EditRiscaldamentoKeyPress` (0x004C7478):
-  - sub_42A52C (358 B)
-  - sub_42A698 (235 B)
-  - sub_42A788 (358 B)
-  - sub_42A8F4 (235 B)
-  - sub_432BE4 (16 B)
-  - sub_432BF4 (84 B): chama TAebVector::SetEcuData
-  - sub_434840 (34 B)
-  - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  - sub_96BA2C (343 B)
-  - … +15 (ver telas.json)
-- `EditRpmTachimetroKeyPress` (0x004A647C):
-  - sub_40487C (45 B)
-  - sub_96C73C (114 B)
-- `EditScartoMinFuoriMinKeyPress` (0x004BA1E8):
-  - sub_42FE7C (89 B)
-  - sub_42FEF4 (185 B): chama TAebVector::SetEcuData
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_433FFC (14 B)
-  -   sub_42B224 (15 B)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_40487C (45 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `EditRiscaldamentoKeyPress` (0x004C7478):
+  - sub_432BF4 (84 B): chama TAebVector::SetEcuData
+  - sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `EditRpmTachimetroKeyPress` (0x004A647C):
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `EditScartoMinFuoriMinKeyPress` (0x004BA1E8):
+  - sub_42FEF4 (185 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+14 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditSensAdattaKeyPress` (0x004C07D0):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  - … +9 (ver telas.json)
+  - (+18 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditSogliaGiriKeyPress` (0x004C58DC):
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_40487C (45 B)
-  - … +13 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditTInjSup22KeyPress` (0x004C3E44):
-  - sub_4301AC (209 B)
   - sub_4302A0 (233 B): chama TAebVector::SetEcuData
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_433FFC (14 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_40487C (45 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+14 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditTempAcquaKeyPress` (0x004BCB78):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  - … +12 (ver telas.json)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditTempMotoreKeyPress` (0x004C8F84):
-  - sub_42A788 (358 B)
-  - sub_42A8F4 (235 B)
-  - sub_434CC0 (834 B)
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A698 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_40487C (45 B)
-  - … +13 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditTempoBenzinaKeyPress` (0x004C0570):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  - … +9 (ver telas.json)
+  - (+17 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditTempoMortoBenzKeyPress` (0x004B11B0):
   - sub_4312A8 (593 B): chama TAebNumber::SetEcuData
-  - sub_4337D8 (288 B): chama TAebVector::SetEcuData; toca LabelV11
-  - sub_96BA2C (343 B)
-  -   sub_42B224 (15 B)
+  - sub_4337D8 (288 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_40487C (45 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  - … +3 (ver telas.json)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditTipoIniettoreKeyPress` (0x004BACE0):
-  - sub_40487C (45 B)
-  - sub_42FFC8 (16 B)
   - sub_42FFD8 (84 B): chama TAebVector::SetEcuData
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+14 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormCloseQuery` (0x004ADE94):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormKeyDown` (0x0049EB24):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormResize` (0x00490CB8):
-  - sub_42F338 (7 B)
-  - sub_42F340 (7 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormShow` (0x00490028):
-  - sub_40487C (45 B)
-  - sub_43400C (7 B)
-  - sub_434768 (34 B)
-  - sub_4348D0 (34 B)
-  - sub_4A96A4 (563 B): toca EditCorrBancata2,LabApMot,LabApMot2,LabApMot2Benz
-  -   sub_433918 (29 B)
-  -   sub_434530 (21 B)
-  -   sub_434CC0 (834 B)
   -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_96B97C (174 B)
-  -   sub_96C73C (114 B)
-  -     sub_42A788 (358 B)
-  - … +7 (ver telas.json)
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ImageInjOffClick` (0x004C81B0):
-  - sub_42CFB8 (839 B)
-  - sub_43481C (34 B)
-  - sub_4C7A10 (344 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ImageInjOffA,ImageInjOnA,ImageInjOnB,ImageInjOnC
+  - sub_4C7A10 (344 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ImageInjOnClick` (0x004C80A8):
-  - sub_42CFB8 (839 B)
-  - sub_43481C (34 B)
-  - sub_4C7A10 (344 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ImageInjOffA,ImageInjOnA,ImageInjOnB,ImageInjOnC
+  - sub_4C7A10 (344 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `LabGasClick` (0x004C9A7C):
-  - sub_42CFB8 (839 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
   -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
-  - … +22 (ver telas.json)
-- `LabelDiagnosiClick` (0x004CB060):
-  - sub_4381F4 (7 B)
-- `MenuComunicazioneSerialeCostruitaClick` (0x004AE008):
-  - sub_40487C (45 B)
-  - sub_4080D4 (67 B)
-- `MenuControlloIniettoriClick` (0x004BA408):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
-  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
-  -   sub_431AF8 (124 B)
-  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
-  -   sub_431C6C (37 B)
   -   sub_431C9C (105 B): chama TAebVector::SetEcuData
-  - … +21 (ver telas.json)
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `LabelDiagnosiClick` (0x004CB060):
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `MenuComunicazioneSerialeCostruitaClick` (0x004AE008):
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `MenuControlloIniettoriClick` (0x004BA408):
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  -   sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -     sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `MenuCopiaTaraturaClick` (0x004AD0B0):
-  - sub_40487C (45 B)
-  - sub_4080D4 (67 B)
-  - sub_42EC94 (65 B)
-  - sub_42F130 (65 B)
-  - sub_42F6A8 (30 B)
-  - sub_4A6168 (67 B)
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `MenuIncollaTaraturaClick` (0x004AD4B8):
-  - sub_4047FC (125 B)
-  - sub_40487C (45 B)
   - sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
   - sub_42F174 (181 B): chama TAebMatrix::SetEcuData
   - sub_42F6C8 (143 B): chama TAebMatrix::SetEcuData
-  -   sub_42B224 (15 B)
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+4 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `PageControlChanging` (0x004ADD20):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `PageControlDrawTab` (0x0049E83C):
-  - sub_40487C (45 B)
-  - sub_4080D4 (67 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `RadioAdatta25Click` (0x004C05F0):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `RadioAdattaDirittiClick` (0x004C06EC):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `RadioGasAltiGiriClick` (0x004BFEF4):
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_434CC0 (834 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96B97C (174 B)
-  -   sub_42A788 (358 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
-  -   sub_430A0C (1008 B)
-  -   sub_430DFC (654 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +31 (ver telas.json)
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+31 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `RadioGasClick` (0x004BFAD8):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData; toca TabEsci
-  - sub_42E754 (385 B)
-  - sub_434CC0 (834 B)
+  - sub_42D300 (3089 B): APIs PostMessageW; chama TAebNumber::GetInt,TAebNumber::SetInt,TAebVector::SetEcuData
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_489034 (110 B)
-  - sub_489398 (60 B)
-  - sub_4893D4 (60 B)
-  - sub_489410 (60 B)
-  - … +40 (ver telas.json)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -   sub_431B7C (186 B): chama TAebVector::SetEcuData
+  -   sub_431C9C (105 B): chama TAebVector::SetEcuData
+  -   sub_43204C (129 B): chama TAebVector::SetEcuData
+  -   sub_432464 (178 B): chama TAebVector::SetEcuData
+  -   sub_43255C (178 B): chama TAebVector::SetEcuData
+  -   sub_4334B4 (169 B): chama TAebVector::SetEcuData
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  - (+37 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `RadioMapClick` (0x004B23A0):
-  - sub_42F338 (7 B)
-  - sub_42F340 (7 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabAdattaShow` (0x004C0854):
-  - sub_42CFB8 (839 B)
-  - sub_42DF14 (599 B)
-  - sub_42E754 (385 B)
-  - sub_434568 (20 B)
-  - sub_4346FC (34 B)
-  - sub_4349F0 (34 B)
-  - sub_434B34 (34 B)
-  - sub_434B7C (34 B)
-  - sub_434C9C (34 B)
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_96B97C (174 B)
-  - … +15 (ver telas.json)
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+25 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabAdvancedShow` (0x004C9BBC):
-  - sub_42DF14 (599 B)
-  - sub_42E754 (385 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabAutoCalNewShow` (0x004CB1C4):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_489034 (110 B)
-  - sub_489398 (60 B)
-  - sub_4893D4 (60 B)
-  - sub_489410 (60 B)
+  - (+4 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabBenzinaShow` (0x004BF004):
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_96B97C (174 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A52C (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+15 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabCalibrationShow` (0x004C7904):
-  - sub_434CC0 (834 B)
-  - sub_4C7A10 (344 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect; toca ImageInjOffA,ImageInjOnA,ImageInjOnB,ImageInjOnC
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
+  - sub_4C7A10 (344 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::IsConnect
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42CFB8 (839 B)
-  -   sub_43481C (34 B)
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabCambioShow` (0x004A6ACC):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
-  - sub_42DF14 (599 B)
-  - sub_42FFC8 (16 B)
-  - sub_43362C (14 B)
-  - sub_9691D4 (114 B)
-  - sub_96B924 (79 B)
-  - sub_96B97C (174 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabConsumometroShow` (0x004C1044):
-  - sub_42CFB8 (839 B)
-  - sub_434CC0 (834 B)
-  - sub_96B97C (174 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabEmissioniShow` (0x004A8964):
-  - sub_42FCC0 (16 B)
-  - sub_434044 (21 B)
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_48944C (154 B)
-  - sub_96BB88 (321 B)
-  - sub_96C73C (114 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A52C (358 B)
-  -   sub_433FFC (14 B)
-  - … +8 (ver telas.json)
+  - (+18 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabFrestShow` (0x004C6324):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabIniezioneShow` (0x004AB8BC):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_42A52C (358 B)
-  - sub_42A788 (358 B)
-  - sub_42DF14 (599 B)
-  - sub_431160 (300 B)
-  - sub_432BE4 (16 B)
-  - sub_432CAC (16 B)
-  - sub_4346B4 (34 B)
-  - sub_434840 (34 B)
-  - … +20 (ver telas.json)
+  - sub_435C6C (1903 B): chama TAebVector::GetEcuData
+  - (+27 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabKCoefficientiShow` (0x004B0EA0):
-  - sub_42CFB8 (839 B)
-  - sub_42DF14 (599 B)
-  - sub_431160 (300 B)
-  - sub_4347F8 (34 B)
-  - sub_48944C (154 B)
-  - sub_96BB88 (321 B)
-  -   sub_433FFC (14 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  - … +3 (ver telas.json)
+  - (+15 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabKFactorShow` (0x004C49FC):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_42CFB8 (839 B)
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_489034 (110 B)
-  - sub_489398 (60 B)
-  - sub_4893D4 (60 B)
-  - sub_489410 (60 B)
-  - sub_9691D4 (114 B)
-  - sub_96BB88 (321 B)
-  - … +14 (ver telas.json)
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabKTempiShow` (0x004B1254):
-  - sub_431160 (300 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_96BB88 (321 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  -     sub_982174 (25 B)
-  - … +2 (ver telas.json)
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabKVarieShow` (0x004B94C8):
-  - sub_431514 (16 B)
-  - sub_434CC0 (834 B)
-  - sub_96B97C (174 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  - … +6 (ver telas.json)
+  - (+17 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabLambdaShow` (0x004A6770):
-  - sub_42DF14 (599 B)
-  - sub_433918 (29 B)
-  - sub_433A00 (75 B)
-  - sub_434918 (34 B)
-  - sub_434CC0 (834 B)
-  - sub_48944C (154 B)
-  - sub_9691D4 (114 B)
-  - sub_96B97C (174 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  - … +11 (ver telas.json)
+  - (+22 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabPressioneShow` (0x004AE788):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
-  - sub_42FFC8 (16 B)
-  - sub_430470 (27 B)
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_48944C (154 B)
-  - sub_4AF018 (840 B): toca ButtonRicercaParametri,CheckMapConfigurato,EditPressRid,EditSogliaMap
-  - sub_9691D4 (114 B)
-  - sub_96B97C (174 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  - … +14 (ver telas.json)
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+23 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabSensoreShow` (0x004AA5BC):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_42CFB8 (839 B)
-  - sub_42DF14 (599 B)
-  - sub_42E754 (385 B)
-  - sub_42FFC8 (16 B)
-  - sub_4304E8 (7 B)
-  - sub_431878 (110 B): chama TAebVector::GetEcuData; toca MenuCopia
-  - sub_43277C (47 B)
-  - sub_43400C (7 B)
-  - … +33 (ver telas.json)
+  - sub_431878 (110 B): chama TAebVector::GetEcuData
+  -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
+  - (+39 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabSwitchToPetrolShow` (0x004C65A4):
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_96BB88 (321 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  -     sub_982174 (25 B)
-  -     sub_982198 (25 B)
-  - … +1 (ver telas.json)
+  - (+12 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabTaraturaShow` (0x004A9CD0):
-  - sub_42FE7C (89 B)
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_96B97C (174 B)
-  - sub_96BB88 (321 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A52C (358 B)
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  - … +7 (ver telas.json)
+  - (+17 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabTempShow` (0x004B92C8):
-  - sub_42CFB8 (839 B)
-  - sub_42E754 (385 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabTestShow` (0x004BA440):
-  - sub_434CC0 (834 B)
-  - sub_96B97C (174 B)
-  - sub_96BB88 (321 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_4080D4 (67 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_42A52C (358 B)
-  -     sub_433FFC (14 B)
-  -     sub_9820F0 (31 B)
-  - … +5 (ver telas.json)
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TimerDatiTimer` (0x004A307C):
-  - sub_40487C (45 B)
-  - sub_4080D4 (67 B)
-  - sub_4339B8 (72 B)
-  - sub_433FFC (14 B)
-  - sub_434530 (21 B)
-  - sub_4381FC (6 B)
-  - sub_4A6168 (67 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `chkRitardoPassaggioInMinutiClick` (0x004CB300):
   - sub_42E8D8 (956 B): chama TAebVector::SetEcuData
-  -   sub_42B224 (15 B)
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -   sub_431738 (21 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)

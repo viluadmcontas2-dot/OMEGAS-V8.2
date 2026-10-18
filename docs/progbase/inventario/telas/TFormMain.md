@@ -142,313 +142,174 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `Plot1Click` | 0x0050417C | 160 | INFERIDO | sem fatos diretos extraíveis (160 bytes; chama 6 funções sem nome) |  |  |  |
 | `StatusBarMainDrawPanel` | 0x004FF7D4 | 1098 | INFERIDO | chama TAebProtocol::IsConnect |  |  |  |
 | `TimerExpiredTimer` | 0x004F3774 | 127 | INFERIDO | toca TimerExpired |  |  |  |
-| `TimerUpdateTimer` | 0x004F37F4 | 1113 | INFERIDO | chama APIs do Windows GetTickCount, Sleep; toca TimerUpdate |  | GetTickCount, Sleep | GetUserNameExW, InternetAttemptConnect, InternetConnectW, InternetGetConnectedState |
+| `TimerUpdateTimer` | 0x004F37F4 | 1113 | INFERIDO | chama APIs do Windows GetTickCount, Sleep; toca TimerUpdate |  | GetTickCount, Sleep | InternetAttemptConnect, InternetConnectW, InternetGetConnectedState, InternetOpenW |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ActionAggiornaExecute` (0x005035DC):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_405784 (59 B)
-  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
-  -   sub_48944C (154 B)
-  -   sub_4F3C50 (34 B)
-  -     sub_4047FC (125 B)
-  -     sub_404C94 (59 B)
-  - … +4 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionApriConfExecute` (0x00500314):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
-  - sub_48935C (60 B)
   - sub_4D83CC (5497 B): textos BUTTONANNULLA,BUTTONOK,COMBOCARBURANTE1,COMBOCARBURANTE2; APIs DeleteMenu,GetSystemMenu,GetSystemMetrics; chama TAboutBox.Create,TAebProtocol::IsConnect,TTranslatorExt::GetString
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_50FCF8 (23 B)
-  -   sub_40487C (45 B)
-  -   sub_41E8D0 (96 B)
-  - … +12 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionApriExecute` (0x004FE618):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_404C94 (59 B)
-  - sub_42B964 (428 B)
-  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  - sub_48A228 (2561 B)
-  - sub_4F6CC8 (2878 B): textos FINESTRACONFIG,LABELMODELLO34568CILINDRI,LABELMODELLO34CILINDRI; chama TAebProtocol::IsConnect,TTranslatorExt::GetString; toca OpenDialog,SaveDialog
-  - sub_4FBA40 (933 B): APIs Sleep; chama TAebProtocol::SendCommand,TAebVector::GetEcuData; toca ButtonAnnulla,ButtonOk,EditName
-  - sub_4FFC20 (503 B): toca ActionSalva
-  -   sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  - … +48 (ver telas.json)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  - sub_4F6CC8 (2878 B): textos FINESTRACONFIG,LABELMODELLO34568CILINDRI,LABELMODELLO34CILINDRI; chama TAebProtocol::IsConnect,TTranslatorExt::GetString
+  - sub_4FBA40 (933 B): APIs Sleep; chama TAebProtocol::SendCommand,TAebVector::GetEcuData
+  -   sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  -   sub_42C4B4 (564 B): APIs DeleteFileW
+  -   sub_42C708 (647 B): APIs DeleteFileW,FindResourceW,GetTempFileNameW,GetTempPathW
+  -   sub_42C990 (212 B): APIs DeleteFileW
+  -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -   sub_43834C (4108 B): APIs FindResourceW,LoadResource,LockResource,SizeofResource
+  -   sub_439358 (2592 B): chama TAebMatrix::SetDefValue,TAebVector::SetDefValue
+  -   sub_439DDC (184 B): APIs SendMessageW
+  -   sub_48068E (572 B): APIs PostMessageW
+  - (+49 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionArchivioExecute` (0x004FF6C4):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
   - sub_4D83CC (5497 B): textos BUTTONANNULLA,BUTTONOK,COMBOCARBURANTE1,COMBOCARBURANTE2; APIs DeleteMenu,GetSystemMenu,GetSystemMetrics; chama TAboutBox.Create,TAebProtocol::IsConnect,TTranslatorExt::GetString
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_40487C (45 B)
-  -   sub_41E8D0 (96 B)
-  -   sub_42CFB8 (839 B)
-  -   sub_405784 (59 B)
-  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
-  -   sub_48944C (154 B)
-  - … +8 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionAzzeraIdExecute` (0x005039A0):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_42B964 (428 B)
-  - sub_434C78 (34 B)
-  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
-  - sub_5034CC (262 B): toca StatusBarMain
-  -   sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_40487C (45 B)
-  -   sub_404C94 (59 B)
-  -   sub_42A698 (235 B)
-  - … +48 (ver telas.json)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  -   sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  -   sub_42C4B4 (564 B): APIs DeleteFileW
+  -   sub_42C708 (647 B): APIs DeleteFileW,FindResourceW,GetTempFileNameW,GetTempPathW
+  -   sub_42C990 (212 B): APIs DeleteFileW
+  -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -   sub_43834C (4108 B): APIs FindResourceW,LoadResource,LockResource,SizeofResource
+  -   sub_439358 (2592 B): chama TAebMatrix::SetDefValue,TAebVector::SetDefValue
+  -   sub_439DDC (184 B): APIs SendMessageW
+  -   sub_48068E (572 B): APIs PostMessageW
+  -     sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -     sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  - (+48 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionConnettiExecute` (0x004FB840):
-  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
-  - sub_4F9C34 (11 B)
-  -   sub_50FCF8 (23 B)
-  -   sub_4F9C40 (7167 B): chama TAebNumber::GetEcuData,TAebNumber::SetEcuData,TAebProtocol::Connect,TAebProtocol::Disconnect; toca ActionApri,ActionApriConf,ActionConf,ActionCorrTara
-  -     sub_40487C (45 B)
-  -     sub_404C40 (81 B)
-  -     sub_405754 (48 B)
-  -     sub_4057C0 (139 B)
-  -     sub_4082A0 (88 B)
+  -   sub_4F9C40 (7167 B): chama TAebNumber::GetEcuData,TAebNumber::SetEcuData,TAebProtocol::Connect,TAebProtocol::Disconnect
   -     sub_42B8D4 (144 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::GetIdentification
-  -     sub_42B964 (428 B)
   -     sub_42BB40 (41 B): chama TAebNumber::SetEcuData
-  - … +24 (ver telas.json)
+  -     sub_431788 (239 B): chama TAebVector::SetEcuData
+  -     sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -     sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  -     sub_4F8834 (831 B): chama TAebNumber::GetEcuData
+  -     sub_4F9BDC (86 B): chama TAebProtocol::Connect
+  -     sub_4FBA40 (933 B): APIs Sleep; chama TAebProtocol::SendCommand,TAebVector::GetEcuData
+  -     sub_4FBE1C (111 B): chama TAebNumber::GetEcuData
+  -     sub_4FDBEC (2604 B): textos LABELSCRITTURACONFIG; APIs FindResourceW,LoadResource,LockResource,SizeofResource; chama TAebNumber::GetEcuData,TAebProtocol::Connect,TAebProtocol::Disconnect,TAebProtocol::SetWindowHandle
+  -     sub_503DAC (513 B): chama TAebProtocol::IsConnect
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionCorrTaraExecute` (0x00500DE4):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_431578 (56 B)
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
-  - sub_48935C (60 B)
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_405784 (59 B)
-  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
-  -   sub_48944C (154 B)
-  - … +7 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionDiagnosiExecute` (0x004FFE24):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_431578 (56 B)
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_405784 (59 B)
-  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
-  -   sub_48944C (154 B)
-  -   sub_4F3C50 (34 B)
-  -     sub_4047FC (125 B)
-  - … +5 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionDisconnettiExecute` (0x004FB858):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
   - sub_433280 (132 B): chama TAebVector::SetEcuData
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
-  - sub_503DAC (513 B): chama TAebProtocol::IsConnect; toca BitBtnRiprogramma,ImageServiceOff,ImageServiceOn,ImageServiceOnAlrt
-  -   sub_50FCF8 (23 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - … +7 (ver telas.json)
+  - sub_503DAC (513 B): chama TAebProtocol::IsConnect
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -     sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+12 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionProgrammaExecute` (0x004FDBD4):
-  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
   - sub_4FD80C (966 B): chama TAebProtocol::IsConnect,TFormAttesa.Create
-  -   sub_50FCF8 (23 B)
-  -   sub_40487C (45 B)
-  -   sub_404C40 (81 B)
-  -   sub_405754 (48 B)
-  -   sub_4057C0 (139 B)
-  -   sub_433240 (61 B)
-  -   sub_489034 (110 B)
-  -   sub_489320 (60 B)
-  -   sub_48935C (60 B)
-  -   sub_48944C (154 B)
-  - … +44 (ver telas.json)
+  -   sub_4F95FC (1501 B): APIs Sleep; chama TAebProtocol::Disconnect,TAebProtocol::FindPort,TAebProtocol::GetIdentification,TAebProtocol::IsConnect
+  -   sub_4FBE8C (6492 B): textos LABELSCRITTURACONFIG,MESSNOSCRITTURACONFIG; APIs Sleep; chama TAebNumber::GetEcuData,TAebProtocol::Connect,TAebProtocol::DisableAutoSwitchBaud,TAebProtocol::Disconnect
+  -   sub_501838 (364 B): APIs IsDebuggerPresent
+  -   sub_501E5C (5744 B): textos LABELAGGCENTRALINA,LABELAGGCONFIG,LABELCONNCENTRALINA,LABELPREPAGGCONFIG; APIs FindClose,FindFirstFileW,FindNextFileW,SetLastError; chama TAebProtocol::Connect,TAebProtocol::Disconnect,TAebProtocol::FindPort,TAebProtocol::OffLine
+  -   sub_505258 (432 B): textos BUTTONANNULLA,BUTTONCAMBIA,BUTTONRIPROGR,LABELRIPROGRAMMA; chama TTranslatorExt::GetString
+  -     sub_42B8D4 (144 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::GetIdentification
+  -     sub_4F9BDC (86 B): chama TAebProtocol::Connect
+  -     sub_42BB10 (45 B): chama TAebNumber::SetEcuData
+  -     sub_431788 (239 B): chama TAebVector::SetEcuData
+  -     sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -     sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  - (+37 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionResetDaPcExecute` (0x00501248):
-  - sub_40487C (45 B)
-  - sub_42B244 (15 B)
   - sub_42B8D4 (144 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::GetIdentification
-  - sub_42B964 (428 B)
-  - sub_42CFB8 (839 B)
-  - sub_42FFC8 (16 B)
-  - sub_43362C (14 B)
-  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  - sub_4F9C40 (7167 B): chama TAebNumber::GetEcuData,TAebNumber::SetEcuData,TAebProtocol::Connect,TAebProtocol::Disconnect; toca ActionApri,ActionApriConf,ActionConf,ActionCorrTara
-  -   sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  -   sub_404C40 (81 B)
-  -   sub_404C94 (59 B)
-  - … +57 (ver telas.json)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  - sub_4F9C40 (7167 B): chama TAebNumber::GetEcuData,TAebNumber::SetEcuData,TAebProtocol::Connect,TAebProtocol::Disconnect
+  -   sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  -   sub_42C4B4 (564 B): APIs DeleteFileW
+  -   sub_42C708 (647 B): APIs DeleteFileW,FindResourceW,GetTempFileNameW,GetTempPathW
+  -   sub_42C990 (212 B): APIs DeleteFileW
+  -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -   sub_43834C (4108 B): APIs FindResourceW,LoadResource,LockResource,SizeofResource
+  -   sub_439358 (2592 B): chama TAebMatrix::SetDefValue,TAebVector::SetDefValue
+  -   sub_439DDC (184 B): APIs SendMessageW
+  -   sub_48068E (572 B): APIs PostMessageW
+  - (+52 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionSalvaConfExecute` (0x005000CC):
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_425514 (134 B): toca ImageList1,Timer,btnExportImage,btnLoad
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
-  - sub_48935C (60 B)
   - sub_4D83CC (5497 B): textos BUTTONANNULLA,BUTTONOK,COMBOCARBURANTE1,COMBOCARBURANTE2; APIs DeleteMenu,GetSystemMenu,GetSystemMetrics; chama TAboutBox.Create,TAebProtocol::IsConnect,TTranslatorExt::GetString
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_50FCF8 (23 B)
-  -   sub_40487C (45 B)
-  -   sub_41E8D0 (96 B)
-  - … +12 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionSalvaExecute` (0x004FEA54):
-  - sub_4047FC (125 B)
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_404C94 (59 B)
-  - sub_42CA64 (76 B)
-  - sub_42CFB8 (839 B)
-  - sub_431578 (56 B)
   - sub_4315B0 (316 B): APIs PostMessageW; chama TAebVector::SetEcuData
-  - sub_433B98 (1074 B)
-  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  -   sub_42B224 (15 B)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +48 (ver telas.json)
+  -   sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  -   sub_42C4B4 (564 B): APIs DeleteFileW
+  -   sub_42C708 (647 B): APIs DeleteFileW,FindResourceW,GetTempFileNameW,GetTempPathW
+  -   sub_42C990 (212 B): APIs DeleteFileW
+  -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -   sub_43834C (4108 B): APIs FindResourceW,LoadResource,LockResource,SizeofResource
+  -   sub_439358 (2592 B): chama TAebMatrix::SetDefValue,TAebVector::SetDefValue
+  -   sub_439DDC (184 B): APIs SendMessageW
+  -   sub_48068E (572 B): APIs PostMessageW
+  - (+47 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionUpdateExecute` (0x005035D4):
   - sub_501E5C (5744 B): textos LABELAGGCENTRALINA,LABELAGGCONFIG,LABELCONNCENTRALINA,LABELPREPAGGCONFIG; APIs FindClose,FindFirstFileW,FindNextFileW,SetLastError; chama TAebProtocol::Connect,TAebProtocol::Disconnect,TAebProtocol::FindPort,TAebProtocol::OffLine
-  -   sub_4047FC (125 B)
-  -   sub_40487C (45 B)
-  -   sub_404C40 (81 B)
-  -   sub_404C94 (59 B)
   -   sub_42B8D4 (144 B): chama TAebNumber::GetEcuData,TAebProtocol::GetComFail,TAebProtocol::GetIdentification
   -   sub_42BB10 (45 B): chama TAebNumber::SetEcuData
-  -   sub_42CFB8 (839 B)
-  -   sub_431578 (56 B)
-  -   sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  -   sub_4828E4 (390 B): toca LabelRiprogramma
-  -   sub_4F95FC (1501 B): APIs Sleep; chama TAebProtocol::Disconnect,TAebProtocol::FindPort,TAebProtocol::GetIdentification,TAebProtocol::IsConnect; toca MenuMarket
-  - … +50 (ver telas.json)
+  -   sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  -   sub_4F95FC (1501 B): APIs Sleep; chama TAebProtocol::Disconnect,TAebProtocol::FindPort,TAebProtocol::GetIdentification,TAebProtocol::IsConnect
+  -   sub_4FBA40 (933 B): APIs Sleep; chama TAebProtocol::SendCommand,TAebVector::GetEcuData
+  -   sub_4FBE1C (111 B): chama TAebNumber::GetEcuData
+  -   sub_4FBE8C (6492 B): textos LABELSCRITTURACONFIG,MESSNOSCRITTURACONFIG; APIs Sleep; chama TAebNumber::GetEcuData,TAebProtocol::Connect,TAebProtocol::DisableAutoSwitchBaud,TAebProtocol::Disconnect
+  -     sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  -     sub_42C4B4 (564 B): APIs DeleteFileW
+  -     sub_42C708 (647 B): APIs DeleteFileW,FindResourceW,GetTempFileNameW,GetTempPathW
+  -     sub_42C990 (212 B): APIs DeleteFileW
+  - (+61 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionVisualizzaExecute` (0x00501568):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_431578 (56 B)
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_405784 (59 B)
-  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
-  -   sub_48944C (154 B)
-  -   sub_4F3C50 (34 B)
-  -     sub_4047FC (125 B)
-  - … +5 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormClose` (0x004F35C4):
-  - sub_407D74 (168 B)
-  - sub_50E6B8 (105 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormCloseQuery` (0x004FBDE8):
-  - sub_48944C (154 B)
-  - sub_4FFC20 (503 B): toca ActionSalva
-  -   sub_40487C (45 B)
-  -   sub_404C40 (81 B)
-  -   sub_405754 (48 B)
-  -   sub_4057C0 (139 B)
-  -   sub_42B234 (14 B)
-  -   sub_489034 (110 B)
-  -   sub_489320 (60 B)
-  -   sub_48935C (60 B)
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormShow` (0x004F3E14):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
   - sub_420180 (232 B): chama TAebRegistryData::GetIntData,TTranslatorExt::CreatePopupMenu
-  - sub_4808CC (57 B)
-  - sub_489034 (110 B)
-  - sub_489398 (60 B)
-  - sub_4893D4 (60 B)
-  - sub_489410 (60 B)
-  - sub_4F484C (287 B): toca MenuClientPers
+  - (+6 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ImageServiceClick` (0x00503FB0):
-  - sub_40487C (45 B)
-  - sub_408248 (88 B)
-  - sub_503DAC (513 B): chama TAebProtocol::IsConnect; toca BitBtnRiprogramma,ImageServiceOff,ImageServiceOn,ImageServiceOnAlrt
-  -   sub_408120 (208 B)
-  -   sub_433240 (61 B)
-  -   sub_433304 (38 B)
-  -   sub_43332C (25 B)
+  - sub_503DAC (513 B): chama TAebProtocol::IsConnect
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `MenuAboutClick` (0x004F7808):
-  - sub_40487C (45 B)
   - sub_480D60 (1496 B): textos BUTTONESCI,BUTTON_DELETE_LICENSE,BUTTON_LOAD_LICENSE,BUTTON_REQUEST_LICENSE; chama TAboutBox.Create,TTranslatorExt::GetString
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `OpenConfigWindow` (0x004F9190):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_431578 (56 B)
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
-  - sub_48935C (60 B)
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_405784 (59 B)
-  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
-  -   sub_48944C (154 B)
-  - … +7 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `OpenFormAutotaratura` (0x0050093C):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
-  - sub_431578 (56 B)
-  - sub_489034 (110 B)
-  - sub_489320 (60 B)
-  - sub_48935C (60 B)
   - sub_501838 (364 B): APIs IsDebuggerPresent
-  -   sub_405784 (59 B)
-  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString; toca LabelConfig
-  -   sub_48944C (154 B)
-  - … +7 (ver telas.json)
+  -   sub_414B8C (15681 B): textos MESSCONTACT,MESSDAYS,MESSEXPIRED,MESSWILLEXPIRE; chama TFormAggKey.Create,TTranslatorExt::GetString
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `Plot1Click` (0x0050417C):
   - sub_420448 (523 B): chama TAboutBox.Create
-  -   sub_40487C (45 B)
-  -   sub_42084C (2710 B): toca ActionAggiorna,ActionArchivio,ActionResetDaPc,ActionTara
-  -     sub_41E8D0 (96 B)
-  -     sub_4213E6 (3272 B)
   -     sub_4236FC (332 B): chama TAebRegistryData::GetIntData
-  -     sub_4256FC (119 B): toca ChartDrt
-  -     sub_4272D0 (3882 B): textos BUTTONAVVIA,BUTTONCARICA,BUTTONESPORTA,BUTTONFERMA; chama TTranslatorExt::GetString; toca ActionFileHcf,ActionResetCentralina,ActionResetDaPc,ActionSalvaMappa
-  -     sub_429038 (5 B)
-  -     sub_50F208 (141 B)
-  -     sub_96BA2C (343 B)
+  -     sub_4272D0 (3882 B): textos BUTTONAVVIA,BUTTONCARICA,BUTTONESPORTA,BUTTONFERMA; chama TTranslatorExt::GetString
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `StatusBarMainDrawPanel` (0x004FF7D4):
-  - sub_40487C (45 B)
-  - sub_431578 (56 B)
-  - sub_431750 (53 B)
-  - sub_5034CC (262 B): toca StatusBarMain
-- `TimerExpiredTimer` (0x004F3774):
-  - sub_40487C (45 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TimerUpdateTimer` (0x004F37F4):
-  - sub_4047FC (125 B)
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_404C94 (59 B)
-  - sub_405178 (192 B)
   - sub_4EA9F8 (772 B): APIs InternetAttemptConnect,InternetConnectW,InternetGetConnectedState,InternetOpenW
-  -   sub_403568 (1449 B)
-  -   sub_403D8C (385 B): APIs GetUserNameExW
-  -     sub_40323C (528 B): APIs GetAdaptersAddresses
-  -     sub_403458 (271 B)
-  -     sub_404FBC (412 B)
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)

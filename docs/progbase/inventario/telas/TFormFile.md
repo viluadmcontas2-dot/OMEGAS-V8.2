@@ -33,29 +33,21 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `TreeViewFileDragDrop` | 0x004DE1A8 | 7 | INFERIDO | sem fatos diretos extraíveis (7 bytes; chama 0 funções sem nome) |  |  |  |
 | `TreeViewFileKeyDown` | 0x004DE120 | 132 | INFERIDO | chama TFormFile.TreeViewFileDblClick; toca TreeViewFile |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ButtonOkClick` (0x004D9F30):
-  - sub_4047FC (125 B)
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_404C94 (59 B)
-  - sub_42B234 (14 B)
-  - sub_42B964 (428 B)
   - sub_4315B0 (316 B): APIs PostMessageW; chama TAebVector::SetEcuData
   - sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - sub_433B98 (1074 B)
-  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData; toca EditAnticipoEV2,EditPressRid
-  - sub_48A228 (2561 B)
-  - sub_4FBA40 (933 B): APIs Sleep; chama TAebProtocol::SendCommand,TAebVector::GetEcuData; toca ButtonAnnulla,ButtonOk,EditName
-  - … +48 (ver telas.json)
+  - sub_439E94 (288664 B): APIs Sleep,SendMessageW; chama TAebMatrix::GetEcuData,TAebMatrix::SetColumnDimension,TAebMatrix::SetEcuData,TAebNumber::GetEcuData
+  - sub_4FBA40 (933 B): APIs Sleep; chama TAebProtocol::SendCommand,TAebVector::GetEcuData
+  -   sub_42C1E8 (453 B): APIs DeleteFileW,GetTempFileNameW,GetTempPathW
+  -   sub_42C4B4 (564 B): APIs DeleteFileW
+  -   sub_42C708 (647 B): APIs DeleteFileW,FindResourceW,GetTempFileNameW,GetTempPathW
+  -   sub_42C990 (212 B): APIs DeleteFileW
+  -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
+  -   sub_43834C (4108 B): APIs FindResourceW,LoadResource,LockResource,SizeofResource
+  -   sub_439358 (2592 B): chama TAebMatrix::SetDefValue,TAebVector::SetDefValue
+  -   sub_439DDC (184 B): APIs SendMessageW
+  - (+49 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormActivate` (0x004D9968):
-  - sub_40487C (45 B)
-  - sub_42CFB8 (839 B)
-  - sub_431578 (56 B)
-  - sub_4DBBF4 (65 B): toca ImageList,TreeViewFile
-- `TreeViewFileClick` (0x004DDC04):
-  - sub_4047FC (125 B)
-  - sub_40487C (45 B)
-- `TreeViewFileCompare` (0x004DDAE0):
-  - sub_40487C (45 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)

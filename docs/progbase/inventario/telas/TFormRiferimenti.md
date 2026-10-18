@@ -20,17 +20,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 |---|---|---:|---|---|---|---|---|
 | `FormCloseQuery` | 0x009744E0 | 1007 | INFERIDO | sem fatos diretos extraíveis (1007 bytes; chama 11 funções sem nome) |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `FormCloseQuery` (0x009744E0):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_96BA2C (343 B)
-  -   sub_96BD74 (19 B)
-  -   sub_981F2C (447 B)
-  -     sub_9820F0 (31 B)
-  -     sub_98211C (33 B)
-  -     sub_982150 (25 B)
-  -     sub_982174 (25 B)
-  -     sub_982198 (25 B)
-  -     sub_9821B8 (25 B)
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)

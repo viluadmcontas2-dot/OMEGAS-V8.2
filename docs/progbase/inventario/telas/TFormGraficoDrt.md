@@ -40,8 +40,7 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `MenuStampaClick` | 0x004E6A50 | 52 | INFERIDO | toca ChartDrt, PrintDialog1 |  |  |  |
 | `MenuTracceClick` | 0x004E6A84 | 807 | INFERIDO | chama TFormGestioneTracce.Create; toca ChartDrt, Series1 |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `MenuTracceClick` (0x004E6A84):
-  - sub_40487C (45 B)
-  - sub_4E6DB0 (87 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)

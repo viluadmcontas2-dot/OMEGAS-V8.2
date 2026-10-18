@@ -37,11 +37,13 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `UpDownGasAClick` | 0x00526154 | 64 | INFERIDO | sem fatos diretos extraíveis (64 bytes; chama 4 funções sem nome) |  |  |  |
 | `UpDownPetrolAClick` | 0x00526114 | 64 | INFERIDO | sem fatos diretos extraíveis (64 bytes; chama 4 funções sem nome) |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `UpDownGasAClick` (0x00526154):
   - sub_523898 (28 B): chama TAebVector::GetInt
   - sub_5238B4 (39 B): chama TAebVector::SetEcuData
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `UpDownPetrolAClick` (0x00526114):
   - sub_523854 (28 B): chama TAebVector::GetInt
   - sub_523870 (39 B): chama TAebVector::SetEcuData
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)

@@ -49,94 +49,45 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `FormKeyPress` | 0x00507544 | 112 | INFERIDO | sem fatos diretos extraíveis (112 bytes; chama 0 funções sem nome) |  |  |  |
 | `MemoDataKeyPress` | 0x00508AC0 | 58 | INFERIDO | toca MemoData |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ButtonAzzeraNumeroTagliandiEffettuatiClick` (0x00508B44):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_405754 (48 B)
-  - sub_4057C0 (139 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_489034 (110 B)
-  - sub_489398 (60 B)
-  - sub_4893D4 (60 B)
-  - sub_489410 (60 B)
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  - … +6 (ver telas.json)
-- `ButtonModifyPinClick` (0x00508720):
-  - sub_40487C (45 B)
-- `ButtonNewPinClick` (0x005088E8):
-  - sub_40487C (45 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonResetPinClick` (0x005075B4):
-  - sub_40487C (45 B)
   - sub_42B834 (160 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
-  - sub_433304 (38 B)
-  - sub_433348 (65 B)
   - sub_43338C (228 B): chama TAebVector::SetEcuData
-  - sub_5078D8 (1810 B): APIs CryptAcquireContextW,CryptCreateHash,CryptDeriveKey,CryptDestroyHash; toca CheckDisableGas,CheckEnableService,EditCurrHours,MemoData
+  - sub_5078D8 (1810 B): APIs CryptAcquireContextW,CryptCreateHash,CryptDeriveKey,CryptDestroyHash
   -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
-  -   sub_404C40 (81 B)
-  -   sub_404C94 (59 B)
-  -   sub_433240 (61 B)
-  -   sub_43332C (25 B)
-  -   sub_96B97C (174 B)
-  - … +4 (ver telas.json)
+  -     sub_4382D4 (119 B): APIs GetTickCount,Sleep; chama TAebNumber::GetEcuData
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckDisableGasClick` (0x005085CC):
   - sub_433280 (132 B): chama TAebVector::SetEcuData
-  - sub_96C73C (114 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `CheckEnableServiceClick` (0x0050843C):
   - sub_433280 (132 B): chama TAebVector::SetEcuData
-- `CheckServicePinClick` (0x0050863C):
-  - sub_40487C (45 B)
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditInsPinChange` (0x00507700):
-  - sub_40487C (45 B)
-  - sub_5078D8 (1810 B): APIs CryptAcquireContextW,CryptCreateHash,CryptDeriveKey,CryptDestroyHash; toca CheckDisableGas,CheckEnableService,EditCurrHours,MemoData
-  -   sub_404C40 (81 B)
-  -   sub_404C94 (59 B)
-  -   sub_433240 (61 B)
-  -   sub_433304 (38 B)
-  -   sub_43332C (25 B)
-  -   sub_433348 (65 B)
-  -   sub_96B97C (174 B)
-  -     sub_4080D4 (67 B)
-  -     sub_96BD74 (19 B)
-  -     sub_981F2C (447 B)
-- `EditPin2Change` (0x00507850):
-  - sub_40487C (45 B)
-- `EditPinChange` (0x005077D0):
-  - sub_40487C (45 B)
+  - sub_5078D8 (1810 B): APIs CryptAcquireContextW,CryptCreateHash,CryptDeriveKey,CryptDestroyHash
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditStandardEnter` (0x00506B68):
-  - sub_40487C (45 B)
-  - sub_96BCD0 (42 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditStandardKeyPress` (0x00506D9C):
   - sub_42B834 (160 B): chama TAebProtocol::IsConnect,TAebProtocol::SendCommand
-  - sub_434CC0 (834 B)
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_436444 (1384 B): toca LabelNumeroSonde,LabelTipoLambda
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  - sub_96BA2C (343 B)
-  - sub_96BB88 (321 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_438204 (205 B): APIs GetTickCount,Sleep; chama TAebProtocol::Connect,TAebProtocol::DisableErrorHandling,TAebProtocol::Disconnect,TAebProtocol::EnableErrorHandling
-  -   sub_42A788 (358 B)
-  -   sub_433FCC (47 B)
   -   sub_435BFC (2015 B): chama TAebVector::GetEcuData
-  -   sub_42A52C (358 B)
-  - … +18 (ver telas.json)
+  -   sub_4372B8 (2312 B): chama TAebNumber::SetEcuData,TAebVector::SetEcuData
+  -   sub_4372F2 (2254 B): chama TAebVector::SetEcuData
+  -   sub_4316EC (75 B): chama TAebVector::SetEcuData
+  -     sub_4382D4 (119 B): APIs GetTickCount,Sleep; chama TAebNumber::GetEcuData
+  - (+20 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormClose` (0x00508D28):
-  - sub_40487C (45 B)
-  - sub_433240 (61 B)
   - sub_433280 (132 B): chama TAebVector::SetEcuData
   - sub_435C6C (1903 B): chama TAebVector::GetEcuData
-  - sub_43734C (2164 B): chama TAebVector::SetEcuData; toca DrawGridK,EditRifLambda,LabelV4,PanelArr
-  -   sub_42A52C (358 B)
-  -   sub_42A788 (358 B)
-  -   sub_433FFC (14 B)
-  -   sub_42A698 (235 B)
-  -   sub_42A8F4 (235 B)
-  -   sub_42B224 (15 B)
+  - sub_43734C (2164 B): chama TAebVector::SetEcuData
   -   sub_4316EC (75 B): chama TAebVector::SetEcuData
-  - … +1 (ver telas.json)
-- `MemoDataKeyPress` (0x00508AC0):
-  - sub_40487C (45 B)
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)

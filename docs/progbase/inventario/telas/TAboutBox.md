@@ -32,38 +32,15 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `AboutImageDblClick` | 0x00481350 | 124 | INFERIDO | toca Copyright, LabelDaysLeft, TabLicense, TabUserCode |  |  |  |
 | `ButtonDeleteLicenseClick` | 0x00481FF8 | 602 | INFERIDO | sem fatos diretos extraíveis (602 bytes; chama 9 funções sem nome) |  |  |  |
 | `ButtonLoadLicenseClick` | 0x00481D40 | 693 | INFERIDO | chama APIs do Windows CopyFileW; toca OpenDialog |  | CopyFileW |  |
-| `ButtonRequestClick` | 0x00482254 | 742 | INFERIDO | chama APIs do Windows ShellExecuteW |  | ShellExecuteW | GetComputerNameW, InternetAttemptConnect, InternetConnectW, InternetGetConnectedState |
+| `ButtonRequestClick` | 0x00482254 | 742 | INFERIDO | chama APIs do Windows ShellExecuteW |  | ShellExecuteW | InternetAttemptConnect, InternetConnectW, InternetGetConnectedState, InternetOpenW |
 | `ButtonSendByMailClick` | 0x00481770 | 1487 | INFERIDO | toca MemoUserCode |  |  |  |
 | `EditRegCodeKeyPress` | 0x00481744 | 41 | INFERIDO | sem fatos diretos extraíveis (41 bytes; chama 0 funções sem nome) |  |  |  |
 | `EditRegCodeKeyUp` | 0x004815A8 | 411 | INFERIDO | toca EditRegCode |  |  |  |
 | `FormKeyPress` | 0x004813CC | 14 | INFERIDO | sem fatos diretos extraíveis (14 bytes; chama 1 funções sem nome) |  |  |  |
 | `OkButtonClick` | 0x004813DC | 458 | INFERIDO | toca EditRegCode |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
-- `ButtonDeleteLicenseClick` (0x00481FF8):
-  - sub_40487C (45 B)
-- `ButtonLoadLicenseClick` (0x00481D40):
-  - sub_40487C (45 B)
 - `ButtonRequestClick` (0x00482254):
-  - sub_40487C (45 B)
-  - sub_405238 (1305 B): APIs GetComputerNameW
   - sub_4EA9F8 (772 B): APIs InternetAttemptConnect,InternetConnectW,InternetGetConnectedState,InternetOpenW
-  -   sub_4030FC (317 B)
-  -   sub_404C40 (81 B)
-  -   sub_404C94 (59 B)
-  -   sub_405754 (48 B)
-  -   sub_405784 (59 B)
-  -   sub_4057C0 (139 B)
-  -   sub_40584C (57 B)
-  -   sub_405888 (172 B)
-  -   sub_407234 (505 B)
-  - … +3 (ver telas.json)
-- `ButtonSendByMailClick` (0x00481770):
-  - sub_40487C (45 B)
-  - sub_404C40 (81 B)
-  - sub_404C94 (59 B)
-- `EditRegCodeKeyUp` (0x004815A8):
-  - sub_40487C (45 B)
-- `OkButtonClick` (0x004813DC):
-  - sub_40487C (45 B)
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)

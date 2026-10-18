@@ -41,44 +41,22 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `FormClose` | 0x004CC63C | 40 | INFERIDO | sem fatos diretos extraíveis (40 bytes; chama 2 funções sem nome) |  |  |  |
 | `TimerBlinkTimer` | 0x004CC664 | 940 | INFERIDO | chama TStreamDati.TimerIOTimer; toca LabApMotBenz, LabGas, LabLambda, LabelLambda |  |  | InvalidateRect |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ActionDecrementaZonaExecute` (0x004CD134):
-  - sub_42F4AC (186 B)
-  -   sub_42EC94 (65 B)
   -   sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
-  -   sub_42F348 (27 B)
   -   sub_42F364 (135 B): chama TAebMatrix::SetEcuData
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionIncrementaZonaExecute` (0x004CCFFC):
-  - sub_42F3EC (189 B)
-  -   sub_42EC94 (65 B)
   -   sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
-  -   sub_42F348 (27 B)
   -   sub_42F364 (135 B): chama TAebMatrix::SetEcuData
-  -     sub_42B224 (15 B)
   -     sub_4316EC (75 B): chama TAebVector::SetEcuData
-  -     sub_431738 (21 B)
+  - (+7 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DrawGridKDrawCell` (0x004CCD08):
-  - sub_40487C (45 B)
-  - sub_42F348 (27 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormClose` (0x004CC63C):
-  - sub_4381F4 (7 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TimerBlinkTimer` (0x004CC664):
-  - sub_40487C (45 B)
-  - sub_42A52C (358 B)
-  - sub_42A788 (358 B)
-  - sub_433FFC (14 B)
-  - sub_434530 (21 B)
-  - sub_4381FC (6 B)
-  - sub_480908 (126 B)
-  - sub_4CCB58 (430 B): APIs InvalidateRect; toca DrawGridK
-  -   sub_42F338 (7 B)
-  -   sub_42F340 (7 B)
-  -   sub_42F640 (101 B)
+  - sub_4CCB58 (430 B): APIs InvalidateRect
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)

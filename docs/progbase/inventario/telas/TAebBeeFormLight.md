@@ -81,272 +81,73 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `TabScansioneShow` | 0x00918B3C | 184 | INFERIDO | sem fatos diretos extraíveis (184 bytes; chama 2 funções sem nome) |  |  |  |
 | `TimerUpdateTimer` | 0x00914EA8 | 912 | INFERIDO | sem fatos diretos extraíveis (912 bytes; chama 16 funções sem nome) |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ButtonChangePinClick` (0x00918158):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_912948 (773 B)
-  - sub_917554 (1157 B)
-  - sub_918138 (29 B)
-  -   sub_911A50 (106 B)
-  -   sub_911BD8 (41 B)
-  -   sub_912C50 (142 B)
-  -   sub_912CE0 (142 B)
-  -   sub_9137AC (60 B)
-  -   sub_913524 (621 B): toca BarraCanali
-  -   sub_9173BC (250 B)
-  - … +6 (ver telas.json)
+  -     sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
+  - (+15 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonConnectMcuClick` (0x009199C8):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_91185C (353 B): toca ButtonAbort
-  - sub_911ABC (111 B)
-  - sub_911BD8 (41 B)
-  - sub_9130D4 (74 B)
-  - sub_9137AC (60 B)
-  - sub_917554 (1157 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_9119C0 (141 B)
-  -   sub_911A50 (106 B)
-  -   sub_911B2C (69 B)
-  - … +9 (ver telas.json)
+  - (+19 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonDisconnectMcuClick` (0x00919CD4):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_911ABC (111 B)
-  - sub_911BD8 (41 B)
-  - sub_917554 (1157 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_911A50 (106 B)
-  -   sub_913524 (621 B): toca BarraCanali
-  -   sub_9173BC (250 B)
-  -   sub_9174B8 (156 B)
-  -     sub_911464 (190 B)
-  -     sub_9115E4 (65 B)
-  - … +3 (ver telas.json)
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonProgramDongleClick` (0x00919F80):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_912E00 (40 B)
-  - sub_916534 (364 B)
-  - sub_9166A0 (340 B)
-  - sub_9167F4 (1483 B)
-  - sub_9173BC (250 B)
-  - sub_9174B8 (156 B)
-  - sub_917554 (1157 B)
-  - sub_91BF5C (130 B)
   - sub_91C038 (524 B): APIs Sleep
-  - sub_91C878 (711 B)
-  - … +27 (ver telas.json)
+  -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
+  -   sub_91C43C (404 B): APIs Sleep
+  - (+34 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonProgramMcuClick` (0x0091AE74):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_912E28 (66 B)
-  - sub_9137AC (60 B)
-  - sub_9167F4 (1483 B)
-  - sub_9173BC (250 B)
-  - sub_9174B8 (156 B)
-  - sub_917554 (1157 B)
-  - sub_91BCDC (23 B)
-  - sub_91BF5C (130 B)
   - sub_91C038 (524 B): APIs Sleep
-  - sub_91C878 (711 B)
-  - … +30 (ver telas.json)
+  -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
+  -   sub_91C43C (404 B): APIs Sleep
+  - (+37 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonReadPinClick` (0x00917FA8):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_918138 (29 B)
-  -   sub_91283C (268 B)
-  -     sub_4048AC (68 B)
   -     sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonRemovePinClick` (0x0091864C):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_912D70 (143 B)
-  - sub_917554 (1157 B)
-  - sub_918138 (29 B)
-  -   sub_912948 (773 B)
-  -   sub_913524 (621 B): toca BarraCanali
-  -   sub_9173BC (250 B)
-  -   sub_9174B8 (156 B)
-  -   sub_91283C (268 B)
-  -     sub_911A50 (106 B)
-  -     sub_911BD8 (41 B)
-  - … +6 (ver telas.json)
+  -     sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
+  - (+15 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonScanChannelClick` (0x00915578):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_911B2C (69 B)
-  - sub_91394C (291 B)
-  - sub_915238 (32 B)
-  - sub_916470 (29 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_911B74 (99 B)
-  -   sub_911BD8 (41 B)
-  -   sub_912244 (23 B)
-  -   sub_913524 (621 B): toca BarraCanali
-  -   sub_9137AC (60 B)
-  - … +8 (ver telas.json)
+  - (+18 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonScanClick` (0x00918BF4):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_91185C (353 B): toca ButtonAbort
-  - sub_913120 (300 B)
-  - sub_91324C (87 B)
-  - sub_919430 (28 B)
-  - sub_91944C (19 B)
-  - sub_919460 (33 B)
-  - sub_919484 (33 B)
-  - sub_9194A8 (847 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_9119C0 (141 B)
-  - … +15 (ver telas.json)
+  - (+23 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ButtonScanEnergyClick` (0x00915258):
-  - sub_40487C (45 B)
-  - sub_911D18 (101 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -     sub_911464 (190 B)
-  -     sub_9115E4 (65 B)
-  -     sub_911628 (21 B)
-  -     sub_911640 (21 B)
-- `ButtonSfogliaDongleClick` (0x00919E04):
-  - sub_40487C (45 B)
-- `ButtonSfogliaMcuClick` (0x0091ACF8):
-  - sub_40487C (45 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboCanaleChange` (0x00917E88):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_91394C (291 B)
-  - sub_9167F4 (1483 B)
-  - sub_917554 (1157 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_911B74 (99 B)
-  -   sub_911BD8 (41 B)
-  -   sub_912244 (23 B)
-  -   sub_913524 (621 B): toca BarraCanali
-  -   sub_9137AC (60 B)
-  -   sub_911658 (495 B)
-  - … +13 (ver telas.json)
+  - (+23 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboPotenzaDongleChange` (0x00917258):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_911BD8 (41 B)
-  - sub_9167F4 (1483 B)
-  - sub_91739C (29 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_911658 (495 B)
-  -   sub_916534 (364 B)
-  -   sub_9166A0 (340 B)
-  -   sub_912284 (80 B)
-  -     sub_911464 (190 B)
-  -     sub_9115E4 (65 B)
-  - … +5 (ver telas.json)
+  - (+15 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ComboPotenzaMcuChange` (0x00917D24):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_9137AC (60 B)
-  - sub_917554 (1157 B)
-  - sub_917E68 (32 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_913524 (621 B): toca BarraCanali
-  -   sub_9173BC (250 B)
-  -   sub_9174B8 (156 B)
-  -   sub_912284 (80 B)
-  -     sub_911464 (190 B)
-  -     sub_9115E4 (65 B)
-  - … +3 (ver telas.json)
+  - (+13 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DongleExit` (0x00916DC0):
-  - sub_9167F4 (1483 B)
-  -   sub_40487C (45 B)
-  -   sub_910F38 (25 B)
-  -   sub_911658 (495 B)
-  -   sub_916534 (364 B)
-  -   sub_9166A0 (340 B)
   -     sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -     sub_911848 (20 B)
-  -     sub_911A50 (106 B)
-  -     sub_911B2C (69 B)
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditIndirizzoDongleKeyPress` (0x00916FA8):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_91185C (353 B): toca ButtonAbort
-  - sub_911BD8 (41 B)
-  - sub_912EA8 (127 B)
-  - sub_9137AC (60 B)
-  - sub_916490 (62 B)
-  - sub_9167F4 (1483 B)
-  - sub_917554 (1157 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_9119C0 (141 B)
-  -   sub_911A50 (106 B)
-  - … +15 (ver telas.json)
+  - (+25 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditIndirizzoMcuKeyPress` (0x00917BC8):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_913808 (322 B)
-  - sub_916490 (62 B)
-  - sub_9167F4 (1483 B)
-  - sub_917554 (1157 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_9119C0 (141 B)
-  -   sub_911BD8 (41 B)
-  -   sub_912FBC (37 B)
-  -   sub_9137AC (60 B)
-  -   sub_911658 (495 B)
-  - … +13 (ver telas.json)
+  - (+23 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditNomeDongleKeyPress` (0x00916DF8):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_911BD8 (41 B)
-  - sub_9164D0 (98 B)
-  - sub_9167F4 (1483 B)
-  - sub_916F44 (100 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_911658 (495 B)
-  -   sub_916534 (364 B)
-  -   sub_9166A0 (340 B)
-  -   sub_911C04 (247 B)
-  -     sub_911464 (190 B)
-  - … +9 (ver telas.json)
+  - (+17 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditNomeMcuKeyPress` (0x00917A14):
-  - sub_40487C (45 B)
-  - sub_910F38 (25 B)
-  - sub_9137AC (60 B)
-  - sub_9164D0 (98 B)
-  - sub_917554 (1157 B)
-  - sub_917B60 (103 B)
   -   sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -   sub_913524 (621 B): toca BarraCanali
-  -   sub_9173BC (250 B)
-  -   sub_9174B8 (156 B)
-  -   sub_911C04 (247 B)
-  -     sub_911464 (190 B)
-  - … +7 (ver telas.json)
+  - (+15 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `EditPinKeyPress` (0x00918B1C):
-  - sub_9164D0 (98 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `McuExit` (0x009179DC):
-  - sub_917554 (1157 B)
-  -   sub_40487C (45 B)
-  -   sub_913524 (621 B): toca BarraCanali
-  -   sub_9173BC (250 B)
-  -   sub_9174B8 (156 B)
   -     sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
-  -     sub_913794 (23 B)
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TabScansioneShow` (0x00918B3C):
-  - sub_9194A8 (847 B)
-  -   sub_40487C (45 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `TimerUpdateTimer` (0x00914EA8):
-  - sub_40487C (45 B)
-  - sub_91225C (19 B)
-  - sub_912270 (19 B)
-  - sub_915238 (32 B)
-  - sub_9167F4 (1483 B)
-  - sub_917554 (1157 B)
-  -   sub_911D80 (90 B)
-  -   sub_910F38 (25 B)
-  -   sub_911658 (495 B)
-  -   sub_916534 (364 B)
-  -   sub_9166A0 (340 B)
-  -   sub_913524 (621 B): toca BarraCanali
-  - … +7 (ver telas.json)
+  -     sub_911288 (473 B): chama TAebFtdi.vmt[0x2C],TAebFtdi.vmt[0x30]
+  - (+17 subfunções sem fatos diretos ou fora da lista; telas.json)

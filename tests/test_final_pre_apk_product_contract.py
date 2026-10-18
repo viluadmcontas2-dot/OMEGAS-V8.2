@@ -69,7 +69,7 @@ assert "overflow-x: scroll" not in css
 # O cartão antigo (.autocal-review-card) saiu do JS e o CSS morto foi podado (leveza 2026-10-18): sem classe usada, não há
 # mini-scroll possível; se alguém a trouxer de volta, o bloco precisa existir e seguir sem rolagem própria.
 import glob as _glob
-_ui_js = "".join(open(f, encoding="utf-8").read() for f in _glob.glob("app/src/main/assets/ui/**/*.js", recursive=True))
+_ui_js = "".join(open(f, encoding="utf-8").read() for f in _glob.glob(str(ROOT / "app/src/main/assets/ui/**/*.js"), recursive=True))
 if ".autocal-review-card {" in css:
     review_card_block = css.split(".autocal-review-card {", 1)[1].split("}", 1)[0]
     assert "overflow: auto" not in review_card_block

@@ -44,31 +44,11 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `OKClick` | 0x005109BC | 239 | INFERIDO | usa textos AUTOCALSETTINGSSAVEEXIT; chama TTranslatorExt::GetString | AUTOCALSETTINGSSAVEEXIT |  |  |
 | `_AcqusitionAreas0Click` | 0x00510954 | 66 | INFERIDO | toca MyColorDialog |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `Image1Click` (0x00510AAC):
-  - sub_40487C (45 B)
-  - sub_5100B8 (318 B): toca AcqusitionAreas,GasLine,PetrolLine,PetrolPoint
-  - sub_5104C0 (365 B): toca PanelCustomColors
-  - sub_51071C (350 B)
-  - sub_512244 (15 B)
-  -   sub_510630 (46 B)
-  -   sub_510660 (37 B)
-  -   sub_510688 (42 B)
-  -   sub_51296C (543 B)
-  -     sub_4188D0 (90 B)
-  -     sub_41FC9C (69 B)
-  -     sub_42C3F0 (193 B)
+  - (+11 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `OKClick` (0x005109BC):
-  - sub_40487C (45 B)
-  - sub_51071C (350 B)
-  - sub_512244 (15 B)
-  -   sub_510630 (46 B)
-  -   sub_510660 (37 B)
-  -   sub_510688 (42 B)
-  -   sub_51296C (543 B)
-  -     sub_4188D0 (90 B)
-  -     sub_41FC9C (69 B)
-  -     sub_42C3F0 (193 B)
+  - (+9 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `_AcqusitionAreas0Click` (0x00510954):
-  - sub_5100B8 (318 B): toca AcqusitionAreas,GasLine,PetrolLine,PetrolPoint
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)

@@ -27,15 +27,10 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `FormShow` | 0x00513DA8 | 8 | INFERIDO | sem fatos diretos extraíveis (8 bytes; chama 1 funções sem nome) |  |  |  |
 | `RefreshTimeChange` | 0x005141A4 | 104 | INFERIDO | toca LabelRefreshValue, RefreshTime |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `FormClose` (0x00513E68):
-  - sub_51296C (543 B)
-  -   sub_40487C (45 B)
-  -   sub_4188D0 (90 B)
-  -   sub_41FC9C (69 B)
-  -   sub_42C3F0 (193 B)
+  - (+4 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `FormShow` (0x00513DA8):
   - sub_513DB0 (183 B): chama TAebNumber::GetInt,TAebVector::GetInt,TAebVectorItems::SetValues
-- `RefreshTimeChange` (0x005141A4):
-  - sub_40487C (45 B)
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)

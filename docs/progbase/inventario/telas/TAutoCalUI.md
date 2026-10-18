@@ -139,240 +139,163 @@ Gerado por `tools/progbase/inventario_telas.py`. Evidência: DFM+RTTI = OBS-COD;
 | `TestAreasClick` | 0x00519538 | 392 | INFERIDO | toca AcqusitionAreas |  |  |  |
 | `TimerMessageSwitchToGasTimer` | 0x0051A168 | 226 | INFERIDO | toca TimerMessageSwitchToGas, UserMessageLabel, UserMessageLabel2 |  |  |  |
 
-### Cadeia de subfunções sem nome alcançadas pelos handlers (profundidade <= 3; OBS-COD)
+### Subfunções sem nome com fatos diretos, alcançadas pelos handlers (profundidade <= 3; OBS-COD)
 
 - `ActionAutoCalRifExecute` (0x005187A0):
-  - sub_515D00 (830 B): chama TAebNumber::GetDouble,TAebVector::GetDouble; toca ChartData,ChartKLine,ChartPoint,CursorLimitMAP_MAX
-  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  - sub_5188D4 (46 B)
-  - sub_518904 (42 B)
-  - sub_51AE10 (16 B)
-  - sub_51B604 (779 B): textos BUTTONANNULLA,BUTTONOK,FINESTRACENTRICELLEAUTOCAL,MESSBADRIFMAP; chama TAboutBox.Create,TAebVector::GetDouble,TTranslatorExt::GetString; toca NRunAxes
-  -   sub_41FAFC (16 B)
-  -   sub_516044 (106 B): chama TAebVector::GetDouble; toca KLine
-  -   sub_51745C (265 B): toca ChartData,ChartKLine,ChartPoint,KRunAxes
-  -   sub_518B80 (185 B): toca CursorLimitMAP_MAX,CursorLimitMAP_MIN
-  -   sub_40487C (45 B)
-  -   sub_512254 (15 B)
-  - … +22 (ver telas.json)
+  - sub_515D00 (830 B): chama TAebNumber::GetDouble,TAebVector::GetDouble
+  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
+  - sub_51B604 (779 B): textos BUTTONANNULLA,BUTTONOK,FINESTRACENTRICELLEAUTOCAL,MESSBADRIFMAP; chama TAboutBox.Create,TAebVector::GetDouble,TTranslatorExt::GetString
+  -   sub_516044 (106 B): chama TAebVector::GetDouble
+  -   sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
+  -   sub_5171EC (102 B): chama TAebProtocol::GetComFail
+  -   sub_51BD3C (437 B): chama TAebVector::GetDouble,TNumericEdit.Create
+  -     sub_41FB40 (34 B): chama TAebProtocol::GetPacket
+  -     sub_517254 (518 B): chama TAebVector::GetDouble,TAebVector::GetInt
+  -     sub_51BEF4 (87 B): chama TChildLabel.Create
+  - (+21 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionAutoMatchExecute` (0x005189B4):
   - sub_517568 (359 B): APIs Sleep
-  -   sub_40487C (45 B)
   -   sub_512264 (25 B): chama TAebProtocol::IsConnect
   -   sub_512280 (125 B): chama TAebProtocol::SendCommand
-  -   sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  -     sub_512254 (15 B)
-  -     sub_41FAFC (16 B)
-  -     sub_513208 (10 B)
-  -     sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -     sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -     sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt; toca NumGasPt,NumPetrPt
-  -     sub_5170EC (255 B): toca ChartKLine,KLine,TimerMessageSwitchToGas
-  - … +2 (ver telas.json)
+  -   sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
+  -     sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -     sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -     sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
+  -     sub_5171EC (102 B): chama TAebProtocol::GetComFail
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionChangeColorExecute` (0x0051AE78):
-  - sub_51988C (85 B)
-  -   sub_510630 (46 B)
-  -   sub_510660 (37 B)
-  -   sub_51296C (543 B)
-  -   sub_51995A (1420 B): chama TAutocalColorSettings.Create; toca AcqusitionAreas,ActionFinishAutocal,BtnDeleteRandomPoint,BtnFinishAutomatch
-  -     sub_40487C (45 B)
-  -     sub_4188D0 (90 B)
-  -     sub_41FC9C (69 B)
-  -     sub_42C3F0 (193 B)
-  -     sub_510688 (42 B)
-  -     sub_519EF4 (274 B): toca GasCurve,GasLine,NRunAxes,NumGasPt
-  -     sub_8F3C14 (14 B)
+  -   sub_51995A (1420 B): chama TAutocalColorSettings.Create
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionDeleteSelectedPointsExecute` (0x00518E6C):
-  - sub_40487C (45 B)
   - sub_512858 (275 B): chama TAebVector::SetDefValue
-  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  - sub_518D94 (98 B)
-  - sub_518DF8 (65 B)
+  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
   -   sub_512300 (119 B): chama TAebProtocol::SendCommand
-  -   sub_975FD0 (74 B)
-  -   sub_41FAFC (16 B)
-  -   sub_512254 (15 B)
-  -   sub_513208 (10 B)
-  -   sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -   sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  - … +9 (ver telas.json)
-- `ActionExportChartDataExecute` (0x0051878C):
-  - sub_518610 (377 B): toca SaveDialogChart
-  -   sub_40487C (45 B)
-- `ActionExportChartPointExecute` (0x00519120):
-  - sub_518610 (377 B): toca SaveDialogChart
-  -   sub_40487C (45 B)
-- `ActionExportKChartExecute` (0x005185FC):
-  - sub_518610 (377 B): toca SaveDialogChart
-  -   sub_40487C (45 B)
-- `ActionExportToKExecute` (0x00518514):
-  - sub_40487C (45 B)
-  - sub_512624 (226 B): chama TAebVector::GetDouble
-  - sub_516044 (106 B): chama TAebVector::GetDouble; toca KLine
-  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  - sub_5185D4 (39 B)
-  -   sub_42EE14 (100 B)
-  -   sub_42F338 (7 B)
-  -   sub_512708 (167 B): chama TAebVector::GetDouble
-  -   sub_5127B0 (90 B)
-  -   sub_51280C (72 B)
-  -   sub_513208 (10 B)
-  -   sub_41FAFC (16 B)
-  - … +16 (ver telas.json)
-- `ActionFinishAutocalExecute` (0x0051A390):
-  - sub_40487C (45 B)
-  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  -   sub_41FAFC (16 B)
-  -   sub_512254 (15 B)
-  -   sub_513208 (10 B)
-  -   sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -   sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -   sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt; toca NumGasPt,NumPetrPt
-  -   sub_5170EC (255 B): toca ChartKLine,KLine,TimerMessageSwitchToGas
+  -   sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
   -   sub_5171EC (102 B): chama TAebProtocol::GetComFail
-  -   sub_51ABA8 (147 B)
+  -     sub_512264 (25 B): chama TAebProtocol::IsConnect
   -     sub_41FB40 (34 B): chama TAebProtocol::GetPacket
-  - … +4 (ver telas.json)
+  -     sub_517254 (518 B): chama TAebVector::GetDouble,TAebVector::GetInt
+  - (+10 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `ActionExportChartDataExecute` (0x0051878C):
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `ActionExportChartPointExecute` (0x00519120):
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `ActionExportKChartExecute` (0x005185FC):
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `ActionExportToKExecute` (0x00518514):
+  - sub_512624 (226 B): chama TAebVector::GetDouble
+  - sub_516044 (106 B): chama TAebVector::GetDouble
+  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
+  -   sub_512708 (167 B): chama TAebVector::GetDouble
+  -   sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
+  -   sub_5171EC (102 B): chama TAebProtocol::GetComFail
+  -     sub_42ECD8 (181 B): chama TAebMatrix::SetEcuData
+  -     sub_41FB40 (34 B): chama TAebProtocol::GetPacket
+  -     sub_517254 (518 B): chama TAebVector::GetDouble,TAebVector::GetInt
+  - (+16 subfunções sem fatos diretos ou fora da lista; telas.json)
+- `ActionFinishAutocalExecute` (0x0051A390):
+  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
+  -   sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
+  -   sub_5171EC (102 B): chama TAebProtocol::GetComFail
+  -     sub_41FB40 (34 B): chama TAebProtocol::GetPacket
+  -     sub_517254 (518 B): chama TAebVector::GetDouble,TAebVector::GetInt
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionGoToMinCalibrationExecute` (0x005189E4):
-  - sub_5185D4 (39 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionResetAllExecute` (0x005189D8):
   - sub_517568 (359 B): APIs Sleep
-  -   sub_40487C (45 B)
   -   sub_512264 (25 B): chama TAebProtocol::IsConnect
   -   sub_512280 (125 B): chama TAebProtocol::SendCommand
-  -   sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  -     sub_512254 (15 B)
-  -     sub_41FAFC (16 B)
-  -     sub_513208 (10 B)
-  -     sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -     sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -     sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt; toca NumGasPt,NumPetrPt
-  -     sub_5170EC (255 B): toca ChartKLine,KLine,TimerMessageSwitchToGas
-  - … +2 (ver telas.json)
+  -   sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
+  -     sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -     sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -     sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
+  -     sub_5171EC (102 B): chama TAebProtocol::GetComFail
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionResetGasExecute` (0x005189CC):
   - sub_517568 (359 B): APIs Sleep
-  -   sub_40487C (45 B)
   -   sub_512264 (25 B): chama TAebProtocol::IsConnect
   -   sub_512280 (125 B): chama TAebProtocol::SendCommand
-  -   sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  -     sub_512254 (15 B)
-  -     sub_41FAFC (16 B)
-  -     sub_513208 (10 B)
-  -     sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -     sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -     sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt; toca NumGasPt,NumPetrPt
-  -     sub_5170EC (255 B): toca ChartKLine,KLine,TimerMessageSwitchToGas
-  - … +2 (ver telas.json)
+  -   sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
+  -     sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -     sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -     sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
+  -     sub_5171EC (102 B): chama TAebProtocol::GetComFail
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionResetKFactorExecute` (0x0051A070):
-  - sub_40487C (45 B)
-  - sub_513208 (10 B)
-  - sub_516044 (106 B): chama TAebVector::GetDouble; toca KLine
-  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  -   sub_41FAFC (16 B)
-  -   sub_512254 (15 B)
-  -   sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -   sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -   sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt; toca NumGasPt,NumPetrPt
-  -   sub_5170EC (255 B): toca ChartKLine,KLine,TimerMessageSwitchToGas
+  - sub_516044 (106 B): chama TAebVector::GetDouble
+  - sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
+  -   sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -   sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
   -   sub_5171EC (102 B): chama TAebProtocol::GetComFail
-  -   sub_51ABA8 (147 B)
-  - … +5 (ver telas.json)
+  -     sub_41FB40 (34 B): chama TAebProtocol::GetPacket
+  -     sub_517254 (518 B): chama TAebVector::GetDouble,TAebVector::GetInt
+  - (+8 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ActionResetPetrolExecute` (0x005189C0):
   - sub_517568 (359 B): APIs Sleep
-  -   sub_40487C (45 B)
   -   sub_512264 (25 B): chama TAebProtocol::IsConnect
   -   sub_512280 (125 B): chama TAebProtocol::SendCommand
-  -   sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble; toca ChartData,GasPoint,GasPointPrev,KLine
-  -     sub_512254 (15 B)
-  -     sub_41FAFC (16 B)
-  -     sub_513208 (10 B)
-  -     sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -     sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt; toca ActionAutoMatch,ActionFinishAutocal,LabNumAutoMatch
-  -     sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt; toca NumGasPt,NumPetrPt
-  -     sub_5170EC (255 B): toca ChartKLine,KLine,TimerMessageSwitchToGas
-  - … +2 (ver telas.json)
+  -   sub_5162F8 (1742 B): chama TAebProtocol::GetComFail,TAebProtocol::IsConnect,TAebVector::GetDouble
+  -     sub_516D7F (484 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -     sub_516D8C (471 B): chama TAebNumber::GetInt,TAebNumber::SetInt
+  -     sub_516F64 (390 B): chama TAebNumber::GetInt,TAebVector::GetDouble,TAebVector::GetInt
+  -     sub_5171EC (102 B): chama TAebProtocol::GetComFail
+  - (+5 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `BtnDumpClick` (0x005184D4):
   - sub_41F068 (2706 B): chama TAebMatrix::GetDefValue,TAebMatrix::GetDouble,TAebNumber::GetDouble,TAebVector::GetDefValue
-  -   sub_40487C (45 B)
-  -   sub_41E5D0 (450 B)
-  -     sub_41E8D0 (96 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `BtnDumpEEClick` (0x005184F4):
   - sub_41F068 (2706 B): chama TAebMatrix::GetDefValue,TAebMatrix::GetDouble,TAebNumber::GetDouble,TAebVector::GetDefValue
-  -   sub_40487C (45 B)
-  -   sub_41E5D0 (450 B)
-  -     sub_41E8D0 (96 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `BtnShowBandClick` (0x0051A74C):
-  - sub_40487C (45 B)
   - sub_51A614 (311 B): chama TAebVector::GetDouble
-  -   sub_41FAFC (16 B)
-  -   sub_51A51C (247 B): chama TAebVector::GetDouble; toca CurrentBand
+  -   sub_51A51C (247 B): chama TAebVector::GetDouble
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartDataAfterDraw` (0x0051A998):
-  - sub_40487C (45 B)
-  - sub_51A7B8 (162 B): chama TAebVector::GetDouble; toca ChartData
+  - sub_51A7B8 (162 B): chama TAebVector::GetDouble
   - sub_51A85C (184 B): chama TAebVector::GetDouble
   - sub_51A918 (127 B): chama TAebNumber::GetInt,TAebVector::GetInt
-  -   sub_41FAFC (16 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartDataClickSeries` (0x00518C3C):
-  - sub_518B80 (185 B): toca CursorLimitMAP_MAX,CursorLimitMAP_MIN
-  - sub_518D94 (98 B)
-  - sub_518DF8 (65 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartDataDblClick` (0x00518E3C):
-  - sub_518D60 (52 B)
-  -   sub_518D94 (98 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartDataKeyDown` (0x0051939C):
-  - sub_518B80 (185 B): toca CursorLimitMAP_MAX,CursorLimitMAP_MIN
-  - sub_519354 (72 B)
-  -   sub_519224 (291 B): toca ChartData,CursorLimitMAP_MAX,CursorLimitMAP_MIN
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartDataKeyUp` (0x00519528):
-  - sub_519144 (221 B): chama TAebNumber::SetDouble; toca ChartData,CursorLimitMAP_MAX,DbgEdit1
+  - sub_519144 (221 B): chama TAebNumber::SetDouble
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartDataMouseMove` (0x00517F60):
-  - sub_40487C (45 B)
-  - sub_428774 (150 B)
-  - sub_519354 (72 B)
-  -   sub_4288CC (24 B)
-  -   sub_519224 (291 B): toca ChartData,CursorLimitMAP_MAX,CursorLimitMAP_MIN
+  - (+4 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartDataMouseUp` (0x00519134):
-  - sub_519144 (221 B): chama TAebNumber::SetDouble; toca ChartData,CursorLimitMAP_MAX,DbgEdit1
+  - sub_519144 (221 B): chama TAebNumber::SetDouble
+  - (+0 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartKLineClickSeries` (0x005176D0):
-  - sub_513208 (10 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartKLineDragOver` (0x005178CC):
-  - sub_428774 (150 B)
-  -   sub_4288CC (24 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartKLineEndDrag` (0x00517980):
-  - sub_428774 (150 B)
-  -   sub_4288CC (24 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartKLineKeyDown` (0x005179E0):
-  - sub_428774 (150 B)
-  - sub_513208 (10 B)
-  -   sub_4288CC (24 B)
+  - (+3 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartKLineMouseDown` (0x00517DE8):
-  - sub_513208 (10 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `ChartKLineMouseMove` (0x00517E80):
-  - sub_40487C (45 B)
-  - sub_428774 (150 B)
-  -   sub_4288CC (24 B)
-- `ChartPointMouseMove` (0x00518390):
-  - sub_40487C (45 B)
-- `CheckAutoCalEnableBeforeSetData` (0x0051A474):
-  - sub_40487C (45 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `DbgBtnRandomClick` (0x005189F0):
-  - sub_513208 (10 B)
+  - (+1 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `MenuChartDataPopup` (0x005190A0):
-  - sub_5190E0 (63 B)
-  -   sub_518DF8 (65 B)
+  - (+2 subfunções sem fatos diretos ou fora da lista; telas.json)
 - `SettingsImgClick` (0x00519708):
   - sub_513630 (1880 B): textos AUTOCALCHANGECOLOR,AUTOCALSETTINGSCHARTK,AUTOCALSETTINGSDISABLEHBAND,AUTOCALSETTINGSRPMMAX; chama TAboutBox.Create,TTranslatorExt::GetString
-  - sub_5197AC (46 B)
-  - sub_5197DC (42 B)
-  - sub_51988C (85 B)
-  -   sub_40487C (45 B)
-  -   sub_41E930 (243 B)
-  -   sub_41EA40 (243 B)
-  -   sub_512244 (15 B)
-  -   sub_51296C (543 B)
-  -   sub_51AF7C (37 B)
-  -   sub_510630 (46 B)
-  -   sub_510660 (37 B)
-  - … +10 (ver telas.json)
-- `TimerMessageSwitchToGasTimer` (0x0051A168):
-  - sub_40487C (45 B)
+  -   sub_51995A (1420 B): chama TAutocalColorSettings.Create
+  - (+19 subfunções sem fatos diretos ou fora da lista; telas.json)
