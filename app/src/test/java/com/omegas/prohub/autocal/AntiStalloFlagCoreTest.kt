@@ -163,4 +163,24 @@ class AntiStalloFlagCoreTest {
         assertEquals(Outcome.NOTHING_TO_DO, r.outcome)
         assertTrue(ecu.frames.isEmpty())
     }
+
+    // Revisão independente (item 3): quando o app não sabe o que a ECU tem, a mensagem diz isso (nunca "nada foi gravado").
+    @Test fun `leitura de volta falha - mensagem diz estado incerto`() {
+        val ecu = FakeEcu(intArrayOf(0, 0), FakeEcu.Behavior.READBACK_FAILS)
+        val r = AntiStalloFlagCore.execute(ecu.io(), AntiStalloFlagCore.plan(intArrayOf(0, 0), true))
+        assertTrue(r.message, r.message.startsWith("Estado incerto — releia a ECU"))
+    }
+
+    @Test fun `leitura divergente - mensagem diz estado incerto`() {
+        val ecu = FakeEcu(intArrayOf(0, 0), FakeEcu.Behavior.ACCEPT_WRONG_BIT)
+        val r = AntiStalloFlagCore.execute(ecu.io(), AntiStalloFlagCore.plan(intArrayOf(0, 0), true))
+        assertTrue(r.message, r.message.startsWith("Estado incerto — releia a ECU"))
+    }
+
+    @Test fun `sem ACK com valor mudado e estado incerto, com valor intacto e recusa limpa`() {
+        val mudou = AntiStalloFlagCore.execute(FakeEcu(intArrayOf(0, 0), FakeEcu.Behavior.TRANSPORT_FAIL_WRITTEN).io(), AntiStalloFlagCore.plan(intArrayOf(0, 0), true))
+        assertTrue(mudou.message, mudou.message.startsWith("Estado incerto — releia a ECU"))
+        val intacto = AntiStalloFlagCore.execute(FakeEcu(intArrayOf(0, 0), FakeEcu.Behavior.NAK).io(), AntiStalloFlagCore.plan(intArrayOf(0, 0), true))
+        assertFalse(intacto.message, intacto.message.contains("Estado incerto"))
+    }
 }

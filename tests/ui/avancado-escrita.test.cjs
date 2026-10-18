@@ -347,3 +347,44 @@ test('o módulo não usa relógio nem prazo (setTimeout/setInterval/Date/delay)'
   const fonte = read('core/advanced-flags.js').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
   assert.doesNotMatch(fonte, /setTimeout|setInterval|requestAnimationFrame|Date\.now|new Date|performance\.now|\bdelay\b/);
 });
+
+// ---------- estado incerto (revisão independente, item 3) ----------
+function terminar(status) {
+  const e = ambiente();
+  e.flow.tapSwitch(lido([0, 0]), true);
+  e.setStatus(pronto([0, 0], true));
+  e.emit();
+  e.flow.tapSwitch(lido([0, 0]), true);
+  e.setStatus({ state: 'DONE', ...status });
+  e.emit();
+  return e.flow.view();
+}
+
+test('estado incerto: READBACK_FAILED / READBACK_DIVERGED / valueChanged nunca dizem "nada foi dado como gravado"', () => {
+  const casos = [
+    { outcome: 'READBACK_FAILED', message: 'A leitura de volta falhou' },
+    { outcome: 'READBACK_DIVERGED', readback: [0x10, 0], valueChanged: true, message: 'x' },
+    { outcome: 'NOT_ACKED', readback: [0x20, 0], valueChanged: true, message: 'A ECU não confirmou a gravação (status 0xCA)' },
+  ];
+  for (const caso of casos) {
+    const v = terminar(caso);
+    assert.equal(v.phase, 'error', caso.outcome);
+    assert.match(v.message, /Estado incerto — releia a ECU/, caso.outcome);
+    assert.doesNotMatch(v.message, /[Nn]ada foi dado como gravado/, caso.outcome);
+    assert.equal(v.uncertain, true, caso.outcome);
+  }
+});
+
+test('recusa limpa (NOT_ACKED sem mudança, valor intacto) segue dizendo que nada foi gravado', () => {
+  const v = terminar({ outcome: 'NOT_ACKED', readback: [0, 0], valueChanged: false });
+  assert.equal(v.phase, 'error');
+  assert.match(v.message, /nada foi dado como gravado/);
+  assert.doesNotMatch(v.message, /Estado incerto/);
+  assert.notEqual(v.uncertain, true);
+});
+
+test('CONFIRMED que o JS não consegue reconferir também é estado incerto', () => {
+  const v = terminar({ outcome: 'CONFIRMED', readback: [0x30, 0] });
+  assert.match(v.message, /Estado incerto — releia a ECU/);
+  assert.doesNotMatch(v.message, /[Nn]ada foi dado como gravado/);
+});

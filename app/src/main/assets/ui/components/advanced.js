@@ -34,9 +34,11 @@
       });
       this.toggle.addEventListener('click', () => this.setOpen(!this.open));
       this.host.addEventListener('click', event => this.onClick(event));
-      // Qualquer toque fora do botão de gravar desarma a prévia (evento, nunca prazo).
+      // Qualquer toque fora dos botões de gravar/desfazer desarma a prévia (evento, nunca prazo).
       document.addEventListener('click', event => {
-        if (!this.open || !this.host.contains(event.target) || !event.target.closest('[data-adv-confirm]')) this.flow.otherTouch();
+        const inside = this.open && this.host.contains(event.target);
+        const second = inside && (event.target.closest('[data-adv-confirm]') || (this.flow.view().confirmOn === 'undo' && event.target.closest('[data-adv-undo]')));
+        if (!second) this.flow.otherTouch();
       }, true);
     }
 

@@ -15,13 +15,16 @@ class EcuParameterReader(private val serial: Mp48SerialScheduler) {
     fun readOnce(trigger: String): JSONObject {
         val sessionId = serial.currentSessionId().takeIf { serial.isConnected() && it > 0L }
             ?: throw IllegalStateException("USB desconectado")
-        val items = serial.unit(
-            reason = "leitura de parâmetros da ECU (só leitura)",
-            expectedSessionId = sessionId,
-            workClass = Mp48WorkClass.READ_ONLY,
-            telemetryAfter = true,
-            waitTimeoutMs = 1_500L,
-        ) { unit -> EcuParameterSnapshot.run { entry -> read(unit, entry) } }
+        // Uma unidade curta por grupo (Avançado separado do núcleo): estourar um grupo não perde o param_snapshot inteiro.
+        val items = EcuParameterSnapshot.runGroups { group ->
+            serial.unit(
+                reason = "leitura de parâmetros da ECU (só leitura)",
+                expectedSessionId = sessionId,
+                workClass = Mp48WorkClass.READ_ONLY,
+                telemetryAfter = true,
+                waitTimeoutMs = 1_500L,
+            ) { unit -> EcuParameterSnapshot.run(group) { entry -> read(unit, entry) } }
+        }
         return EcuParameterSnapshot.toJson(items, trigger)
     }
 

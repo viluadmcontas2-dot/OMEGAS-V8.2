@@ -18,6 +18,9 @@ internal object AntiStalloFlagCore {
     const val WORD_COUNT = 2
     const val MASK = 0x0020
 
+    /** Prefixo da mensagem quando o app não sabe o que a ECU tem (a tela nunca diz "nada foi gravado" nesse caso). */
+    const val UNCERTAIN = "Estado incerto — releia a ECU."
+
     enum class Outcome {
         /** ACK + leitura de volta igual ao esperado. */
         CONFIRMED,
@@ -92,20 +95,21 @@ internal object AntiStalloFlagCore {
         if (back == null || !valid(back)) {
             return Result(
                 Outcome.READBACK_FAILED,
-                "A leitura de volta falhou: o valor atual da ECU é desconhecido. Confira antes de tentar de novo.",
+                "$UNCERTAIN A leitura de volta falhou: o valor atual da ECU é desconhecido. Confira antes de tentar de novo.",
                 null, frame = frame, reply = reply,
             )
         }
         if (!reply.acked) {
+            val changed = back[0] != plan.before[0] || back[1] != plan.before[1]
             return Result(
-                Outcome.NOT_ACKED, "A ECU não confirmou a gravação (${reply.detail}).", back,
-                valueChanged = back[0] != plan.before[0] || back[1] != plan.before[1], frame = frame, reply = reply,
+                Outcome.NOT_ACKED, (if (changed) "$UNCERTAIN " else "") + "A ECU não confirmou a gravação (${reply.detail}).", back,
+                valueChanged = changed, frame = frame, reply = reply,
             )
         }
         return if (readbackMatches(plan, back)) {
             Result(Outcome.CONFIRMED, "ECU confirmou e a leitura de volta bate.", back, true, frame, reply)
         } else {
-            Result(Outcome.READBACK_DIVERGED, "A ECU deu ACK, mas a leitura de volta é diferente do esperado.", back, back[0] != plan.before[0] || back[1] != plan.before[1], frame, reply)
+            Result(Outcome.READBACK_DIVERGED, "$UNCERTAIN A ECU deu ACK, mas a leitura de volta é diferente do esperado.", back, back[0] != plan.before[0] || back[1] != plan.before[1], frame, reply)
         }
     }
 }

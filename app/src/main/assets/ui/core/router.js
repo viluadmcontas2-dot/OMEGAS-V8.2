@@ -4,15 +4,54 @@
   const ROUTES = ['autocal', 'refino', 'map', 'curve', 'tools'];
   const STORAGE_KEY = 'omegas-v8-route';
 
+  // Cada script carrega uma vez só. Quem pede de novo espera o mesmo carregamento (nunca insere duas tags).
+  const scripts = new Map();
+
   function loadOptionalScript(src, onload) {
     if (typeof document === 'undefined') return;
-    if (document.querySelector(`script[data-omegas-extension="${src}"]`)) return;
+    const known = scripts.get(src);
+    if (known) {
+      if (typeof onload !== 'function') return;
+      if (known.done) onload(); else known.waiters.push(onload);
+      return;
+    }
+    const entry = { done: false, waiters: typeof onload === 'function' ? [onload] : [] };
+    scripts.set(src, entry);
+    const finish = () => { entry.done = true; entry.waiters.splice(0).forEach(fn => fn()); };
     const script = document.createElement('script');
     script.src = src;
     script.dataset.omegasExtension = src;
-    script.onload = typeof onload === 'function' ? onload : null;
-    script.onerror = () => console.error('[OMEGAS router] extensão não carregada:', src);
+    script.onload = finish;
+    script.onerror = () => { console.error('[OMEGAS router] extensão não carregada:', src); finish(); };
     document.head.appendChild(script);
+  }
+
+  /**
+   * Telas pesadas só entram quando a aba é aberta (evento do operador), nunca no arranque: o app abre na AutoCal e
+   * carregava Mapa K, Curva K, Ferramentas e Refino à toa (mais da metade do JavaScript). A ordem de cada grupo é a de
+   * dependência; o que dois grupos dividem (write-gate, map-editor…) carrega uma vez só.
+   */
+  const SHARED_AUTOCAL = ['core/autocal-api.js', 'core/manual-automatch-advice.js', 'screens/autocal-original.js', 'screens/autocal-cockpit.js'];
+  const ROUTE_SCRIPTS = {
+    map: ['core/autocal-api.js', 'map-editor.js', 'core/curve-to-map.js', 'core/balance-runner.js', 'core/write-gate.js', 'screens/map.js'],
+    curve: ['core/curve-smoothing.js', 'screens/curve.js'],
+    tools: ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'components/drawers.js', 'components/advanced.js'],
+    refino: [...SHARED_AUTOCAL, 'map-editor.js', 'core/stall-region.js', 'core/write-gate.js', 'core/map-fix.js', 'core/gasoline-reference.js', 'screens/refino.js'],
+  };
+  // Se a classe da tela já existe (testes que montam os arquivos à mão), não há o que carregar.
+  const ROUTE_READY = { map: 'MapScreen', curve: 'CurveScreen', tools: 'Drawers', refino: 'RefinoScreen' };
+
+  /** Promessa que resolve quando a tela da rota está carregada; `null` se não há nada a esperar (já carregada). */
+  function loadRoute(route) {
+    if (typeof document === 'undefined' || !ROUTE_SCRIPTS[route]) return null;
+    if (ns[ROUTE_READY[route]]) return null;
+    const pending = ROUTE_SCRIPTS[route].filter(src => !(scripts.get(src) || {}).done);
+    if (!pending.length) return null;
+    return new Promise(resolve => {
+      let index = 0;
+      const next = () => (index < pending.length ? loadOptionalScript(pending[index++], next) : resolve());
+      next();
+    });
   }
 
   class Router {
@@ -41,6 +80,7 @@
 
   ns.Router = Router;
   ns.ROUTES = ROUTES;
+  ns.loadRoute = loadRoute;
 
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
   loadOptionalScript('components/live-bar.js');
@@ -48,5 +88,5 @@
   loadOptionalScript('core/autocal-api.js', () =>
     loadOptionalScript('core/manual-automatch-advice.js', () =>
     loadOptionalScript('screens/autocal-original.js', () =>
-      loadOptionalScript('screens/autocal-cockpit.js', () => loadOptionalScript('screens/refino.js')))));
+      loadOptionalScript('screens/autocal-cockpit.js'))));
 })(typeof window !== 'undefined' ? window : globalThis);

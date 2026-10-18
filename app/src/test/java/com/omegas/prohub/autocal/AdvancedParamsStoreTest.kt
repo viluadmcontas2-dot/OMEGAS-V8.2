@@ -60,4 +60,24 @@ class AdvancedParamsStoreTest {
         assertTrue(json.getBoolean("read"))
         assertEquals(1, json.getJSONObject("params").length())
     }
+
+    @Test fun `markUnknown troca so a entrada para UNKNOWN sem valor e preserva as outras`() {
+        val store = AdvancedParamsStore()
+        store.update(7L, snapshot())
+        store.replaceVector(7L, "FLAG_CONF3", 0x00FA, intArrayOf(0x20, 0), "AO_VIVO")
+        store.markUnknown(7L, "FLAG_CONF3", 0x00FA, "APOS_GRAVAR_FALHOU")
+        val params = store.json(7L).getJSONObject("params")
+        val flag = params.getJSONObject("FLAG_CONF3")
+        assertEquals("UNKNOWN", flag.getString("state"))
+        assertTrue(flag.isNull("values"))
+        assertEquals(0x00FA, flag.getInt("address"))
+        assertEquals("NACK", params.getJSONObject("GIRI_MIN_CAMBIO").getString("state"))
+    }
+
+    @Test fun `markUnknown de outra sessao nao mexe no que a sessao atual leu`() {
+        val store = AdvancedParamsStore()
+        store.replaceVector(7L, "FLAG_CONF3", 0x00FA, intArrayOf(0x20, 0), "AO_VIVO")
+        store.markUnknown(6L, "FLAG_CONF3", 0x00FA, "x")
+        assertEquals("OK", store.json(7L).getJSONObject("params").getJSONObject("FLAG_CONF3").getString("state"))
+    }
 }

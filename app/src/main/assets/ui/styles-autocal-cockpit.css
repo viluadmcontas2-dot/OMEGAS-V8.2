@@ -107,7 +107,7 @@
 
 
 
-.autocal-primary-action,.autocal-review-card button{
+.autocal-primary-action{
   min-height: 56px;
 }
 
@@ -573,28 +573,6 @@
   position: relative;
 }
 
-.autocal-review-card {
-  width: min(620px, 100%);
-  max-height: none;
-  overflow: visible;
-  padding: 18px;
-  border: 1px solid rgba(226,94,94,.28);
-  border-radius: 14px;
-  background: #10151d;
-  box-shadow: 0 18px 48px rgba(0,0,0,.48);
-}
-
-.autocal-review-card header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.autocal-review-card p,
-.autocal-review-card dd,
-.autocal-review-card dt {
-  font-size: 11px;
-}
 
 
 
@@ -602,29 +580,18 @@
 
 
 
-.autocal-review-card dl {
-  display: grid;
-  gap: 6px;
-  margin: 12px 0;
-}
 
-.autocal-review-card dl > div {
-  display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  gap: 8px;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-}
 
-.autocal-review-card dt {
-  color: #8793a4;
-}
 
-.autocal-review-card dd {
-  margin: 0;
-  color: #e0e8f1;
-  overflow-wrap: anywhere;
-}
+
+
+
+
+
+
+
+
+
 
 @container (max-width: 900px) {
   .autocal-band-strip {
@@ -1020,9 +987,7 @@
 .autocal-events article small,
 .autocal-events article span,
 .autocal-events .empty-copy { font-size: 12px; }
-.autocal-review-card p,
-.autocal-review-card dd,
-.autocal-review-card dt { font-size: 13px; }
+
 
 
 
@@ -1163,7 +1128,7 @@
 .autocal-human-copy strong {
   margin-top: 3px;
 }
-.autocal-primary-action,.autocal-review-card button{
+.autocal-primary-action{
   min-height: 48px;
 }
 
@@ -2016,7 +1981,7 @@
 .refino-cockpit .autocal-primary-action[data-kind="waiting"] { color: #c5d0db; background: rgba(35,47,58,.6); border-color: rgba(255,255,255,.1); cursor: default; }
 .refino-cockpit .autocal-primary-action[data-kind="review"] { background: #2d6fd1; border-color: #4a8be8; color: #fff; }
 
-.refino-review-list { max-height: 260px; overflow-y: auto; }
+
 .refino-warning { padding: 9px 11px; border-radius: 10px; background: rgba(104,78,26,.32); color: #ffefbd; font-size: 12px; }
 .refino-route-screen { position: relative; }
 

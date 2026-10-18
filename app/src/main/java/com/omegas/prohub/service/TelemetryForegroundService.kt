@@ -266,6 +266,11 @@ class TelemetryForegroundService : Service() {
             onFlagRead = { session, words, trigger ->
                 advancedParams.replaceVector(session, "FLAG_CONF3", com.omegas.prohub.autocal.AntiStalloFlagCore.ADDRESS, words, trigger)
             },
+            // Calibração, mapa K, curva K ou sonda de buffer na serial: o anti-apagão não disputa a porta (recusa sem enviar).
+            busy = { kWriter.isBusy() || kFactor.isBusy() || bufferProbe.statusJson().let { runCatching { JSONObject(it).optBoolean("busy", false) }.getOrDefault(false) } },
+            onFlagUnknown = { session, trigger ->
+                advancedParams.markUnknown(session, "FLAG_CONF3", com.omegas.prohub.autocal.AntiStalloFlagCore.ADDRESS, trigger)
+            },
         )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = recordingSerial,

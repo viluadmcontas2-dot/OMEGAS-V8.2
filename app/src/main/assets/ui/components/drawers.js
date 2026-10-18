@@ -276,7 +276,8 @@
       document.body.classList.toggle('drawer-open', state.toolsOpen === true);
       if (state.toolsOpen) this.renderTools(state);
       const demo = document.getElementById('toolEnvironment');
-      if (demo) demo.textContent = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup, sessões e saúde do app';
+      const environment = state.demo ? 'Simulação de interface · nenhuma escrita real' : 'Backup, sessões e saúde do app';
+      if (demo && demo.textContent !== environment) demo.textContent = environment;
     }
 
     preserveSessionSettingsInteraction(host) {

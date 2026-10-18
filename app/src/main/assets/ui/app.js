@@ -16,8 +16,13 @@
   const store = new ui.Store(ui.createInitialState());
   const router = new ui.Router(store);
   const instances = {};
-  const utilities = ui.Drawers ? new ui.Drawers(store, router, api) : null;
-  const advanced = ui.AdvancedPanel ? new ui.AdvancedPanel(store, api) : null;
+  // Ferramentas (cartões e Avançado) só existem depois que a aba é aberta: o script chega por evento (core/router.js).
+  let utilities = null;
+  let advanced = null;
+  function ensureTools() {
+    if (!utilities && ui.Drawers) utilities = new ui.Drawers(store, router, api);
+    if (!advanced && ui.AdvancedPanel) advanced = new ui.AdvancedPanel(store, api);
+  }
 
   const routeMeta = {
     map: ['AJUSTE LOCAL', 'Ajuste local'],
@@ -310,8 +315,18 @@
   let toolsSessionsKey = '';
   /** Relistar gravações no próximo contexto (entrar na aba, omegas-refresh). */
   let toolsSessionsStale = true;
-  /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
+  /**
+   * Abrir a aba é o evento que traz a tela pesada (core/router.js, loadRoute). Sem nada a carregar roda na hora (mesmo
+   * quadro do toque, como antes); se o operador já saiu da aba quando o script chegou, não ativa a tela errada.
+   */
   function activateRoute(route, context) {
+    const pending = ui.loadRoute ? ui.loadRoute(route) : null;
+    if (!pending) { enterRoute(route, context); return; }
+    pending.then(() => { if (store.get().route === route) enterRoute(route, context); });
+  }
+
+  /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
+  function enterRoute(route, context) {
     // Cursor em tempo real nos dois gráficos de aquisição (AutoCal e Refino, dono 2026-10-13); demais abas a 200 ms.
     scheduler.setCadenceMs(route === 'autocal' || route === 'refino' ? 50 : 200);
     store.patch({ toolsOpen: route === 'tools' });
@@ -341,6 +356,7 @@
       return;
     }
     if (route === 'tools') {
+      ensureTools();
       toolsSessionsStale = true; // entrar na aba relista as gravações
       if (!toolsEditing()) utilities?.render(store.get());
       afterPaint(refreshContext);

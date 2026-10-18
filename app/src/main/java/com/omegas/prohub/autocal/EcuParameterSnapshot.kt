@@ -49,11 +49,24 @@ object EcuParameterSnapshot {
         return Mp48Protocol.frame(byteArrayOf(0x2A, (address and 0xFF).toByte(), ((address ushr 8) and 0xFF).toByte(), row.toByte()))
     }
 
-    val CATALOG: List<Entry> = listOf(
+    /**
+     * O catálogo sai em GRUPOS: cada grupo é uma unidade curta e independente na serial (o snapshot inteiro, ~49 leituras,
+     * numa só unidade podia estourar a espera e perder tudo). Falha de um grupo não descarta os outros. Sem relógio: a
+     * ordem é a dos grupos e cada leitura espera a RESPOSTA da ECU.
+     */
+    private val NUCLEO: List<Entry> = listOf(
         // Anti-engasgo e troca de combustível
         v("ANTI_STALLO", 0x0133, 5, 2),
-        // Ferramentas > Avançado (2026-10-18): flags e vizinhos, lidos uma vez por conexão junto do resto (evento, nunca tempo).
-        // Formas conferidas no LOGNOVO: `29 03 00`, `29 C0 00`, `29 FA 00`, `29 A1 00`, `2A 34 01 0..3`.
+        s("GIRI_MIN_CAMBIO", 0x0010, 2),
+        s("RITARDO_CAMBIO", 0x0011),
+        v("CHANGE_OVER_CYL_DELAY", 0x00E2, 4, 2),
+        s("GIRI_SUP_BENZINA", 0x0064, 2),
+        s("RPM_FOR_SPLIT_FUEL", 0x00C8, 2),
+        v("RITARDO_PASSAGGIO", 0x00DD, 8, 1),
+    )
+
+    /** Ferramentas > Avançado (2026-10-18): flags e vizinhos. Formas conferidas no LOGNOVO: `29 03 00`, `29 C0 00`, `29 FA 00`, `29 A1 00`, `2A 34 01 0..3`. */
+    private val AVANCADO: List<Entry> = listOf(
         v("FLAG_CONF1", 0x0003, 2, 2),
         v("FLAG_CONF2", 0x00C0, 2, 2),
         v("FLAG_CONF3", 0x00FA, 2, 2),
@@ -62,12 +75,9 @@ object EcuParameterSnapshot {
         row("PARAM_PROGRESSIONI_L1", 0x0134, 1, 3, 2),
         row("PARAM_PROGRESSIONI_L2", 0x0134, 2, 3, 2),
         row("PARAM_PROGRESSIONI_L3", 0x0134, 3, 3, 2),
-        s("GIRI_MIN_CAMBIO", 0x0010, 2),
-        s("RITARDO_CAMBIO", 0x0011),
-        v("CHANGE_OVER_CYL_DELAY", 0x00E2, 4, 2),
-        s("GIRI_SUP_BENZINA", 0x0064, 2),
-        s("RPM_FOR_SPLIT_FUEL", 0x00C8, 2),
-        v("RITARDO_PASSAGGIO", 0x00DD, 8, 1),
+    )
+
+    private val CORTE: List<Entry> = listOf(
         // Corte e retorno do corte
         v("GIRI_TEMPO_CUTOFF", 0x0032, 2, 2),
         s("TEMPO_CORRENTE_CUTOFF", 0x0049, 2),
@@ -83,6 +93,9 @@ object EcuParameterSnapshot {
         v("TEMPI_EXTRAINIETTATE", 0x009B, 3, 2),
         s("TEMPO_MAX_EXTRAINJ_BENZ", 0x009C, 2),
         v("PARAM_VARI", 0x0138, 10, 2),
+    )
+
+    private val APRENDIZADO: List<Entry> = listOf(
         // Qualidade do aprendizado (AutoCal)
         v("CALIBRATION_VAL_1", 0x0172, 10, 1),
         s("MAX_RPM_FOR_AUTOCAL", 0x017A, 2),
@@ -97,6 +110,11 @@ object EcuParameterSnapshot {
         i("AUTOCAL_IDLE_MIN_BUF_UPD_PETR_THD", 0x0165, 1),
         i("MAX_AUTOMATCH", 0x0165, 2),
     )
+
+    /** Núcleo primeiro; o Avançado vai separado e por último (o que importa ao motor não espera pelas flags). */
+    val GROUPS: List<List<Entry>> = listOf(NUCLEO, CORTE, APRENDIZADO, AVANCADO)
+
+    val CATALOG: List<Entry> = GROUPS.flatten()
 
     /** Converte os bytes da resposta em valores; tamanho que não bate com o catálogo = null (desconhecido). */
     fun decode(entry: Entry, payload: IntArray): List<Int>? {
@@ -114,7 +132,22 @@ object EcuParameterSnapshot {
         return value
     }
 
-    fun run(read: (Entry) -> ReadOutcome): List<Item> = CATALOG.map { entry ->
+    /**
+     * Lê grupo a grupo (cada `readGroup` = uma unidade da serial). Se um grupo estoura ou a unidade falha, as leituras dele
+     * ficam ERRO_TRANSPORTE (desconhecido, nunca 0) e os demais grupos seguem.
+     */
+    fun runGroups(readGroup: (List<Entry>) -> List<Item>): List<Item> = GROUPS.flatMap { group ->
+        try {
+            readGroup(group)
+        } catch (error: Exception) {
+            val detail = error.message ?: error.javaClass.simpleName
+            group.map { Item(it, "ERRO_TRANSPORTE", null, detail) }
+        }
+    }
+
+    fun run(read: (Entry) -> ReadOutcome): List<Item> = run(CATALOG, read)
+
+    fun run(entries: List<Entry>, read: (Entry) -> ReadOutcome): List<Item> = entries.map { entry ->
         try {
             when (val outcome = read(entry)) {
                 is ReadOutcome.Ok -> {

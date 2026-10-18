@@ -9,6 +9,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -23,13 +24,17 @@ class AntiStalloFlagWriter(
     private val record: (type: String, data: JSONObject) -> Unit,
     /** Valor lido de FLAG_CONF3 (prévia ou leitura de volta): atualiza o que a tela mostra. */
     private val onFlagRead: (session: Long, words: IntArray, trigger: String) -> Unit,
+    /** Calibração em andamento (mapa K, curva K, sonda de buffer...): enquanto for verdade, nada é lido nem gravado aqui. */
+    private val busy: () -> Boolean = { false },
+    /** A leitura de volta falhou: o valor de FLAG_CONF3 é desconhecido, a tela não pode mostrar o antigo como "lido". */
+    private val onFlagUnknown: (session: Long, trigger: String) -> Unit = { _, _ -> },
 ) {
     private class Pending(val token: String, val plan: AntiStalloFlagCore.Plan, val session: Long)
 
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-anti-stallo-flag").apply { isDaemon = true }
     }
-    private val busy = AtomicBoolean(false)
+    private val running = AtomicBoolean(false)
     private val lock = Any()
     private var pending: Pending? = null
     /** Bit anterior da última gravação CONFIRMADA (para "Desfazer"), da sessão USB em que foi feita. */
@@ -41,7 +46,7 @@ class AntiStalloFlagWriter(
         val copy = JSONObject(status.toString())
         val session = currentSessionOrZero()
         val undo = undoEnable
-        copy.put("busy", busy.get())
+        copy.put("busy", running.get())
         copy.put(
             "undo",
             if (undo != null && undoSession == session && session > 0L) JSONObject().put("available", true).put("enable", undo)
@@ -53,9 +58,13 @@ class AntiStalloFlagWriter(
     /** 1º toque: lê FLAG_CONF3 ao vivo e monta a prévia. Não escreve nada. */
     fun prepare(enable: Boolean): JSONObject {
         if (!serial.isConnected()) return fail("USB desconectado")
-        if (!busy.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
+        if (busy()) return fail(CALIBRATION_BUSY)
+        if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "PREPARING") }
-        executor.execute {
+        try { executor.execute {
+            var published = false
+            // Solta o "ocupado" e publica o estado no MESMO bloco: quem vê READY/ERROR já pode pedir outra operação.
+            fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
             try {
                 val session = sessionOrThrow()
                 val words = serial.unit(
@@ -68,24 +77,24 @@ class AntiStalloFlagWriter(
                 onFlagRead(session, words, "AO_VIVO")
                 val plan = AntiStalloFlagCore.plan(words, enable)
                 val token = UUID.randomUUID().toString()
-                synchronized(lock) {
-                    pending = Pending(token, plan, session)
-                    status = JSONObject()
+                synchronized(lock) { pending = Pending(token, plan, session) }
+                publish(
+                    JSONObject()
                         .put("state", "READY")
                         .put("token", token)
                         .put("enable", enable)
                         .put("before", JSONArray(plan.before.toList()))
                         .put("after", JSONArray(plan.after.toList()))
                         .put("frameHex", hex(plan.frame))
-                        .put("noop", plan.noop)
-                }
+                        .put("noop", plan.noop),
+                )
             } catch (error: Exception) {
-                synchronized(lock) {
-                    status = JSONObject().put("state", "ERROR").put("message", "Não foi possível ler a ECU: ${error.message ?: error.javaClass.simpleName}")
-                }
+                publish(JSONObject().put("state", "ERROR").put("message", "Não foi possível ler a ECU: ${error.message ?: error.javaClass.simpleName}"))
             } finally {
-                busy.set(false)
+                if (!published) running.set(false)
             }
+        } } catch (_: RejectedExecutionException) {
+            return stopped()
         }
         return JSONObject().put("ok", true).put("started", true)
     }
@@ -96,9 +105,12 @@ class AntiStalloFlagWriter(
         if (ready == null || ready.token != token) return fail("Não há prévia válida; refaça o toque.")
         if (ready.plan.noop) return fail("O anti-apagão já está no estado pedido.")
         if (!serial.isConnected() || currentSessionOrZero() != ready.session) return fail("USB mudou desde a prévia; refaça o toque.")
-        if (!busy.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
+        if (busy()) return fail(CALIBRATION_BUSY) // a prévia continua valida: nada mudou
+        if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
-        executor.execute {
+        try { executor.execute {
+            var published = false
+            fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
             try {
                 val result = serial.unit(
                     reason = "anti-apagão: gravar FLAG_CONF3 (bit 0x20) com leitura de volta",
@@ -107,14 +119,16 @@ class AntiStalloFlagWriter(
                     telemetryAfter = true,
                     waitTimeoutMs = 1_000L,
                 ) { unit -> AntiStalloFlagCore.execute(io(unit), ready.plan) }
-                finish(ready, result)
+                finish(ready, result) { publish(it) }
             } catch (error: Exception) {
                 val message = "A ECU está ocupada ou desconectou; nada foi dado como gravado (${error.message ?: error.javaClass.simpleName})."
                 record("anti_stallo_flag_write", JSONObject().put("outcome", "ERROR").put("message", message).put("origin", "APP_UI_MANUAL"))
-                synchronized(lock) { status = JSONObject().put("state", "DONE").put("outcome", "ERROR").put("message", message) }
+                publish(JSONObject().put("state", "DONE").put("outcome", "ERROR").put("message", message))
             } finally {
-                busy.set(false)
+                if (!published) running.set(false)
             }
+        } } catch (_: RejectedExecutionException) {
+            return stopped()
         }
         return JSONObject().put("ok", true).put("started", true)
     }
@@ -128,9 +142,10 @@ class AntiStalloFlagWriter(
         return JSONObject().put("ok", true)
     }
 
-    private fun finish(ready: Pending, result: AntiStalloFlagCore.Result) {
+    private fun finish(ready: Pending, result: AntiStalloFlagCore.Result, publish: (JSONObject) -> Unit) {
         val plan = ready.plan
         result.readback?.let { onFlagRead(ready.session, it, "APOS_GRAVAR") }
+        if (result.outcome == AntiStalloFlagCore.Outcome.READBACK_FAILED) onFlagUnknown(ready.session, "APOS_GRAVAR_FALHOU")
         val json = JSONObject()
             .put("state", "DONE")
             .put("outcome", result.outcome.name)
@@ -145,9 +160,12 @@ class AntiStalloFlagWriter(
             if (result.outcome == AntiStalloFlagCore.Outcome.CONFIRMED) {
                 undoEnable = (plan.before[0] and AntiStalloFlagCore.MASK) != 0
                 undoSession = ready.session
+            } else if (result.outcome == AntiStalloFlagCore.Outcome.READBACK_FAILED || result.outcome == AntiStalloFlagCore.Outcome.READBACK_DIVERGED || result.valueChanged) {
+                // A ECU pode já não estar no estado que o "Desfazer" supõe: não oferecer desfazer sobre valor incerto.
+                undoEnable = null
             }
-            status = json
         }
+        publish(json)
         record("anti_stallo_flag_write", JSONObject(json.toString()).put("origin", "APP_UI_MANUAL").put("enableRequested", plan.enable))
     }
 
@@ -181,7 +199,21 @@ class AntiStalloFlagWriter(
 
     private fun hex(bytes: ByteArray) = bytes.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
 
+    /** Escritor já encerrado (serviço parando): nada foi enviado, libera o ocupado e diz isso. */
+    private fun stopped(): JSONObject {
+        synchronized(lock) {
+            running.set(false)
+            pending = null
+            status = JSONObject().put("state", "ERROR").put("message", "O app está encerrando; nada foi enviado.")
+        }
+        return fail("O app está encerrando; nada foi enviado.")
+    }
+
     private fun fail(message: String) = JSONObject().put("ok", false).put("error", message)
 
     fun close() = executor.shutdownNow()
+
+    private companion object {
+        const val CALIBRATION_BUSY = "Há calibração em andamento, tente de novo."
+    }
 }

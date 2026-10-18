@@ -8,7 +8,11 @@
     const n = finite(value);
     return n === null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
   }
-  function text(id, value) { const node = document.getElementById(id); if (node) node.textContent = value == null ? '—' : String(value); }
+  function text(id, value) {
+    const node = document.getElementById(id);
+    const next = value == null ? '—' : String(value);
+    if (node && node.textContent !== next) node.textContent = next; // mesmo texto: nenhuma escrita no DOM
+  }
 
   class MapScreen {
     constructor(store, api, router) {
@@ -114,7 +118,8 @@
           : suggestion?.reason === 'LIMITE_DO_MAPA' ? 'A correção atingiu o limite do Mapa K. Nada será preparado.'
             : 'Ainda faltam dados confirmados para sugerir um ajuste local.');
       const button = document.getElementById('mapPrepareSuggestion');
-      if (button) button.disabled = !canPrepare || !this.editor.hasMap() || this.reading || !!this.curvePlan || !!this.curveImport;
+      const blocked = !canPrepare || !this.editor.hasMap() || !!this.reading || !!this.curvePlan || !!this.curveImport;
+      if (button && button.disabled !== blocked) button.disabled = blocked;
       const table = document.getElementById('mapEquivalence');
       const html = this.equivalenceTable(suggestion?.equivalence);
       if (table && html !== this.lastEquivalenceHtml) { table.innerHTML = html; this.lastEquivalenceHtml = html; }

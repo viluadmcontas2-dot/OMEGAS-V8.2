@@ -125,4 +125,42 @@ class EcuParameterSnapshotTest {
         assertEquals(0x006A, entry("NUMERO_INJ_BENZINA_CUTOFF").address)
         assertEquals(listOf(0), EcuParameterSnapshot.decode(entry("NUMERO_INJ_BENZINA_CUTOFF"), bytes(0)))
     }
+
+    // ---- revisão independente, item 4: várias unidades por grupo; falha de um grupo não descarta os outros ----
+    @Test fun `grupos cobrem o catalogo uma vez so e o Avancado fica separado do nucleo`() {
+        val all = EcuParameterSnapshot.GROUPS.flatten().map { it.name }
+        assertEquals(EcuParameterSnapshot.CATALOG.map { it.name }.sorted(), all.sorted())
+        assertEquals(all.size, all.toSet().size)
+        val avancado = EcuParameterSnapshot.GROUPS.first { g -> g.any { it.name == "FLAG_CONF3" } }.map { it.name }
+        assertTrue(avancado.containsAll(listOf("FLAG_CONF1", "FLAG_CONF2", "FLAG_CONF3", "PARAM_PROGRESSIONI_L0", "PARAM_PROGRESSIONI_L3")))
+        assertTrue("núcleo misturado com o Avançado", avancado.none { it == "ANTI_STALLO" || it == "GIRI_MIN_CAMBIO" || it == "MAX_AUTOMATCH" })
+    }
+
+    @Test fun `nenhum grupo passa de 20 leituras (cada unidade da serial e curta)`() {
+        assertTrue(EcuParameterSnapshot.GROUPS.size >= 3)
+        EcuParameterSnapshot.GROUPS.forEach { assertTrue("grupo com ${it.size}", it.size in 1..20) }
+    }
+
+    @Test fun `um grupo que estoura nao descarta os outros - o snapshot sai completo`() {
+        val quebrado = EcuParameterSnapshot.GROUPS.first { g -> g.any { it.name == "FLAG_CONF3" } }
+        val items = EcuParameterSnapshot.runGroups { group ->
+            if (group === quebrado) throw IllegalStateException("ECU ocupada")
+            EcuParameterSnapshot.run(group) { ReadOutcome.Ok(IntArray(it.width * it.count) { 1 }) }
+        }
+        assertEquals(EcuParameterSnapshot.CATALOG.size, items.size)
+        val porNome = items.associateBy { it.entry.name }
+        assertEquals("ERRO_TRANSPORTE", porNome.getValue("FLAG_CONF3").state)
+        assertNull(porNome.getValue("FLAG_CONF3").values)
+        assertTrue(porNome.getValue("FLAG_CONF3").detail.contains("ECU ocupada"))
+        assertEquals("OK", porNome.getValue("ANTI_STALLO").state)
+        assertEquals("OK", porNome.getValue("MAX_AUTOMATCH").state)
+        assertEquals(items.size - quebrado.size, items.count { it.state == "OK" })
+    }
+
+    @Test fun `cada grupo e lido uma vez, na ordem, sem relogio`() {
+        val vistos = ArrayList<Int>()
+        EcuParameterSnapshot.runGroups { group -> vistos += group.size; EcuParameterSnapshot.run(group) { ReadOutcome.Nack(0xCA) } }
+        assertEquals(EcuParameterSnapshot.GROUPS.map { it.size }, vistos)
+    }
 }
+

@@ -111,18 +111,20 @@
     const haveBridge = () => !!bridge && ['prepareAntiStalloFlag', 'confirmAntiStalloFlag', 'cancelAntiStalloFlag', 'getAntiStalloFlagStatus']
       .every(n => typeof bridge[n] === 'function');
     // A ponte é conferida na hora do uso (pode ser injetada depois da tela).
-    const s = { phase: 'idle', plan: null, token: null, message: '', undo: null, fromUndo: false, release: null };
+    const s = { phase: 'idle', plan: null, token: null, message: '', undo: null, fromUndo: false, release: null, uncertain: false };
     const changed = () => { if (typeof onChange === 'function') onChange(); };
     const unhook = () => { if (s.release) { s.release(); s.release = null; } };
     const hook = () => { if (!s.release && typeof addHook === 'function') s.release = addHook('fast', poll); };
     const set = (phase, message) => { s.phase = phase; if (message !== undefined) s.message = message; changed(); };
-    const fail = message => { unhook(); s.plan = null; s.token = null; set('error', message); };
+    const fail = (message, uncertain) => { unhook(); s.plan = null; s.token = null; s.uncertain = uncertain === true; set('error', message); };
+    const UNCERTAIN = 'Estado incerto — releia a ECU.';
 
     function prepare(enable) {
       const reply = parse(bridge.prepareAntiStalloFlag(enable));
       if (reply.ok === false) { fail(reply.error || 'Não foi possível preparar.'); return; }
       s.enable = enable;
       s.message = '';
+      s.uncertain = false;
       set('preparing');
       hook();
     }
@@ -162,7 +164,12 @@
           set('done', `Gravado e conferido. ECU confirmou: ${plan.enable ? 'ligado' : 'desligado'} (leitura de volta ${pair(plan.after)}).`);
           return;
         }
-        fail(`A ECU respondeu, mas a leitura de volta é diferente: ${check.ok ? 'não confirmada pelo app' : check.message}. Nada foi dado como gravado.`);
+        fail(`${UNCERTAIN} A ECU respondeu, mas a leitura de volta é diferente: ${check.ok ? 'não confirmada pelo app' : check.message}.`, true);
+        return;
+      }
+      // Sem ACK com o valor intacto = recusa limpa; leitura de volta falha ou valor mudado = o app não sabe o que a ECU tem.
+      if (status.outcome === 'READBACK_FAILED' || status.valueChanged === true) {
+        fail(`${UNCERTAIN} ${status.message || 'A gravação não foi conferida.'}`, true);
         return;
       }
       fail(status.message || 'A ECU não confirmou a gravação; nada foi dado como gravado.');
@@ -187,7 +194,7 @@
       view() {
         const preview = s.plan ? { beforeHex: pair(s.plan.before), afterHex: pair(s.plan.after),
           text: `Antes ${pair(s.plan.before)} → depois ${pair(s.plan.after)}. Só o anti-apagão muda; o resto fica igual.` } : null;
-        return { phase: s.phase, message: s.message, preview, undo: s.undo ? { available: true, enable: s.undo.enable } : { available: false },
+        return { phase: s.phase, message: s.message, uncertain: s.uncertain, preview, undo: s.undo ? { available: true, enable: s.undo.enable } : { available: false },
           buttonLabel: s.phase === 'preview' ? 'Toque de novo para gravar' : s.phase === 'preparing' ? 'Lendo a ECU…' : s.phase === 'writing' ? 'Gravando e conferindo…' : null,
           confirmOn: s.phase === 'preview' ? (s.fromUndo ? 'undo' : 'switch') : null };
       },
