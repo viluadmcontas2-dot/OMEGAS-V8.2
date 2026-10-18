@@ -22,6 +22,10 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - No Drive: DUMP (1SMZqx2Sd1HKooJ5GVCSuYDPvkCn6R0kH): formulários RT_RCDATA(10)__*.bin extraídos do ProgBase
 - **Falta:** A caixa é o bit 0x20 da palavra 0 de FLAG_CONF3 (cód. 250); no log de 12/08 está DESLIGADA; quadro de escrita derivado do código (35 FA 00 20 00 00 00 4F), não visto ao vivo. Falta confirmar o valor hoje (leitura no app) e a decisão do dono de gravar.
 
+## Outras funções nativas do original que ajudam nos apagões (catálogo)
+- No repo: docs/evidence/2026-10-18-catalogo-funcoes-originais.md
+- **Falta:** App ainda não lê FLAG_CONF1/2/3, PARAM_PROGRESSIONI (308) nem GIRI_PER_BENZINA; aba 'Avançado' proposta (leitura primeiro, gravação manual).
+
 ## ProgBase.exe (programa original) e partes extraídas
 - No repo: tools/obter_progbase.py
 - No repo: docs/mapa-de-fontes/progbase.json
