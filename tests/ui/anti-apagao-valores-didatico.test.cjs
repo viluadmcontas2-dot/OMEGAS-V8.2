@@ -73,7 +73,7 @@ test('liga os pontos: explica QUANDO age, o caminho completo e que NÃO é o cor
     assert.match(tudo, /Saída do corte/, 'aponta para o cartão do corte');
     assert.match(tudo, /447 rpm/); assert.match(tudo, /680 rpm/);
     await page.locator('[data-adv-info-tab="f1"]').click(); await T.pump(page, 1);
-    assert.match(await page.locator('.vv-info-full').innerText(), /duas voltas/, 'explica a escala do original sem jargão');
+    assert.match(await page.locator('.vv-info-full').innerText(), /escala interna ainda não foi confirmada/i, 'não inventa uma conversão por ciclo que a descompilação não provou');
     assert.match(await page.locator('.vv-info-full').innerText(), /Se precisar de mais/);
   } finally { await app.context.close(); }
 });
