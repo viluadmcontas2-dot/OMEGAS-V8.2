@@ -357,3 +357,10 @@
   .vv-card .num-box { padding: 0 8px; gap: 6px; }
   .vv-card .num-unit { font-size: 15px; }
 }
+@media (max-height: 660px) {
+  .vv-info .vv-how { display: none; }
+  .vv-info { justify-content: center; }
+  .vv-btn-long { display: none; }
+  .vv-btn-short { display: inline; }
+  .vv-info .secondary { min-height: 56px; font-size: 17px; }
+}
