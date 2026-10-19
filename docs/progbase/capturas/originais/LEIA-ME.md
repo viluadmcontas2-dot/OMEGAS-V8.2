@@ -1,0 +1,7 @@
+# Capturas de tela do ProgBase original (do dono, 2026-10-19; Drive CAPTURAS ORIGINAIS) — OBS-FIO visual
+| Arquivo | O que mostra | Conclusão que vale para o OMEGAS |
+|---|---|---|
+| F9-injetores-anti-stallo-ligado.png | Aba F9 Injetores com "Enable un-stalling strategy" MARCADA | **Aparece UM único número: "Max RPM to enable un-stalling = 1600 rpm".** Não existem 5 campos editáveis. Os outros 4 valores do vetor ficam ocultos no original. Regra do app: cartão do anti-apagão = interruptor + 1 número (rotação máxima, 1600). |
+| F7-centros-das-celulas-k-bins.png | Janela "Map cell centres of the k coefficients" | **12 colunas de RPM** (850, 1350, 1850, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500) e **12 linhas de tempo em ms** (2, 2.5, 3, 3.5, 4.5, 6, 8, 10, 12, 14, 16, 18), todas editáveis (OK/Cancel). A 1ª linha de ms no original é 2; se o original aceita 0 ms ali ainda NÃO foi visto (teste: digitar 0 e capturar). Hoje o OMEGAS espelha esse mesmo conjunto (2–18 ms), o que é coerente com o original. |
+| F4-nivel-gas-volta-automatica.png | F4 Nível do gás | "Automatic change back to petrol" marcada, tempo 0 s, pressão 1,25 bar (volta automática à gasolina por pressão baixa) — útil para diagnosticar "apagão" que na verdade é a central voltando à gasolina. |
+Também visível em F9: "Gas injector minimum opening time 2.5 ms", "Extra-injections cutting" marcada, "Gas injectors timing advance: disabled", "Enrichment in acceleration 50", "Weakening on Mazda 5".

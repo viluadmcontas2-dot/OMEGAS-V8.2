@@ -59,3 +59,6 @@ O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
 - [ ] AutoCal (multimídia): botão ao lado de cada zona para APAGAR os pontos daquela zona, 1 toque, sem confirmação, limpo; balão de informação não pode ficar por cima ao alterar algo
 - [ ] Manuais públicos referenciados no grafo (MAN-*), docs sem duplicatas: um .md por assunto, sem arquivos repetidos/contraditórios (auditar docs/ com tools/auditoria.py)
 - [ ] Meta: 100% de cobertura do ProgBase (COBERTURA.md) e réplica fiel dos comandos úteis ao app
+
+- [ ] CORREÇÃO DE ESCOPO (dono, vendo as capturas): o cartão Anti-apagão do app deve ter INTERRUPTOR + UM número ('Rotação máxima para ativar', 1600 rpm), como no original (docs/progbase/capturas/originais/LEIA-ME.md). Remover da interface os outros 4 números (não existem na tela original; não foram vistos funcionando). Regra geral do dono: só mexer no que foi visto funcionando nas telas do original. Testes: card mostra 1 campo; escrita do elemento 0 do vetor 307 (`14 33 01 00 lo hi cs`) com 2 toques+readback — CONFIRMAR o quadro no log antes (o dono não editou o número no log; 0 escritas `14 33 01`).
+- [ ] Bins: dar ao Mapa K a janela 'Centros das células' (12 rpm × 12 ms editáveis, OK/Cancelar) e testar se o original aceita 0 ms (capturar).
