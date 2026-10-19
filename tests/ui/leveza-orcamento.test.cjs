@@ -18,14 +18,13 @@ let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });
 
-/** Telas pesadas: só entram quando a aba é aberta (evento), nunca no arranque. */
+/** Ferramentas é crítica para o motor e carrega no boot. Só as demais telas pesadas são lazy. */
 const POR_ABA = {
   map: ['screens/map.js', 'map-editor.js', 'core/curve-to-map.js', 'core/balance-runner.js'],
   curve: ['screens/curve.js', 'core/curve-smoothing.js'],
-  tools: ['components/drawers.js', 'components/advanced.js', 'core/advanced-flags.js', 'core/advanced-flags-data.js'],
   refino: ['screens/refino.js', 'core/gasoline-reference.js', 'core/stall-region.js', 'core/map-fix.js'],
 };
-const ORCAMENTO = { scriptsNoArranque: 12, bytesJsNoArranque: 230_000 };
+const ORCAMENTO = { scriptsNoArranque: 20, bytesJsNoArranque: 340_000 }; // +7 módulos pequenos de Ferramentas na partida
 
 async function abrir(viewport = { width: 1280, height: 720 }) {
   const context = await browser.newContext({ viewport });
@@ -70,6 +69,7 @@ test('arranque na AutoCal: só o que a primeira tela precisa (scripts e bytes de
   try {
     const srcs = await scriptsCarregados(page);
     const bytes = srcs.reduce((s, f) => s + fs.statSync(path.join(UI, f)).size, 0);
+    for (const f of ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'core/anti-apagao-valores.js', 'core/idle-mode.js', 'core/cartoes-motor.js', 'components/drawers.js', 'components/advanced.js']) assert.ok(srcs.includes(f), `${f} precisa estar disponível no arranque para não deixar a aba vazia`);
     for (const [aba, arquivos] of Object.entries(POR_ABA)) {
       for (const f of arquivos) assert.ok(!srcs.includes(f), `${f} (aba ${aba}) não pode carregar no arranque da AutoCal`);
     }

@@ -41,7 +41,17 @@ jobs:
             tests/ui/ux-fluxo-toque.test.cjs \
             tests/ui/campos-editaveis.test.cjs \
             tests/ui/ferramentas-sem-rolagem.test.cjs \
+            tests/ui/linguagem-leiga.test.cjs \
+            tests/ui/leveza-orcamento.test.cjs \
             2>&1 | tee "${{ runner.temp }}/w6-ferramentas.log"
+      - name: Capturas da interface testada (sem APK)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ferramental-ux-${{ github.sha }}
+          path: docs/evidence/img/ux-*.png
+          if-no-files-found: warn
+          retention-days: 7
       - name: Diagnóstico do navegador
         if: failure()
         uses: actions/upload-artifact@v4

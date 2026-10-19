@@ -280,3 +280,18 @@ test('RED UX: textos explicam contexto, efeito e unidades sem supor conhecimento
   assert.ok(fields.filter(f => f.unit === 'rpm').length >= 1, 'limites de rotacao devem informar rpm');
   assert.ok(fields.some(f => f.unit === 'ms'), 'o tempo deve indicar ms');
 });
+
+
+test('Ferramentas 800x480: explicações breves permanecem visíveis, não só títulos', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 800, height: 480 }, usb: true });
+  try {
+    await T.tap(app.page, '.side-nav [data-route="tools"]');
+    await app.page.waitForSelector('#toolAdvanced [data-card="troca"]');
+    for (const id of ['anti', 'valores', 'troca', 'lenta', 'volta']) {
+      const line = app.page.locator('#toolAdvanced [data-card="' + id + '"] .tile-line');
+      assert.equal(await line.count(), 1);
+      const rect = await line.boundingBox();
+      assert.ok(rect && rect.height > 0 && rect.width > 0, 'texto de explicação foi escondido: ' + id);
+    }
+  } finally { await app.context.close(); }
+});

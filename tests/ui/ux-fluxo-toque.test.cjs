@@ -96,7 +96,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       await foto('6-valor-fora-da-faixa');
       await U.digitar(app, 0, '1700');
       await T.tap(page, '[data-adv-save]'); await T.pump(page, 4);
-      assert.match(await U.text(page, '#toolsLayer'), /1\.600 → 1\.700 rotação/);
+      assert.match(await U.text(page, '#toolsLayer'), /1\.600 → 1\.700 rpm/);
       await foto('7-valores-confirmar');
       await U.clearLog(page);
       await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
