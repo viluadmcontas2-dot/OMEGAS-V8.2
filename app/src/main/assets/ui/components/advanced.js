@@ -99,8 +99,11 @@
       // Tocar no lápis, na unidade ou na borda do campo = tocar no campo (o teclado abre aí).
       const box = event.target.closest('.num-box');
       if (box) { const input = box.querySelector('input'); if (input && !input.disabled && event.target !== input) input.focus(); return; }
-      const t = event.target.closest('button');
-      if (!t) return;
+      // A ação principal também responde ao toque no título e na descrição.
+      // O primeiro toque só prepara a prévia, nunca escreve diretamente.
+      const t = event.target.closest('button') ||
+        (event.target.closest('#toolAdvanced [data-card="anti"]') ? this.host.querySelector('[data-adv-switch]') : null);
+      if (!t || t.disabled) return;
       if (t.matches('[data-adv-switch]')) {
         const entry = this.param('FLAG_CONF3');
         if (this.reason('flag')) return;
@@ -258,12 +261,13 @@
           const line = why || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : card.line);
           const shortLine = why || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : (card.shortLine || card.line));
           const state = card.on === null ? 'unknown' : card.on ? 'on' : 'off';
+          const action = card.on === null ? 'Conferir e ligar' : card.on ? 'Desligar anti-apagão' : 'Ligar anti-apagão';
           return `
-        <article class="tool-tile" data-card="${card.id}" data-state="${state}">
+        <article class="tool-tile" data-card="${card.id}" data-state="${state}" data-actionable="${!why && !busy}">
           <h3>${escapeHtml(card.title)}</h3>
           <p class="tile-line${why ? ' reason' : ''}"><span class="tile-full">${escapeHtml(line)}</span><span class="tile-compact">${escapeHtml(shortLine)}</span></p>
-          <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(card.title)}: ${card.on === null ? 'estado não lido. Toque para conferir e ligar' : escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
-            <span class="sw-track" aria-hidden="true"><i></i></span><b>${escapeHtml(card.stateText)}</b>
+          <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(action)}. Estado atual: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
+            <span class="sw-track" aria-hidden="true"><i></i></span><span class="sw-caption"><b>${escapeHtml(card.stateText)}</b><small>${escapeHtml(action)}</small></span>
           </button>
         </article>`;
         }
