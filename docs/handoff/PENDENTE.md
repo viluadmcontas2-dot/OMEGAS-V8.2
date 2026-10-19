@@ -46,3 +46,6 @@ O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
 - [ ] Graphify: rodar `graphify update .` + tools/grafo_conhecimento.py + tools/progbase/grafo_progbase.py; INDEX.md com evidence ids (REA + MAN-); REA verify_reconstruction (bloqueado por timeout no .exe: usar CLI em segundo plano)
 
 - [ ] Branches: legadas renomeadas para apagar/* (Codex, ordem do dono); depois que o Codex principal terminar, renomear a branch atual para um nome semântico (ex.: OmegasEsmeralda), parar o autocommit/Codex antes, `git branch -m`, atualizar upstream e a variável de branch nos scripts
+
+- [ ] PRIORIDADE 1: bins de RPM/injeção personalizáveis (original × OMEGAS; 0 ms no ajuste local; adicionar linha) — ver CODEX-AUTONOMO.md
+- [ ] PRIORIDADE 2: README profissional + docs/README.md + estrutura enxuta
