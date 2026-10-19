@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   verify-build-publish:
-    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || (github.event_name == 'push' && github.event.head_commit.message == 'build(apk): authorized one-shot Drive delivery 2026-10-19') }}
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_apk == true) || (github.event_name == 'push' && github.event.head_commit.message == 'build(apk) authorized one-shot Drive delivery 2026-10-19') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
