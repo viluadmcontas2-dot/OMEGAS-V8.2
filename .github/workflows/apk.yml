@@ -23,7 +23,7 @@ jobs:
   verify-build-publish:
     if: ${{ inputs.build_apk == true }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     steps:
       - name: Checkout exact product SHA
         uses: actions/checkout@v4
@@ -44,28 +44,14 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Cache do Chromium
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-chromium-1.56.1
-      - name: Instalar navegador dos testes
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm install --no-save --prefix "${{ runner.temp }}/omegas-ui-test" playwright@1.56.1
-          "${{ runner.temp }}/omegas-ui-test/node_modules/.bin/playwright" install chromium
-
-      - name: Run contracts, unit tests, lint and assemble
+      - name: Assemble (APK direto; testes e lint rodam em paralelo nos outros jobs)
         shell: bash
         env:
           OMEGAS_SOURCE_SHA: ${{ env.PRODUCT_SHA }}
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          export NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules"
-          python3 -B tools/run_checks.py --full 2>&1 | tee "${{ runner.temp }}/apk-contracts.log"
-          ./gradlew lintDebug assembleDebug \
+          ./gradlew assembleDebug \
             -PomegasAbis=arm64-v8a \
             --no-daemon \
             --stacktrace 2>&1 | tee "${{ runner.temp }}/apk-gradle.log"
@@ -133,3 +119,47 @@ jobs:
             build/reports/
           if-no-files-found: warn
           retention-days: 14
+
+  # Em paralelo (não atrasam o APK): lint e o resultado da suíte completa do MESMO commit (ci.yml, que já roda em jobs paralelos a cada push).
+  lint:
+    if: ${{ inputs.build_apk == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PRODUCT_SHA }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Lint
+        run: |
+          chmod +x ./gradlew
+          ./gradlew lintDebug -PomegasAbis=arm64-v8a --no-daemon --stacktrace
+
+  ci-do-mesmo-commit:
+    if: ${{ inputs.build_apk == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Esperar e conferir a suíte completa (OMEGAS CI) deste commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 80); do
+            R="$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=$PRODUCT_SHA&per_page=5" --jq '[.workflow_runs[]|select(.event=="push")][0]|"\(.status) \(.conclusion)"' 2>/dev/null || echo 'none none')"
+            echo "OMEGAS CI deste commit: $R"
+            case "$R" in
+              "completed success") exit 0 ;;
+              "completed "*) echo "A suíte completa deste commit NÃO está verde: $R"; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "A suíte completa não terminou a tempo"; exit 1
