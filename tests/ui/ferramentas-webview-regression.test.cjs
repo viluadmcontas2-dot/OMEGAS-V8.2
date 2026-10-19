@@ -361,3 +361,42 @@ test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU s
       'simular leituras e navegar não pode emitir gravação na ECU');
   } finally { await app.context.close(); }
 });
+
+
+test('RED: ler Ferramentas nao precisa de confirmacao e nao consulta sua ponte em outras abas', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
+  const { page } = app;
+  try {
+    await page.evaluate(() => {
+      const native = window.OmegasAutoCal.getAdvancedParams;
+      window.__toolsReads = 0;
+      window.OmegasAutoCal.getAdvancedParams = (...args) => {
+        window.__toolsReads++;
+        return native.apply(window.OmegasAutoCal, args);
+      };
+      window.__bench.ecu.clearLog();
+    });
+    await T.route(app, 'tools');
+    const before = await page.evaluate(() => window.__toolsReads);
+    assert.ok(before >= 1, 'ao entrar deve ler os dados da central sem toque em atualizar');
+    for (const id of ['troca', 'corte', 'lenta', 'injetores', 'volta']) {
+      await T.tap(page, '[data-adv-open="' + id + '"]');
+      await T.pump(page, 2);
+      assert.equal(await page.locator('.read-view').count(), 1, id + ' abriu uma confirmacao, nao uma leitura');
+      assert.equal(await page.locator('#toolsLayer .tool-layer-card:visible').count(), 0,
+        id + ' exige confirmar dados sem gravar');
+      await T.tap(page, '[data-adv-back]');
+    }
+    assert.deepEqual(T.writesOf((await T.frames(page)).log), [], 'consultar os dados nunca grava');
+    await T.route(app, 'autocal');
+    const beforeOutside = await page.evaluate(() => window.__toolsReads);
+    await T.pump(page, 5);
+    const afterOutside = await page.evaluate(() => window.__toolsReads);
+    assert.equal(afterOutside, beforeOutside,
+      'Ferramentas nao pode continuar relendo a ponte enquanto AutoCal esta em uso');
+    await T.route(app, 'tools');
+    assert.ok((await page.evaluate(() => window.__toolsReads)) > afterOutside,
+      'ao voltar, a leitura deve ocorrer automaticamente, sem acao ou confirmacao extra');
+    assert.equal(await page.locator('#toolAdvanced .tool-tile').count(), 7);
+  } finally { await app.context.close(); }
+});
