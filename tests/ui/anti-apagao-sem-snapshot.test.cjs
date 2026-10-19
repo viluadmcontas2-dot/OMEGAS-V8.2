@@ -109,3 +109,24 @@ test('RED: digitar 1550 sem snapshot grava após leitura direta, sem mudar os ou
     assert.match(await page.locator('.vv-status').innerText(), /Gravado e conferido/);
   } finally { await app.context.close(); }
 });
+
+
+test('RED: sem snapshot, abrir Valores relê ANTI_STALLO diretamente e libera os botões −/+', { skip }, async () => {
+  const app = await connectedWithMissingSnapshot();
+  try {
+    const { page } = app;
+    await T.tap(page, '[data-adv-open="valores"]');
+    await T.pump(page, 12);
+    assert.equal(await page.locator('#advField0').inputValue(), '1.600',
+      'a tela precisa obter o valor real por uma leitura exclusiva de ANTI_STALLO');
+    const minus = page.locator('[data-field="0"] [data-adv-step="0:-1"]');
+    assert.equal(await minus.isDisabled(), false, 'botão de ajuste depende da leitura direta, não do snapshot geral');
+    await T.tap(page, '[data-field="0"] [data-adv-step="0:-1"]');
+    await T.pump(page, 14);
+    const bytes = await page.evaluate(() => window.__bench.ecu.get('29 33 01 5D'));
+    const values = Array.from({ length: 5 }, (_, i) => bytes[2*i] | (bytes[2*i+1] << 8));
+    assert.deepEqual(values, [1550, 100, 1500, 2, 20]);
+    const writes = T.writesOf((await T.frames(page)).log);
+    assert.equal(writes.length, 1);
+  } finally { await app.context.close(); }
+});
