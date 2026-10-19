@@ -42,7 +42,7 @@ assert.equal(cockpit.includes('data-curve-panel="autocal"'), false,
 assert.match(cockpit, /route === ['"]autocal['"]/,
   'cockpit deve acompanhar a rota AutoCal');
 assert.equal(cockpit.includes('data-autocal-read'), false,
-  'cockpit operacional não deve expor consulta manual da ECU');
+  'cockpit operacional não deve expor consulta manual da central');
 assert.match(cockpit, /autocal-secondary-details/,
   'informações secundárias devem ficar recolhidas fora da superfície principal');
 assert.match(cockpit, /this\.api\.projection/,
@@ -70,7 +70,7 @@ assert.match(cockpit, /autocal-live-point/,
 assert.match(cockpit, />AGORA</,
   'cursor vivo precisa ser rotulado para o operador');
 assert.equal(cockpit.includes('>Ajustar</button>'), false,
-  'controle visual não pode parecer ajuste da ECU');
+  'controle visual não pode parecer ajuste da central');
 assert.equal(cockpit.includes('data-autocal-chart-action'), false,
   'zoom/pan desacoplado dos eixos físicos não pode voltar');
 assert.match(cockpit, /Petrol Inj\. \(ms\)/,

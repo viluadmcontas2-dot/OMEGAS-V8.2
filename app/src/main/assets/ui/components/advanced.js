@@ -381,16 +381,14 @@
       const undo = this.vals.view().undo;
       const [level, statusText] = this.saveStatus();
       const sug = this.data.antiStallSuggestion || {};
-      const diff = values ? this.V.suggestionChanges(values, sug) : null;
-      const igual = !!values && Object.keys(diff).length === 0;
       return `
         <section class="tool-view values-view" data-card="valores">
           <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(why || statusText)}</p></header>
           <div class="vv-grid">
             ${this.V.FIELDS.map(f => this.cardHtml(f, values)).join('')}
-            <aside class="vv-info vv-sug" data-state="${igual ? 'ok' : 'diff'}" aria-label="Sugestão para o seu carro">
-              <p class="vv-sug-title"><b>${Number.isInteger(sug.quedas) ? `${sug.quedas} quedas fortes na última viagem` : 'Análise da sua última viagem'}</b></p>
-              <p class="vv-sug-short">Sem dados para sugerir novos números.</p>
+            <aside class="vv-info vv-sug" data-state="neutral" aria-label="Análise da viagem">
+              <p class="vv-sug-title"><b>${Number.isInteger(sug.quedas) ? `${sug.quedas} quedas fortes na viagem` : 'Sua última viagem'}</b></p>
+              <p class="vv-sug-short">Ainda sem novo ajuste.</p>
               <p class="vv-sug-why">${escapeHtml(sug.motivo || 'Ao encerrar uma viagem, o app analisa as quedas do motor. Ainda não há dados para sugerir números.')}</p>
               <button type="button" class="secondary" data-adv-open-info-tab="carro"><span class="vv-t-long">Ver os números do seu carro</span><span class="vv-t-short">Ver os números</span></button>
             </aside>

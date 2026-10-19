@@ -73,3 +73,12 @@ O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
 - Bins K: RPM = SC 61 (`14 3D 00 idx lo hi`); linhas de ms: vetor NÃO provado (SC 120 é MAP_ESTERNO). Editar só RPM quando o escritor do Mapa K estiver livre; teste "A central aceitou 0 ms".
 - Nível do gás e pressão no estado + evento `voltou_para_gasolina` nas sessões.
 - [ ] Velocidade Curva K/Mapa K: Curva K em 1 quadro de vetor 0x37 (32 -> 3 transações, -90%) e repetir sozinho por evento em erro de ACK; precisa OK do dono + ECU real. Veja docs/handoff/PROGRESSO-VELOCIDADE.md e tools/emulacao/simular_gravacao_k.py.
+
+## Rodada Codex 2026-10-19 — worktree wip-codex
+- [x] Corpus completo analisado: 177.457 leituras, 89 sessões com dados + quatro vazias; 31 quedas, 28 paradas do motor. Relatório/JSON: `docs/progbase/bins/apagoes-em-movimento.*` (bf3dddf). Sem velocidade/chave, movimento e causa continuam desconhecidos.
+- [x] Removido aprendizado de outro arquivo (UI, ponte, atividade, serviço e importador); cópia única inclui aprendizado atual (5963e7d). Teste Chromium 2/2; capturas nos três tamanhos.
+- [x] Núcleo observa quedas por leitura e fecha análise com a sessão; resultado em Ferramentas, evento e arquivos exportados (9349a1e). Replay Kotlin 5/5, incluindo corpus completo. Sem escrita automática.
+- [ ] Adaptação **numérica**: não concluída. A recomendação constante era indevida (reduzia ajustes sem conhecer falhas). Foi retirada. Falta semântica provada dos extras e evidência causal para recomendar um novo número sem desperdiçar gasolina.
+- [ ] Exportação em um toque com abertura direta e nome do carro: o ZIP existente ganhou resumo HTML e JSON de análise; ainda usa seletor Android e não abre diretamente o resumo.
+- [ ] Copy completa de todos os estados: teste ampliado cobre seis abas e promessas indevidas; falta revisar todos os erros/avisos e os demais tamanhos em cada aba.
+- [ ] Validar integração Android e suíte completa na CI do SHA enviado. Nenhum novo APK autorizado nesta rodada.

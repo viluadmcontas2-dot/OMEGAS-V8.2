@@ -1,4 +1,4 @@
-// Curva K → Mapa K, etapa 2 falhou (auditoria, 2026-10-16): o mapa novo já está na ECU e a curva planejada não. Antes o aviso
+// Curva K → Mapa K, etapa 2 falhou (auditoria, 2026-10-16): o mapa novo já está na central e a curva planejada não. Antes o aviso
 // mandava "refazer o plano" — e um plano novo partiria do produto já dobrado (mapa novo × curva velha), fixando a dobra.
 // Agora o plano fica armado com `failed`, o rodapé do Mapa K mostra "Concluir curva" (só a etapa 2 de novo) e o botão some
 // quando a curva confirma. Uma gravação manual no meio não dispara a etapa 2 sozinha nem mata a pendência.
@@ -56,20 +56,20 @@ test('etapa 2 falhou: plano fica armado, "Concluir curva" aparece e o aviso diz 
   const { context, screen, alerts, node } = harness();
   screen.renderEditor();
   assert.equal(node('mapFinishCurve').hidden, true, 'sem etapa pendente o botão não ocupa lugar');
-  let outcome = { ok: false, error: 'Tempo limite aguardando a ECU.' };
+  let outcome = { ok: false, error: 'Tempo limite aguardando a central.' };
   let runs = 0;
   context.OmegasBalanceRunner = { writeCurveStage: async () => { runs += 1; return outcome; } };
   screen.curvePlan = PLAN();
   await screen.runCurveStage();
   assert.equal(runs, 1);
   assert.equal(screen.curvePlan?.armed, true, 'o plano continua armado');
-  assert.equal(screen.curvePlan.failed, 'Tempo limite aguardando a ECU.');
+  assert.equal(screen.curvePlan.failed, 'Tempo limite aguardando a central.');
   assert.equal(node('mapFinishCurve').hidden, false, 'o rodapé oferece Concluir curva');
   assert.match(alerts.at(-1), /mapa foi gravado, mas a curva NÃO/);
   assert.match(alerts.at(-1), /Concluir curva/);
   assert.doesNotMatch(alerts.at(-1), /refazer o plano|refaça o plano/i);
   // Curva mudou (runner recusa): a etapa continua pendente, sem mandar refazer o plano.
-  outcome = { ok: false, stale: true, error: 'A Curva K da ECU mudou desde a leitura do plano. Nada foi gravado na curva.' };
+  outcome = { ok: false, stale: true, error: 'A Curva K da central mudou desde a leitura do plano. Nada foi gravado na curva.' };
   await screen.runCurveStage();
   assert.equal(node('mapFinishCurve').hidden, false);
   assert.doesNotMatch(alerts.at(-1), /refazer o plano|refaça o plano/i);
@@ -79,14 +79,14 @@ test('etapa 2 falhou: plano fica armado, "Concluir curva" aparece e o aviso diz 
   assert.equal(runs, 3);
   assert.equal(screen.curvePlan, null);
   assert.equal(node('mapFinishCurve').hidden, true);
-  assert.match(alerts.at(-1), /gravados e conferidos pela ECU/);
+  assert.match(alerts.at(-1), /gravados e conferidos pela central/);
 });
 
 test('gravação manual com a etapa 2 pendente não dispara a curva sozinha nem apaga a pendência', async () => {
   const { context, screen, writes, node, confirmLast } = harness();
   let runs = 0;
   context.OmegasBalanceRunner = { writeCurveStage: async () => { runs += 1; return { ok: false, error: 'NAK' }; } };
-  screen.curvePlan = { ...PLAN(), failed: 'Tempo limite aguardando a ECU.' };
+  screen.curvePlan = { ...PLAN(), failed: 'Tempo limite aguardando a central.' };
   screen.renderEditor();
   assert.equal(node('mapFinishCurve').hidden, false);
   screen.editor.setTargetOverrides([{ row: 5, column: 2, target: 140 }]); // edição manual de outra célula
@@ -96,7 +96,7 @@ test('gravação manual com a etapa 2 pendente não dispara a curva sozinha nem 
   screen.pollWrite();
   await Promise.resolve();
   assert.equal(runs, 0, 'a etapa 2 só roda com o toque em Concluir curva');
-  assert.equal(screen.curvePlan?.failed, 'Tempo limite aguardando a ECU.', 'a pendência continua');
+  assert.equal(screen.curvePlan?.failed, 'Tempo limite aguardando a central.', 'a pendência continua');
 });
 
 test('rodapé do Mapa K: o botão nasce escondido ao lado de Curva K → Mapa K, com a mesma classe, e chama só a etapa 2', () => {

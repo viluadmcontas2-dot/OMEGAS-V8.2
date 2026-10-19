@@ -15,8 +15,8 @@ assert.ok(header, 'cabeçalho do AutoCal existe');
 assert.equal(header.includes('autocal-focus-actions'), false, 'botões não ficam no cabeçalho');
 assert.ok(cockpit.indexOf('class="autocal-focus-actions"') > cockpit.indexOf('id="autocalReferenceChart"'), 'botões ficam depois do gráfico');
 assert.match(cockpit, /<p id="autocalHeadline" class="autocal-headline sr-only">/, 'frase de estado só para leitor de tela (as bolinhas ocupam o lugar visual)');
-assert.match(cockpit, /this\.text\('autocalHeadline', human\.title \+ ' · ' \+ human\.progress\);/, 'a frase acompanha o estado da ECU');
-// AutoMatch X/Y sempre à vista no topo (dono, 2026-10-11), "—" quando a ECU não informou.
+assert.match(cockpit, /this\.text\('autocalHeadline', human\.title \+ ' · ' \+ human\.progress\);/, 'a frase acompanha o estado da central');
+// AutoMatch X/Y sempre à vista no topo (dono, 2026-10-11), "—" quando a central não informou.
 const header2 = cockpit.match(/<header class="autocal-focus-toolbar"[\s\S]*?<\/header>/)?.[0] || '';
 assert.match(header2, /<small>Ajustes automáticos<\/small>\s*<b id="autocalAutoMatchCount">/, 'cartão AutoMatch no topo'); // (dono, 2026-10-11: texto para leigo)
 assert.match(cockpit, /this\.text\('autocalAutoMatchCount', autoMatchFraction\(human\.autoMatchCount, human\.maxAutoMatch\)\);/);
@@ -37,7 +37,7 @@ vm.runInNewContext(cockpit, context);
 assert.equal(typeof context.OmegasUi.AutoCalCockpit.prototype.toggleDetails, 'undefined');
 const frac = context.OmegasUi.AutoCalUxModel.autoMatchFraction;
 assert.equal(frac(2, 3), '2/3');
-assert.equal(frac(0, 3), '0/3', 'zero informado pela ECU é zero');
+assert.equal(frac(0, 3), '0/3', 'zero informado pela central é zero');
 assert.equal(frac(null, 3), '—/3', 'contador desconhecido nunca vira 0');
 assert.equal(frac(null, null), '—');
 assert.equal(frac(1, null), '1/—');

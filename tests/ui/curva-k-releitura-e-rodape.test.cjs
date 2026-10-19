@@ -1,4 +1,4 @@
-// Curva K (dono, 2026-10-11): relê a ECU a cada entrada na aba, sem perder propostas ainda válidas;
+// Curva K (dono, 2026-10-11): relê a central a cada entrada na aba, sem perder propostas ainda válidas;
 // todos os botões num rodapé único embaixo, à esquerda; "Backups (N)" compacto; nada de sub-rolagem.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -57,7 +57,7 @@ function makeScreen(api) {
 }
 const base = Array.from({ length: 30 }, () => 16384);
 
-// 1) Entrar na aba com a curva já lida relê a ECU (antes só lia na primeira vez).
+// 1) Entrar na aba com a curva já lida relê a central (antes só lia na primeira vez).
 let reads = 0;
 let operation = { busy: false, state: 'COMPLETED', ok: true, points: points(base) };
 const api = {
@@ -74,14 +74,14 @@ assert.equal(screen.reading, false);
 screen.onEnter({});
 assert.equal(reads, 2, 'cada entrada na aba relê a Curva K (dono, 2026-10-11)');
 
-// 2) Propostas feitas sobre o mesmo valor da ECU sobrevivem à releitura; as outras caem.
+// 2) Propostas feitas sobre o mesmo valor da central sobrevivem à releitura; as outras caem.
 screen.proposals.set(2, { index: 2, currentRaw: 16384, targetRaw: 16548, currentFactor: 1, targetFactor: 1.01, deltaPercent: 1, petrolMs: 2.2 });
 screen.proposals.set(5, { index: 5, currentRaw: 16384, targetRaw: 16548, currentFactor: 1, targetFactor: 1.01, deltaPercent: 1, petrolMs: 3.2 });
 const changed = base.slice(); changed[5] = 16500;
 operation = { busy: false, state: 'COMPLETED', ok: true, points: points(changed) };
 screen.poll();
-assert.deepEqual([...screen.proposals.keys()], [2], 'só fica a proposta cujo valor atual a ECU ainda tem');
-assert.equal(screen.data.points[5].factorRaw, 16500, 'a curva nova é a da ECU');
+assert.deepEqual([...screen.proposals.keys()], [2], 'só fica a proposta cujo valor atual a central ainda tem');
+assert.equal(screen.data.points[5].factorRaw, 16500, 'a curva nova é a da central');
 
 // 3) Prévia de restauração cai inteira se a curva mudou por baixo dela.
 screen.restoreContext = { fileName: 'b.json' };
@@ -121,9 +121,9 @@ screen.renderProposalList();
 const list = nodes.get('curveProposalList').innerHTML;
 assert.equal((list.match(/<div>/g) || []).length, 4);
 assert.match(list, /\+5 pontos · veja no gráfico/);
-assert.equal(nodes.get('curveReviewButton').textContent, 'Gravar 9 pontos na ECU', 'o botão diz o total que será gravado');
+assert.equal(nodes.get('curveReviewButton').textContent, 'Gravar 9 pontos na central', 'o botão diz o total que será gravado');
 
-// 6) Atualização automática (sem botão Reler): ao reconectar a ECU lê mesmo com proposta preparada; a cada 15 s só lê se o
+// 6) Atualização automática (sem botão Reler): ao reconectar a central lê mesmo com proposta preparada; a cada 15 s só lê se o
 //    dono não está editando; nunca durante gravação; silenciosa (sem a faixa "Lendo…").
 {
   let n = 0;
@@ -136,15 +136,15 @@ assert.equal(nodes.get('curveReviewButton').textContent, 'Gravar 9 pontos na ECU
   s2.autoSync(false);
   assert.equal(n, 1, 'editando (proposta preparada): o relógio de 15 s não mexe na tela');
   s2.autoSync(true);
-  assert.equal(n, 2, 'ECU reconectada: lê mesmo assim (a proposta antiga só sobrevive se o valor da ECU for o mesmo)');
+  assert.equal(n, 2, 'ECU reconectada: lê mesmo assim (a proposta antiga só sobrevive se o valor da central for o mesmo)');
   s2.reading = false; s2.writing = true;
   s2.autoSync(true);
   assert.equal(n, 2, 'nunca durante gravação');
   s2.writing = false; s2.reading = false; s2.proposals.clear();
-  document.getElementById('curveSourceStatus').textContent = 'ECU confirmada · 30 pontos';
+  document.getElementById('curveSourceStatus').textContent = 'Central confirmada · 30 pontos';
   s2.autoSync(false);
   assert.equal(n, 3);
-  assert.equal(document.getElementById('curveSourceStatus').textContent, 'ECU confirmada · 30 pontos', 'leitura silenciosa não troca o texto por "Lendo…"');
+  assert.equal(document.getElementById('curveSourceStatus').textContent, 'Central confirmada · 30 pontos', 'leitura silenciosa não troca o texto por "Lendo…"');
 }
 
 // 7) Gravar nunca sai durante uma leitura.

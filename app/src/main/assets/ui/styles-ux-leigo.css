@@ -413,3 +413,13 @@
 #toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"] {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+@media (max-height: 560px) {
+  .vv-sug { gap: 3px; padding: 5px 10px; justify-content: flex-start; }
+  .vv-sug p { margin: 0; font-size: 13px; line-height: 1.15; }
+}
+@media (max-width: 860px) {
+  .live-cell { padding: 3px 6px; gap: 4px; }
+  .live-cell small { font-size: 12px; letter-spacing: 0; white-space: nowrap; }
+  .live-cell b { font-size: 20px; }
+  .live-cell em { font-size: 12px; }
+}

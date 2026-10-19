@@ -1,6 +1,6 @@
 'use strict';
 // Dono, 2026-10-11: "Readquirir GNV" relê direto, sem pedir para executar de novo (sem dupla confirmação).
-// Um toque prepara e executa; a proteção é a foto da preparação e o readback da ECU.
+// Um toque prepara e executa; a proteção é a foto da preparação e o readback da central.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -40,7 +40,7 @@ test('Readquirir GNV executa no mesmo toque, sem segunda confirmação', () => {
   assert.equal(alerts.at(-1).alert.level, 'working');
 });
 
-test('se a ECU recusar, avisa e libera o próximo toque', () => {
+test('se a central recusar, avisa e libera o próximo toque', () => {
   const { c, calls, alerts } = cockpit({ ok: false, error: 'ECU recusou' });
   c.prepare('RESET_PETROL');
   assert.deepEqual(calls.execute, ['p-RESET_PETROL']);

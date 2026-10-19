@@ -1,5 +1,5 @@
 // Dono, 2026-10-11 ("a curva deve aprender tudo e saber onde ajustar o quê"): o Refino abre o Mapa K com o ajuste local
-// em % por célula. O alvo sai da prévia Kotlin (o mesmo caminho do ajuste percentual manual), sobre o valor lido da ECU:
+// em % por célula. O alvo sai da prévia Kotlin (o mesmo caminho do ajuste percentual manual), sobre o valor lido da central:
 // o JS não faz a conta do Mapa K. Abrir não grava; a gravação continua no botão "Gravar" com readback.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -48,14 +48,14 @@ function harness(previewReply) {
 const plain = value => JSON.parse(JSON.stringify(value));
 const kotlinPreview = (cells, mode, value) => ({ ok: true, items: cells.map(c => ({ row: c.row, column: c.column, target: c.current + Math.round(value) })) });
 
-test('ajuste local em % usa a prévia Kotlin, um pedido por percentual, sobre o valor lido da ECU', () => {
+test('ajuste local em % usa a prévia Kotlin, um pedido por percentual, sobre o valor lido da central', () => {
   const { screen, previews } = harness(kotlinPreview);
   screen.applyContext({ origin: 'refino', suggestion: { mapChanges: [
     { row: 3, column: 0, deltaPercent: 12 }, { row: 4, column: 0, deltaPercent: 12 }, { row: 5, column: 0, deltaPercent: -6 },
   ] } });
   assert.equal(previews.length, 2, 'um pedido de prévia por percentual');
   assert.deepEqual(plain(previews.map(p => [p.mode, p.value])), [['percent', 12], ['percent', -6]]);
-  assert.deepEqual(plain(previews[0].cells), [[3, 0, 113], [4, 0, 114]], 'a prévia recebe o valor lido da ECU');
+  assert.deepEqual(plain(previews[0].cells), [[3, 0, 113], [4, 0, 114]], 'a prévia recebe o valor lido da central');
   const review = screen.editor.buildReview();
   assert.deepEqual(plain(review.items.map(i => [i.row, i.column, i.current, i.target])), [[3, 0, 113, 125], [4, 0, 114, 126], [5, 0, 115, 109]],
     'o alvo é exatamente o que o Kotlin devolveu');

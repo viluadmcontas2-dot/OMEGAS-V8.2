@@ -53,7 +53,7 @@ test('falha antiga, sem toque do dono, não vira aviso', () => {
   assert.equal(alerts.filter(a => /Não concluído|Concluído/.test(a.message)).length, 0);
 });
 
-test('falha da ação tocada aparece uma vez, com "Estado incerto" quando a ECU pode ter mudado', () => {
+test('falha da ação tocada aparece uma vez, com "Estado incerto" quando a central pode ter mudado', () => {
   const { cockpit, alerts, setAction } = boot();
   setAction({ state: 'FAILED', message: 'Reset GNV antigo', updatedAt: 1 });
   cockpit.refresh();
@@ -71,7 +71,7 @@ test('falha da ação tocada aparece uma vez, com "Estado incerto" quando a ECU 
   assert.match(shown[0].message, /Estado incerto/);
 });
 
-test('ação confirmada pela ECU aparece como concluída', () => {
+test('ação confirmada pela central aparece como concluída', () => {
   const { cockpit, alerts, setAction } = boot();
   cockpit.refresh();
   cockpit.expectActionResult();

@@ -89,7 +89,7 @@ test('AutoCal: rótulos para leigo e uma grafia só ("AutoCal")', () => {
   const source = read('screens/autocal-cockpit.js');
   for (const label of ['Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span>', 'Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span>',
     '>Recomeçar tudo<', '>Curva K toda em 1,0<', "'Pausar aprendizado'", "'Retomar aprendizado'",
-    '<small>Ajustes automáticos</small>', '0 pontos da ECU', '>Pontos já medidos<', "'Enviado. Conferindo na ECU…'"]) {
+    '<small>Ajustes automáticos</small>', '0 pontos da central', '>Pontos já medidos<', "'Enviado. Conferindo na central…'"]) {
     assert.ok(source.includes(label), label);
   }
   assert.doesNotMatch(source, /Auto Calibration|AUTO_CAL_ENABLE=0|Confirmando ACK|Aguarde ACK|Readquirir|Selecionar junto|ΔMAP/);
@@ -103,12 +103,12 @@ test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem jargão na tela
   const store = { state: { curve: {} }, get() { return this.state; }, patch(p) { Object.assign(this.state, p); } };
   const screen = new ns.CurveScreen(store, api);
   screen.renderProposalList();
-  assert.equal(document.nodes.get('curveReviewButton').textContent, 'Gravar na ECU');
+  assert.equal(document.nodes.get('curveReviewButton').textContent, 'Gravar na central');
   screen.restoreContext = { fileName: 'b.json' };
   screen.renderProposalList();
   assert.equal(document.nodes.get('curveReviewButton').textContent, 'Toque em Restaurar, no rodapé');
   screen.renderChart();
-  assert.match(document.nodes.get('curveChart').innerHTML, /Curva não lida\. Ligue a ECU: ela aparece sozinha\./);
+  assert.match(document.nodes.get('curveChart').innerHTML, /Curva não lida\. Ligue a central: ela aparece sozinha\./);
   const index = read('index.html');
   assert.match(index, /<div class="curve-axis">Injeção \(ms\) →<\/div>/);
   assert.match(index, /id="curveTargetFactor" type="text" inputmode="decimal"/, 'campo aceita vírgula');
@@ -130,7 +130,7 @@ test('Curva K: o campo "Fator desejado" mostra e aceita vírgula', () => {
   assert.deepEqual(requested, [1.01]);
   input.value = '1,05';
   screen.prepareActivePoint();
-  assert.deepEqual(requested, [1.01, 1.05], '"1,05" vira 1.05 para a prévia da ECU');
+  assert.deepEqual(requested, [1.01, 1.05], '"1,05" vira 1.05 para a prévia da central');
 });
 
 test('Refino: "Gasolina" por extenso e "GNV vs gasolina"', () => {

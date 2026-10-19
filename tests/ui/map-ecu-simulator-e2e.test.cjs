@@ -196,7 +196,7 @@ test('readback divergente invalida sucesso mesmo após ACK', () => {
   assert.notEqual(readback.rows[3][5], expected);
 });
 
-test('recusa imediata da ECU aparece como erro', () => {
+test('recusa imediata da central aparece como erro', () => {
   const ecu = new ScriptedMp48Ecu();
   ecu.setMode('START_REJECTED');
   const editor = loadEditor(ecu);

@@ -21,13 +21,13 @@ assert.match(cockpit, /<summary>Ações avançadas<\/summary>/,
   'AutoMatch manual, Curva K e reset completo devem ficar em complexidade sob demanda');
 assert.match(cockpit, /data-reset-scope="advanced"/,
   'ações pesadas devem formar uma unidade semântica separada');
-assert.match(cockpit, /MANUAL_AUTOMATCH/); // dono, 2026-10-17: o AutoMatch manual voltou (escondido até a cota automática da ECU)
+assert.match(cockpit, /MANUAL_AUTOMATCH/); // dono, 2026-10-17: o AutoMatch manual voltou (escondido até a cota automática da central)
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOCAL"/,
   'Finish AutoCal original nasce desabilitado e não deve virar etapa diária');
 assert.doesNotMatch(cockpit, /data-autocal-action="FINISH_AUTOMATCH"/,
   'Finish AutoMatch pertence ao PanelDbg oculto do ProgBase e não deve aparecer na superfície diária');
 // (dono, 2026-10-11: texto para leigo)
-assert.match(cockpit, /A ECU faz os ajustes automáticos sozinha\./,
+assert.match(cockpit, /A central faz os ajustes automáticos sozinha\./,
   'a UX deve explicar que o AutoMatch normal é ECU-owned, separado do AutoMatch manual');
 assert.match(cockpit, /data-autocal-action="RESET_K_FACTOR">Curva K toda em 1,0<\/button>/,
   'Reset K deve usar a semântica provada do ProgBase/MUL_ACT');

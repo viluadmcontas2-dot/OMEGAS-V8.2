@@ -66,8 +66,8 @@ test('uma ação principal por fase do piloto, decidida no Kotlin', () => {
   const restore = m.primaryAction(pilot('RESTAURAR_TRECHO', { kind: 'restore', label: 'Restaurar 3 pontos que pioraram', enabled: true }), ready);
   assert.equal(restore.kind, 'restore');
   assert.match(restore.label, /^Restaurar 3 pontos que pioraram$/);
-  // Durante o automático da ECU a proposta aparece desabilitada (a ECU sobrescreveria).
-  const early = m.primaryAction(pilot('ECU_TRABALHANDO', { kind: 'waiting', label: 'Aguardando a ECU terminar o automático (2 de 3)', enabled: false }), ready);
+  // Durante o automático da central a proposta aparece desabilitada (a central sobrescreveria).
+  const early = m.primaryAction(pilot('ECU_TRABALHANDO', { kind: 'waiting', label: 'Aguardando a central terminar o automático (2 de 3)', enabled: false }), ready);
   assert.equal(early.kind, 'waiting');
   assert.equal(early.enabled, false);
   assert.match(early.label, /2 de 3/);
@@ -77,7 +77,7 @@ test('uma ação principal por fase do piloto, decidida no Kotlin', () => {
   assert.equal(m.primaryAction({ autopilot: { phase: 'COLETANDO_NOSSOS' } }, ready).kind, 'none');
   assert.equal(m.primaryAction({ autopilot: { phase: 'PROPOSTA_PRONTA' } }, ready).kind, 'none');
   // ECU fora: a ação continua visível, mas desabilitada (erro de transporte não vira gravação).
-  const offline = m.primaryAction(pilot('PROPOSTA_PRONTA', { kind: 'review', label: 'Conecte a ECU para gravar', enabled: false }), ready);
+  const offline = m.primaryAction(pilot('PROPOSTA_PRONTA', { kind: 'review', label: 'Conecte a central para gravar', enabled: false }), ready);
   assert.equal(offline.enabled, false);
 });
 
@@ -88,7 +88,7 @@ test('Refino é um destino próprio logo abaixo do AutoCal e grava só com confe
   assert.match(index, /data-screen="refino"/);
   assert.match(router, /screens\/refino\.js/);
   assert.match(SOURCE, /startCurveRead/);
-  assert.match(SOURCE, /A Curva K da ECU mudou/);
+  assert.match(SOURCE, /A Curva K da central mudou/);
   assert.match(SOURCE, /done\.state === 'BATCH_CONFIRMED' && done\.readbackValid === true/);
   assert.doesNotMatch(SOURCE, /setInterval/);
   // Dono (2026-10-13): o gráfico do Refino é O MESMO objeto do AutoCal (autocal-original.js), sem o painel de aquisição,
@@ -130,7 +130,7 @@ test('ações a mais vêm do Kotlin: Revisar junto de Restaurar e Desfazer; nada
 });
 
 // Ajustado na rodada 2 (revisão, itens 13 e 14): o portão conferia a assinatura exata (com o alvo do motor),
-// que muda em 18–20 de cada 20 ticks rodando, e recusava "Gravar na ECU" em série; e não olhava se a ação
+// que muda em 18–20 de cada 20 ticks rodando, e recusava "Gravar na central" em série; e não olhava se a ação
 // ainda estava liberada. Agora confere elegibilidade (mesmos pontos, mesmo valor atual, nada retido) e grava a
 // lista revisada; com a ação desligada (ECU no automático, sem cabo) não grava.
 test('revisão nunca grava lista velha: mesmos pontos gravam o revisado, ponto mudou atualiza, sumiu não grava', () => {
@@ -150,10 +150,10 @@ test('revisão nunca grava lista velha: mesmos pontos gravam o revisado, ponto m
   assert.equal(m.reviewGate(displayed, eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }], { held: [{ index: 4, reason: 'MEDINDO' }] })), 'changed');
   // Ação desligada (ECU voltou ao automático / sem cabo): o cartão aberto não grava.
   const waiting = eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }]);
-  waiting.autopilot.action = { kind: 'waiting', label: 'Aguardando a ECU terminar o automático', enabled: false };
+  waiting.autopilot.action = { kind: 'waiting', label: 'Aguardando a central terminar o automático', enabled: false };
   assert.equal(m.reviewGate(displayed, waiting), 'blocked');
   const offline = eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }]);
-  offline.autopilot.action = { ...review, enabled: false, label: 'Conecte a ECU para gravar' };
+  offline.autopilot.action = { ...review, enabled: false, label: 'Conecte a central para gravar' };
   assert.equal(m.reviewGate(displayed, offline), 'blocked');
   // Revisar ao lado de Restaurar (secundária) também libera.
   const beside = eqWith([{ index: 4, currentRaw: 16384, targetRaw: 17000 }]);
@@ -172,7 +172,7 @@ test('revisão nunca grava lista velha: mesmos pontos gravam o revisado, ponto m
   assert.equal(m.reviewGate(undo, { ...undoLatest, autopilot: { secondary: [{ kind: 'undo', enabled: false }] } }), 'blocked');
 });
 
-test('pontos da ECU desconhecidos mostram —, nunca Gas 0 · GNV 0 (rodada 2, item 21)', () => {
+test('pontos da central desconhecidos mostram —, nunca Gas 0 · GNV 0 (rodada 2, item 21)', () => {
   const m = model();
   assert.equal(m.ecuPointsText({ petrolValid: null, gasValid: null }), '—');
   assert.equal(m.ecuPointsText({}), '—');
@@ -228,7 +228,7 @@ test('barra única embaixo: UM botão "Ver alterações" (+ Desfazer); as grava�
   // O cartão traz uma seção por destino, cada uma com o seu "Gravar"; nada de tabela de pontos.
   assert.match(SOURCE, /data-refino-confirm[^>]*>Gravar na Curva K</);
   assert.match(SOURCE, /data-refino-map-confirm>Gravar no Mapa K</);
-  assert.match(SOURCE, /Nada foi enviado à ECU ainda/);
+  assert.match(SOURCE, /Nada foi enviado à central ainda/);
   assert.doesNotMatch(SOURCE, /refino-review-list|<dl /);
   assert.doesNotMatch(SOURCE, /toggleNav|data-refino-tabs|data-refino-ack|acknowledge/);
   assert.doesNotMatch(SOURCE, /data-refino-details|data-refino-panel="details"|toggleDetails/);
@@ -313,13 +313,13 @@ test('o Mapa K recebe UMA proposta por vez: engasgo primeiro, depois a diferenç
 });
 
 
-// Refinar por minha conta: só com a ECU online e ainda no automático (ou já assumido); some quando a ECU termina.
-test('Refinar por minha conta so aparece com a ECU ainda no automatico ou ja assumido', () => {
+// Refinar por minha conta: só com a central online e ainda no automático (ou já assumido); some quando a central termina.
+test('Refinar por minha conta so aparece com a central ainda no automatico ou ja assumido', () => {
   const m = model();
   const a = m.manualOffer({ autopilot: { ecuDone: false, ecuOnline: true } });
   assert.equal(a.offered, true); assert.equal(a.on, false); assert.equal(a.label, 'Refinar por minha conta');
   const b = m.manualOffer({ autopilot: { ecuDone: true, manual: true, ecuOnline: true } });
-  assert.equal(b.offered, true); assert.equal(b.on, true); assert.equal(b.label, 'Esperar a ECU terminar');
+  assert.equal(b.offered, true); assert.equal(b.on, true); assert.equal(b.label, 'Esperar a central terminar');
   assert.equal(m.manualOffer({ autopilot: { ecuDone: true, ecuDoneReason: 'MAX_AUTOMATCH' } }).offered, false, 'ECU concluída: nada a assumir');
   assert.equal(m.manualOffer({ autopilot: { ecuDone: false, ecuOnline: false } }).offered, false, 'sem ECU');
   assert.equal(m.manualOffer({}).offered, false, 'estado desconhecido não oferece');

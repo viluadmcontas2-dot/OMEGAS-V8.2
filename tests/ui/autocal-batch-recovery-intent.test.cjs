@@ -44,7 +44,7 @@ const confirmed = model.pointSelectionTransition(
   { action: 'DELETE_POINT', state: 'CONFIRMED' },
   { resetSelection: false, sessionChanged: false },
 );
-assert.equal(confirmed.clear, true, 'seleção só é descartada depois que a ECU confirma a operação');
+assert.equal(confirmed.clear, true, 'seleção só é descartada depois que a central confirma a operação');
 assert.deepEqual(Array.from(confirmed.pending), []);
 assert.equal(confirmed.reason, 'CONFIRMED');
 
@@ -63,7 +63,7 @@ const requestBody = source.slice(requestStart, requestEnd);
 assert.match(requestBody, /pendingPointReacquisitionKeys = new Set/);
 assert.doesNotMatch(requestBody, /selectedAcquiredPoints\.clear\(\)/,
   'início assíncrono não pode apagar a seleção antes do resultado final');
-// (dono, 2026-10-11: texto para leigo): o aviso diz só "Enviado… Conferindo na ECU"; a regra (não limpar antes do resultado) segue provada acima.
-assert.match(requestBody, /para reaprender\. Conferindo na ECU…/);
+// (dono, 2026-10-11: texto para leigo): o aviso diz só "Enviado… Conferindo na central"; a regra (não limpar antes do resultado) segue provada acima.
+assert.match(requestBody, /para reaprender\. Conferindo na central…/);
 
 console.log('AUTOCAL_BATCH_RECOVERY_INTENT=PASS');

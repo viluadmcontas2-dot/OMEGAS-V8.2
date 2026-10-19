@@ -1,4 +1,4 @@
-// Porta de gravação NO TOQUE (auditoria, 2026-10-16). Caso real: proposta montada → dono toca "Reaprender GNV" (a ECU volta ao
+// Porta de gravação NO TOQUE (auditoria, 2026-10-16). Caso real: proposta montada → dono toca "Reaprender GNV" (a central volta ao
 // automático) → toca Gravar → antes gravava sem olhar, porque a porta só era consultada ao montar a proposta. Agora o toque que
 // dispara bytes consulta a porta de novo, para gravações de PROPOSTA (Curva K → Mapa K, Refino). Edição manual continua livre;
 // estado desconhecido (sem piloto) continua liberando (decisão do dono).
@@ -51,7 +51,7 @@ test('Mapa K: a proposta Curva K → Mapa K passa pela porta no toque em Gravar;
   assert.equal(writes.length, 0, 'porta fechada no toque: nenhum byte');
   assert.match(alerts.at(-1), /AutoMatch \(1 de 3\)/);
   assert.equal(screen.curvePlan?.armed, false, 'a proposta continua montada para gravar depois');
-  // A ECU terminou (ou "Refinar por minha conta"): o mesmo toque grava, no formato novo writeMap(cells, reason).
+  // A central terminou (ou "Refinar por minha conta"): o mesmo toque grava, no formato novo writeMap(cells, reason).
   autopilot = { ecuDone: true, autoMatchCount: 3, maxAutomatch: 3 };
   screen.writePrepared();
   assert.equal(writes.length, 1);
@@ -104,7 +104,7 @@ test('Refino: "Gravar na Curva K" e "Gravar no Mapa K" consultam a porta no toqu
   screen.onClick({ target: { closest: sel => (sel === '[data-refino-map-confirm]' ? {} : null) } });
   assert.equal(alerts.length, 2, 'Gravar no Mapa K também consulta a porta');
   assert.equal(screen.preview, true);
-  // A ECU terminou: o mesmo toque passa e vai ler a Curva K da ECU antes de gravar (ACK + readback no Kotlin).
+  // A central terminou: o mesmo toque passa e vai ler a Curva K da central antes de gravar (ACK + readback no Kotlin).
   eq = proposalEq({ ecuDone: true });
   screen.confirm();
   assert.equal(native.reads, 1);

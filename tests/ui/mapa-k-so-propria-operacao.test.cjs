@@ -1,5 +1,5 @@
 // Auditoria de fluxo (2026-10-11): a ponte guarda uma "última operação" só para Curva K, Mapa K, backup e reset.
-// A aba Mapa K mostrava "A ECU não confirmou toda a operação" depois de uma leitura/gravação da Curva K.
+// A aba Mapa K mostrava "A central não confirmou toda a operação" depois de uma leitura/gravação da Curva K.
 // Agora ela só segue a gravação que ela mesma iniciou (mesmo startedAt).
 const test = require('node:test');
 const assert = require('node:assert/strict');

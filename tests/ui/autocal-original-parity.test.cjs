@@ -60,7 +60,7 @@ test('eixo X: depois de um reset (nada adquirido) fica no mínimo de 6 ms e acom
   assert.equal(build(zeroed, { fuel: 'gas', live: { mapBar: 0.4, petrolMs: 12.3 } }).axisX.max, 14, 'o ponto AGORA nunca fica fora do desenho');
 });
 
-test('eixo X: nunca passa do último nó da ECU, mesmo com AGORA além dele', () => {
+test('eixo X: nunca passa do último nó da central, mesmo com AGORA além dele', () => {
   const m = build(snapshot, { fuel: 'gas', live: { mapBar: 0.9, petrolMs: 40 } });
   assert.equal(m.axisX.max, 22);
   assert.equal(axisMaxFor(21.5), 22);
@@ -90,7 +90,7 @@ test('legenda e gráfico usam as mesmas variáveis de cor (nenhuma cor solta div
     assert.match(ao.slice(at, ao.indexOf('}', at)), /var\(--ao-/, rule + ' deve usar variável de cor');
   }
   const cockpit = fs.readFileSync(path.join(root, 'app/src/main/assets/ui/screens/autocal-cockpit.js'), 'utf8');
-  for (const label of ['Pontos já medidos', 'Curva da ECU (✕ = pontos)', 'Faixas prontas ■', 'AGORA', 'Faixa de MAP atual', 'Zona adquirida · não adquirida', 'Limites de MAP', 'Curva K', 'Teto 1,8']) {
+  for (const label of ['Pontos já medidos', 'Curva da central (✕ = pontos)', 'Faixas prontas ■', 'AGORA', 'Pressão atual da admissão', 'Zona adquirida · não adquirida', 'Limites da pressão', 'Curva K', 'Teto 1,8']) {
     assert.ok(cockpit.includes('<b>' + label + '</b>'), 'legenda: ' + label);
   }
 });
@@ -173,7 +173,7 @@ test('desenho: rótulos #n/d, curvas, limites, banda e curva K presentes', () =>
   assert.match(O.renderK(model, 700, 160), /data-series="k-line"/);
 });
 
-test('tudo é "—" quando falta o eixo da ECU: nenhum desenho inventado', () => {
+test('tudo é "—" quando falta o eixo da central: nenhum desenho inventado', () => {
   const empty = build({ fields: [] }, { fuel: 'gas' });
   assert.equal(empty.ok, false);
   assert.equal(O.renderMain(empty, 700, 420), '');

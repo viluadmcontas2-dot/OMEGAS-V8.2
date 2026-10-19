@@ -64,7 +64,7 @@ test('valor 0: tocar numa célula não habilita Gravar nem mostra aviso', () => 
   assert.deepEqual(h.alerts, [], 'nenhum aviso sem o dono ter errado');
   assert.equal(h.previews.length, 0, 'somar 0 % não pede prévia');
   assert.equal(h.button().disabled, true);
-  assert.equal(h.button().textContent, 'Gravar na ECU');
+  assert.equal(h.button().textContent, 'Gravar na central');
   assert.equal(h.nodes.get('mapActiveCell').textContent, '3,5 ms · 3.000 RPM', 'milhar com ponto, como no cabeçalho');
 });
 
@@ -75,20 +75,20 @@ test('com +1 o botão diz quantas células mudam; prévia sem mudança também n
   h.input.value = '1';
   h.screen.applyAdjustment();
   assert.equal(h.button().disabled, false);
-  assert.equal(h.button().textContent, 'Gravar 1 alteração na ECU');
+  assert.equal(h.button().textContent, 'Gravar 1 alteração na central');
   h.setTarget(current => current); // ex.: 0,2 % que arredonda para o mesmo K
   h.input.value = '0.2';
   h.screen.applyAdjustment();
   assert.deepEqual(h.alerts, []);
   assert.equal(h.button().disabled, true);
-  assert.equal(h.button().textContent, 'Gravar na ECU');
+  assert.equal(h.button().textContent, 'Gravar na central');
   assert.throws(() => h.screen.editor.buildReview(), /não muda nenhuma célula/, 'a gravação continua recusada quando nada muda');
 });
 
 test('textos do Mapa K para leigo', () => {
   assert.match(index, />Selecionar tudo</);
   assert.doesNotMatch(index, /Selecionar 144|Linha técnica 0C protegida|Prévia somente/);
-  assert.match(index, /<b>Nada foi gravado\.<\/b><span>Confira os números e toque em Gravar; o app confere na ECU sozinho\.<\/span>/);
+  assert.match(index, /<b>Nada foi gravado\.<\/b><span>Confira os números e toque em Gravar; o app confere na central sozinho\.<\/span>/);
   assert.equal((screenSource.match(/Última linha: só leitura/g) || []).length, 1, '"Última linha: só leitura" uma vez só');
-  assert.match(screenSource, /text\('mapSourceStatus', 'Mapa lido da ECU'\)/);
+  assert.match(screenSource, /text\('mapSourceStatus', 'Mapa lido da central'\)/);
 });

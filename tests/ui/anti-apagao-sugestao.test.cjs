@@ -13,7 +13,7 @@ test('sem viagem analisada: desconhecido, sem sugestão constante e sem escrita'
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   try {
     await U.abrirValores(app);
-    assert.match(await U.text(app.page, '.vv-sug'), /Sem dados|Ainda não há dados/);
+    assert.match(await U.text(app.page, '.vv-sug'), /Ainda sem novo ajuste/);
     assert.equal(await app.page.locator('[data-adv-use-suggestion]').count(), 0);
     assert.deepEqual(await app.page.evaluate(() => window.OmegasUi.AntiApagaoValores.suggestionChanges([3000,100,1500,5,20])), {});
     await T.tap(app.page, '[data-adv-open-info-tab="carro"]'); await T.pump(app.page, 2);
@@ -40,4 +40,20 @@ test('resultado novo do núcleo aparece, sem reduzir configuração nem prometer
     assert.equal(await app.page.locator('[data-adv-use-suggestion]').count(), 0);
     assert.deepEqual(await U.ecuWrites(app.page), []);
   } finally { await app.context.close(); }
+});
+
+test('análise visível inteira nos três tamanhos da multimídia', { skip }, async () => {
+  for (const [width,height] of [[1280,720],[1024,600],[800,480]]) {
+    const app = await T.openApp(browser, {viewport:{width,height}, usb:true});
+    try {
+      await U.abrirValores(app);
+      const clipped = await app.page.locator('.vv-sug').evaluate(e => e.scrollHeight > e.clientHeight + 1);
+      assert.equal(clipped, false, `${width}x${height}`);
+      const outside = await app.page.locator('#liveBar .live-cell').evaluateAll(cells => cells.some(e => {
+        const box=e.getBoundingClientRect(); return box.top < 0 || box.right > innerWidth || e.scrollHeight > e.clientHeight+1;
+      }));
+      assert.equal(outside, false, 'barra do topo inteira');
+      await app.page.screenshot({path:`docs/evidence/img/analise-viagem-${width}x${height}.png`});
+    } finally { await app.context.close(); }
+  }
 });

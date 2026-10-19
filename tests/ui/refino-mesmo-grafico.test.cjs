@@ -43,7 +43,7 @@ test('com extras o gráfico é o mesmo do AutoCal e ganha só o grupo ao-ours (p
   assert.equal((ours.match(/class="ao-our-point gas/g) || []).length, 2, 'quadrados do GNV');
   assert.ok(/ao-our-curve petrol/.test(ours) && /ao-our-curve gas/.test(ours), 'nossas curvas (≥ 2 pontos)');
   assert.equal((ours.match(/ao-stall-mark/g) || []).length, 1, 'marca de apagão');
-  assert.equal((ours.match(/ao-near-mark/g) || []).length, 1, 'quase-apagão; o que cai fora do eixo da ECU não entra');
+  assert.equal((ours.match(/ao-near-mark/g) || []).length, 1, 'quase-apagão; o que cai fora do eixo da central não entra');
 });
 
 test('o Refino não precisa do painel de aquisição: renderMain + renderK bastam', () => {

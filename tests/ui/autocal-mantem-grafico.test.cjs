@@ -16,7 +16,7 @@ vm.createContext(context);
 vm.runInContext(source, context, { filename: 'autocal-cockpit.js' });
 const builds = [];
 context.OmegasUi.AutoCalOriginal = {
-  build: (snapshot) => { builds.push(snapshot.tag); return snapshot.good ? { ok: true, tag: snapshot.tag, zones: [{ label: 'Z1' }] } : { ok: false, reason: 'Aguardando eixo e limiares da ECU.' }; },
+  build: (snapshot) => { builds.push(snapshot.tag); return snapshot.good ? { ok: true, tag: snapshot.tag, zones: [{ label: 'Z1' }] } : { ok: false, reason: 'Aguardando eixo e limiares da central.' }; },
   staticModel: model => model, renderLive: () => ({ band: '', run: '', acq: '', k: '' }), liveState: () => ({ band: null, run: null, mapNow: null }),
   renderAcquisition: model => '<acq ' + model.tag + '>', renderMain: model => '<main ' + model.tag + '>', renderK: model => '<k ' + model.tag + '>',
 };

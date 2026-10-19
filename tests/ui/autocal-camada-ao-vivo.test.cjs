@@ -1,7 +1,7 @@
 'use strict';
 
 // Gráfico do AutoCal em tempo real (dono, 2026-10-13: "o cursor está extremamente lento / as zonas não ficam em tempo real").
-// Só a camada AO VIVO (faixa de MAP atual + cursor) anda a cada amostra; o gráfico inteiro só é refeito quando a ECU manda
+// Só a camada AO VIVO (faixa de MAP atual + cursor) anda a cada amostra; o gráfico inteiro só é refeito quando a central manda
 // dado novo. Aqui: a camada leve é IDÊNTICA ao que o desenho inteiro produziria, a chave do gráfico não depende do AGORA,
 // e a camada leve é muito menor que o desenho inteiro.
 const test = require('node:test');
@@ -36,7 +36,7 @@ test('a camada leve é idêntica ao que o desenho inteiro produz para o mesmo AG
   }
 });
 
-test('o AGORA muda a camada leve mas NÃO a chave do gráfico inteiro; dado novo da ECU muda a chave', () => {
+test('o AGORA muda a camada leve mas NÃO a chave do gráfico inteiro; dado novo da central muda a chave', () => {
   const a = O.build(snapshot, { fuel: 'gas', live: liveSample(3.0, 0.40) });
   const b = O.build(snapshot, { fuel: 'gas', live: liveSample(3.2, 0.55) });
   assert.notEqual(JSON.stringify(a), JSON.stringify(b), 'o modelo completo muda com o AGORA');
