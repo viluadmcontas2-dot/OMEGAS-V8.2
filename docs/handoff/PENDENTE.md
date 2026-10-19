@@ -49,3 +49,5 @@ O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
 
 - [ ] PRIORIDADE 1: bins de RPM/injeção personalizáveis (original × OMEGAS; 0 ms no ajuste local; adicionar linha) — ver CODEX-AUTONOMO.md
 - [ ] PRIORIDADE 2: README profissional + docs/README.md + estrutura enxuta
+
+- [ ] PRIORIDADE 0: log novo omegasaudit.LOG (97 MB, ~810 mil eventos) + capturas do original (Drive CAPTURAS ORIGINAIS): fixtures, matriz comando×resposta, contraste REA, PerfilCentral (app só oferece o que a central suporta)
