@@ -417,8 +417,9 @@ class KFactorManager(
                 expectedSessionId = expectedSessionId,
                 workClass = Mp48WorkClass.MANUAL_WRITE,
                 telemetryAfter = true,
-                // Vez na porta: no máximo 1 s (dono, 16/10). Ocupada = ✗ na hora, nunca "travado confirmando" por 10 s.
-                waitTimeoutMs = 1_000L,
+                // Vez na porta: se a conferência em segundo plano anterior ainda ocupa a serial, ESPERA a vez (nunca falha por "porta ocupada");
+                // a espera termina por evento (unidade anterior termina); o teto de 8 s só protege contra travamento real. A tela não bloqueia.
+                waitTimeoutMs = 8_000L,
             ) { unit ->
                 update("VERIFYING_CURRENT", "Lendo a curva da ECU…", 8)
                 val ecuBefore = readRawPoints(unit, KFactorProtocol.readFactors(), "conferência K factor")
