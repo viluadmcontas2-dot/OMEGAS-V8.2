@@ -37,8 +37,6 @@
 .map-live-condition small,.map-live-condition b,.map-live-condition span{display:block}
 .map-live-condition b{font-size:12px;margin-top:3px;font-variant-numeric:tabular-nums}
 .map-live-condition span{font-size:9px;color:var(--dim);margin-top:2px}
-.from-learning #mapBackToLearning{display:inline-flex}
-#mapBackToLearning{display:none}
 
 /* Sugestões: fila operacional persistente. */
 

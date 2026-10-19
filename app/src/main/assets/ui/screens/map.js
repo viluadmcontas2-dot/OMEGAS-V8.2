@@ -50,14 +50,6 @@
         live.innerHTML = '<small>AGORA</small><b id="mapLiveLabel">Aguardando condição válida</b><span id="mapLiveCell">célula —</span>';
         intro.insertBefore(live, actions || null);
       }
-      if (actions && !document.getElementById('mapBackToLearning')) {
-        const back = document.createElement('button');
-        back.id = 'mapBackToLearning';
-        back.type = 'button';
-        back.className = 'quiet-button';
-        back.textContent = 'Voltar ao aprendizado';
-        actions.prepend(back);
-      }
     }
 
     ensureSuggestionChrome() {
@@ -151,7 +143,6 @@
     }
 
     bind() {
-      document.getElementById('mapBackToLearning')?.addEventListener('click', () => this.router?.navigate('learning'));
       document.getElementById('mapSelectAll')?.addEventListener('click', () => {
         try { this.editor.selectAll(); this.review = null; this.renderEditor(); this.refreshSelectionPreview(); }
         catch (error) { this.alert(error.message); }
@@ -175,7 +166,6 @@
 
     onEnter(context) {
       this.pendingContext = context || null;
-      this.root?.classList.toggle('from-learning', context?.origin === 'learning');
       if (!this.editor.hasMap() && !this.reading) {
         this.startRead(true);
         return;
