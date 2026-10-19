@@ -37,6 +37,7 @@ async function abrirValores(app) {
 /** Digita no campo por toque (foca pelo toque no campo) e dispara a validação, como o teclado do Android faria. */
 async function digitar(app, indice, valor) {
   const { page } = app;
+  await page.locator(`#advField${indice}`).scrollIntoViewIfNeeded();
   await T.tap(page, `#advField${indice}`);
   await page.locator(`#advField${indice}`).fill(String(valor));
   await T.pump(page, 1);

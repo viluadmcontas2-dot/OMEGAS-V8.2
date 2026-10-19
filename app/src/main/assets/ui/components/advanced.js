@@ -333,7 +333,7 @@
         + `<details class="tool-tech extras-experimentais"><summary>Ajustes extras (experimental)</summary><div class="num-grid">${this.V.FIELDS.filter(f => f.index !== 0).map(fieldHtml).join('')}</div></details>`;
       return `
         <section class="tool-view values-view" data-card="valores">
-          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p>${escapeHtml(why || 'Toque num número, digite o novo valor e toque em Gravar.')}</p></header>
+          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p>${escapeHtml(why || 'Use − e + (ou toque no número e digite). Depois toque em Gravar valores: grava na hora e dá para Desfazer.')}</p></header>
           <div class="num-grid">${fields}</div>
           ${this.vals.view().phase === 'done' ? `<p class="adv-saved" role="status">${escapeHtml(this.vals.view().message)}</p>` : ''}
 ${this.vals.view().phase === 'preparing' || this.vals.view().phase === 'writing' ? '<p class="adv-saved" role="status">Gravando…</p>' : ''}
