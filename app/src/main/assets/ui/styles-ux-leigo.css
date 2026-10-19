@@ -284,3 +284,4 @@
 .como-funciona { margin: 6px 0 8px; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); font-size: 14px; line-height: 1.4; }
 .como-funciona p { margin: 0 0 6px; }
 .como-funciona ol { margin: 6px 0; padding-left: 20px; }
+.values-view > .num-grid { flex: 0 0 auto; min-height: auto; }
