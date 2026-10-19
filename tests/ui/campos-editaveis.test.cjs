@@ -109,38 +109,24 @@ test('fora da faixa nunca chega à central, nem pela ponte', { skip }, async () 
   } finally { await app.context.close(); }
 });
 
-test('gravar valores: 1º toque só mostra "antes → depois"; o 2º grava o quadro exato e a central confere', { skip }, async () => {
+test('gravar valores: UM toque grava o quadro exato e a central confere (sem janela de pergunta)', { skip }, async () => {
   const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
   const { page } = app;
   try {
     await U.abrirValores(app);
     await U.clearLog(page);
     await U.digitar(app, 0, '1.700');
-    await T.tap(page, '[data-adv-save]'); await T.pump(page, 4);
-    assert.equal(await U.camada(page), 1, 'janela de confirmação');
-    const previa = await U.text(page, '#toolsLayer');
-    assert.match(previa, /Gravar estes valores\?/);
-    assert.match(previa, /Rotação máxima para agir 1\.600 → 1\.700 rpm/);
-    assert.deepEqual(await U.ecuWrites(page), [], 'nenhuma escrita depois do 1º toque');
-    assert.deepEqual(await U.anti5(page), U.FABRICA);
-    assert.equal(await page.locator('#toolsLayer [data-adv-confirm]').innerText(), 'Gravar valores');
-    assert.equal(await page.locator('#toolsLayer [data-adv-cancel]').innerText(), 'Agora não');
-    // o 2º toque pode cair no cartão sem cancelar (só os botões decidem)
-    await T.tap(page, '#toolsLayer .tool-layer-card h3'); await T.pump(page, 2);
-    assert.equal(await U.camada(page), 1, 'tocar no cartão não cancela a confirmação');
-    assert.deepEqual(await U.ecuWrites(page), []);
-    await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
-    await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]', { timeout: 8000 });
+    await T.tap(page, '[data-adv-save]'); await T.pump(page, 10);
+    assert.equal(await U.camada(page), 0, 'sem janela de confirmação');
     assert.deepEqual(await U.ecuWrites(page), [U.quadroValores([1700, 100, 1500, 2, 20])]);
     assert.deepEqual(await U.anti5(page), [1700, 100, 1500, 2, 20]);
-    assert.match(await U.text(page, '#toolsLayer'), /Pronto/);
-    await T.tap(page, '#toolsLayer [data-adv-close]'); await T.pump(page, 3);
+    assert.match(await U.text(page, '.adv-saved'), /Pronto/);
     assert.equal(await page.locator('#advField0').inputValue(), '1.700', 'o campo mostra o que a central confirmou');
     assert.equal(await page.locator('[data-adv-save]').isDisabled(), true, 'nada mais a gravar');
   } finally { await app.context.close(); }
 });
 
-test('Restaurar fábrica: prévia com os valores de fábrica, 2º toque grava, central volta ao padrão; Desfazer volta ao anterior', { skip }, async () => {
+test('Restaurar fábrica: UM toque grava o padrão; Desfazer (também um toque) volta ao anterior', { skip }, async () => {
   const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
   const { page } = app;
   try {
@@ -152,41 +138,28 @@ test('Restaurar fábrica: prévia com os valores de fábrica, 2º toque grava, c
     assert.equal(await page.locator('#advField0').inputValue(), '3.000');
     assert.equal(await page.locator('[data-adv-factory]').isDisabled(), false);
     await U.clearLog(page);
-    await T.tap(page, '[data-adv-factory]'); await T.pump(page, 4);
-    const previa = await U.text(page, '#toolsLayer');
-    assert.match(previa, /Restaurar valores de fábrica\?/);
-    assert.match(previa, /3\.000 → 1\.600 rpm/);
-    assert.match(previa, /Folga para não ficar trocando 5 → 2 rpm/);
-    assert.doesNotMatch(previa, /Queda de rotação para agir/, 'só o que muda aparece');
-    assert.deepEqual(await U.ecuWrites(page), [], 'Restaurar fábrica também precisa do 2º toque');
-    await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
-    await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]');
+    await T.tap(page, '[data-adv-factory]'); await T.pump(page, 10);
+    assert.equal(await U.camada(page), 0, 'sem janela de confirmação');
     assert.deepEqual(await U.anti5(page), U.FABRICA);
     assert.deepEqual(await U.ecuWrites(page), [U.quadroValores(U.FABRICA)]);
-    await T.tap(page, '#toolsLayer [data-adv-close]'); await T.pump(page, 3);
     assert.equal(await page.locator('[data-adv-factory]').isDisabled(), true, 'já está de fábrica: nada a restaurar');
-    // Desfazer
     await U.clearLog(page);
-    await T.tap(page, '[data-adv-undo-values]'); await T.pump(page, 4);
-    assert.match(await U.text(page, '#toolsLayer'), /Desfazer a última gravação\?/);
-    assert.deepEqual(await U.ecuWrites(page), []);
-    await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
-    await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]');
+    await T.tap(page, '[data-adv-undo-values]'); await T.pump(page, 10);
+    assert.equal(await U.camada(page), 0, 'desfazer também sem pergunta');
     assert.deepEqual(await U.anti5(page), [3000, 100, 1500, 5, 20], 'voltou byte a byte ao que era antes');
   } finally { await app.context.close(); }
 });
 
-test('"Longe do valor de fábrica" avisa na prévia, mas a faixa do original continua valendo', { skip }, async () => {
+test('"Longe do valor de fábrica" só avisa no campo; não bloqueia e a faixa do original continua valendo', { skip }, async () => {
   const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
   const { page } = app;
   try {
     await U.abrirValores(app);
     await U.digitar(app, 0, '5000');
-    await T.tap(page, '[data-adv-save]'); await T.pump(page, 4);
-    assert.match(await U.text(page, '#toolsLayer'), /Longe do valor de fábrica/);
-    await T.tap(page, '#toolsLayer [data-adv-cancel]'); await T.pump(page, 2);
+    assert.match(await U.text(page, '[data-field="0"] .num-warn'), /Longe do valor de fábrica/);
+    assert.equal(await page.locator('[data-adv-save]').isDisabled(), false);
     assert.equal(await U.camada(page), 0);
-    assert.deepEqual(await U.ecuWrites(page), []);
+    assert.deepEqual(await U.ecuWrites(page), [], 'avisar não grava');
   } finally { await app.context.close(); }
 });
 

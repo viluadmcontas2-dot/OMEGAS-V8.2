@@ -8,12 +8,29 @@
   // INFERIDO (forte) = qual edit é qual posição (DataIndex 0..4). Quadro: SetVector ESTENDIDO 0x37 (5 × u16 = 10 bytes > 5), não 0x3B.
   // Sem relógio: esperar a central = esperar a resposta (gancho de dados da ponte).
   const ADDRESS = 307;
+  // Textos para quem nunca mexeu: o que o número faz, para que lado mexer em cada sintoma e o passo dos botões − / +.
+  // O original só mostra o 1º número (Rotação máxima, 1600 rpm); o efeito dos outros 4 é INFERIDO (experimental).
   const FIELDS = [
-    { index: 0, label: 'Rotação máxima para agir', help: 'O anti-apagão só pode agir abaixo desta rotação. rpm significa rotações por minuto.', unit: 'rpm', min: 0, max: 6000, factory: 1600 },
-    { index: 1, label: 'Queda de rotação para agir', help: 'Se o motor perder rotação rapidamente entre leituras, a proteção pode entrar.', unit: 'rpm', min: 0, max: 1000, factory: 100 },
-    { index: 2, label: 'Espera para sair do gás', help: 'Intervalo antes de a central sair do GNV. ms significa milésimos de segundo.', unit: 'ms', min: 0, max: 10000, factory: 1500 },
-    { index: 3, label: 'Folga para não ficar trocando', help: 'Evita ligar e desligar a proteção por pequenas oscilações.', unit: 'rpm', min: 0, max: 1000, factory: 2 },
-    { index: 4, label: 'Queda para parar de agir', help: 'Quando a queda diminui, a proteção pode parar de agir.', unit: 'rpm', min: 0, max: 1000, factory: 20 },
+    { index: 0, label: 'Rotação máxima para agir', unit: 'rpm', min: 0, max: 6000, factory: 1600, step: 50,
+      help: 'Até que rotação o anti-apagão fica de olho no motor. Acima disso ele não interfere. rpm = rotações por minuto.',
+      tipUp: 'O carro ainda apaga ao pisar na embreagem (parando, ré, quebra-molas)? Aumente de 50 em 50 e teste.',
+      tipDown: 'Sente o carro segurando a gasolina sem necessidade? Diminua de 50 em 50. Se está tudo bem, deixe o valor de fábrica.' },
+    { index: 1, label: 'Queda de rotação para agir', unit: 'rpm', min: 0, max: 1000, factory: 100, step: 5,
+      help: 'Quão rápido o motor precisa perder rotação para a proteção entrar.',
+      tipUp: 'Entrando à toa em pequenas oscilações? Aumente de 5 em 5.',
+      tipDown: 'Entrando tarde demais, o motor já apagou? Diminua de 5 em 5.' },
+    { index: 2, label: 'Espera para sair do gás', unit: 'ms', min: 0, max: 10000, factory: 1500, step: 100,
+      help: 'Quanto tempo a central espera antes de sair do GNV. ms = milésimos de segundo (1.000 ms = 1 segundo).',
+      tipUp: 'Saindo do gás cedo demais? Aumente de 100 em 100.',
+      tipDown: 'Demora para trocar e o motor falha? Diminua de 100 em 100.' },
+    { index: 3, label: 'Folga para não ficar trocando', unit: 'rpm', min: 0, max: 1000, factory: 2, step: 5,
+      help: 'Evita ligar e desligar a proteção por oscilação pequena.',
+      tipUp: 'A proteção liga e desliga toda hora? Aumente de 5 em 5.',
+      tipDown: 'Demora para voltar ao normal? Diminua de 5 em 5.' },
+    { index: 4, label: 'Queda para parar de agir', unit: 'rpm', min: 0, max: 1000, factory: 20, step: 5,
+      help: 'Quando a queda de rotação diminui até este valor, a proteção para de agir.',
+      tipUp: 'A proteção solta cedo e o motor volta a falhar? Diminua de 5 em 5.',
+      tipDown: 'Ela demora a soltar e atrapalha a aceleração? Aumente de 5 em 5.' },
   ];
   const COUNT = FIELDS.length;
   const FACTORY = FIELDS.map(f => f.factory);
@@ -148,8 +165,9 @@
       }
       unhook();
       if (mine.noop) { bridge.cancelAntiStalloValues(); s.plan = null; set('idle', TEXT.SAME, 'info'); return; }
+      // Sem atrito (dono): o toque em Gravar já é a ordem; o plano acima foi conferido contra o quadro calculado aqui.
       s.plan = mine; s.token = status.token;
-      set('preview', '', '');
+      confirm();
     }
     function onDone(status) {
       unhook();

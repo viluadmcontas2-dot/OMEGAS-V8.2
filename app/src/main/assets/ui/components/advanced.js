@@ -99,6 +99,8 @@
       // Tocar no lápis, na unidade ou na borda do campo = tocar no campo (o teclado abre aí).
       const box = event.target.closest('.num-box');
       if (box) { const input = box.querySelector('input'); if (input && !input.disabled && event.target !== input) input.focus(); return; }
+      const stepBtn = event.target.closest('[data-adv-step]');
+      if (stepBtn && !stepBtn.disabled) { this.stepField(stepBtn.dataset.advStep); return; }
       // A ação principal também responde ao toque no título e na descrição.
       // O primeiro toque só prepara a prévia, nunca escreve diretamente.
       const t = event.target.closest('button') ||
@@ -138,6 +140,21 @@
       const input = event.target.closest('input[data-adv-field]');
       if (!input) return;
       this.drafts[input.dataset.advField] = input.value;
+      this.paintFields();
+    }
+
+    /** Botões − / +: mexem no número em passos pequenos (nunca fora da faixa) e só preparam; "Gravar valores" grava num toque. */
+    stepField(spec) {
+      const [idx, dir] = String(spec).split(':').map(Number);
+      const f = this.V.FIELDS.find(x => x.index === idx);
+      if (!f) return;
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const parsed = this.V.parseInput(this.drafts[idx]);
+      const base = parsed.ok ? parsed.value : (values ? values[idx] : f.factory);
+      const next = Math.max(f.min, Math.min(f.max, base + dir * f.step));
+      this.drafts[idx] = this.V.num(next);
+      const input = this.host.querySelector(`#advField${idx}`);
+      if (input) input.value = this.drafts[idx];
       this.paintFields();
     }
 
@@ -190,6 +207,8 @@
         if (input) input.setAttribute('aria-invalid', err ? 'true' : 'false');
         const msg = box.querySelector('.num-error');
         if (msg) msg.textContent = err || '';
+        const warn = box.querySelector('.num-warn');
+        if (warn) { const pv = this.V.parseInput(this.drafts[f.index]); warn.textContent = pv.ok && !err && this.V.farFromFactory(f.index, pv.value) ? 'Longe do valor de fábrica. Se o carro piorar, toque em Desfazer ou Restaurar fábrica.' : ''; }
         const sec = box.querySelector('.num-seconds');
         if (sec) { const parsed = this.V.parseInput(this.drafts[f.index]); sec.textContent = parsed.ok ? `= ${this.V.secondsText(parsed.value)}` : ''; }
       });
@@ -294,13 +313,19 @@
       const fieldHtml = f => `
         <div class="num-field" data-field="${f.index}" data-invalid="false" data-changed="false">
           <label for="advField${f.index}">${escapeHtml(f.label)}</label>
-          <div class="num-box">
-            <input id="advField${f.index}" type="text" inputmode="numeric" pattern="[0-9.]*" autocomplete="off" data-adv-field="${f.index}" value="${escapeHtml(this.drafts[f.index] ?? (values ? this.V.num(values[f.index]) : ''))}" ${values ? '' : 'disabled'} aria-describedby="advHelp${f.index}">
-            ${PENCIL}
-            <span class="num-unit">${escapeHtml(f.unit)}</span>
+          <div class="num-stepper">
+            <button type="button" class="step-btn" data-adv-step="${f.index}:-1" aria-label="Diminuir ${f.step} ${escapeHtml(f.unit)}" ${values ? '' : 'disabled'}>− ${f.step}</button>
+            <div class="num-box">
+              <input id="advField${f.index}" type="text" inputmode="numeric" pattern="[0-9.]*" autocomplete="off" data-adv-field="${f.index}" value="${escapeHtml(this.drafts[f.index] ?? (values ? this.V.num(values[f.index]) : ''))}" ${values ? '' : 'disabled'} aria-describedby="advHelp${f.index}">
+              ${PENCIL}
+              <span class="num-unit">${escapeHtml(f.unit)}</span>
+            </div>
+            <button type="button" class="step-btn" data-adv-step="${f.index}:1" aria-label="Aumentar ${f.step} ${escapeHtml(f.unit)}" ${values ? '' : 'disabled'}>+ ${f.step}</button>
           </div>
           <p class="num-help" id="advHelp${f.index}">${escapeHtml(f.help)}${f.unit === 'ms' ? ' <span class="num-seconds"></span>' : ''}</p>
-          <p class="num-meta">${escapeHtml(this.V.range(f))} · Valor de fábrica: ${escapeHtml(this.V.num(f.factory))}</p>
+          <ul class="num-tips"><li><b>Se precisar de mais:</b> ${escapeHtml(f.tipUp)}</li><li><b>Se atrapalhar:</b> ${escapeHtml(f.tipDown)}</li></ul>
+          <p class="num-meta">${escapeHtml(this.V.range(f))} · Valor de fábrica: ${escapeHtml(this.V.num(f.factory))} (bom ponto de partida)</p>
+          <p class="num-warn"></p>
           <p class="num-error" role="alert"></p>
         </div>`;
       // O original só mostra UM número ("Rotação máxima para agir", 1600 rpm); os outros 4 ficam recolhidos (experimental).
@@ -310,6 +335,8 @@
         <section class="tool-view values-view" data-card="valores">
           <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p>${escapeHtml(why || 'Toque num número, digite o novo valor e toque em Gravar.')}</p></header>
           <div class="num-grid">${fields}</div>
+          ${this.vals.view().phase === 'done' ? `<p class="adv-saved" role="status">${escapeHtml(this.vals.view().message)}</p>` : ''}
+${this.vals.view().phase === 'preparing' || this.vals.view().phase === 'writing' ? '<p class="adv-saved" role="status">Gravando…</p>' : ''}
           <div class="tool-actions">
             <button type="button" class="primary" data-adv-save disabled>Gravar valores</button>
             <button type="button" class="secondary" data-adv-factory ${why || !values || values.every((v, i) => v === this.V.FACTORY[i]) ? 'disabled' : ''}>Restaurar fábrica</button>
@@ -374,6 +401,7 @@
     }
 
     layerValues(vv) {
+      if (['preparing', 'preview', 'writing', 'done'].includes(vv.phase)) return '';   // sem janela: o resultado aparece na própria tela
       const V = this.V;
       const title = vv.kind === 'factory' ? 'Restaurar valores de fábrica?' : vv.kind === 'undo' ? 'Desfazer a última gravação?' : 'Gravar estes valores?';
       const verb = vv.kind === 'factory' ? 'Restaurar fábrica' : vv.kind === 'undo' ? 'Desfazer' : 'Gravar valores';
