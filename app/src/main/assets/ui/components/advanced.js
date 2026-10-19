@@ -102,7 +102,8 @@
       if (!this.hasBridge(kind)) return WHY.nobridge;
       if (!this.usb()) return WHY.nousb;
       // O primeiro toque lê FLAG_CONF3 ao vivo. O snapshot geral NÃO é pré-requisito.
-      if (kind === 'values' && !this.valuesNow()) return WHY.unread;
+      // Uma leitura geral incompleta não bloqueia edição digitada: o gravador
+      // nativo relê ANTI_STALLO diretamente antes de qualquer escrita.
       return '';
     }
 
@@ -196,7 +197,7 @@
     resetDrafts() {
       const values = this.valuesNow();
       this.drafts = {};
-      this.V.FIELDS.forEach(f => { this.drafts[f.index] = values ? this.V.num(values[f.index]) : ''; });
+      if (values) this.V.FIELDS.forEach(f => { this.drafts[f.index] = this.V.num(values[f.index]); });
     }
 
     /** O que o dono digitou que difere do valor lido (só campos válidos). */
@@ -210,7 +211,9 @@
         if (!parsed.ok) { out.invalid = true; out.errors[f.index] = parsed.error; return; }
         const check = this.V.validate({ [f.index]: parsed.value });
         if (!check.ok) { out.invalid = true; out.errors[f.index] = `Use um valor ${this.V.range(f).toLowerCase()}.`; return; }
-        if (values && parsed.value !== values[f.index]) out.changes[f.index] = parsed.value;
+        // Sem snapshot, aceita apenas o campo digitado pelo usuário;
+        // o Kotlin relê os outros quatro e valida o plano antes de gravar.
+        if (!values || parsed.value !== values[f.index]) out.changes[f.index] = parsed.value;
       });
       return out;
     }
@@ -351,7 +354,7 @@
           <div class="num-stepper">
             <button type="button" class="step-btn" data-adv-step="${f.index}:-1" aria-label="Diminuir ${f.step} ${escapeHtml(f.unit)}" ${values ? '' : 'disabled'}>− ${f.step}</button>
             <div class="num-box">
-              <input id="advField${f.index}" type="text" inputmode="numeric" pattern="[0-9.]*" autocomplete="off" data-adv-field="${f.index}" value="${escapeHtml(this.drafts[f.index] ?? (values ? this.V.num(values[f.index]) : ''))}" ${values ? '' : 'disabled'} aria-describedby="advHelp${f.index}">
+              <input id="advField${f.index}" type="text" inputmode="numeric" pattern="[0-9.]*" autocomplete="off" data-adv-field="${f.index}" value="${escapeHtml(this.drafts[f.index] ?? (values ? this.V.num(values[f.index]) : ''))}" ${this.reason('values') ? 'disabled' : ''} aria-describedby="advHelp${f.index}">
               ${PENCIL}
               <span class="num-unit">${escapeHtml(f.unit)}</span>
             </div>
@@ -380,10 +383,12 @@
       const why = this.reason('values');
       const undo = this.vals.view().undo;
       const [level, statusText] = this.saveStatus();
+      const displayStatus = !values && !why && this.vals.view().phase === 'idle'
+        ? 'Digite um número. A central será lida antes da gravação; os botões −/+ aguardam a leitura.' : statusText;
       const sug = this.data.antiStallSuggestion || {};
       return `
         <section class="tool-view values-view" data-card="valores">
-          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(why || statusText)}</p></header>
+          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(why || displayStatus)}</p></header>
           <div class="vv-grid">
             ${this.V.FIELDS.map(f => this.cardHtml(f, values)).join('')}
             <aside class="vv-info vv-sug" data-state="neutral" aria-label="Análise da viagem">
