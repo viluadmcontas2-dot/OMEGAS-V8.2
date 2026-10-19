@@ -175,3 +175,53 @@ test('cartão com defeito exibe tentar de novo e preserva os outros', { skip }, 
     assert.equal(await app.page.locator('#toolAdvanced [data-card="lenta"]').count(), 1);
   } finally { await app.context.close(); }
 });
+
+
+test('sem param_snapshot, Ferramentas usa a central conectada no primeiro toque e não inventa o estado', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 } });
+  const { page } = app;
+  try {
+    await T.tap(page, '.side-nav [data-route="tools"]');
+    // A ECU conectou e o AutoCal já pode receber quadros. A leitura automática de
+    // 49 parâmetros ainda NÃO terminou (defeito observado no aparelho).
+    await page.evaluate(() => window.__bench.plugUsb());
+    await T.pump(page, 3);
+    assert.equal(await page.locator('#globalEcu').innerText(), 'Central conectada');
+    assert.equal(await page.locator('[data-card="anti"] .tile-state').count(), 0);
+    assert.equal(await page.locator('#toolAdvanced [data-adv-switch]').isDisabled(), false,
+      'USB conectado não pode depender do param_snapshot geral para ler FLAG_CONF3');
+    assert.match(await page.locator('[data-card="anti"]').innerText(), /Anti-apagão/);
+    assert.match(await page.locator('#toolAdvanced [data-adv-switch]').innerText(), /—/);
+    await page.evaluate(() => window.__bench.ecu.clearLog());
+    await T.tap(page, '[data-adv-switch]');
+    await T.pump(page, 4);
+    const first = await T.frames(page);
+    assert.deepEqual(T.writesOf(first.log), [], 'primeiro toque é SÓ leitura da ECU');
+    await page.waitForSelector('#toolsLayer [data-adv-confirm]', { state: 'visible' });
+    await T.tap(page, '#toolsLayer [data-adv-confirm]');
+    await T.pump(page, 6);
+    await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]', { state: 'visible' });
+    const all = await T.frames(page);
+    assert.deepEqual(T.writesOf(all.log).map(x => x.hex), ['35 FA 00 20 00 00 00 4F']);
+    assert.deepEqual(await page.evaluate(() => window.__bench.ecu.get('29 FA 00 23')), [32, 0, 0, 0]);
+  } finally { await app.context.close(); }
+});
+
+test('sem param_snapshot, central com anti-apagão já ligado identifica estado real sem escrita', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 } });
+  const { page } = app;
+  try {
+    await T.tap(page, '.side-nav [data-route="tools"]');
+    await page.evaluate(() => {
+      window.__bench.seed('29 FA 00 23', [0x20, 0, 0, 0]);
+      window.__bench.plugUsb();
+    });
+    await T.pump(page, 3);
+    assert.equal(await page.locator('#toolAdvanced [data-adv-switch]').isDisabled(), false);
+    await T.tap(page, '[data-adv-switch]');
+    await T.pump(page, 5);
+    assert.deepEqual(T.writesOf((await T.frames(page)).log), [], 'consultar nunca desliga a função existente');
+    assert.match(await page.locator('[data-card="anti"]').innerText(), /Ligado/);
+    assert.equal(await page.locator('#toolsLayer [data-adv-confirm]').count(), 0);
+  } finally { await app.context.close(); }
+});
