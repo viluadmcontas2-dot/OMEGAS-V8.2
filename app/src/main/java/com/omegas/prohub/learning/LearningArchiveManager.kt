@@ -1,7 +1,5 @@
 package com.omegas.prohub.learning
 
-import android.content.ContentResolver
-import android.net.Uri
 import com.omegas.prohub.calibration.KWriteManager
 import com.omegas.prohub.ecu.NativeRuntimeManager
 import com.omegas.prohub.settings.AppSettings
@@ -9,11 +7,8 @@ import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStreamReader
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -160,51 +155,4 @@ class LearningArchiveManager(
                 .put("obdIsolation", true))
     }
 
-    fun export(resolver: ContentResolver, uri: Uri): JSONObject = try {
-        val bytes = snapshotJson().toString(2).toByteArray(StandardCharsets.UTF_8)
-        resolver.openOutputStream(uri, "w")?.use { it.write(bytes); it.flush() }
-            ?: error("Não foi possível abrir o arquivo de destino")
-        log.add("INFO", "LEARNING-NATIVE", "Arquivo .omegas exportado (${bytes.size} bytes)")
-        JSONObject().put("ok", true).put("bytes", bytes.size)
-    } catch (error: Exception) {
-        JSONObject().put("ok", false).put("error", error.message ?: "Falha ao exportar aprendizado")
-    }
-
-    fun import(resolver: ContentResolver, uri: Uri): JSONObject = try {
-        val text = resolver.openInputStream(uri)?.use { input ->
-            BufferedReader(InputStreamReader(input, StandardCharsets.UTF_8)).readText()
-        } ?: error("Não foi possível abrir o arquivo")
-        val root = JSONObject(text)
-        val format = root.optString("format")
-        val learningPayload = when (format) {
-            FORMAT -> root.optJSONObject("learning") ?: error("Arquivo sem aprendizado")
-            NATIVE_FORMAT -> root
-            else -> error("Formato anterior à escala MP48 v2 não é importado: $format")
-        }
-        if (learningPayload.optString("format") != NATIVE_FORMAT) {
-            error("O arquivo contém medidas calculadas por outra escala de telemetria")
-        }
-        val learningResult = runtime.mergeLearning(learningPayload, settings.deviceId)
-        val obdResult = root.optJSONObject("obd")?.let { org.json.JSONObject().put("ok", true).put("ignored", "OBD removido") }
-            ?: JSONObject().put("ok", true).put("ignored", true)
-        val historyPayload = root.optJSONObject("kHistoryComponent") ?: JSONObject()
-            .put("format", "omegas-k-history-v1")
-            .put("deviceId", root.optString("sourceDeviceId"))
-            .put("events", root.optJSONArray("confirmedKHistory") ?: JSONArray())
-        val historyResult = kWriter.mergeHistoryComponent(historyPayload)
-        val ok = learningResult.optBoolean("ok") &&
-            obdResult.optBoolean("ok", true) && historyResult.optBoolean("ok", true)
-        log.add(
-            if (ok) "INFO" else "WARN",
-            "LEARNING-NATIVE",
-            "Importação .omegas: aprendizado=${learningResult.optBoolean("ok")} " +
-                "OBD=${obdResult.optBoolean("ok", true)} histórico=${historyResult.optBoolean("ok", true)}",
-        )
-        JSONObject().put("ok", ok)
-            .put("learning", learningResult)
-            .put("obd", obdResult)
-            .put("history", historyResult)
-    } catch (error: Exception) {
-        JSONObject().put("ok", false).put("error", error.message ?: "Falha ao importar aprendizado")
-    }
 }

@@ -349,8 +349,6 @@
     exportData() { return this.demo ? false : invoke(this.native, 'exportData', [], false); }
     /** Contagens de uso (abas e toques) para o log da sessão; só no aparelho, nunca em rede (core/usage-meter.js). */
     recordUiUsage(delta) { return this.demo ? { ok: true, demo: true } : invoke(this.native, 'recordUiUsage', [JSON.stringify(delta || {})], { ok: false }); }
-    exportLearning() { return this.demo ? false : invoke(this.native, 'exportLearningArchive', [], false); }
-    importLearning() { return this.demo ? false : invoke(this.native, 'importLearningArchive', [], false); }
     exportLogs() { return this.demo ? false : invoke(this.native, 'exportLogs', [], false); }
     selfTest() { return this.demo ? { ok: true, demo: true } : invoke(this.native, 'runEngineSelfTests', [], {}); }
   }

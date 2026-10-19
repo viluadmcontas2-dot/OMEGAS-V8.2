@@ -261,13 +261,6 @@ class NativeRuntimeManager(
         return exported.put("componentRevision", revision)
     }
 
-    fun mergeLearning(payload: JSONObject, localDeviceId: String = ""): JSONObject {
-        flushLearning("antes de mesclar aprendizado")
-        val result = learning.merge(payload, localDeviceId)
-        publishLearningState(latestLearningSequence, safeLearningStatus())
-        return result
-    }
-
     /**
      * Imports only contextual evidence from a read-only AutoCal snapshot.
      * It never prepares or invokes any ECU writer.

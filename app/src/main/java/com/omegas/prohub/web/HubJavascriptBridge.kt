@@ -502,8 +502,6 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun getKFactorHistory(): String = activity?.serviceOrNull()?.kFactorHistoryJson() ?: "[]"
 
     @JavascriptInterface fun getLearningSyncStatus(): String = activity?.serviceOrNull()?.learningSyncStatusJson() ?: "{}"
-    @JavascriptInterface fun importLearningArchive() = activity?.importLearningArchive()
-    @JavascriptInterface fun exportLearningArchive() = activity?.exportLearningArchive()
 
     @JavascriptInterface fun getSessionRecorderStatus(): String = activity?.serviceOrNull()?.sessionRecorderStatusJson() ?: "{}"
     @JavascriptInterface fun listRecordedSessions(): String = activity?.serviceOrNull()?.sessionRecorderListJson() ?: "[]"

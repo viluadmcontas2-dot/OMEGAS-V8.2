@@ -408,3 +408,8 @@
 @media (max-height: 700px) { .vv-t-long { display: none; } .vv-t-short { display: inline; } }
 .vv-sug { gap: 6px; }
 .vv-sug .secondary, .vv-sug .primary { flex: 0 0 auto; }
+
+/* Seis ferramentas após unificar os arquivos: três colunas deixam o texto inteiro. */
+#toolsDrawer[data-page="2"] #toolDiagnosticsWorkspace[data-mode="home"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}

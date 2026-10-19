@@ -35,11 +35,14 @@ class DataArchiveManager(
         sanitizeLegacyProjects()
     }
 
-    fun exportData(resolver: ContentResolver, uri: Uri) {
+    fun exportData(resolver: ContentResolver, uri: Uri, currentLearning: JSONObject) {
         resolver.openOutputStream(uri, "w").use { output ->
             requireNotNull(output) { "Não foi possível criar o arquivo" }
             ZipOutputStream(output.buffered()).use { zip ->
                 zipDirectory(paths.externalRoot, paths.externalRoot, zip)
+                zip.putNextEntry(ZipEntry("aprendizado-atual.json"))
+                zip.write(currentLearning.toString(2).toByteArray(Charsets.UTF_8))
+                zip.closeEntry()
             }
         }
     }

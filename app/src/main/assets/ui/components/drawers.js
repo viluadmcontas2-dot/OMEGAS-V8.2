@@ -96,8 +96,6 @@
       const target = event.target.closest('button');
       if (!target) return;
       if (target.id === 'toolExportData') this.api.exportData();
-      else if (target.id === 'toolExportLearning') this.api.exportLearning();
-      else if (target.id === 'toolImportLearning') this.api.importLearning();
       else if (target.id === 'toolBufferProbe') this.runBufferProbe();
       else if (target.id === 'toolAutoRefine') this.toggleAutoRefine();
       else if (target.matches('[data-session-start]')) {
@@ -389,18 +387,8 @@
       host.innerHTML = `
         <article class="tool-tile" data-card="copia" data-state="neutral">
           <h3>Cópia de segurança</h3>
-          <p class="tile-line">Guarda tudo do app num arquivo.</p>
+          <p class="tile-line">Inclui o aprendizado atual e as sessões.</p>
           <button type="button" id="toolExportData" class="tile-action"><b>Salvar cópia</b></button>
-        </article>
-        <article class="tool-tile" data-card="aprendizado-salvar" data-state="neutral">
-          <h3>Aprendizado</h3>
-          <p class="tile-line">Guarda o que o app aprendeu.</p>
-          <button type="button" id="toolExportLearning" class="tile-action"><b>Salvar aprendizado</b></button>
-        </article>
-        <article class="tool-tile" data-card="aprendizado-carregar" data-state="neutral">
-          <h3>Aprendizado de outro arquivo</h3>
-          <p class="tile-line">Confere antes. Não grava na central.</p>
-          <button type="button" id="toolImportLearning" class="tile-action"><b>Carregar aprendizado</b></button>
         </article>
         <article class="tool-tile" data-card="refino-automatico" data-state="${refineOn ? 'on' : 'off'}">
           <h3>Refino automático</h3>

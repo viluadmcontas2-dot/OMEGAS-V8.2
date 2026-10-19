@@ -612,8 +612,6 @@ class TelemetryForegroundService : Service() {
         .put("error", "Uma operação de $operation está em andamento")
         .toString()
 
-    fun importLearningArchive(uri: Uri): String = learningArchive.import(contentResolver, uri).toString()
-    fun exportLearningArchive(uri: Uri): String = learningArchive.export(contentResolver, uri).toString()
     fun importNativeAutoCalSnapshot(payload: String): String = try {
         runtime.importNativeAutoCalSnapshot(JSONObject(payload)).toString()
     } catch (error: Exception) {

@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         if (uri == null) return@registerForActivityResult
         runWithServiceAsync { svc ->
             try {
-                svc.archives.exportData(contentResolver, uri)
+                svc.archives.exportData(contentResolver, uri, svc.learningArchive.snapshotJson())
                 toast("Dados exportados")
             } catch (error: Exception) {
                 toast("Falha ao exportar: ${error.message}", true)
@@ -84,33 +84,6 @@ class MainActivity : AppCompatActivity() {
                 !result.optBoolean("ok"),
             )
             refreshWebUi()
-        }
-    }
-
-    private val importLearningLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument(),
-    ) { uri: Uri? ->
-        if (uri == null) return@registerForActivityResult
-        runWithServiceAsync { svc ->
-            val result = JSONObject(svc.importLearningArchive(uri))
-            toast(
-                if (result.optBoolean("ok")) "Aprendizado nativo importado" else "Falha: ${result.optString("error")}",
-                !result.optBoolean("ok"),
-            )
-            refreshWebUi()
-        }
-    }
-
-    private val exportLearningLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/vnd.omegas.learning+json"),
-    ) { uri: Uri? ->
-        if (uri == null) return@registerForActivityResult
-        runWithServiceAsync { svc ->
-            val result = JSONObject(svc.exportLearningArchive(uri))
-            toast(
-                if (result.optBoolean("ok")) "Arquivo .omegas exportado" else "Falha: ${result.optString("error")}",
-                !result.optBoolean("ok"),
-            )
         }
     }
 
@@ -343,21 +316,6 @@ class MainActivity : AppCompatActivity() {
     fun exportSession(sessionId: String) = runOnUiThread {
         pendingSessionExportId = sessionId.trim()
         exportSessionLauncher.launch("OMEGAS_Sessao_${sessionStamp(pendingSessionExportId)}.zip")
-    }
-
-    fun importLearningArchive() = runOnUiThread {
-        importLearningLauncher.launch(
-            arrayOf(
-                "application/vnd.omegas.learning+json",
-                "application/json",
-                "text/plain",
-                "application/octet-stream",
-            ),
-        )
-    }
-
-    fun exportLearningArchive() = runOnUiThread {
-        exportLearningLauncher.launch("OMEGAS_Aprendizado_${exportStamp()}.omegas")
     }
 
     private fun exportStamp(timeMs: Long = System.currentTimeMillis()): String =
