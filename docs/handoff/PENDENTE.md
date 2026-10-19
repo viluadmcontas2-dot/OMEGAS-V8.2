@@ -51,3 +51,11 @@ O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
 - [ ] PRIORIDADE 2: README profissional + docs/README.md + estrutura enxuta
 
 - [ ] PRIORIDADE 0: log novo omegasaudit.LOG (97 MB, ~810 mil eventos) + capturas do original (Drive CAPTURAS ORIGINAIS): fixtures, matriz comando×resposta, contraste REA, PerfilCentral (app só oferece o que a central suporta)
+
+## Retroativo + contratos (pedido do dono 2026-10-19; Claude com poucos tokens → Codex executa)
+- [ ] Log novo: fixtures + pareamento req→resp + matriz nova (docs/progbase/bins/LOG-NOVO-omegasaudit-achados.md tem os 1ºs achados: anti-apagão OBS-FIO; bins RPM = vetor 0x3D por elemento)
+- [ ] CONTRATO DE COERÊNCIA (retroativo): para CADA função do app (Ferramentas, Anti-apagão, Marcha lenta, AutoCal, Mapa K, Curva K, Sessões): arquivo JS/Kotlin → ponte → comando → resposta → estado na tela; teste e2e no WebView-like (scripts em ordem, sem cache, console.error = falha) + diagnóstico visível no app (estado claro: 'Central conectada / lendo / sem resposta / não suportado por esta central'). Nenhuma aba pode abrir vazia: erro de módulo mostra cartão de falha com 'Tentar de novo'. Gerar o grafo função→ponte→comando→teste no Graphify e falhar a CI se faltar elo.
+- [ ] Bug: aba Ferramentas vazia no WebView real (docs/handoff/PROMPT-CORRECAO-TELA-FERRAMENTAS.md; GPT já mexeu em tools: commit 3e844c2)
+- [ ] AutoCal (multimídia): botão ao lado de cada zona para APAGAR os pontos daquela zona, 1 toque, sem confirmação, limpo; balão de informação não pode ficar por cima ao alterar algo
+- [ ] Manuais públicos referenciados no grafo (MAN-*), docs sem duplicatas: um .md por assunto, sem arquivos repetidos/contraditórios (auditar docs/ com tools/auditoria.py)
+- [ ] Meta: 100% de cobertura do ProgBase (COBERTURA.md) e réplica fiel dos comandos úteis ao app
