@@ -273,14 +273,15 @@ test('USB cai durante a gravação: a espera termina (sem resposta final) com av
   assert.equal(e.hooks.size, 0);
 });
 
-test('valor atual desconhecido ("—"): o botão não faz nada', () => {
-  const e = ambiente();
+test('valor ainda não lido: primeiro toque pede leitura ao vivo, nunca grava sozinho', () => {
   for (const entrada of [undefined, { state: 'NACK', values: null }]) {
+    const e = ambiente();
+    assert.equal(e.flow.canTap(entrada, true), true);
     e.flow.tapSwitch(entrada, true);
-    assert.equal(e.flow.view().phase, 'idle');
+    assert.equal(e.flow.view().phase, 'preparing');
+    deepEqual(e.chamadas, [['prepare', true]], 'a central confere o estado atual antes de oferecer escrita');
+    assert.equal(e.count('confirm'), 0);
   }
-  assert.equal(e.chamadas.length, 0);
-  assert.equal(e.flow.canTap(undefined, true), false);
 });
 
 test('sem ECU conectada: não prepara nem grava', () => {
