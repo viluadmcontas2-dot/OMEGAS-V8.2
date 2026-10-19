@@ -31,6 +31,8 @@ async function abrirValores(app) {
   await abrirMotor(app);
   await T.tap(app.page, '[data-adv-open="valores"]');
   await T.pump(app.page, 3);
+  // Os 4 números extras ficam recolhidos (experimental); os testes de campo precisam deles visíveis.
+  await app.page.evaluate(() => { const d = document.querySelector('.extras-experimentais'); if (d) d.open = true; });
 }
 /** Digita no campo por toque (foca pelo toque no campo) e dispara a validação, como o teclado do Android faria. */
 async function digitar(app, indice, valor) {

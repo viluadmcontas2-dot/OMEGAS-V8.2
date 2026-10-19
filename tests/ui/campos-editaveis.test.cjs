@@ -33,7 +33,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
         assert.equal(await caixa.locator('svg.pencil').count(), 1, 'lápis dentro do campo: ' + c.nome);
         assert.ok(await caixa.locator('svg.pencil').isVisible(), 'lápis visível');
         assert.equal(await caixa.locator('.num-unit').innerText(), c.unidade, 'unidade em palavra simples');
-        assert.match(await campo.locator('.num-meta').innerText(), new RegExp(`^${c.faixa} · Valor de fábrica: ${c.fabrica.replace('.', '\\.')}$`));
+        assert.match(await campo.locator('.num-meta').innerText(), new RegExp(`^${c.faixa} · Valor de fábrica: ${c.fabrica.replace('.', '\\.')}( \\(bom ponto de partida\\))?$`));
         const box = await caixa.boundingBox();
         assert.ok(box.height >= 56, `altura do campo ${c.nome}: ${box.height}`);
         const borda = await caixa.evaluate(e => parseFloat(getComputedStyle(e).borderTopWidth));
