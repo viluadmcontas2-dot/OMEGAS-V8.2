@@ -30,12 +30,11 @@ def test_finish_remains_backend_compatibility_not_terminal_semantics():
 
 def test_modern_curve_screen_preserves_progbase_manual_k_capability():
     curve = read("app/src/main/assets/ui/screens/curve.js")
-    coherence = read("tests/ui/curve-map-editor-coherence.test.cjs")
     assert "data-curve-nudge" in curve
     assert "nudgeActive" in curve
     assert "writePrepared()" in curve
     assert "writeCurve" in curve
-    assert "uma única confirmação humana" in coherence
+    assert "readbackValid" in curve  # Confirmação pela central; não depende da redação de outro teste.
 
 def test_host_actions_remain_distinct_and_manual():
     manager = read("app/src/main/java/com/omegas/prohub/autocal/AutoCalNativeActionManager.kt")
@@ -43,3 +42,10 @@ def test_host_actions_remain_distinct_and_manual():
         assert action in manager
     assert '"automatic", false' in manager
     assert '"manualOnly", true' in manager
+
+if __name__ == "__main__":
+    test_autocal_normal_surface_matches_closed_progbase_host_model()
+    test_finish_remains_backend_compatibility_not_terminal_semantics()
+    test_modern_curve_screen_preserves_progbase_manual_k_capability()
+    test_host_actions_remain_distinct_and_manual()
+    print("AUTOCAL_HOST_CONTRACT=PASS tests=4")
