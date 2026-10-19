@@ -42,6 +42,15 @@
       this.node = document.getElementById('liveBar');
       this.cells = new Map();
       this.last = null;
+      this.verifyNode = document.getElementById('liveVerify');
+      const Tracker = root.OmegasWriteVerify?.Tracker;
+      if (Tracker) {
+        this.verify = app.writeVerify = new Tracker(() => app.api?.writeVerify?.(), state => this.renderVerify(state));
+        this.verifyNode?.addEventListener?.('click', () => {
+          const detail = this.verify?.state?.detail;
+          if (detail) app.store.patch?.({ alert: detail });
+        });
+      }
       this.unsubscribe = app.store.subscribe(state => this.render(state), true);
     }
 
@@ -56,8 +65,20 @@
       return entry;
     }
 
+    renderVerify(view) {
+      const node = this.verifyNode;
+      if (!node) return;
+      const idle = view.phase === 'idle';
+      node.hidden = idle;
+      node.dataset.phase = view.phase;
+      node.title = view.detail || '';
+      const label = node.querySelector('span');
+      if (label) label.textContent = view.phase === 'failed' || view.phase === 'fixing' ? view.label : view.label;
+    }
+
     render(state) {
       if (!this.node) return;
+      if (this.verify?.armed) this.verify.tick(); // avança a conferência a cada resposta da ECU (telemetria), nunca por relógio
       const telemetry = state.telemetry;
       if (telemetry === this.last) return; // mesmo quadro: nada a fazer
       this.last = telemetry;

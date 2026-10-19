@@ -71,5 +71,5 @@ test('gravação confirmada da Curva K não vira "alterações confirmadas" no M
 test('a gravação do próprio Mapa K continua mostrando o resultado', () => {
   const r = run({ ok: true, state: 'BATCH_CONFIRMED', busy: false, progress: 100, readbackValid: true, confirmedCells: 2, totalCells: 2, startedAt: 42 }, 42);
   assert.equal(r.overlay, true);
-  assert.match(r.title, /2 alterações confirmadas pela ECU/);
+  assert.match(r.title, /2 alterações gravadas/);
 });

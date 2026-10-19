@@ -52,6 +52,10 @@ class V7JavascriptBridge(activity: MainActivity) {
         .put("busy", busy.get())
         .toString()
 
+    /** Conferência em segundo plano da última gravação K (barra do topo): {phase, detail, label}. */
+    @JavascriptInterface
+    fun getWriteVerify(): String = activity?.serviceOrNull()?.kWriteVerifyJson() ?: "{\"phase\":\"idle\"}"
+
     @JavascriptInterface
     fun previewMapAdjustment(cellsJson: String, mode: String, adjustment: Double): String =
         MapKManualPlanner.preview(cellsJson, mode, adjustment).toString()

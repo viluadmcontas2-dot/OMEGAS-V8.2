@@ -621,7 +621,7 @@
       // A ponte guarda uma "última operação" só para Curva K, Mapa K, backup e reset: esta tela só segue a gravação que iniciou.
       this.writeStartedAt = result.startedAt ?? null;
       text('mapOperationTitle', 'Escrita manual em andamento');
-      text('mapOperationMessage', `0 de ${this.review.count} células confirmadas`);
+      text('mapOperationMessage', `0 de ${this.review.count} células gravadas`);
       this.store.patch({ map: { ...this.store.get().map, state: 'writing', operation: result, review: this.review } });
     }
 
@@ -642,20 +642,22 @@
       if (bar) bar.style.width = `${progress}%`;
       if (operation.busy) {
         // Progresso real do gravador ("Gravando 12 de 24…" → "Conferindo 1 de 2 linhas…"); "confirmadas" só depois da leitura de volta.
-        text('mapOperationTitle', operation.writerMessage || 'Gravando e conferindo…');
-        text('mapOperationMessage', 'A ECU confirma ao final, lendo de volta');
+        text('mapOperationTitle', operation.writerMessage || 'Gravando…');
+        text('mapOperationMessage', 'A ECU confirma cada quadro');
         return;
       }
-      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células confirmadas`);
-      if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
+      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células gravadas`);
+      if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
+        // "Gravado" na hora (ACKs); a leitura de volta segue em segundo plano e só avisa na barra do topo se falhar.
+        globalThis.OmegasApp?.writeVerify?.begin();
         this.root?.classList.remove('is-writing');
         this.root?.classList.add('has-result');
         const result = document.getElementById('mapOperationResult');
         if (result) {
           result.dataset.level = 'ok';
-          result.querySelector('b').textContent = `${operation.confirmedCells || operation.totalCells} alterações confirmadas pela ECU`;
+          result.querySelector('b').textContent = `${operation.confirmedCells || operation.totalCells} alterações gravadas`;
           // "Gravado" só aqui: BATCH_CONFIRMED + readbackValid (ACK e leitura de volta da ECU); texto para leigo (dono, 2026-10-11).
-          result.querySelector('span').textContent = 'Gravado e conferido na ECU. O mapa será relido.';
+          result.querySelector('span').textContent = 'Gravado na ECU. O mapa será relido.';
         }
         this.writeStartedAt = null;
         this.editor.reset();

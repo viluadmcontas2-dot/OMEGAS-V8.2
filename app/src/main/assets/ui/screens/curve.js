@@ -229,7 +229,7 @@
       this.root?.classList.remove('has-result');
       this.root?.classList.add('is-writing');
       text('curveOperationTitle', 'Pondo a Curva K toda em 1,0');
-      text('curveOperationMessage', 'Gravando e conferindo…');
+      text('curveOperationMessage', 'Gravando…');
       const bar = document.getElementById('curveOperationProgress');
       if (bar) bar.style.width = '0%';
     }
@@ -453,18 +453,20 @@
         const progress = Math.max(0, Math.min(100, finite(operation.progress) || finite(operation.writerProgress) || 0));
         const bar = document.getElementById('curveOperationProgress');
         if (bar) bar.style.width = `${progress}%`;
-        text('curveOperationTitle', operation.message || operation.writerMessage || 'Gravando e conferindo…');
+        text('curveOperationTitle', operation.message || operation.writerMessage || 'Gravando…');
         if (!operation.busy) {
           this.writing = false;
-          // "Gravado" só depois do ACK e da leitura de volta da ECU (BATCH_CONFIRMED + readbackValid); o texto é para leigo.
-          if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
+          // "Gravado" na hora, assim que os ACKs chegam (dono, 2026-10-19); a leitura de volta segue em segundo plano e só avisa
+          // na barra do topo se falhar (OmegasWriteVerify). Texto para leigo.
+          if (operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)) {
+            globalThis.OmegasApp?.writeVerify?.begin();
             this.root?.classList.remove('is-writing');
             this.root?.classList.add('has-result');
             const result = document.getElementById('curveOperationResult');
             if (result) {
               result.dataset.level = 'ok';
-              result.querySelector('b').textContent = 'Curva K confirmada pela ECU';
-              result.querySelector('span').textContent = 'Gravado e conferido na ECU.';
+              result.querySelector('b').textContent = 'Curva K gravada';
+              result.querySelector('span').textContent = 'Gravado na ECU.';
             }
             this.data = null;
             this.proposals.clear();

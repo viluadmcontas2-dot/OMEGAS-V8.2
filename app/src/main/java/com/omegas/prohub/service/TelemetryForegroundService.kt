@@ -526,6 +526,12 @@ class TelemetryForegroundService : Service() {
         }
     }
     fun kFactorStatusJson(): String = kFactor.statusJson()
+    /** Conferência em segundo plano da última gravação K (Curva ou Mapa): a que está ativa/falhou tem prioridade. */
+    fun kWriteVerifyJson(): String {
+        val a = org.json.JSONObject(kWriter.writeVerifyJson()); val b = org.json.JSONObject(kFactor.writeVerifyJson())
+        fun rank(o: org.json.JSONObject) = when (o.optString("phase")) { "failed" -> 3; "fixing" -> 2; "checking" -> 1; else -> 0 }
+        return (if (rank(a) >= rank(b)) a else b).toString()
+    }
     fun startBufferWriteProbe(): String = bufferProbe.start().toString()
     fun bufferWriteProbeStatusJson(): String = bufferProbe.statusJson()
     // Ferramentas > Avançado. Escrita só por toque do dono (prévia + confirmação); nada aqui dispara sozinho.

@@ -303,6 +303,11 @@
       if (this.demo) return { ok: false, simulationOnly: true, error: 'Reset real exige ECU conectada.' };
       return invoke(this.v7, 'startCurveReset', [], { ok: false, error: 'Reset da Curva K indisponível' });
     }
+    /** Conferência em segundo plano da última gravação K: {phase: idle|checking|fixing|ok|failed, detail, label, cells}. */
+    writeVerify() {
+      if (this.demo) return { phase: 'idle' };
+      return invoke(this.v7, 'getWriteVerify', [], { phase: 'idle' });
+    }
     curveOperation() {
       if (this.demo) return { ...this.demoCurveState, state: 'COMPLETED', busy: false };
       return invoke(this.v7, 'getLastOperation', [], { ok: false, state: 'UNAVAILABLE', busy: false });

@@ -58,6 +58,12 @@ class KFactorManager(
         .put("message", "Aguardando ação manual")
 
     fun isBusy(): Boolean = busy.get()
+    @Volatile private var verify = JSONObject().put("phase", KBatchVerifyCore.Phase.IDLE)
+    fun writeVerifyJson(): String = synchronized(statusLock) { verify.toString() }
+    private fun setVerify(phase: String, detail: String) = synchronized(statusLock) {
+        verify = JSONObject().put("phase", phase).put("detail", detail).put("kind", "curve")
+            .put("label", if (phase == KBatchVerifyCore.Phase.FAILED) "não confere" else if (phase == KBatchVerifyCore.Phase.FIXING) "corrigindo" else "conferindo")
+    }
 
     fun statusJson(): String = synchronized(statusLock) { JSONObject(status.toString()).toString() }
 
@@ -393,6 +399,7 @@ class KFactorManager(
         val confirmed = JSONArray()
         var initialHash = ""
         var historyPersisted = false
+        var acked = false
         try {
             val cache = loadCache()
             val cachedAxis = jsonIntArray(cache.optJSONArray("axisRaw"))
@@ -405,7 +412,7 @@ class KFactorManager(
                 throw IllegalStateException("Leia a curva K factor nesta conexão antes de aplicar")
             }
 
-            val working = serial.unit(
+            val expectedAfter = serial.unit(
                 reason = "escrita direta Curva K",
                 expectedSessionId = expectedSessionId,
                 workClass = Mp48WorkClass.MANUAL_WRITE,
@@ -466,15 +473,64 @@ class KFactorManager(
                     )
                 }
 
-                update("VERIFYING_FINAL", "Conferindo a curva lida de volta…", 90)
-                val finalReadback = readRawPoints(unit, KFactorProtocol.readFactors(), "confirmação final K factor")
-                // Vetor inteiro lido numa transação; só os pontos alterados precisam bater (a ECU pode mexer nos outros).
-                val changed = (0 until points.length()).map { points.getJSONObject(it).getInt("index") }
-                val bad = KBatchVerifyCore.firstMismatch(live, finalReadback, changed)
-                if (bad != null) {
-                    throw IllegalStateException("A confirmação final da curva divergiu no ponto $bad")
+                live
+            }
+
+            // Gravar é INSTANTÂNEO (dono, 2026-10-19): ACK de todos os pontos = "Gravado". A leitura de volta do vetor inteiro
+            // (1 transação) segue em segundo plano; divergiu = regrava só os pontos divergentes 1 vez e relê; falhou = aviso na barra.
+            acked = true
+            setVerify(KBatchVerifyCore.Phase.CHECKING, "")
+            update("BATCH_CONFIRMED", "Gravado", 100,
+                JSONObject().put("ok", true).put("calibrationType", "K_FACTOR").put("adjustmentId", adjustmentId)
+                    .put("points", points).put("acked", true).put("readbackValid", false))
+            synchronized(statusLock) { status.put("busy", false) }
+            busy.set(false)
+            onBusyChanged(false)
+
+            val changed = (0 until points.length()).map { points.getJSONObject(it).getInt("index") }
+            val targets = HashMap<Int, Int>()
+            repeat(points.length()) { i -> val pt = points.getJSONObject(i); targets[pt.getInt("index")] = pt.getInt("targetRaw") }
+            var retried = false
+            var working = IntArray(0)
+            while (true) {
+                var bad = emptyList<Int>()
+                working = serial.unit(
+                    reason = "conferência em segundo plano Curva K",
+                    expectedSessionId = expectedSessionId,
+                    workClass = Mp48WorkClass.MANUAL_WRITE,
+                    telemetryAfter = true,
+                    waitTimeoutMs = 3_000L,
+                ) { unit ->
+                    val readback = readRawPoints(unit, KFactorProtocol.readFactors(), "conferência K factor")
+                    // Só os pontos alterados precisam bater (a ECU pode mexer nos outros).
+                    bad = KBatchVerifyCore.divergent(expectedAfter, readback, changed)
+                    readback
                 }
-                finalReadback
+                val phase = KBatchVerifyCore.nextPhase(bad.size, retried)
+                if (phase == KBatchVerifyCore.Phase.OK) break
+                val detail = "ponto ${bad.first() + 1}"
+                if (phase == KBatchVerifyCore.Phase.FAILED) {
+                    setVerify(KBatchVerifyCore.Phase.FAILED, KBatchVerifyCore.mismatchDetail(detail, false))
+                    val stale = loadCache().put("sessionConfirmed", false)
+                    atomicWrite(cacheFile, stale.toString(2))
+                    log.add("ERROR", "K-FACTOR", "$adjustmentId conferência falhou em $detail")
+                    return
+                }
+                setVerify(KBatchVerifyCore.Phase.FIXING, KBatchVerifyCore.mismatchDetail(detail, true))
+                retried = true
+                val fixes = bad.toList()
+                serial.unit(
+                    reason = "correção autônoma Curva K",
+                    expectedSessionId = expectedSessionId,
+                    workClass = Mp48WorkClass.MANUAL_WRITE,
+                    telemetryAfter = true,
+                    waitTimeoutMs = 3_000L,
+                ) { unit ->
+                    fixes.forEach { index ->
+                        val target = targets[index] ?: return@forEach
+                        requireAck(unit.transaction(KFactorProtocol.writeFactor(index, target), "regravar K factor[$index]", 900, purgeBefore = false), "escrita do ponto $index")
+                    }
+                }
             }
 
             val finalHash = hash(working)
@@ -515,7 +571,7 @@ class KFactorManager(
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-FACTOR", "Curva confirmada; notificação falhou: ${error.message}")
             }
-            update("BATCH_CONFIRMED", "K factor confirmado por ACK e readback", 100, payload)
+            setVerify(KBatchVerifyCore.Phase.OK, "")
             log.add("INFO", "K-FACTOR", "$adjustmentId confirmado • ${points.length()} pontos")
         } catch (error: Exception) {
             if (!historyPersisted && confirmed.length() > 0) {
@@ -526,7 +582,7 @@ class KFactorManager(
             }
             val stale = loadCache().put("sessionConfirmed", false)
             atomicWrite(cacheFile, stale.toString(2))
-            update(
+            if (acked) setVerify(KBatchVerifyCore.Phase.FAILED, error.message ?: "Conferência não concluída") else update(
                 "BATCH_FAILED",
                 error.message ?: "Alteração K factor interrompida",
                 100,

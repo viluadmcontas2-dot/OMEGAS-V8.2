@@ -62,6 +62,13 @@ class KWriteManager(
         .put("message", "Aguardando ação manual")
 
     fun isBusy(): Boolean = busy.get()
+    @Volatile private var verify = JSONObject().put("phase", KBatchVerifyCore.Phase.IDLE)
+    fun writeVerifyJson(): String = synchronized(statusLock) { verify.toString() }
+    private fun setVerify(phase: String, detail: String, cell: String?) = synchronized(statusLock) {
+        verify = JSONObject().put("phase", phase).put("detail", detail).put("kind", "map")
+            .put("label", if (phase == KBatchVerifyCore.Phase.FAILED) "não confere" else if (phase == KBatchVerifyCore.Phase.FIXING) "corrigindo" else "conferindo")
+            .also { if (cell != null) it.put("cell", cell) }
+    }
     fun statusJson(): String = synchronized(statusLock) { JSONObject(status.toString()).toString() }
     fun historyJson(): String = loadHistory().toString()
 
@@ -332,6 +339,7 @@ class KWriteManager(
         var initialHash = ""
         var insertionEnabled = false
         var historyPersisted = false
+        var acked = false
         try {
             update("BATCH_PREPARING", "Preparando a gravação…", 3,
                 JSONObject().put("adjustmentId", adjustmentId).put("cells", cells))
@@ -428,34 +436,77 @@ class KWriteManager(
                 )
                 insertionEnabled = false
                 setInsertionSafetyLock(false, "Saída K insertion confirmada em $adjustmentId")
+            }
 
-                // Leitura de volta na MESMA vez na porta: uma transação por linha afetada (a linha inteira de uma vez,
-                // nunca célula a célula), comparando só as células alteradas.
-                val changedByRow = cells.let { list ->
-                    val map = linkedMapOf<Int, MutableList<Int>>()
-                    repeat(list.length()) { i ->
-                        val c = list.getJSONObject(i)
-                        map.getOrPut(c.getInt("row")) { mutableListOf() }.add(c.getInt("column"))
+            // Gravar é INSTANTÂNEO (dono, 2026-10-19): todos os ACKs chegaram e a saída do K insertion foi confirmada = "Gravado".
+            // A tela libera na hora; a leitura de volta (1 transação por linha, só as células alteradas) segue em segundo plano
+            // e só avisa na barra do topo se falhar, depois de 1 correção autônoma (regrava só as divergentes).
+            acked = true
+            setVerify(KBatchVerifyCore.Phase.CHECKING, "", null)
+            update("BATCH_CONFIRMED", "Gravado", 100,
+                JSONObject().put("ok", true).put("calibrationType", "MAP_K").put("adjustmentId", adjustmentId)
+                    .put("cells", cells).put("acked", true).put("readbackValid", false))
+            synchronized(statusLock) { status.put("busy", false) }
+            busy.set(false)
+            onBusyChanged(false)
+
+            val changedByRow = linkedMapOf<Int, MutableList<Int>>()
+            repeat(cells.length()) { i ->
+                val c = cells.getJSONObject(i)
+                changedByRow.getOrPut(c.getInt("row")) { mutableListOf() }.add(c.getInt("column"))
+            }
+            val expectedRows = JSONArray(workingRows.toString())
+            var retried = false
+            while (true) {
+                val bad = mutableListOf<Pair<Int, Int>>()
+                serial.unit(
+                    reason = "conferência em segundo plano Mapa K",
+                    expectedSessionId = expectedSessionId,
+                    workClass = Mp48WorkClass.MANUAL_WRITE,
+                    telemetryAfter = true,
+                    waitTimeoutMs = 3_000L,
+                ) { unit ->
+                    changedByRow.forEach { (row, columns) ->
+                        val verified = readRow(unit, row, "conferência K[$row]")
+                        val expectedLine = expectedRows.getJSONArray(row)
+                        val expectedValues = IntArray(COLUMN_COUNT) { expectedLine.getInt(it) }
+                        val actualValues = IntArray(COLUMN_COUNT) { verified[it].toInt() and 0xFF }
+                        KBatchVerifyCore.divergent(expectedValues, actualValues, columns).forEach { bad += row to it }
+                        workingRows.put(row, JSONArray(actualValues.toList())) // o cache fica com o que a ECU realmente tem
                     }
-                    map
                 }
-                changedByRow.entries.forEachIndexed { index, (row, columns) ->
-                    update("BATCH_VERIFYING_ROWS", KBatchVerifyCore.verifyingMessage(index + 1, changedByRow.size),
-                        82 + (index * 16 / changedByRow.size),
-                        JSONObject().put("adjustmentId", adjustmentId).put("row", row)
-                            .put("written", cells.length()).put("total", cells.length()))
-                    val verified = readRow(unit, row, "confirmação final K[$row]")
-                    val expectedLine = workingRows.getJSONArray(row)
-                    val expectedValues = IntArray(COLUMN_COUNT) { expectedLine.getInt(it) }
-                    val actualValues = IntArray(COLUMN_COUNT) { verified[it].toInt() and 0xFF }
-                    val bad = KBatchVerifyCore.firstMismatch(expectedValues, actualValues, columns)
-                    if (bad != null) {
-                        throw IllegalStateException(
-                            "Confirmação final divergente [$row,$bad]: esperado ${expectedValues[bad]}, ECU ${actualValues[bad]}",
-                        )
+                val phase = KBatchVerifyCore.nextPhase(bad.size, retried)
+                if (phase == KBatchVerifyCore.Phase.OK) break
+                val first = bad.first()
+                val label = KBatchVerifyCore.mapCellLabel(first.first, first.second)
+                if (phase == KBatchVerifyCore.Phase.FAILED) {
+                    setVerify(KBatchVerifyCore.Phase.FAILED, KBatchVerifyCore.mismatchDetail(label, false), label)
+                    val stale = loadCache().put("sessionConfirmed", false)
+                    atomicWrite(cacheFile, stale.toString(2))
+                    log.add("ERROR", "K-BATCH", "$adjustmentId conferência falhou em $label")
+                    return
+                }
+                setVerify(KBatchVerifyCore.Phase.FIXING, KBatchVerifyCore.mismatchDetail(label, true), label)
+                retried = true
+                val fixes = bad.toList()
+                val targetByCell = HashMap<String, Int>()
+                repeat(cells.length()) { i -> val c = cells.getJSONObject(i); targetByCell["${c.getInt("row")}:${c.getInt("column")}"] = c.getInt("target") }
+                serial.unit(
+                    reason = "correção autônoma Mapa K",
+                    expectedSessionId = expectedSessionId,
+                    workClass = Mp48WorkClass.MANUAL_WRITE,
+                    telemetryAfter = true,
+                    waitTimeoutMs = 3_000L,
+                ) { unit ->
+                    requireAck(unit.transaction(Mp48Protocol.kInsertionMode(true), "ativar K insertion (correção)", 800, purgeBefore = false), "ativação K insertion")
+                    try {
+                        fixes.forEach { (row, column) ->
+                            val target = targetByCell["$row:$column"] ?: return@forEach
+                            requireAck(unit.transaction(Mp48Protocol.writeKCell(row, column, target), "regravar MAP_K[$row,$column]=$target", 800, purgeBefore = false), "escrita K")
+                        }
+                    } finally {
+                        requireAck(unit.transaction(Mp48Protocol.kInsertionMode(false), "desativar K insertion (correção)", 800, purgeBefore = false), "saída K insertion")
                     }
-                    // A linha lida já está na mão: o cache fica com o que a ECU realmente tem (sem custo extra).
-                    workingRows.put(row, JSONArray(actualValues.toList()))
                 }
             }
 
@@ -507,7 +558,7 @@ class KWriteManager(
             try { onConfirmedBatch(payload) } catch (error: Exception) {
                 log.add("WARN", "K-BATCH", "Lote confirmado; notificação falhou: ${error.message}")
             }
-            update("BATCH_CONFIRMED", "Alterações confirmadas por ACK e readback", 100, payload)
+            setVerify(KBatchVerifyCore.Phase.OK, "", null)
             log.add("INFO", "K-BATCH", "$adjustmentId confirmado • ${cells.length()} células")
         } catch (error: Exception) {
             if (!historyPersisted && confirmed.length() > 0) {
@@ -546,7 +597,8 @@ class KWriteManager(
             }
             val stale = loadCache().put("sessionConfirmed", false)
             atomicWrite(cacheFile, stale.toString(2))
-            update("BATCH_PARTIAL_FAILED", error.message ?: "Lote interrompido", 100,
+            if (acked) setVerify(KBatchVerifyCore.Phase.FAILED, error.message ?: "Conferência não concluída", null)
+            else update("BATCH_PARTIAL_FAILED", error.message ?: "Lote interrompido", 100,
                 JSONObject().put("adjustmentId", adjustmentId)
                     .put("oldHash", initialHash)
                     .put("confirmedEvents", confirmed)

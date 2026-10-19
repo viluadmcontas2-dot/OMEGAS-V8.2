@@ -135,7 +135,7 @@
     const bench = {
       ecu, usb: false, session: 0, seq: 0, live: null, advRead: false, params: {}, scalars: {},
       hold: options.hold === true, held: null, antiPending: null, antiStatus: { state: 'IDLE' }, antiUndo: null, antiUndoSession: 0,
-      actionPrepared: null, actionStatus: {}, prepN: 0, mapOp: { ok: true, state: 'IDLE', busy: false }, curveOp: { ok: true, state: 'IDLE', busy: false },
+      verify: { phase: 'idle' }, actionPrepared: null, actionStatus: {}, prepN: 0, mapOp: { ok: true, state: 'IDLE', busy: false }, curveOp: { ok: true, state: 'IDLE', busy: false },
       mapRead: { ok: true, state: 'IDLE', busy: false }, opN: 0,
     };
     const send = frame => ecu.transact(frame);
@@ -317,9 +317,9 @@
         if (!decodeReply(frame, send(frame)).ok) return { ...op, ok: false, state: 'BATCH_PARTIAL_FAILED', error: 'A ECU não deu ACK', failure: { error: 'A ECU não deu ACK' } };
         op.confirmedCells += 1;
       }
-      const after = mapRows();
-      op.readbackValid = !!after && items.every(i => after[i.row][i.column] === i.target);
-      if (!op.readbackValid) { op.ok = false; op.state = 'BATCH_PARTIAL_FAILED'; op.error = 'A leitura de volta é diferente'; op.failure = { error: op.error }; }
+      // Gravar é instantâneo: ACK de todos os quadros = "Gravado". A leitura de volta roda em segundo plano (getWriteVerify).
+      op.acked = true;
+      bench.verify = { phase: 'checking', kind: 'map', retried: false, items: items.map(i => ({ row: i.row, column: i.column, target: i.target })) };
       return op;
     }
     function writeCurveBatch(points) {
@@ -332,10 +332,29 @@
         if (!decodeReply(frame, send(frame)).ok) return { ...op, ok: false, state: 'BATCH_PARTIAL_FAILED', error: 'A ECU não deu ACK' };
         op.confirmedCells += 1;
       }
-      const after = readCurve();
-      op.readbackValid = after.ok && points.every(p => after.points[p.index].factorRaw === p.targetRaw);
-      if (!op.readbackValid) { op.ok = false; op.state = 'BATCH_PARTIAL_FAILED'; op.error = 'A leitura de volta é diferente'; }
+      op.acked = true;
+      bench.verify = { phase: 'checking', kind: 'curve', retried: false, items: points.map(p => ({ index: p.index, target: p.targetRaw })) };
       return op;
+    }
+
+    // Leitura de volta em segundo plano (1 passo por chamada = por resposta, nunca por tempo): compara só o que mudou,
+    // regrava UMA vez só as divergentes e relê; se ainda diverge, falha com a célula.
+    function verifyStep() {
+      const v = bench.verify;
+      if (!v || (v.phase !== 'checking' && v.phase !== 'fixing')) return v || { phase: 'idle' };
+      const isMap = v.kind === 'map';
+      const rows = isMap ? mapRows() : null; const cur = isMap ? null : readCurve();
+      const readOk = isMap ? !!rows : cur.ok;
+      const bad = !readOk ? v.items : v.items.filter(i => (isMap ? rows[i.row][i.column] : cur.points[i.index].factorRaw) !== i.target);
+      if (!bad.length) { bench.verify = { phase: 'ok', kind: v.kind, corrected: v.retried }; return bench.verify; }
+      const name = i => (isMap ? `L${i.row + 1} C${i.column + 1}` : `ponto ${i.index + 1}`);
+      if (v.retried) { bench.verify = { phase: 'failed', kind: v.kind, cells: bad, detail: `Gravação diferente na célula ${name(bad[0])}`, label: 'não confere' }; return bench.verify; }
+      for (const i of bad) {
+        const frame = isMap ? pedido(0x14, 0x54, 0x00, i.row, i.column, i.target) : pedido(0x14, 0x61, 0x01, i.index, i.target & 255, i.target >> 8);
+        send(frame);
+      }
+      bench.verify = { ...v, phase: 'fixing', retried: true, items: bad, detail: `Gravação diferente na célula ${name(bad[0])} — corrigindo`, label: 'corrigindo' };
+      return bench.verify;
     }
 
     // ---- ações AutoCal (02 24 04 modo): preparar NUNCA envia; executar envia um quadro
@@ -385,6 +404,7 @@
         return json({ ok: true, started: true, startedAt: bench.mapOp.startedAt });
       },
       getLastOperation: () => json(bench.lastOp || bench.mapOp),
+      getWriteVerify: () => json(verifyStep()),
       startCurveRead: () => {
         const cur = readCurve(); bench.curveOp = cur; bench.lastOp = cur;
         return json({ ok: cur.ok, started: cur.ok, state: cur.state, error: cur.error });

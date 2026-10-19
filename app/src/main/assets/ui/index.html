@@ -38,6 +38,7 @@
         <div class="live-cell" data-live="map"><small>MAP</small><b>—</b><em>bar</em></div>
         <div class="live-cell" data-live="petrol"><small>Inj. gasolina</small><b>—</b><em>ms</em></div>
         <div class="live-cell" data-live="rpm"><small>Rotação</small><b>—</b></div>
+        <button type="button" id="liveVerify" class="live-verify" data-phase="idle" hidden aria-live="polite"><i aria-hidden="true"></i><span></span></button>
       </header>
 
       <main class="screen-host">
@@ -164,6 +165,7 @@
   <script src="core/curve-to-map.js" defer></script>
   <script src="core/balance-runner.js" defer></script>
   <script src="core/write-gate.js" defer></script>
+  <script src="core/write-verify.js" defer></script>
   <script src="screens/map.js" defer></script>
   <script src="core/curve-smoothing.js" defer></script>
   <script src="screens/curve.js" defer></script>

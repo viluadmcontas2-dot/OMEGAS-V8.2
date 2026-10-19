@@ -33,4 +33,23 @@ object KBatchVerifyCore {
     fun writingMessage(done: Int, total: Int): String = "Gravando $done de $total…"
 
     fun verifyingMessage(done: Int, total: Int): String = "Conferindo $done de $total linhas…"
+
+    /** Todas as colunas/pontos alterados que divergem (para a correção autônoma regravar só essas). */
+    fun divergent(expected: IntArray, actual: IntArray, changed: Collection<Int>): List<Int> =
+        changed.sorted().filter { it !in expected.indices || it !in actual.indices || expected[it] != actual[it] }
+
+    /** Aviso da barra do topo (dono, 2026-10-19): gravar é instantâneo; a conferência corre em segundo plano. */
+    fun mapCellLabel(row: Int, column: Int): String = "L${row + 1} C${column + 1}"
+    fun mismatchDetail(cellLabel: String, fixing: Boolean): String =
+        "Gravação diferente na célula $cellLabel" + if (fixing) " — corrigindo" else ""
+
+    /** Fases do estado de conferência em segundo plano (contrato com core/write-verify.js). */
+    object Phase { const val IDLE = "idle"; const val CHECKING = "checking"; const val FIXING = "fixing"; const val OK = "ok"; const val FAILED = "failed" }
+
+    /** Decisão pura de um passo: sem divergência = OK; divergiu e ainda não corrigiu = FIXING; divergiu de novo = FAILED. */
+    fun nextPhase(divergentCount: Int, alreadyRetried: Boolean): String = when {
+        divergentCount == 0 -> Phase.OK
+        !alreadyRetried -> Phase.FIXING
+        else -> Phase.FAILED
+    }
 }
