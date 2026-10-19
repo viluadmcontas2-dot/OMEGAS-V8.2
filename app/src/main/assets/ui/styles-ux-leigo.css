@@ -243,3 +243,10 @@
   }
   #toolsDrawer .tile-state { font-size: 20px; }
 }
+
+/* Um mesmo cartão tem resumo completo e resumo compacto, sem esconder controles e sem duplicar texto visível. */
+#toolsDrawer .tile-line .tile-compact { display: none; }
+@media (max-width: 900px) and (max-height: 520px) {
+  #toolsDrawer .tile-line .tile-full { display: none; }
+  #toolsDrawer .tile-line .tile-compact { display: inline; }
+}
