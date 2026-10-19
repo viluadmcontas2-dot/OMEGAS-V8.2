@@ -93,7 +93,7 @@ test('nota curta do botão cabe na linha e muda com o veredito', () => {
 });
 
 test('cockpit carrega o conselheiro e atualiza só a nota e o título do botão', () => {
-  const router = fs.readFileSync(path.join(UI, 'core/router.js'), 'utf8');
+  const router = fs.readFileSync(path.join(UI, 'index.html'), 'utf8');
   assert.match(router, /core\/manual-automatch-advice\.js/);
   const cockpit = fs.readFileSync(path.join(UI, 'screens/autocal-cockpit.js'), 'utf8');
   assert.match(cockpit, /ManualAutoMatchAdvice\.advise/);

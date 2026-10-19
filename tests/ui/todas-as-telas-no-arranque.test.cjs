@@ -49,7 +49,8 @@ test('ordem de dependência (a mesma dos antigos grupos por aba) e app.js por ú
   assert.ok(scripts.every(s => s === 'app.js' || pos(s) < pos('app.js')));
 });
 
-test('tela que não abre mostra cartão com retentativa por toque (nunca vazio)', () => {
-  assert.match(app, /Não foi possível abrir esta parte\. Toque para tentar de novo\./);
-  assert.match(app, /data-route-retry/);
+test('tela que não abre mostra estado claro e o app tenta de novo sozinho por evento (sem botão)', () => {
+  assert.match(app, /Não foi possível abrir esta parte\. Reconectando…/);
+  assert.match(app, /retryFailedRoutes\(\)/);
+  assert.doesNotMatch(app, /Tentar de novo|Toque para tentar|data-route-retry/);
 });

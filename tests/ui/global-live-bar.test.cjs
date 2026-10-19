@@ -85,5 +85,5 @@ test('o quadro rápido chega em todas as abas (a barra é persistente) e a assin
   const app = read('app.js');
   assert.match(app, /function isTelemetryRoute\(\) \{\s*return true;/);
   assert.match(app, /unknown_raw_19 \?\? live\.unknownRaw19/);
-  assert.match(read('core/router.js'), /components\/live-bar\.js/);
+  assert.match(read('index.html'), /components\/live-bar\.js/);
 });

@@ -34,12 +34,14 @@
     }
   }
 
+  const failedRoutes = new Set();
   function toolsUnavailable(error) {
     if (error) console.error('[OMEGAS] Ferramentas não abriram', error);
     const host = byId('toolAdvanced');
-    if (host && !host.querySelector('[data-card="anti"]') && !host.querySelector('[data-route-retry]')) {
-      host.innerHTML = '';
-      routeFailureCard('tools');
+    if (host && !host.querySelector('[data-card="anti"]')) {
+      // Estado claro, sem botão: o app tenta de novo sozinho no próximo dado válido (retryFailedRoutes).
+      host.innerHTML = '<article class="tool-tile" data-card="unavailable" data-route-failed="tools" role="status"><h3>Ferramentas indisponíveis</h3><p class="tile-line reason">O aplicativo não conseguiu abrir este painel. Reconectando…</p></article>';
+      failedRoutes.add('tools');
     }
   }
 
@@ -234,6 +236,7 @@
 
   /** Único pump de PresentSnapshot. Nenhum screen abre polling nativo próprio. */
   function refreshFast() {
+    retryFailedRoutes();
     const route = store.get().route;
     if (isTelemetryRoute(route)) {
       const envelope = api.presentSnapshot() || {};
@@ -358,15 +361,24 @@
    */
   function routeFailureCard(route, error) {
     if (error) console.error('[OMEGAS] Tela não abriu', route, error);
+    failedRoutes.add(route);
     const host = document.querySelector(ROUTE_HOST[route] || '#toolAdvanced');
-    if (!host || host.querySelector('[data-route-retry]')) return;
-    const card = document.createElement('button');
-    card.type = 'button';
+    if (!host || host.querySelector('[data-route-failed]')) return;
+    const card = document.createElement('article');
     card.className = 'tool-tile route-failure';
-    card.dataset.routeRetry = route;
-    card.innerHTML = '<h3 class="tile-line reason">Não foi possível abrir esta parte. Toque para tentar de novo.</h3>';
-    card.addEventListener('click', () => { card.remove(); activateRoute(route, store.get().routeContext); });
+    card.dataset.routeFailed = route;
+    card.setAttribute('role', 'status');
+    card.innerHTML = '<h3 class="tile-line reason">Não foi possível abrir esta parte. Reconectando…</h3>';
     host.prepend(card);
+  }
+  /** O app tenta de novo sozinho, por EVENTO (próximo dado válido que chega), sem botão e sem relógio. */
+  function retryFailedRoutes() {
+    if (!failedRoutes.size) return;
+    const route = store.get().route;
+    if (!failedRoutes.has(route)) return;
+    failedRoutes.delete(route);
+    document.querySelectorAll('[data-route-failed="' + route + '"]').forEach(n => n.remove());
+    activateRoute(route, store.get().routeContext);
   }
   function activateRoute(route, context) {
     try {

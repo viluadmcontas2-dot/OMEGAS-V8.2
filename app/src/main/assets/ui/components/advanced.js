@@ -290,7 +290,7 @@
       const values = this.V.valuesOf(this.param('ANTI_STALLO'));
       const why = this.reason('values');
       const undo = this.vals.view().undo;
-      const fields = this.V.FIELDS.map(f => `
+      const fieldHtml = f => `
         <div class="num-field" data-field="${f.index}" data-invalid="false" data-changed="false">
           <label for="advField${f.index}">${escapeHtml(f.label)}</label>
           <div class="num-box">
@@ -301,7 +301,10 @@
           <p class="num-help" id="advHelp${f.index}">${escapeHtml(f.help)}${f.unit === 'ms' ? ' <span class="num-seconds"></span>' : ''}</p>
           <p class="num-meta">${escapeHtml(this.V.range(f))} · Valor de fábrica: ${escapeHtml(this.V.num(f.factory))}</p>
           <p class="num-error" role="alert"></p>
-        </div>`).join('');
+        </div>`;
+      // O original só mostra UM número ("Rotação máxima para agir", 1600 rpm); os outros 4 ficam recolhidos (experimental).
+      const fields = this.V.FIELDS.filter(f => f.index === 0).map(fieldHtml).join('')
+        + `<details class="tool-tech extras-experimentais"><summary>Ajustes extras (experimental)</summary><div class="num-grid">${this.V.FIELDS.filter(f => f.index !== 0).map(fieldHtml).join('')}</div></details>`;
       return `
         <section class="tool-view values-view" data-card="valores">
           <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p>${escapeHtml(why || 'Toque num número, digite o novo valor e toque em Gravar.')}</p></header>

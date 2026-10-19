@@ -83,7 +83,7 @@ test('uma ação principal por fase do piloto, decidida no Kotlin', () => {
 
 test('Refino é um destino próprio logo abaixo do AutoCal e grava só com conferência e readback', () => {
   const index = read('app/src/main/assets/ui/index.html');
-  const router = read('app/src/main/assets/ui/core/router.js');
+  const router = index; // scripts agora no index.html (sem carregamento por aba)
   assert.ok(index.indexOf('data-route="autocal"') < index.indexOf('data-route="refino"'));
   assert.match(index, /data-screen="refino"/);
   assert.match(router, /screens\/refino\.js/);

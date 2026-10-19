@@ -64,7 +64,7 @@ test('cinco parâmetros anti-stallo aparecem como números com unidade, não com
     assert.equal(await inputs.count(), 5);
     for (let i = 0; i < 5; i++) {
       assert.equal(await inputs.nth(i).isDisabled(), false, 'campo numérico '+i+' precisa aceitar edição');
-      assert.match(await page.locator('[data-field="'+i+'"]').innerText(), /rpm|ms/i);
+      assert.match(await page.locator('[data-field="'+i+'"]').textContent(), /rpm|ms/i);
     }
     assert.equal(await page.locator('.values-view .tool-switch').count(), 0,
       'números não podem virar opções binárias');

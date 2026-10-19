@@ -24,7 +24,8 @@ const POR_ABA = {
   curve: ['screens/curve.js', 'core/curve-smoothing.js'],
   refino: ['screens/refino.js', 'core/gasoline-reference.js', 'core/stall-region.js', 'core/map-fix.js'],
 };
-const ORCAMENTO = { scriptsNoArranque: 20, bytesJsNoArranque: 340_000 }; // +7 módulos pequenos de Ferramentas na partida
+// Dono (2026-10-19): sem carregamento por aba; tudo entra no arranque, como a AutoCal. O orçamento vira teto da soma (contagem, não tempo).
+const ORCAMENTO = { scriptsNoArranque: 40, bytesJsNoArranque: 1_100_000 };
 
 async function abrir(viewport = { width: 1280, height: 720 }) {
   const context = await browser.newContext({ viewport });
@@ -64,14 +65,14 @@ async function esperarAba(page, rota) {
   }, rota, { timeout: 8000 });
 }
 
-test('arranque na AutoCal: só o que a primeira tela precisa (scripts e bytes de JS)', { skip }, async () => {
+test('arranque: todas as telas já carregadas (scripts e bytes de JS dentro do teto)', { skip }, async () => {
   const { context, page, erros } = await abrir();
   try {
     const srcs = await scriptsCarregados(page);
     const bytes = srcs.reduce((s, f) => s + fs.statSync(path.join(UI, f)).size, 0);
     for (const f of ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'core/anti-apagao-valores.js', 'core/idle-mode.js', 'core/cartoes-motor.js', 'components/drawers.js', 'components/advanced.js']) assert.ok(srcs.includes(f), `${f} precisa estar disponível no arranque para não deixar a aba vazia`);
     for (const [aba, arquivos] of Object.entries(POR_ABA)) {
-      for (const f of arquivos) assert.ok(!srcs.includes(f), `${f} (aba ${aba}) não pode carregar no arranque da AutoCal`);
+      for (const f of arquivos) assert.ok(srcs.includes(f), `${f} (aba ${aba}) precisa estar no arranque (sem carregamento por aba)`);
     }
     assert.ok(srcs.length <= ORCAMENTO.scriptsNoArranque, `scripts no arranque: ${srcs.length} > ${ORCAMENTO.scriptsNoArranque}`);
     assert.ok(bytes <= ORCAMENTO.bytesJsNoArranque, `bytes de JS no arranque: ${bytes} > ${ORCAMENTO.bytesJsNoArranque}`);
@@ -79,16 +80,16 @@ test('arranque na AutoCal: só o que a primeira tela precisa (scripts e bytes de
   } finally { await context.close(); }
 });
 
-test('abrir cada aba carrega a tela dela (evento) e ela funciona; trocar antes de terminar de carregar não quebra', { skip }, async () => {
+test('abrir cada aba mostra a tela dela (já carregada) e ela funciona; trocar rápido não quebra', { skip }, async () => {
   const { context, page, erros } = await abrir();
   try {
     for (const rota of ['map', 'curve', 'tools', 'refino']) {
       const antes = await scriptsCarregados(page);
-      for (const f of (POR_ABA[rota] || [])) assert.ok(!antes.includes(f), `${f} ainda não deveria estar carregado`);
+      for (const f of (POR_ABA[rota] || [])) assert.ok(antes.includes(f), `${f} já deveria estar carregado`);
       await irPara(page, rota);
       await esperarAba(page, rota);
       const depois = await scriptsCarregados(page);
-      for (const f of (POR_ABA[rota] || [])) assert.ok(depois.includes(f), `${f} deveria carregar ao abrir a aba ${rota}`);
+      for (const f of (POR_ABA[rota] || [])) assert.ok(depois.includes(f), `${f} segue carregado ao abrir a aba ${rota}`);
       assert.equal(await page.evaluate(() => window.OmegasApp.store.get().route), rota);
       if (rota === 'map' || rota === 'refino') assert.equal(await page.evaluate(() => typeof window.OmegasWriteGate?.check), 'function', 'porta de gravação ativa na aba ' + rota);
       assert.equal(await page.evaluate(() => document.querySelectorAll('.screen.active').length), 1, 'uma tela ativa só');
