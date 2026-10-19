@@ -47,19 +47,25 @@
         this.flag.otherTouch();
         this.vals.otherTouch();
       }, true);
-      this.flag.adopt();
-      this.vals.adopt();
+      // As leituras auxiliares são opcionais. Uma exceção da ponte Android não
+      // pode impedir a criação dos cartões nem duplicar listeners ao reabrir.
+      try { this.flag.adopt(); }
+      catch (error) { console.warn('[OMEGAS Ferramentas] Estado anterior do anti-apagão indisponível', error); }
+      try { this.vals.adopt(); }
+      catch (error) { console.warn('[OMEGAS Ferramentas] Estado anterior dos valores indisponível', error); }
     }
 
     /** Chamado pelo ciclo de dados (app.js). */
     refresh() {
       if (!this.host || !this.flag) return;
-      this.loadData();
       const state = this.store.get();
       const usb = state.status?.usbConnected === true ? true : state.status?.usbConnected === false ? false : undefined;
       this.flag.observe({ route: state.route, usbConnected: usb });
       this.vals.observe({ route: state.route, usbConnected: usb });
       if (state.route !== 'tools') { if (this.view !== 'home') { this.view = 'home'; this.signature = ''; this.setView(); } return; }
+      // Tal como as demais telas, só consulta seus dados enquanto está ativa.
+      // Observe/cancel do fluxo de escrita permanece operando mesmo ao sair da aba.
+      this.loadData();
       this.render();
     }
 
@@ -75,12 +81,15 @@
 
     usb() { return this.store.get().status?.usbConnected === true; }
     param(name) { return (this.data.params || {})[name]; }
-    hasBridge() { const b = root.OmegasAutoCal; return !!b && typeof b.prepareAntiStalloFlag === 'function' && typeof b.prepareAntiStalloValues === 'function'; }
+    hasBridge(kind = 'flag') {
+      const b = root.OmegasAutoCal;
+      return !!b && typeof b[kind === 'values' ? 'prepareAntiStalloValues' : 'prepareAntiStalloFlag'] === 'function';
+    }
 
     reason(kind) {
-      if (!this.hasBridge()) return WHY.nobridge;
+      if (!this.hasBridge(kind)) return WHY.nobridge;
       if (!this.usb()) return WHY.nousb;
-      if (kind === 'flag' && !this.A.wordsOf(this.param('FLAG_CONF3'))) return WHY.unread;
+      // O primeiro toque lê FLAG_CONF3 ao vivo. O snapshot geral NÃO é pré-requisito.
       if (kind === 'values' && !this.V.valuesOf(this.param('ANTI_STALLO'))) return WHY.unread;
       return '';
     }
@@ -94,8 +103,7 @@
       if (!t) return;
       if (t.matches('[data-adv-switch]')) {
         const entry = this.param('FLAG_CONF3');
-        const words = this.A.wordsOf(entry);
-        if (!words || this.reason('flag')) return;
+        if (this.reason('flag')) return;
         this.vals.cancel();
         this.flag.tapSwitch(entry, this.usb());
       } else if (t.matches('[data-adv-confirm]')) {
@@ -197,7 +205,12 @@
       const state = this.store.get();
       if (state.route !== 'tools') return;
       this.setView();
-      this.renderLayer();
+      try { this.renderLayer(); }
+      catch (error) {
+        console.error('[OMEGAS Ferramentas] Janela de confirmação indisponível', error);
+        if (this.layer) { this.layer.hidden = true; this.layer.innerHTML = ''; }
+        this.layerSignature = '';
+      }
       const active = document.activeElement;
       if (this.view === 'valores' && active && this.host.contains(active) && active.tagName === 'INPUT') { this.paintFields(); return; }
       const fv = this.flag.view();
@@ -206,22 +219,47 @@
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
       this.host.dataset.mode = this.view === 'home' ? 'home' : 'view';
-      const cards = this.M.build(this.data.params);
-      this.host.innerHTML = this.view === 'home' ? this.renderHome(cards) : this.view === 'valores' ? this.renderValues(cards) : this.renderReadOnly(cards.find(c => c.id === this.view));
-      if (this.view === 'valores') this.paintFields();
+      try {
+        let cards;
+        let usingUnknown = false;
+        try { cards = this.M.build(this.data.params); }
+        catch (error) {
+          console.warn('[OMEGAS Ferramentas] Leitura inválida, mostrando estado desconhecido', error);
+          cards = this.M.build({}); // Degrada apenas a leitura, nunca escreve nem presume desligado.
+          usingUnknown = true;
+        }
+        const next = this.view === 'home' ? this.renderHome(cards)
+          : this.view === 'valores' ? this.renderValues(cards)
+          : this.renderReadOnly(cards.find(c => c.id === this.view));
+        if (this.host.innerHTML !== next) this.host.innerHTML = next;
+        if (this.view === 'valores') this.paintFields();
+        if (usingUnknown) this.signature = ''; // Próximo quadro tenta recuperar sozinho, sem redesenho idêntico.
+      } catch (error) {
+        console.error('[OMEGAS Ferramentas] Cartões indisponíveis', error);
+        const fallback = this.errorCard('ferramentas');
+        if (this.host.innerHTML !== fallback) this.host.innerHTML = fallback;
+        this.signature = '';
+      }
+    }
+
+    errorCard(id) {
+      return `<article class="tool-tile" data-card="${escapeHtml(id)}"><h3>Leitura indisponível</h3><p class="tile-line reason">Esta parte não pôde ser exibida. As outras continuam disponíveis.</p></article>`;
     }
 
     renderHome(cards) {
       const busy = ['preparing', 'preview', 'writing'].includes(this.flag.view().phase);
       return cards.map(card => {
+        try {
         if (card.kind === 'switch') {
           const why = this.reason('flag');
+          const line = why || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : card.line);
+          const shortLine = why || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : (card.shortLine || card.line));
           const state = card.on === null ? 'unknown' : card.on ? 'on' : 'off';
           return `
         <article class="tool-tile" data-card="${card.id}" data-state="${state}">
           <h3>${escapeHtml(card.title)}</h3>
-          <p class="tile-line${why ? ' reason' : ''}">${escapeHtml(why || card.line)}</p>
-          <button type="button" class="tool-switch" role="switch" aria-checked="${card.on === true ? 'true' : 'false'}" aria-label="${escapeHtml(card.title)}: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
+          <p class="tile-line${why ? ' reason' : ''}"><span class="tile-full">${escapeHtml(line)}</span><span class="tile-compact">${escapeHtml(shortLine)}</span></p>
+          <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(card.title)}: ${card.on === null ? 'estado não lido. Toque para conferir e ligar' : escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
             <span class="sw-track" aria-hidden="true"><i></i></span><b>${escapeHtml(card.stateText)}</b>
           </button>
         </article>`;
@@ -230,10 +268,14 @@
         return `
         <button type="button" class="tool-tile tool-open" data-card="${card.id}" data-adv-open="${card.id}" data-state="${card.on === null ? (card.stateText === '—' ? 'unknown' : 'neutral') : card.on ? 'on' : 'off'}">
           <h3>${escapeHtml(card.title)}</h3>
-          <p class="tile-line">${escapeHtml(card.line)}</p>
+          <p class="tile-line"><span class="tile-full">${escapeHtml(card.line)}</span><span class="tile-compact">${escapeHtml(card.shortLine || card.line)}</span></p>
           <span class="tile-state">${escapeHtml(card.stateText)}</span>
           <span class="tile-go">${go}</span>
         </button>`;
+        } catch (error) {
+          console.error('[OMEGAS Ferramentas] Um cartão não abriu', error);
+          return this.errorCard(card?.id || 'parte');
+        }
       }).join('');
     }
 

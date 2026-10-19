@@ -9,11 +9,11 @@
   // Sem relógio: esperar a central = esperar a resposta (gancho de dados da ponte).
   const ADDRESS = 307;
   const FIELDS = [
-    { index: 0, label: 'Rotação máxima para agir', help: 'Só age abaixo disso.', unit: 'rotação', min: 0, max: 6000, factory: 1600 },
-    { index: 1, label: 'Queda de rotação para agir', help: 'Se a rotação cair mais que isso, age.', unit: 'rotação', min: 0, max: 1000, factory: 100 },
-    { index: 2, label: 'Tempo antes de voltar ao gás', help: 'Espera antes de voltar ao gás.', unit: 'ms', min: 0, max: 10000, factory: 1500 },
-    { index: 3, label: 'Folga para não ficar trocando', help: 'Evita trocar toda hora.', unit: 'rotação', min: 0, max: 1000, factory: 2 },
-    { index: 4, label: 'Queda para parar de agir', help: 'Abaixo disso, ele para de agir.', unit: 'rotação', min: 0, max: 1000, factory: 20 },
+    { index: 0, label: 'Rotação máxima para agir', help: 'O anti-apagão só pode agir abaixo desta rotação. rpm significa rotações por minuto.', unit: 'rpm', min: 0, max: 6000, factory: 1600 },
+    { index: 1, label: 'Queda de rotação para agir', help: 'Se o motor perder rotação rapidamente entre leituras, a proteção pode entrar.', unit: 'rpm', min: 0, max: 1000, factory: 100 },
+    { index: 2, label: 'Espera para sair do gás', help: 'Intervalo antes de a central sair do GNV. ms significa milésimos de segundo.', unit: 'ms', min: 0, max: 10000, factory: 1500 },
+    { index: 3, label: 'Folga para não ficar trocando', help: 'Evita ligar e desligar a proteção por pequenas oscilações.', unit: 'rpm', min: 0, max: 1000, factory: 2 },
+    { index: 4, label: 'Queda para parar de agir', help: 'Quando a queda diminui, a proteção pode parar de agir.', unit: 'rpm', min: 0, max: 1000, factory: 20 },
   ];
   const COUNT = FIELDS.length;
   const FACTORY = FIELDS.map(f => f.factory);

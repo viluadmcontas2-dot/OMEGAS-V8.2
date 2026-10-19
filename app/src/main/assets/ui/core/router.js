@@ -17,12 +17,16 @@
     }
     const entry = { done: false, waiters: typeof onload === 'function' ? [onload] : [] };
     scripts.set(src, entry);
-    const finish = () => { entry.done = true; entry.waiters.splice(0).forEach(fn => fn()); };
+    const finish = (ok) => {
+      entry.done = ok;
+      if (!ok) scripts.delete(src); // Falha não pode ficar guardada como sucesso.
+      entry.waiters.splice(0).forEach(fn => fn());
+    };
     const script = document.createElement('script');
     script.src = src;
     script.dataset.omegasExtension = src;
-    script.onload = finish;
-    script.onerror = () => { console.error('[OMEGAS router] extensão não carregada:', src); finish(); };
+    script.onload = () => finish(true);
+    script.onerror = () => { console.error('[OMEGAS router] extensão não carregada:', src); finish(false); };
     document.head.appendChild(script);
   }
 
@@ -45,7 +49,11 @@
   /** Promessa que resolve quando a tela da rota está carregada; `null` se não há nada a esperar (já carregada). */
   function loadRoute(route) {
     if (typeof document === 'undefined' || !ROUTE_SCRIPTS[route]) return null;
-    if (ns[ROUTE_READY[route]]) return null;
+    // Uma classe não basta: a tela depende de todos os módulos. O carregador tenta
+    // reparar uma dependência ausente antes de renderizar (WebView file://).
+    if (route === 'tools') {
+      if (ns.AdvancedPanel && ns.AdvancedFlags && ns.AntiApagaoValores && ns.IdleMode && ns.CartoesMotor && ns.Drawers) return null;
+    } else if (ns[ROUTE_READY[route]]) return null;
     const pending = ROUTE_SCRIPTS[route].filter(src => !(scripts.get(src) || {}).done);
     if (!pending.length) return null;
     return new Promise(resolve => {
@@ -82,6 +90,13 @@
   ns.Router = Router;
   ns.ROUTES = ROUTES;
   ns.loadRoute = loadRoute;
+  // Nova tentativa apenas por toque do operador: não cria repetição automática.
+  ns.retryRoute = function (route) {
+    if (!ROUTE_SCRIPTS[route]) return null;
+    ROUTE_SCRIPTS[route].forEach(src => scripts.delete(src));
+    if (route === 'tools') delete ns.AdvancedPanel; // Painel incompleto não pode impedir nova carga.
+    return loadRoute(route);
+  };
 
   // Extensões visuais usam o mesmo Store/Router/Scheduler do shell; não criam polling próprio.
   loadOptionalScript('components/live-bar.js');

@@ -152,7 +152,8 @@
   .side-nav button { height: 56px; min-height: 56px; }
   .screen { padding-top: 8px; padding-bottom: 8px; }
   #toolsDrawer .page-intro, #sessionsScreen .page-intro { display: none; }
-  #toolsDrawer .tool-tile .tile-line:not(.reason) { display: none; }
+  /* A explicação dos cartões continua visível em telas baixas. Detalhes permanecem acessíveis pelo toque. */
+  #toolsDrawer .tool-tile .tile-line:not(.reason) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .tool-tile h3 { font-size: 20px; }
   .tile-state { font-size: 22px; width: 100%; }
   .tile-go { display: none; }
@@ -229,3 +230,23 @@
 .app-shell.autocal-focus .autocal-chart-legend .ao-key svg { width: 20px; }
 @media (max-height: 520px) { .tool-switch { min-height: 56px; } #toolsDrawer .tile-line.reason { font-size: 16px; line-height: 1.1; } }
 @media (max-width: 900px) { .tool-actions button { padding: 0 12px; font-size: 19px; } .tool-actions { gap: 8px; } }
+
+
+/* Multimídia compacta 800x480: manter três linhas de explicação legíveis sem cobrir estado/controle. */
+@media (max-width: 900px) and (max-height: 520px) {
+  #toolsDrawer .tool-tile { padding: 6px 9px; gap: 2px; }
+  #toolsDrawer .tool-tile h3 { font-size: 18px; line-height: 1.08; }
+  #toolsDrawer .tool-tile .tile-line:not(.reason) {
+    font-size: 18px;
+    line-height: 1.12;
+    -webkit-line-clamp: 3;
+  }
+  #toolsDrawer .tile-state { font-size: 20px; }
+}
+
+/* Um mesmo cartão tem resumo completo e resumo compacto, sem esconder controles e sem duplicar texto visível. */
+#toolsDrawer .tile-line .tile-compact { display: none; }
+@media (max-width: 900px) and (max-height: 520px) {
+  #toolsDrawer .tile-line .tile-full { display: none; }
+  #toolsDrawer .tile-line .tile-compact { display: inline; }
+}

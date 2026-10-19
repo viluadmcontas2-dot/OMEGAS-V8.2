@@ -28,12 +28,12 @@ test('endereço 307, 5 campos, fábrica e faixa máxima do DFM', () => {
 });
 
 test('nomes leigos: nenhum jargão e a unidade é palavra simples', () => {
-  const proibido = /rpm|ciclo|flag|\bbit\b|palavra|0x|FLAG_CONF|ECU|SerialCode|histerese|delta/i;
+  const proibido = /ciclo|flag|\bbit\b|palavra|0x|FLAG_CONF|ECU|SerialCode|histerese|delta/i;
   for (const f of V.FIELDS) {
     for (const t of [f.label, f.help, f.unit]) assert.doesNotMatch(t, proibido, t);
-    assert.ok(['rotação', 'ms'].includes(f.unit), f.unit);
+    assert.ok(['rpm', 'ms'].includes(f.unit), f.unit);
   }
-  same(V.FIELDS.map(f => f.label), ['Rotação máxima para agir', 'Queda de rotação para agir', 'Tempo antes de voltar ao gás', 'Folga para não ficar trocando', 'Queda para parar de agir']);
+  same(V.FIELDS.map(f => f.label), ['Rotação máxima para agir', 'Queda de rotação para agir', 'Espera para sair do gás', 'Folga para não ficar trocando', 'Queda para parar de agir']);
 });
 
 test('quadro: SetVector estendido 37 33 0C 01 (e não 3B), igual à conta independente', () => {

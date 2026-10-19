@@ -6,7 +6,7 @@ Palavra única escolhida para o aparelho: **central** (nunca "ECU", nunca "módu
 
 | Padrão proibido (regex) | Vinha de | Palavra do app |
 |---|---|---|
-| `\brpm\b` | unidade de rotação | rotação |
+| `\brpm\s+por\s+ciclo\b` | jargão de implementação | rpm é unidade válida nos campos, com explicação em português |
 | `\bciclos?\b` | "rpm por ciclo" | (sem unidade: "rotação") |
 | `\bflags?\b` | FLAG_CONF | (nome humano do assunto) |
 | `FLAG_CONF` | nome do vetor de ajustes | — |
@@ -35,9 +35,9 @@ Palavra única escolhida para o aparelho: **central** (nunca "ECU", nunca "módu
 | Original (eng) | Posição | No app |
 |---|---|---|
 | Enable un-stalling strategy | caixa (bit 0x20 da palavra 0 de FLAG_CONF3) | Anti-apagão (interruptor) |
-| Max RPM to enable un-stalling | ANTI_STALLO[0] | Rotação máxima para agir |
+| Max RPM to enable un-stalling | ANTI_STALLO[0] | Rotação máxima para agir (rpm) |
 | Delta RPM to enable un-stalling | ANTI_STALLO[1] | Queda de rotação para agir |
-| Delay to exit gas mode | ANTI_STALLO[2] | Tempo antes de voltar ao gás (ms) |
+| Delay to exit gas mode | ANTI_STALLO[2] | Espera para sair do gás (ms) |
 | Hysteresys for enabling threshold | ANTI_STALLO[3] | Folga para não ficar trocando |
 | Delta RPM to disenable un-stalling | ANTI_STALLO[4] | Queda para parar de agir |
 | Sequential fuel changeover | FLAG_CONF1 palavra 1, 0x1000 | Um cilindro por vez (Troca de gasolina para gás) |

@@ -20,8 +20,36 @@
   let utilities = null;
   let advanced = null;
   function ensureTools() {
-    if (!utilities && ui.Drawers) utilities = new ui.Drawers(store, router, api);
-    if (!advanced && ui.AdvancedPanel) advanced = new ui.AdvancedPanel(store, api);
+    // Cada parte é independente: uma falha nas ferramentas auxiliares não pode esconder o anti-apagão.
+    if (!advanced && ui.AdvancedPanel) {
+      try {
+        const panel = new ui.AdvancedPanel(store, api);
+        if (panel.flag) advanced = panel;
+        else toolsUnavailable(new Error('Parte do painel não carregou'));
+      } catch (error) { toolsUnavailable(error); }
+    }
+    if (!utilities && ui.Drawers) {
+      try { utilities = new ui.Drawers(store, router, api); }
+      catch (error) { console.error('[OMEGAS] Falha ao abrir App e arquivos', error); }
+    }
+  }
+
+  let toolsRecoveryAttempted = false;
+  function toolsUnavailable(error) {
+    if (error) console.error('[OMEGAS] Ferramentas não abriram', error);
+    const host = byId('toolAdvanced');
+    if (host && !host.querySelector('[data-card="anti"]')) {
+      host.innerHTML = '<article class="tool-tile" data-card="unavailable"><h3>Ferramentas indisponíveis</h3><p class="tile-line reason">O aplicativo não conseguiu abrir este painel.</p></article>';
+    }
+    // Reparação automática apenas UMA vez por carregamento, sem botão e sem loop de scripts.
+    // Carregamento normal é estático no index.html; esta é apenas uma segunda chance em caso de asset incompleto.
+    if (!advanced && !toolsRecoveryAttempted && ui.retryRoute && store.get().route === 'tools') {
+      toolsRecoveryAttempted = true;
+      const pending = ui.retryRoute('tools');
+      if (pending) pending.then(() => {
+        if (store.get().route === 'tools') { ensureTools(); if (advanced) advanced.refresh(); }
+      }).catch(cause => console.error('[OMEGAS] Recuperação da tela indisponível', cause));
+    }
   }
 
   const routeMeta = {
@@ -279,7 +307,9 @@
     const needsScience = route === 'tools';
 
     if (needsScience) {
-      const science = api.scienceSnapshotSince(scienceRevision) || {};
+      let science = {};
+      try { science = api.scienceSnapshotSince(scienceRevision) || {}; }
+      catch (error) { console.error('[OMEGAS] Leitura auxiliar indisponível', error); }
       const nextRevision = Number(science.revision || scienceRevision || 0);
       // Ciência igual (changed:false) e mesmo estado de recálculo: nada a gravar no store, nenhum redesenho.
       const refreshing = science.refreshing === true;
@@ -298,22 +328,32 @@
     }
 
     if (route === 'tools' || route === 'sessions') {
-      patch.sessionStatus = api.sessionStatus() || {};
-      patch.logs = api.logs() || [];
+      try { patch.sessionStatus = api.sessionStatus() || {}; }
+      catch (error) { console.error('[OMEGAS] Situação das gravações indisponível', error); }
+      try { patch.logs = api.logs() || []; }
+      catch (error) { console.error('[OMEGAS] Registro indisponível', error); }
       // Listar as gravações lê o disco (manifesto e tamanho de cada uma): não a cada 2 s. Só ao entrar na aba, quando
       // a gravação começa/para, quando algo pede atualização (omegas-refresh).
       const sessionsKey = `${patch.sessionStatus.recording === true}:${patch.sessionStatus.sessionId ?? ''}`;
       if (!Array.isArray(state.sessions) || sessionsKey !== toolsSessionsKey || toolsSessionsStale) {
-        patch.sessions = api.sessions() || [];
+        try { patch.sessions = api.sessions() || []; }
+        catch (error) { console.error('[OMEGAS] Lista de gravações indisponível', error); }
         toolsSessionsKey = sessionsKey;
         toolsSessionsStale = false;
       }
     }
     if (Object.keys(patch).length) store.patch(patch);
     const updated = store.get();
-    if ((route === 'tools' || route === 'sessions') && !toolsEditing()) utilities?.render(updated);
-    if (route === 'tools') advanced?.refresh();
-    else if (advanced?.open) advanced.refresh(); // fora de Ferramentas: só desarma a prévia
+    if ((route === 'tools' || route === 'sessions') && !toolsEditing()) {
+      try { utilities?.render(updated); }
+      catch (error) { console.error('[OMEGAS] Ferramentas auxiliares indisponíveis', error); }
+    }
+    if (route === 'tools') {
+      try { if (advanced) advanced.refresh(); else toolsUnavailable(); }
+      catch (error) { toolsUnavailable(error); }
+    } else if (advanced?.open) {
+      try { advanced.refresh(); } catch (error) { console.error('[OMEGAS] Falha ao fechar Ferramentas', error); }
+    }
   }
 
   let toolsSessionsKey = '';
@@ -324,9 +364,16 @@
    * quadro do toque, como antes); se o operador já saiu da aba quando o script chegou, não ativa a tela errada.
    */
   function activateRoute(route, context) {
-    const pending = ui.loadRoute ? ui.loadRoute(route) : null;
+    let pending;
+    try { pending = ui.loadRoute ? ui.loadRoute(route) : null; }
+    catch (error) { if (route === 'tools') toolsUnavailable(error); return; }
     if (!pending) { enterRoute(route, context); return; }
-    pending.then(() => { if (store.get().route === route) enterRoute(route, context); });
+    if (route === 'tools') {
+      const host = byId('toolAdvanced');
+      if (host && !host.childElementCount) host.innerHTML = '<div class="tool-tile">Abrindo ferramentas…</div>';
+    }
+    pending.then(() => { if (store.get().route === route) enterRoute(route, context); })
+      .catch(error => { if (route === 'tools') toolsUnavailable(error); else console.error('[OMEGAS] Tela não abriu', error); });
   }
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */
@@ -360,9 +407,18 @@
       return;
     }
     if (route === 'tools' || route === 'sessions') {
+      // Estado USB nativo no próprio toque de entrada (AutoCal e Ferramentas não podem divergir).
+      // No WebView, onStatus pode ainda não ter rodado desde a conexão física.
+      refreshStatus();
       ensureTools();
       toolsSessionsStale = true; // entrar na aba relista as gravações
-      if (!toolsEditing()) utilities?.render(store.get());
+      // Anti-apagão aparece no próprio toque, sem depender de leituras auxiliares/arquivos.
+      if (route === 'tools') {
+        try { if (advanced) advanced.refresh(); else toolsUnavailable(); }
+        catch (error) { toolsUnavailable(error); }
+      }
+      try { if (!toolsEditing()) utilities?.render(store.get()); }
+      catch (error) { console.error('[OMEGAS] App e arquivos não abriu', error); if (route === 'tools' && !advanced) toolsUnavailable(error); }
       afterPaint(refreshContext);
     }
   }

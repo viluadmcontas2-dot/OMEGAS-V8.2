@@ -44,7 +44,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       assert.ok(alvo.height >= 56 && alvo.width >= 56, `interruptor ≥ 56 px: ${alvo.width}x${alvo.height}`);
       for (const tile of await page.locator('#toolAdvanced .tool-tile').all()) {
         const t = (await tile.innerText()).replace(/\s+/g, ' ');
-        assert.match(t, /Ligado|Desligado|De fábrica|Mudados|Só gás|Segurar com gasolina|Sempre gasolina/, 'cartão sem estado escrito: ' + t);
+        assert.match(t, /Ligado|Desligado|De fábrica|Mudados|Só gás|Segurar com gasolina|Sempre gasolina|injeções|—/, 'cartão sem estado escrito: ' + t);
       }
 
       // ---- anti-apagão: 1º toque só mostra; nada grava
@@ -96,7 +96,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       await foto('6-valor-fora-da-faixa');
       await U.digitar(app, 0, '1700');
       await T.tap(page, '[data-adv-save]'); await T.pump(page, 4);
-      assert.match(await U.text(page, '#toolsLayer'), /1\.600 → 1\.700 rotação/);
+      assert.match(await U.text(page, '#toolsLayer'), /1\.600 → 1\.700 rpm/);
       await foto('7-valores-confirmar');
       await U.clearLog(page);
       await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
