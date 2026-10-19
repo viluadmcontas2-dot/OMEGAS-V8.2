@@ -44,7 +44,7 @@
         tech: [`ANTI_STALLO · código ${V.ADDRESS} · 5 números de 16 bits: ${values ? values.join(' ') : 'não lido'}`] },
       { id: 'corte', kind: 'open', title: 'Saída do corte', viewTitle: 'Saída do corte (quando solta o acelerador)', line: 'Volta suave ao acelerar após soltar o pedal.', shortLine: 'Volta suave ao acelerar.',
         on: null, stateText: cutoffRaw === null ? DASH : `${num(cutoffRaw)} injeções`, stateFor: 'Gasolina ao retomar',
-        note: 'Ao soltar o acelerador, a central pode interromper a injeção. Esta opção trata a volta da aceleração.',
+        note: 'Ao desacelerar, a central pode cortar a injeção. Este cartão mostra o número previsto de injeções de gasolina na retomada; não liga uma função de sobreposição.',
         rows: [{ label: 'Gasolina ao sair do corte', text: cutoffRaw === null ? DASH : `${num(cutoffRaw)} injeções`, on: null }, row('Corte das injeções extras', bit('FLAG_CONF2', 0, 0x0001))],
         tech: [techBit('FLAG_CONF2', 0, 0x0001, 'Corte das injeções extras'), `NUMERO_INJ_BENZINA_CUTOFF · código 106 · ${cutoffInj ? cutoffInj.cells.join(' ') : DASH} (papel inferido pelo nome)`] },
       { id: 'lenta', kind: 'open', title: 'Marcha lenta', viewTitle: 'Marcha lenta', line: 'Motor ligado sem acelerar, na parada ou manobra.', shortLine: 'Motor ligado sem acelerar.', on: null, stateText: idleMode, stateFor: 'Modo',
