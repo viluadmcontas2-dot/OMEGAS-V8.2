@@ -62,19 +62,21 @@ def raw_para_fisico(raw, tamanho=1, sinal=False, coef=(1.0, 0.0, 0.0, 1.0), prec
 def fisico_para_raw(fis, tamanho=1, sinal=False, coef=(1.0, 0.0, 0.0, 1.0), vmin=0.0, vmax=0.0,
                     transformacao='ttFormula'):
     """Referência (Python) do caminho ttNone/ttFormula do RE:0x009752C8 (sem mesclagem de máscara)."""
-    if vmin != 0.0 and fis < vmin:
-        fis = vmin
-    if vmax != 0.0 and fis > vmax:
-        fis = vmax
+    # O par inteiro está ativo quando qualquer extremo difere de zero.
+    if vmin != 0.0 or vmax != 0.0:
+        if fis > vmax:
+            fis = vmax
+        elif fis < vmin:
+            fis = vmin
     if transformacao == 'ttNone':
-        x = fis
+        return int(fis)  # original chama trunc, sem deslocamento de meio ponto
     else:
         a, b, c, d = coef
         t = fis * c - a
         if t == 0:
             return int(ERRO_FORMULA)
         x = (b - fis * d) / t
-    x = x - 0.5 if x < 0 else x + 0.5
+    x = x - 0.5 if sinal and x < 0 else x + 0.5
     return int(x)  # trunc para zero
 
 

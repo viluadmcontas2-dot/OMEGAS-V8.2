@@ -44,6 +44,18 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      - name: Cache do Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-1.56.1
+      - name: Instalar navegador dos testes
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --prefix "${{ runner.temp }}/omegas-ui-test" playwright@1.56.1
+          "${{ runner.temp }}/omegas-ui-test/node_modules/.bin/playwright" install chromium
+
       - name: Run contracts, unit tests, lint and assemble
         shell: bash
         env:
@@ -51,11 +63,12 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          python3 -B tools/run_checks.py 2>&1 | tee "${{ runner.temp }}/w6-contracts.log"
-          ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
+          export NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules"
+          python3 -B tools/run_checks.py --full 2>&1 | tee "${{ runner.temp }}/apk-contracts.log"
+          ./gradlew lintDebug assembleDebug \
             -PomegasAbis=arm64-v8a \
             --no-daemon \
-            --stacktrace 2>&1 | tee "${{ runner.temp }}/w6-gradle.log"
+            --stacktrace 2>&1 | tee "${{ runner.temp }}/apk-gradle.log"
 
       - name: Verify and hash APK
         id: apk
@@ -114,7 +127,7 @@ jobs:
         with:
           name: apk-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            ${{ runner.temp }}/w6-*.log
+            ${{ runner.temp }}/apk-*.log
             app/build/reports/
             app/build/test-results/
             build/reports/

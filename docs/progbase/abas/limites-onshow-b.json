@@ -1,0 +1,1220 @@
+{
+  "evidence_id": "MAN-ABAS-B-ONSHOW-LIMITES",
+  "marca": "DERIVADO",
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4",
+  "limites": [
+    "Execução x86 emulada com objetos sintéticos e hooks VCL; não é execução Windows nem captura.",
+    "Um cenário: estado_dono, família padrão; retornos não comprovam todos os ramos.",
+    "APIS_NULAS preexistentes usam fallback genérico; nomes não asseguram semântica Windows."
+  ],
+  "abas": [
+    {
+      "aba": "TabKVarie",
+      "handler": "TabKVarieShow",
+      "endereco": "0x4b94c8",
+      "erro": null,
+      "instr": 1231,
+      "quadros": [],
+      "efeitos": [
+        [
+          "texto",
+          "EditGiriKFiltro",
+          ""
+        ],
+        [
+          "texto",
+          "EditGiriAltiKFiltro",
+          ""
+        ],
+        [
+          "texto",
+          "EditSogliaFS2",
+          ""
+        ],
+        [
+          "texto",
+          "EditFiltro",
+          ""
+        ],
+        [
+          "texto",
+          "EditKFiltro",
+          ""
+        ],
+        [
+          "texto",
+          "EditKFiltroGiriAlti",
+          ""
+        ]
+      ],
+      "stubs": {}
+    },
+    {
+      "aba": "TabAdvanced",
+      "handler": "TabAdvancedShow",
+      "endereco": "0x4c9bbc",
+      "erro": null,
+      "instr": 525,
+      "quadros": [],
+      "efeitos": [],
+      "stubs": {}
+    },
+    {
+      "aba": "TabCalibration",
+      "handler": "TabCalibrationShow",
+      "endereco": "0x4c7904",
+      "erro": null,
+      "instr": 4436,
+      "quadros": [
+        "09 ac 00 b5"
+      ],
+      "efeitos": [
+        [
+          "visible",
+          "ImageInjOffA",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffB",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffC",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffD",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffE",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffF",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffG",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffH",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffI",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOffL",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOnA",
+          1
+        ],
+        [
+          "visible",
+          "ImageInjOnB",
+          1
+        ],
+        [
+          "visible",
+          "ImageInjOnC",
+          1
+        ],
+        [
+          "visible",
+          "ImageInjOnD",
+          1
+        ],
+        [
+          "visible",
+          "ImageInjOnE",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOnF",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOnG",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOnH",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOnI",
+          0
+        ],
+        [
+          "visible",
+          "ImageInjOnL",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjA",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjB",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjC",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjD",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjE",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjF",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjG",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjH",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjI",
+          0
+        ],
+        [
+          "visible",
+          "ShapeInjL",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ],
+        [
+          "visible",
+          "0x0",
+          0
+        ]
+      ],
+      "stubs": {
+        "EnterCriticalSection": 1,
+        "GetCommTimeouts": 1,
+        "LeaveCriticalSection": 1,
+        "PurgeComm": 1,
+        "ReadFile": 7,
+        "SetCommTimeouts": 2,
+        "WriteFile": 1
+      }
+    },
+    {
+      "aba": "TabIniezione",
+      "handler": "TabIniezioneShow",
+      "endereco": "0x4ab8bc",
+      "erro": "API sem stub: GetClassInfoW",
+      "instr": 9617,
+      "quadros": [],
+      "efeitos": [
+        [
+          "visible",
+          "CheckIncrementoMaxCorrente",
+          1
+        ],
+        [
+          "visible",
+          "CheckRiscaldamento",
+          1
+        ],
+        [
+          "visible",
+          "LabelPreheatPGasTh",
+          0
+        ],
+        [
+          "visible",
+          "EditPreheatPGasTh",
+          0
+        ],
+        [
+          "texto",
+          "EditPreheatPGasTh",
+          ""
+        ],
+        [
+          "visible",
+          "LabelUnitPreheatPGasTh",
+          0
+        ],
+        [
+          "texto",
+          "EditAperturaInj",
+          ""
+        ],
+        [
+          "texto",
+          "EditChiusuraInj",
+          ""
+        ],
+        [
+          "texto",
+          "EditAperturaExtra",
+          ""
+        ],
+        [
+          "texto",
+          "EditTMaxExtraInjBenz",
+          ""
+        ],
+        [
+          "texto",
+          "EditTMaxInjBenz",
+          ""
+        ],
+        [
+          "texto",
+          "EditTInjSup22",
+          ""
+        ],
+        [
+          "visible",
+          "LabelGiriCutoff",
+          1
+        ],
+        [
+          "visible",
+          "EditGiriCutoff",
+          1
+        ],
+        [
+          "texto",
+          "EditGiriCutoff",
+          ""
+        ],
+        [
+          "visible",
+          "LabGiriCutoff",
+          1
+        ],
+        [
+          "visible",
+          "LabelTInjCutoff",
+          1
+        ],
+        [
+          "visible",
+          "EditTInjCutoff",
+          1
+        ],
+        [
+          "texto",
+          "EditTInjCutoff",
+          ""
+        ],
+        [
+          "visible",
+          "LabTInjCutoff",
+          1
+        ],
+        [
+          "visible",
+          "LabelPressioneCutoff",
+          1
+        ],
+        [
+          "visible",
+          "EditPressioneCutoff",
+          1
+        ],
+        [
+          "texto",
+          "EditPressioneCutoff",
+          ""
+        ],
+        [
+          "visible",
+          "LabPressioneCutoff",
+          1
+        ],
+        [
+          "visible",
+          "LabelTBenzMaxCutoff",
+          1
+        ],
+        [
+          "visible",
+          "EditTBenzMaxCutoff",
+          1
+        ],
+        [
+          "texto",
+          "EditTBenzMaxCutoff",
+          ""
+        ],
+        [
+          "visible",
+          "LabTBenzMaxCutoff",
+          1
+        ],
+        [
+          "texto",
+          "EditArricchimento",
+          ""
+        ],
+        [
+          "texto",
+          "EditSmagrimento",
+          ""
+        ],
+        [
+          "perform",
+          "CheckTagliaExtraIniettate",
+          "0xb00c"
+        ],
+        [
+          "cursor_carregado",
+          32512
+        ]
+      ],
+      "stubs": {
+        "GetClassInfoW": 1,
+        "LoadCursorW": 1,
+        "MultiByteToWideChar": 1
+      }
+    },
+    {
+      "aba": "TabInjSettings",
+      "handler": null,
+      "estado": "sem OnShow no DFM"
+    },
+    {
+      "aba": "TabInjSettingsSt",
+      "handler": null,
+      "estado": "sem OnShow no DFM"
+    },
+    {
+      "aba": "TabTaratura",
+      "handler": "TabTaraturaShow",
+      "endereco": "0x4a9cd0",
+      "erro": null,
+      "instr": 1515,
+      "quadros": [],
+      "efeitos": [
+        [
+          "texto",
+          "EditGiriAutotaratura",
+          ""
+        ],
+        [
+          "texto",
+          "EditTempTaratura",
+          ""
+        ],
+        [
+          "texto",
+          "EditScartoMinFuoriMin",
+          ""
+        ],
+        [
+          "texto",
+          "EditScartoMinAlMin",
+          ""
+        ],
+        [
+          "texto",
+          "EditDeltaK",
+          ""
+        ],
+        [
+          "texto",
+          "EditNumControlli",
+          ""
+        ],
+        [
+          "texto",
+          "EditNumControlliOk",
+          ""
+        ]
+      ],
+      "stubs": {}
+    },
+    {
+      "aba": "TabVariatore",
+      "handler": null,
+      "estado": "sem OnShow no DFM"
+    },
+    {
+      "aba": "TabBenzina",
+      "handler": "TabBenzinaShow",
+      "endereco": "0x4bf004",
+      "erro": null,
+      "instr": 5672,
+      "quadros": [],
+      "efeitos": [
+        [
+          "texto",
+          "EditGiriMinimoPerBenzina",
+          ""
+        ],
+        [
+          "texto",
+          "EditGiriPerBenzina",
+          ""
+        ],
+        [
+          "texto",
+          "EditGiriSupBenzina",
+          ""
+        ],
+        [
+          "perform",
+          "EditGiriSupBenzina",
+          "0xb00c"
+        ],
+        [
+          "texto",
+          "EditTempoBenzina1",
+          ""
+        ],
+        [
+          "texto",
+          "EditTempoBenzina3",
+          ""
+        ],
+        [
+          "perform",
+          "RadioGas",
+          "0xb028"
+        ],
+        [
+          "perform",
+          "RadioGas",
+          "0xb037"
+        ],
+        [
+          "perform",
+          "RadioBenzinaAltiGiri",
+          "0xb028"
+        ],
+        [
+          "perform",
+          "RadioBenzinaAltiGiri",
+          "0xb037"
+        ],
+        [
+          "perform",
+          "CheckIstantaneo",
+          "0xb037"
+        ],
+        [
+          "perform",
+          "CheckParzializza",
+          "0xb037"
+        ],
+        [
+          "visible",
+          "CheckSplitFuel",
+          0
+        ],
+        [
+          "perform",
+          "CheckSplitFuel",
+          "0xb00c"
+        ],
+        [
+          "visible",
+          "DrawGridSplitFuel",
+          0
+        ],
+        [
+          "visible",
+          "LabelRifSplitFuel",
+          0
+        ],
+        [
+          "visible",
+          "LabelCoeffSplitFuel",
+          0
+        ],
+        [
+          "visible",
+          "EditRpmForSplitFuel",
+          0
+        ],
+        [
+          "visible",
+          "LabelRpmForSplitFuel",
+          0
+        ],
+        [
+          "visible",
+          "LabRpmForSplitFuel",
+          0
+        ],
+        [
+          "texto",
+          "EditRpmForSplitFuel",
+          ""
+        ],
+        [
+          "visible",
+          "LabelIniettate",
+          0
+        ],
+        [
+          "visible",
+          "EditIniettate",
+          0
+        ],
+        [
+          "texto",
+          "EditIniettate",
+          ""
+        ],
+        [
+          "visible",
+          "LabelIniettateCutoff",
+          0
+        ],
+        [
+          "visible",
+          "EditIniettateCutoff",
+          0
+        ],
+        [
+          "texto",
+          "EditIniettateCutoff",
+          ""
+        ],
+        [
+          "visible",
+          "LabelUscita",
+          0
+        ],
+        [
+          "visible",
+          "EditUscita",
+          0
+        ],
+        [
+          "texto",
+          "EditUscita",
+          ""
+        ],
+        [
+          "visible",
+          "StrategiaPandaUI1",
+          0
+        ]
+      ],
+      "stubs": {}
+    },
+    {
+      "aba": "TabAdatta",
+      "handler": "TabAdattaShow",
+      "endereco": "0x4c0854",
+      "erro": "API sem stub: GetClassInfoW",
+      "instr": 3262,
+      "quadros": [],
+      "efeitos": [
+        [
+          "perform",
+          "CheckAzzeraErroriObd",
+          "0xb00c"
+        ],
+        [
+          "perform",
+          "CheckPetrolObdConnection",
+          "0xb00c"
+        ],
+        [
+          "perform",
+          "CheckUsaCanPerObd",
+          "0xb00c"
+        ],
+        [
+          "perform",
+          "CheckUsaCanPerObd",
+          "0xb037"
+        ],
+        [
+          "perform",
+          "CheckOutDiagInfoSuKLine",
+          "0xb00c"
+        ],
+        [
+          "perform",
+          "CheckDeleteErrorMotoreSpento",
+          "0xb00c"
+        ],
+        [
+          "perform",
+          "RadioAdattaDiritti",
+          "0xb028"
+        ],
+        [
+          "perform",
+          "RadioAdattaDiritti",
+          "0xb037"
+        ],
+        [
+          "perform",
+          "RadioAdatta25",
+          "0xb028"
+        ],
+        [
+          "perform",
+          "RadioAdatta25",
+          "0xb037"
+        ],
+        [
+          "texto",
+          "EditSensAdatta",
+          ""
+        ],
+        [
+          "texto",
+          "EditKi",
+          ""
+        ],
+        [
+          "texto",
+          "EditKp",
+          ""
+        ],
+        [
+          "cursor_carregado",
+          32512
+        ]
+      ],
+      "stubs": {
+        "GetClassInfoW": 1,
+        "LoadCursorW": 1,
+        "MultiByteToWideChar": 1
+      }
+    },
+    {
+      "aba": "TabConsumometro",
+      "handler": "TabConsumometroShow",
+      "endereco": "0x4c1044",
+      "erro": "API sem stub: GetClassInfoW",
+      "instr": 1539,
+      "quadros": [],
+      "efeitos": [
+        [
+          "cursor_carregado",
+          32512
+        ]
+      ],
+      "stubs": {
+        "GetClassInfoW": 1,
+        "LoadCursorW": 1,
+        "MultiByteToWideChar": 1
+      }
+    },
+    {
+      "aba": "TabFrest",
+      "handler": "TabFrestShow",
+      "endereco": "0x4c6324",
+      "erro": null,
+      "instr": 480,
+      "quadros": [],
+      "efeitos": [],
+      "stubs": {}
+    },
+    {
+      "aba": "TabSwitchToPetrol",
+      "handler": "TabSwitchToPetrolShow",
+      "endereco": "0x4c65a4",
+      "erro": null,
+      "instr": 477,
+      "quadros": [],
+      "efeitos": [],
+      "stubs": {}
+    },
+    {
+      "aba": "TabDhlpAgaslev",
+      "handler": "TabDhlpAgaslevShow",
+      "endereco": "0x4c8ec4",
+      "erro": null,
+      "instr": 468,
+      "quadros": [],
+      "efeitos": [],
+      "stubs": {}
+    },
+    {
+      "aba": "TabTest",
+      "handler": "TabTestShow",
+      "endereco": "0x4ba440",
+      "erro": null,
+      "instr": 906,
+      "quadros": [],
+      "efeitos": [
+        [
+          "texto",
+          "EditTestWord",
+          ""
+        ],
+        [
+          "texto",
+          "EditTestByte",
+          ""
+        ],
+        [
+          "texto",
+          "EditTestTempo",
+          ""
+        ]
+      ],
+      "stubs": {}
+    },
+    {
+      "aba": "TabAutoCalNew",
+      "handler": "TabAutoCalNewShow",
+      "endereco": "0x4cb1c4",
+      "erro": "limite de instruções",
+      "instr": 500001,
+      "quadros": [],
+      "efeitos": [],
+      "stubs": {}
+    },
+    {
+      "aba": "TabEsci",
+      "handler": "TabEsciShow",
+      "endereco": "0x4ae418",
+      "erro": null,
+      "instr": 641,
+      "quadros": [],
+      "efeitos": [
+        [
+          "visible",
+          "0x2033580",
+          0
+        ]
+      ],
+      "stubs": {}
+    }
+  ]
+}

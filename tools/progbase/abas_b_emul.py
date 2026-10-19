@@ -362,6 +362,28 @@ class MaquinaAbas(C._Maquina):
                        'GetSystemDefaultLCID': lambda mm: 0x416, 'GetCurrentThreadId': lambda mm: 1,
                        'IsDBCSLeadByte': lambda mm: 0}
 
+        # OBS-CPU: 0x7F2EF7 pede LoadCursorW(NULL, 32512). Modelo apenas
+        # desse recurso compartilhado; não representa uma janela renderizada.
+        self.cursor_atual = 0
+        self.stdcall.update({'LoadCursorW': 2, 'SetCursor': 1})
+
+        def load_cursor(mm):
+            instance, recurso = arg(mm, 0), arg(mm, 1)
+            if instance != 0 or recurso != 32512:
+                raise C.ErroEmulacao('LoadCursorW recurso não modelado: %x/%x' % (instance, recurso))
+            mm.efeitos.append(('cursor_carregado', recurso))
+            return 0x71007F00  # handle opaco, estável, nunca desreferenciado
+
+        def set_cursor(mm):
+            cursor = arg(mm, 0)
+            if cursor not in (0, 0x71007F00):
+                raise C.ErroEmulacao('SetCursor handle não modelado: %x' % cursor)
+            anterior, mm.cursor_atual = mm.cursor_atual, cursor
+            mm.efeitos.append(('cursor_selecionado', cursor))
+            return anterior
+
+        self.api_py.update({'LoadCursorW': load_cursor, 'SetCursor': set_cursor})
+
     # ------------------------------------------------------------------ montagem
     def montar_sd(self, dfm_sd):
         """TStreamDati com todos os componentes do DFM."""
@@ -572,6 +594,7 @@ class Sessao:
         m.ecu = EcuDono(self.tab_ecu, self.forma)
         m.escritas = []
         m.caixas = []
+        m.cursor_atual = 0
         m.efeitos = []
         m.erro = None
         m.instr = 0

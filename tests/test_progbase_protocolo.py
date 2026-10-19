@@ -54,7 +54,20 @@ class ProtocoloTest(unittest.TestCase):
         self.assertEqual(x87.raw_para_fisico(0, coef=(1, 0, 0, 0)), x87.ERRO_FORMULA)
         self.assertEqual(x87.fisico_para_raw(3, tamanho=2, coef=(1, 0, 0, 512)), 1536)
         self.assertEqual(x87.fisico_para_raw(12, vmin=1, vmax=10), 10)
-        self.assertEqual(x87.fisico_para_raw(-2.5), -3)
+        self.assertEqual(x87.fisico_para_raw(-2.5, sinal=True), -3)
+
+    def test_conversao_original_trunca_none_e_limita_par_com_zero(self):
+        # OBS-COD: 0x009752C8 executada no Unicorn, sem Single/mesclagem.
+        cases = [(-2.5, dict(transformacao='ttNone'), -2),
+                 (2.5, dict(transformacao='ttNone'), 2),
+                 (-3., dict(sinal=False), -2),
+                 (-3., dict(sinal=True), -3),
+                 (-20., dict(vmin=0., vmax=10.), 0),
+                 (20., dict(vmin=-10., vmax=0.), 0),
+                 (0., dict(vmin=10., vmax=1.), 10)]
+        for value, params, expected in cases:
+            with self.subTest(value=value, params=params):
+                self.assertEqual(x87.fisico_para_raw(value, **params), expected)
 
     def test_orquestrador_valida_antes_de_escrever(self):
         import protocolo_gerar as gerar

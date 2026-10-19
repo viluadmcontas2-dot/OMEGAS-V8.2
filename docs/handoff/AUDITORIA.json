@@ -1,0 +1,53 @@
+{
+  "actions": {
+    "alerta_70_porcento": null,
+    "estado": "DESCONHECIDO",
+    "minutos": null,
+    "orcamento_mensal": 10000
+  },
+  "cobertura_estatica": {
+    "alvos_decompilacao": 2850,
+    "bytes_app": 934950,
+    "bytes_com_unidade": 2637386,
+    "bytes_em_funcoes_ghidra": 4172893,
+    "bytes_funcoes_nomeadas": 1341264,
+    "bytes_nomeados_por_rtti": 1175139,
+    "bytes_text_sem_funcao": 2446243,
+    "funcoes": 29927,
+    "funcoes_gigantes_fora_do_alvo": [
+      "0x00439E94"
+    ],
+    "marca": "OBS-COD (contagens) ; INFERIDO (unidade por intervalo)",
+    "n_funcoes_app": 2329,
+    "n_nomeadas": 9818,
+    "n_publicados": 565,
+    "n_sem_nome": 20109,
+    "pct_text_com_unidade": 39.84,
+    "pct_text_em_funcoes": 63.04,
+    "pct_text_nomeado": 20.26,
+    "text_bytes_virtuais": 6619136
+  },
+  "erros": [],
+  "evidencias": {
+    "rea_ausentes": [],
+    "rea_citadas": 0,
+    "rea_existentes": 2
+  },
+  "grafo": {
+    "arestas_invalidas": 0,
+    "arquivos": 102,
+    "arquivos_ausentes": [],
+    "nos": 11879
+  },
+  "integridade_ok": true,
+  "limite": "Integridade referencial; não comprova reconstrução funcional ou execução no carro. Bundle validado separadamente pelo REA.",
+  "pendencias": {
+    "abertas": 10,
+    "feitas": 1
+  },
+  "source_sha": "f4383e4be68cc26e7295bcd31a760e240ed3110b",
+  "testes": {
+    "estado": "DESCONHECIDO",
+    "motivo": "Este comando não executa testes nem presume resultados de outros jobs."
+  }
+}

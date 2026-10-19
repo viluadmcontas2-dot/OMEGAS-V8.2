@@ -31,12 +31,12 @@ jobs:
           set -euo pipefail
           npm install --no-save --prefix "${{ runner.temp }}/omegas-ui-test" playwright@1.56.1
           "${{ runner.temp }}/omegas-ui-test/node_modules/.bin/playwright" install chromium
-      - name: Testar fluxo real de Ferramentas com toque e ECU simulada
+      - name: Testar JavaScript e navegador
         shell: bash
         run: |
           set -euo pipefail
           export NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules"
-          python3 - <<'CHECKS'
+          python3 - <<'CHECKS' 2>&1 | tee "${{ runner.temp }}/ci-javascript.log"
           from pathlib import Path
           import subprocess
           tests = sorted(Path("tests/ui").glob("*.test.cjs"))
@@ -59,7 +59,7 @@ jobs:
         with:
           name: ci-ui-failure-${{ github.run_id }}
           path: |
-            ${{ runner.temp }}/w6-ferramentas.log
+            ${{ runner.temp }}/ci-javascript.log
             docs/evidence/img/
           if-no-files-found: warn
           retention-days: 14
@@ -74,7 +74,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'CHECKS'
+          python3 - <<'CHECKS' 2>&1 | tee "${{ runner.temp }}/ci-python.log"
           from pathlib import Path
           import subprocess, sys
           tests = sorted(Path("tests").glob("test_*.py"))
@@ -87,7 +87,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-contracts-failure-${{ github.run_id }}
-          path: ${{ runner.temp }}/w6-contracts.log
+          path: ${{ runner.temp }}/ci-python.log
           if-no-files-found: warn
           retention-days: 14
 
@@ -107,7 +107,7 @@ jobs:
       - run: chmod +x gradlew
       - name: JVM unit tests
         shell: bash
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDebugUnitTest 2>&1 | tee "${{ runner.temp }}/ci-kotlin.log"
       - name: Contratos que exigem resultados JVM
         shell: bash
         run: |
@@ -124,8 +124,7 @@ jobs:
         with:
           name: ci-android-failure-${{ github.run_id }}
           path: |
-            ${{ runner.temp }}/w6-unit-tests.log
-            ${{ runner.temp }}/w6-lint.log
+            ${{ runner.temp }}/ci-kotlin.log
             app/build/reports/
             app/build/test-results/
             build/reports/
@@ -167,15 +166,19 @@ jobs:
           graphify update . 2>&1 | tail -5
       - name: Ligar documentos, evidências e código (determinístico)
         run: python3 -B tools/grafo_conhecimento.py
+      - name: Integridade das evidências e do grafo
+        run: python3 -B tools/auditoria.py --check
       - name: Mapa de fontes em dia
         run: python3 -B tools/mapa_de_fontes.py --check
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: omegas-grafo
           path: |
             graphify-out/graph.json
             graphify-out/GRAPH_REPORT.md
             docs/mapa-de-fontes/
+            docs/handoff/AUDITORIA.json
           retention-days: 30
 
   build_and_test:
