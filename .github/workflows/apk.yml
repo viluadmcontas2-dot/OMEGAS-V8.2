@@ -97,10 +97,10 @@ jobs:
             test "$BUILD_COMMIT" = "${PRODUCT_SHA:0:12}"
           fi
 
-      - name: Publish APK + evidence
+      - name: Guardar APK candidato (só vira oficial se lint e a suíte do mesmo commit passarem)
         uses: actions/upload-artifact@v4
         with:
-          name: omegas-apk-${{ env.PRODUCT_SHA }}
+          name: omegas-apk-candidato-${{ env.PRODUCT_SHA }}
           path: |
             build/apk/OMEGAS-*.apk
             build/evidence/omegas-apk-evidence.txt
@@ -163,3 +163,23 @@ jobs:
             sleep 30
           done
           echo "A suíte completa não terminou a tempo"; exit 1
+
+  # Só aqui o APK vira oficial: exige build + lint + suíte completa do MESMO commit, todos verdes.
+  liberar-apk:
+    needs: [verify-build-publish, lint, ci-do-mesmo-commit]
+    if: ${{ inputs.build_apk == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: omegas-apk-candidato-${{ env.PRODUCT_SHA }}
+          path: liberado
+      - name: Publicar APK oficial + evidência (testes verdes)
+        uses: actions/upload-artifact@v4
+        with:
+          name: omegas-apk-${{ env.PRODUCT_SHA }}
+          path: liberado/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
