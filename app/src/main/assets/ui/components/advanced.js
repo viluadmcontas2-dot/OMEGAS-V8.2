@@ -330,13 +330,13 @@
         </div>`;
       // O original só mostra UM número ("Rotação máxima para agir", 1600 rpm); os outros 4 ficam recolhidos (experimental).
       const fields = this.V.FIELDS.filter(f => f.index === 0).map(fieldHtml).join('')
-        + `<details class="tool-tech extras-experimentais"><summary>Ajustes extras (experimental)</summary><div class="num-grid">${this.V.FIELDS.filter(f => f.index !== 0).map(fieldHtml).join('')}</div></details>`;
+        + `<details class="mais-info extras-experimentais"><summary>Ajustes extras (experimental)</summary><div class="num-grid">${this.V.FIELDS.filter(f => f.index !== 0).map(fieldHtml).join('')}</div></details>`;
       return `
         <section class="tool-view values-view" data-card="valores">
           <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p>${escapeHtml(why || 'Use − e + (ou toque no número e digite). Depois toque em Gravar valores: grava na hora e dá para Desfazer.')}</p></header>
           <section class="como-funciona" aria-label="Como funciona">
             <p><b>Como funciona:</b> quando a rotação do motor <b>cai de repente</b> e está <b>abaixo de ${escapeHtml(this.V.num(values ? values[0] : 1600))} rpm</b> (ex.: você pisa na embreagem parando, engatando ré ou reduzindo), o anti-apagão entra e ajuda o motor a não apagar. Em aceleração normal ele não faz nada.</p>
-            <details class="tool-tech"><summary>Ver o caminho completo e o que NÃO é</summary>
+            <details class="mais-info"><summary>Ver o caminho completo e o que NÃO é</summary>
               <ol>
                 <li>Rotação cai mais rápido que <b>Queda para agir</b> <em>e</em> está abaixo da <b>Rotação máxima</b> → a proteção <b>entra</b>.</li>
                 <li>A central sai do gás conforme a <b>Espera</b> (ms) e ajuda o motor a segurar.</li>
