@@ -58,7 +58,7 @@ assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOCAL\""), false,
 assert.equal(cockpit.includes("class=\"autocal-finish-action\""), false);
 assert.equal(cockpit.includes("data-autocal-action=\"FINISH_AUTOMATCH\""), false);
 assert.equal(cockpitCss.includes('.autocal-finish-action'), false);
-assert.equal(cockpit.includes('A ECU faz os ajustes automáticos sozinha.'), true); // (dono, 2026-10-11: texto para leigo)
+assert.equal(cockpit.includes('AutoCal ativo · Ajustes automáticos '), true); // Contrato de cópia vigente: ajuste automático continua explícito
 assert.equal(cockpit.includes('Nada aqui roda automaticamente.'), false);
 assert.equal(cockpit.includes('autoMatchQuotaReached'), true);
 assert.equal(cockpit.includes('AutoMatch automático '), true);
