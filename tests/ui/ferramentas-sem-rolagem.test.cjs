@@ -28,7 +28,9 @@ function load(file) {
 }
 
 test('Ferramentas e Sessões não rolam (overflow escondido, nunca auto/scroll)', () => {
-  assert.doesNotMatch(css, /overflow(?:-[xy])?\s*:\s*(?:auto|scroll)/, 'o CSS novo não pode criar rolagem');
+  // Única exceção documentada: a tela de Valores do anti-apagão com os "Ajustes extras (experimental)" abertos (não cabe sem rolar).
+  const semExcecao = css.replace(/\.values-view\s*\{\s*overflow-y:\s*auto;\s*\}/, '');
+  assert.doesNotMatch(semExcecao, /overflow(?:-[xy])?\s*:\s*(?:auto|scroll)/, 'o CSS novo não pode criar rolagem');
   assert.match(rules('#toolsDrawer.screen.active'), /overflow:\s*hidden/);
   assert.match(rules('.sessions-screen.active'), /overflow:\s*hidden/);
   assert.match(rules('.log-lines'), /overflow:\s*hidden/);

@@ -292,3 +292,10 @@
 .mais-info ol, .mais-info p { font-size: 14px; line-height: 1.4; }
 .num-field .num-meta, .num-field .num-tips, .num-field .num-warn { font-size: 16px; }
 .como-funciona, .como-funciona p, .mais-info ol, .mais-info p { font-size: 15px; }
+
+/* Telas pequenas (800x480): o cartão do anti-apagão mostra só o estado, numa linha; a ação continua no aria-label. */
+@media (max-width: 860px) {
+  .tool-switch .sw-caption small { display: none; }
+  .tool-switch .sw-caption b { white-space: nowrap; font-size: 18px; }
+  .tool-switch { gap: 8px; padding: 0 10px; }
+}

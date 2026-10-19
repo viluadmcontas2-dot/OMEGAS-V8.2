@@ -51,7 +51,7 @@ test('não existe modo oficina, checkbox nem segunda confirmação no fluxo ativ
   assert.doesNotMatch(active, /workshopModeButton|workshopRequested|confirmWriteCheckbox|mapWriteButton|mapReviewBack/);
   // (dono, 2026-10-11: texto para leigo): um toque em Gravar; a conferência na ECU (ACK + readback) é automática e só ela dá "confirmadas".
   assert.match(HTML, /Nada foi gravado\.<\/b><span>Confira os números e toque em Gravar; o app confere na ECU sozinho\./);
-  assert.match(MAP_SCREEN, /operation\.state === 'BATCH_CONFIRMED' && operation\.readbackValid === true/);
+  assert.match(MAP_SCREEN, /operation\.state === 'BATCH_CONFIRMED' && \(operation\.readbackValid === true \|\| operation\.acked === true\)/);
   assert.match(MAP_SCREEN, /Gravar \$\{changes\} \$\{changes === 1 \? .alteração. : .alterações.\} na ECU/); // plural certo: "alterações"
 });
 
@@ -71,8 +71,8 @@ test('não existe modal intermediário de revisão que exija um segundo clique',
   assert.doesNotMatch(HTML, /id="mapWriteButton"|id="mapReviewBack"|class="operation-layer review-layer"/);
 });
 
-test('resultado só é sucesso com BATCH_CONFIRMED e readbackValid', () => {
-  assert.match(MAP_SCREEN, /operation\.state === 'BATCH_CONFIRMED' && operation\.readbackValid === true/);
+test('resultado só é sucesso com BATCH_CONFIRMED e (readbackValid ou ACK: Gravado na hora, conferência em segundo plano)', () => {
+  assert.match(MAP_SCREEN, /operation\.state === 'BATCH_CONFIRMED' && \(operation\.readbackValid === true \|\| operation\.acked === true\)/);
   assert.match(MAP_SCREEN, /BATCH_PARTIAL_FAILED/);
   assert.match(MAP_SCREEN, /A ECU não confirmou toda a operação/);
 });
