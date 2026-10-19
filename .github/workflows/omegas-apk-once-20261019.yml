@@ -33,14 +33,21 @@ jobs:
           set -euo pipefail
           npm install --no-save --prefix "${{ runner.temp }}/omegas-ui-test" playwright@1.56.1
           "${{ runner.temp }}/omegas-ui-test/node_modules/.bin/playwright" install chromium
-      - name: Full suite and Android APK
+      - name: Prove CI for same immutable product SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERIFIED="$(gh api repos/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/39259211578 --jq '[.head_sha,.conclusion] | join(" ")')"
+          echo "CI_PROOF=$VERIFIED"
+          test "$VERIFIED" = "$PRODUCT_SHA success"
+      - name: Android recheck and assemble APK
         shell: bash
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          export NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules"
-          python3 -B tools/run_checks.py --full 2>&1 | tee "${{ runner.temp }}/apk-contracts.log"
-          ./gradlew lintDebug assembleDebug -PomegasAbis=arm64-v8a --no-daemon --stacktrace 2>&1 | tee "${{ runner.temp }}/apk-gradle.log"
+          ./gradlew testDebugUnitTest lintDebug assembleDebug -PomegasAbis=arm64-v8a --no-daemon --stacktrace 2>&1 | tee "${{ runner.temp }}/apk-gradle.log"
       - name: Hash and package APK
         shell: bash
         run: |
