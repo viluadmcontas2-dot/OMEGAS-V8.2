@@ -212,16 +212,17 @@
       },
       canTap(entry, usbConnected) {
         if (!haveBridge() || usbConnected !== true || s.phase === 'preparing' || s.phase === 'writing') return false;
-        return s.phase === 'preview' ? !s.fromUndo : bitOn(entry) !== null;
+        return s.phase === 'preview' ? !s.fromUndo : true;
       },
       tapSwitch(entry, usbConnected) {
         if (!haveBridge() || usbConnected !== true) return;
         if (s.phase === 'preview') { if (s.fromUndo) cancel(); else confirm(); return; }
         if (s.phase === 'preparing' || s.phase === 'writing') return;
         const on = bitOn(entry);
-        if (on === null) return;
         s.fromUndo = false;
-        prepare(!on);
+        // Desconhecido não equivale a "desligado": o Kotlin confere o estado real
+        // na ECU e, se já estiver ligado, não emite escrita alguma.
+        prepare(on === null ? true : !on);
       },
       tapUndo() {
         if (!haveBridge()) return;

@@ -75,12 +75,15 @@
 
     usb() { return this.store.get().status?.usbConnected === true; }
     param(name) { return (this.data.params || {})[name]; }
-    hasBridge() { const b = root.OmegasAutoCal; return !!b && typeof b.prepareAntiStalloFlag === 'function' && typeof b.prepareAntiStalloValues === 'function'; }
+    hasBridge(kind = 'flag') {
+      const b = root.OmegasAutoCal;
+      return !!b && typeof b[kind === 'values' ? 'prepareAntiStalloValues' : 'prepareAntiStalloFlag'] === 'function';
+    }
 
     reason(kind) {
-      if (!this.hasBridge()) return WHY.nobridge;
+      if (!this.hasBridge(kind)) return WHY.nobridge;
       if (!this.usb()) return WHY.nousb;
-      if (kind === 'flag' && !this.A.wordsOf(this.param('FLAG_CONF3'))) return WHY.unread;
+      // O primeiro toque lê FLAG_CONF3 ao vivo. O snapshot geral NÃO é pré-requisito.
       if (kind === 'values' && !this.V.valuesOf(this.param('ANTI_STALLO'))) return WHY.unread;
       return '';
     }
@@ -95,8 +98,7 @@
       if (t.matches('[data-adv-retry]')) { this.signature = ''; this.render(); return; }
       if (t.matches('[data-adv-switch]')) {
         const entry = this.param('FLAG_CONF3');
-        const words = this.A.wordsOf(entry);
-        if (!words || this.reason('flag')) return;
+        if (this.reason('flag')) return;
         this.vals.cancel();
         this.flag.tapSwitch(entry, this.usb());
       } else if (t.matches('[data-adv-confirm]')) {
@@ -237,8 +239,8 @@
           return `
         <article class="tool-tile" data-card="${card.id}" data-state="${state}">
           <h3>${escapeHtml(card.title)}</h3>
-          <p class="tile-line${why ? ' reason' : ''}">${escapeHtml(why || card.line)}</p>
-          <button type="button" class="tool-switch" role="switch" aria-checked="${card.on === true ? 'true' : 'false'}" aria-label="${escapeHtml(card.title)}: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
+          <p class="tile-line${why ? ' reason' : ''}">${escapeHtml(why || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : card.line))}</p>
+          <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(card.title)}: ${card.on === null ? 'estado não lido. Toque para conferir e ligar' : escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
             <span class="sw-track" aria-hidden="true"><i></i></span><b>${escapeHtml(card.stateText)}</b>
           </button>
         </article>`;
