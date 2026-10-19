@@ -82,12 +82,13 @@ async function percorrerFerramentasESessoes(app) {
   // valores: erro de digitação, botões − / +, dicas, gravado
   await T.tap(page, '[data-adv-open="valores"]'); await T.pump(page, 3);
   await colher('valores: como funciona e dicas');
-  await page.evaluate(() => { document.querySelectorAll('.como-funciona details, .extras-experimentais').forEach(d => { d.open = true; }); });
-  await colher('valores: caminho completo e extras');
+  await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
+  for (const aba of ['como', 'f0', 'f1', 'f2', 'f3', 'f4', 'carro', 'nao']) { await T.tap(page, `[data-adv-info-tab="${aba}"]`); await T.pump(page, 1); await colher('valores: caminho completo e extras'); }
+  await T.tap(page, '[data-adv-back-valores]'); await T.pump(page, 2);
   await page.locator('#advField0').fill('7000');
   await colher('valores: fora da faixa');
   await page.locator('#advField0').fill('1700');
-  await T.tap(page, '[data-adv-save]'); await T.pump(page, 10);
+  await page.evaluate(() => document.activeElement && document.activeElement.blur()); await T.pump(page, 10);
   await colher('valores: pronto');
   await T.tap(page, '[data-adv-back]'); await T.pump(page, 2);
   // página 2 e registro

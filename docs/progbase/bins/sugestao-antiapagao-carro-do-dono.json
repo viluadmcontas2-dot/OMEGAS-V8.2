@@ -1,0 +1,122 @@
+{
+ "fonte": "omegasaudit.LOG (log novo do dono) + apagão real 2026-10-13",
+ "marcha_lenta_tipica_rpm": 870,
+ "amostras": 14932,
+ "eventos": [
+  {
+   "amostra": 601,
+   "estado": "LIGADO",
+   "rpm_inicio_da_queda": 1757,
+   "rpm_minimo": 685
+  },
+  {
+   "amostra": 9807,
+   "estado": "DESLIGADO",
+   "rpm_inicio_da_queda": 1826,
+   "rpm_minimo": 447
+  },
+  {
+   "amostra": 9923,
+   "estado": "DESLIGADO",
+   "rpm_inicio_da_queda": 1967,
+   "rpm_minimo": 585
+  },
+  {
+   "amostra": 9992,
+   "estado": "DESLIGADO",
+   "rpm_inicio_da_queda": 1899,
+   "rpm_minimo": 723
+  },
+  {
+   "amostra": 10592,
+   "estado": "LIGADO",
+   "rpm_inicio_da_queda": 1642,
+   "rpm_minimo": 680
+  },
+  {
+   "amostra": 11132,
+   "estado": "LIGADO",
+   "rpm_inicio_da_queda": 1789,
+   "rpm_minimo": 708
+  }
+ ],
+ "por_estado": {
+  "LIGADO": {
+   "eventos": 3,
+   "pior_minimo": 680
+  },
+  "DESLIGADO": {
+   "eventos": 3,
+   "pior_minimo": 447
+  }
+ },
+ "apagao_real_13_10": {
+  "rpm_antes": 1236,
+  "rpm_maximo_na_janela": 2303,
+  "funcao": "desligada"
+ },
+ "sugerido": {
+  "valores": [
+   1600,
+   100,
+   1500,
+   2,
+   20
+  ],
+  "motivo": "manter: com estes valores e a função ligada a rotação pós-queda nunca passou abaixo de 680 rpm (marcha lenta típica 870)"
+ },
+ "faixa_rotacao_maxima": {
+  "minimo": 1600,
+  "maximo": 2000,
+  "porque": "a maior rotação em que uma queda do seu carro começou foi 1967 rpm"
+ },
+ "gasolina": {
+  "LIGADO": {
+   "leituras": 14258,
+   "fora_do_gnv": 118,
+   "trocas": 11,
+   "pct_fora_do_gnv": 0.8
+  },
+  "DESLIGADO": {
+   "leituras": 315,
+   "fora_do_gnv": 17,
+   "trocas": 2,
+   "pct_fora_do_gnv": 5.4
+  }
+ },
+ "corpus_quedas": {
+  "horas": 12.3,
+  "por_rotacao_maxima": {
+   "1200": {
+    "ativacoes_por_hora": 170.2,
+    "terminaram_abaixo_de_350": 25
+   },
+   "1400": {
+    "ativacoes_por_hora": 198.8,
+    "terminaram_abaixo_de_350": 20
+   },
+   "1600": {
+    "ativacoes_por_hora": 192.3,
+    "terminaram_abaixo_de_350": 15
+   },
+   "1800": {
+    "ativacoes_por_hora": 179.4,
+    "terminaram_abaixo_de_350": 11
+   },
+   "2000": {
+    "ativacoes_por_hora": 165.1,
+    "terminaram_abaixo_de_350": 6
+   },
+   "2200": {
+    "ativacoes_por_hora": 143.5,
+    "terminaram_abaixo_de_350": 7
+   }
+  }
+ },
+ "resultado": {
+  "ligado_pior_minimo": 680,
+  "desligado_pior_minimo": 447,
+  "ligado_eventos": 3,
+  "desligado_eventos": 3
+ }
+}

@@ -1,5 +1,6 @@
 # Modo autônomo do Codex (leia e siga; só pare quando o limite de 5 h acabar)
 > **Prioridade nova:** HANDOFF-ENGENHARIA-REVERSA-CODEX.md (engenharia reversa completa, evidence IDs versionados, auto-auditoria, funções de referência da AutoCal em Ferramentas).
+> **PRIORIDADE 0 AGORA:** `docs/handoff/CODEX-PROXIMA-RODADA.md` (antes de tudo abaixo).
 
 Ordem de leitura: AGENTS.md → docs/handoff/CONTEXTO-DO-DONO.md → PENDENTE.md → CONTRATO-CODEX.md (§1–§9) → PROMPT-CORRECAO-TELA-FERRAMENTAS.md → docs/progbase/RETOMAR.md. Branch: claude/carregar-sessao-r7j85r.
 

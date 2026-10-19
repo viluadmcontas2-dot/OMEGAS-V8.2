@@ -364,3 +364,47 @@
   .vv-btn-short { display: inline; }
   .vv-info .secondary { min-height: 56px; font-size: 17px; }
 }
+
+.vv-sug { justify-content: flex-start; border-style: solid; }
+.vv-sug[data-state="ok"] { border-color: #3ddc97; }
+.vv-sug-title { font-size: 16px; }
+.vv-sug-vals { font-size: 17px; font-weight: 700; }
+.vv-sug .primary { min-height: 52px; }
+.vv-sug-why { font-size: 14px; opacity: .9; }
+@media (max-height: 700px) { .vv-sug-why { display: none; } }
+
+/* alvos de toque >= 56 px e lápis sempre visível (regra do dono/testes) */
+.vv-card .num-box { height: 56px; }
+.vv-card .step-btn { min-height: 56px; }
+@media (max-width: 860px) {
+  .vv-card .num-box .pencil { display: inline-block; width: 18px; height: 18px; flex: 0 0 auto; }
+  .vv-card .num-box input { font-size: 20px; }
+  .vv-card .step-btn { min-width: 42px; padding: 0 2px; font-size: 14px; }
+  .vv-card .num-unit { font-size: 13px; }
+  .vv-card .num-box { padding: 0 6px; gap: 3px; }
+}
+
+@media (max-width: 860px) {
+  .vv-card .step-btn { min-width: 44px; }
+  .vv-card .num-unit { font-size: 15px; }
+  .vv-card .num-box { padding: 0 5px; gap: 2px; }
+}
+
+.vv-evid { margin: 0 0 6px; padding-left: 18px; font-size: 14px; line-height: 1.3; }
+.vv-tab-evid { width: 100%; border-collapse: collapse; font-size: 14px; }
+.vv-tab-evid caption { text-align: left; font-size: 13px; opacity: .85; padding-bottom: 3px; }
+.vv-tab-evid th, .vv-tab-evid td { text-align: left; padding: 1px 8px 1px 0; }
+.vv-info-full p { font-size: 14px; }
+.vv-sug .secondary { min-height: 52px; font-size: 15px; }
+
+/* telas baixas: o card de sugestão mostra só o essencial (título + botão); o resto está em "Seu carro" */
+@media (max-height: 700px) { .vv-sug-why { display: none; } .vv-sug { justify-content: center; } }
+@media (max-width: 860px) { .vv-tab { font-size: 12px; padding: 0 2px; } .vv-info-full .vv-tab-evid { font-size: 13px; } .vv-evid { font-size: 13px; } }
+
+.vv-tab-evid th, .vv-tab-evid td { line-height: 1.05; padding: 0 8px 0 0; }
+@media (max-height: 560px) { .vv-info-full .vv-tab-evid { font-size: 13px; } .vv-evid li { margin: 0; } .vv-info-full p { margin: 0 0 4px; } }
+
+.vv-t-short { display: none; }
+@media (max-height: 700px) { .vv-t-long { display: none; } .vv-t-short { display: inline; } }
+.vv-sug { gap: 6px; }
+.vv-sug .secondary, .vv-sug .primary { flex: 0 0 auto; }

@@ -79,7 +79,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       await foto('6-valor-fora-da-faixa');
       await U.digitar(app, 0, '1700');
       await U.clearLog(page);
-      await T.tap(page, '[data-adv-save]'); await T.pump(page, 10);
+      await page.evaluate(() => document.activeElement && document.activeElement.blur()); await T.pump(page, 10);   // saiu do campo: grava na hora
       assert.equal(await U.camada(page), 0, 'gravar valores sem janela de pergunta');
       assert.deepEqual(await U.ecuWrites(page), [U.quadroValores([1700, 100, 1500, 2, 20])]);
       await foto('8-valores-pronto');

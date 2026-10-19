@@ -125,15 +125,20 @@
       else if (t.matches('[data-adv-undo-flag]')) { this.flag.dismiss(); this.flag.tapUndo(); }
       else if (t.matches('[data-adv-undo-values]')) {
         const undo = this.vals.view().undo;
-        if (undo.available) { this.vals.dismiss(); this.vals.ask('undo', this.diff(undo.values), this.usb()); }
+        if (undo.available) { this.vals.dismiss(); this.drafts = {}; this.vals.ask('undo', this.diff(undo.values), this.usb()); }
       } else if (t.matches('[data-adv-save]')) this.askSave();
       else if (t.matches('[data-adv-factory]')) {
         const current = this.V.valuesOf(this.param('ANTI_STALLO'));
         const changes = this.V.factoryChanges(current);
-        this.flag.cancel();
+        this.flag.cancel(); this.drafts = {};
         if (Object.keys(changes).length) this.vals.ask('factory', changes, this.usb());
       } else if (t.matches('[data-adv-open-view]')) { this.view = t.dataset.advOpenView; this.setView(); }
       else if (t.matches('[data-adv-back-valores]')) { this.view = 'valores'; this.setView(); }
+      else if (t.matches('[data-adv-use-suggestion]')) {
+        const changes = this.V.suggestionChanges(this.V.valuesOf(this.param('ANTI_STALLO')));
+        this.flag.cancel(); this.drafts = {};
+        if (Object.keys(changes).length) this.vals.ask('edit', changes, this.usb());
+      } else if (t.matches('[data-adv-open-info-tab]')) { this.infoTab = t.dataset.advOpenInfoTab; this.view = 'info'; this.setView(); }
       else if (t.matches('[data-adv-info-tab]')) { this.infoTab = t.dataset.advInfoTab; }
       else if (t.matches('[data-adv-open]')) { this.view = t.dataset.advOpen; if (this.view === 'valores') this.resetDrafts(); this.setView(); }
       else if (t.matches('[data-adv-back]')) { this.view = 'home'; this.setView(); }
@@ -367,22 +372,34 @@
       const why = this.reason('values');
       const undo = this.vals.view().undo;
       const [level, statusText] = this.saveStatus();
-      const lim = this.V.num(values ? values[0] : this.V.FIELDS[0].factory);
+      const sug = this.V.SUGESTAO;
+      const diff = values ? this.V.suggestionChanges(values) : null;
+      const igual = !!values && Object.keys(diff).length === 0;
       return `
         <section class="tool-view values-view" data-card="valores">
           <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(why || statusText)}</p></header>
           <div class="vv-grid">
             ${this.V.FIELDS.map(f => this.cardHtml(f, values)).join('')}
-            <aside class="vv-info" aria-label="Como funciona">
-              <p class="vv-how"><b>Como funciona:</b> quando a rotação <b>cai de repente</b> abaixo de <b>${escapeHtml(lim)} rpm</b> (ex.: pisou na embreagem), o anti-apagão entra e ajuda o motor a não apagar. Em aceleração normal não faz nada.</p>
-              <button type="button" class="secondary" data-adv-open-view="info"><span class="vv-btn-long">Ver explicação completa</span><span class="vv-btn-short">Como funciona ›</span></button>
+            <aside class="vv-info vv-sug" data-state="${igual ? 'ok' : 'diff'}" aria-label="Sugestão para o seu carro">
+              <p class="vv-sug-title"><b><span class="vv-t-long">${igual ? '✔ Seus valores já são os recomendados para o seu carro.' : 'Sugestão para o seu carro:'}</span><span class="vv-t-short">${igual ? '✔ Valores ideais para o seu carro' : 'Sugestão para o seu carro'}</span></b></p>
+              ${igual || !values ? '' : `<p class="vv-sug-vals">${sug.valores.map((v, k) => escapeHtml(this.V.num(v) + ' ' + this.V.FIELDS[k].unit)).join(' · ')}</p><button type="button" class="primary" data-adv-use-suggestion>Usar a sugestão</button>`}
+              <p class="vv-sug-why">Pelos seus logs: ligada, a rotação não passou de ${escapeHtml(this.V.num(sug.ligadoPior))} rpm para baixo e só ${escapeHtml(String(sug.gasLigadoPct).replace('.', ','))}% do tempo foi em gasolina.</p>
+              <button type="button" class="secondary" data-adv-open-info-tab="carro"><span class="vv-t-long">Ver os números do seu carro</span><span class="vv-t-short">Ver os números</span></button>
             </aside>
           </div>
           <div class="tool-actions vv-actions">
             <button type="button" class="secondary" data-adv-factory ${why || !values || values.every((v, i) => v === this.V.FACTORY[i]) ? 'disabled' : ''}>Restaurar fábrica</button>
             ${undo.available ? '<button type="button" class="secondary" data-adv-undo-values>Desfazer</button>' : ''}
+            <button type="button" class="secondary" data-adv-open-view="info">Como funciona</button>
           </div>
         </section>`;
+    }
+
+    /** Os números do carro do dono, tirados dos logs reais (fonte: docs/progbase/bins/sugestao-antiapagao-carro-do-dono.json). */
+    carroHtml() {
+      const g = this.V.SUGESTAO; const n = x => escapeHtml(this.V.num(x));
+      const linhas = g.tabela.map(r => `<tr><td>${n(r.m)} rpm</td><td>${escapeHtml(String(r.porHora).replace('.', ','))}</td><td>${r.quase}</td></tr>`).join('');
+      return `<ul class="vv-evid"><li><b>Seu teste (função ligada e desligada, 11 vezes):</b> ligada, depois da queda a rotação não passou de ${n(g.ligadoPior)} rpm para baixo; desligada, caiu até ${n(g.desligadoPior)} (sua marcha lenta: ${n(g.marcha)}).</li><li><b>Gasolina:</b> ligada, só ${escapeHtml(String(g.gasLigadoPct).replace('.', ','))}% do tempo fora do GNV (${n(g.gasLigado.fora)} de ${n(g.gasLigado.leituras)} leituras); desligada, ${escapeHtml(String(g.gasDesligadoPct).replace('.', ','))}%.</li></ul><table class="vv-tab-evid"><caption>${escapeHtml(String(g.horas).replace('.', ','))} h de uso real, para cada valor de «Rotação máxima para agir»:</caption><thead><tr><th>Rotação máxima para agir</th><th>Atua (vezes por hora)</th><th>Quase-apagões</th></tr></thead><tbody>${linhas}</tbody></table><p>Quanto mais alta, menos quedas terminam mal e ela não atua mais vezes: <b>baixar não economiza gasolina</b>. Se ainda apagar, aumente o número «Rotação máxima para agir» (o primeiro card) até ${n(g.faixaMax)} rpm. Os 4 ajustes extras: sem dado suficiente para sugerir mudança.</p>`;
     }
 
     /** Explicação completa: leitura, em abas curtas (cabe sem rolar). */
@@ -390,14 +407,16 @@
       const values = this.V.valuesOf(this.param('ANTI_STALLO'));
       const lim = this.V.num(values ? values[0] : 1600);
       const tab = this.infoTab || 'como';
-      const tabList = [['como', 'Como funciona'], ...this.V.FIELDS.map(f => ['f' + f.index, f.tab]), ['nao', 'O que NÃO é']];
+      const tabList = [['como', 'Como funciona'], ...this.V.FIELDS.map(f => ['f' + f.index, f.tab]), ['carro', 'Seu carro'], ['nao', 'NÃO é']];
       const tabs = tabList.map(([id, nome]) => `<button type="button" class="vv-tab" data-adv-info-tab="${id}" aria-pressed="${id === tab}">${escapeHtml(nome)}</button>`).join('');
       const field = /^f\d$/.test(tab) ? this.V.FIELDS[Number(tab[1])] : null;
       const body = field
         ? `<h4>${escapeHtml(field.label)}${field.index === 0 ? '' : ' <small>(experimental)</small>'}</h4><p>${escapeHtml(field.help)}</p><ul class="vv-hints"><li><b>Se precisar de mais:</b> ${escapeHtml(field.tipUp)}</li><li><b>Se atrapalhar:</b> ${escapeHtml(field.tipDown)}</li></ul><p class="vv-meta">${escapeHtml(this.V.range(field))} · Valor de fábrica: ${escapeHtml(this.V.num(field.factory))}</p>`
+        : tab === 'carro'
+          ? this.carroHtml()
         : tab === 'nao'
           ? `<p><b>Não é o corte de injeção</b> (soltar o acelerador em desaceleração): o corte tem ajustes próprios no cartão <b>Saída do corte</b>.</p><p>Os dois se encontram: no seu log, depois de cada corte, com o anti-apagão <b>desligado</b> a rotação afundou até 447 rpm (26 vezes abaixo de 600); <b>ligado</b>, nunca passou de 680 rpm.</p><p>O programa original só mostra o primeiro número. O efeito exato dos outros quatro ainda não foi confirmado em carro (experimental).</p>`
-          : `<ol><li>A rotação cai mais rápido que <b>Queda para agir</b> <em>e</em> está abaixo de <b>${escapeHtml(lim)} rpm</b> → a proteção <b>entra</b>.</li><li>A central sai do gás conforme a <b>Espera</b> (ms) e ajuda o motor a segurar.</li><li>Quando a queda fica menor que <b>Queda para parar</b>, a proteção <b>solta</b>. A <b>Folga</b> evita ligar e desligar toda hora.</li></ol>`;
+          : `<p class="vv-how"><b>Quando age:</b> quando a rotação <b>cai de repente</b> abaixo de <b>${escapeHtml(lim)} rpm</b> (ex.: pisou na embreagem parando ou engatando ré), o anti-apagão entra e ajuda o motor a não apagar. Em aceleração normal não faz nada.</p><ol><li>A rotação cai mais rápido que <b>Queda para agir</b> <em>e</em> está abaixo de <b>${escapeHtml(lim)} rpm</b> → a proteção <b>entra</b>.</li><li>A central sai do gás conforme a <b>Espera</b> (ms) e ajuda o motor a segurar.</li><li>Quando a queda fica menor que <b>Queda para parar</b>, a proteção <b>solta</b>. A <b>Folga</b> evita ligar e desligar toda hora.</li></ol>`;
       return `
         <section class="tool-view values-view" data-card="valores-info">
           <header><button type="button" class="secondary tool-back" data-adv-back-valores><span aria-hidden="true">‹</span> Voltar</button><h3>Como o anti-apagão funciona</h3></header>

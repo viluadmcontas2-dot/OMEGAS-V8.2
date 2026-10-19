@@ -37,6 +37,9 @@
   ];
   const COUNT = FIELDS.length;
   const FACTORY = FIELDS.map(f => f.factory);
+  // <SUGESTAO:INICIO> gerado de docs/progbase/bins/sugestao-antiapagao-carro-do-dono.json (tools/sessoes/gerar_sugestao_js.py); um teste confere os dois.
+  const SUGESTAO = {"valores": [1600, 100, 1500, 2, 20], "ligadoPior": 680, "desligadoPior": 447, "marcha": 870, "maiorInicioQueda": 1967, "faixaMax": 2000, "gasLigadoPct": 0.8, "gasDesligadoPct": 5.4, "ativMin": 165.1, "ativMax": 198.8, "quase1200": 25, "quase1600": 15, "quase2000": 6, "tabela": [{"m": 1200, "porHora": 170.2, "quase": 25}, {"m": 1400, "porHora": 198.8, "quase": 20}, {"m": 1600, "porHora": 192.3, "quase": 15}, {"m": 1800, "porHora": 179.4, "quase": 11}, {"m": 2000, "porHora": 165.1, "quase": 6}], "horas": 12.3, "gasLigado": {"leituras": 14258, "fora": 118}};
+  // <SUGESTAO:FIM>
   const DASH = '—';
 
   function isU16(v) { return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 0xFFFF; }
@@ -98,6 +101,12 @@
     if (!Array.isArray(values) || values.length !== COUNT || !values.every(isU16)) return { ok: false, message: 'A leitura de volta não veio completa.' };
     const ok = values.every((v, i) => v === p.after[i]);
     return { ok, message: ok ? 'ok' : `esperado ${p.after.join(' ')}, veio ${values.join(' ')}` };
+  }
+  /** O que mudar para ficar igual à sugestão para o carro do dono (vazio = já está igual). */
+  function suggestionChanges(current) {
+    const out = {};
+    FIELDS.forEach(f => { if (!current || current[f.index] !== SUGESTAO.valores[f.index]) out[f.index] = SUGESTAO.valores[f.index]; });
+    return out;
   }
   function factoryChanges(current) {
     const out = {};
@@ -239,7 +248,7 @@
   }
 
   ns.AntiApagaoValores = {
-    ADDRESS, FIELDS, FACTORY, COUNT, TEXT, valuesOf, parseInput, validate, plan, verifyReadback, factoryChanges, frameForVector,
+    ADDRESS, FIELDS, FACTORY, SUGESTAO, suggestionChanges, COUNT, TEXT, valuesOf, parseInput, validate, plan, verifyReadback, factoryChanges, frameForVector,
     secondsText, farFromFactory, range, num, createValuesFlow,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

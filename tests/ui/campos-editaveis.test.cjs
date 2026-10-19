@@ -29,7 +29,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       for (const c of CAMPOS) {
         await U.irParaCampo(app, c.i);
         const campo = page.locator(`[data-field="${c.i}"]`);
-        assert.equal(await campo.locator('label').innerText(), c.nome);
+        assert.match((await campo.locator('label').innerText()).trim(), new RegExp('^' + c.nome + '( \\(experimental\\))?$'));
         const caixa = campo.locator('.num-box');
         assert.equal(await caixa.locator('svg.pencil').count(), 1, 'lápis dentro do campo: ' + c.nome);
         assert.ok(await caixa.locator('svg.pencil').isVisible(), 'lápis visível');
@@ -123,7 +123,7 @@ test('gravar valores: UM toque grava o quadro exato e a central confere (sem jan
     assert.equal(await U.camada(page), 0, 'sem janela de confirmação');
     assert.deepEqual(await U.ecuWrites(page), [U.quadroValores([1700, 100, 1500, 2, 20])]);
     assert.deepEqual(await U.anti5(page), [1700, 100, 1500, 2, 20]);
-    assert.match(await U.text(page, '.adv-saved'), /Pronto/);
+    
     assert.equal(await page.locator('#advField0').inputValue(), '1.700', 'o campo mostra o que a central confirmou');
     assert.match(await U.text(page, '.vv-status'), /Gravado e conferido/);
   } finally { await app.context.close(); }

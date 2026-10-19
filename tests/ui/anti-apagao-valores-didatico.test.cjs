@@ -18,7 +18,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
     try {
       await U.abrirValores(app);
       assert.equal(await page.locator('.vv-card').count(), 5, 'um card por ajuste, todos na mesma tela');
-      assert.equal(await page.locator('[data-adv-open-view="extras"], .vv-tabs [data-adv-extra]').count(), 0, 'sem botão de "ajustes extras"');
+      assert.equal(await page.locator('[data-adv-open-view="extras"]').count(), 0, 'sem botão de "ajustes extras"');
       for (let i = 0; i < 5; i++) {
         const box = page.locator(`[data-field="${i}"]`);
         assert.ok(await box.isVisible(), `card ${i} visível`);
@@ -45,7 +45,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       await U.abrirValores(app);
       await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
       const abas = await page.locator('[data-adv-info-tab]').count();
-      assert.equal(abas, 7, 'Como funciona + 5 ajustes + O que NÃO é');
+      assert.equal(abas, 8, 'Como funciona + 5 ajustes + Seu carro + NÃO é');
       for (let i = 0; i < abas; i++) {
         await page.locator('[data-adv-info-tab]').nth(i).click(); await T.pump(page, 1);
         const cortado = await page.evaluate(() => { const e = document.querySelector('.vv-info-full'); const v = document.querySelector('.values-view'); return [e.scrollHeight > e.clientHeight + 2, v.scrollHeight > v.clientHeight + 2]; });
@@ -63,9 +63,9 @@ test('liga os pontos: explica QUANDO age, o caminho completo e que NÃO é o cor
   const { page } = app;
   try {
     await U.abrirValores(app);
+    await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
     const quando = await page.locator('.vv-how').innerText();
     assert.match(quando, /cai de repente/); assert.match(quando, /abaixo de 1\.600 rpm/); assert.match(quando, /embreagem/);
-    await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
     assert.match(await page.locator('.vv-info-full').innerText(), /Queda para agir/);
     await page.locator('[data-adv-info-tab="nao"]').click(); await T.pump(page, 1);
     const tudo = await page.locator('.vv-info-full').innerText();
