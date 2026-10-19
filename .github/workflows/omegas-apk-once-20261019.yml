@@ -9,13 +9,13 @@ env:
   PRODUCT_SHA: d4db2ee5c194543d1e3d2b4b6c89ef9cf30ee784
 jobs:
   build:
-    if: \${{ github.event.head_commit.message == 'build(apk) one-time approved source d4db2ee5 for Drive' }}
+    if: ${{ github.event.head_commit.message == 'build(apk) one-time approved source d4db2ee5 for Drive' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: \${{ env.PRODUCT_SHA }}
+          ref: ${{ env.PRODUCT_SHA }}
       - name: Verify immutable product source
         run: test "$(git rev-parse HEAD)" = "$PRODUCT_SHA"
       - uses: actions/setup-java@v4
@@ -26,21 +26,21 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: \${{ runner.os }}-playwright-chromium-1.56.1
+          key: ${{ runner.os }}-playwright-chromium-1.56.1
       - name: Browser for UI tests
         shell: bash
         run: |
           set -euo pipefail
-          npm install --no-save --prefix "\${{ runner.temp }}/omegas-ui-test" playwright@1.56.1
-          "\${{ runner.temp }}/omegas-ui-test/node_modules/.bin/playwright" install chromium
+          npm install --no-save --prefix "${{ runner.temp }}/omegas-ui-test" playwright@1.56.1
+          "${{ runner.temp }}/omegas-ui-test/node_modules/.bin/playwright" install chromium
       - name: Full suite and Android APK
         shell: bash
         run: |
           set -euo pipefail
           chmod +x ./gradlew
-          export NODE_PATH="\${{ runner.temp }}/omegas-ui-test/node_modules"
-          python3 -B tools/run_checks.py --full 2>&1 | tee "\${{ runner.temp }}/apk-contracts.log"
-          ./gradlew lintDebug assembleDebug -PomegasAbis=arm64-v8a --no-daemon --stacktrace 2>&1 | tee "\${{ runner.temp }}/apk-gradle.log"
+          export NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules"
+          python3 -B tools/run_checks.py --full 2>&1 | tee "${{ runner.temp }}/apk-contracts.log"
+          ./gradlew lintDebug assembleDebug -PomegasAbis=arm64-v8a --no-daemon --stacktrace 2>&1 | tee "${{ runner.temp }}/apk-gradle.log"
       - name: Hash and package APK
         shell: bash
         run: |
@@ -72,9 +72,9 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: apk-once-failure-\${{ github.run_id }}
+          name: apk-once-failure-${{ github.run_id }}
           path: |
-            \${{ runner.temp }}/apk-*.log
+            ${{ runner.temp }}/apk-*.log
             app/build/reports/
             app/build/test-results/
           if-no-files-found: ignore
