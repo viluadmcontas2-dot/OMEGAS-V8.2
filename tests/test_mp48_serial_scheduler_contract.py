@@ -32,10 +32,10 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
             kwrite,
             re.compile(r"serial\.unit\([\s\S]*?writeKCell\(", re.M),
         )
-        self.assertIn("BATCH_VERIFYING_ROWS", kwrite)
-        self.assertIn("confirmação final K[$row]", kwrite)
+        self.assertIn("BATCH_CONFIRMED", kwrite)
+        self.assertIn("conferência em segundo plano Mapa K", kwrite)
         direct_start = kwrite.index('reason = "escrita direta Mapa K"')
-        readback_start = kwrite.index('reason = "readback final Mapa K"')
+        readback_start = kwrite.index('reason = "conferência em segundo plano Mapa K"')
         self.assertLess(direct_start, readback_start)
         direct_unit_body = kwrite[direct_start:readback_start]
         self.assertIn("writeKCell(", direct_unit_body)
@@ -44,8 +44,8 @@ class Mp48SerialSchedulerContractTest(unittest.TestCase):
             kfactor,
             re.compile(r"serial\.unit\([\s\S]*?writeFactor\(", re.M),
         )
-        self.assertIn("VERIFYING_FINAL", kfactor)
-        self.assertIn("confirmação final K factor", kfactor)
+        self.assertIn("conferência em segundo plano Curva K", kfactor)
+        self.assertIn("conferência K factor", kfactor)
         curve_start = kfactor.index('reason = "escrita direta Curva K"')
         curve_end = kfactor.index("private fun readRawPoints(request:", curve_start)
         curve_unit_body = kfactor[curve_start:curve_end]

@@ -199,7 +199,5 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 .live-verify { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 2px 8px; border: 0; background: transparent; color: var(--muted, #8a94a3); font: inherit; font-size: 12px; opacity: .7; cursor: default; }
 .live-verify[hidden] { display: none; }
 .live-verify i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.live-verify[data-phase="checking"] i { animation: liveVerifyPulse 1.6s ease-in-out infinite; }
+.live-verify[data-phase="checking"] i { opacity: .55; }
 .live-verify[data-phase="fixing"], .live-verify[data-phase="failed"] { color: #d99a1e; opacity: 1; cursor: pointer; }
-@keyframes liveVerifyPulse { 50% { opacity: .25; } }
-@media (prefers-reduced-motion: reduce) { .live-verify[data-phase="checking"] i { animation: none; } }
