@@ -42,7 +42,7 @@
       { id: 'valores', kind: 'values', title: 'Valores do anti-apagão', line: 'Limites de rotação para proteger a lenta.', shortLine: 'Limites de rotação e espera.', on: null, stateText: valuesState,
         rows: V.FIELDS.map(f => ({ label: f.label, text: values ? `${num(values[f.index])} ${f.unit}` : DASH, on: null })),
         tech: [`ANTI_STALLO · código ${V.ADDRESS} · 5 números de 16 bits: ${values ? values.join(' ') : 'não lido'}`] },
-      { id: 'corte', kind: 'open', title: 'Saída do corte', viewTitle: 'Saída do corte (quando volta a acelerar)', line: 'Injeções de gasolina ao retomar após soltar o pedal.', shortLine: 'Injeções ao voltar a acelerar.',
+      { id: 'corte', kind: 'open', title: 'Saída do corte', viewTitle: 'Saída do corte (quando volta a acelerar)', line: 'Injeções de gasolina ao retomar a aceleração.', shortLine: 'Injeções ao voltar a acelerar.',
         on: null, stateText: cutoffRaw === null ? DASH : `${num(cutoffRaw)} injeções`, stateFor: 'Gasolina ao retomar',
         note: 'Ao tirar o pé, a central pode interromper temporariamente a injeção. Aqui aparece quantas injeções de gasolina estão configuradas para a retomada, quando o dado foi lido.',
         rows: [{ label: 'Gasolina ao sair do corte', text: cutoffRaw === null ? DASH : `${num(cutoffRaw)} injeções`, on: null }, row('Corte das injeções extras', bit('FLAG_CONF2', 0, 0x0001))],
