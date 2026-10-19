@@ -47,8 +47,12 @@
         this.flag.otherTouch();
         this.vals.otherTouch();
       }, true);
-      this.flag.adopt();
-      this.vals.adopt();
+      // As leituras auxiliares são opcionais. Uma exceção da ponte Android não
+      // pode impedir a criação dos cartões nem duplicar listeners ao reabrir.
+      try { this.flag.adopt(); }
+      catch (error) { console.warn('[OMEGAS Ferramentas] Estado anterior do anti-apagão indisponível', error); }
+      try { this.vals.adopt(); }
+      catch (error) { console.warn('[OMEGAS Ferramentas] Estado anterior dos valores indisponível', error); }
     }
 
     /** Chamado pelo ciclo de dados (app.js). */

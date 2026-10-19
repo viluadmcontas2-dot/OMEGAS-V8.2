@@ -49,7 +49,11 @@
   /** Promessa que resolve quando a tela da rota está carregada; `null` se não há nada a esperar (já carregada). */
   function loadRoute(route) {
     if (typeof document === 'undefined' || !ROUTE_SCRIPTS[route]) return null;
-    if (ns[ROUTE_READY[route]]) return null;
+    // Uma classe não basta: a tela depende de todos os módulos. O carregador tenta
+    // reparar uma dependência ausente antes de renderizar (WebView file://).
+    if (route === 'tools') {
+      if (ns.AdvancedPanel && ns.AdvancedFlags && ns.AntiApagaoValores && ns.IdleMode && ns.CartoesMotor && ns.Drawers) return null;
+    } else if (ns[ROUTE_READY[route]]) return null;
     const pending = ROUTE_SCRIPTS[route].filter(src => !(scripts.get(src) || {}).done);
     if (!pending.length) return null;
     return new Promise(resolve => {
