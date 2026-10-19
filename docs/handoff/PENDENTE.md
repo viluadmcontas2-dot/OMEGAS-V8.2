@@ -70,3 +70,4 @@ O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
 - Volta automática à gasolina: caixa F4 não é bit de FLAG_CONF1 (o 0x0040 da palavra 1 é "pressão baixa impostável"); decodificar CheckRitornoBenzinaClick 0x4A9484 e EditBassaPressioneMpKeyPress 0x4C526C (Unicorn) antes de gravar. Tempo = SC 62 u8.
 - Bins K: RPM = SC 61 (`14 3D 00 idx lo hi`); linhas de ms: vetor NÃO provado (SC 120 é MAP_ESTERNO). Editar só RPM quando o escritor do Mapa K estiver livre; teste "A central aceitou 0 ms".
 - Nível do gás e pressão no estado + evento `voltou_para_gasolina` nas sessões.
+- [ ] Velocidade Curva K/Mapa K: Curva K em 1 quadro de vetor 0x37 (32 -> 3 transações, -90%) e repetir sozinho por evento em erro de ACK; precisa OK do dono + ECU real. Veja docs/handoff/PROGRESSO-VELOCIDADE.md e tools/emulacao/simular_gravacao_k.py.
