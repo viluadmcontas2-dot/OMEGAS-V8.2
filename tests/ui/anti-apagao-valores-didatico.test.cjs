@@ -42,7 +42,7 @@ test('liga os pontos: explica QUANDO age, o caminho completo e que NÃO é o cor
     assert.match(tudo, /Saída do corte/, 'aponta para o cartão do corte');
     assert.match(tudo, /447 rpm/); assert.match(tudo, /680 rpm/);
     await page.evaluate(() => { document.querySelector('.extras-experimentais').open = true; });
-    assert.match(await page.locator('[data-field="1"] .num-unit').innerText(), /rpm por ciclo/, 'unidade do original: rpm/ciclo');
+    assert.match(await page.locator('[data-field="1"] .num-help').innerText(), /duas voltas/, 'explica a escala do original sem jargão');
   } finally { await app.context.close(); }
 });
 

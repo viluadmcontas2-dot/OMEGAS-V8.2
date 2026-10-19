@@ -135,7 +135,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       lista.push(...sub(fixos, 'sessões (navegação e barra do topo)'));
       assert.ok(lista.length > 150, 'a varredura leu poucos textos: ' + lista.length);
       const estados = new Set(lista.map(x => x.estado));
-      for (const esperado of ['ferramentas página 1', 'valores: fora da faixa', 'valores: confirmar', 'anti-apagão: central não aceitou', 'registro do app', 'sessões', 'sessões: tamanho das gravações']) assert.ok(estados.has(esperado), 'estado não visitado: ' + esperado);
+      for (const esperado of ['ferramentas página 1', 'valores: fora da faixa', 'valores: como funciona e dicas', 'valores: caminho completo e extras', 'anti-apagão: central não aceitou', 'registro do app', 'sessões', 'sessões: tamanho das gravações']) assert.ok(estados.has(esperado), 'estado não visitado: ' + esperado);
       assert.deepEqual(violacoes(lista, proibidos()), [], 'jargão em texto visível');
       // a navegação e a barra do topo falam a mesma palavra em todo o app
       const nav = lista.filter(x => x.estado === 'sessões (navegação e barra do topo)').map(x => x.t);

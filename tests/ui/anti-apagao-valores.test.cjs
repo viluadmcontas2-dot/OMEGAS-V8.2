@@ -27,12 +27,11 @@ test('endereço 307, 5 campos, fábrica e faixa máxima do DFM', () => {
   same(V.FIELDS.map(f => f.min), [0, 0, 0, 0, 0]);
 });
 
-test('nomes leigos: nenhum jargão; "ciclo" só aparece explicado; unidade curta', () => {
-  const proibido = /\bflag\b|\bbit\b|palavra|0x|FLAG_CONF|ECU|SerialCode|histerese|delta/i;
+test('nomes leigos: nenhum jargão ("ciclo" é jargão banido pelo dono); unidade curta', () => {
+  const proibido = /\bciclos?\b|\bflag\b|\bbit\b|palavra|0x|FLAG_CONF|ECU|SerialCode|histerese|delta/i;
   for (const f of V.FIELDS) {
     for (const t of [f.label, f.help, f.unit, f.tipUp, f.tipDown]) assert.doesNotMatch(t, proibido, t);
-    assert.ok(['rpm', 'rpm por ciclo', 'ms'].includes(f.unit), f.unit);
-    if (f.unit === 'rpm por ciclo') assert.match(f.help, /por ciclo/, 'a unidade do original é explicada no texto');
+    assert.ok(['rpm', 'ms'].includes(f.unit), f.unit);
     assert.ok(f.step > 0 && f.tipUp && f.tipDown, 'botões − / + e dicas para os dois lados: ' + f.label);
   }
   same(V.FIELDS.map(f => f.label), ['Rotação máxima para agir', 'Queda de rotação para agir', 'Espera para sair do gás', 'Folga para não ficar trocando', 'Queda para parar de agir']);
