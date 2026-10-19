@@ -252,6 +252,14 @@
       });
       const save = this.host.querySelector('[data-adv-save]');
       if (save) save.disabled = p.invalid || !Object.keys(p.changes).length || !!this.reason('values');
+      // Enquanto o teclado está aberto, o cartão não é reconstruído.
+      // Ainda assim, a confirmação real da ECU precisa aparecer imediatamente.
+      const status = this.host.querySelector('.vv-status');
+      if (status) {
+        const { level, text } = this.valuesStatus();
+        if (status.dataset.level !== level) status.dataset.level = level;
+        if (status.textContent !== text) status.textContent = text;
+      }
     }
 
     setView() {
@@ -377,18 +385,26 @@
       return ['idle', 'Toque em − ou +: grava na hora.'];
     }
 
+    valuesStatus() {
+      const values = this.valuesNow();
+      const why = this.reason('values');
+      const [level, message] = this.saveStatus();
+      const text = !values && !why && this.vals.view().phase === 'idle'
+        ? 'Digite um número. A central será lida antes da gravação; os botões −/+ aguardam a leitura.'
+        : (why || message);
+      return { level, text };
+    }
+
     /** Tela única: os 5 ajustes em cards + o card "Como funciona". Sem rolagem, sem botão Gravar, sem "extras". */
     renderValues(cards) {
       const values = this.valuesNow();
       const why = this.reason('values');
       const undo = this.vals.view().undo;
-      const [level, statusText] = this.saveStatus();
-      const displayStatus = !values && !why && this.vals.view().phase === 'idle'
-        ? 'Digite um número. A central será lida antes da gravação; os botões −/+ aguardam a leitura.' : statusText;
+      const { level, text: displayStatus } = this.valuesStatus();
       const sug = this.data.antiStallSuggestion || {};
       return `
         <section class="tool-view values-view" data-card="valores">
-          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(why || displayStatus)}</p></header>
+          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(displayStatus)}</p></header>
           <div class="vv-grid">
             ${this.V.FIELDS.map(f => this.cardHtml(f, values)).join('')}
             <aside class="vv-info vv-sug" data-state="neutral" aria-label="Análise da viagem">
