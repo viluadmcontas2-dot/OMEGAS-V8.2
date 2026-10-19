@@ -1,0 +1,1068 @@
+{
+  "aba": "TabCalibration",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabCalibration",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabCalibration",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Calibra inj.",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 17,
+        "OnShow": "TabCalibrationShow",
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabCalibrationShow",
+          "endereco": "0x4C7904",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelEsclusioneGINJ",
+      "classe": "TPanel",
+      "propriedades": {
+        "BevelOuter": "bvNone",
+        "Height": 220,
+        "Left": 0,
+        "ParentColor": "True",
+        "TabOrder": 0,
+        "Top": 467,
+        "Width": 841
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjL",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 731,
+        "Top": 39,
+        "Visible": "False",
+        "Width": 77
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjI",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 334,
+        "Top": 39,
+        "Visible": "False",
+        "Width": 77
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjH",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 655,
+        "Top": 39,
+        "Visible": "False",
+        "Width": 77
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjG",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 580,
+        "Top": 39,
+        "Visible": "False",
+        "Width": 77
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjF",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 504,
+        "Top": 39,
+        "Visible": "False",
+        "Width": 77
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjE",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 429,
+        "Top": 39,
+        "Visible": "False",
+        "Width": 76
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjD",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 258,
+        "Top": 39,
+        "Width": 77
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjC",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 183,
+        "Top": 39,
+        "Width": 77
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjB",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 107,
+        "Top": 39,
+        "Width": 77
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeInjA",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clBtnFace",
+        "Height": 66,
+        "Left": 32,
+        "Top": 39,
+        "Width": 76
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffF",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 505,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 32,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 75
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffG",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 581,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 64,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnG",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 581,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 64,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffE",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 430,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 16,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnE",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 430,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 16,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnF",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 505,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 32,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 75
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffL",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 732,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 512,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 75
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnL",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 732,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 512,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 75
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnH",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 657,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 128,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffH",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 657,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 128,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnI",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 335,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 256,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 75
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnC",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 184,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 4,
+        "Top": 40,
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnD",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 260,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 8,
+        "Top": 40,
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffC",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 184,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 4,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffB",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 108,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 2,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 75
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffD",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 260,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 8,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnB",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 108,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 2,
+        "Top": 40,
+        "Width": 75
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOnA",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 33,
+        "OnClick": "ImageInjOnClick",
+        "Picture.Data": "<binary 3967B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 1,
+        "Top": 40,
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOnClick",
+          "endereco": "0x4C80A8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffA",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 33,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 1,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelEsclusioneGas",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Esclusione iniettori gas",
+        "CustomHint": "BalloonHint",
+        "Height": 29,
+        "Left": 38,
+        "OnMouseDown": "ControlMouseDown",
+        "Top": 0,
+        "Width": 271
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageInjOffI",
+      "classe": "TImage",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 63,
+        "Left": 335,
+        "OnClick": "ImageInjOffClick",
+        "Picture.Data": "<binary 4562B 0954506e67496d61676589504e470d0a1a0a0000000d4948…>",
+        "Stretch": "True",
+        "Tag": 256,
+        "Top": 40,
+        "Visible": "False",
+        "Width": 75
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "ImageInjOffClick",
+          "endereco": "0x4C81B0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelBancata1",
+      "classe": "TPanel",
+      "propriedades": {
+        "BevelOuter": "bvNone",
+        "BorderStyle": "bsSingle",
+        "Ctl3D": "False",
+        "Height": 69,
+        "Left": 429,
+        "ParentCtl3D": "False",
+        "TabOrder": 0,
+        "Top": 120,
+        "Visible": "False",
+        "Width": 379
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCalibSlow1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Lento",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 25,
+        "ParentFont": "False",
+        "Top": 38,
+        "Width": 54
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCalibCorrSlow1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 142,
+        "ParentFont": "False",
+        "Top": 38,
+        "Visible": "False",
+        "Width": 28
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCalibFast1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Veloce",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 214,
+        "ParentFont": "False",
+        "Top": 38,
+        "Width": 62
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCalibCorrFast1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 331,
+        "ParentFont": "False",
+        "Top": 38,
+        "Visible": "False",
+        "Width": 28
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCalibCorrettori1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Caption": "Correttori Bancata 2",
+        "CustomHint": "BalloonHint",
+        "Height": 29,
+        "Left": 32,
+        "OnMouseDown": "ControlMouseDown",
+        "Top": 6,
+        "Width": 229
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelBancata0",
+      "classe": "TPanel",
+      "propriedades": {
+        "BevelOuter": "bvNone",
+        "BorderStyle": "bsSingle",
+        "Ctl3D": "False",
+        "Height": 69,
+        "Left": 32,
+        "ParentCtl3D": "False",
+        "TabOrder": 1,
+        "Top": 120,
+        "Visible": "False",
+        "Width": 379
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCalibSlow0",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Lento",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 25,
+        "ParentFont": "False",
+        "Top": 38,
+        "Width": 54
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCalibCorrSlow0",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 142,
+        "ParentFont": "False",
+        "Top": 38,
+        "Visible": "False",
+        "Width": 28
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCalibCorrFast0",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 331,
+        "ParentFont": "False",
+        "Top": 38,
+        "Visible": "False",
+        "Width": 28
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCalibFast0",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Veloce",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 214,
+        "ParentFont": "False",
+        "Top": 38,
+        "Width": 62
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCalibCorrettori0",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "AutoSize": "False",
+        "Caption": "Correttori Bancata 1",
+        "CustomHint": "BalloonHint",
+        "Height": 28,
+        "Left": 32,
+        "OnMouseDown": "ControlMouseDown",
+        "Top": 6,
+        "Width": 315
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "StrategiaTempiMortiUI1",
+      "classe": "TStrategiaTempiMortiUI",
+      "propriedades": {
+        "AlignWithMargins": "True",
+        "ExplicitHeight": 456,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -11,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 456,
+        "Left": 0,
+        "Margins.Bottom": 0,
+        "Margins.Left": 0,
+        "Margins.Right": 0,
+        "Margins.Top": 0,
+        "ParentFont": "False",
+        "TabOrder": 1,
+        "Top": 0,
+        "Width": 840
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

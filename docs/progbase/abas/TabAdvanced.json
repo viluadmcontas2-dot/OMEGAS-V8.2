@@ -1,0 +1,158 @@
+{
+  "aba": "TabAdvanced",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabAdvanced",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabAdvanced",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Advanced",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 19,
+        "OnShow": "TabAdvancedShow",
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabAdvancedShow",
+          "endereco": "0x4C9BBC",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelHelp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "AutoSize": "False",
+        "Caption": "NOTE: the values are percentage of petrol injection time",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsItalic]",
+        "Height": 25,
+        "Left": 30,
+        "ParentFont": "False",
+        "Top": 423,
+        "Width": 668
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckContributi",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "BiDiMode": "bdLeftToRight",
+        "Caption": "Enable petrol addition map",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Height": 31,
+        "Left": 30,
+        "OnClick": "CheckContributiClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentBiDiMode": "False",
+        "ParentColor": "False",
+        "TabOrder": 0,
+        "Top": 20,
+        "Width": 667
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckContributiClick",
+          "endereco": "0x4C9C1C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "DrawGridContributi",
+      "classe": "TDrawGrid",
+      "propriedades": {
+        "ColCount": 13,
+        "Cursor": "crHandPoint",
+        "DefaultColWidth": 50,
+        "DefaultRowHeight": 25,
+        "Enabled": "False",
+        "FixedColor": 10158080,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 343,
+        "Left": 30,
+        "OnDblClick": "DrawGridContributiDblClick",
+        "OnDrawCell": "DrawGridContributiDrawCell",
+        "OnKeyDown": "DrawGridKKeyDown",
+        "OnKeyPress": "DrawGridContributiKeyPress",
+        "ParentFont": "False",
+        "RowCount": 13,
+        "ScrollBars": "ssNone",
+        "TabOrder": 1,
+        "Top": 65,
+        "Width": 668
+      },
+      "eventos": [
+        {
+          "evento": "OnDblClick",
+          "handler": "DrawGridContributiDblClick",
+          "endereco": "0x4CA288",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnDrawCell",
+          "handler": "DrawGridContributiDrawCell",
+          "endereco": "0x4C9DF0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyDown",
+          "handler": "DrawGridKKeyDown",
+          "endereco": "0x4B2514",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "DrawGridContributiKeyPress",
+          "endereco": "0x4CA278",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

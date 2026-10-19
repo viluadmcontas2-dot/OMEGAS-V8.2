@@ -1,0 +1,313 @@
+{
+  "aba": "TabTest",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabTest",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabTest",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Dati di test",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 11,
+        "OnShow": "TabTestShow",
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabTestShow",
+          "endereco": "0x4BA440",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTestWord",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Valore WORD",
+        "Height": 42,
+        "Left": 38,
+        "Top": 20,
+        "Width": 447
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTestByte",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Valore BYTE",
+        "Height": 36,
+        "Left": 38,
+        "Top": 66,
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTestArray",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Vettori di valori",
+        "Height": 40,
+        "Left": 38,
+        "Top": 163,
+        "Width": 709
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTestTempo",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Valore TIME",
+        "Height": 35,
+        "Left": 38,
+        "Top": 118,
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabTestTempo",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 29,
+        "Left": 630,
+        "Top": 118,
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditTestWord",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 494,
+        "MaxLength": 5,
+        "MaxValue": 65535.0,
+        "NextControl": "EditTestByte",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "DrawGridTest",
+        "ShapePenWidth": 2,
+        "TabOrder": 0,
+        "Text": "0",
+        "Top": 10,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditTestByte",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 3,
+        "MaxValue": 255.0,
+        "NextControl": "EditTestTempo",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditTestWord",
+        "ShapePenWidth": 2,
+        "TabOrder": 1,
+        "Text": "0",
+        "Top": 61,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditTestTempo",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 5,
+        "MaxValue": 50.0,
+        "NextControl": "DrawGridTest",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditTestByte",
+        "ShapePenWidth": 2,
+        "TabOrder": 2,
+        "Text": "0",
+        "Top": 108,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "DrawGridTest",
+      "classe": "TDrawGrid",
+      "propriedades": {
+        "ColCount": 11,
+        "Cursor": "crHandPoint",
+        "DefaultColWidth": 56,
+        "DefaultRowHeight": 30,
+        "FixedColor": 10158080,
+        "FixedRows": 0,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 97,
+        "Left": 45,
+        "OnDblClick": "DrawGridTestDblClick",
+        "OnDrawCell": "DrawGridTestDrawCell",
+        "OnKeyDown": "DrawGridKKeyDown",
+        "OnKeyPress": "DrawGridTestKeyPress",
+        "ParentFont": "False",
+        "RowCount": 3,
+        "ScrollBars": "ssNone",
+        "TabOrder": 3,
+        "Top": 204,
+        "Width": 631
+      },
+      "eventos": [
+        {
+          "evento": "OnDblClick",
+          "handler": "DrawGridTestDblClick",
+          "endereco": "0x4B75EC",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnDrawCell",
+          "handler": "DrawGridTestDrawCell",
+          "endereco": "0x4B71B8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyDown",
+          "handler": "DrawGridKKeyDown",
+          "endereco": "0x4B2514",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "DrawGridTestKeyPress",
+          "endereco": "0x4B7650",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

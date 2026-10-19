@@ -1,10 +1,10 @@
-name: OMEGAS VERMELHO CI
+name: OMEGAS CI
 
 on:
   push:
-    branches: [ OmegasVermelho, 'claude/carregar-sessao-r7j85r' ]
+    branches: ['**']
   pull_request:
-    branches: [ OmegasVermelho ]
+    branches: ['**']
   workflow_dispatch:
 
 concurrency:
@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ui_chromium:
-    name: UI Chromium e ECU simulada
+  javascript:
+    name: JavaScript e navegador
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -35,15 +35,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules" node --test --test-concurrency=1 \
-            tests/ui/ferramentas-webview-regression.test.cjs \
-            tests/ui/anti-apagao-sem-snapshot.test.cjs \
-            tests/ui/ux-fluxo-toque.test.cjs \
-            tests/ui/campos-editaveis.test.cjs \
-            tests/ui/ferramentas-sem-rolagem.test.cjs \
-            tests/ui/linguagem-leiga.test.cjs \
-            tests/ui/leveza-orcamento.test.cjs \
-            2>&1 | tee "${{ runner.temp }}/w6-ferramentas.log"
+          export NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules"
+          python3 - <<'CHECKS'
+          from pathlib import Path
+          import subprocess
+          tests = sorted(Path("tests/ui").glob("*.test.cjs"))
+          assert tests, "Nenhum teste JavaScript descoberto"
+          for path in tests:
+              if "@requires-gradle-test-results" not in path.read_text():
+                  subprocess.run(["node", "--test", str(path)], check=True)
+          CHECKS
       - name: Capturas da interface testada (sem APK)
         if: success()
         uses: actions/upload-artifact@v4
@@ -63,7 +64,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-  fast_contracts:
+  python:
     name: Contratos Python
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -71,7 +72,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Testar contratos
         shell: bash
-        run: python3 -B tools/run_checks.py
+        run: |
+          set -euo pipefail
+          python3 - <<'CHECKS'
+          from pathlib import Path
+          import subprocess, sys
+          tests = sorted(Path("tests").glob("test_*.py"))
+          assert tests, "Nenhum contrato Python descoberto"
+          for path in tests:
+              subprocess.run([sys.executable, "-B", str(path)], check=True)
+          CHECKS
       - name: Diagnóstico de contratos
         if: failure()
         uses: actions/upload-artifact@v4
@@ -81,8 +91,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-  android_checks:
-    name: Android unitário e lint
+  kotlin:
+    name: Kotlin e contratos dependentes da JVM
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -98,9 +108,16 @@ jobs:
       - name: JVM unit tests
         shell: bash
         run: ./gradlew testDebugUnitTest
-      - name: Android lint
+      - name: Contratos que exigem resultados JVM
         shell: bash
-        run: ./gradlew lintDebug
+        run: |
+          python3 - <<'CHECKS'
+          from pathlib import Path
+          import subprocess
+          for path in sorted(Path("tests/ui").glob("*.test.cjs")):
+              if "@requires-gradle-test-results" in path.read_text():
+                  subprocess.run(["node", "--test", str(path)], check=True)
+          CHECKS
       - name: Android failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
@@ -115,6 +132,24 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  lint:
+    name: Android lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - run: sh ./gradlew lintDebug
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ci-lint-failure-${{ github.run_id }}
+          path: app/build/reports/
+
   grafo:
     # Grafo de conhecimento do código (graphify update: determinístico, sem LLM, sem chave de API) + mapa de fontes em dia.
     runs-on: ubuntu-latest
@@ -126,7 +161,10 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install --quiet graphifyy
       - name: Reconstruir grafo
-        run: graphify update . 2>&1 | tail -5
+        shell: bash
+        run: |
+          set -euo pipefail
+          graphify update . 2>&1 | tail -5
       - name: Ligar documentos, evidências e código (determinístico)
         run: python3 -B tools/grafo_conhecimento.py
       - name: Mapa de fontes em dia
@@ -143,16 +181,17 @@ jobs:
   build_and_test:
     # Preserva o nome do status check obrigatório. Falha se QUALQUER frente falhar ou não rodar.
     name: build_and_test
-    needs: [ui_chromium, fast_contracts, android_checks, grafo]
+    needs: [javascript, python, kotlin, lint, grafo]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
       - name: Integração de todas as provas no mesmo SHA
         env:
-          UI: ${{ needs.ui_chromium.result }}
-          CONTRACTS: ${{ needs.fast_contracts.result }}
-          ANDROID: ${{ needs.android_checks.result }}
+          UI: ${{ needs.javascript.result }}
+          CONTRACTS: ${{ needs.python.result }}
+          ANDROID: ${{ needs.kotlin.result }}
+          LINT: ${{ needs.lint.result }}
           GRAPH: ${{ needs.grafo.result }}
         shell: bash
         run: |
@@ -162,21 +201,4 @@ jobs:
           test "$CONTRACTS" = success
           test "$ANDROID" = success
           test "$GRAPH" = success
-
-  disparar_apk_com_autorizacao:
-    # Exceção única: pedido explícito do proprietário, depois de ambos os checks verdes.
-    # Este job NÃO compila nem publica APK; solicita o workflow manual separado.
-    needs: [build_and_test]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/claude/carregar-sessao-r7j85r' && contains(github.event.head_commit.message, '[apk-autorizado-20261018]') }}
-    runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
-    steps:
-      - name: Solicitar o APK manual depois da CI verde
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh workflow run verde-apk-now.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME" -f build_apk=true
+          test "$LINT" = success

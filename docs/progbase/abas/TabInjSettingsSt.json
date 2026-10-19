@@ -1,0 +1,1127 @@
+{
+  "aba": "TabInjSettingsSt",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabInjSettingsSt",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabInjSettingsSt",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Settings Inj ST",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 1,
+        "ParentFont": "False"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCorrenteDiPicco",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Corrente di picco",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 38,
+        "ParentColor": "False",
+        "Top": 38,
+        "Transparent": "True",
+        "Width": 198
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelDurataFase2",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Durata fase 2",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 38,
+        "ParentColor": "False",
+        "Top": 77,
+        "Transparent": "True",
+        "Width": 149
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelDurataMaxFase1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Durata max fase 1",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 38,
+        "ParentColor": "False",
+        "Top": 115,
+        "Transparent": "True",
+        "Width": 203
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelDurataFaseDiDemag",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Durata fase di demag",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 38,
+        "ParentColor": "False",
+        "Top": 194,
+        "Transparent": "True",
+        "Width": 242
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCorrenteDiHold",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Corrente di hold",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 38,
+        "ParentColor": "False",
+        "Top": 233,
+        "Transparent": "True",
+        "Width": 187
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCorrenteDiHoldTemp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Corrente di hold dopo picco",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 38,
+        "ParentColor": "False",
+        "Top": 272,
+        "Transparent": "True",
+        "Width": 324
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelDurataCorrenteDiHoldTemp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Durata corrente di hold dopo picco",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 38,
+        "ParentColor": "False",
+        "Top": 311,
+        "Transparent": "True",
+        "Width": 402
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrequenzaSwitching",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Frequenza di switching",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 38,
+        "ParentColor": "False",
+        "Top": 350,
+        "Transparent": "True",
+        "Width": 268
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelDefault",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "default",
+        "Color": 14671839,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 22,
+        "Left": 418,
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "Top": 10,
+        "Transparent": "True",
+        "Width": 63
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCambioCutoff",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "cutoff/cambio",
+        "Color": 14671839,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 22,
+        "Left": 512,
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "Top": 10,
+        "Transparent": "True",
+        "Width": 126
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelWarmUp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "warmup",
+        "Color": 14671839,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 22,
+        "Left": 671,
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "Top": 10,
+        "Transparent": "True",
+        "Width": 75
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabDurataMaxFase1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 761,
+        "ParentColor": "False",
+        "Top": 115,
+        "Transparent": "True",
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabDurataFase2",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 761,
+        "ParentColor": "False",
+        "Top": 77,
+        "Transparent": "True",
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCorrenteDiPicco",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "A",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 761,
+        "ParentColor": "False",
+        "Top": 38,
+        "Transparent": "True",
+        "Width": 17
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrequenzaSwitching",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Hz",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 630,
+        "ParentColor": "False",
+        "Top": 350,
+        "Transparent": "True",
+        "Width": 29
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabDurataCorrenteDiHoldTemp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 630,
+        "ParentColor": "False",
+        "Top": 311,
+        "Transparent": "True",
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCorrenteDiHoldTemp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "A",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 630,
+        "ParentColor": "False",
+        "Top": 272,
+        "Transparent": "True",
+        "Width": 17
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCorrenteDiHold",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "A",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 630,
+        "ParentColor": "False",
+        "Top": 233,
+        "Transparent": "True",
+        "Width": 17
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabDurataFaseDiDemag",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "µs",
+        "Color": 14671839,
+        "Height": 29,
+        "Left": 630,
+        "ParentColor": "False",
+        "Top": 194,
+        "Transparent": "True",
+        "Width": 27
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckDemagMode",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "BiDiMode": "bdLeftToRight",
+        "Caption": "Fast demag mode",
+        "Checked": "True",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Height": 33,
+        "Left": 38,
+        "OnClick": "CheckDemagModeClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentBiDiMode": "False",
+        "ParentColor": "False",
+        "State": "cbChecked",
+        "TabOrder": 9,
+        "Top": 153,
+        "Width": 715
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckDemagModeClick",
+          "endereco": "0x4CAE44",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditCorrenteDiPicco",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 415,
+        "MaxValue": 20.55,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 0,
+        "Text": "0",
+        "Top": 35,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDurataFase2",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 1,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 415,
+        "MaxValue": 5.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 1,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 74,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDurataMaxFase1",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 7,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 415,
+        "MaxValue": 10.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 2,
+        "Tag": 2,
+        "Text": "0",
+        "Top": 113,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditCorrenteDiPiccoCutoff",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 9,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 544,
+        "MaxValue": 20.55,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 3,
+        "Text": "0",
+        "Top": 35,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDurataFase2Cutoff",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 10,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 544,
+        "MaxValue": 5.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 4,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 74,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDurataMaxFase1Cutoff",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 11,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 544,
+        "MaxValue": 10.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 5,
+        "Tag": 2,
+        "Text": "0",
+        "Top": 113,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditCorrenteDiPiccoWarmUp",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 13,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 674,
+        "MaxValue": 20.55,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 6,
+        "Text": "0",
+        "Top": 35,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDurataFase2WarmUp",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 14,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 674,
+        "MaxValue": 5.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 7,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 74,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDurataMaxFase1WarmUp",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 15,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 674,
+        "MaxValue": 10.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 8,
+        "Tag": 2,
+        "Text": "0",
+        "Top": 113,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDurataFaseDiDemag",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 2,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 544,
+        "MaxValue": 500.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 1.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 10,
+        "Tag": 3,
+        "Text": "0",
+        "Top": 190,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditCorrenteDiHold",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 4,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 544,
+        "MaxValue": 4.11,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 11,
+        "Tag": 4,
+        "Text": "0",
+        "Top": 229,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditCorrenteDiHoldTemp",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 5,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 544,
+        "MaxValue": 4.11,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 12,
+        "Tag": 4,
+        "Text": "0",
+        "Top": 268,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDurataCorrenteDiHoldTemp",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 6,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 544,
+        "MaxValue": 5.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 13,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 307,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrequenzaSwitching",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 8,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 544,
+        "MaxValue": 25500.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditVH34ParamKeyPress",
+        "ParentFont": "False",
+        "Precision": 100.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 14,
+        "Tag": 5,
+        "Text": "0",
+        "Top": 346,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditVH34ParamKeyPress",
+          "endereco": "0x4CAE48",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

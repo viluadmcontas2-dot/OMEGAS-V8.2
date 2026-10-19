@@ -1,0 +1,40 @@
+{
+  "aba": "TabEsci",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabEsci",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabEsci",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "- Esc Esci",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 13,
+        "OnShow": "TabEsciShow",
+        "ParentFont": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabEsciShow",
+          "endereco": "0x4AE418",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

@@ -1,0 +1,763 @@
+{
+  "aba": "TabSwitchToPetrol",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabSwitchToPetrol",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabSwitchToPetrol",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Switch to petrol",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 16,
+        "OnShow": "TabSwitchToPetrolShow",
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabSwitchToPetrolShow",
+          "endereco": "0x4C65A4",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol0",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "t_or",
+        "Height": 29,
+        "Left": 38,
+        "Top": 61,
+        "Width": 45
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "t_gas_a_or1",
+        "Height": 29,
+        "Left": 38,
+        "Top": 98,
+        "Width": 138
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol2",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "t_gas_a_or2",
+        "Height": 29,
+        "Left": 38,
+        "Top": 136,
+        "Width": 138
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol3",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "T_inj_b_or_th ",
+        "Height": 29,
+        "Left": 38,
+        "Top": 174,
+        "Width": 165
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol4",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "T_inj_b_sw_p_th",
+        "Height": 29,
+        "Left": 38,
+        "Top": 274,
+        "Width": 194
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol0",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "s",
+        "Height": 29,
+        "Left": 567,
+        "Top": 62,
+        "Width": 13
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "s",
+        "Height": 29,
+        "Left": 567,
+        "Top": 98,
+        "Width": 13
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol2",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "s",
+        "Height": 29,
+        "Left": 567,
+        "Top": 136,
+        "Width": 13
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol3",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 29,
+        "Left": 567,
+        "Top": 174,
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol4",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 29,
+        "Left": 567,
+        "Top": 274,
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol5",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "T_inj_b_re_gas_th",
+        "Height": 29,
+        "Left": 38,
+        "Top": 313,
+        "Width": 210
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol6",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "t_gas_a_sw_p",
+        "Height": 29,
+        "Left": 38,
+        "Top": 350,
+        "Width": 161
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol6",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "s",
+        "Height": 29,
+        "Left": 567,
+        "Top": 350,
+        "Width": 13
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol5",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 29,
+        "Left": 567,
+        "Top": 313,
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol7",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "t_sw_p_or",
+        "Height": 29,
+        "Left": 38,
+        "Top": 389,
+        "Width": 118
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSwitchToPetrol8",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "RPM_st_dis_th",
+        "Height": 29,
+        "Left": 38,
+        "Top": 427,
+        "Width": 172
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol8",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "rpm",
+        "Height": 29,
+        "Left": 567,
+        "Top": 427,
+        "Width": 45
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSwitchToPetrol7",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "s",
+        "Height": 29,
+        "Left": 567,
+        "Top": 389,
+        "Width": 13
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label2",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Switch to petrol after cutoff",
+        "Height": 29,
+        "Left": 38,
+        "Top": 20,
+        "Width": 314
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label3",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Switch to petrol for short T_Inj_b",
+        "Height": 29,
+        "Left": 38,
+        "Top": 232,
+        "Width": 380
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol4",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 4,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 20.0,
+        "MinValue": 1.0,
+        "NextControl": "EditSwitchToPetrol5",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditSwitchToPetrol3",
+        "ShapePenWidth": 2,
+        "TabOrder": 4,
+        "Tag": 4,
+        "Text": "0",
+        "Top": 270,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol3",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 3,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 20.0,
+        "MinValue": 1.0,
+        "NextControl": "EditSwitchToPetrol4",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditSwitchToPetrol2",
+        "ShapePenWidth": 2,
+        "TabOrder": 3,
+        "Tag": 3,
+        "Text": "0",
+        "Top": 170,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol2",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 2,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 10.0,
+        "MinValue": 1.0,
+        "NextControl": "EditSwitchToPetrol3",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditSwitchToPetrol1",
+        "ShapePenWidth": 2,
+        "TabOrder": 2,
+        "Tag": 2,
+        "Text": "0",
+        "Top": 132,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol1",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 1,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 10.0,
+        "MinValue": 1.0,
+        "NextControl": "EditSwitchToPetrol2",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditSwitchToPetrol0",
+        "ShapePenWidth": 2,
+        "TabOrder": 1,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 95,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol0",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 60.0,
+        "MinValue": 1.0,
+        "NextControl": "EditSwitchToPetrol1",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditSwitchToPetrol8",
+        "ShapePenWidth": 2,
+        "TabOrder": 0,
+        "Text": "0",
+        "Top": 57,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol5",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 5,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 20.0,
+        "MinValue": 1.0,
+        "NextControl": "EditSwitchToPetrol6",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditSwitchToPetrol4",
+        "ShapePenWidth": 2,
+        "TabOrder": 5,
+        "Tag": 5,
+        "Text": "0",
+        "Top": 309,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol6",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 6,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 60.0,
+        "MinValue": 1.0,
+        "NextControl": "EditSwitchToPetrol7",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditSwitchToPetrol5",
+        "ShapePenWidth": 2,
+        "TabOrder": 6,
+        "Tag": 6,
+        "Text": "0",
+        "Top": 347,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol7",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 7,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 60.0,
+        "MinValue": 1.0,
+        "NextControl": "EditSwitchToPetrol8",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditSwitchToPetrol6",
+        "ShapePenWidth": 2,
+        "TabOrder": 7,
+        "Tag": 7,
+        "Text": "0",
+        "Top": 386,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSwitchToPetrol8",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 8,
+        "Height": 37,
+        "Left": 479,
+        "MaxValue": 6000.0,
+        "MinValue": 200.0,
+        "NextControl": "EditSwitchToPetrol0",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditSwitchToPetrol7",
+        "ShapePenWidth": 2,
+        "TabOrder": 8,
+        "Tag": 8,
+        "Text": "0",
+        "Top": 424,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

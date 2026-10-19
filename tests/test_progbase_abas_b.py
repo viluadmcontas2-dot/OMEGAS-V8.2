@@ -8,6 +8,37 @@ import abas_b_re as A
 
 @unittest.skipUnless(A.achar_exe() and _UC, 'ProgBase.exe ou unicorn ausente')
 class AbasB(unittest.TestCase):
+    def test_tab_iniezione_nao_aborta_memoria_delphi(self):
+        import abas_b_emul as E
+        s = E.Sessao(A.achar_exe())
+        m = s.cenario()
+        r = s.rodar(m, s.ctx.metodos_inv["TabIniezioneShow"], m.ctl("TabIniezione"))
+        # A regressão é o heap: APIs de janela continuam um limite explícito.
+        self.assertNotEqual(r["erro"], "API sem stub: ExitProcess", r)
+        self.assertIn(0x4005000, r["funcoes"], "alocador substituto não executado")
+        self.assertFalse(any("Runtime error 203" in x for x in r["caixas"]))
+
+    def test_delphi_realloc_preserva_bytes(self):
+        import abas_b_emul as E
+        s = E.Sessao(A.achar_exe())
+        m = s.m
+        m.chamar(m.r32(0xAAFB84), {"eax": 4})
+        p = m.uc.reg_read(m.X.UC_X86_REG_EAX)
+        m.uc.mem_write(p, b"ABCD")
+        m.chamar(m.r32(0xAAFB8C), {"eax": p, "edx": 16})
+        q = m.uc.reg_read(m.X.UC_X86_REG_EAX)
+        self.assertEqual(bytes(m.uc.mem_read(q, 4)), b"ABCD")
+
+    def test_inventario_17_abas_e_eventos(self):
+        import abas_b_gerar as G
+        dados = G.inventario(A.Ctx(A.achar_exe()), A.indexa(A.dfm_arvore()))
+        self.assertEqual(len(dados), 17)
+        self.assertEqual(len({d["aba"] for d in dados}), 17)
+        inj = next(d for d in dados if d["aba"] == "TabIniezione")
+        ev = next(c for c in inj["controles"] if c["nome"] == "TabIniezione")["eventos"]
+        self.assertTrue(any(e["handler"] == "TabIniezioneShow" and e["endereco"] for e in ev))
+        self.assertTrue(all(c["formula"] == "DESCONHECIDO" for d in dados for c in d["controles"]))
+
     def test_anti_stallo_click_quadro(self):
         import json, abas_b_emul as E, abas_b_log as L
         p = os.path.join(ROOT, 'docs', 'progbase', 'abas', '_ecu_dono_vetores.json')

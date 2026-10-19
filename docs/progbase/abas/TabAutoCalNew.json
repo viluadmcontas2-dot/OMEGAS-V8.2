@@ -1,0 +1,515 @@
+{
+  "aba": "TabAutoCalNew",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabAutoCalNew",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabAutoCalNew",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Auto calibrazione",
+        "ImageIndex": 21,
+        "OnShow": "TabAutoCalNewShow"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabAutoCalNewShow",
+          "endereco": "0x4CB1C4",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ScrollBoxAutoCal",
+      "classe": "TScrollBox",
+      "propriedades": {
+        "Align": "alClient",
+        "BevelInner": "bvNone",
+        "BevelOuter": "bvNone",
+        "BorderStyle": "bsNone",
+        "Color": "cl3DLight",
+        "Height": 729,
+        "Left": 0,
+        "ParentColor": "False",
+        "TabOrder": 0,
+        "Top": 0,
+        "Width": 994
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "AutoCalPage",
+      "classe": "TAutoCalUI",
+      "propriedades": {
+        "Align": "alClient",
+        "AlignWithMargins": "True",
+        "AutoSize": "True",
+        "ExplicitHeight": 723,
+        "ExplicitLeft": 3,
+        "ExplicitTop": 3,
+        "ExplicitWidth": 988,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clWindowText",
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 723,
+        "Left": 3,
+        "ParentFont": "False",
+        "TabOrder": 0,
+        "Top": 3,
+        "Width": 988
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelBackground",
+      "classe": "TPanelImage",
+      "propriedades": {
+        "ExplicitWidth": 980,
+        "Width": 980
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "UserMessageLabel",
+      "classe": "TLabel",
+      "propriedades": {
+        "ExplicitWidth": 980,
+        "Width": 980
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelTop",
+      "classe": "TPanel",
+      "propriedades": {
+        "ExplicitWidth": 974,
+        "Width": 974
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "SettingsImg",
+      "classe": "TImage",
+      "propriedades": {
+        "ExplicitLeft": 931,
+        "Left": 931
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "BtnMenu",
+      "classe": "TBitBtn",
+      "propriedades": {
+        "ExplicitLeft": 884,
+        "Left": 884
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Panel2",
+      "classe": "TPanel",
+      "propriedades": {
+        "ExplicitLeft": 481,
+        "Left": 481
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditNumAutomatch",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": ""
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelBottom",
+      "classe": "TPanel",
+      "propriedades": {
+        "ExplicitWidth": 974,
+        "Width": 974
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelDbg",
+      "classe": "TPanel",
+      "propriedades": {
+        "ExplicitWidth": 968,
+        "Width": 968
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelActions",
+      "classe": "TGridPanel",
+      "propriedades": {
+        "ControlCollection": "<{Column=0; Control=AutoCalPage.ChartPoint; Row=0} {Column=1; Control=AutoCalPage.ChartData; Row=0} {Column=0; Control=AutoCalPage.Panel1; Row=1} {Column=1; Control=AutoCalPage.ChartKLine; Row=1}>",
+        "ExplicitWidth": 972,
+        "Width": 972
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ChartPoint",
+      "classe": "TChart",
+      "propriedades": {
+        "ExplicitWidth": 188,
+        "Width": 188
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "NRunAxes",
+      "classe": "TPointSeries",
+      "propriedades": {
+        "Data": "<binary 21B 0101000000333333333333d3bf0000000000000000>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "NumPetrPt",
+      "classe": "TBubbleSeries",
+      "propriedades": {
+        "Data": "<binary 437B 0112000000333333333333d3bfb81e85eb51b8be3f7b14ae…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "NumGasPt",
+      "classe": "TBubbleSeries",
+      "propriedades": {
+        "Data": "<binary 437B 0112000000333333333333d33fb81e85eb51b8be3f7b14ae…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ChartData",
+      "classe": "TChart",
+      "propriedades": {
+        "ExplicitLeft": 197,
+        "ExplicitWidth": 772,
+        "Left": 197,
+        "PrintMargins": "(15, 24, 15, 24)",
+        "Width": 772
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "AcqusitionAreas",
+      "classe": "THorizAreaSeries",
+      "propriedades": {
+        "Data": "<binary 165B 030800000000000000000000000000000000003240000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RunAxes",
+      "classe": "TPointSeries",
+      "propriedades": {
+        "Data": "<binary 21B 0101000000000000000000f03f0000000000000000>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PetrolLine",
+      "classe": "TLineSeries",
+      "propriedades": {
+        "Data": "<binary 37B 0102000000000000000000f03f0000000000000000000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "GasLine",
+      "classe": "TLineSeries",
+      "propriedades": {
+        "Data": "<binary 37B 0102000000000000000000f03f0000000000000000000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PetrolPoint",
+      "classe": "TPointSeries",
+      "propriedades": {
+        "Data": "<binary 293B 0112000000000000000000f03f0000000000000000000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "GasPointPrev",
+      "classe": "TPointSeries",
+      "propriedades": {
+        "Data": "<binary 293B 0112000000000000000000f03f0000000000000000000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "GasPoint",
+      "classe": "TPointSeries",
+      "propriedades": {
+        "Data": "<binary 293B 0112000000000000000000f03f0000000000000000000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RunPoint",
+      "classe": "TPointSeries",
+      "propriedades": {
+        "Data": "<binary 21B 0101000000000000000000f03f0000000000000000>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CursorLimitMAP_MIN",
+      "classe": "TLineSeries",
+      "propriedades": {
+        "Data": "<binary 37B 010200000000000000000000009a9999999999c93f000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CursorLimitMAP_MAX",
+      "classe": "TLineSeries",
+      "propriedades": {
+        "Data": "<binary 37B 010200000000000000000000009a9999999999e93f000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CurrentBand",
+      "classe": "THorizAreaSeries",
+      "propriedades": {
+        "Data": "<binary 69B 01040000003d0ad7a3703dda3f00000000000000003d0ad7…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PetrolCurve",
+      "classe": "TLineSeries",
+      "propriedades": {
+        "Data": "<binary 293B 0112000000000000000000f03f0000000000000000000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "GasCurve",
+      "classe": "TLineSeries",
+      "propriedades": {
+        "Data": "<binary 293B 0112000000000000000000f03f0000000000000000000000…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Panel1",
+      "classe": "TPanel",
+      "propriedades": {
+        "ExplicitWidth": 194,
+        "Width": 194
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ButtonResetAll",
+      "classe": "TButton",
+      "propriedades": {
+        "ExplicitWidth": 176,
+        "Width": 176
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ButtonResetGas",
+      "classe": "TButton",
+      "propriedades": {
+        "ExplicitWidth": 176,
+        "Width": 176
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ButtonResetPetrol",
+      "classe": "TButton",
+      "propriedades": {
+        "ExplicitWidth": 176,
+        "Width": 176
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "BtnMenuPanelLeft",
+      "classe": "TBitBtn",
+      "propriedades": {
+        "ExplicitWidth": 176,
+        "Width": 176
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ButtonResetK",
+      "classe": "TButton",
+      "propriedades": {
+        "ExplicitWidth": 176,
+        "Width": 176
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ChartKLine",
+      "classe": "TChart",
+      "propriedades": {
+        "ExplicitLeft": 197,
+        "ExplicitWidth": 772,
+        "Left": 197,
+        "PrintMargins": "(15, 41, 15, 41)",
+        "Width": 772
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "KRunAxes",
+      "classe": "TPointSeries",
+      "propriedades": {
+        "Data": "<binary 21B 0101000000000000000000f03f0000000000000000>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "KLine",
+      "classe": "TLineSeries",
+      "propriedades": {
+        "Data": "<binary 293B 0112000000000000000000f03f0000000000448640abaaaa…>"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

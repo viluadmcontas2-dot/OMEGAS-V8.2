@@ -1,5 +1,5 @@
-# Platina APK readiness gate. This workflow never builds on push.
-name: OMEGAS VERMELHO APK (aprovação do dono)
+# APK somente por solicitação manual autorizada.
+name: OMEGAS APK (aprovação do dono)
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ env:
   PRODUCT_SHA: ${{ github.sha }}
 
 concurrency:
-  group: omegas-vermelho-apk-gated-${{ github.sha }}
+  group: omegas-apk-gated-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -53,7 +53,7 @@ jobs:
           chmod +x ./gradlew
           python3 -B tools/run_checks.py 2>&1 | tee "${{ runner.temp }}/w6-contracts.log"
           ./gradlew clean testDebugUnitTest lintDebug assembleDebug \
-            -PomegasAbis=armeabi-v7a \
+            -PomegasAbis=arm64-v8a \
             --no-daemon \
             --stacktrace 2>&1 | tee "${{ runner.temp }}/w6-gradle.log"
 
@@ -64,6 +64,9 @@ jobs:
           set -euo pipefail
           APK="app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
+          VERSION="$(python3 -c 'import json; print(json.load(open("config/omegas-release.json"))["versionName"])')"
+          mkdir -p build/apk
+          cp "$APK" "build/apk/OMEGAS-${VERSION}-${PRODUCT_SHA:0:12}.apk"
           mkdir -p build/evidence
           APK_SHA256="$(sha256sum "$APK" | awk '{print $1}')"
           APK_BYTES="$(stat -c %s "$APK")"
@@ -78,7 +81,7 @@ jobs:
           fi
 
           {
-            echo "OMEGAS_VERMELHO_APK=PASS"
+            echo "OMEGAS_APK=PASS"
             echo "SOURCE_SHA=$SOURCE_SHA"
             echo "SOURCE_TREE=$SOURCE_TREE"
             echo "OMEGAS_BUILD_COMMIT=$BUILD_COMMIT"
@@ -88,7 +91,7 @@ jobs:
             echo "APK_BYTES=$APK_BYTES"
             echo "APK_ZIP_INTEGRITY=PASS"
             echo "PHYSICAL_INSTALL_NOT_YET_CLAIMED=true"
-          } | tee build/evidence/omegas-vermelho-apk-evidence.txt
+          } | tee build/evidence/omegas-apk-evidence.txt
 
           test "$SOURCE_SHA" = "$PRODUCT_SHA"
           if [ -n "$BUILD_COMMIT" ]; then
@@ -98,10 +101,10 @@ jobs:
       - name: Publish APK + evidence
         uses: actions/upload-artifact@v4
         with:
-          name: omegas-vermelho-apk-${{ env.PRODUCT_SHA }}
+          name: omegas-apk-${{ env.PRODUCT_SHA }}
           path: |
-            app/build/outputs/apk/debug/app-debug.apk
-            build/evidence/omegas-vermelho-apk-evidence.txt
+            build/apk/OMEGAS-*.apk
+            build/evidence/omegas-apk-evidence.txt
           if-no-files-found: error
           retention-days: 14
           compression-level: 0

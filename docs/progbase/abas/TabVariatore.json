@@ -1,0 +1,125 @@
+{
+  "aba": "TabVariatore",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabVariatore",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabVariatore",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Variatore",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 12,
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelAnticipo",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Mappa di anticipo",
+        "Height": 41,
+        "Left": 38,
+        "Top": 20,
+        "Width": 528
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabAnticipo",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "AutoSize": "False",
+        "Caption": "(0)",
+        "Height": 42,
+        "Left": 575,
+        "Top": 20,
+        "Width": 157
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "DrawGridAnticipo",
+      "classe": "TDrawGrid",
+      "propriedades": {
+        "ColCount": 9,
+        "Cursor": "crHandPoint",
+        "DefaultColWidth": 69,
+        "DefaultRowHeight": 28,
+        "FixedColor": 10158080,
+        "FixedCols": 0,
+        "FixedRows": 0,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 178,
+        "Left": 45,
+        "OnDblClick": "DrawGridAnticipoDblClick",
+        "OnDrawCell": "DrawGridAnticipoDrawCell",
+        "OnKeyDown": "DrawGridKKeyDown",
+        "OnKeyPress": "DrawGridAnticipoKeyPress",
+        "ParentFont": "False",
+        "RowCount": 6,
+        "ScrollBars": "ssNone",
+        "TabOrder": 0,
+        "Top": 73,
+        "Width": 634
+      },
+      "eventos": [
+        {
+          "evento": "OnDblClick",
+          "handler": "DrawGridAnticipoDblClick",
+          "endereco": "0x4BD2E4",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnDrawCell",
+          "handler": "DrawGridAnticipoDrawCell",
+          "endereco": "0x4BCF1C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyDown",
+          "handler": "DrawGridKKeyDown",
+          "endereco": "0x4B2514",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "DrawGridAnticipoKeyPress",
+          "endereco": "0x4BD348",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

@@ -1,0 +1,1042 @@
+{
+  "aba": "TabFrest",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabFrest",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabFrest",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Frest model",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 15,
+        "OnShow": "TabFrestShow",
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabFrestShow",
+          "endereco": "0x4C6324",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasExtraInjThd",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Gas extra-injection rejection threshold",
+        "Height": 29,
+        "Left": 38,
+        "Top": 171,
+        "Width": 440
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrestGasExtraInjThd",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 29,
+        "Left": 693,
+        "Top": 171,
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasInjOffset",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Gas Injector Offset Time",
+        "Height": 29,
+        "Left": 38,
+        "Top": 134,
+        "Width": 277
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrestGasInjOffset",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 29,
+        "Left": 693,
+        "Top": 134,
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasInjGain",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Gas Injector Static Flow",
+        "Height": 29,
+        "Left": 38,
+        "Top": 96,
+        "Width": 274
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrestGasInjGain",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "bar",
+        "Height": 29,
+        "Left": 693,
+        "Top": 96,
+        "Width": 37
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasNormTemp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Normalization temperature",
+        "Height": 29,
+        "Left": 38,
+        "Top": 20,
+        "Width": 303
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LablFrestGasNormTemp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "°K",
+        "Height": 29,
+        "Left": 693,
+        "Top": 21,
+        "Width": 27
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasNormPress",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Normalization pressure",
+        "Height": 29,
+        "Left": 38,
+        "Top": 58,
+        "Width": 266
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrestGasNormPress",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "bar",
+        "Height": 29,
+        "Left": 693,
+        "Top": 58,
+        "Width": 37
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestRailPressCoeff",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Filtering coeff for rail pressure input",
+        "Height": 29,
+        "Left": 38,
+        "Top": 209,
+        "Width": 416
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestFuelCons",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Instant fuel consumption",
+        "Height": 29,
+        "Left": 38,
+        "Top": 402,
+        "Width": 288
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasTempCorr",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Gas temp corrector",
+        "Height": 29,
+        "Left": 38,
+        "Top": 436,
+        "Width": 220
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasPressCorr",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Gas press corrector",
+        "Height": 29,
+        "Left": 38,
+        "Top": 470,
+        "Width": 226
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasInjCorr",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Gas injection corrector",
+        "Height": 29,
+        "Left": 38,
+        "Top": 505,
+        "Width": 263
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrestFuelCons",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0,000000 Kg/h",
+        "Height": 29,
+        "Left": 553,
+        "Top": 402,
+        "Width": 159
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrestGasTempCorr",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0,000000",
+        "Height": 29,
+        "Left": 554,
+        "Top": 436,
+        "Width": 98
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrestGasPressCorr",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0,000000",
+        "Height": 29,
+        "Left": 554,
+        "Top": 470,
+        "Width": 98
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabFrestGasInjCorr",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0,000000",
+        "Height": 29,
+        "Left": 554,
+        "Top": 505,
+        "Width": 98
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasInjBreak",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Filtering coefficient for gas inj time breakpoint (-30;30)",
+        "Height": 29,
+        "Left": 38,
+        "Top": 247,
+        "Width": 622
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelFrestGasInjVect",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Filtering coefficient for gas inj time vector (0;1)",
+        "Height": 29,
+        "Left": 38,
+        "Top": 323,
+        "Width": 536
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasExtraInjThd",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 4,
+        "Height": 37,
+        "Left": 548,
+        "MaxValue": 63.999,
+        "NextControl": "EditFrestRailPressCoeff",
+        "OnEnter": "EditFrestEnter",
+        "OnExit": "EditFrestExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjOffset",
+        "ShapePenWidth": 2,
+        "TabOrder": 4,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 168,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditFrestEnter",
+          "endereco": "0x4C611C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditFrestExit",
+          "endereco": "0x4C6314",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjOffset",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 3,
+        "Height": 37,
+        "Left": 548,
+        "MaxValue": 15.999,
+        "MinValue": -16.0,
+        "NextControl": "EditFrestGasExtraInjThd",
+        "OnEnter": "EditFrestEnter",
+        "OnExit": "EditFrestExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjGain",
+        "ShapePenWidth": 2,
+        "TabOrder": 3,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 130,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditFrestEnter",
+          "endereco": "0x4C611C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditFrestExit",
+          "endereco": "0x4C6314",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjGain",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 2,
+        "Height": 37,
+        "Left": 548,
+        "MaxValue": 31.999,
+        "MinValue": -32.0,
+        "NextControl": "EditFrestGasInjOffset",
+        "OnEnter": "EditFrestEnter",
+        "OnExit": "EditFrestExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasNormPress",
+        "ShapePenWidth": 2,
+        "TabOrder": 2,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 92,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditFrestEnter",
+          "endereco": "0x4C611C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditFrestExit",
+          "endereco": "0x4C6314",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditlFrestGasNormTemp",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Height": 37,
+        "Left": 548,
+        "MaxValue": 32767.0,
+        "MinValue": -32768.0,
+        "NextControl": "EditFrestGasNormPress",
+        "OnEnter": "EditFrestEnter",
+        "OnExit": "EditFrestExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditFrestGasInjVect5",
+        "ShapePenWidth": 2,
+        "TabOrder": 0,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 16,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditFrestEnter",
+          "endereco": "0x4C611C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditFrestExit",
+          "endereco": "0x4C6314",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasNormPress",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 1,
+        "Height": 37,
+        "Left": 548,
+        "MaxValue": 31.999,
+        "MinValue": -32.0,
+        "NextControl": "EditFrestGasInjGain",
+        "OnEnter": "EditFrestEnter",
+        "OnExit": "EditFrestExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditlFrestGasNormTemp",
+        "ShapePenWidth": 2,
+        "TabOrder": 1,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 54,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditFrestEnter",
+          "endereco": "0x4C611C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditFrestExit",
+          "endereco": "0x4C6314",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestRailPressCoeff",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 5,
+        "Height": 37,
+        "Left": 548,
+        "MaxValue": 1.0,
+        "NextControl": "EditFrestGasInjBreak0",
+        "OnEnter": "EditFrestEnter",
+        "OnExit": "EditFrestExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasExtraInjThd",
+        "ShapePenWidth": 2,
+        "TabOrder": 5,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 205,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditFrestEnter",
+          "endereco": "0x4C611C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditFrestExit",
+          "endereco": "0x4C6314",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjVect0",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Height": 37,
+        "Left": 38,
+        "MaxValue": 1.0,
+        "NextControl": "EditFrestGasInjVect1",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjBreak5",
+        "ShapePenWidth": 2,
+        "TabOrder": 12,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 353,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjVect1",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 1,
+        "Height": 37,
+        "Left": 164,
+        "MaxValue": 1.0,
+        "NextControl": "EditFrestGasInjVect2",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjVect0",
+        "ShapePenWidth": 2,
+        "TabOrder": 13,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 353,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjVect2",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 2,
+        "Height": 37,
+        "Left": 290,
+        "MaxValue": 1.0,
+        "NextControl": "EditFrestGasInjVect3",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjVect1",
+        "ShapePenWidth": 2,
+        "TabOrder": 14,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 353,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjVect3",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 3,
+        "Height": 37,
+        "Left": 416,
+        "MaxValue": 1.0,
+        "NextControl": "EditFrestGasInjVect4",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjVect2",
+        "ShapePenWidth": 2,
+        "TabOrder": 15,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 353,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjVect4",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 4,
+        "Height": 37,
+        "Left": 542,
+        "MaxValue": 1.0,
+        "NextControl": "EditFrestGasInjVect5",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjVect3",
+        "ShapePenWidth": 2,
+        "TabOrder": 16,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 353,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjVect5",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 5,
+        "Height": 37,
+        "Left": 668,
+        "MaxValue": 1.0,
+        "NextControl": "EditlFrestGasNormTemp",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjVect4",
+        "ShapePenWidth": 2,
+        "TabOrder": 17,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 353,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjBreak2",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 2,
+        "Height": 37,
+        "Left": 290,
+        "MaxValue": 30.0,
+        "MinValue": -30.0,
+        "NextControl": "EditFrestGasInjBreak3",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjBreak1",
+        "ShapePenWidth": 2,
+        "TabOrder": 8,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 277,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjBreak3",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 3,
+        "Height": 37,
+        "Left": 416,
+        "MaxValue": 30.0,
+        "MinValue": -30.0,
+        "NextControl": "EditFrestGasInjBreak4",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjBreak2",
+        "ShapePenWidth": 2,
+        "TabOrder": 9,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 277,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjBreak4",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 4,
+        "Height": 37,
+        "Left": 542,
+        "MaxValue": 30.0,
+        "MinValue": -30.0,
+        "NextControl": "EditFrestGasInjBreak5",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjBreak3",
+        "ShapePenWidth": 2,
+        "TabOrder": 10,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 277,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjBreak5",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 5,
+        "Height": 37,
+        "Left": 668,
+        "MaxValue": 30.0,
+        "MinValue": -30.0,
+        "NextControl": "EditFrestGasInjVect0",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjBreak4",
+        "ShapePenWidth": 2,
+        "TabOrder": 11,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 277,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjBreak0",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Height": 37,
+        "Left": 38,
+        "MaxValue": 30.0,
+        "MinValue": -30.0,
+        "NextControl": "EditFrestGasInjBreak1",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestRailPressCoeff",
+        "ShapePenWidth": 2,
+        "TabOrder": 6,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 277,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFrestGasInjBreak1",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "Cursor": "crHandPoint",
+        "DataIndex": 1,
+        "Height": 37,
+        "Left": 164,
+        "MaxValue": 30.0,
+        "MinValue": -30.0,
+        "NextControl": "EditFrestGasInjBreak2",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": "1e-06",
+        "PrevControl": "EditFrestGasInjBreak0",
+        "ShapePenWidth": 2,
+        "TabOrder": 7,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 277,
+        "Width": 126
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

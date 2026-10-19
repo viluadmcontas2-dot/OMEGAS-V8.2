@@ -1,0 +1,625 @@
+{
+  "aba": "TabTaratura",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabTaratura",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabTaratura",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Varie",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 9,
+        "OnShow": "TabTaraturaShow",
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabTaraturaShow",
+          "endereco": "0x4A9CD0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTempTaratura",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Temperatura acqua per autotaratura",
+        "Height": 39,
+        "Left": 38,
+        "Top": 73,
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelT3",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "°C",
+        "Height": 29,
+        "Left": 630,
+        "Top": 73,
+        "Width": 27
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelScartoMinFuoriMin",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Tolleranza t. inj. benzina",
+        "Height": 37,
+        "Left": 38,
+        "Top": 126,
+        "Visible": "False",
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelU0",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 29,
+        "Left": 630,
+        "Top": 126,
+        "Visible": "False",
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelScartoMinAlMin",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Spostamento dal t. inj. benzina nominale",
+        "Height": 34,
+        "Left": 38,
+        "Top": 179,
+        "Visible": "False",
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelU1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 29,
+        "Left": 630,
+        "Top": 179,
+        "Visible": "False",
+        "Width": 34
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTInjDefault",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Tempi di iniezione di default a 3000 giri (ms)",
+        "Height": 41,
+        "Left": 38,
+        "Top": 233,
+        "Visible": "False",
+        "Width": 689
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelGiriAutotaratura",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Giri per autotaratura",
+        "Height": 42,
+        "Left": 38,
+        "Top": 20,
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabGiriAutotaratura",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "rpm",
+        "Height": 29,
+        "Left": 630,
+        "Top": 20,
+        "Width": 45
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelDeltaK",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Variazione coefficienti k per autotaratura",
+        "Height": 36,
+        "Left": 38,
+        "Top": 400,
+        "Visible": "False",
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelNumControlli",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Numero controlli di tolleranza",
+        "Height": 34,
+        "Left": 38,
+        "Top": 445,
+        "Visible": "False",
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelNumControlliOk",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Numero controlli di tolleranza corretta",
+        "Height": 42,
+        "Left": 38,
+        "Top": 485,
+        "Visible": "False",
+        "Width": 498
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditTempTaratura",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 3,
+        "MaxValue": 80.0,
+        "MinValue": 20.0,
+        "NextControl": "EditScartoMinFuoriMin",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditGiriAutotaratura",
+        "ShapePenWidth": 2,
+        "TabOrder": 1,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 63,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditScartoMinFuoriMin",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 5,
+        "MaxValue": 1.0,
+        "MinValue": 0.02,
+        "NextControl": "EditScartoMinAlMin",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditScartoMinFuoriMinKeyPress",
+        "Precision": 0.02,
+        "PrevControl": "EditTempTaratura",
+        "ShapePenWidth": 2,
+        "TabOrder": 2,
+        "Text": "0",
+        "Top": 116,
+        "Visible": "False",
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditScartoMinFuoriMinKeyPress",
+          "endereco": "0x4BA1E8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditScartoMinAlMin",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 5,
+        "MaxValue": 1.0,
+        "NextControl": "DrawGridTInjDefault",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.02,
+        "PrevControl": "EditScartoMinFuoriMin",
+        "ShapePenWidth": 2,
+        "TabOrder": 3,
+        "Text": "0",
+        "Top": 169,
+        "Visible": "False",
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditGiriAutotaratura",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 4,
+        "MaxValue": 3500.0,
+        "MinValue": 500.0,
+        "NextControl": "EditTempTaratura",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditNumControlliOk",
+        "ShapePenWidth": 2,
+        "TabOrder": 0,
+        "Tag": 1,
+        "Text": "3000",
+        "Top": 10,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditDeltaK",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 2,
+        "MaxValue": 2.0,
+        "MinValue": 1.0,
+        "NextControl": "EditNumControlli",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 5,
+        "Text": "1",
+        "Top": 397,
+        "Visible": "False",
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditNumControlli",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 1,
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 2,
+        "MaxValue": 10.0,
+        "MinValue": 1.0,
+        "NextControl": "EditNumControlliOk",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditDeltaK",
+        "ShapePenWidth": 2,
+        "TabOrder": 6,
+        "Text": "5",
+        "Top": 439,
+        "Visible": "False",
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditNumControlliOk",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 2,
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 2,
+        "MaxValue": 10.0,
+        "MinValue": 1.0,
+        "NextControl": "EditGiriAutotaratura",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditNumControlli",
+        "ShapePenWidth": 2,
+        "TabOrder": 7,
+        "Text": "2",
+        "Top": 482,
+        "Visible": "False",
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "DrawGridTInjDefault",
+      "classe": "TDrawGrid",
+      "propriedades": {
+        "ColCount": 9,
+        "Cursor": "crHandPoint",
+        "DefaultColWidth": 69,
+        "DefaultRowHeight": 30,
+        "FixedColor": 10158080,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 97,
+        "Left": 38,
+        "OnDblClick": "DrawGridTInjDefaultDblClick",
+        "OnDrawCell": "DrawGridTInjDefaultDrawCell",
+        "OnKeyDown": "DrawGridKKeyDown",
+        "OnKeyPress": "DrawGridTInjDefaultKeyPress",
+        "ParentFont": "False",
+        "RowCount": 3,
+        "ScrollBars": "ssNone",
+        "TabOrder": 4,
+        "Top": 275,
+        "Visible": "False",
+        "Width": 634
+      },
+      "eventos": [
+        {
+          "evento": "OnDblClick",
+          "handler": "DrawGridTInjDefaultDblClick",
+          "endereco": "0x4B6868",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnDrawCell",
+          "handler": "DrawGridTInjDefaultDrawCell",
+          "endereco": "0x4B64A0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyDown",
+          "handler": "DrawGridKKeyDown",
+          "endereco": "0x4B2514",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "DrawGridTInjDefaultKeyPress",
+          "endereco": "0x4B68CC",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

@@ -1,0 +1,1584 @@
+{
+  "aba": "TabBenzina",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabBenzina",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabBenzina",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Gas/benzina",
+        "ImageIndex": 13,
+        "OnShow": "TabBenzinaShow",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabBenzinaShow",
+          "endereco": "0x4BF004",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ScrollBox1",
+      "classe": "TScrollBox",
+      "propriedades": {
+        "Align": "alClient",
+        "BorderStyle": "bsNone",
+        "Ctl3D": "True",
+        "Height": 729,
+        "Left": 0,
+        "ParentCtl3D": "False",
+        "TabOrder": 0,
+        "Top": 0,
+        "VertScrollBar.Position": 411,
+        "Width": 994
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCoeffSplitFuel",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "(0-25%)",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 15,
+        "ParentFont": "False",
+        "Top": 87,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 71
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelRifSplitFuel",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "(bar)",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 15,
+        "ParentFont": "False",
+        "Top": 52,
+        "Visible": "False",
+        "Width": 45
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabRpmForSplitFuel",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "rpm",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 752,
+        "ParentFont": "False",
+        "Top": 14,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 37
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelRpmForSplitFuel",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "RPM per attivazione split fuel",
+        "Color": 14671839,
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -20,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 379,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "Top": 16,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 276
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "GroupMinimoBenzina",
+      "classe": "TGroupBox",
+      "propriedades": {
+        "Caption": "Funzionamento al minimo",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 148,
+        "Left": 4,
+        "ParentFont": "False",
+        "TabOrder": 0,
+        "Top": -330,
+        "Width": 788
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelGiriMinimoPerBenzina",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Giri per identificazione del minimo",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 25,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 73,
+        "Visible": "False",
+        "Width": 340
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabGiriMinimoPerBenzina",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "rpm",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 592,
+        "ParentFont": "False",
+        "Top": 73,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 40
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelIniettate",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Num inj min",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 25,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 110,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 118
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelUscita",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Progress",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 574,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 110,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 92
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelIniettateCutoff",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Num inj exit cutoff",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 265,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 110,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 182
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioGas",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "Gas",
+        "Checked": "True",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Height": 32,
+        "Left": 20,
+        "OnClick": "RadioGasClick",
+        "OnMouseDown": "ControlMouseDown",
+        "TabOrder": 0,
+        "TabStop": "True",
+        "Top": 29,
+        "Width": 183
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioGasClick",
+          "endereco": "0x4BFAD8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditGiriMinimoPerBenzina",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 498,
+        "MaxLength": 4,
+        "MaxValue": 2000.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditGiriMinimoPerBenzinaKeyPress",
+        "Precision": 1.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 3,
+        "Text": "1100",
+        "Top": 66,
+        "Visible": "False",
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditGiriMinimoPerBenzinaKeyPress",
+          "endereco": "0x4BFE6C",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioBenzina",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "Benzina",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Height": 32,
+        "Left": 524,
+        "OnClick": "RadioGasClick",
+        "OnMouseDown": "ControlMouseDown",
+        "TabOrder": 2,
+        "Tag": 2,
+        "Top": 29,
+        "Width": 254
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioGasClick",
+          "endereco": "0x4BFAD8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioRientro",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "Rientro a benzina",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Height": 32,
+        "Left": 212,
+        "OnClick": "RadioGasClick",
+        "OnMouseDown": "ControlMouseDown",
+        "TabOrder": 1,
+        "Tag": 1,
+        "Top": 29,
+        "Width": 304
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioGasClick",
+          "endereco": "0x4BFAD8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditIniettate",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 176,
+        "MaxLength": 2,
+        "MaxValue": 50.0,
+        "NextControl": "EditIniettateCutoff",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "ParentFont": "False",
+        "Precision": 1.0,
+        "PrevControl": "EditGiriMinimoPerBenzina",
+        "ShapePenWidth": 2,
+        "TabOrder": 4,
+        "Text": "20",
+        "Top": 104,
+        "Visible": "False",
+        "Width": 79
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditUscita",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 1,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 693,
+        "MaxLength": 2,
+        "MaxValue": 10.0,
+        "NextControl": "EditGiriMinimoPerBenzina",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "ParentFont": "False",
+        "Precision": 1.0,
+        "PrevControl": "EditIniettate",
+        "ShapePenWidth": 2,
+        "TabOrder": 6,
+        "Text": "5",
+        "Top": 102,
+        "Visible": "False",
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditIniettateCutoff",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 485,
+        "MaxLength": 2,
+        "MaxValue": 50.0,
+        "NextControl": "EditUscita",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "ParentFont": "False",
+        "Precision": 1.0,
+        "PrevControl": "EditIniettate",
+        "ShapePenWidth": 2,
+        "TabOrder": 5,
+        "Text": "0",
+        "Top": 104,
+        "Visible": "False",
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckParzializza",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Contributo automatico benzina ad alti giri",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 30,
+        "Left": 34,
+        "OnClick": "CheckParzializzaClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "OnMouseDown": "ControlMouseDown",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 1,
+        "Top": -368,
+        "Width": 754
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckParzializzaClick",
+          "endereco": "0x4BFAA0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "GroupAltiGiriBenzina",
+      "classe": "TGroupBox",
+      "propriedades": {
+        "Caption": "Funzionamento ad alti giri",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 183,
+        "Left": 4,
+        "ParentFont": "False",
+        "TabOrder": 2,
+        "Top": -179,
+        "Width": 788
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelGiriPerBenzina",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Giri per funzionamento benzina",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 25,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 71,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 315
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTempiBenzina",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Tempo di iniezione per funz. benzina",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 25,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 108,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 367
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabGiriPerBenzina",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "rpm",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 715,
+        "ParentFont": "False",
+        "Top": 71,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 40
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabTempiBenzina",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 586,
+        "ParentFont": "False",
+        "Top": 108,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 31
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabTempoBenzina1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 586,
+        "ParentFont": "False",
+        "Top": 146,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 31
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTempoBenzina1",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Valore di contributo benzina",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 25,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 146,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 281
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ShapeBenzina",
+      "classe": "TShape",
+      "propriedades": {
+        "Brush.Color": "clSilver",
+        "Height": 31,
+        "Left": 736,
+        "Shape": "stCircle",
+        "Top": 29,
+        "Visible": "False",
+        "Width": 32
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelRpmRangeStop",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "a",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 586,
+        "ParentFont": "False",
+        "Top": 71,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 12
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelRpmRangeStart",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "da",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 465,
+        "ParentFont": "False",
+        "Top": 71,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 25
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioGasAltiGiri",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "Gas",
+        "Checked": "True",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Height": 31,
+        "Left": 20,
+        "OnClick": "RadioGasAltiGiriClick",
+        "OnMouseDown": "ControlMouseDown",
+        "TabOrder": 0,
+        "TabStop": "True",
+        "Top": 29,
+        "Width": 183
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioGasAltiGiriClick",
+          "endereco": "0x4BFEF4",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioBenzinaAltiGiri",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "Benzina",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Height": 31,
+        "Left": 524,
+        "OnClick": "RadioGasAltiGiriClick",
+        "OnMouseDown": "ControlMouseDown",
+        "TabOrder": 2,
+        "Tag": 1,
+        "Top": 29,
+        "Width": 203
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioGasAltiGiriClick",
+          "endereco": "0x4BFEF4",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditTempoBenzina3",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 498,
+        "MaxLength": 5,
+        "MaxValue": 30.0,
+        "NextControl": "EditTempoBenzina1",
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditTempoBenzinaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditGiriPerBenzina",
+        "ShapePenWidth": 2,
+        "TabOrder": 5,
+        "Tag": 3,
+        "Text": "15",
+        "Top": 101,
+        "Visible": "False",
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditTempoBenzinaKeyPress",
+          "endereco": "0x4C0570",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditGiriPerBenzina",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 498,
+        "MaxLength": 4,
+        "MaxValue": 9000.0,
+        "MinValue": 100.0,
+        "NextControl": "EditGiriSupBenzina",
+        "OnKeyPress": "EditGiriPerBenzinaKeyPress",
+        "Precision": 1.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 3,
+        "Tag": 1,
+        "Text": "9000",
+        "Top": 64,
+        "Visible": "False",
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditGiriPerBenzinaKeyPress",
+          "endereco": "0x4C04E8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditTempoBenzina1",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 498,
+        "MaxLength": 5,
+        "MaxValue": 30.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditTempoBenzinaKeyPress",
+        "Precision": 0.01,
+        "PrevControl": "EditTempoBenzina3",
+        "ShapePenWidth": 2,
+        "TabOrder": 6,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 139,
+        "Visible": "False",
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditTempoBenzinaKeyPress",
+          "endereco": "0x4C0570",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioContributoAltiGiri",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "Contributo benzina",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Height": 31,
+        "Left": 212,
+        "OnClick": "RadioGasAltiGiriClick",
+        "OnMouseDown": "ControlMouseDown",
+        "TabOrder": 1,
+        "Tag": 2,
+        "Top": 29,
+        "Width": 304
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioGasAltiGiriClick",
+          "endereco": "0x4BFEF4",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditGiriSupBenzina",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 625,
+        "MaxLength": 4,
+        "MaxValue": 9000.0,
+        "MinValue": 100.0,
+        "NextControl": "EditTempoBenzina3",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditGiriPerBenzina",
+        "ShapePenWidth": 2,
+        "TabOrder": 4,
+        "Tag": 1,
+        "Text": "9000",
+        "Top": 64,
+        "Visible": "False",
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditRpmForSplitFuel",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 37,
+        "Left": 667,
+        "MaxLength": 5,
+        "MaxValue": 8000.0,
+        "MinValue": 400.0,
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "ParentFont": "False",
+        "Precision": 1.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 3,
+        "Tag": 1,
+        "Text": "500",
+        "Top": 8,
+        "Visible": "False",
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "DrawGridSplitFuel",
+      "classe": "TDrawGrid",
+      "propriedades": {
+        "ColCount": 10,
+        "Cursor": "crHandPoint",
+        "DefaultColWidth": 68,
+        "DefaultRowHeight": 31,
+        "FixedColor": 10158080,
+        "FixedCols": 0,
+        "FixedRows": 0,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 68,
+        "Left": 96,
+        "OnDblClick": "DrawGridSplitFuelDblClick",
+        "OnDrawCell": "DrawGridSplitFuelDrawCell",
+        "OnKeyDown": "DrawGridKKeyDown",
+        "OnKeyPress": "DrawGridSplitFuelKeyPress",
+        "ParentFont": "False",
+        "RowCount": 2,
+        "ScrollBars": "ssNone",
+        "TabOrder": 4,
+        "Top": 50,
+        "Visible": "False",
+        "Width": 694
+      },
+      "eventos": [
+        {
+          "evento": "OnDblClick",
+          "handler": "DrawGridSplitFuelDblClick",
+          "endereco": "0x4C2788",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnDrawCell",
+          "handler": "DrawGridSplitFuelDrawCell",
+          "endereco": "0x4C2420",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyDown",
+          "handler": "DrawGridKKeyDown",
+          "endereco": "0x4B2514",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "DrawGridSplitFuelKeyPress",
+          "endereco": "0x4C27EC",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckIstantaneo",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Passaggio benzina gas in modo sequenziale",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 30,
+        "Left": 34,
+        "OnClick": "CheckIstantaneoClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "TabOrder": 5,
+        "Top": -398,
+        "Width": 754
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckIstantaneoClick",
+          "endereco": "0x4BFA68",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckSplitFuel",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Abilita split fuel",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 30,
+        "Left": 34,
+        "OnClick": "CheckSplitFuelClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "OnMouseDown": "ControlMouseDown",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 6,
+        "Top": 12,
+        "Visible": "False",
+        "Width": 256
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckSplitFuelClick",
+          "endereco": "0x4C1C64",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "StrategiaPandaUI1",
+      "classe": "TStrategiaPandaUI",
+      "propriedades": {
+        "AlignWithMargins": "True",
+        "ExplicitHeight": 610,
+        "ExplicitLeft": 4,
+        "ExplicitTop": 119,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -11,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 610,
+        "Left": 4,
+        "Margins.Bottom": 0,
+        "Margins.Left": 0,
+        "Margins.Right": 0,
+        "Margins.Top": 0,
+        "ParentFont": "False",
+        "TabOrder": 7,
+        "Top": 119,
+        "Width": 788
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelBackground",
+      "classe": "TGroupBox",
+      "propriedades": {},
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaInnescoGiri",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaInnescoTInj",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaInnescoMAP",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaDisinnescoGiri",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaDisinnescoTInj",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaDisinnescoMAP",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_TempoInterventoEmulazione",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_ValoreDiEmulazioneSensPress",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaMAPperEmulazioneContinuativa",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaAriaCondizionataON",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "edit_SP_SogliaInnescoGiri"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaInnescoGiri_CO",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "_CO"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaInnescoTInj_CO",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "_CO"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaInnescoMAP_CO",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "_CO"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaDisinnescoGiri_CO",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "_CO"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaDisinnescoTInj_CO",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "_CO"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaDisinnescoMAP_CO",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "_CO"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_TempoInterventoEmulazione_CO",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "_CO"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "edit_SP_SogliaMAPperEmulazioneContinuativa_CO",
+      "classe": "TValueEditEx",
+      "propriedades": {
+        "EditLabel.Caption": "_CO"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

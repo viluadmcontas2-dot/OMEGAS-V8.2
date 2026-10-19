@@ -1,0 +1,198 @@
+{
+  "aba": "TabConsumometro",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabConsumometro",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabConsumometro",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Consume meter",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 16,
+        "OnShow": "TabConsumometroShow",
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabConsumometroShow",
+          "endereco": "0x4C1044",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelLitriSerbatoio",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Litri serbatoio (80%)",
+        "Height": 29,
+        "Left": 38,
+        "Top": 232,
+        "Width": 228
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabLitriSerbatoio",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "litri",
+        "Height": 29,
+        "Left": 635,
+        "Top": 233,
+        "Width": 38
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTagliaIniettori",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Taglia iniettori",
+        "Height": 29,
+        "Left": 38,
+        "Top": 151,
+        "Width": 164
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckConsumometro",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Attiva consumometro (solo GPL)",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -24,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 41,
+        "Left": 38,
+        "OnClick": "CheckConsumometroClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentFont": "False",
+        "TabOrder": 0,
+        "Top": 66,
+        "Width": 654
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckConsumometroClick",
+          "endereco": "0x4C1108",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditLitriSerbatoio",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "Left": 548,
+        "MaxLength": 3,
+        "MaxValue": 250.0,
+        "MinValue": 20.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 1.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 2,
+        "Tag": 1,
+        "Text": "45",
+        "Top": 227,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ComboTagliaIniettori",
+      "classe": "TKeyComboBox",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 37,
+        "ItemIndex": 1,
+        "Items.Strings": "('Small', 'Medium', 'Large')",
+        "Left": 548,
+        "OnKeyPress": "ComboTagliaIniettoriKeyPress",
+        "ShapePenWidth": 2,
+        "Style": "csDropDownList",
+        "TabOrder": 1,
+        "Text": "Medium",
+        "Top": 141,
+        "Width": 159
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "ComboTagliaIniettoriKeyPress",
+          "endereco": "0x4C1138",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

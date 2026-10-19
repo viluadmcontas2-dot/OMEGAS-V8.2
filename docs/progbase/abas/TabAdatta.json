@@ -1,0 +1,2333 @@
+{
+  "aba": "TabAdatta",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabAdatta",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabAdatta",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Adattività OBD",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "ImageIndex": 12,
+        "OnShow": "TabAdattaShow",
+        "ParentFont": "False",
+        "TabVisible": "False"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabAdattaShow",
+          "endereco": "0x4C0854",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "BevelObd",
+      "classe": "TBevel",
+      "propriedades": {
+        "Height": 264,
+        "Left": 20,
+        "Shape": "bsFrame",
+        "Top": 10,
+        "Width": 800
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageObdOk",
+      "classe": "TImage",
+      "propriedades": {
+        "Center": "True",
+        "Height": 40,
+        "Left": 760,
+        "Picture.Data": "<binary 3138B 07544269746d6170360c0000424d360c0000000000003600…>",
+        "Top": 13,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 40
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageObdKo",
+      "classe": "TImage",
+      "propriedades": {
+        "Center": "True",
+        "Height": 40,
+        "Left": 760,
+        "Picture.Data": "<binary 3138B 07544269746d6170360c0000424d360c0000000000003600…>",
+        "Top": 13,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 40
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ImageObdInfo",
+      "classe": "TImage",
+      "propriedades": {
+        "Center": "True",
+        "Height": 40,
+        "Left": 760,
+        "Picture.Data": "<binary 3138B 07544269746d6170360c0000424d360c0000000000003600…>",
+        "Top": 13,
+        "Transparent": "True",
+        "Visible": "False",
+        "Width": 40
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTipoObd",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Tipo connessione OBD",
+        "CustomHint": "BalloonHint",
+        "Height": 24,
+        "Left": 38,
+        "OnMouseDown": "ControlMouseDown",
+        "Top": 20,
+        "Width": 232
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckAdattaBenzina",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Adattività con mappa benzina",
+        "Cursor": "crHandPoint",
+        "Enabled": "False",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 31,
+        "Left": 360,
+        "OnClick": "CheckAdattaBenzinaClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentFont": "False",
+        "TabOrder": 7,
+        "Top": 179,
+        "Visible": "False",
+        "Width": 449
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckAdattaBenzinaClick",
+          "endereco": "0x4C0E34",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckAdattativita",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Adattività OBD",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 31,
+        "Left": 38,
+        "OnClick": "CheckAdattativitaClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "TabOrder": 6,
+        "Top": 179,
+        "Width": 316
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckAdattativitaClick",
+          "endereco": "0x4C0D50",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelAdatta",
+      "classe": "TPanel",
+      "propriedades": {
+        "BevelInner": "bvLowered",
+        "Color": "cl3DLight",
+        "Height": 324,
+        "Left": 19,
+        "ParentBackground": "False",
+        "TabOrder": 9,
+        "Top": 279,
+        "Visible": "False",
+        "Width": 580
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelMappaBenzina",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Mappa target benzina [ms]",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 14,
+        "ParentFont": "False",
+        "Top": 6,
+        "Width": 268
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelKi",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Ki",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 62,
+        "ParentFont": "False",
+        "Top": 291,
+        "Width": 20
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabKi",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 236,
+        "ParentFont": "False",
+        "Top": 291,
+        "Transparent": "True",
+        "Width": 17
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelKp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Kp",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 345,
+        "ParentFont": "False",
+        "Top": 291,
+        "Width": 28
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabKp",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 608,
+        "ParentFont": "False",
+        "Top": 317,
+        "Transparent": "True",
+        "Width": 17
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditKi",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 32,
+        "Left": 137,
+        "MaxLength": 4,
+        "MaxValue": 10.0,
+        "MinValue": 0.01,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 0,
+        "Text": "1",
+        "Top": 286,
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditKp",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 1,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 32,
+        "Left": 422,
+        "MaxLength": 4,
+        "MaxValue": 10.0,
+        "MinValue": 0.01,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "ParentFont": "False",
+        "Precision": 0.01,
+        "ShapePenWidth": 2,
+        "TabOrder": 1,
+        "Text": "0,3",
+        "Top": 286,
+        "Width": 78
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "DrawGridBenzina",
+      "classe": "TDrawGrid",
+      "propriedades": {
+        "ColCount": 9,
+        "Cursor": "crHandPoint",
+        "DefaultColWidth": 60,
+        "DefaultRowHeight": 26,
+        "FixedColor": 10158080,
+        "FixedCols": 0,
+        "FixedRows": 0,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 247,
+        "Left": 14,
+        "OnDblClick": "DrawGridBenzinaDblClick",
+        "OnDrawCell": "DrawGridBenzinaDrawCell",
+        "OnKeyDown": "DrawGridKKeyDown",
+        "OnKeyPress": "DrawGridBenzinaKeyPress",
+        "ParentFont": "False",
+        "RowCount": 9,
+        "ScrollBars": "ssNone",
+        "TabOrder": 2,
+        "Top": 34,
+        "Width": 553
+      },
+      "eventos": [
+        {
+          "evento": "OnDblClick",
+          "handler": "DrawGridBenzinaDblClick",
+          "endereco": "0x4C157C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnDrawCell",
+          "handler": "DrawGridBenzinaDrawCell",
+          "endereco": "0x4C11B8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyDown",
+          "handler": "DrawGridKKeyDown",
+          "endereco": "0x4B2514",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "DrawGridBenzinaKeyPress",
+          "endereco": "0x4C15E0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelAdattaObd",
+      "classe": "TPanel",
+      "propriedades": {
+        "BevelInner": "bvRaised",
+        "BevelOuter": "bvLowered",
+        "Color": "cl3DLight",
+        "Height": 324,
+        "Left": 20,
+        "ParentBackground": "False",
+        "TabOrder": 8,
+        "Top": 280,
+        "Visible": "False",
+        "Width": 580
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelTipoCorrettori",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Tipo correttori BENZINA",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 40,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 10,
+        "Width": 238
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSensAdatta",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Sensibilità adattività",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 40,
+        "OnMouseDown": "ControlMouseDown",
+        "ParentFont": "False",
+        "Top": 176,
+        "Width": 202
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabSensAdatta",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 546,
+        "ParentFont": "False",
+        "Top": 175,
+        "Transparent": "True",
+        "Width": 17
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCorrettoriGas",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Correttori GAS (lenti)",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 40,
+        "ParentFont": "False",
+        "Top": 261,
+        "Visible": "False",
+        "Width": 209
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCorrMinimo",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "MINIMO",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 310,
+        "ParentFont": "False",
+        "Top": 250,
+        "Visible": "False",
+        "Width": 74
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelCorrFuoriMinimo",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "FUORI MINIMO",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 310,
+        "ParentFont": "False",
+        "Top": 281,
+        "Visible": "False",
+        "Width": 143
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCorrMinimo",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 508,
+        "ParentFont": "False",
+        "Top": 250,
+        "Visible": "False",
+        "Width": 29
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabCorrFuoriMinimo",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "Caption": "0%",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Left": 508,
+        "ParentFont": "False",
+        "Top": 281,
+        "Visible": "False",
+        "Width": 29
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSogliaAdatta",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "Soglia per attivazione adattività",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 24,
+        "Layout": "tlCenter",
+        "Left": 40,
+        "ParentFont": "False",
+        "Top": 209,
+        "Transparent": "True",
+        "Width": 316
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelTipoCorr1",
+      "classe": "TPanel",
+      "propriedades": {
+        "BevelOuter": "bvNone",
+        "Color": "cl3DLight",
+        "Height": 130,
+        "Left": 340,
+        "TabOrder": 1,
+        "Top": 36,
+        "Visible": "False",
+        "Width": 160
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioAdatta25",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "max ±25%",
+        "Checked": "True",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 22,
+        "Left": 5,
+        "OnClick": "RadioAdatta25Click",
+        "ParentFont": "False",
+        "TabOrder": 0,
+        "TabStop": "True",
+        "Top": 5,
+        "Width": 259
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioAdatta25Click",
+          "endereco": "0x4C05F0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioAdatta50",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "max ±50%",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "RadioAdatta25Click",
+        "ParentFont": "False",
+        "TabOrder": 1,
+        "Tag": 1,
+        "Top": 38,
+        "Visible": "False",
+        "Width": 259
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioAdatta25Click",
+          "endereco": "0x4C05F0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioAdatta100",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "max ±100%",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "RadioAdatta25Click",
+        "ParentFont": "False",
+        "TabOrder": 2,
+        "Tag": 2,
+        "Top": 70,
+        "Width": 259
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioAdatta25Click",
+          "endereco": "0x4C05F0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelTipoCorr2",
+      "classe": "TPanel",
+      "propriedades": {
+        "BevelOuter": "bvNone",
+        "Color": "cl3DLight",
+        "Height": 130,
+        "Left": 30,
+        "TabOrder": 0,
+        "Top": 36,
+        "Width": 250
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelAdattaNota1",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "se carburazione magra allora correttori positivi",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -13,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 32,
+        "Left": 30,
+        "ParentFont": "False",
+        "Top": 26,
+        "Width": 200,
+        "WordWrap": "True"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelAdattaNota2",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "se carburazione magra allora correttori negativi",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -13,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 32,
+        "Left": 30,
+        "ParentFont": "False",
+        "Top": 91,
+        "Width": 200,
+        "WordWrap": "True"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioAdattaDiritti",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "diritti",
+        "Checked": "True",
+        "Cursor": "crHandPoint",
+        "Height": 22,
+        "Left": 10,
+        "OnClick": "RadioAdattaDirittiClick",
+        "TabOrder": 0,
+        "TabStop": "True",
+        "Top": 5,
+        "Width": 249
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioAdattaDirittiClick",
+          "endereco": "0x4C06EC",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "RadioAdattaInvertiti",
+      "classe": "TRadioButton",
+      "propriedades": {
+        "Caption": "invertiti",
+        "Cursor": "crHandPoint",
+        "Height": 21,
+        "Left": 10,
+        "OnClick": "RadioAdattaDirittiClick",
+        "TabOrder": 1,
+        "Tag": 1,
+        "Top": 70,
+        "Width": 252
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "RadioAdattaDirittiClick",
+          "endereco": "0x4C06EC",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSensAdatta",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 32,
+        "Left": 460,
+        "MaxLength": 4,
+        "MaxValue": 200.0,
+        "MinValue": 100.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditSensAdattaKeyPress",
+        "ParentFont": "False",
+        "Precision": 1.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 2,
+        "Text": "100",
+        "Top": 171,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditSensAdattaKeyPress",
+          "endereco": "0x4C07D0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSogliaAdatta",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 32,
+        "Left": 460,
+        "MaxLength": 3,
+        "MaxValue": 10.0,
+        "OnEnter": "EditGiriCambioEnter",
+        "OnExit": "EditGiriCambioExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "ParentFont": "False",
+        "Precision": 1.0,
+        "ShapePenWidth": 2,
+        "TabOrder": 3,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 206,
+        "Width": 76
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriCambioEnter",
+          "endereco": "0x4A98D8",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriCambioExit",
+          "endereco": "0x4A9CC0",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ComboTipoObd",
+      "classe": "TKeyComboBox",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DropDownCount": 10,
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": "clRed",
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 32,
+        "ItemIndex": 0,
+        "Items.Strings": "('Auto', '1: ISO9141-2', '2: KWP-2000 Fast Init', '3: KWP-2000 Slow Init', '6: CAN Standard 250 kbps', '7: CAN Extended 250 kbps', '8: CAN Standard 500 kbps', '9: CAN Extended 500 kbps', 'None')",
+        "Left": 380,
+        "OnKeyPress": "ComboTipoObdKeyPress",
+        "ParentFont": "False",
+        "ShapePenWidth": 2,
+        "Style": "csDropDownList",
+        "TabOrder": 0,
+        "Text": "Auto",
+        "Top": 17,
+        "Width": 364
+      },
+      "eventos": [
+        {
+          "evento": "OnKeyPress",
+          "handler": "ComboTipoObdKeyPress",
+          "endereco": "0x4C0F18",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckAzzeraErroriObd",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Reset errori OBD",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 31,
+        "Left": 38,
+        "OnClick": "CheckAzzeraErroriObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "OnMouseDown": "ControlMouseDown",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 2,
+        "Top": 86,
+        "Width": 476
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckAzzeraErroriObdClick",
+          "endereco": "0x4C1AAC",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckAzzeraBlackListObd",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Reset selettivo errori OBD",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 31,
+        "Left": 38,
+        "OnClick": "CheckAzzeraBlackListObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 1,
+        "Top": 55,
+        "Width": 476
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckAzzeraBlackListObdClick",
+          "endereco": "0x4C1ADC",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckOutDiagInfoSuKLine",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Output high-level on k-line during diagnostic error",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 31,
+        "Left": 38,
+        "OnClick": "CheckOutDiagInfoSuKLineClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 3,
+        "Top": 117,
+        "Visible": "False",
+        "Width": 537
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckOutDiagInfoSuKLineClick",
+          "endereco": "0x4C1B74",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckPetrolObdConnection",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Connessione obd in funzionameno benzina",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 62,
+        "Left": 520,
+        "OnClick": "CheckPetrolObdConnectionClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 5,
+        "Top": 55,
+        "Width": 289,
+        "WordWrap": "True"
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckPetrolObdConnectionClick",
+          "endereco": "0x4C1B0C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "PanelListObd",
+      "classe": "TPanel",
+      "propriedades": {
+        "BevelInner": "bvRaised",
+        "BevelOuter": "bvLowered",
+        "Color": "cl3DLight",
+        "Ctl3D": "False",
+        "Height": 323,
+        "Left": 617,
+        "ParentBackground": "False",
+        "ParentCtl3D": "False",
+        "TabOrder": 10,
+        "Top": 280,
+        "Visible": "False",
+        "Width": 203
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelListObdTitle",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taCenter",
+        "AutoSize": "False",
+        "Caption": "Lista dei parametri OBD da visualizzare",
+        "Color": "cl3DLight",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 52,
+        "Left": 0,
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "Top": 10,
+        "Transparent": "True",
+        "Width": 203,
+        "WordWrap": "True"
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "BevelListObd",
+      "classe": "TBevel",
+      "propriedades": {
+        "Height": 10,
+        "Left": 2,
+        "Shape": "bsTopLine",
+        "Top": 70,
+        "Width": 199
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "ScrollObd",
+      "classe": "TScrollBox",
+      "propriedades": {
+        "Align": "alBottom",
+        "AutoScroll": "False",
+        "BorderStyle": "bsNone",
+        "Height": 242,
+        "Left": 2,
+        "TabOrder": 0,
+        "Top": 79,
+        "VertScrollBar.Range": 660,
+        "Width": 199
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelObd05",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Engine coolant temp.",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 5,
+        "Top": 21,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label5",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Map pressure",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 11,
+        "Top": 71,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label6",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Engine RPM",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 12,
+        "Top": 121,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label7",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Lambda 1 bank 1",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 20,
+        "Top": 171,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label8",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Lambda 2 bank 1",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 21,
+        "Top": 221,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label9",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Lambda 1 bank 2",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 24,
+        "Top": 271,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label10",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Lambda 2 bank 2",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 25,
+        "Top": 321,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label11",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Uego lambda 1 bank 1",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 52,
+        "Top": 371,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label12",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Uego lambda 1 bank 2",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 56,
+        "Top": 421,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label13",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Fast 2 trim bank 1",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 85,
+        "Top": 471,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label14",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Slow 2 trim bank 1",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 86,
+        "Top": 521,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label15",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Fast 2 trim bank 2",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 87,
+        "Top": 571,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "Label16",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Slow 2 trim bank 2",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -17,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[]",
+        "Height": 21,
+        "Left": 5,
+        "ParentFont": "False",
+        "Tag": 88,
+        "Top": 621,
+        "Width": 180
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckObd05",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x05",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 0,
+        "Tag": 5,
+        "Top": 0,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox2",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x0B",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 1,
+        "Tag": 11,
+        "Top": 50,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox3",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x0C",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 2,
+        "Tag": 12,
+        "Top": 100,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox4",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x14",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 3,
+        "Tag": 20,
+        "Top": 150,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox5",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x15",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 4,
+        "Tag": 21,
+        "Top": 200,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox6",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x18",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 5,
+        "Tag": 24,
+        "Top": 250,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox7",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x19",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 6,
+        "Tag": 25,
+        "Top": 300,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox8",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x34",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 7,
+        "Tag": 52,
+        "Top": 350,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox9",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x38",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 8,
+        "Tag": 56,
+        "Top": 400,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox10",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x55",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 9,
+        "Tag": 85,
+        "Top": 450,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox11",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x56",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 10,
+        "Tag": 86,
+        "Top": 500,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox12",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x57",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 3,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 11,
+        "Tag": 87,
+        "Top": 550,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBox13",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Alignment": "taLeftJustify",
+        "Caption": "PID 0x58",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -19,
+        "Font.Name": "Tahoma",
+        "Font.Style": "[fsBold]",
+        "Height": 21,
+        "Left": 5,
+        "OnClick": "CheckObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 12,
+        "Tag": 88,
+        "Top": 600,
+        "Width": 160
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckObdClick",
+          "endereco": "0x4CAE4C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckUsaCanPerObd",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Usa CAN per OBD",
+        "Checked": "True",
+        "Cursor": "crHandPoint",
+        "CustomHint": "BalloonHint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 31,
+        "Left": 580,
+        "OnClick": "CheckUsaCanPerObdClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentFont": "False",
+        "State": "cbChecked",
+        "TabOrder": 11,
+        "Top": 117,
+        "Width": 229
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckUsaCanPerObdClick",
+          "endereco": "0x4C1B3C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckDeleteErrorMotoreSpento",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "Cancellazione errori OBD a motore spento",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 31,
+        "Left": 38,
+        "OnClick": "CheckDeleteErrorMotoreSpentoClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 4,
+        "Top": 148,
+        "Visible": "False",
+        "Width": 771
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckDeleteErrorMotoreSpentoClick",
+          "endereco": "0x4C1BA4",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "CheckBoxEnDiagDtcPowertrain",
+      "classe": "TCheckBox",
+      "propriedades": {
+        "Caption": "En Diag DTC POWERTRAIN",
+        "Color": "cl3DLight",
+        "Cursor": "crHandPoint",
+        "Font.Charset": "DEFAULT_CHARSET",
+        "Font.Color": 10158080,
+        "Font.Height": -21,
+        "Font.Name": "Arial",
+        "Font.Style": "[fsBold]",
+        "Height": 31,
+        "Left": 38,
+        "OnClick": "CheckBoxEnDiagDtcPowertrainClick",
+        "OnKeyPress": "CheckTpsBlocKeyPress",
+        "ParentColor": "False",
+        "ParentFont": "False",
+        "TabOrder": 12,
+        "Top": 210,
+        "Visible": "False",
+        "Width": 771
+      },
+      "eventos": [
+        {
+          "evento": "OnClick",
+          "handler": "CheckBoxEnDiagDtcPowertrainClick",
+          "endereco": "0x4CB358",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "CheckTpsBlocKeyPress",
+          "endereco": "0x4A8928",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

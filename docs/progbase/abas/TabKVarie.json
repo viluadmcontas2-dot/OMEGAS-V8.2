@@ -1,0 +1,440 @@
+{
+  "aba": "TabKVarie",
+  "marca": "OBS-COD",
+  "evidence_id": "MAN-ABAS-B-TabKVarie",
+  "fonte": "DFM TFORMCONFIG + RTTI TFormConfig",
+  "controles": [
+    {
+      "nome": "TabKVarie",
+      "classe": "TTabSheet",
+      "propriedades": {
+        "Caption": "Smagrimento",
+        "ImageIndex": 6,
+        "OnShow": "TabKVarieShow"
+      },
+      "eventos": [
+        {
+          "evento": "OnShow",
+          "handler": "TabKVarieShow",
+          "endereco": "0x4B94C8",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelSogliaFS2",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Soglia t inj per intervento filtro",
+        "CustomHint": "BalloonHint",
+        "Height": 30,
+        "Left": 38,
+        "OnMouseDown": "ControlMouseDown",
+        "Top": 83,
+        "Width": 498
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelMsFS2",
+      "classe": "TLabel",
+      "propriedades": {
+        "Caption": "ms",
+        "Height": 24,
+        "Left": 630,
+        "Top": 83,
+        "Width": 28
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelKFiltro2",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "K filtro",
+        "Height": 31,
+        "Left": 38,
+        "Top": 45,
+        "Visible": "False",
+        "Width": 94
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelGiriBassi",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "AutoSize": "False",
+        "Caption": "fino a",
+        "Height": 31,
+        "Left": 454,
+        "Top": 21,
+        "Visible": "False",
+        "Width": 82
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelGiriAlti",
+      "classe": "TLabel",
+      "propriedades": {
+        "Alignment": "taRightJustify",
+        "AutoSize": "False",
+        "Caption": "oltre",
+        "Height": 31,
+        "Left": 625,
+        "Top": 21,
+        "Visible": "False",
+        "Width": 64
+      },
+      "eventos": [],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "LabelGiriKFiltro",
+      "classe": "TLabel",
+      "propriedades": {
+        "AutoSize": "False",
+        "Caption": "Giri per smagrimento (RPM)",
+        "CustomHint": "BalloonHint",
+        "Height": 31,
+        "Left": 38,
+        "OnMouseDown": "ControlMouseDown",
+        "Top": 11,
+        "Width": 417
+      },
+      "eventos": [
+        {
+          "evento": "OnMouseDown",
+          "handler": "ControlMouseDown",
+          "endereco": "0x4C6020",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditFiltro",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "DataIndex": 0,
+        "Height": 32,
+        "Left": 548,
+        "MaxLength": 3,
+        "MinValue": -30.0,
+        "NextControl": "EditGiriKFiltro",
+        "OnEnter": "EditFiltroEnter",
+        "OnExit": "EditFiltroExit",
+        "OnKeyPress": "EditFiltroKeyPress",
+        "Precision": 1.0,
+        "PrevControl": "EditGiriKFiltro",
+        "ShapePenWidth": 2,
+        "TabOrder": 5,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 73,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditFiltroEnter",
+          "endereco": "0x4BDFD4",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditFiltroExit",
+          "endereco": "0x4BE208",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditFiltroKeyPress",
+          "endereco": "0x4B9644",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditSogliaFS2",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 32,
+        "Left": 548,
+        "MaxLength": 5,
+        "MaxValue": 5.0,
+        "NextControl": "EditGiriKFiltro",
+        "OnEnter": "EditGiriKFiltroEnter",
+        "OnExit": "EditGiriKFiltroExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "Precision": 0.02,
+        "PrevControl": "EditKFiltroGiriAlti",
+        "ShapePenWidth": 2,
+        "TabOrder": 4,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 73,
+        "Visible": "False",
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriKFiltroEnter",
+          "endereco": "0x4BE90C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriKFiltroExit",
+          "endereco": "0x4BEABC",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditKFiltro",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 32,
+        "Left": 548,
+        "MaxLength": 3,
+        "MaxValue": 255.0,
+        "NextControl": "EditKFiltroGiriAlti",
+        "OnEnter": "EditGiriKFiltroEnter",
+        "OnExit": "EditGiriKFiltroExit",
+        "OnKeyPress": "EditKFiltroKeyPress",
+        "ParentShowHint": "False",
+        "Precision": 1.0,
+        "PrevControl": "EditGiriAltiKFiltro",
+        "ShapePenWidth": 2,
+        "ShowHint": "False",
+        "TabOrder": 2,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 35,
+        "Visible": "False",
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriKFiltroEnter",
+          "endereco": "0x4BE90C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriKFiltroExit",
+          "endereco": "0x4BEABC",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditKFiltroKeyPress",
+          "endereco": "0x4B95C0",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditGiriKFiltro",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 32,
+        "Left": 548,
+        "MaxLength": 5,
+        "MaxValue": 9000.0,
+        "NextControl": "EditGiriAltiKFiltro",
+        "OnEnter": "EditGiriKFiltroEnter",
+        "OnExit": "EditGiriKFiltroExit",
+        "OnKeyPress": "EditGiriKFiltroKeyPress",
+        "ParentShowHint": "False",
+        "Precision": 1.0,
+        "PrevControl": "EditSogliaFS2",
+        "ShapePenWidth": 2,
+        "ShowHint": "False",
+        "TabOrder": 0,
+        "Text": "0",
+        "Top": 1,
+        "Width": 72
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriKFiltroEnter",
+          "endereco": "0x4BE90C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriKFiltroExit",
+          "endereco": "0x4BEABC",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditGiriKFiltroKeyPress",
+          "endereco": "0x4BEB24",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditKFiltroGiriAlti",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 32,
+        "Left": 700,
+        "MaxLength": 3,
+        "MaxValue": 255.0,
+        "NextControl": "EditSogliaFS2",
+        "OnEnter": "EditGiriKFiltroEnter",
+        "OnExit": "EditGiriKFiltroExit",
+        "OnKeyPress": "EditRifLambdaKeyPress",
+        "ParentShowHint": "False",
+        "Precision": 1.0,
+        "PrevControl": "EditKFiltro",
+        "ShapePenWidth": 2,
+        "ShowHint": "False",
+        "TabOrder": 3,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 35,
+        "Visible": "False",
+        "Width": 71
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriKFiltroEnter",
+          "endereco": "0x4BE90C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriKFiltroExit",
+          "endereco": "0x4BEABC",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditRifLambdaKeyPress",
+          "endereco": "0x4A6A00",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    },
+    {
+      "nome": "EditGiriAltiKFiltro",
+      "classe": "TNumericEdit",
+      "propriedades": {
+        "Cursor": "crHandPoint",
+        "Height": 32,
+        "Left": 700,
+        "MaxLength": 5,
+        "MaxValue": 9000.0,
+        "NextControl": "EditKFiltro",
+        "OnEnter": "EditGiriKFiltroEnter",
+        "OnExit": "EditGiriKFiltroExit",
+        "OnKeyPress": "EditGiriKFiltroKeyPress",
+        "ParentShowHint": "False",
+        "Precision": 1.0,
+        "PrevControl": "EditGiriKFiltro",
+        "ShapePenWidth": 2,
+        "ShowHint": "False",
+        "TabOrder": 1,
+        "Tag": 1,
+        "Text": "0",
+        "Top": 1,
+        "Visible": "False",
+        "Width": 71
+      },
+      "eventos": [
+        {
+          "evento": "OnEnter",
+          "handler": "EditGiriKFiltroEnter",
+          "endereco": "0x4BE90C",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnExit",
+          "handler": "EditGiriKFiltroExit",
+          "endereco": "0x4BEABC",
+          "marca": "OBS-COD"
+        },
+        {
+          "evento": "OnKeyPress",
+          "handler": "EditGiriKFiltroKeyPress",
+          "endereco": "0x4BEB24",
+          "marca": "OBS-COD"
+        }
+      ],
+      "marca": "OBS-COD",
+      "formula": "DESCONHECIDO",
+      "efeito_runtime": "DESCONHECIDO"
+    }
+  ],
+  "limites": [
+    "Propriedades e eventos não provam a fórmula nem o efeito do clique.",
+    "Combos/grades: itens dinâmicos e conteúdo da ECU não inferidos do DFM.",
+    "Não é captura de tela nem execução do aplicativo Windows."
+  ],
+  "sha256_exe": "8a2d297c8c21ff3b4f7a47f7fe64593b0fec9014dd938bd91022dc0c68ac36f4"
+}

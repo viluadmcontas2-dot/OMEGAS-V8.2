@@ -304,6 +304,15 @@ class MaquinaAbas(C._Maquina):
             self.hook(a_, fn, 0)
             self.mm_funcs[nome] = a_
 
+        # OBS-COD: RTL Delphi chama esta tabela diretamente (0x690700),
+        # antes de LoadLibrary. Montar também a tabela evita usar o heap
+        # interno sem sua inicialização de processo; nenhum byte do exe muda.
+        for off, nome in enumerate(("SysGetMem$qqri", "SysFreeMem$qqrpv",
+                                    "SysReallocMem$qqrpvi", "SysAllocMem$qqri",
+                                    "SysRegisterExpectedMemoryLeak$qqrpi",
+                                    "SysUnregisterExpectedMemoryLeak$qqrpi")):
+            self.w32(0xAAFB84 + 4 * off, self.mm_funcs["@Borlndmm@" + nome])
+
         def load(mm):
             return 0x70000000
 
