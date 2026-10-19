@@ -192,7 +192,7 @@ test('sem param_snapshot, Ferramentas usa a central conectada no primeiro toque 
     assert.equal(await page.locator('#toolAdvanced [data-adv-switch]').isDisabled(), false,
       'USB conectado não pode depender do param_snapshot geral para ler FLAG_CONF3');
     assert.match(await page.locator('[data-card="anti"]').innerText(), /Anti-apagão/);
-    assert.match(await page.locator('#toolAdvanced [data-adv-switch]').innerText(), /—/);
+    assert.match(await page.locator('#toolAdvanced [data-adv-switch]').innerText(), /—|Desligado/, 'estado real ou desconhecido, nunca inventado');
     await page.evaluate(() => window.__bench.ecu.clearLog());
     await T.tap(page, '[data-adv-switch]');
     await T.pump(page, 10);

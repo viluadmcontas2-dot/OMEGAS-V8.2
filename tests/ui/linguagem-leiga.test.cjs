@@ -71,28 +71,24 @@ async function percorrerFerramentasESessoes(app) {
     await colher('cartão ' + id);
     await T.tap(page, '[data-adv-back]'); await T.pump(page, 2);
   }
-  // interruptor: prévia, resultado, erro
-  await T.tap(page, '[data-adv-switch]'); await T.pump(page, 4);
-  await colher('anti-apagão: confirmar');
-  await T.tap(page, '[data-adv-confirm]'); await T.pump(page, 4);
+  // interruptor: um toque liga (sem janela); erro; Desfazer
+  await T.tap(page, '[data-adv-switch]'); await T.pump(page, 10);
   await colher('anti-apagão: pronto');
-  await T.tap(page, '[data-adv-close]'); await T.pump(page, 2);
   await page.evaluate(() => window.__bench.setFault('nak'));
-  await T.tap(page, '[data-adv-switch]'); await T.pump(page, 4);
-  await T.tap(page, '[data-adv-confirm]'); await T.pump(page, 4);
+  await T.tap(page, '[data-adv-switch]'); await T.pump(page, 10);
   await colher('anti-apagão: central não aceitou');
   await T.tap(page, '[data-adv-close]'); await T.pump(page, 2);
   await page.evaluate(() => window.__bench.setFault('nak', false));
-  // valores: erro de digitação, prévia, pronto
+  // valores: erro de digitação, botões − / +, dicas, gravado
   await T.tap(page, '[data-adv-open="valores"]'); await T.pump(page, 3);
+  await colher('valores: como funciona e dicas');
+  await page.evaluate(() => { document.querySelectorAll('.como-funciona details, .extras-experimentais').forEach(d => { d.open = true; }); });
+  await colher('valores: caminho completo e extras');
   await page.locator('#advField0').fill('7000');
   await colher('valores: fora da faixa');
   await page.locator('#advField0').fill('1700');
-  await T.tap(page, '[data-adv-save]'); await T.pump(page, 4);
-  await colher('valores: confirmar');
-  await T.tap(page, '[data-adv-confirm]'); await T.pump(page, 4);
+  await T.tap(page, '[data-adv-save]'); await T.pump(page, 10);
   await colher('valores: pronto');
-  await T.tap(page, '[data-adv-close]'); await T.pump(page, 2);
   await T.tap(page, '[data-adv-back]'); await T.pump(page, 2);
   // página 2 e registro
   await T.tap(page, '#toolsPageNext'); await T.pump(page, 3);
