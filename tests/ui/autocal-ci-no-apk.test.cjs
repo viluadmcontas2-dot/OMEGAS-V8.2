@@ -23,7 +23,13 @@ assert.doesNotMatch(ci,
 const apk = workflow('apk.yml');
 assert.match(apk, /if: \$\{\{ inputs\.build_apk == true \}\}/, 'APK exige autorização explícita');
 assert.doesNotMatch(apk, /^\s+(?:push|pull_request|schedule):/m, 'APK não tem gatilho automático');
-assert.match(apk, /playwright@1\.56\.1/, 'testes do APK têm navegador instalado');
-assert.match(apk, /export NODE_PATH=/, 'testes do APK conseguem carregar o navegador');
-assert.match(apk, /tools\/run_checks\.py --full/, 'APK inclui contratos que dependem dos resultados JVM');
+// Desenho (dono, 2026-10-19): o APK compila direto (rápido) e a suíte completa roda UMA vez, em paralelo, no ci.yml. O APK só vira
+// oficial se build + lint + a suíte do MESMO commit estiverem verdes (job liberar-apk). Sem repetir a suíte em fila dentro do apk.yml.
+assert.doesNotMatch(apk, /run_checks\.py --full/, 'o APK não repete a suíte em fila (ela roda no ci.yml)');
+assert.match(apk, /ci-do-mesmo-commit:/, 'o APK confere a suíte completa do mesmo commit');
+assert.match(apk, /workflows\/ci\.yml\/runs\?head_sha=\$PRODUCT_SHA/, 'a conferência é do MESMO commit');
+assert.match(apk, /"completed success"\) exit 0/, 'só "completed success" libera');
+assert.match(apk, /liberar-apk:\s*\n\s*needs: \[verify-build-publish, lint, ci-do-mesmo-commit\]/, 'o APK oficial exige build, lint e a suíte verdes');
+assert.match(apk, /name: omegas-apk-candidato-\$\{\{ env\.PRODUCT_SHA \}\}/, 'o build só guarda um CANDIDATO');
+assert.equal((apk.match(/name: omegas-apk-\$\{\{ env\.PRODUCT_SHA \}\}/g) || []).length, 1, 'o nome oficial só é publicado no job liberar-apk');
 console.log('AUTOCAL_CI_NO_APK=PASS');
