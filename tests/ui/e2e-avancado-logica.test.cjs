@@ -11,7 +11,7 @@ const DESLIGAR = '35 FA 00 00 00 00 00 2F';
 
 function ready() { const r = makeRig(); r.bench.plugUsb(); r.cycle(); return r; }
 
-test('antes da leitura o estado é "—" e o toque não faz nada; depois do dado chegar vira "Desligado"', () => {
+test('sem USB não envia nada; com USB vivo e sem snapshot, primeiro toque lê só o estado real', () => {
   const r = makeRig();
   assert.equal(r.stateText(), '—');
   r.tap();
@@ -20,8 +20,12 @@ test('antes da leitura o estado é "—" e o toque não faz nada; depois do dado
   r.bench.plugUsb();
   assert.equal(r.stateText(), '—', 'USB ligado mas nenhum dado ainda: continua —');
   r.tap();
-  assert.deepEqual(r.bench.ecu.log, [], 'sem dado válido o toque não envia nada');
+  assert.equal(r.view().phase, 'preparing', 'primeiro toque lê FLAG_CONF3 diretamente');
+  assert.deepEqual(r.writes(), [], 'primeiro toque não escreve');
+  assert.deepEqual(r.bench.ecu.log.filter(x => x.kind === 'READ').map(x => x.hex), ['29 FA 00 23']);
   r.cycle();
+  assert.equal(r.view().phase, 'preview', 'resposta gera prévia sem escrita');
+  assert.deepEqual(r.writes(), []);
   assert.equal(r.stateText(), 'Desligado');
   assert.deepEqual(r.flag3(), [0, 0, 0, 0]);
 });
