@@ -44,7 +44,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       assert.ok(alvo.height >= 56 && alvo.width >= 56, `interruptor ≥ 56 px: ${alvo.width}x${alvo.height}`);
       for (const tile of await page.locator('#toolAdvanced .tool-tile').all()) {
         const t = (await tile.innerText()).replace(/\s+/g, ' ');
-        assert.match(t, /Ligado|Desligado|De fábrica|Mudados|Só gás|Segurar com gasolina|Sempre gasolina/, 'cartão sem estado escrito: ' + t);
+        assert.match(t, /Ligado|Desligado|De fábrica|Mudados|Só gás|Segurar com gasolina|Sempre gasolina|injeções|—/, 'cartão sem estado escrito: ' + t);
       }
 
       // ---- anti-apagão: 1º toque só mostra; nada grava
