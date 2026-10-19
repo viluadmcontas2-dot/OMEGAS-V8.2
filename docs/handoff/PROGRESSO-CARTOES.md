@@ -1,0 +1,5 @@
+# Progresso — cartões Anti-apagão / Volta à gasolina / Bins / sem lazy-load (2026-10-19)
+## Marco 0 (achados de evidência, antes de codar)
+- F4 "Automatic change back to petrol" (CheckRitornoBenzina) NÃO tem bit em FLAG_CONF1: seu estado vem de TEMPO_RITORNO_BENZINA (SC 62, u8, escalar, `12 3E 00 <v> ck`, OBS-COD via Unicorn: `12 3E 00 00 50`). O bit FLAG_CONF1 palavra 1 0x0040 é OUTRA caixa (CheckBassaPressione, "mudança com pressão baixa impostável").
+- "Low pressure value" 1,25 bar (campo EditBassaPressioneMp) NÃO é SC 189 (PRESS_RETROPASSAGGIO = grade 12×u16 em mbar: 1800..2200 na central do dono) nem SC 152 (LR; na central do dono 152 é TINJ_FILTRO, 8×u16). O campo usa métodos próprios do TStreamDati (0x43277C/0x4327C0/0x432670: RIF_PRESS_DIFF, COEFF_PRESS_DIFF) = valor derivado, fórmula DESCONHECIDA. Não gravar.
+- Marco 1: tarefa 4 (sem lazy-load) implementada: index.html com todos os scripts, router sem loadRoute, app.js com cartão 'Não foi possível abrir esta parte' (teste novo tests/ui/todas-as-telas-no-arranque.test.cjs RED→GREEN). Ajustando testes antigos que dependiam do lazy-load.

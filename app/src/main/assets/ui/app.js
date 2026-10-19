@@ -16,7 +16,7 @@
   const store = new ui.Store(ui.createInitialState());
   const router = new ui.Router(store);
   const instances = {};
-  // Ferramentas (cartões e Avançado) só existem depois que a aba é aberta: o script chega por evento (core/router.js).
+  // Ferramentas (cartões e Avançado): todos os scripts já vieram do index.html; os objetos são criados na primeira visita da aba.
   let utilities = null;
   let advanced = null;
   function ensureTools() {
@@ -34,21 +34,12 @@
     }
   }
 
-  let toolsRecoveryAttempted = false;
   function toolsUnavailable(error) {
     if (error) console.error('[OMEGAS] Ferramentas não abriram', error);
     const host = byId('toolAdvanced');
-    if (host && !host.querySelector('[data-card="anti"]')) {
-      host.innerHTML = '<article class="tool-tile" data-card="unavailable"><h3>Ferramentas indisponíveis</h3><p class="tile-line reason">O aplicativo não conseguiu abrir este painel.</p></article>';
-    }
-    // Reparação automática apenas UMA vez por carregamento, sem botão e sem loop de scripts.
-    // Carregamento normal é estático no index.html; esta é apenas uma segunda chance em caso de asset incompleto.
-    if (!advanced && !toolsRecoveryAttempted && ui.retryRoute && store.get().route === 'tools') {
-      toolsRecoveryAttempted = true;
-      const pending = ui.retryRoute('tools');
-      if (pending) pending.then(() => {
-        if (store.get().route === 'tools') { ensureTools(); if (advanced) advanced.refresh(); }
-      }).catch(cause => console.error('[OMEGAS] Recuperação da tela indisponível', cause));
+    if (host && !host.querySelector('[data-card="anti"]') && !host.querySelector('[data-route-retry]')) {
+      host.innerHTML = '';
+      routeFailureCard('tools');
     }
   }
 
@@ -359,21 +350,31 @@
   let toolsSessionsKey = '';
   /** Relistar gravações no próximo contexto (entrar na aba, omegas-refresh). */
   let toolsSessionsStale = true;
+  const ROUTE_CLASS = { map: 'MapScreen', curve: 'CurveScreen', refino: 'RefinoScreen', tools: 'AdvancedPanel', sessions: 'Drawers' };
+  const ROUTE_HOST = { map: '[data-screen="map"]', curve: '[data-screen="curve"]', refino: '#refinoScreenHost', tools: '#toolAdvanced', sessions: '#sessionsScreen' };
   /**
-   * Abrir a aba é o evento que traz a tela pesada (core/router.js, loadRoute). Sem nada a carregar roda na hora (mesmo
-   * quadro do toque, como antes); se o operador já saiu da aba quando o script chegou, não ativa a tela errada.
+   * Todos os scripts já estão carregados (index.html). Se a parte desta aba não existe ou falha ao abrir, a aba mostra um
+   * cartão com a retentativa por TOQUE (nunca tela vazia, nunca repetição automática).
    */
+  function routeFailureCard(route, error) {
+    if (error) console.error('[OMEGAS] Tela não abriu', route, error);
+    const host = document.querySelector(ROUTE_HOST[route] || '#toolAdvanced');
+    if (!host || host.querySelector('[data-route-retry]')) return;
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'tool-tile route-failure';
+    card.dataset.routeRetry = route;
+    card.innerHTML = '<h3 class="tile-line reason">Não foi possível abrir esta parte. Toque para tentar de novo.</h3>';
+    card.addEventListener('click', () => { card.remove(); activateRoute(route, store.get().routeContext); });
+    host.prepend(card);
+  }
   function activateRoute(route, context) {
-    let pending;
-    try { pending = ui.loadRoute ? ui.loadRoute(route) : null; }
-    catch (error) { if (route === 'tools') toolsUnavailable(error); return; }
-    if (!pending) { enterRoute(route, context); return; }
-    if (route === 'tools') {
-      const host = byId('toolAdvanced');
-      if (host && !host.childElementCount) host.innerHTML = '<div class="tool-tile">Abrindo ferramentas…</div>';
+    try {
+      if (ROUTE_CLASS[route] && !ui[ROUTE_CLASS[route]]) throw new Error('Parte ausente: ' + ROUTE_CLASS[route]);
+      enterRoute(route, context);
+    } catch (error) {
+      if (route === 'tools') toolsUnavailable(error); else routeFailureCard(route, error);
     }
-    pending.then(() => { if (store.get().route === route) enterRoute(route, context); })
-      .catch(error => { if (route === 'tools') toolsUnavailable(error); else console.error('[OMEGAS] Tela não abriu', error); });
   }
 
   /** Pinta cache primeiro; bridge/ciência só são consultadas depois de um paint. */

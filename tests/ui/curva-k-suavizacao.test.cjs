@@ -91,13 +91,10 @@ test('falha de uma prévia é atômica; leitura/escrita em curso bloqueiam prepa
 test('botão carrega módulo antes da tela e possui texto explícito de prévia',()=>{
   const html=fs.readFileSync(path.join(root,'app/src/main/assets/ui/index.html'),'utf8');
   assert.match(html,/id="curveSmoothButton"[^>]*>Suavizar<\/button>/);
-  // A tela da Curva K e o módulo de suavização chegam ao abrir a aba (core/router.js ROUTE_SCRIPTS), o módulo primeiro.
-  const router=fs.readFileSync(path.join(root,'app/src/main/assets/ui/core/router.js'),'utf8');
-  assert.ok(router.indexOf("'core/curve-smoothing.js'")>=0);
-  assert.ok(router.indexOf("'core/curve-smoothing.js'")<router.indexOf("'screens/curve.js'"));
-  const grupo=/\n    curve: \[([^\]]*)\]/.exec(router);assert.ok(grupo,'grupo da aba curve');
-  assert.ok(grupo[1].indexOf('core/curve-smoothing.js')>=0&&grupo[1].indexOf('core/curve-smoothing.js')<grupo[1].indexOf('screens/curve.js'),'módulo dentro do grupo da aba, antes da tela');
-  assert.doesNotMatch(html,/curve-smoothing\.js|screens\/curve\.js/,'nada da Curva K no arranque');
+  // Tudo carrega no index.html (sem carregamento por aba), o módulo de suavização antes da tela da Curva K.
+  const ordem=[...html.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]);
+  assert.ok(ordem.includes('core/curve-smoothing.js')&&ordem.includes('screens/curve.js'),'módulo e tela no index.html');
+  assert.ok(ordem.indexOf('core/curve-smoothing.js')<ordem.indexOf('screens/curve.js'),'módulo antes da tela');
 });
 
 test('sem curva, curva suave e restauração pendente não criam proposta',()=>{

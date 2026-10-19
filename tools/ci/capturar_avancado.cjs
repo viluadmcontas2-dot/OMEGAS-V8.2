@@ -52,7 +52,7 @@ function ponteAvancado() {
   await page.addInitScript(fakeBridge);
   await page.goto('file://' + path.resolve('app/src/main/assets/ui/index.html'), { waitUntil: 'load' });
   await page.waitForTimeout(1200);
-  // Ferramentas/Avançado carregam ao abrir a aba (core/router.js, ROUTE_SCRIPTS): abre antes de trocar a ponte.
+  // Ferramentas/Avançado: abre a aba antes de trocar a ponte.
   await page.locator('.side-nav button[data-route="tools"]').click();
   await page.waitForFunction(() => !!window.OmegasUi.AdvancedFlags && !!window.OmegasUi.AdvancedPanel, null, { timeout: 8000 });
   await page.evaluate(ponteAvancado);

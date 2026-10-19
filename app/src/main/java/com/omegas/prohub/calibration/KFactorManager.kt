@@ -413,7 +413,7 @@ class KFactorManager(
                 // Vez na porta: no máximo 1 s (dono, 16/10). Ocupada = ✗ na hora, nunca "travado confirmando" por 10 s.
                 waitTimeoutMs = 1_000L,
             ) { unit ->
-                update("VERIFYING_CURRENT", "Conferindo os 30 pontos antes da escrita", 8)
+                update("VERIFYING_CURRENT", "Lendo a curva da ECU…", 8)
                 val ecuBefore = readRawPoints(unit, KFactorProtocol.readFactors(), "conferência K factor")
                 if (!ecuBefore.contentEquals(cachedFactors)) {
                     throw IllegalStateException("A curva da ECU mudou. Leia novamente antes de aplicar")
@@ -429,12 +429,13 @@ class KFactorManager(
                     if (live[index] != currentRaw) {
                         throw IllegalStateException("Ponto $index: esperado $currentRaw, encontrado ${live[index]}")
                     }
-                    val progress = 15 + ((pointPosition + 1) * 65 / points.length())
+                    val progress = 15 + (pointPosition * 65 / points.length())
                     update(
                         "WRITING_POINT",
-                        "Ponto ${pointPosition + 1}/${points.length()} • ${formatFactor(currentRaw)} → ${formatFactor(targetRaw)}",
+                        KBatchVerifyCore.writingMessage(pointPosition + 1, points.length()),
                         progress,
-                        JSONObject().put("adjustmentId", adjustmentId).put("index", index),
+                        JSONObject().put("adjustmentId", adjustmentId).put("index", index)
+                            .put("written", pointPosition).put("total", points.length()),
                     )
                     requireAck(
                         unit.transaction(
@@ -465,12 +466,15 @@ class KFactorManager(
                     )
                 }
 
-                update("VERIFYING_FINAL", "Confirmando readback K factor final", 90)
+                update("VERIFYING_FINAL", "Conferindo a curva lida de volta…", 90)
                 val finalReadback = readRawPoints(unit, KFactorProtocol.readFactors(), "confirmação final K factor")
-                if (!finalReadback.contentEquals(live)) {
-                    throw IllegalStateException("A confirmação final da curva divergiu")
+                // Vetor inteiro lido numa transação; só os pontos alterados precisam bater (a ECU pode mexer nos outros).
+                val changed = (0 until points.length()).map { points.getJSONObject(it).getInt("index") }
+                val bad = KBatchVerifyCore.firstMismatch(live, finalReadback, changed)
+                if (bad != null) {
+                    throw IllegalStateException("A confirmação final da curva divergiu no ponto $bad")
                 }
-                live
+                finalReadback
             }
 
             val finalHash = hash(working)

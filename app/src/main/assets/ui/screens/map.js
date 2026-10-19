@@ -640,12 +640,13 @@
       const progress = Math.max(0, Math.min(100, finite(operation.progress) || 0));
       const bar = document.getElementById('mapOperationProgress');
       if (bar) bar.style.width = `${progress}%`;
-      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células confirmadas`);
-
       if (operation.busy) {
+        // Progresso real do gravador ("Gravando 12 de 24…" → "Conferindo 1 de 2 linhas…"); "confirmadas" só depois da leitura de volta.
         text('mapOperationTitle', operation.writerMessage || 'Gravando e conferindo…');
+        text('mapOperationMessage', 'A ECU confirma ao final, lendo de volta');
         return;
       }
+      text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células confirmadas`);
       if (operation.state === 'BATCH_CONFIRMED' && operation.readbackValid === true) {
         this.root?.classList.remove('is-writing');
         this.root?.classList.add('has-result');

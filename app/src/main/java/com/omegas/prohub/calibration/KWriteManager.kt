@@ -333,7 +333,7 @@ class KWriteManager(
         var insertionEnabled = false
         var historyPersisted = false
         try {
-            update("BATCH_PREPARING", "Conferindo somente as linhas afetadas", 3,
+            update("BATCH_PREPARING", "Preparando a gravação…", 3,
                 JSONObject().put("adjustmentId", adjustmentId).put("cells", cells))
             val cache = loadCache()
             val cachedRows = cache.optJSONArray("rows") ?: JSONArray()
@@ -348,30 +348,6 @@ class KWriteManager(
             initialHash = canonicalFullMapHash(workingRows, extraRow)
             createPreWriteBackup(adjustmentId, cache, cells, initialHash)
             repeat(cells.length()) { affectedRows += cells.getJSONObject(it).getInt("row") }
-
-            serial.unit(
-                reason = "conferência prévia Mapa K",
-                expectedSessionId = expectedSessionId,
-                workClass = Mp48WorkClass.READ_ONLY,
-                telemetryAfter = false,
-                waitTimeoutMs = 6_000L,
-            ) { unit ->
-                affectedRows.forEachIndexed { index, row ->
-                    update("BATCH_CHECKING_ROWS", "Conferindo linha ${index + 1} de ${affectedRows.size}",
-                        5 + ((index + 1) * 12 / affectedRows.size), JSONObject().put("row", row))
-                    val ecuLine = readRow(unit, row, "conferência antes da escrita K[$row]")
-                    val cachedLine = workingRows.getJSONArray(row)
-                    repeat(COLUMN_COUNT) { column ->
-                        val actual = ecuLine[column].toInt() and 0xFF
-                        val expected = cachedLine.getInt(column)
-                        if (actual != expected) {
-                            throw IllegalStateException(
-                                "A ECU mudou [$row,$column]: esperado $expected, encontrado $actual. Leia o mapa K novamente.",
-                            )
-                        }
-                    }
-                }
-            }
 
             serial.unit(
                 reason = "escrita direta Mapa K",
@@ -403,13 +379,14 @@ class KWriteManager(
                     if (workingLine.getInt(column) != expected) {
                         throw IllegalStateException("O valor confirmado [$row,$column] não é $expected")
                     }
-                    val progress = 18 + ((cellIndex + 1) * 65 / cells.length())
+                    val progress = 10 + (cellIndex * 70 / cells.length())
                     update(
                         "BATCH_WRITING",
-                        "Célula ${cellIndex + 1}/${cells.length()} • $expected → $target",
+                        KBatchVerifyCore.writingMessage(cellIndex + 1, cells.length()),
                         progress,
                         JSONObject().put("adjustmentId", adjustmentId)
-                            .put("row", row).put("column", column).put("target", target),
+                            .put("row", row).put("column", column).put("target", target)
+                            .put("written", cellIndex).put("total", cells.length()),
                     )
                     requireAck(
                         unit.transaction(
@@ -451,29 +428,34 @@ class KWriteManager(
                 )
                 insertionEnabled = false
                 setInsertionSafetyLock(false, "Saída K insertion confirmada em $adjustmentId")
-            }
 
-            update("BATCH_VERIFYING_ROWS", "Confirmando somente as linhas alteradas", 88,
-                JSONObject().put("adjustmentId", adjustmentId).put("rows", JSONArray(affectedRows.toList())))
-            serial.unit(
-                reason = "readback final Mapa K",
-                expectedSessionId = expectedSessionId,
-                workClass = Mp48WorkClass.READ_ONLY,
-                telemetryAfter = true,
-                waitTimeoutMs = 6_000L,
-            ) { unit ->
-                affectedRows.forEach { row ->
+                // Leitura de volta na MESMA vez na porta: uma transação por linha afetada (a linha inteira de uma vez,
+                // nunca célula a célula), comparando só as células alteradas.
+                val changedByRow = cells.let { list ->
+                    val map = linkedMapOf<Int, MutableList<Int>>()
+                    repeat(list.length()) { i ->
+                        val c = list.getJSONObject(i)
+                        map.getOrPut(c.getInt("row")) { mutableListOf() }.add(c.getInt("column"))
+                    }
+                    map
+                }
+                changedByRow.entries.forEachIndexed { index, (row, columns) ->
+                    update("BATCH_VERIFYING_ROWS", KBatchVerifyCore.verifyingMessage(index + 1, changedByRow.size),
+                        82 + (index * 16 / changedByRow.size),
+                        JSONObject().put("adjustmentId", adjustmentId).put("row", row)
+                            .put("written", cells.length()).put("total", cells.length()))
                     val verified = readRow(unit, row, "confirmação final K[$row]")
                     val expectedLine = workingRows.getJSONArray(row)
-                    repeat(COLUMN_COUNT) { column ->
-                        val actual = verified[column].toInt() and 0xFF
-                        val expectedValue = expectedLine.getInt(column)
-                        if (actual != expectedValue) {
-                            throw IllegalStateException(
-                                "Confirmação final divergente [$row,$column]: esperado $expectedValue, ECU $actual",
-                            )
-                        }
+                    val expectedValues = IntArray(COLUMN_COUNT) { expectedLine.getInt(it) }
+                    val actualValues = IntArray(COLUMN_COUNT) { verified[it].toInt() and 0xFF }
+                    val bad = KBatchVerifyCore.firstMismatch(expectedValues, actualValues, columns)
+                    if (bad != null) {
+                        throw IllegalStateException(
+                            "Confirmação final divergente [$row,$bad]: esperado ${expectedValues[bad]}, ECU ${actualValues[bad]}",
+                        )
                     }
+                    // A linha lida já está na mão: o cache fica com o que a ECU realmente tem (sem custo extra).
+                    workingRows.put(row, JSONArray(actualValues.toList()))
                 }
             }
 
