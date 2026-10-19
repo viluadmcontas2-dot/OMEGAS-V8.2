@@ -120,7 +120,7 @@ test('gravar valores: 1º toque só mostra "antes → depois"; o 2º grava o qua
     assert.equal(await U.camada(page), 1, 'janela de confirmação');
     const previa = await U.text(page, '#toolsLayer');
     assert.match(previa, /Gravar estes valores\?/);
-    assert.match(previa, /Rotação máxima para agir 1\.600 → 1\.700 rotação/);
+    assert.match(previa, /Rotação máxima para agir 1\.600 → 1\.700 rpm/);
     assert.deepEqual(await U.ecuWrites(page), [], 'nenhuma escrita depois do 1º toque');
     assert.deepEqual(await U.anti5(page), U.FABRICA);
     assert.equal(await page.locator('#toolsLayer [data-adv-confirm]').innerText(), 'Gravar valores');
@@ -155,7 +155,7 @@ test('Restaurar fábrica: prévia com os valores de fábrica, 2º toque grava, c
     await T.tap(page, '[data-adv-factory]'); await T.pump(page, 4);
     const previa = await U.text(page, '#toolsLayer');
     assert.match(previa, /Restaurar valores de fábrica\?/);
-    assert.match(previa, /3\.000 → 1\.600 rotação/);
+    assert.match(previa, /3\.000 → 1\.600 rpm/);
     assert.match(previa, /Folga para não ficar trocando 5 → 2 rpm/);
     assert.doesNotMatch(previa, /Queda de rotação para agir/, 'só o que muda aparece');
     assert.deepEqual(await U.ecuWrites(page), [], 'Restaurar fábrica também precisa do 2º toque');

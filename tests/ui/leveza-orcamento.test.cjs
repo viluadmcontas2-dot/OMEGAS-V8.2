@@ -84,11 +84,11 @@ test('abrir cada aba carrega a tela dela (evento) e ela funciona; trocar antes d
   try {
     for (const rota of ['map', 'curve', 'tools', 'refino']) {
       const antes = await scriptsCarregados(page);
-      for (const f of POR_ABA[rota]) assert.ok(!antes.includes(f), `${f} ainda não deveria estar carregado`);
+      for (const f of (POR_ABA[rota] || [])) assert.ok(!antes.includes(f), `${f} ainda não deveria estar carregado`);
       await irPara(page, rota);
       await esperarAba(page, rota);
       const depois = await scriptsCarregados(page);
-      for (const f of POR_ABA[rota]) assert.ok(depois.includes(f), `${f} deveria carregar ao abrir a aba ${rota}`);
+      for (const f of (POR_ABA[rota] || [])) assert.ok(depois.includes(f), `${f} deveria carregar ao abrir a aba ${rota}`);
       assert.equal(await page.evaluate(() => window.OmegasApp.store.get().route), rota);
       if (rota === 'map' || rota === 'refino') assert.equal(await page.evaluate(() => typeof window.OmegasWriteGate?.check), 'function', 'porta de gravação ativa na aba ' + rota);
       assert.equal(await page.evaluate(() => document.querySelectorAll('.screen.active').length), 1, 'uma tela ativa só');
