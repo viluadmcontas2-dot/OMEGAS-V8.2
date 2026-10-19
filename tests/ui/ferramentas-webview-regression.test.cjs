@@ -132,9 +132,10 @@ for (const [name, viewport] of Object.entries({
         assert.equal(await button.isDisabled(), !usb, 'sem a central não pode gravar');
         if (usb) {
           await T.tap(page, '[data-adv-switch]');
-          await page.waitForSelector('#toolsLayer [data-adv-confirm]');
+          await T.pump(page, 10);
           const frames = await T.frames(page);
-          assert.deepEqual(T.writesOf(frames.log), [], 'primeiro toque nunca grava');
+          assert.equal(T.writesOf(frames.log).length, 1, 'sem atrito: um toque no interruptor grava (sem janela de pergunta)');
+          assert.equal(await page.locator('#toolsLayer [data-adv-confirm]').count(), 0);
         }
         assert.deepEqual(app.problems.requests, [], 'script ou arquivo não carregado');
       } finally { await app.context.close(); }
@@ -194,13 +195,8 @@ test('sem param_snapshot, Ferramentas usa a central conectada no primeiro toque 
     assert.match(await page.locator('#toolAdvanced [data-adv-switch]').innerText(), /—/);
     await page.evaluate(() => window.__bench.ecu.clearLog());
     await T.tap(page, '[data-adv-switch]');
-    await T.pump(page, 4);
-    const first = await T.frames(page);
-    assert.deepEqual(T.writesOf(first.log), [], 'primeiro toque é SÓ leitura da ECU');
-    await page.waitForSelector('#toolsLayer [data-adv-confirm]', { state: 'visible' });
-    await T.tap(page, '#toolsLayer [data-adv-confirm]');
-    await T.pump(page, 6);
-    await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]', { state: 'visible' });
+    await T.pump(page, 10);
+    assert.equal(await page.locator('#toolsLayer [data-adv-confirm]').count(), 0, 'sem janela de pergunta');
     const all = await T.frames(page);
     assert.deepEqual(T.writesOf(all.log).map(x => x.hex), ['35 FA 00 20 00 00 00 4F']);
     assert.deepEqual(await page.evaluate(() => window.__bench.ecu.get('29 FA 00 23')), [32, 0, 0, 0]);

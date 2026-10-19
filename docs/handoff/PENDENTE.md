@@ -1,4 +1,5 @@
 # Pendente — ledger único (lido no início de cada sessão; atualizado a cada marco)
+> **Novo (2026-10-19):** engenharia reversa completa + funções de referência da AutoCal em Ferramentas: veja `docs/handoff/HANDOFF-ENGENHARIA-REVERSA-CODEX.md` (prioridade do Codex). Regra sem-atrito = 1 toque, sem confirmação (substitui "2 toques").
 
 ## Agora (APK urgente: o carro apaga ao sair do lugar e ao parar/pisar na embreagem)
 - [ ] Interface para leigo na multimídia (paisagem 1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem jargão

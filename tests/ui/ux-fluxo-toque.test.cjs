@@ -47,37 +47,20 @@ for (const [nome, vp] of Object.entries(VPS)) {
         assert.match(t, /Ligado|Desligado|De fábrica|Mudados|Só gás|Segurar com gasolina|Sempre gasolina|injeções|—/, 'cartão sem estado escrito: ' + t);
       }
 
-      // ---- anti-apagão: 1º toque só mostra; nada grava
+      // ---- anti-apagão: SEM ATRITO, um toque liga (sem janela de pergunta)
       await U.clearLog(page);
-      await T.tap(page, '[data-adv-switch]'); await T.pump(page, 4);
-      assert.equal(await U.camada(page), 1);
-      assert.match(await U.text(page, '#toolsLayer'), /Ligar anti-apagão\?\s*Desligado\s*→\s*Ligado/);
-      assert.deepEqual(await U.ecuWrites(page), [], 'nenhuma escrita depois do 1º toque');
-      assert.equal(await page.locator('#toolsLayer [data-adv-confirm]').innerText(), 'Ligar anti-apagão');
-      assert.equal(await page.locator('#toolsLayer [data-adv-cancel]').innerText(), 'Agora não');
-      await foto('2-anti-apagao-confirmar');
-      await T.tap(page, '#toolsLayer [data-adv-cancel]'); await T.pump(page, 2);
-      assert.equal(await U.camada(page), 0, 'Agora não descarta');
-      assert.deepEqual(await U.ecuWrites(page), []);
-      await T.tap(page, '[data-adv-switch]'); await T.pump(page, 4);
-      await T.tap(page, '#toolsLayer .tool-layer-card h3'); await T.pump(page, 2);       // 2º toque cai no cartão: não cancela
-      assert.equal(await U.camada(page), 1, 'tocar no cartão não cancela');
-      await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
-      await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]', { timeout: 8000 });
+      await T.tap(page, '[data-adv-switch]'); await T.pump(page, 10);
+      assert.equal(await U.camada(page), 0, 'nenhuma janela de pergunta');
       assert.deepEqual(await U.ecuWrites(page), [U.LIGAR], 'quadro exato, uma vez');
       assert.deepEqual(await U.flag3(page), [0x20, 0, 0, 0]);
-      assert.match(await U.text(page, '#toolsLayer'), /Pronto\. Anti-apagão ligado e conferido na central\./);
+      assert.match(await sw.innerText(), /Ligado/);
       await foto('3-anti-apagao-pronto');
-      // Desfazer
+      // Desfazer (também um toque, no próprio cartão)
       await U.clearLog(page);
-      await T.tap(page, '#toolsLayer [data-adv-undo-flag]'); await T.pump(page, 4);
-      assert.match(await U.text(page, '#toolsLayer'), /Desligar anti-apagão\?/);
-      assert.deepEqual(await U.ecuWrites(page), [], 'o 1º toque do Desfazer não grava');
-      await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
-      await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]');
+      await T.tap(page, '[data-adv-undo-flag]'); await T.pump(page, 10);
+      assert.equal(await U.camada(page), 0, 'desfazer sem pergunta');
       assert.deepEqual(await U.ecuWrites(page), [U.DESLIGAR]);
       assert.deepEqual(await U.flag3(page), [0, 0, 0, 0], 'a central voltou ao original');
-      await T.tap(page, '#toolsLayer [data-adv-close]'); await T.pump(page, 3);
       assert.match(await sw.innerText(), /Desligado/);
 
       // ---- cartão só de leitura
@@ -95,20 +78,13 @@ for (const [nome, vp] of Object.entries(VPS)) {
       assert.match(await U.text(page, '[data-field="0"] .num-error'), /Use um valor de 0 a 6\.000/);
       await foto('6-valor-fora-da-faixa');
       await U.digitar(app, 0, '1700');
-      await T.tap(page, '[data-adv-save]'); await T.pump(page, 4);
-      assert.match(await U.text(page, '#toolsLayer'), /1\.600 → 1\.700 rpm/);
-      await foto('7-valores-confirmar');
       await U.clearLog(page);
-      await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
-      await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]');
+      await T.tap(page, '[data-adv-save]'); await T.pump(page, 10);
+      assert.equal(await U.camada(page), 0, 'gravar valores sem janela de pergunta');
       assert.deepEqual(await U.ecuWrites(page), [U.quadroValores([1700, 100, 1500, 2, 20])]);
       await foto('8-valores-pronto');
-      await T.tap(page, '#toolsLayer [data-adv-close]'); await T.pump(page, 3);
-      await T.tap(page, '[data-adv-factory]'); await T.pump(page, 4);
-      await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
-      await page.waitForSelector('#toolsLayer .adv-result[data-level="ok"]');
-      assert.deepEqual(await U.anti5(page), U.FABRICA, 'Restaurar fábrica');
-      await T.tap(page, '#toolsLayer [data-adv-close]'); await T.pump(page, 3);
+      await T.tap(page, '[data-adv-factory]'); await T.pump(page, 10);
+      assert.deepEqual(await U.anti5(page), U.FABRICA, 'Restaurar fábrica em um toque');
       await T.tap(page, '[data-adv-back]'); await T.pump(page, 2);
 
       // ---- página 2 de Ferramentas (um cartão por função)
@@ -140,8 +116,7 @@ test('falha honesta: a central não aceita o anti-apagão e o texto diz o que ho
   try {
     await U.abrirMotor(app);
     await page.evaluate(() => window.__bench.setFault('nak'));
-    await T.tap(page, '[data-adv-switch]'); await T.pump(page, 4);
-    await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
+    await T.tap(page, '[data-adv-switch]'); await T.pump(page, 10);
     await page.waitForSelector('#toolsLayer .adv-result[data-level="warning"]');
     const msg = await U.text(page, '#toolsLayer');
     assert.match(msg, /A central não aceitou\. Tente de novo\./);
@@ -152,46 +127,39 @@ test('falha honesta: a central não aceita o anti-apagão e o texto diz o que ho
   } finally { await app.context.close(); }
 });
 
-test('o cabo soltar na janela de confirmação descarta e nada é gravado', { skip }, async () => {
+test('cabo solto: o interruptor fica desligado e nada é gravado', { skip }, async () => {
   const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
   const { page } = app;
   try {
     await U.abrirMotor(app);
     await U.clearLog(page);
-    await T.tap(page, '[data-adv-switch]'); await T.pump(page, 4);
-    assert.equal(await U.camada(page), 1);
     await page.evaluate(() => window.__bench.unplugUsb());
     await T.pump(page, 12);
-    assert.equal(await U.camada(page), 0);
+    assert.equal(await page.locator('[data-adv-switch]').isDisabled(), true);
     assert.deepEqual(await U.ecuWrites(page), []);
   } finally { await app.context.close(); }
 });
 
-test('mutação: confirmação automática faz a prova "nada grava no 1º toque" FALHAR no app carregado', { skip }, async () => {
-  const dir = T.mutatedUi([['core/advanced-flags.js', "s.plan = plan;\n      s.token = status.token;\n      set('preview', '');", "s.plan = plan;\n      s.token = status.token;\n      set('preview', '');\n      confirm();"]]);
+test('mutação: voltar a exigir o 2º toque faz a prova "um toque grava" FALHAR no app carregado', { skip }, async () => {
+  const dir = T.mutatedUi([['core/advanced-flags.js', "s.plan = plan;\n      s.token = status.token;\n      confirm();", "s.plan = plan;\n      s.token = status.token;\n      set('preview', '');"]]);
   const app = await T.openApp(browser, { ui: dir, usb: true, viewport: VPS['1280x720'] });
   try {
     await U.abrirMotor(app);
     await U.clearLog(app.page);
-    await T.tap(app.page, '[data-adv-switch]'); await T.pump(app.page, 6);
-    assert.deepEqual(await U.ecuWrites(app.page), [U.LIGAR], 'o mutante grava sozinho: exatamente o que a prova real proíbe');
+    await T.tap(app.page, '[data-adv-switch]'); await T.pump(app.page, 10);
+    assert.deepEqual(await U.ecuWrites(app.page), [], 'o mutante não grava em um toque: a prova real (UM toque = 1 quadro) falharia');
   } finally { await app.context.close(); require('node:fs').rmSync(dir, { recursive: true, force: true }); }
 });
 
 // ---- portados do antigo e2e-avancado-toque (a UI antiga do Avançado saiu): mesmas garantias na nova tela
-test('toque duplo RÁPIDO: do repouso só prepara; na confirmação, rajada de toques grava UMA vez', { skip }, async () => {
+test('toque duplo RÁPIDO e rajada: gravam UMA vez só', { skip }, async () => {
   const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
   const { page } = app;
   try {
     await U.abrirMotor(app);
     await U.clearLog(page);
-    await T.doubleTap(page, '[data-adv-switch]'); await T.pump(page, 4);
-    assert.deepEqual(await U.ecuWrites(page), [], 'o 2º toque caiu em "lendo": nada escrito');
-    assert.equal(await U.camada(page), 1);
-    const b = await page.locator('#toolsLayer [data-adv-confirm]').boundingBox();
-    for (let i = 0; i < 3; i += 1) await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
-    await T.pump(page, 6);
-    assert.deepEqual(await U.ecuWrites(page), [U.LIGAR], 'rajada de 3 toques = exatamente 1 quadro');
+    await T.doubleTap(page, '[data-adv-switch]'); await T.pump(page, 10);
+    assert.deepEqual(await U.ecuWrites(page), [U.LIGAR], 'toque duplo = exatamente 1 quadro');
   } finally { await app.context.close(); }
 });
 
@@ -215,8 +183,7 @@ test('falhas honestas: silêncio, ACK sem aplicar e leitura diferente nunca vira
     try {
       await U.abrirMotor(app);
       await page.evaluate(f => window.__bench.setFault(f), falha);
-      await T.tap(page, '[data-adv-switch]'); await T.pump(page, 4);
-      await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);
+      await T.tap(page, '[data-adv-switch]'); await T.pump(page, 10);
       await page.waitForSelector('#toolsLayer .adv-result[data-level="warning"]');
       const msg = await U.text(page, '#toolsLayer');
       assert.match(msg, re, falha);
