@@ -27,11 +27,13 @@ test('endereço 307, 5 campos, fábrica e faixa máxima do DFM', () => {
   same(V.FIELDS.map(f => f.min), [0, 0, 0, 0, 0]);
 });
 
-test('nomes leigos: nenhum jargão e a unidade é palavra simples', () => {
-  const proibido = /ciclo|flag|\bbit\b|palavra|0x|FLAG_CONF|ECU|SerialCode|histerese|delta/i;
+test('nomes leigos: nenhum jargão; "ciclo" só aparece explicado; unidade curta', () => {
+  const proibido = /\bflag\b|\bbit\b|palavra|0x|FLAG_CONF|ECU|SerialCode|histerese|delta/i;
   for (const f of V.FIELDS) {
-    for (const t of [f.label, f.help, f.unit]) assert.doesNotMatch(t, proibido, t);
-    assert.ok(['rpm', 'ms'].includes(f.unit), f.unit);
+    for (const t of [f.label, f.help, f.unit, f.tipUp, f.tipDown]) assert.doesNotMatch(t, proibido, t);
+    assert.ok(['rpm', 'rpm por ciclo', 'ms'].includes(f.unit), f.unit);
+    if (f.unit === 'rpm por ciclo') assert.match(f.help, /por ciclo/, 'a unidade do original é explicada no texto');
+    assert.ok(f.step > 0 && f.tipUp && f.tipDown, 'botões − / + e dicas para os dois lados: ' + f.label);
   }
   same(V.FIELDS.map(f => f.label), ['Rotação máxima para agir', 'Queda de rotação para agir', 'Espera para sair do gás', 'Folga para não ficar trocando', 'Queda para parar de agir']);
 });
@@ -127,23 +129,19 @@ function ambiente(opcoes = {}) {
 }
 const pronto = (before, changes, token = 'tk1') => { const p = V.plan(before, changes); return { state: 'READY', token, before, after: p.after, changed: p.changed, frameHex: p.frameHex, noop: p.noop }; };
 
-test('1º toque só PEDE (lê a central e mostra antes → depois); nada é gravado', () => {
+test('SEM ATRITO: um pedido lê, confere o plano e grava sozinho (sem prévia, sem 2º toque)', () => {
   const e = ambiente();
   assert.equal(e.flow.ask('edit', { 0: 1700 }, true), true);
   same(e.chamadas, [['prepare', '{"0":1700}']]);
   assert.equal(e.flow.view().phase, 'preparing');
-  e.setStatus(pronto(F, { 0: 1700 })); e.emit();
-  const v = e.flow.view();
-  assert.equal(v.phase, 'preview');
-  same(v.plan.before, F); same(v.plan.after, [1700, 100, 1500, 2, 20]);
-  assert.equal(e.count('confirm'), 0);
-  assert.equal(e.hooks.size, 0, 'o gancho de dados solta quando a prévia chega');
+  e.setStatus(pronto(F, { 0: 1700 }, 'tkZ')); e.emit();
+  assert.equal(e.flow.view().phase, 'writing');
+  same(e.chamadas.filter(c => c[0] === 'confirm'), [['confirm', 'tkZ']]);
 });
 
-test('2º toque confirma com o token da prévia; só depois da leitura de volta igual vira "ok"', () => {
+test('gravação: só depois da leitura de volta igual vira "ok"', () => {
   const e = ambiente();
   e.flow.ask('edit', { 0: 1700 }, true); e.setStatus(pronto(F, { 0: 1700 }, 'tkA')); e.emit();
-  e.flow.confirm();
   same(e.chamadas.filter(c => c[0] === 'confirm'), [['confirm', 'tkA']]);
   assert.equal(e.flow.view().phase, 'writing');
   e.setStatus({ state: 'WRITING' }); e.emit();
@@ -154,15 +152,15 @@ test('2º toque confirma com o token da prévia; só depois da leitura de volta 
   same(v.undo, { available: true, values: F });
 });
 
-test('confirmar sem prévia não faz nada; toque fora cancela; nada grava sozinho', () => {
+test('confirmar solto não faz nada; cancelar durante a leitura descarta; nada grava sem pedido', () => {
   const e = ambiente();
   e.flow.confirm();
   assert.equal(e.count('confirm'), 0);
-  e.flow.ask('edit', { 0: 1700 }, true); e.setStatus(pronto(F, { 0: 1700 })); e.emit();
+  e.flow.ask('edit', { 0: 1700 }, true);
   e.flow.otherTouch();
   assert.equal(e.count('cancel'), 1); assert.equal(e.flow.view().phase, 'idle');
-  e.flow.confirm();
-  assert.equal(e.count('confirm'), 0, 'depois de cancelar, o 2º toque não grava');
+  e.setStatus(pronto(F, { 0: 1700 })); e.emit();
+  assert.equal(e.count('confirm'), 0, 'depois de cancelar, a resposta tardia não grava');
 });
 
 test('sem USB, fora da faixa ou ponte ausente: nem pede', () => {
@@ -215,26 +213,27 @@ test('o USB cair durante a gravação: não sabe como ficou', () => {
   assert.equal(e.flow.view().phase, 'error'); assert.match(e.flow.view().message, /cabo soltou.*Não sei como ficou/s);
 });
 
-test('sair da aba ou perder o USB na prévia descarta; Desfazer e Restaurar usam o mesmo caminho de 2 toques', () => {
+test('sair da aba ou perder o USB na leitura descarta; Restaurar fábrica também grava em um pedido', () => {
   const e = ambiente();
-  e.flow.ask('edit', { 0: 1700 }, true); e.setStatus(pronto(F, { 0: 1700 })); e.emit();
+  e.flow.ask('edit', { 0: 1700 }, true);
   e.flow.observe({ route: 'map', usbConnected: true });
   assert.equal(e.flow.view().phase, 'idle');
+  assert.equal(e.count('confirm'), 0);
   e.flow.ask('factory', V.factoryChanges([1800, 100, 1500, 5, 20]), true);
   assert.equal(e.chamadas.at(-1)[1], '{"0":1600,"3":2}');
   e.setStatus(pronto([1800, 100, 1500, 5, 20], { 0: 1600, 3: 2 })); e.emit();
-  assert.equal(e.flow.view().phase, 'preview'); assert.equal(e.flow.view().kind, 'factory');
-  assert.equal(e.count('confirm'), 0);
+  assert.equal(e.flow.view().phase, 'writing'); assert.equal(e.flow.view().kind, 'factory');
+  assert.equal(e.count('confirm'), 1);
 });
 
-test('mutação: confirmação automática (sem o 2º toque) faria o teste "nada grava sozinho" falhar', () => {
-  const M = carregar([["s.plan = mine; s.token = status.token;\n      set('preview', '', '');", "s.plan = mine; s.token = status.token;\n      set('preview', '', ''); confirm();"]]);
+test('mutação: voltar a exigir o 2º toque faria o teste "um pedido grava" falhar', () => {
+  const M = carregar([["s.plan = mine; s.token = status.token;\n      confirm();", "s.plan = mine; s.token = status.token;\n      set('preview', '', '');"]]);
   const chamadas = [];
   const bridge = { prepareAntiStalloValues: () => '{"ok":true}', confirmAntiStalloValues: t => { chamadas.push(t); return '{"ok":true}'; }, cancelAntiStalloValues: () => '{}',
     getAntiStalloValuesStatus: () => JSON.stringify(pronto(F, { 0: 1700 })) };
   let fn; const flow = M.createValuesFlow({ bridge, addHook: (_, f) => { fn = f; return () => {}; } });
   flow.ask('edit', { 0: 1700 }, true); fn();
-  assert.equal(chamadas.length, 1, 'o mutante grava sozinho: é exatamente o que o teste de verdade proíbe');
+  assert.equal(chamadas.length, 0, 'o mutante pede 2º toque: o teste verdadeiro (1 confirmação) pegaria');
 });
 
 test('mutação: faixa estragada (max+1 aceito) é pega pelo teste de limites', () => {
