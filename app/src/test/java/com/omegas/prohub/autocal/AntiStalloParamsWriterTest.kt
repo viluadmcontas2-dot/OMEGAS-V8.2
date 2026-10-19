@@ -62,6 +62,22 @@ class AntiStalloParamsWriterTest {
 
     private fun changes(vararg pairs: Pair<Int, Int>) = JSONObject().also { o -> pairs.forEach { o.put(it.first.toString(), it.second) } }.toString()
 
+    @Test fun `abrir valores sem snapshot le diretamente sem escrever ou alterar estados`() {
+        val serial = FakeSerial(factory.copyOf())
+        val reads = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val w = writer(serial, reads = reads)
+        assertTrue(w.readCurrent().getBoolean("ok"))
+        repeat(5_000_000) {
+            if (reads.isNotEmpty()) return@repeat
+            Thread.yield()
+        }
+        assertTrue("leitura direta deve alimentar snapshot", reads.any { it.endsWith("ABRIR_VALORES") })
+        assertEquals(factory.toList(), serial.values.toList())
+        assertEquals(listOf(Mp48WorkClass.READ_ONLY), serial.classes)
+        assertEquals(listOf("29"), serial.frames.map { it.substring(0, 2) })
+        assertEquals("IDLE", JSONObject(w.statusJson()).getString("state"))
+    }
+
     @Test fun `prepare so le - nenhum quadro de escrita sai`() {
         val serial = FakeSerial(factory.copyOf())
         val w = writer(serial)

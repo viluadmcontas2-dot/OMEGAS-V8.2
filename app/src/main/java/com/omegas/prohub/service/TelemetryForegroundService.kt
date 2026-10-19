@@ -543,6 +543,7 @@ class TelemetryForegroundService : Service() {
     fun cancelAntiStalloFlag(): String = antiStalloWriter.cancel().toString()
     fun antiStalloFlagStatusJson(): String = antiStalloWriter.statusJson()
     // Anti-apagão, os 5 números: mesmo fluxo (prévia → 2º toque → leitura de volta → desfazer).
+    fun readAntiStalloValues(): String = antiStalloParamsWriter.readCurrent().toString()
     fun prepareAntiStalloValues(changesJson: String): String = antiStalloParamsWriter.prepare(changesJson).toString()
     fun confirmAntiStalloValues(token: String): String = antiStalloParamsWriter.confirm(token).toString()
     fun cancelAntiStalloValues(): String = antiStalloParamsWriter.cancel().toString()

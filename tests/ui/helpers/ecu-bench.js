@@ -422,6 +422,13 @@
 
     const autocalExtra = {
       getAdvancedParams: () => json({ ok: true, read: bench.advRead, trigger: 'AUTO_START', params: clone(bench.params) }),
+      readAntiStalloValues: () => {
+        if (!bench.usb) return antiFail('USB desconectado');
+        const values = readAntiV();
+        if (!values) return antiFail('Leitura de ANTI_STALLO não respondeu.');
+        setAntiVParam(values);
+        return antiOk();
+      },
       prepareAntiStalloFlag: enable => antiPrepare(enable === true || enable === 'true'),
       confirmAntiStalloFlag: token => antiConfirm(String(token)),
       cancelAntiStalloFlag: () => { if (bench.antiStatus.state === 'READY') bench.antiStatus = { state: 'IDLE' }; bench.antiPending = null; return json({ ok: true }); },

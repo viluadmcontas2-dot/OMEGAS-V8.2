@@ -245,6 +245,11 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getAntiStalloFlagStatus(): String = activityRef.get()?.serviceOrNull()?.antiStalloFlagStatusJson() ?: unavailable()
 
+    /** Leitura direta de ANTI_STALLO quando o snapshot geral não chegou. Nunca escreve. */
+    @JavascriptInterface
+    fun readAntiStalloValues(): String =
+        activityRef.get()?.serviceOrNull()?.readAntiStalloValues() ?: unavailable()
+
     /** Anti-apagão, os 5 números: 1º toque. `changesJson` = {"índice": valor}. Valida a faixa, lê o módulo e monta a prévia; NÃO grava. */
     @JavascriptInterface
     fun prepareAntiStalloValues(changesJson: String): String =

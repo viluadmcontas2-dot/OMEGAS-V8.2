@@ -33,6 +33,7 @@
       this.signature = '';
       this.extraIndex = 1;
       this.saveAgain = false;
+      this.directReadRequested = false;
       this.layerSignature = '';
       if (!this.host || !this.A || !this.V || !this.M) return;
       const bridge = new Proxy({}, { get: (_, name) => (root.OmegasAutoCal ? root.OmegasAutoCal[name] : undefined) }); // ponte lida na hora do uso
@@ -66,7 +67,12 @@
       const usb = state.status?.usbConnected === true ? true : state.status?.usbConnected === false ? false : undefined;
       this.flag.observe({ route: state.route, usbConnected: usb });
       this.vals.observe({ route: state.route, usbConnected: usb });
-      if (state.route !== 'tools') { if (this.view !== 'home') { this.view = 'home'; this.signature = ''; this.setView(); } return; }
+      if (state.route !== 'tools') {
+        this.directReadRequested = false;
+        if (this.view !== 'home') { this.view = 'home'; this.signature = ''; this.setView(); }
+        return;
+      }
+      if (usb === false) this.directReadRequested = false;
       // Tal como as demais telas, só consulta seus dados enquanto está ativa.
       // Observe/cancel do fluxo de escrita permanece operando mesmo ao sair da aba.
       this.loadData();
@@ -81,6 +87,19 @@
         try { const parsed = JSON.parse(bridge.getAdvancedParams()); if (parsed && parsed.ok !== false) data = parsed; } catch (_) { /* fica "não lido" */ }
       }
       this.data = data;
+      const v = this.V.valuesOf(data.params?.ANTI_STALLO);
+      if (v) { this.lastValues = v; return; }
+      // Entrada na tela de valores: não depende do Mapa K/Curva K para ler o vetor.
+      // Uma única solicitação por visita, sem polling por tempo; o snapshot chega
+      // pela ponte nativa no próximo ciclo normal de contexto.
+      if (this.view === 'valores' && this.usb() && !this.directReadRequested &&
+          this.vals.view().phase === 'idle' && typeof bridge?.readAntiStalloValues === 'function') {
+        this.directReadRequested = true;
+        try {
+          const result = JSON.parse(bridge.readAntiStalloValues());
+          if (result.ok === false) console.warn('[OMEGAS Ferramentas] Leitura direta recusada:', result.error);
+        } catch (error) { console.warn('[OMEGAS Ferramentas] Leitura direta indisponível:', error); }
+      }
     }
 
     /** Valores atuais; enquanto grava/relê, mantém o último conhecido (a leitura volta daqui a pouco): os botões não podem sumir no meio dos toques. */

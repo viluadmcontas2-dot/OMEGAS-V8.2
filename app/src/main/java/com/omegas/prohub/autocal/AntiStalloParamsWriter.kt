@@ -37,6 +37,7 @@ class AntiStalloParamsWriter(
         Thread(runnable, "omegas-anti-stallo-params").apply { isDaemon = true }
     }
     private val running = AtomicBoolean(false)
+    private val backgroundRead = AtomicBoolean(false)
     private val lock = Any()
     private var pending: Pending? = null
     /** Valores anteriores da última gravação CONFIRMADA (para "Desfazer"), da sessão USB em que foi feita. */
@@ -71,6 +72,47 @@ class AntiStalloParamsWriter(
         }
         if (out.isEmpty()) return null to "Nenhum número foi informado."
         return out to AntiStalloParamsCore.validate(out)
+    }
+
+    /**
+     * Ferramentas abertas com snapshot geral ausente: lê SOMENTE ANTI_STALLO.
+     * Usa a mesma fila do gravador, sem prévia, sem token e SEM comando de escrita.
+     * Duas visitas concorrentes não duplicam consultas. Falhas só afetam esta leitura.
+     */
+    fun readCurrent(): JSONObject {
+        if (!serial.isConnected()) return fail("USB desconectado")
+        if (busy()) return fail(CALIBRATION_BUSY)
+        if (!backgroundRead.compareAndSet(false, true))
+            return JSONObject().put("ok", true).put("alreadyReading", true)
+        try {
+            executor.execute {
+                try {
+                    val session = sessionOrThrow()
+                    val values = esperandoAVez {
+                        serial.unit(
+                            reason = "anti-apagão: ler ANTI_STALLO ao abrir valores",
+                            expectedSessionId = session,
+                            workClass = Mp48WorkClass.READ_ONLY,
+                            telemetryAfter = true,
+                            waitTimeoutMs = 8_000L,
+                        ) { unit -> readValues(unit) }
+                    }
+                    if (serial.isConnected() && serial.currentSessionId() == session)
+                        onRead(session, values, "ABRIR_VALORES")
+                } catch (error: Exception) {
+                    record("anti_stallo_params_read", JSONObject()
+                        .put("outcome", "ERROR")
+                        .put("origin", "APP_UI_READ")
+                        .put("error", (error.message ?: error.javaClass.simpleName).take(120)))
+                } finally {
+                    backgroundRead.set(false)
+                }
+            }
+        } catch (_: RejectedExecutionException) {
+            backgroundRead.set(false)
+            return fail("O aplicativo está encerrando.")
+        }
+        return JSONObject().put("ok", true).put("started", true)
     }
 
     /** 1º toque: valida, lê ANTI_STALLO ao vivo e monta a prévia. Não escreve nada. */
