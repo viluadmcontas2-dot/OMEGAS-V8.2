@@ -390,6 +390,8 @@ test('RED: ler Ferramentas nao precisa de confirmacao e nao consulta sua ponte e
     assert.deepEqual(T.writesOf((await T.frames(page)).log), [], 'consultar os dados nunca grava');
     await T.route(app, 'autocal');
     const beforeOutside = await page.evaluate(() => window.__toolsReads);
+    // Evento público do app: atualiza contexto de fato, independentemente da cadência interna.
+    await page.evaluate(() => window.dispatchEvent(new Event('omegas-refresh')));
     await T.pump(page, 5);
     const afterOutside = await page.evaluate(() => window.__toolsReads);
     assert.equal(afterOutside, beforeOutside,
