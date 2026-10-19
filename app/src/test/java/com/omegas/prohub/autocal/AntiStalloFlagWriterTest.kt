@@ -240,4 +240,14 @@ class AntiStalloFlagWriterTest {
         assertEquals("READBACK_DIVERGED", waitFor(w, "DONE").getString("outcome"))
         assertFalse(JSONObject(w.statusJson()).getJSONObject("undo").getBoolean("available"))
     }
+
+    @Test fun `leitura previa espera a vez quando a serial recusa por estar ocupada e nao vira erro`() {
+        var recusas = 0
+        val resultado = esperandoAVez {
+            if (recusas < 3) { recusas += 1; throw com.omegas.prohub.ecu.Mp48BackpressureRejectedException("lane READ_ONLY saturada") }
+            "leu"
+        }
+        assertEquals("leu", resultado)
+        assertEquals(3, recusas)
+    }
 }

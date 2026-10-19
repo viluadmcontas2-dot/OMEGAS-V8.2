@@ -67,13 +67,13 @@ class AntiStalloFlagWriter(
             fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
             try {
                 val session = sessionOrThrow()
-                val words = serial.unit(
+                val words = esperandoAVez { serial.unit(
                     reason = "anti-apagão: ler FLAG_CONF3 para a prévia",
                     expectedSessionId = session,
                     workClass = Mp48WorkClass.READ_ONLY,
                     telemetryAfter = true,
-                    waitTimeoutMs = 1_000L,
-                ) { unit -> readFlags(unit) }
+                    waitTimeoutMs = 8_000L,
+                ) { unit -> readFlags(unit) } }
                 onFlagRead(session, words, "AO_VIVO")
                 val plan = AntiStalloFlagCore.plan(words, enable)
                 val token = UUID.randomUUID().toString()
@@ -117,7 +117,7 @@ class AntiStalloFlagWriter(
                     expectedSessionId = ready.session,
                     workClass = Mp48WorkClass.MANUAL_WRITE,
                     telemetryAfter = true,
-                    waitTimeoutMs = 1_000L,
+                    waitTimeoutMs = 8_000L,
                 ) { unit -> AntiStalloFlagCore.execute(io(unit), ready.plan) }
                 finish(ready, result) { publish(it) }
             } catch (error: Exception) {
@@ -215,5 +215,19 @@ class AntiStalloFlagWriter(
 
     private companion object {
         const val CALIBRATION_BUSY = "Há calibração em andamento, tente de novo."
+    }
+}
+
+/**
+ * A leitura prévia usa a faixa de leitura, que RECUSA na hora quando a serial está ocupada (telemetria/AutoCal lendo).
+ * Para quem tocou no botão isso não pode virar erro: espera a vez, por evento (cada recusa = a serial ainda está ocupada), no máximo ~3 s.
+ */
+internal inline fun <T> esperandoAVez(block: () -> T): T {
+    var tentativa = 0
+    while (true) {
+        try { return block() } catch (error: com.omegas.prohub.ecu.Mp48BackpressureRejectedException) {
+            if (++tentativa >= 30) throw error
+            Thread.sleep(100)
+        }
     }
 }

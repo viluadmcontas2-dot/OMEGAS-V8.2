@@ -86,13 +86,13 @@ class AntiStalloParamsWriter(
             fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
             try {
                 val session = sessionOrThrow()
-                val values = serial.unit(
+                val values = esperandoAVez { serial.unit(
                     reason = "anti-apagão: ler ANTI_STALLO para a prévia",
                     expectedSessionId = session,
                     workClass = Mp48WorkClass.READ_ONLY,
                     telemetryAfter = true,
-                    waitTimeoutMs = 1_000L,
-                ) { unit -> readValues(unit) }
+                    waitTimeoutMs = 8_000L,
+                ) { unit -> readValues(unit) } }
                 onRead(session, values, "AO_VIVO")
                 val plan = AntiStalloParamsCore.plan(values, changes)
                 val token = UUID.randomUUID().toString()
@@ -136,7 +136,7 @@ class AntiStalloParamsWriter(
                     expectedSessionId = ready.session,
                     workClass = Mp48WorkClass.MANUAL_WRITE,
                     telemetryAfter = true,
-                    waitTimeoutMs = 1_000L,
+                    waitTimeoutMs = 8_000L,
                 ) { unit -> AntiStalloParamsCore.execute(io(unit), ready.plan) }
                 finish(ready, result) { publish(it) }
             } catch (error: Exception) {
