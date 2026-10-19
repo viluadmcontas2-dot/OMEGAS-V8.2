@@ -17,14 +17,17 @@ def test_reset_k_truth_is_progbase_mul_act_one_not_ee_surface():
     assert "actual.all { it == 0x4000 }" in AUTOCAL
 
 
-def test_curve_k_batch_uses_one_direct_serial_unit_and_one_final_readback():
+def test_curve_k_batch_uses_direct_write_unit_then_background_readback():
     start = KFACTOR.index("private fun executeBatch")
     end = KFACTOR.index("private fun readRawPoints", start)
     body = KFACTOR[start:end]
 
     assert 'reason = "escrita direta Curva K"' in body
     assert "KFactorProtocol.writeFactor(index, targetRaw)" in body
-    assert body.count("serial.unit(") == 1
+    # 3 unidades em sequência: escrever (Gravado no ACK), conferir em segundo plano e, só se divergiu, corrigir 1x.
+    assert body.count("serial.unit(") == 3
+    assert body.index('reason = "conferência em segundo plano Curva K"') < body.index('reason = "correção autônoma Curva K"')
+    assert body.index('reason = "escrita direta Curva K"') < body.index('reason = "conferência em segundo plano Curva K"')
     assert body.count("KFactorProtocol.readFactors()") >= 2
     assert "appendHistory(event)" not in body
     assert "appendHistoryBatch(confirmed)" in body
@@ -37,6 +40,6 @@ def test_curve_k_history_is_persisted_once_per_batch():
 
 if __name__ == "__main__":
     test_reset_k_truth_is_progbase_mul_act_one_not_ee_surface()
-    test_curve_k_batch_uses_one_direct_serial_unit_and_one_final_readback()
+    test_curve_k_batch_uses_direct_write_unit_then_background_readback()
     test_curve_k_history_is_persisted_once_per_batch()
     print("CURVE_K_DIRECT_PARITY_CONTRACT=PASS")
