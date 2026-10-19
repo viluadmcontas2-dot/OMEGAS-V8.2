@@ -83,6 +83,14 @@
       this.data = data;
     }
 
+    /** Valores atuais; enquanto grava/relê, mantém o último conhecido (a leitura volta daqui a pouco): os botões não podem sumir no meio dos toques. */
+    valuesNow() {
+      const live = this.V.valuesOf(this.param('ANTI_STALLO'));
+      if (live) { this.lastValues = live; return live; }
+      const ph = this.vals.view().phase;
+      return (ph === 'preparing' || ph === 'writing' || ph === 'done') && this.lastValues ? this.lastValues : null;
+    }
+
     usb() { return this.store.get().status?.usbConnected === true; }
     param(name) { return (this.data.params || {})[name]; }
     hasBridge(kind = 'flag') {
@@ -94,7 +102,7 @@
       if (!this.hasBridge(kind)) return WHY.nobridge;
       if (!this.usb()) return WHY.nousb;
       // O primeiro toque lê FLAG_CONF3 ao vivo. O snapshot geral NÃO é pré-requisito.
-      if (kind === 'values' && !this.V.valuesOf(this.param('ANTI_STALLO'))) return WHY.unread;
+      if (kind === 'values' && !this.valuesNow()) return WHY.unread;
       return '';
     }
 
@@ -128,14 +136,14 @@
         if (undo.available) { this.vals.dismiss(); this.drafts = {}; this.vals.ask('undo', this.diff(undo.values), this.usb()); }
       } else if (t.matches('[data-adv-save]')) this.askSave();
       else if (t.matches('[data-adv-factory]')) {
-        const current = this.V.valuesOf(this.param('ANTI_STALLO'));
+        const current = this.valuesNow();
         const changes = this.V.factoryChanges(current);
         this.flag.cancel(); this.drafts = {};
         if (Object.keys(changes).length) this.vals.ask('factory', changes, this.usb());
       } else if (t.matches('[data-adv-open-view]')) { this.view = t.dataset.advOpenView; this.setView(); }
       else if (t.matches('[data-adv-back-valores]')) { this.view = 'valores'; this.setView(); }
       else if (t.matches('[data-adv-use-suggestion]')) {
-        const changes = this.V.suggestionChanges(this.V.valuesOf(this.param('ANTI_STALLO')));
+        const changes = this.V.suggestionChanges(this.valuesNow());
         this.flag.cancel(); this.drafts = {};
         if (Object.keys(changes).length) this.vals.ask('edit', changes, this.usb());
       } else if (t.matches('[data-adv-open-info-tab]')) { this.infoTab = t.dataset.advOpenInfoTab; this.view = 'info'; this.setView(); }
@@ -160,7 +168,7 @@
       const [idx, dir] = String(spec).split(':').map(Number);
       const f = this.V.FIELDS.find(x => x.index === idx);
       if (!f) return;
-      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const values = this.valuesNow();
       const parsed = this.V.parseInput(this.drafts[idx]);
       const base = parsed.ok ? parsed.value : (values ? values[idx] : f.factory);
       const next = Math.max(f.min, Math.min(f.max, base + dir * f.step));
@@ -186,14 +194,14 @@
     isValuesView() { return this.view === 'valores' || this.view === 'info'; }
 
     resetDrafts() {
-      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const values = this.valuesNow();
       this.drafts = {};
       this.V.FIELDS.forEach(f => { this.drafts[f.index] = values ? this.V.num(values[f.index]) : ''; });
     }
 
     /** O que o dono digitou que difere do valor lido (só campos válidos). */
     pendingChanges() {
-      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const values = this.valuesNow();
       const out = { changes: {}, invalid: false, errors: {} };
       this.V.FIELDS.forEach(f => {
         const text = this.drafts[f.index];
@@ -208,7 +216,7 @@
     }
 
     diff(target) {
-      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const values = this.valuesNow();
       const out = {};
       this.V.FIELDS.forEach(f => { if (!values || target[f.index] !== values[f.index]) out[f.index] = target[f.index]; });
       return out;
@@ -368,7 +376,7 @@
 
     /** Tela única: os 5 ajustes em cards + o card "Como funciona". Sem rolagem, sem botão Gravar, sem "extras". */
     renderValues(cards) {
-      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const values = this.valuesNow();
       const why = this.reason('values');
       const undo = this.vals.view().undo;
       const [level, statusText] = this.saveStatus();
@@ -404,7 +412,7 @@
 
     /** Explicação completa: leitura, em abas curtas (cabe sem rolar). */
     renderInfo() {
-      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const values = this.valuesNow();
       const lim = this.V.num(values ? values[0] : 1600);
       const tab = this.infoTab || 'como';
       const tabList = [['como', 'Como funciona'], ...this.V.FIELDS.map(f => ['f' + f.index, f.tab]), ['carro', 'Seu carro'], ['nao', 'NÃO é']];

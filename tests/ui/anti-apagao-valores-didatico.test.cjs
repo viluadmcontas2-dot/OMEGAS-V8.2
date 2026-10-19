@@ -106,9 +106,8 @@ test('toques rápidos em + não se perdem: o último valor chega à central (gra
   const { page } = app;
   try {
     await U.abrirValores(app);
-    await T.tap(page, '[data-field="0"] [data-adv-step="0:1"]');
-    await T.tap(page, '[data-field="0"] [data-adv-step="0:1"]');
-    await T.tap(page, '[data-field="0"] [data-adv-step="0:1"]');
+    const mais = '[data-field="0"] [data-adv-step="0:1"]:not([disabled])';
+    for (let k = 0; k < 3; k++) { await page.waitForSelector(mais, { state: 'visible' }); await T.tap(page, mais); }   // sem pausa de relógio entre os toques
     await T.pump(page, 40);
     assert.deepEqual(await U.anti5(page), [1750, 100, 1500, 2, 20], 'três toques de +50 = 1750 na central');
     assert.equal(await page.locator('#advField0').inputValue(), '1.750');
