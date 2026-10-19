@@ -64,7 +64,8 @@ class AutoCalResetSafetyGateTest(unittest.TestCase):
         self.assertIn("startBatchWrite(points, reason)", text)
         self.assertNotIn("createBackup(adjustmentId", text)
         self.assertIn('.put("automaticBackup", false)', text)
-        self.assertIn("readback K factor", text)
+        self.assertIn("conferência K factor", text)
+        self.assertIn("conferência em segundo plano Curva K", text)
 
 if __name__ == "__main__":
     unittest.main()
