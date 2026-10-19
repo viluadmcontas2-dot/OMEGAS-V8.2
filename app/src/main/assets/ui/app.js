@@ -34,11 +34,21 @@
     }
   }
 
+  let toolsRecoveryAttempted = false;
   function toolsUnavailable(error) {
     if (error) console.error('[OMEGAS] Ferramentas não abriram', error);
     const host = byId('toolAdvanced');
     if (host && !host.querySelector('[data-card="anti"]')) {
-      host.innerHTML = '<button type="button" class="tool-tile tool-open" data-tools-retry>Não foi possível abrir esta parte. Toque para tentar de novo.</button>';
+      host.innerHTML = '<article class="tool-tile" data-card="unavailable"><h3>Ferramentas indisponíveis</h3><p class="tile-line reason">O aplicativo não conseguiu abrir este painel.</p></article>';
+    }
+    // Reparação automática apenas UMA vez por carregamento, sem botão e sem loop de scripts.
+    // Carregamento normal é estático no index.html; esta é apenas uma segunda chance em caso de asset incompleto.
+    if (!advanced && !toolsRecoveryAttempted && ui.retryRoute && store.get().route === 'tools') {
+      toolsRecoveryAttempted = true;
+      const pending = ui.retryRoute('tools');
+      if (pending) pending.then(() => {
+        if (store.get().route === 'tools') { ensureTools(); if (advanced) advanced.refresh(); }
+      }).catch(cause => console.error('[OMEGAS] Recuperação da tela indisponível', cause));
     }
   }
 
@@ -424,14 +434,6 @@
 
   function bindGlobalEvents() {
     routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
-    byId('toolAdvanced')?.addEventListener('click', event => {
-      if (!event.target.closest('[data-tools-retry]')) return;
-      if (advanced) { enterRoute('tools'); return; }
-      const pending = ui.retryRoute?.('tools');
-      if (pending) pending.then(() => { if (store.get().route === 'tools') enterRoute('tools'); })
-        .catch(error => toolsUnavailable(error));
-      else enterRoute('tools');
-    });
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
 
     document.addEventListener('visibilitychange', () => {

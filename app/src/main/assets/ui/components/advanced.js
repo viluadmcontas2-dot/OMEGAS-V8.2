@@ -99,7 +99,6 @@
       if (box) { const input = box.querySelector('input'); if (input && !input.disabled && event.target !== input) input.focus(); return; }
       const t = event.target.closest('button');
       if (!t) return;
-      if (t.matches('[data-adv-retry]')) { this.signature = ''; this.render(); return; }
       if (t.matches('[data-adv-switch]')) {
         const entry = this.param('FLAG_CONF3');
         if (this.reason('flag')) return;
@@ -219,18 +218,30 @@
       this.signature = signature;
       this.host.dataset.mode = this.view === 'home' ? 'home' : 'view';
       try {
-        const cards = this.M.build(this.data.params);
-        this.host.innerHTML = this.view === 'home' ? this.renderHome(cards) : this.view === 'valores' ? this.renderValues(cards) : this.renderReadOnly(cards.find(c => c.id === this.view));
+        let cards;
+        let usingUnknown = false;
+        try { cards = this.M.build(this.data.params); }
+        catch (error) {
+          console.warn('[OMEGAS Ferramentas] Leitura inválida, mostrando estado desconhecido', error);
+          cards = this.M.build({}); // Degrada apenas a leitura, nunca escreve nem presume desligado.
+          usingUnknown = true;
+        }
+        const next = this.view === 'home' ? this.renderHome(cards)
+          : this.view === 'valores' ? this.renderValues(cards)
+          : this.renderReadOnly(cards.find(c => c.id === this.view));
+        if (this.host.innerHTML !== next) this.host.innerHTML = next;
         if (this.view === 'valores') this.paintFields();
+        if (usingUnknown) this.signature = ''; // Próximo quadro tenta recuperar sozinho, sem redesenho idêntico.
       } catch (error) {
         console.error('[OMEGAS Ferramentas] Cartões indisponíveis', error);
-        this.host.innerHTML = this.errorCard('ferramentas');
+        const fallback = this.errorCard('ferramentas');
+        if (this.host.innerHTML !== fallback) this.host.innerHTML = fallback;
         this.signature = '';
       }
     }
 
     errorCard(id) {
-      return `<button type="button" class="tool-tile tool-open" data-card="${escapeHtml(id)}" data-adv-retry>Não foi possível abrir esta parte. Toque para tentar de novo.</button>`;
+      return `<article class="tool-tile" data-card="${escapeHtml(id)}"><h3>Leitura indisponível</h3><p class="tile-line reason">Esta parte não pôde ser exibida. As outras continuam disponíveis.</p></article>`;
     }
 
     renderHome(cards) {

@@ -95,10 +95,11 @@ test('GREEN: Ferramentas desenha cartões apesar de falha na leitura auxiliar', 
   assert.match(html, /Marcha lenta/, 'outro cartão deve continuar visível');
 });
 
-test('se a carga dos cartões falhar parcialmente, a aba oferece nova tentativa', () => {
+test('se a carga dos cartões falhar parcialmente, o estado não exige nova tentativa manual', () => {
   const current = fs.readFileSync(path.join(T.UI_DIR, 'app.js'), 'utf8');
   const html = runBridgeFailure(current, { incompletePanel: true });
-  assert.match(html, /Não foi possível abrir esta parte\. Toque para tentar de novo\./);
+  assert.match(html, /Ferramentas indisponíveis/);
+  assert.doesNotMatch(html, /tocar|tente de novo/i);
 });
 
 const skip = T.skipReason() || false;
@@ -141,23 +142,21 @@ for (const [name, viewport] of Object.entries({
   }
 }
 
-test('script de cartão incompleto: mostra erro e deixa tentar de novo por toque', { skip }, async () => {
+test('script de cartão permanentemente incompleto: informa erro sem exigir toque manual', { skip }, async () => {
   const dir = T.mutatedUi([['core/cartoes-motor.js', 'ns.CartoesMotor = { build, stateOf };', '/* arquivo chegou incompleto */']]);
   const app = await T.openApp(browser, { ui: dir, viewport: { width: 1280, height: 720 } });
   try {
     await T.tap(app.page, '.side-nav [data-route="tools"]');
-    await app.page.waitForSelector('#toolAdvanced [data-tools-retry]');
-    assert.match(await app.page.locator('#toolAdvanced').innerText(), /Não foi possível abrir esta parte/);
-    await T.tap(app.page, '#toolAdvanced [data-tools-retry]');
-    await app.page.waitForSelector('#toolAdvanced [data-tools-retry]');
-    assert.match(await app.page.locator('#toolAdvanced').innerText(), /Toque para tentar de novo/);
+    await app.page.waitForSelector('#toolAdvanced [data-card="unavailable"]');
+    assert.match(await app.page.locator('#toolAdvanced').innerText(), /Ferramentas indisponíveis/);
+    assert.equal(await app.page.locator('#toolAdvanced [data-tools-retry]').count(), 0);
   } finally {
     await app.context.close();
     require('node:fs').rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test('cartão com defeito exibe tentar de novo e preserva os outros', { skip }, async () => {
+test('cartão com defeito exibe aviso sem exigir toque e preserva os outros', { skip }, async () => {
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 } });
   try {
     await T.tap(app.page, '.side-nav [data-route="tools"]');
@@ -170,7 +169,8 @@ test('cartão com defeito exibe tentar de novo e preserva os outros', { skip }, 
     });
     await T.tap(app.page, '[data-adv-open="valores"]');
     await T.tap(app.page, '[data-adv-back]');
-    assert.match(await app.page.locator('#toolAdvanced [data-card="corte"]').innerText(), /Não foi possível abrir esta parte\. Toque para tentar de novo\./);
+    assert.match(await app.page.locator('#toolAdvanced [data-card="corte"]').innerText(), /Leitura indisponível/);
+    assert.equal(await app.page.locator('[data-adv-retry], [data-tools-retry]').count(), 0);
     assert.equal(await app.page.locator('#toolAdvanced [data-card="anti"]').count(), 1);
     assert.equal(await app.page.locator('#toolAdvanced [data-card="lenta"]').count(), 1);
   } finally { await app.context.close(); }
