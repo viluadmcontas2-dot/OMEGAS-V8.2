@@ -36,7 +36,13 @@ jobs:
           set -euo pipefail
           npm install --no-save --prefix "${{ runner.temp }}/omegas-ui-test" playwright@1.56.1
           "${{ runner.temp }}/omegas-ui-test/node_modules/.bin/playwright" install chromium
-          NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules" node --test tests/ui/ferramentas-webview-regression.test.cjs 2>&1 | tee "${{ runner.temp }}/w6-ferramentas.log"
+          NODE_PATH="${{ runner.temp }}/omegas-ui-test/node_modules" node --test --test-concurrency=1 \
+            tests/ui/ferramentas-webview-regression.test.cjs \
+            tests/ui/anti-apagao-sem-snapshot.test.cjs \
+            tests/ui/ux-fluxo-toque.test.cjs \
+            tests/ui/campos-editaveis.test.cjs \
+            tests/ui/ferramentas-sem-rolagem.test.cjs \
+            2>&1 | tee "${{ runner.temp }}/w6-ferramentas.log"
       - name: Fast contracts
         shell: bash
         run: python3 -B tools/run_checks.py 2>&1 | tee "${{ runner.temp }}/w6-contracts.log"
