@@ -318,3 +318,46 @@ test('Multimidia 800x480: as descricoes e os estados nao ficam encobertos ou tru
     }
   } finally { await app.context.close(); }
 });
+
+
+test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU simulada', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
+  const { page } = app;
+  try {
+    await page.evaluate(() => {
+      const entry = values => ({ state: 'OK', values });
+      window.OmegasAutoCal.getAdvancedParams = () => JSON.stringify({ ok: true, read: true, params: {
+        FLAG_CONF1: entry([0, 0x1000]), FLAG_CONF2: entry([0, 0]),
+        FLAG_CONF3: entry([0x0010, 0]), ANTI_STALLO: entry([1600, 100, 1500, 2, 20]),
+        NUMERO_INJ_BENZINA_CUTOFF: entry([3]),
+      } });
+      window.__bench.ecu.clearLog();
+    });
+    for (const name of ['tools', 'autocal', 'refino', 'map', 'curve', 'sessions', 'tools']) {
+      await T.route(app, name);
+      await T.pump(page, 3);
+      assert.equal(await page.locator('.screen.active').count(), 1,
+        'navegação deixou mais de uma tela aberta ou nenhuma: ' + name);
+      if (name === 'tools') {
+        await page.waitForSelector('#toolAdvanced [data-card="anti"]', { state: 'visible' });
+        assert.equal(await page.locator('#toolAdvanced .tool-tile').count(), 7,
+          'Ferramentas perdeu cartões após navegar: ' + name);
+        assert.equal(await page.locator('[data-tools-retry], [data-adv-retry]').count(), 0);
+      }
+    }
+    assert.match(await page.locator('[data-card="corte"] .tile-state').innerText(), /3 injeções/);
+    assert.doesNotMatch(await page.locator('[data-card="corte"]').innerText(), /Saída suave/);
+    await T.tap(page, '[data-adv-open="troca"]');
+    await T.pump(page, 2);
+    const details = await page.locator('.read-view').innerText();
+    assert.match(details, /Sobreposição da troca.*Ligado/s,
+      'sinal da sobreposição do original deve aparecer na tela correta');
+    await T.tap(page, '[data-adv-back]');
+    await T.pump(page, 2);
+    await T.tap(page, '[data-adv-open="corte"]');
+    await T.pump(page, 2);
+    assert.match(await page.locator('.read-view').innerText(), /Gasolina ao sair do corte.*3 injeções/s);
+    assert.deepEqual(T.writesOf((await T.frames(page)).log), [],
+      'simular leituras e navegar não pode emitir gravação na ECU');
+  } finally { await app.context.close(); }
+});
