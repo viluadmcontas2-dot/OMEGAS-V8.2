@@ -290,3 +290,5 @@
 .mais-info > summary { display: flex; align-items: center; min-height: 52px; padding: 0 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer; }
 .mais-info[open] > summary { margin-bottom: 8px; }
 .mais-info ol, .mais-info p { font-size: 14px; line-height: 1.4; }
+.num-field .num-meta, .num-field .num-tips, .num-field .num-warn { font-size: 16px; }
+.como-funciona, .como-funciona p, .mais-info ol, .mais-info p { font-size: 15px; }
