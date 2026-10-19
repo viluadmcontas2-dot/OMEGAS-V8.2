@@ -320,6 +320,13 @@
       if (this.isValuesView() && active && this.host.contains(active) && active.tagName === 'INPUT') { this.paintFields(); return; }
       const fv = this.flag.view();
       const vv = this.vals.view();
+      // Não substitui botões sob o dedo enquanto uma escrita está em curso.
+      // Preserva toques rápidos e mantém status/erros atualizados sem recriar a tela.
+      if (this.view === 'valores' && this.host.querySelector('.vv-grid') &&
+          ['preparing', 'writing'].includes(vv.phase)) {
+        this.paintFields();
+        return;
+      }
       const signature = JSON.stringify([this.view, this.data, this.usb(), this.hasBridge(), fv.phase, vv.phase, vv.message, vv.undo, this.isValuesView() ? [this.drafts, this.infoTab] : null]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
