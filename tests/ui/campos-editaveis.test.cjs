@@ -10,11 +10,11 @@ const U = require('./helpers/ux-cenarios.cjs');
 const skip = T.skipReason() || false;
 const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 const CAMPOS = [
-  { i: 0, nome: 'Rotação máxima para agir', unidade: 'rotação', faixa: 'De 0 a 6.000', fabrica: '1.600' },
-  { i: 1, nome: 'Queda de rotação para agir', unidade: 'rotação', faixa: 'De 0 a 1.000', fabrica: '100' },
-  { i: 2, nome: 'Tempo antes de voltar ao gás', unidade: 'ms', faixa: 'De 0 a 10.000', fabrica: '1.500' },
-  { i: 3, nome: 'Folga para não ficar trocando', unidade: 'rotação', faixa: 'De 0 a 1.000', fabrica: '2' },
-  { i: 4, nome: 'Queda para parar de agir', unidade: 'rotação', faixa: 'De 0 a 1.000', fabrica: '20' },
+  { i: 0, nome: 'Rotação máxima para agir', unidade: 'rpm', faixa: 'De 0 a 6.000', fabrica: '1.600' },
+  { i: 1, nome: 'Queda de rotação para agir', unidade: 'rpm', faixa: 'De 0 a 1.000', fabrica: '100' },
+  { i: 2, nome: 'Espera para sair do gás', unidade: 'ms', faixa: 'De 0 a 10.000', fabrica: '1.500' },
+  { i: 3, nome: 'Folga para não ficar trocando', unidade: 'rpm', faixa: 'De 0 a 1.000', fabrica: '2' },
+  { i: 4, nome: 'Queda para parar de agir', unidade: 'rpm', faixa: 'De 0 a 1.000', fabrica: '20' },
 ];
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
@@ -156,7 +156,7 @@ test('Restaurar fábrica: prévia com os valores de fábrica, 2º toque grava, c
     const previa = await U.text(page, '#toolsLayer');
     assert.match(previa, /Restaurar valores de fábrica\?/);
     assert.match(previa, /3\.000 → 1\.600 rotação/);
-    assert.match(previa, /Folga para não ficar trocando 5 → 2 rotação/);
+    assert.match(previa, /Folga para não ficar trocando 5 → 2 rpm/);
     assert.doesNotMatch(previa, /Queda de rotação para agir/, 'só o que muda aparece');
     assert.deepEqual(await U.ecuWrites(page), [], 'Restaurar fábrica também precisa do 2º toque');
     await T.tap(page, '#toolsLayer [data-adv-confirm]'); await T.pump(page, 6);

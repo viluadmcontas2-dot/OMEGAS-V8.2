@@ -152,7 +152,8 @@
   .side-nav button { height: 56px; min-height: 56px; }
   .screen { padding-top: 8px; padding-bottom: 8px; }
   #toolsDrawer .page-intro, #sessionsScreen .page-intro { display: none; }
-  #toolsDrawer .tool-tile .tile-line:not(.reason) { display: none; }
+  /* A explicação dos cartões continua visível em telas baixas. Detalhes permanecem acessíveis pelo toque. */
+  #toolsDrawer .tool-tile .tile-line:not(.reason) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .tool-tile h3 { font-size: 20px; }
   .tile-state { font-size: 22px; width: 100%; }
   .tile-go { display: none; }
