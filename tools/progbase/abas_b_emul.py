@@ -594,6 +594,8 @@ class Sessao:
         m.ecu = EcuDono(self.tab_ecu, self.forma)
         m.escritas = []
         m.caixas = []
+        m.chamador_erro = 0
+        m.pilha_erro = []
         m.cursor_atual = 0
         m.efeitos = []
         m.erro = None

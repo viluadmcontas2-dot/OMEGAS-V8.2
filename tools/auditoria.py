@@ -8,6 +8,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 REA = re.compile(r'\bev_[a-f0-9]{64}\b')
+MAN = re.compile(r'\bMAN-(?:2\.16\.4-p\d{3}|ABAS-B-[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*|PROTOCOLO-CONNECT-[A-F0-9]{8})\b')
 
 
 def ler(path, default):
@@ -20,8 +21,13 @@ def auditar(root):
     bundle = ler(pb / 'decomp/evidence-bundle.json', {'records': []})
     existentes = {r['evidence_id'] for r in bundle['records']}
     citados = set()
+    man_citados = set()
+    locais = ler(pb / 'evidencias-locais.json', {'records': []})['records']
+    paginas = ler(pb / 'manual/paginas.json', {'paginas': {}})['paginas']
+    man_existentes = {r['evidence_id'] for r in locais} | set(paginas)
     for path in pb.rglob('*.md'):
         citados.update(REA.findall(path.read_text()))
+        man_citados.update(MAN.findall(path.read_text()))
     graph = ler(pb / 'grafo/graph.json', {'nodes': [], 'links': []})
     ids = {n['id'] for n in graph['nodes']}
     arquivos = sorted({n['source_file'] for n in graph['nodes'] if n.get('source_file')})
@@ -36,12 +42,19 @@ def auditar(root):
         errors.append('ledger ausente')
     errors.extend('arquivo ausente: ' + p for p in ausentes)
     errors.extend('evidência REA ausente: ' + e for e in sorted(citados - existentes))
+    errors.extend('evidência MAN ausente: ' + e for e in sorted(man_citados - man_existentes))
+    errors.extend('fonte MAN ausente: ' + r['source_file'] for r in locais
+                  if not (root / r['source_file']).is_file())
+    if paginas and not (pb / 'manual/manual-2.16.4C.txt').is_file():
+        errors.append('texto do manual ausente')
     if pontas:
         errors.append(f'{len(pontas)} arestas com ponta inexistente')
     return {
         'integridade_ok': not errors, 'erros': errors,
         'limite': 'Integridade referencial; não comprova reconstrução funcional ou execução no carro. Bundle validado separadamente pelo REA.',
-        'evidencias': {'rea_citadas': len(citados), 'rea_existentes': len(existentes), 'rea_ausentes': sorted(citados - existentes)},
+        'evidencias': {'rea_citadas': len(citados), 'rea_existentes': len(existentes), 'rea_ausentes': sorted(citados - existentes),
+                      'man_citadas': len(man_citados), 'man_existentes': len(man_existentes),
+                      'man_ausentes': sorted(man_citados - man_existentes)},
         'grafo': {'nos': len(ids), 'arquivos': len(arquivos), 'arquivos_ausentes': ausentes, 'arestas_invalidas': len(pontas)},
         'pendencias': {'abertas': len(re.findall(r'^- \[ \]', texto, re.M)), 'feitas': len(re.findall(r'^- \[[xX]\]', texto, re.M))},
         'cobertura_estatica': ler(pb / 'decomp/cobertura.json', None),

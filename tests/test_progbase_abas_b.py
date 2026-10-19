@@ -18,6 +18,20 @@ class AbasB(unittest.TestCase):
         self.assertIn(0x4005000, r["funcoes"], "alocador substituto não executado")
         self.assertFalse(any("Runtime error 203" in x for x in r["caixas"]))
 
+    def test_cenario_limpa_diagnostico_da_execucao_anterior(self):
+        import abas_b_emul as E
+        s = E.Sessao(A.achar_exe())
+        m = s.cenario()
+        r = s.rodar(m, s.ctx.metodos_inv["TabIniezioneShow"], m.ctl("TabIniezione"))
+        self.assertEqual(r["erro"], "API sem stub: GetClassInfoW")
+        self.assertIn(("cursor_carregado", 32512), r["efeitos"])
+        self.assertNotEqual(m.chamador_erro, 0)
+        m = s.cenario()
+        r = s.rodar(m, s.ctx.metodos_inv["TabKVarieShow"], m.ctl("TabKVarie"))
+        self.assertIsNone(r["erro"])
+        self.assertEqual(m.chamador_erro, 0)
+        self.assertEqual(m.pilha_erro, [])
+
     def test_cursor_compartilhado_modelado_sem_aceitar_recurso_desconhecido(self):
         import abas_b_emul as E
         s = E.Sessao(A.achar_exe())

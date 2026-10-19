@@ -29,15 +29,18 @@
   },
   "erros": [],
   "evidencias": {
+    "man_ausentes": [],
+    "man_citadas": 74,
+    "man_existentes": 74,
     "rea_ausentes": [],
-    "rea_citadas": 0,
+    "rea_citadas": 2,
     "rea_existentes": 2
   },
   "grafo": {
     "arestas_invalidas": 0,
-    "arquivos": 102,
+    "arquivos": 167,
     "arquivos_ausentes": [],
-    "nos": 11879
+    "nos": 12071
   },
   "integridade_ok": true,
   "limite": "Integridade referencial; não comprova reconstrução funcional ou execução no carro. Bundle validado separadamente pelo REA.",
@@ -45,7 +48,7 @@
     "abertas": 10,
     "feitas": 1
   },
-  "source_sha": "f4383e4be68cc26e7295bcd31a760e240ed3110b",
+  "source_sha": "d4db2ee5c194543d1e3d2b4b6c89ef9cf30ee784",
   "testes": {
     "estado": "DESCONHECIDO",
     "motivo": "Este comando não executa testes nem presume resultados de outros jobs."

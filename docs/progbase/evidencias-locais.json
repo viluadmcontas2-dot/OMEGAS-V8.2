@@ -1,0 +1,119 @@
+{
+  "limite": "Registro local de análises manuais; não é bundle nem ID REA. Páginas do manual em manual/paginas.json.",
+  "records": [
+    {
+      "evidence_id": "MAN-ABAS-B-TabAdatta",
+      "source_file": "docs/progbase/abas/TabAdatta.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabAdvanced",
+      "source_file": "docs/progbase/abas/TabAdvanced.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabAutoCalNew",
+      "source_file": "docs/progbase/abas/TabAutoCalNew.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabBenzina",
+      "source_file": "docs/progbase/abas/TabBenzina.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabCalibration",
+      "source_file": "docs/progbase/abas/TabCalibration.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabConsumometro",
+      "source_file": "docs/progbase/abas/TabConsumometro.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabDhlpAgaslev",
+      "source_file": "docs/progbase/abas/TabDhlpAgaslev.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabEsci",
+      "source_file": "docs/progbase/abas/TabEsci.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabFrest",
+      "source_file": "docs/progbase/abas/TabFrest.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabIniezione",
+      "source_file": "docs/progbase/abas/TabIniezione.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabInjSettings",
+      "source_file": "docs/progbase/abas/TabInjSettings.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabInjSettingsSt",
+      "source_file": "docs/progbase/abas/TabInjSettingsSt.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabKVarie",
+      "source_file": "docs/progbase/abas/TabKVarie.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabSwitchToPetrol",
+      "source_file": "docs/progbase/abas/TabSwitchToPetrol.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabTaratura",
+      "source_file": "docs/progbase/abas/TabTaratura.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabTest",
+      "source_file": "docs/progbase/abas/TabTest.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-TabVariatore",
+      "source_file": "docs/progbase/abas/TabVariatore.md",
+      "marca": "OBS-COD",
+      "limite": "Inventário DFM/RTTI; fórmulas e efeitos runtime não comprovados pelo inventário."
+    },
+    {
+      "evidence_id": "MAN-ABAS-B-ONSHOW-LIMITES",
+      "source_file": "docs/progbase/abas/limites-onshow-b.json",
+      "marca": "DERIVADO",
+      "limite": "Execução CPU sintética: limites e retornos; sem captura Wine."
+    },
+    {
+      "evidence_id": "MAN-PROTOCOLO-CONNECT-00923FDC",
+      "source_file": "docs/progbase/protocolo/conexao.md",
+      "marca": "OBS-COD",
+      "limite": "Leitura de pseudocódigo retido; sem execução da conexão nesta evidência."
+    }
+  ]
+}

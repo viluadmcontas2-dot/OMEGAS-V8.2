@@ -19,6 +19,7 @@ PB = os.path.join(ROOT, 'docs', 'progbase')
 OUT = os.path.join(PB, 'grafo')
 ORIGEM = 'progbase'
 EV = re.compile(r'\bev_[a-f0-9]{64}\b')
+MAN = re.compile(r'\bMAN-(?:2\.16\.4-p\d{3}|ABAS-B-[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*|PROTOCOLO-CONNECT-[A-F0-9]{8})\b')
 ADDR = re.compile(r'\b0x([0-9A-Fa-f]{6,8})\b')
 ARQ = re.compile(r'[\w./-]+\.(?:kt|js|cjs|py|md|json)\b')
 
@@ -234,6 +235,9 @@ def documentos(por, arq):
             for e in EV.findall(linha):
                 eid = no('ev:' + e, e[:15] + '…', 'evidencia', rel, evidence_id=e, arquivo=rel, linha=ln)
                 lig(did, 'cita_evidencia', eid, 'OBS-COD')
+            for e in MAN.findall(linha):
+                if 'ev:' + e in nos:
+                    lig(did, 'cita_evidencia', 'ev:' + e, 'DERIVADO')
         for forma in sorted(set(re.findall(r'\bT[A-Za-z0-9_]+\b', texto))):
             if 'form:' + forma in nos:
                 lig(did, 'menciona', 'form:' + forma, 'OBS-COD')
@@ -277,11 +281,34 @@ def manuais():
         lig(x['de'], x['relacao'], x['para'], x.get('marca', 'INFERIDO'), x.get('evidencia'))
 
 
+def evidencias():
+    """Registros REA permanecem separados das análises locais e páginas do manual."""
+    bundle_path = 'docs/progbase/decomp/evidence-bundle.json'
+    bundle = abrir(bundle_path) or {}
+    for record in bundle.get('records', []):
+        eid = record['evidence_id']
+        no('ev:' + eid, record['operation'], 'evidencia', bundle_path,
+           evidence_id=eid, authority=record.get('authority'), confidence=record.get('confidence'))
+    local = abrir('docs/progbase/evidencias-locais.json') or {}
+    for record in local.get('records', []):
+        eid = record['evidence_id']
+        no('ev:' + eid, eid, 'evidencia_manual', record['source_file'], evidence_id=eid,
+           marca=record.get('marca'), limite=record.get('limite'))
+    manual = abrir('docs/progbase/manual/paginas.json') or {}
+    for eid, page in sorted(manual.get('paginas', {}).items()):
+        page_id = 'manual:2.16.4:p' + str(page['pagina'])
+        no(page_id, 'Manual 2.16.4, página ' + str(page['pagina']), 'pagina_manual',
+           'docs/progbase/manual/manual-2.16.4C.txt', pagina=page['pagina'], sha256=page['sha256'])
+        no('ev:' + eid, eid, 'evidencia_manual', 'docs/progbase/manual/paginas.json',
+           evidence_id=eid, marca='OBS-DOC', limite=manual.get('limite'))
+        lig('ev:' + eid, 'identifica_pagina', page_id, 'DERIVADO')
+
+
 def montar():
     nos.clear(); arestas.clear(); ausentes.clear()
     arq = indice_arquivos()
     por = carregar_funcoes()
-    telas(por); protocolo(por, arq); abas(); documentos(por, arq); reconstrucoes(por); manuais()
+    telas(por); protocolo(por, arq); abas(); evidencias(); documentos(por, arq); reconstrucoes(por); manuais()
     return por
 
 
