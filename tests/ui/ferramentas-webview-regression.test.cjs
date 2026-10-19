@@ -226,3 +226,57 @@ test('sem param_snapshot, central com anti-apagão já ligado identifica estado 
     assert.equal(await page.locator('#toolsLayer [data-adv-confirm]').count(), 0);
   } finally { await app.context.close(); }
 });
+
+
+test('RED realidade: status auxiliar nativo falha, mas sete cartoes reais continuam operaveis', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
+  try {
+    await app.page.evaluate(() => {
+      window.OmegasAutoCal.getAntiStalloFlagStatus = () => { throw Error('status nativo ainda indisponivel'); };
+      window.OmegasAutoCal.getAntiStalloValuesStatus = () => { throw Error('leitura auxiliar indisponivel'); };
+    });
+    await T.tap(app.page, '.side-nav [data-route="tools"]');
+    await T.pump(app.page, 3);
+    for (const id of ['anti', 'valores', 'corte', 'lenta', 'troca', 'injetores', 'volta']) {
+      const card = app.page.locator('#toolAdvanced [data-card="' + id + '"]');
+      assert.equal(await card.count(), 1, 'cartao real desapareceu: ' + id);
+      const box = await card.boundingBox();
+      assert.ok(box && box.width > 0 && box.height > 0, 'cartao fora da tela: ' + id);
+    }
+    assert.equal(await app.page.locator('[data-tools-retry], [data-adv-retry]').count(), 0, 'nao exigir toque para tentar de novo');
+    const frames = await T.frames(app.page);
+    assert.deepEqual(T.writesOf(frames.log), [], 'falha de status nunca grava na central');
+  } finally { await app.context.close(); }
+});
+
+test('RED fluxo: dependencias criticas de Ferramentas fazem parte do carregamento inicial deterministico', () => {
+  const html = fs.readFileSync(path.join(T.UI_DIR, 'index.html'), 'utf8');
+  const srcs = Array.from(html.matchAll(/<script\s+src="([^"]+)"/g), m => m[1]);
+  const deps = ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'core/anti-apagao-valores.js',
+    'core/idle-mode.js', 'core/cartoes-motor.js', 'components/drawers.js', 'components/advanced.js'];
+  const indices = deps.map(src => srcs.indexOf(src));
+  assert.ok(indices.every(i => i >= 0), 'a aba principal nao pode depender de scripts dinamicos no WebView: ' + srcs.join(', '));
+  assert.deepEqual(indices, indices.slice().sort((a,b) => a-b), 'dependencias devem carregar na ordem');
+  assert.ok(indices.at(-1) < srcs.indexOf('app.js'), 'Ferramentas deve estar pronta antes do shell');
+});
+
+test('RED UX: textos explicam contexto, efeito e unidades sem supor conhecimento do GNV', () => {
+  const sources = ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'core/anti-apagao-valores.js',
+    'core/idle-mode.js', 'core/cartoes-motor.js'];
+  const context = { console, Intl, JSON, Number, String, Math };
+  context.window = context;
+  vm.createContext(context);
+  for (const src of sources) vm.runInContext(fs.readFileSync(path.join(T.UI_DIR, src), 'utf8'), context, { filename: src });
+  const cards = context.OmegasUi.CartoesMotor.build({});
+  const pick = id => cards.find(x => x.id === id);
+  assert.match(pick('anti').line, /embreagem|manobra|parar/i);
+  assert.match(pick('valores').line, /rota.c.o|limite/i);
+  assert.match(pick('troca').line, /gasolina.*(?:g.s|GNV)/i);
+  assert.match(pick('corte').line, /(?:retoma|volta).*aceler/i);
+  assert.match(pick('lenta').line, /motor ligado|parar|manobra/i);
+  assert.match(pick('injetores').line, /(?:acion|aliment).*(?:injetor|g.s)|injetores.*g.s/i);
+  assert.match(pick('volta').line, /rota..es|giro alto/i);
+  const fields = context.OmegasUi.AntiApagaoValores.FIELDS;
+  assert.ok(fields.filter(f => f.unit === 'rpm').length >= 1, 'limites de rotacao devem informar rpm');
+  assert.ok(fields.some(f => f.unit === 'ms'), 'o tempo deve indicar ms');
+});
