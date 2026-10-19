@@ -10,27 +10,30 @@
   const ADDRESS = 307;
   // Textos para quem nunca mexeu: o que o número faz, para que lado mexer em cada sintoma e o passo dos botões − / +.
   // O original só mostra o 1º número (Rotação máxima, 1600 rpm); o efeito dos outros 4 é INFERIDO (experimental).
+  // Rótulos e unidades do ORIGINAL (i18n 963-970): "Max RPM to enable un-stalling" (rpm), "Delta RPM to enable" (rpm/ciclo),
+  // "Delay to exit gas mode" (ms), "Hysteresis for enabling threshold" (rpm/ciclo), "Delta RPM to disenable" (rpm/ciclo).
+  // Evidência de uso (OBS-FIO, log novo): com a função ligada a rotação pós-corte nunca caiu de 600 rpm (desligada: 26 vezes, mín. 447).
   const FIELDS = [
     { index: 0, label: 'Rotação máxima para agir', unit: 'rpm', min: 0, max: 6000, factory: 1600, step: 50,
-      help: 'Até que rotação o anti-apagão fica de olho no motor. Acima disso ele não interfere. rpm = rotações por minuto.',
-      tipUp: 'O carro ainda apaga ao pisar na embreagem (parando, ré, quebra-molas)? Aumente de 50 em 50 e teste.',
+      help: 'O anti-apagão só entra com o motor ABAIXO desta rotação (parado, marcha lenta, manobra). Acima dela, em aceleração normal, ele não interfere.',
+      tipUp: 'O carro ainda apaga ao pisar na embreagem (parando, ré, quebra-molas, reduzindo)? Aumente de 50 em 50 e teste.',
       tipDown: 'Sente o carro segurando a gasolina sem necessidade? Diminua de 50 em 50. Se está tudo bem, deixe o valor de fábrica.' },
-    { index: 1, label: 'Queda de rotação para agir', unit: 'rpm', min: 0, max: 1000, factory: 100, step: 5,
-      help: 'Quão rápido o motor precisa perder rotação para a proteção entrar.',
-      tipUp: 'Entrando à toa em pequenas oscilações? Aumente de 5 em 5.',
-      tipDown: 'Entrando tarde demais, o motor já apagou? Diminua de 5 em 5.' },
+    { index: 1, label: 'Queda de rotação para agir', unit: 'rpm por ciclo', min: 0, max: 1000, factory: 100, step: 5,
+      help: 'Mede a VELOCIDADE da queda: quantas rpm o motor perde por ciclo. Se a rotação cair mais rápido que isso (embreagem, parada, depois de um corte), a proteção entra. Queda lenta não ativa.',
+      tipUp: 'Está entrando à toa, em quedas pequenas? Aumente de 5 em 5 (fica menos sensível).',
+      tipDown: 'Entra tarde e o motor já apagou? Diminua de 5 em 5 (fica mais sensível).' },
     { index: 2, label: 'Espera para sair do gás', unit: 'ms', min: 0, max: 10000, factory: 1500, step: 100,
-      help: 'Quanto tempo a central espera antes de sair do GNV. ms = milésimos de segundo (1.000 ms = 1 segundo).',
+      help: 'Tempo de espera para a central sair do modo gás quando a proteção age (original: "Delay to exit gas mode"). 1.000 ms = 1 segundo.',
       tipUp: 'Saindo do gás cedo demais? Aumente de 100 em 100.',
       tipDown: 'Demora para trocar e o motor falha? Diminua de 100 em 100.' },
-    { index: 3, label: 'Folga para não ficar trocando', unit: 'rpm', min: 0, max: 1000, factory: 2, step: 5,
-      help: 'Evita ligar e desligar a proteção por oscilação pequena.',
+    { index: 3, label: 'Folga para não ficar trocando', unit: 'rpm por ciclo', min: 0, max: 1000, factory: 2, step: 5,
+      help: 'Margem (histerese) para a proteção não ligar e desligar por oscilação pequena perto do limite.',
       tipUp: 'A proteção liga e desliga toda hora? Aumente de 5 em 5.',
       tipDown: 'Demora para voltar ao normal? Diminua de 5 em 5.' },
-    { index: 4, label: 'Queda para parar de agir', unit: 'rpm', min: 0, max: 1000, factory: 20, step: 5,
-      help: 'Quando a queda de rotação diminui até este valor, a proteção para de agir.',
-      tipUp: 'A proteção solta cedo e o motor volta a falhar? Diminua de 5 em 5.',
-      tipDown: 'Ela demora a soltar e atrapalha a aceleração? Aumente de 5 em 5.' },
+    { index: 4, label: 'Queda para parar de agir', unit: 'rpm por ciclo', min: 0, max: 1000, factory: 20, step: 5,
+      help: 'Quando a queda por ciclo ficar menor que este valor, o motor já se firmou e a proteção para de agir.',
+      tipUp: 'A proteção demora a soltar e atrapalha a aceleração? Aumente de 5 em 5.',
+      tipDown: 'Ela solta cedo e o motor volta a falhar? Diminua de 5 em 5.' },
   ];
   const COUNT = FIELDS.length;
   const FACTORY = FIELDS.map(f => f.factory);

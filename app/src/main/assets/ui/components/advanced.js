@@ -334,6 +334,17 @@
       return `
         <section class="tool-view values-view" data-card="valores">
           <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p>${escapeHtml(why || 'Use − e + (ou toque no número e digite). Depois toque em Gravar valores: grava na hora e dá para Desfazer.')}</p></header>
+          <section class="como-funciona" aria-label="Como funciona">
+            <p><b>Como funciona:</b> quando a rotação do motor <b>cai de repente</b> e está <b>abaixo de ${escapeHtml(this.V.num(values ? values[0] : 1600))} rpm</b> (ex.: você pisa na embreagem parando, engatando ré ou reduzindo), o anti-apagão entra e ajuda o motor a não apagar. Em aceleração normal ele não faz nada.</p>
+            <details class="tool-tech"><summary>Ver o caminho completo e o que NÃO é</summary>
+              <ol>
+                <li>Rotação cai mais rápido que <b>Queda para agir</b> <em>e</em> está abaixo da <b>Rotação máxima</b> → a proteção <b>entra</b>.</li>
+                <li>A central sai do gás conforme a <b>Espera</b> (ms) e ajuda o motor a segurar.</li>
+                <li>Quando a queda fica menor que <b>Queda para parar</b>, a proteção <b>solta</b>. A <b>Folga</b> evita ligar e desligar toda hora.</li>
+              </ol>
+              <p><b>Não é o corte de injeção</b> (soltar o acelerador em desaceleração). O corte tem ajustes próprios no cartão <b>Saída do corte</b>. Mas os dois se encontram: no seu log, depois de cada corte, com o anti-apagão <b>desligado</b> a rotação afundou até 447 rpm (26 vezes abaixo de 600); <b>ligado</b>, nunca passou de 680 rpm.</p>
+            </details>
+          </section>
           <div class="num-grid">${fields}</div>
           ${this.vals.view().phase === 'done' ? `<p class="adv-saved" role="status">${escapeHtml(this.vals.view().message)}</p>` : ''}
 ${this.vals.view().phase === 'preparing' || this.vals.view().phase === 'writing' ? '<p class="adv-saved" role="status">Gravando…</p>' : ''}

@@ -27,6 +27,25 @@ test('cada número explica o efeito, diz para que lado mexer e tem botões − /
   } finally { await app.context.close(); }
 });
 
+test('liga os pontos: explica QUANDO age, o caminho completo e que NÃO é o corte de injeção (com a evidência do log)', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
+  const { page } = app;
+  try {
+    await T.route(app, 'tools');
+    await T.tap(page, '[data-adv-open="valores"]');
+    await T.pump(page, 3);
+    const quando = await page.locator('.como-funciona > p').first().innerText();
+    assert.match(quando, /cai de repente/); assert.match(quando, /abaixo de 1\.600 rpm/); assert.match(quando, /embreagem/);
+    await page.evaluate(() => { document.querySelector('.como-funciona details').open = true; });
+    const tudo = await page.locator('.como-funciona').innerText();
+    assert.match(tudo, /Não é o corte de injeção/);
+    assert.match(tudo, /Saída do corte/, 'aponta para o cartão do corte');
+    assert.match(tudo, /447 rpm/); assert.match(tudo, /680 rpm/);
+    await page.evaluate(() => { document.querySelector('.extras-experimentais').open = true; });
+    assert.match(await page.locator('[data-field="1"] .num-unit').innerText(), /rpm por ciclo/, 'unidade do original: rpm/ciclo');
+  } finally { await app.context.close(); }
+});
+
 test('SEM ATRITO: + / − muda o número e "Gravar valores" grava num toque, sem janela de pergunta', { skip }, async () => {
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   const { page } = app;
