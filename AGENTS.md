@@ -18,15 +18,13 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 
 ## Invariantes (cada um tem teste)
 
-- **sem-atrito** (dono, 2026-10-19, repetido várias vezes): interruptor/ação simples = **UM toque, sem pergunta de confirmação, sem janela bloqueando**. O toque é a ordem; o app grava na hora (ACK = "Gravado"), confere a leitura de volta em segundo plano, corrige sozinho se divergir, avisa só se falhar e oferece "Desfazer" no próprio cartão. Proibido novo diálogo "Tem certeza?"/2º toque. Continua valendo: nunca grava sem toque do dono. Teste RED→GREEN: `tests/ui/anti-apagao-toque-real.test.cjs` (falha com o fluxo de 2 toques).
-
 - Nenhuma escrita automática de Map K/Curve K (dono, 2026-10-18: "não é para gravar sozinho"; supera a exceção D1 de 2026-10-16). O D1 só SUGERE: após cada AutoMatch da ECU registra `d1_decision` na sessão (modo SOMBRA ou DESLIGADO; não existe modo que grave). O AutoMatch manual continua só por ação do operador. Escrita manual exige intenção explícita + ACK + readback. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md` (Q1: a ECU aplica o AutoMatch sobre a curva viva).
 - `RESET_ALL` não é ação exposta; só o reset do GNV (ação AutoCal `02 24 04 02`) pode ser pedido à mão, em um toque, com backup completo antes e readback da ECU.
 - Teto de escrita da curva K = **1,8** (dono, 2026-10-13), como o piso de 100 do Mapa K: `KFactorProtocol.MAX_WRITE_FACTOR`/`MAX_WRITE_RAW` valem para escrita manual, restauração de backup e AutoMatch; a leitura segue até o limite do protocolo. Testes: `KFactorManualPlannerTest.kt`, `AutoMatchKFactorDraftTest.kt`, `tests/ui/curva-k-arrasto.test.cjs`.
 - `reset-nunca-pausa-aprendizado` (dono, 2026-10-08): após qualquer reset, `AUTO_CAL_ENABLE` é conferido e religado até readback = 1, mesmo em timeout/NAK; sem isso o reset não está concluído. Teste: `ResetNuncaPausaAprendizadoTest.kt` + `tests/test_reset_nunca_pausa_aprendizado.py`.
 - `autocal-sem-leitura-anterior` (dono, 2026-10-11): o AutoCal não mostra leitura anterior nem comparação antes × depois; tudo em tempo real. Teste: `tests/ui/autocal-sem-leitura-anterior.test.cjs` + `tests/test_autocal_sem_leitura_anterior.py`.
 - Ciência e protocolo críticos ficam em Kotlin/native. AGORA fica no mesmo contexto da referência AutoCal. LEVELS fica RAW até haver calibração física separada.
-- Desconhecido é "—", nunca 0. Erro de transporte não é erro da ECU. "Gravado" só após readback igual.
+- Desconhecido é "—", nunca 0. Erro de transporte não é erro da ECU. "Gravado" só após readback igual. **Sem atrito** (dono): interruptor/ação simples = 1 toque, sem pergunta nem janela; conferência em segundo plano, Desfazer no cartão (teste `tests/ui/anti-apagao-toque-real.test.cjs`; regra completa em `docs/handoff/CONTEXTO-DO-DONO.md`).
 
 ## Decisões de campo do dono (2026-10-13)
 
