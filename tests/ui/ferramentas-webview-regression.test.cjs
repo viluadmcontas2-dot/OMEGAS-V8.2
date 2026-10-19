@@ -295,3 +295,26 @@ test('Ferramentas 800x480: explicações breves permanecem visíveis, não só t
     }
   } finally { await app.context.close(); }
 });
+
+
+test('Multimidia 800x480: as descricoes e os estados nao ficam encobertos ou truncados', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 800, height: 480 }, usb: true });
+  try {
+    await T.tap(app.page, '.side-nav [data-route="tools"]');
+    await app.page.waitForSelector('#toolAdvanced [data-card="volta"]');
+    for (const id of ['anti', 'valores', 'corte', 'lenta', 'troca', 'injetores', 'volta']) {
+      const result = await app.page.locator('#toolAdvanced [data-card="' + id + '"]').evaluate(card => {
+        const title = card.querySelector('h3'), line = card.querySelector('.tile-line'), control = card.querySelector('button, .tile-state');
+        const a = card.getBoundingClientRect(), b = line?.getBoundingClientRect(), c = control?.getBoundingClientRect();
+        return { overflow: line ? line.scrollHeight > line.clientHeight + 2 : true,
+          visible: !!(b && b.height > 0 && b.right <= a.right + 1 && b.bottom <= a.bottom + 1),
+          controlVisible: !!(c && c.height > 0 && c.bottom <= a.bottom + 1),
+          titleVisible: !!title && title.getBoundingClientRect().bottom <= a.bottom + 1 };
+      });
+      assert.equal(result.overflow, false, id + ' tem texto cortado');
+      assert.equal(result.visible, true, id + ' tem texto fora do cartão');
+      assert.equal(result.controlVisible, true, id + ' esconde controle ou estado');
+      assert.equal(result.titleVisible, true, id + ' esconde título');
+    }
+  } finally { await app.context.close(); }
+});

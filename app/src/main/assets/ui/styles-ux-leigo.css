@@ -230,3 +230,16 @@
 .app-shell.autocal-focus .autocal-chart-legend .ao-key svg { width: 20px; }
 @media (max-height: 520px) { .tool-switch { min-height: 56px; } #toolsDrawer .tile-line.reason { font-size: 16px; line-height: 1.1; } }
 @media (max-width: 900px) { .tool-actions button { padding: 0 12px; font-size: 19px; } .tool-actions { gap: 8px; } }
+
+
+/* Multimídia compacta 800x480: manter três linhas de explicação legíveis sem cobrir estado/controle. */
+@media (max-width: 900px) and (max-height: 520px) {
+  #toolsDrawer .tool-tile { padding: 6px 9px; gap: 2px; }
+  #toolsDrawer .tool-tile h3 { font-size: 18px; line-height: 1.08; }
+  #toolsDrawer .tool-tile .tile-line:not(.reason) {
+    font-size: 18px;
+    line-height: 1.12;
+    -webkit-line-clamp: 3;
+  }
+  #toolsDrawer .tile-state { font-size: 20px; }
+}
