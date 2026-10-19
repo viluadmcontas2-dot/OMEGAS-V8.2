@@ -95,7 +95,134 @@ def calcular(path):
         gasolina=gas, corpus_quedas=corpus,
         resultado=dict(ligado_pior_minimo=ligado.get('pior_minimo'), desligado_pior_minimo=deslig.get('pior_minimo'), ligado_eventos=ligado.get('eventos'), desligado_eventos=deslig.get('eventos')),
     )
+def analisar_sessoes(rows, sessoes_catalogadas=()):
+    """Triagem observacional, sem simular o algoritmo desconhecido da central.
+
+    Preserva a ordem gravada. Sem velocidade/chave, movimento e causa são
+    desconhecidos. 350 rpm é limiar de triagem, não ajuste para a central.
+    Uma queda só termina ao recuperar >=500 rpm ou perder a leitura.
+    """
+    from collections import defaultdict
+    grupos = defaultdict(list)
+    for row in rows:
+        grupos[row['sessao']].append(row)
+    eventos = []
+    def valido(r):
+        return (r.get('rpm') is not None and 0 <= r['rpm'] <= 10000
+                and r.get('sample_state') not in ('TELEMETRY_GAP', 'INVALID'))
+    for sid, serie in grupos.items():
+        ativo = None
+        armado = False
+        for i, r in enumerate(serie):
+            if not valido(r):
+                if ativo is not None:
+                    ativo['desfecho'] = 'LEITURA_INTERROMPIDA'
+                    ativo['fim'] = i
+                    ativo = None
+                armado = False
+                continue
+            rpm = r['rpm']
+            if ativo is not None:
+                ativo['rpm_minima'] = min(ativo['rpm_minima'], rpm)
+                if rpm < 100 and ativo['parada'] is None:
+                    ativo['parada'] = i
+                if rpm >= 500:
+                    ativo['recuperacao'] = i
+                    ativo['fim'] = i
+                    ativo['desfecho'] = 'RECUPEROU'
+                    ativo = None
+                continue
+            if rpm >= 500:
+                armado = True
+            elif rpm < 350 and armado:
+                ativo = dict(sessao=sid, inicio=i, fim=len(serie)-1,
+                             parada=i if rpm < 100 else None, recuperacao=None,
+                             rpm_minima=rpm, desfecho='SEM_RECUPERACAO_REGISTRADA')
+                eventos.append(ativo)
+                armado = False
+    for e in eventos:
+        serie = grupos[e['sessao']]
+        start, end = e['inicio'], e['fim']
+        parada, rec = e['parada'], e['recuperacao']
+        base = parada if parada is not None else start
+        e['tipo'] = 'MOTOR_PAROU' if parada is not None else 'QUEDA_FORTE'
+        e['movimento'] = 'DESCONHECIDO'
+        e['causa'] = 'DESCONHECIDA_SEM_CHAVE_EMBREAGEM_OU_VELOCIDADE'
+        e['leituras_ate_recuperar'] = rec-base if rec is not None else None
+        tempos = [r.get('t_ms') for r in serie[base:rec+1]] if rec is not None else []
+        monotono = len(tempos) > 1 and all(t is not None for t in tempos) and all(a < b for a,b in zip(tempos, tempos[1:]))
+        e['tempo_registrado_ate_recuperar_ms'] = tempos[-1]-tempos[0] if monotono else None
+        e['tempo_observacao'] = 'RELOGIO_DO_REGISTRO_NAO_VALIDADO' if monotono else 'DESCONHECIDO'
+        # Preserve every point until recovery, plus context before/after.
+        e['linha_do_tempo'] = [dict(indice=k, **{key: serie[k].get(key) for key in
+            ('t_ms', 'rpm', 'fuel', 'fuel_byte', 'state', 'sample_state', 'map_bar', 'gas_ms', 'petrol_ms')})
+            for k in range(max(0, start-8), min(len(serie), end+5))]
+        e['gnv_antes'] = any(r.get('fuel_byte') == 144 or r.get('fuel') == 'GNV'
+                            for r in serie[max(0,start-8):start])
+    limiares = []
+    for limite in range(1200, 2201, 200):
+        cobertos = sum(any(350 <= r['rpm'] <= limite for r in e['linha_do_tempo']
+                           if r['indice'] < e['inicio'] and valido(r)) for e in eventos if e['gnv_antes'])
+        cruzamentos = sem_queda = incompletos = 0
+        for serie in grupos.values():
+            for i in range(1, len(serie)):
+                p, r = serie[i-1], serie[i]
+                if not (valido(p) and valido(r) and p['rpm'] > limite >= r['rpm'] >= 350
+                        and (p.get('fuel_byte') == 144 or p.get('fuel') == 'GNV')):
+                    continue
+                cruzamentos += 1
+                janela = serie[i+1:i+25]
+                if len(janela) < 24 or not all(valido(x) for x in janela):
+                    incompletos += 1
+                elif all(x['rpm'] >= 350 for x in janela):
+                    sem_queda += 1
+        limiares.append(dict(rotacao_maxima=limite,
+            eventos_com_leitura_previa_abaixo=cobertos,
+            cruzamentos_em_gnv=cruzamentos, cruzamentos_sem_queda_nas_24_leituras=sem_queda,
+            cruzamentos_com_desfecho_incompleto=incompletos, gasolina_poupar_litros=None))
+    return dict(schema='omegas.apagoes-observados.v1', amostras=sum(map(len, grupos.values())),
+                sessoes_com_telemetria=len(grupos),
+                sessoes_sem_telemetria=sorted(set(sessoes_catalogadas)-set(grupos)),
+                eventos=eventos, limiares=limiares, extras='SEM_DADO_PARA_SUGERIR')
+
+
+def relatorio_corpus():
+    from corpus import telemetria
+    raiz = pathlib.Path(__file__).resolve().parents[2]
+    catalogo = json.loads((raiz/'tests/fixtures/sessoes-uteis/sessoes.json').read_text())
+    resultado = analisar_sessoes(telemetria(), [s['sessao'] for s in catalogo['sessoes']])
+    import hashlib
+    resultado['fonte_sha256'] = hashlib.sha256((raiz/'tests/fixtures/sessoes-uteis/telemetria.csv.gz').read_bytes()).hexdigest()
+    destino = raiz/'docs/progbase/bins/apagoes-em-movimento'
+    destino.with_suffix('.json').write_text(json.dumps(resultado, ensure_ascii=False, indent=1)+'\n')
+    es = resultado['eventos']
+    linhas = ['# Apagões e quedas nas sessões reais', '',
+        'Gerado por `python3 tools/sessoes/sugerir_antiapagao.py --corpus`. Evidência DERIVADA dos registros; nenhuma escrita na central.', '',
+        f"Foram lidas todas as {len(catalogo['sessoes'])} sessões catalogadas: {resultado['sessoes_com_telemetria']} têm telemetria, {len(resultado['sessoes_sem_telemetria'])} estão vazias. Total: {resultado['amostras']} leituras.", '',
+        '**Movimento não é comprovável neste corpus:** faltam velocidade, embreagem e chave. Rotação alta não prova carro andando. Motor parando e recuperando também pode ser partida após desligamento manual. Cada caso permanece candidato, inclusive os fora do gás.', '',
+        'Triagem: motor observado em pelo menos 500 rpm e depois abaixo de 350; abaixo de 100 marca motor parado. Agrupa até recuperar 500 ou perder a leitura. Não reordena relógios. Tempos são diferenças do registro, não tempo validado de partida. O JSON guarda cada leitura antes/durante/depois.', '',
+        '| Sessão / leitura | Evento | GNV antes | Menor rotação | Recuperação (leituras) | Tempo registrado (ms) | Desfecho |',
+        '|---|---|---|---|---|---|---|']
+    for e in es:
+        show = lambda x: '—' if x is None else str(x)
+        linhas.append(f"| {e['sessao'].split('_')[0]} / {e['inicio']} | {e['tipo']} | {e['gnv_antes']} | {e['rpm_minima']} | {show(e['leituras_ate_recuperar'])} | {show(e['tempo_registrado_ate_recuperar_ms'])} | {e['desfecho']} |")
+    linhas += ['', '## Comparação de limiares (não é simulação da proteção)', '',
+        'Cobertura conta eventos com GNV antes e leitura anterior entre 350 e o limiar. Cruzamentos sem queda nas 24 leituras seguintes são oportunidades potencialmente desnecessárias, **não** gasolina desperdiçada comprovada. Não se conhece o ciclo interno da central, a atuação da proteção em cada sessão nem o consumo. Não converter diferença entre leituras em rpm por ciclo.', '',
+        '| Rotação máxima | Eventos com leitura anterior abaixo | Cruzamentos em GNV | Sem queda depois | Observação incompleta |',
+        '|---|---|---|---|---|']
+    for a in resultado['limiares']:
+        linhas.append('| %s | %s | %s | %s | %s |' % tuple(a[k] for k in ('rotacao_maxima','eventos_com_leitura_previa_abaixo','cruzamentos_em_gnv','cruzamentos_sem_queda_nas_24_leituras','cruzamentos_com_desfecho_incompleto')))
+    linhas += ['', '## Conclusões e limites', '',
+        'Os dados não sustentam um número ótimo que evite todos os apagões sem gasolina extra. Não há comparação controlada das configurações nas mesmas condições. Os quatro extras permanecem **sem dado para sugerir**; os rótulos do original não provam o algoritmo dentro da central.', '',
+        'Próximo passo: registrar por evento os valores lidos da proteção, queda, combustível e recuperação no app; recalcular sugestões ao encerrar a sessão, sem gravar sozinho. Não reduzir ajuste associado a falha registrada. Confirmar movimento exige fonte adicional, não adivinhação por rotação.', '']
+    destino.with_suffix('.md').write_text('\n'.join(linhas))
+    print(json.dumps({k:v for k,v in resultado.items() if k != 'eventos'}, ensure_ascii=False))
+
+
 if __name__ == '__main__':
+    if sys.argv[1:] == ['--corpus']:
+        relatorio_corpus()
+        raise SystemExit(0)
     out = calcular(sys.argv[1])
     texto = json.dumps(out, indent=1, ensure_ascii=False)
     if len(sys.argv) > 2: pathlib.Path(sys.argv[2]).write_text(texto + '\n', encoding='utf-8')
