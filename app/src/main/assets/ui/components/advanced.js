@@ -31,6 +31,8 @@
       this.data = { read: false, params: {} };
       this.drafts = {};          // índice -> texto digitado
       this.signature = '';
+      this.extraIndex = 1;
+      this.saveAgain = false;
       this.layerSignature = '';
       if (!this.host || !this.A || !this.V || !this.M) return;
       const bridge = new Proxy({}, { get: (_, name) => (root.OmegasAutoCal ? root.OmegasAutoCal[name] : undefined) }); // ponte lida na hora do uso
@@ -39,6 +41,8 @@
       this.vals = this.V.createValuesFlow({ bridge, addHook, onChange: () => { this.loadData(); this.render(); } });
       this.host.addEventListener('click', event => this.onClick(event));
       this.host.addEventListener('input', event => this.onInput(event));
+      // Digitou e saiu do campo (ou Enter): grava na hora, como os botões − / +.
+      this.host.addEventListener('change', event => { if (event.target.closest('input[data-adv-field]')) this.autoSave(); });
       this.layer?.addEventListener('click', event => this.onClick(event));
       // Um toque fora da janela de confirmação desarma a prévia (evento, nunca prazo). Toque DENTRO da janela (até no cartão, fora dos
       // botões) não cancela: o 2º toque do toque duplo pode cair no cartão sem estragar a confirmação.
@@ -128,7 +132,10 @@
         const changes = this.V.factoryChanges(current);
         this.flag.cancel();
         if (Object.keys(changes).length) this.vals.ask('factory', changes, this.usb());
-      } else if (t.matches('[data-adv-open]')) { this.view = t.dataset.advOpen; if (this.view === 'valores') this.resetDrafts(); this.setView(); }
+      } else if (t.matches('[data-adv-open-view]')) { this.view = t.dataset.advOpenView; this.setView(); }
+      else if (t.matches('[data-adv-back-valores]')) { this.view = 'valores'; this.setView(); }
+      else if (t.matches('[data-adv-extra]')) { this.extraIndex = Number(t.dataset.advExtra) || 1; }
+      else if (t.matches('[data-adv-open]')) { this.view = t.dataset.advOpen; if (this.view === 'valores') this.resetDrafts(); this.setView(); }
       else if (t.matches('[data-adv-back]')) { this.view = 'home'; this.setView(); }
       this.signature = '';
       this.render();
@@ -156,7 +163,22 @@
       const input = this.host.querySelector(`#advField${idx}`);
       if (input) input.value = this.drafts[idx];
       this.paintFields();
+      this.autoSave();
     }
+
+    /** Grava o que mudou, na hora. Toques durante uma gravação não se perdem: gravam em seguida (por evento, sem relógio). */
+    autoSave() {
+      const phase = this.vals.view().phase;
+      if (phase === 'preparing' || phase === 'writing') { this.saveAgain = true; return; }
+      this.saveAgain = false;
+      const p = this.pendingChanges();
+      if (p.invalid || !Object.keys(p.changes).length || this.reason('values')) return;
+      this.vals.dismiss();
+      this.flag.cancel();
+      this.vals.ask('edit', p.changes, this.usb());
+    }
+
+    isValuesView() { return this.view === 'valores' || this.view === 'extras' || this.view === 'info'; }
 
     resetDrafts() {
       const values = this.V.valuesOf(this.param('ANTI_STALLO'));
@@ -231,6 +253,7 @@
       const state = this.store.get();
       if (state.route !== 'tools') return;
       this.setView();
+      if (this.saveAgain && !['preparing', 'writing'].includes(this.vals.view().phase)) this.autoSave();
       try { this.renderLayer(); }
       catch (error) {
         console.error('[OMEGAS Ferramentas] Janela de confirmação indisponível', error);
@@ -238,10 +261,10 @@
         this.layerSignature = '';
       }
       const active = document.activeElement;
-      if (this.view === 'valores' && active && this.host.contains(active) && active.tagName === 'INPUT') { this.paintFields(); return; }
+      if (this.isValuesView() && active && this.host.contains(active) && active.tagName === 'INPUT') { this.paintFields(); return; }
       const fv = this.flag.view();
       const vv = this.vals.view();
-      const signature = JSON.stringify([this.view, this.data, this.usb(), this.hasBridge(), fv.phase, vv.phase, vv.undo, this.view === 'valores' ? this.drafts : null]);
+      const signature = JSON.stringify([this.view, this.data, this.usb(), this.hasBridge(), fv.phase, vv.phase, vv.message, vv.undo, this.isValuesView() ? [this.drafts, this.extraIndex] : null]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
       try {
@@ -255,9 +278,11 @@
         }
         const next = this.view === 'home' ? this.renderHome(cards)
           : this.view === 'valores' ? this.renderValues(cards)
+          : this.view === 'extras' ? this.renderExtras(cards)
+          : this.view === 'info' ? this.renderInfo()
           : this.renderReadOnly(cards.find(c => c.id === this.view));
         if (this.host.innerHTML !== next) this.host.innerHTML = next;
-        if (this.view === 'valores') this.paintFields();
+        if (this.isValuesView()) this.paintFields();
         if (usingUnknown) this.signature = ''; // Próximo quadro tenta recuperar sozinho, sem redesenho idêntico.
       } catch (error) {
         console.error('[OMEGAS Ferramentas] Cartões indisponíveis', error);
@@ -306,11 +331,9 @@
       }).join('');
     }
 
-    renderValues(cards) {
-      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
-      const why = this.reason('values');
-      const undo = this.vals.view().undo;
-      const fieldHtml = f => `
+    /** Campo com − / + : cada toque já grava (sem botão "Gravar"). */
+    fieldHtml(f, values) {
+      return `
         <div class="num-field" data-field="${f.index}" data-invalid="false" data-changed="false">
           <label for="advField${f.index}">${escapeHtml(f.label)}</label>
           <div class="num-stepper">
@@ -324,35 +347,82 @@
           </div>
           <p class="num-help" id="advHelp${f.index}">${escapeHtml(f.help)}${f.unit === 'ms' ? ' <span class="num-seconds"></span>' : ''}</p>
           <ul class="num-tips"><li><b>Se precisar de mais:</b> ${escapeHtml(f.tipUp)}</li><li><b>Se atrapalhar:</b> ${escapeHtml(f.tipDown)}</li></ul>
-          <p class="num-meta">${escapeHtml(this.V.range(f))} · Valor de fábrica: ${escapeHtml(this.V.num(f.factory))} (bom ponto de partida)</p>
+          <p class="num-meta">${escapeHtml(this.V.range(f))} · Valor de fábrica: ${escapeHtml(this.V.num(f.factory))}</p>
           <p class="num-warn"></p>
           <p class="num-error" role="alert"></p>
         </div>`;
-      // O original só mostra UM número ("Rotação máxima para agir", 1600 rpm); os outros 4 ficam recolhidos (experimental).
-      const fields = this.V.FIELDS.filter(f => f.index === 0).map(fieldHtml).join('')
-        + `<details class="mais-info extras-experimentais"><summary>Ajustes extras (experimental)</summary><div class="num-grid">${this.V.FIELDS.filter(f => f.index !== 0).map(fieldHtml).join('')}</div></details>`;
-      return `
-        <section class="tool-view values-view" data-card="valores">
-          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p>${escapeHtml(why || 'Use − e + (ou toque no número e digite). Depois toque em Gravar valores: grava na hora e dá para Desfazer.')}</p></header>
-          <section class="como-funciona" aria-label="Como funciona">
-            <p><b>Como funciona:</b> quando a rotação do motor <b>cai de repente</b> e está <b>abaixo de ${escapeHtml(this.V.num(values ? values[0] : 1600))} rpm</b> (ex.: você pisa na embreagem parando, engatando ré ou reduzindo), o anti-apagão entra e ajuda o motor a não apagar. Em aceleração normal ele não faz nada.</p>
-            <details class="mais-info"><summary>Ver o caminho completo e o que NÃO é</summary>
-              <ol>
-                <li>Rotação cai mais rápido que <b>Queda para agir</b> <em>e</em> está abaixo da <b>Rotação máxima</b> → a proteção <b>entra</b>.</li>
-                <li>A central sai do gás conforme a <b>Espera</b> (ms) e ajuda o motor a segurar.</li>
-                <li>Quando a queda fica menor que <b>Queda para parar</b>, a proteção <b>solta</b>. A <b>Folga</b> evita ligar e desligar toda hora.</li>
-              </ol>
-              <p><b>Não é o corte de injeção</b> (soltar o acelerador em desaceleração). O corte tem ajustes próprios no cartão <b>Saída do corte</b>. Mas os dois se encontram: no seu log, depois de cada corte, com o anti-apagão <b>desligado</b> a rotação afundou até 447 rpm (26 vezes abaixo de 600); <b>ligado</b>, nunca passou de 680 rpm.</p>
-            </details>
-          </section>
-          <div class="num-grid">${fields}</div>
-          ${this.vals.view().phase === 'done' ? `<p class="adv-saved" role="status">${escapeHtml(this.vals.view().message)}</p>` : ''}
-${this.vals.view().phase === 'preparing' || this.vals.view().phase === 'writing' ? '<p class="adv-saved" role="status">Gravando…</p>' : ''}
-          <div class="tool-actions">
-            <button type="button" class="primary" data-adv-save disabled>Gravar valores</button>
+    }
+
+    /** Linha de estado da gravação, sempre visível: o dono vê o que está acontecendo. */
+    saveStatus() {
+      const vv = this.vals.view();
+      if (vv.phase === 'preparing' || vv.phase === 'writing') return ['busy', 'Gravando…'];
+      if (vv.phase === 'done') return ['ok', 'Gravado e conferido ✓'];
+      if (vv.phase === 'error') return ['bad', 'Não gravou. ' + (vv.message || '')];
+      return ['idle', 'Toque em − ou + : grava na hora.'];
+    }
+
+    footerHtml(cards, extra) {
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const why = this.reason('values');
+      const undo = this.vals.view().undo;
+      return `<div class="tool-actions vv-actions">
             <button type="button" class="secondary" data-adv-factory ${why || !values || values.every((v, i) => v === this.V.FACTORY[i]) ? 'disabled' : ''}>Restaurar fábrica</button>
             ${undo.available ? '<button type="button" class="secondary" data-adv-undo-values>Desfazer</button>' : ''}
-            <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${(cards.find(c => c.id === 'valores')?.tech || []).map(t => `<li>${escapeHtml(t)}</li>`).join('')}<li>Faixa e valor de fábrica: tela original do programa do fabricante; a ordem dos campos é inferida.</li></ul></details>
+            ${extra}
+          </div>`;
+    }
+
+    /** Tela principal: o número que importa, ao lado do "como funciona". Sem rolagem. */
+    renderValues(cards) {
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const why = this.reason('values');
+      const f0 = this.V.FIELDS[0];
+      const [level, statusText] = this.saveStatus();
+      return `
+        <section class="tool-view values-view" data-card="valores">
+          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(why || statusText)}</p></header>
+          <div class="vv-body">
+            <div class="vv-main">${this.fieldHtml(f0, values)}</div>
+            <aside class="vv-info" aria-label="Como funciona">
+              <p class="vv-how"><b>Como funciona:</b> quando a rotação <b>cai de repente</b> abaixo de <b>${escapeHtml(this.V.num(values ? values[0] : f0.factory))} rpm</b> <span class="vv-long">(ex.: pisou na embreagem parando ou engatando ré), o anti-apagão entra e ajuda o motor a não apagar. Em aceleração normal ele não faz nada.</span><span class="vv-short">(ex.: pisou na embreagem), ele entra e ajuda o motor a não apagar.</span></p>
+              <button type="button" class="secondary" data-adv-open-view="info">Ver explicação completa</button>
+            </aside>
+          </div>
+          ${this.footerHtml(cards, '<button type="button" class="secondary" data-adv-open-view="extras">Ajustes extras (experimental) ›</button>')}
+        </section>`;
+    }
+
+    /** Ajustes extras: um por vez (abas), cada um com a sua explicação completa. Sem rolagem. */
+    renderExtras(cards) {
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const [level, statusText] = this.saveStatus();
+      const extras = this.V.FIELDS.filter(f => f.index !== 0);
+      const cur = extras.find(f => f.index === this.extraIndex) || extras[0];
+      const tabs = extras.map(f => `<button type="button" class="vv-tab" data-adv-extra="${f.index}" aria-pressed="${f.index === cur.index}">${escapeHtml(f.tab)}</button>`).join('');
+      return `
+        <section class="tool-view values-view" data-card="valores-extras">
+          <header><button type="button" class="secondary tool-back" data-adv-back-valores><span aria-hidden="true">‹</span> Voltar</button><h3>Ajustes extras <small>(experimental)</small></h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(statusText)}</p></header>
+          <nav class="vv-tabs" aria-label="Qual ajuste">${tabs}</nav>
+          <div class="vv-main vv-single">${this.fieldHtml(cur, values)}</div>
+          <p class="vv-note">O programa original só mostra o primeiro número. O efeito exato destes quatro ainda não foi confirmado em carro.</p>
+        </section>`;
+    }
+
+    /** Explicação completa (uma tela só de leitura, sem rolagem). */
+    renderInfo() {
+      const values = this.V.valuesOf(this.param('ANTI_STALLO'));
+      const lim = this.V.num(values ? values[0] : 1600);
+      return `
+        <section class="tool-view values-view" data-card="valores-info">
+          <header><button type="button" class="secondary tool-back" data-adv-back-valores><span aria-hidden="true">‹</span> Voltar</button><h3>Como o anti-apagão funciona</h3></header>
+          <div class="vv-info-full">
+            <ol>
+              <li>A rotação cai mais rápido que <b>Queda para agir</b> <em>e</em> está abaixo de <b>${escapeHtml(lim)} rpm</b> → a proteção <b>entra</b>.</li>
+              <li>A central sai do gás conforme a <b>Espera</b> (ms) e ajuda o motor a segurar.</li>
+              <li>Quando a queda fica menor que <b>Queda para parar</b>, a proteção <b>solta</b>. A <b>Folga</b> evita ligar e desligar toda hora.</li>
+            </ol>
+            <p><b>Não é o corte de injeção</b> (soltar o acelerador em desaceleração): o corte tem ajustes próprios no cartão <b>Saída do corte</b>. Os dois se encontram: no seu log, depois de cada corte, com o anti-apagão <b>desligado</b> a rotação afundou até 447 rpm (26 vezes abaixo de 600); <b>ligado</b>, nunca passou de 680 rpm.</p>
           </div>
         </section>`;
     }

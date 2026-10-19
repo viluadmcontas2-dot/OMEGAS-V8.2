@@ -31,13 +31,22 @@ async function abrirValores(app) {
   await abrirMotor(app);
   await T.tap(app.page, '[data-adv-open="valores"]');
   await T.pump(app.page, 3);
-  // Os 4 números extras ficam recolhidos (experimental); os testes de campo precisam deles visíveis.
-  await app.page.evaluate(() => { const d = document.querySelector('.extras-experimentais'); if (d) d.open = true; });
+}
+/** Vai até o campo i: o 0 está na tela principal; 1-4 nos Ajustes extras (uma aba por vez, sem rolagem). */
+async function irParaCampo(app, indice) {
+  const { page } = app;
+  const naExtras = await page.locator('.vv-tabs').count();
+  if (indice === 0) {
+    if (naExtras) { await T.tap(page, '[data-adv-back-valores]'); await T.pump(page, 2); }
+    return;
+  }
+  if (!naExtras) { await T.tap(page, '[data-adv-open-view="extras"]'); await T.pump(page, 2); }
+  if ((await page.locator(`[data-adv-extra="${indice}"]`).getAttribute('aria-pressed')) !== 'true') { await T.tap(page, `[data-adv-extra="${indice}"]`); await T.pump(page, 2); }
 }
 /** Digita no campo por toque (foca pelo toque no campo) e dispara a validação, como o teclado do Android faria. */
 async function digitar(app, indice, valor) {
   const { page } = app;
-  await page.locator(`#advField${indice}`).scrollIntoViewIfNeeded();
+  await irParaCampo(app, indice);
   await T.tap(page, `#advField${indice}`);
   await page.locator(`#advField${indice}`).fill(String(valor));
   await T.pump(page, 1);
@@ -54,4 +63,4 @@ async function foto(page, nome) {
   return file;
 }
 
-module.exports = { foto, LIGAR, DESLIGAR, FABRICA, quadroValores, hexSum, text, count, ecuWrites, clearLog, flag3, anti5, camada, abrirMotor, abrirValores, digitar };
+module.exports = { foto, LIGAR, DESLIGAR, FABRICA, quadroValores, hexSum, text, count, ecuWrites, clearLog, flag3, anti5, camada, abrirMotor, abrirValores, irParaCampo, digitar };

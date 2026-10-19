@@ -27,13 +27,14 @@ for (const [nome, vp] of Object.entries(VPS)) {
     try {
       await U.abrirValores(app);
       for (const c of CAMPOS) {
+        await U.irParaCampo(app, c.i);
         const campo = page.locator(`[data-field="${c.i}"]`);
         assert.equal(await campo.locator('label').innerText(), c.nome);
         const caixa = campo.locator('.num-box');
         assert.equal(await caixa.locator('svg.pencil').count(), 1, 'lápis dentro do campo: ' + c.nome);
         assert.ok(await caixa.locator('svg.pencil').isVisible(), 'lápis visível');
         assert.equal(await caixa.locator('.num-unit').innerText(), c.unidade, 'unidade em palavra simples');
-        assert.match(await campo.locator('.num-meta').innerText(), new RegExp(`^${c.faixa} · Valor de fábrica: ${c.fabrica.replace('.', '\\.')}( \\(bom ponto de partida\\))?$`));
+        assert.match(await campo.locator('.num-meta').innerText(), new RegExp(`^${c.faixa} · Valor de fábrica: ${c.fabrica.replace('.', '\\.')}$`));
         const box = await caixa.boundingBox();
         assert.ok(box.height >= 56, `altura do campo ${c.nome}: ${box.height}`);
         const borda = await caixa.evaluate(e => parseFloat(getComputedStyle(e).borderTopWidth));
@@ -43,7 +44,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
         assert.equal(await input.inputValue(), c.fabrica, 'mostra o valor lido da central');
         assert.equal(await page.locator(`label[for="advField${c.i}"]`).count(), 1, 'campo com rótulo associado');
       }
-      assert.equal(await page.locator('[data-adv-save]').isDisabled(), true, 'Gravar valores começa desligado: nada mudou');
+      assert.deepEqual(await U.ecuWrites(page), [], 'abrir e olhar nunca grava');
       const tamanhoTexto = await page.evaluate(() => Math.min(...[...document.querySelectorAll('.num-field label, .num-box input, .num-unit, .num-meta')].map(e => parseFloat(getComputedStyle(e).fontSize))));
       assert.ok(tamanhoTexto >= 15, 'texto dos campos legível: ' + tamanhoTexto);
       await T.shot(page, `ux-${nome}-campos-editaveis`);
@@ -57,8 +58,10 @@ test('tocar no lápis ou na unidade leva o foco para o campo (o teclado abre ali
   const { page } = app;
   try {
     await U.abrirValores(app);
+    await U.irParaCampo(app, 1);
     await T.tap(page, '[data-field="1"] .pencil');
     assert.equal(await page.evaluate(() => document.activeElement?.id), 'advField1');
+    await U.irParaCampo(app, 2);
     await T.tap(page, '[data-field="2"] .num-unit');
     assert.equal(await page.evaluate(() => document.activeElement?.id), 'advField2');
   } finally { await app.context.close(); }
@@ -69,7 +72,6 @@ test('validação: aceita os limites, recusa 1 acima, vazio, vírgula e letra; e
   const { page } = app;
   try {
     await U.abrirValores(app);
-    const salvar = page.locator('[data-adv-save]');
     for (const c of CAMPOS) {
       const faixa = Number(c.faixa.match(/a ([\d.]+)/)[1].replace(/\./g, ''));
       await U.digitar(app, c.i, faixa);
@@ -78,21 +80,22 @@ test('validação: aceita os limites, recusa 1 acima, vazio, vírgula e letra; e
       assert.equal(await page.locator(`[data-field="${c.i}"]`).getAttribute('data-invalid'), 'true', `${faixa + 1} recusado em ${c.nome}`);
       assert.match(await page.locator(`[data-field="${c.i}"] .num-error`).innerText(), /Use um valor de 0 a/);
       assert.equal(await page.locator(`#advField${c.i}`).getAttribute('aria-invalid'), 'true');
-      assert.equal(await salvar.isDisabled(), true, 'com erro, Gravar valores fica desligado');
+      assert.deepEqual(await U.ecuWrites(page), [], 'com erro nada é gravado');
       for (const ruim of ['', 'abc', '1,5', '-3', '12a']) {
         await U.digitar(app, c.i, ruim);
         assert.equal(await page.locator(`[data-field="${c.i}"]`).getAttribute('data-invalid'), 'true', `"${ruim}" recusado em ${c.nome}`);
-        assert.equal(await salvar.isDisabled(), true);
+        assert.deepEqual(await U.ecuWrites(page), []);
       }
       await U.digitar(app, c.i, c.fabrica);   // volta ao valor lido
       assert.equal(await page.locator(`[data-field="${c.i}"]`).getAttribute('data-invalid'), 'false');
     }
     assert.deepEqual(await U.ecuWrites(page), [], 'digitar nunca escreve');
     await U.digitar(app, 0, '1.700');
-    assert.equal(await salvar.isDisabled(), false, 'valor válido e diferente liga o botão');
+    assert.deepEqual(await U.ecuWrites(page), [], 'digitando ainda não gravou');
     assert.equal(await page.locator('[data-field="0"]').getAttribute('data-changed'), 'true');
     await U.digitar(app, 0, '1600');
-    assert.equal(await salvar.isDisabled(), true, 'voltar ao valor lido desliga o botão (nada a gravar)');
+    await page.evaluate(() => document.activeElement && document.activeElement.blur()); await T.pump(page, 6);
+    assert.deepEqual(await U.ecuWrites(page), [], 'voltar ao valor lido: nada a gravar, nada gravado');
   } finally { await app.context.close(); }
 });
 
@@ -116,13 +119,13 @@ test('gravar valores: UM toque grava o quadro exato e a central confere (sem jan
     await U.abrirValores(app);
     await U.clearLog(page);
     await U.digitar(app, 0, '1.700');
-    await T.tap(page, '[data-adv-save]'); await T.pump(page, 10);
+    await page.evaluate(() => document.activeElement && document.activeElement.blur()); await T.pump(page, 10);   // saiu do campo: grava na hora
     assert.equal(await U.camada(page), 0, 'sem janela de confirmação');
     assert.deepEqual(await U.ecuWrites(page), [U.quadroValores([1700, 100, 1500, 2, 20])]);
     assert.deepEqual(await U.anti5(page), [1700, 100, 1500, 2, 20]);
     assert.match(await U.text(page, '.adv-saved'), /Pronto/);
     assert.equal(await page.locator('#advField0').inputValue(), '1.700', 'o campo mostra o que a central confirmou');
-    assert.equal(await page.locator('[data-adv-save]').isDisabled(), true, 'nada mais a gravar');
+    assert.match(await U.text(page, '.vv-status'), /Gravado e conferido/);
   } finally { await app.context.close(); }
 });
 
@@ -157,7 +160,7 @@ test('"Longe do valor de fábrica" só avisa no campo; não bloqueia e a faixa d
     await U.abrirValores(app);
     await U.digitar(app, 0, '5000');
     assert.match(await U.text(page, '[data-field="0"] .num-warn'), /Longe do valor de fábrica/);
-    assert.equal(await page.locator('[data-adv-save]').isDisabled(), false);
+    assert.equal(await U.camada(page), 0, 'avisar não abre janela');
     assert.equal(await U.camada(page), 0);
     assert.deepEqual(await U.ecuWrites(page), [], 'avisar não grava');
   } finally { await app.context.close(); }
@@ -169,7 +172,7 @@ test('sem central conectada: os campos ficam desligados e o motivo está escrito
   try {
     await U.abrirValores(app);
     assert.equal(await page.locator('#advField0').isDisabled(), true);
-    assert.equal(await page.locator('[data-adv-save]').isDisabled(), true);
+    assert.equal(await page.locator('[data-adv-step]').first().isDisabled(), true, 'sem central os botões − / + ficam desligados');
     assert.equal(await page.locator('[data-adv-factory]').isDisabled(), true);
     assert.match(await U.text(page, '.values-view > header p'), /Conecte a central|Aguardando a central/);
   } finally { await app.context.close(); }
