@@ -66,13 +66,13 @@ test('sem cache mas com bit já ligado: lê ao vivo, não produz segunda escrita
 test('sem resposta na primeira leitura: não escreve, exibe falha e permite tentar novamente', { skip }, async () => {
   const app = await connectedWithMissingSnapshot();
   try {
-    await app.page.evaluate(() => window.__bench.setFault('noReply', true));
+    await app.page.evaluate(() => window.__bench.setFault('noReadReply', true));
     await T.tap(app.page, '[data-adv-switch]');
     await T.pump(app.page, 5);
     assert.deepEqual(T.writesOf((await T.frames(app.page)).log), []);
     assert.match(await app.page.locator('#toolsLayer').innerText(), /não consegui falar com a central|não foi gravado/i);
     await T.tap(app.page, '#toolsLayer [data-adv-close]');
-    await app.page.evaluate(() => window.__bench.setFault('noReply', false));
+    await app.page.evaluate(() => window.__bench.setFault('noReadReply', false));
     await T.tap(app.page, '[data-adv-switch]');
     await T.pump(app.page, 5);
     assert.equal(await app.page.locator('#toolsLayer [data-adv-confirm="flag"]').count(), 1);

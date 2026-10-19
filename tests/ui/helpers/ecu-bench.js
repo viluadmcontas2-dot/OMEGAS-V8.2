@@ -40,7 +40,7 @@
       this.telIdx = 0;
       this.log = [];           // {n, hex, kind}
       this.acoes = [];         // modos 02 24 04 <modo> recebidos
-      this.faults = { noReply: false, nak: false, ignoreWrite: false, corruptWrite: false };
+      this.faults = { noReply: false, noReadReply: false, nak: false, ignoreWrite: false, corruptWrite: false };
       this.n = 0;
     }
     /** Remove falhas e zera o registro (o estado da ECU fica). */
@@ -67,6 +67,9 @@
         const data = this.telemetria[this.telIdx++ % this.telemetria.length];
         return [...frame, ...quadro(ACK, data)];
       }
+      // Falha de leitura independente da falha de escrita: não transformar
+      // testes de ACK/NAK de gravação em falhas de preparação da tela.
+      if (this.faults.noReadReply) return [];
       const data = this.get(H(frame));
       return data ? [...frame, ...quadro(ACK, data)] : frame;
     }
