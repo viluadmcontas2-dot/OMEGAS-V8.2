@@ -84,3 +84,28 @@ test('desconectada: não oferece escrita e não simula conexão', { skip }, asyn
     assert.deepEqual(T.writesOf((await T.frames(app.page)).log), []);
   } finally { await app.context.close(); }
 });
+
+
+test('RED: digitar 1550 sem snapshot grava após leitura direta, sem mudar os outros quatro números', { skip }, async () => {
+  const app = await connectedWithMissingSnapshot();
+  try {
+    const { page } = app;
+    await T.tap(page, '[data-adv-open="valores"]');
+    await T.pump(page, 2);
+    const input = page.locator('#advField0');
+    assert.equal(await input.isDisabled(), false,
+      'com USB conectado, editar não pode depender de param_snapshot geral');
+    await input.fill('1550');
+    await input.dispatchEvent('change');
+    await T.pump(page, 20);
+    const state = await page.evaluate(() => {
+      const bytes = window.__bench.ecu.get('29 33 01 5D');
+      return Array.from({length: 5}, (_, i) => bytes[2 * i] | (bytes[2 * i + 1] << 8));
+    });
+    assert.deepEqual(state, [1550, 100, 1500, 2, 20], 'somente o valor digitado muda na ECU');
+    const log = T.writesOf((await T.frames(page)).log);
+    assert.equal(log.length, 1, 'uma alteração humana = uma escrita; sem extras');
+    assert.match(log[0].hex, /^37 33 0C 01 /);
+    assert.match(await page.locator('.vv-status').innerText(), /Gravado e conferido/);
+  } finally { await app.context.close(); }
+});
