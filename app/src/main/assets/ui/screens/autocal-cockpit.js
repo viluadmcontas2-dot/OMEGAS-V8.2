@@ -75,7 +75,7 @@
     if (!box || !(box.width > 0) || !(box.height > 0)) return 1000;
     return Math.max(1000, Math.round(height * box.width / box.height));
   }
-  /** "X/Y" do AutoMatch da ECU (feitos / máximo); desconhecido = "—". */
+  /** "X/Y" do AutoMatch da central (feitos / máximo); desconhecido = "—". */
   function autoMatchFraction(count, max) {
     const done = finite(count);
     const limit = finite(max);
@@ -184,7 +184,7 @@
         ? ''
         : Math.round(evidenceBefore) + '→' + Math.round(evidenceAfter);
       let evidenceTitle = 'Aguardando evento AutoMatch observável';
-      let evidenceDetail = 'Quando o contador nativo avançar, o OMEGAS compara a Curva K estável antes e depois da mesma época da ECU.';
+      let evidenceDetail = 'Quando o contador nativo avançar, o OMEGAS compara a Curva K estável antes e depois da mesma época da central.';
       if (evidenceState === 'FACTOR_CHANGE_CONFIRMED') {
         evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K mudou ' + changedPoints + '/30';
         evidenceDetail = largestIndex === null || largestBefore === null || largestAfter === null
@@ -214,8 +214,8 @@
       } else if (enabled === 0) nextAction = 'Inicie a aquisição quando quiser continuar o aprendizado nativo.';
       else if (enabled === 1 && autoMatchQuotaReached) nextAction = 'A cota automática de AutoMatch foi atingida. A aquisição continua habilitada e pode preencher novas zonas; pause somente se quiser interromper a coleta.';
       else if (enabled === 1 && gasMissingZones.length) nextAction = 'Aquisição habilitada. Faltam no GNV: ' + gasMissingZones.map(zone => 'Z' + zone).join(', ') + '. Use a faixa AGORA para buscar essas zonas sem resetar dados.';
-      else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela ECU. Continue acompanhando: o próximo AutoMatch é decisão nativa da ECU.';
-      else if (enabled === 1) nextAction = 'Aquisição habilitada; aguardando a ECU publicar o mapa das quatro zonas.';
+      else if (enabled === 1 && gasZones === 4) nextAction = 'As 4 zonas GNV já foram marcadas pela central. Continue acompanhando: o próximo AutoMatch é decisão nativa da central.';
+      else if (enabled === 1) nextAction = 'Aquisição habilitada; aguardando a central publicar o mapa das quatro zonas.';
       return {
         title, progress, autoMatch, nextAction,
         autoMatchEvidenceState: evidenceState || 'WAITING',
@@ -231,16 +231,16 @@
       const busy = readerState.busy === true || state === 'QUEUED' || state === 'READING' || state === 'CANCEL_REQUESTED';
       const progress = finite(readerState.progress);
       const suffix = progress !== null && busy ? ' · ' + Math.round(progress) + '%' : '';
-      if (state === 'QUEUED') return { state, busy, level: 'working', title: 'Solicitação recebida', detail: 'Preparando leitura da ECU' + suffix, next: 'Aguarde a leitura iniciar.' };
+      if (state === 'QUEUED') return { state, busy, level: 'working', title: 'Solicitação recebida', detail: 'Preparando leitura da central' + suffix, next: 'Aguarde a leitura iniciar.' };
       if (state === 'READING') return { state, busy, level: 'working', title: 'Lendo ECU', detail: String(readerState.message || 'Recebendo campos AutoCal') + suffix, next: 'Aguarde ou cancele a leitura.' };
       if (state === 'CANCEL_REQUESTED') return { state, busy: true, cancelling: true, level: 'working', title: 'Cancelando leitura', detail: String(readerState.message || 'Cancelamento solicitado') + suffix, next: 'Aguarde a leitura encerrar com segurança.' };
       if (state === 'READY') return { state, busy: false, level: 'ok', title: 'Leitura concluída', detail: String(readerState.message || 'Todos os campos esperados foram processados.'), next: 'Dados prontos para inspeção.' };
-      if (state === 'READY_PARTIAL') return { state, busy: false, level: 'warning', title: 'Leitura parcial', detail: String(readerState.message || 'Alguns campos não foram confirmados pela ECU.'), next: 'Veja os detalhes técnicos ou tente consultar novamente.' };
-      if (state === 'CANCELLED') return { state, busy: false, level: 'neutral', title: 'Leitura cancelada', detail: String(readerState.message || 'A leitura foi interrompida sem alterar a ECU.'), next: 'A próxima leitura será retomada automaticamente quando a sessão estiver pronta.' };
-      if (state === 'DISCONNECTED') return { state, busy: false, level: 'error', title: 'ECU desconectada', detail: String(readerState.message || 'A conexão foi perdida.'), next: 'Reconecte a ECU e tente novamente.' };
+      if (state === 'READY_PARTIAL') return { state, busy: false, level: 'warning', title: 'Leitura parcial', detail: String(readerState.message || 'Alguns campos não foram confirmados pela central.'), next: 'Veja os detalhes técnicos ou tente consultar novamente.' };
+      if (state === 'CANCELLED') return { state, busy: false, level: 'neutral', title: 'Leitura cancelada', detail: String(readerState.message || 'A leitura foi interrompida sem alterar a central.'), next: 'A próxima leitura será retomada automaticamente quando a sessão estiver pronta.' };
+      if (state === 'DISCONNECTED') return { state, busy: false, level: 'error', title: 'ECU desconectada', detail: String(readerState.message || 'A conexão foi perdida.'), next: 'Reconecte a central e tente novamente.' };
       if (state === 'STALE_SESSION') return { state, busy: false, level: 'error', title: 'Sessão mudou', detail: String(readerState.message || 'A sessão USB mudou durante a leitura.'), next: 'A leitura automática será reiniciada na sessão atual.' };
       if (state === 'CALIBRATION_CONFLICT') return { state, busy: false, level: 'warning', title: 'Outra calibração está em uso', detail: String(readerState.message || 'A porta serial está ocupada por outra operação.'), next: 'Finalize a outra operação e tente novamente.' };
-      if (state === 'FAILED' || state === 'TIMEOUT' || state === 'UNAVAILABLE') return { state, busy: false, level: 'error', title: state === 'TIMEOUT' ? 'Tempo de leitura esgotado' : 'Leitura falhou', detail: String(readerState.error || readerState.message || 'A ECU não concluiu a leitura.'), next: 'Verifique a conexão; o monitor tentará novamente automaticamente.' };
+      if (state === 'FAILED' || state === 'TIMEOUT' || state === 'UNAVAILABLE') return { state, busy: false, level: 'error', title: state === 'TIMEOUT' ? 'Tempo de leitura esgotado' : 'Leitura falhou', detail: String(readerState.error || readerState.message || 'A central não concluiu a leitura.'), next: 'Verifique a conexão; o monitor tentará novamente automaticamente.' };
       return { state, busy: false, level: 'neutral', title: 'Leitura pronta para iniciar', detail: 'Nenhuma consulta manual em andamento.', next: 'O monitor nativo atualiza o snapshot automaticamente.' };
     },
 
@@ -543,7 +543,7 @@
       if (source === 'MANUAL_READER') {
         return freshness === 'CURRENT_SESSION' ? 'Leitura manual · sessão atual' : 'Leitura manual';
       }
-      if (freshness === 'STALE_SESSION') return 'Sem fonte atual · aguardando leitura nova da ECU';
+      if (freshness === 'STALE_SESSION') return 'Sem fonte atual · aguardando leitura nova da central';
       if (source === 'NONE') return 'Sem fonte confiável';
       return source || '—';
     },
@@ -561,7 +561,7 @@
           : 'Região madura nesta sessão; aguardando nova janela de telemetria para tentar a correlação física novamente.';
       }
       return band.counter > 0
-        ? 'A ECU registrou atividade nesta região.'
+        ? 'A central registrou atividade nesta região.'
         : 'Ainda não há atividade nesta região.';
     },
 
@@ -708,16 +708,16 @@
             <section class="autocal-reference-card" aria-label="CURVA DE AQUISIÇÃO · Gasolina × GNV">
               <span class="autocal-plot-title">CURVA DE AQUISIÇÃO · Gasolina × GNV</span>
               <div class="autocal-chart-workspace">
-                <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da ECU.</div></div>
+                <div id="autocalReferenceChart" class="autocal-chart-host"><div class="chart-empty">Aguardando os vetores nativos da central.</div></div>
                 <div class="autocal-chart-legend ao-keybar" aria-label="Legenda do gráfico">
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><circle class="ao-g-petrol" cx="7" cy="7" r="5"/><circle class="ao-g-gas" cx="19" cy="7" r="5"/></svg><b>Pontos já medidos</b></span>
-                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-line-petrol" d="M0 5 H12"/><path class="ao-g-line-gas" d="M13 9 H26"/></svg><b>Curva da ECU (✕ = pontos)</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-line-petrol" d="M0 5 H12"/><path class="ao-g-line-gas" d="M13 9 H26"/></svg><b>Curva da central (✕ = pontos)</b></span>
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-petrol" x="2" y="2" width="9" height="10"/><rect class="ao-g-gas" x="15" y="2" width="9" height="10"/></svg><b>Faixas prontas ■</b></span>
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-run" d="M13 1 L20 7 L13 13 L6 7 Z"/></svg><b>AGORA</b></span>
-                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-band" x="0" y="3" width="26" height="8"/></svg><b>Faixa de MAP atual</b></span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-band" x="0" y="3" width="26" height="8"/></svg><b>Pressão atual da admissão</b></span>
                   <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><rect class="ao-g-zone-ok" x="0" y="2" width="12" height="10"/><rect class="ao-g-zone-no" x="14" y="2" width="12" height="10"/></svg><b>Zona adquirida · não adquirida</b></span>
-                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-limit-min" d="M0 4 H26"/><path class="ao-g-limit-max" d="M0 10 H26"/></svg><b>Limites de MAP</b></span>
-                  <span id="autocalReferenceCount" class="ao-key-count">0 pontos da ECU</span>
+                  <span class="ao-key"><svg viewBox="0 0 26 14" aria-hidden="true"><path class="ao-g-limit-min" d="M0 4 H26"/><path class="ao-g-limit-max" d="M0 10 H26"/></svg><b>Limites da pressão</b></span>
+                  <span id="autocalReferenceCount" class="ao-key-count">0 pontos da central</span>
                 </div>
                 <aside id="autocalChartInspector" class="autocal-chart-inspector"><b>Toque em um ponto</b><span>Toque numa bolinha para reaprender só aquele ponto.</span></aside>
               </div>
@@ -728,7 +728,7 @@
               <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
               <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
               <!-- Texto para leigo (dono, 2026-10-11): o botão diz que apaga o que já foi aprendido. -->
-              <!-- AutoMatch manual (dono, 2026-10-17): a ECU faz os 3 dela; depois, com mais aprendizado nas médias (quadradinhos), o dono manda aplicar de novo. Um toque, ACK + leitura de volta da curva. -->
+              <!-- AutoMatch manual (dono, 2026-10-17): a central faz os 3 dela; depois, com mais aprendizado nas médias (quadradinhos), o dono manda aplicar de novo. Um toque, ACK + leitura de volta da curva. -->
               <button type="button" id="autocalManualAutoMatch" class="autocal-reacquire-action" data-autocal-action="MANUAL_AUTOMATCH" hidden>AutoMatch manual <span class="autocal-action-note">(aplica as médias)</span></button>
               <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span></button>
               <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span></button>
@@ -739,7 +739,7 @@
                     <small>CONTROLE MANUAL</small>
                     <button type="button" data-autocal-action="RESET_K_FACTOR">Curva K toda em 1,0</button>
                     <button type="button" data-autocal-action="RESET_ALL" class="danger-primary">Recomeçar tudo</button>
-                    <p>A ECU faz os ajustes automáticos sozinha. Curva K toda em 1,0: volta a curva ao neutro. Recomeçar tudo: apaga o que a ECU aprendeu. Nenhum destes botões pausa o aprendizado.</p>
+                    <p>A central faz os ajustes automáticos sozinha. Curva K toda em 1,0: volta a curva ao neutro. Recomeçar tudo: apaga o que a central aprendeu. Nenhum destes botões pausa o aprendizado.</p>
                   </section>
                 </div>
               </details>
@@ -785,7 +785,7 @@
                 <div>
                   <small>AJUSTE NATIVO · EVIDÊNCIA CAUSAL</small>
                   <b id="autocalAutoMatchEvidenceTitle">Aguardando evento AutoMatch observável</b>
-                  <span id="autocalAutoMatchEvidenceDetail">O OMEGAS só atribui mudança à ECU quando fecha o antes/depois da mesma época.</span>
+                  <span id="autocalAutoMatchEvidenceDetail">O OMEGAS só atribui mudança à central quando fecha o antes/depois da mesma época.</span>
                 </div>
               </section>
 
@@ -896,7 +896,7 @@
       return { projection, actionState, sessionState };
     }
 
-    /** Operação na ECU ou releitura de ponto em curso: o progresso não pode esperar o vigia. */
+    /** Operação na central ou releitura de ponto em curso: o progresso não pode esperar o vigia. */
     refreshBusy(reading) {
       return this.operationalPending === true || reading?.actionState?.busy === true ||
         (this.pendingPointReacquisitionKeys?.size || 0) > 0;
@@ -1045,7 +1045,7 @@
       } else {
         this.expectActionResult();
         // Texto para leigo (dono, 2026-10-11); "Concluído" só chega com o estado CONFIRMED (ACK + leitura de volta).
-        this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na ECU…' } });
+        this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na central…' } });
       }
       this.refresh();
     }
@@ -1058,7 +1058,7 @@
         return;
       }
       this.prepared = result;
-      // Um toque (dono, 2026-10-11): preparar já executa; a proteção é a foto da preparação e o readback da ECU.
+      // Um toque (dono, 2026-10-11): preparar já executa; a proteção é a foto da preparação e o readback da central.
       this.confirmPrepared();
     }
 
@@ -1075,7 +1075,7 @@
       }
       this.prepared = null;
       this.expectActionResult();
-      this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na ECU…' } });
+      this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na central…' } });
       this.refresh();
     }
 
@@ -1115,7 +1115,7 @@
       this.text('autocalHumanProgress', human.progress);
       this.text('autocalHumanAction', human.nextAction);
       // Frase única do estado (dono, 2026-10-11: sem Detalhes) e o contador AutoMatch X/Y sempre à vista no topo;
-      // o que a ECU não informou fica "—", nunca 0.
+      // o que a central não informou fica "—", nunca 0.
       this.text('autocalHeadline', human.title + ' · ' + human.progress);
       this.text('autocalAutoMatchCount', autoMatchFraction(human.autoMatchCount, human.maxAutoMatch));
       this.renderStatusDots(snapshot, human);
@@ -1142,7 +1142,7 @@
         const toggleOff = !action || !!this.operationalPending;
         if (toggle.disabled !== toggleOff) toggle.disabled = toggleOff;
         const toggleLabel = this.operationalPending
-          ? 'Conferindo na ECU…'
+          ? 'Conferindo na central…'
           : action === 'DISABLE_AUTO_CAL'
             ? 'Pausar aprendizado'
             : action === 'ENABLE_AUTO_CAL' ? 'Retomar aprendizado' : 'Aguardando estado';
@@ -1153,7 +1153,7 @@
         const off = !!this.operationalPending;
         if (button.disabled !== off) button.disabled = off;
       });
-      // Disponível só depois dos AutoMatches automáticos da ECU (cota atingida) e com o aprendizado ligado.
+      // Disponível só depois dos AutoMatches automáticos da central (cota atingida) e com o aprendizado ligado.
       const manualAutoMatch = this.panel?.querySelector('#autocalManualAutoMatch');
       if (manualAutoMatch) {
         const showManual = !!(human.autoMatchQuotaReached && human.enabled !== 0);
@@ -1291,7 +1291,7 @@
       this.text('autocalLiveTitle', 'Motor nesta região agora');
       const enabled = AutoCalUxModel.humanState(this.snapshot || {}, this.acquisitionState || {}, this.projection).enabled;
       const acquisitionCopy = enabled === 1
-        ? 'Aquisição nativa habilitada. Se a condição estabilizar, a ECU pode fortalecer esta região.'
+        ? 'Aquisição nativa habilitada. Se a condição estabilizar, a central pode fortalecer esta região.'
         : enabled === 0 ? 'Aquisição pausada. O ponto AGORA é somente telemetria.' : 'Estado de aquisição ainda não confirmado.';
       this.text('autocalLiveNarrative', rpmLabel + ' · ' + decimal(live.petrolMs, 2) + ' ms · ' + decimal(live.mapBar, 3) + ' bar. ' + acquisitionCopy);
     }
@@ -1462,11 +1462,11 @@
       const stage = restartBoth
         ? 'Aguardando novas aquisições de gasolina e GNV'
         : petrolRestart
-          ? 'Gasolina reiniciada: aguardando a nova referência da ECU'
+          ? 'Gasolina reiniciada: aguardando a nova referência da central'
           : gasRestart
-            ? 'GNV reiniciado: gasolina preservada; aguardando leitura nova da ECU'
+            ? 'GNV reiniciado: gasolina preservada; aguardando leitura nova da central'
             : epoch.referencePending
-              ? 'GNV atual sendo adquirido: aguardando novo grupo de curvas da ECU'
+              ? 'GNV atual sendo adquirido: aguardando novo grupo de curvas da central'
               : 'Coleta em andamento; ainda sem suporte para comparação';
 
       // A referência gasolina sobrevive ao RESET_GAS e ao AutoMatch, mas jamais
@@ -1498,15 +1498,15 @@
         'Gasolina ' + petrolCount + '/18 · GNV ' + gasCount + '/18 faixas com amostra');
       const kValues = physicalVector(snapshot, 'MUL_ACT');
       const kNarrative = kValues.length === 30
-        ? 'Curva K: 30 fatores nativos; observador não altera a ECU.'
+        ? 'Curva K: 30 fatores nativos; observador não altera a central.'
         : 'Curva K: aguardando leitura nativa.';
       const sourceNarrative = petrolCurve.length
-        ? 'Linha contínua = referência gasolina da ECU preservada. '
+        ? 'Linha contínua = referência gasolina da central preservada. '
         : 'Sem curva gasolina temporalmente válida nesta etapa. ';
       const quotaNarrative = automatch !== null && quota !== null && automatch >= quota
         ? ' Cota AutoMatch atingida; a aquisição NÃO terminou.' : '';
       this.text('autocalChartInspector',
-        'Contador AutoMatch da ECU: ' + step + '.' + quotaNarrative + ' ' + stage + '. ' +
+        'Contador AutoMatch da central: ' + step + '.' + quotaNarrative + ' ' + stage + '. ' +
         sourceNarrative +
         'Bolinhas = faixas com amostra, não maturidade automática. ' +
         'Comparação gasolina/GNV suspensa até novo grupo coerente. ' + kNarrative);
@@ -1551,7 +1551,7 @@
             '" y="' + (y(live.mapBar) - 8).toFixed(1) + '">AGORA</text>' : '';
 
         chart = '<svg class="autocal-reference-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" ' +
-          'aria-label="Aquisição atual da ECU; referência gasolina independente; sem equivalência durante reset">' +
+          'aria-label="Aquisição atual da central; referência gasolina independente; sem equivalência durante reset">' +
           '<title>AQUISIÇÃO EM TEMPO REAL · gasolina e GNV por época nativa</title>' +
           '<path d="M' + left + ' ' + top + ' V' + (height - bottom) + ' H' + (width - right) + '" fill="none" stroke="currentColor" opacity=".2"></path>' +
           reference +
@@ -1562,7 +1562,7 @@
           'transform="rotate(-90 14 200)">MAP (bar)</text></svg>';
       }
       const html = chart || '<div class="chart-empty"><b>AQUISIÇÃO EM TEMPO REAL</b><span>' +
-        escapeHtml(stage) + '. Aguardando pontos da ECU. Nenhuma equivalência é calculada agora.</span></div>';
+        escapeHtml(stage) + '. Aguardando pontos da central. Nenhuma equivalência é calculada agora.</span></div>';
       // Mesmo HTML e o gráfico ainda é este: não reconstrói (antes: a cada segundo durante a reaquisição).
       if (this.epochChartHtml !== html || host.firstChild !== this.epochChartNode) {
         host.innerHTML = html;
@@ -1574,7 +1574,7 @@
 
     /**
      * Tela do original em tempo real (PROTOCOLO-LANDI docs 20/21/25): Acquisition + gráfico principal + curva K,
-     * desenhados direto dos vetores da ECU. Não espera "referência utilizável": depois de um Reset o gráfico
+     * desenhados direto dos vetores da central. Não espera "referência utilizável": depois de um Reset o gráfico
      * continua vivo e vazio, em vez de congelar à espera de um grupo coerente.
      */
     renderOriginalChart(snapshot) {
@@ -1697,27 +1697,27 @@
           const spanLabel = timingSpanMs === null ? 'intervalo desconhecido' : Math.round(timingSpanMs) + ' ms';
           const limitLabel = timingLimitMs === null ? 'limite nativo' : 'limite ' + Math.round(timingLimitMs) + ' ms';
           this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' · fora da janela');
-          host.innerHTML = '<div class="chart-empty"><b>REFERÊNCIA FORA DA JANELA</b><span>Os vetores físicos foram lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '. Aguarde a próxima atualização automática da ECU. O AGORA continua vivo sem virar referência.</span></div>';
-          this.text('autocalChartInspector', 'Referência física temporalmente incoerente. Aguarde a próxima atualização automática da ECU; o cursor AGORA continua somente como telemetria.');
+          host.innerHTML = '<div class="chart-empty"><b>REFERÊNCIA FORA DA JANELA</b><span>Os vetores físicos foram lidos com ' + spanLabel + ' de diferença; ' + limitLabel + '. Aguarde a próxima atualização automática da central. O AGORA continua vivo sem virar referência.</span></div>';
+          this.text('autocalChartInspector', 'Referência física temporalmente incoerente. Aguarde a próxima atualização automática da central; o cursor AGORA continua somente como telemetria.');
         } else if (this.ecuDisconnected()) {
           // Sem ECU (dono, 2026-10-11: texto para leigo): diz o que fazer, nada é inventado no gráfico.
-          this.text('autocalReferenceCount', '0 pontos da ECU');
+          this.text('autocalReferenceCount', '0 pontos da central');
           this.chartShowsLive = false;
           host.innerHTML = '<div class="chart-empty"><b>ECU desconectada</b><span>Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.</span></div>';
           this.text('autocalChartInspector', 'ECU desconectada · Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
           this.chartShowsLive = true;
-          host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A ECU ainda não mandou a curva de referência. Os números ao lado continuam ao vivo; o gráfico aparece sozinho.</span></div>';
+          host.innerHTML = '<div class="chart-empty"><b>SEM REFERÊNCIA</b><span>A central ainda não mandou a curva de referência. Os números ao lado continuam ao vivo; o gráfico aparece sozinho.</span></div>';
           this.text('autocalChartInspector', live
-            ? 'AGORA: ' + decimal(live.petrolMs, 2) + ' ms · ' + decimal(live.mapBar, 3) + ' bar. A ECU ainda não mandou a referência.'
-            : 'Aguardando a ECU mandar injeção e MAP.');
+            ? 'AGORA: ' + decimal(live.petrolMs, 2) + ' ms · ' + decimal(live.mapBar, 3) + ' bar. A central ainda não mandou a referência.'
+            : 'Aguardando a central mandar injeção e MAP.');
         }
         this.renderLiveNarrative();
         return;
       }
 
-      this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' da ECU');
+      this.text('autocalReferenceCount', points.length + ' ponto' + (points.length === 1 ? '' : 's') + ' da central');
 
       const height = 400;
       const width = chartWidthFor(host, height);
@@ -1932,7 +1932,7 @@
         return;
       }
       this.expectActionResult();
-      this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na ECU…' } });
+      this.store.patch({ alert: { level: 'working', message: 'Enviado. Conferindo na central…' } });
       this.refresh();
     }
  
@@ -1976,7 +1976,7 @@
         alert: {
           level: 'working',
           message: 'Enviado: ' + count + ' ponto' + (count === 1 ? '' : 's') +
-            ' para reaprender. Conferindo na ECU…',
+            ' para reaprender. Conferindo na central…',
         },
       });
       this.refresh();
@@ -2035,8 +2035,8 @@
       const message = AutoCalUxModel.bandNarrative(band);
 
       const zoneText = band.zoneAcquired
-        ? 'Zona ' + (band.zone + 1) + ' confirmada pela ECU'
-        : 'Zona ' + (band.zone + 1) + ' ainda não confirmada pela ECU';
+        ? 'Zona ' + (band.zone + 1) + ' confirmada pela central'
+        : 'Zona ' + (band.zone + 1) + ' ainda não confirmada pela central';
       const inspected = '<b>Região ' + (index + 1) + ' de 18 · ' + zoneText + '</b><span>' + message + '</span>';
       if (this.bandInspectorHtml !== inspected || host.firstChild === null) { host.innerHTML = inspected; this.bandInspectorHtml = inspected; }
     }
@@ -2045,7 +2045,7 @@
       const host = document.getElementById('autocalEvents');
       if (!host) return;
       if (!events.length) {
-        const empty = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a ECU já acumulou.</p>';
+        const empty = '<p class="empty-copy">Nenhum evento de maturidade foi gerado nesta leitura. Isso não apaga o que a central já acumulou.</p>';
         if (this.eventsHtml !== empty) { host.innerHTML = empty; this.eventsHtml = empty; }
         return;
       }
@@ -2058,7 +2058,7 @@
       if (this.eventsHtml !== html) { host.innerHTML = html; this.eventsHtml = html; }
     }
 
-    /** Ação aceita pela ECU: o próximo fim (Concluído/Não concluído) dela vira aviso; o estado antigo não conta. */
+    /** Ação aceita pela central: o próximo fim (Concluído/Não concluído) dela vira aviso; o estado antigo não conta. */
     expectActionResult() {
       this.awaitingActionResult = true;
       this.actionBaselineSignature = actionSignature(this.actionState || {});
@@ -2080,7 +2080,7 @@
       const recoveryCode = String(recovery?.reasonCode || state?.reasonCode || '');
       const mutationMayHaveStarted = state?.mutationMayHaveStarted === true;
       const uncertainty = failed && mutationMayHaveStarted
-        ? ' · Estado incerto: a ECU pode ter mudado. Releia antes de repetir.'
+        ? ' · Estado incerto: a central pode ter mudado. Releia antes de repetir.'
         : '';
       const text = name === 'IDLE' ? message
         : name === 'CONFIRMED' ? 'Concluído · ' + message
@@ -2105,7 +2105,7 @@
       this.text('autocalHumanProgress', 'A tela não recebeu o bridge nativo.');
       this.text('autocalHumanAction', 'Reconecte o serviço antes de tentar qualquer ação.');
       const host = document.getElementById('autocalReferenceChart');
-      const empty = '<div class="chart-empty"><b>Sem ligação com a ECU</b><span>Nenhum dado foi inventado para preencher o gráfico.</span></div>';
+      const empty = '<div class="chart-empty"><b>Sem ligação com a central</b><span>Nenhum dado foi inventado para preencher o gráfico.</span></div>';
       if (host && host.innerHTML !== empty) host.innerHTML = empty;
     }
 

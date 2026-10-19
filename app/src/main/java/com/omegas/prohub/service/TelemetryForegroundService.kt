@@ -537,7 +537,7 @@ class TelemetryForegroundService : Service() {
     // Ferramentas > Avançado. Escrita só por toque do dono (prévia + confirmação); nada aqui dispara sozinho.
     fun advancedParamsJson(): String = advancedParams.json(
         if (usb.connected) runtime.serialScheduler().currentSessionId() else 0L,
-    ).toString()
+    ).put("antiStallSuggestion", sessionRecorder.antiStallSuggestion()).toString()
     fun prepareAntiStalloFlag(enable: Boolean): String = antiStalloWriter.prepare(enable).toString()
     fun confirmAntiStalloFlag(token: String): String = antiStalloWriter.confirm(token).toString()
     fun cancelAntiStalloFlag(): String = antiStalloWriter.cancel().toString()

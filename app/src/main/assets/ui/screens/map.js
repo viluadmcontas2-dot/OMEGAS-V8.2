@@ -173,7 +173,7 @@
       if (this.editor.hasMap()) this.applyContext(this.pendingContext);
     }
 
-    /** Atualização automática ao reconectar a ECU (sem botão Reler). Nunca apaga edição, revisão ou gravação em curso. */
+    /** Atualização automática ao reconectar a central (sem botão Reler). Nunca apaga edição, revisão ou gravação em curso. */
     autoSync(justConnected) {
       if (this.reading || this.curveImport || this.review || this.root?.classList.contains('is-writing')) return;
       if (!this.editor.hasMap() || justConnected) this.startRead(true);
@@ -187,7 +187,7 @@
       this.rowHeaders = [];
       this.columnHeaders = [];
       if (this.host) {
-        this.host.innerHTML = '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da ECU não confirmada. Verifique a conexão e tente novamente.</span></div>';
+        this.host.innerHTML = '<div class="map-empty-state"><b>Mapa indisponível</b><span>Leitura da central não confirmada. Verifique a conexão e tente novamente.</span></div>';
       }
       text('mapSourceStatus', 'Mapa não confirmado');
       this.store.patch({ map: { ...this.store.get().map, state: 'failed', data: null, selection: 0, review: null } });
@@ -208,13 +208,13 @@
       this.cells.clear();
       this.rowHeaders = [];
       this.columnHeaders = [];
-      if (this.host) this.host.innerHTML = '<div class="map-empty-state"><div class="spinner"></div><b>Lendo Mapa K da ECU</b><span>13 linhas físicas · somente leitura</span></div>';
-      text('mapSourceStatus', automatic ? 'Leitura automática em andamento' : 'Relendo diretamente da ECU');
+      if (this.host) this.host.innerHTML = '<div class="map-empty-state"><div class="spinner"></div><b>Lendo Mapa K da central</b><span>13 linhas físicas · somente leitura</span></div>';
+      text('mapSourceStatus', automatic ? 'Leitura automática em andamento' : 'Relendo diretamente da central');
       this.store.patch({ map: { ...this.store.get().map, state: 'reading', data: null, selection: 0, review: null } });
     }
 
     /**
-     * Curva K → Mapa K (rotina própria; o ExportToK do original não é usado). Relê o Mapa K e a Curva K da ECU AGORA (nada
+     * Curva K → Mapa K (rotina própria; o ExportToK do original não é usado). Relê o Mapa K e a Curva K da central AGORA (nada
      * fixo: o mapa pode ter qualquer valor), refatora o produto Mapa × Curva (core/curve-to-map.js) e deixa a PROPOSTA na
      * grade. Gravar = mapa (fluxo manual, ACK + leitura de volta) e, em seguida, a curva neutra (core/balance-runner.js).
      */
@@ -268,7 +268,7 @@
         return;
       }
       const message = this.applyCurveToMap(operation.points);
-      text('mapSourceStatus', 'Mapa lido da ECU');
+      text('mapSourceStatus', 'Mapa lido da central');
       this.finishCurveImport(message);
     }
 
@@ -278,9 +278,9 @@
       if (!planner) return 'Rotina Curva K → Mapa K indisponível.';
       const snapshot = this.editor.snapshot();
       this.curvePlan = null;
-      // Refino do piloto (Kotlin): vale em QUALQUER fase, também com a ECU ainda no automático (dono, 2026-10-13: não esperar o
-      // 3º AutoMatch). O motor calcula a proposta o tempo todo com os nossos pontos; só pontos cujo valor na ECU ainda é o da
-      // proposta entram (refinementTargets descarta os que a ECU já mexeu).
+      // Refino do piloto (Kotlin): vale em QUALQUER fase, também com a central ainda no automático (dono, 2026-10-13: não esperar o
+      // 3º AutoMatch). O motor calcula a proposta o tempo todo com os nossos pontos; só pontos cujo valor na central ainda é o da
+      // proposta entram (refinementTargets descarta os que a central já mexeu).
       const pilot = (root.OmegasUi || {}).AutoCalApi?.equivalence?.()?.autopilot;
       const proposal = pilot?.proposal?.known && Number(pilot?.proposal?.count) > 0 ? pilot.proposal.points : null;
       const refined = proposal && planner.refinementTargets ? planner.refinementTargets(points, proposal) : null;
@@ -321,7 +321,7 @@
         summary.tightCells ? `${summary.tightCells} células sem folga` : '',
         summary.saturatedCells ? `${summary.saturatedCells} células não cabem em 100–255` : '',
       ].filter(Boolean).join(' · ');
-      // A curva da ECU sai serrilhada do AutoMatch; ela é suavizada ANTES de virar mapa (senão o serrilhado vai junto).
+      // A curva da central sai serrilhada do AutoMatch; ela é suavizada ANTES de virar mapa (senão o serrilhado vai junto).
       const smoothed = summary.smoothed && summary.roughnessBefore - summary.roughnessAfter >= 1
         ? ` · curva suavizada (serrilhado ${summary.roughnessBefore.toFixed(0)}% → ${summary.roughnessAfter.toFixed(0)}%)` : '';
       const refinedText = summary.refinedNodes ? ` · inclui o refino (${summary.refinedNodes} ${summary.refinedNodes === 1 ? 'ponto' : 'pontos'})` : '';
@@ -329,7 +329,7 @@
     }
 
     /**
-     * Segunda etapa: a curva refatorada, só depois do mapa confirmado pela ECU. Também é o que "Concluir curva" repete:
+     * Segunda etapa: a curva refatorada, só depois do mapa confirmado pela central. Também é o que "Concluir curva" repete:
      * se a etapa falha (tempo limite, ECU recusou, curva mudou), o plano fica armado com `failed` — um plano novo partiria
      * do produto já dobrado (mapa novo × curva velha) e fixaria a dobra. A releitura trata curva já no alvo como concluída.
      */
@@ -347,8 +347,8 @@
       plan.running = false;
       if (outcome.ok) {
         this.curvePlan = null;
-        text('mapSourceStatus', 'Mapa lido da ECU');
-        this.alert('Mapa e Curva K gravados e conferidos pela ECU. A curva ficou neutra nas linhas do mapa; o AutoCal segue aprendendo o resto.');
+        text('mapSourceStatus', 'Mapa lido da central');
+        this.alert('Mapa e Curva K gravados e conferidos pela central. A curva ficou neutra nas linhas do mapa; o AutoCal segue aprendendo o resto.');
       } else {
         plan.failed = outcome.error;
         text('mapSourceStatus', 'Curva K pendente (etapa 2 de 2)');
@@ -380,7 +380,7 @@
               this.buildGrid();
               this.renderGrid();
               this.renderEditor();
-              text('mapSourceStatus', 'Mapa lido da ECU');
+              text('mapSourceStatus', 'Mapa lido da central');
               this.store.patch({ map: { ...this.store.get().map, state: 'ready', data: result, selection: 0, review: null } });
               this.applyContext(this.pendingContext || this.store.get().routeContext);
               this.continueCurveToMap();
@@ -448,7 +448,7 @@
       const technical = document.createElement('div');
       technical.className = 'technical-row-note';
       // Uma vez só, em palavras do dono (2026-10-11); a 13ª linha (0C) fica fora da grade e da escrita manual.
-      technical.innerHTML = '<b>Última linha: só leitura</b><span>13ª linha da ECU, fora desta grade</span>';
+      technical.innerHTML = '<b>Última linha: só leitura</b><span>13ª linha da central, fora desta grade</span>';
       this.host.appendChild(technical);
 
       table.addEventListener('click', event => {
@@ -564,9 +564,9 @@
       const button = document.getElementById('mapReviewButton');
       if (button) {
         button.disabled = count === 0 || changes === 0;
-        button.textContent = !count ? 'Gravar na ECU'
-          : !changes ? 'Gravar na ECU'
-            : `Gravar ${changes} ${changes === 1 ? 'alteração' : 'alterações'} na ECU`;
+        button.textContent = !count ? 'Gravar na central'
+          : !changes ? 'Gravar na central'
+            : `Gravar ${changes} ${changes === 1 ? 'alteração' : 'alterações'} na central`;
       }
       if (Number.isInteger(activeRow) && Number.isInteger(activeColumn) && this.editor.hasMap()) {
         const snapshot = this.editor.snapshot();
@@ -595,7 +595,7 @@
       }
       if (!this.review?.items?.length) return;
       // Proposta do Curva K → Mapa K gravada sem edição: é ela que arma a etapa 2 (curva) e passa pela porta de gravação NO
-      // TOQUE (dono, 2026-10-16: a proposta pode ter sido montada antes de a ECU voltar ao automático, ex.: Reaprender GNV).
+      // TOQUE (dono, 2026-10-16: a proposta pode ter sido montada antes de a central voltar ao automático, ex.: Reaprender GNV).
       // Edição manual de célula não passa pela porta. Uma etapa 2 já pendente (falhou antes) não morre por uma edição manual.
       const plan = this.curvePlan;
       let proposal = false;
@@ -643,7 +643,7 @@
       if (operation.busy) {
         // Progresso real do gravador ("Gravando 12 de 24…" → "Conferindo 1 de 2 linhas…"); "confirmadas" só depois da leitura de volta.
         text('mapOperationTitle', operation.writerMessage || 'Gravando…');
-        text('mapOperationMessage', 'A ECU confirma cada quadro');
+        text('mapOperationMessage', 'A central confirma cada quadro');
         return;
       }
       text('mapOperationMessage', `${operation.confirmedCells || 0} de ${operation.totalCells || this.review?.count || 0} células gravadas`);
@@ -656,8 +656,8 @@
         if (result) {
           result.dataset.level = 'ok';
           result.querySelector('b').textContent = `${operation.confirmedCells || operation.totalCells} alterações gravadas`;
-          // "Gravado" só aqui: BATCH_CONFIRMED + readbackValid (ACK e leitura de volta da ECU); texto para leigo (dono, 2026-10-11).
-          result.querySelector('span').textContent = 'Gravado na ECU. O mapa será relido.';
+          // "Gravado" só aqui: BATCH_CONFIRMED + readbackValid (ACK e leitura de volta da central); texto para leigo (dono, 2026-10-11).
+          result.querySelector('span').textContent = 'Gravado na central. O mapa será relido.';
         }
         this.writeStartedAt = null;
         this.editor.reset();
@@ -671,7 +671,7 @@
         const result = document.getElementById('mapOperationResult');
         if (result) {
           result.dataset.level = 'critical';
-          result.querySelector('b').textContent = 'A ECU não confirmou toda a operação';
+          result.querySelector('b').textContent = 'A central não confirmou toda a operação';
           result.querySelector('span').textContent = `${operation.confirmedCells || 0} células foram confirmadas antes da falha. ${failure.error || operation.error || 'Releitura obrigatória.'}`;
         }
         this.writeStartedAt = null;
@@ -687,7 +687,7 @@
       try {
         // Ajuste local do Refino (dono, 2026-10-11: a curva aprende tudo e sabe onde ajustar o quê): só o percentual por
         // célula. O alvo sai da prévia Kotlin (MapKManualPlanner), o mesmo caminho do ajuste percentual manual, sobre o
-        // valor lido da ECU — a conta do Mapa K não é feita no JS.
+        // valor lido da central — a conta do Mapa K não é feita no JS.
         const percentOnly = changes.length > 0 && changes.every(c => c && c.after == null && c.target == null && finite(c.deltaPercent) !== null);
         if (percentOnly) {
           const groups = new Map();

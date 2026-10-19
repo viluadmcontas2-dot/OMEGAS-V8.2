@@ -18,22 +18,22 @@
       help: 'O anti-apagão só entra com o motor ABAIXO desta rotação (parado, marcha lenta, manobra). Acima dela, em aceleração normal, ele não interfere.',
       tipUp: 'Ainda apaga ao pisar na embreagem? Aumente de 50 em 50 e teste.',
       tipDown: 'Segura a gasolina sem precisar? Diminua de 50 em 50.' },
-    { index: 1, tab: 'Queda p/ agir', short: 'Velocidade da queda que ativa.', hintUp: 'Entra à toa? Aumente.', hintDown: 'Entra tarde? Diminua.', label: 'Queda de rotação para agir', unit: 'rpm', min: 0, max: 1000, factory: 100, step: 5,
-      help: 'Mede a VELOCIDADE da queda: quantas rpm o motor perde a cada duas voltas dele. Se a rotação cair mais rápido que isso (embreagem, parada, depois de um corte), a proteção entra. Queda lenta não ativa.',
-      tipUp: 'Está entrando à toa, em quedas pequenas? Aumente de 5 em 5 (fica menos sensível).',
-      tipDown: 'Entra tarde e o motor já apagou? Diminua de 5 em 5 (fica mais sensível).' },
-    { index: 2, tab: 'Espera', short: 'Espera para sair do gás.', hintUp: 'Sai cedo? Aumente.', hintDown: 'Demora a trocar? Diminua.', label: 'Espera para sair do gás', unit: 'ms', min: 0, max: 10000, factory: 1500, step: 100,
+    { index: 1, tab: 'Queda p/ agir', short: 'Velocidade da queda que ativa.', hintUp: 'Sem dado para sugerir.', hintDown: 'Efeito ainda não confirmado.', label: 'Queda de rotação para agir', unit: 'rpm', min: 0, max: 1000, factory: 100, step: 5,
+      help: 'Mede a VELOCIDADE da queda: a rapidez com que o motor perde rotação. A escala interna ainda não foi confirmada. Se a rotação cair mais rápido que isso (embreagem, parada, depois de um corte), a proteção entra. Queda lenta não ativa.',
+      tipUp: 'Ainda não há dados para recomendar aumento.',
+      tipDown: 'Ainda não há dados para recomendar redução.' },
+    { index: 2, tab: 'Espera', short: 'Espera para sair do gás.', hintUp: 'Sem dado para sugerir.', hintDown: 'Efeito ainda não confirmado.', label: 'Espera para sair do gás', unit: 'ms', min: 0, max: 10000, factory: 1500, step: 100,
       help: 'Tempo de espera para a central sair do modo gás quando a proteção age (original: "Delay to exit gas mode"). 1.000 ms = 1 segundo.',
-      tipUp: 'Saindo do gás cedo demais? Aumente de 100 em 100.',
-      tipDown: 'Demora para trocar e o motor falha? Diminua de 100 em 100.' },
-    { index: 3, tab: 'Folga', short: 'Evita ligar e desligar à toa.', hintUp: 'Liga e desliga? Aumente.', hintDown: 'Demora a voltar? Diminua.', label: 'Folga para não ficar trocando', unit: 'rpm', min: 0, max: 1000, factory: 2, step: 5,
+      tipUp: 'Ainda não há dados para recomendar aumento.',
+      tipDown: 'Ainda não há dados para recomendar redução.' },
+    { index: 3, tab: 'Folga', short: 'Evita ligar e desligar à toa.', hintUp: 'Sem dado para sugerir.', hintDown: 'Efeito ainda não confirmado.', label: 'Folga para não ficar trocando', unit: 'rpm', min: 0, max: 1000, factory: 2, step: 5,
       help: 'Margem, medida na mesma escala da queda, para a proteção não ligar e desligar por oscilação pequena perto do limite.',
-      tipUp: 'A proteção liga e desliga toda hora? Aumente de 5 em 5.',
-      tipDown: 'Demora para voltar ao normal? Diminua de 5 em 5.' },
-    { index: 4, tab: 'Queda p/ parar', short: 'Quando a queda acalma, solta.', hintUp: 'Demora a soltar? Aumente.', hintDown: 'Solta cedo? Diminua.', label: 'Queda para parar de agir', unit: 'rpm', min: 0, max: 1000, factory: 20, step: 5,
-      help: 'Quando a queda a cada duas voltas ficar menor que este valor, o motor já se firmou e a proteção para de agir.',
-      tipUp: 'A proteção demora a soltar e atrapalha a aceleração? Aumente de 5 em 5.',
-      tipDown: 'Ela solta cedo e o motor volta a falhar? Diminua de 5 em 5.' },
+      tipUp: 'Ainda não há dados para recomendar aumento.',
+      tipDown: 'Ainda não há dados para recomendar redução.' },
+    { index: 4, tab: 'Queda p/ parar', short: 'Quando a queda acalma, solta.', hintUp: 'Sem dado para sugerir.', hintDown: 'Efeito ainda não confirmado.', label: 'Queda para parar de agir', unit: 'rpm', min: 0, max: 1000, factory: 20, step: 5,
+      help: 'Ajuste experimental ligado ao fim da proteção. Ainda não há prova suficiente para orientar a mudança.',
+      tipUp: 'Ainda não há dados para recomendar aumento.',
+      tipDown: 'Ainda não há dados para recomendar redução.' },
   ];
   const COUNT = FIELDS.length;
   const FACTORY = FIELDS.map(f => f.factory);
@@ -103,10 +103,10 @@
     return { ok, message: ok ? 'ok' : `esperado ${p.after.join(' ')}, veio ${values.join(' ')}` };
   }
   /** O que mudar para ficar igual à sugestão para o carro do dono (vazio = já está igual). */
-  function suggestionChanges(current) {
-    const out = {};
-    FIELDS.forEach(f => { if (!current || current[f.index] !== SUGESTAO.valores[f.index]) out[f.index] = SUGESTAO.valores[f.index]; });
-    return out;
+  function suggestionChanges(current, analysis) {
+    // Observação sem prova causal não autoriza voltar aos valores fixos do corpus.
+    // O núcleo nativo ainda não recomenda números; desconhecido permanece sem ação.
+    return {};
   }
   function factoryChanges(current) {
     const out = {};

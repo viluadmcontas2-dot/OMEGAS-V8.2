@@ -16,7 +16,7 @@
     if (node.textContent !== next) node.textContent = next;
   }
   // Campo "Fator desejado" com vírgula decimal (dono, 2026-10-11: "1,02", como o resto do app); aceita vírgula ou ponto.
-  // Mesmos dígitos de antes (sem arredondar o alvo normalizado pela ECU), só a vírgula muda.
+  // Mesmos dígitos de antes (sem arredondar o alvo normalizado pela central), só a vírgula muda.
   function factorText(value) {
     const n = finite(value);
     return n === null ? '' : String(n).replace('.', ',');
@@ -24,7 +24,7 @@
   function parseFactor(value) {
     return finite(typeof value === 'string' ? value.trim().replace(',', '.') : value);
   }
-  // Arrasto de nó (dono, 2026-10-13): mesmos limites do botão de ajuste fino (0,6 a 1,8); passo de 0,001 (precisão da ECU em Q14 é maior).
+  // Arrasto de nó (dono, 2026-10-13): mesmos limites do botão de ajuste fino (0,6 a 1,8); passo de 0,001 (precisão da central em Q14 é maior).
   // Teto de gravação da curva K (dono, 2026-10-13): nenhum nó sobe acima de 1,8 por erro. Mesmo valor do KFactorProtocol.MAX_WRITE_FACTOR.
   const DRAG_FACTOR_MIN = 0.6;
   const DRAG_FACTOR_MAX = 1.8;
@@ -157,7 +157,7 @@
         this.pendingSuggestion = suggestion;
         this.renderSuggestionFocus(suggestion);
       }
-      // Toda entrada na aba relê a Curva K da ECU (dono, 2026-10-11); o botão Reler ECU continua.
+      // Toda entrada na aba relê a Curva K da central (dono, 2026-10-11); o botão Reler central continua.
       if (!this.reading && !this.writing && !this.backupTask) this.startRead(true);
       if (this.data && suggestion) {
         this.focusSuggestion(suggestion);
@@ -298,8 +298,8 @@
     }
 
     /**
-     * Atualização automática (dono, 2026-10-13: "não tenho que clicar em Reler"): o app.js chama isto ao reconectar a ECU e
-     * a cada 15 s na aba. Leitura silenciosa: sem faixa "Lendo…", só troca o gráfico se a ECU mudou. Não mexe enquanto o
+     * Atualização automática (dono, 2026-10-13: "não tenho que clicar em Reler"): o app.js chama isto ao reconectar a central e
+     * a cada 15 s na aba. Leitura silenciosa: sem faixa "Lendo…", só troca o gráfico se a central mudou. Não mexe enquanto o
      * dono edita (proposta preparada) ou grava.
      */
     autoSync(justConnected) {
@@ -313,20 +313,20 @@
       const result = this.api.startCurveRead();
       if (!result?.ok || !result?.started) {
         // Releitura de entrada sem ECU não vira aviso a cada toque na aba; a curva mostrada é dita como a última lida.
-        if (onEnter && this.data) { text('curveSourceStatus', 'Última leitura · ECU sem resposta'); return; }
+        if (onEnter && this.data) { text('curveSourceStatus', 'Última leitura · Central sem resposta'); return; }
         // Sem curva na tela, o gráfico diz o que fazer (dono, 2026-10-11) em vez de "a leitura começa ao abrir".
         if (!this.data) { text('curveSourceStatus', 'Curva não lida'); this.renderChart(); }
         this.alert(result?.error || 'Não foi possível iniciar a leitura da Curva K.');
         return;
       }
-      // A curva anterior fica na tela durante a leitura; ao chegar, só sobrevivem propostas feitas sobre o mesmo valor da ECU.
+      // A curva anterior fica na tela durante a leitura; ao chegar, só sobrevivem propostas feitas sobre o mesmo valor da central.
       this.reading = true;
       if (!this.data) {
         const host = document.getElementById('curveChart');
-        if (host) host.innerHTML = '<div class="chart-empty">Lendo a Curva K da ECU…</div>';
+        if (host) host.innerHTML = '<div class="chart-empty">Lendo a Curva K da central…</div>';
       }
       if (!silent) {
-        text('curveSourceStatus', 'Lendo 30 pontos diretamente da ECU');
+        text('curveSourceStatus', 'Lendo 30 pontos diretamente da central');
         this.root?.classList.add('is-reading');
       }
       if (this.pendingSuggestion) this.renderSuggestionFocus(this.pendingSuggestion);
@@ -391,7 +391,7 @@
               restore.disabled = true;
               restore.textContent = 'Já está igual';
             }
-            text('curveBackupStatus', 'A ECU já está igual ao backup');
+            text('curveBackupStatus', 'A central já está igual ao backup');
             this.alert('A Curva K atual já é idêntica ao backup escolhido.');
             return;
           }
@@ -415,7 +415,7 @@
           const restore = document.getElementById('curveBackupRestore');
           if (restore) {
             restore.disabled = false;
-            restore.textContent = `Restaurar ${points.length} ponto${points.length === 1 ? '' : 's'} na ECU`;
+            restore.textContent = `Restaurar ${points.length} ponto${points.length === 1 ? '' : 's'} na central`;
           }
           text('curveBackupStatus', 'Restauração pronta · confira o antes→depois e use o botão Restaurar');
           return;
@@ -424,7 +424,7 @@
 
       if (this.reading && !operation.busy) {
         if (operation.state !== 'COMPLETED' && !operation.demo) {
-          this.settleReadFailure(operation.error || 'A leitura da Curva K não foi confirmada pela ECU.');
+          this.settleReadFailure(operation.error || 'A leitura da Curva K não foi confirmada pela central.');
           return;
         }
         this.reading = false;
@@ -435,7 +435,7 @@
         }
         this.data = operation;
         this.dropStaleProposals(operation.points);
-        text('curveSourceStatus', 'ECU confirmada · 30 pontos');
+        text('curveSourceStatus', 'Central confirmada · 30 pontos');
         this.renderChart();
         this.renderProposalList();
         if (this.pendingSuggestion) {
@@ -466,12 +466,12 @@
             if (result) {
               result.dataset.level = 'ok';
               result.querySelector('b').textContent = 'Curva K gravada';
-              result.querySelector('span').textContent = 'Gravado na ECU.';
+              result.querySelector('span').textContent = 'Gravado na central.';
             }
             this.data = null;
             this.proposals.clear();
             this.pendingSuggestion = null;
-            if (this.restoreContext) text('curveBackupStatus', 'Backup restaurado e confirmado pela ECU');
+            if (this.restoreContext) text('curveBackupStatus', 'Backup restaurado e confirmado pela central');
             this.restoreContext = null;
             this.refreshBackups();
             this.startRead();
@@ -482,7 +482,7 @@
             if (result) {
               result.dataset.level = 'critical';
               result.querySelector('b').textContent = 'A Curva K não foi confirmada';
-              result.querySelector('span').textContent = operation.error || operation.message || 'A ECU não confirmou toda a operação. Releitura obrigatória.';
+              result.querySelector('span').textContent = operation.error || operation.message || 'A central não confirmou toda a operação. Releitura obrigatória.';
             }
             this.data = null;
             if (this.restoreContext) text('curveBackupStatus', 'Restauração não confirmada · releitura obrigatória');
@@ -494,7 +494,7 @@
       }
     }
 
-    /** Proposta preparada sobre um valor que a ECU já não tem perde a validade (a escrita também recusaria). */
+    /** Proposta preparada sobre um valor que a central já não tem perde a validade (a escrita também recusaria). */
     dropStaleProposals(points) {
       const fresh = new Map((Array.isArray(points) ? points : []).map(point => [Number(point.index), Number(point.factorRaw)]));
       const before = this.proposals.size;
@@ -503,7 +503,7 @@
       });
       if (this.restoreContext && this.proposals.size !== before) {
         this.proposals.clear();
-        this.cancelRestorePreview('A Curva K mudou na ECU · escolha o backup de novo');
+        this.cancelRestorePreview('A Curva K mudou na central · escolha o backup de novo');
       }
     }
 
@@ -575,13 +575,13 @@
         const previews = result.changed.map(change => this.api.previewCurvePoint(change.index, change.after));
         const failed = previews.find(preview => !preview?.ok);
         if (previews.some(preview => !preview?.ok)) {
-          this.alert(failed?.error || 'Não foi possível preparar a curva. Releia a ECU.');
+          this.alert(failed?.error || 'Não foi possível preparar a curva. Releia a central.');
           return;
         }
         previews.forEach(preview => this.acceptPreview(preview, true));
         this.renderChart();
         this.renderProposalList();
-        this.alert('Confira os pontos preparados; nada foi gravado. Para aplicar, toque em Gravar na ECU.');
+        this.alert('Confira os pontos preparados; nada foi gravado. Para aplicar, toque em Gravar na central.');
       } catch (error) {
         this.alert(error.message || 'Não foi possível suavizar a curva.');
       }
@@ -657,7 +657,7 @@
       const points = this.points();
       if (!host) return;
       if (!points.length) {
-        host.innerHTML = '<div class="chart-empty">Curva não lida. Ligue a ECU: ela aparece sozinha.</div>';
+        host.innerHTML = '<div class="chart-empty">Curva não lida. Ligue a central: ela aparece sozinha.</div>';
         return;
       }
       const width = 920; const height = 350; const padX = 42; const padY = 34;
@@ -709,8 +709,8 @@
         } else {
           review.disabled = items.length === 0;
           review.textContent = items.length
-            ? `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na ECU`
-            : 'Gravar na ECU';
+            ? `Gravar ${items.length} ponto${items.length === 1 ? '' : 's'} na central`
+            : 'Gravar na central';
         }
       }
     }
@@ -725,7 +725,7 @@
       const label = persistentChanges.length
         ? `${persistentChanges.length} ponto${persistentChanges.length === 1 ? '' : 's'} da Curva K`
         : 'ainda sem valor exato para gravar';
-      host.innerHTML = `<b>${prepared ? 'Sugestão preparada para revisão' : 'Sugestão global em revisão'}</b><span>${escapeHtml(label)}</span><small>${escapeHtml(suggestion.rationale || suggestion.reason || suggestion.explanation || '')}</small><button type="button" data-curve-prepare-suggestion ${this.data && persistentChanges.length ? '' : 'disabled'}>${prepared ? 'Preparar de novo' : 'Preparar sugestão'}</button><small>${prepared ? 'Confira o antes → depois; nada foi gravado.' : 'Preparar não grava na ECU.'}</small>`;
+      host.innerHTML = `<b>${prepared ? 'Sugestão preparada para revisão' : 'Sugestão global em revisão'}</b><span>${escapeHtml(label)}</span><small>${escapeHtml(suggestion.rationale || suggestion.reason || suggestion.explanation || '')}</small><button type="button" data-curve-prepare-suggestion ${this.data && persistentChanges.length ? '' : 'disabled'}>${prepared ? 'Preparar de novo' : 'Preparar sugestão'}</button><small>${prepared ? 'Confira o antes → depois; nada foi gravado.' : 'Preparar não grava na central.'}</small>`;
       host.querySelector('[data-curve-prepare-suggestion]')?.addEventListener('click', () => this.prepareSuggestion(suggestion));
     }
 

@@ -1,5 +1,8 @@
 """Não confundir motor girando, movimento, falta de leitura e reinício."""
 import unittest
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.sessoes.sugerir_antiapagao import analisar_sessoes
 
 

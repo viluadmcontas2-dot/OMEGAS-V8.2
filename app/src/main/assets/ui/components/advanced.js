@@ -143,7 +143,7 @@
       } else if (t.matches('[data-adv-open-view]')) { this.view = t.dataset.advOpenView; this.setView(); }
       else if (t.matches('[data-adv-back-valores]')) { this.view = 'valores'; this.setView(); }
       else if (t.matches('[data-adv-use-suggestion]')) {
-        const changes = this.V.suggestionChanges(this.valuesNow());
+        const changes = this.V.suggestionChanges(this.valuesNow(), this.data.antiStallSuggestion);
         this.flag.cancel(); this.drafts = {};
         if (Object.keys(changes).length) this.vals.ask('edit', changes, this.usb());
       } else if (t.matches('[data-adv-open-info-tab]')) { this.infoTab = t.dataset.advOpenInfoTab; this.view = 'info'; this.setView(); }
@@ -380,8 +380,8 @@
       const why = this.reason('values');
       const undo = this.vals.view().undo;
       const [level, statusText] = this.saveStatus();
-      const sug = this.V.SUGESTAO;
-      const diff = values ? this.V.suggestionChanges(values) : null;
+      const sug = this.data.antiStallSuggestion || {};
+      const diff = values ? this.V.suggestionChanges(values, sug) : null;
       const igual = !!values && Object.keys(diff).length === 0;
       return `
         <section class="tool-view values-view" data-card="valores">
@@ -389,9 +389,9 @@
           <div class="vv-grid">
             ${this.V.FIELDS.map(f => this.cardHtml(f, values)).join('')}
             <aside class="vv-info vv-sug" data-state="${igual ? 'ok' : 'diff'}" aria-label="Sugestão para o seu carro">
-              <p class="vv-sug-title"><b><span class="vv-t-long">${igual ? '✔ Seus valores já são os recomendados para o seu carro.' : 'Sugestão para o seu carro:'}</span><span class="vv-t-short">${igual ? '✔ Valores ideais para o seu carro' : 'Sugestão para o seu carro'}</span></b></p>
-              ${igual || !values ? '' : `<p class="vv-sug-vals">${sug.valores.map((v, k) => escapeHtml(this.V.num(v) + ' ' + this.V.FIELDS[k].unit)).join(' · ')}</p><button type="button" class="primary" data-adv-use-suggestion>Usar a sugestão</button>`}
-              <p class="vv-sug-why">Pelos seus logs: ligada, a rotação não passou de ${escapeHtml(this.V.num(sug.ligadoPior))} rpm para baixo e só ${escapeHtml(String(sug.gasLigadoPct).replace('.', ','))}% do tempo foi em gasolina.</p>
+              <p class="vv-sug-title"><b>${Number.isInteger(sug.quedas) ? `${sug.quedas} quedas fortes na última viagem` : 'Análise da sua última viagem'}</b></p>
+              <p class="vv-sug-short">Sem dados para sugerir novos números.</p>
+              <p class="vv-sug-why">${escapeHtml(sug.motivo || 'Ao encerrar uma viagem, o app analisa as quedas do motor. Ainda não há dados para sugerir números.')}</p>
               <button type="button" class="secondary" data-adv-open-info-tab="carro"><span class="vv-t-long">Ver os números do seu carro</span><span class="vv-t-short">Ver os números</span></button>
             </aside>
           </div>
@@ -405,9 +405,11 @@
 
     /** Os números do carro do dono, tirados dos logs reais (fonte: docs/progbase/bins/sugestao-antiapagao-carro-do-dono.json). */
     carroHtml() {
-      const g = this.V.SUGESTAO; const n = x => escapeHtml(this.V.num(x));
-      const linhas = g.tabela.map(r => `<tr><td>${n(r.m)} rpm</td><td>${escapeHtml(String(r.porHora).replace('.', ','))}</td><td>${r.quase}</td></tr>`).join('');
-      return `<ul class="vv-evid"><li><b>Seu teste (função ligada e desligada, 11 vezes):</b> ligada, depois da queda a rotação não passou de ${n(g.ligadoPior)} rpm para baixo; desligada, caiu até ${n(g.desligadoPior)} (sua marcha lenta: ${n(g.marcha)}).</li><li><b>Gasolina:</b> ligada, só ${escapeHtml(String(g.gasLigadoPct).replace('.', ','))}% do tempo fora do GNV (${n(g.gasLigado.fora)} de ${n(g.gasLigado.leituras)} leituras); desligada, ${escapeHtml(String(g.gasDesligadoPct).replace('.', ','))}%.</li></ul><table class="vv-tab-evid"><caption>${escapeHtml(String(g.horas).replace('.', ','))} h de uso real, para cada valor de «Rotação máxima para agir»:</caption><thead><tr><th>Rotação máxima para agir</th><th>Atua (vezes por hora)</th><th>Quase-apagões</th></tr></thead><tbody>${linhas}</tbody></table><p>Quanto mais alta, menos quedas terminam mal e ela não atua mais vezes: <b>baixar não economiza gasolina</b>. Se ainda apagar, aumente o número «Rotação máxima para agir» (o primeiro card) até ${n(g.faixaMax)} rpm. Os 4 ajustes extras: sem dado suficiente para sugerir mudança.</p>`;
+      const analysis = this.data.antiStallSuggestion || {};
+      return `<p><b>${escapeHtml(analysis.motivo || 'Ainda não há uma viagem analisada neste aparelho.')}</b></p>
+        <p>A análise é refeita ao encerrar cada viagem. O app guarda as quedas do motor e os ajustes que conseguiu ler.</p>
+        <p>As sessões antigas não permitem confirmar se o carro estava andando nem medir gasolina economizada.</p>
+        <p>Os quatro ajustes extras continuam sem dados para sugerir mudança. Nenhum número é gravado sozinho.</p>`;
     }
 
     /** Explicação completa: leitura, em abas curtas (cabe sem rolar). */

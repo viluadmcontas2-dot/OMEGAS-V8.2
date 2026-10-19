@@ -4,7 +4,7 @@
 
   /**
    * Modelo e desenho do AutoCal como o programa original (PROTOCOLO-LANDI docs 20, 21 e 25), em tempo real.
-   * Lê só os vetores do snapshot nativo e nunca depende de "referência utilizável": o que a ECU mandou é o que se desenha.
+   * Lê só os vetores do snapshot nativo e nunca depende de "referência utilizável": o que a central mandou é o que se desenha.
    * Por decisão do dono (2026-10-13) NÃO existe a série GasPointPrev (leitura anterior) nem "Manual automatch".
    */
   const AXIS_Y = { min: 0.15, max: 1.10, step: 0.05 };
@@ -72,7 +72,7 @@
   }
 
   /**
-   * Bolinhas por zona (UX do dono, 2026-10-13): verde = zona completa (flag da ECU), azul = coletando (já há amostra na zona),
+   * Bolinhas por zona (UX do dono, 2026-10-13): verde = zona completa (flag da central), azul = coletando (já há amostra na zona),
    * laranja = falta. Zona sem leitura = 'unknown' (cinza). Vale para cada combustível, independente do que está em uso.
    */
   function zoneStates(snapshot, fuel) {
@@ -106,7 +106,7 @@
     const thresholds = physical(snapshot, 'MNFLD_PRESS_THD');
     const lastNode = [...tbp].reverse().find(value => value !== null && value > 0) ?? null;
     if (lastNode === null || thresholds.length !== BANDS || thresholds.some(value => value === null)) {
-      return { ok: false, reason: 'Aguardando eixo e limiares da ECU.' };
+      return { ok: false, reason: 'Aguardando eixo e limiares da central.' };
     }
     const fullAxisX = { min: 1, max: Math.max(lastNode, 2) };
     const axisY = { ...AXIS_Y };
@@ -168,7 +168,7 @@
     const petrolPoints = pairs(petrolX, petrolY, axisY);
     const gasPoints = pairs(gasX, gasY, axisY);
     // Eixo X flexível (dono, 2026-10-13): só até onde já houve aquisição (ou onde o motor está agora), com 1 ms de folga
-    // e passo de 2 ms para o eixo não ficar pulando; nunca além do último nó da ECU nem abaixo de 6 ms.
+    // e passo de 2 ms para o eixo não ficar pulando; nunca além do último nó da central nem abaixo de 6 ms.
     // Extras do Refino (nossos pontos medidos e marcas de engasgo) entram no MESMO gráfico; o AutoCal não passa nada.
     const extras = options.extras || null;
     const ours = extras ? {
@@ -361,7 +361,7 @@
     return out.join('');
   }
 
-  /** Curva K (ChartKLine): MUL_ACT por nó, suavizada, só leitura (a ECU é quem a ajusta). */
+  /** Curva K (ChartKLine): MUL_ACT por nó, suavizada, só leitura (a central é quem a ajusta). */
   function renderK(model, width, height) {
     if (!model?.ok) return '';
     const p = plot(width, height, model.axisX, model.kAxisY, { bottom: 8 });
@@ -389,7 +389,7 @@
 
   // ------------------------------------------------------------------------------------- camada AO VIVO (leve)
   // Dono, 2026-10-13: o cursor e a faixa de MAP atual têm que andar em tempo real. Só estes poucos elementos dependem da
-  // telemetria; o resto do gráfico (zonas, curvas, pontos, quadrados) só muda quando a ECU manda dado novo. Por isso o
+  // telemetria; o resto do gráfico (zonas, curvas, pontos, quadrados) só muda quando a central manda dado novo. Por isso o
   // desenho é dividido: o gráfico inteiro é feito uma vez e esta camada é trocada a cada amostra (alguns elementos).
   function liveBand(model, p) {
     if (!model.band) return '';

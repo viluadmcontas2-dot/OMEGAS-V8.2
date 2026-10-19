@@ -2,6 +2,8 @@ package com.omegas.prohub.diagnostics
 
 import android.content.ContentResolver
 import android.net.Uri
+import com.omegas.prohub.autocal.AntiStallSessionAnalysis
+import com.omegas.prohub.util.AtomicJsonFile
 import com.omegas.prohub.settings.AppSettings
 import com.omegas.prohub.storage.AppPaths
 import org.json.JSONArray
@@ -147,6 +149,46 @@ class SessionRecorder(
     @Volatile private var lastExportBoundarySequence = 0L
 
     private var sessionDir: File? = null
+    private var antiStallAnalysis = AntiStallSessionAnalysis()
+    private val antiStallFile = File(paths.runtimeRoot, "anti-stall-analysis.json")
+    private var antiStallResult = AtomicJsonFile.readJson(antiStallFile) ?: JSONObject()
+
+    @Synchronized
+    fun antiStallSuggestion(): JSONObject = JSONObject(antiStallResult.toString())
+
+    /** Event-driven, once per closed session; no import and no ECU write. */
+    private fun finishAntiStallAnalysis() {
+        val result = antiStallAnalysis.finish(sessionId)
+        val oldFloor = antiStallResult.optInt("maiorAjusteComQueda", -1)
+        val newFloor = result.optInt("maiorAjusteComQueda", -1)
+        val floor = maxOf(oldFloor, newFloor)
+        if (floor >= 0) result.put("maiorAjusteComQueda", floor)
+        try {
+            val text = result.toString(2)
+            sessionDir?.let { dir ->
+                AtomicJsonFile.write(File(dir, "anti-apagao.json"), text)
+                File(dir, "RESUMO-DA-VIAGEM.html").writeText(
+                    """<!doctype html><html lang="pt-BR"><meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width,initial-scale=1">
+                    <title>Resumo da viagem — OMEGAS</title>
+                    <style>body{font:20px system-ui;max-width:42em;margin:2em auto;padding:0 1em;line-height:1.5}</style>
+                    <h1>Resumo da viagem</h1><p>${result.getString("motivo")}</p>
+                    <p>Leituras analisadas: ${result.getInt("leituras")}.</p>
+                    <p>Paradas do motor observadas: ${result.getInt("paradasDoMotor")}.</p>
+                    <p>Não foi possível confirmar se o carro estava em movimento ou se a chave foi desligada.</p>
+                    <p>Nenhum ajuste foi gravado pelo app. Os quatro ajustes extras ainda não têm dados para sugestão.</p>
+                    <p>O arquivo anti-apagao.json guarda as quedas e o resultado da análise.
+                    Os arquivos de eventos guardam as leituras completas.</p></html>""".trimIndent(),
+                )
+            }
+            AtomicJsonFile.write(antiStallFile, result.toString())
+            antiStallResult = result
+            recordNow("anti_stall_analysis", "native", result)
+        } catch (error: Exception) {
+            lastError = "Não foi possível salvar a análise da viagem: ${error.message}"
+        }
+    }
+
     private var semanticLedger: SessionSemanticLedger? = null
     private var writer: BufferedWriter? = null
     private var segmentFile: File? = null
@@ -181,6 +223,7 @@ class SessionRecorder(
             petrolTicks = 0L
             cngTicks = 0L
             synchronized(previewLock) { preview.clear() }
+            antiStallAnalysis = AntiStallSessionAnalysis()
             semanticLedger = SessionSemanticLedger(
                 sessionDir = dir,
                 sessionId = id,
@@ -222,6 +265,7 @@ class SessionRecorder(
         awaitPendingWrites()
         return synchronized(this) {
             if (!recording) return@synchronized statusObject().put("ok", true).put("alreadyStopped", true)
+            finishAntiStallAnalysis()
             recordNow("session_stopped", "native", JSONObject().put("reason", reason))
             recording = false
             stoppedAt = System.currentTimeMillis()
@@ -626,11 +670,13 @@ class SessionRecorder(
                 if (f.contains("CNG") || f.contains("GNV") || f == "GAS") cngTicks++
             }
 
+            antiStallAnalysis.observe(type, data)
             val line = item.toString() + "\n"
             val bytes = line.toByteArray(StandardCharsets.UTF_8).size.toLong()
             val effectiveLimitMb = settings.sessionLogMaxMb.coerceIn(64, 1_024)
             val maxBytes = effectiveLimitMb.toLong() * 1024L * 1024L
             if (byteCount + bytes > maxBytes && type != "session_stopped") {
+                finishAntiStallAnalysis()
                 stopReason = "limite de $effectiveLimitMb MB atingido"
                 lastError = stopReason
                 recording = false

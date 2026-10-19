@@ -35,7 +35,7 @@
     <section class="workspace">
       <header id="liveBar" class="workspace-head live-bar" aria-label="Leituras ao vivo da central" aria-live="off">
         <div class="live-cell" data-live="voltage" data-state="unknown" title="Tensão da central. Só aparece no GNV. Acima de 14,1 V o GNV desliga."><small>Tensão</small><b>—</b><em>V</em></div>
-        <div class="live-cell" data-live="map"><small>MAP</small><b>—</b><em>bar</em></div>
+        <div class="live-cell" data-live="map"><small>Pressão da admissão</small><b>—</b><em>bar</em></div>
         <div class="live-cell" data-live="petrol"><small>Inj. gasolina</small><b>—</b><em>ms</em></div>
         <div class="live-cell" data-live="rpm"><small>Rotação</small><b>—</b></div>
         <button type="button" id="liveVerify" class="live-verify" data-phase="idle" hidden aria-live="polite"><i aria-hidden="true"></i><span></span></button>
@@ -50,7 +50,7 @@
 
           <div class="map-workspace">
             <section class="map-surface">
-              <div class="surface-toolbar"><div><button id="mapSelectAll" type="button" class="quiet-button">Selecionar tudo</button><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button><button id="mapFromCurve" type="button" class="quiet-button" title="Lê a Curva K e propõe no Mapa K, linha por linha, o fator da curva naquele Tinj. Nada é gravado até você confirmar.">Curva K → Mapa K</button><button id="mapFinishCurve" type="button" class="quiet-button" hidden title="O mapa novo já está na ECU; falta a curva planejada. Grava só a curva, conferida pela ECU.">Concluir curva</button></div></div>
+              <div class="surface-toolbar"><div><button id="mapSelectAll" type="button" class="quiet-button">Selecionar tudo</button><button id="mapClearSelection" type="button" class="quiet-button">Limpar</button><button id="mapFromCurve" type="button" class="quiet-button" title="Lê a Curva K e propõe no Mapa K, linha por linha, o fator da curva naquele Tinj. Nada é gravado até você confirmar.">Curva K → Mapa K</button><button id="mapFinishCurve" type="button" class="quiet-button" hidden title="O mapa novo já está na central; falta a curva planejada. Grava só a curva, conferida pela central.">Concluir curva</button></div></div>
               <div id="mapGrid" class="map-grid-host"><div class="empty-state"><b>Mapa K</b><span>A leitura começa ao abrir esta área.</span></div></div>
             </section>
             <aside class="inspector-panel map-editor-panel">
@@ -58,14 +58,14 @@
               <label class="field-label"><span>Como ajustar</span><select id="mapAdjustmentMode"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select></label>
               <label class="field-label"><span>Valor</span><input id="mapAdjustmentValue" type="number" inputmode="decimal" step="1" value="0"></label>
               <div class="nudge-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
-              <!-- Texto para leigo (dono, 2026-10-11): um toque em Gravar; a conferência na ECU (resposta + leitura de volta) é automática. -->
-              <div class="safety-copy"><b>Nada foi gravado.</b><span>Confira os números e toque em Gravar; o app confere na ECU sozinho.</span></div>
-              <button id="mapReviewButton" type="button" class="primary wide" disabled>Gravar na ECU</button>
+              <!-- Texto para leigo (dono, 2026-10-11): um toque em Gravar; a conferência na central (resposta + leitura de volta) é automática. -->
+              <div class="safety-copy"><b>Nada foi gravado.</b><span>Confira os números e toque em Gravar; o app confere na central sozinho.</span></div>
+              <button id="mapReviewButton" type="button" class="primary wide" disabled>Gravar na central</button>
             </aside>
           </div>
 
-          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Escrita manual em andamento</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence"><span>Preparar</span><span>Gravação</span><span>Resposta da ECU</span><span>Conferência</span></div></div></div>
-          <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="mapOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="mapDismissResult" type="button" class="secondary">Voltar ao mapa</button></div></div>
+          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>MAPA K</small><h3 id="mapOperationTitle">Escrita manual em andamento</h3><p id="mapOperationMessage">Preparando operação.</p><div class="progress-track"><i id="mapOperationProgress"></i></div><div class="operation-sequence"><span>Preparar</span><span>Gravação</span><span>Resposta da central</span><span>Conferência</span></div></div></div>
+          <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="mapOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da central.</span></div><button id="mapDismissResult" type="button" class="secondary">Voltar ao mapa</button></div></div>
         </section>
 
         <section class="screen curve-screen" data-screen="curve" aria-labelledby="curveTitle">
@@ -78,7 +78,7 @@
             <div class="curve-view curve-editor-view active" data-curve-panel="editor">
               <div class="curve-workspace">
                 <section class="curve-surface">
-                  <div class="curve-legend"><span><i class="line actual"></i>Atual da ECU</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque em qualquer um dos 30 pontos</span></div>
+                  <div class="curve-legend"><span><i class="line actual"></i>Atual da central</span><span><i class="line proposal"></i>Proposta</span><span class="curve-point-hint">toque em qualquer um dos 30 pontos</span></div>
                   <div id="curveChart" class="curve-chart"><div class="empty-state">A leitura começa ao abrir esta área.</div></div>
                   <div class="curve-axis">Injeção (ms) →</div>
                 </section>
@@ -92,8 +92,8 @@
                   <div class="context-separator"></div>
                   <div class="editor-heading"><div><small>PROPOSTA</small><h3>Pontos preparados</h3></div><button id="curveClearProposals" type="button" class="quiet-button">Limpar</button></div>
                   <div id="curveProposalList" class="proposal-list"><p>Toque num ponto do gráfico e em “Preparar este ponto”.</p></div>
-                  <div class="safety-copy"><b>Uma confirmação</b><span>Confira o antes → depois. Gravar grava e confere na ECU sozinho, sem outro “tem certeza?”. Quer uma cópia antes? Salvar curva atual.</span></div>
-                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Gravar na ECU</button>
+                  <div class="safety-copy"><b>Uma confirmação</b><span>Confira o antes → depois. Gravar grava e confere na central sozinho, sem outro “tem certeza?”. Quer uma cópia antes? Salvar curva atual.</span></div>
+                  <button id="curveReviewButton" type="button" class="primary wide" disabled>Gravar na central</button>
                 </aside>
               </div>
             </div>
@@ -101,16 +101,16 @@
 
           <!-- Rodapé único (dono, 2026-10-11): os botões da Curva K ficam embaixo, à esquerda, ao alcance da mão. -->
           <div class="curve-footbar" role="toolbar" aria-label="Ações da Curva K">
-            <button id="curveReadButton" type="button" class="secondary">Reler ECU</button>
-            <button id="curveSmoothButton" type="button" class="secondary" title="Prepara uma curva mais suave para você conferir. Não grava na ECU.">Suavizar</button>
+            <button id="curveReadButton" type="button" class="secondary">Reler central</button>
+            <button id="curveSmoothButton" type="button" class="secondary" title="Prepara uma curva mais suave para você conferir. Não grava na central.">Suavizar</button>
             <button id="curveBackupSave" type="button" class="secondary">Guardar backup</button>
             <select id="curveBackupSelect" aria-label="Backups da Curva K"><option value="">Backups</option></select>
             <button id="curveBackupRestore" type="button" class="quiet-button" disabled>Restaurar backup</button>
             <button id="curveResetButton" type="button" class="quiet-button">Curva K toda em 1,0</button>
           </div>
 
-          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Preparar</span><span>Gravação</span><span>Resposta da ECU</span><span>Conferência</span></div></div></div>
-          <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da ECU.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
+          <div class="operation-layer writing-layer"><div class="operation-card compact-operation"><small>CURVA K</small><h3 id="curveOperationTitle">Escrita manual</h3><div class="progress-track"><i id="curveOperationProgress"></i></div><div class="operation-sequence"><span>Preparar</span><span>Gravação</span><span>Resposta da central</span><span>Conferência</span></div></div></div>
+          <div class="operation-layer result-layer"><div class="operation-card compact-operation"><div id="curveOperationResult" class="operation-result" data-level="ok"><b>Operação concluída</b><span>Resultado da central.</span></div><button id="curveDismissResult" type="button" class="secondary">Voltar à curva</button></div></div>
         </section>
 
         <section class="screen autocal-route-screen" data-screen="autocal" aria-label="AutoCal">

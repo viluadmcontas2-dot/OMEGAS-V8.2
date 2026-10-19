@@ -27,7 +27,19 @@ test('textos da tela de valores: sem ambiguidade e sem sigla (em todas as abas d
     for (const m of tudo.matchAll(/Rotação máxima(?! para agir)/g)) assert.fail('"Rotação máxima" solta (rotação de quê?): …' + tudo.slice(Math.max(0, m.index - 30), m.index + 60));
     assert.doesNotMatch(tudo, SIGLAS, 'sigla técnica na tela');
     for (const frase of blocos.join('\n').split(/(?<=[.!?])\s+/)) assert.ok(frase.length < 260, 'frase longa demais para leigo: ' + frase.slice(0, 80));
-    // todo "até N rpm" aponta para o número certo
-    assert.match(tudo, /aumente o número «Rotação máxima para agir» \(o primeiro card\) até 2\.000 rpm/);
+    assert.doesNotMatch(tudo, /valores ideais|já são os recomendados|baixar não economiza|a cada duas voltas|Atua \(vezes por hora\)/i);
+    assert.match(tudo, /sem dados|não há dados|não permitem/i);
+  } finally { await app.context.close(); }
+});
+
+
+test('nenhuma aba principal mostra siglas sem explicar ao motorista', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: {width:1280, height:720}, usb:true });
+  try {
+    for (const route of ['autocal','refino','map','curve','sessions','tools']) {
+      await T.route(app, route); await T.pump(app.page, 3);
+      const text = await app.page.locator('body').innerText();
+      assert.doesNotMatch(text, /\b(ECU|MAP|ACK|NAK|readback|runtime|snapshot)\b/, route);
+    }
   } finally { await app.context.close(); }
 });

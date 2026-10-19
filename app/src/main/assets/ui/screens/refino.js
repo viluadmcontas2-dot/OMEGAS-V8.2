@@ -27,7 +27,7 @@
   /** As três palavras do dono para cada ponto gravado (+ sem medição possível). */
   const OUTCOME = { MELHOROU: 'melhorou', PIOROU: 'piorou', MEDINDO: 'ainda medindo', SEM_MEDICAO: 'sem medição' };
   const ORIGIN = { MEASURED: 'Medido', BLENDED: 'Transição', SMOOTHED: 'Anti-tranco', HELD: 'Mantido', LOW_GUARD: 'Trava da baixa' };
-  /** Motivo que vai para a ECU com a gravação; o Kotlin classifica por ele (RefinementJournal.kindFromReason). */
+  /** Motivo que vai para a central com a gravação; o Kotlin classifica por ele (RefinementJournal.kindFromReason). */
   const REASONS = {
     apply: 'Refino OMEGAS: curva refinada confirmada',
     restore: 'Refino OMEGAS: restaurar pontos que pioraram',
@@ -129,16 +129,16 @@
   }
 
   /**
-   * "Refinar por minha conta" (dono, 2026-10-14): enquanto a ECU ainda está no automático o Refino espera. O dono pode assumir:
-   * as gravações liberam, ele decide quando gravar e depois manda a ECU reler o GNV. Só aparece com a ECU online e ainda
-   * trabalhando (ou já assumida); some quando a ECU termina de verdade.
+   * "Refinar por minha conta" (dono, 2026-10-14): enquanto a central ainda está no automático o Refino espera. O dono pode assumir:
+   * as gravações liberam, ele decide quando gravar e depois manda a central reler o GNV. Só aparece com a central online e ainda
+   * trabalhando (ou já assumida); some quando a central termina de verdade.
    */
   function manualOffer(eq) {
     const pilot = eq?.autopilot;
     if (!pilot || pilot.ecuOnline === false) return { offered: false, on: false };
     const on = pilot.manual === true;
     if (!on && pilot.ecuDone !== false) return { offered: false, on: false };
-    return { offered: true, on, label: on ? 'Esperar a ECU terminar' : 'Refinar por minha conta' };
+    return { offered: true, on, label: on ? 'Esperar a central terminar' : 'Refinar por minha conta' };
   }
 
   /** Lista que a revisão mostra e grava: sempre a do Kotlin naquele instante, com assinatura. */
@@ -172,7 +172,7 @@
 
   /**
    * O cartão aberto só grava a lista que está na tela. Confere elegibilidade, não o alvo exato do motor (que anda
-   * com cada leitura nova): mesmos pontos, mesmo valor atual na ECU, nada retido agora e a ação liberada.
+   * com cada leitura nova): mesmos pontos, mesmo valor atual na central, nada retido agora e a ação liberada.
    * 'write' grava a lista revisada; 'changed' atualiza e avisa; 'blocked' segura; 'gone' não há o que gravar.
    */
   function reviewGate(displayed, eq) {
@@ -188,7 +188,7 @@
     return same ? 'write' : 'changed';
   }
 
-  /** Pontos da ECU com atividade; desconhecido (aquisição não lida, campo indisponível) = "—". */
+  /** Pontos da central com atividade; desconhecido (aquisição não lida, campo indisponível) = "—". */
   // "Gasolina" por extenso (dono, 2026-10-11): "Gas" se lê gás = GNV.
   function ecuPointsText(pilot) {
     const petrol = finite(pilot?.petrolValid);
@@ -281,14 +281,14 @@
           <header class="autocal-focus-toolbar">
             <div class="autocal-focus-title">
               <div class="autocal-title-line"><h3>Refino · GNV = Gasolina</h3><span id="refinoPhaseChip" class="autocal-fuel-chip" data-fuel-state="unknown">—</span></div>
-              <p id="refinoHeadline">Aguardando a ECU</p>
+              <p id="refinoHeadline">Aguardando a central</p>
             </div>
           </header>
           <p class="refino-next" id="refinoNext"></p>
-          <div id="refinoChart" class="autocal-chart-host refino-chart" aria-label="Gráfico do Refino"><div class="chart-empty">Aguardando a leitura da ECU.</div></div>
+          <div id="refinoChart" class="autocal-chart-host refino-chart" aria-label="Gráfico do Refino"><div class="chart-empty">Aguardando a leitura da central.</div></div>
           <div class="refino-legend" aria-hidden="true">
-            <span class="ao-key"><svg viewBox="0 0 26 14"><line class="ao-g-line-petrol" x1="2" x2="24" y1="7" y2="7"/></svg><b>Gasolina (ECU)</b></span>
-            <span class="ao-key"><svg viewBox="0 0 26 14"><line class="ao-g-line-gas" x1="2" x2="24" y1="7" y2="7"/></svg><b>GNV (ECU)</b></span>
+            <span class="ao-key"><svg viewBox="0 0 26 14"><line class="ao-g-line-petrol" x1="2" x2="24" y1="7" y2="7"/></svg><b>Gasolina (central)</b></span>
+            <span class="ao-key"><svg viewBox="0 0 26 14"><line class="ao-g-line-gas" x1="2" x2="24" y1="7" y2="7"/></svg><b>GNV (central)</b></span>
             <span class="ao-key"><svg viewBox="0 0 26 14"><rect class="ao-g-petrol" x="3" y="3" width="8" height="8" rx="1.5"/><rect class="ao-g-gas" x="15" y="3" width="8" height="8" rx="1.5"/></svg><b>Medido por nós</b></span>
             <span class="ao-key"><svg viewBox="0 0 26 14"><path class="ao-g-stall" d="M8,3 l10,8 M18,3 l-10,8"/></svg><b>Apagou</b></span>
             <span class="ao-key"><svg viewBox="0 0 26 14"><path class="ao-g-near" d="M13,2 l6,5 l-6,5 l-6,-5 z"/></svg><b>Quase apagou</b></span>
@@ -344,8 +344,8 @@
       const result = this.api.setRefinementManual(!offer.on) || { ok: false };
       this.store.patch({ alert: result.ok === true
         ? { level: 'working', message: offer.on
-            ? 'Certo: o Refino volta a esperar a ECU terminar.'
-            : 'Você assumiu o Refino. Agora dá para gravar mesmo com a ECU no automático. Depois de gravar, mande a ECU reler o GNV (AutoCal › Reaprender GNV).' }
+            ? 'Certo: o Refino volta a esperar a central terminar.'
+            : 'Você assumiu o Refino. Agora dá para gravar mesmo com a central no automático. Depois de gravar, mande a central reler o GNV (AutoCal › Reaprender GNV).' }
         : { level: 'warning', message: result.error || 'Não foi possível mudar. Nada foi alterado.' } });
       this.refresh(true);
     }
@@ -370,7 +370,7 @@
 
     /** Uma proposta para o Mapa K por vez: o engasgo vem primeiro (segurança); depois a diferença por RPM do piloto. */
     mapProposal() {
-      // Porta de gravação: com a ECU ainda no automático, nenhuma proposta de Mapa K (a ECU aplicaria a correção em cima).
+      // Porta de gravação: com a central ainda no automático, nenhuma proposta de Mapa K (a central aplicaria a correção em cima).
       if (root.OmegasWriteGate && !root.OmegasWriteGate.check(this.eq?.autopilot).ok) return null;
       const stalls = this.eq?.stalls;
       const info = describeStalls(stalls);
@@ -405,7 +405,7 @@
     }
 
     /**
-     * Porta de gravação NO TOQUE (dono, 2026-10-16): a proposta pode ter sido montada antes de a ECU voltar ao automático
+     * Porta de gravação NO TOQUE (dono, 2026-10-16): a proposta pode ter sido montada antes de a central voltar ao automático
      * (ex.: Reaprender GNV no AutoCal). Relê o piloto e, com a porta fechada, avisa e não dispara byte nenhum; o cartão fica.
      * Leitura sem piloto (ponte/serviço fora) não substitui a última conhecida: desconhecido não abre nem fecha a porta.
      */
@@ -421,7 +421,7 @@
     /**
      * Lista na tela = lista que será gravada. Mudou no Kotlin? Atualiza o cartão e avisa; sumiu? Diz por quê.
      * Tick sem piloto (ponte/serviço fora por um instante) não é evidência: o cartão fica como está (o toque em Gravar relê
-     * a curva da ECU antes de qualquer byte).
+     * a curva da central antes de qualquer byte).
      */
     syncReview() {
       if (!this.review || !this.eq?.autopilot) return;
@@ -433,7 +433,7 @@
       if (gate === 'blocked') {
         const action = primaryAction(this.eq);
         const why = action.label && !action.enabled ? action.label : 'a ação não está liberada agora';
-        this.review = { ...this.review, blocked: true, notice: `Gravação indisponível agora: ${why}. Nada foi enviado à ECU.` };
+        this.review = { ...this.review, blocked: true, notice: `Gravação indisponível agora: ${why}. Nada foi enviado à central.` };
       } else if (gate === 'changed') {
         const list = reviewList(this.eq, this.review.kind);
         this.review = { ...this.review, ...list, blocked: false, notice: 'A proposta mudou com leituras novas. Confira a lista atualizada antes de gravar.' };
@@ -472,13 +472,13 @@
         sections.push(`<section class="refino-change"><div><b>${escapeHtml(name)}</b><p>${escapeHtml(this.curveSummary(review.points) || 'Nada para gravar agora.')}</p>${notice}</div>${canWrite ? '<button type="button" class="autocal-primary-action" data-kind="review" data-refino-confirm>Gravar na Curva K</button>' : ''}</section>`);
       }
       const fix = this.mapFix?.state || { phase: 'idle' };
-      if (fix.phase === 'reading') sections.push('<section class="refino-change"><div><b>Mapa K</b><p>Lendo o Mapa K da ECU…</p></div></section>');
+      if (fix.phase === 'reading') sections.push('<section class="refino-change"><div><b>Mapa K</b><p>Lendo o Mapa K da central…</p></div></section>');
       else if (fix.phase === 'ready') sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.summary)}</p></div><button type="button" class="autocal-primary-action" data-kind="map" data-refino-map-confirm>Gravar no Mapa K</button></section>`);
       else if (fix.phase === 'failed') sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.message)}</p></div></section>`);
       else if (fix.note && !review) sections.push(`<section class="refino-change"><div><b>Mapa K</b><p>${escapeHtml(fix.note)}</p></div></section>`);
       if (!sections.length) sections.push('<section class="refino-change"><div><b>Nada a mudar agora</b><p>O refino ainda não tem uma alteração segura para propor.</p></div></section>');
       host.hidden = false;
-      host.innerHTML = `<div class="refino-card" role="dialog" aria-label="O que vai mudar"><header><div><small>O QUE VAI MUDAR</small><h3>Nada foi enviado à ECU ainda</h3></div><button type="button" data-refino-cancel class="icon-close" aria-label="Fechar">×</button></header>${sections.join('')}<footer>Cada gravação é conferida na ECU e pode ser desfeita.</footer></div>`;
+      host.innerHTML = `<div class="refino-card" role="dialog" aria-label="O que vai mudar"><header><div><small>O QUE VAI MUDAR</small><h3>Nada foi enviado à central ainda</h3></div><button type="button" data-refino-cancel class="icon-close" aria-label="Fechar">×</button></header>${sections.join('')}<footer>Cada gravação é conferida na central e pode ser desfeita.</footer></div>`;
     }
 
     closeReview() {
@@ -505,21 +505,21 @@
       this.render(true);
       this.poll(result => {
         const list = Array.isArray(result.points) ? result.points : [];
-        if (result.state !== 'COMPLETED' || list.length !== 30) { this.fail(result.error || 'A ECU não devolveu os 30 pontos da Curva K.'); return; }
+        if (result.state !== 'COMPLETED' || list.length !== 30) { this.fail(result.error || 'A central não devolveu os 30 pontos da Curva K.'); return; }
         const factors = new Map(list.map((p, i) => [Number(p.index ?? i), Number(p.factorRaw)]));
         const stale = points.find(p => factors.get(p.index) !== p.currentRaw);
-        if (stale) { this.fail('A Curva K da ECU mudou desde a última leitura. Aguarde a próxima atualização e revise de novo.'); return; }
+        if (stale) { this.fail('A Curva K da central mudou desde a última leitura. Aguarde a próxima atualização e revise de novo.'); return; }
         const write = this.native.writeCurve(points, reason);
         if (!write?.ok || !write?.started) { this.fail(write?.error || 'A gravação não iniciou.'); return; }
         this.operation = { phase: 'writing', total: points.length };
         this.render(true);
         this.poll(done => {
           if (done.state === 'BATCH_CONFIRMED' && done.readbackValid === true) {
-            // Gravado e conferido pela ECU: o piloto já está medindo; a tela volta a ele sem botão extra.
+            // Gravado e conferido pela central: o piloto já está medindo; a tela volta a ele sem botão extra.
             this.operation = { phase: 'idle' };
             this.refresh(true);
           } else {
-            this.fail(done.error || 'O readback não confirmou a gravação. A ECU manteve a curva anterior.');
+            this.fail(done.error || 'O readback não confirmou a gravação. A central manteve a curva anterior.');
           }
         });
       });
@@ -535,7 +535,7 @@
           return;
         }
         off();
-        if (status.ok === false || /FAILED|TIMEOUT/.test(String(status.state || ''))) { this.fail(status.error || 'A ECU recusou a operação.'); return; }
+        if (status.ok === false || /FAILED|TIMEOUT/.test(String(status.state || ''))) { this.fail(status.error || 'A central recusou a operação.'); return; }
         onFinish(status);
       };
       off = this.scheduler.addHook('fast', tick);
@@ -573,7 +573,7 @@
         if (chip.textContent !== chipText) chip.textContent = chipText;
       }
 
-      let headline = pilot.headline || 'Conecte a ECU para acompanhar a calibração.';
+      let headline = pilot.headline || 'Conecte a central para acompanhar a calibração.';
       let next = (pilot.next || '') + (op.phase === 'idle' && fix.phase === 'idle' ? this.gasNote(eq) : '');
       const show = { preview: false, manual: manualOffer(eq).offered, undo: false, ok: false };
       const label = {};
@@ -582,7 +582,7 @@
       // gravação troca a barra pelos botões de desfecho, e a proposta some quando o piloto deixa de oferecê-la.
       const evidence = !!this.curveKind() || !!this.mapProposal();
       if (op.phase === 'reading' || op.phase === 'writing') {
-        headline = op.phase === 'reading' ? 'Conferindo a Curva K da ECU…' : 'Gravando e conferindo na ECU…'; next = 'Não desligue o carro nem tire o cabo.';
+        headline = op.phase === 'reading' ? 'Conferindo a Curva K da central…' : 'Gravando e conferindo na central…'; next = 'Não desligue o carro nem tire o cabo.';
       } else if (op.phase === 'failed') {
         headline = op.message; next = 'Nada foi dado como gravado. A lista é refeita com a curva lida na hora.'; show.ok = true; label.ok = 'Tentar de novo';
       } else if (fix.phase === 'reading' || fix.phase === 'writing') {
@@ -591,7 +591,7 @@
       } else if (fix.phase === 'done') {
         headline = 'Gravado e conferido no Mapa K'; next = 'Dirija e veja se o engasgo some. Se piorar, desfaça.'; show.undo = true; show.ok = true; label.ok = 'Pronto';
       } else if (fix.phase === 'undone') {
-        headline = 'Desfeito e conferido na ECU'; next = 'O Mapa K voltou ao valor de antes.'; show.ok = true; label.ok = 'Pronto';
+        headline = 'Desfeito e conferido na central'; next = 'O Mapa K voltou ao valor de antes.'; show.ok = true; label.ok = 'Pronto';
       } else if (fix.phase === 'failed') {
         headline = fix.message; next = 'Nada foi dado como gravado. Confira o Mapa K antes de dirigir.'; show.ok = true; label.ok = 'Entendi';
       } else {
@@ -637,7 +637,7 @@
           .map(r => `${fmt(r[0], 1)}–${finite(r[1]) === null ? 'fim' : fmt(r[1], 1)} ms`).join(', ');
         return ranges ? ` Nossos pontos de GNV em ${ranges} recomeçaram às ${at(partial.at)}: a Curva K foi gravada ali (o resto continua valendo).` : '';
       }
-      const reason = { AUTOMATCH_NATIVO: 'a ECU trocou a curva no automático', CURVA_K_GRAVADA: 'a Curva K foi gravada', MAPA_K_GRAVADO: 'o Mapa K foi gravado', CURVA_K_MUDOU_FORA_DO_APP: 'a curva mudou fora do app' }[eq.gasEpochReason];
+      const reason = { AUTOMATCH_NATIVO: 'a central trocou a curva no automático', CURVA_K_GRAVADA: 'a Curva K foi gravada', MAPA_K_GRAVADO: 'o Mapa K foi gravado', CURVA_K_MUDOU_FORA_DO_APP: 'a curva mudou fora do app' }[eq.gasEpochReason];
       return reason ? ` Nossos pontos de GNV recomeçaram às ${at(eq.gasEpochAt)} porque ${reason} (o GNV medido com a curva antiga não vale para a nova).` : '';
     }
 
@@ -661,7 +661,7 @@
       else if (this.lastGoodSnapshot) model = O.build(this.lastGoodSnapshot, { fuel, live, extras });
       if (!model.ok) {
         if (this.chart) return;
-        host.innerHTML = '<div class="chart-empty"><b>SEM PONTOS AINDA</b><span>Ligue a ECU e rode na gasolina e no GNV. O gráfico aparece aqui, igual ao do AutoCal.</span></div>';
+        host.innerHTML = '<div class="chart-empty"><b>SEM PONTOS AINDA</b><span>Ligue a central e rode na gasolina e no GNV. O gráfico aparece aqui, igual ao do AutoCal.</span></div>';
         return;
       }
       const box = host.getBoundingClientRect?.() || {};
