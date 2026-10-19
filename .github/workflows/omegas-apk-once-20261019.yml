@@ -5,6 +5,7 @@ on:
     paths: ['.github/workflows/omegas-apk-once-20261019.yml']
 permissions:
   contents: read
+  actions: read
 env:
   PRODUCT_SHA: d4db2ee5c194543d1e3d2b4b6c89ef9cf30ee784
 jobs:
