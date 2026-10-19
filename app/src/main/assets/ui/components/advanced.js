@@ -168,7 +168,20 @@
         if (Object.keys(changes).length) this.vals.ask('edit', changes, this.usb());
       } else if (t.matches('[data-adv-open-info-tab]')) { this.infoTab = t.dataset.advOpenInfoTab; this.view = 'info'; this.setView(); }
       else if (t.matches('[data-adv-info-tab]')) { this.infoTab = t.dataset.advInfoTab; }
-      else if (t.matches('[data-adv-open]')) { this.view = t.dataset.advOpen; if (this.view === 'valores') this.resetDrafts(); this.setView(); }
+      else if (t.matches('[data-adv-open]')) {
+        this.view = t.dataset.advOpen;
+        if (this.view === 'valores') {
+          this.resetDrafts();
+          // A solicitação de leitura nasce do toque, não depende de um novo
+          // ciclo de telemetria. A consulta não grava e é única por visita.
+          this.loadData();
+          // Se a resposta for imediata (emulador), atualiza o cache agora.
+          // Na ECU real o retorno assíncrono vem pelo ciclo normal do app.
+          if (this.directReadRequested && !this.valuesNow()) this.loadData();
+          this.resetDrafts();
+        }
+        this.setView();
+      }
       else if (t.matches('[data-adv-back]')) { this.view = 'home'; this.setView(); }
       this.signature = '';
       this.render();
