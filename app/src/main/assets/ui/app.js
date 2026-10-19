@@ -397,6 +397,9 @@
       return;
     }
     if (route === 'tools' || route === 'sessions') {
+      // Estado USB nativo no próprio toque de entrada (AutoCal e Ferramentas não podem divergir).
+      // No WebView, onStatus pode ainda não ter rodado desde a conexão física.
+      refreshStatus();
       ensureTools();
       toolsSessionsStale = true; // entrar na aba relista as gravações
       // Anti-apagão aparece no próprio toque, sem depender de leituras auxiliares/arquivos.
