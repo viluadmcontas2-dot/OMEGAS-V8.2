@@ -157,9 +157,10 @@
         set('idle', `O anti-apagão já está ${s.enable ? 'ligado' : 'desligado'}. Nada a gravar.`);
         return;
       }
+      // O toque no interruptor JÁ é a ordem (dono: sem pergunta de confirmação). A conferência do plano acima continua valendo.
       s.plan = plan;
       s.token = status.token;
-      set('preview', '');
+      confirm();
     }
     function onDone(status) {
       unhook();

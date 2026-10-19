@@ -269,6 +269,7 @@
           <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(action)}. Estado atual: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
             <span class="sw-track" aria-hidden="true"><i></i></span><span class="sw-caption"><b>${escapeHtml(card.stateText)}</b><small>${escapeHtml(action)}</small></span>
           </button>
+          ${this.flag.view().undo.available && ['done', 'idle'].includes(this.flag.view().phase) ? '<button type="button" class="tile-undo" data-adv-undo-flag>Desfazer</button>' : ''}
         </article>`;
         }
         const go = card.kind === 'values' ? `Mudar valores ${PENCIL}` : 'Ver ›';
@@ -354,6 +355,8 @@
     }
 
     layerFlag(fv, on) {
+      // Sem janela de pergunta: ler, gravar e "pronto" acontecem no próprio cartão; só erro/aviso abrem a janela.
+      if (['preparing', 'preview', 'writing', 'done'].includes(fv.phase)) return '';
       const undoing = fv.confirmOn === 'undo';
       const target = undoing ? (on ? 'Desligado' : 'Ligado') : (on ? 'Desligado' : 'Ligado');
       const verb = target === 'Ligado' ? 'Ligar anti-apagão' : 'Desligar anti-apagão';

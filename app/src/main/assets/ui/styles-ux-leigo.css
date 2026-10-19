@@ -255,3 +255,5 @@
   #toolsDrawer .tile-line .tile-full { display: none; }
   #toolsDrawer .tile-line .tile-compact { display: inline; }
 }
+
+.tile-undo { align-self: flex-start; margin-top: 6px; padding: 4px 12px; min-height: 36px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--muted, #9fb0c3); font-size: 14px; }
