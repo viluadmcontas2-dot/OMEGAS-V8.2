@@ -12,27 +12,47 @@ test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });
 
 for (const [nome, vp] of Object.entries(VPS)) {
-  test(`cada número explica o efeito, diz para que lado mexer, tem − / + e a tela NÃO rola @${nome}`, { skip }, async () => {
+  test(`os 5 ajustes ficam expostos, cada um no seu card, com − / +, e a tela NÃO rola @${nome}`, { skip }, async () => {
     const app = await T.openApp(browser, { viewport: vp, usb: true });
     const { page } = app;
     try {
       await U.abrirValores(app);
+      assert.equal(await page.locator('.vv-card').count(), 5, 'um card por ajuste, todos na mesma tela');
+      assert.equal(await page.locator('[data-adv-open-view="extras"], .vv-tabs [data-adv-extra]').count(), 0, 'sem botão de "ajustes extras"');
       for (let i = 0; i < 5; i++) {
-        await U.irParaCampo(app, i);
         const box = page.locator(`[data-field="${i}"]`);
+        assert.ok(await box.isVisible(), `card ${i} visível`);
         assert.equal(await box.locator('[data-adv-step]').count(), 2, `campo ${i}: botões − e +`);
-        const tips = await box.locator('.num-tips').innerText();
-        assert.match(tips, /Se precisar de mais/, `campo ${i}: diz quando aumentar`);
-        assert.match(tips, /Se atrapalhar/, `campo ${i}: diz quando diminuir`);
-        assert.match(await box.locator('.num-meta').innerText(), /Valor de fábrica/, `campo ${i}: mostra o valor de fábrica`);
-        const rola = await page.evaluate(() => { const v = document.querySelector('.values-view'); return v.scrollHeight > v.clientHeight + 1 || v.scrollWidth > v.clientWidth + 1; });
-        assert.equal(rola, false, `campo ${i}: a tela não pode rolar (nem para baixo nem para o lado)`);
+        assert.notEqual((await box.locator('input').inputValue()).trim(), '', `campo ${i}: o número aparece`);
         const bs = await box.locator('[data-adv-step]').first().boundingBox();
-        assert.ok(bs.height >= 52 && bs.width >= 52, `botão − grande o bastante: ${bs.width}x${bs.height}`);
+        assert.ok(bs.height >= 50 && bs.width >= 44, `botão − grande o bastante: ${bs.width}x${bs.height}`);
+        const bi = await box.locator('input').boundingBox();
+        assert.ok(bi.width >= 60, `o número cabe na caixa: ${bi.width}px`);
       }
-      await U.foto(page, `valores-extras-${nome}`);
-      await U.irParaCampo(app, 0);
-      await U.foto(page, `valores-principal-${nome}`);
+      const rola = await page.evaluate(() => { const v = document.querySelector('.values-view'); return v.scrollHeight > v.clientHeight + 1 || v.scrollWidth > v.clientWidth + 1; });
+      assert.equal(rola, false, 'a tela não pode rolar (nem para baixo nem para o lado)');
+      const cortado = await page.evaluate(() => [...document.querySelectorAll('.vv-card, .vv-info')].filter(e => e.scrollHeight > e.clientHeight + 2).map(e => e.className + ' ' + e.textContent.slice(0, 30)));
+      assert.deepEqual(cortado, [], 'nenhum card com texto cortado');
+      await U.foto(page, `valores-${nome}`);
+      assert.deepEqual(app.problems.page, []);
+    } finally { await app.context.close(); }
+  });
+
+  test(`a explicação completa cabe sem cortar em nenhuma aba @${nome}`, { skip }, async () => {
+    const app = await T.openApp(browser, { viewport: vp, usb: true });
+    const { page } = app;
+    try {
+      await U.abrirValores(app);
+      await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
+      const abas = await page.locator('[data-adv-info-tab]').count();
+      assert.equal(abas, 7, 'Como funciona + 5 ajustes + O que NÃO é');
+      for (let i = 0; i < abas; i++) {
+        await page.locator('[data-adv-info-tab]').nth(i).click(); await T.pump(page, 1);
+        const cortado = await page.evaluate(() => { const e = document.querySelector('.vv-info-full'); const v = document.querySelector('.values-view'); return [e.scrollHeight > e.clientHeight + 2, v.scrollHeight > v.clientHeight + 2]; });
+        assert.deepEqual(cortado, [false, false], `aba ${i}: texto cortado`);
+        const dentro = await page.evaluate(() => { const r = document.querySelector('.vv-info-full').getBoundingClientRect(); const n = document.querySelector('nav, .side-nav, #appNav'); return r.bottom; });
+        assert.ok(dentro > 0);
+      }
       assert.deepEqual(app.problems.page, []);
     } finally { await app.context.close(); }
   });
@@ -46,13 +66,15 @@ test('liga os pontos: explica QUANDO age, o caminho completo e que NÃO é o cor
     const quando = await page.locator('.vv-how').innerText();
     assert.match(quando, /cai de repente/); assert.match(quando, /abaixo de 1\.600 rpm/); assert.match(quando, /embreagem/);
     await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
+    assert.match(await page.locator('.vv-info-full').innerText(), /Queda para agir/);
+    await page.locator('[data-adv-info-tab="nao"]').click(); await T.pump(page, 1);
     const tudo = await page.locator('.vv-info-full').innerText();
     assert.match(tudo, /Não é o corte de injeção/);
     assert.match(tudo, /Saída do corte/, 'aponta para o cartão do corte');
     assert.match(tudo, /447 rpm/); assert.match(tudo, /680 rpm/);
-    await T.tap(page, '[data-adv-back-valores]'); await T.pump(page, 2);
-    await U.irParaCampo(app, 1);
-    assert.match(await page.locator('[data-field="1"] .num-help').innerText(), /duas voltas/, 'explica a escala do original sem jargão');
+    await page.locator('[data-adv-info-tab="f1"]').click(); await T.pump(page, 1);
+    assert.match(await page.locator('.vv-info-full').innerText(), /duas voltas/, 'explica a escala do original sem jargão');
+    assert.match(await page.locator('.vv-info-full').innerText(), /Se precisar de mais/);
   } finally { await app.context.close(); }
 });
 

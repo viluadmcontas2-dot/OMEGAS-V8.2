@@ -32,17 +32,8 @@ async function abrirValores(app) {
   await T.tap(app.page, '[data-adv-open="valores"]');
   await T.pump(app.page, 3);
 }
-/** Vai até o campo i: o 0 está na tela principal; 1-4 nos Ajustes extras (uma aba por vez, sem rolagem). */
-async function irParaCampo(app, indice) {
-  const { page } = app;
-  const naExtras = await page.locator('.vv-tabs').count();
-  if (indice === 0) {
-    if (naExtras) { await T.tap(page, '[data-adv-back-valores]'); await T.pump(page, 2); }
-    return;
-  }
-  if (!naExtras) { await T.tap(page, '[data-adv-open-view="extras"]'); await T.pump(page, 2); }
-  if ((await page.locator(`[data-adv-extra="${indice}"]`).getAttribute('aria-pressed')) !== 'true') { await T.tap(page, `[data-adv-extra="${indice}"]`); await T.pump(page, 2); }
-}
+/** Todos os 5 ajustes ficam expostos na mesma tela (cada um no seu card): não há mais navegação até o campo. */
+async function irParaCampo() {}
 /** Digita no campo por toque (foca pelo toque no campo) e dispara a validação, como o teclado do Android faria. */
 async function digitar(app, indice, valor) {
   const { page } = app;
