@@ -195,8 +195,12 @@
     }
 
     setView() {
-      if (this.host) this.host.dataset.mode = this.view === 'home' ? 'home' : 'view';
-      if (this.screen) this.screen.dataset.view = this.screen.querySelector('[data-mode="view"]') ? 'view' : 'home';
+      const mode = this.view === 'home' ? 'home' : 'view';
+      if (this.host && this.host.dataset.mode !== mode) this.host.dataset.mode = mode;
+      if (this.screen) {
+        const screenView = this.screen.querySelector('[data-mode="view"]') ? 'view' : 'home';
+        if (this.screen.dataset.view !== screenView) this.screen.dataset.view = screenView;
+      }
     }
 
     // ---------- desenho ----------
@@ -218,7 +222,6 @@
       const signature = JSON.stringify([this.view, this.data, this.usb(), this.hasBridge(), fv.phase, vv.phase, vv.undo, this.view === 'valores' ? this.drafts : null]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
-      this.host.dataset.mode = this.view === 'home' ? 'home' : 'view';
       try {
         let cards;
         let usingUnknown = false;
