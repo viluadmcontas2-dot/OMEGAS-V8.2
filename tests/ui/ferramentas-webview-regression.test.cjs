@@ -178,13 +178,13 @@ test('cartão com defeito exibe tentar de novo e preserva os outros', { skip }, 
 
 
 test('sem param_snapshot, Ferramentas usa a central conectada no primeiro toque e não inventa o estado', { skip }, async () => {
-  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 } });
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   const { page } = app;
   try {
     await T.tap(page, '.side-nav [data-route="tools"]');
-    // A ECU conectou e o AutoCal já pode receber quadros. A leitura automática de
-    // 49 parâmetros ainda NÃO terminou (defeito observado no aparelho).
-    await page.evaluate(() => window.__bench.plugUsb());
+    // O AutoCal já recebe telemetria, mas o lote auxiliar de parâmetros
+    // ainda não chegou (situação do aparelho que o banco antigo não simulava).
+    await page.evaluate(() => { window.__bench.params = {}; window.__bench.advRead = false; });
     await T.pump(page, 3);
     assert.equal(await page.locator('#globalEcu').innerText(), 'Central conectada');
     assert.equal(await page.locator('[data-card="anti"] .tile-state').count(), 0);
@@ -208,13 +208,14 @@ test('sem param_snapshot, Ferramentas usa a central conectada no primeiro toque 
 });
 
 test('sem param_snapshot, central com anti-apagão já ligado identifica estado real sem escrita', { skip }, async () => {
-  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 } });
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   const { page } = app;
   try {
     await T.tap(page, '.side-nav [data-route="tools"]');
     await page.evaluate(() => {
       window.__bench.seed('29 FA 00 23', [0x20, 0, 0, 0]);
-      window.__bench.plugUsb();
+      window.__bench.params = {};
+      window.__bench.advRead = false;
     });
     await T.pump(page, 3);
     assert.equal(await page.locator('#toolAdvanced [data-adv-switch]').isDisabled(), false);
