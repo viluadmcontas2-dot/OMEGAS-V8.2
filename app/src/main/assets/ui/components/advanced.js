@@ -58,12 +58,14 @@
     /** Chamado pelo ciclo de dados (app.js). */
     refresh() {
       if (!this.host || !this.flag) return;
-      this.loadData();
       const state = this.store.get();
       const usb = state.status?.usbConnected === true ? true : state.status?.usbConnected === false ? false : undefined;
       this.flag.observe({ route: state.route, usbConnected: usb });
       this.vals.observe({ route: state.route, usbConnected: usb });
       if (state.route !== 'tools') { if (this.view !== 'home') { this.view = 'home'; this.signature = ''; this.setView(); } return; }
+      // Tal como as demais telas, só consulta seus dados enquanto está ativa.
+      // Observe/cancel do fluxo de escrita permanece operando mesmo ao sair da aba.
+      this.loadData();
       this.render();
     }
 
