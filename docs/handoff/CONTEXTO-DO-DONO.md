@@ -20,3 +20,7 @@ O carro (GNV, central OMEGAS 4/MP48) APAGA ao pisar na embreagem: parando, dando
 
 ## Onde está o resto
 AGENTS.md · docs/handoff/{PENDENTE,CONTRATO-CODEX,HANDOFF-CODEX}.md · docs/progbase/{RETOMAR,INDEX}.md (+PROGRESSO*.md por frente) · docs/mapa-de-fontes/MAPA.md · docs/manual/OMEGAS-guia-do-app.pdf · docs/evidence/ · STATUS.md · .claude/skills/{entender-dono,emular-por-observacao}.
+
+
+## Regra sem-atrito (2026-10-19)
+Um toque = ação feita. Sem pergunta de confirmação, sem janela, sem 2º toque, sem botão "tentar de novo". Conferência em segundo plano, autocorreção, aviso sutil só se falhar, Desfazer no cartão. Teste: `tests/ui/anti-apagao-toque-real.test.cjs`. Vale para toda função nova (volta automática, marcha lenta, cartões).

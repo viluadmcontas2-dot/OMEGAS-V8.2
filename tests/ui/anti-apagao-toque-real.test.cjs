@@ -9,45 +9,38 @@ let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });
 
-test('RED: toque no cartão Anti-apagão liga E desliga, preservando todos os outros bits, com ACK e readback', { skip }, async () => {
+test('SEM ATRITO (regra do dono): UM toque liga e UM toque desliga; nenhuma janela de pergunta; só o bit 0x20 muda', { skip }, async () => {
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   const { page } = app;
   try {
-    // ECU real de referência: 0x0010 (sobreposição) permanece intacto, assim como a palavra 1.
     await page.evaluate(() => {
       window.__bench.seed('29 FA 00 23', [0x10, 0, 0x34, 0x12]);
       window.__bench.readAdvanced();
       window.__bench.ecu.clearLog();
+      // Vigia: a janela de confirmação NUNCA pode aparecer durante ligar/desligar.
+      window.__janelaVista = false;
+      const layer = document.getElementById('toolsLayer');
+      new MutationObserver(() => { if (!layer.hidden && layer.querySelector('[data-adv-confirm],[data-adv-cancel]')) window.__janelaVista = true; })
+        .observe(layer, { attributes: true, childList: true, subtree: true });
     });
     await T.route(app, 'tools');
     const card = page.locator('[data-card="anti"]');
-    assert.match(await card.innerText(), /Desligado/);
-    assert.match(await card.innerText(), /Ligar anti-apagão/,
-      'a tela deve mostrar a AÇÃO e não apenas o estado passivo do switch');
+    assert.match(await card.innerText(), /Ligar anti-apagão/, 'a tela mostra a AÇÃO');
 
-    // Toque humano no título inteiro deve abrir a prévia. Não basta ter um botão pequeno lá embaixo.
-    await T.tap(page, '[data-card="anti"] h3');
-    await T.pump(page, 6);
-    await page.waitForSelector('#toolsLayer [data-adv-confirm="flag"]', { state: 'visible', timeout: 8000 });
-    assert.deepEqual(T.writesOf((await T.frames(page)).log), [], 'a prévia deve ler, sem gravar');
-    await T.tap(page, '#toolsLayer [data-adv-confirm="flag"]');
-    await T.pump(page, 6);
-    assert.match(await page.locator('#toolsLayer .adv-result').innerText(), /ligado e conferido na central/i);
+    await T.tap(page, '[data-card="anti"] h3');            // UM toque
+    await T.pump(page, 10);
     let bytes = await page.evaluate(() => window.__bench.ecu.get('29 FA 00 23'));
-    assert.deepEqual(bytes, [0x30, 0, 0x34, 0x12], 'apenas o bit 0x20 deve mudar');
-    await T.tap(page, '#toolsLayer [data-adv-close]');
+    assert.deepEqual(bytes, [0x30, 0, 0x34, 0x12], 'um toque grava; apenas o bit 0x20 muda');
     assert.match(await card.innerText(), /Desligar anti-apagão/);
+    assert.equal(await page.evaluate(() => window.__janelaVista), false, 'nenhuma janela de pergunta ao ligar');
 
-    await T.tap(page, '[data-card="anti"] h3');
-    await T.pump(page, 6);
-    assert.deepEqual(T.writesOf((await T.frames(page)).log).length, 1, 'só a escrita anterior até confirmar a segunda ação');
-    await T.tap(page, '#toolsLayer [data-adv-confirm="flag"]');
-    await T.pump(page, 6);
-    assert.match(await page.locator('#toolsLayer .adv-result').innerText(), /desligado e conferido na central/i);
+    await T.tap(page, '[data-card="anti"] h3');            // UM toque
+    await T.pump(page, 10);
     bytes = await page.evaluate(() => window.__bench.ecu.get('29 FA 00 23'));
     assert.deepEqual(bytes, [0x10, 0, 0x34, 0x12], 'desligar só apaga 0x20');
+    assert.equal(await page.evaluate(() => window.__janelaVista), false, 'nenhuma janela de pergunta ao desligar');
     const writes = T.writesOf((await T.frames(page)).log);
-    assert.equal(writes.length, 2, 'ligar e desligar geram uma escrita cada, nenhuma extra');
+    assert.equal(writes.length, 2, 'uma escrita por toque, nenhuma extra');
     assert.ok(writes.every(w => w.hex.startsWith('35 FA 00 ')), 'somente FLAG_CONF3 é escrito');
     assert.deepEqual(app.problems.page, [], 'JavaScript no navegador não pode lançar');
   } finally { await app.context.close(); }

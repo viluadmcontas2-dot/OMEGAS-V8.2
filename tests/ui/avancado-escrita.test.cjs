@@ -126,38 +126,32 @@ const pronto = (before, enable, token = 'tk1') => {
   return { state: 'READY', token, enable, before, after: plan.after, frameHex: plan.frameHex, noop: plan.noop };
 };
 
-test('1º toque só PREPARA (lê a ECU e mostra a prévia); nada é gravado', () => {
+test('SEM ATRITO: um toque lê, confere o plano e grava sozinho (sem prévia, sem 2º toque)', () => {
   const e = ambiente();
   e.flow.tapSwitch(lido([0, 0]), true);
   deepEqual(e.chamadas, [['prepare', true]]);
   assert.equal(e.flow.view().phase, 'preparing');
-  e.setStatus(pronto([0, 0], true));
+  e.setStatus(pronto([0, 0], true, 'tk9'));
   e.emit();
-  const v = e.flow.view();
-  assert.equal(v.phase, 'preview');
-  assert.equal(v.preview.beforeHex, '0000 0000');
-  assert.equal(v.preview.afterHex, '0020 0000');
-  assert.match(v.preview.text, /Só o anti-apagão muda; o resto fica igual/);
-  assert.match(v.buttonLabel, /Toque de novo/);
-  assert.equal(e.count('confirm'), 0, 'prévia nunca grava');
+  assert.equal(e.flow.view().phase, 'writing');
+  deepEqual(e.chamadas.filter(c => c[0] === 'confirm'), [['confirm', 'tk9']]);
 });
 
-test('NUNCA grava sozinho: muitos dados novos na prévia, nenhuma confirmação enviada', () => {
+test('o plano divergente do quadro calculado aqui NÃO grava (mesmo sem pergunta)', () => {
   const e = ambiente();
   e.flow.tapSwitch(lido([0, 0]), true);
-  e.setStatus(pronto([0, 0], true));
-  for (let i = 0; i < 500; i += 1) e.emit();
+  e.setStatus({ ...pronto([0, 0], true), frameHex: '35 FA 00 FF FF 00 00 00' });
+  e.emit();
   assert.equal(e.count('confirm'), 0);
-  assert.equal(e.flow.view().phase, 'preview');
+  assert.equal(e.flow.view().phase, 'error');
 });
 
-test('2º toque (confirmação) envia UMA vez a confirmação com o token da prévia', () => {
+test('toque repetido enquanto grava: ignorado (uma confirmação só)', () => {
   const e = ambiente();
   e.flow.tapSwitch(lido([0, 0]), true);
   e.setStatus(pronto([0, 0], true, 'abc'));
   e.emit();
   e.flow.tapSwitch(lido([0, 0]), true);
-  e.flow.tapSwitch(lido([0, 0]), true); // toque repetido enquanto grava: ignorado
   e.flow.tapSwitch(lido([0, 0]), true);
   deepEqual(e.chamadas.filter(c => c[0] === 'confirm'), [['confirm', 'abc']]);
   assert.equal(e.flow.view().phase, 'writing');
@@ -232,31 +226,19 @@ test('ECU não confirmou (sem ACK / recusa): erro, sem sucesso', () => {
   }
 });
 
-test('desarma sem gravar: outro toque, troca de rota, USB caiu, cancelar', () => {
+test('cancelar durante a leitura (antes do plano) descarta sem gravar', () => {
   for (const motivo of ['cancel', 'route', 'usb', 'other']) {
     const e = ambiente();
     e.flow.tapSwitch(lido([0, 0]), true);
-    e.setStatus(pronto([0, 0], true));
-    e.emit();
-    assert.equal(e.flow.view().phase, 'preview');
+    assert.equal(e.flow.view().phase, 'preparing');
     if (motivo === 'cancel') e.flow.cancel();
     if (motivo === 'route') e.flow.observe({ route: 'map', usbConnected: true });
     if (motivo === 'usb') e.flow.observe({ route: 'tools', usbConnected: false });
     if (motivo === 'other') e.flow.otherTouch();
     assert.equal(e.flow.view().phase, 'idle', motivo);
     assert.equal(e.count('confirm'), 0, motivo);
-    assert.equal(e.count('cancel'), 1, motivo + ': avisa o nativo para descartar a prévia');
     assert.equal(e.hooks.size, 0);
   }
-});
-
-test('observe com rota Ferramentas e USB ligado não desarma', () => {
-  const e = ambiente();
-  e.flow.tapSwitch(lido([0, 0]), true);
-  e.setStatus(pronto([0, 0], true));
-  e.emit();
-  e.flow.observe({ route: 'tools', usbConnected: true });
-  assert.equal(e.flow.view().phase, 'preview');
 });
 
 test('USB cai durante a gravação: a espera termina (sem resposta final) com aviso honesto', () => {
@@ -315,26 +297,21 @@ test('prévia com valor já no estado pedido (alguém mudou): avisa e não ofere
   assert.equal(e.count('confirm'), 0);
 });
 
-test('DESFAZER restaura o valor anterior pelo MESMO fluxo (prepara, prévia, toque duplo)', () => {
+test('DESFAZER restaura o valor anterior no MESMO fluxo, também em um toque', () => {
   const e = ambiente();
   e.flow.tapSwitch(lido([0, 0]), true);
   e.setStatus(pronto([0, 0], true));
   e.emit();
-  e.flow.tapSwitch(lido([0, 0]), true);
   e.setStatus({ state: 'DONE', outcome: 'CONFIRMED', readback: [0x20, 0], undo: { available: true, enable: false } });
   e.emit();
   assert.equal(e.flow.view().phase, 'done');
   e.chamadas.length = 0;
   e.flow.tapUndo();
-  deepEqual(e.chamadas, [['prepare', false]], 'desfazer só prepara: nada grava ainda');
+  deepEqual(e.chamadas, [['prepare', false]]);
   e.setStatus(pronto([0x20, 0], false, 'tk2'));
   e.emit();
-  const v = e.flow.view();
-  assert.equal(v.phase, 'preview');
-  assert.equal(v.preview.beforeHex, '0020 0000');
-  assert.equal(v.preview.afterHex, '0000 0000');
-  e.flow.tapUndo(); // 2º toque no mesmo botão confirma
-  deepEqual(e.chamadas.filter(c => c[0] === 'confirm'), [['confirm', 'tk2']]);
+  deepEqual(e.chamadas.filter(c => c[0] === 'confirm'), [['confirm', 'tk2']], 'desfazer grava sem 2º toque');
+  assert.equal(e.flow.view().phase, 'writing');
 });
 
 test('sem desfazer disponível: tapUndo não chama nada', () => {

@@ -18,6 +18,8 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 
 ## Invariantes (cada um tem teste)
 
+- **sem-atrito** (dono, 2026-10-19, repetido várias vezes): interruptor/ação simples = **UM toque, sem pergunta de confirmação, sem janela bloqueando**. O toque é a ordem; o app grava na hora (ACK = "Gravado"), confere a leitura de volta em segundo plano, corrige sozinho se divergir, avisa só se falhar e oferece "Desfazer" no próprio cartão. Proibido novo diálogo "Tem certeza?"/2º toque. Continua valendo: nunca grava sem toque do dono. Teste RED→GREEN: `tests/ui/anti-apagao-toque-real.test.cjs` (falha com o fluxo de 2 toques).
+
 - Nenhuma escrita automática de Map K/Curve K (dono, 2026-10-18: "não é para gravar sozinho"; supera a exceção D1 de 2026-10-16). O D1 só SUGERE: após cada AutoMatch da ECU registra `d1_decision` na sessão (modo SOMBRA ou DESLIGADO; não existe modo que grave). O AutoMatch manual continua só por ação do operador. Escrita manual exige intenção explícita + ACK + readback. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md` (Q1: a ECU aplica o AutoMatch sobre a curva viva).
 - `RESET_ALL` não é ação exposta; só o reset do GNV (ação AutoCal `02 24 04 02`) pode ser pedido à mão, em um toque, com backup completo antes e readback da ECU.
 - Teto de escrita da curva K = **1,8** (dono, 2026-10-13), como o piso de 100 do Mapa K: `KFactorProtocol.MAX_WRITE_FACTOR`/`MAX_WRITE_RAW` valem para escrita manual, restauração de backup e AutoMatch; a leitura segue até o limite do protocolo. Testes: `KFactorManualPlannerTest.kt`, `AutoMatchKFactorDraftTest.kt`, `tests/ui/curva-k-arrasto.test.cjs`.

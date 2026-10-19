@@ -35,19 +35,15 @@ test('RED de campo: conectado e com AutoCal vivo, cache vazio não bloqueia leit
     assert.equal(await button.isDisabled(), false, 'o toque deve iniciar leitura ao vivo, mesmo sem snapshot inicial');
     await T.tap(app.page, '[data-adv-switch]');
     await T.pump(app.page, 5);
-    await app.page.waitForSelector('#toolsLayer [data-adv-confirm="flag"]', { timeout: 8000 });
-    let frames = await T.frames(app.page);
-    assert.ok(frames.log.some(f => f.kind === 'READ' && f.hex.startsWith('29 FA 00 ')), 'primeiro toque deve ler FLAG_CONF3 do simulador');
-    assert.deepEqual(T.writesOf(frames.log), [], 'primeiro toque nunca escreve na ECU');
-    await T.tap(app.page, '#toolsLayer [data-adv-confirm="flag"]');
-    await T.pump(app.page, 5);
-    frames = await T.frames(app.page);
+    await T.pump(app.page, 10);
+    const frames = await T.frames(app.page);
+    assert.ok(frames.log.some(f => f.kind === 'READ' && f.hex.startsWith('29 FA 00 ')), 'o toque lê FLAG_CONF3 ao vivo antes de escrever');
     const writes = T.writesOf(frames.log);
-    assert.equal(writes.length, 1, 'somente segundo toque escreve');
+    assert.equal(writes.length, 1, 'sem atrito: UM toque lê, grava e confere (nenhuma pergunta)');
     assert.match(writes[0].hex, /^35 FA 00 /, 'escreve apenas FLAG_CONF3');
     const words = await app.page.evaluate(() => window.__bench.ecu.get('29 FA 00 23'));
     assert.ok(words && (words[0] & 0x20) !== 0, 'simulador tem bit 0x20 ligado após readback');
-    assert.match(await app.page.locator('#toolsLayer').innerText(), /conferido na central/i);
+    assert.match(await app.page.locator('#toolAdvanced [data-card="anti"]').innerText(), /Ligado/);
   } finally { await app.context.close(); }
 });
 
@@ -73,10 +69,9 @@ test('sem resposta na primeira leitura: não escreve, exibe falha e permite tent
     assert.match(await app.page.locator('#toolsLayer').innerText(), /não consegui falar com a central|não foi gravado/i);
     await T.tap(app.page, '#toolsLayer [data-adv-close]');
     await app.page.evaluate(() => window.__bench.setFault('noReadReply', false));
-    await T.tap(app.page, '[data-adv-switch]');
-    await T.pump(app.page, 5);
-    assert.equal(await app.page.locator('#toolsLayer [data-adv-confirm="flag"]').count(), 1);
-    assert.deepEqual(T.writesOf((await T.frames(app.page)).log), []);
+    await T.tap(app.page, '[data-adv-switch]');           // de novo: um toque resolve, sem botão "tentar de novo" separado
+    await T.pump(app.page, 10);
+    assert.equal(T.writesOf((await T.frames(app.page)).log).length, 1);
   } finally { await app.context.close(); }
 });
 
