@@ -171,6 +171,7 @@
     "tests/ui/autocal-mantem-grafico.test.cjs",
     "tests/ui/autocal-multimedia-sophistication.test.cjs",
     "tests/ui/autocal-original-parity.test.cjs",
+    "tests/ui/autocal-preferencias.test.cjs",
     "tests/ui/autocal-reacquisition-ux.test.cjs",
     "tests/ui/autocal-resultado-visivel.test.cjs",
     "tests/ui/autocal-rodape-sem-detalhes.test.cjs",
@@ -395,6 +396,11 @@
   [
    "aba:base",
    "ui:app/src/main/assets/ui/app.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
    "exibe"
   ],
   [
@@ -715,6 +721,11 @@
   [
    "ev:EV-AUTOCAL-001",
    "teste:tests/test_progbase_autocal_preferencias.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-001",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
    "sustenta"
   ],
   [
@@ -2630,6 +2641,16 @@
   [
    "teste:tests/ui/autocal-original-parity.test.cjs",
    "ui:app/src/main/assets/ui/screens/autocal-original.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-preferencias.test.cjs",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-preferencias.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
    "cobre"
   ],
   [
@@ -4760,9 +4781,9 @@
  ],
  "contagem_arestas": {
   "chama": 106,
-  "cobre": 654,
-  "exibe": 33,
-  "sustenta": 72,
+  "cobre": 656,
+  "exibe": 34,
+  "sustenta": 73,
   "usa": 14
  },
  "contagem_nos": {
@@ -4770,8 +4791,8 @@
   "ev": 95,
   "kt": 8,
   "ponte": 112,
-  "teste": 386,
-  "ui": 32
+  "teste": 387,
+  "ui": 33
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -4789,7 +4810,10 @@
  ],
  "elos_quebrados": {
   "essenciais": {
-   "E1_ui_chama_ponte_inexistente": [],
+   "E1_ui_chama_ponte_inexistente": [
+    "core/autocal-preferencias.js -> applyAutoCalPreference",
+    "core/autocal-preferencias.js -> readAutoCalPreference"
+   ],
    "E2_evidencia_aponta_arquivo_inexistente": [],
    "E3_ponte_de_escrita_chamada_sem_teste": []
   },
@@ -7576,6 +7600,10 @@
    "rotulo": "tests/ui/autocal-original-parity.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/autocal-preferencias.test.cjs": {
+   "rotulo": "tests/ui/autocal-preferencias.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/autocal-reacquisition-ux.test.cjs": {
    "rotulo": "tests/ui/autocal-reacquisition-ux.test.cjs",
    "tipo": "teste"
@@ -7918,6 +7946,10 @@
   },
   "ui:app/src/main/assets/ui/core/autocal-api.js": {
    "rotulo": "core/autocal-api.js",
+   "tipo": "ui"
+  },
+  "ui:app/src/main/assets/ui/core/autocal-preferencias.js": {
+   "rotulo": "core/autocal-preferencias.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/core/balance-runner.js": {

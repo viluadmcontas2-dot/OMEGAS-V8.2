@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 95, kt 8, ponte 112, teste 386, ui 32. Arestas: chama 106, cobre 654, exibe 33, sustenta 72, usa 14.
+Nós: aba 9, ev 95, kt 8, ponte 112, teste 387, ui 33. Arestas: chama 106, cobre 656, exibe 34, sustenta 73, usa 14.
 
 ## (a) Por aba
 
@@ -12,7 +12,7 @@ Nós: aba 9, ev 95, kt 8, ponte 112, teste 386, ui 32. Arestas: chama 106, cobre
 | Agora (`-`) | Sem aba própria: só a barra viva (tensão, MAP, injeção, RPM) no topo. | 1 | 0 | 8 | 0 |
 | Mapa K (`map`) | Grade 12x12 do Mapa K, edição e correção de células, região de apagão. | 5 | 3 | 26 | 1 |
 | Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 18 | 0 |
-| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 51 | 1 |
+| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 52 | 1 |
 | Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 16 | 0 |
 | Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 7 | 11 | 0 |
 | Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 22 | 30 | 16 |
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 112 pontes, 32 arquivos de UI, 386 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 112 pontes, 33 arquivos de UI, 387 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
@@ -65,7 +65,7 @@ Lacunas do CATALOGO já resolvidas: #11.
 ## (c) Elos quebrados
 
 ESSENCIAIS (a CI falha se houver; critério no cabeçalho de `tools/grafo_producao.py`):
-- E1_ui_chama_ponte_inexistente: 0
+- E1_ui_chama_ponte_inexistente: 2 — core/autocal-preferencias.js -> applyAutoCalPreference; core/autocal-preferencias.js -> readAutoCalPreference
 - E2_evidencia_aponta_arquivo_inexistente: 0
 - E3_ponte_de_escrita_chamada_sem_teste: 0
 

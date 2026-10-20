@@ -732,6 +732,33 @@
               <button type="button" id="autocalManualAutoMatch" class="autocal-reacquire-action" data-autocal-action="MANUAL_AUTOMATCH" hidden>AutoMatch manual <span class="autocal-action-note">(aplica as médias)</span></button>
               <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_GAS">Reaprender GNV <span class="autocal-action-note">(apaga o atual)</span></button>
               <button type="button" class="autocal-reacquire-action" data-autocal-action="RESET_PETROL">Reaprender gasolina <span class="autocal-action-note">(apaga o atual)</span></button>
+              <details class="autocal-reset-menu autocal-pref-menu" id="autocalPrefMenu">
+                <summary>Preferências</summary>
+                <div class="autocal-reset-popover autocal-pref-popover" aria-label="Preferências AutoCal">
+                  <section class="autocal-reset-group" data-pref-scope="local">
+                    <small>NESTE APARELHO</small>
+                    <label>Atualização (ms)<input type="number" data-pref="refreshMs" min="200" max="2000" step="50"></label>
+                    <label>Mostrar zonas<input type="checkbox" data-pref="showZones"></label>
+                    <label>Mostrar pontos<input type="checkbox" data-pref="showPoints"></label>
+                    <label>Mostrar mensagens<input type="checkbox" data-pref="showMessages"></label>
+                    <label>Cor gasolina<input type="color" data-pref="colorPetrol"></label>
+                    <label>Cor GNV<input type="color" data-pref="colorGas"></label>
+                    <label>Valor de calibração<input type="text" data-pref="calibrationValue" maxlength="16"></label>
+                  </section>
+                  <section class="autocal-reset-group" data-pref-scope="central">
+                    <small>NA CENTRAL</small>
+                    <label>Limite de AutoMatch<input type="number" data-pref-central="automatchLimit" min="1" max="99"></label>
+                    <button type="button" data-pref-save="automatchLimit">Gravar limite de AutoMatch</button>
+                    <label>Limite de RPM<input type="number" data-pref-central="rpmLimit" min="400" max="8000"></label>
+                    <button type="button" data-pref-save="rpmLimit">Gravar limite de RPM</button>
+                    <span class="autocal-pref-state" id="autocalPrefState" role="status">—</span>
+                  </section>
+                  <section class="autocal-reset-group" data-pref-scope="unproven">
+                    <small>NÃO COMPROVADO · SÓ LEITURA</small>
+                    <p class="autocal-pref-ro" id="autocalPrefUnproven"></p>
+                  </section>
+                </div>
+              </details>
               <details class="autocal-reset-menu">
                 <summary>Ações avançadas</summary>
                 <div class="autocal-reset-popover" aria-label="Ações avançadas AutoCal">
@@ -823,6 +850,35 @@
       }
     }
 
+    bindPreferences() {
+      const P = window.OmegasUi?.AutoCalPrefs; const menu = this.panel?.querySelector('#autocalPrefMenu');
+      if (!P || !menu) return;
+      const prefs = P.load(); P.applyToDom(prefs);
+      const state = menu.querySelector('#autocalPrefState');
+      menu.querySelector('#autocalPrefUnproven').textContent = P.UNPROVEN.join(' · ');
+      menu.querySelectorAll('[data-pref]').forEach(input => {
+        const k = input.dataset.pref;
+        if (input.type === 'checkbox') input.checked = !!prefs[k]; else input.value = prefs[k] || (input.type === 'color' ? '#888888' : '');
+        input.addEventListener('change', () => {
+          prefs[k] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : input.value;
+          P.save(prefs); P.applyToDom(prefs);
+          document.dispatchEvent(new CustomEvent('omegas:autocal-prefs', { detail: Object.assign({}, prefs) }));
+        });
+      });
+      const refresh = () => menu.querySelectorAll('[data-pref-central]').forEach(input => {
+        const raw = P.read(P.PARAMS[input.dataset.prefCentral]);
+        input.value = raw == null ? '' : String(raw); input.placeholder = '—';
+      });
+      menu.addEventListener('toggle', () => { if (menu.open) refresh(); });
+      menu.querySelectorAll('[data-pref-save]').forEach(button => button.addEventListener('click', () => {
+        const p = P.PARAMS[button.dataset.prefSave];
+        const input = menu.querySelector('[data-pref-central="' + p.id + '"]');
+        const r = P.write(p, Number(input.value));
+        state.textContent = p.label + ': ' + r.message;
+        if (r.state === 'saved' || r.state === 'mismatch') input.value = String(r.raw);
+      }));
+    }
+
     bind() {
       this.panel?.querySelector('[data-autocal-toggle]')?.addEventListener('click', event => {
         const action = event.currentTarget?.dataset?.action;
@@ -834,6 +890,7 @@
           this.prepare(button.dataset.autocalAction);
         });
       });
+      try { this.bindPreferences(); } catch (error) { console.warn('[OMEGAS AutoCal] Preferências indisponíveis', error); }
       this.panel?.querySelector('[data-autocal-sessions]')?.addEventListener('click', event => {
         this.sessionDrawerOpen = !this.sessionDrawerOpen;
         const drawer = document.getElementById('autocalSessionDrawer');
