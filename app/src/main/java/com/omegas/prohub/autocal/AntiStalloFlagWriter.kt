@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Liga a escrita manual do anti-apagão (AntiStalloFlagCore) à porta serial. SÓ roda por toque do dono em Ferramentas >
- * Avançado: `prepare` (lê FLAG_CONF3 ao vivo e guarda a prévia), depois `confirm(token)` (segundo toque). Nada aqui
+ * Avançado: `apply` (um toque = ler, gravar e reler numa só etapa). `prepare`/`confirm` seguem como caminho em dois passos (bancadas/ponte antiga). Nada aqui
  * dispara sozinho: nenhum laço, nenhum relógio de decisão; esperar a ECU = esperar a resposta de cada transação.
  * Escrita pelo agendador MANUAL_WRITE (registrada como `ecu_command` na sessão). Não altera AutoCalProtocol,
  * KFactorManager nem KWriteManager: só usa `AutoCalProtocol.readVector/writeVectorU16`.
@@ -53,6 +53,47 @@ class AntiStalloFlagWriter(
             else JSONObject().put("available", false),
         )
         copy.toString()
+    }
+
+    /**
+     * Toque no interruptor = UMA chamada: dentro de uma só etapa MANUAL_WRITE da serial, lê FLAG_CONF3, monta o quadro,
+     * grava e relê (mesmo desenho do Mapa K / Curva K). Sem prévia, sem token, sem segundo passo entre o JS e a central:
+     * o resultado (ou o erro) vem pelo status. Nada dispara sozinho: só o toque do dono chega aqui.
+     */
+    fun apply(enable: Boolean): JSONObject {
+        if (!serial.isConnected()) return fail("USB desconectado")
+        if (busy()) return fail(CALIBRATION_BUSY)
+        if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
+        synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
+        try { executor.execute {
+            var published = false
+            fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
+            try {
+                val session = sessionOrThrow()
+                var plan: AntiStalloFlagCore.Plan? = null
+                val result = serial.unit(
+                    reason = "anti-apagão: ler, gravar FLAG_CONF3 (bit 0x20) e reler",
+                    expectedSessionId = session,
+                    workClass = Mp48WorkClass.MANUAL_WRITE,
+                    telemetryAfter = true,
+                    waitTimeoutMs = 8_000L,
+                ) { unit ->
+                    val words = readFlags(unit)
+                    onFlagRead(session, words, "AO_VIVO")
+                    AntiStalloFlagCore.plan(words, enable).also { plan = it }.let { AntiStalloFlagCore.execute(io(unit), it) }
+                }
+                finish(Pending("", plan!!, session), result) { publish(it) }
+            } catch (error: Exception) {
+                val message = "A ECU está ocupada ou desconectou; nada foi dado como gravado (${error.message ?: error.javaClass.simpleName})."
+                record("anti_stallo_flag_write", JSONObject().put("outcome", "ERROR").put("message", message).put("origin", "APP_UI_MANUAL"))
+                publish(JSONObject().put("state", "DONE").put("outcome", "ERROR").put("message", message))
+            } finally {
+                if (!published) running.set(false)
+            }
+        } } catch (_: RejectedExecutionException) {
+            return stopped()
+        }
+        return JSONObject().put("ok", true).put("started", true)
     }
 
     /** 1º toque: lê FLAG_CONF3 ao vivo e monta a prévia. Não escreve nada. */

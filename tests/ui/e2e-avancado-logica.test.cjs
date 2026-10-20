@@ -9,7 +9,9 @@ const { makeRig } = require('./helpers/flow-harness.cjs');
 const LIGAR = '35 FA 00 20 00 00 00 4F';
 const DESLIGAR = '35 FA 00 00 00 00 00 2F';
 
-function ready() { const r = makeRig(); r.bench.plugUsb(); r.cycle(); return r; }
+function ready(opts) { const r = makeRig(opts); r.bench.plugUsb(); r.cycle(); return r; }
+// Ponte em dois passos (prepare -> confirm): só reserva; as provas de "descartar durante a leitura" e "ECU mudou entre a leitura e a gravação" valem para ela.
+const legacy = () => ready({ legacy: true });
 
 test('sem USB não envia nada; com USB vivo e sem snapshot, o toque lê o estado real e então grava', () => {
   const r = makeRig();
@@ -20,10 +22,10 @@ test('sem USB não envia nada; com USB vivo e sem snapshot, o toque lê o estado
   r.bench.plugUsb();
   assert.equal(r.stateText(), '—', 'USB ligado mas nenhum dado ainda: continua —');
   r.tap();
-  assert.equal(r.view().phase, 'preparing', 'o toque lê FLAG_CONF3 diretamente');
-  assert.deepEqual(r.writes(), [], 'a leitura não escreve');
-  assert.deepEqual(r.bench.ecu.log.filter(x => x.kind === 'READ').map(x => x.hex), ['29 FA 00 23']);
+  assert.equal(r.view().phase, 'writing', 'um toque dispara a chamada única (ler -> gravar -> reler)');
+  assert.deepEqual(r.writes(), [], 'antes de a central responder nada foi escrito');
   r.cycle(3);
+  assert.ok(r.bench.ecu.log.some(x => x.kind === 'READ' && x.hex === '29 FA 00 23'), 'leu FLAG_CONF3 ao vivo antes de gravar');
   assert.equal(r.view().phase, 'done');
   assert.deepEqual(r.writes(), [LIGAR]);
   assert.equal(r.stateText(), 'Ligado');
@@ -63,7 +65,7 @@ for (const [nome, descarta] of [
   ['USB caído', r => { r.bench.unplugUsb(); r.observe(); }],
 ]) {
   test(`${nome} durante a leitura descarta SEM enviar nada; o toque seguinte recomeça`, () => {
-    const r = ready();
+    const r = legacy();
     r.bench.ecu.clearLog();
     r.tap();
     assert.equal(r.view().phase, 'preparing');
@@ -128,8 +130,8 @@ test('USB cai com a gravação em andamento: erro honesto, nada dado como gravad
   assert.doesNotMatch(r.view().message, /Gravado e conferido/);
 });
 
-test('mudança na ECU entre a leitura e a gravação: nada é gravado', () => {
-  const r = ready();
+test('mudança na ECU entre a leitura e a gravação (ponte em dois passos): nada é gravado', () => {
+  const r = legacy();
   r.tap();
   r.bench.seed('29 FA 00 23', [0x01, 0, 0, 0]);   // outro programa mexeu
   r.bench.ecu.clearLog();
@@ -147,16 +149,31 @@ function umToqueGrava(r) {
   assert.deepEqual(r.writes(), [LIGAR]);
 }
 test('mutação: voltar a exigir o 2º toque faz a prova "um toque grava" FALHAR', () => {
-  const ok = makeRig(); ok.bench.plugUsb(); ok.cycle();
+  const ok = makeRig({ legacy: true }); ok.bench.plugUsb(); ok.cycle();
   umToqueGrava(ok);                       // íntegro: passa
-  const mut = makeRig({ mutations: VOLTA_2_TOQUES });
+  const mut = makeRig({ legacy: true, mutations: VOLTA_2_TOQUES });
   mut.bench.plugUsb(); mut.cycle();
   assert.throws(() => umToqueGrava(mut), /deepEqual|Expected values/i);
   assert.deepEqual(mut.writes(), [], 'o mutante não grava no 1º toque (pede o 2º)');
 });
 
-test('mutação: máscara errada muda o quadro e o teste de quadro exato falha', () => {
+test('mutação: a chamada única trocada por "só preparar" faz a prova "um toque grava" FALHAR', () => {
+  const ok = makeRig(); ok.bench.plugUsb(); ok.cycle();
+  umToqueGrava(ok);
+  const mut = makeRig({ mutations: [[F, 'bridge.applyAntiStalloFlag(enable)', 'bridge.prepareAntiStalloFlag(enable)']] });
+  mut.bench.plugUsb(); mut.cycle();
+  assert.throws(() => umToqueGrava(mut), /deepEqual|Expected values/i);
+});
+
+test('mutação: máscara errada na tela impede o "Pronto" mesmo com a chamada única (a conferência do app discorda do nativo)', () => {
   const mut = makeRig({ mutations: [['core/advanced-flags.js', 'const ANTI_MASK = 0x0020;', 'const ANTI_MASK = 0x0040;']] });
+  mut.bench.plugUsb(); mut.cycle();
+  mut.tap(); mut.cycle(3);
+  assert.notEqual(mut.view().phase, 'done');
+});
+
+test('mutação: máscara errada muda o quadro e o teste de quadro exato falha (ponte em dois passos)', () => {
+  const mut = makeRig({ legacy: true, mutations: [['core/advanced-flags.js', 'const ANTI_MASK = 0x0020;', 'const ANTI_MASK = 0x0040;']] });
   mut.bench.plugUsb(); mut.cycle();
   mut.tap(); mut.cycle(3);
   assert.notDeepEqual(mut.writes(), [LIGAR]);
@@ -180,10 +197,10 @@ test('mutação: readback fraco na TELA (2ª barreira) deixaria "Gravado" quando
 });
 
 test('mutação: trocar de aba não desarma a leitura -> o teste de descarte falha', () => {
-  const mut = makeRig({ mutations: [[F, "if (away || noUsb) cancel();", "if (noUsb) cancel();"]] });
+  const mut = makeRig({ legacy: true, mutations: [[F, "if (away || noUsb) cancel();", "if (noUsb) cancel();"]] });
   mut.bench.plugUsb(); mut.cycle(); mut.tap();
   mut.state.route = 'map'; mut.observe();
   assert.equal(mut.view().phase, 'preparing', 'mutante mantém a leitura ao sair da aba (o íntegro volta a idle)');
-  const ok = makeRig(); ok.bench.plugUsb(); ok.cycle(); ok.tap(); ok.state.route = 'map'; ok.observe();
+  const ok = makeRig({ legacy: true }); ok.bench.plugUsb(); ok.cycle(); ok.tap(); ok.state.route = 'map'; ok.observe();
   assert.equal(ok.view().phase, 'idle');
 });

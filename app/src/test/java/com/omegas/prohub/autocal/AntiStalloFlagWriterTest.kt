@@ -17,6 +17,7 @@ class AntiStalloFlagWriterTest {
         var storeInstead: IntArray? = null
         /** Depois de qualquer SetVector, as leituras 29 deixam de responder. */
         var failReadsAfterWrite = false
+        var failAllReads = false
         @Volatile var connected = true
         var session = 5L
         val frames = ArrayList<String>()
@@ -37,6 +38,7 @@ class AntiStalloFlagWriterTest {
             val h = hex(request)
             frames += h
             return if (request[0].toInt() == 0x29) {
+                if (failAllReads) return UsbProtocolReply(ok = false, status = -1, error = "timeout", request = request)
                 if (failReadsAfterWrite && frames.any { it.startsWith("35") }) return UsbProtocolReply(ok = false, status = -1, error = "timeout", request = request)
                 val p = ByteArray(4) { i -> ((words[i / 2] shr (8 * (i % 2))) and 0xFF).toByte() }
                 UsbProtocolReply(ok = true, status = 0x53, payload = p, request = request, rawResponse = request + byteArrayOf(0x53, 4) + p)
@@ -249,5 +251,55 @@ class AntiStalloFlagWriterTest {
         }
         assertEquals("leu", resultado)
         assertEquals(3, recusas)
+    }
+
+    @Test fun `apply grava num unico passo MANUAL_WRITE - ler, gravar e reler sem previa nem token`() {
+        val serial = FakeSerial(intArrayOf(0, 0))
+        val records = ArrayList<JSONObject>()
+        val w = writer(serial, records)
+        assertTrue(w.apply(true).getBoolean("ok"))
+        val done = waitFor(w, "DONE")
+        assertEquals("CONFIRMED", done.getString("outcome"))
+        assertEquals(listOf(0x20, 0), done.getJSONArray("readback").let { listOf(it.getInt(0), it.getInt(1)) })
+        assertEquals("35 FA 00 20 00 00 00 4F", done.getString("frameHex"))
+        assertEquals(listOf(Mp48WorkClass.MANUAL_WRITE), serial.classes) // UMA só etapa, sem faixa de leitura recusável
+        assertEquals(listOf("29", "29", "35", "29"), serial.frames.map { it.substring(0, 2) })
+        assertEquals("CONFIRMED", records.last().getString("outcome"))
+        assertTrue(JSONObject(w.statusJson()).getJSONObject("undo").getBoolean("available"))
+    }
+
+    @Test fun `apply com o bit ja no estado pedido nao envia nada`() {
+        val serial = FakeSerial(intArrayOf(0x20, 0))
+        val w = writer(serial)
+        w.apply(true)
+        assertEquals("NOTHING_TO_DO", waitFor(w, "DONE").getString("outcome"))
+        assertTrue(serial.frames.none { it.startsWith("35") })
+    }
+
+    @Test fun `apply se a ECU recusa nao e sucesso e se a leitura falha o estado e incerto`() {
+        val recusa = FakeSerial(intArrayOf(0, 0), acceptWrites = false)
+        val a = writer(recusa); a.apply(true)
+        assertEquals("NOT_ACKED", waitFor(a, "DONE").getString("outcome"))
+        val sem = FakeSerial(intArrayOf(0, 0)).also { it.failReadsAfterWrite = true }
+        val unknowns = ArrayList<String>()
+        val b = writer(sem, unknowns = unknowns); b.apply(true)
+        assertEquals("READBACK_FAILED", waitFor(b, "DONE").getString("outcome"))
+        assertEquals(1, unknowns.size)
+    }
+
+    @Test fun `apply recusa USB desconectado, calibracao em andamento e ocupado, sem escrever`() {
+        val off = FakeSerial(intArrayOf(0, 0)).also { it.connected = false }
+        assertFalse(writer(off).apply(true).getBoolean("ok"))
+        val serial = FakeSerial(intArrayOf(0, 0))
+        assertFalse(writer(serial, busy = { true }).apply(true).getBoolean("ok"))
+        assertTrue(serial.frames.isEmpty())
+    }
+
+    @Test fun `apply sem sucesso de leitura inicial - erro, nada enviado`() {
+        val serial = FakeSerial(intArrayOf(0, 0)).also { it.failAllReads = true }
+        val w = writer(serial); w.apply(true)
+        val done = waitFor(w, "DONE")
+        assertEquals("ERROR", done.getString("outcome"))
+        assertTrue(serial.frames.none { it.startsWith("35") })
     }
 }

@@ -140,8 +140,8 @@ test('cabo solto: o interruptor fica desligado e nada é gravado', { skip }, asy
   } finally { await app.context.close(); }
 });
 
-test('mutação: voltar a exigir o 2º toque faz a prova "um toque grava" FALHAR no app carregado', { skip }, async () => {
-  const dir = T.mutatedUi([['core/advanced-flags.js', "s.plan = plan;\n      s.token = status.token;\n      confirm();", "s.plan = plan;\n      s.token = status.token;\n      set('preview', '');"]]);
+test('mutação: trocar a chamada única por "só preparar" faz a prova "um toque grava" FALHAR no app carregado', { skip }, async () => {
+  const dir = T.mutatedUi([['core/advanced-flags.js', 'bridge.applyAntiStalloFlag(enable)', 'bridge.prepareAntiStalloFlag(enable)']]);
   const app = await T.openApp(browser, { ui: dir, usb: true, viewport: VPS['1280x720'] });
   try {
     await U.abrirMotor(app);

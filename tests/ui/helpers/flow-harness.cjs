@@ -21,9 +21,11 @@ function loadFlags(mutations = []) {
   return ctx.OmegasUi.AdvancedFlags;
 }
 
-function makeRig({ mutations = [], bench: benchOpts } = {}) {
+function makeRig({ mutations = [], bench: benchOpts, legacy = false } = {}) {
   const A = loadFlags(mutations);
   const bench = createBench(fixture, benchOpts);
+  // legacy = ponte antiga em dois passos (prepare -> confirm), mantida só como reserva; o normal é a chamada única.
+  if (legacy) { delete bench.autocalExtra.applyAntiStalloFlag; delete bench.autocalExtra.applyAntiStalloValues; }
   const hooks = new Set();
   const state = { route: 'tools', changes: 0 };
   const flow = A.createWriteFlow({

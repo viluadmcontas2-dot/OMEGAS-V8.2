@@ -128,6 +128,15 @@
     };
 
     function prepare(enable) {
+      // Caminho normal: UMA chamada nativa (ler -> gravar -> reler numa só etapa); o resultado chega no status.
+      if (typeof bridge.applyAntiStalloFlag === 'function') {
+        const sent = parse(bridge.applyAntiStalloFlag(enable));
+        if (sent.ok === false) { fail(sent.error || HUMAN.noLink); return; }
+        s.enable = enable; s.message = ''; s.uncertain = false; s.plan = null; s.token = null;
+        set('writing', '');
+        hook();
+        return;
+      }
       const reply = parse(bridge.prepareAntiStalloFlag(enable));
       if (reply.ok === false) { fail(reply.error || HUMAN.noLink); return; }
       s.enable = enable;
@@ -164,7 +173,14 @@
     }
     function onDone(status) {
       unhook();
-      const plan = s.plan;
+      // Na chamada única não houve prévia no JS: o plano vem do que a central leu e do quadro que o nativo montou.
+      const plan = s.plan || planAntiStallo(status.before, s.enable);
+      if (status.outcome === 'NOTHING_TO_DO') {
+        s.plan = null; s.token = null;
+        set('idle', `O anti-apagão já está ${s.enable ? 'ligado' : 'desligado'}. Nada a gravar.`);
+        return;
+      }
+
       if (status.outcome === 'CONFIRMED' || status.outcome === 'READBACK_DIVERGED') {
         const check = verifyReadback(plan, status.readback);
         if (status.outcome === 'CONFIRMED' && check.ok) {

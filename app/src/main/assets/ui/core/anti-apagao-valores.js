@@ -155,6 +155,15 @@
     function request(kind, changes) {
       const check = validate(changes);
       if (!check.ok) { set('error', check.error, 'warning'); return false; }
+      // Caminho normal: UMA chamada nativa (ler -> gravar -> reler numa só etapa); o resultado chega no status.
+      if (typeof bridge.applyAntiStalloValues === 'function') {
+        const sent = parse(bridge.applyAntiStalloValues(JSON.stringify(changes)));
+        if (sent.ok === false) { fail(sent.error || TEXT.NO_LINK); return false; }
+        s.kind = kind; s.changes = changes; s.message = ''; s.uncertain = false; s.plan = null; s.token = null;
+        set('writing', '', '');
+        hook();
+        return true;
+      }
       const reply = parse(bridge.prepareAntiStalloValues(JSON.stringify(changes)));
       if (reply.ok === false) { fail(reply.error || TEXT.NO_LINK); return false; }
       s.kind = kind; s.changes = changes; s.message = ''; s.uncertain = false;
@@ -183,7 +192,9 @@
     }
     function onDone(status) {
       unhook();
-      const mine = s.plan;
+      // Na chamada única não houve prévia no JS: o plano vem do que a central leu (before) mais o pedido do toque.
+      const mine = s.plan || plan(status.before, s.changes);
+      if (status.outcome === 'NOTHING_TO_DO') { s.plan = null; s.token = null; set('idle', TEXT.SAME, 'info'); return; }
       if (status.outcome === 'CONFIRMED' || status.outcome === 'READBACK_DIVERGED') {
         const check = verifyReadback(mine, status.readback);
         if (status.outcome === 'CONFIRMED' && check.ok) {

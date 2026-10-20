@@ -115,6 +115,48 @@ class AntiStalloParamsWriter(
         return JSONObject().put("ok", true).put("started", true)
     }
 
+    /**
+     * Toque em − / + (ou Restaurar / Desfazer) = UMA chamada: valida a faixa e, dentro de uma só etapa MANUAL_WRITE, lê
+     * ANTI_STALLO, monta o quadro, grava e relê. Sem prévia nem token; o resultado (ou o erro) vem pelo status.
+     */
+    fun apply(changesJson: String): JSONObject {
+        val (changes, problem) = parseChanges(changesJson)
+        if (changes == null || problem != null) return fail(problem ?: "Pedido inválido.")
+        if (!serial.isConnected()) return fail("USB desconectado")
+        if (busy()) return fail(CALIBRATION_BUSY)
+        if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
+        synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
+        try { executor.execute {
+            var published = false
+            fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
+            try {
+                val session = sessionOrThrow()
+                var plan: AntiStalloParamsCore.Plan? = null
+                val result = serial.unit(
+                    reason = "anti-apagão: ler, gravar ANTI_STALLO (5 números) e reler",
+                    expectedSessionId = session,
+                    workClass = Mp48WorkClass.MANUAL_WRITE,
+                    telemetryAfter = true,
+                    waitTimeoutMs = 8_000L,
+                ) { unit ->
+                    val values = readValues(unit)
+                    onRead(session, values, "AO_VIVO")
+                    AntiStalloParamsCore.plan(values, changes).also { plan = it }.let { AntiStalloParamsCore.execute(io(unit), it) }
+                }
+                finish(Pending("", plan!!, session), result) { publish(it) }
+            } catch (error: Exception) {
+                val message = "A central está ocupada ou o cabo soltou. Nada foi dado como gravado. Confira o cabo e tente de novo."
+                record("anti_stallo_params_write", JSONObject().put("outcome", "ERROR").put("message", message).put("origin", "APP_UI_MANUAL"))
+                publish(JSONObject().put("state", "DONE").put("outcome", "ERROR").put("message", message))
+            } finally {
+                if (!published) running.set(false)
+            }
+        } } catch (_: RejectedExecutionException) {
+            return stopped()
+        }
+        return JSONObject().put("ok", true).put("started", true)
+    }
+
     /** 1º toque: valida, lê ANTI_STALLO ao vivo e monta a prévia. Não escreve nada. */
     fun prepare(changesJson: String): JSONObject {
         val (changes, problem) = parseChanges(changesJson)

@@ -229,6 +229,16 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getAdvancedParams(): String = activityRef.get()?.serviceOrNull()?.advancedParamsJson() ?: unavailable()
 
+    /** Anti-apagão (bit 0x20 de FLAG_CONF3): o toque do dono é a ordem. UMA chamada: ler → gravar → reler; o resultado vem em getAntiStalloFlagStatus. */
+    @JavascriptInterface
+    fun applyAntiStalloFlag(enable: Boolean): String =
+        activityRef.get()?.serviceOrNull()?.applyAntiStalloFlag(enable) ?: unavailable()
+
+    /** Anti-apagão, os 5 números: o toque em − / + é a ordem. UMA chamada: ler → gravar → reler; o resultado vem em getAntiStalloValuesStatus. */
+    @JavascriptInterface
+    fun applyAntiStalloValues(changesJson: String): String =
+        activityRef.get()?.serviceOrNull()?.applyAntiStalloValues(changesJson) ?: unavailable()
+
     /** Anti-apagão (bit 0x20 de FLAG_CONF3): 1º toque. Lê a ECU e monta a prévia; NÃO grava. */
     @JavascriptInterface
     fun prepareAntiStalloFlag(enable: Boolean): String =

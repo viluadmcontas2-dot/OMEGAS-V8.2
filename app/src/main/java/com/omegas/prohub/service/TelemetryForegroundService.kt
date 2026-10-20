@@ -538,6 +538,8 @@ class TelemetryForegroundService : Service() {
     fun advancedParamsJson(): String = advancedParams.json(
         if (usb.connected) runtime.serialScheduler().currentSessionId() else 0L,
     ).put("antiStallSuggestion", sessionRecorder.antiStallSuggestion()).toString()
+    fun applyAntiStalloFlag(enable: Boolean): String = antiStalloWriter.apply(enable).toString()
+    fun applyAntiStalloValues(changesJson: String): String = antiStalloParamsWriter.apply(changesJson).toString()
     fun prepareAntiStalloFlag(enable: Boolean): String = antiStalloWriter.prepare(enable).toString()
     fun confirmAntiStalloFlag(token: String): String = antiStalloWriter.confirm(token).toString()
     fun cancelAntiStalloFlag(): String = antiStalloWriter.cancel().toString()

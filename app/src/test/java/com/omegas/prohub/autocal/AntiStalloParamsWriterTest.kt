@@ -243,4 +243,32 @@ class AntiStalloParamsWriterTest {
         assertEquals("READBACK_DIVERGED", waitFor(w, "DONE").getString("outcome"))
         assertFalse(JSONObject(w.statusJson()).getJSONObject("undo").getBoolean("available"))
     }
+
+    @Test fun `apply grava num unico passo MANUAL_WRITE - ler, gravar e reler sem previa nem token`() {
+        val serial = FakeSerial(factory.copyOf())
+        val w = writer(serial)
+        assertTrue(w.apply(changes(0 to 1700)).getBoolean("ok"))
+        val done = waitFor(w, "DONE")
+        assertEquals("CONFIRMED", done.getString("outcome"))
+        assertEquals(1700, done.getJSONArray("readback").getInt(0))
+        assertEquals(listOf(Mp48WorkClass.MANUAL_WRITE), serial.classes)
+        assertEquals(1, serial.frames.count { it.startsWith("37") })
+        assertTrue(JSONObject(w.statusJson()).getJSONObject("undo").getBoolean("available"))
+    }
+
+    @Test fun `apply com os mesmos numeros nao envia nada e valor fora da faixa e recusado antes de tocar a central`() {
+        val serial = FakeSerial(factory.copyOf())
+        val w = writer(serial)
+        w.apply(changes(0 to factory[0]))
+        assertEquals("NOTHING_TO_DO", waitFor(w, "DONE").getString("outcome"))
+        assertFalse(w.apply(changes(0 to 999999)).getBoolean("ok"))
+        assertTrue(serial.frames.none { it.startsWith("37") })
+    }
+
+    @Test fun `apply com a central recusando nao e sucesso`() {
+        val serial = FakeSerial(factory.copyOf(), acceptWrites = false)
+        val w = writer(serial); w.apply(changes(0 to 1700))
+        assertEquals("NOT_ACKED", waitFor(w, "DONE").getString("outcome"))
+        assertEquals(factory.toList(), serial.values.toList())
+    }
 }

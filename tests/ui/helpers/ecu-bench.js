@@ -236,16 +236,20 @@
     const readAntiV = () => { const r = read(pedido(0x29, 0x33, 0x01)); const w = words(r.payload); return r.ok && w.length === 5 ? w : null; };
     const setAntiVParam = v => { bench.params.ANTI_STALLO = { state: 'OK', values: v.slice() }; };
     bench.antiVPending = null; bench.antiVStatus = { state: 'IDLE' }; bench.antiVUndo = null; bench.antiVUndoSession = 0; bench.heldV = null;
+    function antiVPrepareCheck(ch) {
+      for (const k of Object.keys(ch)) {
+        const i = Number(k);
+        if (!/^\d+$/.test(k) || i > 4) return 'Esse campo não existe.';
+        if (!Number.isInteger(ch[k])) return 'O valor tem que ser um número inteiro.';
+        if (ch[k] < 0 || ch[k] > ANTI_V_MAX[i]) return `O valor tem que ficar entre 0 e ${ANTI_V_MAX[i]}.`;
+      }
+      return null;
+    }
     function antiVPrepare(changesJson) {
       let ch; try { ch = JSON.parse(changesJson); } catch (_) { return antiFail('Pedido inválido.'); }
       const keys = Object.keys(ch || {});
       if (!keys.length) return antiFail('Nenhum número foi informado.');
-      for (const k of keys) {
-        const i = Number(k);
-        if (!/^\d+$/.test(k) || i > 4) return antiFail('Esse campo não existe.');
-        if (!Number.isInteger(ch[k])) return antiFail('O valor tem que ser um número inteiro.');
-        if (ch[k] < 0 || ch[k] > ANTI_V_MAX[i]) return antiFail(`O valor tem que ficar entre 0 e ${ANTI_V_MAX[i]}.`);
-      }
+      const bad = antiVPrepareCheck(ch); if (bad) return antiFail(bad);
       if (!bench.usb) return antiFail('USB desconectado');
       const live = readAntiV();
       if (!live) { bench.antiVStatus = { state: 'ERROR', message: 'Não consegui ler a central.' }; return antiOk(); }
@@ -420,6 +424,41 @@
     const startMapWrite = v7.startMapBatchWrite;
     v7.startMapBatchWrite = items => { const r = startMapWrite(items); bench.lastOp = bench.mapOp; return r; };
 
+    // Chamada única (AntiStalloFlagWriter.apply / AntiStalloParamsWriter.apply): ler -> gravar -> reler, sem prévia nem token visíveis.
+    bench.queuedApply = null;
+    const runQueued = () => { const fn = bench.queuedApply; bench.queuedApply = null; if (fn) fn(); };
+    function antiApply(enable) {
+      if (!bench.usb) return antiFail('USB desconectado');
+      bench.antiStatus = { state: 'WRITING' };
+      bench.queuedApply = () => antiApplyNow(enable);
+      return antiOk();
+    }
+    function antiApplyNow(enable) {
+      const started = antiPrepare(enable);
+      if (bench.antiStatus.state === 'ERROR') { bench.antiStatus = { state: 'DONE', outcome: 'ERROR', message: bench.antiStatus.message }; return started; }
+      if (!JSON.parse(started).ok) return started;
+      const p = bench.antiPending;
+      if (p.noop) { bench.antiPending = null; bench.antiStatus = { state: 'DONE', outcome: 'NOTHING_TO_DO', before: p.before, after: p.after, readback: p.before, frameHex: H(p.frame) }; return antiOk(); }
+      return antiConfirm(p.token);
+    }
+    function antiVApply(changesJson) {
+      let ch; try { ch = JSON.parse(changesJson); } catch (_) { return antiFail('Pedido inválido.'); }
+      if (!Object.keys(ch || {}).length) return antiFail('Nenhum número foi informado.');
+      const bad = antiVPrepareCheck(ch); if (bad) return antiFail(bad);
+      if (!bench.usb) return antiFail('USB desconectado');
+      bench.antiVStatus = { state: 'WRITING' };
+      bench.queuedApply = () => antiVApplyNow(changesJson);
+      return antiOk();
+    }
+    function antiVApplyNow(changesJson) {
+      const started = antiVPrepare(changesJson);
+      if (!JSON.parse(started).ok) { bench.antiVStatus = { state: 'DONE', outcome: 'ERROR', message: JSON.parse(started).error }; return started; }
+      if (bench.antiVStatus.state === 'ERROR') { bench.antiVStatus = { state: 'DONE', outcome: 'ERROR', message: bench.antiVStatus.message }; return started; }
+      const p = bench.antiVPending;
+      if (p.noop) { bench.antiVPending = null; bench.antiVStatus = { state: 'DONE', outcome: 'NOTHING_TO_DO', before: p.before, after: p.after, changed: [], readback: p.before, frameHex: H(p.frame) }; return antiOk(); }
+      return antiVConfirm(p.token);
+    }
+
     const autocalExtra = {
       getAdvancedParams: () => json({ ok: true, read: bench.advRead, trigger: 'AUTO_START', params: clone(bench.params) }),
       readAntiStalloValues: () => {
@@ -429,16 +468,18 @@
         setAntiVParam(values);
         return antiOk();
       },
+      applyAntiStalloFlag: enable => antiApply(enable === true || enable === 'true'),
+      applyAntiStalloValues: json => antiVApply(String(json)),
       prepareAntiStalloFlag: enable => antiPrepare(enable === true || enable === 'true'),
       confirmAntiStalloFlag: token => antiConfirm(String(token)),
       cancelAntiStalloFlag: () => { if (bench.antiStatus.state === 'READY') bench.antiStatus = { state: 'IDLE' }; bench.antiPending = null; return json({ ok: true }); },
-      getAntiStalloFlagStatus: () => json({ ...bench.antiStatus, busy: false,
-        undo: bench.antiUndo !== null && bench.antiUndoSession === bench.session && bench.usb ? { available: true, enable: bench.antiUndo } : { available: false } }),
+      getAntiStalloFlagStatus: () => { runQueued(); return json({ ...bench.antiStatus, busy: false,
+        undo: bench.antiUndo !== null && bench.antiUndoSession === bench.session && bench.usb ? { available: true, enable: bench.antiUndo } : { available: false } }); },
       prepareAntiStalloValues: json => antiVPrepare(String(json)),
       confirmAntiStalloValues: token => antiVConfirm(String(token)),
       cancelAntiStalloValues: () => { if (bench.antiVStatus.state === 'READY') bench.antiVStatus = { state: 'IDLE' }; bench.antiVPending = null; return json({ ok: true }); },
-      getAntiStalloValuesStatus: () => json({ ...bench.antiVStatus, busy: false,
-        undo: bench.antiVUndo && bench.antiVUndoSession === bench.session && bench.usb ? { available: true, values: bench.antiVUndo } : { available: false } }),
+      getAntiStalloValuesStatus: () => { runQueued(); return json({ ...bench.antiVStatus, busy: false,
+        undo: bench.antiVUndo && bench.antiVUndoSession === bench.session && bench.usb ? { available: true, values: bench.antiVUndo } : { available: false } }); },
       prepareNativeAction: action => {
         if (!(action in ACTION_MODE)) return json({ ok: false, error: 'Ação não exposta nesta bancada: ' + action });
         bench.actionPrepared = { id: 'prep' + (++bench.prepN), action };
