@@ -25,6 +25,8 @@
       this.A = ns.AdvancedFlags;
       this.V = ns.AntiApagaoValores;
       this.M = ns.CartoesMotor;
+      this.VG = ns.VoltaGasolina;   // opcional: sem ele o cartão "Volta para gasolina" vira só leitura
+      this.voltaDrafts = {};        // { mbar?, segundos? } ainda não salvos
       this.screen = document.getElementById('toolsDrawer');
       this.host = document.getElementById('toolAdvanced');
       this.layer = document.getElementById('toolsLayer');
@@ -90,6 +92,7 @@
         try { const parsed = JSON.parse(bridge.getAdvancedParams()); if (parsed && parsed.ok !== false) data = parsed; } catch (_) { /* fica "não lido" */ }
       }
       this.data = data;
+      this.voltaReadIfMissing(bridge);
       const v = this.V.valuesOf(data.params?.ANTI_STALLO);
       if (v) { this.lastValues = v; return; }
       // Tela de valores sem os 5 números conhecidos: pede a leitura direta (não depende do Mapa K/Curva K).
@@ -161,7 +164,8 @@
         const changes = this.V.factoryChanges(current);
         this.flag.cancel(); this.drafts = {};
         if (Object.keys(changes).length) this.vals.ask('factory', changes, this.usb());
-      } else if (t.matches('[data-adv-open-view]')) { this.view = t.dataset.advOpenView; this.setView(); }
+      } else if (t.matches('[data-volta-step], [data-volta-wait], [data-volta-save], [data-volta-toggle], [data-volta-undo]')) { this.voltaTap(t); }
+      else if (t.matches('[data-adv-open-view]')) { this.view = t.dataset.advOpenView; this.setView(); }
       else if (t.matches('[data-adv-back-valores]')) { this.view = 'valores'; this.setView(); }
       else if (t.matches('[data-adv-use-suggestion]')) {
         const changes = this.V.suggestionChanges(this.valuesNow(), this.data.antiStallSuggestion);
@@ -171,6 +175,7 @@
       else if (t.matches('[data-adv-info-tab]')) { this.infoTab = t.dataset.advInfoTab; }
       else if (t.matches('[data-adv-open]')) {
         this.view = t.dataset.advOpen;
+        if (this.view === 'volta') { this.voltaDrafts = {}; this.voltaRefused = ''; this.voltaReadAsked = false; this.loadData(); }
         if (this.view === 'valores') {
           this.resetDrafts();
           // A solicitação de leitura nasce do toque, não depende de um novo
@@ -327,7 +332,10 @@
         this.paintFields();
         return;
       }
-      const signature = JSON.stringify([this.view, this.data, this.usb(), this.hasBridge(), fv.phase, fv.message, vv.phase, vv.message, vv.undo, this.isValuesView() ? [this.drafts, this.infoTab] : null]);
+      // Volta: a releitura da central chega pela ponte junto com o fim da gravação; relê aqui para a tela nunca mostrar o valor velho.
+      if (this.view === 'volta') this.loadData();
+      const signature = JSON.stringify([this.view, this.data, this.usb(), this.hasBridge(), fv.phase, fv.message, vv.phase, vv.message, vv.undo, this.isValuesView() ? [this.drafts, this.infoTab] : null,
+        this.view === 'volta' ? [this.voltaStatus(), this.voltaDrafts, this.voltaRefused] : null]);
       if (signature === this.signature && this.host.childElementCount) return;
       this.signature = signature;
       this.cardFailed = false;
@@ -345,6 +353,7 @@
           next = this.view === 'home' ? this.renderHome(cards)
             : this.view === 'valores' ? this.renderValues(cards)
             : this.view === 'info' ? this.renderInfo()
+            : this.view === 'volta' && this.VG ? this.renderVolta(cards.find(c => c.id === 'volta'))
             : this.renderReadOnly(cards.find(c => c.id === this.view));
         } catch (error) {
           if (this.view === 'home') throw error;
@@ -507,6 +516,105 @@
           <header><button type="button" class="secondary tool-back" data-adv-back-valores><span aria-hidden="true">‹</span> Voltar</button><h3>Como o anti-apagão funciona</h3></header>
           <nav class="vv-tabs" aria-label="Assunto">${tabs}</nav>
           <div class="vv-info-full">${body}</div>
+        </section>`;
+    }
+
+    // ---------- Volta para gasolina (pressão baixa do gás) ----------
+    voltaBridge(name) { const b = root.OmegasAutoCal; return !!b && typeof b[name] === 'function'; }
+
+    /** Status do gravador nativo (nunca derruba a tela). */
+    voltaStatus() {
+      if (!this.voltaBridge('getVoltaGasolinaStatus')) return {};
+      try { return JSON.parse(root.OmegasAutoCal.getVoltaGasolinaStatus()) || {}; } catch (_) { return {}; }
+    }
+
+    /** Tela aberta sem o tempo/tabela lidos: pede a leitura direta (só lê; repete a cada 3 ciclos do agendador, sem relógio novo). */
+    voltaReadIfMissing(bridge) {
+      if (this.view !== 'volta' || !this.VG || !this.usb() || !this.voltaBridge('readVoltaGasolina')) return;
+      const m = this.VG.read(this.data.params);
+      if (m.tempo !== null && m.rif) return;
+      this.voltaReadTick = (this.voltaReadTick || 0) + 1;
+      if (this.voltaReadAsked && this.voltaReadTick % 3) return;
+      this.voltaReadAsked = true;
+      try { JSON.parse(bridge.readVoltaGasolina()); } catch (error) { console.warn('[OMEGAS Ferramentas] Leitura da volta indisponível', error); }
+    }
+
+    voltaWhy() {
+      if (!this.voltaBridge('applyVoltaGasolina')) return WHY.nobridge;
+      if (!this.usb()) return WHY.nousb;
+      return '';
+    }
+
+    voltaSend(request) {
+      if (!request || this.voltaWhy()) return;
+      if (this.voltaStatus().busy === true) return;   // um toque por vez: o anterior ainda está gravando
+      try {
+        const sent = JSON.parse(root.OmegasAutoCal.applyVoltaGasolina(JSON.stringify(request)));
+        this.voltaRefused = sent && sent.ok === false ? (sent.error || 'Não foi possível. Tente de novo.') : '';
+      } catch (_) { this.voltaRefused = 'Não foi possível falar com a central. Tente de novo.'; }
+    }
+
+    voltaTap(t) {
+      const m = this.VG.read(this.data.params);
+      this.voltaRefused = '';
+      if (t.matches('[data-volta-step]')) {
+        const base = Number.isInteger(this.voltaDrafts.mbar) ? this.voltaDrafts.mbar : m.limitMbar;
+        if (Number.isFinite(base)) this.voltaDrafts = { ...this.voltaDrafts, mbar: this.VG.step(base, Number(t.dataset.voltaStep)) };
+      } else if (t.matches('[data-volta-wait]')) {
+        const base = Number.isInteger(this.voltaDrafts.segundos) ? this.voltaDrafts.segundos : m.tempo;
+        this.voltaDrafts = { ...this.voltaDrafts, segundos: this.VG.nextWait(base) };
+      } else if (t.matches('[data-volta-save]')) {
+        this.voltaSend(this.VG.saveRequest(m, this.voltaDrafts));
+        this.voltaDrafts = {};
+      } else if (t.matches('[data-volta-toggle]')) {
+        this.voltaDrafts = {};
+        this.voltaSend({ acao: m.on ? 'desligar' : 'ligar' });
+      } else if (t.matches('[data-volta-undo]')) {
+        this.voltaDrafts = {};
+        this.voltaSend({ acao: 'desfazer' });
+      }
+    }
+
+    /** Uma frase, o estado e os controles juntos à esquerda: − / + / Espera / Salvar, Ligar ou Desligar; Desfazer depois. */
+    renderVolta(card) {
+      if (!card) return '';
+      const VG = this.VG;
+      const m = VG.read(this.data.params);
+      const d = this.voltaDrafts;
+      const st = this.voltaStatus();
+      const ph = VG.phaseOf(st);
+      const busy = ph.phase === 'writing';
+      const why = this.voltaWhy();
+      const mbar = Number.isInteger(d.mbar) ? d.mbar : m.limitMbar;
+      const wait = Number.isInteger(d.segundos) ? d.segundos : m.tempo;
+      const pending = VG.saveRequest(m, d);
+      const say = m.on === null && !why ? 'Aguardando a central.' : VG.sentence(m, mbar);
+      const level = { writing: 'busy', done: 'ok', info: 'info', error: 'bad' };
+      const status = this.voltaRefused ? ['bad', this.voltaRefused] : why ? ['idle', why]
+        : pending ? ['info', 'Toque em Salvar para gravar.'] : ph.text ? [level[ph.phase] || 'idle', ph.text] : ['idle', ''];
+      const off = !!why || busy;
+      const unsaved = key => (pending && pending[key] !== undefined ? ' · não salvo' : '');
+      const rows = [
+        { label: 'Volta sozinha para a gasolina', text: card.stateText, on: m.on },
+        { label: 'Pressão do gás que faz voltar', text: mbar === null ? '—' : `${VG.barText(mbar)} bar${unsaved('mbar')}`, on: null },
+        { label: 'Espera antes de voltar', text: m.on === false && !Number.isInteger(d.segundos) ? '—' : `${VG.waitText(wait)}${unsaved('segundos')}`, on: null },
+      ];
+      const tech = card.tech.concat((st.notProven || []).map(x => 'Ainda sem prova: ' + x)).map(t => `<li>${escapeHtml(t)}</li>`).join('');
+      return `
+        <section class="tool-view read-view volta-view" data-card="volta">
+          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>${escapeHtml(card.viewTitle || card.title)}</h3></header>
+          <p class="volta-say">${escapeHtml(say)}</p>
+          <ul class="read-list">${rows.map(r => `<li data-state="${r.on === null ? 'neutral' : r.on ? 'on' : 'off'}"><span>${escapeHtml(r.label)}</span><b>${escapeHtml(r.text)}</b></li>`).join('')}</ul>
+          <p class="volta-status" role="status" data-level="${status[0]}"${status[1] ? '' : ' hidden'}>${escapeHtml(status[1])}</p>
+          <div class="tool-actions volta-actions">
+            <button type="button" class="secondary" data-volta-step="-1" aria-label="Diminuir 0,05 bar" ${off || mbar === null || mbar <= VG.MIN ? 'disabled' : ''}>− 0,05</button>
+            <button type="button" class="secondary" data-volta-step="1" aria-label="Aumentar 0,05 bar" ${off || mbar === null || mbar >= VG.MAX ? 'disabled' : ''}>+ 0,05</button>
+            <button type="button" class="secondary" data-volta-wait ${off || m.on !== true ? 'disabled' : ''}>Espera: ${escapeHtml(VG.waitText(wait).toLowerCase())}</button>
+            <button type="button" class="primary" data-volta-save ${off || !pending ? 'disabled' : ''}>Salvar</button>
+            <button type="button" class="secondary" data-volta-toggle ${off || m.on === null ? 'disabled' : ''}>${m.on === false ? 'Ligar volta' : 'Desligar volta'}</button>
+            ${st.undo && st.undo.available && !busy ? '<button type="button" class="secondary" data-volta-undo>Desfazer</button>' : ''}
+          </div>
+          <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>
         </section>`;
     }
 

@@ -128,6 +128,8 @@
     ['ANTI_STALLO', pedido(0x29, 0x33, 0x01)], ['GIRI_PER_BENZINA', pedido(0x29, 0xA1, 0x00)], ['NUMERO_INJ_BENZINA_CUTOFF', pedido(0x09, 0x6A, 0x00)],
     ['PARAM_PROGRESSIONI_L0', pedido(0x2A, 0x34, 0x01, 0)], ['PARAM_PROGRESSIONI_L1', pedido(0x2A, 0x34, 0x01, 1)],
     ['PARAM_PROGRESSIONI_L2', pedido(0x2A, 0x34, 0x01, 2)], ['PARAM_PROGRESSIONI_L3', pedido(0x2A, 0x34, 0x01, 3)],
+    // Volta para gasolina (snapshot Kotlin: TEMPO no grupo CORTE; RIF/COEFF no grupo VOLTA). COEFF é s16.
+    ['TEMPO_RITORNO_BENZINA', pedido(0x09, 0x3E, 0x00)], ['RIF_PRESS_DIFF', pedido(0x29, 0x7B, 0x00)], ['COEFF_PRESS_DIFF', pedido(0x29, 0x7C, 0x00)],
   ];
 
   function createBench(fixture, options = {}) {
@@ -170,7 +172,7 @@
     bench.readAdvanced = () => {
       ADV.forEach(([name, frame]) => {
         const r = read(frame);
-        bench.params[name] = r.ok ? { state: 'OK', values: words(r.payload) } : { state: 'UNREAD' };
+        bench.params[name] = r.ok ? { state: 'OK', values: name === 'COEFF_PRESS_DIFF' ? words(r.payload).map(s16) : words(r.payload) } : { state: 'UNREAD' };
       });
       bench.advRead = true;
     };
@@ -459,7 +461,51 @@
       return antiVConfirm(p.token);
     }
 
+    // ---- volta para gasolina (VoltaGasolinaWriter + VoltaGasolinaCore): tempo 12 3E 00 vv; a TABELA de pressão (30 quadros
+    // 14 7B|7C) é provada no JUnit contra o original executado e NÃO é emulada aqui (a bancada recusa sem enviar).
+    bench.voltaStatus = { state: 'IDLE' }; bench.voltaUndo = null; bench.voltaSaved = 0;
+    const s16 = v => (v & 0x8000 ? v - 0x10000 : v);
+    const readTempo = () => { const r = read(pedido(0x09, 0x3E, 0x00)); return r.ok && r.payload.length === 1 ? r.payload[0] : null; };
+    const readVolta = () => {
+      const t = readTempo();
+      const rif = read(pedido(0x29, 0x7B, 0x00)); const co = read(pedido(0x29, 0x7C, 0x00));
+      if (t !== null) bench.params.TEMPO_RITORNO_BENZINA = { state: 'OK', values: [t] };
+      if (rif.ok) bench.params.RIF_PRESS_DIFF = { state: 'OK', values: words(rif.payload) };
+      if (co.ok) bench.params.COEFF_PRESS_DIFF = { state: 'OK', values: words(co.payload).map(s16) };
+      return t !== null && rif.ok && co.ok;
+    };
+    function voltaTempo(after, acao) {
+      const before = readTempo();
+      if (before === null) { bench.voltaStatus = { state: 'DONE', outcome: 'ERROR', message: 'Não consegui ler a central. Nada foi enviado.' }; return antiOk(); }
+      if (before === after) { bench.voltaStatus = { state: 'DONE', outcome: 'NOTHING_TO_DO', message: 'Já está assim na central. Nada foi enviado.' }; return antiOk(); }
+      const body = [0x12, 0x3E, 0x00, after]; const frame = [...body, sum(body)];
+      const dec = decodeReply(frame, send(frame));
+      const back = readTempo();
+      if (back !== null) bench.params.TEMPO_RITORNO_BENZINA = { state: 'OK', values: [back] };
+      const outcome = !dec.ok ? 'NOT_ACKED' : back === after ? 'CONFIRMED' : back === null ? 'READBACK_FAILED' : 'READBACK_DIVERGED';
+      if (outcome === 'CONFIRMED' && acao !== 'desfazer') bench.voltaUndo = before;
+      if (outcome === 'CONFIRMED' && acao === 'desfazer') bench.voltaUndo = null;
+      bench.voltaStatus = { state: 'DONE', outcome, message: outcome === 'CONFIRMED' ? 'Gravado e conferido na central.' : 'A central não confirmou.', frameHex: [H(frame)] };
+      return antiOk();
+    }
+    const voltaExtra = {
+      readVoltaGasolina: () => (bench.usb ? (readVolta(), antiOk()) : antiFail('USB desconectado')),
+      getVoltaGasolinaStatus: () => json({ ...bench.voltaStatus, busy: false, pressureWritable: true, notProven: [], undo: { available: bench.voltaUndo !== null && bench.usb } }),
+      applyVoltaGasolina: text => {
+        if (!bench.usb) return antiFail('USB desconectado');
+        const req = JSON.parse(text);
+        if (req.mbar !== undefined) return antiFail('Pressão: provada no JUnit contra o original; não emulada na bancada.');
+        const now = readTempo();
+        if (req.acao === 'desligar') { if (now !== null && now !== 255) bench.voltaSaved = now; return voltaTempo(255, req.acao); }
+        if (req.acao === 'ligar') return voltaTempo(bench.voltaSaved > 0 && bench.voltaSaved <= 3 ? bench.voltaSaved : 0, req.acao);
+        if ((req.acao === 'espera' || req.acao === 'salvar') && Number.isInteger(req.segundos)) return voltaTempo(req.segundos, req.acao);
+        if (req.acao === 'desfazer' && bench.voltaUndo !== null) return voltaTempo(bench.voltaUndo, req.acao);
+        return antiFail('Pedido inválido.');
+      },
+    };
+
     const autocalExtra = {
+      ...voltaExtra,
       getAdvancedParams: () => json({ ok: true, read: bench.advRead, trigger: 'AUTO_START', params: clone(bench.params) }),
       readAntiStalloValues: () => {
         if (!bench.usb) return antiFail('USB desconectado');

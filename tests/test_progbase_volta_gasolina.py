@@ -18,8 +18,46 @@ class Tabela(unittest.TestCase):
         self.assertAlmostEqual(b[0], (1 - (1.25 / 1.5) ** 0.5) * 125)
 
 
+GRADE = os.path.join(ROOT, 'tests', 'fixtures', 'volta_gasolina_original_grade.json')
+LOGNOVO = os.path.join(ROOT, 'tests', 'ui', 'fixtures', 'ecu-estado-lognovo.json')
+
+
+class Grade(unittest.TestCase):
+    """Oráculo congelado (gerado do .exe): coerente com a central real do dono e com o formato dos quadros."""
+
+    def setUp(self):
+        import json
+        self.g = json.load(open(GRADE, encoding='utf-8'))
+
+    def test_quadros_tem_soma_e_ordem_do_original(self):
+        self.assertEqual(self.g['tempo_ritorno_benzina']['255'], ['12 3E 00 FF 4F'])
+        self.assertGreaterEqual(len(self.g['tabelas']), 70)
+        for t in self.g['tabelas']:
+            self.assertEqual(len(t['quadros']), 30)
+            for k, q in enumerate(t['quadros']):
+                b = [int(x, 16) for x in q.split()]
+                self.assertEqual(b[:4], [0x14, 0x7B if k % 2 == 0 else 0x7C, 0x00, k // 2])
+                self.assertEqual(sum(b[:-1]) & 0xFF, b[-1])
+
+    def test_central_do_dono_e_a_tabela_do_original_para_1_25_bar_e_p0_2000(self):
+        import json
+        leit = json.load(open(LOGNOVO, encoding='utf-8'))['leituras']
+        t = [x for x in self.g['tabelas'] if x['p0_bruto'] == 2000 and abs(x['pmp_bar'] - 1.25) < 1e-9][0]
+        vals = lambda h: [int(a, 16) | int(b, 16) << 8 for a, b in zip(h.split()[0::2], h.split()[1::2])]
+        rif = [int(q.split()[4], 16) | int(q.split()[5], 16) << 8 for q in t['quadros'][0::2]]
+        coeff = [int(q.split()[4], 16) | int(q.split()[5], 16) << 8 for q in t['quadros'][1::2]]
+        self.assertEqual(vals(leit['29 7B 00 A4']), rif)
+        self.assertEqual(vals(leit['29 7C 00 A5']), coeff)
+        self.assertEqual(leit['09 3E 00 47'], '00')
+
+
 @unittest.skipUnless(EXE and os.path.exists(EXE), 'ProgBase.exe ausente (PROGBASE_EXE)')
 class Original(unittest.TestCase):
+    def test_grade_congelada_e_a_que_o_exe_gera_hoje(self):
+        import json
+        import volta_gasolina_grade as G
+        self.assertEqual(G.gerar(EXE), json.load(open(GRADE, encoding='utf-8')))
+
     def test_quadros(self):
         r = V.emular(EXE, 1.25, 1500, 3)
         t = r['tempo_ritorno_benzina']

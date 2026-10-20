@@ -111,8 +111,19 @@ object EcuParameterSnapshot {
         i("MAX_AUTOMATCH", 0x0165, 2),
     )
 
+    /**
+     * Volta à gasolina por pressão baixa (ProgBase F4; docs/progbase/protocolo/volta-automatica-gasolina.md): tabela de 15
+     * pontos RIF_PRESS_DIFF (SC 123, mbar) e COEFF_PRESS_DIFF (SC 124, s16). Forma `29 7B 00` / `29 7C 00` CONFERIDA no LOGNOVO
+     * (ACK). O campo da família LR (SC 152) NÃO é lido: nesta central o SC 152 é TINJ_FILTRO (8 × u16, LOGNOVO).
+     * Grupo próprio: um NACK aqui não derruba nenhum outro grupo.
+     */
+    private val VOLTA: List<Entry> = listOf(
+        v("RIF_PRESS_DIFF", 0x007B, 15, 2),
+        Entry("COEFF_PRESS_DIFF", 0x007C, Kind.VECTOR, 2, 15, signed = true),
+    )
+
     /** Núcleo primeiro; o Avançado vai separado e por último (o que importa ao motor não espera pelas flags). */
-    val GROUPS: List<List<Entry>> = listOf(NUCLEO, CORTE, APRENDIZADO, AVANCADO)
+    val GROUPS: List<List<Entry>> = listOf(NUCLEO, CORTE, APRENDIZADO, AVANCADO, VOLTA)
 
     val CATALOG: List<Entry> = GROUPS.flatten()
 

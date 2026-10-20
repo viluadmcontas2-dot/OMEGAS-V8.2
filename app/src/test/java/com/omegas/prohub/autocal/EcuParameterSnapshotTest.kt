@@ -106,6 +106,18 @@ class EcuParameterSnapshotTest {
         assertEquals(listOf(0, 8500), EcuParameterSnapshot.decode(entry("GIRI_PER_BENZINA"), bytes(0, 0, 0x34, 0x21)))
     }
 
+    @Test fun `volta a gasolina - tabela de pressao RIF 15 u16 e COEFF 15 s16 lidos num grupo proprio (sem o SC 152 da familia LR)`() {
+        val rif = entry("RIF_PRESS_DIFF"); val coeff = entry("COEFF_PRESS_DIFF")
+        assertEquals(123, rif.address); assertEquals(124, coeff.address)
+        assertTrue("SC 152 nesta central é TINJ_FILTRO, não a pressão LR", EcuParameterSnapshot.CATALOG.none { it.address == 0x0098 })
+        val p = IntArray(30).also { it[0] = 0xE2; it[1] = 0x04; it[28] = 0xD3; it[29] = 0x06 }
+        assertEquals(1250, EcuParameterSnapshot.decode(rif, p)!![0])
+        val c = IntArray(30).also { it[28] = 0x22; it[29] = 0xFC }
+        assertEquals(-990, EcuParameterSnapshot.decode(coeff, c)!![14])
+        val grupo = EcuParameterSnapshot.GROUPS.first { g -> g.any { it.name == "RIF_PRESS_DIFF" } }
+        assertTrue("NACK da família LR não pode levar outro grupo junto", grupo.none { it.name == "FLAG_CONF3" || it.name == "ANTI_STALLO" })
+    }
+
     @Test fun `PARAM_PROGRESSIONI sao 4 linhas de 3 u16 lidas por 2A endereco 0x0134 (OBS-FIO)`() {
         val rows = EcuParameterSnapshot.CATALOG.filter { it.name.startsWith("PARAM_PROGRESSIONI_L") }
         assertEquals(listOf("PARAM_PROGRESSIONI_L0", "PARAM_PROGRESSIONI_L1", "PARAM_PROGRESSIONI_L2", "PARAM_PROGRESSIONI_L3"), rows.map { it.name })

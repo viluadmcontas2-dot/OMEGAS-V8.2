@@ -6,8 +6,8 @@ chamam, e devolve os quadros que iriam para a serial.
 O que é executado do .exe (OBS-COD): SetEsc 0x436444 (código 28 -> TEMPO_RITORNO_BENZINA SC 62;
 código 68 -> PRESS_BASSA_RETROPAS_LR SC 152), 0x4327C0 (RIF_PRESS_DIFF[i], SC 123) e 0x432670
 (COEFF_PRESS_DIFF[i], SC 124) com a pilha de protocolo até WriteFile (stub).
-O que é reproduzido em Python (DERIVADO da desmontagem, ver docs/progbase/protocolo/volta-automatica-gasolina.md):
-a conta da tabela de 15 pontos que 0x4C526C faz antes de chamar os setters.
+A conta da tabela de 15 pontos também é EXECUTADA do .exe (miolo de 0x4C526C, `tabela_original`), com o FPCW 0x1332 do
+Delphi (o Unicorn começa com 0 = precisão simples). `tabela_pressao` é só a mesma conta em double, para leitura humana.
 A ECU é STUB (eco + ACK 53 00 53, INFERIDO do LOG). Determinístico. Uso:
   volta_gasolina_original.py [--exe ProgBase.exe] [--pmp 1.25] [--p0-bruto N] [--json]
 """
@@ -47,6 +47,63 @@ def tabela_pressao(pmp, p0):
     return a, b
 
 
+FPCW_DELPHI = 0x1332   # Default8087CW do .exe (OBS-COD: `fldcw [0xAAF454]`, palavra 0x1332 = precisão estendida, arredonda ao mais próximo)
+QUADRO = 0x03080000    # ebp falso para rodar o miolo de 0x4C526C (área da pilha do emulador, longe do esp)
+
+
+def _fpcw(em):
+    """O Unicorn começa com FPCW = 0 (precisão de 24 bits!); o programa real roda com o 0x1332 do Delphi. Sem isto a conta e o
+    Trunc dos setters saem em precisão simples e alguns quadros erram por 1 (ex.: 1,2 bar virava 1200 em vez de 1199)."""
+    from unicorn import x86_const as X
+    em.m.uc.reg_write(X.UC_X86_REG_FPCW, FPCW_DELPHI)
+
+
+def _rd_double(em, addr):
+    import struct
+    return struct.unpack('<d', bytes(em.m.uc.mem_read(addr, 8)))[0]
+
+
+def tabela_original(em, pmp, p0_bruto):
+    """Executa NA CPU EMULADA a conta ORIGINAL de 0x4C526C (OBS-COD): getter 0x43277C (edx=10, RIF_PRESS_DIFF[10] x 0.001
+    estendido) -> [ebp-0x30]; Pmp -> [ebp-0x38]; laço 0x4C52FD..0x4C53F2 (x87, FPCW do Delphi) -> A[15] em [ebp-0xBC] e
+    B[15] em [ebp-0x134]. Devolve (A, B) como os doubles que o original passa aos setters."""
+    import struct
+    m = em.m
+    m.w32(m.sd + OFF_RIF + 10 * 4, p0_bruto)
+    _fpcw(em)
+    m.instr = 0
+    m.chamar(0x4C52E4, regs={'eax': m.sd, 'edx': 10, 'ebp': QUADRO}, ate=0x4C52EC)
+    m.uc.mem_write(QUADRO - 0x38, struct.pack('<d', float(pmp)))
+    m.instr = 0
+    m.chamar(0x4C52FD, regs={'ebp': QUADRO}, ate=0x4C53F8)
+    if m.erro:
+        raise RuntimeError(m.erro)
+    a = [_rd_double(em, QUADRO - 0xBC + 8 * i) for i in range(15)]
+    b = [_rd_double(em, QUADRO - 0x134 + 8 * i) for i in range(15)]
+    return a, b
+
+
+def quadros_tabela(em, a, b):
+    """Chama os setters originais 0x4327C0 (RIF) e 0x432670 (COEFF) com A[i], B[i]; devolve [(i, quadros, rif, coeff)]."""
+    out = []
+    for i in range(15):
+        _fpcw(em)
+        em.m.instr = 0
+        ra = E_mod().chamar_registros(em, 0x4327C0, edx=i, pilha=tuple(em._double(a[i])))
+        em.m.instr = 0
+        rb = E_mod().chamar_registros(em, 0x432670, edx=i, pilha=tuple(em._double(b[i])))
+        if ra['erro'] or rb['erro']:
+            raise RuntimeError(ra['erro'] or rb['erro'])
+        out.append((i, [_hex(q) for q in ra['quadros'] + rb['quadros']], em.cache(OFF_RIF + 4 * i),
+                    (em.cache(0x1D98 + 4 * i) + 2**31) % 2**32 - 2**31))
+    return out
+
+
+def E_mod():
+    import abas_emul
+    return abas_emul
+
+
 def _hex(q):
     return ' '.join('%02X' % c for c in q)
 
@@ -61,6 +118,7 @@ def emular(exe, pmp=1.25, p0_bruto=None, tempo=3):
 
     em = E.Emul(exe, campos, objs, lr=0)
     E.todos_vetores(em, objs, campos)
+    _fpcw(em)
     t = {}
     for nome, v in (('desmarcar_volta_auto (SetEsc 28, 255.0)', 255.0), ('marcar_sem_valor_salvo (SetEsc 28, 0.0)', 0.0),
                     ('marcar_restaura_%d (SetEsc 28, %d.0)' % (tempo, tempo), float(tempo))):
@@ -78,17 +136,10 @@ def emular(exe, pmp=1.25, p0_bruto=None, tempo=3):
     if p0_bruto is not None:
         em = E.Emul(exe, campos, objs, lr=0)
         E.todos_vetores(em, objs, campos)
-        em.m.w32(em.m.sd + OFF_RIF + 10 * 4, p0_bruto)
         p0 = p0_bruto * 0.001   # getter 0x43277C: cache[10] * 0.001 (OBS-COD)
-        a, bb = tabela_pressao(pmp, p0)
-        pontos = []
-        for i in range(15):
-            ra = E.chamar_registros(em, 0x4327C0, edx=i, pilha=tuple(E.Emul._double(em, a[i])))
-            rb = E.chamar_registros(em, 0x432670, edx=i, pilha=tuple(E.Emul._double(em, bb[i])))
-            pontos.append(dict(i=i, pressao_bar=round(a[i], 6), coef=round(bb[i], 6),
-                               rif_bruto=em.cache(OFF_RIF + 4 * i), coeff_bruto=(em.cache(0x1D98 + 4 * i) + 2**31) % 2**32 - 2**31,
-                               quadros=[_hex(q) for q in ra['quadros'] + rb['quadros']],
-                               erro=ra['erro'] or rb['erro']))
+        a, bb = tabela_original(em, pmp, p0_bruto)
+        pontos = [dict(i=i, pressao_bar=round(a[i], 6), coef=round(bb[i], 6), rif_bruto=rif, coeff_bruto=coeff, quadros=q, erro=None)
+                  for i, q, rif, coeff in quadros_tabela(em, a, bb)]
         out['tabela_press_diff'] = dict(pmp_bar=pmp, p0_bruto=p0_bruto, p0_bar=p0, flag_SD_0x1DD4=0, pontos=pontos)
     return out
 

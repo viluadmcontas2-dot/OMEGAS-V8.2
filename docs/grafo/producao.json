@@ -282,12 +282,15 @@
     "EV-LENTA-001",
     "EV-LENTA-002",
     "EV-LENTA-003",
-    "EV-LENTA-005"
+    "EV-LENTA-005",
+    "EV-VOLTAGASOLINA-007",
+    "EV-VOLTAGASOLINA-011"
    ],
    "id": "tools",
    "pontes": [
     "OmegasAutoCal.applyAntiStalloFlag",
     "OmegasAutoCal.applyAntiStalloValues",
+    "OmegasAutoCal.applyVoltaGasolina",
     "OmegasAutoCal.cancelAntiStalloFlag",
     "OmegasAutoCal.cancelAntiStalloValues",
     "OmegasAutoCal.confirmAntiStalloFlag",
@@ -297,9 +300,11 @@
     "OmegasAutoCal.getAntiStalloValuesStatus",
     "OmegasAutoCal.getAutoRefineMode",
     "OmegasAutoCal.getBufferWriteProbeStatus",
+    "OmegasAutoCal.getVoltaGasolinaStatus",
     "OmegasAutoCal.prepareAntiStalloFlag",
     "OmegasAutoCal.prepareAntiStalloValues",
     "OmegasAutoCal.readAntiStalloValues",
+    "OmegasAutoCal.readVoltaGasolina",
     "OmegasAutoCal.setAutoRefineMode",
     "OmegasAutoCal.startBufferWriteProbe",
     "OmegasNative.exportData",
@@ -337,7 +342,8 @@
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sonda-escrita-pontos.test.cjs",
     "tests/ui/todas-as-telas-no-arranque.test.cjs",
-    "tests/ui/ux-fluxo-toque.test.cjs"
+    "tests/ui/ux-fluxo-toque.test.cjs",
+    "tests/ui/volta-gasolina.test.cjs"
    ],
    "ui": [
     "app/src/main/assets/ui/components/advanced.js",
@@ -418,6 +424,11 @@
   [
    "aba:base",
    "ui:app/src/main/assets/ui/core/usage-meter.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
+   "ui:app/src/main/assets/ui/core/volta-gasolina.js",
    "exibe"
   ],
   [
@@ -778,6 +789,71 @@
   [
    "ev:EV-TRANSPORTE-012",
    "teste:tests/test_progbase_protocolo.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-001",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaWriterTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-002",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-003",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-005",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-005",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaWriterTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-006",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-007",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-007",
+   "teste:tests/ui/volta-gasolina.test.cjs",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-007",
+   "ui:app/src/main/assets/ui/core/volta-gasolina.js",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-011",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-011",
+   "teste:tests/ui/volta-gasolina-toque.test.cjs",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-011",
+   "teste:tests/ui/volta-gasolina.test.cjs",
+   "sustenta"
+  ],
+  [
+   "ev:EV-VOLTAGASOLINA-014",
+   "ui:app/src/main/assets/ui/core/volta-gasolina.js",
    "sustenta"
   ],
   [
@@ -3071,6 +3147,11 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/ferramentas-webview-regression.test.cjs",
+   "ui:app/src/main/assets/ui/core/volta-gasolina.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/gasolina-referencia.test.cjs",
    "ui:app/src/main/assets/ui/core/gasoline-reference.js",
    "cobre"
@@ -3147,6 +3228,11 @@
   ],
   [
    "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasAutoCal.applyVoltaGasolina",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
    "ponte:OmegasAutoCal.cancelAntiStalloFlag",
    "cobre"
   ],
@@ -3207,6 +3293,11 @@
   ],
   [
    "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasAutoCal.getVoltaGasolinaStatus",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
    "ponte:OmegasAutoCal.prepareAntiStalloFlag",
    "cobre"
   ],
@@ -3223,6 +3314,11 @@
   [
    "teste:tests/ui/helpers/ecu-bench.js",
    "ponte:OmegasAutoCal.readAntiStalloValues",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/helpers/ecu-bench.js",
+   "ponte:OmegasAutoCal.readVoltaGasolina",
    "cobre"
   ],
   [
@@ -3986,6 +4082,36 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/volta-gasolina.test.cjs",
+   "ui:app/src/main/assets/ui/core/advanced-flags-data.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/volta-gasolina.test.cjs",
+   "ui:app/src/main/assets/ui/core/advanced-flags.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/volta-gasolina.test.cjs",
+   "ui:app/src/main/assets/ui/core/anti-apagao-valores.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/volta-gasolina.test.cjs",
+   "ui:app/src/main/assets/ui/core/cartoes-motor.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/volta-gasolina.test.cjs",
+   "ui:app/src/main/assets/ui/core/idle-mode.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/volta-gasolina.test.cjs",
+   "ui:app/src/main/assets/ui/core/volta-gasolina.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/write-gate.test.cjs",
    "ui:app/src/main/assets/ui/core/router.js",
    "cobre"
@@ -4022,7 +4148,17 @@
   ],
   [
    "ui:app/src/main/assets/ui/components/advanced.js",
+   "ponte:OmegasAutoCal.applyVoltaGasolina",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/components/advanced.js",
    "ponte:OmegasAutoCal.getAdvancedParams",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/components/advanced.js",
+   "ponte:OmegasAutoCal.getVoltaGasolinaStatus",
    "chama"
   ],
   [
@@ -4038,6 +4174,11 @@
   [
    "ui:app/src/main/assets/ui/components/advanced.js",
    "ponte:OmegasAutoCal.readAntiStalloValues",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/components/advanced.js",
+   "ponte:OmegasAutoCal.readVoltaGasolina",
    "chama"
   ],
   [
@@ -4537,19 +4678,19 @@
   ]
  ],
  "contagem_arestas": {
-  "chama": 105,
-  "cobre": 632,
-  "exibe": 31,
-  "sustenta": 53,
+  "chama": 108,
+  "cobre": 642,
+  "exibe": 32,
+  "sustenta": 66,
   "usa": 14
  },
  "contagem_nos": {
   "aba": 9,
-  "ev": 84,
+  "ev": 89,
   "kt": 8,
-  "ponte": 109,
-  "teste": 377,
-  "ui": 30
+  "ponte": 112,
+  "teste": 381,
+  "ui": 31
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -4563,8 +4704,7 @@
   "EV-BINS-008",
   "EV-COBERTURA-002",
   "EV-TRANSPORTE-010",
-  "EV-VOLTAGASOLINA-005",
-  "EV-VOLTAGASOLINA-006"
+  "EV-VOLTAGASOLINA-015"
  ],
  "elos_quebrados": {
   "essenciais": {
@@ -4614,16 +4754,13 @@
     "EV-TRANSPORTE-008",
     "EV-TRANSPORTE-009",
     "EV-TRANSPORTE-010",
-    "EV-VOLTAGASOLINA-001",
-    "EV-VOLTAGASOLINA-002",
-    "EV-VOLTAGASOLINA-003",
     "EV-VOLTAGASOLINA-004",
-    "EV-VOLTAGASOLINA-005",
-    "EV-VOLTAGASOLINA-006",
-    "EV-VOLTAGASOLINA-007",
     "EV-VOLTAGASOLINA-008",
     "EV-VOLTAGASOLINA-009",
-    "EV-VOLTAGASOLINA-010"
+    "EV-VOLTAGASOLINA-010",
+    "EV-VOLTAGASOLINA-012",
+    "EV-VOLTAGASOLINA-013",
+    "EV-VOLTAGASOLINA-015"
    ],
    "ponte_sem_chamador": [
     "OmegasNative.getEngineMetrics",
@@ -5311,14 +5448,14 @@
    "tipo": "ev"
   },
   "ev:EV-VOLTAGASOLINA-005": {
-   "afirmacao": "O corpo das rotinas 0x4A9484 e 0x4C526C (regra do clique, SetEsc 28) ainda não foi decodif",
-   "marca": "DESCONHECIDO",
+   "afirmacao": "As rotinas 0x4A9484 e 0x4C526C foram decodificadas e executadas (Unicorn): desmarcar grava",
+   "marca": "OBS-COD",
    "rotulo": "EV-VOLTAGASOLINA-005",
    "tipo": "ev"
   },
   "ev:EV-VOLTAGASOLINA-006": {
-   "afirmacao": "A fórmula do campo \"Low pressure value\" (1,25 bar), derivado de RIF_PRESS_DIFF/COEFF_PRESS",
-   "marca": "DESCONHECIDO",
+   "afirmacao": "A fórmula do campo \"Low pressure value\" é a conta x87 de 0x4C526C (precisão estendida, FPC",
+   "marca": "OBS-COD",
    "rotulo": "EV-VOLTAGASOLINA-006",
    "tipo": "ev"
   },
@@ -5344,6 +5481,36 @@
    "afirmacao": "Baixar o limiar de 1,25 para 1,0 bar seguraria o gás mais tempo na reserva (hipótese do do",
    "marca": "INFERIDO",
    "rotulo": "EV-VOLTAGASOLINA-010",
+   "tipo": "ev"
+  },
+  "ev:EV-VOLTAGASOLINA-011": {
+   "afirmacao": "Central do dono (PortmonLOGNOVO): 09 3E 00 = 0 s; 29 7B 00 = 1250 1324 … 2000 (ponto 10) …",
+   "marca": "OBS-FIO",
+   "rotulo": "EV-VOLTAGASOLINA-011",
+   "tipo": "ev"
+  },
+  "ev:EV-VOLTAGASOLINA-012": {
+   "afirmacao": "O ProgBase roda com Default8087CW 0x1332 (fldcw [0xAAF454]); o Unicorn começa com FPCW 0 (",
+   "marca": "OBS-COD",
+   "rotulo": "EV-VOLTAGASOLINA-012",
+   "tipo": "ev"
+  },
+  "ev:EV-VOLTAGASOLINA-013": {
+   "afirmacao": "Nesta central o SerialCode 152 (0x98) é TINJ_FILTRO (29 98 00 com ACK no LOGNOVO); o campo",
+   "marca": "OBS-FIO",
+   "rotulo": "EV-VOLTAGASOLINA-013",
+   "tipo": "ev"
+  },
+  "ev:EV-VOLTAGASOLINA-014": {
+   "afirmacao": "Faixas do original: espera EditRitornoBenzina 0 a 3 s (Precision 1, MaxValue 3); pressão E",
+   "marca": "OBS-COD",
+   "rotulo": "EV-VOLTAGASOLINA-014",
+   "tipo": "ev"
+  },
+  "ev:EV-VOLTAGASOLINA-015": {
+   "afirmacao": "O ACK da central a cada um dos 30 quadros 14 7B|7C no carro e o efeito real (voltar à gaso",
+   "marca": "DESCONHECIDO",
+   "rotulo": "EV-VOLTAGASOLINA-015",
    "tipo": "ev"
   },
   "kt:AutoCalNativeActionManager": {
@@ -5396,6 +5563,12 @@
    "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
    "escrita": true,
    "rotulo": "OmegasAutoCal.applyAntiStalloValues",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasAutoCal.applyVoltaGasolina": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasAutoCal.applyVoltaGasolina",
    "tipo": "ponte"
   },
   "ponte:OmegasAutoCal.cancelAntiStalloFlag": {
@@ -5554,6 +5727,12 @@
    "rotulo": "OmegasAutoCal.getUiProjection",
    "tipo": "ponte"
   },
+  "ponte:OmegasAutoCal.getVoltaGasolinaStatus": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasAutoCal.getVoltaGasolinaStatus",
+   "tipo": "ponte"
+  },
   "ponte:OmegasAutoCal.listAutoCalSessions": {
    "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
    "escrita": false,
@@ -5594,6 +5773,12 @@
    "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
    "escrita": false,
    "rotulo": "OmegasAutoCal.readAntiStalloValues",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasAutoCal.readVoltaGasolina": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasAutoCal.readVoltaGasolina",
    "tipo": "ponte"
   },
   "ponte:OmegasAutoCal.setAcquisitionEnabled": {
@@ -6210,6 +6395,14 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/autocal/TypicalInjectionBandsTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/autocal/TypicalInjectionBandsTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaWriterTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaWriterTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/calibration/AdvisorSuggestionAdapterV7CausalStepTest.kt": {
@@ -7544,6 +7737,14 @@
    "rotulo": "tests/ui/ux-fluxo-toque.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/volta-gasolina-toque.test.cjs": {
+   "rotulo": "tests/ui/volta-gasolina-toque.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/volta-gasolina.test.cjs": {
+   "rotulo": "tests/ui/volta-gasolina.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/write-gate.test.cjs": {
    "rotulo": "tests/ui/write-gate.test.cjs",
    "tipo": "teste"
@@ -7634,6 +7835,10 @@
   },
   "ui:app/src/main/assets/ui/core/usage-meter.js": {
    "rotulo": "core/usage-meter.js",
+   "tipo": "ui"
+  },
+  "ui:app/src/main/assets/ui/core/volta-gasolina.js": {
+   "rotulo": "core/volta-gasolina.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/core/write-gate.js": {

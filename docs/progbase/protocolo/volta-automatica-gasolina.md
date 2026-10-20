@@ -72,3 +72,24 @@ Em ambos a unidade na ECU é mbar (×1000) `[OBS-COD]`.
 - Se a ECU do dono é LR (`SD+0x80D`) e se `SD+0x1DD4` está ligado → achar quem escreve esses bytes (xrefs de escrita) no .exe.
 - Ordem real no fio e ACK entre os 30 quadros da tabela → só com captura física (classe 5) ou LOG que contenha um Enter nesse campo.
 - Significado de `[form+0x1280]` e de `[CheckRitornoBenzina+0x69]` → xrefs de escrita (INFERIDO hoje).
+
+## 5. Resolvido em 2026-10-20 (o app grava como o original)
+
+- **Precisão da FPU** `[OBS-COD]`: o ProgBase roda com `Default8087CW = 0x1332` (`fldcw [0xAAF454]`, precisão estendida).
+  O Unicorn começa com FPCW = 0 (24 bits) e o emulador antigo errava 1 mbar em alguns pontos. Agora o gerador fixa 0x1332 e
+  EXECUTA também a conta de 0x4C526C (`tabela_original`), não só os setters. Ex. (1,25 bar, P0 1500): o ponto 1 sai **1274**
+  (o original trunca 1274,999…), não 1275; e 1,20 bar digitado vira 1199 mbar no ponto 0.
+- **Oráculo**: `tools/emulacao/volta_gasolina_grade.py` → `tests/fixtures/volta_gasolina_original_grade.json` (tempos 0..20 e 255;
+  70 pares pressão × P0, 30 quadros cada, e os doubles A[i]/B[i]). `VoltaGasolinaCore.kt` reproduz tudo bit a bit
+  (aritmética estendida exata em BigInteger) — `VoltaGasolinaCoreTest`.
+- **Central do dono** `[OBS-FIO]` (PortmonLOGNOVO, `tests/ui/fixtures/ecu-estado-lognovo.json`): `09 3E 00` → 0 s;
+  `29 7B 00` → 1250 1324 1399 1475 1550 1625 1699 1774 1850 1925 **2000** 2083 2167 2251 2335; `29 7C 00` → 2617 … 0 … −1007.
+  É exatamente a tabela do original para **1,25 bar com P0 = 2000**. Logo: o "1,25 bar" da tela F4 é **RIF_PRESS_DIFF[0]**
+  (campo EditBassaPressioneMp); o coeficiente vai ×100 em 16 bits (SD+0x1DD4 = 0); e o SC 152 desta central é TINJ_FILTRO
+  (lido com ACK no LOG), não a família LR.
+- **Faixas** `[OBS-COD, DFM]`: espera 0..3 s (EditRitornoBenzina MaxValue 3); pressão 0,2..2,0 bar, passo 0,005.
+- **Trava do app**: só grava a pressão se a tabela lida na hora for a que o original montaria a partir do próprio ponto 0 e do
+  ponto 10 (`consistentWithOriginal`); senão recusa sem enviar. Cada quadro exige ACK; depois relê os dois vetores e compara.
+  Falha no meio = "Desfazer" regrava a tabela de antes.
+- **Ainda sem prova** (classe 5, com o dono): ACK da central aos 30 quadros `14 7B|7C` no carro e o efeito (voltar à gasolina
+  quando a Press.diff. cai abaixo do ponto 0).

@@ -623,11 +623,14 @@
   "fonte": "docs/progbase/abas/TabSensore.md",
   "versao_progbase": "2.16.4",
   "sha_commit": "80e1486",
-  "usado_por": [],
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt",
+   "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaWriterTest.kt"
+  ],
   "funcoes": [
    "0x004A9484"
-  ],
-  "uso_pendente": true
+  ]
  },
  {
   "id": "EV-VOLTAGASOLINA-002",
@@ -636,11 +639,13 @@
   "fonte": "docs/progbase/abas/TabSensore.md",
   "versao_progbase": "2.16.4",
   "sha_commit": "80e1486",
-  "usado_por": [],
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt"
+  ],
   "funcoes": [
    "0x004C526C"
-  ],
-  "uso_pendente": true
+  ]
  },
  {
   "id": "EV-VOLTAGASOLINA-003",
@@ -650,7 +655,9 @@
   "versao_progbase": "2.16.4",
   "sha_commit": "afa6515",
   "usado_por": [
-   "app/src/main/java/com/omegas/prohub/autocal/EcuParameterSnapshot.kt"
+   "app/src/main/java/com/omegas/prohub/autocal/EcuParameterSnapshot.kt",
+   "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaWriter.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt"
   ],
   "chave": "voltagas.tempo.sc62"
  },
@@ -666,12 +673,16 @@
  },
  {
   "id": "EV-VOLTAGASOLINA-005",
-  "afirmacao": "O corpo das rotinas 0x4A9484 e 0x4C526C (regra do clique, SetEsc 28) ainda não foi decodificado.",
-  "marca": "DESCONHECIDO",
-  "fonte": "docs/handoff/PROGRESSO-CARTOES.md",
+  "afirmacao": "As rotinas 0x4A9484 e 0x4C526C foram decodificadas e executadas (Unicorn): desmarcar grava 255 em TEMPO_RITORNO_BENZINA (12 3E 00 FF 4F); marcar regrava o tempo guardado ou 0; a pressão recalcula a tabela de 15 pontos RIF_PRESS_DIFF/COEFF_PRESS_DIFF (30 quadros 14 7B|7C 00 i lo hi soma).",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/volta-automatica-gasolina.md",
   "versao_progbase": "2.16.4",
-  "sha_commit": "afa6515",
-  "usado_por": [],
+  "sha_commit": "4bb41d6",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaWriterTest.kt"
+  ],
   "funcoes": [
    "0x004A9484",
    "0x004C526C"
@@ -679,12 +690,15 @@
  },
  {
   "id": "EV-VOLTAGASOLINA-006",
-  "afirmacao": "A fórmula do campo \"Low pressure value\" (1,25 bar), derivado de RIF_PRESS_DIFF/COEFF_PRESS_DIFF, não foi decodificada; não gravar.",
-  "marca": "DESCONHECIDO",
-  "fonte": "docs/handoff/PROGRESSO-CARTOES.md",
+  "afirmacao": "A fórmula do campo \"Low pressure value\" é a conta x87 de 0x4C526C (precisão estendida, FPCW 0x1332) + Trunc dos setters 0x4327C0/0x432670; o app a reproduz bit a bit (70 tabelas × 30 quadros iguais ao original executado).",
+  "marca": "OBS-COD",
+  "fonte": "tests/fixtures/volta_gasolina_original_grade.json",
   "versao_progbase": "2.16.4",
-  "sha_commit": "afa6515",
-  "usado_por": [],
+  "sha_commit": "4bb41d6",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt"
+  ],
   "chave": "voltagas.pressao.formula"
  },
  {
@@ -694,8 +708,11 @@
   "fonte": "docs/progbase/capturas/originais/LEIA-ME.md",
   "versao_progbase": "2.16.4",
   "sha_commit": "1bb8fd4",
-  "usado_por": [],
-  "uso_pendente": true
+  "usado_por": [
+   "app/src/main/assets/ui/core/volta-gasolina.js",
+   "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "tests/ui/volta-gasolina.test.cjs"
+  ]
  },
  {
   "id": "EV-VOLTAGASOLINA-008",
@@ -726,6 +743,68 @@
   "sha_commit": "404e83f",
   "usado_por": [],
   "uso_pendente": true
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-011",
+  "marca": "OBS-FIO",
+  "fonte": "tests/ui/fixtures/ecu-estado-lognovo.json",
+  "chave": "voltagas.central.dono",
+  "afirmacao": "Central do dono (PortmonLOGNOVO): 09 3E 00 = 0 s; 29 7B 00 = 1250 1324 … 2000 (ponto 10) … 2335 mbar; 29 7C 00 = 2617 … 0 … −1007. É exatamente a tabela do original para 1,25 bar com P0 = 2000: o \"1,25 bar\" da tela F4 é RIF_PRESS_DIFF[0] e o coeficiente vai ×100 em 16 bits (SD+0x1DD4 = 0).",
+  "usado_por": [
+   "app/src/test/java/com/omegas/prohub/autocal/VoltaGasolinaCoreTest.kt",
+   "tests/ui/volta-gasolina-toque.test.cjs",
+   "tests/ui/volta-gasolina.test.cjs"
+  ],
+  "versao_progbase": "2.16.4",
+  "sha_commit": "4bb41d6"
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-012",
+  "marca": "OBS-COD",
+  "fonte": "tools/emulacao/volta_gasolina_original.py",
+  "chave": "voltagas.emulador.fpcw",
+  "afirmacao": "O ProgBase roda com Default8087CW 0x1332 (fldcw [0xAAF454]); o Unicorn começa com FPCW 0 (precisão de 24 bits) e por isso o emulador antigo errava 1 mbar em alguns pontos (ex.: 1,275 bar sai 1274, não 1275). Corrigido no gerador.",
+  "usado_por": [
+   "tests/fixtures/volta_gasolina_original_grade.json",
+   "tools/emulacao/volta_gasolina_grade.py"
+  ],
+  "versao_progbase": "2.16.4",
+  "sha_commit": "4bb41d6"
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-013",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/protocolo/vetores.md",
+  "chave": "voltagas.sc152",
+  "afirmacao": "Nesta central o SerialCode 152 (0x98) é TINJ_FILTRO (29 98 00 com ACK no LOGNOVO); o campo PRESS_BASSA_RETROPAS_LR da família LR não existe nela e o app não o lê.",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/EcuParameterSnapshot.kt"
+  ],
+  "versao_progbase": "2.16.4",
+  "sha_commit": "4bb41d6"
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-014",
+  "marca": "OBS-COD",
+  "fonte": "docs/evidence/dfm-original/TFORMCONFIG.txt",
+  "chave": "voltagas.faixas",
+  "afirmacao": "Faixas do original: espera EditRitornoBenzina 0 a 3 s (Precision 1, MaxValue 3); pressão EditBassaPressioneMp 0,2 a 2,0 bar (Precision 0,005).",
+  "usado_por": [
+   "app/src/main/assets/ui/core/volta-gasolina.js",
+   "app/src/main/java/com/omegas/prohub/autocal/VoltaGasolinaCore.kt"
+  ],
+  "versao_progbase": "2.16.4",
+  "sha_commit": "4bb41d6"
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-015",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/protocolo/volta-automatica-gasolina.md",
+  "chave": "voltagas.fio.30quadros",
+  "afirmacao": "O ACK da central a cada um dos 30 quadros 14 7B|7C no carro e o efeito real (voltar à gasolina abaixo do ponto 0) não foram vistos no fio; só a releitura protege (classe 5 com o dono).",
+  "usado_por": [],
+  "versao_progbase": "2.16.4",
+  "sha_commit": "4bb41d6"
  },
  {
   "id": "EV-CAPTURA-001",

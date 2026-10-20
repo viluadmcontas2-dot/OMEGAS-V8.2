@@ -258,7 +258,7 @@ test('RED fluxo: dependencias criticas de Ferramentas fazem parte do carregament
 
 test('RED UX: textos explicam contexto, efeito e unidades sem supor conhecimento do GNV', () => {
   const sources = ['core/advanced-flags-data.js', 'core/advanced-flags.js', 'core/anti-apagao-valores.js',
-    'core/idle-mode.js', 'core/cartoes-motor.js'];
+    'core/idle-mode.js', 'core/volta-gasolina.js', 'core/cartoes-motor.js'];
   const context = { console, Intl, JSON, Number, String, Math };
   context.window = context;
   vm.createContext(context);
@@ -271,7 +271,9 @@ test('RED UX: textos explicam contexto, efeito e unidades sem supor conhecimento
   assert.match(pick('corte').line, /(?:retoma|volta).*aceler/i);
   assert.match(pick('lenta').line, /motor ligado|parar|manobra/i);
   assert.match(pick('injetores').line, /(?:acion|aliment).*(?:injetor|g.s)|injetores.*g.s/i);
-  assert.match(pick('volta').line, /rota..es|giro alto/i);
+  // Volta para gasolina = pressão baixa do gás (ProgBase F4), não rotação (dono, 2026-10-20).
+  assert.match(pick('volta').line, /press.o do g.s.*gasolina/i);
+  assert.doesNotMatch(pick('volta').line, /rota..es|giro alto|bomba/i);
   const fields = context.OmegasUi.AntiApagaoValores.FIELDS;
   assert.ok(fields.filter(f => f.unit === 'rpm').length >= 1, 'limites de rotacao devem informar rpm');
   assert.ok(fields.some(f => f.unit === 'ms'), 'o tempo deve indicar ms');

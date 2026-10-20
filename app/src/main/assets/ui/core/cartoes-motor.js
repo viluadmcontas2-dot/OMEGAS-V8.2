@@ -62,11 +62,10 @@
         note: 'Mostra o controle e o aquecimento dos injetores. Esta tela consulta, não altera.',
         rows: [row('Controle dos injetores', bit('FLAG_CONF1', 1, 0x0010)), row('Aquecimento dos injetores', bit('FLAG_CONF2', 0, 0x0040)), row('Corrente maior na troca para gás', bit('FLAG_CONF2', 1, 0x0400))],
         tech: [techBit('FLAG_CONF1', 1, 0x0010, 'Controle'), techBit('FLAG_CONF2', 0, 0x0040, 'Aquecimento'), techBit('FLAG_CONF2', 1, 0x0400, 'Corrente maior')] },
-      { id: 'volta', kind: 'open', title: 'Volta para gasolina', viewTitle: 'Volta para gasolina', line: 'Volta à gasolina em rotações altas.', shortLine: 'Gasolina em rotações altas.',
-        on: bit('FLAG_CONF1', 1, 0x2000), stateText: stateOf(bit('FLAG_CONF1', 1, 0x2000)), stateFor: 'Entrada automática',
-        note: 'Quando ligada, a central pode usar gasolina em giro alto. Isto não é aviso de gás acabando.',
-        rows: [row('Gasolina entra sozinha em rotação alta', bit('FLAG_CONF1', 1, 0x2000)), row('Corte da bomba de gasolina', bit('FLAG_CONF3', 0, 0x0004)), row('Reativar a bomba na reserva', bit('FLAG_CONF3', 0, 0x0800))],
-        tech: [techBit('FLAG_CONF1', 1, 0x2000, 'Entrada automática'), techBit('FLAG_CONF3', 0, 0x0004, 'Corte da bomba'), techBit('FLAG_CONF3', 0, 0x0800, 'Reativar a bomba')] },
+      // Volta para gasolina = volta automática por PRESSÃO BAIXA do gás (ProgBase F4), não rotação nem bomba (dono, 2026-10-20).
+      ns.VoltaGasolina ? ns.VoltaGasolina.card(p) : { id: 'volta', kind: 'volta', title: 'Volta para gasolina', viewTitle: 'Volta para gasolina',
+        line: 'Se a pressão do gás cair demais, o carro volta sozinho para a gasolina.', shortLine: 'Pressão baixa: volta à gasolina.',
+        on: null, stateText: DASH, rows: [{ label: 'Volta sozinha para a gasolina', text: DASH, on: null }], tech: [] },
     ];
     return cards;
   }

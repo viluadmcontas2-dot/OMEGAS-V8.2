@@ -423,3 +423,13 @@
   .live-cell b { font-size: 20px; }
   .live-cell em { font-size: 12px; }
 }
+
+/* Volta para gasolina (pressão baixa): frase, estado e controles juntos à esquerda (dono, 2026-10-20). */
+.volta-say { margin: 0; font-size: 22px; font-weight: 700; line-height: 1.25; }
+.volta-status { margin: 0; padding: 6px 12px; border-radius: 10px; font-size: 18px; font-weight: 600; background: var(--surface-2); color: var(--muted, #b7c4d4); align-self: flex-start; }
+.volta-status[data-level="ok"] { color: #3ddc97; }
+.volta-status[data-level="busy"] { color: #8ec2ff; }
+.volta-status[data-level="bad"] { color: #ff8a8a; }
+.volta-actions { justify-content: flex-start; align-items: center; }
+.volta-view .read-list { flex: 0 0 auto; }
+@media (max-height: 520px) { .volta-say { font-size: 19px; } .volta-status { font-size: 16px; padding: 4px 10px; } }

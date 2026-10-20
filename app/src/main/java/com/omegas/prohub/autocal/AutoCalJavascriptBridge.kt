@@ -229,6 +229,18 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getAdvancedParams(): String = activityRef.get()?.serviceOrNull()?.advancedParamsJson() ?: unavailable()
 
+    /** Volta à gasolina por pressão baixa: o toque do dono é a ordem. UMA chamada: ler → gravar → reler; o resultado vem em getVoltaGasolinaStatus. */
+    @JavascriptInterface
+    fun applyVoltaGasolina(json: String): String =
+        activityRef.get()?.serviceOrNull()?.applyVoltaGasolina(json) ?: unavailable()
+
+    /** Lê tempo de volta e tabela de pressão da central. Nunca escreve. */
+    @JavascriptInterface
+    fun readVoltaGasolina(): String = activityRef.get()?.serviceOrNull()?.readVoltaGasolina() ?: unavailable()
+
+    @JavascriptInterface
+    fun getVoltaGasolinaStatus(): String = activityRef.get()?.serviceOrNull()?.voltaGasolinaStatusJson() ?: unavailable()
+
     /** Anti-apagão (bit 0x20 de FLAG_CONF3): o toque do dono é a ordem. UMA chamada: ler → gravar → reler; o resultado vem em getAntiStalloFlagStatus. */
     @JavascriptInterface
     fun applyAntiStalloFlag(enable: Boolean): String =

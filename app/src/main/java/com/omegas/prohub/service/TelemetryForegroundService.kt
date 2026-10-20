@@ -127,6 +127,7 @@ class TelemetryForegroundService : Service() {
     val advancedParams = com.omegas.prohub.autocal.AdvancedParamsStore()
     lateinit var antiStalloWriter: com.omegas.prohub.autocal.AntiStalloFlagWriter
     lateinit var antiStalloParamsWriter: com.omegas.prohub.autocal.AntiStalloParamsWriter
+    lateinit var voltaGasolinaWriter: com.omegas.prohub.autocal.VoltaGasolinaWriter
     lateinit var parameterReader: com.omegas.prohub.autocal.EcuParameterReader
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
@@ -285,6 +286,14 @@ class TelemetryForegroundService : Service() {
                 advancedParams.markUnknown(session, "ANTI_STALLO", com.omegas.prohub.autocal.AntiStalloParamsCore.ADDRESS, trigger)
             },
         )
+        // Volta à gasolina por pressão baixa (TEMPO_RITORNO_BENZINA + tabela RIF/COEFF_PRESS_DIFF): só por toque do dono, um toque = ler → gravar → reler.
+        voltaGasolinaWriter = com.omegas.prohub.autocal.VoltaGasolinaWriter(
+            serial = recordingSerial,
+            record = { type, data -> sessionRecorder.record(type, "volta_gasolina", data, force = true) },
+            onRead = { session, name, address, values, trigger -> advancedParams.replaceVector(session, name, address, values, trigger) },
+            busy = { kWriter.isBusy() || kFactor.isBusy() || bufferProbe.statusJson().let { runCatching { JSONObject(it).optBoolean("busy", false) }.getOrDefault(false) } },
+            onUnknown = { session, name, address, trigger -> advancedParams.markUnknown(session, name, address, trigger) },
+        )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = recordingSerial,
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
@@ -374,6 +383,7 @@ class TelemetryForegroundService : Service() {
         try { bufferProbe.close() } catch (_: Exception) { /* encerrando */ }
         try { antiStalloWriter.close() } catch (_: Exception) { /* encerrando */ }
         try { antiStalloParamsWriter.close() } catch (_: Exception) { /* encerrando */ }
+        try { voltaGasolinaWriter.close() } catch (_: Exception) { /* encerrando */ }
         autoReadExecutor.shutdownNow()
         try { kWriter.close() } catch (_: Exception) { /* encerrando */ }
         try { runtime.close() } catch (_: Exception) { /* encerrando */ }
@@ -552,6 +562,10 @@ class TelemetryForegroundService : Service() {
     fun confirmAntiStalloValues(token: String): String = antiStalloParamsWriter.confirm(token).toString()
     fun cancelAntiStalloValues(): String = antiStalloParamsWriter.cancel().toString()
     fun antiStalloValuesStatusJson(): String = antiStalloParamsWriter.statusJson()
+    // Volta à gasolina: um toque = ler → gravar → reler; Desfazer é outro toque.
+    fun applyVoltaGasolina(json: String): String = voltaGasolinaWriter.apply(json).toString()
+    fun readVoltaGasolina(): String = voltaGasolinaWriter.readCurrent().toString()
+    fun voltaGasolinaStatusJson(): String = voltaGasolinaWriter.statusJson()
     fun kFactorHistoryJson(): String = kFactor.historyJson()
 
     @Synchronized fun saveKFactorBackup(label: String): String =
