@@ -159,7 +159,8 @@ test('mutação: AutoMatch enviado sozinho quando a cota atinge -> o cenário de
   const app = await T.openApp(browser, { ui: dir, usb: true, bench: { quota: true } });
   try {
     await assert.rejects(() => cenarioAutoMatch(app, null));
-    assert.deepEqual((await T.frames(app.page)).acoes, [8], 'o mutante realmente mandou 02 24 04 08 sem toque');
+    const acoes = (await T.frames(app.page)).acoes; // quantas vezes o mutante repete depende de quantas leituras a bancada serve; o que importa é que mandou 02 24 04 08 sem toque
+    assert.ok(acoes.length >= 1 && acoes.every(a => a === 8), 'o mutante realmente mandou 02 24 04 08 sem toque');
   } finally { await app.context.close(); require('node:fs').rmSync(dir, { recursive: true, force: true }); }
 });
 
