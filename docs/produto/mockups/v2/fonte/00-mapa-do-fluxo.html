@@ -1,0 +1,28 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><link rel="stylesheet" href="base.css"><style>
+body{font-size:16px}.m{height:100vh;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.bar{display:block;white-space:nowrap;padding:8px 14px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:17px}.bar b{color:var(--text)}
+.cols{display:grid;grid-template-columns:repeat(4,150px) 1fr;gap:10px;flex:1;min-height:0}
+.col{display:flex;flex-direction:column;gap:8px}.tab{height:46px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent);font-weight:850;font-size:19px}
+.box{flex:1;border-radius:10px;background:var(--surface);border:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:6px;font-size:15px;color:var(--muted)}.box b{color:var(--text);font-size:16px}.box i{margin-top:auto;font-style:normal;color:#8ec1ff;font-weight:800}
+.lock{border-style:dashed}
+.fer{display:flex;flex-direction:column;gap:8px}.gs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:1}
+.grp{border-radius:10px;background:var(--surface);border:1px solid var(--line);padding:8px 10px;display:flex;flex-direction:column;gap:5px}
+.gn{font-weight:850;font-size:17px;color:var(--text)}.it{display:flex;justify-content:space-between;gap:6px;padding:5px 8px;border-radius:7px;background:var(--surface-2);font-size:15px}.it em{font-style:normal;color:#8ec1ff;font-weight:800;white-space:nowrap}
+.note{font-size:15px;color:var(--muted)}.note b{color:var(--text)}</style><body><div class="m">
+<div class="bar"><b>Sempre na tela, em cima:</b> Tensão · Pressão da admissão · Inj. gasolina · Rotação · <b>Nível do gás (5 bolinhas)</b> · lâmpada No gás / Na gasolina <em style="float:right;font-style:normal;color:#8ec1ff;font-weight:800">01-barras</em></div>
+<div class="cols">
+<div class="col"><div class="tab">AutoCal</div><div class="box lock"><b>Tela atual, sem mudança</b><span>Aprende sozinho a gasolina e o gás</span><span>Gráfico, zonas, reaprender</span><span style="margin-top:10px;color:var(--warn)">Muda só: barra de cima (bolinhas) e barra de baixo (5 botões).</span><i>15-autocal</i></div></div>
+<div class="col"><div class="tab">Refino</div><div class="box lock"><b>Tela atual, sem mudança</b><span>Sugestões de ajuste fino</span><span>Revisar e gravar (só você)</span><span style="margin-top:10px;color:var(--warn)">Muda só: barra de cima (bolinhas) e barra de baixo (5 botões).</span><i>16-refino</i></div></div>
+<div class="col"><div class="tab">Ajuste local</div><div class="box lock"><b>Tela atual, sem mudança</b><span>Mapa K 12 × 12</span><span>Corrigir uma região</span><span style="margin-top:10px;color:var(--warn)">Muda só: barra de cima (bolinhas) e barra de baixo (5 botões).</span><i>17-ajuste-local</i></div></div>
+<div class="col"><div class="tab">Ajuste global</div><div class="box lock"><b>Tela atual, sem mudança</b><span>Curva K</span><span>Backup, suavizar, gravar</span><span style="margin-top:10px;color:var(--warn)">Muda só: barra de cima (bolinhas) e barra de baixo (5 botões).</span><i>18-ajuste-global</i></div></div>
+<div class="fer"><div class="tab">Ferramentas <span style="font-weight:600;color:var(--muted);margin-left:8px">(02: grupos à esquerda, cartões à direita)</span></div>
+<div class="gs">
+<div class="grp"><div class="gn">1 · Evitar apagão (02)</div><div class="it"><span>Anti-apagão</span><em>03 › 03b</em></div><div class="it"><span>Saída do corte</span><em>04</em></div><div class="it"><span>Marcha lenta</span><em>05</em></div></div>
+<div class="grp"><div class="gn">2 · Gasolina ⇄ gás (02b)</div><div class="it"><span>Quando o gás entra</span><em>09</em></div><div class="it"><span>Troca de gasolina para gás</span><em>06</em></div><div class="it"><span>Volta para gasolina</span><em>08</em></div></div>
+<div class="grp"><div class="gn">3 · Peças do gás (02c)</div><div class="it"><span>Nível do gás</span><em>10 › 10b</em></div><div class="it"><span>Injetores</span><em>07</em></div></div>
+<div class="grp"><div class="gn">4 · Diagnóstico (02d)</div><div class="it"><span>Avisos da central</span><em>11 › 11b</em></div><div class="it"><span>Registro do app</span><em>14</em></div><div class="it"><span>Teste de gravação</span><em>no cartão</em></div></div>
+<div class="grp"><div class="gn">5 · Sessões e arquivos (02e)</div><div class="it"><span>Sessões</span><em>12 › 12b</em></div><div class="it"><span>Cópia de segurança</span><em>no cartão</em></div><div class="it"><span>Exportar e sobre</span><em>13</em></div></div>
+<div class="grp"><div class="gn">6 · Ajustes do app (02f)</div><div class="it"><span>Refino automático</span><em>no cartão</em></div><div class="it"><span>Bateria</span><em>no cartão</em></div><div class="it"><span>Balão sobre outros apps</span><em>no cartão</em></div></div>
+</div></div></div>
+<div class="note"><b>Embaixo, sempre: 5 botões</b> (AutoCal · Refino · Ajuste local · Ajuste global · Ferramentas). Sem "Agora", sem aba Sessões, sem aba Diagnóstico. Em toda tela de detalhe: <b>‹ Voltar</b> é o 1º botão da barra de baixo e volta ao grupo. "no cartão" = a ação acontece no próprio cartão, com um toque.</div>
+</div></body></html>

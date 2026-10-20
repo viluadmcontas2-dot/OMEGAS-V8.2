@@ -1,0 +1,16 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="base.css"><style>.nav .br{display:none}@media (max-width:900px){.nav .br{display:inline}}.vt{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:14px 20px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.vt.sel{border:2px solid var(--accent);background:#0f1b2e}.vt .k{font-size:22px;color:var(--muted);font-weight:750}.vt .s{font-size:20px;color:var(--muted)}
+.two{display:flex;gap:12px;flex:1;min-height:0}
+@media (max-width:900px){.vt{padding:8px 12px;gap:2px}.vt .s{display:none}.two{gap:8px}}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;flex:1;min-height:0}.three .big{font-size:40px}.three b{font-size:22px}
+@media (max-width:900px){.three{gap:6px}.three .big{font-size:30px}.three .vt{justify-content:space-around}.three .k{white-space:nowrap}}</style><body><div class="shell">
+<div class="top">
+<span class="cell"><small>Tensão</small><b>13,8</b><em>V</em></span>
+<span class="cell"><small><span class="lg">Pressão da admissão</span><span class="sh">Admissão</span></small><b>0,39</b><em>bar</em></span>
+<span class="cell"><small><span class="lg">Inj. gasolina</span><span class="sh">Inj. gas.</span></small><b>3,44</b><em>ms</em></span>
+<span class="cell"><small>Rotação</small><b>860</b></span>
+<span class="lvl"><small>Nível</small><span class="d"></span><span class="d on"></span><span class="d"></span><span class="d"></span><span class="d"></span></span><span class="lamp pet"><i></i><span class="lg">Na gasolina</span><span class="sh">Gasolina</span></span></div><div class="screen"><div class="head"><span class="crumb">Ferramentas › Gasolina ⇄ gás ›</span><h1>Quando o gás entra</h1><span class="chip warn">Falta acelerar</span></div>
+<div class="body"><div class="hint w">O carro liga na gasolina e passa para o gás quando as 3 condições estão com ✓.</div>
+<div class="three"><div class="vt"><span class="k">1. Jeito da troca</span><span class="big">Ao acelerar</span><b class="warn">✕ Ainda não acelerou</b></div>
+<div class="vt sel"><span class="k">2. Giros do motor</span><span class="big">1.200</span><b class="warn">✕ Agora: 860</b></div>
+<div class="vt"><span class="k">3. Água do motor</span><span class="big">40 °C</span><b class="ok">✓ Agora: 65 °C</b></div></div></div>
+<div class="btn-bar"><button class="btn"><span class="lg">‹ Voltar</span><span class="sh">‹</span></button><button class="btn sq">−</button><button class="btn sq">+</button><button class="btn sel">Giros</button><button class="btn ">Água</button><button class="btn p">Salvar na central</button></div></div><div class="nav"><div class="">AutoCal</div><div class="">Refino</div><div class="">Ajuste <br class="br">local</div><div class="">Ajuste <br class="br">global</div><div class="on">Ferramentas</div></div></div></body></html>
