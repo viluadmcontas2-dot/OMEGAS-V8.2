@@ -1,6 +1,8 @@
 (function (root) {
   'use strict';
   const ns = root.OmegasUi = root.OmegasUi || {};
+  /** Ciclos de contexto do agendador do app (o que já atualiza a tela, ~2 s) entre dois pedidos de leitura dos 5 números enquanto eles não chegam. Sem relógio novo. */
+  const READ_RETRY_CYCLES = 1;
 
   // Ferramentas, página "Motor e combustível" (dono, 2026-10-18): um cartão por assunto, em palavras simples.
   // Cada cartão: título, uma linha, o estado escrito (Ligado/Desligado) e UM controle. Interruptor = liga/desliga; campo com lápis = número que
@@ -89,12 +91,15 @@
       this.data = data;
       const v = this.V.valuesOf(data.params?.ANTI_STALLO);
       if (v) { this.lastValues = v; return; }
-      // Entrada na tela de valores: não depende do Mapa K/Curva K para ler o vetor.
-      // Uma única solicitação por visita, sem polling por tempo; o snapshot chega
-      // pela ponte nativa no próximo ciclo normal de contexto.
-      if (this.view === 'valores' && this.usb() && !this.directReadRequested &&
+      // Tela de valores sem os 5 números conhecidos: pede a leitura direta (não depende do Mapa K/Curva K).
+      // Sem relógio: a cada ciclo de atualização da tela (o do agendador, sem relógio novo), enquanto os valores não
+      // chegam. O nativo ainda responde `alreadyReading` se uma leitura estiver em andamento, então nunca empilha. (Antes era UMA vez por visita: se essa
+      // falhasse, os botões − / + ficavam desligados para sempre e parecia que "não grava".)
+      this.readTick = (this.readTick || 0) + 1;
+      if (this.view === 'valores' && this.usb() && this.readTick >= (this.nextReadAt || 0) &&
           this.vals.view().phase === 'idle' && typeof bridge?.readAntiStalloValues === 'function') {
         this.directReadRequested = true;
+        this.nextReadAt = this.readTick + READ_RETRY_CYCLES; // conta ciclos do agendador, não segundos
         try {
           const result = JSON.parse(bridge.readAntiStalloValues());
           if (result.ok === false) console.warn('[OMEGAS Ferramentas] Leitura direta recusada:', result.error);

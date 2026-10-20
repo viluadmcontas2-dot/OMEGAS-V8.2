@@ -106,6 +106,7 @@ test('toques rápidos em + não se perdem: o último valor chega à central (gra
   const { page } = app;
   try {
     await U.abrirValores(app);
+    await page.evaluate(() => window.OmegasApp.scheduler.stop()); // determinístico: só o teste gira os ciclos
     const mais = '[data-field="0"] [data-adv-step="0:1"]:not([disabled])';
     for (let k = 0; k < 3; k++) { await page.waitForSelector(mais, { state: 'visible' }); await T.tap(page, mais); }   // sem pausa de relógio entre os toques
     await T.pump(page, 40);

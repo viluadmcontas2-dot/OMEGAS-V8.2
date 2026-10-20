@@ -45,3 +45,21 @@ flowchart LR
 - **Ainda INFERIDO:** efeito exato de "Espera para sair do gás" (campo 2) e dos extras; o original só mostra o campo 0 (captura F9).
 
 Testes: `tests/ui/anti-apagao-valores-didatico.test.cjs`, `tests/ui/anti-apagao-toque-real.test.cjs`. Código: `app/src/main/assets/ui/core/anti-apagao-valores.js`, `components/advanced.js`.
+
+## Provas da escrita (função → teste → o que prova)
+```mermaid
+flowchart LR
+  TOQUE[Toque: interruptor ou − / +] --> JS[advanced-flags.js / anti-apagao-valores.js<br/>applyAntiStalloFlag / applyAntiStalloValues]
+  JS --> PONTE[AutoCalJavascriptBridge → TelemetryForegroundService]
+  PONTE --> KT[AntiStalloFlagWriter.apply / AntiStalloParamsWriter.apply<br/>UMA etapa MANUAL_WRITE: ler → gravar → reler]
+  KT --> ECU[(Central MP48)]
+  EMU[tools/emulacao/ecu_emulator.py<br/>respostas das capturas reais] --> DIAL[tests/fixtures/anti-apagao-dialogo-ecu.json]
+  DIAL -. ordem estrita .-> T1[AntiStalloDialogoEcuEmuladaTest<br/>escritor REAL × central emulada]
+  KT --- T1
+  T2[anti-apagao-chamada-unica.test.cjs<br/>anti-apagao-leitura-persistente.test.cjs] --- JS
+  T3[tests/test_dialogo_antiapagao_ecu.py<br/>a ECU emulada MUDOU de verdade] --- EMU
+```
+- Escritor real × central emulada (byte a byte, ordem estrita; mutantes: máscara, opcode 0x37 e faixa de leitura derrubam o teste): `AntiStalloDialogoEcuEmuladaTest` (rodar local: `tools/jvm-local/rodar-antiapagao.sh`).
+- Faixa de leitura saturada + telemetria em paralelo: a gravação manual passa; o caminho antigo (prévia pela faixa READ_ONLY) falha — causa provável do "não grava" nas versões anteriores.
+- Valores não lidos na 1ª tentativa: a tela pede de novo a cada ciclo do agendador (`anti-apagao-leitura-persistente.test.cjs`).
+- **Não provado:** o aparelho real (USB, WebView, timing da central).

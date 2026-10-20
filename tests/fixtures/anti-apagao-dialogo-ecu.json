@@ -1,0 +1,160 @@
+{
+ "schema": "anti-apagao-dialogo-ecu/1",
+ "fonte": "tools/emulacao/ecu_emulator.py (respostas das capturas reais; efeito da escrita DERIVADO do código do original)",
+ "flag_ligar": {
+  "antes": [
+   16,
+   4660
+  ],
+  "depois": [
+   48,
+   4660
+  ],
+  "passos": [
+   {
+    "pedido": "29 FA 00 23",
+    "resposta": "29 FA 00 23 53 04 10 00 34 12 AD",
+    "status": 83,
+    "payload": "10 00 34 12"
+   },
+   {
+    "pedido": "29 FA 00 23",
+    "resposta": "29 FA 00 23 53 04 10 00 34 12 AD",
+    "status": 83,
+    "payload": "10 00 34 12"
+   },
+   {
+    "pedido": "35 FA 00 30 00 34 12 A5",
+    "resposta": "35 FA 00 30 00 34 12 A5 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "29 FA 00 23",
+    "resposta": "29 FA 00 23 53 04 30 00 34 12 CD",
+    "status": 83,
+    "payload": "30 00 34 12"
+   }
+  ]
+ },
+ "flag_desligar": {
+  "antes": [
+   48,
+   4660
+  ],
+  "depois": [
+   16,
+   4660
+  ],
+  "passos": [
+   {
+    "pedido": "29 FA 00 23",
+    "resposta": "29 FA 00 23 53 04 30 00 34 12 CD",
+    "status": 83,
+    "payload": "30 00 34 12"
+   },
+   {
+    "pedido": "29 FA 00 23",
+    "resposta": "29 FA 00 23 53 04 30 00 34 12 CD",
+    "status": 83,
+    "payload": "30 00 34 12"
+   },
+   {
+    "pedido": "35 FA 00 10 00 34 12 85",
+    "resposta": "35 FA 00 10 00 34 12 85 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "29 FA 00 23",
+    "resposta": "29 FA 00 23 53 04 10 00 34 12 AD",
+    "status": 83,
+    "payload": "10 00 34 12"
+   }
+  ]
+ },
+ "valores_rotacao_maxima": {
+  "antes": [
+   1600,
+   100,
+   1500,
+   2,
+   20
+  ],
+  "depois": [
+   1800,
+   100,
+   1500,
+   2,
+   20
+  ],
+  "passos": [
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "37 33 0C 01 08 07 64 00 DC 05 02 00 14 00 E1",
+    "resposta": "37 33 0C 01 08 07 64 00 DC 05 02 00 14 00 E1 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 08 07 64 00 DC 05 02 00 14 00 C7",
+    "status": 83,
+    "payload": "08 07 64 00 DC 05 02 00 14 00"
+   }
+  ]
+ },
+ "valores_restaurar_fabrica": {
+  "antes": [
+   1800,
+   150,
+   2000,
+   4,
+   30
+  ],
+  "depois": [
+   1600,
+   100,
+   1500,
+   2,
+   20
+  ],
+  "passos": [
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 08 07 96 00 D0 07 04 00 1E 00 FB",
+    "status": 83,
+    "payload": "08 07 96 00 D0 07 04 00 1E 00"
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 08 07 96 00 D0 07 04 00 1E 00 FB",
+    "status": 83,
+    "payload": "08 07 96 00 D0 07 04 00 1E 00"
+   },
+   {
+    "pedido": "37 33 0C 01 40 06 64 00 DC 05 02 00 14 00 18",
+    "resposta": "37 33 0C 01 40 06 64 00 DC 05 02 00 14 00 18 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   }
+  ]
+ }
+}

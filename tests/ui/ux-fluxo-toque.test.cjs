@@ -157,6 +157,7 @@ test('toque duplo RÁPIDO e rajada: gravam UMA vez só', { skip }, async () => {
   const { page } = app;
   try {
     await U.abrirMotor(app);
+    await page.evaluate(() => window.OmegasApp.scheduler.stop()); // só o teste gira os ciclos: os dois toques caem antes de qualquer ciclo (o que o nome diz)
     await U.clearLog(page);
     await T.doubleTap(page, '[data-adv-switch]'); await T.pump(page, 10);
     assert.deepEqual(await U.ecuWrites(page), [U.LIGAR], 'toque duplo = exatamente 1 quadro');
