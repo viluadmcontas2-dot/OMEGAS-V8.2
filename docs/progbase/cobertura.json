@@ -817,36 +817,43 @@
    "app": {
     "aba_producao": null,
     "evidencias_no_grafo_de_producao": 0,
-    "evidencias_usadas_no_codigo": 1,
-    "pct": 50.0,
+    "evidencias_usadas_no_codigo": 7,
+    "pct": 87.5,
     "pontes": 0,
     "testes": 0
    },
    "area": "Geral (decompilação)",
    "desconhecidos": [
+    "EV-AUTOCAL-006",
     "EV-COBERTURA-002"
    ],
-   "evidencias": 2,
+   "evidencias": 8,
    "funcoes": {
     "com_dono": 0
    },
    "grafo": {
     "abas": [],
     "evidencias": [
+     "EV-AUTOCAL-001",
+     "EV-AUTOCAL-002",
+     "EV-AUTOCAL-003",
+     "EV-AUTOCAL-004",
+     "EV-AUTOCAL-005",
+     "EV-AUTOCAL-006",
      "EV-COBERTURA-001",
      "EV-COBERTURA-002"
     ],
     "ponte_producao": null
    },
-   "pct_cobertura": 50.0,
-   "pct_provado": 50.0,
+   "pct_cobertura": 75.0,
+   "pct_provado": 75.0,
    "perguntas_abertas": [],
    "peso": 4,
    "por_marca": {
     "DERIVADO": 0,
-    "DESCONHECIDO": 1,
+    "DESCONHECIDO": 2,
     "INFERIDO": 0,
-    "OBS-COD": 1,
+    "OBS-COD": 6,
     "OBS-FIO": 0
    },
    "proximo_passo": "Nomear as funções sem dono e os bytes de .text fora de função.",
@@ -932,7 +939,7 @@
    "tipo": "evidencia"
   }
  ],
- "desconhecidos_total": 25,
+ "desconhecidos_total": 26,
  "gerador": "tools/progbase/cobertura_re.py",
  "titulo": "Cobertura da Engenharia Reversa",
  "total": {
@@ -947,16 +954,16 @@
    "programa": 1010,
    "total_alvo": 7132
   },
-  "evidencias": 89,
+  "evidencias": 95,
   "funcoes_do_programa_nomeadas": 1692,
   "funcoes_do_programa_sem_nome": 637,
-  "pct_provado": 76.4,
+  "pct_provado": 76.8,
   "perguntas_abertas_producao": 13,
   "por_marca": {
    "DERIVADO": 10,
-   "DESCONHECIDO": 12,
+   "DESCONHECIDO": 13,
    "INFERIDO": 9,
-   "OBS-COD": 31,
+   "OBS-COD": 36,
    "OBS-FIO": 27
   },
   "vetores": 389,

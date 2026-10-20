@@ -1046,5 +1046,83 @@
    "tests/test_anti_apagao_valores_ecu_emulada.py",
    "tests/fixtures/anti-apagao-dialogo-ecu.json"
   ]
+ },
+ {
+  "id": "EV-AUTOCAL-001",
+  "afirmacao": "EditNumAutomatch está vinculado a VECT_AUTOCAL_U8_2, SC357 índice2, faixa DFM 1–99, default host 3. O gravador original emulado para RAW3 envia 13 65 01 02 03 7E; leitor original pede 0A 65 01 02 72. Preferências completas ainda não usadas pelo app.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098",
+  "usado_por": [
+   "tools/emulacao/autocal_preferencias_original.py",
+   "tests/test_progbase_autocal_preferencias.py"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-AUTOCAL-002",
+  "afirmacao": "Gravadores RAW originais 0x977014 e 0x9796B8 e leitores 0x976D98/0x978DCC foram executados em Unicorn; pedidos e checksums capturados para escalares, grade e referências. ACK é stub e respostas de leitura não foram executadas. Painel ainda não usado pelo app.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098",
+  "usado_por": [
+   "tools/emulacao/autocal_preferencias_original.py",
+   "tests/test_progbase_autocal_preferencias.py"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-AUTOCAL-003",
+  "afirmacao": "CalibrationVal tem 12 linhas: SC357 índices0/1, depois SC370 índices0,4,5,6,1,2,3,7,8,9; construtor 0x513630 e handler 0x5140F0. Mapeamento ainda não usado pelo painel do app.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098",
+  "usado_por": [
+   "tools/emulacao/autocal_preferencias_original.py",
+   "tests/test_progbase_autocal_preferencias.py"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-AUTOCAL-004",
+  "afirmacao": "Settings contém opções locais de mensagens, zonas, pontos, curva K, atualização e cores; parâmetros avançados são mostrados pelo construtor somente no perfil100. Defaults DFM não provam fábrica. Painel ainda não usado pelo app.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098",
+  "usado_por": [
+   "tools/emulacao/autocal_preferencias_original.py",
+   "tests/test_progbase_autocal_preferencias.py"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-AUTOCAL-005",
+  "afirmacao": "CursorLimitMAP_MIN/MAX gravam SC361/362 ao soltar; referências MAP/injeção são SC332/331. EditKMin/Max de TFormRifAutocal ajustam eixos do gráfico, não gravam curva K. Distinção ainda não usada pelo painel do app.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098",
+  "usado_por": [
+   "tools/emulacao/autocal_preferencias_original.py",
+   "tests/test_progbase_autocal_preferencias.py"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-AUTOCAL-006",
+  "afirmacao": "Efeito interno dos limiares avançados, defaults efetivos por perfil, valores de fábrica e respostas reais das novas leituras permanecem desconhecidos. Próximos passos mínimos discriminados em autocal-preferencias.md; painel ainda não usado pelo app.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098",
+  "usado_por": [
+   "tools/emulacao/autocal_preferencias_original.py",
+   "tests/test_progbase_autocal_preferencias.py"
+  ],
+  "uso_pendente": true
  }
 ]

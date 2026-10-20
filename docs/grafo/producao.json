@@ -713,6 +713,36 @@
    "sustenta"
   ],
   [
+   "ev:EV-AUTOCAL-001",
+   "teste:tests/test_progbase_autocal_preferencias.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-002",
+   "teste:tests/test_progbase_autocal_preferencias.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-003",
+   "teste:tests/test_progbase_autocal_preferencias.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-004",
+   "teste:tests/test_progbase_autocal_preferencias.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-005",
+   "teste:tests/test_progbase_autocal_preferencias.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-006",
+   "teste:tests/test_progbase_autocal_preferencias.py",
+   "sustenta"
+  ],
+  [
    "ev:EV-BINS-001",
    "teste:tests/ui/mapa-k-ajuste-local.test.cjs",
    "sustenta"
@@ -4732,15 +4762,15 @@
   "chama": 106,
   "cobre": 654,
   "exibe": 33,
-  "sustenta": 66,
+  "sustenta": 72,
   "usa": 14
  },
  "contagem_nos": {
   "aba": 9,
-  "ev": 89,
+  "ev": 95,
   "kt": 8,
   "ponte": 112,
-  "teste": 385,
+  "teste": 386,
   "ui": 32
  },
  "desconhecido_sem_uso": [
@@ -5216,6 +5246,42 @@
    "afirmacao": "O app agora grava os 5 números do anti-apagão no formato do original (dono autorizou, 2026",
    "marca": "DERIVADO",
    "rotulo": "EV-ANTIAPAGAO-031",
+   "tipo": "ev"
+  },
+  "ev:EV-AUTOCAL-001": {
+   "afirmacao": "EditNumAutomatch está vinculado a VECT_AUTOCAL_U8_2, SC357 índice2, faixa DFM 1–99, defaul",
+   "marca": "OBS-COD",
+   "rotulo": "EV-AUTOCAL-001",
+   "tipo": "ev"
+  },
+  "ev:EV-AUTOCAL-002": {
+   "afirmacao": "Gravadores RAW originais 0x977014 e 0x9796B8 e leitores 0x976D98/0x978DCC foram executados",
+   "marca": "OBS-COD",
+   "rotulo": "EV-AUTOCAL-002",
+   "tipo": "ev"
+  },
+  "ev:EV-AUTOCAL-003": {
+   "afirmacao": "CalibrationVal tem 12 linhas: SC357 índices0/1, depois SC370 índices0,4,5,6,1,2,3,7,8,9; c",
+   "marca": "OBS-COD",
+   "rotulo": "EV-AUTOCAL-003",
+   "tipo": "ev"
+  },
+  "ev:EV-AUTOCAL-004": {
+   "afirmacao": "Settings contém opções locais de mensagens, zonas, pontos, curva K, atualização e cores; p",
+   "marca": "OBS-COD",
+   "rotulo": "EV-AUTOCAL-004",
+   "tipo": "ev"
+  },
+  "ev:EV-AUTOCAL-005": {
+   "afirmacao": "CursorLimitMAP_MIN/MAX gravam SC361/362 ao soltar; referências MAP/injeção são SC332/331. ",
+   "marca": "OBS-COD",
+   "rotulo": "EV-AUTOCAL-005",
+   "tipo": "ev"
+  },
+  "ev:EV-AUTOCAL-006": {
+   "afirmacao": "Efeito interno dos limiares avançados, defaults efetivos por perfil, valores de fábrica e ",
+   "marca": "DESCONHECIDO",
+   "rotulo": "EV-AUTOCAL-006",
    "tipo": "ev"
   },
   "ev:EV-BINS-001": {
@@ -7188,6 +7254,10 @@
   },
   "teste:tests/test_progbase_autocal_original_oracle_contract.py": {
    "rotulo": "tests/test_progbase_autocal_original_oracle_contract.py",
+   "tipo": "teste"
+  },
+  "teste:tests/test_progbase_autocal_preferencias.py": {
+   "rotulo": "tests/test_progbase_autocal_preferencias.py",
    "tipo": "teste"
   },
   "teste:tests/test_progbase_autocal_resource_defaults_contract.py": {
