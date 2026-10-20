@@ -257,7 +257,7 @@
     diff(target) {
       const values = this.valuesNow();
       const out = {};
-      this.V.FIELDS.forEach(f => { if (!values || target[f.index] !== values[f.index]) out[f.index] = target[f.index]; });
+      for (let i = 0; i < this.V.COUNT; i++) { if (!values || target[i] !== values[i]) out[i] = target[i]; }   // os 5 números, mesmo com 1 só à vista: o Desfazer da fábrica devolve todos
       return out;
     }
 

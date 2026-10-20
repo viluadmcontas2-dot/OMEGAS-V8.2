@@ -15,12 +15,11 @@ test.after(async () => { if (browser) await browser.close(); });
 const VIEWPORTS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 // cartão da tela inicial -> grupo que abre e cartões que PRECISAM estar na mesma página
 const GROUPS = [
-  { open: 'valores', group: 'valores', must: ['anti', 'av-0', 'av-1', 'av-2', 'av-3', 'av-4'], edit: 5 },
+  { open: 'valores', group: 'valores', must: ['anti', 'av-0'], edit: 1 },
   { open: 'volta', group: 'volta', must: ['volta-liga', 'volta-mbar', 'volta-espera'], edit: 2 },
-  { open: 'troca', group: 'troca', must: ['FLAG_CONF1-1-1000', 'corte-inj', 'FLAG_CONF2-0-1', 'FLAG_CONF1-1-10'], edit: 0 },
-  { open: 'corte', group: 'troca', must: ['corte-inj'], edit: 0 },
-  { open: 'injetores', group: 'troca', must: ['FLAG_CONF1-1-10'], edit: 0 },
-  { open: 'lenta', group: 'lenta', must: ['lenta-modo', 'lenta-giro'], edit: 0 },
+  { open: 'troca', group: 'troca', must: ['giri-cambio', 'FLAG_CONF1-1-1', 'FLAG_CONF2-0-2'], edit: 0 },
+  { open: 'corte', group: 'troca', must: ['giri-cambio'], edit: 0 },
+  { open: 'injetores', group: 'troca', must: ['giri-cambio'], edit: 0 },
   { open: 'outras', group: 'outras', must: [], edit: 0 },
 ];
 
@@ -173,7 +172,7 @@ test('tela inicial: continua a grade de cartões com o interruptor do anti-apag�
   try {
     const { page } = app;
     assert.equal(await page.locator('#toolAdvanced [data-card="anti"] [data-adv-switch]').count(), 1);
-    for (const id of ['valores', 'corte', 'lenta', 'troca', 'injetores', 'volta', 'outras']) assert.equal(await page.locator(`#toolAdvanced [data-adv-open="${id}"]`).count(), 1, id);
+    for (const id of ['valores', 'corte', 'troca', 'injetores', 'volta', 'outras']) assert.equal(await page.locator(`#toolAdvanced [data-adv-open="${id}"]`).count(), 1, id);
     const over = await page.evaluate(() => { const g = document.getElementById('toolAdvanced'); return g.scrollHeight > g.clientHeight + 1 || g.scrollWidth > g.clientWidth + 1; });
     assert.equal(over, false, 'a tela inicial não rola');
   } finally { await app.context.close(); }

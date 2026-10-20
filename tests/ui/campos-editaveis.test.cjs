@@ -11,10 +11,6 @@ const skip = T.skipReason() || false;
 const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 const CAMPOS = [
   { i: 0, nome: 'Rotação máxima para agir', unidade: 'rpm', faixa: 'De 0 a 6.000', fabrica: '1.600' },
-  { i: 1, nome: 'Queda de rotação para agir', unidade: 'rpm', faixa: 'De 0 a 1.000', fabrica: '100' },
-  { i: 2, nome: 'Espera para sair do gás', unidade: 'ms', faixa: 'De 0 a 10.000', fabrica: '1.500' },
-  { i: 3, nome: 'Folga para não ficar trocando', unidade: 'rpm', faixa: 'De 0 a 1.000', fabrica: '2' },
-  { i: 4, nome: 'Queda para parar de agir', unidade: 'rpm', faixa: 'De 0 a 1.000', fabrica: '20' },
 ];
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
@@ -45,7 +41,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
         assert.equal(await page.locator(`label[for="advField${c.i}"]`).count(), 1, 'campo com rótulo associado');
       }
       assert.deepEqual(await U.ecuWrites(page), [], 'abrir e olhar nunca grava');
-      const tamanhoTexto = await page.evaluate(() => Math.min(...[...document.querySelectorAll('.num-field label, .num-box input, .num-unit, .num-meta')].map(e => parseFloat(getComputedStyle(e).fontSize))));
+      const tamanhoTexto = await page.evaluate(() => Math.min(...[...document.querySelectorAll('.num-field label, .num-box input, .num-unit, .num-meta')].filter(e => e.offsetParent).map(e => parseFloat(getComputedStyle(e).fontSize))));
       assert.ok(tamanhoTexto >= 15, 'texto dos campos legível: ' + tamanhoTexto);
       await T.shot(page, `ux-${nome}-campos-editaveis`);
       assert.deepEqual(app.problems.page.concat(app.problems.console), []);
@@ -58,12 +54,12 @@ test('tocar no lápis ou na unidade leva o foco para o campo (o teclado abre ali
   const { page } = app;
   try {
     await U.abrirValores(app);
-    await U.irParaCampo(app, 1);
-    await T.tap(page, '[data-field="1"] .pencil');
-    assert.equal(await page.evaluate(() => document.activeElement?.id), 'advField1');
-    await U.irParaCampo(app, 2);
-    await T.tap(page, '[data-field="2"] .num-unit');
-    assert.equal(await page.evaluate(() => document.activeElement?.id), 'advField2');
+    await U.irParaCampo(app, 0);
+    await T.tap(page, '[data-field="0"] .pencil');
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'advField0');
+    await page.evaluate(() => document.activeElement && document.activeElement.blur());
+    await T.tap(page, '[data-field="0"] .num-unit');
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'advField0');
   } finally { await app.context.close(); }
 });
 
