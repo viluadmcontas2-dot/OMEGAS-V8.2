@@ -32,7 +32,9 @@ Regras permanentes: `docs/REGRAS-DO-DONO.md` e `AGENTS.md`. Quem é o dono e com
 - Possível flake `leveza-orcamento` "200 trocas" (falhou 1x no CI, passou 3x local e no re-run): investigar se repetir. Painel de Ferramentas regrava `data-mode/data-view` iguais; por isso 'tools' está fora do teste de leveza por ora.
 - Teste CSS morto (TODO antigo).
 
-## Telas e interface
+## Pendências por tela
+Lista completa com prova, esforço e prioridade: `docs/produto/lacunas-por-tela.md` (telas existentes só listadas; regra 12).
+- [ ] P1 (ver o arquivo): primeiro uso guiado; Preferências do AutoCal + pergunta da água 80-90 °C; Diagnóstico por item; quando o gás entra; volta por pressão; nível do gás; painel ao vivo completo.
 - [ ] Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem jargão. Em 1024x600 e 800x480 só Sessões e Ferramentas foram redesenhadas; AutoCal, Mapa K e Curva K cortam conteúdo (diagnóstico: `tools/ci/sem_rolagem_abas.cjs`).
 - [ ] AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU", "RPM" e "MAP" (o teste `linguagem-leiga` marca como todo): trocar por "central" e "Rotação".
 - [ ] Bug "Ferramentas vazia" no WebView real: a causa provável (carga preguiçosa) foi removida e há cartão de falha "Não foi possível abrir esta parte"; confirmar no aparelho.
