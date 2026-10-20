@@ -88,7 +88,7 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
 .live-level b { font-size: 14px; }
 .live-level[data-state="unknown"] b { color: #7d8da0; }
 .live-level:not([data-state="unknown"]) b { display: none; }
-.live-level[data-state="reserve"] i:nth-of-type(1) { background: #ff5d5d; border-color: #ff5d5d; box-shadow: 0 0 6px #ff5d5d; animation: live-blink 1s steps(2) infinite; }
+.live-level[data-state="reserve"] i:nth-of-type(1) { background: #ff5d5d; border-color: #ff5d5d; box-shadow: 0 0 6px #ff5d5d; }
 .live-level[data-state="quarter"] i:nth-of-type(-n+2):not(:nth-of-type(1)),
 .live-level[data-state="half"] i:nth-of-type(-n+3):not(:nth-of-type(1)),
 .live-level[data-state="three"] i:nth-of-type(-n+4):not(:nth-of-type(1)),
@@ -118,8 +118,6 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
   .live-level i { width: 9px; height: 9px; }
   .live-source b { font-size: 13px; }
 }
-@keyframes live-blink { 50% { opacity: .35; } }
-@media (prefers-reduced-motion: reduce) { .live-level[data-state="reserve"] i { animation: none !important; } }
 .app-shell.autocal-focus [data-screen="autocal"] { padding: 8px 12px 10px; }
 
 
