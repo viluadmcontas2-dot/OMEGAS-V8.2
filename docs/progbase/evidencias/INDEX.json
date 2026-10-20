@@ -726,5 +726,155 @@
   "sha_commit": "404e83f",
   "usado_por": [],
   "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-001",
+  "afirmacao": "No rodapé do original Press.diff. = Press. − MAP (2,45−0,50=1,95; 2,44−0,44=2,00; 2,42−0,45=1,97; 2,50−0,60=1,90); o gráfico em tempo real traça a diferença (~1,9) sob o nome 'Pressure'.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-002",
+  "afirmacao": "F1 do original (carro de teste, 3 cilindros, 1000 cc, sequencial, Single coil): Type of change-over 'In acceleration', 'Revs. threshold for change-over' 1200 rpm, 'Water temperature for change-over' 40 °C; F6 marca 'Enable change-over with water temperature' e deixa gás e sensor do motor desmarcados.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-003",
+  "afirmacao": "F4 do original: lista 'Type of GAS level sensor' = AEB, 0 - 90 ohm, Landi Renzo, Sensata HD, AEB807A, Non standard, Non standard inverted; em Non standard as referências são Reserve 39, 1/4 93, 2/4 143, 3/4 219 (números crus, nível ao vivo 125) com botões Accept, Set min level, Set max level e Find levels; 'Recognition of full' desmarcada.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-004",
+  "afirmacao": "F9 do original, valores e unidades: Gas injector minimum opening time 2,5 ms; Gas extra-injection minimum opening time 0,1 ms; Extra-injections cutting marcada; Gas injectors timing advance 'disabled'; RPMs for gas injectors driving in cutoff 0 rpm; Gas injection time during cutoff 2,5 ms; Pressure for inj gas activation in cutoff 0 bar; T. petrol max for press. discharge in cutoff 0,8 ms; Enrichment in acceleration 50 (sem unidade na tela); Weakening on Mazda 5 (há um sinal '−' antes da caixa).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-005",
+  "afirmacao": "F7 aba 'Times' do original: Petrol injector dead time 0,6 ms; coluna 'extra-injections' 0 ms (gasolina) e 0 ms (gás); o campo de Gas injector dead time não mostra valor.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-006",
+  "afirmacao": "F8 do original: 'Enable map of petrol contribution' desmarcada, grade 12 x 12 (mesmos eixos rpm x ms do Mapa K) toda 0 e desabilitada, com a nota 'the values are percentage of petrol injection time'.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-007",
+  "afirmacao": "Mapa K do original neste carro: valores crus inteiros iguais em todas as 12 linhas de ms e variando só com o rpm (850=253, 1350=250, 1850=245, 2500=240, 3000=236, 3500 a 6500=226); campo K factor 1,5 desabilitado; ponto azul ao vivo fica na linha do Petrol Tinj. (3,78 ms na linha 3,50; 5,15 ms a 43% entre 4,50 e 6,00).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-008",
+  "afirmacao": "A janela 'Map cell centres of the k coefficients' do original tem 'REVS. columns (rpm)' e 'Time lines (ms)', 12 campos editáveis cada, com OK e Cancel; a primeira linha de ms é 2 (0 ms continua não visto).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-009",
+  "afirmacao": "O AutoCal original ('Automatic ECU calibration') só segue depois da pergunta 'Has engine water temperature reached the value of about 80°C - 90°C?' (Continue/Cancel) e mostra T.água, T.gás, 'Voltage for gas injectors' (13,74 V em marcha lenta), tempos de gás e gasolina e pressão.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-010",
+  "afirmacao": "A tela ECU diagnosis do original lista 14 verificações com código, caixa, estado (todas OK) e ação 'Switch to petrol' (20x injetores de gás, 231 válvula redutora, 190 sensor de pressão do gás, 105 sensor MAP, 180 sensor de temperatura do gás) ou 'None' (600 chave de troca, 460 sensor HP, 181 temperatura do gás baixa com limite -15, isolamento de baixa e de alta pressão, baixa pressão, sobrepressão, plausibilidade de alta pressão, baixa pressão do gás), com Reset errors.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-011",
+  "afirmacao": "A tela Display do original mostra lâmpadas Key-on, Cutoff, Gas e Petrol, Pressure (bar), tempos de gás e de gasolina (ms), Level (125 cru), MAP, temperaturas da água e do gás (°C), 'Voltage for gas injectors' (13,68 V) e Lambda 0 a 5 (n.a.); o gráfico permite ligar/desligar 13 traços (Revs x 1000, Lambda, Gas inj. T, Petrol inj. T, T inj. benz. filter, Pressure, T.gas x 10, T.water x 10, MAP e as versões 2).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-012",
+  "afirmacao": "F3 do original tem só 2 campos: 'Exit from cutoff leaning' 0 % (faixa -100;100) e 'Leaning number of injections' 0.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-013",
+  "afirmacao": "O rodapé da F9 do original mostra ΔRPM ao vivo (1 e 3 na marcha lenta de ~865 rpm) quando o anti-apagão está ligado; a barra lateral do Mapa K chegou a 23,1 % com ΔRPM 3.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-014",
+  "afirmacao": "A grandeza 'Delta RPM' do rodapé da F9 é a mesma dos campos 'Delta RPM' do vetor ANTI_STALLO (fábrica 100), o que sugere queda por leitura em rpm inteiro; a escala real continua não provada (não fecha EV-ANTIAPAGAO-014).",
+  "marca": "INFERIDO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-CAPTURA-015",
+  "afirmacao": "O limiar 'Low pressure value for change back' (1,25 bar) é comparado à Press.diff. (normal ~1,95 bar, folga ~0,7 bar), pois está na mesma faixa de unidades; falta provar (relaciona-se a EV-VOLTAGASOLINA-006).",
+  "marca": "INFERIDO",
+  "fonte": "docs/progbase/capturas/originais/CATALOGO.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8978a3a",
+  "usado_por": [],
+  "uso_pendente": true
  }
 ]
