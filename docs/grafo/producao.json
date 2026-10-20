@@ -328,6 +328,7 @@
     "tests/ui/cartao-marcha-lenta.test.cjs",
     "tests/ui/e2e-avancado-logica.test.cjs",
     "tests/ui/ferramentas-contrato-coerencia.test.cjs",
+    "tests/ui/ferramentas-copy-efeito.test.cjs",
     "tests/ui/ferramentas-paridade-original.test.cjs",
     "tests/ui/ferramentas-sem-rolagem.test.cjs",
     "tests/ui/ferramentas-webview-regression.test.cjs",
@@ -3092,6 +3093,31 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/ferramentas-copy-efeito.test.cjs",
+   "ui:app/src/main/assets/ui/components/advanced.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ferramentas-copy-efeito.test.cjs",
+   "ui:app/src/main/assets/ui/core/advanced-flags-data.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ferramentas-copy-efeito.test.cjs",
+   "ui:app/src/main/assets/ui/core/anti-apagao-valores.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ferramentas-copy-efeito.test.cjs",
+   "ui:app/src/main/assets/ui/core/ferramentas-grupos.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ferramentas-copy-efeito.test.cjs",
+   "ui:app/src/main/assets/ui/core/volta-gasolina.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/ferramentas-grupos.test.cjs",
    "ponte:OmegasAutoCal.applyAntiStalloValues",
    "cobre"
@@ -4704,7 +4730,7 @@
  ],
  "contagem_arestas": {
   "chama": 106,
-  "cobre": 649,
+  "cobre": 654,
   "exibe": 33,
   "sustenta": 66,
   "usa": 14
@@ -4714,7 +4740,7 @@
   "ev": 89,
   "kt": 8,
   "ponte": 112,
-  "teste": 384,
+  "teste": 385,
   "ui": 32
  },
  "desconhecido_sem_uso": [
@@ -7598,6 +7624,10 @@
   },
   "teste:tests/ui/ferramentas-contrato-coerencia.test.cjs": {
    "rotulo": "tests/ui/ferramentas-contrato-coerencia.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/ferramentas-copy-efeito.test.cjs": {
+   "rotulo": "tests/ui/ferramentas-copy-efeito.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/ferramentas-grupos.test.cjs": {
