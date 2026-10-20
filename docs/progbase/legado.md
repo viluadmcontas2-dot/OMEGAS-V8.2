@@ -12,7 +12,7 @@ OBS-COD — contrato `tests/test_missao_final_contract.py`: RED pela presença d
 
 | Arquivo | Destino proposto / estado | Justificativa |
 |---|---|---|
-| `.claude/hooks/codex-primeiro.txt` | Revisar | Correspondência textual não demonstra obsolescência; confirmar autoridade e referências. |
+| `.claude/hooks/regras-do-dono.txt` | Revisar | Correspondência textual não demonstra obsolescência; confirmar autoridade e referências. |
 | `.claude/skills/emular-por-observacao/SKILL.md` | Revisar | Correspondência textual não demonstra obsolescência; confirmar autoridade e referências. |
 | `.github/workflows/ci.yml` | Concluído nesta ação | CI limpa e dividida; APK manual renomeado para apk.yml. |
 | `.github/workflows/verde-apk-now.yml` | Concluído nesta ação | CI limpa e dividida; APK manual renomeado para apk.yml. |

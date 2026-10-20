@@ -1,6 +1,6 @@
 # Regras permanentes do dono (OMEGAS) — fonte canônica
 
-Vale em toda sessão neste repositório. O gancho `.claude/hooks/codex-primeiro.txt` só aponta para cá; o contrato curto está em `AGENTS.md`.
+Vale em toda sessão neste repositório. O gancho `.claude/hooks/regras-do-dono.txt` só aponta para cá; o contrato curto está em `AGENTS.md`.
 Branch canônica: `OMEGASCANONICO` (padrão do GitHub). Estado vivo: `docs/handoff/PENDENTE.md`.
 
 1. **Graphify sempre.** `graphify query` antes de buscar código/docs. Toda captura, descoberta, função feita ou pendente vira nó (índice `docs/progbase/evidencias/INDEX.json` + `graphify update .`). Dois grafos: PESQUISA (ProgBase/evidências) e PRODUÇÃO (só `app/`), cada um com implementado × falta.

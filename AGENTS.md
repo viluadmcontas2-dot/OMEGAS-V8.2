@@ -70,7 +70,7 @@ Não gerar APK sem aprovação explícita do dono. Ordem: mexer → testar → m
 
 ## Fronteiras
 
-- **Codex primeiro (dono, 2026-10-16):** tarefa delegável vai ao Codex (`tools/codex-task.sh`, hook `.claude/hooks/codex-primeiro.txt`); o Claude fica com decisão, junção/push e CI; relato do Codex não é prova.
+- **Codex primeiro (dono, 2026-10-16):** tarefa delegável vai ao Codex (`tools/codex-task.sh`, hook `.claude/hooks/regras-do-dono.txt`); o Claude fica com decisão, junção/push e CI; relato do Codex não é prova.
 - Não alterar bytes nem classes de comando da ECU (`UsbSerialManager`, `ResponseDrivenEcuEngine`, `AutoCalProtocol`, `KFactorManager`, `KWriteManager`, `AutoCalNativeActionManager`) sem autorização do dono.
 - Alvo que não roda aqui (ECU, programa Windows): skill `.claude/skills/emular-por-observacao/SKILL.md` (capturas → parser → esquema → decompilação mínima → emulador → tela renderizada → app real).
 - O programa ativo compara o OMEGAS Platina com o **ProgBase original e seus logs reais**.

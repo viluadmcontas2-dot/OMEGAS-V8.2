@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cat \"$CLAUDE_PROJECT_DIR/.claude/hooks/codex-primeiro.txt\""
+            "command": "cat \"$CLAUDE_PROJECT_DIR/.claude/hooks/regras-do-dono.txt\""
           }
         ]
       }
