@@ -632,6 +632,7 @@
       this.readerSnapshot = {};
       this.acquisitionState = {};
       this.acquisitionSnapshot = {};
+      this.lowRpmFilter = ns.LowRpmFilter?.create?.() || null;
       this.actionState = {};
       this.sessionState = {};
       this.sessions = [];
@@ -929,6 +930,7 @@
       // O AGORA que aparece/some exige redesenhar o gráfico; gráfico com AGORA embutido (reaquisição, sem
       // referência) segue a amostra de ≤ 2 Hz como antes seguia a releitura de 1 s.
       const sample = this.liveTelemetry();
+      this.lowRpmFilter?.observeRpm(AutoCalUxModel.livePoint(sample)?.rpm);
       const liveNow = !!AutoCalUxModel.livePoint(sample);
       const due = this.refreshBusy(reading) || fingerprint !== this.readingKey || liveNow !== this.renderedLive ||
         (this.chartShowsLive === true && !this.originalChart && sample !== this.renderedSample) ||
@@ -1037,6 +1039,19 @@
         ].includes(String(this.actionState?.state || ''));
       this.sessionState = reading.sessionState;
       this.render();
+      this.applyLowRpmFilter();
+    }
+
+    // Ponto que entrou com o motor abaixo de 1000 RPM (ou parado) é apagado na hora, sem pergunta.
+    applyLowRpmFilter() {
+      if (!this.lowRpmFilter || this.operationalPending || this.zoneQueue) return;
+      const snapshot = this.acquisitionSnapshot;
+      if (!snapshot?.available) return;
+      const targets = this.lowRpmFilter.step({
+        GAS: vector(snapshot, 'NUM_BUF_UPD_GAS'),
+        PETROL: vector(snapshot, 'NUM_BUF_UPD_PETR'),
+      });
+      if (targets.length) this.reacquireTargets(targets);
     }
 
     loadSessions() {

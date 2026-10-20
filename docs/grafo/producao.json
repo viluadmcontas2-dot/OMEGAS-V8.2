@@ -188,6 +188,7 @@
     "tests/ui/curva-para-mapa-concluir-curva.test.cjs",
     "tests/ui/e2e-mapak-curvak-automatch.test.cjs",
     "tests/ui/eventos-sem-tempo.test.cjs",
+    "tests/ui/filtro-rpm-baixo.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/manual-automatch-advice.test.cjs",
     "tests/ui/mapa-k-ajuste-local.test.cjs",
@@ -410,6 +411,11 @@
   [
    "aba:base",
    "ui:app/src/main/assets/ui/core/ferramentas-grupos.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
+   "ui:app/src/main/assets/ui/core/low-rpm-filter.js",
    "exibe"
   ],
   [
@@ -3348,6 +3354,16 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/filtro-rpm-baixo.test.cjs",
+   "ui:app/src/main/assets/ui/core/low-rpm-filter.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/filtro-rpm-baixo.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/gasolina-referencia.test.cjs",
    "ui:app/src/main/assets/ui/core/gasoline-reference.js",
    "cobre"
@@ -4860,8 +4876,8 @@
  ],
  "contagem_arestas": {
   "chama": 108,
-  "cobre": 662,
-  "exibe": 34,
+  "cobre": 664,
+  "exibe": 35,
   "sustenta": 80,
   "usa": 14
  },
@@ -4870,8 +4886,8 @@
   "ev": 98,
   "kt": 8,
   "ponte": 114,
-  "teste": 390,
-  "ui": 33
+  "teste": 391,
+  "ui": 34
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -7862,6 +7878,10 @@
    "rotulo": "tests/ui/ferramentas-webview-regression.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/filtro-rpm-baixo.test.cjs": {
+   "rotulo": "tests/ui/filtro-rpm-baixo.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/gasolina-referencia.test.cjs": {
    "rotulo": "tests/ui/gasolina-referencia.test.cjs",
    "tipo": "teste"
@@ -8096,6 +8116,10 @@
   },
   "ui:app/src/main/assets/ui/core/idle-mode.js": {
    "rotulo": "core/idle-mode.js",
+   "tipo": "ui"
+  },
+  "ui:app/src/main/assets/ui/core/low-rpm-filter.js": {
+   "rotulo": "core/low-rpm-filter.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/core/manual-automatch-advice.js": {
