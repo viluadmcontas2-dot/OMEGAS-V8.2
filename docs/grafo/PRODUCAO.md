@@ -46,19 +46,19 @@ Lacunas do CATALOGO já resolvidas: #11.
 - #13 F6 Salvar / F7 Carregar configuração, F8 Ecu programming, F9 Update sc
 - #14 Lambda (F2) e lubrificante
 
-**FALTA — pendências abertas (PENDENTE.md, 27; 12 primeiras):**
-- Interface para leigo na multimídia (paisagem 1280x720, 1024x600, 800x480): estilo da tela 
-- Cartão "Anti-apagão" (ligar/desligar + 5 números editáveis, Restaurar fábrica) — fluxo: pr
-- Cartão "Marcha lenta" (Só gás / Segurar com gasolina na parada / Sempre gasolina na parada
-- Leveza (orçamentos de nós/timers/renders) + testes e2e de toque verdes
-- Limpar menções ao fabricante/legado do app/ (comentários, textos, nomes); pesquisa fica fo
-- Workflows novos sem legado (ci.yml + apk.yml) + tools/auditoria.py + AUDITORIA.json no job
-- Listar com git grep -il "platina\|vermelho\|legado\|landi\|aeb" os .md/workflows/testes/no
-- Mover documentação de pesquisa do fabricante para docs/progbase; app/ sem menção ao fabric
-- Mock-up didático (CONTRATO-CODEX §9) · ECU simulada no original (§1) · guia curto (§3) · w
-- Graphify: rodar graphify update . + tools/grafo_conhecimento.py + tools/progbase/grafo_pro
-- Branches: legadas renomeadas para apagar/ (Codex, ordem do dono); depois que o Codex princ
-- PRIORIDADE 1: bins de RPM/injeção personalizáveis (original × OMEGAS; 0 ms no ajuste local
+**FALTA — pendências abertas (PENDENTE.md, 34; 12 primeiras):**
+- Sugestão ADAPTATIVA do anti-apagão, recalculada por evento (fim de sessão) com as sessões 
+- Semântica dos 4 extras do anti-apagão e unidade de "Queda de rotação" (rpm por ciclo = qua
+- Separar apagão de motor desligado nos logs (17 quedas ambíguas).
+- Provar no fio o quadro 37 33 0C 01 ... do anti-apagão (maior risco): pedir ao dono UMA cap
+- CORREÇÃO DE ESCOPO do dono: o cartão Anti-apagão deve ter INTERRUPTOR + UM número ("Rotaçã
+- Exportação de sessões em um toque, abrindo direto o resumo, com nome do carro e data (o ZI
+- Copy para leigo: revisar todos os erros e avisos e os três tamanhos (1280x720, 1024x600, 8
+- Validar integração Android e suíte completa na CI do SHA enviado. Nenhum novo APK sem orde
+- APK na pasta OMEGAS do Drive: o conector não sobe 4,9 MB; o dono arrasta ou libera gh rele
+- Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem j
+- AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU", "RPM" e "MAP" (o teste li
+- Bug "Ferramentas vazia" no WebView real: a causa provável (carga preguiçosa) foi removida 
 
 **FALTA — evidências DESCONHECIDO sem uso (12):** EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023, EV-BINS-005, EV-BINS-006, EV-BINS-008, EV-COBERTURA-002, EV-TRANSPORTE-010, EV-VOLTAGASOLINA-005, EV-VOLTAGASOLINA-006
 
