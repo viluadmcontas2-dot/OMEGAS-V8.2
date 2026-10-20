@@ -1977,22 +1977,57 @@
     requestZoneReacquisition(fuel, zone) {
       const O = ns.AutoCalOriginal;
       if (!O?.zoneBands || !Number.isInteger(zone) || zone < 0 || zone > 3) return;
-      this.reacquireTargets(O.zoneBands(zone).map(index => ({ fuel, index })));
+      const targets = O.zoneBands(zone).map(index => ({ fuel, index }));
+      // Tenta limpar a zona de uma vez; se a central recusar, apaga um por um (advanceZoneQueue).
+      this.zoneQueue = { mode: 'batch', targets, rest: [], failed: 0, total: targets.length };
+      if (!this.reacquireTargets(targets)) this.zoneQueue = null;
+    }
+
+    /** Continua o botão por zona depois que a central respondeu: lote falhou → um por um; ponto falhou → segue. */
+    advanceZoneQueue(failed) {
+      const q = this.zoneQueue;
+      if (!q) return;
+      if (q.mode === 'batch') {
+        if (!failed) { this.zoneQueue = null; return; }
+        q.mode = 'single';
+        q.rest = q.targets.slice();
+      } else if (failed) {
+        q.failed += 1;
+      }
+      while (q.rest.length) {
+        const next = q.rest.shift();
+        const prepared = this.api?.preparePointDelete?.(next.fuel, next.index);
+        const started = prepared?.ok && prepared?.prepared && this.api.execute(prepared.preparationId)?.ok === true;
+        if (!started) {
+          this.api?.cancelPreparation?.();
+          q.failed += 1;
+          continue;
+        }
+        this.expectActionResult();
+        this.store?.patch?.({ alert: { level: 'working', message: 'Apagando um por um… faltam ' + (q.rest.length + 1) + ' de ' + q.total + '.' } });
+        return;
+      }
+      this.zoneQueue = null;
+      this.store?.patch?.({
+        alert: q.failed
+          ? { level: 'warning', message: 'Zona limpa, mas ' + q.failed + ' de ' + q.total + ' ponto(s) a central não apagou.' }
+          : { level: 'ok', message: 'Zona limpa: ' + q.total + ' ponto(s) apagados um por um.' },
+      });
     }
 
     reacquireTargets(rawTargets) {
       const targets = rawTargets.filter(item => Number.isInteger(item.index));
-      if (!this.api?.available?.() || targets.length === 0) return;
+      if (!this.api?.available?.() || targets.length === 0) return false;
       const prepared = this.api.preparePointDeleteBatch?.(targets) || { ok: false, error: 'Readquisição múltipla indisponível.' };
       if (!prepared?.ok || !prepared?.prepared) {
         this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar os pontos selecionados.' } });
-        return;
+        return false;
       }
       const result = this.api.execute(prepared.preparationId);
       if (result?.ok !== true) {
         this.api?.cancelPreparation?.();
         this.store.patch({ alert: { level: 'warning', message: result?.error || 'Não foi possível iniciar a readquisição selecionada.' } });
-        return;
+        return false;
       }
       const count = targets.length;
       this.pendingPointReacquisitionKeys = new Set(targets.map(item => item.fuel + ':' + item.index));
@@ -2005,6 +2040,7 @@
         },
       });
       this.refresh();
+      return true;
     }
 
     inspectReferencePoint(index) {
@@ -2115,6 +2151,7 @@
       if (this.awaitingActionResult && (failed || name === 'CONFIRMED') && actionSignature(state) !== this.actionBaselineSignature) {
         this.awaitingActionResult = false;
         this.store?.patch?.({ alert: { level: failed ? 'warning' : 'ok', message: text } });
+        this.advanceZoneQueue(failed);
       }
       if (!host) return;
       setData(host, 'level', failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral');

@@ -2489,6 +2489,11 @@
   ],
   [
    "teste:tests/ui/autocal-botao-por-zona.test.cjs",
+   "ponte:OmegasAutoCal.preparePointDelete",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-botao-por-zona.test.cjs",
    "ponte:OmegasAutoCal.preparePointDeleteBatch",
    "cobre"
   ],
@@ -4855,7 +4860,7 @@
  ],
  "contagem_arestas": {
   "chama": 108,
-  "cobre": 661,
+  "cobre": 662,
   "exibe": 34,
   "sustenta": 80,
   "usa": 14
