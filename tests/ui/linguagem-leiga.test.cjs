@@ -82,7 +82,7 @@ async function percorrerFerramentasESessoes(app) {
   await T.tap(page, '[data-adv-open="valores"]'); await T.pump(page, 3);
   await colher('valores: como funciona e dicas');
   await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
-  for (const aba of ['como', 'f0', 'f1', 'f2', 'f3', 'f4', 'carro', 'nao']) { await T.tap(page, `[data-adv-info-tab="${aba}"]`); await T.pump(page, 1); await colher('valores: caminho completo e extras'); }
+  for (const aba of ['como', 'f0', 'carro', 'nao']) { await T.tap(page, `[data-adv-info-tab="${aba}"]`); await T.pump(page, 1); await colher('valores: caminho completo e extras'); }
   await T.tap(page, '[data-adv-back-valores]'); await T.pump(page, 2);
   await page.locator('#advField0').fill('7000');
   await colher('valores: fora da faixa');

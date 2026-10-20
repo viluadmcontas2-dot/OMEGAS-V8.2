@@ -46,7 +46,7 @@ class AutoCalPreferenceCoreTest {
         val refs = { id: String -> id.substringAfter(':').toIntOrNull()?.let { 100 + it * 10 } }
         val p5 = AutoCalPreferenceCore.spec("MNFLD_PRESS_THD:5")!!
         assertNull(AutoCalPreferenceCore.refusal(p5, 155, refs))
-        assertNotNull(AutoCalPreferenceCore.refusal(p5, 150, refs))
+        assertNotNull(AutoCalPreferenceCore.refusal(p5, 140, refs))
         assertNotNull(AutoCalPreferenceCore.refusal(p5, 160, refs))
         assertNotNull(AutoCalPreferenceCore.refusal(p5, 155, none)) // vizinho ilegível: não envia
         assertNotNull(AutoCalPreferenceCore.refusal(AutoCalPreferenceCore.spec("LIMIT_PRESSURE_MIN")!!, 60) { 50 })

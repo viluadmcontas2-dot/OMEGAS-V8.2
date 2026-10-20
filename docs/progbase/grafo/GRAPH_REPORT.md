@@ -2,14 +2,14 @@
 
 Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `graphify query "TFormDiagnosi" --graph docs/progbase/grafo/graph.json`; `graphify path "TFormDiagnosi" "SendCommand" --graph docs/progbase/grafo/graph.json`; índice humano: `docs/progbase/INDEX.md`.
 
-- Nós: 12071 · Arestas: 19122 · Órfãos: 4280 (críticos: 1)
+- Nós: 12091 · Arestas: 19181 · Órfãos: 4286 (críticos: 7)
 
 ## Nós por tipo
-- arquivo_omegas: 45
+- arquivo_omegas: 53
 - captura: 23
 - comando: 34
 - controle: 740
-- doc: 110
+- doc: 122
 - evidencia: 2
 - evidencia_manual: 74
 - formulario: 43
@@ -24,7 +24,7 @@ Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `grap
 ## Arestas por relação
 - abre: 59
 - chama: 9909
-- cita: 107
+- cita: 118
 - cita_evidencia: 95
 - contem: 740
 - definida_em: 40
@@ -36,7 +36,7 @@ Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `grap
 - identifica_pagina: 55
 - implementado_em: 38
 - le_com: 389
-- menciona: 5876
+- menciona: 5924
 - reconstroi: 9
 - rotina: 14
 - visto_em: 24
@@ -62,4 +62,10 @@ Gerado por `tools/progbase/grafo_progbase.py` (determinístico). Consulta: `grap
 - docs/progbase/grafo/ligacoes_manuais.json
 
 ## Órfãos críticos
-- doc:docs/progbase/protocolo/matriz-comando-resposta.md
+- doc:docs/progbase/COBERTURA.md
+- doc:docs/progbase/abas/PROGRESSO-B.md
+- doc:docs/progbase/bins/ANTI-APAGAO-no-log-novo.md
+- doc:docs/progbase/bins/apagoes-em-movimento.md
+- doc:docs/progbase/bins/limiares-em-movimento.md
+- doc:docs/progbase/capturas/originais/LEIA-ME.md
+- doc:docs/progbase/decomp/classificacao-funcoes.md
