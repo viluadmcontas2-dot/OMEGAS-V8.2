@@ -167,12 +167,23 @@
       + '<label class="pref-local-row"><span>Cor do GNV</span><input type="color" data-pref="colorGas" value="' + esc(prefs.colorGas || '#4cd964') + '"></label></div>';
   }
 
+  function learnEffect(v) {
+    return v > 0 ? 'Apaga o ponto que entrar abaixo de ' + v + ' rpm (ou com o carro parado). Só ele, a zona fica.' : 'Desligado: nenhum ponto é apagado.';
+  }
   function learnLocalHtml(prefs) {
+    const v = prefs.minRpmLearn;
+    const chip = n => '<button type="button" class="step-btn pref-chip" data-pref-local-set="minRpmLearn:' + n + '" aria-pressed="' + (v === n) + '">' + (n === 0 ? 'Desligado' : n) + '</button>';
     return '<div class="vv-card pref-card" data-pref-card="minRpmLearn"><label for="pref-minrpm">RPM mínimo para aceitar ponto</label>'
       + '<div class="num-stepper"><button type="button" class="step-btn" data-pref-local-key="minRpmLearn" data-pref-local-step="-100" aria-label="Diminuir RPM mínimo">−</button>'
-      + '<div class="num-box"><input id="pref-minrpm" type="text" inputmode="numeric" data-pref="minRpmLearn" value="' + esc(prefs.minRpmLearn) + '"><span class="num-unit">rpm</span></div>'
+      + '<div class="num-box"><input id="pref-minrpm" type="text" inputmode="none" readonly data-pref="minRpmLearn" value="' + esc(v) + '"><span class="num-unit">rpm</span></div>'
       + '<button type="button" class="step-btn" data-pref-local-key="minRpmLearn" data-pref-local-step="100" aria-label="Aumentar RPM mínimo">+</button></div>'
-      + '<p class="pref-help">Ponto que entrar com o motor abaixo disso (ou parado) é apagado na hora, só ele. 0 desliga. Vale neste aparelho.</p></div>';
+      + '<div class="pref-chips" role="group" aria-label="Atalhos de RPM mínimo">' + [0, 800, 1000, 1200, 1500].map(chip).join('') + '</div>'
+      + '<p class="pref-help" data-pref-effect="minRpmLearn" role="status">' + esc(learnEffect(v)) + '</p></div>';
+  }
+  function syncLearn(body, v) {
+    const i = body.querySelector('[data-pref="minRpmLearn"]'); if (i) i.value = v;
+    const e = body.querySelector('[data-pref-effect="minRpmLearn"]'); if (e) e.textContent = learnEffect(v);
+    body.querySelectorAll('[data-pref-local-set^="minRpmLearn:"]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.prefLocalSet.split(':')[1]) === v)));
   }
 
   function groupHtml(g, state) {
@@ -237,10 +248,16 @@
       if (t.dataset.prefSave) { const id = t.dataset.prefSave; if (state.drafts[id] != null) commit(id, state.drafts[id]); return; }
       if (t.dataset.prefSet) { const [id, v] = t.dataset.prefSet.split(':'); commit(id, Number(v)); return; }
       if (t.dataset.prefUndo) { const id = t.dataset.prefUndo; const back = state.notes[id]?.undo; if (Number.isInteger(back)) { const keep = back; commit(id, keep); if (state.notes[id]) { state.notes[id].undo = null; state.notes[id].text = 'Desfeito.'; repaint(id); } } return; }
+      if (t.dataset.prefLocalSet) {
+        const [key, v] = t.dataset.prefLocalSet.split(':');
+        if (key === 'minRpmLearn') { state.prefs.minRpmLearn = clampLocal(key, Number(v)); syncLearn(body, state.prefs.minRpmLearn); save(state.prefs); applyToDom(state.prefs, doc); notify(); }
+        return;
+      }
       if (t.dataset.prefLocalStep) {
         const key = t.dataset.prefLocalKey === 'minRpmLearn' ? 'minRpmLearn' : 'refreshMs';
         state.prefs[key] = clampLocal(key, state.prefs[key] + Number(t.dataset.prefLocalStep));
         const input = body.querySelector('[data-pref="' + key + '"]'); if (input) input.value = state.prefs[key];
+        if (key === 'minRpmLearn') syncLearn(body, state.prefs[key]);
         save(state.prefs); applyToDom(state.prefs, doc); notify();
       }
     });

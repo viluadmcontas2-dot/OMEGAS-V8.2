@@ -103,3 +103,14 @@ test('preferência minRpmLearn: padrão 1000, cartão no grupo Aprendizado, limi
   assert.match(html, /data-pref="minRpmLearn"/);
   assert.match(html, /RPM mínimo/);
 });
+
+test('RPM mínimo sem teclado: valor só leitura, atalhos de um toque e frase do efeito', () => {
+  const P = require(path.join(root, 'app/src/main/assets/ui/core/autocal-preferencias.js'));
+  const html = P.panelHtml({ prefs: P.DEFAULTS, values: {}, drafts: {}, notes: {} });
+  const campo = html.match(/<input[^>]*data-pref="minRpmLearn"[^>]*>/)[0];
+  assert.match(campo, /readonly/);
+  assert.match(campo, /inputmode="none"/);
+  for (const v of [0, 800, 1000, 1200, 1500]) assert.match(html, new RegExp('data-pref-local-set="minRpmLearn:' + v + '"'));
+  assert.match(html, /Apaga o ponto que entrar abaixo de 1000 rpm/);
+  assert.match(P.panelHtml({ prefs: Object.assign({}, P.DEFAULTS, { minRpmLearn: 0 }), values: {}, drafts: {}, notes: {} }), /Desligado: nenhum ponto é apagado/);
+});

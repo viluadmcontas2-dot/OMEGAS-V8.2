@@ -2259,6 +2259,10 @@
 .pref-card { padding: 10px; border: 1px solid rgba(120,170,230,.2); border-radius: 10px; background: rgba(13,22,32,.7); display: flex; flex-direction: column; gap: 6px; }
 .pref-card label { font-size: 13px; color: #e3edf8; }
 .pref-help, .pref-tech, .pref-note { margin: 0; font-size: 11px; color: #a9b6c4; }
+.pref-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pref-chip { min-height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid #3a4a5c; background: transparent; color: #cdd8e3; font-size: 12px; }
+.pref-chip[aria-pressed="true"] { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+.pref-chip:focus-visible { outline: 2px solid #8ab4ff; outline-offset: 2px; }
 .pref-note[data-kind="error"] { color: #ff9b9b; }
 .pref-note[data-kind="ok"] { color: #8fe3a4; }
 .pref-switch, .pref-actions, .pref-local-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
