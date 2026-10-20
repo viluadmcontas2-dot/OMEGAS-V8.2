@@ -8,7 +8,7 @@
 
 # OMEGAS — Status
 
-Canônica: **`OmegasVermelho`** (dono, 2026-10-16). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
+Canônica: **`claude/carregar-sessao-r7j85r`** (ativa desde 2026-10-20; `OmegasVermelho` está contida nela). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
 ## Último APK (2026-10-18, v7: o app NÃO grava sozinho)
 
@@ -49,7 +49,7 @@ Fase 1 do plano (porta de gravação no toque, Curva→Mapa recuperável, persis
 Histórico (Platina, até 2026-10-02):
 ## Active control surface
 
-- Branch: `OmegasVermelho`
+- Branch: `claude/carregar-sessao-r7j85r`
 - Estado: `FINAL RELEASE CANDIDATE — PROGBASE HOST CONTRACT V2 LOCKED — SAME-SHA GATES + APK BUILD`
 - Autoridade: GitHub remoto no HEAD resolvido antes de qualquer escrita.
 

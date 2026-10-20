@@ -7,10 +7,10 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
-def test_active_authority_is_omegas_vermelho():
-    assert "Branch autorizada: `OmegasVermelho`" in read("PROJECT.md")
-    assert "resolver HEAD remoto de `OmegasVermelho`" in read("AGENTS.md")  # canônica: Vermelho (dono, 2026-10-16)
-    assert "Branch: `OmegasVermelho`" in read("STATUS.md")
+def test_active_authority_is_branch_ativa():
+    assert "Branch autorizada: `claude/carregar-sessao-r7j85r`" in read("PROJECT.md")
+    assert "resolver HEAD remoto de `claude/carregar-sessao-r7j85r`" in read("AGENTS.md")  # ativa e canônica (2026-10-20)
+    assert "Branch: `claude/carregar-sessao-r7j85r`" in read("STATUS.md")
 
 
 def test_only_two_workflows_exist_and_ci_preserves_all_groups():
@@ -64,7 +64,7 @@ def test_status_keeps_gap_classification_fail_closed():
     assert "contador anterior UNKNOWN" in status
 
 if __name__ == "__main__":
-    test_active_authority_is_omegas_vermelho()
+    test_active_authority_is_branch_ativa()
     test_only_two_workflows_exist_and_ci_preserves_all_groups()
     test_apk_workflow_is_manual_gated_and_not_push_triggered()
     test_v7_predictor_suggestion_cannot_start_writer()
