@@ -102,11 +102,12 @@ test('sessões: 3 por página, "Salvar arquivo" por sessão, configuração dent
   assert.doesNotMatch(out, /ECU|USB bruto|Telemetria salva|ZIP/);
 });
 
-test('Ferramentas: um cartão por função e os botões de backup mantêm os ids', () => {
+test('Ferramentas: um cartão por função; só "Cópia de segurança" (sem aprendizado de outro arquivo)', () => {
   const { hosts, drawers, state } = harness();
   drawers.view = 'home';
   drawers.renderTools(state);
   const out = hosts.toolDiagnosticsWorkspace.innerHTML;
-  for (const id of ['toolExportData', 'toolExportLearning', 'toolImportLearning', 'toolAutoRefine', 'toolBufferProbe']) assert.match(out, new RegExp('id="' + id + '"'));
-  assert.equal((out.match(/class="tool-tile/g) || []).length, 8);
+  for (const id of ['toolExportData', 'toolAutoRefine', 'toolBufferProbe']) assert.match(out, new RegExp('id="' + id + '"'));
+  for (const id of ['toolExportLearning', 'toolImportLearning']) assert.doesNotMatch(out, new RegExp('id="' + id + '"'), 'removido a pedido do dono (2026-10-19): o app usa a telemetria atual');
+  assert.equal((out.match(/class="tool-tile/g) || []).length, 6);
 });

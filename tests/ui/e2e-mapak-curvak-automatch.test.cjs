@@ -112,7 +112,7 @@ async function cenarioSuavizar(app, shot) {
   await T.tap(page, '#curveSmoothButton'); await T.pump(page, 4);
   assert.deepEqual(await writes(page), [], 'Suavizar só prepara a prévia');
   assert.deepEqual(await ECU_CURVA(page), antes, 'a Curva K da ECU não mudou');
-  assert.match(await txt(page, '#curveReviewButton'), /Gravar \d+ pontos? na ECU/);
+  assert.match(await txt(page, '#curveReviewButton'), /Gravar \d+ pontos? na central/);
   assert.equal(await page.locator('#curveReviewButton').isDisabled(), false);
   if (shot) await shot('curva-1-suavizar-previa');
   await ciclos(page, 500); await T.pump(page, 3);
@@ -164,7 +164,7 @@ test('mutação: AutoMatch enviado sozinho quando a cota atinge -> o cenário de
 });
 
 test('mutação: Suavizar gravando direto -> o cenário "só prévia" FALHA', { skip }, async () => {
-  const dir = T.mutatedUi([['screens/curve.js', "this.alert('Confira os pontos preparados; nada foi gravado. Para aplicar, toque em Gravar na ECU.');", 'this.writePrepared();']]);
+  const dir = T.mutatedUi([['screens/curve.js', "this.alert('Confira os pontos preparados; nada foi gravado. Para aplicar, toque em Gravar na central.');", 'this.writePrepared();']]);
   const app = await T.openApp(browser, { ui: dir, usb: true, viewport: { width: 1280, height: 720 } });
   try {
     await assert.rejects(() => cenarioSuavizar(app, null), assert.AssertionError);

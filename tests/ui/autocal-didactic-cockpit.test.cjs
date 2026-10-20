@@ -162,7 +162,7 @@ assert.equal(
 );
 assert.equal(
   model.referenceSourceLabel({ source: 'NONE', freshness: 'STALE_SESSION' }),
-  'Sem fonte atual · aguardando leitura nova da ECU',
+  'Sem fonte atual · aguardando leitura nova da central',
 );
 
 assert.equal(typeof model.bandNarrative, 'function', 'mensagem da região deve ser testável sem DOM');

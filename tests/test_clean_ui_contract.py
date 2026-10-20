@@ -100,7 +100,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('id="mapReviewBack"', self.html)
         # (dono, 2026-10-11: texto para leigo): "Gravado e conferido na ECU." só com BATCH_CONFIRMED + readbackValid.
         self.assertIn("operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)", self.map_screen)
-        self.assertIn('Gravado na ECU.', self.map_screen)
+        self.assertIn('Gravado na central.', self.map_screen)
         self.assertNotIn('window.Android', self.map_screen)
         self.assertNotIn('protocolTransaction', self.map_screen)
 
@@ -119,7 +119,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('id="curveReviewBack"', self.html)
         # (dono, 2026-10-11: texto para leigo): o texto visível é "Gravado e conferido na ECU."; o sucesso continua exigindo ACK + readback.
         self.assertIn("operation.state === 'BATCH_CONFIRMED' && (operation.readbackValid === true || operation.acked === true)", self.curve_screen)
-        self.assertIn('Gravado na ECU.', self.curve_screen)
+        self.assertIn('Gravado na central.', self.curve_screen)
         self.assertNotIn('window.Android', self.curve_screen)
         self.assertNotIn('protocolTransaction', self.curve_screen)
 
@@ -128,7 +128,7 @@ class CleanUiContract(unittest.TestCase):
         self.assertNotIn('startKBatchWrite(', self.refino_screen)
         self.assertIn("data-refino-confirm", self.refino_screen)
         self.assertIn("state === 'BATCH_CONFIRMED' && done.readbackValid === true", self.refino_screen)
-        self.assertIn('A Curva K da ECU mudou', self.refino_screen)
+        self.assertIn('A Curva K da central mudou', self.refino_screen)
 
     def test_native_api_is_single_bridge_surface(self):
         self.assertIn('class NativeApi', self.native_api)

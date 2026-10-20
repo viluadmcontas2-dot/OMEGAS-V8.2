@@ -37,7 +37,7 @@ class Block1SessionContract(unittest.TestCase):
         self.assertIn('id="mapReviewButton"', self.html)
         self.assertIn('id="curveReviewButton"', self.html)
         # (dono, 2026-10-11: texto para leigo): um toque em Gravar; a conferência na ECU é automática.
-        self.assertIn('Confira os números e toque em Gravar; o app confere na ECU sozinho.', self.html)
+        self.assertIn('Confira os números e toque em Gravar; o app confere na central sozinho.', self.html)
         self.assertIn('Uma confirmação', self.html)
         self.assertNotIn('id="mapWriteButton"', self.html)
         self.assertNotIn('id="curveWriteButton"', self.html)
