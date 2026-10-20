@@ -263,6 +263,7 @@
     "tests/ui/ferramentas-webview-regression.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
+    "tests/ui/sem-teclado-obrigatorio.test.cjs",
     "tests/ui/sonda-escrita-pontos.test.cjs"
    ],
    "ui": [
@@ -342,6 +343,7 @@
     "tests/ui/idle-mode.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
+    "tests/ui/sem-teclado-obrigatorio.test.cjs",
     "tests/ui/sonda-escrita-pontos.test.cjs",
     "tests/ui/todas-as-telas-no-arranque.test.cjs",
     "tests/ui/ux-fluxo-toque.test.cjs",
@@ -4054,6 +4056,21 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/sem-teclado-obrigatorio.test.cjs",
+   "ui:app/src/main/assets/ui/components/advanced.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/sem-teclado-obrigatorio.test.cjs",
+   "ui:app/src/main/assets/ui/components/drawers.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/sem-teclado-obrigatorio.test.cjs",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/sonda-escrita-pontos.test.cjs",
    "ponte:OmegasAutoCal.getBufferWriteProbeStatus",
    "cobre"
@@ -4881,7 +4898,7 @@
  ],
  "contagem_arestas": {
   "chama": 108,
-  "cobre": 665,
+  "cobre": 668,
   "exibe": 35,
   "sustenta": 80,
   "usa": 14
@@ -4891,7 +4908,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 114,
-  "teste": 391,
+  "teste": 392,
   "ui": 34
  },
  "desconhecido_sem_uso": [
@@ -8013,6 +8030,10 @@
   },
   "teste:tests/ui/sem-roxo.test.cjs": {
    "rotulo": "tests/ui/sem-roxo.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/sem-teclado-obrigatorio.test.cjs": {
+   "rotulo": "tests/ui/sem-teclado-obrigatorio.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/sonda-escrita-pontos.test.cjs": {
