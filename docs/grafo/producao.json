@@ -639,6 +639,26 @@
    "sustenta"
   ],
   [
+   "ev:EV-ANTIAPAGAO-025",
+   "teste:tests/test_progbase_antiapagao_original.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-ANTIAPAGAO-026",
+   "teste:tests/test_progbase_antiapagao_original.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-ANTIAPAGAO-027",
+   "teste:tests/test_progbase_antiapagao_original.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-ANTIAPAGAO-028",
+   "teste:tests/test_progbase_antiapagao_original.py",
+   "sustenta"
+  ],
+  [
    "ev:EV-BINS-001",
    "teste:tests/ui/mapa-k-ajuste-local.test.cjs",
    "sustenta"
@@ -4463,15 +4483,15 @@
   "chama": 105,
   "cobre": 629,
   "exibe": 31,
-  "sustenta": 41,
+  "sustenta": 45,
   "usa": 14
  },
  "contagem_nos": {
   "aba": 9,
-  "ev": 77,
+  "ev": 83,
   "kt": 8,
   "ponte": 110,
-  "teste": 374,
+  "teste": 375,
   "ui": 30
  },
  "desconhecido_sem_uso": [
@@ -4480,6 +4500,7 @@
   "EV-ANTIAPAGAO-020",
   "EV-ANTIAPAGAO-022",
   "EV-ANTIAPAGAO-023",
+  "EV-ANTIAPAGAO-030",
   "EV-BINS-005",
   "EV-BINS-006",
   "EV-BINS-008",
@@ -4502,6 +4523,8 @@
     "EV-ANTIAPAGAO-020",
     "EV-ANTIAPAGAO-022",
     "EV-ANTIAPAGAO-023",
+    "EV-ANTIAPAGAO-029",
+    "EV-ANTIAPAGAO-030",
     "EV-BINS-002",
     "EV-BINS-003",
     "EV-BINS-004",
@@ -4906,6 +4929,42 @@
    "afirmacao": "O corpus tem 89 sessões com telemetria (12,3 h) com 20 apagões em movimento, 35 quase-apag",
    "marca": "DERIVADO",
    "rotulo": "EV-ANTIAPAGAO-024",
+   "tipo": "ev"
+  },
+  "ev:EV-ANTIAPAGAO-025": {
+   "afirmacao": "Executando CheckAntiStalloClick/0x42E8D8 no Unicorn, o original manda 35 FA 00 20 00 00 00",
+   "marca": "OBS-COD",
+   "rotulo": "EV-ANTIAPAGAO-025",
+   "tipo": "ev"
+  },
+  "ev:EV-ANTIAPAGAO-026": {
+   "afirmacao": "Enter num EditAntiStallo<i> (0x4C97D8) chama 0x979E48(ANTI_STALLO, DataIndex, valor inteir",
+   "marca": "OBS-COD",
+   "rotulo": "EV-ANTIAPAGAO-026",
+   "tipo": "ev"
+  },
+  "ev:EV-ANTIAPAGAO-027": {
+   "afirmacao": "O original envia o quadro do campo mesmo quando o valor não mudou (1600 -> 1600 gera 14 33",
+   "marca": "OBS-COD",
+   "rotulo": "EV-ANTIAPAGAO-027",
+   "tipo": "ev"
+  },
+  "ev:EV-ANTIAPAGAO-028": {
+   "afirmacao": "Divergência: o app grava o vetor 307 inteiro com 37 33 0C 01 <10 bytes> <soma>; o original",
+   "marca": "DERIVADO",
+   "rotulo": "EV-ANTIAPAGAO-028",
+   "tipo": "ev"
+  },
+  "ev:EV-ANTIAPAGAO-029": {
+   "afirmacao": "O ΔRPM do rodapé da F9 é IntToStr de um s16 cru lido em TStreamDati+0x293C+0x1E (resposta ",
+   "marca": "OBS-COD",
+   "rotulo": "EV-ANTIAPAGAO-029",
+   "tipo": "ev"
+  },
+  "ev:EV-ANTIAPAGAO-030": {
+   "afirmacao": "Qual código vai no pedido 48 que traz o ΔRPM, o período de amostragem da central e o efeit",
+   "marca": "DESCONHECIDO",
+   "rotulo": "EV-ANTIAPAGAO-030",
    "tipo": "ev"
   },
   "ev:EV-BINS-001": {
@@ -6804,6 +6863,10 @@
   },
   "teste:tests/test_progbase_abas_b.py": {
    "rotulo": "tests/test_progbase_abas_b.py",
+   "tipo": "teste"
+  },
+  "teste:tests/test_progbase_antiapagao_original.py": {
+   "rotulo": "tests/test_progbase_antiapagao_original.py",
    "tipo": "teste"
   },
   "teste:tests/test_progbase_autocal_action_map_contract.py": {
