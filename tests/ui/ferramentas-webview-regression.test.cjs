@@ -338,7 +338,7 @@ test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU s
         'navegação deixou mais de uma tela aberta ou nenhuma: ' + name);
       if (name === 'tools') {
         await page.waitForSelector('#toolAdvanced [data-card="anti"]', { state: 'visible' });
-        assert.equal(await page.locator('#toolAdvanced .tool-tile').count(), 7,
+        assert.equal(await page.locator('#toolAdvanced .tool-tile').count(), 8,   // 7 assuntos + "Outras configurações" (2026-10-20)
           'Ferramentas perdeu cartões após navegar: ' + name);
         assert.equal(await page.locator('[data-tools-retry], [data-adv-retry]').count(), 0);
       }
@@ -354,7 +354,7 @@ test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU s
     await T.pump(page, 2);
     await T.tap(page, '[data-adv-open="corte"]');
     await T.pump(page, 2);
-    assert.match(await page.locator('.read-view').innerText(), /Gasolina ao sair do corte.*3 injeções/s);
+    assert.match(await page.locator('.read-view').innerText(), /Gasolina ao sair do corte.*3\s+injeções/s);
     assert.deepEqual(T.writesOf((await T.frames(page)).log), [],
       'simular leituras e navegar não pode emitir gravação na ECU');
   } finally { await app.context.close(); }
@@ -397,6 +397,6 @@ test('RED: ler Ferramentas nao precisa de confirmacao e nao consulta sua ponte e
     await T.route(app, 'tools');
     assert.ok((await page.evaluate(() => window.__toolsReads)) > afterOutside,
       'ao voltar, a leitura deve ocorrer automaticamente, sem acao ou confirmacao extra');
-    assert.equal(await page.locator('#toolAdvanced .tool-tile').count(), 7);
+    assert.equal(await page.locator('#toolAdvanced .tool-tile').count(), 8);
   } finally { await app.context.close(); }
 });

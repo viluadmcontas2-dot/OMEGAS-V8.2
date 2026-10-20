@@ -9,7 +9,7 @@ const U = require('./helpers/ux-cenarios.cjs');
 
 const skip = T.skipReason() || false;
 const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
-const TITULOS_P1 = ['Anti-apagão', 'Valores do anti-apagão', 'Saída do corte', 'Marcha lenta', 'Troca de gasolina para gás', 'Injetores', 'Volta para gasolina'];
+const TITULOS_P1 = ['Anti-apagão', 'Valores do anti-apagão', 'Saída do corte', 'Marcha lenta', 'Troca de gasolina para gás', 'Injetores', 'Volta para gasolina', 'Outras configurações'];
 const TITULOS_P2 = ['Cópia de segurança', 'Refino automático', 'Bateria', 'Balão sobre outros apps', 'Registro do app'];
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
@@ -44,7 +44,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       assert.ok(alvo.height >= 56 && alvo.width >= 56, `interruptor ≥ 56 px: ${alvo.width}x${alvo.height}`);
       for (const tile of await page.locator('#toolAdvanced .tool-tile').all()) {
         const t = (await tile.innerText()).replace(/\s+/g, ' ');
-        assert.match(t, /Ligado|Desligado|De fábrica|Mudados|Só gás|Segurar com gasolina|Sempre gasolina|injeções|—/, 'cartão sem estado escrito: ' + t);
+        assert.match(t, /Ligado|Desligado|De fábrica|Mudados|Só gás|Segurar com gasolina|Sempre gasolina|injeções|Só leitura|—/, 'cartão sem estado escrito: ' + t);
       }
 
       // ---- anti-apagão: SEM ATRITO, um toque liga (sem janela de pergunta)
@@ -65,7 +65,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
 
       // ---- cartão só de leitura
       await T.tap(page, '[data-adv-open="troca"]'); await T.pump(page, 3);
-      assert.match(await U.text(page, '.read-view'), /Troca de gasolina para gás.*Um cilindro por vez Ligado/);
+      assert.match(await U.text(page, '.read-view'), /Troca entre gasolina e gás.*Um cilindro por vez Ligado/);
       assert.equal(await page.locator('.read-view details.tool-tech').count(), 1, 'um único "Ver detalhes técnicos"');
       assert.equal(await page.locator('.read-view details.tool-tech').evaluate(e => e.open), false, 'recolhido');
       await foto('4-cartao-de-leitura');

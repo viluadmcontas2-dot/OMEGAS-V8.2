@@ -26,11 +26,12 @@
       this.V = ns.AntiApagaoValores;
       this.M = ns.CartoesMotor;
       this.VG = ns.VoltaGasolina;   // opcional: sem ele o cartão "Volta para gasolina" vira só leitura
+      this.G = ns.FerramentasGrupos; // páginas de grupo (dono, 2026-10-20): tudo do assunto numa página só
       this.voltaDrafts = {};        // { mbar?, segundos? } ainda não salvos
       this.screen = document.getElementById('toolsDrawer');
       this.host = document.getElementById('toolAdvanced');
       this.open = true;          // a página 1 de Ferramentas existe sempre; só desenha quando a aba está à vista
-      this.view = 'home';        // 'home' | 'valores' | id de um cartão de leitura
+      this.view = 'home';        // 'home' | 'valores' (grupo anti-apagão) | 'info' | 'volta' | 'troca' | 'lenta' | 'outras'
       this.data = { read: false, params: {} };
       this.drafts = {};          // índice -> texto digitado
       this.signature = '';
@@ -160,7 +161,7 @@
         const changes = this.V.factoryChanges(current);
         this.flag.cancel(); this.drafts = {};
         if (Object.keys(changes).length) this.vals.ask('factory', changes, this.usb());
-      } else if (t.matches('[data-volta-step], [data-volta-wait], [data-volta-save], [data-volta-toggle], [data-volta-undo]')) { this.voltaTap(t); }
+      } else if (t.matches('[data-volta-step], [data-volta-toggle], [data-volta-undo]')) { this.voltaTap(t); }
       else if (t.matches('[data-adv-open-view]')) { this.view = t.dataset.advOpenView; this.setView(); }
       else if (t.matches('[data-adv-back-valores]')) { this.view = 'valores'; this.setView(); }
       else if (t.matches('[data-adv-use-suggestion]')) {
@@ -170,8 +171,8 @@
       } else if (t.matches('[data-adv-open-info-tab]')) { this.infoTab = t.dataset.advOpenInfoTab; this.view = 'info'; this.setView(); }
       else if (t.matches('[data-adv-info-tab]')) { this.infoTab = t.dataset.advInfoTab; }
       else if (t.matches('[data-adv-open]')) {
-        this.view = t.dataset.advOpen;
-        if (this.view === 'volta') { this.voltaDrafts = {}; this.voltaRefused = ''; this.voltaReadAsked = false; this.loadData(); }
+        this.view = (this.G && this.G.groupOf(t.dataset.advOpen)) || t.dataset.advOpen;
+        if (this.view === 'volta') { this.voltaDrafts = {}; this.voltaRefused = ''; this.voltaReadAsked = false; this.voltaAgain = false; this.voltaSent = false; this.loadData(); }
         if (this.view === 'valores') {
           this.resetDrafts();
           // A solicitação de leitura nasce do toque, não depende de um novo
@@ -323,7 +324,7 @@
         return;
       }
       // Volta: a releitura da central chega pela ponte junto com o fim da gravação; relê aqui para a tela nunca mostrar o valor velho.
-      if (this.view === 'volta') this.loadData();
+      if (this.view === 'volta') { this.loadData(); this.voltaSettle(); }
       const signature = JSON.stringify([this.view, this.data, this.usb(), this.hasBridge(), fv.phase, fv.message, vv.phase, vv.message, vv.undo, this.isValuesView() ? [this.drafts, this.infoTab] : null,
         this.view === 'volta' ? [this.voltaStatus(), this.voltaDrafts, this.voltaRefused] : null]);
       if (signature === this.signature && this.host.childElementCount) return;
@@ -344,7 +345,7 @@
             : this.view === 'valores' ? this.renderValues(cards)
             : this.view === 'info' ? this.renderInfo()
             : this.view === 'volta' && this.VG ? this.renderVolta(cards.find(c => c.id === 'volta'))
-            : this.renderReadOnly(cards.find(c => c.id === this.view));
+            : this.renderReadOnly(this.view, cards);
         } catch (error) {
           if (this.view === 'home') throw error;
           // Uma tela interna que não abre não pode prender o dono nela: volta aos cartões (que têm barreira própria).
@@ -369,22 +370,20 @@
       return `<article class="tool-tile" data-card="${escapeHtml(id)}"><h3>Leitura indisponível</h3><p class="tile-line reason">Esta parte não pôde ser exibida. As outras continuam disponíveis.</p></article>`;
     }
 
-    renderHome(cards) {
-      return cards.map(card => {
-        try {
-        if (card.kind === 'switch') {
-          const fv = this.flag.view();
-          const busy = ['preparing', 'writing'].includes(fv.phase);
-          const why = this.reason('flag');
-          // Todo resultado (ok, "já está ligado", recusa, cabo solto, incerto) vai na linha do próprio cartão: sem janela, sem 2º toque.
-          const failed = fv.phase === 'error' && fv.message ? fv.message : '';
-          const note = busy ? 'Gravando e conferindo…' : (['idle', 'done'].includes(fv.phase) && fv.message ? fv.message : '');
-          const line = failed || why || note || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : card.line);
-          const shortLine = failed || why || note || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : (card.shortLine || card.line));
-          const state = card.on === null ? 'unknown' : card.on ? 'on' : 'off';
-          const action = card.on === null ? 'Conferir e ligar' : card.on ? 'Desligar anti-apagão' : 'Ligar anti-apagão';
-          return `
-        <article class="tool-tile" data-card="${card.id}" data-state="${state}" data-actionable="${!why && !busy}">
+    /** Interruptor do anti-apagão: o mesmo cartão na tela inicial e na página do grupo. Um toque = a ordem; tudo na linha do cartão. */
+    switchCardHtml(card, extra = '') {
+      const fv = this.flag.view();
+      const busy = ['preparing', 'writing'].includes(fv.phase);
+      const why = this.reason('flag');
+      // Todo resultado (ok, "já está ligado", recusa, cabo solto, incerto) vai na linha do próprio cartão: sem janela, sem 2º toque.
+      const failed = fv.phase === 'error' && fv.message ? fv.message : '';
+      const note = busy ? 'Gravando e conferindo…' : (['idle', 'done'].includes(fv.phase) && fv.message ? fv.message : '');
+      const line = failed || why || note || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : card.line);
+      const shortLine = failed || why || note || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : (card.shortLine || card.line));
+      const state = card.on === null ? 'unknown' : card.on ? 'on' : 'off';
+      const action = card.on === null ? 'Conferir e ligar' : card.on ? 'Desligar anti-apagão' : 'Ligar anti-apagão';
+      return `
+        <article class="tool-tile${extra}" data-card="${card.id}" data-item="${card.id}" data-kind="switch" data-state="${state}" data-actionable="${!why && !busy}">
           <h3>${escapeHtml(card.title)}</h3>
           <p class="tile-line${why && !failed ? ' reason' : ''}"${failed ? ' data-level="warn" role="status"' : ''}><span class="tile-full">${escapeHtml(line)}</span><span class="tile-compact">${escapeHtml(shortLine)}</span></p>
           <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(action)}. Estado atual: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
@@ -392,7 +391,12 @@
           </button>
           ${fv.undo.available && ['done', 'idle'].includes(fv.phase) ? '<button type="button" class="tile-undo" data-adv-undo-flag>Desfazer</button>' : ''}
         </article>`;
-        }
+    }
+
+    renderHome(cards) {
+      const tiles = cards.map(card => {
+        try {
+        if (card.kind === 'switch') return this.switchCardHtml(card);
         const go = card.kind === 'values' ? `Mudar valores ${PENCIL}` : 'Ver ›';
         // Falha, parcial ou incerto dos 5 números continua à vista no cartão, mesmo fora da tela de valores.
         const vv = card.kind === 'values' ? this.vals.view() : null;
@@ -409,13 +413,22 @@
           this.cardFailed = true;
           return this.errorCard(card?.id || 'parte');
         }
-      }).join('');
+      });
+      // 8º cartão (o lugar vazio da grade): as configurações que o app lê e ainda não muda, todas numa página.
+      if (this.G) tiles.push(`
+        <button type="button" class="tool-tile tool-open" data-card="outras" data-adv-open="outras" data-state="neutral">
+          <h3>Outras configurações</h3>
+          <p class="tile-line"><span class="tile-full">Tudo o que o app lê da central e ainda não muda.</span><span class="tile-compact">O que o app só lê.</span></p>
+          <span class="tile-state">Só leitura</span>
+          <span class="tile-go">Ver ›</span>
+        </button>`);
+      return tiles.join('');
     }
 
     /** Card de um ajuste: − / + gravam na hora. Todos os cinco ficam expostos, cada um no seu card. */
     cardHtml(f, values) {
       return `
-        <div class="num-field vv-card" data-field="${f.index}" data-invalid="false" data-changed="false" data-main="${f.index === 0}">
+        <div class="num-field vv-card grp-card" data-kind="edit" data-item="av-${f.index}" data-field="${f.index}" data-invalid="false" data-changed="false" data-main="${f.index === 0}">
           <label for="advField${f.index}">${escapeHtml(f.label)}${f.index === 0 ? '' : ' <small>(experimental)</small>'}</label>
           <div class="num-stepper">
             <button type="button" class="step-btn" data-adv-step="${f.index}:-1" aria-label="Diminuir ${f.step} ${escapeHtml(f.unit)}" ${values ? '' : 'disabled'}>− ${f.step}</button>
@@ -459,31 +472,51 @@
       return { level, text };
     }
 
-    /** Tela única: os 5 ajustes em cards + o card "Como funciona". Sem rolagem, sem botão Gravar, sem "extras". */
+    /** Casca comum das páginas de grupo (modelo da tela "Valores do anti-apagão"): Voltar + título + linha de estado; grade de cartões
+     *  (rola só na vertical); rodapé de botões juntos à esquerda. */
+    groupPage({ group, cls = '', dataCard, title, status, cards, gridCls = '', actions = '' }) {
+      const [level, text] = status || ['idle', ''];
+      return `
+        <section class="tool-view grp-view ${cls}" data-group="${group}" data-card="${dataCard || group}">
+          <header class="grp-head"><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>${escapeHtml(title)}</h3><p class="grp-status vv-status" data-level="${level}" role="status">${escapeHtml(text)}</p></header>
+          <div class="grp-grid ${gridCls}">${cards}</div>
+          ${actions.trim() ? `<div class="btn-bar grp-actions">${actions}</div>` : ''}
+        </section>`;
+    }
+
+    /** Cartão SÓ LEITURA: nome, valor lido ("—" se não lido), dica numa linha; sem − / + e sem lápis. */
+    readCardHtml(c) {
+      return `
+        <article class="grp-card grp-read" data-kind="read" data-item="${escapeHtml(c.id)}" data-state="${c.on === null || c.on === undefined ? 'neutral' : c.on ? 'on' : 'off'}">
+          <h4 class="grp-label">${escapeHtml(c.label)}</h4>
+          <p class="grp-line"><b class="grp-val${c.small ? ' grp-val-text' : ''}">${escapeHtml(c.value)}</b>${c.unit ? ` <span class="grp-unit">${escapeHtml(c.unit)}</span>` : ''}</p>
+          <p class="grp-hint">${escapeHtml(c.hint || '')}</p>
+          <span class="grp-ro">Só leitura</span>
+        </article>`;
+    }
+
+    /** Grupo Anti-apagão: o interruptor + os 5 ajustes + a última viagem, tudo numa página. − / + gravam na hora. */
     renderValues(cards) {
       const values = this.valuesNow();
       const why = this.reason('values');
       const undo = this.vals.view().undo;
       const { level, text: displayStatus } = this.valuesStatus();
       const sug = this.data.antiStallSuggestion || {};
-      return `
-        <section class="tool-view values-view" data-card="valores">
-          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>Valores do anti-apagão</h3><p class="vv-status" data-level="${level}" role="status">${escapeHtml(displayStatus)}</p></header>
-          <div class="vv-grid">
+      const anti = (cards || []).find(c => c.id === 'anti');
+      return this.groupPage({
+        group: 'valores', cls: 'values-view', dataCard: 'valores', title: 'Anti-apagão', status: [level, displayStatus], gridCls: 'vv-grid',
+        cards: `${anti ? this.switchCardHtml(anti, ' grp-card grp-switch') : ''}
             ${this.V.FIELDS.map(f => this.cardHtml(f, values)).join('')}
-            <aside class="vv-info vv-sug" data-state="neutral" aria-label="Análise da viagem">
+            <aside class="vv-info vv-sug grp-card" data-kind="info" data-item="viagem" data-state="neutral" aria-label="Análise da viagem">
               <p class="vv-sug-title"><b>${Number.isInteger(sug.quedas) ? `${sug.quedas} quedas fortes na viagem` : 'Sua última viagem'}</b></p>
               <p class="vv-sug-short">Ainda sem novo ajuste.</p>
               <p class="vv-sug-why">${escapeHtml(sug.motivo || 'Ao encerrar uma viagem, o app analisa as quedas do motor. Ainda não há dados para sugerir números.')}</p>
               <button type="button" class="secondary" data-adv-open-info-tab="carro"><span class="vv-t-long">Ver os números do seu carro</span><span class="vv-t-short">Ver os números</span></button>
-            </aside>
-          </div>
-          <div class="tool-actions vv-actions">
-            <button type="button" class="secondary" data-adv-factory ${why || !values || values.every((v, i) => v === this.V.FACTORY[i]) ? 'disabled' : ''}>Restaurar fábrica</button>
+            </aside>`,
+        actions: `<button type="button" class="secondary" data-adv-factory ${why || !values || values.every((v, i) => v === this.V.FACTORY[i]) ? 'disabled' : ''}>Restaurar fábrica</button>
             ${undo.available ? '<button type="button" class="secondary" data-adv-undo-values>Desfazer</button>' : ''}
-            <button type="button" class="secondary" data-adv-open-view="info">Como funciona</button>
-          </div>
-        </section>`;
+            <button type="button" class="secondary" data-adv-open-view="info">Como funciona</button>`,
+      });
     }
 
     /** Os números do carro do dono, tirados dos logs reais (fonte: docs/progbase/bins/sugestao-antiapagao-carro-do-dono.json). */
@@ -554,27 +587,68 @@
     }
 
     voltaTap(t) {
-      const m = this.VG.read(this.data.params);
       this.voltaRefused = '';
-      if (t.matches('[data-volta-step]')) {
-        const base = Number.isInteger(this.voltaDrafts.mbar) ? this.voltaDrafts.mbar : m.limitMbar;
-        if (Number.isFinite(base)) this.voltaDrafts = { ...this.voltaDrafts, mbar: this.VG.step(base, Number(t.dataset.voltaStep)) };
-      } else if (t.matches('[data-volta-wait]')) {
-        const base = Number.isInteger(this.voltaDrafts.segundos) ? this.voltaDrafts.segundos : m.tempo;
-        this.voltaDrafts = { ...this.voltaDrafts, segundos: this.VG.nextWait(base) };
-      } else if (t.matches('[data-volta-save]')) {
-        this.voltaSend(this.VG.saveRequest(m, this.voltaDrafts));
-        this.voltaDrafts = {};
-      } else if (t.matches('[data-volta-toggle]')) {
-        this.voltaDrafts = {};
+      if (t.matches('[data-volta-step]')) { this.voltaStep(t.dataset.voltaStep); return; }
+      this.voltaDrafts = {};
+      this.voltaAgain = false;
+      if (t.matches('[data-volta-toggle]')) {
+        const m = this.VG.read(this.data.params);
         this.voltaSend({ acao: m.on ? 'desligar' : 'ligar' });
-      } else if (t.matches('[data-volta-undo]')) {
-        this.voltaDrafts = {};
-        this.voltaSend({ acao: 'desfazer' });
-      }
+      } else if (t.matches('[data-volta-undo]')) this.voltaSend({ acao: 'desfazer' });
     }
 
-    /** Uma frase, o estado e os controles juntos à esquerda: − / + / Espera / Salvar, Ligar ou Desligar; Desfazer depois. */
+    /** − / + da volta: um toque = a ordem (sem "Salvar"). Toques durante uma gravação somam e vão em seguida (por evento, sem relógio). */
+    voltaStep(spec) {
+      const [key, d] = String(spec).split(':');
+      const dir = Number(d) < 0 ? -1 : 1;
+      const VG = this.VG;
+      const m = VG.read(this.data.params);
+      const draft = this.voltaDrafts[key];
+      let next;
+      if (key === 'mbar') {
+        const base = Number.isInteger(draft) ? draft : m.limitMbar;
+        if (!Number.isFinite(base)) return;
+        next = VG.step(base, dir);
+      } else if (key === 'segundos') {
+        const base = Number.isInteger(draft) ? draft : m.tempo;
+        if (!Number.isInteger(base) || base === VG.OFF) return;
+        next = Math.max(0, Math.min(VG.TEMPO_MAX, base + dir));
+      } else return;
+      this.voltaDrafts = { ...this.voltaDrafts, [key]: next };
+      this.voltaFlush();
+    }
+
+    voltaFlush() {
+      if (this.voltaStatus().busy === true) { this.voltaAgain = true; return; }
+      this.voltaAgain = false;
+      const request = this.VG.saveRequest(this.VG.read(this.data.params), this.voltaDrafts);
+      if (!request) { this.voltaDrafts = {}; return; }
+      this.voltaSend(request);
+      this.voltaSent = true;
+      if (this.voltaRefused) { this.voltaDrafts = {}; this.voltaSent = false; }
+    }
+
+    /** A cada ciclo da tela: terminou a gravação? manda o toque que esperava; senão volta a mostrar o que a central confirmou. */
+    voltaSettle() {
+      if (!this.VG || this.voltaStatus().busy === true) return;
+      if (this.voltaAgain) { this.voltaFlush(); return; }
+      if (this.voltaSent) { this.voltaSent = false; this.voltaDrafts = {}; }
+    }
+
+    stepperHtml({ item, label, value, unit, call, minus, plus, offMinus, offPlus, hint }) {
+      return `
+        <div class="grp-card grp-edit" data-kind="edit" data-item="${item}">
+          <h4 class="grp-label">${escapeHtml(label)}</h4>
+          <div class="num-stepper">
+            <button type="button" class="step-btn" data-volta-step="${call}:-1" aria-label="Diminuir ${escapeHtml(minus)}" ${offMinus ? 'disabled' : ''}>− ${escapeHtml(minus)}</button>
+            <div class="num-box grp-box"><b class="grp-val">${escapeHtml(value)}</b>${unit ? `<span class="num-unit">${escapeHtml(unit)}</span>` : ''}</div>
+            <button type="button" class="step-btn" data-volta-step="${call}:1" aria-label="Aumentar ${escapeHtml(plus)}" ${offPlus ? 'disabled' : ''}>+ ${escapeHtml(plus)}</button>
+          </div>
+          <p class="grp-hint">${escapeHtml(hint)}</p>
+        </div>`;
+    }
+
+    /** Grupo Volta para gasolina: ligar/desligar, pressão e espera, cada um no seu cartão; − / + gravam na hora; Desfazer no rodapé. */
     renderVolta(card) {
       if (!card) return '';
       const VG = this.VG;
@@ -586,47 +660,45 @@
       const why = this.voltaWhy();
       const mbar = Number.isInteger(d.mbar) ? d.mbar : m.limitMbar;
       const wait = Number.isInteger(d.segundos) ? d.segundos : m.tempo;
-      const pending = VG.saveRequest(m, d);
-      const say = m.on === null && !why ? 'Aguardando a central.' : VG.sentence(m, mbar);
       const level = { writing: 'busy', done: 'ok', info: 'info', error: 'bad' };
-      const status = this.voltaRefused ? ['bad', this.voltaRefused] : why ? ['idle', why]
-        : pending ? ['info', 'Toque em Salvar para gravar.'] : ph.text ? [level[ph.phase] || 'idle', ph.text] : ['idle', ''];
-      const off = !!why || busy;
-      const unsaved = key => (pending && pending[key] !== undefined ? ' · não salvo' : '');
-      const rows = [
-        { label: 'Volta sozinha para a gasolina', text: card.stateText, on: m.on },
-        { label: 'Pressão do gás que faz voltar', text: mbar === null ? '—' : `${VG.barText(mbar)} bar${unsaved('mbar')}`, on: null },
-        { label: 'Espera antes de voltar', text: m.on === false && !Number.isInteger(d.segundos) ? '—' : `${VG.waitText(wait)}${unsaved('segundos')}`, on: null },
-      ];
+      const status = this.voltaRefused ? ['bad', 'Não gravou. ' + this.voltaRefused] : why ? ['idle', why]
+        : ph.text ? [level[ph.phase] || 'idle', ph.text] : ['idle', 'Toque em − ou +: grava na hora.'];
+      const off = !!why;
+      const action = m.on === false ? 'Ligar volta' : 'Desligar volta';
       const tech = card.tech.concat((st.notProven || []).map(x => 'Ainda sem prova: ' + x)).map(t => `<li>${escapeHtml(t)}</li>`).join('');
-      return `
-        <section class="tool-view read-view volta-view" data-card="volta">
-          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>${escapeHtml(card.viewTitle || card.title)}</h3></header>
-          <p class="volta-say">${escapeHtml(say)}</p>
-          <ul class="read-list">${rows.map(r => `<li data-state="${r.on === null ? 'neutral' : r.on ? 'on' : 'off'}"><span>${escapeHtml(r.label)}</span><b>${escapeHtml(r.text)}</b></li>`).join('')}</ul>
-          <p class="volta-status" role="status" data-level="${status[0]}"${status[1] ? '' : ' hidden'}>${escapeHtml(status[1])}</p>
-          <div class="tool-actions volta-actions">
-            <button type="button" class="secondary" data-volta-step="-1" aria-label="Diminuir 0,05 bar" ${off || mbar === null || mbar <= VG.MIN ? 'disabled' : ''}>− 0,05</button>
-            <button type="button" class="secondary" data-volta-step="1" aria-label="Aumentar 0,05 bar" ${off || mbar === null || mbar >= VG.MAX ? 'disabled' : ''}>+ 0,05</button>
-            <button type="button" class="secondary" data-volta-wait ${off || m.on !== true ? 'disabled' : ''}>Espera: ${escapeHtml(VG.waitText(wait).toLowerCase())}</button>
-            <button type="button" class="primary" data-volta-save ${off || !pending ? 'disabled' : ''}>Salvar</button>
-            <button type="button" class="secondary" data-volta-toggle ${off || m.on === null ? 'disabled' : ''}>${m.on === false ? 'Ligar volta' : 'Desligar volta'}</button>
-            ${st.undo && st.undo.available && !busy ? '<button type="button" class="secondary" data-volta-undo>Desfazer</button>' : ''}
-          </div>
-          <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>
-        </section>`;
+      const extra = this.G ? this.G.readCards('volta', this.data.params).map(c => this.readCardHtml(c)).join('') : '';
+      const waitOff = off || m.on !== true || !Number.isInteger(wait);
+      return this.groupPage({
+        group: 'volta', cls: 'read-view volta-view', dataCard: 'volta', title: card.viewTitle || card.title, status,
+        cards: `
+          <article class="tool-tile grp-card grp-switch" data-item="volta-liga" data-kind="switch" data-state="${m.on === null ? 'unknown' : m.on ? 'on' : 'off'}">
+            <h3>Volta sozinha para a gasolina</h3>
+            <p class="grp-hint volta-say">${escapeHtml(m.on === null && !why ? 'Aguardando a central.' : VG.sentence(m, mbar))}</p>
+            <button type="button" class="tool-switch" role="${m.on === null ? 'button' : 'switch'}" ${m.on === null ? '' : `aria-checked="${m.on}"`} aria-label="${escapeHtml(action)}" data-volta-toggle ${off || busy || m.on === null ? 'disabled' : ''}>
+              <span class="sw-track" aria-hidden="true"><i></i></span><span class="sw-caption"><b>${escapeHtml(card.stateText)}</b><small>${escapeHtml(action)}</small></span>
+            </button>
+          </article>
+          ${this.stepperHtml({ item: 'volta-mbar', label: 'Pressão do gás que faz voltar', value: mbar === null ? '—' : VG.barText(mbar), unit: 'bar', call: 'mbar', minus: '0,05', plus: '0,05',
+            offMinus: off || mbar === null || mbar <= VG.MIN, offPlus: off || mbar === null || mbar >= VG.MAX, hint: `De ${VG.barText(VG.MIN)} a ${VG.barText(VG.MAX)} bar.` })}
+          ${this.stepperHtml({ item: 'volta-espera', label: 'Espera antes de voltar', value: m.on === false && !Number.isInteger(d.segundos) ? '—' : VG.waitText(wait), unit: '', call: 'segundos', minus: '1 s', plus: '1 s',
+            offMinus: waitOff || wait <= 0, offPlus: waitOff || wait >= VG.TEMPO_MAX, hint: `De "na hora" a ${VG.TEMPO_MAX} s.` })}
+          ${extra}
+          <details class="tool-tech grp-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>`,
+        actions: st.undo && st.undo.available && !busy ? '<button type="button" class="secondary" data-volta-undo>Desfazer</button>' : '',
+      });
     }
 
-    renderReadOnly(card) {
-      if (!card) return '';
-      const tech = card.tech.map(t => `<li>${escapeHtml(t)}</li>`).join('');
-      return `
-        <section class="tool-view read-view" data-card="${card.id}">
-          <header><button type="button" class="secondary tool-back" data-adv-back><span aria-hidden="true">‹</span> Voltar</button><h3>${escapeHtml(card.viewTitle || card.title)}</h3><p>Só mostra como está. O app não muda isto.</p></header>
-          ${card.note ? `<p class="read-note">${escapeHtml(card.note)}</p>` : ''}
-          <ul class="read-list">${card.rows.map(r => `<li data-state="${r.on === null ? 'neutral' : r.on ? 'on' : 'off'}"><span>${escapeHtml(r.label)}</span><b>${escapeHtml(r.text)}</b></li>`).join('')}</ul>
-          <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>
-        </section>`;
+    /** Grupos só de leitura (troca, marcha lenta, outras): todos os cartões do assunto numa página; sem − / +. */
+    renderReadOnly(group, cards) {
+      if (!this.G || !this.G.TITLES[group]) return '';
+      const items = this.G.readCards(group, this.data.params);
+      const source = { troca: ['troca', 'corte', 'injetores'], lenta: ['lenta'] }[group] || [];
+      const tech = source.flatMap(id => ((cards || []).find(c => c.id === id) || { tech: [] }).tech).map(t => `<li>${escapeHtml(t)}</li>`).join('');
+      const note = { troca: 'A troca normal para o gás. Não quer dizer que o gás acabou.', lenta: 'Motor ligado sem acelerar, na parada ou manobra.', outras: 'O app lê da central e ainda não muda.' }[group];
+      return this.groupPage({
+        group, cls: 'read-view', title: this.G.TITLES[group], status: ['idle', note],
+        cards: items.map(c => this.readCardHtml(c)).join('') + (tech ? `<details class="tool-tech grp-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>` : ''),
+      });
     }
   }
 

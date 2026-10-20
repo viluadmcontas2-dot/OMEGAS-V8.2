@@ -1,6 +1,6 @@
 'use strict';
 // "Volta para gasolina" por TOQUE (Chromium, central emulada com o estado do LOGNOVO): o cartão diz a pressão lida (1,25 bar),
-// os controles − / + / Espera / Salvar ficam juntos À ESQUERDA na mesma linha, um toque grava (quadro exato do original) e
+// cada valor no seu cartão com − / + à esquerda (página de grupo, 2026-10-20), um toque grava (quadro exato do original) e
 // Desfazer volta. Abrir a tela nunca grava. Sem Chromium PULA.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -29,40 +29,32 @@ for (const [nome, vp] of Object.entries({ '1280x720': { width: 1280, height: 720
       assert.match(await view.innerText(), /Se a pressão do gás cair abaixo de 1,25 bar, o carro volta sozinho para a gasolina\./);
       assert.deepEqual(await writes(page), [], 'abrir a tela nunca grava');
 
-      // controles juntos, à esquerda, na mesma linha, sem buraco entre eles
-      const boxes = [];
-      for (const sel of ['[data-volta-step="-1"]', '[data-volta-step="1"]', '[data-volta-wait]', '[data-volta-save]']) boxes.push(await page.locator(sel).boundingBox());
-      const bar = await page.locator('.volta-actions').boundingBox();
-      assert.ok(Math.abs(boxes[0].x - bar.x) <= 2, `o primeiro botão começa na esquerda: ${boxes[0].x} vs ${bar.x}`);
-      for (let i = 1; i < boxes.length; i += 1) {
-        assert.ok(Math.abs(boxes[i].y - boxes[0].y) <= 2, 'mesma linha');
-        const gap = boxes[i].x - (boxes[i - 1].x + boxes[i - 1].width);
-        assert.ok(gap >= 0 && gap <= 16, `sem buraco entre botões: ${gap}px`);
+      // página do grupo: ligar/desligar, pressão e espera, cada um no seu cartão, com − / + visíveis (≥ 58 px) e juntos à esquerda
+      for (const item of ['volta-mbar', 'volta-espera']) {
+        const card = await page.locator(`[data-item="${item}"]`).boundingBox();
+        const minus = await page.locator(`[data-item="${item}"] .step-btn`).first().boundingBox();
+        const plus = await page.locator(`[data-item="${item}"] .step-btn`).last().boundingBox();
+        assert.ok(minus.x - card.x <= 16, `${item}: o − começa à esquerda do cartão`);
+        for (const b of [minus, plus]) assert.ok(b.height >= 58 && b.width >= 58, `${item}: alvo ≥ 58 px (${b.width}x${b.height})`);
+        assert.ok(Math.abs(minus.y - plus.y) <= 2, `${item}: − e + na mesma linha`);
+        assert.ok(card.x + card.width <= vp.width, `${item}: cabe na largura`);
       }
-      for (const b of boxes) assert.ok(b.height >= 56, `alvo ≥ 56 px: ${b.height}`);
-      assert.ok(boxes.every(b => b.x + b.width <= vp.width && b.y + b.height <= vp.height), 'cabe na tela sem rolar');
 
-      // − / + só mudam o rascunho (nada vai à central até Salvar)
-      await T.tap(page, '[data-volta-step="1"]'); await T.pump(page, 2);
-      assert.match(await view.innerText(), /1,30 bar · não salvo/);
-      assert.deepEqual(await writes(page), []);
-      await T.tap(page, '[data-volta-step="-1"]'); await T.pump(page, 2);
-      assert.equal(await page.locator('[data-volta-save]').isDisabled(), true, 'voltou ao valor da central: nada a salvar');
-
-      // Espera + Salvar: um toque grava o tempo (quadro exato do original) e confere
-      await T.tap(page, '[data-volta-wait]'); await T.pump(page, 2);
-      assert.match(await page.locator('[data-volta-wait]').innerText(), /1 s/);
-      await T.tap(page, '[data-volta-save]'); await T.pump(page, 4);
+      // + na espera: UM toque grava (quadro exato do original) e confere; sem "Salvar"
+      await T.tap(page, '[data-volta-step="segundos:1"]'); await T.pump(page, 4);
       const w1 = (await T.frames(page)).log.filter(f => f.kind !== 'READ');
       assert.equal(w1.length, 1, 'um quadro de escrita');
       assert.match(JSON.stringify(w1[0]), /12 3E 00 01 51/);
-      assert.match(await page.locator('.volta-status').innerText(), /Salvo e conferido na central/);
+      assert.match(await page.locator('#toolAdvanced .grp-status').innerText(), /Salvo e conferido na central/);
+      assert.match(await page.locator('[data-item="volta-espera"] .grp-val').innerText(), /1 s/);
+      assert.equal(await page.locator('[data-volta-save]').count(), 0, 'não existe mais o botão "Salvar"');
 
       // Desligar (como desmarcar no original: 255) e Desfazer
       await page.evaluate(() => window.__bench.ecu.clearLog());
       await T.tap(page, '[data-volta-toggle]'); await T.pump(page, 4);
       assert.match(JSON.stringify((await T.frames(page)).log.filter(f => f.kind !== 'READ')), /12 3E 00 FF 4F/);
       assert.match(await view.innerText(), /Desligado: se a pressão do gás cair, o carro não volta sozinho/);
+      assert.equal(await page.locator('[data-volta-step="segundos:1"]').isDisabled(), true, 'desligada: a espera não muda');
       await page.evaluate(() => window.__bench.ecu.clearLog());
       await T.tap(page, '[data-volta-undo]'); await T.pump(page, 4);
       assert.match(JSON.stringify((await T.frames(page)).log.filter(f => f.kind !== 'READ')), /12 3E 00 01 51/);

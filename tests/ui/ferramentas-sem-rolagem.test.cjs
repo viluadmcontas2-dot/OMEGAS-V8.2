@@ -29,7 +29,10 @@ function load(file) {
 
 test('Ferramentas e Sessões não rolam (overflow escondido, nunca auto/scroll)', () => {
   // Única exceção documentada: a tela de Valores do anti-apagão com os "Ajustes extras (experimental)" abertos (não cabe sem rolar).
-  const semExcecao = css.replace(/\.values-view\s*\{\s*overflow-y:\s*auto;\s*\}/, '');
+  // Segunda exceção (dono, 2026-10-20): a grade da PÁGINA DE GRUPO de Ferramentas rola só na vertical ("pode ter rolagem vertical").
+  const grade = /#toolAdvanced \.grp-grid\s*\{\s*overflow-y:\s*auto;\s*overflow-x:\s*hidden;\s*\}/;
+  assert.match(css, grade, 'a grade do grupo rola só na vertical (nunca na horizontal)');
+  const semExcecao = css.replace(/\.values-view\s*\{\s*overflow-y:\s*auto;\s*\}/, '').replace(grade, '');
   assert.doesNotMatch(semExcecao, /overflow(?:-[xy])?\s*:\s*(?:auto|scroll)/, 'o CSS novo não pode criar rolagem');
   assert.match(rules('#toolsDrawer.screen.active'), /overflow:\s*hidden/);
   assert.match(rules('.sessions-screen.active'), /overflow:\s*hidden/);

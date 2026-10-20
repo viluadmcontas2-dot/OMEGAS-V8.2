@@ -19,7 +19,7 @@ const VIEWPORTS = {
 };
 const STATES = ['desconectada', 'lendo', 'com dados'];
 const MOTOR = ['anti', 'valores', 'corte', 'lenta', 'troca', 'injetores', 'volta'];
-const LEITURA = ['corte', 'lenta', 'troca', 'injetores', 'volta'];
+const LEITURA = ['corte', 'lenta', 'troca', 'injetores', 'volta', 'outras'];   // cada um abre a PÁGINA DO GRUPO (2026-10-20)
 const APP = ['copia', 'refino-automatico', 'bateria', 'balao', 'registro'];
 
 /** Troca cada método das pontes por um que exige o `this` certo (como o WebView) e registra a chamada. */
@@ -166,7 +166,7 @@ async function readCards(page, viewport, state) {
     await T.tap(page, `[data-adv-open="${id}"]`);
     await T.pump(page, 2);
     await inside(page, '#toolAdvanced .read-view', viewport, where);
-    const rows = await page.locator('#toolAdvanced .read-list li b').allInnerTexts();
+    const rows = await page.locator('#toolAdvanced .read-view .grp-card .grp-val').allInnerTexts();
     assert.ok(rows.length > 0 && rows.every(r => r.trim()), `${where}: leitura sem linhas ou com valor vazio`);
     await noVisibleLayer(page, where);
     await T.tap(page, '[data-adv-back]');

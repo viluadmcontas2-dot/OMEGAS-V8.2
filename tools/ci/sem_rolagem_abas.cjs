@@ -61,7 +61,8 @@ function measure() {
   for (const e of [screen, ...screen.querySelectorAll('*')]) {
     if (!visible(e) || e.closest('details:not([open]) > :not(summary)')) continue;
     const cs = getComputedStyle(e);
-    if (/(auto|scroll)/.test(cs.overflowY) && e.scrollHeight - e.clientHeight > 1) problems.push('rola: ' + name(e) + ' +' + (e.scrollHeight - e.clientHeight) + 'px');
+    // Exceção do dono (2026-10-20): a grade da página de grupo de Ferramentas rola na VERTICAL (nunca na horizontal).
+    if (/(auto|scroll)/.test(cs.overflowY) && e.scrollHeight - e.clientHeight > 1 && !e.matches('.grp-grid')) problems.push('rola: ' + name(e) + ' +' + (e.scrollHeight - e.clientHeight) + 'px');
     if (/(auto|scroll)/.test(cs.overflowX) && e.scrollWidth - e.clientWidth > 1) problems.push('rola na horizontal: ' + name(e));
   }
   const sb = screen.getBoundingClientRect();
@@ -69,12 +70,13 @@ function measure() {
     if (!visible(e) || e.closest('.operation-layer, [hidden], details:not([open]) > :not(summary), option')) continue;
     if (!(e.textContent || '').trim() && !/^(BUTTON|SELECT|INPUT)$/.test(e.tagName)) continue; // decoração sem texto
     const r = e.getBoundingClientRect();
-    let cut = r.bottom > sb.bottom + 1 || r.right > sb.right + 1;
+    let cut = (!e.closest('.grp-grid') && r.bottom > sb.bottom + 1) || r.right > sb.right + 1;
     for (let a = e.parentElement; !cut && a && a !== screen.parentElement; a = a.parentElement) {
       const acs = getComputedStyle(a);
       if (/(hidden|clip)/.test(acs.overflowY + acs.overflowX) && acs.display !== 'contents') {
         const ar = a.getBoundingClientRect();
-        cut = r.bottom > ar.bottom + 1 || r.right > ar.right + 1 || r.top < ar.top - 1;
+        const rolaNaGrade = !!e.closest('.grp-grid') && (a.matches('.grp-grid') || a.contains(e.closest('.grp-grid')));
+        cut = r.right > ar.right + 1 || (!rolaNaGrade && (r.bottom > ar.bottom + 1 || r.top < ar.top - 1));
       }
     }
     if (cut) problems.push('cortado: ' + name(e) + ' "' + (e.textContent || '').trim().slice(0, 30) + '"');
