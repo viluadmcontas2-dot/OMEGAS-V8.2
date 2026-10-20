@@ -238,9 +238,7 @@
    "id": "sessions",
    "pontes": [
     "OmegasAutoCal.getAutoRefineMode",
-    "OmegasAutoCal.getBufferWriteProbeStatus",
     "OmegasAutoCal.setAutoRefineMode",
-    "OmegasAutoCal.startBufferWriteProbe",
     "OmegasNative.exportData",
     "OmegasNative.exportLogs",
     "OmegasNative.exportSession",
@@ -258,7 +256,6 @@
     "tests/ui/ferramentas-sem-rolagem.test.cjs",
     "tests/ui/ferramentas-webview-regression.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
-    "tests/ui/operacoes-encerram-por-evento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sonda-escrita-pontos.test.cjs"
    ],
@@ -299,14 +296,12 @@
     "OmegasAutoCal.getAntiStalloFlagStatus",
     "OmegasAutoCal.getAntiStalloValuesStatus",
     "OmegasAutoCal.getAutoRefineMode",
-    "OmegasAutoCal.getBufferWriteProbeStatus",
     "OmegasAutoCal.getVoltaGasolinaStatus",
     "OmegasAutoCal.prepareAntiStalloFlag",
     "OmegasAutoCal.prepareAntiStalloValues",
     "OmegasAutoCal.readAntiStalloValues",
     "OmegasAutoCal.readVoltaGasolina",
     "OmegasAutoCal.setAutoRefineMode",
-    "OmegasAutoCal.startBufferWriteProbe",
     "OmegasNative.exportData",
     "OmegasNative.exportLogs",
     "OmegasNative.exportSession",
@@ -325,6 +320,7 @@
     "tests/test_sugestao_antiapagao_carro.py",
     "tests/test_tools_session_retention_contract.py",
     "tests/ui/anti-apagao-chamada-unica.test.cjs",
+    "tests/ui/anti-apagao-quadros-14.test.cjs",
     "tests/ui/anti-apagao-valores.test.cjs",
     "tests/ui/aprendizado-atual.test.cjs",
     "tests/ui/avancado-escrita.test.cjs",
@@ -338,7 +334,6 @@
     "tests/ui/helpers/flow-harness.cjs",
     "tests/ui/idle-mode.test.cjs",
     "tests/ui/leveza-orcamento.test.cjs",
-    "tests/ui/operacoes-encerram-por-evento.test.cjs",
     "tests/ui/refino-automatico-interruptor.test.cjs",
     "tests/ui/sonda-escrita-pontos.test.cjs",
     "tests/ui/todas-as-telas-no-arranque.test.cjs",
@@ -2222,6 +2217,46 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/anti-apagao-quadros-14.test.cjs",
+   "ponte:OmegasAutoCal.applyAntiStalloFlag",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/anti-apagao-quadros-14.test.cjs",
+   "ponte:OmegasAutoCal.getAntiStalloFlagStatus",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/anti-apagao-quadros-14.test.cjs",
+   "ponte:OmegasAutoCal.getAntiStalloValuesStatus",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/anti-apagao-quadros-14.test.cjs",
+   "ui:app/src/main/assets/ui/components/advanced.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/anti-apagao-quadros-14.test.cjs",
+   "ui:app/src/main/assets/ui/core/advanced-flags-data.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/anti-apagao-quadros-14.test.cjs",
+   "ui:app/src/main/assets/ui/core/advanced-flags.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/anti-apagao-quadros-14.test.cjs",
+   "ui:app/src/main/assets/ui/core/anti-apagao-valores.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/anti-apagao-quadros-14.test.cjs",
+   "ui:app/src/main/assets/ui/core/cartoes-motor.js",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/anti-apagao-revisao.test.cjs",
    "ponte:OmegasAutoCal.applyAntiStalloFlag",
    "cobre"
@@ -3648,16 +3683,6 @@
   ],
   [
    "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
-   "ponte:OmegasAutoCal.getBufferWriteProbeStatus",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
-   "ponte:OmegasAutoCal.startBufferWriteProbe",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
    "ponte:OmegasNative.readKFactorCurve",
    "cobre"
   ],
@@ -3669,11 +3694,6 @@
   [
    "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
    "ui:app/src/main/assets/ui/app.js",
-   "cobre"
-  ],
-  [
-   "teste:tests/ui/operacoes-encerram-por-evento.test.cjs",
-   "ui:app/src/main/assets/ui/components/drawers.js",
    "cobre"
   ],
   [
@@ -4188,17 +4208,7 @@
   ],
   [
    "ui:app/src/main/assets/ui/components/drawers.js",
-   "ponte:OmegasAutoCal.getBufferWriteProbeStatus",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/components/drawers.js",
    "ponte:OmegasAutoCal.setAutoRefineMode",
-   "chama"
-  ],
-  [
-   "ui:app/src/main/assets/ui/components/drawers.js",
-   "ponte:OmegasAutoCal.startBufferWriteProbe",
    "chama"
   ],
   [
@@ -4678,8 +4688,8 @@
   ]
  ],
  "contagem_arestas": {
-  "chama": 108,
-  "cobre": 642,
+  "chama": 106,
+  "cobre": 647,
   "exibe": 32,
   "sustenta": 66,
   "usa": 14
@@ -4689,7 +4699,7 @@
   "ev": 89,
   "kt": 8,
   "ponte": 112,
-  "teste": 381,
+  "teste": 382,
   "ui": 31
  },
  "desconhecido_sem_uso": [
@@ -4763,6 +4773,8 @@
     "EV-VOLTAGASOLINA-015"
    ],
    "ponte_sem_chamador": [
+    "OmegasAutoCal.getBufferWriteProbeStatus",
+    "OmegasAutoCal.startBufferWriteProbe",
     "OmegasNative.getEngineMetrics",
     "OmegasNative.getKFactorHistory",
     "OmegasNative.getKFactorStatus",
@@ -7331,6 +7343,10 @@
   },
   "teste:tests/ui/anti-apagao-leitura-persistente.test.cjs": {
    "rotulo": "tests/ui/anti-apagao-leitura-persistente.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/anti-apagao-quadros-14.test.cjs": {
+   "rotulo": "tests/ui/anti-apagao-quadros-14.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/anti-apagao-revisao.test.cjs": {
