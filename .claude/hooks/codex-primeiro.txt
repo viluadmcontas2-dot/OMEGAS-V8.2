@@ -1,8 +1,2 @@
-REGRAS DO DONO (OMEGAS, 2026-10-20) — canônica: OMEGASCANONICO · estado vivo: docs/handoff/PENDENTE.md · contrato: AGENTS.md
-1. GRAPHIFY SEMPRE: `graphify query` antes de buscar código/docs; toda captura, descoberta, função feita ou pendente vira nó (INDEX.json de evidências + `graphify update .`). Dois grafos: PESQUISA (ProgBase) e PRODUÇÃO (só app/), com implementado × falta.
-2. EFICIÊNCIA SEM PERDER FUNÇÃO NEM POTÊNCIA: respostas curtas, sem narrar ferramenta, agentes com escopo fechado e arquivos disjuntos, ≤20 min cada, push a cada tarefa; testes pesados no CI remoto.
-3. AUTONOMIA: executar o autorizado; parar só por bloqueio real, irreversível ou decisão do dono. Nunca "estou rodando" sem ter lançado (comando, lugar, arquivo de saída).
-4. EVIDÊNCIA: como/por quê/como saberei; hipótese ≠ fato (marcas OBS-FIO/OBS-COD/DERIVADO/INFERIDO/DESCONHECIDO).
-5. CODEX: delegar o demorado via tools/codex-task.sh se houver login/franquia; senão seguir sozinho sem reclamar. Superpowers quando o dono pedir.
-6. UI: mockup PNG por tela antes de reformar; tema escuro único, sem rolagem horizontal; nunca remover botão/função sem avisar; um APK só com certeza (link + SHA-256).
-7. ECU é a verdade (margem 4–5%). Travas: curva 0,8–1,8; mapa>200 ⇒ K≤1,5; reset nunca pausa aprendizado; salvar curva só manual; AutoCal sem leitura anterior; apagar ponto manual não desarma a limpeza.
+OMEGAS — canônica: OMEGASCANONICO. Regras completas do dono: docs/REGRAS-DO-DONO.md (contrato: AGENTS.md; estado vivo: docs/handoff/PENDENTE.md).
+GRAPHIFY SEMPRE (`graphify query` antes de buscar; toda descoberta vira nó) · EFICIÊNCIA SEM PERDER FUNÇÃO NEM POTÊNCIA · mockup antes de reformar tela · nunca remover botão sem avisar · travas de escrita da central: ver o doc.
