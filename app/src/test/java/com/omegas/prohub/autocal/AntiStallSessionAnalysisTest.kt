@@ -46,6 +46,32 @@ class AntiStallSessionAnalysisTest {
         assertTrue(a.finish("s").isNull("maiorAjusteComQueda"))
     }
 
+    @Test fun tabelaPorRotacaoMaxima() {
+        val a = AntiStallSessionAnalysis()
+        val rpms = ArrayList<Int>()
+        repeat(15) { rpms.add(900) }
+        rpms.addAll(listOf(1700, 1650, 1580, 1500, 1420, 1340, 1260, 1180, 1100, 1020, 940)) // desce devagar: cruza 1600 sem queda forte
+        repeat(15) { rpms.add(900) }
+        rpms.addAll(listOf(1700, 1700, 300))  // queda forte 1700 -> 300
+        repeat(30) { rpms.add(300) }
+        rpms.forEach { a.observe("telemetry", frame(it)) }
+        val tabela = a.finish("s").getJSONArray("porRotacaoMaxima")
+        assertEquals(6, tabela.length())
+        fun linha(m: Int) = (0 until tabela.length()).map { tabela.getJSONObject(it) }.first { it.getInt("rotacaoMaxima") == m }
+        val l16 = linha(1600)
+        assertEquals(1, l16.getInt("quedasPegas")); assertEquals(1, l16.getInt("quedasTotal"))
+        // as 2 leituras seguintes ao 1700 (300, 300) veem rpm[i-2]=1700: mesma contagem do script Python
+        assertEquals(2, l16.getInt("acionamentos")); assertEquals(2, l16.getInt("quedasSemRecuperar"))
+        val l18 = linha(1800)
+        assertEquals(0, l18.getInt("quedasPegas")); assertEquals(1, l18.getInt("quedasTotal"))
+        assertEquals(0, l18.getInt("acionamentos")); assertEquals(0, l18.getInt("quedasSemRecuperar"))
+    }
+    @Test fun tabelaVaziaComPoucasLeituras() {
+        val a = AntiStallSessionAnalysis()
+        repeat(49) { a.observe("telemetry", frame(900)) }
+        assertEquals(0, a.finish("s").getJSONArray("porRotacaoMaxima").length())
+    }
+
     @Test fun replayAllRealSessions() {
         val file = listOf(java.io.File("tests/fixtures/sessoes-uteis/telemetria.csv.gz"),
             java.io.File("../tests/fixtures/sessoes-uteis/telemetria.csv.gz")).first { it.isFile }
