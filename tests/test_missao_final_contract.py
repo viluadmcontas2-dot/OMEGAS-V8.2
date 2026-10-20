@@ -8,9 +8,9 @@ def read(path: str) -> str:
 
 
 def test_active_authority_is_branch_ativa():
-    assert "Branch autorizada: `claude/carregar-sessao-r7j85r`" in read("PROJECT.md")
-    assert "resolver HEAD remoto de `claude/carregar-sessao-r7j85r`" in read("AGENTS.md")  # ativa e canônica (2026-10-20)
-    assert "Branch: `claude/carregar-sessao-r7j85r`" in read("STATUS.md")
+    assert "Branch autorizada: `OMEGASCANONICO`" in read("PROJECT.md")
+    assert "resolver HEAD remoto de `OMEGASCANONICO`" in read("AGENTS.md")  # ativa e canônica (2026-10-20)
+    assert "Branch: `OMEGASCANONICO`" in read("STATUS.md")
 
 
 def test_only_two_workflows_exist_and_ci_preserves_all_groups():

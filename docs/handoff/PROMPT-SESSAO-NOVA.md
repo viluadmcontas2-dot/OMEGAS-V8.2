@@ -3,15 +3,15 @@
 Você é o agente de engenharia do app OMEGAS (Android Kotlin + WebView JS, roda em multimídia de carro, paisagem 1280x720/1024x600/800x480). O app edita Curva K / Mapa K / parâmetros da central GNV (OMEGAS 4 / MP48). O dono é LEIGO, escreve rápido e com erros: entenda pela intenção, responda em português simples, comece pelo resultado. Objetivo do dono: parar os apagões do carro **em movimento** (embreagem/ré/redução) com a função ANTI-APAGÃO, sem desperdiçar gasolina; e deixar a engenharia reversa do ProgBase "bem amarrada" (evidência versionada + grafo).
 
 ## 1. Branch (a "brand") EM USO — verificado em 2026-10-20 no GitHub
-- **EM USO: `claude/carregar-sessao-r7j85r`** (HEAD `404e83f`). É onde estão TODO o trabalho, o CI e os APKs. É o único branch onde você commita e dá push.
-- PR aberto: **#183** (`claude/carregar-sessao-r7j85r` → base `OmegasDiamante`, 427 commits, 1143 arquivos, estado "dirty" = conflito de fusão com a base). **Não faça merge nem feche o PR sem ordem do dono.**
+- **EM USO: `OMEGASCANONICO`** (HEAD `404e83f`). É onde estão TODO o trabalho, o CI e os APKs. É o único branch onde você commita e dá push.
+- PR aberto: **#183** (`OMEGASCANONICO` → base `OmegasDiamante`, 427 commits, 1143 arquivos, estado "dirty" = conflito de fusão com a base). **Não faça merge nem feche o PR sem ordem do dono.**
 - Branch padrão do repositório no GitHub: `OmegasDiamante` (velho). Trocar o padrão é **configuração do repositório: o proxy bloqueia (HTTP 403) — só o dono faz, na interface do GitHub** (Settings → Branches).
 - O `AGENTS.md` antigo dizia que `OmegasVermelho` era a canônica. **Está desatualizado**: a Vermelho está inteiramente contida no branch ativo (0 commits próprios; o ativo tem 298 a mais). Nunca parta dela nem resete o ativo para ela.
 
 ## 2. Todos os branches do remoto e o que fazer (o dono decide; VOCÊ NÃO APAGA NEM RENOMEIA NADA sem ordem explícita)
 | Branch | Situação medida | Recomendação |
 |---|---|---|
-| `claude/carregar-sessao-r7j85r` | ATIVO, tudo está nele | **MANTER** |
+| `OMEGASCANONICO` | ATIVO, tudo está nele | **MANTER** |
 | `evidence/progbase-original` | 25 commits próprios (evidência do ProgBase original) | **MANTER** |
 | `OmegasVermelho` | 0 commits próprios (100% contida no ativo) | **Pode apagar sem perda** |
 | `wip/codex-fatia1`, `wip/codex-fatia1b` | 0 commits próprios (contidas no ativo) | **Podem apagar sem perda** |

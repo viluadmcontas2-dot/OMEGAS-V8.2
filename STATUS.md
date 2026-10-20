@@ -8,7 +8,7 @@
 
 # OMEGAS — Status
 
-Canônica: **`claude/carregar-sessao-r7j85r`** (ativa desde 2026-10-20; `OmegasVermelho` está contida nela). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
+Canônica: **`OMEGASCANONICO`** (padrão do GitHub desde 2026-10-20). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
 ## Último APK (2026-10-18, v7: o app NÃO grava sozinho)
 
@@ -36,20 +36,20 @@ Canônica: **`claude/carregar-sessao-r7j85r`** (ativa desde 2026-10-20; `OmegasV
 
 ## Último APK (2026-10-17, v4: AutoMatch manual de volta + sessão completa)
 
-- Workflow `verde-apk-now.yml`, run `39002502126` (SUCCESS, testes + lint + build) e `ci.yml` run `39002494915` (SUCCESS), commit `a0a1953061f51480e53801448cf9916e1e4498e3` (branch `claude/carregar-sessao-r7j85r`).
+- Workflow `verde-apk-now.yml`, run `39002502126` (SUCCESS, testes + lint + build) e `ci.yml` run `39002494915` (SUCCESS), commit `a0a1953061f51480e53801448cf9916e1e4498e3` (branch `OMEGASCANONICO`).
 - Artifact `omegas-platina-final-a0a19530…` (id `12089269595`), 4.824.592 bytes, digest do ZIP `sha256:c9002b8cb18195ab9afa73a0d43c0531a5b18084734a7b7850c024d00a8878ef`; expira 2026-10-31. Link: https://github.com/viluadmcontas2-dot/OMEGAS-V8.2/actions/runs/39002502126/artifacts/12089269595
 - **SHA-256 do APK** (`app-debug.apk`, 4.823.809 bytes): `970ba72179808e2f0fc5a2124bac152f8eabf549be516fc63bac348306740970` (`APK_ZIP_INTEGRITY=PASS`).
 - Contém: botão **AutoMatch manual** no AutoCal (modo `0x08`, escondido até a cota automática da ECU; um toque, ACK + leitura de volta); tudo do v3 (leitura automática de curva e Mapa K, `k_read_*`/`k_*_state`/`engineReview`/`ecu_command`, Curva→Mapa parcial 50% e mapa ≤ 200, prior dos nós baixos). Substitui `1e5d749`. NÃO instalado no carro (classe 5).
 
 ## Em andamento (2026-10-16)
 
-Fase 1 do plano (porta de gravação no toque, Curva→Mapa recuperável, persistência à prova de queda, "piorou" honesto, apagar Wi-Fi/Link e limite de passo, sessões e aprendizado leves) na branch `claude/carregar-sessao-r7j85r`; entra na Vermelho por PR com CI verde no SHA. Decisões do dono: D1 = Refino grava sozinho após cada AutoMatch (só travas absolutas); D2 = sem API do Claude no app.
+Fase 1 do plano (porta de gravação no toque, Curva→Mapa recuperável, persistência à prova de queda, "piorou" honesto, apagar Wi-Fi/Link e limite de passo, sessões e aprendizado leves) na branch `OMEGASCANONICO`; entra na Vermelho por PR com CI verde no SHA. Decisões do dono: D1 = Refino grava sozinho após cada AutoMatch (só travas absolutas); D2 = sem API do Claude no app.
 
 ---
 Histórico (Platina, até 2026-10-02):
 ## Active control surface
 
-- Branch: `claude/carregar-sessao-r7j85r`
+- Branch: `OMEGASCANONICO`
 - Estado: `FINAL RELEASE CANDIDATE — PROGBASE HOST CONTRACT V2 LOCKED — SAME-SHA GATES + APK BUILD`
 - Autoridade: GitHub remoto no HEAD resolvido antes de qualquer escrita.
 

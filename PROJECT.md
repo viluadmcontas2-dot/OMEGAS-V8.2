@@ -1,4 +1,4 @@
-# OMEGAS — Projeto ativo (branch canônica: claude/carregar-sessao-r7j85r)
+# OMEGAS — Projeto ativo (branch canônica: OMEGASCANONICO)
 
 ## Missão
 
@@ -7,7 +7,7 @@ Entregar o OMEGAS pronto para geração de APK, sem gerar APK nesta missão: Aut
 ## Repositório e branch
 
 - Repositório: `viluadmcontas2-dot/OMEGAS-V8.2`
-- Branch autorizada: `claude/carregar-sessao-r7j85r`
+- Branch autorizada: `OMEGASCANONICO`
 - Source authority: GitHub remoto
 
 ## Plataforma
