@@ -25,44 +25,7 @@
   function pair(words) { return `${hex4(words[0])} ${hex4(words[1])}`; }
   function hexBytes(bytes) { return bytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' '); }
 
-  // ---------- leitura ----------
-  function decodeFlags(name, entry) {
-    const table = DATA[name];
-    const words = wordsOf(entry);
-    const rows = table.bits.map(bit => {
-      const known = words !== null;
-      const on = known && (words[bit.word] & bit.mask) !== 0;
-      const stateText = !known ? DASH : bit.kind === 'lista' ? (on ? 'Bit ligado' : 'Bit desligado') : (on ? 'Ligado' : 'Desligado');
-      return { word: bit.word, mask: bit.mask, label: bit.label, kind: bit.kind, control: bit.control, state: known ? (on ? 'on' : 'off') : 'unknown', stateText };
-    });
-    return {
-      name, code: table.code, read: words !== null, rows,
-      hex: words ? [`0x${hex4(words[0])}`, `0x${hex4(words[1])}`] : [DASH, DASH],
-      unknownBits: words ? 32 - rows.length : 32,
-    };
-  }
-
-  const ANTI_FIELDS = [
-    { label: 'Rotação máxima para ativar', unit: 'rpm', help: 'acima disso o anti-apagão não entra' },
-    { label: 'Queda de rotação para ativar', unit: 'rpm por ciclo', help: 'quão rápido a rotação cai para entrar' },
-    { label: 'Atraso para sair do gás', unit: 'ms', help: 'espera antes de voltar à gasolina' },
-    { label: 'Histerese', unit: 'rpm por ciclo', help: 'folga para não ligar e desligar toda hora' },
-    { label: 'Queda de rotação para desativar', unit: 'rpm por ciclo', help: 'quando a rotação se firma, ele sai' },
-  ];
-  function antiStallo(entry) {
-    const v = valuesOf(entry, 5);
-    return {
-      read: v !== null, orderInferred: true,
-      fields: ANTI_FIELDS.map((f, i) => ({ ...f, value: v ? v[i] : null, valueText: v ? num(v[i]) : DASH })),
-    };
-  }
-  function progressioni(params) {
-    const rows = [0, 1, 2, 3].map(i => {
-      const v = valuesOf((params || {})[`PARAM_PROGRESSIONI_L${i}`], 3);
-      return { index: i, cells: v ? v.map(num) : [DASH, DASH, DASH] };
-    });
-    return { rows, meaningKnown: false };
-  }
+  // ---------- leitura (os cartões usam wordsOf/simpleParams; a tabela de bits fica em `table` para a paridade com o original) ----------
   const SIMPLE = [
     { name: 'GIRI_PER_BENZINA', count: 2, label: 'Rotação para rodar a gasolina', help: 'dois valores; o papel de cada um é desconhecido', unit: 'rpm (inferido pelo nome)' },
     { name: 'NUMERO_INJ_BENZINA_CUTOFF', count: 1, label: 'Injeções a gasolina ao voltar do corte', help: 'quantas injeções antes de voltar ao gás (pelo nome)', unit: 'injeções (inferido)' },
@@ -275,7 +238,7 @@
   }
 
   ns.AdvancedFlags = {
-    table: DATA, FLAGS, ANTI_ADDRESS, ANTI_MASK, decodeFlags, antiStallo, progressioni, simpleParams,
+    table: DATA, FLAGS, ANTI_ADDRESS, ANTI_MASK, simpleParams,
     frameForVector, wordsFromBytes, planAntiStallo, verifyReadback, createWriteFlow, hexBytes, pair, wordsOf,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

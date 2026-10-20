@@ -1,7 +1,7 @@
 'use strict';
 
-// Ferramentas > Avançado, LEITURA (dono, 2026-10-18): FLAG_CONF1/2/3, PARAM_PROGRESSIONI, GIRI_PER_BENZINA,
-// NUMERO_INJ_BENZINA_CUTOFF e ANTI_STALLO em português simples. Bits só pela tabela PROVADA de
+// Ferramentas > Avançado, LEITURA (dono, 2026-10-18): tabela de bits FLAG_CONF1/2/3, GIRI_PER_BENZINA e
+// NUMERO_INJ_BENZINA_CUTOFF em português simples. Bits só pela tabela PROVADA de
 // docs/evidence/flags-do-original.json; o resto é 'desconhecido' (nunca 0); valor não lido = '—'.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -71,84 +71,8 @@ test('todo rótulo é português (sem código cru do original) e tem texto', () 
   }
 });
 
-test('FLAG_CONF3 da ECU do dono (0000 0000): anti-stallo desligado, os demais provados desligados', () => {
-  const v = A.decodeFlags('FLAG_CONF3', { state: 'OK', values: [0, 0] });
-  assert.equal(v.read, true);
-  deepEqual(v.hex, ['0x0000', '0x0000']);
-  const anti = v.rows.find(r => r.mask === 0x20 && r.word === 0);
-  assert.equal(anti.state, 'off');
-  assert.equal(anti.stateText, 'Desligado');
-  assert.ok(v.rows.every(r => r.state === 'off'));
-  assert.equal(v.rows.length, 16);
-  assert.equal(v.unknownBits, 32 - 16, 'bits sem caixa conhecida: desconhecido');
-});
-
-test('FLAG_CONF1 da ECU do dono (2486 1051): bit ligado fora da tabela fica desconhecido, não vira 0', () => {
-  const v = A.decodeFlags('FLAG_CONF1', { state: 'OK', values: [0x2486, 0x1051] });
-  deepEqual(v.hex, ['0x2486', '0x1051']);
-  // 0x0004 está ligado na palavra 0 e não existe na tabela provada: não pode aparecer como desligado.
-  assert.equal(v.rows.some(r => r.word === 0 && r.mask === 0x0004), false);
-  const ligados = v.rows.filter(r => r.state === 'on').map(r => `${r.word}:${r.mask.toString(16)}`);
-  deepEqual(ligados.sort(), ['0:2', '0:2000', '0:80', '1:1', '1:10', '1:1000'].sort());
-  assert.equal(v.unknownBits, 32 - v.rows.length);
-  assert.ok(v.unknownBits > 0);
-});
-
-test('lista (combo) mostra "bit ligado/desligado": o significado do valor da lista é desconhecido', () => {
-  const v = A.decodeFlags('FLAG_CONF1', { state: 'OK', values: [0x0002, 0] });
-  const combo = v.rows.find(r => r.word === 0 && r.mask === 0x0002);
-  assert.equal(combo.kind, 'lista');
-  assert.equal(combo.stateText, 'Bit ligado');
-  assert.equal(v.rows.find(r => r.word === 0 && r.mask === 0x0010).stateText, 'Bit desligado');
-});
-
-test('valor ainda não lido: tudo "—" (nenhum estado, nenhum 0)', () => {
-  for (const entrada of [undefined, null, {}, { state: 'NACK', values: null }, { state: 'OK', values: [1] }, { state: 'OK', values: [1, 70000] },
-    { state: 'OK', values: [-1, 0] }, { state: 'ERRO_TRANSPORTE', values: [0, 0] }]) {
-    const v = A.decodeFlags('FLAG_CONF3', entrada);
-    assert.equal(v.read, false, JSON.stringify(entrada));
-    deepEqual(v.hex, ['—', '—']);
-    assert.ok(v.rows.every(r => r.state === 'unknown' && r.stateText === '—'));
-    assert.equal(v.unknownBits, 32);
-  }
-});
-
-test('ANTI_STALLO: 5 valores na ordem INFERIDA, com unidade e a marca "ordem inferida"', () => {
-  const a = A.antiStallo({ state: 'OK', values: [1600, 100, 1500, 2, 20] });
-  assert.equal(a.orderInferred, true);
-  assert.equal(a.fields.length, 5);
-  deepEqual(a.fields.map(f => f.valueText), ['1.600', '100', '1.500', '2', '20']);
-  deepEqual(a.fields.map(f => f.unit), ['rpm', 'rpm por ciclo', 'ms', 'rpm por ciclo', 'rpm por ciclo']);
-  const rotulos = a.fields.map(f => f.label).join('|');
-  assert.match(rotulos, /Rotação máxima para ativar/);
-  assert.match(rotulos, /Queda de rotação para ativar/);
-  assert.match(rotulos, /Atraso para sair do gás/);
-  assert.match(rotulos, /Histerese/);
-  assert.match(rotulos, /Queda de rotação para desativar/);
-});
-
-test('ANTI_STALLO não lido ou com tamanho errado: "—"', () => {
-  for (const entrada of [undefined, { state: 'NACK', values: null }, { state: 'OK', values: [1600, 100] }]) {
-    const a = A.antiStallo(entrada);
-    deepEqual(a.fields.map(f => f.valueText), ['—', '—', '—', '—', '—']);
-    assert.equal(a.read, false);
-  }
-});
-
-test('PARAM_PROGRESSIONI: 4 linhas de 3 valores (leitura 2A por linha); linha ausente = "—"', () => {
-  const params = {
-    PARAM_PROGRESSIONI_L0: { state: 'OK', values: [0, 4, 500] },
-    PARAM_PROGRESSIONI_L1: { state: 'OK', values: [20, 4, 500] },
-    PARAM_PROGRESSIONI_L2: { state: 'NACK', values: null },
-  };
-  const p = A.progressioni(params);
-  assert.equal(p.rows.length, 4);
-  deepEqual(p.rows[0].cells, ['0', '4', '500']);
-  deepEqual(p.rows[1].cells, ['20', '4', '500']);
-  deepEqual(p.rows[2].cells, ['—', '—', '—']);
-  deepEqual(p.rows[3].cells, ['—', '—', '—']);
-  assert.equal(p.meaningKnown, false, 'o significado de cada coluna é desconhecido');
-});
+// decodeFlags/antiStallo/progressioni saíram (2026-10-20): nenhuma tela os usava; os cartões leem por wordsOf/simpleParams
+// (cartoes-motor.js) e os 5 números por AntiApagaoValores. A tabela provada continua conferida acima.
 
 test('GIRI_PER_BENZINA e NUMERO_INJ_BENZINA_CUTOFF: 0 lido é 0; não lido é "—"', () => {
   const lido = A.simpleParams({

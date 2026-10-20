@@ -55,7 +55,9 @@ test('sem cache mas com bit já ligado: lê ao vivo, não produz segunda escrita
     await T.pump(app.page, 5);
     const frames = await T.frames(app.page);
     assert.deepEqual(T.writesOf(frames.log), []);
-    assert.match(await app.page.locator('#toolsLayer').innerText(), /já est[aá] ligado/i);
+    // Sem atrito (dono, 2026-10-20): "já está ligado" vai na linha do cartão, sem janela "Aviso" nem toque em Fechar.
+    assert.match(await app.page.locator('#toolAdvanced [data-card="anti"] .tile-line').innerText(), /já est[aá] ligado/i);
+    assert.equal(await app.page.locator('#toolsLayer:not([hidden]) .tool-layer-card').count(), 0);
   } finally { await app.context.close(); }
 });
 
