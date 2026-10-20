@@ -62,7 +62,7 @@ small{font-size:10px;line-height:1.2;letter-spacing:.09em;color:var(--dim);font-
    esquerda e o aviso não pode cobri-los (nem as abas). */
 .alert-toast{position:fixed;right:16px;left:auto;bottom:calc(var(--nav-height) + 10px);z-index:50;min-width:320px;max-width:min(600px,calc(48vw - 16px));border:1px solid var(--line);border-left:6px solid var(--warn);border-radius:10px;background:var(--surface-3);box-shadow:0 10px 28px #000a;padding:14px 60px 14px 18px;text-align:left;display:none}.alert-toast.show{display:block}.alert-toast[data-level="ok"]{border-left-color:var(--ok)}.alert-toast[data-level="working"]{border-left-color:var(--accent)}.alert-toast[data-level="error"],.alert-toast[data-level="critical"]{border-left-color:var(--danger)}.alert-toast b{display:block;font-size:21px;line-height:1.3;font-weight:750}.alert-toast button{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:48px;height:48px;border:0;background:transparent;color:var(--muted);font-size:28px}
 /* O layout é intencionalmente fixado para a multimídia 1280×720. Não há animação contínua. */
-@media (max-width:1100px){:root{--rail-width:184px}.workspace-head{padding-inline:16px}.screen{padding-inline:13px}.map-workspace,.curve-workspace{grid-template-columns:minmax(0,1fr) 290px}}
+@media (max-width:1100px){:root{--rail-width:184px}.workspace-head{padding-inline:16px}.screen{padding-inline:13px}.map-workspace,.curve-workspace{grid-template-columns:minmax(0,1fr) 290px}.tool-actions{grid-template-columns:repeat(2,1fr)}}
 
 
 /* Barra do topo persistente (dono, 2026-10-13): Tensão, MAP, Petrol Inj. e RPM em todas as abas, centralizadas; ela
