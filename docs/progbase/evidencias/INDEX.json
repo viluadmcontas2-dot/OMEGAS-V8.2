@@ -876,5 +876,75 @@
   "sha_commit": "8978a3a",
   "usado_por": [],
   "uso_pendente": true
+ },
+ {
+  "id": "EV-ANTIAPAGAO-025",
+  "afirmacao": "Executando CheckAntiStalloClick/0x42E8D8 no Unicorn, o original manda 35 FA 00 20 00 00 00 4F ao marcar e 35 FA 00 00 00 00 00 2F ao desmarcar (igual ao fio).",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "63717bd",
+  "usado_por": [
+   "tests/test_progbase_antiapagao_original.py",
+   "tools/emulacao/antiapagao_original.py"
+  ],
+  "funcoes": [
+   "0x004C982C"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-026",
+  "afirmacao": "Enter num EditAntiStallo<i> (0x4C97D8) chama 0x979E48(ANTI_STALLO, DataIndex, valor inteiro arredondado) e no fio sai 29 33 01 5D seguido de UM SetNumber indexado 14 33 01 <i> <u16 LE> <soma>; ex. Max RPM 1800 = 14 33 01 00 08 07 57.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "63717bd",
+  "usado_por": [
+   "tests/test_progbase_antiapagao_original.py",
+   "tools/emulacao/antiapagao_original.py"
+  ],
+  "chave": "antiapagao.quadro.vetor307.original"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-027",
+  "afirmacao": "O original envia o quadro do campo mesmo quando o valor não mudou (1600 -> 1600 gera 14 33 01 00 40 06 8E).",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "63717bd",
+  "usado_por": [
+   "tests/test_progbase_antiapagao_original.py"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-028",
+  "afirmacao": "Divergência: o app grava o vetor 307 inteiro com 37 33 0C 01 <10 bytes> <soma>; o original nunca usa esse quadro para o vetor 307 (usa 14 33 01 <i> lo hi soma, um por campo). Trocar o app é decisão do dono (muda o que a ECU recebe).",
+  "marca": "DERIVADO",
+  "fonte": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "63717bd",
+  "usado_por": [
+   "tests/test_progbase_antiapagao_original.py"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-ANTIAPAGAO-029",
+  "afirmacao": "O ΔRPM do rodapé da F9 é IntToStr de um s16 cru lido em TStreamDati+0x293C+0x1E (resposta do pedido ao vivo de opcode 0x48), sem escala; o mesmo handler da caixa mostra/esconde esse rótulo. Ainda não usado pelo app.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "63717bd",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-ANTIAPAGAO-030",
+  "afirmacao": "Qual código vai no pedido 48 que traz o ΔRPM, o período de amostragem da central e o efeito interno dos 4 extras do vetor 307 continuam desconhecidos.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "63717bd",
+  "usado_por": []
  }
 ]
