@@ -48,7 +48,7 @@
     "abertas": 34,
     "feitas": 0
   },
-  "source_sha": "63717bdfe4346a237b848f40482fedc553505200",
+  "source_sha": "27c514e13a0df5c5dee76eb6f190561581885887",
   "testes": {
     "estado": "DESCONHECIDO",
     "motivo": "Este comando não executa testes nem presume resultados de outros jobs."
