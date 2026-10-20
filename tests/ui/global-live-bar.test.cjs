@@ -87,3 +87,50 @@ test('o quadro rápido chega em todas as abas (a barra é persistente) e a assin
   assert.match(app, /unknown_raw_19 \?\? live\.unknownRaw19/);
   assert.match(read('index.html'), /components\/live-bar\.js/);
 });
+
+// Nível do gás em bolinhas + lâmpada "No gás / Na gasolina" (dono, 2026-10-20; mockup v2/01-barras). level_raw = byte 13 do 48 01.
+// Pontos de corte PROVISÓRIOS (Reserva 39, ¼ 93, ½ 143, ¾ 219 do original): regulável em Ferramentas depois.
+const withLevel = (level, extra = {}) => ({ valid: true, ageMs: 40, live: { rpm: 2000, petrol_ms: 4, load_bar: 0.5, fuel: 'GNV', unknown_raw_19: 224, level_raw: level, ...extra } });
+
+test('o HTML tem a pílula Nível com 5 bolinhas (reserva, ¼, ½, ¾, cheio) e a lâmpada da fonte', () => {
+  const html = read('index.html');
+  assert.match(html, /data-live="level"[^>]*data-state="unknown"/);
+  assert.equal((/data-live="level"[\s\S]*?<\/div>/.exec(html)[0].match(/<i>/g) || []).length, 5);
+  assert.match(html, /data-live="source"/);
+  assert.match(html, /<small>Nível<\/small>/);
+});
+
+test('nível: marcas do medidor viram Reserva, ¼, ½, ¾ e cheio; desconhecido é "—" com bolinhas apagadas, nunca 0', () => {
+  const { model } = mount();
+  const state = raw => model.read(withLevel(raw)).levelState;
+  assert.equal(state(39), 'reserve');
+  assert.equal(state(93), 'quarter');
+  assert.equal(state(143), 'half');
+  assert.equal(state(219), 'three');
+  assert.equal(state(255), 'full');
+  for (const unknown of [0, -1, undefined, null, 'x']) assert.equal(state(unknown), 'unknown', String(unknown));
+  assert.equal(model.read({ valid: false }).levelState, 'unknown');
+  assert.equal(model.read({ ...withLevel(143), ageMs: 5000 }).levelState, 'unknown', 'quadro velho não mostra o último nível');
+});
+
+test('a pílula e a lâmpada seguem o quadro: nível por bolinhas, "No gás" no GNV, "Na gasolina" na gasolina, "Sem central" sem quadro', () => {
+  const { component, cells } = mount();
+  component.render({ telemetry: withLevel(143) });
+  assert.equal(cells.level.dataset.state, 'half');
+  assert.equal(cells.level.value.textContent, '');
+  assert.equal(cells.source.dataset.state, 'gas');
+  assert.equal(cells.source.value.textContent, 'No gás');
+  component.render({ telemetry: withLevel(39, { fuel: 'GASOLINA' }) });
+  assert.equal(cells.level.dataset.state, 'reserve');
+  assert.equal(cells.source.dataset.state, 'petrol');
+  assert.equal(cells.source.value.textContent, 'Na gasolina');
+  component.render({ telemetry: { valid: false } });
+  assert.equal(cells.level.dataset.state, 'unknown');
+  assert.equal(cells.level.value.textContent, '—');
+  assert.equal(cells.source.dataset.state, 'none');
+  assert.equal(cells.source.value.textContent, 'Sem central');
+});
+
+test('a assinatura do quadro inclui o nível (senão a barra não acompanha o medidor)', () => {
+  assert.match(read('app.js'), /live\.level_raw \?\? live\.levelRaw/);
+});

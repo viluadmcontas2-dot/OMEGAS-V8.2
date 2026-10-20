@@ -5,7 +5,7 @@ Fonte: `fonte/gen.js` (gera os HTML) → `fonte/render.js` (fotos + medição: s
 Comece por `00-mapa-do-fluxo` (só 1280). Marcas: EXISTE = já está no app · NOVO = não existe · **PRECISA OK DO DONO** = muda o que a central recebe ou pede leitura nova.
 
 ## Barras (todas as telas)
-- **01-barras**: topo = Tensão, Pressão da admissão, Inj. gasolina, Rotação (EXISTE, `live-bar.js`) + **Nível**: 5 bolinhas Reserva (vermelha), ¼, ½, ¾, cheio (verdes), 6 estados; + lâmpada "No gás / Na gasolina / Sem central" (NOVO). Nível = número cru do medidor (Level 125 no original, F2/F4) convertido pelas marcas da tela 10. Ler o nível hoje não existe no app: **PRECISA OK DO DONO** (leitura nova). Embaixo: 5 botões, mais nada.
+- **01-barras**: topo = Tensão, Pressão da admissão, Inj. gasolina, Rotação (EXISTE, `live-bar.js`) + **Nível**: 5 bolinhas Reserva (vermelha), ¼, ½, ¾, cheio (verdes), 6 estados; + lâmpada "No gás / Na gasolina / Sem central" (NOVO). Nível = número cru do medidor (Level 125 no original, F2/F4) convertido pelas marcas da tela 10. **IMPLEMENTADO (2026-10-20, aprovado)**: o app já recebe o nível (`level_raw` = byte 13 do 48 01); `live-bar.js` usa pontos de corte PROVISÓRIOS no meio das marcas do original (Reserva 39, ¼ 93, ½ 143, ¾ 219: cortes 66/118/181/237); a escala será regulável em Ferramentas (tela 10). Sem leitura = "—" e bolinhas apagadas. Embaixo: 5 botões, mais nada.
 
 ## Ferramentas (02 a 14)
 - **02 / 02b-02f**: 6 grupos à esquerda, cartões do grupo à direita (um grupo por vez). Cartão = ação à esquerda + nome + estado em uma frase. Grupos: Evitar apagão · Gasolina ⇄ gás · Peças do gás · Diagnóstico · Sessões e arquivos · Ajustes do app. Todos os cartões de hoje (págs. 1 e 2 de Ferramentas e a aba Sessões) estão aqui; nada sumiu.

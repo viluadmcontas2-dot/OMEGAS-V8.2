@@ -212,6 +212,7 @@
       rounded(live.petrol_ms ?? live.petrolMs, 2),
       rounded(live.load_bar ?? live.map_bar ?? live.mapBar, 2),
       rounded(live.unknown_raw_19 ?? live.unknownRaw19, 0),
+      rounded(live.level_raw ?? live.levelRaw, 0),
       String(live.fuel || live.state || ''),
     ].join('|');
   }

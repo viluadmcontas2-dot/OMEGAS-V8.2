@@ -12,6 +12,11 @@
   // Acima de 14,1 V o GNV desliga (relato de campo): o campo entra em alerta.
   const VOLTAGE_ALERT_V = 14.1;
   const VOLTAGE_RAW_PER_VOLT = 16;
+  // Nível do gás (byte 13 do 48 01 = level_raw), em bolinhas como o comutador físico. Pontos de corte PROVISÓRIOS: ficam no meio
+  // entre as marcas do original (Reserva 39, ¼ 93, ½ 143, ¾ 219; OBS-FIO tela F4); acima de ¾ só 'cheio' (237 = meio até 255).
+  // A escala será regulável em Ferramentas (tela "Nível do gás"). 0/ausente/inválido/quadro velho = desconhecido, nunca 0.
+  const LEVEL_CUTS = [[66, 'reserve'], [118, 'quarter'], [181, 'half'], [237, 'three']];
+  const LEVEL_FULL = 'full';
   const finite = value => value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value);
   const RPM_FORMAT = new Intl.NumberFormat('pt-BR');
   const TWO = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -28,7 +33,15 @@
     const map = finite(live.load_bar ?? live.map_bar ?? live.mapBar);
     const raw = finite(live.unknown_raw_19 ?? live.unknownRaw19);
     const volts = raw !== null && raw > 0 ? raw / VOLTAGE_RAW_PER_VOLT : null;
+    const levelRaw = finite(live.level_raw ?? live.levelRaw);
+    const levelState = levelRaw === null || levelRaw <= 0 ? 'unknown' : (LEVEL_CUTS.find(([cut]) => levelRaw < cut) || [0, LEVEL_FULL])[1];
+    const fuel = String(live.fuel || '').toUpperCase();
+    const sourceState = !fresh ? 'none' : fuel === 'GNV' ? 'gas' : fuel === 'GASOLINA' ? 'petrol' : 'unknown';
     return {
+      levelState,
+      levelText: levelState === 'unknown' ? '—' : '',
+      sourceState,
+      sourceText: { none: 'Sem central', gas: 'No gás', petrol: 'Na gasolina', unknown: '—' }[sourceState],
       voltage: volts === null ? '—' : ONE.format(volts),
       voltageState: volts === null ? 'unknown' : volts >= VOLTAGE_ALERT_V ? 'alert' : 'measured',
       map: map === null ? '—' : TWO.format(map),
@@ -87,6 +100,8 @@
       this.put('map', view.map);
       this.put('petrol', view.petrol);
       this.put('rpm', view.rpm);
+      this.put('level', view.levelText, view.levelState);
+      this.put('source', view.sourceText, view.sourceState);
     }
 
     put(key, value, state) {
@@ -108,6 +123,6 @@
   }
 
   ns.LiveBar = LiveBar;
-  ns.LiveBarModel = { read, VOLTAGE_ALERT_V };
+  ns.LiveBarModel = { read, VOLTAGE_ALERT_V, LEVEL_CUTS };
   boot();
 })(typeof window !== 'undefined' ? window : globalThis);
