@@ -23,8 +23,8 @@ const F = [1600, 100, 1500, 2, 20];
 test('endereço 307, 5 campos, fábrica e faixa máxima do DFM', () => {
   assert.equal(V.ADDRESS, 307);
   same(V.FACTORY, F);
-  same(V.FIELDS.map(f => f.max), [6000, 1000, 10000, 1000, 1000]);
-  same(V.FIELDS.map(f => f.min), [0, 0, 0, 0, 0]);
+  same(V.SLOTS.map(f => f.max), [6000, 1000, 10000, 1000, 1000]);
+  same(V.SLOTS.map(f => f.min), [0, 0, 0, 0, 0]);
 });
 
 test('nomes leigos: nenhum jargão ("ciclo" é jargão banido pelo dono); unidade curta', () => {
@@ -34,7 +34,8 @@ test('nomes leigos: nenhum jargão ("ciclo" é jargão banido pelo dono); unidad
     assert.ok(['rpm', 'ms'].includes(f.unit), f.unit);
     assert.ok(f.step > 0 && f.tipUp && f.tipDown, 'botões − / + e dicas para os dois lados: ' + f.label);
   }
-  same(V.FIELDS.map(f => f.label), ['Rotação máxima para agir', 'Queda de rotação para agir', 'Espera para sair do gás', 'Folga para não ficar trocando', 'Queda para parar de agir']);
+  same(V.FIELDS.map(f => f.label), ['Rotação máxima para agir']);
+  same(V.SLOTS.length, 5);
 });
 
 test('quadro: formato do original, 14 33 01 <índice> lo hi soma (só o campo alterado), igual à conta independente', () => {

@@ -7,7 +7,7 @@
   'use strict';
   // Preferências do AutoCal do original (docs/progbase/protocolo/autocal-preferencias.md, EV-AUTOCAL-001..008).
   // O catálogo e os quadros espelham AutoCalPreferenceCore.kt (o Kotlin é quem manda na central; aqui só pedimos {id, raw}).
-  // NADA aqui inventa valor de fábrica: o efeito e a faixa de fábrica de cada item seguem "não comprovados".
+  // Só entram itens com evidência no código do ProgBase (EV-AUTOCAL-*); nada de valor de fábrica inventado.
   const KEY = 'omegas.autocal.prefs.v1';
   const DEFAULTS = Object.freeze({ refreshMs: 300, showZones: true, showPoints: true, showMessages: true, showKLine: true, colorPetrol: '', colorGas: '', calibrationValue: '' });
 
@@ -16,24 +16,6 @@
   const refs = (prefix, sc, scale, step, max, label) => Array.from({ length: 18 }, (_, i) =>
     P(prefix + i, sc, i, 2, 0, max, { group: 'faixas', section: label, scale, digits: 2, step, label: 'Ponto ' + (i + 1), tech: prefix + i, order: i }));
 
-  const CAL_NAMES = [ // 12 CalibrationVal na ordem do documento: [id, SC:índice, nome técnico, nome simples]
-    ['VECT_AUTOCAL_U8_0', '357:0', 'AutoCalIdleMinBufPetrThd', 'Marcha lenta, gasolina: mínimo no buffer'],
-    ['VECT_AUTOCAL_U8_1', '357:1', 'AutoCalIdleMinBufUpdPetrThd', 'Marcha lenta, gasolina: mínimo para atualizar'],
-    ['CALIBRATION_VAL_1:0', '370:0', 'AutoCalIdleSumBufPetrThd', 'Marcha lenta, gasolina: soma no buffer'],
-    ['CALIBRATION_VAL_1:4', '370:4', 'AutoCalIdleMinBufGasThd', 'Marcha lenta, GNV: mínimo no buffer'],
-    ['CALIBRATION_VAL_1:5', '370:5', 'AutoCalIdleMinBufUpdGasThd', 'Marcha lenta, GNV: mínimo para atualizar'],
-    ['CALIBRATION_VAL_1:6', '370:6', 'AutoCalIdleSumBufGasThd', 'Marcha lenta, GNV: soma no buffer'],
-    ['CALIBRATION_VAL_1:1', '370:1', 'AutoCalMinBufPetrThd', 'Gasolina: mínimo no buffer'],
-    ['CALIBRATION_VAL_1:2', '370:2', 'AutoCalMinBufUpdPetrThd', 'Gasolina: mínimo para atualizar'],
-    ['CALIBRATION_VAL_1:3', '370:3', 'AutoCalSumBufPetrThd', 'Gasolina: soma no buffer'],
-    ['CALIBRATION_VAL_1:7', '370:7', 'AutoCalMinBufGasThd', 'GNV: mínimo no buffer'],
-    ['CALIBRATION_VAL_1:8', '370:8', 'AutoCalMinBufUpdGasThd', 'GNV: mínimo para atualizar'],
-    ['CALIBRATION_VAL_1:9', '370:9', 'AutoCalSumBufGasThd', 'GNV: soma no buffer'],
-  ];
-  const calSpec = ([id, loc, tech, label]) => {
-    const [sc, index] = loc.split(':').map(Number);
-    return P(id, sc, index, 1, 0, 255, { group: 'qualidade', section: 'Quanto a central junta antes de aprender', label, tech, step: 1 });
-  };
 
   const CATALOG = Object.freeze([
     P('AUTO_CAL_ENABLE', 330, -1, 1, 0, 1, { group: 'aprendizado', kind: 'enable', label: 'Aprendizado ligado', tech: 'AUTO_CAL_ENABLE', help: 'Liga o aprendizado automático da central. Desligar pausa a curva, por isso o app só deixa ligar.' }),
@@ -44,20 +26,11 @@
     P('LIMIT_PRESSURE_MAX', 362, -1, 2, 0, 4096, { group: 'faixas', section: 'Limites de pressão (MAP)', signed: true, scale: 1024, digits: 2, unit: 'bar', step: 51, label: 'Pressão máxima', tech: 'LIMIT_PRESSURE_MAX', help: 'Acima disso a central não coleta.' }),
     ...refs('MNFLD_PRESS_THD:', 332, 1024, 10, 4096, 'Pressões de referência (18 pontos, sempre crescentes)').map(s => Object.freeze(Object.assign({}, s, { unit: 'bar' }))),
     ...refs('PETR_INJ_TBP:', 331, 512, 51, 20480, 'Tempos de injeção de referência (18 pontos, sempre crescentes)').map(s => Object.freeze(Object.assign({}, s, { unit: 'ms' }))),
-    ...CAL_NAMES.map(calSpec),
-    P('EN_CDN_T_THD', 359, 1, 2, 0, 65535, { group: 'qualidade', section: 'Limites de estabilidade', label: 'Tempo de estabilidade', tech: 'EN_CDN_T_THD', scale: 1024, digits: 2, step: 102 }),
-    P('DIFF_ENG_SPD_THD', 387, -1, 2, 0, 65535, { group: 'qualidade', section: 'Limites de estabilidade', label: 'Giro: diferença aceita', tech: 'DIFF_ENG_SPD_THD', unit: 'rpm', step: 50 }),
-    P('DELTA_ENG_SPD_THD', 388, -1, 2, 0, 65535, { group: 'qualidade', section: 'Limites de estabilidade', label: 'Giro: variação aceita', tech: 'DELTA_ENG_SPD_THD', unit: 'rpm', step: 50 }),
-    P('DIFF_MNFLD_PRESS_THD', 389, -1, 2, 0, 65535, { group: 'qualidade', section: 'Limites de estabilidade', label: 'Pressão: diferença aceita', tech: 'DIFF_MNFLD_PRESS_THD', step: 10 }),
-    P('DELTA_MNFLD_PRESS_THD', 390, -1, 2, 0, 65535, { group: 'qualidade', section: 'Limites de estabilidade', label: 'Pressão: variação aceita', tech: 'DELTA_MNFLD_PRESS_THD', step: 10 }),
-    P('DIFF_PETR_TINJ_T_THD', 391, -1, 2, 0, 65535, { group: 'qualidade', section: 'Limites de estabilidade', label: 'Injeção: diferença aceita', tech: 'DIFF_PETR_TINJ_T_THD', step: 51 }),
-    P('DELTA_PETR_INJ_T_THD', 392, -1, 2, 0, 65535, { group: 'qualidade', section: 'Limites de estabilidade', label: 'Injeção: variação aceita', tech: 'DELTA_PETR_INJ_T_THD', step: 51 }),
   ]);
   const BY_ID = Object.freeze(Object.fromEntries(CATALOG.map(s => [s.id, s])));
   const GROUPS = Object.freeze([
     { id: 'aprendizado', title: 'Aprendizado', hint: 'Liga o aprendizado e define até onde ele vai.' },
     { id: 'faixas', title: 'Faixas de pressão e injeção', hint: 'Onde a central coleta. Os pontos têm que ser sempre crescentes.' },
-    { id: 'qualidade', title: 'Qualidade da coleta', hint: 'Quão estável e cheia tem que estar a coleta para a central aprender.' },
     { id: 'exibicao', title: 'Exibição neste aparelho', hint: 'Só muda a tela deste aparelho. Não mexe na central.' },
   ]);
 
@@ -154,11 +127,10 @@
 
   // ---- tela ----
   const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const SEAL = '<span class="pref-seal" title="O efeito deste item e o valor de fábrica ainda não foram comprovados">não comprovado</span>';
 
   function cardHtml(s, current, draft, note) {
     const shown = draft != null ? draft : current;
-    const head = '<label for="pref-' + esc(s.id) + '">' + esc(s.label) + '</label>' + SEAL;
+    const head = '<label for="pref-' + esc(s.id) + '">' + esc(s.label) + '</label>';
     const tail = (s.tech ? '<p class="pref-tech">' + esc(s.tech) + ' · bruto ' + (current == null ? '—' : current) + '</p>' : '')
       + '<p class="pref-note" role="status" data-kind="' + esc(note?.kind || '') + '">' + esc(note?.text || '') + '</p>';
     const help = s.help ? '<p class="pref-help">' + esc(s.help) + '</p>' : '';
@@ -204,7 +176,7 @@
   }
 
   function panelHtml(state) {
-    return '<p class="pref-intro">Ajustes da central do AutoCal. Cada item diz "não comprovado" enquanto o efeito dele não foi visto numa central real. Toque em Gravar: o app confere o que a central devolve.</p>'
+    return '<p class="pref-intro">Ajustes da central do AutoCal. Toque em Gravar: o app confere o que a central devolve.</p>'
       + '<p class="pref-status" id="autocalPrefState" role="status">' + (supported() ? '—' : 'Sem ligação com a central neste aparelho.') + '</p>'
       + GROUPS.map(g => groupHtml(g, state)).join('');
   }
@@ -276,5 +248,5 @@
     return { state, openGroup, step, commit };
   }
 
-  return { KEY, DEFAULTS, CATALOG, BY_ID, GROUPS, CAL_NAMES, writeFrame, readFrame, validate, toDisplay, fromDisplay, validRaw, load, save, applyToDom, supported, read, write, cardHtml, panelHtml, mount };
+  return { KEY, DEFAULTS, CATALOG, BY_ID, GROUPS, writeFrame, readFrame, validate, toDisplay, fromDisplay, validRaw, load, save, applyToDom, supported, read, write, cardHtml, panelHtml, mount };
 });

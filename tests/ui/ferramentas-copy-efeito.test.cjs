@@ -1,7 +1,6 @@
 'use strict';
-// Copy das páginas de grupo de Ferramentas (dono, 2026-10-20): "Você não tem que esconder o que o leigo não entende, você tem que FAZER
-// o leigo entender. E o que ainda não está provado, você tem que botar lá." Todo cartão de valor tem 3 linhas: o que é; o EFEITO de
-// mudar (só com evidência) OU a etiqueta "não comprovado"; a faixa/fábrica. Sem termo proibido (ECU, readback, ciclo, snapshot).
+// Copy das páginas de grupo de Ferramentas (dono, 2026-10-20): "O que não for comprovado, não for útil, você nem coloca." Todo cartão
+// mostrado tem 3 linhas: o que é; o EFEITO de mudar (de fonte: manual ou ProgBase); a faixa. Sem selo "não comprovado": item sem efeito não existe.
 // Teste sem navegador: carrega os módulos reais e confere os textos que a tela desenha.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -18,7 +17,6 @@ const VG = ns.VoltaGasolina;
 const G = ns.FerramentasGrupos;
 
 const PROIBIDO = /\bECU\b|readback|\bciclos?\b|snapshot/i;
-const UNPROVEN = 'Ainda não sei exatamente o efeito. Não mude sem necessidade.';
 const EFEITO = /Se aumentar:|Se diminuir:|Ligado:|Desligado:|Ligado,|ligado,|desligado,|Segundo o manual|indica/;
 
 const w2 = (a, b) => ({ state: 'OK', values: [a, b] });
@@ -30,17 +28,20 @@ const PARAMS = {
 
 function checkCard(where, what, effect, range) {
   assert.ok(typeof what === 'string' && what.trim().length > 5, `${where}: falta a linha 1 (o que é)`);
-  assert.ok(effect === null || (typeof effect === 'string' && EFEITO.test(effect)), `${where}: linha 2 sem efeito nem "não comprovado": ${effect}`);
+  assert.ok(typeof effect === 'string' && EFEITO.test(effect), `${where}: linha 2 sem efeito: ${effect}`);
   assert.ok(typeof range === 'string' && range.trim(), `${where}: falta a linha 3 (faixa/fábrica)`);
-  for (const t of [what, effect || '', range]) assert.doesNotMatch(t, PROIBIDO, `${where}: termo proibido em "${t}"`);
+  for (const t of [what, effect, range]) assert.doesNotMatch(t, PROIBIDO, `${where}: termo proibido em "${t}"`);
 }
 
-test('anti-apagão: os 5 números têm o que é, efeito ou "não comprovado", e faixa', () => {
-  assert.equal(V.UNPROVEN, UNPROVEN);
+test('anti-apagão: só a Rotação máxima aparece, com o que é, efeito e faixa; os 5 números seguem lidos e gravados', () => {
+  assert.equal(V.UNPROVEN, undefined);
+  assert.equal(V.FIELDS.length, 1);
   V.FIELDS.forEach(f => checkCard(f.label, f.what, f.effect, `${V.range(f)} · ${f.factory}`));
-  // Só a Rotação máxima tem efeito sustentado (rótulo do original + logs); os 4 extras: DESCONHECIDO no firmware.
-  assert.deepEqual(V.FIELDS.map(f => f.effect !== null), [true, false, false, false, false]);
   assert.match(V.FIELDS[0].effect, /Se aumentar:.*Se diminuir:/);
+  assert.equal(V.COUNT, 5);
+  assert.deepEqual(V.FACTORY, [1600, 100, 1500, 2, 20]);
+  const p = V.plan([1600, 100, 1500, 2, 20], { 0: 1700 });
+  assert.deepEqual(p.after, [1700, 100, 1500, 2, 20]);
 });
 
 test('volta para gasolina: ligar, pressão e espera explicados com o efeito', () => {
@@ -49,41 +50,25 @@ test('volta para gasolina: ligar, pressão e espera explicados com o efeito', ()
   assert.match(VG.TEXT.liga.effect, /desligado/i);
 });
 
-test('grupos só de leitura (troca, marcha lenta, volta, outras): cada cartão tem efeito ou "não comprovado"', () => {
-  let total = 0, nao = 0;
-  for (const group of ['troca', 'lenta', 'volta', 'outras']) {
+test('grupos só de leitura: todo cartão mostrado tem efeito de fonte; grupo sem prova não tem cartão', () => {
+  let total = 0;
+  for (const group of ['troca', 'outras']) {
     const cards = G.readCards(group, PARAMS);
     assert.ok(cards.length > 0, group);
-    for (const c of cards) {
-      assert.ok('effect' in c, `${group}/${c.id}: sem campo de efeito`);
-      checkCard(`${group}/${c.label}`, c.hint, c.effect, c.range);
-      total++; if (c.effect === null) nao++;
-    }
+    for (const c of cards) { checkCard(`${group}/${c.label}`, c.hint, c.effect, c.range); total++; }
   }
-  assert.ok(total >= 40, 'cartões: ' + total);
-  assert.ok(nao > 0 && nao < total, `não comprovados: ${nao} de ${total}`);
+  assert.ok(total >= 9, 'cartões: ' + total);
+  assert.equal(G.readCards('outras', PARAMS).length, 4);
+  assert.deepEqual(G.readCards('volta', PARAMS), []);
+  assert.deepEqual(G.readCards('lenta', PARAMS), []);
 });
 
-test('"Outras": nomes do original (OBD, Valvetronic, Landi Connect) ficam e são explicados', () => {
-  const cards = G.readCards('outras', PARAMS);
-  const by = l => cards.find(c => c.label.includes(l));
-  for (const nome of ['OBD', 'Valvetronic', 'Landi Connect', 'Start & Stop']) {
-    const c = by(nome);
-    assert.ok(c, 'cartão some: ' + nome);
-    assert.doesNotMatch(c.hint, /Configuração (lida )?da central/, 'linha genérica em ' + nome);
-  }
-  assert.match(by('Adaptatividade OBD').hint, /OBD é a tomada de diagnóstico/);
-  cards.forEach(c => assert.notEqual(c.hint, 'Configuração da central com este nome no original.', 'sem tradução: ' + c.label));
-});
-
-test('a tela desenha a linha 2 em todos os cartões de valor, com a etiqueta "não comprovado"', () => {
+test('a tela desenha a linha de efeito nos cartões e não tem selo "não comprovado"', () => {
   const src = fs.readFileSync(path.join(UI, 'components', 'advanced.js'), 'utf8');
-  assert.match(src, /<span class="grp-tag">não comprovado<\/span>/);
+  const css = fs.readFileSync(path.join(UI, 'styles-ux-leigo.css'), 'utf8');
+  for (const t of [src, css]) assert.doesNotMatch(t, /não comprovado|grp-tag|data-proof|UNPROVEN|experimental/i);
   for (const fn of ['readCardHtml', 'cardHtml', 'stepperHtml']) {
     const body = src.slice(src.indexOf(`    ${fn}(`), src.indexOf('\n    }\n', src.indexOf(`    ${fn}(`)));
     assert.match(body, /this\.effectHtml\(/, `${fn} sem a linha de efeito`);
   }
-  const how = src.slice(src.indexOf('class="vv-how"'), src.indexOf('</ol>', src.indexOf('class="vv-how"')));
-  assert.match(how, /giros por ciclo/, 'explicação da unidade da queda (única exceção para "ciclo")');
-  assert.match(how, /rapidez da queda/);
 });

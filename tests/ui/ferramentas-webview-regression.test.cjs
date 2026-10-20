@@ -122,7 +122,7 @@ for (const [name, viewport] of Object.entries({
         await page.evaluate(() => { window.OmegasApp.api.scienceSnapshotSince = () => { throw Error('falha da ponte'); }; });
         await T.tap(page, '.side-nav [data-route="tools"]');
         await page.waitForSelector('#toolAdvanced [data-card="anti"]', { state: 'visible', timeout: 8000 });
-        for (const card of ['anti', 'lenta']) {
+        for (const card of ['anti', 'valores']) {
           const rect = await page.locator(`#toolAdvanced [data-card="${card}"]`).boundingBox();
           assert.ok(rect && rect.height > 0 && rect.width > 0, `cartão ${card} invisível`);
         }
@@ -173,7 +173,7 @@ test('cartão com defeito exibe aviso sem exigir toque e preserva os outros', { 
     assert.match(await app.page.locator('#toolAdvanced [data-card="corte"]').innerText(), /Leitura indisponível/);
     assert.equal(await app.page.locator('[data-adv-retry], [data-tools-retry]').count(), 0);
     assert.equal(await app.page.locator('#toolAdvanced [data-card="anti"]').count(), 1);
-    assert.equal(await app.page.locator('#toolAdvanced [data-card="lenta"]').count(), 1);
+    assert.equal(await app.page.locator('#toolAdvanced [data-card="valores"]').count(), 1);
   } finally { await app.context.close(); }
 });
 
@@ -233,7 +233,7 @@ test('RED realidade: status auxiliar nativo falha, mas sete cartoes reais contin
     });
     await T.tap(app.page, '.side-nav [data-route="tools"]');
     await T.pump(app.page, 3);
-    for (const id of ['anti', 'valores', 'corte', 'lenta', 'troca', 'injetores', 'volta']) {
+    for (const id of ['anti', 'valores', 'corte', 'troca', 'injetores', 'volta']) {
       const card = app.page.locator('#toolAdvanced [data-card="' + id + '"]');
       assert.equal(await card.count(), 1, 'cartao real desapareceu: ' + id);
       const box = await card.boundingBox();
@@ -266,17 +266,15 @@ test('RED UX: textos explicam contexto, efeito e unidades sem supor conhecimento
   const cards = context.OmegasUi.CartoesMotor.build({});
   const pick = id => cards.find(x => x.id === id);
   assert.match(pick('anti').line, /embreagem|manobra|parar/i);
-  assert.match(pick('valores').line, /rota.c.o|limite/i);
+  assert.match(pick('valores').line, /giros|rota.c.o|limite/i);
   assert.match(pick('troca').line, /gasolina.*(?:g.s|GNV)/i);
   assert.match(pick('corte').line, /(?:retoma|volta).*aceler/i);
-  assert.match(pick('lenta').line, /motor ligado|parar|manobra/i);
   assert.match(pick('injetores').line, /(?:acion|aliment).*(?:injetor|g.s)|injetores.*g.s/i);
   // Volta para gasolina = pressão baixa do gás (ProgBase F4), não rotação (dono, 2026-10-20).
   assert.match(pick('volta').line, /press.o do g.s.*gasolina/i);
   assert.doesNotMatch(pick('volta').line, /rota..es|giro alto|bomba/i);
   const fields = context.OmegasUi.AntiApagaoValores.FIELDS;
   assert.ok(fields.filter(f => f.unit === 'rpm').length >= 1, 'limites de rotacao devem informar rpm');
-  assert.ok(fields.some(f => f.unit === 'ms'), 'o tempo deve indicar ms');
 });
 
 
@@ -285,7 +283,7 @@ test('Ferramentas 800x480: explicações breves permanecem visíveis, não só t
   try {
     await T.tap(app.page, '.side-nav [data-route="tools"]');
     await app.page.waitForSelector('#toolAdvanced [data-card="troca"]');
-    for (const id of ['anti', 'valores', 'troca', 'lenta', 'volta']) {
+    for (const id of ['anti', 'valores', 'troca', 'volta']) {
       const line = app.page.locator('#toolAdvanced [data-card="' + id + '"] .tile-line');
       assert.equal(await line.count(), 1);
       const rect = await line.boundingBox();
@@ -300,7 +298,7 @@ test('Multimidia 800x480: as descricoes e os estados nao ficam encobertos ou tru
   try {
     await T.tap(app.page, '.side-nav [data-route="tools"]');
     await app.page.waitForSelector('#toolAdvanced [data-card="volta"]');
-    for (const id of ['anti', 'valores', 'corte', 'lenta', 'troca', 'injetores', 'volta']) {
+    for (const id of ['anti', 'valores', 'corte', 'troca', 'injetores', 'volta']) {
       const result = await app.page.locator('#toolAdvanced [data-card="' + id + '"]').evaluate(card => {
         const title = card.querySelector('h3'), line = card.querySelector('.tile-line'), control = card.querySelector('button, .tile-state');
         const a = card.getBoundingClientRect(), b = line?.getBoundingClientRect(), c = control?.getBoundingClientRect();
@@ -338,7 +336,7 @@ test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU s
         'navegação deixou mais de uma tela aberta ou nenhuma: ' + name);
       if (name === 'tools') {
         await page.waitForSelector('#toolAdvanced [data-card="anti"]', { state: 'visible' });
-        assert.equal(await page.locator('#toolAdvanced .tool-tile').count(), 8,   // 7 assuntos + "Outras configurações" (2026-10-20)
+        assert.equal(await page.locator('#toolAdvanced .tool-tile').count(), 7,   // assuntos com algo comprovado (a Marcha lenta só entra quando houver)
           'Ferramentas perdeu cartões após navegar: ' + name);
         assert.equal(await page.locator('[data-tools-retry], [data-adv-retry]').count(), 0);
       }
@@ -354,7 +352,7 @@ test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU s
     await T.pump(page, 2);
     await T.tap(page, '[data-adv-open="corte"]');
     await T.pump(page, 2);
-    assert.match(await page.locator('.read-view').innerText(), /Gasolina ao sair do corte.*3\s+injeções/s);
+    assert.match(await page.locator('.read-view').innerText(), /Sobreposição da troca/);   // o corte abre a página da troca; o valor do corte fica no cartão
     assert.deepEqual(T.writesOf((await T.frames(page)).log), [],
       'simular leituras e navegar não pode emitir gravação na ECU');
   } finally { await app.context.close(); }
@@ -377,7 +375,7 @@ test('RED: ler Ferramentas nao precisa de confirmacao e nao consulta sua ponte e
     await T.route(app, 'tools');
     const before = await page.evaluate(() => window.__toolsReads);
     assert.ok(before >= 1, 'ao entrar deve ler os dados da central sem toque em atualizar');
-    for (const id of ['troca', 'corte', 'lenta', 'injetores', 'volta']) {
+    for (const id of ['troca', 'corte', 'injetores', 'volta']) {
       await T.tap(page, '[data-adv-open="' + id + '"]');
       await T.pump(page, 2);
       assert.equal(await page.locator('.read-view').count(), 1, id + ' abriu uma confirmacao, nao uma leitura');

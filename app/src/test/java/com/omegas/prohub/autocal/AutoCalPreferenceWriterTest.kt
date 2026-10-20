@@ -56,12 +56,12 @@ class AutoCalPreferenceWriterTest {
 
     @Test fun `ler - vetor inteiro fatiado, desconhecido vira nulo`() {
         val s = FakeSerial()
-        val out = writer(s).read("""{"ids":["MAX_RPM_FOR_AUTOCAL","PETR_INJ_TBP:2","DIFF_ENG_SPD_THD"]}""")
+        val out = writer(s).read("""{"ids":["MAX_RPM_FOR_AUTOCAL","PETR_INJ_TBP:2","DISABLE_ACQ_BAND"]}""")
         assertTrue(out.getBoolean("ok"))
         val v = out.getJSONObject("values")
         assertEquals(3000, v.getInt("MAX_RPM_FOR_AUTOCAL"))
         assertEquals(200, v.getInt("PETR_INJ_TBP:2"))
-        assertTrue(v.isNull("DIFF_ENG_SPD_THD")) // a central falsa não responde: "—", nunca 0
+        assertTrue(v.isNull("DISABLE_ACQ_BAND")) // a central falsa não responde: "—", nunca 0
         assertEquals(listOf(Mp48WorkClass.READ_ONLY), s.classes.toList())
     }
 

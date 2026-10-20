@@ -395,7 +395,9 @@
     }
 
     renderHome(cards) {
-      const tiles = cards.map(card => {
+      // Grupo sem nada provado para mostrar não aparece (dono, 2026-10-20).
+      const empty = id => id === 'lenta' && this.G && !this.G.readCards('lenta', this.data.params).length;
+      const tiles = cards.filter(card => !empty(card.id)).map(card => {
         try {
         if (card.kind === 'switch') return this.switchCardHtml(card);
         const go = card.kind === 'values' ? `Mudar valores ${PENCIL}` : 'Ver ›';
@@ -416,7 +418,7 @@
         }
       });
       // 8º cartão (o lugar vazio da grade): as configurações que o app lê e ainda não muda, todas numa página.
-      if (this.G) tiles.push(`
+      if (this.G && this.G.readCards('outras', this.data.params).length) tiles.push(`
         <button type="button" class="tool-tile tool-open" data-card="outras" data-adv-open="outras" data-state="neutral">
           <h3>Outras configurações</h3>
           <p class="tile-line"><span class="tile-full">OBD, Start &amp; Stop, Landi Connect e mais: o que é cada um.</span><span class="tile-compact">OBD, Start &amp; Stop e mais.</span></p>
@@ -430,7 +432,7 @@
     cardHtml(f, values) {
       return `
         <div class="num-field vv-card grp-card" data-kind="edit" data-item="av-${f.index}" data-field="${f.index}" data-invalid="false" data-changed="false" data-main="${f.index === 0}">
-          <label for="advField${f.index}">${escapeHtml(f.label)}${f.index === 0 ? '' : ' <small>(experimental)</small>'}</label>
+          <label for="advField${f.index}">${escapeHtml(f.label)}</label>
           <div class="num-stepper">
             <button type="button" class="step-btn" data-adv-step="${f.index}:-1" aria-label="Diminuir ${f.step} ${escapeHtml(f.unit)}" ${values ? '' : 'disabled'}>− ${f.step}</button>
             <div class="num-box">
@@ -485,13 +487,8 @@
         </section>`;
     }
 
-    /** Linha 2 de todo cartão (dono, 2026-10-20): o EFEITO de mudar, ou a etiqueta "não comprovado" com a frase honesta. */
-    effectHtml(effect) {
-      const unproven = (this.V && this.V.UNPROVEN) || 'Ainda não sei exatamente o efeito. Não mude sem necessidade.';
-      return effect
-        ? `<p class="grp-effect" data-proof="sim">${escapeHtml(effect)}</p>`
-        : `<p class="grp-effect" data-proof="nao"><span class="grp-tag">não comprovado</span> ${escapeHtml(unproven)}</p>`;
-    }
+    /** Linha 2 de todo cartão: o EFEITO de mudar. Sem efeito provado o cartão nem existe (dono, 2026-10-20), então nunca sai vazio. */
+    effectHtml(effect) { return effect ? `<p class="grp-effect">${escapeHtml(effect)}</p>` : ''; }
 
     /** Cartão SÓ LEITURA: nome, valor lido ("—" se não lido), dica numa linha; sem − / + e sem lápis. */
     readCardHtml(c) {
@@ -536,7 +533,7 @@
       return `<p><b>${escapeHtml(analysis.motivo || 'Ainda não há uma viagem analisada neste aparelho.')}</b></p>
         <p>A análise é refeita ao encerrar cada viagem. O app guarda as quedas do motor e os ajustes que conseguiu ler.</p>
         <p>As sessões antigas não permitem confirmar se o carro estava andando nem medir gasolina economizada.</p>
-        <p>Os quatro ajustes extras continuam sem dados para sugerir mudança. Nenhum número é gravado sozinho.</p>`;
+        <p>Nenhum número é gravado sozinho.</p>`;
     }
 
     /** Explicação completa: leitura, em abas curtas (cabe sem rolar). */
@@ -548,12 +545,12 @@
       const tabs = tabList.map(([id, nome]) => `<button type="button" class="vv-tab" data-adv-info-tab="${id}" aria-pressed="${id === tab}">${escapeHtml(nome)}</button>`).join('');
       const field = /^f\d$/.test(tab) ? this.V.FIELDS[Number(tab[1])] : null;
       const body = field
-        ? `<h4>${escapeHtml(field.label)}${field.index === 0 ? '' : ' <small>(experimental)</small>'}</h4><p>${escapeHtml(field.help)}</p><ul class="vv-hints"><li><b>Se precisar de mais:</b> ${escapeHtml(field.tipUp)}</li><li><b>Se atrapalhar:</b> ${escapeHtml(field.tipDown)}</li></ul><p class="vv-meta">${escapeHtml(this.V.range(field))} · Valor de fábrica: ${escapeHtml(this.V.num(field.factory))}</p>`
+        ? `<h4>${escapeHtml(field.label)}</h4><p>${escapeHtml(field.help)}</p><ul class="vv-hints"><li><b>Se precisar de mais:</b> ${escapeHtml(field.tipUp)}</li><li><b>Se atrapalhar:</b> ${escapeHtml(field.tipDown)}</li></ul><p class="vv-meta">${escapeHtml(this.V.range(field))} · Valor de fábrica: ${escapeHtml(this.V.num(field.factory))}</p>`
         : tab === 'carro'
           ? this.carroHtml()
         : tab === 'nao'
-          ? `<p><b>Não é o corte de injeção</b> (soltar o acelerador em desaceleração): o corte tem ajustes próprios no cartão <b>Saída do corte</b>.</p><p>Os dois se encontram: no seu log, depois de cada corte, com o anti-apagão <b>desligado</b> a rotação afundou até 447 rpm (26 vezes abaixo de 600); <b>ligado</b>, nunca passou de 680 rpm.</p><p>O programa original só mostra o primeiro número. O efeito exato dos outros quatro ainda não foi confirmado em carro (experimental).</p>`
-          : `<p class="vv-how"><b>A história:</b> ao pisar na embreagem para parar, a rotação cai de repente. No gás, o motor pode apagar aí. Se isso acontece abaixo de ${escapeHtml(lim)} rpm, o anti-apagão percebe a queda e segura o motor até ela acalmar.</p><ol><li><b>Rotação máxima para agir</b> (${escapeHtml(lim)} rpm): só age abaixo destes giros. Acelerando normal, não faz nada.</li><li><b>Queda para agir</b>: não são giros, é a <b>velocidade</b> da queda. A unidade é a mesma do número de queda que o programa original mostra no rodapé: "giros por ciclo" (o que é um ciclo ainda é dedução; leia como "rapidez da queda"). Queda mais rápida que isto liga a proteção.</li><li><b>Espera para sair do gás</b>: quanto a central espera para sair do gás quando age.</li><li><b>Queda para parar de agir</b> e <b>Folga</b>: quando a queda fica mais lenta que isto, a proteção solta; a folga evita liga-desliga.</li></ol><p><b>Já provado:</b> no seu log, ligado, os giros nunca caíram abaixo de 600 depois do corte; desligado, caíram até 447. Efeito de mudar os 4 últimos números: <b>não comprovado</b>.</p>`;
+          ? `<p><b>Não é o corte de injeção</b> (soltar o acelerador em desaceleração): o corte tem ajustes próprios no cartão <b>Saída do corte</b>.</p><p>Os dois se encontram: no seu log, depois de cada corte, com o anti-apagão <b>desligado</b> a rotação afundou até 447 rpm (26 vezes abaixo de 600); <b>ligado</b>, nunca passou de 680 rpm.</p><p>O programa original mostra só este número.</p>`
+          : `<p class="vv-how"><b>A história:</b> ao pisar na embreagem para parar, a rotação cai de repente. No gás, o motor pode apagar aí. Se isso acontece abaixo de ${escapeHtml(lim)} rpm, o anti-apagão percebe a queda e segura o motor até ela acalmar.</p><p><b>Rotação máxima para agir</b> (${escapeHtml(lim)} rpm): só age abaixo destes giros. Acelerando normal, não faz nada.</p><p><b>Já provado:</b> no seu log, ligado, os giros nunca caíram abaixo de 600 depois do corte; desligado, caíram até 447.</p>`;
       return `
         <section class="tool-view values-view" data-card="valores-info">
           <header><button type="button" class="secondary tool-back" data-adv-back-valores><span aria-hidden="true">‹</span> Voltar</button><h3>Como o anti-apagão funciona</h3></header>

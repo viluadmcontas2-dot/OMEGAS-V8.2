@@ -18,8 +18,9 @@ const VIEWPORTS = {
   '800x480': { width: 800, height: 480 },
 };
 const STATES = ['desconectada', 'lendo', 'com dados'];
-const MOTOR = ['anti', 'valores', 'corte', 'lenta', 'troca', 'injetores', 'volta'];
-const LEITURA = ['corte', 'lenta', 'troca', 'injetores', 'volta', 'outras'];   // cada um abre a PÁGINA DO GRUPO (2026-10-20)
+// 'lenta' só aparece com algo comprovado para mostrar (dono, 2026-10-20: o que não é comprovado nem entra)
+const MOTOR = ['anti', 'valores', 'corte', 'troca', 'injetores', 'volta'];
+const LEITURA = ['corte', 'troca', 'injetores', 'volta', 'outras'];   // cada um abre a PÁGINA DO GRUPO (2026-10-20)
 const APP = ['copia', 'refino-automatico', 'bateria', 'balao', 'registro'];
 
 /** Troca cada método das pontes por um que exige o `this` certo (como o WebView) e registra a chamada. */
@@ -267,7 +268,7 @@ test('barreira: um cartão que lança erro ao desenhar some sozinho; os outros s
       window.OmegasUi.CartoesMotor.build = (...args) => original(...args).map(c => (c.id === 'corte' && window.__quebrado
         ? Object.defineProperty(c, 'title', { get() { throw Error('cartão falhou'); } }) : c));
     });
-    await T.tap(page, '[data-adv-open="lenta"]'); await T.tap(page, '[data-adv-back]'); await T.pump(page, 2);
+    await T.tap(page, '[data-adv-open="corte"]'); await T.tap(page, '[data-adv-back]'); await T.pump(page, 2);
     assert.match(await text(page, '#toolAdvanced [data-card="corte"]'), /Leitura indisponível/);
     for (const id of MOTOR.filter(x => x !== 'corte')) await inside(page, `#toolAdvanced [data-card="${id}"]`, VIEWPORTS['1280x720'], id);
     await page.evaluate(() => { window.__quebrado = false; });
@@ -300,7 +301,7 @@ test('barreira: o fluxo do anti-apagão quebrado derruba só o cartão dele', { 
   try {
     await T.route(app, 'tools');
     await page.evaluate(() => { window.__flagQuebrado = true; window.__bench.deliver(); });
-    await T.tap(page, '[data-adv-open="lenta"]'); await T.tap(page, '[data-adv-back]').catch(() => {}); await T.pump(page, 2);
+    await T.tap(page, '[data-adv-open="corte"]'); await T.tap(page, '[data-adv-back]').catch(() => {}); await T.pump(page, 2);
     assert.match(await text(page, '#toolAdvanced [data-card="anti"]'), /Leitura indisponível/);
     for (const id of MOTOR.filter(x => x !== 'anti')) await inside(page, `#toolAdvanced [data-card="${id}"]`, VIEWPORTS['1280x720'], id);
   } finally {

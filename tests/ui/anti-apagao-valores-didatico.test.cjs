@@ -12,14 +12,14 @@ test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });
 
 for (const [nome, vp] of Object.entries(VPS)) {
-  test(`os 5 ajustes ficam expostos, cada um no seu card, com − / +, e a tela NÃO rola @${nome}`, { skip }, async () => {
+  test(`o único ajuste com efeito comprovado fica exposto no seu card, com − / +, e a tela NÃO rola @${nome}`, { skip }, async () => {
     const app = await T.openApp(browser, { viewport: vp, usb: true });
     const { page } = app;
     try {
       await U.abrirValores(app);
-      assert.equal(await page.locator('.vv-card').count(), 5, 'um card por ajuste, todos na mesma tela');
+      assert.equal(await page.locator('[data-field]').count(), 1, 'só o ajuste com efeito comprovado tem card');
       assert.equal(await page.locator('[data-adv-open-view="extras"]').count(), 0, 'sem botão de "ajustes extras"');
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 1; i++) {
         const box = page.locator(`[data-field="${i}"]`);
         assert.ok(await box.isVisible(), `card ${i} visível`);
         assert.equal(await box.locator('[data-adv-step]').count(), 2, `campo ${i}: botões − e +`);
@@ -45,7 +45,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       await U.abrirValores(app);
       await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
       const abas = await page.locator('[data-adv-info-tab]').count();
-      assert.equal(abas, 8, 'Como funciona + 5 ajustes + Seu carro + NÃO é');
+      assert.equal(abas, 4, 'Como funciona + Rotação máxima + Seu carro + NÃO é');
       for (let i = 0; i < abas; i++) {
         await page.locator('[data-adv-info-tab]').nth(i).click(); await T.pump(page, 1);
         const cortado = await page.evaluate(() => { const e = document.querySelector('.vv-info-full'); const v = document.querySelector('.values-view'); return [e.scrollHeight > e.clientHeight + 2, v.scrollHeight > v.clientHeight + 2]; });
@@ -66,14 +66,13 @@ test('liga os pontos: explica QUANDO age, o caminho completo e que NÃO é o cor
     await T.tap(page, '[data-adv-open-view="info"]'); await T.pump(page, 2);
     const quando = await page.locator('.vv-how').innerText();
     assert.match(quando, /cai de repente/); assert.match(quando, /abaixo de 1\.600 rpm/); assert.match(quando, /embreagem/);
-    assert.match(await page.locator('.vv-info-full').innerText(), /Queda para agir/);
+    assert.match(await page.locator('.vv-info-full').innerText(), /Rotação máxima para agir/);
     await page.locator('[data-adv-info-tab="nao"]').click(); await T.pump(page, 1);
     const tudo = await page.locator('.vv-info-full').innerText();
     assert.match(tudo, /Não é o corte de injeção/);
     assert.match(tudo, /Saída do corte/, 'aponta para o cartão do corte');
     assert.match(tudo, /447 rpm/); assert.match(tudo, /680 rpm/);
-    await page.locator('[data-adv-info-tab="f1"]').click(); await T.pump(page, 1);
-    assert.match(await page.locator('.vv-info-full').innerText(), /escala interna ainda não foi confirmada/i, 'não inventa uma conversão por ciclo que a descompilação não provou');
+    await page.locator('[data-adv-info-tab="f0"]').click(); await T.pump(page, 1);
     assert.match(await page.locator('.vv-info-full').innerText(), /Se precisar de mais/);
   } finally { await app.context.close(); }
 });

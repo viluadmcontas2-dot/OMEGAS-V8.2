@@ -11,9 +11,8 @@ import com.omegas.prohub.ecu.Mp48Protocol
  * valor little-endian, soma módulo 256. Leitura: número = `09`; elemento de vetor = vetor inteiro `29` (provado na central
  * para SC 123/124) fatiado por largura. A leitura `0A` (elemento) não tem resposta provada, por isso não é usada.
  *
- * O que NÃO está provado (vai como "não comprovado" na tela): o efeito de cada parâmetro no firmware, a faixa de fábrica,
- * o ACK real destes SC na central do dono e o fatiamento do vetor `29` para SC 357/359/370/331/332. O valor de fábrica é
- * DESCONHECIDO: nada aqui inventa padrão. Nunca grava MUL_ACT (curva K) nem Mapa K.
+ * Só entram itens com evidência no código do ProgBase (EV-AUTOCAL-*); parâmetros de efeito ou faixa desconhecidos ficam
+ * de fora. Nada aqui inventa valor de fábrica. Nunca grava MUL_ACT (curva K) nem Mapa K.
  */
 internal object AutoCalPreferenceCore {
     const val ENABLE_ID = "AUTO_CAL_ENABLE"
@@ -45,16 +44,6 @@ internal object AutoCalPreferenceCore {
         add(Spec(MAP_MAX_ID, 362, -1, 2, 0, 4096, signed = true))
         for (i in 0 until REF_POINTS) add(Spec("$MAP_REF_PREFIX$i", 332, i, 2, 0, 4 * 1024))
         for (i in 0 until REF_POINTS) add(Spec("$INJ_REF_PREFIX$i", 331, i, 2, 0, 40 * 512))
-        add(Spec("EN_CDN_T_THD", 359, 1, 2, 0, 0xFFFF))
-        add(Spec("DIFF_ENG_SPD_THD", 387, -1, 2, 0, 0xFFFF))
-        add(Spec("DELTA_ENG_SPD_THD", 388, -1, 2, 0, 0xFFFF))
-        add(Spec("DIFF_MNFLD_PRESS_THD", 389, -1, 2, 0, 0xFFFF))
-        add(Spec("DELTA_MNFLD_PRESS_THD", 390, -1, 2, 0, 0xFFFF))
-        add(Spec("DIFF_PETR_TINJ_T_THD", 391, -1, 2, 0, 0xFFFF))
-        add(Spec("DELTA_PETR_INJ_T_THD", 392, -1, 2, 0, 0xFFFF))
-        add(Spec("VECT_AUTOCAL_U8_0", 357, 0, 1, 0, 255))
-        add(Spec("VECT_AUTOCAL_U8_1", 357, 1, 1, 0, 255))
-        for (i in 0 until 10) add(Spec("CALIBRATION_VAL_1:$i", 370, i, 1, 0, 255))
     }
 
     private val BY_ID = SPECS.associateBy { it.id }

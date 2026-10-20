@@ -18,7 +18,7 @@
   // (null = "não comprovado": docs/progbase/protocolo/anti-apagao-quadros-original.md §4 diz efeito DESCONHECIDO nos 4 extras); a faixa sai de range().
   // Rotação máxima: rótulo do original "Max RPM to enable" (OBS-COD) + logs (docs/progbase/bins/limiares-em-movimento.md: subir de 1600 a
   // 1800 vê 20 de 20 apagões em vez de 19, e passa de 187 a 222 acionamentos à toa por hora).
-  const FIELDS = [
+  const SLOTS = [
     { index: 0, tab: 'Rotação máx.', short: 'Só age com o motor abaixo destes giros.', what: 'Só age com o motor abaixo destes giros.',
       effect: 'Se aumentar: protege em mais quedas, mas age mais vezes à toa. Se diminuir: age menos e pode deixar apagar.',
       hintUp: 'Ainda apaga? Aumente.', hintDown: 'Age à toa? Diminua.', label: 'Rotação máxima para agir', unit: 'rpm', min: 0, max: 6000, factory: 1600, step: 50,
@@ -46,10 +46,10 @@
       tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
       tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
   ];
-  /** Linha 2 quando o efeito não está provado (dono, 2026-10-20): o cartão continua visível, com a etiqueta "não comprovado". */
-  const UNPROVEN = 'Ainda não sei exatamente o efeito. Não mude sem necessidade.';
-  const COUNT = FIELDS.length;
-  const FACTORY = FIELDS.map(f => f.factory);
+  // Só o que tem efeito provado é mostrado (dono, 2026-10-20). Os 5 números continuam sendo lidos e gravados juntos (SLOTS).
+  const FIELDS = SLOTS.filter(f => f.effect);
+  const COUNT = SLOTS.length;
+  const FACTORY = SLOTS.map(f => f.factory);
   // <SUGESTAO:INICIO> gerado de docs/progbase/bins/sugestao-antiapagao-carro-do-dono.json (tools/sessoes/gerar_sugestao_js.py); um teste confere os dois.
   const SUGESTAO = {"valores": [1600, 100, 1500, 2, 20], "ligadoPior": 680, "desligadoPior": 447, "marcha": 870, "maiorInicioQueda": 1967, "faixaMax": 2000, "gasLigadoPct": 0.8, "gasDesligadoPct": 5.4, "ativMin": 165.1, "ativMax": 198.8, "quase1200": 25, "quase1600": 15, "quase2000": 6, "tabela": [{"m": 1200, "porHora": 170.2, "quase": 25}, {"m": 1400, "porHora": 198.8, "quase": 20}, {"m": 1600, "porHora": 192.3, "quase": 15}, {"m": 1800, "porHora": 179.4, "quase": 11}, {"m": 2000, "porHora": 165.1, "quase": 6}], "horas": 12.3, "gasLigado": {"leituras": 14258, "fora": 118}};
   // <SUGESTAO:FIM>
@@ -78,7 +78,7 @@
     const keys = Object.keys(changes || {});
     if (!keys.length) return { ok: false, error: 'Nenhum número foi informado.' };
     for (const key of keys) {
-      const field = /^\d+$/.test(key) ? FIELDS[Number(key)] : null;
+      const field = /^\d+$/.test(key) ? SLOTS[Number(key)] : null;
       if (!field) return { ok: false, error: 'Esse campo não existe.' };
       const value = changes[key];
       if (typeof value !== 'number' || !Number.isInteger(value)) return { ok: false, error: 'O valor tem que ser um número inteiro.' };
@@ -120,7 +120,7 @@
   }
   function factoryChanges(current) {
     const out = {};
-    FIELDS.forEach(f => { if (!current || current[f.index] !== f.factory) out[f.index] = f.factory; });
+    SLOTS.forEach(f => { if (!current || current[f.index] !== f.factory) out[f.index] = f.factory; });
     return out;
   }
   /** "1.500 ms" → "1,5 s" (só o campo de tempo). */
@@ -130,7 +130,7 @@
   }
   /** Fora de ±50% do valor de fábrica (INFERIDO, conservador): só avisa, a faixa dura é a do DFM. */
   function farFromFactory(index, value) {
-    const f = FIELDS[index];
+    const f = SLOTS[index];
     if (!f || !isU16(value)) return false;
     return Math.abs(value - f.factory) > f.factory * 0.5;
   }
@@ -289,7 +289,7 @@
   }
 
   ns.AntiApagaoValores = {
-    ADDRESS, FIELDS, FACTORY, UNPROVEN, SUGESTAO, suggestionChanges, COUNT, TEXT, valuesOf, parseInput, validate, plan, verifyReadback, factoryChanges, frameFor, hex: hexBytes, partialText,
+    ADDRESS, FIELDS, SLOTS, FACTORY, SUGESTAO, suggestionChanges, COUNT, TEXT, valuesOf, parseInput, validate, plan, verifyReadback, factoryChanges, frameFor, hex: hexBytes, partialText,
     secondsText, farFromFactory, range, num, createValuesFlow,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

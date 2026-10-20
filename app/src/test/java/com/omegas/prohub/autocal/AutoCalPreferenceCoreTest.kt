@@ -20,16 +20,11 @@ class AutoCalPreferenceCoreTest {
         assertEquals("12 4A 01 01 5E", frame("AUTO_CAL_ENABLE", 1))
         assertEquals("13 69 01 33 00 B0", frame("LIMIT_PRESSURE_MIN", 51))
         assertEquals("13 6A 01 CC 03 4D", frame("LIMIT_PRESSURE_MAX", 972))
-        assertEquals("14 67 01 01 00 04 81", frame("EN_CDN_T_THD", 1024))
-        assertEquals("13 83 01 90 01 28", frame("DIFF_ENG_SPD_THD", 400))
-        assertEquals("13 72 01 03 04 8D", frame("CALIBRATION_VAL_1:3", 4))
         assertEquals("14 4C 01 05 00 02 68", frame("MNFLD_PRESS_THD:5", 512))
         assertEquals("14 4B 01 05 00 04 69", frame("PETR_INJ_TBP:5", 1024))
     }
 
-    @Test fun `catalogo tem os 12 parametros de qualidade e nenhum toca a curva K`() {
-        val cal = AutoCalPreferenceCore.SPECS.filter { it.sc == 370 || (it.sc == 357 && it.index in 0..1) }
-        assertEquals(12, cal.size)
+    @Test fun `catalogo so tem itens comprovados e nenhum toca a curva K`() {
         assertTrue(AutoCalPreferenceCore.SPECS.none { it.sc == AutoCalProtocol.MUL_ACT.address })
         assertEquals(AutoCalPreferenceCore.SPECS.size, AutoCalPreferenceCore.SPECS.map { it.id }.toSet().size)
     }

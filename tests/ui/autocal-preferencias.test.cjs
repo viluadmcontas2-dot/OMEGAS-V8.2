@@ -23,20 +23,15 @@ test('quadros de escrita batem com o oráculo do documento', () => {
   assert.equal(w('AUTO_CAL_ENABLE', 1), '12 4A 01 01 5E');
   assert.equal(w('LIMIT_PRESSURE_MIN', 51), '13 69 01 33 00 B0');
   assert.equal(w('LIMIT_PRESSURE_MAX', 972), '13 6A 01 CC 03 4D');
-  assert.equal(w('EN_CDN_T_THD', 1024), '14 67 01 01 00 04 81');
-  assert.equal(w('DIFF_ENG_SPD_THD', 400), '13 83 01 90 01 28');
-  assert.equal(w('CALIBRATION_VAL_1:3', 4), '13 72 01 03 04 8D');
   assert.equal(w('MNFLD_PRESS_THD:5', 512), '14 4C 01 05 00 02 68');
   assert.equal(w('PETR_INJ_TBP:5', 1024), '14 4B 01 05 00 04 69');
 });
 
-test('catálogo: 12 CalibrationVal, 18+18 pontos, 4 grupos, sem MUL_ACT, ids únicos', () => {
+test('catálogo: 18+18 pontos, 3 grupos, sem MUL_ACT, ids únicos', () => {
   const P = fresh(undefined);
-  assert.equal(P.CAL_NAMES.length, 12);
-  assert.equal(P.CATALOG.filter(s => s.group === 'qualidade' && /^(VECT|CALIBRATION)/.test(s.id)).length, 12);
   assert.equal(P.CATALOG.filter(s => s.sc === 332).length, 18);
   assert.equal(P.CATALOG.filter(s => s.sc === 331).length, 18);
-  assert.equal(P.GROUPS.length, 4);
+  assert.equal(P.GROUPS.length, 3);
   assert.ok(!P.CATALOG.some(s => /MUL_ACT/.test(s.id)));
   assert.equal(new Set(P.CATALOG.map(s => s.id)).size, P.CATALOG.length);
 });
@@ -91,7 +86,7 @@ test('preferências locais: 200 a 2000, cores e linha K', () => {
   assert.equal(l.colorPetrol, '');
 });
 
-test('tela: Preferências antes de Ações avançadas; sem @keyframes nem CHANGE_NETWORK_STATE; selo visível', () => {
+test('tela: Preferências antes de Ações avançadas; sem @keyframes nem CHANGE_NETWORK_STATE; sem selo decorativo', () => {
   const js = fs.readFileSync(path.join(UI, 'screens', 'autocal-cockpit.js'), 'utf8');
   assert.ok(js.indexOf('<summary>Preferências</summary>') > 0);
   assert.ok(js.indexOf('<summary>Preferências</summary>') < js.indexOf('<summary>Ações avançadas</summary>'));
@@ -99,6 +94,6 @@ test('tela: Preferências antes de Ações avançadas; sem @keyframes nem CHANGE
   const mod = fs.readFileSync(path.join(UI, 'core', 'autocal-preferencias.js'), 'utf8');
   const css = fs.readFileSync(path.join(UI, 'styles-autocal-cockpit.css'), 'utf8');
   for (const bad of ['@keyframes', 'CHANGE_NETWORK_STATE']) assert.ok(!mod.includes(bad) && !js.includes(bad));
-  assert.ok(mod.includes('não comprovado') && css.includes('.pref-seal'));
+  assert.ok(!mod.includes('não comprovado') && !css.includes('.pref-seal'));
   assert.ok(fs.readFileSync(path.join(UI, 'index.html'), 'utf8').includes('core/autocal-preferencias.js'));
 });

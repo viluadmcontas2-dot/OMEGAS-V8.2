@@ -46,7 +46,7 @@ test('SEM ATRITO (regra do dono): UM toque liga e UM toque desliga; nenhuma jane
   } finally { await app.context.close(); }
 });
 
-test('cinco parâmetros anti-stallo aparecem como números com unidade, não como interruptores', { skip }, async () => {
+test('o parâmetro anti-stallo com efeito comprovado aparece como número com unidade, não como interruptores', { skip }, async () => {
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   const { page } = app;
   try {
@@ -54,8 +54,8 @@ test('cinco parâmetros anti-stallo aparecem como números com unidade, não com
     await T.tap(page, '[data-adv-open="valores"]');
     await T.pump(page, 3);
     const inputs = page.locator('#toolAdvanced input[data-adv-field]');
-    assert.equal(await inputs.count(), 5);
-    for (let i = 0; i < 5; i++) {
+    assert.equal(await inputs.count(), 1);
+    for (let i = 0; i < 1; i++) {
       assert.equal(await inputs.nth(i).isDisabled(), false, 'campo numérico '+i+' precisa aceitar edição');
       assert.match(await page.locator('[data-field="'+i+'"]').textContent(), /rpm|ms/i);
     }
