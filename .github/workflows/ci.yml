@@ -166,6 +166,8 @@ jobs:
           graphify update . 2>&1 | tail -5
       - name: Ligar documentos, evidências e código (determinístico)
         run: python3 -B tools/grafo_conhecimento.py
+      - name: Grafo de produção em dia e sem elo essencial quebrado
+        run: python3 -B tools/grafo_producao.py --check
       - name: Integridade das evidências e do grafo
         run: python3 -B tools/auditoria.py --check
       - name: Mapa de fontes em dia
@@ -178,6 +180,7 @@ jobs:
             graphify-out/graph.json
             graphify-out/GRAPH_REPORT.md
             docs/mapa-de-fontes/
+            docs/grafo/
             docs/handoff/AUDITORIA.json
           retention-days: 30
 
