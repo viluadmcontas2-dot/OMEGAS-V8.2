@@ -1,0 +1,216 @@
+{
+ "schema": "limiares-em-movimento/1",
+ "horas": 12.3,
+ "sessoes": 89,
+ "pico_minimo": 1200,
+ "queda_minima": 400,
+ "apagoes": 20,
+ "quase_apagoes": 35,
+ "quedas_comuns": 3646,
+ "picos_dos_apagoes": [
+  1314,
+  1408,
+  1597,
+  1615,
+  1827,
+  1930,
+  1936,
+  1964,
+  2287,
+  2378,
+  2482,
+  2517,
+  2540,
+  2554,
+  2612,
+  2653,
+  2689,
+  2717,
+  2725,
+  3259
+ ],
+ "tabela": [
+  {
+   "maxima": 1400,
+   "velocidade_rpm_s": 150,
+   "apagoes_vistos": 15,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 152.2
+  },
+  {
+   "maxima": 1400,
+   "velocidade_rpm_s": 250,
+   "apagoes_vistos": 14,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 146.1
+  },
+  {
+   "maxima": 1400,
+   "velocidade_rpm_s": 350,
+   "apagoes_vistos": 14,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 139.3
+  },
+  {
+   "maxima": 1400,
+   "velocidade_rpm_s": 450,
+   "apagoes_vistos": 12,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 132.0
+  },
+  {
+   "maxima": 1400,
+   "velocidade_rpm_s": 600,
+   "apagoes_vistos": 12,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 119.2
+  },
+  {
+   "maxima": 1600,
+   "velocidade_rpm_s": 150,
+   "apagoes_vistos": 19,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 187.4
+  },
+  {
+   "maxima": 1600,
+   "velocidade_rpm_s": 250,
+   "apagoes_vistos": 18,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 178.1
+  },
+  {
+   "maxima": 1600,
+   "velocidade_rpm_s": 350,
+   "apagoes_vistos": 18,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 168.6
+  },
+  {
+   "maxima": 1600,
+   "velocidade_rpm_s": 450,
+   "apagoes_vistos": 17,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 156.2
+  },
+  {
+   "maxima": 1600,
+   "velocidade_rpm_s": 600,
+   "apagoes_vistos": 16,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 141.8
+  },
+  {
+   "maxima": 1800,
+   "velocidade_rpm_s": 150,
+   "apagoes_vistos": 20,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 221.9
+  },
+  {
+   "maxima": 1800,
+   "velocidade_rpm_s": 250,
+   "apagoes_vistos": 19,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 215.2
+  },
+  {
+   "maxima": 1800,
+   "velocidade_rpm_s": 350,
+   "apagoes_vistos": 19,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 198.3
+  },
+  {
+   "maxima": 1800,
+   "velocidade_rpm_s": 450,
+   "apagoes_vistos": 18,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 178.0
+  },
+  {
+   "maxima": 1800,
+   "velocidade_rpm_s": 600,
+   "apagoes_vistos": 16,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 159.7
+  },
+  {
+   "maxima": 2000,
+   "velocidade_rpm_s": 150,
+   "apagoes_vistos": 20,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 249.4
+  },
+  {
+   "maxima": 2000,
+   "velocidade_rpm_s": 250,
+   "apagoes_vistos": 19,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 243.0
+  },
+  {
+   "maxima": 2000,
+   "velocidade_rpm_s": 350,
+   "apagoes_vistos": 19,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 220.8
+  },
+  {
+   "maxima": 2000,
+   "velocidade_rpm_s": 450,
+   "apagoes_vistos": 18,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 199.3
+  },
+  {
+   "maxima": 2000,
+   "velocidade_rpm_s": 600,
+   "apagoes_vistos": 16,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 177.6
+  },
+  {
+   "maxima": 2200,
+   "velocidade_rpm_s": 150,
+   "apagoes_vistos": 20,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 267.5
+  },
+  {
+   "maxima": 2200,
+   "velocidade_rpm_s": 250,
+   "apagoes_vistos": 19,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 260.7
+  },
+  {
+   "maxima": 2200,
+   "velocidade_rpm_s": 350,
+   "apagoes_vistos": 19,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 239.3
+  },
+  {
+   "maxima": 2200,
+   "velocidade_rpm_s": 450,
+   "apagoes_vistos": 19,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 215.1
+  },
+  {
+   "maxima": 2200,
+   "velocidade_rpm_s": 600,
+   "apagoes_vistos": 17,
+   "quase_apagoes_vistos": 35,
+   "quedas_comuns_por_hora": 193.0
+  }
+ ],
+ "tempo_abaixo_de_700_nos_quase_apagoes_s": {
+  "n": 35,
+  "p50": 0.5,
+  "p90": 2.0,
+  "max": 5.0
+ },
+ "rotacao_maxima_sugerida": 1800
+}
