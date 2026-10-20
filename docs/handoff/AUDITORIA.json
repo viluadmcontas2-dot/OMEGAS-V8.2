@@ -38,17 +38,17 @@
   },
   "grafo": {
     "arestas_invalidas": 0,
-    "arquivos": 167,
+    "arquivos": 187,
     "arquivos_ausentes": [],
-    "nos": 12071
+    "nos": 12091
   },
   "integridade_ok": true,
   "limite": "Integridade referencial; não comprova reconstrução funcional ou execução no carro. Bundle validado separadamente pelo REA.",
   "pendencias": {
-    "abertas": 34,
+    "abertas": 35,
     "feitas": 0
   },
-  "source_sha": "27c514e13a0df5c5dee76eb6f190561581885887",
+  "source_sha": "38352648ab2b1c854f12dd1931550bdeed2f3108",
   "testes": {
     "estado": "DESCONHECIDO",
     "motivo": "Este comando não executa testes nem presume resultados de outros jobs."
