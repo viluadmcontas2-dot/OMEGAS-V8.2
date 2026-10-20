@@ -35,6 +35,8 @@ class NativeAutoCalMonitor(
     /** Cópia da última leitura completa antes do AutoMatch (buffers do GNV ainda cheios); a ECU zera o GNV logo depois. */
     private val onPreAutoMatchSnapshot: (JSONObject) -> Unit = {},
     private val onStateChanged: () -> Unit = {},
+    /** Falha de quem ouve (serviço/sessão): vira linha de log; a leitura da central segue igual. */
+    private val onListenerError: (String, Exception) -> Unit = { _, _ -> },
 ) {
     private data class PendingMaturity(
         val transition: NativeAutoCalMaturityTracker.Transition,
@@ -62,6 +64,10 @@ class NativeAutoCalMonitor(
     )
 
     private val lock = Any()
+
+    private fun listenerFailed(what: String, error: Exception) {
+        try { onListenerError(what, error) } catch (_: Exception) { /* quem registra falhou também: nada mais a fazer sem derrubar a leitura */ }
+    }
     private val maturityTracker = NativeAutoCalMaturityTracker()
     private val autoMatchCounterTracker = NativeAutoMatchCounterTracker()
     private val refreshPlanner = NativeAutoCalRefreshPlanner()
@@ -222,10 +228,10 @@ class NativeAutoCalMonitor(
         val countIncreased = previousProbe != null && probe.autoMatchCount > previousProbe.autoMatchCount
         if (countIncreased) {
             PreAutoMatchState.capture(latestSnapshot, probe.autoMatchCount, System.currentTimeMillis())?.let { pre ->
-                try { onPreAutoMatchState(pre) } catch (_: Exception) {}
+                try { onPreAutoMatchState(pre) } catch (error: Exception) { listenerFailed("estado antes do AutoMatch", error) }
             }
             if (latestSnapshot.optBoolean("available", false)) {
-                try { onPreAutoMatchSnapshot(JSONObject(latestSnapshot.toString())) } catch (_: Exception) {}
+                try { onPreAutoMatchSnapshot(JSONObject(latestSnapshot.toString())) } catch (error: Exception) { listenerFailed("cópia antes do AutoMatch", error) }
             }
         }
         // O primeiro probe apenas estabelece baseline. Não autoriza snapshot pesado.
@@ -913,7 +919,7 @@ class NativeAutoCalMonitor(
                 .put("appWritePerformed", false)
                 .put("appAutomaticWrite", false)
                 .put("nativeFirmwareFormulaInferred", false)
-            try { onNativeAutoMatchObserved(epoch) } catch (_: Exception) {}
+            try { onNativeAutoMatchObserved(epoch) } catch (error: Exception) { listenerFailed("AutoMatch observado", error) }
         }
 
         val currentCounters = vector(snapshot, AutoCalProtocol.NUM_BUF_UPD_GAS)
@@ -977,7 +983,7 @@ class NativeAutoCalMonitor(
         }
 
         if (enabled == 1) {
-            try { onFreshSnapshot(decorated) } catch (_: Exception) {}
+            try { onFreshSnapshot(decorated) } catch (error: Exception) { listenerFailed("leitura nova do AutoCal", error) }
         }
         if (countIncreased &&
             autoMatchEvidence?.state == NativeAutoMatchEvidenceBracket.State.FACTOR_CHANGE_CONFIRMED
@@ -1005,7 +1011,9 @@ class NativeAutoCalMonitor(
                         .put("appAutomaticWrite", false)
                         .put("pointDeltas", autoMatchEvidence.toJson().getJSONArray("pointDeltas")),
                 )
-            } catch (_: Exception) {}
+            } catch (error: Exception) {
+                listenerFailed("Curva K trocada pela central", error)
+            }
         }
         onStateChanged()
     }

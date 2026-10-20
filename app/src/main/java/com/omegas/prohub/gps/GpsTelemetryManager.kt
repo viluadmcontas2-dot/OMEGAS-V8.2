@@ -58,7 +58,7 @@ class GpsTelemetryManager(
     }
 
     fun stop() {
-        try { manager.removeUpdates(this) } catch (_: Exception) {}
+        try { manager.removeUpdates(this) } catch (_: Exception) { /* GPS já parado ou sem permissão: nada a soltar */ }
         if (running) log.add("INFO", "GPS", "GPS encerrado")
         running = false
         onUpdate()

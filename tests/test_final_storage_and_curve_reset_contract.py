@@ -12,10 +12,11 @@ drawers = (ROOT / "app/src/main/assets/ui/components/drawers.js").read_text(enco
 curve = (ROOT / "app/src/main/assets/ui/screens/curve.js").read_text(encoding="utf-8")
 index = (ROOT / "app/src/main/assets/ui/index.html").read_text(encoding="utf-8")
 
-# Sessões e backups manuais precisam existir fora do sandbox em Download/Omegas.
-assert 'const val PUBLIC_ROOT = "Download/Omegas"' in mirror
+# Sessões e backups manuais ficam no armazenamento privado do app (privacidade, 2026-10-20);
+# Download/Omegas só é lida para migrar cópias antigas. Sair do app = "Exportar" (toque do dono).
+assert 'const val PRIVATE_ROOT = "Omegas"' in mirror
 assert "fun publishRootFile(" in mirror
-assert "Environment.DIRECTORY_DOWNLOADS" in mirror
+assert "fun migrateLegacyPublicCopies(" in mirror
 assert "publishManualBackup" in manager
 assert "publishRootFile" in service
 assert '"publicPath"' in manager

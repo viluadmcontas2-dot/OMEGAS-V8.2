@@ -69,7 +69,7 @@ class DeferredLiveOnlyLearningStore(
                 var expose = false
                 synchronized(stateLock) {
                     if (closed.get()) {
-                        try { restored.store.close() } catch (_: Exception) {}
+                        try { restored.store.close() } catch (_: Exception) { /* fechando recurso descartado */ }
                     } else {
                         migration = JSONObject(restored.migration.toString())
                         if (sessionRequested) restored.store.startSession()
@@ -178,7 +178,7 @@ class DeferredLiveOnlyLearningStore(
             delegate = null
             current
         }
-        try { active?.close() } catch (_: Exception) {}
+        try { active?.close() } catch (_: Exception) { /* encerrando */ }
         restoreExecutor.shutdownNow()
     }
 

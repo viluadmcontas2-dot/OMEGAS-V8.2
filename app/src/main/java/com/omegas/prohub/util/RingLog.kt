@@ -49,7 +49,7 @@ class RingLog(
             .put("message", clean)
         items.addLast(item)
         while (items.size > maxEntries) items.removeFirst()
-        try { listener?.invoke(JSONObject(item.toString())) } catch (_: Exception) {}
+        try { listener?.invoke(JSONObject(item.toString())) } catch (_: Exception) { /* o log não pode logar a falha do próprio ouvinte (laço); a linha já está na memória */ }
         try {
             persistentFile?.appendText(
                 "${lineFormatter.format(now)}\t${level.uppercase()}\t${category.uppercase()}\t${clean.replace('\n', ' ')}\n",
@@ -57,6 +57,7 @@ class RingLog(
             )
             rotateIfNeeded()
         } catch (_: Exception) {
+            // Disco cheio/sem acesso: a linha continua na memória (tela e exportação); o log não loga a si mesmo.
         }
     }
 
@@ -70,7 +71,7 @@ class RingLog(
     @Synchronized
     fun clear() {
         items.clear()
-        try { persistentFile?.writeText("") } catch (_: Exception) {}
+        try { persistentFile?.writeText("") } catch (_: Exception) { /* limpar o arquivo falhou: a memória já está limpa */ }
     }
 
     @Synchronized

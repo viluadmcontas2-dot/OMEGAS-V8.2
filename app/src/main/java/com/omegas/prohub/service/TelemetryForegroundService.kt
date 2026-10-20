@@ -322,6 +322,7 @@ class TelemetryForegroundService : Service() {
             },
             onPreAutoMatchSnapshot = { snapshot -> preAutoMatchSnapshot = snapshot },
             onStateChanged = { stateChanged() },
+            onListenerError = { what, error -> log.add("WARN", "AUTOCAL", "Falha ao processar $what: ${error.message ?: error.javaClass.simpleName}") },
         )
         learningArchive = LearningArchiveManager(paths, settings, runtime, kWriter, log)
 
@@ -359,23 +360,24 @@ class TelemetryForegroundService : Service() {
         if (stopping) return
         stopping = true
         autoReadGate.wakeAll()
-        try { equivalence.flush() } catch (_: Exception) {}
+        // Encerrando o serviço: cada peça fecha sozinha; a falha de uma não impede as outras (nada mais a mostrar).
+        try { equivalence.flush() } catch (_: Exception) { /* encerrando */ }
         scheduler.shutdownNow()
-        try { runtime.stop(3) } catch (_: Exception) {}
-        try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) {}
-        try { usb.disconnect() } catch (_: Exception) {}
-        try { gps.stop() } catch (_: Exception) {}
-        try { overlay.close() } catch (_: Exception) {}
-        try { sessionRecorder.close() } catch (_: Exception) {}
-        try { nativeAutoCal.endUsbSession() } catch (_: Exception) {}
-        try { kFactor.close() } catch (_: Exception) {}
-        try { bufferProbe.close() } catch (_: Exception) {}
-        try { antiStalloWriter.close() } catch (_: Exception) {}
-        try { antiStalloParamsWriter.close() } catch (_: Exception) {}
+        try { runtime.stop(3) } catch (_: Exception) { /* encerrando */ }
+        try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) { /* encerrando */ }
+        try { usb.disconnect() } catch (_: Exception) { /* encerrando */ }
+        try { gps.stop() } catch (_: Exception) { /* encerrando */ }
+        try { overlay.close() } catch (_: Exception) { /* encerrando */ }
+        try { sessionRecorder.close() } catch (_: Exception) { /* encerrando */ }
+        try { nativeAutoCal.endUsbSession() } catch (_: Exception) { /* encerrando */ }
+        try { kFactor.close() } catch (_: Exception) { /* encerrando */ }
+        try { bufferProbe.close() } catch (_: Exception) { /* encerrando */ }
+        try { antiStalloWriter.close() } catch (_: Exception) { /* encerrando */ }
+        try { antiStalloParamsWriter.close() } catch (_: Exception) { /* encerrando */ }
         autoReadExecutor.shutdownNow()
-        try { kWriter.close() } catch (_: Exception) {}
-        try { runtime.close() } catch (_: Exception) {}
-        try { usb.close() } catch (_: Exception) {}
+        try { kWriter.close() } catch (_: Exception) { /* encerrando */ }
+        try { runtime.close() } catch (_: Exception) { /* encerrando */ }
+        try { usb.close() } catch (_: Exception) { /* encerrando */ }
         releaseWakeLock()
         stopForeground(STOP_FOREGROUND_REMOVE)
         log.setListener(null)
@@ -818,7 +820,7 @@ class TelemetryForegroundService : Service() {
             val progress = if (::nativeAutoCal.isInitialized) nativeAutoCal.autoMatchProgressJson() else null
             val snapshot = if (::nativeAutoCal.isInitialized) nativeAutoCal.latestSnapshotJson() else null
             // Gravação da Curva K que falhou no meio (pontos com ACK) também é gravação do app.
-            try { refinement.noteCurveOperation(JSONObject(kFactor.statusJson()), snapshot) } catch (_: Exception) {}
+            try { refinement.noteCurveOperation(JSONObject(kFactor.statusJson()), snapshot) } catch (error: Exception) { log.add("WARN", "REFINE", "Estado da Curva K ilegível para o refino: ${error.message}") }
             val before = refinementAutopilot.json().optString("phase")
             // Referência de gasolina da ECU (leitura desconhecida mantém a última), proposta e fase: tudo na cola.
             val decided = refinement.observe(
@@ -842,6 +844,7 @@ class TelemetryForegroundService : Service() {
                             notifications.buildRefinementAlert(alert.optString("headline"), alert.optString("next")),
                         )
                     } catch (_: SecurityException) {
+                        // Sem permissão de aviso: a fase continua na tela e na sessão.
                     }
                 }
             }
@@ -1034,7 +1037,8 @@ class TelemetryForegroundService : Service() {
                     .put("engineReview", engineReview(snapshot)),
                 force = true,
             )
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            log.add("WARN", "AUTOCAL", "Mudança da Curva K vista na central não foi registrada: ${error.message}")
         }
     }
 
@@ -1249,7 +1253,9 @@ class TelemetryForegroundService : Service() {
                     notifications.build(status()),
                     0,
                 )
-            } catch (_: Exception) {}
+            } catch (fallback: Exception) {
+                log.add("ERROR", "SERVICE", "Aviso fixo do serviço não abriu: ${fallback.message}")
+            }
         }
         lastNotificationAt = System.currentTimeMillis()
     }
@@ -1262,6 +1268,7 @@ class TelemetryForegroundService : Service() {
             NotificationManagerCompat.from(this)
                 .notify(NotificationController.NOTIFICATION_ID, notifications.build(status()))
         } catch (_: SecurityException) {
+            // Sem permissão de aviso: o estado continua na tela.
         }
     }
 
@@ -1283,12 +1290,12 @@ class TelemetryForegroundService : Service() {
             .apply { setReferenceCounted(false) }
             .also { wakeLock = it }
         if (!lock.isHeld) {
-            try { lock.acquire(10 * 60_000L) } catch (_: Exception) {}
+            try { lock.acquire(10 * 60_000L) } catch (error: Exception) { log.add("WARN", "WAKELOCK", "Não consegui manter a CPU acordada: ${error.message}") }
         }
     }
 
     private fun releaseWakeLock() {
-        try { if (wakeLock?.isHeld == true) wakeLock?.release() } catch (_: Exception) {}
+        try { if (wakeLock?.isHeld == true) wakeLock?.release() } catch (_: Exception) { /* já solto pelo sistema */ }
         wakeLock = null
     }
 }

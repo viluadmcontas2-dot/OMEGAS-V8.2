@@ -535,8 +535,6 @@ class HubJavascriptBridge(activity: MainActivity) {
         }
     }
 
-    @JavascriptInterface fun requestBluetoothPermission() = activity?.requestBluetoothPermission()
-
     @JavascriptInterface fun setGpsEnabled(enabled: Boolean) = activity?.setGpsEnabled(enabled)
     @JavascriptInterface fun openAppSettings() = activity?.openAppSettings()
     @JavascriptInterface

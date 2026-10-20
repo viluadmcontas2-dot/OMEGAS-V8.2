@@ -52,6 +52,7 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
     private var near: Near? = null
     /** Motivo de o arquivo não ter sido lido (ou lido em parte); vai em [json] para a tela dizer em palavras. */
     private var loadError: String? = null
+    @Volatile private var saveError: String? = null
 
     init { load() }
 
@@ -156,6 +157,7 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
             .put("nearEvents", JSONArray(nearEvents.takeLast(10).map { JSONObject(it.toString()) }))
             .put("nearRegions", JSONArray(nearBins))
             .put("loadError", loadError ?: JSONObject.NULL)
+            .put("saveError", saveError ?: JSONObject.NULL)
     }
 
     private fun save() {
@@ -163,7 +165,10 @@ class StallWatch(private val file: File? = null, private val clock: () -> Long =
         val payload = synchronized(lock) { JSONObject().put("format", FORMAT).put("events", JSONArray(events.map { JSONObject(it.toString()) })).put("nearEvents", JSONArray(nearEvents.map { JSONObject(it.toString()) })) }
         try {
             AtomicJsonFile.write(target, payload.toString())
-        } catch (_: Exception) {
+            saveError = null
+        } catch (error: Exception) {
+            // Registro de apagões continua na memória; a tela mostra que não foi salvo.
+            saveError = "Registro de apagões não foi salvo: ${error.message ?: error.javaClass.simpleName}"
         }
     }
 

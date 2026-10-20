@@ -306,10 +306,10 @@ class NativeRuntimeManager(
     fun close() {
         stop(3)
         flushPipelines("encerramento do runtime", 2_000L)
-        try { telemetryDeliveryPipeline.close() } catch (_: Exception) {}
-        try { learningPipeline.close() } catch (_: Exception) {}
-        try { engine.close() } catch (_: Exception) {}
-        try { learning.close() } catch (_: Exception) {}
+        try { telemetryDeliveryPipeline.close() } catch (_: Exception) { /* encerrando */ }
+        try { learningPipeline.close() } catch (_: Exception) { /* encerrando */ }
+        try { engine.close() } catch (_: Exception) { /* encerrando */ }
+        try { learning.close() } catch (_: Exception) { /* encerrando */ }
     }
 
     private fun consumeTelemetry(

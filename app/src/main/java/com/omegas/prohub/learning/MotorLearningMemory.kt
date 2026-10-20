@@ -210,7 +210,7 @@ class MotorLearningMemory(
     fun close() {
         awaitPersistence()
         persistExecutor.shutdown()
-        try { persistExecutor.awaitTermination(2, TimeUnit.SECONDS) } catch (_: Exception) {}
+        try { persistExecutor.awaitTermination(2, TimeUnit.SECONDS) } catch (_: Exception) { /* encerrando: espera interrompida, o último salvamento já foi pedido */ }
     }
 
     fun export(deviceId: String): JSONObject = synchronized(lock) {

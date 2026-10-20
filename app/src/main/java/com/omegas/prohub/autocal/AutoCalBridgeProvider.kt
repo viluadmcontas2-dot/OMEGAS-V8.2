@@ -42,6 +42,7 @@ class AutoCalBridgeProvider : ContentProvider() {
                 try {
                     main.findViewById<WebView>(R.id.hubWebView)?.removeJavascriptInterface(INTERFACE_NAME)
                 } catch (_: Exception) {
+                    // Tela já destruída: a ponte some junto; nada a avisar.
                 }
             }
 

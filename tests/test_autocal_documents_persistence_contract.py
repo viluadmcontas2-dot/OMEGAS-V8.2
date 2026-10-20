@@ -10,13 +10,14 @@ MANIFEST_PATH = ROOT / "app/src/main/AndroidManifest.xml"
 
 
 class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
-    def test_documents_mirror_exists_and_uses_exact_public_root(self):
+    def test_documents_mirror_exists_and_uses_private_root(self):
+        # Privacidade (2026-10-20): a cópia durável mora no armazenamento privado do app; Download/Omegas
+        # (pública) só é lida para trazer as cópias antigas para dentro. Ver test_seguranca_privacidade_contract.py.
         self.assertTrue(MIRROR_PATH.is_file(), "DocumentsSessionMirror.kt ainda não existe")
         mirror = MIRROR_PATH.read_text(encoding="utf-8")
-        self.assertIn('PUBLIC_ROOT = "Download/Omegas"', mirror)
-        self.assertIn("MediaStore.Files.getContentUri", mirror)
-        self.assertIn("MediaStore.MediaColumns.RELATIVE_PATH", mirror)
-        self.assertIn("Environment.getExternalStoragePublicDirectory", mirror)
+        self.assertIn('PRIVATE_ROOT = "Omegas"', mirror)
+        self.assertIn("getExternalFilesDir", mirror)
+        self.assertIn("migrateLegacyPublicCopies", mirror)
 
     def test_android_26_28_has_legacy_write_permission_only_until_28(self):
         root = ET.parse(MANIFEST_PATH).getroot()
@@ -61,15 +62,14 @@ class AutoCalDocumentsPersistenceContractTest(unittest.TestCase):
 
     def test_status_tells_hmi_where_the_durable_copy_lives(self):
         self.assertIn('"documentsMirror"', RECORDER)
-        self.assertIn('"Download/Omegas"', MIRROR_PATH.read_text(encoding="utf-8"))
+        self.assertIn('.put("relativeRoot", PRIVATE_ROOT)', MIRROR_PATH.read_text(encoding="utf-8"))
 
     def test_session_is_published_as_immutable_zip_parts(self):
         # Contrato de texto (apoio); a prova de comportamento é SessionPartPlannerTest (JVM).
         mirror = MIRROR_PATH.read_text(encoding="utf-8")
         publish = mirror[mirror.index("fun publishPart("):mirror.index("fun publishRootFile(")]
-        self.assertIn('"application/zip"', publish)
-        self.assertIn("MediaStore.MATCH_INCLUDE", publish)
-        self.assertIn("IS_PENDING", publish)
+        # Escrita atômica (temporário oculto + renomear) provada em PrivateSessionArchiveTest (JVM).
+        self.assertIn("archive.writePart(", publish)
         recorder_sync = RECORDER[RECORDER.index("private fun syncDocumentsMirror"):RECORDER.index("private fun documentsMirrorMarker")]
         self.assertIn("fd?.sync()", recorder_sync)
         self.assertIn("SessionPartPlanner.commit", recorder_sync)

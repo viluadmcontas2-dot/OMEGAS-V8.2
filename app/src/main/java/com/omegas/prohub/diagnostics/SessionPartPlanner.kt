@@ -34,9 +34,9 @@ object SessionPartPlanner {
     }
 
     fun partName(sessionId: String, part: Int): String =
-        DocumentsSessionMirror.safeName(sessionId) + "_parte_" + part.toString().padStart(4, '0') + ".zip"
+        PrivateSessionArchive.safeName(sessionId) + "_parte_" + part.toString().padStart(4, '0') + ".zip"
 
-    fun singleName(sessionId: String): String = DocumentsSessionMirror.safeName(sessionId) + ".zip"
+    fun singleName(sessionId: String): String = PrivateSessionArchive.safeName(sessionId) + ".zip"
 
     private fun readState(dir: File): JSONObject = try {
         File(dir, STATE_FILE).takeIf { it.isFile }?.let { JSONObject(it.readText()) } ?: JSONObject()
@@ -75,7 +75,7 @@ object SessionPartPlanner {
         val nextMeta = JSONObject(meta.toString())
         val slices = ArrayList<Slice>()
         val files = ArrayList<File>()
-        DocumentsSessionMirror.sessionFiles(dir).forEach { file ->
+        PrivateSessionArchive.sessionFiles(dir).forEach { file ->
             if (isEvents(file)) {
                 val from = offsets.optLong(file.name, 0L)
                 val to = completeLength(file)
@@ -101,7 +101,7 @@ object SessionPartPlanner {
 
     /** ZIP da parte: `<sessão>/events_0001.from_<byte>.jsonl`, arquivos mudados e `parte.json`. */
     fun writeZip(plan: Plan, sessionId: String, output: OutputStream): Int {
-        val prefix = DocumentsSessionMirror.safeName(sessionId)
+        val prefix = PrivateSessionArchive.safeName(sessionId)
         val listing = JSONArray()
         ZipOutputStream(output.buffered()).use { zip ->
             plan.slices.forEach { slice ->

@@ -42,21 +42,21 @@ class SessionRecorder(
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
         private const val PREVIEW_LIMIT = 120
-        /** Garantia local (flash/manifesto) a cada 2 min; a publicação para Download/Drive só acontece ao fechar a sessão. */
+        /** Garantia local (flash/manifesto) a cada 2 min; o ZIP no arquivo privado do app só sai ao fechar a sessão. */
         private const val DOCUMENTS_MIRROR_INTERVAL_MS = 120_000L
         /** Evento do AutoCal antecipa a parte, sem gerar uma parte por evento. */
         private const val DURABLE_EVENT_MIN_GAP_MS = 15_000L
         /**
-         * Teto total das sessões guardadas no app (1,5 GB). Sessão sem cópia pública confirmada não saía nunca; sem
+         * Teto total das sessões guardadas no app (1,5 GB). Sessão sem ZIP confirmado no arquivo privado não saía nunca; sem
          * permissão ou com o MediaStore falhando, o disco enchia (até 256 MB por viagem) e depois tudo falhava em
          * silêncio. Acima do teto as mais antigas saem, espelhadas ou não; a ativa nunca.
          */
         internal const val SESSIONS_TOTAL_LIMIT_BYTES = 1_536L * 1024L * 1024L
 
         /**
-         * Poda das pastas de sessão (puro, sem Android). Regra de sempre: pasta minúscula e [durable] (cópia pública
+         * Poda das pastas de sessão (puro, sem Android). Regra de sempre: pasta minúscula e [durable] (cópia arquivada
          * confirmada) sai; fora das [keep] mais recentes só sai quem é [durable]. Regra nova: acima de
-         * [totalLimitBytes] as mais antigas saem mesmo sem cópia pública, nunca [activeDir].
+         * [totalLimitBytes] as mais antigas saem mesmo sem cópia arquivada, nunca [activeDir].
          * Devolve quantas saíram pelo teto.
          */
         internal fun pruneSessionDirs(
@@ -113,7 +113,7 @@ class SessionRecorder(
         { _, _ -> droppedEvents.incrementAndGet() },
     )
     /**
-     * Publicação (ZIP para Download/Drive) fora do worker de eventos e de quem pediu a parada: empacotar uma sessão
+     * Publicação (ZIP no arquivo privado do app) fora do worker de eventos e de quem pediu a parada: empacotar uma sessão
      * de até 256 MB na thread de quem chamava `stop()` (a mesma do agendador que reconecta o USB) travava o app,
      * e no worker travaria a gravação da sessão seguinte.
      */
@@ -144,6 +144,11 @@ class SessionRecorder(
     @Volatile private var lastSnapshotAt = 0L
     @Volatile private var stopReason = ""
     @Volatile private var lastError = ""
+
+    /** Falha de disco/arquivo vira o `lastError` do status (frase legível na tela); a gravação segue. */
+    private fun noteFailure(what: String, error: Exception) {
+        lastError = "Não consegui $what: ${error.message ?: error.javaClass.simpleName}"
+    }
     @Volatile private var lastDocumentsMirrorAt = 0L
     @Volatile private var lastExportedSegment = 0
     @Volatile private var lastExportBoundarySequence = 0L
@@ -353,7 +358,7 @@ class SessionRecorder(
             .put("documentsMirror", documentsMirror?.statusObject() ?: JSONObject()
                 .put("available", false)
                 .put("lastSyncOk", false)
-                .put("relativeRoot", DocumentsSessionMirror.PUBLIC_ROOT))
+                .put("relativeRoot", DocumentsSessionMirror.PRIVATE_ROOT))
             .put("semanticSummary", semanticLedger?.snapshot(recording, stoppedAt, stopReason) ?: JSONObject.NULL)
             .put(
                 "settings",
@@ -529,6 +534,12 @@ class SessionRecorder(
         if (documentsMirror == null) return
         if (publisher.isShutdown) return
         publisher.execute {
+            // Versões antigas deixavam cópias na pasta pública Download/Omegas: traz para a pasta privada (sem perda).
+            try {
+                documentsMirror?.migrateLegacyPublicCopies()
+            } catch (error: Exception) {
+                noteFailure("trazer as cópias antigas", error)
+            }
             paths.sessionLogsRoot.listFiles { file -> file.isDirectory }
                 ?.sortedBy { it.lastModified() }
                 ?.forEach { dir ->
@@ -538,7 +549,9 @@ class SessionRecorder(
                     try {
                         // Sessão interrompida (energia cortada): publica o que faltou como parte final.
                         publishParts(dir, dir.name, final = true)
-                    } catch (_: Exception) {}
+                    } catch (error: Exception) {
+                        noteFailure("arquivar a sessão", error)
+                    }
                 }
         }
     }
@@ -761,9 +774,9 @@ class SessionRecorder(
     }
 
     private fun closeWriter() {
-        try { writer?.flush() } catch (_: Exception) {}
+        try { writer?.flush() } catch (error: Exception) { noteFailure("gravar no armazenamento", error) }
         syncToDisk()
-        try { writer?.close() } catch (_: Exception) {}
+        try { writer?.close() } catch (_: Exception) { /* fechando: o que importava já foi gravado acima */ }
         writer = null
         segmentStream = null
     }
@@ -820,7 +833,8 @@ class SessionRecorder(
         val dir = sessionDir ?: return
         try {
             File(dir, "manifest.json").writeText(manifestObject().toString(2), Charsets.UTF_8)
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            noteFailure("salvar o manifesto", error)
         }
     }
 
@@ -833,7 +847,7 @@ class SessionRecorder(
             syncToDisk()
             updateManifest()
             semanticLedger?.persist(recording = recording, stoppedAtMs = stoppedAt, stopReason = stopReason)
-            // Gravando: só garante no armazenamento do app (flash, manifesto, razões); NADA vai para o Drive/Download até a sessão
+            // Gravando: só garante no armazenamento do app (flash, manifesto, razões); nenhum ZIP é feito até a sessão
             // fechar (um ZIP por sessão, dono 2026-10-13: "49 partes é ridículo"). Se o app morrer, a próxima abertura publica.
             // Parada: o ZIP sai no publisher; aqui (monitor da sessão, thread de quem parou) nada pesado.
             if (!recording) publishAsync(dir, sessionId)
@@ -844,8 +858,8 @@ class SessionRecorder(
 
     /** Garante no flash o que já foi escrito (carro pode ser desligado a qualquer instante). */
     private fun syncToDisk() {
-        try { writer?.flush() } catch (_: Exception) {}
-        try { segmentStream?.fd?.sync() } catch (_: Exception) {}
+        try { writer?.flush() } catch (error: Exception) { noteFailure("gravar no armazenamento", error) }
+        try { segmentStream?.fd?.sync() } catch (error: Exception) { noteFailure("gravar no armazenamento", error) }
     }
 
     /** Publica em segundo plano; quem parou volta na hora. Se falhar ou o app morrer, a pasta fica sem marcador e a próxima abertura publica. */
@@ -853,9 +867,11 @@ class SessionRecorder(
         if (documentsMirror == null || publisher.isShutdown) return
         try {
             publisher.execute {
-                try { publishParts(dir, id, final = true) } catch (_: Exception) {}
+                try { publishParts(dir, id, final = true) } catch (error: Exception) { noteFailure("arquivar a sessão", error) }
             }
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+            // Publicador já encerrado: a pasta fica sem marcador e a próxima abertura arquiva.
+        }
     }
 
     /**
@@ -881,7 +897,9 @@ class SessionRecorder(
     private fun markDocumentsMirrored(dir: File) {
         try {
             documentsMirrorMarker(dir).writeText(System.currentTimeMillis().toString(), Charsets.UTF_8)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+            // Sem marcador a sessão é arquivada de novo na próxima abertura (mesmo nome, sem perda).
+        }
     }
 
     /** Devolve quantas sessões saíram pelo teto total (regra em [pruneSessionDirs]). */
@@ -890,13 +908,13 @@ class SessionRecorder(
         activeDir = if (recording) sessionDir else null,
         keep = settings.sessionKeepCount.coerceAtLeast(25),
         totalLimitBytes = SESSIONS_TOTAL_LIMIT_BYTES,
-        // Sessão sem cópia pública confirmada só sai pelo teto total, nunca pela contagem.
+        // Sessão sem ZIP confirmado no arquivo privado só sai pelo teto total, nunca pela contagem.
         durable = { dir -> documentsMirror == null || documentsMirrorMarker(dir).isFile },
     )
 
     private fun awaitPendingWrites(timeoutMs: Long = 5_000L) {
         if (worker.isShutdown) return
-        try { worker.submit {}.get(timeoutMs, TimeUnit.MILLISECONDS) } catch (_: Exception) {}
+        try { worker.submit {}.get(timeoutMs, TimeUnit.MILLISECONDS) } catch (_: Exception) { /* espera vencida/interrompida: segue sem bloquear quem parou */ }
     }
 
     private fun summarize(type: String, data: JSONObject): String = when (type) {

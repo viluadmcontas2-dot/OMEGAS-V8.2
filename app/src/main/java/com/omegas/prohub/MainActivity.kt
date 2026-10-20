@@ -14,6 +14,7 @@ import android.provider.Settings
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -29,13 +30,32 @@ import com.omegas.prohub.service.TelemetryForegroundService
 import com.omegas.prohub.web.HubJavascriptBridge
 import com.omegas.prohub.web.PowerJavascriptBridge
 import com.omegas.prohub.web.V7JavascriptBridge
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.ByteArrayInputStream
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        /** Única origem que a WebView abre: a UI empacotada no APK (assets são lidos mesmo com allowFileAccess=false). */
+        const val APP_UI_ORIGIN = "file:///android_asset/ui/"
+
+        /** Só a UI do próprio APK: nada de arquivos do aparelho, rede ou outro esquema; sem "../" para sair da pasta. */
+        fun isAppUiUrl(url: String?): Boolean {
+            val value = url ?: return false
+            return value.startsWith(APP_UI_ORIGIN) && !value.contains("..") && !value.contains("%2e%2e", ignoreCase = true)
+        }
+    }
+
+    /** Exportações em segundo plano da tela; canceladas quando a tela é destruída (nada fica solto). */
+    private val screenScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var webView: WebView
     private var service: TelemetryForegroundService? = null
     private var bound = false
@@ -110,15 +130,6 @@ class MainActivity : AppCompatActivity() {
             )
             refreshWebUi()
         }
-    }
-
-    private val bluetoothPermission = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { grants ->
-        val granted = Build.VERSION.SDK_INT < 31 ||
-            grants[Manifest.permission.BLUETOOTH_CONNECT] == true
-        toast(if (granted) "Bluetooth autorizado" else "Permissão Bluetooth não concedida", !granted)
-        refreshWebUi()
     }
 
     private val connection = object : ServiceConnection {
@@ -218,8 +229,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        screenScope.cancel()
         if (bound) {
-            try { unbindService(connection) } catch (_: Exception) {}
+            try { unbindService(connection) } catch (_: Exception) { /* serviço já desligado: nada a soltar */ }
             bound = false
         }
         jsBridge?.destroy()
@@ -228,10 +240,11 @@ class MainActivity : AppCompatActivity() {
         v7Bridge = null
         powerBridge = null
         if (::webView.isInitialized) {
-            try { webView.removeJavascriptInterface("OmegasNative") } catch (_: Exception) {}
-            try { webView.removeJavascriptInterface("OmegasV7") } catch (_: Exception) {}
-            try { webView.removeJavascriptInterface("OmegasPower") } catch (_: Exception) {}
-            try { webView.destroy() } catch (_: Exception) {}
+            // Tela fechando: falha ao soltar a WebView não afeta o carro nem os dados.
+            try { webView.removeJavascriptInterface("OmegasNative") } catch (_: Exception) { /* tela fechando */ }
+            try { webView.removeJavascriptInterface("OmegasV7") } catch (_: Exception) { /* tela fechando */ }
+            try { webView.removeJavascriptInterface("OmegasPower") } catch (_: Exception) { /* tela fechando */ }
+            try { webView.destroy() } catch (_: Exception) { /* tela fechando */ }
         }
         super.onDestroy()
     }
@@ -264,7 +277,8 @@ class MainActivity : AppCompatActivity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             databaseEnabled = false
-            allowFileAccess = true
+            // Assets (file:///android_asset/) continuam legíveis; o resto do disco do aparelho não.
+            allowFileAccess = false
             allowContentAccess = false
             mediaPlaybackRequiresUserGesture = true
             mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
@@ -297,9 +311,14 @@ class MainActivity : AppCompatActivity() {
                 // Notificação do refino abriu o app a frio: navega depois que a UI montar.
                 webView.postDelayed({ openRouteFromIntent(intent) }, 800L)
             }
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val uri = request?.url ?: return true
-                return uri.scheme != "file"
+            // Navegar para fora da UI empacotada (link externo, outro arquivo): bloqueado.
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean =
+                !isAppUiUrl(request?.url?.toString())
+
+            // Recurso de fora (rede, arquivo do aparelho, content://) nunca carrega; data:/blob: não passam por aqui.
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                if (isAppUiUrl(request?.url?.toString())) return null
+                return WebResourceResponse("text/plain", "utf-8", 403, "Bloqueado", emptyMap(), ByteArrayInputStream(ByteArray(0)))
             }
         }
         webView.loadUrl("file:///android_asset/ui/index.html")
@@ -349,19 +368,6 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_COARSE_LOCATION,
             ),
         )
-    }
-
-    fun requestBluetoothPermission() = runOnUiThread {
-        if (Build.VERSION.SDK_INT >= 31) {
-            bluetoothPermission.launch(
-                arrayOf(
-                    Manifest.permission.BLUETOOTH_CONNECT,
-                    Manifest.permission.BLUETOOTH_SCAN,
-                ),
-            )
-        } else {
-            toast("Bluetooth disponível")
-        }
     }
 
     fun batteryOptimizationStatusJson(): String {
@@ -449,11 +455,11 @@ class MainActivity : AppCompatActivity() {
             toast("Serviço ainda iniciando")
             return
         }
-        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+        screenScope.launch {
             try {
                 action(current)
             } catch (error: Exception) {
-                toast("Falha: ${error.message}", true)
+                if (isActive) toast("Falha: ${error.message}", true)
             }
         }
     }

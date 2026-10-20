@@ -148,7 +148,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                 if (closed || epoch != showEpoch.get() || !requestedEnabled()) return@post
                 windowManager.addView(panel, lp)
                 if (closed || epoch != showEpoch.get() || !requestedEnabled()) {
-                    try { windowManager.removeView(panel) } catch (_: Exception) {}
+                    try { windowManager.removeView(panel) } catch (_: Exception) { /* balão já fora da tela */ }
                     return@post
                 }
                 root = panel
@@ -169,7 +169,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         root = null
         main.post {
             if (view != null) {
-                try { windowManager.removeView(view) } catch (_: Exception) {}
+                try { windowManager.removeView(view) } catch (_: Exception) { /* balão já fora da tela */ }
             }
         }
     }
@@ -197,7 +197,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
                     if (abs(dx) > dp(5) || abs(dy) > dp(5)) moved = true
                     lp.x = (startX - dx.toInt()).coerceAtLeast(0)
                     lp.y = (startY + dy.toInt()).coerceAtLeast(0)
-                    try { windowManager.updateViewLayout(panel, lp) } catch (_: Exception) {}
+                    try { windowManager.updateViewLayout(panel, lp) } catch (_: Exception) { /* balão já fora da tela */ }
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -210,7 +210,7 @@ class TelemetryOverlayController(private val context: Context) : AutoCloseable {
         clickTarget.setOnClickListener {
             expanded = !expanded
             details?.visibility = if (expanded) View.VISIBLE else View.GONE
-            params?.let { lp -> try { root?.let { windowManager.updateViewLayout(it, lp) } } catch (_: Exception) {} }
+            params?.let { lp -> try { root?.let { windowManager.updateViewLayout(it, lp) } } catch (_: Exception) { /* balão já fora da tela */ } }
         }
     }
 
