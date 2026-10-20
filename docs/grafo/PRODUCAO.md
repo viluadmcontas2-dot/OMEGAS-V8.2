@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 89, kt 8, ponte 112, teste 383, ui 32. Arestas: chama 106, cobre 649, exibe 33, sustenta 66, usa 14.
+Nós: aba 9, ev 89, kt 8, ponte 112, teste 384, ui 32. Arestas: chama 106, cobre 649, exibe 33, sustenta 66, usa 14.
 
 ## (a) Por aba
 
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 112 pontes, 32 arquivos de UI, 383 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 112 pontes, 32 arquivos de UI, 384 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
@@ -46,7 +46,7 @@ Lacunas do CATALOGO já resolvidas: #11.
 - #13 F6 Salvar / F7 Carregar configuração, F8 Ecu programming, F9 Update sc
 - #14 Lambda (F2) e lubrificante
 
-**FALTA — pendências abertas (PENDENTE.md, 34; 12 primeiras):**
+**FALTA — pendências abertas (PENDENTE.md, 35; 12 primeiras):**
 - Sugestão ADAPTATIVA do anti-apagão, recalculada por evento (fim de sessão) com as sessões 
 - Semântica dos 4 extras do anti-apagão e unidade de "Queda de rotação" (rpm por ciclo = qua
 - Separar apagão de motor desligado nos logs (17 quedas ambíguas).
@@ -56,9 +56,9 @@ Lacunas do CATALOGO já resolvidas: #11.
 - Copy para leigo: revisar todos os erros e avisos e os três tamanhos (1280x720, 1024x600, 8
 - Validar integração Android e suíte completa na CI do SHA enviado. Nenhum novo APK sem orde
 - APK na pasta OMEGAS do Drive: o conector não sobe 4,9 MB; o dono arrasta ou libera gh rele
+- P1 (ver o arquivo): primeiro uso guiado; Preferências do AutoCal + pergunta da água 80-90 
 - Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem j
 - AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU", "RPM" e "MAP" (o teste li
-- Bug "Ferramentas vazia" no WebView real: a causa provável (carga preguiçosa) foi removida 
 
 **FALTA — evidências DESCONHECIDO sem uso (12):** EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023, EV-ANTIAPAGAO-030, EV-BINS-005, EV-BINS-006, EV-BINS-008, EV-COBERTURA-002, EV-TRANSPORTE-010, EV-VOLTAGASOLINA-015
 

@@ -4714,7 +4714,7 @@
   "ev": 89,
   "kt": 8,
   "ponte": 112,
-  "teste": 383,
+  "teste": 384,
   "ui": 32
  },
  "desconhecido_sem_uso": [
@@ -7176,6 +7176,10 @@
    "rotulo": "tests/test_progbase_classificacao.py",
    "tipo": "teste"
   },
+  "teste:tests/test_progbase_cobertura.py": {
+   "rotulo": "tests/test_progbase_cobertura.py",
+   "tipo": "teste"
+  },
   "teste:tests/test_progbase_decomp.py": {
    "rotulo": "tests/test_progbase_decomp.py",
    "tipo": "teste"
@@ -7923,6 +7927,7 @@
   "Copy para leigo: revisar todos os erros e avisos e os três tamanhos (1280x720, 1024x600, 8",
   "Validar integração Android e suíte completa na CI do SHA enviado. Nenhum novo APK sem orde",
   "APK na pasta OMEGAS do Drive: o conector não sobe 4,9 MB; o dono arrasta ou libera gh rele",
+  "P1 (ver o arquivo): primeiro uso guiado; Preferências do AutoCal + pergunta da água 80-90 ",
   "Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem j",
   "AutoCal, Refino, Ajuste local e Ajuste global ainda dizem \"ECU\", \"RPM\" e \"MAP\" (o teste li",
   "Bug \"Ferramentas vazia\" no WebView real: a causa provável (carga preguiçosa) foi removida ",
