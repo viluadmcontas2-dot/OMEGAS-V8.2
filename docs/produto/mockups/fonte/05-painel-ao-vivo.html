@@ -1,0 +1,16 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="base.css"><style>.p5{display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface);border-bottom:1px solid var(--line)}
+.cell{padding:8px 14px;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;justify-content:center}.cell span{font-size:20px;color:var(--muted);line-height:1.05}.cell b{font-size:28px;font-variant-numeric:tabular-nums;line-height:1.1}.cell b small{font-size:20px;color:var(--muted);font-weight:700}
+.lamps{display:flex;align-items:center;gap:16px;padding:0 18px;height:52px;background:var(--surface-2);border-bottom:1px solid var(--line);font-size:22px;font-weight:800}
+.lamp{display:inline-flex;align-items:center;gap:8px;color:var(--dim)}.lamp.on{color:var(--text)}.lamp i{width:18px;height:18px;border-radius:50%;background:#1c2a26;border:2px solid var(--line)}.lamp.on i{background:var(--ok);border-color:var(--ok);box-shadow:0 0 10px var(--ok)}.lamp.on.red i{background:var(--danger);border-color:var(--danger);box-shadow:0 0 10px var(--danger)}
+.ghost{flex:1;border:2px dashed var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:24px;text-align:center;padding:0 20px}
+.shell5{display:grid;grid-template-rows:auto minmax(0,1fr) var(--nav);width:100vw;height:100vh}.r{margin-left:auto;color:var(--muted);font-weight:650}
+@media (max-width:900px){.p5{grid-template-columns:repeat(3,1fr)}.cell{padding:3px 10px;border-bottom:1px solid var(--line-soft)}.cell b{font-size:24px}.lamps{height:44px;gap:12px;font-size:20px;padding:0 10px}.ghost{font-size:22px}.r{font-size:18px}}</style><body><div class="shell5">
+<div><div class="p5">
+<div class="cell"><span>Pressão do gás</span><b>2,39 <small>bar</small></b></div>
+<div class="cell"><span>Folga de pressão</span><b class="ok">1,93 <small>bar</small></b></div>
+<div class="cell"><span>Temp. do gás</span><b>52 <small>°C</small></b></div>
+<div class="cell"><span>Temp. da água</span><b>65 <small>°C</small></b></div>
+<div class="cell"><span>Nível do gás</span><b>pouco mais de ¼</b></div>
+<div class="cell"><span>Tensão dos bicos</span><b>13,7 <small>V</small></b></div>
+</div><div class="lamps"><span class="lamp on red"><i></i>Chave ligada</span><span class="lamp on "><i></i>Gás</span><span class="lamp  "><i></i>Gasolina</span><span class="lamp  "><i></i>Corte</span><span class="r">MAP 0,46 bar · Giros 860</span></div></div>
+<div class="screen"><div class="ghost">O conteúdo da aba continua aqui embaixo.<br>O painel fica sempre visível, em todas as abas.</div></div><div class="nav"><div class="on"><i>01</i><span>Agora</span></div><div class=""><i>02</i><span>Mapa K</span></div><div class=""><i>03</i><span>Curva K</span></div><div class=""><i>04</i><span>AutoCal</span></div><div class=""><i>05</i><span>Ajuste GNV</span></div><div class=""><i>06</i><span>Sessões</span></div><div class=""><i>07</i><span>Ferramentas</span></div><div class=""><i>08</i><span>Diagnóstico</span></div></div></div></body></html>
