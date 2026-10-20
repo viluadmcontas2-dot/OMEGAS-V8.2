@@ -3355,6 +3355,11 @@
   ],
   [
    "teste:tests/ui/filtro-rpm-baixo.test.cjs",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/filtro-rpm-baixo.test.cjs",
    "ui:app/src/main/assets/ui/core/low-rpm-filter.js",
    "cobre"
   ],
@@ -4876,7 +4881,7 @@
  ],
  "contagem_arestas": {
   "chama": 108,
-  "cobre": 664,
+  "cobre": 665,
   "exibe": 35,
   "sustenta": 80,
   "usa": 14

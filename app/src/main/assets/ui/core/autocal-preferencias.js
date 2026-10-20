@@ -9,7 +9,7 @@
   // O catálogo e os quadros espelham AutoCalPreferenceCore.kt (o Kotlin é quem manda na central; aqui só pedimos {id, raw}).
   // Só entram itens com evidência no código do ProgBase (EV-AUTOCAL-*); nada de valor de fábrica inventado.
   const KEY = 'omegas.autocal.prefs.v1';
-  const DEFAULTS = Object.freeze({ refreshMs: 300, showZones: true, showPoints: true, showMessages: true, showKLine: true, colorPetrol: '', colorGas: '', calibrationValue: '' });
+  const DEFAULTS = Object.freeze({ refreshMs: 300, showZones: true, showPoints: true, showMessages: true, showKLine: true, colorPetrol: '', colorGas: '', calibrationValue: '', minRpmLearn: 1000 });
 
   // scale: valor mostrado = bruto / scale (só onde o documento dá a unidade); step em BRUTO; digits = casas decimais mostradas.
   const P = (id, sc, index, width, min, max, o) => Object.freeze(Object.assign({ id, sc, index, width, min, max, signed: false, scale: 1, digits: 0, unit: '', step: 1, kind: 'stepper' }, o));
@@ -80,10 +80,12 @@
       if (Number.isFinite(s.refreshMs)) out.refreshMs = Math.min(2000, Math.max(200, s.refreshMs));
       for (const k of ['showZones', 'showPoints', 'showMessages', 'showKLine']) if (typeof s[k] === 'boolean') out[k] = s[k];
       for (const k of ['colorPetrol', 'colorGas']) if (/^#[0-9a-f]{6}$/i.test(s[k] || '')) out[k] = s[k];
+      if (Number.isFinite(s.minRpmLearn)) out.minRpmLearn = Math.min(3000, Math.max(0, Math.round(s.minRpmLearn)));
       if (typeof s.calibrationValue === 'string') out.calibrationValue = s.calibrationValue.slice(0, 16);
     } catch (_) { /* sem armazenamento: usa o padrão */ }
     return out;
   }
+  function clampLocal(key, v) { const n = Number.isFinite(v) ? v : DEFAULTS[key]; return key === 'minRpmLearn' ? Math.min(3000, Math.max(0, Math.round(n))) : Math.min(2000, Math.max(200, n)); }
   function save(prefs) { try { storage()?.setItem(KEY, JSON.stringify(prefs)); return true; } catch (_) { return false; } }
   function applyToDom(prefs, doc) {
     const el = (doc || root.document)?.documentElement; if (!el) return;
@@ -165,9 +167,17 @@
       + '<label class="pref-local-row"><span>Cor do GNV</span><input type="color" data-pref="colorGas" value="' + esc(prefs.colorGas || '#4cd964') + '"></label></div>';
   }
 
+  function learnLocalHtml(prefs) {
+    return '<div class="vv-card pref-card" data-pref-card="minRpmLearn"><label for="pref-minrpm">RPM mínimo para aceitar ponto</label>'
+      + '<div class="num-stepper"><button type="button" class="step-btn" data-pref-local-key="minRpmLearn" data-pref-local-step="-100" aria-label="Diminuir RPM mínimo">−</button>'
+      + '<div class="num-box"><input id="pref-minrpm" type="text" inputmode="numeric" data-pref="minRpmLearn" value="' + esc(prefs.minRpmLearn) + '"><span class="num-unit">rpm</span></div>'
+      + '<button type="button" class="step-btn" data-pref-local-key="minRpmLearn" data-pref-local-step="100" aria-label="Aumentar RPM mínimo">+</button></div>'
+      + '<p class="pref-help">Ponto que entrar com o motor abaixo disso (ou parado) é apagado na hora, só ele. 0 desliga. Vale neste aparelho.</p></div>';
+  }
+
   function groupHtml(g, state) {
     if (g.id === 'exibicao') return '<details class="pref-group" data-pref-group="exibicao"><summary>' + esc(g.title) + '<small>' + esc(g.hint) + '</small></summary><div class="vv-grid pref-grid">' + localHtml(state.prefs) + '</div></details>';
-    let lastSection = null; let cards = '';
+    let lastSection = null; let cards = g.id === 'aprendizado' ? learnLocalHtml(state.prefs) : '';
     for (const s of CATALOG.filter(x => x.group === g.id)) {
       if (s.section && s.section !== lastSection) { cards += '<h4 class="pref-section">' + esc(s.section) + '</h4>'; lastSection = s.section; }
       cards += cardHtml(s, state.values[s.id] ?? null, state.drafts[s.id], state.notes[s.id]);
@@ -228,8 +238,9 @@
       if (t.dataset.prefSet) { const [id, v] = t.dataset.prefSet.split(':'); commit(id, Number(v)); return; }
       if (t.dataset.prefUndo) { const id = t.dataset.prefUndo; const back = state.notes[id]?.undo; if (Number.isInteger(back)) { const keep = back; commit(id, keep); if (state.notes[id]) { state.notes[id].undo = null; state.notes[id].text = 'Desfeito.'; repaint(id); } } return; }
       if (t.dataset.prefLocalStep) {
-        state.prefs.refreshMs = Math.min(2000, Math.max(200, state.prefs.refreshMs + Number(t.dataset.prefLocalStep)));
-        const input = body.querySelector('[data-pref="refreshMs"]'); if (input) input.value = state.prefs.refreshMs;
+        const key = t.dataset.prefLocalKey === 'minRpmLearn' ? 'minRpmLearn' : 'refreshMs';
+        state.prefs[key] = clampLocal(key, state.prefs[key] + Number(t.dataset.prefLocalStep));
+        const input = body.querySelector('[data-pref="' + key + '"]'); if (input) input.value = state.prefs[key];
         save(state.prefs); applyToDom(state.prefs, doc); notify();
       }
     });
@@ -241,8 +252,8 @@
         repaint(s.id); return;
       }
       const k = el.dataset?.pref; if (!k) return;
-      state.prefs[k] = el.type === 'checkbox' ? el.checked : k === 'refreshMs' ? Math.min(2000, Math.max(200, Number(el.value) || DEFAULTS.refreshMs)) : el.value;
-      if (k === 'refreshMs') el.value = state.prefs.refreshMs;
+      state.prefs[k] = el.type === 'checkbox' ? el.checked : k === 'refreshMs' ? clampLocal(k, Number(el.value) || DEFAULTS.refreshMs) : k === 'minRpmLearn' ? clampLocal(k, el.value === '' ? DEFAULTS.minRpmLearn : Number(el.value)) : el.value;
+      if (k === 'refreshMs' || k === 'minRpmLearn') el.value = state.prefs[k];
       save(state.prefs); applyToDom(state.prefs, doc); notify();
     });
     return { state, openGroup, step, commit };

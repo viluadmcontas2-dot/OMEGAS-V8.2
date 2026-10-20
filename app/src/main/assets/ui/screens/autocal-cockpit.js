@@ -632,7 +632,12 @@
       this.readerSnapshot = {};
       this.acquisitionState = {};
       this.acquisitionSnapshot = {};
-      this.lowRpmFilter = ns.LowRpmFilter?.create?.() || null;
+      this.minRpmLearn = ns.AutoCalPrefs?.load?.().minRpmLearn ?? 1000;
+      this.lowRpmFilter = ns.LowRpmFilter?.create?.({ minRpm: () => this.minRpmLearn }) || null;
+      document.addEventListener?.('omegas:autocal-prefs', event => {
+        const value = Number(event?.detail?.minRpmLearn);
+        if (Number.isFinite(value)) this.minRpmLearn = value;
+      });
       this.actionState = {};
       this.sessionState = {};
       this.sessions = [];

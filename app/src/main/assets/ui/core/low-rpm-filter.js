@@ -7,7 +7,12 @@
   const FUELS = ['GAS', 'PETROL'];
 
   function create(options) {
-    const minRpm = (options && options.minRpm) || MIN_RPM;
+    // minRpm pode ser número ou função (lê o ajuste atual do dono a cada passo); 0 desliga o filtro.
+    const limit = () => {
+      const raw = options && options.minRpm;
+      const value = Number(typeof raw === 'function' ? raw() : raw === undefined ? MIN_RPM : raw);
+      return Number.isFinite(value) && value >= 0 ? value : MIN_RPM;
+    };
     let lowest = null;
     let previous = null;
 
@@ -20,7 +25,8 @@
     // counters = { GAS: [18], PETROL: [18] }. Devolve [{ fuel, index }] das bandas que ganharam medição com RPM baixo.
     function step(counters) {
       const targets = [];
-      const low = lowest !== null && lowest < minRpm;
+      const min = limit();
+      const low = min > 0 && lowest !== null && lowest < min;
       lowest = null;
       const current = {};
       FUELS.forEach(fuel => { current[fuel] = Array.isArray(counters && counters[fuel]) ? counters[fuel].map(Number) : []; });

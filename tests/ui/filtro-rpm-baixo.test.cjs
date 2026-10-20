@@ -77,3 +77,29 @@ test('o cockpit liga o filtro ao caminho de apagar já existente e ele está no 
   assert.match(cockpit, /reacquireTargets\(/);
   assert.match(fs.readFileSync(path.join(root, 'app/src/main/assets/ui/index.html'), 'utf8'), /core\/low-rpm-filter\.js/);
 });
+
+test('limite configurável: função devolve o valor atual a cada passo', () => {
+  let limite = 1000;
+  const f = create({ minRpm: () => limite });
+  f.step(snap(zeros(), zeros()));
+  f.observeRpm(1200);
+  assert.deepEqual(plain(f.step(snap([1, ...zeros().slice(1)], zeros()))), []);
+  limite = 1500;
+  f.observeRpm(1200);
+  assert.deepEqual(plain(f.step(snap([2, ...zeros().slice(1)], zeros()))), [{ fuel: 'GAS', index: 0 }]);
+});
+
+test('limite 0 desliga o filtro (nunca apaga)', () => {
+  const f = create({ minRpm: () => 0 });
+  f.step(snap(zeros(), zeros()));
+  f.observeRpm(0);
+  assert.deepEqual(plain(f.step(snap([1, ...zeros().slice(1)], zeros()))), []);
+});
+
+test('preferência minRpmLearn: padrão 1000, cartão no grupo Aprendizado, limites 0 a 3000', () => {
+  const P = require(path.join(root, 'app/src/main/assets/ui/core/autocal-preferencias.js'));
+  assert.equal(P.DEFAULTS.minRpmLearn, 1000);
+  const html = P.panelHtml({ prefs: P.DEFAULTS, values: {}, drafts: {}, notes: {} });
+  assert.match(html, /data-pref="minRpmLearn"/);
+  assert.match(html, /RPM mínimo/);
+});
