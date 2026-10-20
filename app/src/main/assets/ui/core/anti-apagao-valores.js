@@ -144,7 +144,8 @@
    */
   function createValuesFlow({ bridge, addHook, onChange }) {
     const NAMES = ['prepareAntiStalloValues', 'confirmAntiStalloValues', 'cancelAntiStalloValues', 'getAntiStalloValuesStatus'];
-    const haveBridge = () => !!bridge && NAMES.every(n => typeof bridge[n] === 'function');
+    const has = n => typeof bridge[n] === 'function';
+    const haveBridge = () => !!bridge && has('getAntiStalloValuesStatus') && (has('applyAntiStalloValues') || NAMES.every(has));
     const s = { phase: 'idle', kind: null, changes: null, plan: null, token: null, message: '', level: '', undo: null, release: null, uncertain: false };
     const changed = () => { if (typeof onChange === 'function') onChange(); };
     const unhook = () => { if (s.release) { s.release(); s.release = null; } };
@@ -212,11 +213,16 @@
       fail(TEXT.NO_LINK);
     }
     function poll() {
-      const status = parse(bridge.getAntiStalloValuesStatus());
+      let status;
+      try { status = parse(bridge.getAntiStalloValuesStatus()); }
+      catch (_) { if (s.phase === 'writing') fail(TEXT.UNSURE, true); else if (s.phase === 'preparing') fail(TEXT.NO_LINK); return; }
       if (s.phase === 'preparing') {
         if (status.state === 'READY') onReady(status);
         else if (status.state === 'ERROR' || (status.state === 'DONE' && status.outcome)) fail(TEXT.NO_LINK);
-      } else if (s.phase === 'writing' && status.state === 'DONE') onDone(status);
+      } else if (s.phase === 'writing') {
+        if (status.state === 'DONE') onDone(status);
+        else if (status.state === 'ERROR' || status.state === 'IDLE' || status.ok === false) fail(TEXT.UNSURE, true);
+      }
     }
     function cancel() {
       if (s.phase !== 'preparing' && s.phase !== 'preview') return;

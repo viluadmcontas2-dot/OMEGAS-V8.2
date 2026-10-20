@@ -18,17 +18,28 @@ class AntiStalloFlagWriterTest {
         /** Depois de qualquer SetVector, as leituras 29 deixam de responder. */
         var failReadsAfterWrite = false
         var failAllReads = false
+        /** Se definido, o `unit` lança este Error (não Exception): o escritor não pode ficar preso em WRITING. */
+        var errorInUnit: Error? = null
+        /** Segura quem lê a sessão a partir da thread do escritor até o teste soltar (prova de que a sessão é capturada no toque). */
+        @Volatile var holdWriterSessionRead: java.util.concurrent.CountDownLatch? = null
+        val expectedSessions = java.util.concurrent.CopyOnWriteArrayList<Long>()
         @Volatile var connected = true
         var session = 5L
         val frames = ArrayList<String>()
         val classes = ArrayList<Mp48WorkClass>()
         private fun hex(b: ByteArray) = b.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
         override fun isConnected() = connected
-        override fun currentSessionId() = session
+        override fun currentSessionId(): Long {
+            val h = holdWriterSessionRead
+            if (h != null && Thread.currentThread().name.startsWith("omegas-anti-stallo")) h.await(5, java.util.concurrent.TimeUnit.SECONDS)
+            return session
+        }
         override fun transaction(request: ByteArray, reason: String, timeoutMs: Int, purgeBefore: Boolean, expectedSessionId: Long, workClass: Mp48WorkClass, telemetryAfter: Boolean): UsbProtocolReply =
             handle(request)
         override fun <T> unit(reason: String, expectedSessionId: Long, workClass: Mp48WorkClass, telemetryAfter: Boolean, waitTimeoutMs: Long, block: (Mp48SerialUnit) -> T): T {
             classes += workClass
+            expectedSessions += expectedSessionId
+            errorInUnit?.let { throw it }
             return block(object : Mp48SerialUnit {
                 override val sessionId = session
                 override fun transaction(request: ByteArray, reason: String, timeoutMs: Int, purgeBefore: Boolean) = handle(request)
@@ -301,5 +312,25 @@ class AntiStalloFlagWriterTest {
         val done = waitFor(w, "DONE")
         assertEquals("ERROR", done.getString("outcome"))
         assertTrue(serial.frames.none { it.startsWith("35") })
+    }
+
+    @Test fun `apply captura a sessao USB no toque - se o USB trocar depois, a gravacao nao vai para a sessao nova`() {
+        val serial = FakeSerial(intArrayOf(0, 0)); serial.holdWriterSessionRead = java.util.concurrent.CountDownLatch(1)
+        val w = writer(serial)
+        assertTrue(w.apply(true).getBoolean("ok"))
+        serial.session = 6L                       // o cabo foi trocado logo depois do toque
+        serial.holdWriterSessionRead!!.countDown()
+        waitFor(w, "DONE")
+        assertEquals(listOf(5L), serial.expectedSessions.distinct()) // a sessão do toque, nunca a 6
+    }
+
+    @Test fun `apply com Error no meio nao fica preso em WRITING - publica estado incerto`() {
+        val serial = FakeSerial(intArrayOf(0, 0)); serial.errorInUnit = StackOverflowError("simulado")
+        val w = writer(serial)
+        w.apply(true)
+        val done = waitFor(w, "DONE")
+        assertEquals("ERROR", done.getString("outcome"))
+        assertTrue(done.getString("message").contains("incerto", ignoreCase = true))
+        assertFalse(JSONObject(w.statusJson()).getBoolean("busy")) // soltou o ocupado: outro toque funciona
     }
 }

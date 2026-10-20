@@ -15,17 +15,26 @@ class AntiStalloParamsWriterTest {
     private class FakeSerial(var values: IntArray, var acceptWrites: Boolean = true) : Mp48SerialScheduler {
         var storeInstead: IntArray? = null
         var failReadsAfterWrite = false
+        var errorInUnit: Error? = null
+        @Volatile var holdWriterSessionRead: java.util.concurrent.CountDownLatch? = null
+        val expectedSessions = java.util.concurrent.CopyOnWriteArrayList<Long>()
         @Volatile var connected = true
         var session = 5L
         val frames = ArrayList<String>()
         val classes = ArrayList<Mp48WorkClass>()
         private fun hex(b: ByteArray) = b.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
         override fun isConnected() = connected
-        override fun currentSessionId() = session
+        override fun currentSessionId(): Long {
+            val h = holdWriterSessionRead
+            if (h != null && Thread.currentThread().name.startsWith("omegas-anti-stallo")) h.await(5, java.util.concurrent.TimeUnit.SECONDS)
+            return session
+        }
         override fun transaction(request: ByteArray, reason: String, timeoutMs: Int, purgeBefore: Boolean, expectedSessionId: Long, workClass: Mp48WorkClass, telemetryAfter: Boolean): UsbProtocolReply =
             handle(request)
         override fun <T> unit(reason: String, expectedSessionId: Long, workClass: Mp48WorkClass, telemetryAfter: Boolean, waitTimeoutMs: Long, block: (Mp48SerialUnit) -> T): T {
             classes += workClass
+            expectedSessions += expectedSessionId
+            errorInUnit?.let { throw it }
             return block(object : Mp48SerialUnit {
                 override val sessionId = session
                 override fun transaction(request: ByteArray, reason: String, timeoutMs: Int, purgeBefore: Boolean) = handle(request)
@@ -270,5 +279,25 @@ class AntiStalloParamsWriterTest {
         val w = writer(serial); w.apply(changes(0 to 1700))
         assertEquals("NOT_ACKED", waitFor(w, "DONE").getString("outcome"))
         assertEquals(factory.toList(), serial.values.toList())
+    }
+
+    @Test fun `apply captura a sessao USB no toque - se o USB trocar depois, a gravacao nao vai para a sessao nova`() {
+        val serial = FakeSerial(factory.copyOf()); serial.holdWriterSessionRead = java.util.concurrent.CountDownLatch(1)
+        val w = writer(serial)
+        assertTrue(w.apply(changes(0 to 1800)).getBoolean("ok"))
+        serial.session = 6L
+        serial.holdWriterSessionRead!!.countDown()
+        waitFor(w, "DONE")
+        assertEquals(listOf(5L), serial.expectedSessions.distinct())
+    }
+
+    @Test fun `apply com Error no meio nao fica preso em WRITING - publica estado incerto`() {
+        val serial = FakeSerial(factory.copyOf()); serial.errorInUnit = StackOverflowError("simulado")
+        val w = writer(serial)
+        w.apply(changes(0 to 1800))
+        val done = waitFor(w, "DONE")
+        assertEquals("ERROR", done.getString("outcome"))
+        assertTrue(done.getString("message").contains("incert", ignoreCase = true) || done.getString("message").contains("Nada foi dado como gravado"))
+        assertFalse(JSONObject(w.statusJson()).getBoolean("busy"))
     }
 }

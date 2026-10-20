@@ -108,8 +108,9 @@
   function parse(text) { try { return typeof text === 'string' ? JSON.parse(text) : (text || {}); } catch (_) { return {}; } }
 
   function createWriteFlow({ bridge, addHook, onChange }) {
-    const haveBridge = () => !!bridge && ['prepareAntiStalloFlag', 'confirmAntiStalloFlag', 'cancelAntiStalloFlag', 'getAntiStalloFlagStatus']
-      .every(n => typeof bridge[n] === 'function');
+    const has = n => typeof bridge[n] === 'function';
+    const haveBridge = () => !!bridge && has('getAntiStalloFlagStatus') &&
+      (has('applyAntiStalloFlag') || (has('prepareAntiStalloFlag') && has('confirmAntiStalloFlag') && has('cancelAntiStalloFlag')));
     // A ponte é conferida na hora do uso (pode ser injetada depois da tela).
     const s = { phase: 'idle', plan: null, token: null, message: '', undo: null, fromUndo: false, release: null, uncertain: false };
     const changed = () => { if (typeof onChange === 'function') onChange(); };
@@ -200,11 +201,17 @@
       fail(status.outcome === 'CHANGED_MEANWHILE' ? HUMAN.changed : status.outcome === 'NOT_ACKED' ? HUMAN.refused : HUMAN.noLink);
     }
     function poll() {
-      const status = parse(bridge.getAntiStalloFlagStatus());
+      let status;
+      try { status = parse(bridge.getAntiStalloFlagStatus()); }
+      catch (_) { if (s.phase === 'writing') fail(HUMAN.unsure, true); else if (s.phase === 'preparing') fail(HUMAN.noLink); return; }
       if (s.phase === 'preparing') {
         if (status.state === 'READY') onReady(status);
         else if (status.state === 'ERROR' || (status.state === 'DONE' && status.outcome)) fail(HUMAN.noLink);
-      } else if (s.phase === 'writing' && status.state === 'DONE') onDone(status);
+      } else if (s.phase === 'writing') {
+        if (status.state === 'DONE') onDone(status);
+        // O nativo deu erro, perdeu o pedido ou a ponte caiu: o quadro pode já ter saído, então é estado incerto, nunca fica preso em "gravando".
+        else if (status.state === 'ERROR' || status.state === 'IDLE' || status.ok === false) fail(HUMAN.unsure, true);
+      }
     }
     function cancel() {
       if (s.phase !== 'preparing' && s.phase !== 'preview') return;

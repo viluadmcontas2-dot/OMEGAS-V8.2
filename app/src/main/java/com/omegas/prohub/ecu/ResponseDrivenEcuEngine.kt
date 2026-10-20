@@ -81,14 +81,30 @@ class ResponseDrivenEcuEngine(
         lastValidTelemetryAtMs = 0L
         analyzer.reset()
         nativeTelemetryWindow.reset()
-        queue.forEach { it.fail(IllegalStateException("Nova sessão USB")) }
-        queue.clear()
+        failAllQueued("Nova sessão USB")
+    }
+
+    /** Falha TODO trabalho enfileirado (quem espera o resultado recebe o erro; nada foi enviado). Usa poll() em laço: um offer concorrente não escapa. */
+    private fun failAllQueued(reason: String) {
+        while (true) {
+            val work = queue.poll() ?: break
+            work.fail(IllegalStateException(reason))
+        }
+    }
+
+    /**
+     * Escrita do dono que ainda NÃO começou e a sessão com a central caiu: falha agora ("nada foi enviado") em vez de executar minutos depois,
+     * quando o link voltar e o dono já estiver em outra tela. SAFETY (saída segura) e leituras ficam na fila.
+     */
+    private fun failQueuedManualWrites(reason: String) {
+        queue.removeIf { work ->
+            if (work.workClass == Mp48WorkClass.MANUAL_WRITE) { work.fail(IllegalStateException(reason)); true } else false
+        }
     }
 
     @Synchronized
     fun endUsbSession() {
-        queue.forEach { it.fail(IllegalStateException("Sessão USB encerrada")) }
-        queue.clear()
+        failAllQueued("Sessão USB encerrada")
         physicalSessionId = 0L
         sessionReady = false
         hadOnlineSession = false
@@ -117,8 +133,7 @@ class ResponseDrivenEcuEngine(
 
     fun close() {
         stop(graceful = false)
-        queue.forEach { it.fail(IllegalStateException("Engine encerrada")) }
-        queue.clear()
+        failAllQueued("Engine encerrada")
         executor.shutdownNow()
     }
 
@@ -224,6 +239,7 @@ class ResponseDrivenEcuEngine(
                 failureBlock = future::completeExceptionally,
             ),
         )
+        if (!running.get()) failAllQueued("Engine MP48 parou; nada foi enviado") // parou entre a checagem e o offer
     }
 
     fun statusJson(): JSONObject = synchronized(stateLock) {
@@ -262,6 +278,7 @@ class ResponseDrivenEcuEngine(
                     break
                 }
                 if (!usb.connected) {
+                    failQueuedManualWrites("USB desconectado; nada foi enviado")
                     sessionReady = false
                     hadOnlineSession = false
                     recoveringExistingSession = false
@@ -280,6 +297,8 @@ class ResponseDrivenEcuEngine(
                     continue
                 }
                 if (!sessionReady) {
+                    // Só quando a sessão JÁ esteve online e caiu (recuperação): no handshake inicial a escrita do dono ainda espera a vez.
+                    if (hadOnlineSession) failQueuedManualWrites("A comunicação com a central caiu; nada foi enviado. Toque de novo.")
                     if (!performHandshakeOrResume()) {
                         SystemClock.sleep(80L)
                         continue
@@ -310,6 +329,9 @@ class ResponseDrivenEcuEngine(
             analyzer.reset()
             running.set(false)
             stopRequested.set(false)
+            // A engine parou (crash, handshake esgotado, stop, reinício): ninguém mais vai consumir a fila. Sem isto a thread do escritor
+            // ficava esperando para sempre e o "ocupado" nunca soltava.
+            failAllQueued("Engine MP48 parou; nada foi enviado")
             updateState(EngineState.STOPPED, lastError)
         }
     }

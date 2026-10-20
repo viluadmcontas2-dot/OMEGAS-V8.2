@@ -69,6 +69,7 @@
       const usb = state.status?.usbConnected === true ? true : state.status?.usbConnected === false ? false : undefined;
       this.flag.observe({ route: state.route, usbConnected: usb });
       this.vals.observe({ route: state.route, usbConnected: usb });
+      if (state.route !== 'tools' || usb === false) this.saveAgain = false;   // toque enfileirado não sobrevive a sair da aba nem a cabo solto
       if (state.route !== 'tools') {
         this.directReadRequested = false;
         if (this.view !== 'home') { this.view = 'home'; this.signature = ''; this.setView(); }
@@ -119,7 +120,9 @@
     param(name) { return (this.data.params || {})[name]; }
     hasBridge(kind = 'flag') {
       const b = root.OmegasAutoCal;
-      return !!b && typeof b[kind === 'values' ? 'prepareAntiStalloValues' : 'prepareAntiStalloFlag'] === 'function';
+      const apply = kind === 'values' ? 'applyAntiStalloValues' : 'applyAntiStalloFlag';
+      const prepare = kind === 'values' ? 'prepareAntiStalloValues' : 'prepareAntiStalloFlag';
+      return !!b && (typeof b[apply] === 'function' || typeof b[prepare] === 'function');   // a chamada única basta; prepare/confirm é só a reserva antiga
     }
 
     reason(kind) {
@@ -146,6 +149,7 @@
       if (t.matches('[data-adv-switch]')) {
         const entry = this.param('FLAG_CONF3');
         if (this.reason('flag')) return;
+        if (['preparing', 'writing'].includes(this.vals.view().phase)) return;   // os 5 números estão gravando: o toque espera a vez
         this.vals.cancel();
         this.flag.tapSwitch(entry, this.usb());
       } else if (t.matches('[data-adv-confirm]')) {
@@ -218,9 +222,12 @@
     }
 
     /** Grava o que mudou, na hora. Toques durante uma gravação não se perdem: gravam em seguida (por evento, sem relógio). */
+    /** O interruptor está lendo/gravando (a porta serial é uma só: nunca duas gravações juntas). */
+    flagBusy() { return ['preparing', 'writing'].includes(this.flag.view().phase); }
+
     autoSave() {
       const phase = this.vals.view().phase;
-      if (phase === 'preparing' || phase === 'writing') { this.saveAgain = true; return; }
+      if (phase === 'preparing' || phase === 'writing' || this.flagBusy()) { this.saveAgain = true; return; }
       this.saveAgain = false;
       const p = this.pendingChanges();
       if (p.invalid || !Object.keys(p.changes).length || this.reason('values')) return;
@@ -314,7 +321,12 @@
       const state = this.store.get();
       if (state.route !== 'tools') return;
       this.setView();
-      if (this.saveAgain && !['preparing', 'writing'].includes(this.vals.view().phase)) this.autoSave();
+      if (this.saveAgain) {
+        const ph = this.vals.view().phase;
+        // Só regrava o toque enfileirado se a gravação anterior TERMINOU BEM; falha ou erro nunca vira nova gravação sem toque.
+        if (ph === 'error') this.saveAgain = false;
+        else if (!['preparing', 'writing'].includes(ph) && !this.flagBusy()) this.autoSave();
+      }
       try { this.renderLayer(); }
       catch (error) {
         console.error('[OMEGAS Ferramentas] Janela de confirmação indisponível', error);
@@ -478,7 +490,7 @@
     /** Explicação completa: leitura, em abas curtas (cabe sem rolar). */
     renderInfo() {
       const values = this.valuesNow();
-      const lim = this.V.num(values ? values[0] : 1600);
+      const lim = values ? this.V.num(values[0]) : '—';
       const tab = this.infoTab || 'como';
       const tabList = [['como', 'Como funciona'], ...this.V.FIELDS.map(f => ['f' + f.index, f.tab]), ['carro', 'Seu carro'], ['nao', 'NÃO é']];
       const tabs = tabList.map(([id, nome]) => `<button type="button" class="vv-tab" data-adv-info-tab="${id}" aria-pressed="${id === tab}">${escapeHtml(nome)}</button>`).join('');

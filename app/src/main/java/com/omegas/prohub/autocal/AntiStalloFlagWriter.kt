@@ -63,13 +63,13 @@ class AntiStalloFlagWriter(
     fun apply(enable: Boolean): JSONObject {
         if (!serial.isConnected()) return fail("USB desconectado")
         if (busy()) return fail(CALIBRATION_BUSY)
+        val session = try { sessionOrThrow() } catch (_: Exception) { return fail("USB desconectado") } // a sessão é a do TOQUE, não a de quando o executor chegar
         if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
         try { executor.execute {
             var published = false
             fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
             try {
-                val session = sessionOrThrow()
                 var plan: AntiStalloFlagCore.Plan? = null
                 val result = serial.unit(
                     reason = "anti-apagão: ler, gravar FLAG_CONF3 (bit 0x20) e reler",
@@ -83,8 +83,9 @@ class AntiStalloFlagWriter(
                     AntiStalloFlagCore.plan(words, enable).also { plan = it }.let { AntiStalloFlagCore.execute(io(unit), it) }
                 }
                 finish(Pending("", plan!!, session), result) { publish(it) }
-            } catch (error: Exception) {
-                val message = "A ECU está ocupada ou desconectou; nada foi dado como gravado (${error.message ?: error.javaClass.simpleName})."
+            } catch (error: Throwable) {
+                val message = if (error is Exception) "A ECU está ocupada ou desconectou; nada foi dado como gravado (${error.message ?: error.javaClass.simpleName})."
+                else "${AntiStalloFlagCore.UNCERTAIN} Falha interna durante a gravação (${error.javaClass.simpleName}); o valor atual da ECU é desconhecido."
                 record("anti_stallo_flag_write", JSONObject().put("outcome", "ERROR").put("message", message).put("origin", "APP_UI_MANUAL"))
                 publish(JSONObject().put("state", "DONE").put("outcome", "ERROR").put("message", message))
             } finally {

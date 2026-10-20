@@ -10,6 +10,20 @@
 - Foco seguinte (dono: "inteligência"): (1) sugestão ADAPTATIVA do anti-apagão recalculada a cada evento a partir das sessões reais do app (nunca sugerir diminuir se houve apagão em movimento); (2) separar apagão de motor desligado nos logs (17 quedas ambíguas); (3) simplificar/automatizar "Aprendizado" e melhorar exportação das sessões; (4) Codex (pausado) retoma com `CODEX-PROXIMA-RODADA.md`.
 - Pendências: APK na pasta OMEGAS do Drive (conector não sobe 4,9 MB; dono arrasta ou libera `gh release create`); teste CSS morto (TODO antigo); possível flake `leveza-orcamento` "200 trocas" (falhou 1x no CI, passou 3x local e no re-run — investigar se repetir).
 
+## REVISÃO DE CÓDIGO DO APP INTEIRO (2026-10-20, 3 revisores independentes, commit eb42e72)
+CORRIGIDO (com teste): fase "gravando" presa se o nativo erra; nova gravação sem toque depois de erro/ao voltar à aba; interruptor e 5 números gravando juntos;
+"—" em vez de 1600 quando o valor é desconhecido; sessão USB capturada no toque; `Error` não deixa mais "WRITING" preso nos escritores do anti-apagão;
+fila do motor serial esvaziada quando o motor para + escrita do dono que não começou falha se o link caiu (antes podia rodar minutos depois); R8 mantém as 4 pontes JS; a tela aceita só a chamada única.
+PENDENTE (não corrigido nesta rodada):
+- KWriteManager: se o "ativar K insertion" chega e a resposta falha, a saída segura 0x24 não é enviada (flag só vira true após o ACK). Mexe no Mapa K do dono: tratar em rodada própria com teste.
+- KWriteManager/KFactorManager: `busy` liberado duas vezes (a conferência em segundo plano pode apagar o ocupado de outra operação); "Gravado" publicado só com ACK (decisão do dono de 2026-10-19: confirmar se vale como exceção à regra "só depois da leitura de volta").
+- Mapa K compara `current` com o cache em arquivo, não com a central (curva K relê a central).
+- AntiStalloParamsCore aceita 0 como piso (DERIVADO); proposta: JS manda o `before` exibido e o nativo recusa se a leitura ao vivo diferir.
+- "Já está assim" abre janela "Aviso" (2º toque) — contra a regra sem atrito; mensagem deve ir na linha de estado.
+- Código morto do caminho antigo (fase `preview`, janelas "Gravar estes valores?", `data-adv-save`, `decodeFlags`) e superfície prepare/confirm no nativo: remover.
+- MainActivity: allowFileAccess + shouldOverrideUrlLoading só bloqueia não-file://; CoroutineScope solto; ~56 `catch` vazios. Espelho de sessões em Download/Omegas é público (privacidade).
+- Quadro 0x37 de 10 bytes ainda nunca visto no fio: só a leitura de volta protege.
+
 ## Agora (APK urgente: o carro apaga ao sair do lugar e ao parar/pisar na embreagem)
 - [ ] Interface para leigo na multimídia (paisagem 1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem jargão
 - [ ] Cartão "Anti-apagão" (ligar/desligar + 5 números editáveis, Restaurar fábrica) — fluxo: prévia, 2º toque, ACK, leitura de volta, Desfazer

@@ -124,13 +124,13 @@ class AntiStalloParamsWriter(
         if (changes == null || problem != null) return fail(problem ?: "Pedido inválido.")
         if (!serial.isConnected()) return fail("USB desconectado")
         if (busy()) return fail(CALIBRATION_BUSY)
+        val session = try { sessionOrThrow() } catch (_: Exception) { return fail("USB desconectado") } // a sessão é a do TOQUE, não a de quando o executor chegar
         if (!running.compareAndSet(false, true)) return fail("Há outra operação em andamento; tente de novo.")
         synchronized(lock) { pending = null; status = JSONObject().put("state", "WRITING") }
         try { executor.execute {
             var published = false
             fun publish(next: JSONObject) { if (published) return; synchronized(lock) { running.set(false); status = next }; published = true }
             try {
-                val session = sessionOrThrow()
                 var plan: AntiStalloParamsCore.Plan? = null
                 val result = serial.unit(
                     reason = "anti-apagão: ler, gravar ANTI_STALLO (5 números) e reler",
@@ -144,8 +144,9 @@ class AntiStalloParamsWriter(
                     AntiStalloParamsCore.plan(values, changes).also { plan = it }.let { AntiStalloParamsCore.execute(io(unit), it) }
                 }
                 finish(Pending("", plan!!, session), result) { publish(it) }
-            } catch (error: Exception) {
-                val message = "A central está ocupada ou o cabo soltou. Nada foi dado como gravado. Confira o cabo e tente de novo."
+            } catch (error: Throwable) {
+                val message = if (error is Exception) "A central está ocupada ou o cabo soltou. Nada foi dado como gravado. Confira o cabo e tente de novo."
+                else "Estado incerto: houve uma falha interna durante a gravação. Releia a central antes de tentar de novo."
                 record("anti_stallo_params_write", JSONObject().put("outcome", "ERROR").put("message", message).put("origin", "APP_UI_MANUAL"))
                 publish(JSONObject().put("state", "DONE").put("outcome", "ERROR").put("message", message))
             } finally {
