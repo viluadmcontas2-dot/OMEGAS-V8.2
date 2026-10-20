@@ -2,6 +2,13 @@
 > **Novo (2026-10-19):** engenharia reversa completa + funções de referência da AutoCal em Ferramentas: veja `docs/handoff/HANDOFF-ENGENHARIA-REVERSA-CODEX.md` (prioridade do Codex). Regra sem-atrito = 1 toque, sem confirmação (substitui "2 toques").
 > **PRIORIDADE 0 do Codex (2026-10-19):** `docs/handoff/CODEX-PROXIMA-RODADA.md` — anti-apagão adaptativo com todas as sessões reais, remover "Aprendizado de outro arquivo", melhorar exportação, teste de copy para leigo.
 
+## ESTADO VERIFICADO (2026-10-20) — ler isto primeiro
+- Branch `claude/carregar-sessao-r7j85r`, HEAD `bf276c5`; CI 1501 verde (6 jobs); APK v13 oficial (apk.yml run 39375479431, exige input `build_apk=true`), SHA256 `f93c92af...7e23`, entregue ao dono. Não provado no aparelho.
+- Anti-apagão grava em UMA chamada nativa (`applyAntiStalloFlag` / `applyAntiStalloValues`: ler→gravar→reler numa só etapa MANUAL_WRITE). Prepare/confirm ficou só como reserva da ponte.
+- REGRA DO DONO (vale mais que a linha antiga de "2 toques"): MÍNIMO DE ATRITO — 1 toque = ação feita; sem pergunta, sem 2º toque, sem janela, sem rolagem, nada por tempo. App nunca grava sozinho (o toque é a ordem).
+- Foco seguinte (dono: "inteligência"): (1) sugestão ADAPTATIVA do anti-apagão recalculada a cada evento a partir das sessões reais do app (nunca sugerir diminuir se houve apagão em movimento); (2) separar apagão de motor desligado nos logs (17 quedas ambíguas); (3) simplificar/automatizar "Aprendizado" e melhorar exportação das sessões; (4) Codex (pausado) retoma com `CODEX-PROXIMA-RODADA.md`.
+- Pendências: APK na pasta OMEGAS do Drive (conector não sobe 4,9 MB; dono arrasta ou libera `gh release create`); teste CSS morto (TODO antigo); possível flake `leveza-orcamento` "200 trocas" (falhou 1x no CI, passou 3x local e no re-run — investigar se repetir).
+
 ## Agora (APK urgente: o carro apaga ao sair do lugar e ao parar/pisar na embreagem)
 - [ ] Interface para leigo na multimídia (paisagem 1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem jargão
 - [ ] Cartão "Anti-apagão" (ligar/desligar + 5 números editáveis, Restaurar fábrica) — fluxo: prévia, 2º toque, ACK, leitura de volta, Desfazer
@@ -21,7 +28,7 @@
 - [ ] Workflows novos sem legado (ci.yml + apk.yml) + tools/auditoria.py + AUDITORIA.json no job grafo (CONTRATO-CODEX §6)
 
 ## Regras permanentes
-App nunca grava sozinho (sempre 2 toques + leitura de volta). Nada por tempo. Não burlar licença. Não versionar .exe/DLL. Sem segredos.
+App nunca grava sozinho (o toque do dono é a ordem; 1 toque + leitura de volta, sem 2º toque). Nada por tempo. Não burlar licença. Não versionar .exe/DLL. Sem segredos.
 
 ## Marcha lenta — escrita (próxima versão)
 # PENDENTE — escrita da Marcha lenta (não implementada)
