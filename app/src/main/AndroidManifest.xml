@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-feature android:name="android.hardware.usb.host" android:required="true" />
 
@@ -8,8 +9,6 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
-    <!-- Exigida pelo Android 14 junto com FOREGROUND_SERVICE_CONNECTED_DEVICE (permissão comum, sem pedido ao usuário, sem acesso a dados) -->
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -50,8 +49,10 @@
                 android:resource="@xml/device_filter" />
         </activity>
 
+        <!-- connectedDevice: a permissão de execução é a da USB da central (UsbManager); o app não usa Bluetooth nem rede -->
         <service
             android:name=".service.TelemetryForegroundService"
+            tools:ignore="ForegroundServicePermission"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="connectedDevice|location"
