@@ -24,3 +24,6 @@ AGENTS.md · docs/handoff/{PENDENTE,CONTRATO-CODEX,HANDOFF-CODEX}.md · docs/pro
 
 ## Regra sem-atrito (2026-10-19)
 Um toque = ação feita. Sem pergunta de confirmação, sem janela, sem 2º toque, sem botão "tentar de novo". Conferência em segundo plano, autocorreção, aviso sutil só se falhar, Desfazer no cartão. Teste: `tests/ui/anti-apagao-toque-real.test.cjs`. Vale para toda função nova (volta automática, marcha lenta, cartões).
+
+## Regra de entrega (dono, 2026-10-20 — já repetida várias vezes)
+PROMPTS, listas, relatórios e qualquer texto que o dono precise usar vão **INTEIROS NO CHAT**, prontos para copiar. O dono NÃO abre o GitHub nem o repositório para ler. Arquivo no repo é só backup; nunca responda "está em docs/…" no lugar do texto.
