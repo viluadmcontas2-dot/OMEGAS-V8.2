@@ -158,6 +158,7 @@
     "tests/ui/autocal-automatic-live-surface.test.cjs",
     "tests/ui/autocal-batch-recovery-intent.test.cjs",
     "tests/ui/autocal-blueprint-context.test.cjs",
+    "tests/ui/autocal-botao-por-zona.test.cjs",
     "tests/ui/autocal-camada-ao-vivo.test.cjs",
     "tests/ui/autocal-chart-semantics.test.cjs",
     "tests/ui/autocal-cockpit.test.cjs",
@@ -2484,6 +2485,21 @@
   [
    "teste:tests/ui/autocal-blueprint-context.test.cjs",
    "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-botao-por-zona.test.cjs",
+   "ponte:OmegasAutoCal.preparePointDeleteBatch",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-botao-por-zona.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-cockpit.js",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-botao-por-zona.test.cjs",
+   "ui:app/src/main/assets/ui/screens/autocal-original.js",
    "cobre"
   ],
   [
@@ -4839,7 +4855,7 @@
  ],
  "contagem_arestas": {
   "chama": 108,
-  "cobre": 658,
+  "cobre": 661,
   "exibe": 34,
   "sustenta": 80,
   "usa": 14
@@ -4849,7 +4865,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 114,
-  "teste": 389,
+  "teste": 390,
   "ui": 33
  },
  "desconhecido_sem_uso": [
@@ -7623,6 +7639,10 @@
   },
   "teste:tests/ui/autocal-blueprint-context.test.cjs": {
    "rotulo": "tests/ui/autocal-blueprint-context.test.cjs",
+   "tipo": "teste"
+  },
+  "teste:tests/ui/autocal-botao-por-zona.test.cjs": {
+   "rotulo": "tests/ui/autocal-botao-por-zona.test.cjs",
    "tipo": "teste"
   },
   "teste:tests/ui/autocal-camada-ao-vivo.test.cjs": {

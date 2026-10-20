@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 8, ponte 114, teste 389, ui 33. Arestas: chama 108, cobre 658, exibe 34, sustenta 80, usa 14.
+Nós: aba 9, ev 98, kt 8, ponte 114, teste 390, ui 33. Arestas: chama 108, cobre 661, exibe 34, sustenta 80, usa 14.
 
 ## (a) Por aba
 
@@ -12,7 +12,7 @@ Nós: aba 9, ev 98, kt 8, ponte 114, teste 389, ui 33. Arestas: chama 108, cobre
 | Agora (`-`) | Sem aba própria: só a barra viva (tensão, MAP, injeção, RPM) no topo. | 1 | 0 | 8 | 0 |
 | Mapa K (`map`) | Grade 12x12 do Mapa K, edição e correção de células, região de apagão. | 5 | 3 | 26 | 1 |
 | Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 18 | 0 |
-| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 52 | 4 |
+| AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 53 | 4 |
 | Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 16 | 0 |
 | Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 7 | 11 | 0 |
 | Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 22 | 30 | 16 |
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 114 pontes, 33 arquivos de UI, 389 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 114 pontes, 33 arquivos de UI, 390 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
