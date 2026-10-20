@@ -10,3 +10,7 @@ Branch canônica: `OMEGASCANONICO` (padrão do GitHub). Estado vivo: `docs/hando
 5. **Codex.** Delegar o demorado via `tools/codex-task.sh` se houver login/franquia; senão seguir sozinho sem reclamar. Superpowers quando o dono pedir.
 6. **UI.** Mockup PNG por tela antes de reformar; tema escuro único; sem rolagem horizontal; nunca remover botão ou função sem avisar; um APK só com certeza (link + SHA-256).
 7. **Central (ECU).** A central é a verdade (margem 4–5%). Travas de escrita: curva 0,8–1,8; mapa > 200 ⇒ K ≤ 1,5; reset nunca pausa o aprendizado; salvar curva só manual; AutoCal sem leitura anterior; apagar ponto manual não desarma a limpeza.
+8. **Navegação e telas (dono, 2026-10-20).** No máximo 5 botões de navegação: AutoCal, Refino, Ajuste local, Ajuste global e Ferramentas. Sessões, Diagnóstico e o resto vivem DENTRO de Ferramentas, organizados em grupos com nome claro (organizado não é poluído). A barra do topo é persistente (tensão, MAP, injeção de gasolina, rotação) e ganha o nível do gás como bolinhas, como as do comutador físico; não existe tela "Agora". Calibrar a leitura do nível do gás fica em Ferramentas.
+9. **Botões sempre à esquerda (dono, 2026-10-20).** Em multimídia, quanto menos esticar o braço, melhor: toda barra de botões e toda linha de controles (−, +, Espera, Salvar…) fica agrupada à esquerda, sem buraco no meio e sem botão isolado no canto direito.
+10. **Aprovação de tela.** Nada de aprovar mockup solto: mandar o conjunto de TODAS as telas e o mapa do fluxo de navegação, e só implementar depois do OK do dono.
+
