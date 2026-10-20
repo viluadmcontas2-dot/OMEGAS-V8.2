@@ -1839,6 +1839,21 @@
    "cobre"
   ],
   [
+   "teste:tests/test_seguranca_privacidade_contract.py",
+   "kt:AutoCalNativeActionManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_seguranca_privacidade_contract.py",
+   "kt:KWriteManager",
+   "cobre"
+  ],
+  [
+   "teste:tests/test_seguranca_privacidade_contract.py",
+   "kt:TelemetryForegroundService",
+   "cobre"
+  ],
+  [
    "teste:tests/test_sem_tempo_como_gatilho.py",
    "kt:KWriteManager",
    "cobre"
@@ -4481,7 +4496,7 @@
  ],
  "contagem_arestas": {
   "chama": 105,
-  "cobre": 629,
+  "cobre": 632,
   "exibe": 31,
   "sustenta": 45,
   "usa": 14
@@ -4490,8 +4505,8 @@
   "aba": 9,
   "ev": 83,
   "kt": 8,
-  "ponte": 110,
-  "teste": 375,
+  "ponte": 109,
+  "teste": 377,
   "ui": 30
  },
  "desconhecido_sem_uso": [
@@ -4584,7 +4599,6 @@
     "OmegasNative.readKFactorCurve",
     "OmegasNative.recoverKInsertionState",
     "OmegasNative.registerRefuel",
-    "OmegasNative.requestBluetoothPermission",
     "OmegasNative.resetLearningToleranceSettings",
     "OmegasNative.restartEngine",
     "OmegasNative.runProtocolLab",
@@ -4617,7 +4631,6 @@
     "OmegasNative.previewKMapCell",
     "OmegasNative.recoverKInsertionState",
     "OmegasNative.registerRefuel",
-    "OmegasNative.requestBluetoothPermission",
     "OmegasNative.restartEngine",
     "OmegasNative.runProtocolLab",
     "OmegasNative.setGnvSettings",
@@ -5769,12 +5782,6 @@
    "rotulo": "OmegasNative.registerRefuel",
    "tipo": "ponte"
   },
-  "ponte:OmegasNative.requestBluetoothPermission": {
-   "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
-   "escrita": false,
-   "rotulo": "OmegasNative.requestBluetoothPermission",
-   "tipo": "ponte"
-  },
   "ponte:OmegasNative.resetLearningToleranceSettings": {
    "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
    "escrita": true,
@@ -6215,6 +6222,10 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/calibration/OwnedBusyLockTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/calibration/OwnedBusyLockTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/PrivateSessionArchiveTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/PrivateSessionArchiveTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/diagnostics/SessionPartPlannerTest.kt": {
@@ -6991,6 +7002,10 @@
   },
   "teste:tests/test_runtime_object_telemetry_delivery_contract.py": {
    "rotulo": "tests/test_runtime_object_telemetry_delivery_contract.py",
+   "tipo": "teste"
+  },
+  "teste:tests/test_seguranca_privacidade_contract.py": {
+   "rotulo": "tests/test_seguranca_privacidade_contract.py",
    "tipo": "teste"
   },
   "teste:tests/test_sem_tempo_como_gatilho.py": {
