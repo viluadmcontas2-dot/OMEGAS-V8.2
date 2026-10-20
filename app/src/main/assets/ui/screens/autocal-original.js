@@ -44,6 +44,13 @@
     return 3;
   }
 
+  /** Bandas (0–17) que pertencem à zona: 0–4, 5–8, 9–12, 13–17. */
+  function zoneBands(zone) {
+    const out = [];
+    for (let band = ZONE_EDGES[zone]; band < (zone === 3 ? BANDS : ZONE_EDGES[zone + 1]); band += 1) out.push(band);
+    return out;
+  }
+
   /** Nós com Tinj ou MAP = 0 são omitidos (slot vazio); nós abaixo do eixo MAP ficam fora do desenho. */
   function pairs(xs, ys, axisY) {
     const count = Math.min(xs.length, ys.length);
@@ -293,6 +300,16 @@
       out.push('<line class="ao-zone-edge" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(y) + '" y2="' + fixed(y) + '"/>');
       out.push('<text class="ao-zone-label" data-zone-label="' + zone.zone + '" x="' + (p.m.left + p.w - 6) + '" y="' + fixed(y + 18) + '" text-anchor="end">' + esc(zone.label) + '</text>');
     }
+    // Botão por zona (dono, 2026-10-20): círculo pequeno, verde = GNV, vermelho = gasolina; reaprende os pontos da zona.
+    for (const zone of model.zones) {
+      const mid = (p.Y(Math.min(zone.upper, model.axisY.max)) + p.Y(Math.max(zone.lower, model.axisY.min))) / 2;
+      [['GAS', 'gas', 'GNV', 18], ['PETROL', 'petrol', 'gasolina', 52]].forEach(([fuelKey, cls, name, dx]) => {
+        out.push('<g class="ao-zone-btn ' + cls + '" role="button" tabindex="0" data-autocal-zone-reacquire="' + zone.zone + '" data-autocal-zone-fuel="' + fuelKey +
+          '" aria-label="Reaprender ' + name + ' da zona ' + (zone.zone + 1) + '"><title>Reaprender ' + name + ' · zona ' + (zone.zone + 1) + '</title>' +
+          '<circle class="ao-zone-btn-hit" cx="' + fixed(p.m.left + dx) + '" cy="' + fixed(mid) + '" r="17"/>' +
+          '<circle class="ao-zone-btn-dot" cx="' + fixed(p.m.left + dx) + '" cy="' + fixed(mid) + '" r="8"/></g>');
+      });
+    }
     out.push('<g data-ao-live="band">' + liveBand(model, p) + '</g>');
     for (const [value, cls, name] of [[model.limitMin, 'ao-limit-min', 'min'], [model.limitMax, 'ao-limit-max', 'max']]) {
       if (value !== null) out.push('<line class="' + cls + '" data-limit="' + name + '" x1="' + p.m.left + '" x2="' + (p.m.left + p.w) + '" y1="' + fixed(p.Y(value)) + '" y2="' + fixed(p.Y(value)) + '"/>');
@@ -444,5 +461,5 @@
     return { band: liveBand(model, main), run: liveRun(model, main), acq: liveAcq(model, acq), k: liveK(model, k) };
   }
 
-  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, K_WRITE_CEILING, ZONE_EDGES, BANDS, zoneOfBand, build, zoneStates, automatchDots, renderMain, renderAcquisition, renderK, liveState, staticModel, renderLive };
+  ns.AutoCalOriginal = { AXIS_Y, K_AXIS_Y, K_WRITE_CEILING, ZONE_EDGES, BANDS, zoneOfBand, zoneBands, build, zoneStates, automatchDots, renderMain, renderAcquisition, renderK, liveState, staticModel, renderLive };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -878,6 +878,8 @@
             Number(togglePoint.dataset.autocalReacquireIndex),
           );
         }
+        const zoneBtn = event.target.closest('[data-autocal-zone-reacquire]');
+        if (zoneBtn) this.requestZoneReacquisition(zoneBtn.dataset.autocalZoneFuel, Number(zoneBtn.dataset.autocalZoneReacquire));
         if (event.target.closest('[data-autocal-reacquire-selected]')) this.requestSelectedPointReacquisition();
         if (event.target.closest('[data-autocal-clear-point-selection]')) this.clearAcquiredPointSelection();
         const exportButton = event.target.closest('[data-autocal-export-session]');
@@ -1964,11 +1966,23 @@
     }
 
     requestSelectedPointReacquisition() {
-      if (!this.api?.available?.() || this.selectedAcquiredPoints.size === 0) return;
       const targets = Array.from(this.selectedAcquiredPoints).map(key => {
         const [fuel, rawIndex] = key.split(':');
         return { fuel, index: Number(rawIndex) };
-      }).filter(item => Number.isInteger(item.index));
+      });
+      this.reacquireTargets(targets);
+    }
+
+    /** Botão por zona: reaprende todas as bandas da zona do combustível, pelo mesmo caminho dos "marcados". */
+    requestZoneReacquisition(fuel, zone) {
+      const O = ns.AutoCalOriginal;
+      if (!O?.zoneBands || !Number.isInteger(zone) || zone < 0 || zone > 3) return;
+      this.reacquireTargets(O.zoneBands(zone).map(index => ({ fuel, index })));
+    }
+
+    reacquireTargets(rawTargets) {
+      const targets = rawTargets.filter(item => Number.isInteger(item.index));
+      if (!this.api?.available?.() || targets.length === 0) return;
       const prepared = this.api.preparePointDeleteBatch?.(targets) || { ok: false, error: 'Readquisição múltipla indisponível.' };
       if (!prepared?.ok || !prepared?.prepared) {
         this.store.patch({ alert: { level: 'warning', message: prepared?.error || 'Não foi possível preparar os pontos selecionados.' } });

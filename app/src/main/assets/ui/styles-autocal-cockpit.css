@@ -2270,3 +2270,12 @@
 :root[data-ac-hide-kline="1"] .ao-k-line, :root[data-ac-hide-kline="1"] .ao-k-node { display: none; }
 :root[data-ac-hide-zones="1"] .autocal-zone-card { display: none; }
 :root[data-ac-hide-messages="1"] #autocalActionStatus { display: none; }
+
+/* Botão por zona (dono, 2026-10-20): discreto, alvo de toque grande; verde = GNV, vermelho = gasolina. */
+.ao-zone-btn { cursor: pointer; outline: none; }
+.ao-zone-btn-hit { fill: transparent; }
+.ao-zone-btn-dot { stroke: rgba(255,255,255,.55); stroke-width: 1.5; opacity: .8; }
+.ao-zone-btn.gas .ao-zone-btn-dot { fill: #2fbf6b; }
+.ao-zone-btn.petrol .ao-zone-btn-dot { fill: #e0474c; }
+.ao-zone-btn:hover .ao-zone-btn-dot, .ao-zone-btn:focus-visible .ao-zone-btn-dot { opacity: 1; stroke: #fff; stroke-width: 2.5; }
+.refino-chart .ao-zone-btn { display: none; }
