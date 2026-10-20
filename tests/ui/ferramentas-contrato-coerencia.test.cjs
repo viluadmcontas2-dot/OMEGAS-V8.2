@@ -20,7 +20,7 @@ const VIEWPORTS = {
 const STATES = ['desconectada', 'lendo', 'com dados'];
 const MOTOR = ['anti', 'valores', 'corte', 'lenta', 'troca', 'injetores', 'volta'];
 const LEITURA = ['corte', 'lenta', 'troca', 'injetores', 'volta'];
-const APP = ['copia', 'refino-automatico', 'teste-gravacao', 'bateria', 'balao', 'registro'];
+const APP = ['copia', 'refino-automatico', 'bateria', 'balao', 'registro'];
 
 /** Troca cada método das pontes por um que exige o `this` certo (como o WebView) e registra a chamada. */
 async function strictBridges(page) {
@@ -184,10 +184,11 @@ async function appPage(page, viewport, state) {
   assert.match(await text(page, '#toolAutoRefine'), /Desligado/, `${where}: interruptor não mudou`);
   await tapCalls(page, '#toolAutoRefine', 'OmegasAutoCal.setAutoRefineMode', `${where} Refino automático de volta`);
   assert.match(await text(page, '#toolAutoRefine'), /Ligado/, where);
-  // Teste de gravação: ainda arma no 1º toque e roda no 2º (pendente decisão do dono: escreve na central). Só confere que chega e termina legível.
-  await T.tap(page, '#toolBufferProbe');
-  await tapCalls(page, '#toolBufferProbe', 'OmegasAutoCal.startBufferWriteProbe', `${where} Teste de gravação`);
-  assert.match(await text(page, '#toolBufferProbe'), /recusou|aceitou|Nenhuma faixa|Sonda/, `${where}: teste sem resultado legível`);
+  // Um toque = a ação: nenhum botão desta página pede dois toques. O antigo "Teste de gravação" (armava no 1º toque e
+  // escrevia na central no 2º) saiu do que o leigo vê (2026-10-20); se voltar, este contrato falha.
+  assert.equal(await page.locator('#toolBufferProbe').count(), 0, `${where}: "Teste de gravação" de dois toques voltou`);
+  assert.doesNotMatch(await text(page, '#toolDiagnosticsWorkspace'), /Toque de novo|Teste de gravação/, `${where}: pede dois toques`);
+  assert.ok(!(await calls(page)).includes('OmegasAutoCal.startBufferWriteProbe'), `${where}: a tela chamou a escrita da sonda`);
   await tapCalls(page, '[data-tool-battery-request]', 'OmegasPower.requestBatteryOptimizationExemption', `${where} Bateria`);
   await tapCalls(page, '[data-tool-overlay-request]', 'OmegasPower.requestOverlayPermissionAndEnable', `${where} Balão`);
   await T.tap(page, '[data-tool-open-log]');

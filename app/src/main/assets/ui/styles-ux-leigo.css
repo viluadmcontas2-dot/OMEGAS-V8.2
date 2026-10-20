@@ -292,6 +292,7 @@
 .vv-status[data-level="ok"] { color: #3ddc97; }
 .vv-status[data-level="busy"] { color: #8ec2ff; }
 .vv-status[data-level="bad"] { color: #ff8a8a; }
+.vv-status[data-level="warn"], #toolAdvanced .tile-line[data-level="warn"] { color: var(--warn); }
 .vv-grid { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .vv-card { display: flex; flex-direction: column; gap: 4px; min-width: 0; min-height: 0; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); overflow: hidden; }
 .vv-card[data-main="true"] { border-color: var(--accent, #2f8cff); }

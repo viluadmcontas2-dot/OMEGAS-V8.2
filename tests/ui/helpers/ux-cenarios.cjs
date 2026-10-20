@@ -7,11 +7,12 @@ const T = require('./browser.cjs');
 const LIGAR = '35 FA 00 20 00 00 00 4F';
 const DESLIGAR = '35 FA 00 00 00 00 00 2F';
 const hexSum = bytes => (bytes.reduce((a, b) => a + b, 0) & 255).toString(16).toUpperCase().padStart(2, '0');
-/** Quadro esperado dos 5 números (conta independente: 37, end. baixo, n+1, end. alto, dados, soma). */
-function quadroValores(valores) {
-  const dados = valores.flatMap(v => [v & 255, v >> 8]);
-  const corpo = [0x37, 0x33, dados.length + 2, 0x01, ...dados];
-  return [...corpo, corpo.reduce((a, b) => a + b, 0) & 255].map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+/** Quadros esperados dos 5 números, no formato do original (conta independente): UM `14 33 01 <índice> lo hi soma` por campo
+ *  que muda de `antes` para `depois`, em ordem de índice. */
+function quadroValores(depois, antes = [1600, 100, 1500, 2, 20]) {
+  const hex = b => b.toString(16).toUpperCase().padStart(2, '0');
+  return depois.map((v, i) => (v === antes[i] ? null : [0x14, 0x33, 0x01, i, v & 255, v >> 8]))
+    .filter(Boolean).map(c => [...c, c.reduce((a, b) => a + b, 0) & 255].map(hex).join(' '));
 }
 const FABRICA = [1600, 100, 1500, 2, 20];
 
@@ -54,4 +55,14 @@ async function foto(page, nome) {
   return file;
 }
 
-module.exports = { foto, LIGAR, DESLIGAR, FABRICA, quadroValores, hexSum, text, count, ecuWrites, clearLog, flag3, anti5, camada, abrirMotor, abrirValores, irParaCampo, digitar };
+/** Cenários da gravação dos 5 números na central emulada (quadros 14 33 01 i … com ACK 53 00 53 e leitura 29 33 01 5D). */
+const CENARIOS_VALORES = {
+  sucesso: () => {},
+  parcial: () => window.__bench.setFault('nakAfter', 1),            // o 1º quadro tem ACK, o 2º não (PARTIAL)
+  'leitura-diferente': () => window.__bench.setFault('corruptWrite'), // ACK, mas a leitura de volta traz outro número
+  'leitura-falha': () => window.__bench.setFault('noReadAfterWrite'), // ACK, e a leitura de volta não vem
+  desconectada: () => window.__bench.unplugUsb(),
+};
+const cenarioValores = (page, nome) => page.evaluate(CENARIOS_VALORES[nome]);
+
+module.exports = { CENARIOS_VALORES, cenarioValores, foto, LIGAR, DESLIGAR, FABRICA, quadroValores, hexSum, text, count, ecuWrites, clearLog, flag3, anti5, camada, abrirMotor, abrirValores, irParaCampo, digitar };

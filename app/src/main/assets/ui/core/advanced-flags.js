@@ -90,19 +90,21 @@
       usbDrop: 'O cabo soltou durante a gravação. Não sei como ficou. Reconecte e confira o estado.',
       mismatch: 'A conferência do app não bate com a da central. Nada foi gravado.',
     };
+    // Recusa da ponte antes de qualquer envio: o texto cru do nativo ("USB desconectado") vira frase de leigo com o que fazer.
+    const refusal = error => (!error || /\bUSB\b/i.test(error) ? HUMAN.noLink : error);
 
     function prepare(enable) {
       // Caminho normal: UMA chamada nativa (ler -> gravar -> reler numa só etapa); o resultado chega no status.
       if (typeof bridge.applyAntiStalloFlag === 'function') {
         const sent = parse(bridge.applyAntiStalloFlag(enable));
-        if (sent.ok === false) { fail(sent.error || HUMAN.noLink); return; }
+        if (sent.ok === false) { fail(refusal(sent.error)); return; }
         s.enable = enable; s.message = ''; s.uncertain = false; s.plan = null; s.token = null;
         set('writing', '');
         hook();
         return;
       }
       const reply = parse(bridge.prepareAntiStalloFlag(enable));
-      if (reply.ok === false) { fail(reply.error || HUMAN.noLink); return; }
+      if (reply.ok === false) { fail(refusal(reply.error)); return; }
       s.enable = enable;
       s.message = '';
       s.uncertain = false;
@@ -111,7 +113,7 @@
     }
     function confirm() {
       const reply = parse(bridge.confirmAntiStalloFlag(s.token));
-      if (reply.ok === false) { fail(reply.error || HUMAN.noLink); return; }
+      if (reply.ok === false) { fail(refusal(reply.error)); return; }
       set('writing', '');
       hook();
     }

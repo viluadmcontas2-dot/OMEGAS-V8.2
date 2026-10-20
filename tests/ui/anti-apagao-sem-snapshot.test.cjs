@@ -68,8 +68,9 @@ test('sem resposta na primeira leitura: não escreve, exibe falha e permite tent
     await T.tap(app.page, '[data-adv-switch]');
     await T.pump(app.page, 5);
     assert.deepEqual(T.writesOf((await T.frames(app.page)).log), []);
-    assert.match(await app.page.locator('#toolsLayer').innerText(), /não consegui falar com a central|não foi gravado/i);
-    await T.tap(app.page, '#toolsLayer [data-adv-close]');
+    // Sem janela: a falha e o que fazer ficam na linha do cartão; o próximo toque já tenta de novo.
+    assert.match(await app.page.locator('#toolAdvanced [data-card="anti"] .tile-line').innerText(), /não consegui falar com a central/i);
+    assert.equal(await app.page.locator('#toolsLayer:not([hidden]) .tool-layer-card').count(), 0);
     await app.page.evaluate(() => window.__bench.setFault('noReadReply', false));
     await T.tap(app.page, '[data-adv-switch]');           // de novo: um toque resolve, sem botão "tentar de novo" separado
     await T.pump(app.page, 10);
@@ -107,7 +108,7 @@ test('RED: digitar 1550 sem snapshot grava após leitura direta, sem mudar os ou
     assert.deepEqual(state, [1550, 100, 1500, 2, 20], 'somente o valor digitado muda na ECU');
     const log = T.writesOf((await T.frames(page)).log);
     assert.equal(log.length, 1, 'uma alteração humana = uma escrita; sem extras');
-    assert.match(log[0].hex, /^37 33 0C 01 /);
+    assert.equal(log[0].hex, '14 33 01 00 0E 06 5C', 'formato do original: um 14 33 01 <índice> só do campo alterado');
     assert.match(await page.locator('.vv-status').innerText(), /Gravado e conferido/);
   } finally { await app.context.close(); }
 });

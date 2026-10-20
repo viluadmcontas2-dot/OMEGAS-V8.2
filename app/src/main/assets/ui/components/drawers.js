@@ -52,7 +52,6 @@
       this.sessionPage = 0;
       this.view = 'home';          // 'home' | 'log'
       this.page = 1;               // página de Ferramentas: 1 = motor e combustível, 2 = app e arquivos
-      this.probeNote = '';
       this.sessionSettingsFeedback = '';
       this.ensureToolsExpansion();
       this.bind();
@@ -96,7 +95,6 @@
       const target = event.target.closest('button');
       if (!target) return;
       if (target.id === 'toolExportData') this.api.exportData();
-      else if (target.id === 'toolBufferProbe') this.runBufferProbe();
       else if (target.id === 'toolAutoRefine') this.toggleAutoRefine();
       else if (target.matches('[data-session-start]')) {
         const result = this.api.startSession('registro manual pela interface');
@@ -166,77 +164,6 @@
       }
     }
 
-    // Teste de gravação nos pontos (dono, 2026-10-17): toque duplo (arma e confirma), sem diálogo do sistema.
-    setProbeNote(text) {
-      this.probeNote = text;
-      const label = document.getElementById('toolBufferProbe')?.querySelector('span');
-      if (label) label.textContent = text;
-    }
-
-    runBufferProbe() {
-      const button = document.getElementById('toolBufferProbe');
-      const bridge = window.OmegasAutoCal;
-      if (!button || !bridge?.startBufferWriteProbe) {
-        this.store.patch({ alert: { level: 'warning', message: 'O teste só funciona no app, com a central.' } });
-        return;
-      }
-      if (this.bufferProbeRunning) return;
-      if (!this.bufferProbeArmed) {
-        this.bufferProbeArmed = true;
-        this.setProbeNote('Toque de novo para testar');
-        const disarmNow = () => {
-          this.bufferProbeArmed = false;
-          this.setProbeNote('');
-          this.bufferProbeDisarm?.();
-        };
-        // Desarma na troca de aba, no USB desconectado e em qualquer outro toque (evento, nunca prazo).
-        const disarm = state => {
-          if (state.route === 'tools' && state.status?.usbConnected !== false) return;
-          disarmNow();
-        };
-        const otherClick = event => { if (!button.contains?.(event?.target)) disarmNow(); };
-        this.bufferProbeDisarm?.();
-        const unsubscribe = this.store.subscribe(disarm);
-        document.addEventListener?.('click', otherClick, true);
-        this.bufferProbeDisarm = () => {
-          this.bufferProbeDisarm = null;
-          unsubscribe?.();
-          document.removeEventListener?.('click', otherClick, true);
-        };
-        return;
-      }
-      this.bufferProbeDisarm?.();
-      this.bufferProbeArmed = false;
-      let started;
-      try { started = JSON.parse(bridge.startBufferWriteProbe()); } catch (_) { started = { ok: false, error: 'Resposta inválida do teste.' }; }
-      if (started?.ok === false) {
-        this.setProbeNote(started.error || 'Não começou.');
-        this.notifyResult(started, '');
-        return;
-      }
-      this.bufferProbeRunning = true;
-      this.setProbeNote('Testando…');
-      const poll = () => {
-        let status = {};
-        try { status = JSON.parse(bridge.getBufferWriteProbeStatus()); } catch (_) { status = {}; }
-        if (status.state !== 'DONE') {
-          // Sem resposta final e o USB caiu: a espera termina; o resultado (se vier) fica na sessão.
-          if (this.store.get?.()?.status?.usbConnected === false) {
-            this.bufferProbePoll?.();
-            this.bufferProbeRunning = false;
-            this.setProbeNote('O cabo soltou. O resultado fica na gravação da viagem.');
-          }
-          return;
-        }
-        this.bufferProbePoll?.();
-        this.bufferProbeRunning = false;
-        const text = Drawers.describeBufferProbe(status);
-        this.setProbeNote(text);
-        this.store.patch({ alert: { level: status.outcome === 'ACCEPTED_AND_HELD' || status.outcome === 'REFUSED' ? 'ok' : 'warning', message: text } });
-      };
-      this.bufferProbePoll = window.OmegasApp.scheduler.addHook('fast', poll);
-    }
-
     // Refino automático depois de cada AutoMatch da central: Desligado · Ligado (só sugere). O app nunca grava sozinho (dono, 2026-10-18).
     static describeAutoRefineMode(mode) {
       if (mode === 'OFF') return 'Desligado: não sugere nada depois do AutoMatch';
@@ -266,18 +193,6 @@
       this.toolsSignature = '';
       this.syncAutoRefine();
       if (typeof this.store.get === 'function') this.renderTools(this.store.get());
-    }
-
-    static describeBufferProbe(status) {
-      const back = status.restoreNeeded ? (status.restored ? ' Original restaurado.' : ' ATENÇÃO: o original NÃO voltou. Use Reaprender GNV no AutoCal.') : '';
-      switch (status.outcome) {
-        case 'REFUSED': return 'A central recusou escrever nos pontos (só leitura). Nada mudou.';
-        case 'ACCEPTED_AND_HELD': return 'A central aceitou e o valor ficou (faixa ' + status.band + ').' + back;
-        case 'ACCEPTED_THEN_OVERWRITTEN': return 'A central aceitou, mas desfez sozinha o valor.' + back;
-        case 'ACCEPTED_BUT_DIFFERENT': return 'A central aceitou, mas guardou outro valor.' + back;
-        case 'NO_STABLE_BAND': return 'Nenhuma faixa do GNV está cheia ainda; nada foi escrito.';
-        default: return 'Sonda sem resultado: ' + (status.message || 'erro') + back;
-      }
     }
 
     notifyResult(result, successMessage) {
@@ -354,7 +269,7 @@
       if (!mode) { try { mode = String(window.OmegasAutoCal?.getAutoRefineMode?.() || 'SHADOW'); } catch (_) { mode = 'SHADOW'; } this.autoRefineMode = mode; }
       // Só redesenha quando algo visível mudou: redesenho a cada ciclo engolia toques.
       const signature = JSON.stringify([
-        this.view, this.page, serviceHealthy, appStatus.usbConnected, battery, overlay, mode, this.probeNote, !!window.OmegasAutoCal?.startBufferWriteProbe,
+        this.view, this.page, serviceHealthy, appStatus.usbConnected, battery, overlay, mode,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.logPage,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
@@ -394,11 +309,6 @@
           <h3>Refino automático</h3>
           <p class="tile-line">Só sugere. Nunca grava sozinho.</p>
           <button type="button" id="toolAutoRefine" class="tool-switch" role="switch" aria-checked="${refineOn ? 'true' : 'false'}" aria-label="Refino automático"><i class="sw-track" aria-hidden="true"><u></u></i><span class="sw-label">${refineOn ? 'Ligado' : 'Desligado'}</span></button>
-        </article>
-        <article class="tool-tile" data-card="teste-gravacao" data-state="neutral">
-          <h3>Teste de gravação</h3>
-          <p class="tile-line">Só com o carro parado.</p>
-          <button type="button" id="toolBufferProbe" class="tile-action"><b>Testar</b><span>${escapeHtml(this.probeNote)}</span></button>
         </article>
         <article class="tool-tile" data-card="bateria" data-state="${batteryOk ? 'on' : 'off'}">
           <h3>Bateria</h3>

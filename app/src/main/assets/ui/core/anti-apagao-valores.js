@@ -5,7 +5,8 @@
   // Os 5 números do anti-apagão (ANTI_STALLO, SerialCode 307 = 0x0133, 5 × u16), editáveis pelo dono (2026-10-18).
   // Espelha o Kotlin (AntiStalloParamsCore): mesma faixa, mesmo quadro. Marcas: OBS-COD = faixa MÁXIMA e valor de fábrica do DFM do
   // ProgBase (TFormConfig.EditAntiStallo0..4, TSTREAMDATI.ANTI_STALLO); DERIVADO = piso 0 (u16 sem sinal; o DFM não traz MinValue);
-  // INFERIDO (forte) = qual edit é qual posição (DataIndex 0..4). Quadro: SetVector ESTENDIDO 0x37 (5 × u16 = 10 bytes > 5), não 0x3B.
+  // INFERIDO (forte) = qual edit é qual posição (DataIndex 0..4). Quadros do ORIGINAL (docs/progbase/protocolo/anti-apagao-quadros-original.md):
+  // leitura `29 33 01 5D` e UM `14 33 01 <índice> <u16 LE> <soma>` por campo ALTERADO, em ordem 0..4, cada um com ACK; depois a leitura de volta.
   // Sem relógio: esperar a central = esperar a resposta (gancho de dados da ponte).
   const ADDRESS = 307;
   // Textos para quem nunca mexeu: o que o número faz, para que lado mexer em cada sintoma e o passo dos botões − / +.
@@ -74,14 +75,10 @@
     return { ok: true };
   }
 
-  function frameForVector(address, words) {
-    if (!Array.isArray(words) || !words.length || !words.every(isU16) || !(address >= 0 && address <= 0xFFFF)) throw new Error('quadro inválido');
-    const payload = [];
-    for (const w of words) payload.push(w & 0xFF, (w >>> 8) & 0xFF);
-    const head = payload.length <= 5
-      ? [0x31 + payload.length, address & 0xFF, (address >>> 8) & 0xFF]
-      : [0x37, address & 0xFF, payload.length + 2, (address >>> 8) & 0xFF]; // estendido: baixo, n+1, alto (decompilação do original)
-    const body = [...head, ...payload];
+  /** Um campo: `14 33 01 <índice> <lo> <hi> <soma>` (espelha AutoCalProtocol.writeIndexedU16 do Kotlin). */
+  function frameFor(index, value) {
+    if (!(Number.isInteger(index) && index >= 0 && index < COUNT) || !isU16(value)) throw new Error('quadro inválido');
+    const body = [0x14, ADDRESS & 0xFF, (ADDRESS >>> 8) & 0xFF, index, value & 0xFF, (value >>> 8) & 0xFF];
     return [...body, body.reduce((a, b) => a + b, 0) & 0xFF];
   }
 
@@ -92,9 +89,10 @@
     if (!check.ok) return check;
     const after = before.slice();
     for (const key of Object.keys(changes)) after[Number(key)] = changes[key];
-    const frame = frameForVector(ADDRESS, after);
     const changed = after.map((v, i) => (v !== before[i] ? i : -1)).filter(i => i >= 0);
-    return { ok: true, before: before.slice(), after, changed, noop: changed.length === 0, frame, frameHex: hexBytes(frame) };
+    // Só os campos alterados saem, um quadro cada; `frameHex` = os quadros unidos por " · " (igual ao status do Kotlin).
+    const frames = changed.map(i => frameFor(i, after[i]));
+    return { ok: true, before: before.slice(), after, changed, noop: changed.length === 0, frames, frameHex: frames.map(hexBytes).join(' · ') };
   }
   function verifyReadback(p, values) {
     if (!p || !p.ok) return { ok: false, message: 'Sem plano.' };
@@ -128,19 +126,24 @@
   const TEXT = {
     CONFIRMED: 'Pronto. A central aceitou e os números conferem.',
     NOT_ACKED: 'A central não aceitou. Os números continuam como estavam. Tente de novo.',
-    UNSURE: 'Não sei como ficou na central. Espere a leitura voltar e confira os números antes de tentar de novo.',
+    UNSURE: 'Não consegui conferir se gravou. Espere a leitura voltar e olhe os valores.',
     CHANGED: 'Os números mudaram na central. Nada foi gravado. Toque em Gravar para conferir de novo.',
     NO_LINK: 'Não consegui falar com a central. Nada foi gravado. Confira o cabo e tente de novo.',
-    USB_DROP: 'O cabo soltou durante a gravação. Não sei como ficou. Reconecte e confira os números.',
+    USB_DROP: 'O cabo soltou durante a gravação. Não consegui conferir se gravou. Reconecte e olhe os valores.',
     SAME: 'Esses números já estão assim na central. Nada a gravar.',
     PREVIEW_MISMATCH: 'A conferência do app não bate com a da central. Nada foi gravado.',
   };
+  /** Parte dos quadros teve ACK e um seguinte não (PARTIAL): diz quanto foi e o que fazer. */
+  /** Recusa da ponte antes de qualquer envio: o texto cru do nativo ("USB desconectado") vira frase de leigo com o que fazer. */
+  const refusal = error => (!error || /\bUSB\b/i.test(error) ? TEXT.NO_LINK : error);
+  const partialText = (done, total) => `Gravei só uma parte (${done} de ${total}). Toque em Desfazer para voltar ao que era antes.`;
 
   function parse(text) { try { return typeof text === 'string' ? JSON.parse(text) : (text || {}); } catch (_) { return {}; } }
 
   /**
-   * Fluxo de toque dos 5 números: pedir (lê a central e mostra antes → depois) → 2º toque confirma → ACK → leitura de volta → Desfazer.
-   * Gravar, Restaurar fábrica e Desfazer usam o MESMO caminho (`request`); nada grava sem o 2º toque.
+   * Fluxo de toque dos 5 números: UM toque = a ordem → o nativo lê, manda um quadro por campo (cada um com ACK), relê → Desfazer.
+   * Desfechos: feito (conferido), parcial (Desfazer volta o que já foi), incerto (nem "gravado" nem "não gravado") ou erro.
+   * Gravar, Restaurar fábrica e Desfazer usam o MESMO caminho (`request`).
    */
   function createValuesFlow({ bridge, addHook, onChange }) {
     const NAMES = ['prepareAntiStalloValues', 'confirmAntiStalloValues', 'cancelAntiStalloValues', 'getAntiStalloValuesStatus'];
@@ -159,14 +162,14 @@
       // Caminho normal: UMA chamada nativa (ler -> gravar -> reler numa só etapa); o resultado chega no status.
       if (typeof bridge.applyAntiStalloValues === 'function') {
         const sent = parse(bridge.applyAntiStalloValues(JSON.stringify(changes)));
-        if (sent.ok === false) { fail(sent.error || TEXT.NO_LINK); return false; }
+        if (sent.ok === false) { fail(refusal(sent.error)); return false; }
         s.kind = kind; s.changes = changes; s.message = ''; s.uncertain = false; s.plan = null; s.token = null;
         set('writing', '', '');
         hook();
         return true;
       }
       const reply = parse(bridge.prepareAntiStalloValues(JSON.stringify(changes)));
-      if (reply.ok === false) { fail(reply.error || TEXT.NO_LINK); return false; }
+      if (reply.ok === false) { fail(refusal(reply.error)); return false; }
       s.kind = kind; s.changes = changes; s.message = ''; s.uncertain = false;
       set('preparing', '', '');
       hook();
@@ -174,7 +177,7 @@
     }
     function confirm() {
       const reply = parse(bridge.confirmAntiStalloValues(s.token));
-      if (reply.ok === false) { fail(reply.error || TEXT.NO_LINK); return; }
+      if (reply.ok === false) { fail(refusal(reply.error)); return; }
       set('writing', '', '');
       hook();
     }
@@ -196,6 +199,15 @@
       // Na chamada única não houve prévia no JS: o plano vem do que a central leu (before) mais o pedido do toque.
       const mine = s.plan || plan(status.before, s.changes);
       if (status.outcome === 'NOTHING_TO_DO') { s.plan = null; s.token = null; set('idle', TEXT.SAME, 'info'); return; }
+      // O Desfazer segue o nativo: ele só o oferece quando sabe o que havia antes (CONFIRMED/PARTIAL) e o retira sobre valor incerto.
+      if (status.undo && typeof status.undo === 'object') s.undo = status.undo.available && Array.isArray(status.undo.values) ? { values: status.undo.values.slice() } : null;
+      if (status.outcome === 'PARTIAL') {
+        s.plan = null; s.token = null; s.uncertain = false;
+        const total = Array.isArray(status.changed) ? status.changed.length : (mine.ok ? mine.changed.length : 0);
+        const done = Array.isArray(status.written) ? status.written.length : 0;
+        set('partial', partialText(done, total), 'warning');
+        return;
+      }
       if (status.outcome === 'CONFIRMED' || status.outcome === 'READBACK_DIVERGED') {
         const check = verifyReadback(mine, status.readback);
         if (status.outcome === 'CONFIRMED' && check.ok) {
@@ -247,7 +259,7 @@
       /** 2º toque. */
       confirm() { if (s.phase === 'preview') confirm(); },
       cancel,
-      dismiss() { if (s.phase === 'done' || s.phase === 'error') s.phase = 'idle'; if (s.phase === 'idle') { s.message = ''; s.uncertain = false; } changed(); },
+      dismiss() { if (s.phase === 'done' || s.phase === 'error' || s.phase === 'partial') s.phase = 'idle'; if (s.phase === 'idle') { s.message = ''; s.uncertain = false; } changed(); },
       otherTouch() { cancel(); },
       observe(state) {
         const away = state.route !== 'tools';
@@ -265,7 +277,7 @@
   }
 
   ns.AntiApagaoValores = {
-    ADDRESS, FIELDS, FACTORY, SUGESTAO, suggestionChanges, COUNT, TEXT, valuesOf, parseInput, validate, plan, verifyReadback, factoryChanges, frameForVector,
+    ADDRESS, FIELDS, FACTORY, SUGESTAO, suggestionChanges, COUNT, TEXT, valuesOf, parseInput, validate, plan, verifyReadback, factoryChanges, frameFor, hex: hexBytes, partialText,
     secondsText, farFromFactory, range, num, createValuesFlow,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

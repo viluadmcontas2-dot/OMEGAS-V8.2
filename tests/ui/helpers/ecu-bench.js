@@ -40,7 +40,11 @@
       this.telIdx = 0;
       this.log = [];           // {n, hex, kind}
       this.acoes = [];         // modos 02 24 04 <modo> recebidos
-      this.faults = { noReply: false, noReadReply: false, nak: false, ignoreWrite: false, corruptWrite: false };
+      // nakAfter = N: as N primeiras escritas têm ACK, as seguintes NAK (falha no meio, ex.: 2º quadro do anti-apagão).
+      // noReadAfterWrite: depois de qualquer escrita, as leituras ficam sem resposta (escrita chegou, leitura de volta falha).
+      this.faults = { noReply: false, noReadReply: false, nak: false, ignoreWrite: false, corruptWrite: false, nakAfter: null, noReadAfterWrite: false };
+      this.okWrites = 0;
+      this.wrote = false;
       this.n = 0;
     }
     /** Remove falhas e zera o registro (o estado da ECU fica). */
@@ -56,8 +60,13 @@
       this.log.push({ n: ++this.n, hex: H(frame), kind });
       if (sum(frame.slice(0, -1)) !== frame[frame.length - 1] || tamanhoPedido(frame) !== frame.length) return frame;
       if (kind === 'WRITE') {
+        this.wrote = true;
         if (this.faults.noReply) return [];
         if (this.faults.nak) return [...frame, ...quadro(NAK, [])];
+        if (Number.isInteger(this.faults.nakAfter)) {
+          if (this.okWrites >= this.faults.nakAfter) return [...frame, ...quadro(NAK, [])];
+          this.okWrites += 1;
+        }
         if (!this.faults.ignoreWrite) this.applyWrite(frame);
         return [...frame, ...quadro(ACK, [])];
       }
@@ -69,7 +78,7 @@
       }
       // Falha de leitura independente da falha de escrita: não transformar
       // testes de ACK/NAK de gravação em falhas de preparação da tela.
-      if (this.faults.noReadReply) return [];
+      if (this.faults.noReadReply || (this.faults.noReadAfterWrite && this.wrote)) return [];
       const data = this.get(H(frame));
       return data ? [...frame, ...quadro(ACK, data)] : frame;
     }
@@ -176,7 +185,7 @@
       });
       bench.advRead = true;
     };
-    bench.setFault = (name, on = true) => { ecu.faults[name] = on; };
+    bench.setFault = (name, on = true) => { ecu.faults[name] = on; ecu.okWrites = 0; ecu.wrote = false; };
     /** Pré-condição de cenário (não é quadro): põe um valor direto no estado da ECU. */
     bench.seed = (requestHex, data) => ecu.put(requestHex, data);
     bench.seedCurve = factors => {
@@ -234,7 +243,9 @@
     }
     // ---- anti-apagão, os 5 números (AntiStalloParamsWriter + AntiStalloParamsCore)
     const ANTI_V_MAX = [6000, 1000, 10000, 1000, 1000];
-    const antiVFrame = v => { const payload = v.flatMap(x => [x & 255, x >> 8]); const body = [0x37, 0x33, payload.length + 2, 0x01, ...payload]; return [...body, sum(body)]; };
+    // Formato do original: UM `14 33 01 <índice> lo hi soma` por campo ALTERADO, em ordem 0..4 (AntiStalloParamsCore.execute).
+    const antiVFrames = (before, after) => after.map((v, i) => (v !== before[i] ? pedido(0x14, 0x33, 0x01, i, v & 255, v >> 8) : null)).filter(Boolean);
+    const framesHex = frames => frames.map(H).join(' · ');
     const readAntiV = () => { const r = read(pedido(0x29, 0x33, 0x01)); const w = words(r.payload); return r.ok && w.length === 5 ? w : null; };
     const setAntiVParam = v => { bench.params.ANTI_STALLO = { state: 'OK', values: v.slice() }; };
     bench.antiVPending = null; bench.antiVStatus = { state: 'IDLE' }; bench.antiVUndo = null; bench.antiVUndoSession = 0; bench.heldV = null;
@@ -259,8 +270,9 @@
       const after = live.slice(); keys.forEach(k => { after[Number(k)] = ch[k]; });
       const changed = after.map((v, i) => (v !== live[i] ? i : -1)).filter(i => i >= 0);
       const token = 'tv' + (++bench.opN);
-      bench.antiVPending = { token, before: live, after, changed, session: bench.session, frame: antiVFrame(after), noop: !changed.length };
-      bench.antiVStatus = { state: 'READY', token, before: live, after, changed, frameHex: H(antiVFrame(after)), noop: !changed.length };
+      const frames = antiVFrames(live, after);
+      bench.antiVPending = { token, before: live, after, changed, session: bench.session, frames, noop: !changed.length };
+      bench.antiVStatus = { state: 'READY', token, before: live, after, changed, frames: frames.map(H), frameHex: framesHex(frames), noop: !changed.length };
       return antiOk();
     }
     function antiVConfirm(token) {
@@ -272,26 +284,42 @@
       const cur = readAntiV();
       if (!cur) return finishAntiV(p, { outcome: 'ERROR', message: 'Não consegui ler a central antes de gravar.' });
       if (cur.some((v, i) => v !== p.before[i])) return finishAntiV(p, { outcome: 'CHANGED_MEANWHILE', message: 'Os números da central mudaram.' });
-      const reply = send(p.frame);
-      if (bench.hold) { bench.heldV = { p, reply }; return antiOk(); }
-      return resolveV(p, reply);
+      // Um quadro por vez; sem ACK, os seguintes não saem (o original grava um por vez).
+      const sent = []; const written = [];
+      for (const frame of p.frames) {
+        sent.push(frame);
+        if (!decodeReply(frame, send(frame)).ok) break;
+        written.push(frame[3]);
+      }
+      if (bench.hold) { bench.heldV = { p, sent, written }; return antiOk(); }
+      return resolveV(p, sent, written);
     }
-    function resolveV(p, reply) {
+    function resolveV(p, sent, written) {
       bench.heldV = null;
-      const dec = decodeReply(p.frame, reply);
-      if (!dec.ok) { const back0 = readAntiV(); return finishAntiV(p, { outcome: 'NOT_ACKED', message: 'A central não confirmou.', valueChanged: !!back0 && back0.some((v, i) => v !== p.before[i]) }); }
+      const wire = { frames: sent, written };
       const back = readAntiV();
-      if (!back) return finishAntiV(p, { outcome: 'READBACK_FAILED', message: 'A leitura depois de gravar falhou.' });
+      if (!back) return finishAntiV(p, { outcome: 'READBACK_FAILED', message: 'A leitura depois de gravar falhou.', ...wire });
       setAntiVParam(back);
+      const valueChanged = back.some((v, i) => v !== p.before[i]);
+      if (written.length < p.changed.length) {
+        return finishAntiV(p, written.length
+          ? { outcome: 'PARTIAL', message: 'Só parte foi gravada.', readback: back, valueChanged, ...wire }
+          : { outcome: 'NOT_ACKED', message: 'A central não confirmou.', readback: back, valueChanged, ...wire });
+      }
       const same = back.every((v, i) => v === p.after[i]);
-      return finishAntiV(p, same ? { outcome: 'CONFIRMED', message: 'Gravado e conferido na central.', readback: back } : { outcome: 'READBACK_DIVERGED', message: 'Os números lidos são outros.', readback: back });
+      return finishAntiV(p, same ? { outcome: 'CONFIRMED', message: 'Gravado e conferido na central.', readback: back, ...wire }
+        : { outcome: 'READBACK_DIVERGED', message: 'Os números lidos são outros.', readback: back, valueChanged, ...wire });
     }
     function finishAntiV(p, result) {
-      bench.antiVStatus = { state: 'DONE', ...result, before: p.before, after: p.after, changed: p.changed, readback: result.readback || null, frameHex: H(p.frame) };
-      if (result.outcome === 'CONFIRMED') { bench.antiVUndo = p.before.slice(); bench.antiVUndoSession = p.session; }
+      const frames = result.frames || [];
+      bench.antiVStatus = { state: 'DONE', ...result, before: p.before, after: p.after, changed: p.changed, readback: result.readback || null,
+        frames: frames.map(H), frameHex: framesHex(frames), written: result.written || [] };
+      // Igual ao AntiStalloParamsWriter: Desfazer depois de CONFIRMED/PARTIAL; nunca sobre valor incerto.
+      if (result.outcome === 'CONFIRMED' || result.outcome === 'PARTIAL') { bench.antiVUndo = p.before.slice(); bench.antiVUndoSession = p.session; }
+      else if (['READBACK_FAILED', 'READBACK_DIVERGED'].includes(result.outcome) || result.valueChanged) bench.antiVUndo = null;
       return antiOk();
     }
-    bench.releaseValuesWrite = () => { if (bench.heldV) resolveV(bench.heldV.p, bench.heldV.reply); };
+    bench.releaseValuesWrite = () => { if (bench.heldV) resolveV(bench.heldV.p, bench.heldV.sent, bench.heldV.written); };
     /** Termina uma gravação segurada (hold): a resposta da ECU chega agora. */
     bench.releaseWrite = () => { if (bench.held) resolveWrite(bench.held.p, bench.held.reply); };
 
@@ -457,7 +485,7 @@
       if (!JSON.parse(started).ok) { bench.antiVStatus = { state: 'DONE', outcome: 'ERROR', message: JSON.parse(started).error }; return started; }
       if (bench.antiVStatus.state === 'ERROR') { bench.antiVStatus = { state: 'DONE', outcome: 'ERROR', message: bench.antiVStatus.message }; return started; }
       const p = bench.antiVPending;
-      if (p.noop) { bench.antiVPending = null; bench.antiVStatus = { state: 'DONE', outcome: 'NOTHING_TO_DO', before: p.before, after: p.after, changed: [], readback: p.before, frameHex: H(p.frame) }; return antiOk(); }
+      if (p.noop) { bench.antiVPending = null; bench.antiVStatus = { state: 'DONE', outcome: 'NOTHING_TO_DO', before: p.before, after: p.after, changed: [], readback: p.before, frames: [], frameHex: '', written: [] }; return antiOk(); }
       return antiVConfirm(p.token);
     }
 

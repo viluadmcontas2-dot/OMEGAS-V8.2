@@ -14,62 +14,7 @@ const ROOT = path.join(__dirname, '../..');
 const UI = path.join(ROOT, 'app/src/main/assets/ui');
 const read = file => fs.readFileSync(path.join(UI, file), 'utf8');
 
-function loadDrawers() {
-  const label = { textContent: '' };
-  const button = { querySelector: () => label, contains: target => target === button };
-  const listeners = new Set();
-  const context = {
-    console, Date, Math, JSON, Intl, Set, Map, Number, String, Array, Object, setTimeout, clearTimeout,
-    document: {
-      getElementById: id => (id === 'toolBufferProbe' ? button : null), querySelectorAll: () => [],
-      addEventListener: (type, fn) => { if (type === 'click') listeners.add(fn); },
-      removeEventListener: (type, fn) => { if (type === 'click') listeners.delete(fn); },
-    },
-  };
-  context.window = context;
-  context.globalThis = context;
-  context.OmegasUi = {};
-  vm.createContext(context);
-  vm.runInContext(read('components/drawers.js'), context, { filename: 'drawers.js' });
-  const drawers = Object.create(context.OmegasUi.Drawers.prototype);
-  const state = { route: 'tools', status: { usbConnected: true } };
-  drawers.store = { patch() {}, get: () => state, subscribe: () => () => {} };
-  return { context, drawers, label, button, listeners, state };
-}
-
-test('sonda armada desarma em qualquer outro toque', () => {
-  const { context, drawers, label, button, listeners } = loadDrawers();
-  let calls = 0;
-  context.OmegasAutoCal = { startBufferWriteProbe: () => { calls += 1; return '{"ok":true}'; }, getBufferWriteProbeStatus: () => '{}' };
-  context.OmegasApp = { scheduler: { addHook: () => () => {} } };
-  drawers.runBufferProbe();
-  assert.match(label.textContent, /Toque de novo/);
-  assert.equal(listeners.size, 1);
-  [...listeners].forEach(fn => fn({ target: button })); // o próprio botão não desarma
-  assert.equal(drawers.bufferProbeArmed, true);
-  [...listeners].forEach(fn => fn({ target: {} }));
-  assert.equal(drawers.bufferProbeArmed, false);
-  assert.equal(listeners.size, 0, 'o ouvinte sai junto');
-  drawers.runBufferProbe();
-  assert.equal(calls, 0, 'depois de desarmar, um toque só arma de novo');
-});
-
-test('acompanhamento da sonda termina quando o USB cai', () => {
-  const { context, drawers, label, state } = loadDrawers();
-  let hook = null;
-  context.OmegasAutoCal = { startBufferWriteProbe: () => '{"ok":true,"started":true}', getBufferWriteProbeStatus: () => '{"state":"RUNNING"}' };
-  context.OmegasApp = { scheduler: { addHook: (_, fn) => { hook = fn; return () => { hook = null; }; } } };
-  drawers.runBufferProbe();
-  drawers.runBufferProbe();
-  assert.equal(drawers.bufferProbeRunning, true);
-  hook();
-  assert.equal(drawers.bufferProbeRunning, true, 'com USB e sem resposta final, continua esperando a ECU');
-  state.status = { usbConnected: false };
-  hook();
-  assert.equal(drawers.bufferProbeRunning, false);
-  assert.match(label.textContent, /cabo soltou/);
-});
-
+// A sonda "Teste de gravação" saiu de Ferramentas (2026-10-20: pedia dois toques e escrevia na central); ver sonda-escrita-pontos.test.cjs.
 test('etapa da curva (Curva K → Mapa K) termina no evento USB desconectado', async () => {
   const runner = require(path.join(UI, 'core/balance-runner.js'));
   let events = 0;

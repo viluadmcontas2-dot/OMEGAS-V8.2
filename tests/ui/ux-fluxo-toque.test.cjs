@@ -10,7 +10,7 @@ const U = require('./helpers/ux-cenarios.cjs');
 const skip = T.skipReason() || false;
 const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 const TITULOS_P1 = ['Anti-apagão', 'Valores do anti-apagão', 'Saída do corte', 'Marcha lenta', 'Troca de gasolina para gás', 'Injetores', 'Volta para gasolina'];
-const TITULOS_P2 = ['Cópia de segurança', 'Refino automático', 'Teste de gravação', 'Bateria', 'Balão sobre outros apps', 'Registro do app'];
+const TITULOS_P2 = ['Cópia de segurança', 'Refino automático', 'Bateria', 'Balão sobre outros apps', 'Registro do app'];
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });
@@ -81,7 +81,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
       await U.clearLog(page);
       await page.evaluate(() => document.activeElement && document.activeElement.blur()); await T.pump(page, 10);   // saiu do campo: grava na hora
       assert.equal(await U.camada(page), 0, 'gravar valores sem janela de pergunta');
-      assert.deepEqual(await U.ecuWrites(page), [U.quadroValores([1700, 100, 1500, 2, 20])]);
+      assert.deepEqual(await U.ecuWrites(page), U.quadroValores([1700, 100, 1500, 2, 20]));
       await foto('8-valores-pronto');
       await T.tap(page, '[data-adv-factory]'); await T.pump(page, 10);
       assert.deepEqual(await U.anti5(page), U.FABRICA, 'Restaurar fábrica em um toque');
@@ -117,12 +117,13 @@ test('falha honesta: a central não aceita o anti-apagão e o texto diz o que ho
     await U.abrirMotor(app);
     await page.evaluate(() => window.__bench.setFault('nak'));
     await T.tap(page, '[data-adv-switch]'); await T.pump(page, 10);
-    await page.waitForSelector('#toolsLayer .adv-result[data-level="warning"]');
-    const msg = await U.text(page, '#toolsLayer');
+    // Sem janela: o que houve e o que fazer aparecem na linha do próprio cartão.
+    await page.waitForSelector('[data-card="anti"] .tile-line[data-level="warn"]');
+    const msg = await U.text(page, '[data-card="anti"] .tile-line');
     assert.match(msg, /A central não aceitou\. Tente de novo\./);
     assert.doesNotMatch(msg, /0x|status|ACK|NAK|ECU/i, 'sem código cru');
+    assert.equal(await U.camada(page), 0, 'erro sem janela');
     await U.foto(page, '1280x720-13-central-nao-aceitou');
-    await T.tap(page, '#toolsLayer [data-adv-close]'); await T.pump(page, 2);
     assert.match(await U.text(page, '[data-adv-switch]'), /Desligado/, 'o estado mostrado é o real');
   } finally { await app.context.close(); }
 });
@@ -185,11 +186,12 @@ test('falhas honestas: silêncio, ACK sem aplicar e leitura diferente nunca vira
       await U.abrirMotor(app);
       await page.evaluate(f => window.__bench.setFault(f), falha);
       await T.tap(page, '[data-adv-switch]'); await T.pump(page, 10);
-      await page.waitForSelector('#toolsLayer .adv-result[data-level="warning"]');
-      const msg = await U.text(page, '#toolsLayer');
+      await page.waitForSelector('[data-card="anti"] .tile-line[data-level="warn"]');
+      const msg = await U.text(page, '[data-card="anti"] .tile-line');
       assert.match(msg, re, falha);
       assert.doesNotMatch(msg, /Pronto\./);
-      assert.equal(await page.locator('#toolsLayer [data-adv-undo-flag]').count(), 0, 'sem Desfazer sem confirmação');
+      assert.equal(await U.camada(page), 0, 'erro sem janela');
+      assert.equal(await page.locator('[data-adv-undo-flag]').count(), 0, 'sem Desfazer sem confirmação');
     } finally { await app.context.close(); }
   }
 });

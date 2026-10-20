@@ -107,7 +107,8 @@ test('Ferramentas: um cartão por função; só "Cópia de segurança" (sem apre
   drawers.view = 'home';
   drawers.renderTools(state);
   const out = hosts.toolDiagnosticsWorkspace.innerHTML;
-  for (const id of ['toolExportData', 'toolAutoRefine', 'toolBufferProbe']) assert.match(out, new RegExp('id="' + id + '"'));
+  for (const id of ['toolExportData', 'toolAutoRefine']) assert.match(out, new RegExp('id="' + id + '"'));
+  assert.doesNotMatch(out, /toolBufferProbe|Teste de gravação/, 'a sonda (dois toques, escrevia na central) saiu do que o leigo vê (2026-10-20)');
   for (const id of ['toolExportLearning', 'toolImportLearning']) assert.doesNotMatch(out, new RegExp('id="' + id + '"'), 'removido a pedido do dono (2026-10-19): o app usa a telemetria atual');
-  assert.equal((out.match(/class="tool-tile/g) || []).length, 6);
+  assert.equal((out.match(/class="tool-tile/g) || []).length, 5);
 });

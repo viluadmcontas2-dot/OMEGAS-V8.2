@@ -77,7 +77,6 @@ async function percorrerFerramentasESessoes(app) {
   await page.evaluate(() => window.__bench.setFault('nak'));
   await T.tap(page, '[data-adv-switch]'); await T.pump(page, 10);
   await colher('anti-apagão: central não aceitou');
-  await T.tap(page, '[data-adv-close]'); await T.pump(page, 2);
   await page.evaluate(() => window.__bench.setFault('nak', false));
   // valores: erro de digitação, botões − / +, dicas, gravado
   await T.tap(page, '[data-adv-open="valores"]'); await T.pump(page, 3);

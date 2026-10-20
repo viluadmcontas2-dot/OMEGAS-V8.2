@@ -29,7 +29,6 @@
       this.voltaDrafts = {};        // { mbar?, segundos? } ainda não salvos
       this.screen = document.getElementById('toolsDrawer');
       this.host = document.getElementById('toolAdvanced');
-      this.layer = document.getElementById('toolsLayer');
       this.open = true;          // a página 1 de Ferramentas existe sempre; só desenha quando a aba está à vista
       this.view = 'home';        // 'home' | 'valores' | id de um cartão de leitura
       this.data = { read: false, params: {} };
@@ -38,7 +37,6 @@
       this.extraIndex = 1;
       this.saveAgain = false;
       this.directReadRequested = false;
-      this.layerSignature = '';
       if (!this.host || !this.A || !this.V || !this.M) return;
       // Ponte lida na hora do uso. A chamada sai SEMPRE como `OmegasAutoCal.metodo(...)`: no WebView do Android o método Java só
       // responde quando chamado no próprio objeto injetado (com outro `this` lança "Java bridge method can't be invoked on a
@@ -55,7 +53,6 @@
       this.host.addEventListener('input', event => this.onInput(event));
       // Digitou e saiu do campo (ou Enter): grava na hora, como os botões − / +.
       this.host.addEventListener('change', event => { if (event.target.closest('input[data-adv-field]')) this.autoSave(); });
-      this.layer?.addEventListener('click', event => this.onClick(event));
       // As leituras auxiliares são opcionais. Uma exceção da ponte Android não
       // pode impedir a criação dos cartões nem duplicar listeners ao reabrir.
       try { this.flag.adopt(); }
@@ -154,8 +151,7 @@
         if (['preparing', 'writing'].includes(this.vals.view().phase)) return;   // os 5 números estão gravando: o toque espera a vez
         this.vals.cancel();
         this.flag.tapSwitch(entry, this.usb());
-      } else if (t.matches('[data-adv-close]')) { this.flag.dismiss(); this.vals.dismiss(); }
-      else if (t.matches('[data-adv-undo-flag]')) { this.flag.dismiss(); this.flag.tapUndo(); }
+      } else if (t.matches('[data-adv-undo-flag]')) { this.flag.dismiss(); this.flag.tapUndo(); }
       else if (t.matches('[data-adv-undo-values]')) {
         const undo = this.vals.view().undo;
         if (undo.available) { this.vals.dismiss(); this.drafts = {}; this.vals.ask('undo', this.diff(undo.values), this.usb()); }
@@ -310,14 +306,8 @@
       if (this.saveAgain) {
         const ph = this.vals.view().phase;
         // Só regrava o toque enfileirado se a gravação anterior TERMINOU BEM; falha ou erro nunca vira nova gravação sem toque.
-        if (ph === 'error') this.saveAgain = false;
+        if (ph === 'error' || ph === 'partial') this.saveAgain = false;
         else if (!['preparing', 'writing'].includes(ph) && !this.flagBusy()) this.autoSave();
-      }
-      try { this.renderLayer(); }
-      catch (error) {
-        console.error('[OMEGAS Ferramentas] Aviso de falha indisponível', error);
-        if (this.layer) { this.layer.hidden = true; this.layer.innerHTML = ''; }
-        this.layerSignature = '';
       }
       const active = document.activeElement;
       if (this.isValuesView() && active && this.host.contains(active) && active.tagName === 'INPUT') { this.paintFields(); return; }
@@ -386,16 +376,17 @@
           const fv = this.flag.view();
           const busy = ['preparing', 'writing'].includes(fv.phase);
           const why = this.reason('flag');
-          // Resultado sem erro (ex.: "já está ligado") vai na linha do próprio cartão: sem janela, sem 2º toque.
+          // Todo resultado (ok, "já está ligado", recusa, cabo solto, incerto) vai na linha do próprio cartão: sem janela, sem 2º toque.
+          const failed = fv.phase === 'error' && fv.message ? fv.message : '';
           const note = busy ? 'Gravando e conferindo…' : (['idle', 'done'].includes(fv.phase) && fv.message ? fv.message : '');
-          const line = why || note || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : card.line);
-          const shortLine = why || note || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : (card.shortLine || card.line));
+          const line = failed || why || note || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : card.line);
+          const shortLine = failed || why || note || (card.on === null ? 'Ainda não lido. Toque para conferir e ligar.' : (card.shortLine || card.line));
           const state = card.on === null ? 'unknown' : card.on ? 'on' : 'off';
           const action = card.on === null ? 'Conferir e ligar' : card.on ? 'Desligar anti-apagão' : 'Ligar anti-apagão';
           return `
         <article class="tool-tile" data-card="${card.id}" data-state="${state}" data-actionable="${!why && !busy}">
           <h3>${escapeHtml(card.title)}</h3>
-          <p class="tile-line${why ? ' reason' : ''}"><span class="tile-full">${escapeHtml(line)}</span><span class="tile-compact">${escapeHtml(shortLine)}</span></p>
+          <p class="tile-line${why && !failed ? ' reason' : ''}"${failed ? ' data-level="warn" role="status"' : ''}><span class="tile-full">${escapeHtml(line)}</span><span class="tile-compact">${escapeHtml(shortLine)}</span></p>
           <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(action)}. Estado atual: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
             <span class="sw-track" aria-hidden="true"><i></i></span><span class="sw-caption"><b>${escapeHtml(card.stateText)}</b><small>${escapeHtml(action)}</small></span>
           </button>
@@ -403,10 +394,13 @@
         </article>`;
         }
         const go = card.kind === 'values' ? `Mudar valores ${PENCIL}` : 'Ver ›';
+        // Falha, parcial ou incerto dos 5 números continua à vista no cartão, mesmo fora da tela de valores.
+        const vv = card.kind === 'values' ? this.vals.view() : null;
+        const said = vv && ['error', 'partial'].includes(vv.phase) && vv.message ? vv.message : '';
         return `
         <button type="button" class="tool-tile tool-open" data-card="${card.id}" data-adv-open="${card.id}" data-state="${card.on === null ? (card.stateText === '—' ? 'unknown' : 'neutral') : card.on ? 'on' : 'off'}">
           <h3>${escapeHtml(card.title)}</h3>
-          <p class="tile-line"><span class="tile-full">${escapeHtml(card.line)}</span><span class="tile-compact">${escapeHtml(card.shortLine || card.line)}</span></p>
+          <p class="tile-line"${said ? ' data-level="warn" role="status"' : ''}><span class="tile-full">${escapeHtml(said || card.line)}</span><span class="tile-compact">${escapeHtml(said || card.shortLine || card.line)}</span></p>
           <span class="tile-state">${escapeHtml(card.stateText)}</span>
           <span class="tile-go">${go}</span>
         </button>`;
@@ -445,7 +439,12 @@
       const vv = this.vals.view();
       if (vv.phase === 'preparing' || vv.phase === 'writing') return ['busy', 'Gravando…'];
       if (vv.phase === 'done') return ['ok', 'Gravado e conferido ✓'];
-      if (vv.phase === 'error') return ['bad', 'Não gravou. ' + (vv.message || '')];
+      // Parcial e incerto NUNCA viram "gravado" nem "não gravado": a frase do fluxo já diz o que houve e o que fazer.
+      if (vv.phase === 'partial' || (vv.phase === 'error' && vv.uncertain)) return ['warn', vv.message || ''];
+      if (vv.phase === 'error') {
+        const msg = vv.message || '';
+        return ['bad', /Nada foi gravado|continuam como estavam/.test(msg) ? msg : 'Não gravou. ' + msg];
+      }
       if (vv.message) return ['info', vv.message];   // ex.: "já estão assim": linha de estado, sem janela
       return ['idle', 'Toque em − ou +: grava na hora.'];
     }
@@ -628,25 +627,6 @@
           <ul class="read-list">${card.rows.map(r => `<li data-state="${r.on === null ? 'neutral' : r.on ? 'on' : 'off'}"><span>${escapeHtml(r.label)}</span><b>${escapeHtml(r.text)}</b></li>`).join('')}</ul>
           <details class="tool-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>
         </section>`;
-    }
-
-    /** Janela só para falha de gravação (o dono precisa ver que NÃO gravou). Pergunta, "lendo", "gravando", "pronto" e
-     *  "já está assim" não abrem janela: aparecem na linha de estado do próprio cartão (regra sem atrito). */
-    renderLayer() {
-      if (!this.layer) return;
-      const fv = this.flag.view();
-      const vv = this.vals.view();
-      const sig = JSON.stringify([fv.phase, fv.message, vv.phase, vv.message]);
-      if (sig === this.layerSignature) return;
-      this.layerSignature = sig;
-      const html = vv.phase === 'error' ? this.layerError(vv.message) : fv.phase === 'error' ? this.layerError(fv.message) : '';
-      this.layer.hidden = !html;
-      this.layer.innerHTML = html;
-      if (html) { const first = this.layer.querySelector('button:not([disabled])'); if (first && document.activeElement && !this.layer.contains(document.activeElement)) first.focus({ preventScroll: true }); }
-    }
-
-    layerError(message) {
-      return `<div class="tool-layer-card" role="dialog" aria-modal="true" aria-label="Não foi gravado" data-level="warning"><h3>Não foi gravado</h3><p class="adv-result" data-level="warning">${escapeHtml(message)}</p><div class="tool-actions"><button type="button" class="primary" data-adv-close>Fechar</button></div></div>`;
     }
   }
 

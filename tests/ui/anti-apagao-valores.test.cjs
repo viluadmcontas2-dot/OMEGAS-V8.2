@@ -37,14 +37,16 @@ test('nomes leigos: nenhum jargão ("ciclo" é jargão banido pelo dono); unidad
   same(V.FIELDS.map(f => f.label), ['Rotação máxima para agir', 'Queda de rotação para agir', 'Espera para sair do gás', 'Folga para não ficar trocando', 'Queda para parar de agir']);
 });
 
-test('quadro: SetVector estendido 37 33 0C 01 (e não 3B), igual à conta independente', () => {
+test('quadro: formato do original, 14 33 01 <índice> lo hi soma (só o campo alterado), igual à conta independente', () => {
   const p = V.plan([1700, 100, 1500, 2, 20], { 0: 1600 });
-  assert.equal(p.frameHex, '37 33 0C 01 40 06 64 00 DC 05 02 00 14 00 18');
-  assert.equal(p.frame[0], 0x37);
-  assert.equal(p.frame.length, 15);
-  assert.equal(p.frame.slice(0, -1).reduce((a, b) => a + b, 0) & 255, p.frame[14]);
-  assert.equal(V.frameForVector(0x0161, [0x1234, 0xABCD, 0x4000]).map(b => b.toString(16)).join(' '), '37 61 8 1 34 12 cd ab 0 40 9f', 'mesmo quadro do AutoCalProtocolTest (3 × u16)');
-  assert.equal(V.frameForVector(0x0161, [0x1234, 0xABCD]).length, 8, 'até 2 × u16 continua compacto (0x35)');
+  assert.equal(p.frameHex, '14 33 01 00 40 06 8E');
+  assert.equal(p.frames.length, 1);
+  const q = p.frames[0];
+  assert.equal(q[0], 0x14); assert.equal(q.length, 7);
+  assert.equal(q.slice(0, -1).reduce((a, b) => a + b, 0) & 255, q[6]);
+  assert.equal(V.hex(V.frameFor(2, 0xABCD)), '14 33 01 02 CD AB ' + ((0x14 + 0x33 + 0x01 + 0x02 + 0xCD + 0xAB) & 0xFF).toString(16).toUpperCase());
+  assert.throws(() => V.frameFor(5, 1), /quadro inválido/);
+  assert.throws(() => V.frameFor(0, 0x10000), /quadro inválido/);
 });
 
 test('ler-modificar-escrever: só o campo pedido muda; os outros são os lidos', () => {
@@ -68,7 +70,7 @@ test('faixa: aceita os dois limites e recusa 1 acima/abaixo, em todos os campos'
     assert.equal(V.validate({ [f.index]: f.max + 1 }).ok, false, 'max+1 em ' + f.index);
     assert.equal(V.validate({ [f.index]: f.min - 1 }).ok, false, 'min-1 em ' + f.index);
     const p = V.plan(F, { [f.index]: f.max + 1 });
-    assert.equal(p.ok, false); assert.equal(p.frame, undefined, 'fora da faixa nunca vira quadro');
+    assert.equal(p.ok, false); assert.equal(p.frames, undefined, 'fora da faixa nunca vira quadro');
   });
   for (const bad of [1.5, NaN, Infinity, '1700', null, undefined, true]) assert.equal(V.validate({ 0: bad }).ok, false, String(bad));
   assert.equal(V.validate({ 5: 1 }).ok, false);
@@ -189,9 +191,9 @@ test('mesmo valor que a central já tem: avisa e não pede confirmação', () =>
 test('falhas: texto humano (o que houve + o que fazer), sem sigla', () => {
   const casos = [
     [{ outcome: 'NOT_ACKED' }, /não aceitou.*continuam como estavam.*Tente de novo/s, false],
-    [{ outcome: 'NOT_ACKED', valueChanged: true }, /Não sei como ficou/, true],
-    [{ outcome: 'READBACK_FAILED' }, /Não sei como ficou/, true],
-    [{ outcome: 'READBACK_DIVERGED', readback: [1, 1, 1, 1, 1] }, /Não sei como ficou/, true],
+    [{ outcome: 'NOT_ACKED', valueChanged: true }, /^Não consegui conferir se gravou\. Espere a leitura voltar e olhe os valores\.$/, true],
+    [{ outcome: 'READBACK_FAILED' }, /^Não consegui conferir se gravou\. Espere a leitura voltar e olhe os valores\.$/, true],
+    [{ outcome: 'READBACK_DIVERGED', readback: [1, 1, 1, 1, 1] }, /^Não consegui conferir se gravou\. Espere a leitura voltar e olhe os valores\.$/, true],
     [{ outcome: 'CHANGED_MEANWHILE' }, /mudaram.*Nada foi gravado/s, false],
     [{ outcome: 'ERROR' }, /Não consegui falar com a central/, false],
   ];
@@ -209,7 +211,7 @@ test('o USB cair durante a gravação: não sabe como ficou', () => {
   const e = ambiente();
   e.flow.ask('edit', { 0: 1700 }, true); e.setStatus(pronto(F, { 0: 1700 })); e.emit(); e.flow.confirm();
   e.flow.observe({ route: 'tools', usbConnected: false });
-  assert.equal(e.flow.view().phase, 'error'); assert.match(e.flow.view().message, /cabo soltou.*Não sei como ficou/s);
+  assert.equal(e.flow.view().phase, 'error'); assert.match(e.flow.view().message, /cabo soltou.*Não consegui conferir se gravou/s);
 });
 
 test('sair da aba ou perder o USB na leitura descarta; Restaurar fábrica também grava em um pedido', () => {

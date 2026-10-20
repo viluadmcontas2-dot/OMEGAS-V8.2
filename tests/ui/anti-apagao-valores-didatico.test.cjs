@@ -94,7 +94,7 @@ test('SEM ATRITO: um toque em + grava na hora (sem botão Gravar, sem janela) e 
     await T.tap(page, '[data-field="0"] [data-adv-step="0:1"]');
     await T.pump(page, 10);
     assert.deepEqual(await U.anti5(page), [1650, 100, 1500, 2, 20], 'a central tem o novo valor depois de UM toque');
-    assert.deepEqual(await U.ecuWrites(page), [U.quadroValores([1650, 100, 1500, 2, 20])], 'um quadro, exato');
+    assert.deepEqual(await U.ecuWrites(page), U.quadroValores([1650, 100, 1500, 2, 20]), 'um quadro, exato');
     assert.equal(await page.evaluate(() => window.__janelaVista), false, 'nenhuma janela de pergunta');
     assert.match(await U.text(page, '.vv-status'), /Gravado e conferido/, 'o aviso está na própria tela');
     assert.deepEqual(app.problems.page, []);

@@ -121,7 +121,7 @@ test('gravar valores: UM toque grava o quadro exato e a central confere (sem jan
     await U.digitar(app, 0, '1.700');
     await page.evaluate(() => document.activeElement && document.activeElement.blur()); await T.pump(page, 10);   // saiu do campo: grava na hora
     assert.equal(await U.camada(page), 0, 'sem janela de confirmação');
-    assert.deepEqual(await U.ecuWrites(page), [U.quadroValores([1700, 100, 1500, 2, 20])]);
+    assert.deepEqual(await U.ecuWrites(page), U.quadroValores([1700, 100, 1500, 2, 20]));
     assert.deepEqual(await U.anti5(page), [1700, 100, 1500, 2, 20]);
     
     assert.equal(await page.locator('#advField0').inputValue(), '1.700', 'o campo mostra o que a central confirmou');
@@ -144,7 +144,7 @@ test('Restaurar fábrica: UM toque grava o padrão; Desfazer (também um toque) 
     await T.tap(page, '[data-adv-factory]'); await T.pump(page, 10);
     assert.equal(await U.camada(page), 0, 'sem janela de confirmação');
     assert.deepEqual(await U.anti5(page), U.FABRICA);
-    assert.deepEqual(await U.ecuWrites(page), [U.quadroValores(U.FABRICA)]);
+    assert.deepEqual(await U.ecuWrites(page), U.quadroValores(U.FABRICA, [3000, 100, 1500, 5, 20]));
     assert.equal(await page.locator('[data-adv-factory]').isDisabled(), true, 'já está de fábrica: nada a restaurar');
     await U.clearLog(page);
     await T.tap(page, '[data-adv-undo-values]'); await T.pump(page, 10);
@@ -164,6 +164,56 @@ test('"Longe do valor de fábrica" só avisa no campo; não bloqueia e a faixa d
     assert.equal(await U.camada(page), 0);
     assert.deepEqual(await U.ecuWrites(page), [], 'avisar não grava');
   } finally { await app.context.close(); }
+});
+
+async function valoresNaoFabrica(app) {
+  const { page } = app;
+  await page.evaluate(() => window.__bench.seed('29 33 01 5D', [0xB8, 0x0B, 0x64, 0x00, 0xDC, 0x05, 0x05, 0x00, 0x14, 0x00])); // 3000 100 1500 5 20
+  await T.pump(page, 2);
+  await page.evaluate(() => { window.__bench.plugUsb(); window.__bench.deliver(); }); await T.pump(page, 40);
+  await U.abrirValores(app);
+  await U.clearLog(page);
+}
+
+test('PARCIAL: o 2º quadro sem ACK = frase na linha de estado + Desfazer já visível; um toque volta ao que era', { skip }, async () => {
+  const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
+  const { page } = app;
+  try {
+    await valoresNaoFabrica(app);
+    await U.cenarioValores(page, 'parcial');
+    await T.tap(page, '[data-adv-factory]'); await T.pump(page, 10);   // fábrica muda 2 campos = 2 quadros
+    assert.deepEqual(await U.ecuWrites(page), U.quadroValores(U.FABRICA, [3000, 100, 1500, 5, 20]), 'os dois saíram; o 2º foi recusado');
+    assert.deepEqual(await U.anti5(page), [1600, 100, 1500, 5, 20], 'só o 1º ficou na central');
+    assert.equal(await U.text(page, '.vv-status'), 'Gravei só uma parte (1 de 2). Toque em Desfazer para voltar ao que era antes.');
+    assert.doesNotMatch(await U.text(page, '.vv-status'), /Gravado|Não gravou/);
+    assert.equal(await U.camada(page), 0, 'sem janela');
+    assert.equal(await U.count(page, '[data-adv-undo-values]'), 1, 'Desfazer à vista, sem 2º toque');
+    await U.foto(page, '1280x720-valores-parcial');
+    await page.evaluate(() => window.__bench.setFault('nakAfter', null));
+    await U.clearLog(page);
+    await T.tap(page, '[data-adv-undo-values]'); await T.pump(page, 10);
+    assert.deepEqual(await U.ecuWrites(page), U.quadroValores([3000, 100, 1500, 5, 20], [1600, 100, 1500, 5, 20]), 'Desfazer manda só o campo que foi gravado');
+    assert.deepEqual(await U.anti5(page), [3000, 100, 1500, 5, 20], 'voltou ao que era antes');
+    assert.match(await U.text(page, '.vv-status'), /Gravado e conferido/);
+  } finally { await app.context.close(); }
+});
+
+test('escrita chegou, leitura de volta falhou ou veio outra: "Não consegui conferir se gravou", sem janela', { skip }, async () => {
+  for (const cenario of ['leitura-falha', 'leitura-diferente']) {
+    const app = await T.openApp(browser, { usb: true, viewport: VPS['1280x720'] });
+    const { page } = app;
+    try {
+      await U.abrirValores(app);
+      await U.cenarioValores(page, cenario);
+      await U.digitar(app, 0, '1700');
+      await page.evaluate(() => document.activeElement && document.activeElement.blur()); await T.pump(page, 10);
+      assert.equal((await U.ecuWrites(page)).length >= 1, true, cenario);
+      const linha = await U.text(page, '.vv-status');
+      assert.equal(linha, 'Não consegui conferir se gravou. Espere a leitura voltar e olhe os valores.', cenario);
+      assert.doesNotMatch(linha, /Não gravou|Não foi gravado|Gravado/, cenario);
+      assert.equal(await U.camada(page), 0, cenario + ': sem janela');
+    } finally { await app.context.close(); }
+  }
 });
 
 test('sem central conectada: os campos ficam desligados e o motivo está escrito', { skip }, async () => {
