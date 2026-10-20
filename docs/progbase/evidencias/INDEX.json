@@ -1124,5 +1124,45 @@
    "tests/test_progbase_autocal_preferencias.py"
   ],
   "uso_pendente": true
+ },
+ {
+  "id": "EV-AUTOCAL-007",
+  "afirmacao": "Leitura de elemento indexado das preferências (SC331/332/357/359/370) fatiando o vetor inteiro lido com 0x29 (índice*largura) é INFERIDA do padrão de leitura de vetor; a resposta real da central não foi capturada.",
+  "marca": "INFERIDO",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AutoCalPreferenceCore.kt",
+   "app/src/main/assets/ui/core/autocal-preferencias.js",
+   "tests/ui/autocal-preferencias.test.cjs"
+  ],
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098"
+ },
+ {
+  "id": "EV-AUTOCAL-008",
+  "afirmacao": "Quadros de escrita das preferências montados pelo Kotlin (opcode 0x11+largura+indexado, SC little-endian, soma mod 256) batem com os 11 quadros do oráculo do código do original; ACK e readback em central real não foram vistos.",
+  "marca": "OBS-COD",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AutoCalPreferenceCore.kt",
+   "app/src/main/assets/ui/core/autocal-preferencias.js",
+   "tests/ui/autocal-preferencias.test.cjs",
+   "app/src/test/java/com/omegas/prohub/autocal/AutoCalPreferenceCoreTest.kt"
+  ],
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098"
+ },
+ {
+  "id": "EV-AUTOCAL-009",
+  "afirmacao": "Efeito de cada preferência avançada, valor de fábrica e se a central aceita gravar cada uma seguem desconhecidos; o painel mostra o selo 'não comprovado' em todo campo e não inventa padrão.",
+  "marca": "DESCONHECIDO",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AutoCalPreferenceCore.kt",
+   "app/src/main/assets/ui/core/autocal-preferencias.js",
+   "tests/ui/autocal-preferencias.test.cjs"
+  ],
+  "fonte": "docs/progbase/protocolo/autocal-preferencias.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "9df6676606f6db45b14a33ebbe6939409c094098"
  }
 ]

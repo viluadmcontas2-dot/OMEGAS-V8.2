@@ -2,7 +2,7 @@
 
 Gerado por `tools/progbase/cobertura_re.py` (dados até 2026-10-18). Detalhe: `cobertura.json`. Cobertura = média de: % provado (OBS-FIO+OBS-COD+DERIVADO sobre as evidências), abas com vetor e vetores no fio com unidade.
 
-Total: 95 evidências, **76.8% provado**; 33 abas, 389 vetores (222 no fio); 1713 funções do programa sem dono.
+Total: 98 evidências, **75.5% provado**; 33 abas, 389 vetores (222 no fio); 1713 funções do programa sem dono.
 
 | Área | Cobertura | Provado | Ev. | Abas c/ vetor | Vetores | App usa |
 |---|---|---|---|---|---|---|
@@ -19,7 +19,7 @@ Total: 95 evidências, **76.8% provado**; 33 abas, 389 vetores (222 no fio); 171
 | Transporte | `█████████░░░░░░░░░░░` 45.9% | 91.7% | 12 | 0/0 | 0/5 | 9/12 |
 | Cadastro/F1 | `█████████░░░░░░░░░░░` 42.8% | 100.0% | 2 | 27/95 | 0/42 | 0/2 |
 | F6/F7/F8 | `████████░░░░░░░░░░░░` 37.9% | 100.0% | 1 | 2/22 | 4/86 | 0/1 |
-| Geral (decompilação) | `███████████████░░░░░` 75.0% | 75.0% | 8 | 0/0 | 0/0 | 7/8 |
+| Geral (decompilação) | `█████████████░░░░░░░` 63.6% | 63.6% | 11 | 0/0 | 0/0 | 10/11 |
 
 ## 10 maiores DESCONHECIDOS (impacto para o usuário)
 1. [Cadastro/F1] PROD-01: Quando o gás entra (F1): tipo de troca, rpm mínimo 1200, água 40 °C

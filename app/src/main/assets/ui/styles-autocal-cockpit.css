@@ -2248,11 +2248,26 @@
 
 /* Preferencias do AutoCal (botao ao lado de Acoes avancadas). Padrao: tudo visivel, nada muda. */
 .autocal-pref-menu > summary { border-color: rgba(120,170,230,.32); color: #d6e6fa; background: rgba(24,44,72,.46); }
-.autocal-pref-popover { border-color: rgba(120,170,230,.26); max-height: 70vh; overflow: auto; }
-.autocal-pref-popover label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: #cdd8e4; }
-.autocal-pref-popover input[type=number], .autocal-pref-popover input[type=text] { width: 84px; min-height: 36px; }
-.autocal-pref-popover button { border-color: rgba(120,170,230,.28); color: #d6e6fa; }
-.autocal-pref-ro { opacity: .7; font-size: 10px; color: #a9b6c4; }
-.autocal-pref-state { font-size: 10px; color: #9fb0c0; }
+.autocal-pref-popover { position: fixed; inset: 0; z-index: 60; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 16px 24px; background: #0d1620; border: 0; display: none; }
+.autocal-pref-menu[open] > .autocal-pref-popover { display: block; }
+.pref-intro, .pref-status { font-size: 12px; color: #b9c7d6; margin: 6px 0; }
+.pref-group { margin: 10px 0; border: 1px solid rgba(120,170,230,.26); border-radius: 12px; background: rgba(24,44,72,.3); }
+.pref-group > summary { padding: 14px; min-height: 48px; font-size: 15px; font-weight: 600; color: #e3edf8; cursor: pointer; }
+.pref-group > summary small { display: block; font-size: 11px; font-weight: 400; color: #9fb0c0; }
+.pref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; padding: 0 10px 12px; }
+.pref-section { grid-column: 1 / -1; margin: 8px 0 0; font-size: 12px; color: #9fb0c0; text-transform: uppercase; }
+.pref-card { padding: 10px; border: 1px solid rgba(120,170,230,.2); border-radius: 10px; background: rgba(13,22,32,.7); display: flex; flex-direction: column; gap: 6px; }
+.pref-card label { font-size: 13px; color: #e3edf8; }
+.pref-seal { align-self: flex-start; font-size: 10px; padding: 2px 6px; border-radius: 999px; border: 1px solid #c9a227; color: #f0d36b; background: rgba(201,162,39,.12); }
+.pref-help, .pref-tech, .pref-note { margin: 0; font-size: 11px; color: #a9b6c4; }
+.pref-note[data-kind="error"] { color: #ff9b9b; }
+.pref-note[data-kind="ok"] { color: #8fe3a4; }
+.pref-switch, .pref-actions, .pref-local-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pref-card .step-btn, .pref-undo { min-height: 44px; min-width: 44px; }
+.pref-undo { align-self: flex-start; border: 1px solid rgba(120,170,230,.28); color: #d6e6fa; background: transparent; border-radius: 8px; padding: 0 12px; }
+.pref-card input[type=text] { min-height: 44px; width: 100%; font-size: 16px; }
+.pref-card button:focus-visible, .pref-card input:focus-visible, .pref-group > summary:focus-visible { outline: 2px solid #7fb4ff; outline-offset: 2px; }
+:root[data-ac-hide-points="1"] .ao-point { display: none; }
+:root[data-ac-hide-kline="1"] .ao-k-line, :root[data-ac-hide-kline="1"] .ao-k-node { display: none; }
 :root[data-ac-hide-zones="1"] .autocal-zone-card { display: none; }
 :root[data-ac-hide-messages="1"] #autocalActionStatus { display: none; }

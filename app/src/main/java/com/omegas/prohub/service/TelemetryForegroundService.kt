@@ -128,6 +128,7 @@ class TelemetryForegroundService : Service() {
     lateinit var antiStalloWriter: com.omegas.prohub.autocal.AntiStalloFlagWriter
     lateinit var antiStalloParamsWriter: com.omegas.prohub.autocal.AntiStalloParamsWriter
     lateinit var voltaGasolinaWriter: com.omegas.prohub.autocal.VoltaGasolinaWriter
+    lateinit var autoCalPreferenceWriter: com.omegas.prohub.autocal.AutoCalPreferenceWriter
     lateinit var parameterReader: com.omegas.prohub.autocal.EcuParameterReader
         private set
     lateinit var nativeAutoCal: NativeAutoCalMonitor
@@ -294,6 +295,12 @@ class TelemetryForegroundService : Service() {
             busy = { kWriter.isBusy() || kFactor.isBusy() || bufferProbe.statusJson().let { runCatching { JSONObject(it).optBoolean("busy", false) }.getOrDefault(false) } },
             onUnknown = { session, name, address, trigger -> advancedParams.markUnknown(session, name, address, trigger) },
         )
+        // Preferências do AutoCal (botão Preferências): só por toque do dono; ACK + releitura igual para "Gravado".
+        autoCalPreferenceWriter = com.omegas.prohub.autocal.AutoCalPreferenceWriter(
+            serial = recordingSerial,
+            record = { type, data -> sessionRecorder.record(type, "autocal_preferencias", data, force = true) },
+            busy = { kWriter.isBusy() || kFactor.isBusy() },
+        )
         nativeAutoCal = NativeAutoCalMonitor(
             serial = recordingSerial,
             calibrationBusy = { kWriter.isBusy() || kFactor.isBusy() },
@@ -384,6 +391,7 @@ class TelemetryForegroundService : Service() {
         try { antiStalloWriter.close() } catch (_: Exception) { /* encerrando */ }
         try { antiStalloParamsWriter.close() } catch (_: Exception) { /* encerrando */ }
         try { voltaGasolinaWriter.close() } catch (_: Exception) { /* encerrando */ }
+        try { autoCalPreferenceWriter.close() } catch (_: Exception) { /* encerrando */ }
         autoReadExecutor.shutdownNow()
         try { kWriter.close() } catch (_: Exception) { /* encerrando */ }
         try { runtime.close() } catch (_: Exception) { /* encerrando */ }
@@ -566,6 +574,8 @@ class TelemetryForegroundService : Service() {
     fun applyVoltaGasolina(json: String): String = voltaGasolinaWriter.apply(json).toString()
     fun readVoltaGasolina(): String = voltaGasolinaWriter.readCurrent().toString()
     fun voltaGasolinaStatusJson(): String = voltaGasolinaWriter.statusJson()
+    fun readAutoCalPreference(json: String): String = autoCalPreferenceWriter.read(json).toString()
+    fun applyAutoCalPreference(json: String): String = autoCalPreferenceWriter.apply(json).toString()
     fun kFactorHistoryJson(): String = kFactor.historyJson()
 
     @Synchronized fun saveKFactorBackup(label: String): String =

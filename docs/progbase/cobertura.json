@@ -178,7 +178,7 @@
     "evidencias_usadas_no_codigo": 0,
     "pct": 0.0,
     "pontes": 27,
-    "testes": 51
+    "testes": 52
    },
    "area": "AutoCal/preferências",
    "desconhecidos": [],
@@ -817,17 +817,18 @@
    "app": {
     "aba_producao": null,
     "evidencias_no_grafo_de_producao": 0,
-    "evidencias_usadas_no_codigo": 7,
-    "pct": 87.5,
+    "evidencias_usadas_no_codigo": 10,
+    "pct": 90.9,
     "pontes": 0,
     "testes": 0
    },
    "area": "Geral (decompilação)",
    "desconhecidos": [
     "EV-AUTOCAL-006",
+    "EV-AUTOCAL-009",
     "EV-COBERTURA-002"
    ],
-   "evidencias": 8,
+   "evidencias": 11,
    "funcoes": {
     "com_dono": 0
    },
@@ -840,20 +841,23 @@
      "EV-AUTOCAL-004",
      "EV-AUTOCAL-005",
      "EV-AUTOCAL-006",
+     "EV-AUTOCAL-007",
+     "EV-AUTOCAL-008",
+     "EV-AUTOCAL-009",
      "EV-COBERTURA-001",
      "EV-COBERTURA-002"
     ],
     "ponte_producao": null
    },
-   "pct_cobertura": 75.0,
-   "pct_provado": 75.0,
+   "pct_cobertura": 63.6,
+   "pct_provado": 63.6,
    "perguntas_abertas": [],
    "peso": 4,
    "por_marca": {
     "DERIVADO": 0,
-    "DESCONHECIDO": 2,
-    "INFERIDO": 0,
-    "OBS-COD": 6,
+    "DESCONHECIDO": 3,
+    "INFERIDO": 1,
+    "OBS-COD": 7,
     "OBS-FIO": 0
    },
    "proximo_passo": "Nomear as funções sem dono e os bytes de .text fora de função.",
@@ -939,7 +943,7 @@
    "tipo": "evidencia"
   }
  ],
- "desconhecidos_total": 26,
+ "desconhecidos_total": 27,
  "gerador": "tools/progbase/cobertura_re.py",
  "titulo": "Cobertura da Engenharia Reversa",
  "total": {
@@ -954,16 +958,16 @@
    "programa": 1010,
    "total_alvo": 7132
   },
-  "evidencias": 95,
+  "evidencias": 98,
   "funcoes_do_programa_nomeadas": 1692,
   "funcoes_do_programa_sem_nome": 637,
-  "pct_provado": 76.8,
+  "pct_provado": 75.5,
   "perguntas_abertas_producao": 13,
   "por_marca": {
    "DERIVADO": 10,
-   "DESCONHECIDO": 13,
-   "INFERIDO": 9,
-   "OBS-COD": 36,
+   "DESCONHECIDO": 14,
+   "INFERIDO": 10,
+   "OBS-COD": 37,
    "OBS-FIO": 27
   },
   "vetores": 389,

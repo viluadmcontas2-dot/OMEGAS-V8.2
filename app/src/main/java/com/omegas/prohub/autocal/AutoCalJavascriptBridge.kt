@@ -241,6 +241,16 @@ class AutoCalJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface
     fun getVoltaGasolinaStatus(): String = activityRef.get()?.serviceOrNull()?.voltaGasolinaStatusJson() ?: unavailable()
 
+    /** Preferências do AutoCal (botão Preferências): lê `{"ids":[...]}`. Nunca escreve; não lido = null, a tela mostra "—". */
+    @JavascriptInterface
+    fun readAutoCalPreference(json: String): String =
+        activityRef.get()?.serviceOrNull()?.readAutoCalPreference(json) ?: unavailable()
+
+    /** Preferências do AutoCal: `{"id","raw"}` por toque do dono. Ler → gravar → ACK → reler; "Gravado" só com releitura igual. */
+    @JavascriptInterface
+    fun applyAutoCalPreference(json: String): String =
+        activityRef.get()?.serviceOrNull()?.applyAutoCalPreference(json) ?: unavailable()
+
     /** Anti-apagão (bit 0x20 de FLAG_CONF3): o toque do dono é a ordem. UMA chamada: ler → gravar → reler; o resultado vem em getAntiStalloFlagStatus. */
     @JavascriptInterface
     fun applyAntiStalloFlag(enable: Boolean): String =

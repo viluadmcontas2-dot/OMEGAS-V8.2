@@ -106,6 +106,9 @@
   {
    "aba": "AutoCal",
    "evidencias": [
+    "EV-AUTOCAL-007",
+    "EV-AUTOCAL-008",
+    "EV-AUTOCAL-009",
     "EV-BINS-001"
    ],
    "id": "autocal",
@@ -751,6 +754,41 @@
   [
    "ev:EV-AUTOCAL-006",
    "teste:tests/test_progbase_autocal_preferencias.py",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-007",
+   "teste:tests/ui/autocal-preferencias.test.cjs",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-007",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-008",
+   "teste:app/src/test/java/com/omegas/prohub/autocal/AutoCalPreferenceCoreTest.kt",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-008",
+   "teste:tests/ui/autocal-preferencias.test.cjs",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-008",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-009",
+   "teste:tests/ui/autocal-preferencias.test.cjs",
+   "sustenta"
+  ],
+  [
+   "ev:EV-AUTOCAL-009",
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
    "sustenta"
   ],
   [
@@ -2645,6 +2683,16 @@
   ],
   [
    "teste:tests/ui/autocal-preferencias.test.cjs",
+   "ponte:OmegasAutoCal.applyAutoCalPreference",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-preferencias.test.cjs",
+   "ponte:OmegasAutoCal.readAutoCalPreference",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/autocal-preferencias.test.cjs",
    "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
    "cobre"
   ],
@@ -4504,6 +4552,16 @@
    "chama"
   ],
   [
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "ponte:OmegasAutoCal.applyAutoCalPreference",
+   "chama"
+  ],
+  [
+   "ui:app/src/main/assets/ui/core/autocal-preferencias.js",
+   "ponte:OmegasAutoCal.readAutoCalPreference",
+   "chama"
+  ],
+  [
    "ui:app/src/main/assets/ui/core/balance-runner.js",
    "ponte:OmegasV7.startCurveRead",
    "chama"
@@ -4780,18 +4838,18 @@
   ]
  ],
  "contagem_arestas": {
-  "chama": 106,
-  "cobre": 656,
+  "chama": 108,
+  "cobre": 658,
   "exibe": 34,
-  "sustenta": 73,
+  "sustenta": 80,
   "usa": 14
  },
  "contagem_nos": {
   "aba": 9,
-  "ev": 95,
+  "ev": 98,
   "kt": 8,
-  "ponte": 112,
-  "teste": 387,
+  "ponte": 114,
+  "teste": 389,
   "ui": 33
  },
  "desconhecido_sem_uso": [
@@ -4810,10 +4868,7 @@
  ],
  "elos_quebrados": {
   "essenciais": {
-   "E1_ui_chama_ponte_inexistente": [
-    "core/autocal-preferencias.js -> applyAutoCalPreference",
-    "core/autocal-preferencias.js -> readAutoCalPreference"
-   ],
+   "E1_ui_chama_ponte_inexistente": [],
    "E2_evidencia_aponta_arquivo_inexistente": [],
    "E3_ponte_de_escrita_chamada_sem_teste": []
   },
@@ -5308,6 +5363,24 @@
    "rotulo": "EV-AUTOCAL-006",
    "tipo": "ev"
   },
+  "ev:EV-AUTOCAL-007": {
+   "afirmacao": "Leitura de elemento indexado das preferências (SC331/332/357/359/370) fatiando o vetor int",
+   "marca": "INFERIDO",
+   "rotulo": "EV-AUTOCAL-007",
+   "tipo": "ev"
+  },
+  "ev:EV-AUTOCAL-008": {
+   "afirmacao": "Quadros de escrita das preferências montados pelo Kotlin (opcode 0x11+largura+indexado, SC",
+   "marca": "OBS-COD",
+   "rotulo": "EV-AUTOCAL-008",
+   "tipo": "ev"
+  },
+  "ev:EV-AUTOCAL-009": {
+   "afirmacao": "Efeito de cada preferência avançada, valor de fábrica e se a central aceita gravar cada um",
+   "marca": "DESCONHECIDO",
+   "rotulo": "EV-AUTOCAL-009",
+   "tipo": "ev"
+  },
   "ev:EV-BINS-001": {
    "afirmacao": "A janela do original \"Map cell centres of the k coefficients\" mostra 12 colunas de RPM (85",
    "marca": "OBS-FIO",
@@ -5708,6 +5781,12 @@
    "rotulo": "OmegasAutoCal.applyAntiStalloValues",
    "tipo": "ponte"
   },
+  "ponte:OmegasAutoCal.applyAutoCalPreference": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+   "escrita": true,
+   "rotulo": "OmegasAutoCal.applyAutoCalPreference",
+   "tipo": "ponte"
+  },
   "ponte:OmegasAutoCal.applyVoltaGasolina": {
    "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
    "escrita": true,
@@ -5916,6 +5995,12 @@
    "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
    "escrita": false,
    "rotulo": "OmegasAutoCal.readAntiStalloValues",
+   "tipo": "ponte"
+  },
+  "ponte:OmegasAutoCal.readAutoCalPreference": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/autocal/AutoCalJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasAutoCal.readAutoCalPreference",
    "tipo": "ponte"
   },
   "ponte:OmegasAutoCal.readVoltaGasolina": {
@@ -6410,6 +6495,14 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/autocal/AutoCalNativeActionManagerTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/autocal/AutoCalNativeActionManagerTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/autocal/AutoCalPreferenceCoreTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/autocal/AutoCalPreferenceCoreTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/autocal/AutoCalPreferenceWriterTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/autocal/AutoCalPreferenceWriterTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/autocal/AutoCalRecoveryPolicyTest.kt": {
