@@ -1,0 +1,730 @@
+[
+ {
+  "id": "EV-ANTIAPAGAO-001",
+  "afirmacao": "A caixa \"Abilitazione anti-stallo\" liga/desliga o bit 0x0020 da palavra 0 de FLAG_CONF3 (SerialCode 250).",
+  "marca": "OBS-COD",
+  "fonte": "docs/evidence/2026-10-18-anti-stallo-caixa-re.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "46216c3",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloFlagCore.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/AntiStalloFlagCoreTest.kt"
+  ],
+  "chave": "antiapagao.caixa.bit"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-002",
+  "afirmacao": "CheckAntiStalloClick (0x4C982C) chama o setter genérico 0x42E8D8 e a gravação reenvia as DUAS palavras de FLAG_CONF3.",
+  "marca": "OBS-COD",
+  "fonte": "docs/evidence/2026-10-18-anti-stallo-caixa-re.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "46216c3",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloFlagCore.kt",
+   "tests/test_cpu_setter_original.py"
+  ],
+  "funcoes": [
+   "0x004C982C"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-003",
+  "afirmacao": "Ao marcar a caixa, o original enviou o quadro 35 FA 00 20 00 00 00 4F (visto 6 vezes no log novo).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/bins/LOG-NOVO-omegasaudit-achados.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "0c8ea95",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloFlagCore.kt",
+   "tests/ui/avancado-escrita.test.cjs",
+   "tests/test_avancado_ecu_emulada.py"
+  ],
+  "chave": "antiapagao.quadro.ligar"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-004",
+  "afirmacao": "Ao desmarcar a caixa, o original enviou o quadro 35 FA 00 00 00 00 00 2F (visto 5 vezes no log novo).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/bins/LOG-NOVO-omegasaudit-achados.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "0c8ea95",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloFlagCore.kt",
+   "tests/ui/avancado-escrita.test.cjs",
+   "tests/test_avancado_ecu_emulada.py"
+  ],
+  "chave": "antiapagao.quadro.desligar"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-005",
+  "afirmacao": "Executando o setter original numa CPU emulada, só o bit 0x20 da palavra 0 muda; os outros bits e a palavra 1 seguem no quadro (casos 0C10 ABCD e FFFF FFFF).",
+  "marca": "OBS-COD",
+  "fonte": "docs/evidence/2026-10-18-cpu-setter-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "0665434",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloFlagCore.kt",
+   "tests/test_cpu_setter_original.py",
+   "app/src/test/java/com/omegas/prohub/autocal/AntiStalloFlagCoreTest.kt"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-006",
+  "afirmacao": "O original grava o quadro mesmo ao desmarcar um bit que já estava apagado (não compara antes de enviar).",
+  "marca": "OBS-COD",
+  "fonte": "docs/evidence/2026-10-18-cpu-setter-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "0665434",
+  "usado_por": [
+   "tests/test_cpu_setter_original.py"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-007",
+  "afirmacao": "O SetVector de 2 x u16 aparece no fio como 35 03 00 86 2C 51 10 4B (FLAG_CONF1, linha 31284 do PortmonLOGNOVO), com eco e ACK 53 00 53.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/evidence/2026-10-18-anti-stallo-quadro-de-escrita.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "7eaf32a",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
+   "app/src/test/java/com/omegas/prohub/ecu/AutoCalProtocolTest.kt"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-008",
+  "afirmacao": "ANTI_STALLO é o vetor SerialCode 307 (0x133), 5 x u16, padrão 1600, 100, 1500, 2, 20.",
+  "marca": "OBS-COD",
+  "fonte": "docs/evidence/2026-10-18-tela-anti-stallo-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8611f2b",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt",
+   "app/src/main/assets/ui/core/anti-apagao-valores.js"
+  ],
+  "chave": "antiapagao.vetor307"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-009",
+  "afirmacao": "As faixas máximas dos 5 campos no DFM são 6000, 1000, 10000, 1000 e 1000 (o DFM não traz mínimo).",
+  "marca": "OBS-COD",
+  "fonte": "docs/evidence/2026-10-18-tela-anti-stallo-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8611f2b",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/AntiStalloParamsCoreTest.kt"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-010",
+  "afirmacao": "Para 5 x u16 (10 bytes) o app usa o SetVector estendido de opcode 0x37 (37 33 ...), e não o compacto 0x3B; o montador é o mesmo do original.",
+  "marca": "DERIVADO",
+  "fonte": "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "0db13e4",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt",
+   "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/AntiStalloParamsWriterTest.kt"
+  ],
+  "chave": "antiapagao.quadro.vetor307"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-011",
+  "afirmacao": "Que a central aceita o quadro 0x37 de 10 bytes para o vetor 307 nunca foi visto no fio; só a leitura de volta protege.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [],
+  "chave": "antiapagao.quadro.vetor307.fio"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-012",
+  "afirmacao": "Os campos EditAntiStallo0..4 ligam-se a ANTI_STALLO[0..4] pelo DataIndex e pelo nome; o código Delphi que liga os dois não foi visto.",
+  "marca": "INFERIDO",
+  "fonte": "docs/evidence/2026-10-18-tela-anti-stallo-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "8611f2b",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt",
+   "app/src/main/assets/ui/core/anti-apagao-valores.js"
+  ],
+  "chave": "antiapagao.campos.ordem"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-013",
+  "afirmacao": "Nos rótulos do original os campos 1, 3 e 4 têm unidade \"rpm/ciclo\" (i18n 970, UNITARPMCICLOMOTORE); o campo 2 é em ms.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/inventario/i18n.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [
+   "app/src/main/assets/ui/core/anti-apagao-valores.js",
+   "tests/ui/anti-apagao-valores-didatico.test.cjs"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-014",
+  "afirmacao": "A escala real da \"queda de rotação\" (quanto vale 1 rpm/ciclo na central) é desconhecida; a velocidade de queda do log não vira o número do cartão.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/bins/limiares-em-movimento.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "085ab37",
+  "usado_por": [],
+  "chave": "antiapagao.queda.unidade"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-015",
+  "afirmacao": "Na captura F9 do original, com a estratégia ligada, aparece UM único número editável: \"Max RPM to enable un-stalling = 1600 rpm\".",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/LEIA-ME.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "1bb8fd4",
+  "usado_por": [
+   "app/src/main/assets/ui/core/anti-apagao-valores.js",
+   "tests/ui/anti-apagao-valores-didatico.test.cjs"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-016",
+  "afirmacao": "Nos 89 logs (12,3 h) a Rotação máxima de fábrica 1600 vê 19 dos 20 apagões em movimento.",
+  "marca": "DERIVADO",
+  "fonte": "docs/progbase/bins/limiares-em-movimento.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "085ab37",
+  "usado_por": [
+   "tests/test_limiares_em_movimento.py"
+  ],
+  "chave": "antiapagao.limiar.1600"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-017",
+  "afirmacao": "Nos 89 logs, a Rotação máxima 1800 vê 20 de 20 apagões em movimento e é o menor valor que vê todos; é só sugestão, não vira gravação.",
+  "marca": "DERIVADO",
+  "fonte": "docs/progbase/bins/limiares-em-movimento.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "085ab37",
+  "usado_por": [
+   "tests/test_limiares_em_movimento.py"
+  ],
+  "chave": "antiapagao.limiar.1800"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-018",
+  "afirmacao": "No log novo, com o anti-apagão ligado a rotação pós-corte mínima foi 680 rpm (0 vezes abaixo de 600); desligado, 447 rpm (26 vezes abaixo de 600).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/bins/ANTI-APAGAO-no-log-novo.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "c9af26e",
+  "usado_por": [
+   "app/src/main/assets/ui/core/anti-apagao-valores.js",
+   "tests/ui/anti-apagao-sugestao.test.cjs"
+  ],
+  "chave": "antiapagao.log.contraste"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-019",
+  "afirmacao": "A ajuda do anti-apagão é a central segurar com gasolina por instantes; a conferência por vetor de combustível ficou pendente.",
+  "marca": "INFERIDO",
+  "fonte": "docs/progbase/bins/ANTI-APAGAO-no-log-novo.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "c9af26e",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-ANTIAPAGAO-020",
+  "afirmacao": "O efeito exato de \"Espera para sair do gás\" (campo 2) e dos outros campos extras não foi provado.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/abas/ANTI-APAGAO-mapa.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "eb42e72",
+  "usado_por": [],
+  "chave": "antiapagao.extras.efeito"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-021",
+  "afirmacao": "O anti-apagão olha só a queda de rotação, não a causa (embreagem, parada, ré, afundo depois do corte).",
+  "marca": "INFERIDO",
+  "fonte": "docs/progbase/abas/ANTI-APAGAO-mapa.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "eb42e72",
+  "usado_por": [
+   "app/src/main/assets/ui/core/anti-apagao-valores.js"
+  ]
+ },
+ {
+  "id": "EV-ANTIAPAGAO-022",
+  "afirmacao": "Se a central mantém o bit 0x20 depois de rodar o próprio ciclo e se a função evita apagões no efeito físico não foi provado.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/evidence/2026-10-18-aba-avancado.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "7954363",
+  "usado_por": [],
+  "chave": "antiapagao.efeito.fisico"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-023",
+  "afirmacao": "Movimento e causa dos apagões não são comprovados no corpus: faltam velocidade, embreagem e chave.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/bins/apagoes-em-movimento.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "bf3dddf",
+  "usado_por": [],
+  "chave": "antiapagao.corpus.movimento"
+ },
+ {
+  "id": "EV-ANTIAPAGAO-024",
+  "afirmacao": "O corpus tem 89 sessões com telemetria (12,3 h) com 20 apagões em movimento, 35 quase-apagões e 3646 quedas comuns.",
+  "marca": "DERIVADO",
+  "fonte": "docs/progbase/bins/limiares-em-movimento.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "085ab37",
+  "usado_por": [
+   "tests/test_limiares_em_movimento.py",
+   "tests/test_apagoes_movimento.py"
+  ]
+ },
+ {
+  "id": "EV-BINS-001",
+  "afirmacao": "A janela do original \"Map cell centres of the k coefficients\" mostra 12 colunas de RPM (850 a 6500) e 12 linhas de ms (2 a 18), todas editáveis.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/LEIA-ME.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "1bb8fd4",
+  "usado_por": [
+   "tests/ui/mapa-k-ajuste-local.test.cjs"
+  ],
+  "chave": "bins.janela.12x12"
+ },
+ {
+  "id": "EV-BINS-002",
+  "afirmacao": "O original grava cada bin de RPM por elemento: 14 3D 00 idx lo hi cs (idx 0 = 850, idx 1 = 1350, idx 2 = 1850, idx 3 = 2500, idx 4 = 3000).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/bins/LOG-NOVO-omegasaudit-achados.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "0c8ea95",
+  "usado_por": [],
+  "chave": "bins.rpm.quadros",
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-BINS-003",
+  "afirmacao": "O vetor SerialCode 61 (0x3D) são os bins de RPM do Mapa K (inferência forte por bater com 850/1350/1850).",
+  "marca": "INFERIDO",
+  "fonte": "docs/progbase/bins/LOG-NOVO-omegasaudit-achados.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "0c8ea95",
+  "usado_por": [],
+  "chave": "bins.rpm.vetor",
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-BINS-004",
+  "afirmacao": "O vetor 0x3D se chama GIRI_PER_K, 12 elementos s16, lido por 29 3D 00 ck.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/vetores.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "7314f88",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-BINS-005",
+  "afirmacao": "Qual vetor guarda as 12 linhas de ms não está provado (SC 120 é MAP_ESTERNO, 6 x s16).",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/handoff/PROGRESSO-CARTOES.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "afa6515",
+  "usado_por": [],
+  "chave": "bins.ms.vetor"
+ },
+ {
+  "id": "EV-BINS-006",
+  "afirmacao": "Se o original aceita 0 ms na primeira linha de ms dos bins ainda não foi visto.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/capturas/originais/LEIA-ME.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "1bb8fd4",
+  "usado_por": [],
+  "chave": "bins.ms.zero"
+ },
+ {
+  "id": "EV-BINS-007",
+  "afirmacao": "Nos logs, K = MUL_ACT / 16384 (Q14) e o eixo ms = PETR_INJ_TBP / 512, com 30 uint16 little-endian.",
+  "marca": "DERIVADO",
+  "fonte": "docs/evidence/2026-10-18-quadro-gasolina-gnv-k.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "1e71e85",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/ecu/AutoCalScale.kt",
+   "app/src/main/java/com/omegas/prohub/calibration/KMapPhysicalAxes.kt"
+  ]
+ },
+ {
+  "id": "EV-BINS-008",
+  "afirmacao": "Se a central aceita a Curva K em 1 quadro de vetor 0x37 (32 para 3 transações) não foi provado com central real.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [],
+  "chave": "bins.curvak.quadro37"
+ },
+ {
+  "id": "EV-COBERTURA-001",
+  "afirmacao": "O Ghidra reconhece 29 927 funções no ProgBase.exe, 25 202 com pseudo-C e 9 818 com nome (RTTI); isso não é cobertura de comportamento.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/decomp/COBERTURA.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [
+   "tests/test_progbase_decomp.py"
+  ]
+ },
+ {
+  "id": "EV-COBERTURA-002",
+  "afirmacao": "Há 7 132 funções sem nome e sem unidade, e 37% dos bytes de .text fora de qualquer função, cujo papel é desconhecido.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/decomp/COBERTURA.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": []
+ },
+ {
+  "id": "EV-LENTA-001",
+  "afirmacao": "RadioGasClick (0x4BFAD8) em \"Gás\": quadros 35 03 00 86 24 51 10 43 e 14 A1 00 00 00 00 B5 (GIRI_PER_BENZINA[0] = 0 rpm, bit apagado).",
+  "marca": "OBS-COD",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [
+   "app/src/main/assets/ui/core/idle-mode.js",
+   "tests/ui/idle-mode.test.cjs"
+  ],
+  "chave": "lenta.quadro.gas",
+  "funcoes": [
+   "0x004BFAD8"
+  ]
+ },
+ {
+  "id": "EV-LENTA-002",
+  "afirmacao": "RadioGasClick em \"Volta\": quadros 35 03 00 86 24 51 10 43 e 14 A1 00 00 4C 04 05 (GIRI_PER_BENZINA[0] = 1100 rpm, bit apagado).",
+  "marca": "OBS-COD",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [
+   "app/src/main/assets/ui/core/idle-mode.js",
+   "tests/ui/idle-mode.test.cjs"
+  ],
+  "chave": "lenta.quadro.volta",
+  "funcoes": [
+   "0x004BFAD8"
+  ]
+ },
+ {
+  "id": "EV-LENTA-003",
+  "afirmacao": "RadioGasClick em \"Gasolina\": quadros 35 03 00 86 24 51 11 44 e 14 A1 00 00 4C 04 05 (1100 rpm e bit 0x0100 da palavra 1 de FLAG_CONF1).",
+  "marca": "OBS-COD",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [
+   "app/src/main/assets/ui/core/idle-mode.js",
+   "tests/ui/idle-mode.test.cjs"
+  ],
+  "chave": "lenta.quadro.gasolina",
+  "funcoes": [
+   "0x004BFAD8"
+  ]
+ },
+ {
+  "id": "EV-LENTA-004",
+  "afirmacao": "O handler original não confere a 1a gravação antes da 2a (provado na execução emulada).",
+  "marca": "OBS-COD",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-LENTA-005",
+  "afirmacao": "Na central do dono [obj+0x80D] = 0, então a máscara é 0x0100 (0x0400 só com 0x80D diferente de 0); inferido pelo log.",
+  "marca": "INFERIDO",
+  "fonte": "app/src/main/assets/ui/core/idle-mode.js",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "ab55c5b",
+  "usado_por": [
+   "app/src/main/assets/ui/core/idle-mode.js",
+   "tests/ui/idle-mode.test.cjs"
+  ]
+ },
+ {
+  "id": "EV-LENTA-006",
+  "afirmacao": "GIRI_PER_BENZINA é uma rotação (rpm) e NUMERO_INJ_BENZINA_CUTOFF um número de injeções, só pelo nome; o papel exato é desconhecido.",
+  "marca": "INFERIDO",
+  "fonte": "docs/evidence/2026-10-18-aba-avancado.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "7954363",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/EcuParameterSnapshot.kt"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-001",
+  "afirmacao": "O quadro TX é b0 b1 [carga] ck, com ck = soma mod 256 dos bytes anteriores; o tamanho (b0 & 7) + 3 confere com 100% dos 20 290 pedidos da captura.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/protocolo/comandos.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/ecu/AutoCalProtocol.kt",
+   "app/src/test/java/com/omegas/prohub/ecu/AutoCalProtocolTest.kt",
+   "app/src/test/java/com/omegas/prohub/ecu/PortmonSameEcuParityTest.kt"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-002",
+  "afirmacao": "A resposta ACK é 53 n dados ck com ck = (0x53 + n + soma dos dados) & 0xFF, sem contar o eco; 16 788 respostas, 100% com checksum certo.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/protocolo/comandos.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/usb/UsbProtocolReply.kt",
+   "app/src/test/java/com/omegas/prohub/usb/UsbProtocolReplyTest.kt"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-003",
+  "afirmacao": "Toda NAK da captura é CA 01 10 DB (3 499 casos).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/protocolo/comandos.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/usb/UsbProtocolReply.kt"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-004",
+  "afirmacao": "NAK com o bit 0x10 em s2 significa parâmetro não suportado e não tem retry; sem o bit 0x10 há retry até 5 vezes.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/comandos.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/usb/UsbProtocolReply.kt",
+   "app/src/test/java/com/omegas/prohub/usb/UsbProtocolReplyTest.kt"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-005",
+  "afirmacao": "O original espera o 1o byte da resposta por 1000 ms e faz 5 reenvios (6 tentativas); o Portmon mostra RC=1200 nesse tempo.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/comandos.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [],
+  "funcoes": [
+   "0x009226E4"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-TRANSPORTE-006",
+  "afirmacao": "O original manda o quadro inteiro num único WRITE e confere o eco byte a byte; divergência marca ComFail 0x08.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/comandos.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/usb/UsbSerialManager.kt"
+  ],
+  "funcoes": [
+   "0x00923608"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-007",
+  "afirmacao": "Resposta 96 (central ocupada): o original dorme 400 ms e repete; 0 ocorrências na captura, comportamento não observado no fio.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/comandos.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f166410",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-TRANSPORTE-008",
+  "afirmacao": "Connect envia 01 00 3A 3B e depois consulta a versão com 00 <byte> ck; a versão começa em 0 e não é versão confirmada.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/conexao.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f4383e4",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt"
+  ],
+  "funcoes": [
+   "0x00923FDC"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-009",
+  "afirmacao": "No catálogo da captura há quatro Connect com ACK e quatro respostas de versão 53 01 02 56 (versão 2).",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/protocolo/conexao.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f4383e4",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/ecu/ResponseDrivenEcuEngine.kt"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-010",
+  "afirmacao": "O significado da opção +0x2BD do Connect e a transição real com perda de porta ou resposta de comprimento zero não foram executados.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/progbase/protocolo/conexao.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "f4383e4",
+  "usado_por": []
+ },
+ {
+  "id": "EV-TRANSPORTE-011",
+  "afirmacao": "No app, resposta com formato ACK mas checksum inválido é classificada UNKNOWN e não deixa o handshake avançar para init2 (teste JUnit; USB real não testado).",
+  "marca": "DERIVADO",
+  "fonte": "docs/evidence/PLATINA-TRANSPORT-179.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "82f6184",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/usb/UsbProtocolReply.kt",
+   "app/src/test/java/com/omegas/prohub/usb/UsbProtocolReplyTest.kt"
+  ]
+ },
+ {
+  "id": "EV-TRANSPORTE-012",
+  "afirmacao": "O catálogo do ProgBase tem 389 objetos de dados (314 em TStreamDati; 222 aparecem na captura).",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/protocolo/vetores.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "7314f88",
+  "usado_por": [
+   "tests/test_progbase_protocolo.py"
+  ]
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-001",
+  "afirmacao": "A caixa \"Automatic change back to petrol\" tem OnClick CheckRitornoBenzinaClick em 0x4A9484.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/abas/TabSensore.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "80e1486",
+  "usado_por": [],
+  "funcoes": [
+   "0x004A9484"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-002",
+  "afirmacao": "O campo da pressão tem OnKeyPress EditBassaPressioneMpKeyPress em 0x4C526C.",
+  "marca": "OBS-COD",
+  "fonte": "docs/progbase/abas/TabSensore.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "80e1486",
+  "usado_por": [],
+  "funcoes": [
+   "0x004C526C"
+  ],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-003",
+  "afirmacao": "TEMPO_RITORNO_BENZINA é o escalar SerialCode 62 (0x3E), u8, lido por 09 3E 00 ck e gravado por 12 3E 00 v ck.",
+  "marca": "OBS-COD",
+  "fonte": "docs/handoff/PROGRESSO-CARTOES.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "afa6515",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/EcuParameterSnapshot.kt"
+  ],
+  "chave": "voltagas.tempo.sc62"
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-004",
+  "afirmacao": "A caixa F4 não é bit de FLAG_CONF1; o bit 0x0040 da palavra 1 é outra caixa (\"pressão baixa impostável\").",
+  "marca": "OBS-COD",
+  "fonte": "docs/handoff/PROGRESSO-CARTOES.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "afa6515",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-005",
+  "afirmacao": "O corpo das rotinas 0x4A9484 e 0x4C526C (regra do clique, SetEsc 28) ainda não foi decodificado.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/handoff/PROGRESSO-CARTOES.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "afa6515",
+  "usado_por": [],
+  "funcoes": [
+   "0x004A9484",
+   "0x004C526C"
+  ]
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-006",
+  "afirmacao": "A fórmula do campo \"Low pressure value\" (1,25 bar), derivado de RIF_PRESS_DIFF/COEFF_PRESS_DIFF, não foi decodificada; não gravar.",
+  "marca": "DESCONHECIDO",
+  "fonte": "docs/handoff/PROGRESSO-CARTOES.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "afa6515",
+  "usado_por": [],
+  "chave": "voltagas.pressao.formula"
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-007",
+  "afirmacao": "Na captura F4 do original: \"Automatic change back to petrol\" marcada, tempo 0 s, pressão 1,25 bar.",
+  "marca": "OBS-FIO",
+  "fonte": "docs/progbase/capturas/originais/LEIA-ME.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "1bb8fd4",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-008",
+  "afirmacao": "No corpus de 89 sessões, 8 das 28 trocas GNV para gasolina ocorreram com pressão muito abaixo do normal (0,26 a 1,34 bar).",
+  "marca": "DERIVADO",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-009",
+  "afirmacao": "A pressão normal do gás em GNV fica em 2,3 a 2,5 bar (p5 = 2,30) no corpus.",
+  "marca": "DERIVADO",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [],
+  "uso_pendente": true
+ },
+ {
+  "id": "EV-VOLTAGASOLINA-010",
+  "afirmacao": "Baixar o limiar de 1,25 para 1,0 bar seguraria o gás mais tempo na reserva (hipótese do dono, plausível pelo corpus).",
+  "marca": "INFERIDO",
+  "fonte": "docs/handoff/PENDENTE.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "404e83f",
+  "usado_por": [],
+  "uso_pendente": true
+ }
+]

@@ -13,6 +13,10 @@ Reconstrução **parcial**. Inventário, pseudocódigo, replay e execução visu
 - [Original sob Wine](decomp/execucao-original.md): capturas existentes, ainda sem prova de central conectada nesse relatório.
 - [Grafo](grafo/GRAPH_REPORT.md): relações entre documentos, funções, controles e evidências.
 
+## Evidências versionadas (EV-ÁREA-nnn)
+
+Índice mestre: [evidencias/INDEX.json](evidencias/INDEX.json) (id, afirmação, marca, fonte, versão 2.16.4, commit, quem usa). Auditor: `python3 -B tools/progbase/auditar.py --check` (id duplicado, marca inválida, fonte inexistente, id órfão, contradição); teste: `python3 -B tests/test_progbase_evidencias.py`. Os ids REA e MAN seguem valendo como alias.
+
 ## Registros REA existentes
 
 Fonte: `docs/progbase/decomp/evidence-bundle.json`. IDs abaixo são reais; a operação e sua autoridade delimitam o que provam.
