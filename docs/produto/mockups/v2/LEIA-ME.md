@@ -1,7 +1,7 @@
 # Mockups v2: o app inteiro, para aprovar o conjunto (só desenho; o app NÃO foi alterado)
 
 Responde à rodada 1 (reprovada em parte) e às regras 8, 9 e 10 de `docs/REGRAS-DO-DONO.md`. PNG em 1280x720 e 800x480 (`NN-nome-LxA.png`).
-Fonte: `fonte/gen.js` (gera os HTML) → `fonte/render.js` (fotos + medição: sem rolagem, nada cortado, botões com 58 px começando à esquerda; 0 problemas) e `fonte/real.js` (telas 15-18 = app real com só as duas barras trocadas na foto). Tokens de `assets/ui/styles.css`.
+Fonte: `fonte/gen.js` (gera os HTML) → `fonte/render.js` (fotos + medição: sem rolagem, nada cortado, botões com 58 px começando à esquerda; 0 problemas). Tokens de `assets/ui/styles.css`.
 Comece por `00-mapa-do-fluxo` (só 1280). Marcas: EXISTE = já está no app · NOVO = não existe · **PRECISA OK DO DONO** = muda o que a central recebe ou pede leitura nova.
 
 ## Barras (todas as telas)
