@@ -398,6 +398,11 @@
   ],
   [
    "aba:base",
+   "ui:app/src/main/assets/ui/core/ferramentas-grupos.js",
+   "exibe"
+  ],
+  [
+   "aba:base",
    "ui:app/src/main/assets/ui/core/native-api.js",
    "exibe"
   ],
@@ -3087,6 +3092,16 @@
    "cobre"
   ],
   [
+   "teste:tests/ui/ferramentas-grupos.test.cjs",
+   "ponte:OmegasAutoCal.applyAntiStalloValues",
+   "cobre"
+  ],
+  [
+   "teste:tests/ui/ferramentas-grupos.test.cjs",
+   "ponte:OmegasAutoCal.applyVoltaGasolina",
+   "cobre"
+  ],
+  [
    "teste:tests/ui/ferramentas-paridade-original.test.cjs",
    "ui:app/src/main/assets/ui/core/advanced-flags-data.js",
    "cobre"
@@ -4689,8 +4704,8 @@
  ],
  "contagem_arestas": {
   "chama": 106,
-  "cobre": 647,
-  "exibe": 32,
+  "cobre": 649,
+  "exibe": 33,
   "sustenta": 66,
   "usa": 14
  },
@@ -4699,8 +4714,8 @@
   "ev": 89,
   "kt": 8,
   "ponte": 112,
-  "teste": 382,
-  "ui": 31
+  "teste": 383,
+  "ui": 32
  },
  "desconhecido_sem_uso": [
   "EV-ANTIAPAGAO-011",
@@ -7581,6 +7596,10 @@
    "rotulo": "tests/ui/ferramentas-contrato-coerencia.test.cjs",
    "tipo": "teste"
   },
+  "teste:tests/ui/ferramentas-grupos.test.cjs": {
+   "rotulo": "tests/ui/ferramentas-grupos.test.cjs",
+   "tipo": "teste"
+  },
   "teste:tests/ui/ferramentas-paridade-original.test.cjs": {
    "rotulo": "tests/ui/ferramentas-paridade-original.test.cjs",
    "tipo": "teste"
@@ -7811,6 +7830,10 @@
   },
   "ui:app/src/main/assets/ui/core/curve-to-map.js": {
    "rotulo": "core/curve-to-map.js",
+   "tipo": "ui"
+  },
+  "ui:app/src/main/assets/ui/core/ferramentas-grupos.js": {
+   "rotulo": "core/ferramentas-grupos.js",
    "tipo": "ui"
   },
   "ui:app/src/main/assets/ui/core/gasoline-reference.js": {
