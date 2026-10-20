@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 83, kt 8, ponte 109, teste 377, ui 30. Arestas: chama 105, cobre 632, exibe 31, sustenta 45, usa 14.
+Nós: aba 9, ev 84, kt 8, ponte 109, teste 377, ui 30. Arestas: chama 105, cobre 632, exibe 31, sustenta 53, usa 14.
 
 ## (a) Por aba
 
@@ -15,7 +15,7 @@ Nós: aba 9, ev 83, kt 8, ponte 109, teste 377, ui 30. Arestas: chama 105, cobre
 | AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 51 | 1 |
 | Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 16 | 0 |
 | Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 9 | 12 | 0 |
-| Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 21 | 28 | 12 |
+| Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 21 | 28 | 14 |
 | Diagnóstico (`-`) | Sem aba própria: estados na barra e cartões de Ferramentas. | 0 | 0 | 0 | 0 |
 
 Pontes e evidências por aba (amostra):
@@ -50,7 +50,7 @@ Lacunas do CATALOGO já resolvidas: #11.
 - Sugestão ADAPTATIVA do anti-apagão, recalculada por evento (fim de sessão) com as sessões 
 - Semântica dos 4 extras do anti-apagão e unidade de "Queda de rotação" (rpm por ciclo = qua
 - Separar apagão de motor desligado nos logs (17 quedas ambíguas).
-- Provar no fio o quadro 37 33 0C 01 ... do anti-apagão (maior risco): pedir ao dono UMA cap
+- Provar no carro a gravação dos 5 números do anti-apagão: desde 2026-10-20 o app manda, com
 - CORREÇÃO DE ESCOPO do dono: o cartão Anti-apagão deve ter INTERRUPTOR + UM número ("Rotaçã
 - Exportação de sessões em um toque, abrindo direto o resumo, com nome do carro e data (o ZI
 - Copy para leigo: revisar todos os erros e avisos e os três tamanhos (1280x720, 1024x600, 8

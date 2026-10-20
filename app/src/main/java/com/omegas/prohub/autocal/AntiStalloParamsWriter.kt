@@ -16,7 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Liga a escrita manual dos 5 números do anti-apagão (AntiStalloParamsCore) à porta serial. Espelho de AntiStalloFlagWriter.
  * SÓ roda por toque do dono: `prepare(changes)` (valida a faixa, lê ANTI_STALLO ao vivo e guarda a prévia), depois
  * `confirm(token)` (2º toque). Nada aqui dispara sozinho: nenhum laço nem relógio de decisão; esperar a central = esperar a
- * resposta de cada transação. Escrita pelo agendador MANUAL_WRITE (registrada na sessão). Só usa `AutoCalProtocol.readVector/writeVectorU16`.
+ * resposta de cada transação. Escrita pelo agendador MANUAL_WRITE (registrada na sessão). Só usa `AutoCalProtocol.readVector/writeIndexedU16`:
+ * como o original, UM `14 33 01 <índice> lo hi soma` por campo alterado (status: `frames` = lista, `frameHex` = os quadros unidos por " · ").
  *
  * `changes` = objeto JSON `{"índice": valor}` com inteiros; os campos que não aparecem ficam como a leitura ao vivo.
  * "Restaurar fábrica" e "Desfazer" são pedidos comuns (`factoryChangesJson`, `undo.values`): passam pela mesma prévia e pelo mesmo 2º toque.
@@ -133,7 +134,7 @@ class AntiStalloParamsWriter(
             try {
                 var plan: AntiStalloParamsCore.Plan? = null
                 val result = serial.unit(
-                    reason = "anti-apagão: ler, gravar ANTI_STALLO (5 números) e reler",
+                    reason = "anti-apagão: ler, gravar ANTI_STALLO (um 14 por número mudado) e reler",
                     expectedSessionId = session,
                     workClass = Mp48WorkClass.MANUAL_WRITE,
                     telemetryAfter = true,
@@ -189,7 +190,8 @@ class AntiStalloParamsWriter(
                         .put("before", JSONArray(plan.before.toList()))
                         .put("after", JSONArray(plan.after.toList()))
                         .put("changed", JSONArray(plan.changedIndices))
-                        .put("frameHex", hex(plan.frame))
+                        .put("frames", JSONArray(plan.frames.map { hex(it) }))
+                        .put("frameHex", framesHex(plan.frames))
                         .put("noop", plan.noop),
                 )
             } catch (error: Exception) {
@@ -259,10 +261,13 @@ class AntiStalloParamsWriter(
             .put("changed", JSONArray(plan.changedIndices))
             .put("readback", result.readback?.let { JSONArray(it.toList()) } ?: JSONObject.NULL)
             .put("valueChanged", result.valueChanged)
-            .put("frameHex", result.frame?.let { hex(it) } ?: "")
-            .put("replyHex", result.reply?.replyHex ?: "")
+            .put("frames", JSONArray(result.frames.map { hex(it) }))
+            .put("frameHex", framesHex(result.frames))
+            .put("written", JSONArray(result.written))
+            .put("replyHex", result.replies.joinToString(" · ") { it.replyHex })
         synchronized(lock) {
-            if (result.outcome == AntiStalloParamsCore.Outcome.CONFIRMED) {
+            if (result.outcome == AntiStalloParamsCore.Outcome.CONFIRMED || result.outcome == AntiStalloParamsCore.Outcome.PARTIAL) {
+                // PARTIAL: a leitura de volta é conhecida; o Desfazer pede os valores de antes e só os campos já gravados saem (por 14).
                 undoValues = plan.before.copyOf()
                 undoSession = ready.session
             } else if (result.outcome == AntiStalloParamsCore.Outcome.READBACK_FAILED || result.outcome == AntiStalloParamsCore.Outcome.READBACK_DIVERGED || result.valueChanged) {
@@ -278,7 +283,7 @@ class AntiStalloParamsWriter(
         read = { readValues(unit) },
         write = { frame ->
             val reply = try {
-                unit.transaction(frame, "anti-apagão: SetVector ANTI_STALLO", 900, purgeBefore = false)
+                unit.transaction(frame, "anti-apagão: SetNumber indexado ANTI_STALLO", 900, purgeBefore = false)
             } catch (error: Exception) {
                 return@Io AntiStalloParamsCore.WriteReply(false, true, "", error.message ?: error.javaClass.simpleName)
             }
@@ -303,6 +308,7 @@ class AntiStalloParamsWriter(
     private fun currentSessionOrZero(): Long = if (serial.isConnected()) serial.currentSessionId() else 0L
 
     private fun hex(bytes: ByteArray) = bytes.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
+    private fun framesHex(frames: List<ByteArray>) = frames.joinToString(" · ") { hex(it) }
 
     private fun stopped(): JSONObject {
         synchronized(lock) {

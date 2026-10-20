@@ -15,18 +15,20 @@ import org.junit.Test
 
 /**
  * Os 5 números do anti-apagão (ANTI_STALLO, SerialCode 307 = 0x0133, 5 × u16), editáveis pelo dono (2026-10-18).
- * Espelha AntiStalloFlagCoreTest. Marcas: OBS-COD = DFM do ProgBase (faixa máxima de cada edit, padrão do vetor);
- * DERIVADO = quadro montado pelo mesmo montador do original (AutoCalProtocol.writeVectorU16); INFERIDO = ordem campo → posição.
+ * Espelha AntiStalloFlagCoreTest. Marcas: OBS-COD = DFM do ProgBase (faixa máxima de cada edit, padrão do vetor) e o código
+ * ORIGINAL executado no emulador (docs/progbase/protocolo/anti-apagao-quadros-original.md, EV-ANTIAPAGAO-026/027);
+ * INFERIDO = ordem campo → posição.
  *
- * Quadro: 5 × u16 = 10 bytes de dados (> 5) => SetVector ESTENDIDO 0x37 (decompilação do original, TAebProtocol.SetVector:
- * n >= 7 envia 0x37, endereço baixo, n+1, endereço alto, dados). NÃO é 0x3B: o opcode compacto só vai até 0x36.
+ * Quadro (dono autorizou, 2026-10-20): igual ao original, UM SetNumber indexado por campo alterado,
+ * `14 33 01 <índice> <u16 LE> <soma>`, em ordem 0..4, cada um com ACK; depois a leitura de volta `29 33 01`.
+ * O SetVector estendido `37 33 0C 01 …` que o app mandava antes o original NUNCA usa para o vetor 307.
  */
 class AntiStalloParamsCoreTest {
     private fun hex(b: ByteArray) = b.joinToString(" ") { "%02X".format(it.toInt() and 0xFF) }
     private val factory = intArrayOf(1600, 100, 1500, 2, 20)
 
     private class FakeEcu(var values: IntArray, val behavior: Behavior = Behavior.ACCEPT) {
-        enum class Behavior { ACCEPT, NAK, ACCEPT_BUT_KEEP_OLD, ACCEPT_WRONG_VALUE, TRANSPORT_FAIL_WRITTEN, TRANSPORT_FAIL_NOT_WRITTEN, READBACK_FAILS, CHANGES_BEFORE_WRITE }
+        enum class Behavior { ACCEPT, NAK, ACCEPT_BUT_KEEP_OLD, ACCEPT_WRONG_VALUE, TRANSPORT_FAIL_WRITTEN, TRANSPORT_FAIL_NOT_WRITTEN, READBACK_FAILS, CHANGES_BEFORE_WRITE, NAK_ON_SECOND }
         val frames = ArrayList<ByteArray>()
         val events = ArrayList<String>()
         fun io() = Io(
@@ -39,15 +41,20 @@ class AntiStalloParamsCoreTest {
             write = { frame ->
                 events += "write"
                 frames += frame
-                // quadro estendido: 37 lo len hi <10 bytes> ck
-                val sent = IntArray(5) { (frame[4 + it * 2].toInt() and 0xFF) or ((frame[5 + it * 2].toInt() and 0xFF) shl 8) }
+                // SetNumber indexado do original: 14 33 01 <índice> <lo> <hi> <soma>
+                assertEquals(7, frame.size)
+                assertEquals(0x14, frame[0].toInt() and 0xFF)
+                val index = frame[3].toInt() and 0xFF
+                val value = (frame[4].toInt() and 0xFF) or ((frame[5].toInt() and 0xFF) shl 8)
+                fun store() { values = values.copyOf().also { it[index] = value } }
                 when (behavior) {
                     Behavior.NAK -> WriteReply(false, false, "CA 01 10", "status 0xCA")
+                    Behavior.NAK_ON_SECOND -> if (frames.size >= 2) WriteReply(false, false, "CA 01 10", "status 0xCA") else { store(); WriteReply(true, false, "53 00 53", "ACK") }
                     Behavior.ACCEPT_BUT_KEEP_OLD -> WriteReply(true, false, "53 00 53", "ACK")
-                    Behavior.ACCEPT_WRONG_VALUE -> { values = sent.copyOf().also { it[2] += 1 }; WriteReply(true, false, "53 00 53", "ACK") }
-                    Behavior.TRANSPORT_FAIL_WRITTEN -> { values = sent; WriteReply(false, true, "", "timeout") }
+                    Behavior.ACCEPT_WRONG_VALUE -> { store(); values[2] += 1; WriteReply(true, false, "53 00 53", "ACK") }
+                    Behavior.TRANSPORT_FAIL_WRITTEN -> { store(); WriteReply(false, true, "", "timeout") }
                     Behavior.TRANSPORT_FAIL_NOT_WRITTEN -> WriteReply(false, true, "", "timeout")
-                    else -> { values = sent; WriteReply(true, false, "53 00 53", "ACK") }
+                    else -> { store(); WriteReply(true, false, "53 00 53", "ACK") }
                 }
             },
         )
@@ -72,19 +79,39 @@ class AntiStalloParamsCoreTest {
     }
 
     // ---------- quadro ----------
-    @Test fun `quadro dos valores de fabrica e o SetVector estendido 37 33 0C 01`() {
-        val plan = AntiStalloParamsCore.plan(intArrayOf(1700, 100, 1500, 2, 20), mapOf(0 to 1600))
-        assertEquals("37 33 0C 01 40 06 64 00 DC 05 02 00 14 00 18", hex(plan.frame))
+    @Test fun `um campo mudado = UM quadro 14 33 01 indice lo hi soma - 1600 para 1800 e o do original`() {
+        val plan = AntiStalloParamsCore.plan(factory, mapOf(0 to 1800))
+        assertEquals(listOf("14 33 01 00 08 07 57"), plan.frames.map(::hex))
     }
 
-    @Test fun `o quadro e exatamente o do montador do original (writeVectorU16) e o primeiro byte NAO e 3B`() {
-        val plan = AntiStalloParamsCore.plan(intArrayOf(1600, 100, 1500, 2, 20), mapOf(0 to 1700, 4 to 30))
-        assertArrayEquals(AutoCalProtocol.writeVectorU16(0x0133, plan.after), plan.frame)
-        assertEquals(0x37, plan.frame[0].toInt() and 0xFF)
-        assertEquals(15, plan.frame.size)
-        // conta independente: soma dos bytes anteriores, módulo 256
-        val soma = plan.frame.dropLast(1).sumOf { it.toInt() and 0xFF } and 0xFF
-        assertEquals(soma, plan.frame.last().toInt() and 0xFF)
+    @Test fun `os quadros do original para cada campo (doc, emulacao do codigo original)`() {
+        val esperado = mapOf(
+            (0 to 1601) to "14 33 01 00 41 06 8F", (1 to 150) to "14 33 01 01 96 00 DF", (2 to 1000) to "14 33 01 02 E8 03 35",
+            (3 to 5) to "14 33 01 03 05 00 50", (4 to 30) to "14 33 01 04 1E 00 6A",
+        )
+        for ((campo, quadro) in esperado) assertEquals(quadro, hex(AntiStalloParamsCore.plan(factory, mapOf(campo)).frames.single()))
+    }
+
+    @Test fun `varios campos - um quadro por campo, em ordem 0 a 4, so os que mudaram, NUNCA 37 nem 3B`() {
+        val plan = AntiStalloParamsCore.plan(factory, mapOf(4 to 30, 0 to 1700, 2 to 1500))
+        assertEquals(listOf(0, 4), plan.changedIndices)
+        assertEquals(2, plan.frames.size)
+        assertArrayEquals(AutoCalProtocol.writeIndexedU16(0x0133, 0, 1700), plan.frames[0])
+        assertArrayEquals(AutoCalProtocol.writeIndexedU16(0x0133, 4, 30), plan.frames[1])
+        for (f in plan.frames) {
+            assertEquals(0x14, f[0].toInt() and 0xFF)
+            assertEquals(7, f.size)
+            // conta independente: soma dos bytes anteriores, módulo 256
+            assertEquals(f.dropLast(1).sumOf { it.toInt() and 0xFF } and 0xFF, f.last().toInt() and 0xFF)
+        }
+    }
+
+    @Test fun `restaurar fabrica a partir de tudo diferente - cinco quadros indexados`() {
+        val plan = AntiStalloParamsCore.plan(intArrayOf(1800, 150, 2000, 4, 30), AntiStalloParamsCore.factoryChanges())
+        assertEquals(
+            listOf("14 33 01 00 40 06 8E", "14 33 01 01 64 00 AD", "14 33 01 02 DC 05 2B", "14 33 01 03 02 00 4D", "14 33 01 04 14 00 60"),
+            plan.frames.map(::hex),
+        )
     }
 
     @Test fun `ordem dos bytes e a da leitura - little-endian por posicao`() {
@@ -162,14 +189,47 @@ class AntiStalloParamsCoreTest {
     }
 
     // ---------- execução ----------
-    @Test fun `caminho feliz le, escreve UM quadro, le de volta e so entao confirma`() {
+    @Test fun `caminho feliz le, escreve UM quadro indexado, le de volta e so entao confirma`() {
         val ecu = FakeEcu(factory.copyOf())
-        val r = AntiStalloParamsCore.execute(ecu.io(), AntiStalloParamsCore.plan(factory, mapOf(0 to 1700)))
+        val r = AntiStalloParamsCore.execute(ecu.io(), AntiStalloParamsCore.plan(factory, mapOf(0 to 1800)))
         assertEquals(Outcome.CONFIRMED, r.outcome)
         assertEquals(listOf("read", "write", "read"), ecu.events)
-        assertEquals(1, ecu.frames.size)
-        assertEquals(0x37, ecu.frames[0][0].toInt() and 0xFF)
-        assertArrayEquals(intArrayOf(1700, 100, 1500, 2, 20), r.readback)
+        assertEquals(listOf("14 33 01 00 08 07 57"), ecu.frames.map(::hex))
+        assertEquals(listOf("14 33 01 00 08 07 57"), r.frames.map(::hex))
+        assertEquals(listOf(0), r.written)
+        assertArrayEquals(intArrayOf(1800, 100, 1500, 2, 20), r.readback)
+    }
+
+    @Test fun `varios campos - um quadro por campo com ACK cada, depois UMA leitura de volta comparando o vetor inteiro`() {
+        val ecu = FakeEcu(factory.copyOf())
+        val r = AntiStalloParamsCore.execute(ecu.io(), AntiStalloParamsCore.plan(factory, mapOf(1 to 150, 4 to 30)))
+        assertEquals(Outcome.CONFIRMED, r.outcome)
+        assertEquals(listOf("read", "write", "write", "read"), ecu.events)
+        assertEquals(listOf("14 33 01 01 96 00 DF", "14 33 01 04 1E 00 6A"), ecu.frames.map(::hex))
+        assertEquals(listOf(1, 4), r.written)
+        assertArrayEquals(intArrayOf(1600, 150, 1500, 2, 30), r.readback)
+    }
+
+    @Test fun `falha no segundo quadro - para ali, rele e devolve PARCIAL com o que ja foi gravado (nunca Gravado)`() {
+        val ecu = FakeEcu(factory.copyOf(), FakeEcu.Behavior.NAK_ON_SECOND)
+        val r = AntiStalloParamsCore.execute(ecu.io(), AntiStalloParamsCore.plan(factory, mapOf(1 to 150, 3 to 5, 4 to 30)))
+        assertEquals(Outcome.PARTIAL, r.outcome)
+        assertEquals(listOf("read", "write", "write", "read"), ecu.events) // o 3º quadro NÃO sai
+        assertEquals(listOf(1), r.written)
+        assertArrayEquals(intArrayOf(1600, 150, 1500, 2, 20), r.readback)
+        assertTrue(r.valueChanged)
+        assertFalse(r.message, r.message.contains("Gravado"))
+        assertTrue(r.message, r.message.contains("Desfazer"))
+    }
+
+    @Test fun `desfazer de uma falha parcial restaura so os campos ja gravados, tambem por 14`() {
+        val ecu = FakeEcu(factory.copyOf(), FakeEcu.Behavior.NAK_ON_SECOND)
+        val r = AntiStalloParamsCore.execute(ecu.io(), AntiStalloParamsCore.plan(factory, mapOf(1 to 150, 4 to 30)))
+        val undo = AntiStalloParamsCore.plan(r.readback!!, (0 until 5).associateWith { factory[it] })
+        assertEquals(listOf("14 33 01 01 64 00 AD"), undo.frames.map(::hex))
+        val ecu2 = FakeEcu(r.readback!!.copyOf())
+        assertEquals(Outcome.CONFIRMED, AntiStalloParamsCore.execute(ecu2.io(), undo).outcome)
+        assertArrayEquals(factory, ecu2.values)
     }
 
     @Test fun `a ECU mudou entre a previa e a gravacao - nada e escrito`() {
@@ -222,10 +282,10 @@ class AntiStalloParamsCoreTest {
     @Test fun `mensagens em linguagem simples - sem sigla tecnica e dizendo o que fazer`() {
         val casos = listOf(
             FakeEcu.Behavior.NAK, FakeEcu.Behavior.ACCEPT_BUT_KEEP_OLD, FakeEcu.Behavior.READBACK_FAILS,
-            FakeEcu.Behavior.CHANGES_BEFORE_WRITE, FakeEcu.Behavior.TRANSPORT_FAIL_WRITTEN,
+            FakeEcu.Behavior.CHANGES_BEFORE_WRITE, FakeEcu.Behavior.TRANSPORT_FAIL_WRITTEN, FakeEcu.Behavior.NAK_ON_SECOND,
         )
         for (b in casos) {
-            val r = AntiStalloParamsCore.execute(FakeEcu(factory.copyOf(), b).io(), AntiStalloParamsCore.plan(factory, mapOf(0 to 1700)))
+            val r = AntiStalloParamsCore.execute(FakeEcu(factory.copyOf(), b).io(), AntiStalloParamsCore.plan(factory, mapOf(0 to 1700, 3 to 5)))
             for (proibido in listOf("ECU", "FLAG", "bit", "0x", "SerialCode", "u16")) assertFalse("$b: ${r.message}", r.message.contains(proibido))
             assertTrue("$b: mensagem vazia", r.message.length > 20)
         }

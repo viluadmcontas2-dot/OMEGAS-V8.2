@@ -12,9 +12,11 @@ import org.json.JSONObject
  * é u16 sem sinal, então o piso é 0. INFERIDO (forte) = qual edit liga em qual posição (DataIndex 0..4 do edit = posição do vetor);
  * o código Delphi que liga os dois não foi visto.
  *
- * Quadro (DERIVADO do original, `TAebProtocol.SetVector`): 5 × u16 = 10 bytes de dados; com n+1 >= 7 o original manda o SetVector
- * ESTENDIDO `37 <end. baixo> <n+1> <end. alto> <dados> <soma>`; o opcode compacto (0x31 + tamanho) só existe até 0x36 (5 bytes).
- * Por isso o quadro é `37 33 0C 01 ...`, e não `3B`. O montador é o mesmo do original (`AutoCalProtocol.writeVectorU16`).
+ * Quadro (OBS-COD: código ORIGINAL executado no emulador, `docs/progbase/protocolo/anti-apagao-quadros-original.md`, EV-ANTIAPAGAO-026/027;
+ * dono autorizou a troca em 2026-10-20): o original lê o vetor (`29 33 01`) e grava UM elemento por vez com o SetNumber indexado
+ * `14 33 01 <índice> <u16 LE> <soma>` (`AutoCalProtocol.writeIndexedU16`). Aqui: um quadro por campo ALTERADO, em ordem 0..4, cada um
+ * com ACK; um quadro sem ACK interrompe a sequência (os seguintes não saem). O SetVector estendido `37 33 0C 01 …` que o app mandava
+ * antes o original NUNCA usa para o vetor 307 (EV-ANTIAPAGAO-028).
  *
  * Regras: só os campos pedidos mudam (os outros vêm da leitura ao vivo); nunca aceita valor fora da faixa; o sucesso só existe
  * depois da LEITURA DE VOLTA igual aos 5 números esperados; esperar a central = esperar a resposta (nenhum relógio aqui).
@@ -35,12 +37,17 @@ internal object AntiStalloParamsCore {
     )
     val FACTORY: IntArray = IntArray(COUNT) { FIELDS[it].factory }
 
-    enum class Outcome { CONFIRMED, READBACK_DIVERGED, NOT_ACKED, CHANGED_MEANWHILE, READBACK_FAILED, NOTHING_TO_DO, ERROR }
+    /** PARTIAL = parte dos quadros teve ACK e um seguinte não: a central ficou no meio do caminho (Desfazer volta o que já foi). */
+    enum class Outcome { CONFIRMED, READBACK_DIVERGED, NOT_ACKED, PARTIAL, CHANGED_MEANWHILE, READBACK_FAILED, NOTHING_TO_DO, ERROR }
+
+    /** Um `14 33 01 <índice> lo hi soma` do original, para UM campo. */
+    fun frameFor(index: Int, value: Int): ByteArray = AutoCalProtocol.writeIndexedU16(ADDRESS, index, value)
 
     class Plan(val before: IntArray, val after: IntArray) {
         val noop: Boolean get() = before.contentEquals(after)
         val changedIndices: List<Int> get() = (0 until COUNT).filter { before[it] != after[it] }
-        val frame: ByteArray get() = AutoCalProtocol.writeVectorU16(ADDRESS, after)
+        /** Um quadro por campo alterado, em ordem 0..4 (vazio se noop). */
+        val frames: List<ByteArray> get() = changedIndices.map { frameFor(it, after[it]) }
     }
 
     class WriteReply(val acked: Boolean, val transportFailed: Boolean, val replyHex: String, val detail: String)
@@ -56,8 +63,11 @@ internal object AntiStalloParamsCore {
         val message: String,
         val readback: IntArray?,
         val valueChanged: Boolean = false,
-        val frame: ByteArray? = null,
-        val reply: WriteReply? = null,
+        /** Quadros que saíram para a central, em ordem (o último pode não ter tido ACK). */
+        val frames: List<ByteArray> = emptyList(),
+        val replies: List<WriteReply> = emptyList(),
+        /** Índices cujos quadros tiveram ACK. */
+        val written: List<Int> = emptyList(),
     )
 
     private fun valid(values: IntArray) = values.size == COUNT && values.all { it in 0..0xFFFF }
@@ -101,33 +111,50 @@ internal object AntiStalloParamsCore {
         if (!valid(current) || !current.contentEquals(plan.before)) {
             return Result(Outcome.CHANGED_MEANWHILE, "Os números da central mudaram desde a conferência. Nada foi gravado. Refaça a conferência.", if (valid(current)) current else null)
         }
-        val frame = plan.frame
-        val reply = try { io.write(frame) } catch (error: Exception) {
-            WriteReply(false, true, "", error.message ?: error.javaClass.simpleName)
+        val sent = ArrayList<ByteArray>()
+        val replies = ArrayList<WriteReply>()
+        val written = ArrayList<Int>()
+        for (index in plan.changedIndices) {
+            val frame = frameFor(index, plan.after[index])
+            sent += frame
+            val reply = try { io.write(frame) } catch (error: Exception) {
+                WriteReply(false, true, "", error.message ?: error.javaClass.simpleName)
+            }
+            replies += reply
+            if (!reply.acked) break // o original grava um por vez; sem ACK, os seguintes não saem
+            written += index
         }
         val back = try { io.read() } catch (error: Exception) { null }
         if (back == null || !valid(back)) {
             return Result(
                 Outcome.READBACK_FAILED,
                 "$UNCERTAIN A leitura depois de gravar falhou. Confira o cabo, espere a leitura voltar e olhe os números antes de tentar de novo.",
-                null, frame = frame, reply = reply,
+                null, frames = sent, replies = replies, written = written,
             )
         }
-        if (!reply.acked) {
-            val changed = !back.contentEquals(plan.before)
+        val changed = !back.contentEquals(plan.before)
+        if (written.size < plan.changedIndices.size) {
+            if (written.isEmpty()) {
+                return Result(
+                    Outcome.NOT_ACKED,
+                    (if (changed) "$UNCERTAIN " else "") + "A central não confirmou a gravação. " + (if (changed) "Os números mudaram mesmo assim; confira a tela." else "Os números continuam como estavam. Tente de novo."),
+                    back, valueChanged = changed, frames = sent, replies = replies, written = written,
+                )
+            }
             return Result(
-                Outcome.NOT_ACKED,
-                (if (changed) "$UNCERTAIN " else "") + "A central não confirmou a gravação. " + (if (changed) "Os números mudaram mesmo assim; confira a tela." else "Os números continuam como estavam. Tente de novo."),
-                back, valueChanged = changed, frame = frame, reply = reply,
+                Outcome.PARTIAL,
+                "Só parte foi gravada: a central confirmou ${written.size} de ${plan.changedIndices.size} números e parou. " +
+                    "Os números lidos agora estão na tela. Toque em Desfazer para voltar ao que era, ou tente de novo.",
+                back, valueChanged = changed, frames = sent, replies = replies, written = written,
             )
         }
         return if (readbackMatches(plan, back)) {
-            Result(Outcome.CONFIRMED, "Gravado e conferido na central.", back, true, frame, reply)
+            Result(Outcome.CONFIRMED, "Gravado e conferido na central.", back, true, sent, replies, written)
         } else {
             Result(
                 Outcome.READBACK_DIVERGED,
                 "$UNCERTAIN A central aceitou, mas os números lidos depois são outros. Confira a tela antes de tentar de novo.",
-                back, !back.contentEquals(plan.before), frame, reply,
+                back, changed, sent, replies, written,
             )
         }
     }

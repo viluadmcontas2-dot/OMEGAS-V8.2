@@ -102,8 +102,8 @@
     "payload": "40 06 64 00 DC 05 02 00 14 00"
    },
    {
-    "pedido": "37 33 0C 01 08 07 64 00 DC 05 02 00 14 00 E1",
-    "resposta": "37 33 0C 01 08 07 64 00 DC 05 02 00 14 00 E1 53 00 53",
+    "pedido": "14 33 01 00 08 07 57",
+    "resposta": "14 33 01 00 08 07 57 53 00 53",
     "status": 83,
     "payload": ""
    },
@@ -144,8 +144,201 @@
     "payload": "08 07 96 00 D0 07 04 00 1E 00"
    },
    {
-    "pedido": "37 33 0C 01 40 06 64 00 DC 05 02 00 14 00 18",
-    "resposta": "37 33 0C 01 40 06 64 00 DC 05 02 00 14 00 18 53 00 53",
+    "pedido": "14 33 01 00 40 06 8E",
+    "resposta": "14 33 01 00 40 06 8E 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "14 33 01 01 64 00 AD",
+    "resposta": "14 33 01 01 64 00 AD 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "14 33 01 02 DC 05 2B",
+    "resposta": "14 33 01 02 DC 05 2B 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "14 33 01 03 02 00 4D",
+    "resposta": "14 33 01 03 02 00 4D 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "14 33 01 04 14 00 60",
+    "resposta": "14 33 01 04 14 00 60 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   }
+  ]
+ },
+ "valores_varios_campos": {
+  "antes": [
+   1600,
+   100,
+   1500,
+   2,
+   20
+  ],
+  "depois": [
+   1600,
+   150,
+   1500,
+   2,
+   30
+  ],
+  "passos": [
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "14 33 01 01 96 00 DF",
+    "resposta": "14 33 01 01 96 00 DF 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "14 33 01 04 1E 00 6A",
+    "resposta": "14 33 01 04 1E 00 6A 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 96 00 DC 05 02 00 1E 00 3A",
+    "status": 83,
+    "payload": "40 06 96 00 DC 05 02 00 1E 00"
+   }
+  ]
+ },
+ "valores_falha_segundo_quadro": {
+  "antes": [
+   1600,
+   100,
+   1500,
+   2,
+   20
+  ],
+  "depois": [
+   1600,
+   150,
+   1500,
+   2,
+   30
+  ],
+  "parcial": [
+   1600,
+   150,
+   1500,
+   2,
+   20
+  ],
+  "passos": [
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "14 33 01 01 96 00 DF",
+    "resposta": "14 33 01 01 96 00 DF 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "14 33 01 04 1E 00 6A",
+    "resposta": "",
+    "status": -1,
+    "payload": ""
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 96 00 DC 05 02 00 14 00 30",
+    "status": 83,
+    "payload": "40 06 96 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 96 00 DC 05 02 00 14 00 30",
+    "status": 83,
+    "payload": "40 06 96 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 96 00 DC 05 02 00 14 00 30",
+    "status": 83,
+    "payload": "40 06 96 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "14 33 01 01 64 00 AD",
+    "resposta": "14 33 01 01 64 00 AD 53 00 53",
+    "status": 83,
+    "payload": ""
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   }
+  ]
+ },
+ "valores_leitura_diferente": {
+  "antes": [
+   1600,
+   100,
+   1500,
+   2,
+   20
+  ],
+  "depois": [
+   1800,
+   100,
+   1500,
+   2,
+   20
+  ],
+  "passos": [
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "29 33 01 5D",
+    "resposta": "29 33 01 5D 53 0A 40 06 64 00 DC 05 02 00 14 00 FE",
+    "status": 83,
+    "payload": "40 06 64 00 DC 05 02 00 14 00"
+   },
+   {
+    "pedido": "14 33 01 00 08 07 57",
+    "resposta": "14 33 01 00 08 07 57 53 00 53",
     "status": 83,
     "payload": ""
    },

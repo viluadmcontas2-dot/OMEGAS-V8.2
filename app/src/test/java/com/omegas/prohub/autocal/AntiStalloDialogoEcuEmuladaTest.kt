@@ -7,6 +7,7 @@ import com.omegas.prohub.ecu.Mp48WorkClass
 import com.omegas.prohub.usb.UsbProtocolReply
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * Teste FUNCIONAL da escrita do anti-apagão: o escritor REAL do app (AntiStalloFlagWriter / AntiStalloParamsWriter, com AutoCalProtocol real)
  * conversa com o diálogo gerado pela ECU EMULADA (tests/fixtures/anti-apagao-dialogo-ecu.json, congelado por tests/test_dialogo_antiapagao_ecu.py).
  * Ordem ESTRITA: um quadro diferente, fora de ordem ou a mais derruba o teste. As respostas voltam com o eco do pedido + ACK, como no fio.
+ * Os 5 números vão como no ORIGINAL (docs/progbase/protocolo/anti-apagao-quadros-original.md): UM `14 33 01 <índice> lo hi soma` por campo.
  */
 class AntiStalloDialogoEcuEmuladaTest {
     private class Passo(val pedido: String, val resposta: String, val status: Int, val payload: String)
@@ -60,6 +62,7 @@ class AntiStalloDialogoEcuEmuladaTest {
             if (esperado.pedido != h) { falhas += "passo ${proximo + 1}: esperado ${esperado.pedido}, o app mandou $h"; throw IllegalStateException(falhas.last()) }
             proximo++
             val bruta = esperado.resposta.split(" ").map { it.toInt(16).toByte() }.toByteArray()
+            if (esperado.status < 0) return UsbProtocolReply(ok = false, status = -1, error = "timeout", request = request) // a central não respondeu
             val payload = if (esperado.payload.isBlank()) ByteArray(0) else esperado.payload.split(" ").map { it.toInt(16).toByte() }.toByteArray()
             return UsbProtocolReply(ok = true, status = esperado.status, payload = payload, request = request, echo = request, rawResponse = bruta)
         }
@@ -104,22 +107,58 @@ class AntiStalloDialogoEcuEmuladaTest {
         assertEquals(4, serial.proximo)
     }
 
-    @Test fun `rotacao maxima 1800 - quadro 37 33 0C 01 igual ao da central emulada e CONFIRMED`() {
+    @Test fun `rotacao maxima 1800 - UM quadro 14 33 01 00 08 07 57 igual ao do original e CONFIRMED`() {
         val serial = Replay(passos("valores_rotacao_maxima")); val w = params(serial)
         assertTrue(w.apply("""{"0":1800}""").getBoolean("ok"))
         val done = esperar({ w.statusJson() }, "DONE")
         assertEquals(done.toString() + serial.falhas, "CONFIRMED", done.getString("outcome"))
         assertEquals(4, serial.proximo)
-        assertTrue(done.getString("frameHex").startsWith("37 33 0C 01 08 07 64 00"))
+        assertEquals("14 33 01 00 08 07 57", done.getString("frameHex"))
+        assertTrue(serial.enviados.none { it.startsWith("37") })
         assertEquals(listOf(Mp48WorkClass.MANUAL_WRITE), serial.classes)
     }
 
-    @Test fun `restaurar fabrica - os 5 numeros voltam num unico quadro`() {
+    @Test fun `restaurar fabrica - um quadro indexado por campo, em ordem 0 a 4`() {
         val serial = Replay(passos("valores_restaurar_fabrica")); val w = params(serial)
         w.apply(AntiStalloParamsCore.factoryChangesJson())
         val done = esperar({ w.statusJson() }, "DONE")
         assertEquals(done.toString() + serial.falhas, "CONFIRMED", done.getString("outcome"))
+        assertEquals(8, serial.proximo)
+    }
+
+    @Test fun `varios campos - 14 33 01 01 e 14 33 01 04, cada um com ACK, e so depois a leitura de volta`() {
+        val serial = Replay(passos("valores_varios_campos")); val w = params(serial)
+        w.apply("""{"4":30,"1":150}""")
+        val done = esperar({ w.statusJson() }, "DONE")
+        assertEquals(done.toString() + serial.falhas, "CONFIRMED", done.getString("outcome"))
+        assertEquals(5, serial.proximo)
+        assertEquals("[1600,150,1500,2,30]", done.getJSONArray("readback").toString())
+    }
+
+    @Test fun `falha no 2o quadro - PARTIAL (nunca Gravado) e o Desfazer manda so 14 33 01 01 64 00 AD`() {
+        val serial = Replay(passos("valores_falha_segundo_quadro")); val w = params(serial)
+        w.apply("""{"1":150,"4":30}""")
+        val done = esperar({ w.statusJson() }, "DONE")
+        assertEquals(done.toString() + serial.falhas, "PARTIAL", done.getString("outcome"))
+        assertEquals(5, serial.proximo)
+        assertEquals("[1]", done.getJSONArray("written").toString())
+        val undo = JSONObject(w.statusJson()).getJSONObject("undo")
+        assertTrue(undo.toString(), undo.getBoolean("available"))
+        val pedido = JSONObject(); for (i in 0 until 5) pedido.put(i.toString(), undo.getJSONArray("values").getInt(i))
+        w.apply(pedido.toString())
+        val desfeito = esperar({ w.statusJson() }, "DONE")
+        assertEquals(desfeito.toString() + serial.falhas, "CONFIRMED", desfeito.getString("outcome"))
+        assertEquals(serial.falhas.toString(), 9, serial.proximo)
+        assertTrue(serial.falhas.isEmpty())
+    }
+
+    @Test fun `ACK mas a leitura de volta e outra - nunca Gravado`() {
+        val serial = Replay(passos("valores_leitura_diferente")); val w = params(serial)
+        w.apply("""{"0":1800}""")
+        val done = esperar({ w.statusJson() }, "DONE")
+        assertEquals(done.toString() + serial.falhas, "READBACK_DIVERGED", done.getString("outcome"))
         assertEquals(4, serial.proximo)
+        assertFalse(JSONObject(w.statusJson()).getJSONObject("undo").getBoolean("available"))
     }
 
     @Test fun `o app manda quadro diferente do da central emulada - o teste derruba (prova que o teste morde)`() {
@@ -128,7 +167,7 @@ class AntiStalloDialogoEcuEmuladaTest {
         val done = esperar({ w.statusJson() }, "DONE")
         assertTrue(done.toString(), done.getString("outcome") != "CONFIRMED") // quadro errado nunca vira sucesso (aqui: leitura de volta falha = estado incerto)
         assertTrue(serial.proximo < 4)
-        assertTrue(serial.falhas.first().contains("esperado 37 33 0C 01 08 07"))
+        assertTrue(serial.falhas.first().contains("esperado 14 33 01 00 08 07 57"))
     }
 
     /** Sistema serial de um só trabalho por vez (como o motor real), com telemetria READ_ONLY martelando em paralelo. */

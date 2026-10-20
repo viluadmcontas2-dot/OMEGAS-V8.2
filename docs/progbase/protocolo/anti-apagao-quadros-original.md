@@ -32,13 +32,22 @@ No fio: **lê o vetor inteiro e grava UM elemento indexado** (SetNumber indexado
 Resposta esperada do `14`: eco + `53 00 53` (mesmo padrão OBS-FIO de `14 7B 00 i …` e `14 54 00 …`). Que a leitura `29` antes da
 escrita aconteça sempre na central real (e não só porque o objeto emulado começa "sem cache") é INFERIDO.
 
-## 3. Divergência app × original — EV-ANTIAPAGAO-028
+## 3. Divergência app × original — EV-ANTIAPAGAO-028 — **CORRIGIDO** (2026-10-20, EV-ANTIAPAGAO-031)
 
-O app (`AntiStalloParamsCore.Plan.frame` → `AutoCalProtocol.writeVectorU16`) manda o **vetor inteiro** num SetVector estendido:
+**CORRIGIDO** com autorização explícita do dono (2026-10-20): `AntiStalloParamsCore.Plan.frames` → `AutoCalProtocol.writeIndexedU16`
+manda agora, como o original, `29 33 01 5D` (leitura) e UM `14 33 01 <índice> <u16 LE> <soma>` por campo **alterado**, em ordem 0..4,
+cada um esperando eco + `53 00 53`; um quadro sem ACK interrompe a sequência (`PARTIAL`: estado legível + Desfazer, que restaura só os
+campos já gravados, também por `14`). "Gravado" só depois de `29 33 01` igual ao vetor inteiro. Ex.: 1600 → 1800 = `14 33 01 00 08 07 57`.
+Diferença consciente: sem mudança, o app não manda nada (o original manda; §2). A caixa (§1) já batia byte a byte (`35 FA 00 20 00 00 00 4F` /
+`35 FA 00 00 00 00 00 2F` com a palavra a zero; o app preserva os outros bits lidos, como o original preserva os do cache).
+Provas: `AntiStalloParamsCoreTest`, `AntiStalloParamsWriterTest`, `AntiStalloDialogoEcuEmuladaTest` × `tests/fixtures/anti-apagao-dialogo-ecu.json`
+(gerado por `tests/test_dialogo_antiapagao_ecu.py` com a central emulada). Prova física na central: pendente (dono).
+
+Histórico (antes da correção): o app (`AntiStalloParamsCore.Plan.frame` → `AutoCalProtocol.writeVectorU16`) mandava o **vetor inteiro** num SetVector estendido:
 `37 33 0C 01 <10 bytes> soma` (ex.: 1800,100,1500,2,20 → `37 33 0C 01 08 07 64 00 DC 05 02 00 14 00 E1`).
 O original **nunca** monta esse quadro para o vetor 307: manda `14 33 01 <índice> <u16 LE> <soma>` (7 bytes), um por campo alterado.
 Byte a byte: opcode `37`≠`14`; byte 2 `0C` (comprimento) ≠ `01` (SC alto); byte 3 `01` (SC alto) ≠ índice; corpo 10 bytes ≠ 2 bytes.
-Recomendação (não aplicada aqui; mexe no que a ECU recebe, decisão do dono): trocar a gravação por `14 33 01 i lo hi ck`,
+Recomendação (APLICADA em 2026-10-20, ver acima): trocar a gravação por `14 33 01 i lo hi ck`,
 um quadro por campo mudado, mantendo a leitura de volta `29 33 01`.
 
 ## 4. "Queda de rotação" (ΔRPM) — EV-ANTIAPAGAO-029/030

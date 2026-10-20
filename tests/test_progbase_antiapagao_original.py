@@ -30,11 +30,8 @@ def quadro_indexado(indice, valor):
     return corpo + bytes([sum(corpo) & 0xFF])
 
 
-def quadro_app(valores):
-    """Espelho de AutoCalProtocol.writeVectorU16(0x0133, …) (leitura do código do app, não do original)."""
-    dados = b''.join(v.to_bytes(2, 'little') for v in valores)
-    corpo = bytes([0x37, 0x33, len(dados) + 2, 0x01]) + dados
-    return corpo + bytes([sum(corpo) & 0xFF])
+KT_CORE = os.path.join(RAIZ, 'app', 'src', 'main', 'java', 'com', 'omegas', 'prohub', 'autocal', 'AntiStalloParamsCore.kt')
+KT_TESTE = os.path.join(RAIZ, 'app', 'src', 'test', 'java', 'com', 'omegas', 'prohub', 'autocal', 'AntiStalloParamsCoreTest.kt')
 
 
 class Dados(unittest.TestCase):
@@ -49,10 +46,14 @@ class Dados(unittest.TestCase):
             self.assertEqual(quadro_indexado(i, v), _b(q))
             self.assertIn(q, open(DOC, encoding='utf-8').read())
 
-    def test_app_diverge_do_original(self):
-        app = quadro_app([1800, 100, 1500, 2, 20])
-        self.assertEqual(app.hex(' ').upper(), '37 33 0C 01 08 07 64 00 DC 05 02 00 14 00 E1')
-        self.assertNotEqual(app, quadro_indexado(0, 1800))
+    def test_app_agora_grava_como_o_original(self):
+        """EV-ANTIAPAGAO-028 CORRIGIDO (2026-10-20): o app monta `14 33 01 i lo hi soma` (writeIndexedU16), não o SetVector 37."""
+        core = open(KT_CORE, encoding='utf-8').read()
+        self.assertIn('AutoCalProtocol.writeIndexedU16(ADDRESS, index, value)', core)
+        self.assertNotIn('writeVectorU16', core)
+        teste = open(KT_TESTE, encoding='utf-8').read()
+        for q in ESPERADO.values():
+            self.assertIn(q, teste)
         self.assertNotIn('37 33', ' '.join(ESPERADO.values()))
 
 

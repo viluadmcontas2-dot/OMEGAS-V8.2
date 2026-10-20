@@ -900,6 +900,9 @@
   "versao_progbase": "2.16.4",
   "sha_commit": "63717bd",
   "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt",
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsWriter.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/AntiStalloParamsCoreTest.kt",
    "tests/test_progbase_antiapagao_original.py",
    "tools/emulacao/antiapagao_original.py"
   ],
@@ -918,15 +921,15 @@
  },
  {
   "id": "EV-ANTIAPAGAO-028",
-  "afirmacao": "Divergência: o app grava o vetor 307 inteiro com 37 33 0C 01 <10 bytes> <soma>; o original nunca usa esse quadro para o vetor 307 (usa 14 33 01 <i> lo hi soma, um por campo). Trocar o app é decisão do dono (muda o que a ECU recebe).",
+  "afirmacao": "Divergência (CORRIGIDA em 2026-10-20, ver EV-ANTIAPAGAO-031): o app gravava o vetor 307 inteiro com 37 33 0C 01 <10 bytes> <soma>; o original nunca usa esse quadro para o vetor 307 (usa 14 33 01 <i> lo hi soma, um por campo).",
   "marca": "DERIVADO",
   "fonte": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
   "versao_progbase": "2.16.4",
   "sha_commit": "63717bd",
   "usado_por": [
-   "tests/test_progbase_antiapagao_original.py"
-  ],
-  "uso_pendente": true
+   "tests/test_progbase_antiapagao_original.py",
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt"
+  ]
  },
  {
   "id": "EV-ANTIAPAGAO-029",
@@ -946,5 +949,23 @@
   "versao_progbase": "2.16.4",
   "sha_commit": "63717bd",
   "usado_por": []
+ },
+ {
+  "id": "EV-ANTIAPAGAO-031",
+  "afirmacao": "O app agora grava os 5 números do anti-apagão no formato do original (dono autorizou, 2026-10-20): lê 29 33 01, manda UM SetNumber indexado 14 33 01 <índice> <u16 LE> <soma> (AutoCalProtocol.writeIndexedU16) por campo alterado, em ordem 0..4, cada um com ACK 53 00 53; sem ACK para ali (PARTIAL, Desfazer restaura só o já gravado, também por 14); \"Gravado\" só com a leitura de volta 29 33 01 igual ao vetor inteiro. Ex.: 1600 -> 1800 = 14 33 01 00 08 07 57. Marca DERIVADO (o app copia os bytes OBS-COD de EV-ANTIAPAGAO-026); prova física na central = pendente (dono). Diferença consciente: o original manda o quadro mesmo sem mudança (EV-ANTIAPAGAO-027); o app não manda nada nesse caso.",
+  "marca": "DERIVADO",
+  "fonte": "docs/progbase/protocolo/anti-apagao-quadros-original.md",
+  "versao_progbase": "2.16.4",
+  "sha_commit": "4bb41d6",
+  "usado_por": [
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt",
+   "app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsWriter.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/AntiStalloParamsCoreTest.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/AntiStalloParamsWriterTest.kt",
+   "app/src/test/java/com/omegas/prohub/autocal/AntiStalloDialogoEcuEmuladaTest.kt",
+   "tests/test_dialogo_antiapagao_ecu.py",
+   "tests/test_anti_apagao_valores_ecu_emulada.py",
+   "tests/fixtures/anti-apagao-dialogo-ecu.json"
+  ]
  }
 ]

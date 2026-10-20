@@ -1,11 +1,12 @@
 """Anti-apagão, os 5 números (ANTI_STALLO, SerialCode 307 = 0x0133, 5 x u16): o quadro de escrita alimenta a ECU EMULADA
 (tools/emulacao/ecu_emulator.py) e o fluxo prévia -> escrita -> ACK -> leitura de volta fecha, byte a byte.
 
-Marcas: OBS-COD = decompilação de TAebProtocol.SetVector (docs/evidence/progbase-retained-protocol-export-v1.json): com n+1 >= 7 o
-original manda 0x37, endereço baixo, n+1, endereço ALTO, dados, soma. 5 x u16 = 10 bytes => `37 33 0C 01 <10 bytes> <soma>`
-(o opcode compacto 0x3B NÃO existe: só vai até 0x36). DERIVADO = os bytes montados. SINTÉTICO = estado de partida inventado.
-O montador de quadro do JS (core/anti-apagao-valores.js, o mesmo que a tela usa) roda em Node; o do Kotlin é conferido
-pelos mesmos literais nos testes JUnit (checagem de texto abaixo).
+Marcas: OBS-COD = código ORIGINAL executado no emulador (docs/progbase/protocolo/anti-apagao-quadros-original.md,
+EV-ANTIAPAGAO-026/027): o original grava UM elemento por vez, `14 33 01 <índice> <u16 LE> <soma>`, um quadro por campo alterado,
+e lê de volta com `29 33 01`. O app passou a gravar assim (dono autorizou, 2026-10-20); o SetVector estendido `37 33 0C 01 …` que
+o app mandava antes o original nunca usa. DERIVADO = os bytes montados. SINTÉTICO = estado de partida inventado.
+Quem monta os quadros que vão à central é o Kotlin (AntiStalloParamsCore, conferido pelos mesmos literais nos testes JUnit);
+o JS (core/anti-apagao-valores.js) só valida a faixa e confere a leitura de volta, e é usado aqui só para isso.
 """
 import json
 import subprocess
@@ -59,47 +60,48 @@ def valores(resposta):
     return [d[i] | d[i + 1] << 8 for i in range(0, 10, 2)]
 
 
-def quadro_estendido(valores_novos):
-    """Conta independente do JS e do Kotlin, a partir da decompilação do original."""
-    dados = bytes5(valores_novos)
-    corpo = bytes([0x37, 0x33, len(dados) + 2, 0x01]) + dados
+def quadro_campo(indice, valor):
+    """Conta independente do Kotlin: o SetNumber indexado do original (OBS-COD)."""
+    corpo = bytes([0x14, 0x33, 0x01, indice, valor & 0xFF, valor >> 8])
     return corpo + bytes([soma(corpo)])
 
 
-class EmuladorEntendeOQuadroEstendido(unittest.TestCase):
-    def test_tamanho_do_pedido_estendido_e_o_byte_do_meio_mais_3(self):
-        q = quadro_estendido([1700, 100, 1500, 2, 20])
-        self.assertEqual(len(q), 15)
-        self.assertEqual(tamanho_pedido(q), 15)            # o código antigo lia o endereço baixo (0x33) como tamanho
+def quadros(antes, depois):
+    """Como o original: um quadro por campo alterado, em ordem 0..4."""
+    return [quadro_campo(i, depois[i]) for i in range(5) if antes[i] != depois[i]]
 
-    def test_a_ecu_emulada_grava_no_endereco_307_e_responde_ack(self):
+
+class EmuladorEntendeOQuadroDoOriginal(unittest.TestCase):
+    def test_tamanho_do_pedido_e_7(self):
+        q = quadro_campo(0, 1800)
+        self.assertEqual(q.hex(' ').upper(), '14 33 01 00 08 07 57')     # bytes do original emulado
+        self.assertEqual(tamanho_pedido(q), 7)
+
+    def test_a_ecu_emulada_grava_so_o_elemento_e_responde_eco_mais_ack(self):
         e = ecu_com(FABRICA)
-        q = quadro_estendido([1700, 100, 1500, 2, 20])
+        q = quadro_campo(0, 1700)
         self.assertEqual(e.responder(q), q + ACK_VAZIO)
         self.assertEqual(valores(e.responder(LEITURA)), [1700, 100, 1500, 2, 20])
 
     def test_nao_grava_em_outro_endereco(self):
         e = ecu_com(FABRICA)
-        e.responder(quadro_estendido([1, 2, 3, 4, 5]))
+        for q in quadros(FABRICA, [1, 2, 3, 4, 5]):
+            e.responder(q)
         outra = pedido(0x29, 0x08, 0x01)                      # o endereço errado que o código antigo usaria (0x0108)
         self.assertNotIn(outra, e.estado)
 
 
-class QuadroDoJs(unittest.TestCase):
-    def test_js_gera_exatamente_o_quadro_da_conta_independente(self):
-        plano = js(op='plan', before=FABRICA, changes={'0': 1700})
-        self.assertTrue(plano['ok'])
-        self.assertEqual(bytes(plano['frame']), quadro_estendido([1700, 100, 1500, 2, 20]))
-        self.assertEqual(plano['frame'][0], 0x37)
-
-    def test_quadro_de_fabrica_literal(self):
-        plano = js(op='plan', before=[1700, 100, 1500, 2, 20], changes={'0': 1600})
-        self.assertEqual(bytes(plano['frame']).hex().upper(), '37330C01400664 00DC050200140018'.replace(' ', ''))
-
-    def test_kotlin_afirma_os_mesmos_literais(self):
+class QuadroDoKotlin(unittest.TestCase):
+    def test_kotlin_afirma_os_literais_do_original(self):
         kt = (ROOT / 'app/src/test/java/com/omegas/prohub/autocal/AntiStalloParamsCoreTest.kt').read_text(encoding='utf-8')
-        self.assertIn('37 33 0C 01 40 06 64 00 DC 05 02 00 14 00 18', kt)
-        self.assertIn('o primeiro byte NAO e 3B', kt)
+        for literal in ('14 33 01 00 08 07 57', '14 33 01 01 96 00 DF', '14 33 01 04 1E 00 6A', '14 33 01 00 40 06 8E'):
+            self.assertIn(literal, kt)
+        self.assertIn('NUNCA 37 nem 3B', kt)
+
+    def test_kotlin_monta_pelo_setnumber_indexado_e_nao_pelo_setvector(self):
+        kt = (ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt').read_text(encoding='utf-8')
+        self.assertIn('AutoCalProtocol.writeIndexedU16(ADDRESS, index, value)', kt)
+        self.assertNotIn('writeVectorU16', kt)
 
     def test_faixa_do_js_e_a_do_kotlin(self):
         kt = (ROOT / 'app/src/main/java/com/omegas/prohub/autocal/AntiStalloParamsCore.kt').read_text(encoding='utf-8')
@@ -116,33 +118,50 @@ class QuadroDoJs(unittest.TestCase):
 class FluxoNaEcuEmulada(unittest.TestCase):
     def fluxo(self, ecu, mudancas):
         antes = valores(ecu.responder(LEITURA))
-        plano = js(op='plan', before=antes, changes=mudancas)
-        self.assertTrue(plano['ok'], plano)
-        resposta = ecu.responder(bytes(plano['frame']))
+        depois = list(antes)
+        for k, v in mudancas.items():
+            depois[int(k)] = v
+        enviados = quadros(antes, depois)
+        respostas = [ecu.responder(q) for q in enviados]
         volta = valores(ecu.responder(LEITURA))
         veredito = js(op='verify', before=antes, changes=mudancas, readback=volta)
-        return plano, resposta, volta, veredito
+        return enviados, respostas, volta, veredito
 
     def test_editar_a_rotacao_fecha_o_ciclo(self):
         e = ecu_com(FABRICA)
-        plano, resposta, volta, veredito = self.fluxo(e, {'0': 1700})
-        self.assertEqual(resposta, bytes(plano['frame']) + ACK_VAZIO)
-        self.assertEqual(volta, [1700, 100, 1500, 2, 20])
+        enviados, respostas, volta, veredito = self.fluxo(e, {'0': 1800})
+        self.assertEqual([q.hex(' ').upper() for q in enviados], ['14 33 01 00 08 07 57'])
+        self.assertEqual(respostas, [q + ACK_VAZIO for q in enviados])
+        self.assertEqual(volta, [1800, 100, 1500, 2, 20])
         self.assertTrue(veredito['ok'])
 
     def test_so_o_campo_pedido_muda_os_outros_sao_preservados(self):  # SINTÉTICO
         e = ecu_com([1234, 99, 1400, 3, 21])
-        _, _, volta, _ = self.fluxo(e, {'2': 2000})
+        enviados, _, volta, _ = self.fluxo(e, {'2': 2000})
+        self.assertEqual(len(enviados), 1)
         self.assertEqual(volta, [1234, 99, 2000, 3, 21])
 
     def test_restaurar_fabrica_e_desfazer_voltam_byte_a_byte(self):
         e = ecu_com([1800, 100, 1500, 5, 20])
         original = e.responder(LEITURA)
-        _, _, volta, _ = self.fluxo(e, {'0': 1600, '3': 2})
+        enviados, _, volta, _ = self.fluxo(e, {'0': 1600, '3': 2})
+        self.assertEqual([q[3] for q in enviados], [0, 3])                 # um por campo, em ordem
         self.assertEqual(volta, FABRICA)
         _, _, volta2, _ = self.fluxo(e, {'0': 1800, '3': 5})           # desfazer
         self.assertEqual(volta2, [1800, 100, 1500, 5, 20])
         self.assertEqual(e.responder(LEITURA), original)
+
+    def test_falha_no_segundo_quadro_deixa_a_central_no_meio_e_o_desfazer_volta_so_o_gravado(self):
+        e = ecu_com(FABRICA)
+        q = quadros(FABRICA, [1600, 150, 1500, 2, 30])
+        self.assertEqual(e.responder(q[0]), q[0] + ACK_VAZIO)              # o 2º quadro "se perde": não chega à central
+        parcial = valores(e.responder(LEITURA))
+        self.assertEqual(parcial, [1600, 150, 1500, 2, 20])
+        self.assertFalse(js(op='verify', before=FABRICA, changes={'1': 150, '4': 30}, readback=parcial)['ok'])
+        desfazer = quadros(parcial, FABRICA)
+        self.assertEqual([x.hex(' ').upper() for x in desfazer], ['14 33 01 01 64 00 AD'])
+        e.responder(desfazer[0])
+        self.assertEqual(valores(e.responder(LEITURA)), FABRICA)
 
     def test_fora_da_faixa_nunca_vira_quadro(self):
         for i, maximo in enumerate([6000, 1000, 10000, 1000, 1000]):
@@ -152,25 +171,25 @@ class FluxoNaEcuEmulada(unittest.TestCase):
 
     def test_mesmo_valor_nao_ha_o_que_gravar(self):
         self.assertTrue(js(op='plan', before=FABRICA, changes={'0': 1600})['noop'])
+        self.assertEqual(quadros(FABRICA, FABRICA), [])
 
     def test_idempotente_repetir_o_mesmo_quadro(self):
         e = ecu_com(FABRICA)
-        q = quadro_estendido([1700, 100, 1500, 2, 20])
+        q = quadro_campo(0, 1700)
         r1 = e.responder(q); l1 = e.responder(LEITURA)
         r2 = e.responder(q)
         self.assertEqual((r1, l1), (r2, e.responder(LEITURA)))
 
     def test_mutacao_checksum_errado_a_ecu_nao_grava(self):
         e = ecu_com(FABRICA)
-        q = quadro_estendido([1700, 100, 1500, 2, 20])
+        q = quadro_campo(0, 1700)
         ruim = q[:-1] + bytes([(q[-1] + 1) & 0xFF])
         self.assertEqual(e.responder(ruim), ruim)
         self.assertEqual(valores(e.responder(LEITURA)), FABRICA)
 
     def test_mutacao_ordem_de_bytes_trocada_e_pega_pela_conferencia(self):
         e = ecu_com(FABRICA)
-        dados = bytearray(bytes5([1700, 100, 1500, 2, 20])); dados[0], dados[1] = dados[1], dados[0]   # big-endian por engano
-        corpo = bytes([0x37, 0x33, 12, 0x01]) + bytes(dados)
+        corpo = bytes([0x14, 0x33, 0x01, 0x00, 1700 >> 8, 1700 & 0xFF])   # big-endian por engano
         e.responder(corpo + bytes([soma(corpo)]))
         volta = valores(e.responder(LEITURA))
         self.assertNotEqual(volta, [1700, 100, 1500, 2, 20])
