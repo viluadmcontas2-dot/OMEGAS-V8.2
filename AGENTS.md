@@ -5,10 +5,10 @@ Este arquivo guarda só regras, um mapa e fatos já provados. Estado vivo fica n
 ## Autoridade e boot
 
 - **GitHub remoto é a autoridade técnica do OMEGAS:** código, Issues, specs, planos, WorkUnits, STATUS e evidências versionadas. Chat, Brainbase, AgentRed e MMMACHINE são superfícies de operação.
-- Boot obrigatório: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → Spec Kit ativo → WorkUnit ativa → Issues ligadas. Trabalho em andamento: `docs/handoff/OBSIDIAN-ENXUTO-CHECKPOINT-20261011.md`.
+- Boot obrigatório: `AGENTS.md` → `PROJECT.md` → `STATUS.md` → Spec Kit ativo → WorkUnit ativa → Issues ligadas. Trabalho em andamento: `docs/handoff/PENDENTE.md`.
 - Notion só como referência read-only de UX quando o dono pedir. Notion/Linear não controlam a execução.
 - `WORK_SURFACE=REMOTE` · `SOURCE_MUTATION_TARGET=GITHUB_REMOTE_API` · `LOCAL_SOURCE_MUTATION=DENIED` · `TEST_SURFACE=EPHEMERAL_RUNTIME|REMOTE_CI|DEVICE_WHEN_AUTHORIZED`
-- Antes de escrever e antes de concluir: resolver HEAD remoto de `OMEGASCANONICO` (branch canônica e padrão do GitHub desde 2026-10-20, criada a partir de `claude/carregar-sessao-r7j85r`; as outras são velhas — NÃO partir delas; lista em docs/handoff/PROMPT-SESSAO-NOVA.md), reconciliar movimento concorrente, nunca sobrescrever trabalho alheio. Runtime local/MMMACHINE pode testar ou inspecionar o SHA remoto exato, mas não é fonte de autoridade. Regras permanentes do dono (Graphify sempre, eficiência sem perder função, UI, travas de escrita): `docs/REGRAS-DO-DONO.md`.
+- Antes de escrever e antes de concluir: resolver HEAD remoto de `OMEGASCANONICO` (branch canônica e padrão do GitHub desde 2026-10-20, criada a partir de `claude/carregar-sessao-r7j85r`; as outras são velhas — NÃO partir delas; tabela em docs/archive/HANDOFF-2026-10.md), reconciliar movimento concorrente, nunca sobrescrever trabalho alheio. Runtime local/MMMACHINE pode testar ou inspecionar o SHA remoto exato, mas não é fonte de autoridade. Regras permanentes do dono (Graphify sempre, eficiência sem perder função, UI, travas de escrita): `docs/REGRAS-DO-DONO.md`.
 
 ## Método
 

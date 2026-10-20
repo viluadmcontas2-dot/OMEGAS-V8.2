@@ -76,13 +76,11 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 - **Falta:** Mapa K por sessão ainda não cruzado nó a nó com a gasolina.
 
 ## AutoMatch manual, buffers e sonda de escrita
-- No repo: docs/handoff/AUTOMATCH-MANUAL-2026-10-17.md
-- No repo: docs/handoff/D1-REFINO-AUTOMATICO-2026-10-18.md
+- No repo: docs/handoff/REFINO.md
 - No repo: app/src/main/java/com/omegas/prohub/autocal/BufferWriteProbeCore.kt
 
 ## Tudo por evento (nada por tempo) e regras do dono
 - No repo: docs/handoff/EVENTOS-SEM-TEMPO.md
-- No repo: docs/handoff/FECHAMENTO-2026-10-18.md
 - No repo: tests/test_sem_tempo_como_gatilho.py
 - No repo: AGENTS.md
 
@@ -105,7 +103,7 @@ Repo privado do protocolo: viluadmcontas2-dot/PROTOCOLO-LANDI (clonar com add_re
 ## Inventário do Drive
 - 1056 arquivos listados; 23 acima do limite do conector (10 MB):
   - VMOMEGAS/Landirenzo.rar (1138807320 bytes, id 1A6dlpRna3ey7hCrAIQ7Bq1OFS0ZAalg4)
-  - (busca global; pasta pai 1ZAHZWfDO_lpaqUylZuOkjTqhID4YHLNn, dono viluadmcontas@gmail.com)/PortmonAUTOCAL.LOG (162700984 bytes, id 1KzpWOG6Ou0DRgAeA-cOVOplB8ITB87YM)
+  - (busca global; pasta pai 1ZAHZWfDO_lpaqUylZuOkjTqhID4YHLNn, dono)/PortmonAUTOCAL.LOG (162700984 bytes, id 1KzpWOG6Ou0DRgAeA-cOVOplB8ITB87YM)
   - OMEGAS/SESSOES-zipadas-por-riqueza_rank001-mais-rica.zip (128434296 bytes, id 1SLwAKF7KoCKMJRgCos-HvJqrb3-hIzT6)
   - Apk /AZDOME_4.3.0.200.apk (122233044 bytes, id 1Pv_wfwLSk-dHuOGXxrFh77N3WD-c62UW)
   - Projetos Carro/Copy of AZDOME_4.3.0.200.apk (122233044 bytes, id 1cz6-S_g6YCe9VDBWA8c_nYWUQJjulfml)

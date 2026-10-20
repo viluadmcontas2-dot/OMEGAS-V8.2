@@ -8,7 +8,7 @@
 
 # OMEGAS — Status
 
-Canônica: **`OMEGASCANONICO`** (padrão do GitHub desde 2026-10-20). Plano vigente: `docs/handoff/PLANO-2026-10-16-inteligencia-ponta-a-ponta.md`. Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
+Canônica: **`OMEGASCANONICO`** (padrão do GitHub desde 2026-10-20). Plano vigente: `docs/handoff/REFINO.md` (plano 10-16 incluído; D1 superado). Evidência: `docs/evidence/2026-10-16-evidencia-arrancada-e-automatch.md`.
 
 ## Último APK (2026-10-18, v7: o app NÃO grava sozinho)
 
@@ -24,7 +24,7 @@ Canônica: **`OMEGASCANONICO`** (padrão do GitHub desde 2026-10-20). Plano vige
 - Artifact `omegas-vermelho-apk-bb7de818…` (id `12142657461`), 4.856.786 bytes, digest do ZIP `sha256:71284f041496a2d66153fe7831a6c7db969766591444bd006ec6f3cfd9a7e48a`. SHA do `app-debug.apk` interno: UNKNOWN.
 - Contém: D1 (refino automático após AutoMatch) com padrão **SOMBRA** (só calcula e registra `d1_decision`, nunca grava) e interruptor DESLIGADO/SOMBRA/LIGADO em Ferramentas (LIGADO exige toque duplo); sonda de escrita; `param_snapshot`; `autocal_pre_automatch_state`; conselho do AutoMatch manual; tudo do v5.
 - NÃO contém: correção do Mapa K por faixa de RPM, suavização separada, re-escala do Ledger.
-- Não validado no carro. Detalhes: `docs/handoff/D1-REFINO-AUTOMATICO-2026-10-18.md`.
+- Não validado no carro. Detalhes: `docs/handoff/REFINO.md`.
 
 ## Último APK (2026-10-18, v5: sonda de escrita + parâmetros reais + conselho do AutoMatch manual)
 
@@ -32,7 +32,7 @@ Canônica: **`OMEGASCANONICO`** (padrão do GitHub desde 2026-10-20). Plano vige
 - Artifact `omegas-vermelho-apk-015c33b6…` (id `12124129704`), 4.847.822 bytes, digest do ZIP `sha256:6b0a83cd9affc0604cd6a6e748ec89488a64f7be98d223f9884a02f10aa7e814`. O SHA-256 do `app-debug.apk` de dentro do ZIP não foi lido por este agente (UNKNOWN até alguém baixar o artefato).
 - Contém: sonda de escrita única nos pontos do GNV (Ferramentas, toque duplo); `param_snapshot` (33 parâmetros, só leitura) por conexão; `autocal_pre_automatch_state` antes de cada AutoMatch; conselho na nota do botão AutoMatch manual (regra provisória); tudo do v4.
 - NÃO contém: re-escala do Ledger por K (evidência contra: `docs/evidence/2026-10-18-pares-do-ledger-nao-seguem-o-k.md`), nem gravação automática (D1).
-- Não validado no carro: efeito da sonda, do AutoMatch manual e dos conselhos. Detalhes: `docs/handoff/AUTOMATCH-MANUAL-2026-10-17.md`.
+- Não validado no carro: efeito da sonda, do AutoMatch manual e dos conselhos. Detalhes: `docs/handoff/REFINO.md`.
 
 ## Último APK (2026-10-17, v4: AutoMatch manual de volta + sessão completa)
 

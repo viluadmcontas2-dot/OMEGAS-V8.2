@@ -79,7 +79,7 @@
   ],
   "portmon": [
    {
-    "caminho": "(busca global; pasta pai 1ZAHZWfDO_lpaqUylZuOkjTqhID4YHLNn, dono viluadmcontas@gmail.com)/PortmonAUTOCAL.LOG",
+    "caminho": "(busca global; pasta pai 1ZAHZWfDO_lpaqUylZuOkjTqhID4YHLNn, dono)/PortmonAUTOCAL.LOG",
     "id": "1KzpWOG6Ou0DRgAeA-cOVOplB8ITB87YM",
     "bytes": 162700984
    },
@@ -664,7 +664,7 @@
    "baixavel_pelo_conector": true
   },
   {
-   "caminho": "(busca global; pasta pai 1ZAHZWfDO_lpaqUylZuOkjTqhID4YHLNn, dono viluadmcontas@gmail.com)/PortmonAUTOCAL.LOG",
+   "caminho": "(busca global; pasta pai 1ZAHZWfDO_lpaqUylZuOkjTqhID4YHLNn, dono)/PortmonAUTOCAL.LOG",
    "id": "1KzpWOG6Ou0DRgAeA-cOVOplB8ITB87YM",
    "titulo": "PortmonAUTOCAL.LOG",
    "mime": "text/plain",

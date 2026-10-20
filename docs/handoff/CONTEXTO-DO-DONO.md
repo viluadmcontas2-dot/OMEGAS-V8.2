@@ -7,7 +7,7 @@ Dono do OMEGAS: leigo em programação ("vibe coder"), escreve rápido, erra ter
 O carro (GNV, central OMEGAS 4/MP48) APAGA ao pisar na embreagem: parando, dando ré, saindo de quebra-molas, reduzindo, saindo do lugar. APK v8 (commit eb8c9e8, run 39174963145) liga o ANTI-APAGÃO (botão manual). Só o carro confirma o efeito. 2º passo: modo "Segurar com gasolina na parada" (marcha lenta), troca 1200→1600 rpm só se a evidência das sessões apoiar.
 
 ## Pedidos permanentes (síntese cronológica das mensagens longas)
-1. APP NUNCA GRAVA SOZINHO: toda escrita na central = ação manual com 2 toques + leitura de volta + Desfazer. AutoMatch manual continua manual. O app só SUGERE.
+1. APP NUNCA GRAVA SOZINHO: toda escrita na central = ação manual com 1 toque (o toque é a ordem) + leitura de volta + Desfazer. AutoMatch manual continua manual. O app só SUGERE.
 2. NADA POR TEMPO: tudo por evento/gatilho (primeiro quadro válido, mudança de contagem, resposta da central, toque). Esperar a central = esperar RESPOSTA.
 3. INTERFACE DIDÁTICA, premium e leve, para quem nunca ouviu falar de GNV/ECU. Modelo de coerência: tela AutoCal (botão diz o que faz + estado escrito, 1 linha de apoio). Campo digitável com lápis; interruptor Ligado/Desligado; cartões por assunto; Sessões em aba própria; sem guia de termos na interface (auto-explicativa); zero jargão. Alvo: MULTIMÍDIA de carro, paisagem 1280x720/1024x600/800x480, alvos de toque grandes. Menos carga cognitiva: o app entrega funcionalidade, não carga.
 4. INTELIGÊNCIA POR TRÁS, interface enxuta (pensar como 2026): usar a telemetria para automatizar o que no original é manual — diagnóstico das sessões (onde apaga, por quê), sugerir anti-apagão/marcha lenta/troca, perfil da central (só oferecer o que ela suporta), leitura automática dos bins de RPM/injeção, Mapa K com 0 ms no ajuste local e bins personalizáveis (adicionar linha). Só o que for útil e didático; nunca encher o app.
@@ -19,7 +19,7 @@ O carro (GNV, central OMEGAS 4/MP48) APAGA ao pisar na embreagem: parando, dando
 10. Cobrir pontos cegos (ex.: simular a ECU), questionar o pedido, gravar aprendizados na memória (skills em .claude/skills).
 
 ## Onde está o resto
-AGENTS.md · docs/handoff/{PENDENTE,CONTRATO-CODEX,HANDOFF-CODEX}.md · docs/progbase/{RETOMAR,INDEX}.md (+PROGRESSO*.md por frente) · docs/mapa-de-fontes/MAPA.md · docs/manual/OMEGAS-guia-do-app.pdf · docs/evidence/ · STATUS.md · .claude/skills/{entender-dono,emular-por-observacao}.
+AGENTS.md · docs/README.md (índice) · docs/handoff/{PENDENTE,REFINO}.md · docs/progbase/{RETOMAR,INDEX}.md (+PROGRESSO*.md por frente) · docs/mapa-de-fontes/MAPA.md · docs/manual/OMEGAS-guia-do-app.pdf · docs/evidence/ · STATUS.md · .claude/skills/{entender-dono,emular-por-observacao}.
 
 
 ## Regra sem-atrito (2026-10-19)

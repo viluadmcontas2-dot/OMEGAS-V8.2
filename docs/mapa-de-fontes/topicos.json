@@ -106,8 +106,7 @@
     {
       "assunto": "AutoMatch manual, buffers e sonda de escrita",
       "repo": [
-        "docs/handoff/AUTOMATCH-MANUAL-2026-10-17.md",
-        "docs/handoff/D1-REFINO-AUTOMATICO-2026-10-18.md",
+        "docs/handoff/REFINO.md",
         "app/src/main/java/com/omegas/prohub/autocal/BufferWriteProbeCore.kt"
       ]
     },
@@ -115,8 +114,7 @@
       "assunto": "Tudo por evento (nada por tempo) e regras do dono",
       "repo": [
         "docs/handoff/EVENTOS-SEM-TEMPO.md",
-        "docs/handoff/FECHAMENTO-2026-10-18.md",
-        "tests/test_sem_tempo_como_gatilho.py",
+                "tests/test_sem_tempo_como_gatilho.py",
         "AGENTS.md"
       ]
     },

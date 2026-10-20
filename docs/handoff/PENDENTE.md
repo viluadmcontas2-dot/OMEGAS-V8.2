@@ -1,106 +1,76 @@
 # Pendente — ledger único (lido no início de cada sessão; atualizado a cada marco)
-> **Novo (2026-10-19):** engenharia reversa completa + funções de referência da AutoCal em Ferramentas: veja `docs/handoff/HANDOFF-ENGENHARIA-REVERSA-CODEX.md` (prioridade do Codex). Regra sem-atrito = 1 toque, sem confirmação (substitui "2 toques").
-> **PRIORIDADE 0 do Codex (2026-10-19):** `docs/handoff/CODEX-PROXIMA-RODADA.md` — anti-apagão adaptativo com todas as sessões reais, remover "Aprendizado de outro arquivo", melhorar exportação, teste de copy para leigo.
 
-## ESTADO VERIFICADO (2026-10-20) — ler isto primeiro
-- Branch `claude/carregar-sessao-r7j85r`, HEAD `bf276c5`; CI 1501 verde (6 jobs); APK v13 oficial (apk.yml run 39375479431, exige input `build_apk=true`), SHA256 `f93c92af...7e23`, entregue ao dono. Não provado no aparelho.
-- Anti-apagão grava em UMA chamada nativa (`applyAntiStalloFlag` / `applyAntiStalloValues`: ler→gravar→reler numa só etapa MANUAL_WRITE). Prepare/confirm ficou só como reserva da ponte.
-- REGRA DO DONO (vale mais que a linha antiga de "2 toques"): MÍNIMO DE ATRITO — 1 toque = ação feita; sem pergunta, sem 2º toque, sem janela, sem rolagem, nada por tempo. App nunca grava sozinho (o toque é a ordem).
-- 2026-10-20 (dono): NÃO quer sugestão em tempo real; basta eu ler os logs inteiros. Engasgos PARADOS (marcha lenta ~870 rpm) são abstração; valem só as interrupções EM MOVIMENTO. Feito: `tools/sessoes/limiares_em_movimento.py` → `docs/progbase/bins/limiares-em-movimento.{json,md}` (20 apagões em movimento em 12,3 h; Rotação máxima 1800 vê 20/20, a de fábrica 1600 vê 19/20, 1400 vê 15/20). A Queda de rotação e os 4 extras seguem SEM dado (unidade da central desconhecida). O app continua sem número fixo (decisão testada em `anti-apagao-sugestao.test.cjs`).
-- Foco seguinte (dono: "inteligência"): (1) sugestão ADAPTATIVA do anti-apagão recalculada a cada evento a partir das sessões reais do app (nunca sugerir diminuir se houve apagão em movimento); (2) separar apagão de motor desligado nos logs (17 quedas ambíguas); (3) simplificar/automatizar "Aprendizado" e melhorar exportação das sessões; (4) Codex (pausado) retoma com `CODEX-PROXIMA-RODADA.md`.
-- Pendências: APK na pasta OMEGAS do Drive (conector não sobe 4,9 MB; dono arrasta ou libera `gh release create`); teste CSS morto (TODO antigo); possível flake `leveza-orcamento` "200 trocas" (falhou 1x no CI, passou 3x local e no re-run — investigar se repetir).
+Regras permanentes: `docs/REGRAS-DO-DONO.md` e `AGENTS.md`. Quem é o dono e como pede: `CONTEXTO-DO-DONO.md`. Histórico de documentos antigos: `docs/archive/HANDOFF-2026-10.md`. Item feito sai daqui (fica no `git log`); nenhuma pendência aberta pode sumir sem ser feita ou bloqueada com causa.
 
-## REVISÃO DE CÓDIGO DO APP INTEIRO (2026-10-20, 3 revisores independentes, commit eb42e72)
-CORRIGIDO (com teste): fase "gravando" presa se o nativo erra; nova gravação sem toque depois de erro/ao voltar à aba; interruptor e 5 números gravando juntos;
-"—" em vez de 1600 quando o valor é desconhecido; sessão USB capturada no toque; `Error` não deixa mais "WRITING" preso nos escritores do anti-apagão;
-fila do motor serial esvaziada quando o motor para + escrita do dono que não começou falha se o link caiu (antes podia rodar minutos depois); R8 mantém as 4 pontes JS; a tela aceita só a chamada única.
-PENDENTE (não corrigido nesta rodada):
-- KWriteManager: se o "ativar K insertion" chega e a resposta falha, a saída segura 0x24 não é enviada (flag só vira true após o ACK). Mexe no Mapa K do dono: tratar em rodada própria com teste.
-- KWriteManager/KFactorManager: `busy` liberado duas vezes (a conferência em segundo plano pode apagar o ocupado de outra operação); "Gravado" publicado só com ACK (decisão do dono de 2026-10-19: confirmar se vale como exceção à regra "só depois da leitura de volta").
-- Mapa K compara `current` com o cache em arquivo, não com a central (curva K relê a central).
-- AntiStalloParamsCore aceita 0 como piso (DERIVADO); proposta: JS manda o `before` exibido e o nativo recusa se a leitura ao vivo diferir.
-- "Já está assim" abre janela "Aviso" (2º toque) — contra a regra sem atrito; mensagem deve ir na linha de estado.
+## Estado verificado (2026-10-20)
+- Branch canônica `OMEGASCANONICO`. Último APK oficial: v14, commit `404e83f`, `apk.yml` run 39435537729 (exige `build_apk=true`), SHA-256 `1abe83266aa25b31ea1173a03aade0e4ba53bb577115415ddec8d663511e3dc3`. CI de 6 jobs verde nesse commit. Não provado no aparelho (USB e WebView reais). Detalhes de APKs: `STATUS.md`.
+- Anti-apagão grava em UMA chamada nativa (`applyAntiStalloFlag` / `applyAntiStalloValues`: ler, gravar e reler numa só etapa MANUAL_WRITE). Prepare/confirm ficou só como reserva da ponte.
+- Regra sem atrito: 1 toque = ação feita (sem pergunta, 2º toque, janela, rolagem; nada por tempo). O app nunca grava sozinho; o toque é a ordem.
+- Anti-apagão em movimento (93 sessões, 12,3 h): 20 apagões. Rotação máxima 1800 vê 20/20; a de fábrica 1600 vê 19/20; 1400 vê 15/20 (`docs/progbase/bins/limiares-em-movimento.md`). Engasgos parados são abstração (dono). O app não tem número fixo (decisão testada em `anti-apagao-sugestao.test.cjs`).
+- Corpus completo: 177.457 leituras, 89 sessões com dados; 31 quedas, 28 paradas do motor (`docs/progbase/bins/apagoes-em-movimento.*`). Sem velocidade/chave, movimento e causa seguem desconhecidos.
+- Evidência de volta por pressão baixa: pressão normal do gás ≈ 2,3-2,5 bar; 8 das 28 trocas GNV para gasolina ocorreram com pressão muito abaixo (0,26 a 1,34 bar). O app registra nível e pressão a cada troca.
+
+## Prioridade 0 (dono: o carro apaga em movimento; inteligência, sem desperdiçar gasolina)
+- [ ] Sugestão ADAPTATIVA do anti-apagão, recalculada por evento (fim de sessão) com as sessões reais do app; nunca sugerir diminuir se houve apagão em movimento com valor menor; mostrar em linguagem leiga "o que mudou e por quê", 1 toque para usar, Desfazer. A recomendação constante foi retirada por falta de prova.
+- [ ] Semântica dos 4 extras do anti-apagão e unidade de "Queda de rotação" (rpm por ciclo = quanto?): sem dado, ficam "sem dado para sugerir". Provar com o código decompilado.
+- [ ] Separar apagão de motor desligado nos logs (17 quedas ambíguas).
+- [ ] Provar no fio o quadro `37 33 0C 01 ...` do anti-apagão (maior risco): pedir ao dono UMA captura do ProgBase original gravando os 5 números. Quadro de 10 bytes 0x37 nunca visto no fio: só a leitura de volta protege.
+- [ ] CORREÇÃO DE ESCOPO do dono: o cartão Anti-apagão deve ter INTERRUPTOR + UM número ("Rotação máxima para ativar", 1600 rpm) como no original (`docs/progbase/capturas/originais/LEIA-ME.md`); os outros 4 ficam recolhidos como experimental. Regra geral: só mexer no que foi visto funcionando nas telas do original. Confirmar no log o quadro da escrita do elemento 0 do vetor 307 (`14 33 01 00 lo hi cs`; 0 escritas `14 33 01` vistas).
+- [ ] Exportação de sessões em um toque, abrindo direto o resumo, com nome do carro e data (o ZIP já tem resumo HTML e JSON de análise; ainda usa seletor Android).
+- [ ] Copy para leigo: revisar todos os erros e avisos e os três tamanhos (1280x720, 1024x600, 800x480) em cada aba; ampliar `tests/ui/copy-sem-ambiguidade.test.cjs` (todo número diz de quê, sem sigla solta).
+- [ ] Validar integração Android e suíte completa na CI do SHA enviado. Nenhum novo APK sem ordem do dono.
+- [ ] APK na pasta OMEGAS do Drive: o conector não sobe 4,9 MB; o dono arrasta ou libera `gh release create`.
+
+## Revisão de código do app inteiro (2026-10-20, commit eb42e72): ainda aberto
+- KWriteManager: se o "ativar K insertion" chega e a resposta falha, a saída segura 0x24 não é enviada (flag só vira true após o ACK). Rodada própria com teste (mexe no Mapa K).
+- KWriteManager/KFactorManager: `busy` liberado duas vezes; "Gravado" publicado só com ACK (decisão do dono de 2026-10-19: confirmar se vale como exceção à regra "só depois da leitura de volta").
+- Mapa K compara `current` com o cache em arquivo, não com a central (a Curva K relê a central).
+- AntiStalloParamsCore aceita 0 como piso (DERIVADO): o JS manda o `before` exibido e o nativo recusa se a leitura ao vivo diferir.
+- "Já está assim" abre janela "Aviso" (2º toque): a mensagem deve ir na linha de estado.
 - Código morto do caminho antigo (fase `preview`, janelas "Gravar estes valores?", `data-adv-save`, `decodeFlags`) e superfície prepare/confirm no nativo: remover.
-- MainActivity: allowFileAccess + shouldOverrideUrlLoading só bloqueia não-file://; CoroutineScope solto; ~56 `catch` vazios. Espelho de sessões em Download/Omegas é público (privacidade).
-- Quadro 0x37 de 10 bytes ainda nunca visto no fio: só a leitura de volta protege.
+- MainActivity: `allowFileAccess`; `shouldOverrideUrlLoading` só bloqueia não-file://; CoroutineScope solto; ~56 `catch` vazios. O espelho de sessões em Download/Omegas é público (privacidade).
+- Possível flake `leveza-orcamento` "200 trocas" (falhou 1x no CI, passou 3x local e no re-run): investigar se repetir. Painel de Ferramentas regrava `data-mode/data-view` iguais; por isso 'tools' está fora do teste de leveza por ora.
+- Teste CSS morto (TODO antigo).
 
-## Agora (APK urgente: o carro apaga ao sair do lugar e ao parar/pisar na embreagem)
-- [ ] Interface para leigo na multimídia (paisagem 1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem jargão
-- [ ] Cartão "Anti-apagão" (ligar/desligar + 5 números editáveis, Restaurar fábrica) — fluxo: prévia, 2º toque, ACK, leitura de volta, Desfazer
-- [ ] Cartão "Marcha lenta" (Só gás / Segurar com gasolina na parada / Sempre gasolina na parada) — app só SUGERE
-- [ ] Leveza (orçamentos de nós/timers/renders) + testes e2e de toque verdes
-- [x] FEITO (eb8c9e8, run 39174963145): APK v8 gerado e entregue no chat → APK (verde-apk-now.yml) → STATUS.md v8 → enviar APK extraído ao Drive, pasta OMEGAS (id 1eK0IISPKFeY4FRaCDrYZcSY_zPLsWoIq), nome 'OMEGAS versão nova' (limite do conector: 10 MB; se maior, avisar o dono com o link do artefato da CI)
-- [ ] Limpar menções ao fabricante/legado do app/ (comentários, textos, nomes); pesquisa fica fora do app
+## Telas e interface
+- [ ] Interface leiga na multimídia (1280x720, 1024x600, 800x480): estilo da tela AutoCal, sem jargão. Em 1024x600 e 800x480 só Sessões e Ferramentas foram redesenhadas; AutoCal, Mapa K e Curva K cortam conteúdo (diagnóstico: `tools/ci/sem_rolagem_abas.cjs`).
+- [ ] AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU", "RPM" e "MAP" (o teste `linguagem-leiga` marca como todo): trocar por "central" e "Rotação".
+- [ ] Bug "Ferramentas vazia" no WebView real: a causa provável (carga preguiçosa) foi removida e há cartão de falha "Não foi possível abrir esta parte"; confirmar no aparelho.
+- [ ] AutoCal (multimídia): botão ao lado de cada zona para APAGAR os pontos daquela zona, 1 toque, sem confirmação; o balão de informação não pode ficar por cima ao alterar algo.
+- [ ] Cartão "Marcha lenta": hoje só leitura e sugestão. Escrita ainda não implementada (ver abaixo).
+- [ ] Leveza (orçamentos de nós, timers e renders) e testes e2e de toque verdes.
+- [ ] Limpar menções ao fabricante/legado em `app/` (comentários, textos, nomes); a pesquisa fica fora do app. Listar com `git grep -il "platina\|vermelho\|legado\|landi\|aeb"` e, para cada um, reescrever ou remover com teste de contrato (`tests/test_missao_final_contract.py`).
 
-## Depois do APK (visão do dono: inteligência por trás, interface enxuta)
-1. Graphify didático do ProgBase; cada nó de evidência carrega o evidence id do REA e o caminho do doc (um só índice: docs/progbase/INDEX.md → doc → evidence id → função/endereço). Teste de integridade: todo evidence id citado em docs existe no bundle exportado e todo nó do grafo aponta para um arquivo existente (aba → controle → comando → resposta → evidência → equivalente no app)
-2. Cobertura: % do original já reconstruído (funções/abas/comandos) e backlog só do que falta
-3. Perfil da central: identificar modelo/versão da ECU e só oferecer/enviar o que ela suporta (MASK_FUNCTION, NACK `CA` como sinal)
-4. Diagnóstico inteligente: analisa a sessão, acha onde apaga, sugere (nunca aplica sozinho) anti-apagão, marcha lenta, saída do corte
-5. Auditoria REA da decompilação (verify_reconstruction, audit_residual_unknowns) + cópia de docs/progbase para o Drive (PROTOCOLO-LANDI) + enxugar repo/CI/testes (ponytail-audit). Codex volta ~23:55: usar ao máximo.
-6. Memória entre sessões: cada marco grava aprendizados (skills em .claude/skills, este arquivo)
+## Marcha lenta: escrita (próxima versão)
+Provado no emulador (`tools/emulacao/cpu_setter_original.py --modo-lenta`, RadioGasClick 0x4BFAD8; ECU do dono 80D=0):
+- Gás:      `35 03 00 86 24 51 10 43 ; 14 A1 00 00 00 00 B5`
+- Volta:    `35 03 00 86 24 51 10 43 ; 14 A1 00 00 4C 04 05`
+- Gasolina: `35 03 00 86 24 51 11 44 ; 14 A1 00 00 4C 04 05` (bit = 0x0100 da palavra 1, NÃO 0x0400)
+w0/w1 do FLAG_CONF1 e GIRI[1] são preservados; GIRI vai por indexado 0x14 só no elemento 0. O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
+- [ ] Falta: `IdleModeCore`/`Writer` (Kotlin; ordem: rpm 0 para 1100 primeiro, 1100 para 0 bit primeiro; 2ª falha = PARTIAL + Desfazer), fluxo JS, ponte, testes JUnit/ECU emulada.
 
-- [ ] Workflows novos sem legado (ci.yml + apk.yml) + tools/auditoria.py + AUDITORIA.json no job grafo (CONTRATO-CODEX §6)
+## Cartões, bins e velocidade (detalhes em `PROGRESSO-CARTOES.md`)
+- [ ] Volta automática à gasolina: a caixa F4 não é bit de FLAG_CONF1; tempo = SC 62 u8. Decodificar `CheckRitornoBenzinaClick` 0x4A9484 e `EditBassaPressioneMpKeyPress` 0x4C526C (Unicorn) antes de gravar. Limiar 1,25 bar: a hipótese do dono (baixar para ~1,0 bar) é plausível; o cartão permite editar.
+- [ ] Bins do Mapa K: RPM = SC 61 (`14 3D 00 idx lo hi`); vetor das linhas de ms NÃO provado (SC 120 é MAP_ESTERNO). Janela "Centros das células" (12 rpm x 12 ms, OK/Cancelar), teste "A central aceitou 0 ms" (capturar no original); bins personalizáveis (0 ms no ajuste local, adicionar linha) como no original (TFormRiferimenti, TFormCentriCelle/K, TFormRifAutocal).
+- [ ] Velocidade da Curva K/Mapa K: Curva K em 1 quadro de vetor 0x37 (32 para 3 transações, -90%) e repetição por evento em erro de ACK; precisa de OK do dono e ECU real (`PROGRESSO-CARTOES.md`, `tools/emulacao/simular_gravacao_k.py`).
 
-## Regras permanentes
-App nunca grava sozinho (o toque do dono é a ordem; 1 toque + leitura de volta, sem 2º toque). Nada por tempo. Não burlar licença. Não versionar .exe/DLL. Sem segredos.
+## Engenharia reversa e rastreabilidade
+- [ ] Funções em aberto: 0x4A9484 e 0x4C526C; função gigante 0x00439E94 (289 KB); aba B; separar as 2.329 funções do programa das 7.132 sem nome (biblioteca Delphi). REA estoura 60 s no `ProgBase.exe`: usar Ghidra em segundo plano.
+- [ ] Log novo `omegasaudit.LOG` (97 MB, ~810 mil eventos) e capturas do original (Drive, CAPTURAS ORIGINAIS): fixtures, pareamento requisição/resposta, matriz comando x resposta nova, contraste REA, `PerfilCentral` (o app só oferece o que a central suporta; NACK `CA` como sinal). Não versionar o LOG bruto; achados em `docs/progbase/bins/LOG-NOVO-omegasaudit-achados.md`.
+- [ ] Evidence ids `EV-<área>-<nnn>` em `docs/progbase/evidencias/INDEX.json` + teste de CI (id citado inexistente, id sem fonte, INFERIDO usado como fato na interface); `graphify update .` + `tools/grafo_conhecimento.py` + `tools/progbase/grafo_progbase.py`; cobertura 100% do ProgBase (`COBERTURA.md`) e réplica fiel dos comandos úteis ao app.
+- [ ] Contrato de coerência por função (Ferramentas, Anti-apagão, Marcha lenta, AutoCal, Mapa K, Curva K, Sessões): JS/Kotlin, ponte, comando, resposta, estado na tela; e2e tipo WebView (scripts em ordem, sem cache, `console.error` = falha); estado visível ("Central conectada / lendo / sem resposta / não suportada"); CI falha se faltar elo. Nenhuma aba abre vazia.
+- [ ] Funções de referência da AutoCal em Ferramentas, cartão a cartão no padrão do anti-apagão (só o que o dono viu funcionar entra; o resto recolhido como experimental).
+- [ ] Mock-up didático do original (`docs/progbase/explorar/index.html`, gerado por `tools/progbase/gerar_explorar.py`), ECU simulada ligada ao original (porta serial virtual com `tools/emulacao/ecu_emulator.py`), guia curto do app (1 página por tela; "Carro apagando" com UMA sequência), manuais públicos (MAN-*) no grafo.
+- [ ] Diagnóstico inteligente: analisa a sessão, acha onde apaga, sugere (nunca aplica sozinho) anti-apagão, marcha lenta e saída do corte. Perfil da central (modelo/versão da ECU, MASK_FUNCTION).
+- [ ] Docs sem duplicatas: um .md por assunto (auditar com `tools/auditoria.py`); enxugar repo/CI/testes (`ponytail-audit`).
 
-## Marcha lenta — escrita (próxima versão)
-# PENDENTE — escrita da Marcha lenta (não implementada)
-Provado no emulador (tools/emulacao/cpu_setter_original.py --modo-lenta, RadioGasClick 0x4BFAD8 executado; ECU do dono 80D=0):
-- Gás:      35 03 00 86 24 51 10 43 ; 14 A1 00 00 00 00 B5
-- Volta:    35 03 00 86 24 51 10 43 ; 14 A1 00 00 4C 04 05
-- Gasolina: 35 03 00 86 24 51 11 44 ; 14 A1 00 00 4C 04 05   (bit = 0x0100 da palavra 1, NÃO 0x0400)
-(w0/w1 do FLAG_CONF1 e GIRI[1] são preservados; GIRI vai por indexado 0x14 só no elemento 0.)
-Falta: IdleModeCore/Writer (Kotlin, ordem: rpm 0->1100 primeiro, 1100->0 bit primeiro; 2ª falha = PARTIAL + Desfazer), flow JS, ponte, testes JUnit/ECU emulada.
-O handler original NÃO confere a 1ª gravação antes da 2ª (provado).
+## Ideias herdadas (não verificadas se já feitas)
+- [ ] Experimento do dono dirigindo: K nos nós 0-3 (3 valores x ~20 retomadas pós-corte) para provar se K evita o apagão; sessão nova pedindo "Ler mapa K" para o mapa ideal absoluto.
+- [ ] Equivalência % por nó x rpm (backend + painel) e re-escala K_novo/K_velho no Ledger (depois do OK do mockup 3; mockups 1/2/3 do dono ainda sem OK: AutoCal sem Curva K; cursor AGORA + gravar ao tocar +/-; painel do Refino).
+- [ ] Mapa K perto de 255: propor renormalização (base 100) com a curva absorvendo o ganho; 1 toque, cópia antes, Desfazer, "Gravado" só com readback; semântica do Mapa K (neutro 100 ou 128?) com dado do carro ou `TFormModificaMappa`.
+- [ ] Atribuição por RPM do Refino (`EquivalenceAttribution`) na tela do AutoCal, sem leitura anterior (prévia PNG antes).
+- [ ] Perguntas em aberto: a lenta rica (-14%) é efeito da curva (nós 0-3) ou do Mapa K na 1ª linha? Quantos AutoMatches a ECU faz com o AutoCal religado após refino nosso (3 ou 4)?
+- [ ] Segunda conta do Codex (segredo `CODEX_AUTH_JSON_B64_2`, opcional). Apagar as branches `apagar/*` só com ok do dono.
 
-## Depois do APK (UX leigo, 2026-10-18)
-- AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU" e "RPM"/"MAP" (teste `linguagem-leiga` marca como todo). Trocar por "central"/"Rotação".
-- 1024x600 e 800x480: só Sessões e Ferramentas foram redesenhadas; AutoCal/Mapa K/Curva K cortam conteúdo nesses tamanhos (diagnóstico em `tools/ci/sem_rolagem_abas.cjs`).
-- Marcha lenta: só leitura + sugestão; gravar o modo fica pendente (escrita não implementada).
-- Faixas do anti-apagão: máximo do DFM (OBS-COD), piso 0 (DERIVADO), ordem campo→posição INFERIDA; aviso "Longe do valor de fábrica" a ±50% (INFERIDO).
-- Kotlin (AntiStalloParamsCore/Writer + testes JUnit): compilados e rodados localmente (40 testes) com kotlinc 2.0.21; Gradle/lint só na CI.
-- Antigos testes do Avançado (avancado-painel-dom, e2e-avancado-toque) foram substituídos por ux-fluxo-toque e campos-editaveis (mesmas garantias na nova tela).
-
-## Limpeza e costura (Codex) — NÃO apagar às cegas
-- [ ] Listar com `git grep -il "platina\|vermelho\|legado\|landi\|aeb"` os .md/workflows/testes/nomes legados; para cada um: reescrever (se útil) ou remover (se obsoleto), sempre com teste de contrato atualizado (tests/test_missao_final_contract.py)
-- [ ] Mover documentação de pesquisa do fabricante para docs/progbase; app/ sem menção ao fabricante
-- [ ] Mock-up didático (CONTRATO-CODEX §9) · ECU simulada no original (§1) · guia curto (§3) · workflows novos + auditoria (§6) · marcha lenta gravável · diagnóstico inteligente · bins do Mapa K
-- [ ] Graphify: rodar `graphify update .` + tools/grafo_conhecimento.py + tools/progbase/grafo_progbase.py; INDEX.md com evidence ids (REA + MAN-); REA verify_reconstruction (bloqueado por timeout no .exe: usar CLI em segundo plano)
-
-- [ ] Branches: legadas renomeadas para apagar/* (Codex, ordem do dono); depois que o Codex principal terminar, renomear a branch atual para um nome semântico (ex.: OmegasEsmeralda), parar o autocommit/Codex antes, `git branch -m`, atualizar upstream e a variável de branch nos scripts
-
-- [ ] PRIORIDADE 1: bins de RPM/injeção personalizáveis (original × OMEGAS; 0 ms no ajuste local; adicionar linha) — ver CODEX-AUTONOMO.md
-- [ ] PRIORIDADE 2: README profissional + docs/README.md + estrutura enxuta
-
-- [ ] PRIORIDADE 0: log novo omegasaudit.LOG (97 MB, ~810 mil eventos) + capturas do original (Drive CAPTURAS ORIGINAIS): fixtures, matriz comando×resposta, contraste REA, PerfilCentral (app só oferece o que a central suporta)
-
-## Retroativo + contratos (pedido do dono 2026-10-19; Claude com poucos tokens → Codex executa)
-- [ ] Log novo: fixtures + pareamento req→resp + matriz nova (docs/progbase/bins/LOG-NOVO-omegasaudit-achados.md tem os 1ºs achados: anti-apagão OBS-FIO; bins RPM = vetor 0x3D por elemento)
-- [ ] CONTRATO DE COERÊNCIA (retroativo): para CADA função do app (Ferramentas, Anti-apagão, Marcha lenta, AutoCal, Mapa K, Curva K, Sessões): arquivo JS/Kotlin → ponte → comando → resposta → estado na tela; teste e2e no WebView-like (scripts em ordem, sem cache, console.error = falha) + diagnóstico visível no app (estado claro: 'Central conectada / lendo / sem resposta / não suportado por esta central'). Nenhuma aba pode abrir vazia: erro de módulo mostra cartão de falha com 'Tentar de novo'. Gerar o grafo função→ponte→comando→teste no Graphify e falhar a CI se faltar elo.
-- [ ] Bug: aba Ferramentas vazia no WebView real (docs/handoff/PROMPT-CORRECAO-TELA-FERRAMENTAS.md; GPT já mexeu em tools: commit 3e844c2)
-- [ ] AutoCal (multimídia): botão ao lado de cada zona para APAGAR os pontos daquela zona, 1 toque, sem confirmação, limpo; balão de informação não pode ficar por cima ao alterar algo
-- [ ] Manuais públicos referenciados no grafo (MAN-*), docs sem duplicatas: um .md por assunto, sem arquivos repetidos/contraditórios (auditar docs/ com tools/auditoria.py)
-- [ ] Meta: 100% de cobertura do ProgBase (COBERTURA.md) e réplica fiel dos comandos úteis ao app
-
-- [ ] CORREÇÃO DE ESCOPO (dono, vendo as capturas): o cartão Anti-apagão do app deve ter INTERRUPTOR + UM número ('Rotação máxima para ativar', 1600 rpm), como no original (docs/progbase/capturas/originais/LEIA-ME.md). Remover da interface os outros 4 números (não existem na tela original; não foram vistos funcionando). Regra geral do dono: só mexer no que foi visto funcionando nas telas do original. Testes: card mostra 1 campo; escrita do elemento 0 do vetor 307 (`14 33 01 00 lo hi cs`) com 2 toques+readback — CONFIRMAR o quadro no log antes (o dono não editou o número no log; 0 escritas `14 33 01`).
-- [ ] Bins: dar ao Mapa K a janela 'Centros das células' (12 rpm × 12 ms editáveis, OK/Cancelar) e testar se o original aceita 0 ms (capturar).
-- [x] 2026-10-19 (dono): APK com cartões novos (Anti-apagão 1 número + extras experimentais, Volta automática para gasolina, bins no Mapa K com teste de aceitação 0 ms por leitura de volta), SEM carga sob demanda de telas, gravação rápida Mapa K/Curva K, nível do gás+pressão registrados — agentes em PROGRESSO-CARTOES.md e PROGRESSO-VELOCIDADE.md
-- Evidência 'volta por pressão baixa' (log novo): byte de nível (13) = 125 em TODAS as 14 932 amostras (tanque cheio) e pressão ≥ ~1,97 bar (limiar do dono 1,25 bar) → este log NÃO tem volta por pressão baixa; falta sessão com tanque na reserva. O app passa a registrar nível+pressão+rpm no instante de cada troca gás→gasolina.
-- [x] EVIDÊNCIA volta por pressão baixa (corpus de 89 sessões, tools/sessoes/corpus.py): pressão normal do gás em GNV ≈ 2,3–2,5 bar (p5=2,30). Das 28 trocas GNV→gasolina, 8 ocorreram com pressão MUITO abaixo do normal (0,26; 0,48; 0,58; 0,70; 0,93; 1,07; 1,28; 1,34 bar; sessões 080, 071, 056) = a função 'Automatic change back to petrol' (limiar do dono 1,25 bar). Correção da nota acima: o log novo é de tanque cheio, mas o corpus TEM o caso. Hipótese do dono plausível: baixar o limiar (ex.: 1,25→1,0 bar) segura o gás mais tempo na reserva; o cartão novo permite editar; o app registra nível+pressão a cada troca.
-
-## Cartões Anti-apagão / Volta à gasolina / Bins (2026-10-19) — detalhes em PROGRESSO-CARTOES.md
-- Volta automática à gasolina: caixa F4 não é bit de FLAG_CONF1 (o 0x0040 da palavra 1 é "pressão baixa impostável"); decodificar CheckRitornoBenzinaClick 0x4A9484 e EditBassaPressioneMpKeyPress 0x4C526C (Unicorn) antes de gravar. Tempo = SC 62 u8.
-- Bins K: RPM = SC 61 (`14 3D 00 idx lo hi`); linhas de ms: vetor NÃO provado (SC 120 é MAP_ESTERNO). Editar só RPM quando o escritor do Mapa K estiver livre; teste "A central aceitou 0 ms".
-- Nível do gás e pressão no estado + evento `voltou_para_gasolina` nas sessões.
-- [ ] Velocidade Curva K/Mapa K: Curva K em 1 quadro de vetor 0x37 (32 -> 3 transações, -90%) e repetir sozinho por evento em erro de ACK; precisa OK do dono + ECU real. Veja docs/handoff/PROGRESSO-VELOCIDADE.md e tools/emulacao/simular_gravacao_k.py.
-
-## Rodada Codex 2026-10-19 — worktree wip-codex
-- [x] Corpus completo analisado: 177.457 leituras, 89 sessões com dados + quatro vazias; 31 quedas, 28 paradas do motor. Relatório/JSON: `docs/progbase/bins/apagoes-em-movimento.*` (bf3dddf). Sem velocidade/chave, movimento e causa continuam desconhecidos.
-- [x] Removido aprendizado de outro arquivo (UI, ponte, atividade, serviço e importador); cópia única inclui aprendizado atual (5963e7d). Teste Chromium 2/2; capturas nos três tamanhos.
-- [x] Núcleo observa quedas por leitura e fecha análise com a sessão; resultado em Ferramentas, evento e arquivos exportados (9349a1e). Replay Kotlin 5/5, incluindo corpus completo. Sem escrita automática.
-- [ ] Adaptação **numérica**: não concluída. A recomendação constante era indevida (reduzia ajustes sem conhecer falhas). Foi retirada. Falta semântica provada dos extras e evidência causal para recomendar um novo número sem desperdiçar gasolina.
-- [ ] Exportação em um toque com abertura direta e nome do carro: o ZIP existente ganhou resumo HTML e JSON de análise; ainda usa seletor Android e não abre diretamente o resumo.
-- [ ] Copy completa de todos os estados: teste ampliado cobre seis abas e promessas indevidas; falta revisar todos os erros/avisos e os demais tamanhos em cada aba.
-- [ ] Validar integração Android e suíte completa na CI do SHA enviado. Nenhum novo APK autorizado nesta rodada.
+## Fora de escopo agora
+Teto por ponto no Refino, API do Claude dentro do app, apagamento automático fora da exceção das regras, backup automático em gravação manual, tela nova sem mockup aprovado, mudança de bytes da ECU, APK antes do fim.
