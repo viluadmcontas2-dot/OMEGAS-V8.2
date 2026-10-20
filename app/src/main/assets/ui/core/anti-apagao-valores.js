@@ -14,28 +14,40 @@
   // Rótulos e unidades do ORIGINAL (i18n 963-970): "Max RPM to enable un-stalling" (rpm), "Delta RPM to enable" (rpm/ciclo),
   // "Delay to exit gas mode" (ms), "Hysteresis for enabling threshold" (rpm/ciclo), "Delta RPM to disenable" (rpm/ciclo).
   // Evidência de uso (OBS-FIO, log novo): com a função ligada a rotação pós-corte nunca caiu de 600 rpm (desligada: 26 vezes, mín. 447).
+  // Copy em 3 linhas (dono, 2026-10-20): `what` = o que é; `effect` = efeito de aumentar/diminuir SÓ quando a evidência sustenta
+  // (null = "não comprovado": docs/progbase/protocolo/anti-apagao-quadros-original.md §4 diz efeito DESCONHECIDO nos 4 extras); a faixa sai de range().
+  // Rotação máxima: rótulo do original "Max RPM to enable" (OBS-COD) + logs (docs/progbase/bins/limiares-em-movimento.md: subir de 1600 a
+  // 1800 vê 20 de 20 apagões em vez de 19, e passa de 187 a 222 acionamentos à toa por hora).
   const FIELDS = [
-    { index: 0, tab: 'Rotação máx.', short: 'Só entra abaixo desta rotação.', hintUp: 'Ainda apaga? Aumente.', hintDown: 'Segura gasolina à toa? Diminua.', label: 'Rotação máxima para agir', unit: 'rpm', min: 0, max: 6000, factory: 1600, step: 50,
-      help: 'O anti-apagão só entra com o motor ABAIXO desta rotação (parado, marcha lenta, manobra). Acima dela, em aceleração normal, ele não interfere.',
-      tipUp: 'Ainda apaga ao pisar na embreagem? Aumente de 50 em 50 e teste.',
-      tipDown: 'Segura a gasolina sem precisar? Diminua de 50 em 50.' },
-    { index: 1, tab: 'Queda p/ agir', short: 'Velocidade da queda que ativa.', hintUp: 'Sem dado para sugerir.', hintDown: 'Efeito ainda não confirmado.', label: 'Queda de rotação para agir', unit: 'rpm', min: 0, max: 1000, factory: 100, step: 5,
-      help: 'Mede a VELOCIDADE da queda: a rapidez com que o motor perde rotação. A escala interna ainda não foi confirmada. Se a rotação cair mais rápido que isso (embreagem, parada, depois de um corte), a proteção entra. Queda lenta não ativa.',
-      tipUp: 'Ainda não há dados para recomendar aumento.',
-      tipDown: 'Ainda não há dados para recomendar redução.' },
-    { index: 2, tab: 'Espera', short: 'Espera para sair do gás.', hintUp: 'Sem dado para sugerir.', hintDown: 'Efeito ainda não confirmado.', label: 'Espera para sair do gás', unit: 'ms', min: 0, max: 10000, factory: 1500, step: 100,
-      help: 'Tempo de espera para a central sair do modo gás quando a proteção age (original: "Delay to exit gas mode"). 1.000 ms = 1 segundo.',
-      tipUp: 'Ainda não há dados para recomendar aumento.',
-      tipDown: 'Ainda não há dados para recomendar redução.' },
-    { index: 3, tab: 'Folga', short: 'Evita ligar e desligar à toa.', hintUp: 'Sem dado para sugerir.', hintDown: 'Efeito ainda não confirmado.', label: 'Folga para não ficar trocando', unit: 'rpm', min: 0, max: 1000, factory: 2, step: 5,
-      help: 'Margem, medida na mesma escala da queda, para a proteção não ligar e desligar por oscilação pequena perto do limite.',
-      tipUp: 'Ainda não há dados para recomendar aumento.',
-      tipDown: 'Ainda não há dados para recomendar redução.' },
-    { index: 4, tab: 'Queda p/ parar', short: 'Quando a queda acalma, solta.', hintUp: 'Sem dado para sugerir.', hintDown: 'Efeito ainda não confirmado.', label: 'Queda para parar de agir', unit: 'rpm', min: 0, max: 1000, factory: 20, step: 5,
-      help: 'Ajuste experimental ligado ao fim da proteção. Ainda não há prova suficiente para orientar a mudança.',
-      tipUp: 'Ainda não há dados para recomendar aumento.',
-      tipDown: 'Ainda não há dados para recomendar redução.' },
+    { index: 0, tab: 'Rotação máx.', short: 'Só age com o motor abaixo destes giros.', what: 'Só age com o motor abaixo destes giros.',
+      effect: 'Se aumentar: protege em mais quedas, mas age mais vezes à toa. Se diminuir: age menos e pode deixar apagar.',
+      hintUp: 'Ainda apaga? Aumente.', hintDown: 'Age à toa? Diminua.', label: 'Rotação máxima para agir', unit: 'rpm', min: 0, max: 6000, factory: 1600, step: 50,
+      help: 'O anti-apagão só age com o motor ABAIXO destes giros (parando, marcha lenta, manobra). Acima disso, acelerando normal, ele não interfere. Nos seus logs, 1.800 pegaria todos os 20 apagões em movimento; 1.600 pega 19.',
+      tipUp: 'Ainda apaga ao pisar na embreagem? Aumente de 50 em 50 e teste. Ele vai agir mais vezes.',
+      tipDown: 'Segura a gasolina sem precisar? Diminua de 50 em 50. Ele vai agir menos.' },
+    { index: 1, tab: 'Queda p/ agir', short: 'Rapidez da queda dos giros que liga a proteção.', what: 'Rapidez da queda dos giros que liga a proteção.', effect: null,
+      hintUp: 'Efeito não comprovado.', hintDown: 'Efeito não comprovado.', label: 'Queda de rotação para agir', unit: 'rpm', min: 0, max: 1000, factory: 100, step: 5,
+      help: 'Não é um número de giros: é a VELOCIDADE com que os giros caem. É a mesma conta do número "queda" que o programa original mostra no rodapé. Pelo nome no original, a proteção entra quando a queda é mais rápida que este número. Ainda não sei exatamente o efeito de mudar. Não mude sem necessidade.',
+      tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
+      tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
+    { index: 2, tab: 'Espera', short: 'Tempo para a central sair do gás.', what: 'Tempo que a central espera para sair do gás.', effect: null,
+      hintUp: 'Efeito não comprovado.', hintDown: 'Efeito não comprovado.', label: 'Espera para sair do gás', unit: 'ms', min: 0, max: 10000, factory: 1500, step: 100,
+      help: 'Tempo de espera para a central sair do gás quando a proteção age (no original: "Delay to exit gas mode"). 1.000 ms = 1 segundo. Nos seus logs, o motor fica abaixo de 700 giros por até 2 s em 9 de cada 10 quase-apagões. Ainda não sei exatamente o efeito de mudar. Não mude sem necessidade.',
+      tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
+      tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
+    { index: 3, tab: 'Folga', short: 'Margem para não ficar liga-desliga.', what: 'Margem para a proteção não ficar liga-desliga.', effect: null,
+      hintUp: 'Efeito não comprovado.', hintDown: 'Efeito não comprovado.', label: 'Folga para não ficar trocando', unit: 'rpm', min: 0, max: 1000, factory: 2, step: 5,
+      help: 'Margem, na mesma conta da queda, para a proteção não ligar e desligar por qualquer oscilação pequena perto do limite. Ainda não sei exatamente o efeito de mudar. Não mude sem necessidade.',
+      tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
+      tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
+    { index: 4, tab: 'Queda p/ parar', short: 'Queda lenta abaixo disto: a proteção solta.', what: 'Quando a queda dos giros fica mais lenta que isto, a proteção solta.', effect: null,
+      hintUp: 'Efeito não comprovado.', hintDown: 'Efeito não comprovado.', label: 'Queda para parar de agir', unit: 'rpm', min: 0, max: 1000, factory: 20, step: 5,
+      help: 'Na mesma conta da queda: pelo nome no original, quando os giros param de cair rápido (a queda fica menor que este número), a proteção solta e o motor volta ao normal. Ainda não sei exatamente o efeito de mudar. Não mude sem necessidade.',
+      tipUp: 'Ainda não sei o efeito de aumentar. Não mude sem necessidade.',
+      tipDown: 'Ainda não sei o efeito de diminuir. Não mude sem necessidade.' },
   ];
+  /** Linha 2 quando o efeito não está provado (dono, 2026-10-20): o cartão continua visível, com a etiqueta "não comprovado". */
+  const UNPROVEN = 'Ainda não sei exatamente o efeito. Não mude sem necessidade.';
   const COUNT = FIELDS.length;
   const FACTORY = FIELDS.map(f => f.factory);
   // <SUGESTAO:INICIO> gerado de docs/progbase/bins/sugestao-antiapagao-carro-do-dono.json (tools/sessoes/gerar_sugestao_js.py); um teste confere os dois.
@@ -277,7 +289,7 @@
   }
 
   ns.AntiApagaoValores = {
-    ADDRESS, FIELDS, FACTORY, SUGESTAO, suggestionChanges, COUNT, TEXT, valuesOf, parseInput, validate, plan, verifyReadback, factoryChanges, frameFor, hex: hexBytes, partialText,
+    ADDRESS, FIELDS, FACTORY, UNPROVEN, SUGESTAO, suggestionChanges, COUNT, TEXT, valuesOf, parseInput, validate, plan, verifyReadback, factoryChanges, frameFor, hex: hexBytes, partialText,
     secondsText, farFromFactory, range, num, createValuesFlow,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -458,6 +458,11 @@
 #toolAdvanced .grp-line { margin: 2px 0 0; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 #toolAdvanced .grp-unit { font-size: 16px; color: var(--muted); }
 #toolAdvanced .grp-hint { margin: 0; font-size: 15px; line-height: 1.2; color: var(--muted); }
+/* Linha 2 (efeito) e 3 (faixa) dos cartões de grupo (dono, 2026-10-20). "não comprovado" é etiqueta visível, nunca escondida. */
+#toolAdvanced .grp-effect { margin: 0; font-size: 15px; line-height: 1.25; color: var(--text); }
+#toolAdvanced .grp-effect[data-proof="nao"] { color: var(--muted); }
+#toolAdvanced .grp-tag { display: inline-block; margin-right: 4px; padding: 0 6px; border-radius: 6px; border: 1px solid #c9a227; color: #e6c35c; font-size: 13px; font-weight: 800; line-height: 1.5; vertical-align: 1px; }
+#toolAdvanced .grp-range { margin: 0; font-size: 14px; line-height: 1.2; color: var(--muted); }
 #toolAdvanced .grp-ro { margin-top: auto; align-self: flex-start; padding: 2px 8px; border-radius: 8px; border: 1px solid var(--line); font-size: 15px; font-weight: 700; color: var(--muted); }
 #toolAdvanced .grp-read[data-state="on"] .grp-val { color: var(--ok); }
 #toolAdvanced .grp-card.tool-tile { border-width: 1px; }
@@ -479,5 +484,5 @@
 @media (max-height: 520px) {
   #toolAdvanced .grp-view { gap: 6px; }
   #toolAdvanced .grp-head .grp-status { font-size: 15px; }
-  #toolAdvanced .grp-card .num-meta { display: none; }
+  #toolAdvanced .grp-card .num-meta, #toolAdvanced .grp-range { display: none; }
 }

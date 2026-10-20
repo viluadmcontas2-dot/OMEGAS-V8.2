@@ -38,8 +38,9 @@
     const valuesState = values ? (values.every((v, i) => v === V.FACTORY[i]) ? 'De fábrica' : 'Mudados') : DASH;
 
     const cards = [
-      { id: 'anti', kind: 'switch', title: 'Anti-apagão', line: 'Ao pisar na embreagem, ajuda a evitar apagões.', shortLine: 'Ajuda ao pisar na embreagem.', on: anti, stateText: stateOf(anti), rows: [], tech: [techBit('FLAG_CONF3', 0, A.ANTI_MASK, 'Anti-apagão')] },
-      { id: 'valores', kind: 'values', title: 'Valores do anti-apagão', line: 'Limites de rotação para proteger a lenta.', shortLine: 'Limites de rotação e espera.', on: null, stateText: valuesState,
+      { id: 'anti', kind: 'switch', title: 'Anti-apagão', line: 'Ao pisar na embreagem os giros caem; ele segura o motor no gás para não apagar.', shortLine: 'Segura o motor ao pisar na embreagem.',
+        effect: 'Ligado: no seu log os giros nunca caíram de 600 após o corte. Desligado: caíram até 447.', on: anti, stateText: stateOf(anti), rows: [], tech: [techBit('FLAG_CONF3', 0, A.ANTI_MASK, 'Anti-apagão')] },
+      { id: 'valores', kind: 'values', title: 'Valores do anti-apagão', line: 'Os 5 números que dizem quando o anti-apagão age e quando solta.', shortLine: 'Quando age e quando solta.', on: null, stateText: valuesState,
         rows: V.FIELDS.map(f => ({ label: f.label, text: values ? `${num(values[f.index])} ${f.unit}` : DASH, on: null })),
         tech: [`ANTI_STALLO · código ${V.ADDRESS} · 5 números de 16 bits: ${values ? values.join(' ') : 'não lido'}`] },
       { id: 'corte', kind: 'open', title: 'Saída do corte', viewTitle: 'Saída do corte (quando volta a acelerar)', line: 'Injeções de gasolina ao retomar a aceleração.', shortLine: 'Injeções ao voltar a acelerar.',

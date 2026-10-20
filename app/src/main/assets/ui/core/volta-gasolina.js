@@ -41,6 +41,16 @@
     return 'Se a pressão do gás cair demais, o carro volta sozinho para a gasolina.';
   }
 
+  // Copy em 3 linhas (dono, 2026-10-20). Efeito: manual do original (docs/progbase/manual/manual-2.16.4C.txt, F4 "Automatic change back
+  // to petrol"); no carro do dono ainda sem prova física (volta-automatica-gasolina.md, "Ainda sem prova").
+  const TEXT = {
+    liga: { effect: 'Segundo o manual: desligado, com o gás no fim o motor falha até apagar.' },
+    pressao: { what: 'Pressão do gás abaixo da qual o carro volta à gasolina, com bip.',
+      effect: 'Se aumentar: volta mais cedo, sobra gás. Se diminuir: usa mais gás, mas pode falhar antes.' },
+    espera: { what: 'Quanto tempo a pressão fica baixa antes de voltar.',
+      effect: 'Se aumentar: tolera quedas curtas. Se diminuir: volta mais rápido.' },
+  };
+
   function stateOf(on) { return on === null ? DASH : on ? 'Ligado' : 'Desligado'; }
 
   /** O cartão (mesma forma dos outros de CartoesMotor). */
@@ -88,5 +98,5 @@
     return { phase: 'idle', text: '' };
   }
 
-  ns.VoltaGasolina = { read, card, barText, waitText, step, nextWait, sentence, saveRequest, phaseOf, OFF, TEMPO_MAX, MIN, MAX, STEP };
+  ns.VoltaGasolina = { TEXT, read, card, barText, waitText, step, nextWait, sentence, saveRequest, phaseOf, OFF, TEMPO_MAX, MIN, MAX, STEP };
 })(typeof window !== 'undefined' ? window : globalThis);

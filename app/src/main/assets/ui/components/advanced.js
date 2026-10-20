@@ -386,6 +386,7 @@
         <article class="tool-tile${extra}" data-card="${card.id}" data-item="${card.id}" data-kind="switch" data-state="${state}" data-actionable="${!why && !busy}">
           <h3>${escapeHtml(card.title)}</h3>
           <p class="tile-line${why && !failed ? ' reason' : ''}"${failed ? ' data-level="warn" role="status"' : ''}><span class="tile-full">${escapeHtml(line)}</span><span class="tile-compact">${escapeHtml(shortLine)}</span></p>
+          ${extra && 'effect' in card ? this.effectHtml(card.effect) : ''}
           <button type="button" class="tool-switch" role="${card.on === null ? 'button' : 'switch'}" ${card.on === null ? '' : 'aria-checked="' + (card.on ? 'true' : 'false') + '"'} aria-label="${escapeHtml(action)}. Estado atual: ${escapeHtml(card.stateText)}" data-adv-switch ${why || busy ? 'disabled' : ''}>
             <span class="sw-track" aria-hidden="true"><i></i></span><span class="sw-caption"><b>${escapeHtml(card.stateText)}</b><small>${escapeHtml(action)}</small></span>
           </button>
@@ -418,7 +419,7 @@
       if (this.G) tiles.push(`
         <button type="button" class="tool-tile tool-open" data-card="outras" data-adv-open="outras" data-state="neutral">
           <h3>Outras configurações</h3>
-          <p class="tile-line"><span class="tile-full">Tudo o que o app lê da central e ainda não muda.</span><span class="tile-compact">O que o app só lê.</span></p>
+          <p class="tile-line"><span class="tile-full">OBD, Start &amp; Stop, Landi Connect e mais: o que é cada um.</span><span class="tile-compact">OBD, Start &amp; Stop e mais.</span></p>
           <span class="tile-state">Só leitura</span>
           <span class="tile-go">Ver ›</span>
         </button>`);
@@ -439,8 +440,8 @@
             </div>
             <button type="button" class="step-btn" data-adv-step="${f.index}:1" aria-label="Aumentar ${f.step} ${escapeHtml(f.unit)}" ${values ? '' : 'disabled'}>+ ${f.step}</button>
           </div>
-          <p class="num-help" id="advHelp${f.index}">${escapeHtml(f.short)}${f.unit === 'ms' ? ' <span class="num-seconds"></span>' : ''}</p>
-          <ul class="num-tips"><li><b>▲</b> ${escapeHtml(f.hintUp)}</li><li><b>▼</b> ${escapeHtml(f.hintDown)}</li></ul>
+          <p class="num-help" id="advHelp${f.index}">${escapeHtml(f.what || f.short)}${f.unit === 'ms' ? ' <span class="num-seconds"></span>' : ''}</p>
+          ${this.effectHtml(f.effect)}
           <p class="num-meta">${escapeHtml(this.V.range(f))} · Valor de fábrica: ${escapeHtml(this.V.num(f.factory))}</p>
           <p class="num-warn"></p>
           <p class="num-error" role="alert"></p>
@@ -484,6 +485,14 @@
         </section>`;
     }
 
+    /** Linha 2 de todo cartão (dono, 2026-10-20): o EFEITO de mudar, ou a etiqueta "não comprovado" com a frase honesta. */
+    effectHtml(effect) {
+      const unproven = (this.V && this.V.UNPROVEN) || 'Ainda não sei exatamente o efeito. Não mude sem necessidade.';
+      return effect
+        ? `<p class="grp-effect" data-proof="sim">${escapeHtml(effect)}</p>`
+        : `<p class="grp-effect" data-proof="nao"><span class="grp-tag">não comprovado</span> ${escapeHtml(unproven)}</p>`;
+    }
+
     /** Cartão SÓ LEITURA: nome, valor lido ("—" se não lido), dica numa linha; sem − / + e sem lápis. */
     readCardHtml(c) {
       return `
@@ -491,6 +500,8 @@
           <h4 class="grp-label">${escapeHtml(c.label)}</h4>
           <p class="grp-line"><b class="grp-val${c.small ? ' grp-val-text' : ''}">${escapeHtml(c.value)}</b>${c.unit ? ` <span class="grp-unit">${escapeHtml(c.unit)}</span>` : ''}</p>
           <p class="grp-hint">${escapeHtml(c.hint || '')}</p>
+          ${this.effectHtml(c.effect)}
+          ${c.range ? `<p class="grp-range">${escapeHtml(c.range)}</p>` : ''}
           <span class="grp-ro">Só leitura</span>
         </article>`;
     }
@@ -542,7 +553,7 @@
           ? this.carroHtml()
         : tab === 'nao'
           ? `<p><b>Não é o corte de injeção</b> (soltar o acelerador em desaceleração): o corte tem ajustes próprios no cartão <b>Saída do corte</b>.</p><p>Os dois se encontram: no seu log, depois de cada corte, com o anti-apagão <b>desligado</b> a rotação afundou até 447 rpm (26 vezes abaixo de 600); <b>ligado</b>, nunca passou de 680 rpm.</p><p>O programa original só mostra o primeiro número. O efeito exato dos outros quatro ainda não foi confirmado em carro (experimental).</p>`
-          : `<p class="vv-how"><b>Quando age:</b> quando a rotação <b>cai de repente</b> abaixo de <b>${escapeHtml(lim)} rpm</b> (ex.: pisou na embreagem parando ou engatando ré), o anti-apagão entra e ajuda o motor a não apagar. Em aceleração normal não faz nada.</p><ol><li>A rotação cai mais rápido que <b>Queda para agir</b> <em>e</em> está abaixo de <b>${escapeHtml(lim)} rpm</b> → a proteção <b>entra</b>.</li><li>A central sai do gás conforme a <b>Espera</b> (ms) e ajuda o motor a segurar.</li><li>Quando a queda fica menor que <b>Queda para parar</b>, a proteção <b>solta</b>. A <b>Folga</b> evita ligar e desligar toda hora.</li></ol>`;
+          : `<p class="vv-how"><b>A história:</b> ao pisar na embreagem para parar, a rotação cai de repente. No gás, o motor pode apagar aí. Se isso acontece abaixo de ${escapeHtml(lim)} rpm, o anti-apagão percebe a queda e segura o motor até ela acalmar.</p><ol><li><b>Rotação máxima para agir</b> (${escapeHtml(lim)} rpm): só age abaixo destes giros. Acelerando normal, não faz nada.</li><li><b>Queda para agir</b>: não são giros, é a <b>velocidade</b> da queda. A unidade é a mesma do número de queda que o programa original mostra no rodapé: "giros por ciclo" (o que é um ciclo ainda é dedução; leia como "rapidez da queda"). Queda mais rápida que isto liga a proteção.</li><li><b>Espera para sair do gás</b>: quanto a central espera para sair do gás quando age.</li><li><b>Queda para parar de agir</b> e <b>Folga</b>: quando a queda fica mais lenta que isto, a proteção solta; a folga evita liga-desliga.</li></ol><p><b>Já provado:</b> no seu log, ligado, os giros nunca caíram abaixo de 600 depois do corte; desligado, caíram até 447. Efeito de mudar os 4 últimos números: <b>não comprovado</b>.</p>`;
       return `
         <section class="tool-view values-view" data-card="valores-info">
           <header><button type="button" class="secondary tool-back" data-adv-back-valores><span aria-hidden="true">‹</span> Voltar</button><h3>Como o anti-apagão funciona</h3></header>
@@ -635,7 +646,7 @@
       if (this.voltaSent) { this.voltaSent = false; this.voltaDrafts = {}; }
     }
 
-    stepperHtml({ item, label, value, unit, call, minus, plus, offMinus, offPlus, hint }) {
+    stepperHtml({ item, label, value, unit, call, minus, plus, offMinus, offPlus, hint, what, effect }) {
       return `
         <div class="grp-card grp-edit" data-kind="edit" data-item="${item}">
           <h4 class="grp-label">${escapeHtml(label)}</h4>
@@ -644,7 +655,9 @@
             <div class="num-box grp-box"><b class="grp-val">${escapeHtml(value)}</b>${unit ? `<span class="num-unit">${escapeHtml(unit)}</span>` : ''}</div>
             <button type="button" class="step-btn" data-volta-step="${call}:1" aria-label="Aumentar ${escapeHtml(plus)}" ${offPlus ? 'disabled' : ''}>+ ${escapeHtml(plus)}</button>
           </div>
-          <p class="grp-hint">${escapeHtml(hint)}</p>
+          ${what ? `<p class="grp-hint">${escapeHtml(what)}</p>` : ''}
+          ${this.effectHtml(effect)}
+          <p class="grp-range">${escapeHtml(hint)}</p>
         </div>`;
     }
 
@@ -674,14 +687,17 @@
           <article class="tool-tile grp-card grp-switch" data-item="volta-liga" data-kind="switch" data-state="${m.on === null ? 'unknown' : m.on ? 'on' : 'off'}">
             <h3>Volta sozinha para a gasolina</h3>
             <p class="grp-hint volta-say">${escapeHtml(m.on === null && !why ? 'Aguardando a central.' : VG.sentence(m, mbar))}</p>
+            ${this.effectHtml(VG.TEXT.liga.effect)}
             <button type="button" class="tool-switch" role="${m.on === null ? 'button' : 'switch'}" ${m.on === null ? '' : `aria-checked="${m.on}"`} aria-label="${escapeHtml(action)}" data-volta-toggle ${off || busy || m.on === null ? 'disabled' : ''}>
               <span class="sw-track" aria-hidden="true"><i></i></span><span class="sw-caption"><b>${escapeHtml(card.stateText)}</b><small>${escapeHtml(action)}</small></span>
             </button>
           </article>
           ${this.stepperHtml({ item: 'volta-mbar', label: 'Pressão do gás que faz voltar', value: mbar === null ? '—' : VG.barText(mbar), unit: 'bar', call: 'mbar', minus: '0,05', plus: '0,05',
-            offMinus: off || mbar === null || mbar <= VG.MIN, offPlus: off || mbar === null || mbar >= VG.MAX, hint: `De ${VG.barText(VG.MIN)} a ${VG.barText(VG.MAX)} bar.` })}
+            offMinus: off || mbar === null || mbar <= VG.MIN, offPlus: off || mbar === null || mbar >= VG.MAX, hint: `De ${VG.barText(VG.MIN)} a ${VG.barText(VG.MAX)} bar.`,
+            what: VG.TEXT.pressao.what, effect: VG.TEXT.pressao.effect })}
           ${this.stepperHtml({ item: 'volta-espera', label: 'Espera antes de voltar', value: m.on === false && !Number.isInteger(d.segundos) ? '—' : VG.waitText(wait), unit: '', call: 'segundos', minus: '1 s', plus: '1 s',
-            offMinus: waitOff || wait <= 0, offPlus: waitOff || wait >= VG.TEMPO_MAX, hint: `De "na hora" a ${VG.TEMPO_MAX} s.` })}
+            offMinus: waitOff || wait <= 0, offPlus: waitOff || wait >= VG.TEMPO_MAX, hint: `De "na hora" a ${VG.TEMPO_MAX} s.`,
+            what: VG.TEXT.espera.what, effect: VG.TEXT.espera.effect })}
           ${extra}
           <details class="tool-tech grp-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>`,
         actions: st.undo && st.undo.available && !busy ? '<button type="button" class="secondary" data-volta-undo>Desfazer</button>' : '',
@@ -694,7 +710,7 @@
       const items = this.G.readCards(group, this.data.params);
       const source = { troca: ['troca', 'corte', 'injetores'], lenta: ['lenta'] }[group] || [];
       const tech = source.flatMap(id => ((cards || []).find(c => c.id === id) || { tech: [] }).tech).map(t => `<li>${escapeHtml(t)}</li>`).join('');
-      const note = { troca: 'A troca normal para o gás. Não quer dizer que o gás acabou.', lenta: 'Motor ligado sem acelerar, na parada ou manobra.', outras: 'O app lê da central e ainda não muda.' }[group];
+      const note = { troca: 'Quando e como o carro passa da gasolina ao gás. Não quer dizer que o gás acabou.', lenta: 'Motor ligado sem acelerar: parado no sinal ou manobrando.', outras: 'Nomes do programa original, traduzidos. O app só lê; ainda não muda.' }[group];
       return this.groupPage({
         group, cls: 'read-view', title: this.G.TITLES[group], status: ['idle', note],
         cards: items.map(c => this.readCardHtml(c)).join('') + (tech ? `<details class="tool-tech grp-tech"><summary>Ver detalhes técnicos</summary><ul>${tech}</ul></details>` : ''),
