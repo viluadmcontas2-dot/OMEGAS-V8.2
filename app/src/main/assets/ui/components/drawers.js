@@ -104,6 +104,14 @@
         const result = this.api.stopSession('parada manual pela interface');
         this.notifyResult(result, 'Gravação encerrada.');
         this.refreshSessionStatus(result);
+      } else if (target.matches('[data-session-step]')) {
+        const [kind, dir] = target.dataset.sessionStep.split(':');
+        const input = target.closest('label')?.querySelector(kind === 'maxmb' ? '[data-session-maxmb]' : '[data-session-keep]');
+        if (input) {
+          const step = Number(input.step) || 1;
+          const next = (Number(input.value) || Number(input.min) || 0) + Number(dir) * step;
+          input.value = String(Math.max(Number(input.min), Math.min(Number(input.max), next)));
+        }
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
       } else if (target.matches('[data-export-session]')) {
@@ -378,8 +386,8 @@
                 <label><span>Salvar a cada</span><select data-session-telemetry>
                   ${[250, 500, 1000, 2000, 5000].map(value => `<option value="${value}" ${Number(settings.telemetryEveryMs) === value ? 'selected' : ''}>${value < 1000 ? `${value / 1000}`.replace('.', ',') + ' s' : `${value / 1000} s`}</option>`).join('')}
                 </select></label>
-                <label><span>Tamanho máximo (MB)</span><input data-session-maxmb type="number" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"></label>
-                <label><span>Quantas guardar</span><input data-session-keep type="number" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"></label>
+                <label><span>Tamanho máximo (MB)</span><span class="num-stepper"><button type="button" class="step-btn" data-session-step="maxmb:-1" aria-label="Diminuir 64 MB">−</button><span class="num-box"><input data-session-maxmb type="number" inputmode="none" data-kbd="numeric" min="64" max="1024" step="64" value="${Number(settings.maxSessionMb || status.limitMb || 256)}"><button type="button" class="kbd-pencil" data-kbd-open aria-label="Digitar o valor">✎</button></span><button type="button" class="step-btn" data-session-step="maxmb:1" aria-label="Aumentar 64 MB">+</button></span></label>
+                <label><span>Quantas guardar</span><span class="num-stepper"><button type="button" class="step-btn" data-session-step="keep:-1" aria-label="Diminuir 1">−</button><span class="num-box"><input data-session-keep type="number" inputmode="none" data-kbd="numeric" min="20" max="100" step="1" value="${Math.max(20, Number(settings.keepSessions || 20))}"><button type="button" class="kbd-pencil" data-kbd-open aria-label="Digitar o valor">✎</button></span><button type="button" class="step-btn" data-session-step="keep:1" aria-label="Aumentar 1">+</button></span></label>
                 <label class="check-setting"><input data-session-autostart type="checkbox" ${settings.autoStartOnUsb !== false ? 'checked' : ''}><span>Gravar ao conectar a central</span></label>
                 <label class="check-setting"><input data-session-rawusb type="checkbox" ${settings.captureRawUsb === true ? 'checked' : ''}><span>Gravar tudo do cabo (arquivo grande)</span></label>
               </div>

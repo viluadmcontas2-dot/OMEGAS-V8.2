@@ -58,7 +58,7 @@
             <aside class="inspector-panel map-editor-panel">
               <div class="editor-heading"><div><small>SELEÇÃO</small><h3 id="mapSelectionCount">0 selecionadas</h3></div><span id="mapActiveCell">Toque em uma célula</span></div>
               <label class="field-label"><span>Como ajustar</span><select id="mapAdjustmentMode"><option value="percent">Percentual</option><option value="delta">Somar valor</option><option value="target">Definir valor</option></select></label>
-              <label class="field-label"><span>Valor</span><input id="mapAdjustmentValue" type="number" inputmode="decimal" step="1" value="0"></label>
+              <label class="field-label"><span>Valor</span><input id="mapAdjustmentValue" type="number" inputmode="none" data-kbd="decimal" step="1" value="0"><button type="button" class="kbd-pencil" data-kbd-open aria-label="Digitar o valor">✎</button></label>
               <div class="nudge-row"><button type="button" data-map-nudge="-5">−5</button><button type="button" data-map-nudge="-1">−1</button><button type="button" data-map-nudge="1">+1</button><button type="button" data-map-nudge="5">+5</button></div>
               <!-- Texto para leigo (dono, 2026-10-11): um toque em Gravar; a conferência na central (resposta + leitura de volta) é automática. -->
               <div class="safety-copy"><b>Nada foi gravado.</b><span>Confira os números e toque em Gravar; o app confere na central sozinho.</span></div>
@@ -87,7 +87,7 @@
                 <aside class="inspector-panel curve-editor-panel">
                   <div class="editor-heading"><div><small>PONTO ATIVO</small><h3 id="curveActivePoint">Selecione um ponto</h3></div></div>
                   <div class="current-value"><small>Atual</small><b id="curveCurrentFactor">—</b></div>
-                  <label class="field-label"><span>Fator desejado</span><input id="curveTargetFactor" type="text" inputmode="decimal" autocomplete="off" placeholder="ex.: 1,02"></label>
+                  <label class="field-label"><span>Fator desejado</span><input id="curveTargetFactor" type="text" inputmode="none" data-kbd="decimal" autocomplete="off" placeholder="ex.: 1,02"><button type="button" class="kbd-pencil" data-kbd-open aria-label="Digitar o valor">✎</button></label>
                   <div class="curve-nudge-row"><button type="button" data-curve-nudge="-0.05">−0,05</button><button type="button" data-curve-nudge="-0.01">−0,01</button><button type="button" data-curve-nudge="0.01">+0,01</button><button type="button" data-curve-nudge="0.05">+0,05</button></div>
                   <div id="curveTargetNormalized" class="normalized-preview">Prévia do valor que será gravado</div>
                   <button id="curvePreparePoint" type="button" class="secondary wide">Preparar este ponto</button>

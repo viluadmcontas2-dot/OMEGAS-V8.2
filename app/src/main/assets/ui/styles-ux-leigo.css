@@ -483,3 +483,13 @@
   #toolAdvanced .grp-head .grp-status { font-size: 15px; }
   #toolAdvanced .grp-card .num-meta, #toolAdvanced .grp-range { display: none; }
 }
+
+/* Lápis que abre o teclado de propósito (dono, 2026-10-20: ajustar = − / +, sem teclado obrigatório). */
+.kbd-pencil { flex: 0 0 auto; min-width: 44px; min-height: 44px; padding: 0 8px; border: 0; border-radius: 10px; background: transparent; color: #8ec2ff; font-size: 22px; line-height: 1; cursor: pointer; }
+.kbd-pencil:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.field-label:has(.kbd-pencil) { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.field-label:has(.kbd-pencil) > span { flex: 1 0 100%; }
+.field-label:has(.kbd-pencil) > input { flex: 1 1 0; min-width: 0; }
+.diagnostic-settings-grid .num-stepper { display: flex; align-items: center; gap: 6px; }
+.diagnostic-settings-grid .num-box { flex: 1 1 auto; min-width: 0; height: 48px; padding: 0 8px; gap: 4px; }
+.diagnostic-settings-grid .num-box input { font-size: 20px; }

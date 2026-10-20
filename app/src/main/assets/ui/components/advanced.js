@@ -436,7 +436,7 @@
           <div class="num-stepper">
             <button type="button" class="step-btn" data-adv-step="${f.index}:-1" aria-label="Diminuir ${f.step} ${escapeHtml(f.unit)}" ${values ? '' : 'disabled'}>− ${f.step}</button>
             <div class="num-box">
-              <input id="advField${f.index}" type="text" inputmode="numeric" pattern="[0-9.]*" autocomplete="off" data-adv-field="${f.index}" value="${escapeHtml(this.drafts[f.index] ?? (values ? this.V.num(values[f.index]) : ''))}" ${this.reason('values') ? 'disabled' : ''} aria-describedby="advHelp${f.index}">
+              <input id="advField${f.index}" type="text" inputmode="none" data-kbd="numeric" pattern="[0-9.]*" autocomplete="off" data-adv-field="${f.index}" value="${escapeHtml(this.drafts[f.index] ?? (values ? this.V.num(values[f.index]) : ''))}" ${this.reason('values') ? 'disabled' : ''} aria-describedby="advHelp${f.index}">
               ${PENCIL}
               <span class="num-unit">${escapeHtml(f.unit)}</span>
             </div>

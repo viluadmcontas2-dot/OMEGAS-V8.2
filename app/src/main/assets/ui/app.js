@@ -448,6 +448,20 @@
 
   function bindGlobalEvents() {
     routeButtons.forEach(button => button.addEventListener('click', () => router.navigate(button.dataset.route)));
+    // Sem teclado obrigatório (dono, 2026-10-20): campo numérico nasce inputmode="none"; só o lápis abre o teclado, e ao sair volta a "none".
+    document.addEventListener('click', event => {
+      const pen = event.target.closest?.('[data-kbd-open], svg.pencil');
+      if (!pen) return;
+      const input = pen.closest('.num-box, .kbd-box, label')?.querySelector('input:not([type=checkbox]):not([readonly])');
+      if (!input || input.disabled) return;
+      input.setAttribute('inputmode', input.dataset.kbd || 'decimal');
+      input.focus();
+      try { input.select?.(); } catch (_) { /* campo sem seleção */ }
+    });
+    document.addEventListener('focusout', event => {
+      const el = event.target;
+      if (el?.matches?.('input[data-kbd]')) el.setAttribute('inputmode', 'none');
+    });
     byId('alertToast')?.querySelector('button')?.addEventListener('click', () => byId('alertToast')?.classList.remove('show'));
 
     document.addEventListener('visibilitychange', () => {

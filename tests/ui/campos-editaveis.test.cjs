@@ -36,7 +36,7 @@ for (const [nome, vp] of Object.entries(VPS)) {
         const borda = await caixa.evaluate(e => parseFloat(getComputedStyle(e).borderTopWidth));
         assert.ok(borda >= 2, 'borda visível: parece campo, não texto');
         const input = campo.locator('input');
-        assert.equal(await input.getAttribute('inputmode'), 'numeric');
+        assert.equal(await input.getAttribute('inputmode'), 'none');
         assert.equal(await input.inputValue(), c.fabrica, 'mostra o valor lido da central');
         assert.equal(await page.locator(`label[for="advField${c.i}"]`).count(), 1, 'campo com rótulo associado');
       }

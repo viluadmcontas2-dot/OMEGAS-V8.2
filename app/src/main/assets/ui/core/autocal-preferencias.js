@@ -147,7 +147,7 @@
       const dis = current == null ? ' disabled' : '';
       const dirty = draft != null && draft !== current;
       body = '<div class="num-stepper"><button type="button" class="step-btn" data-pref-step="' + esc(s.id) + ':-1" aria-label="Diminuir ' + esc(s.label) + '"' + dis + '>−</button>'
-        + '<div class="num-box"><input id="pref-' + esc(s.id) + '" type="text" inputmode="decimal" autocomplete="off" data-pref-field="' + esc(s.id) + '" value="' + esc(shown == null ? '' : toDisplay(s, shown)) + '" placeholder="—"' + dis + '>'
+        + '<div class="num-box"><input id="pref-' + esc(s.id) + '" type="text" inputmode="none" data-kbd="decimal" autocomplete="off" data-pref-field="' + esc(s.id) + '" value="' + esc(shown == null ? '' : toDisplay(s, shown)) + '" placeholder="—"' + dis + '>' + PENCIL
         + (s.unit ? '<span class="num-unit">' + esc(s.unit) + '</span>' : '') + '</div>'
         + '<button type="button" class="step-btn" data-pref-step="' + esc(s.id) + ':1" aria-label="Aumentar ' + esc(s.label) + '"' + dis + '>+</button></div>'
         + '<div class="pref-actions"><button type="button" class="step-btn pref-save" data-pref-save="' + esc(s.id) + '"' + (dirty ? '' : ' hidden') + '>Gravar na central</button></div>';
@@ -156,11 +156,13 @@
     return '<div class="num-field vv-card pref-card" data-pref-card="' + esc(s.id) + '">' + head + help + body + undo + tail + '</div>';
   }
 
+  const PENCIL = '<svg class="pencil" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zm17.7-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>';
+
   function localHtml(prefs) {
     const sw = (k, label) => '<label class="pref-local-row"><span>' + label + '</span><input type="checkbox" data-pref="' + k + '"' + (prefs[k] ? ' checked' : '') + '></label>';
     return '<div class="vv-card pref-card"><label for="pref-refresh">Atualizar a cada</label>'
       + '<div class="num-stepper"><button type="button" class="step-btn" data-pref-local-step="-50" aria-label="Diminuir">−</button>'
-      + '<div class="num-box"><input id="pref-refresh" type="text" inputmode="numeric" data-pref="refreshMs" value="' + esc(prefs.refreshMs) + '"><span class="num-unit">ms</span></div>'
+      + '<div class="num-box"><input id="pref-refresh" type="text" inputmode="none" data-kbd="numeric" data-pref="refreshMs" value="' + esc(prefs.refreshMs) + '">' + PENCIL + '<span class="num-unit">ms</span></div>'
       + '<button type="button" class="step-btn" data-pref-local-step="50" aria-label="Aumentar">+</button></div><p class="pref-help">De 200 a 2000 ms.</p></div>'
       + '<div class="vv-card pref-card">' + sw('showMessages', 'Mostrar mensagens') + sw('showZones', 'Mostrar zonas') + sw('showPoints', 'Mostrar pontos') + sw('showKLine', 'Mostrar linha da curva K') + '</div>'
       + '<div class="vv-card pref-card"><label class="pref-local-row"><span>Cor da gasolina</span><input type="color" data-pref="colorPetrol" value="' + esc(prefs.colorPetrol || '#ff5a5a') + '"></label>'

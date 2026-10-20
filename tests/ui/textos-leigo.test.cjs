@@ -111,7 +111,7 @@ test('Curva K: desconhecido = "—", "Gasolina" por extenso, sem jargão na tela
   assert.match(document.nodes.get('curveChart').innerHTML, /Curva não lida\. Ligue a central: ela aparece sozinha\./);
   const index = read('index.html');
   assert.match(index, /<div class="curve-axis">Injeção \(ms\) →<\/div>/);
-  assert.match(index, /id="curveTargetFactor" type="text" inputmode="decimal"/, 'campo aceita vírgula');
+  assert.match(index, /id="curveTargetFactor" type="text" inputmode="none" data-kbd="decimal"/, 'campo aceita vírgula (teclado só pelo lápis)');
 });
 
 test('Curva K: o campo "Fator desejado" mostra e aceita vírgula', () => {
