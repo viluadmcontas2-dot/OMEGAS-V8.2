@@ -142,7 +142,7 @@
 .sess-size .diagnostic-settings[open] .tool-disclosure-back { display: inline; margin-left: auto; font-style: normal; font-weight: 800; font-size: 20px; color: #8ec2ff; }
 .sess-size .tool-disclosure-body { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .diagnostic-settings-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px; }
-.diagnostic-settings-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 18px; font-weight: 700; }
+.diagnostic-settings-grid label, .diagnostic-settings-grid .setting-field { display: flex; flex-direction: column; gap: 4px; font-size: 18px; font-weight: 700; }
 .diagnostic-settings-grid select, .diagnostic-settings-grid input[type="number"] { min-height: 56px; padding: 0 12px; font-size: 22px; border: 2px solid #55697f; border-radius: 12px; background: #0b1118; }
 .diagnostic-settings-grid .check-setting { flex-direction: row; align-items: center; gap: 12px; min-height: 56px; }
 .diagnostic-settings-grid .check-setting input { width: 32px; height: 32px; flex: 0 0 auto; }

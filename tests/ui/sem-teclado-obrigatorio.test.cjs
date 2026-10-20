@@ -111,3 +111,18 @@ test('sessões: tamanho máximo e quantas guardar têm − / + e não abrem tecl
     }
   } finally { await app.close?.(); }
 });
+
+test('sessões: tocar no TEXTO do rótulo não mexe no valor (sem label repassando clique ao −)', { skip }, async () => {
+  const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
+  const { page } = app;
+  try {
+    await T.route(app, 'sessions');
+    await page.evaluate(() => document.querySelectorAll('#sessionsHost details.diagnostic-settings').forEach(d => { d.open = true; }));
+    for (const [attr, texto] of [['data-session-maxmb', 'Tamanho máximo (MB)'], ['data-session-keep', 'Quantas guardar']]) {
+      const campo = page.locator(`[${attr}]`);
+      const antes = await campo.inputValue();
+      await page.locator('#sessionsHost .diagnostic-settings-grid span', { hasText: texto }).first().click();
+      assert.equal(await campo.inputValue(), antes, attr + ': tocar no texto não pode mudar o valor');
+    }
+  } finally { await app.close?.(); }
+});
