@@ -4,7 +4,6 @@ import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
-import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.usb.UsbProtocolReply
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
@@ -22,7 +21,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Nenhuma sugestão inicia este writer.
  */
 class KWriteManager(
-    private val paths: AppPaths,
+    /** Pasta de trabalho (AppPaths.runtimeRoot no app; pasta temporária nos testes JVM). */
+    private val runtimeRoot: File,
     private val serial: Mp48SerialScheduler,
     private val log: RingLog,
     @Suppress("UNUSED_PARAMETER") private val isEngineRunning: () -> Boolean,
@@ -49,11 +49,11 @@ class KWriteManager(
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-k-writer").apply { isDaemon = true }
     }
-    private val busy = AtomicBoolean(false)
-    private val historyFile = File(paths.runtimeRoot, "k_write_history.json")
-    private val cacheFile = File(paths.runtimeRoot, "k_map_cache.json")
-    private val safetyFile = File(paths.runtimeRoot, "k_write_safety.json")
-    private val kBackupDir = File(paths.runtimeRoot, "k_map_backups").apply { mkdirs() }
+    private val busy = OwnedBusyLock()
+    private val historyFile = File(runtimeRoot, "k_write_history.json")
+    private val cacheFile = File(runtimeRoot, "k_map_cache.json")
+    private val safetyFile = File(runtimeRoot, "k_write_safety.json")
+    private val kBackupDir = File(runtimeRoot, "k_map_backups").apply { mkdirs() }
     private val statusLock = Any()
     private val insertionStateUnknown = AtomicBoolean(loadInsertionSafetyLock(safetyFile))
     @Volatile private var status = JSONObject()
@@ -61,7 +61,7 @@ class KWriteManager(
         .put("busy", false)
         .put("message", "Aguardando ação manual")
 
-    fun isBusy(): Boolean = busy.get()
+    fun isBusy(): Boolean = busy.isBusy()
     @Volatile private var verify = JSONObject().put("phase", KBatchVerifyCore.Phase.IDLE)
     fun writeVerifyJson(): String = synchronized(statusLock) { verify.toString() }
     private fun setVerify(phase: String, detail: String, cell: String?) = synchronized(statusLock) {
@@ -306,9 +306,10 @@ class KWriteManager(
                 .put("row", row).put("column", column)
                 .put("current", current).put("target", target))
         }
-        if (!busy.compareAndSet(false, true)) return error("Outra operação K está em andamento")
+        val token = busy.tryAcquire()
+        if (token == 0L) return error("Outra operação K está em andamento")
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
-            busy.set(false)
+            busy.release(token)
             return error(error.message ?: "USB desconectado")
         }
         val adjustmentId = "ADJ-${System.currentTimeMillis()}-${UUID.randomUUID().toString().take(8)}"
@@ -316,7 +317,7 @@ class KWriteManager(
         update("BATCH_QUEUED", "Alteração enfileirada entre telemetrias", 0,
             JSONObject().put("adjustmentId", adjustmentId).put("cells", normalized))
         executor.execute {
-            executeBatch(adjustmentId, normalized, reason, expectedSessionId)
+            executeBatch(adjustmentId, normalized, reason, expectedSessionId, token)
         }
         return JSONObject()
             .put("ok", true)
@@ -332,6 +333,7 @@ class KWriteManager(
         cells: JSONArray,
         reason: String,
         expectedSessionId: Long,
+        busyToken: Long,
     ) {
         val startedAt = System.currentTimeMillis()
         val confirmed = JSONArray()
@@ -340,6 +342,13 @@ class KWriteManager(
         var insertionEnabled = false
         var historyPersisted = false
         var acked = false
+        var exitAttempted = false
+        // Saída segura: no máximo UMA tentativa por lote (sem laço); sem ACK = trava persistida + estado legível.
+        fun exitInsertionOnce(action: String) {
+            if (!insertionEnabled || exitAttempted) return
+            exitAttempted = true
+            if (safeInsertionExit(expectedSessionId, action)) insertionEnabled = false
+        }
         try {
             update("BATCH_PREPARING", "Preparando a gravação…", 3,
                 JSONObject().put("adjustmentId", adjustmentId).put("cells", cells))
@@ -366,6 +375,10 @@ class KWriteManager(
                 // a espera termina quando a unidade anterior termina (evento), o teto de 8 s só protege contra travamento real. A tela não bloqueia.
                 waitTimeoutMs = 8_000L,
             ) { unit ->
+                // Enviado o ativar, a central pode estar em K insertion mesmo sem resposta: marca ANTES do envio
+                // para que falha, tempo esgotado ou cancelamento sempre tentem a saída segura.
+                insertionEnabled = true
+                setInsertionSafetyLock(true, "K insertion ativo durante $adjustmentId")
                 requireAck(
                     unit.transaction(
                         Mp48Protocol.kInsertionMode(true),
@@ -375,8 +388,6 @@ class KWriteManager(
                     ),
                     "ativação K insertion",
                 )
-                insertionEnabled = true
-                setInsertionSafetyLock(true, "K insertion ativo durante $adjustmentId")
 
                 repeat(cells.length()) { cellIndex ->
                     val item = cells.getJSONObject(cellIndex)
@@ -439,6 +450,8 @@ class KWriteManager(
                 setInsertionSafetyLock(false, "Saída K insertion confirmada em $adjustmentId")
             }
 
+            // A CONFIRMAR com o dono: "Gravado" sai só com ACK, antes da leitura de volta (decisão de 2026-10-19,
+            // exceção à regra "Gravado só depois do readback"). Comportamento mantido de propósito.
             // Gravar é INSTANTÂNEO (dono, 2026-10-19): todos os ACKs chegaram e a saída do K insertion foi confirmada = "Gravado".
             // A tela libera na hora; a leitura de volta (1 transação por linha, só as células alteradas) segue em segundo plano
             // e só avisa na barra do topo se falhar, depois de 1 correção autônoma (regrava só as divergentes).
@@ -447,9 +460,7 @@ class KWriteManager(
             update("BATCH_CONFIRMED", "Gravado", 100,
                 JSONObject().put("ok", true).put("calibrationType", "MAP_K").put("adjustmentId", adjustmentId)
                     .put("cells", cells).put("acked", true).put("readbackValid", false))
-            synchronized(statusLock) { status.put("busy", false) }
-            busy.set(false)
-            onBusyChanged(false)
+            releaseBusy(busyToken)
 
             val changedByRow = linkedMapOf<Int, MutableList<Int>>()
             repeat(cells.length()) { i ->
@@ -499,15 +510,17 @@ class KWriteManager(
                     telemetryAfter = true,
                     waitTimeoutMs = 3_000L,
                 ) { unit ->
+                    // Mesma regra do lote: marcado antes de enviar o ativar; qualquer falha cai na saída segura única do catch.
+                    insertionEnabled = true
+                    setInsertionSafetyLock(true, "K insertion ativo na correção de $adjustmentId")
                     requireAck(unit.transaction(Mp48Protocol.kInsertionMode(true), "ativar K insertion (correção)", 800, purgeBefore = false), "ativação K insertion")
-                    try {
-                        fixes.forEach { (row, column) ->
-                            val target = targetByCell["$row:$column"] ?: return@forEach
-                            requireAck(unit.transaction(Mp48Protocol.writeKCell(row, column, target), "regravar MAP_K[$row,$column]=$target", 800, purgeBefore = false), "escrita K")
-                        }
-                    } finally {
-                        requireAck(unit.transaction(Mp48Protocol.kInsertionMode(false), "desativar K insertion (correção)", 800, purgeBefore = false), "saída K insertion")
+                    fixes.forEach { (row, column) ->
+                        val target = targetByCell["$row:$column"] ?: return@forEach
+                        requireAck(unit.transaction(Mp48Protocol.writeKCell(row, column, target), "regravar MAP_K[$row,$column]=$target", 800, purgeBefore = false), "escrita K")
                     }
+                    requireAck(unit.transaction(Mp48Protocol.kInsertionMode(false), "desativar K insertion (correção)", 800, purgeBefore = false), "saída K insertion")
+                    insertionEnabled = false
+                    setInsertionSafetyLock(false, "Saída K insertion confirmada na correção de $adjustmentId")
                 }
             }
 
@@ -566,26 +579,7 @@ class KWriteManager(
                 try { appendHistoryBatch(confirmed) } catch (_: Exception) {}
                 historyPersisted = true
             }
-            if (insertionEnabled) {
-                try {
-                    requireAck(
-                        transaction(
-                            Mp48Protocol.kInsertionMode(false),
-                            "saída K insertion após falha",
-                            800,
-                            expectedSessionId,
-                            Mp48WorkClass.SAFETY,
-                            telemetryAfter = false,
-                        ),
-                        "saída K insertion após falha",
-                    )
-                    insertionEnabled = false
-                    setInsertionSafetyLock(false, "Saída após falha confirmada")
-                } catch (_: Exception) {
-                    // O bloco finally realiza a última tentativa e, se necessário,
-                    // persiste a trava de segurança.
-                }
-            }
+            exitInsertionOnce("saída K insertion após falha")
             val recovery = JSONObject()
             if (!insertionEnabled) {
                 affectedRows.forEach { row ->
@@ -599,7 +593,8 @@ class KWriteManager(
             val stale = loadCache().put("sessionConfirmed", false)
             atomicWrite(cacheFile, stale.toString(2))
             if (acked) setVerify(KBatchVerifyCore.Phase.FAILED, error.message ?: "Conferência não concluída", null)
-            else update("BATCH_PARTIAL_FAILED", error.message ?: "Lote interrompido", 100,
+            // Saída não confirmada: o estado SAFETY_LOCKED (com a próxima ação) fica na tela, não é sobrescrito.
+            else if (!insertionEnabled) update("BATCH_PARTIAL_FAILED", error.message ?: "Lote interrompido", 100,
                 JSONObject().put("adjustmentId", adjustmentId)
                     .put("oldHash", initialHash)
                     .put("confirmedEvents", confirmed)
@@ -607,40 +602,56 @@ class KWriteManager(
                     .put("recoveryRows", recovery))
             log.add("ERROR", "K-BATCH", "$adjustmentId interrompido: ${error.message}")
         } finally {
-            if (insertionEnabled) {
-                try {
-                    requireAck(
-                        transaction(
-                            Mp48Protocol.kInsertionMode(false),
-                            "saída segura K insertion",
-                            800,
-                            expectedSessionId,
-                            Mp48WorkClass.SAFETY,
-                            telemetryAfter = false,
-                        ),
-                        "saída segura K insertion",
-                    )
-                    setInsertionSafetyLock(false, "Saída segura confirmada")
-                } catch (error: Exception) {
-                    setInsertionSafetyLock(true, error.message ?: "Saída K insertion não confirmada")
-                    val stale = loadCache().put("sessionConfirmed", false)
-                    atomicWrite(cacheFile, stale.toString(2))
-                    update(
-                        "SAFETY_LOCKED_INSERTION_UNKNOWN",
-                        "Saída K insertion não confirmada; execute a recuperação antes de continuar",
-                        100,
-                        JSONObject().put("error", error.message ?: "Sem ACK"),
-                    )
-                }
-            }
-            busy.set(false)
-            onBusyChanged(false)
-            synchronized(statusLock) { status.put("busy", false) }
+            // Só chega aqui com o K insertion marcado se algo fora de Exception escapou do catch.
+            exitInsertionOnce("saída segura K insertion")
+            releaseBusy(busyToken)
         }
     }
 
+    /** Uma tentativa da saída segura (o mesmo quadro de saída 0x24). Sem ACK: trava persistida e estado legível. */
+    private fun safeInsertionExit(expectedSessionId: Long, action: String): Boolean {
+        // Cancelamento (close) interrompe a thread: a saída ainda precisa chegar à porta; a interrupção volta depois.
+        val interrupted = Thread.interrupted()
+        try {
+            requireAck(
+                transaction(
+                    Mp48Protocol.kInsertionMode(false),
+                    action,
+                    800,
+                    expectedSessionId,
+                    Mp48WorkClass.SAFETY,
+                    telemetryAfter = false,
+                ),
+                action,
+            )
+            setInsertionSafetyLock(false, "Saída segura confirmada")
+            return true
+        } catch (error: Exception) {
+            setInsertionSafetyLock(true, error.message ?: "Saída K insertion não confirmada")
+            val stale = loadCache().put("sessionConfirmed", false)
+            atomicWrite(cacheFile, stale.toString(2))
+            update(
+                "SAFETY_LOCKED_INSERTION_UNKNOWN",
+                "Saída K insertion não confirmada; execute a recuperação antes de continuar",
+                100,
+                JSONObject().put("error", error.message ?: "Sem ACK"),
+            )
+            return false
+        } finally {
+            if (interrupted) Thread.currentThread().interrupt()
+        }
+    }
+
+    /** Só a operação dona do "ocupado" o libera; liberar de novo (ou com o token de outra) não faz nada. */
+    private fun releaseBusy(token: Long) {
+        if (!busy.release(token)) return
+        synchronized(statusLock) { status.put("busy", busy.isBusy()) }
+        onBusyChanged(false)
+    }
+
     private fun <T> runSynchronous(state: String, message: String, block: () -> T): T {
-        if (!busy.compareAndSet(false, true)) {
+        val token = busy.tryAcquire()
+        if (token == 0L) {
             @Suppress("UNCHECKED_CAST")
             return error("Outra operação K está em andamento") as T
         }
@@ -653,9 +664,7 @@ class KWriteManager(
             @Suppress("UNCHECKED_CAST")
             error(error.message ?: "Falha na operação K") as T
         } finally {
-            busy.set(false)
-            onBusyChanged(false)
-            synchronized(statusLock) { status.put("busy", false) }
+            releaseBusy(token)
         }
     }
 
@@ -752,7 +761,7 @@ class KWriteManager(
         synchronized(statusLock) {
             status = JSONObject()
                 .put("state", state)
-                .put("busy", busy.get())
+                .put("busy", busy.isBusy())
                 .put("message", message)
                 .put("progress", progress.coerceIn(0, 100))
                 .put("updatedAt", System.currentTimeMillis())

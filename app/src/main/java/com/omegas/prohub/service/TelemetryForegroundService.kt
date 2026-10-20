@@ -209,7 +209,7 @@ class TelemetryForegroundService : Service() {
             sessionRecorder.record(type, source, data, force = type == "ecu_command")
         }
         kWriter = KWriteManager(
-            paths = paths,
+            runtimeRoot = paths.runtimeRoot,
             serial = recordingSerial,
             log = log,
             isEngineRunning = { runtime.running },
@@ -237,7 +237,7 @@ class TelemetryForegroundService : Service() {
             },
         )
         kFactor = KFactorManager(
-            paths = paths,
+            runtimeRoot = paths.runtimeRoot,
             serial = recordingSerial,
             log = log,
             onBusyChanged = { onCalibrationBusyChanged() },

@@ -5,7 +5,6 @@ import com.omegas.prohub.ecu.Mp48Protocol
 import com.omegas.prohub.ecu.Mp48SerialScheduler
 import com.omegas.prohub.ecu.Mp48SerialUnit
 import com.omegas.prohub.ecu.Mp48WorkClass
-import com.omegas.prohub.storage.AppPaths
 import com.omegas.prohub.usb.UsbProtocolReply
 import com.omegas.prohub.util.RingLog
 import org.json.JSONArray
@@ -17,7 +16,6 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Autoridade Android da curva azul K factor.
@@ -27,7 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Sugestões do aprendizado nunca chamam este gerenciador.
  */
 class KFactorManager(
-    private val paths: AppPaths,
+    /** Pasta de trabalho (AppPaths.runtimeRoot no app; pasta temporária nos testes JVM). */
+    private val runtimeRoot: File,
     private val serial: Mp48SerialScheduler,
     private val log: RingLog,
     private val onBusyChanged: (Boolean) -> Unit,
@@ -47,17 +46,17 @@ class KFactorManager(
     private val executor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "omegas-k-factor-writer").apply { isDaemon = true }
     }
-    private val busy = AtomicBoolean(false)
-    private val cacheFile = File(paths.runtimeRoot, "k_factor_cache.json")
-    private val historyFile = File(paths.runtimeRoot, "k_factor_history.json")
-    private val backupDir = File(paths.runtimeRoot, "k_factor_backups").apply { mkdirs() }
+    private val busy = OwnedBusyLock()
+    private val cacheFile = File(runtimeRoot, "k_factor_cache.json")
+    private val historyFile = File(runtimeRoot, "k_factor_history.json")
+    private val backupDir = File(runtimeRoot, "k_factor_backups").apply { mkdirs() }
     private val statusLock = Any()
     @Volatile private var status = JSONObject()
         .put("state", "IDLE")
         .put("busy", false)
         .put("message", "Aguardando ação manual")
 
-    fun isBusy(): Boolean = busy.get()
+    fun isBusy(): Boolean = busy.isBusy()
     @Volatile private var verify = JSONObject().put("phase", KBatchVerifyCore.Phase.IDLE)
     fun writeVerifyJson(): String = synchronized(statusLock) { verify.toString() }
     private fun setVerify(phase: String, detail: String) = synchronized(statusLock) {
@@ -84,7 +83,8 @@ class KFactorManager(
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
             return error(error.message ?: "USB desconectado")
         }
-        if (!busy.compareAndSet(false, true)) return error("Outra operação de calibração está em andamento")
+        val token = busy.tryAcquire()
+        if (token == 0L) return error("Outra operação de calibração está em andamento")
         val resetId = "KRESET-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().take(8)
         onBusyChanged(true)
         update("RESET_READING", "Lendo Curva K antes do reset", 0, JSONObject().put("resetId", resetId))
@@ -125,9 +125,7 @@ class KFactorManager(
                     )
                 } else {
                     // O writer canônico precisa adquirir o lock por conta própria.
-                    busy.set(false)
-                    onBusyChanged(false)
-                    synchronized(statusLock) { status.put("busy", false) }
+                    releaseBusy(token)
                     val started = startBatchWrite(points, reason)
                     delegated = started.optBoolean("ok", false)
                     if (!delegated) {
@@ -147,11 +145,7 @@ class KFactorManager(
                     JSONObject().put("resetId", resetId),
                 )
             } finally {
-                if (!delegated) {
-                    busy.set(false)
-                    onBusyChanged(false)
-                    synchronized(statusLock) { status.put("busy", false) }
-                }
+                if (!delegated) releaseBusy(token)
             }
         }
         return JSONObject()
@@ -179,7 +173,8 @@ class KFactorManager(
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
             return error(error.message ?: "USB desconectado")
         }
-        if (!busy.compareAndSet(false, true)) return error("Outra operação de calibração está em andamento")
+        val token = busy.tryAcquire()
+        if (token == 0L) return error("Outra operação de calibração está em andamento")
         onBusyChanged(true)
         update("READING_AXIS", "Lendo eixo Petrol Inj", 10)
         return try {
@@ -204,9 +199,7 @@ class KFactorManager(
             update("FAILED", error.message ?: "Falha ao ler K factor", 100)
             error(error.message ?: "Falha ao ler K factor")
         } finally {
-            busy.set(false)
-            onBusyChanged(false)
-            synchronized(statusLock) { status.put("busy", false) }
+            releaseBusy(token)
         }
     }
 
@@ -368,9 +361,10 @@ class KFactorManager(
                 .put("currentFactor", KFactorProtocol.factorFromRaw(currentRaw))
                 .put("targetFactor", KFactorProtocol.factorFromRaw(targetRaw)))
         }
-        if (!busy.compareAndSet(false, true)) return error("Outra operação de calibração está em andamento")
+        val token = busy.tryAcquire()
+        if (token == 0L) return error("Outra operação de calibração está em andamento")
         val expectedSessionId = try { currentSessionId() } catch (error: Exception) {
-            busy.set(false)
+            busy.release(token)
             return error(error.message ?: "USB desconectado")
         }
         val adjustmentId = "KF-${System.currentTimeMillis()}-${UUID.randomUUID().toString().take(8)}"
@@ -381,7 +375,7 @@ class KFactorManager(
             0,
             JSONObject().put("adjustmentId", adjustmentId).put("points", normalized),
         )
-        executor.execute { executeBatch(adjustmentId, normalized, reason, expectedSessionId) }
+        executor.execute { executeBatch(adjustmentId, normalized, reason, expectedSessionId, token) }
         return JSONObject()
             .put("ok", true)
             .put("started", true)
@@ -394,7 +388,7 @@ class KFactorManager(
 
     fun close() = executor.shutdownNow()
 
-    private fun executeBatch(adjustmentId: String, points: JSONArray, reason: String, expectedSessionId: Long) {
+    private fun executeBatch(adjustmentId: String, points: JSONArray, reason: String, expectedSessionId: Long, busyToken: Long) {
         val startedAt = System.currentTimeMillis()
         val confirmed = JSONArray()
         var initialHash = ""
@@ -477,6 +471,8 @@ class KFactorManager(
                 live
             }
 
+            // A CONFIRMAR com o dono: "Gravado" sai só com ACK, antes da leitura de volta (decisão de 2026-10-19,
+            // exceção à regra "Gravado só depois do readback"). Comportamento mantido de propósito.
             // Gravar é INSTANTÂNEO (dono, 2026-10-19): ACK de todos os pontos = "Gravado". A leitura de volta do vetor inteiro
             // (1 transação) segue em segundo plano; divergiu = regrava só os pontos divergentes 1 vez e relê; falhou = aviso na barra.
             acked = true
@@ -484,9 +480,7 @@ class KFactorManager(
             update("BATCH_CONFIRMED", "Gravado", 100,
                 JSONObject().put("ok", true).put("calibrationType", "K_FACTOR").put("adjustmentId", adjustmentId)
                     .put("points", points).put("acked", true).put("readbackValid", false))
-            synchronized(statusLock) { status.put("busy", false) }
-            busy.set(false)
-            onBusyChanged(false)
+            releaseBusy(busyToken)
 
             val changed = (0 until points.length()).map { points.getJSONObject(it).getInt("index") }
             val targets = HashMap<Int, Int>()
@@ -595,10 +589,15 @@ class KFactorManager(
             )
             log.add("ERROR", "K-FACTOR", "$adjustmentId interrompido: ${error.message}")
         } finally {
-            busy.set(false)
-            onBusyChanged(false)
-            synchronized(statusLock) { status.put("busy", false) }
+            releaseBusy(busyToken)
         }
+    }
+
+    /** Só a operação dona do "ocupado" o libera; liberar de novo (ou com o token de outra) não faz nada. */
+    private fun releaseBusy(token: Long) {
+        if (!busy.release(token)) return
+        synchronized(statusLock) { status.put("busy", busy.isBusy()) }
+        onBusyChanged(false)
     }
 
     private fun readRawPoints(request: ByteArray, reason: String, expectedSessionId: Long): IntArray {
@@ -733,7 +732,7 @@ class KFactorManager(
         synchronized(statusLock) {
             status = JSONObject()
                 .put("state", state)
-                .put("busy", busy.get())
+                .put("busy", busy.isBusy())
                 .put("message", message)
                 .put("progress", progress.coerceIn(0, 100))
                 .put("updatedAt", System.currentTimeMillis())
