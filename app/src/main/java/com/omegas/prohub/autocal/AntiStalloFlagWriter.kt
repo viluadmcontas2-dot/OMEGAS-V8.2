@@ -206,8 +206,8 @@ class AntiStalloFlagWriter(
                 undoEnable = null
             }
         }
-        publish(json)
         record("anti_stallo_flag_write", JSONObject(json.toString()).put("origin", "APP_UI_MANUAL").put("enableRequested", plan.enable))
+        publish(json)
     }
 
     private fun io(unit: Mp48SerialUnit) = AntiStalloFlagCore.Io(

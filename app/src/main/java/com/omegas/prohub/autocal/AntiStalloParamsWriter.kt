@@ -269,8 +269,8 @@ class AntiStalloParamsWriter(
                 undoValues = null
             }
         }
-        publish(json)
         record("anti_stallo_params_write", JSONObject(json.toString()).put("origin", "APP_UI_MANUAL"))
+        publish(json)
     }
 
     private fun io(unit: Mp48SerialUnit) = AntiStalloParamsCore.Io(
