@@ -207,6 +207,8 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("lastError", status.lastError)
             .put("uptimeSeconds", status.uptimeSeconds)
             .put("gpsEnabled", status.gpsEnabled)
+            .put("carInfoEnabled", status.carInfoEnabled)
+            .put("carInfoConnected", status.carInfoConnected)
             .put("directTelemetryAgeMs", status.directTelemetryAgeMs)
             .put("calibrationBusy", service.kWriter.isBusy() || service.kFactor.isBusy())
             .put("kMapState", kStatus.optString("state", "IDLE"))
@@ -536,6 +538,12 @@ class HubJavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface fun setGpsEnabled(enabled: Boolean) = activity?.setGpsEnabled(enabled)
+    /** Painel da multimídia (só leitura). Sem permissão a pedir: liga/desliga direto no serviço. */
+    @JavascriptInterface
+    fun setCarInfoEnabled(enabled: Boolean): String {
+        val service = activity?.serviceOrNull() ?: return unavailable()
+        return service.setCarInfoEnabled(enabled).toString()
+    }
     @JavascriptInterface fun openAppSettings() = activity?.openAppSettings()
     @JavascriptInterface
     fun registerRefuel(addedM3: Double, distanceKm: Double): String {

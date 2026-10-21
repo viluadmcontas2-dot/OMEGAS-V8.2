@@ -26,6 +26,8 @@ import com.omegas.prohub.diagnostics.DocumentsSessionMirror
 import com.omegas.prohub.diagnostics.SessionRecorder
 import com.omegas.prohub.ecu.NativeRuntimeManager
 import com.omegas.prohub.gps.GpsTelemetryManager
+import com.omegas.prohub.carinfo.CarInfoSample
+import com.omegas.prohub.carinfo.CarInfoSource
 import com.omegas.prohub.learning.LearningArchiveManager
 import com.omegas.prohub.learning.LearningTemperatureSettings
 import com.omegas.prohub.learning.LearningToleranceSettings
@@ -119,6 +121,8 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var gps: GpsTelemetryManager
         private set
+    lateinit var carInfo: CarInfoSource
+        private set
     lateinit var kWriter: KWriteManager
         private set
     lateinit var kFactor: KFactorManager
@@ -197,6 +201,7 @@ class TelemetryForegroundService : Service() {
         notifications = NotificationController(this)
         overlay = TelemetryOverlayController(this)
         gps = GpsTelemetryManager(this, log, ::consumeGpsUpdate)
+        carInfo = CarInfoSource(this, log, ::consumeCarInfoSample)
         usb = UsbSerialManager(this, settings, log, ::usbStateChanged, sessionRecorder::recordRawUsb)
         runtime = NativeRuntimeManager(
             paths = paths,
@@ -349,6 +354,7 @@ class TelemetryForegroundService : Service() {
             gps.start(settings.gpsIntervalMs)
             startForegroundCompat()
         }
+        if (settings.carInfoEnabled) carInfo.start()
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         scheduler.execute { healthTick() }
         updateOverlay()
@@ -383,6 +389,7 @@ class TelemetryForegroundService : Service() {
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) { /* encerrando */ }
         try { usb.disconnect() } catch (_: Exception) { /* encerrando */ }
         try { gps.stop() } catch (_: Exception) { /* encerrando */ }
+        try { carInfo.close() } catch (_: Exception) { /* encerrando */ }
         try { overlay.close() } catch (_: Exception) { /* encerrando */ }
         try { sessionRecorder.close() } catch (_: Exception) { /* encerrando */ }
         try { nativeAutoCal.endUsbSession() } catch (_: Exception) { /* encerrando */ }
@@ -440,6 +447,8 @@ class TelemetryForegroundService : Service() {
             storagePath = paths.externalRoot.absolutePath,
             workspaceConfigured = false,
             gpsEnabled = gps.running,
+            carInfoEnabled = ::carInfo.isInitialized && carInfo.supervisor.isEnabled(),
+            carInfoConnected = ::carInfo.isInitialized && carInfo.supervisor.isConnected(),
             gpsSpeedKmh = gps.json().optDouble("speedKmh", 0.0),
             gpsAccuracyM = gps.json().optDouble("accuracyM", 0.0),
             directTelemetryAgeMs = telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it },
@@ -486,6 +495,7 @@ class TelemetryForegroundService : Service() {
         val live = telemetryStore.telemetryCopy()
         val gpsData = gps.json()
         root.put("gps", gpsData)
+            .put("carinfo", carInfo.json())
             .put("k_write", try { JSONObject(kWriter.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("k_factor", try { JSONObject(kFactor.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("session_recorder", try { JSONObject(sessionRecorder.statusJson()) } catch (_: Exception) { JSONObject() })
@@ -685,6 +695,15 @@ class TelemetryForegroundService : Service() {
         stateChanged()
         return JSONObject().put("ok", ok).put("enabled", gps.running)
             .apply { if (!ok) put("error", gps.lastError) }
+    }
+
+    fun setCarInfoEnabled(enabled: Boolean): JSONObject {
+        settings.carInfoEnabled = enabled
+        if (enabled) carInfo.start() else carInfo.stop()
+        stateChanged()
+        val state = carInfo.json()
+        return JSONObject().put("ok", true).put("enabled", state.optBoolean("enabled"))
+            .put("connected", state.optBoolean("connected")).put("state", state.optString("state"))
     }
 
     fun overlayReady(): Boolean = ::overlay.isInitialized
@@ -1218,6 +1237,11 @@ class TelemetryForegroundService : Service() {
         sessionRecorder.record("telemetry", "mp48", live)
         sessionRecorder.record("engine_event", "native", root, force = false)
         stateChanged()
+    }
+
+    /** Painel da multimídia: só registra na sessão (o gravador limita a 1 por segundo). */
+    private fun consumeCarInfoSample(sample: CarInfoSample) {
+        sessionRecorder.record("car_info", "multimidia", sample.knownJson())
     }
 
     private fun consumeGpsUpdate() {

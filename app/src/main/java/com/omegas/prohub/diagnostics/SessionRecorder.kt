@@ -142,6 +142,8 @@ class SessionRecorder(
     @Volatile private var currentSegment = 0
     @Volatile private var lastTelemetryAt = 0L
     @Volatile private var lastSnapshotAt = 0L
+    /** Painel da multimídia (car_info): no máximo 1 evento por segundo. */
+    private val carInfoGate = MinIntervalGate(1_000L)
     @Volatile private var stopReason = ""
     @Volatile private var lastError = ""
 
@@ -218,6 +220,7 @@ class SessionRecorder(
             segmentBytes = 0L
             lastTelemetryAt = 0L
             lastSnapshotAt = 0L
+            carInfoGate.reset()
             stopReason = ""
             lastError = ""
             lastDocumentsMirrorAt = 0L
@@ -297,6 +300,7 @@ class SessionRecorder(
             if (every > 0L && now - lastTelemetryAt < every) return
             lastTelemetryAt = now
         }
+        if (!force && type == "car_info" && !carInfoGate.allow(now)) return
         if (!force && type == "full_snapshot") {
             val every = settings.sessionFullSnapshotEveryMs
             if (every <= 0L || now - lastSnapshotAt < every) return
@@ -924,6 +928,7 @@ class SessionRecorder(
             "${payload.optInt("rpm", 0)} rpm • ${payload.optString("fuel", payload.optString("state", "--"))} • " +
                 "${payload.optDouble("petrol_ms", 0.0)} ms • MAP ${payload.optDouble("load_bar", payload.optDouble("map_bar", 0.0))}"
         }
+        "car_info" -> "Multimídia • ${data.opt("speed") ?: "—"} km/h • ${data.opt("rotationRate") ?: "—"} rpm • odômetro ${data.opt("odo") ?: "—"}"
         "obd" -> "RPM ${data.opt("rpm")} • STFT ${data.opt("stft")} • ${data.optString("quality", "--")}"
         "app_log" -> "${data.optString("category", "LOG")}: ${data.optString("message", "").take(140)}"
         "settings_changed" -> "Configurações alteradas"
@@ -942,6 +947,8 @@ Tipos principais:
 - full_snapshot: estado aprofundado periódico, incluindo aprendizado e runtime;
 - app_log: conexão, recuperação serial, mapa K, readback e erros;
 - obd: fonte opcional e isolada;
+- car_info: painel lido da multimídia (velocidade, odômetro, rotação, marcha, combustível, consumo), só leitura,
+  no máximo 1 por segundo; só os campos que a multimídia informou (ausente = desconhecido, nunca 0);
 - ui_usage: contagens de uso da interface (visitas e segundos por aba, toques por controle), deltas desde o último envio; só contagens, sem valores digitados;
 - usb_raw: somente quando habilitado explicitamente;
 - k_*: leitura, escrita, ACK e confirmação do mapa K;

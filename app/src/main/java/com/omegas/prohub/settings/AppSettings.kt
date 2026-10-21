@@ -65,6 +65,10 @@ class AppSettings(context: Context) {
     var gpsEnabled: Boolean
         get() = prefs.getBoolean("gpsEnabled", false)
         set(value) = prefs.edit().putBoolean("gpsEnabled", value).apply()
+    /** Painel da multimídia (Car Info): só leitura, por isso ligado por padrão. */
+    var carInfoEnabled: Boolean
+        get() = prefs.getBoolean("carInfoEnabled", true)
+        set(value) = prefs.edit().putBoolean("carInfoEnabled", value).apply()
     var gpsIntervalMs: Long
         get() = prefs.getLong("gpsIntervalMs", 1_000L)
         set(value) = prefs.edit().putLong("gpsIntervalMs", value.coerceIn(250L, 60_000L)).apply()
@@ -173,6 +177,7 @@ class AppSettings(context: Context) {
         .put("preferredDeviceName", preferredDeviceName)
         .put("gpsEnabled", gpsEnabled)
         .put("gpsIntervalMs", gpsIntervalMs)
+        .put("carInfoEnabled", carInfoEnabled)
         .put("sessionRecorderEnabled", sessionRecorderEnabled)
         .put("sessionRecorderAutoStartOnUsb", sessionRecorderAutoStartOnUsb)
         .put("sessionTelemetryEveryMs", sessionTelemetryEveryMs)
