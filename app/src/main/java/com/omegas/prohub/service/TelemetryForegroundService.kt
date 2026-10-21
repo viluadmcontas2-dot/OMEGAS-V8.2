@@ -706,6 +706,10 @@ class TelemetryForegroundService : Service() {
             .put("connected", state.optBoolean("connected")).put("state", state.optString("state"))
     }
 
+    /** Estado + última amostra da multimídia para a tela (só leitura). Antes do onCreate: indisponível. */
+    fun carInfoJson(): JSONObject =
+        if (::carInfo.isInitialized) carInfo.json() else JSONObject().put("ok", false).put("error", "Serviço indisponível")
+
     fun overlayReady(): Boolean = ::overlay.isInitialized
 
     fun overlayStatusJson(): String = if (::overlay.isInitialized) overlay.statusJson().toString() else "{}"

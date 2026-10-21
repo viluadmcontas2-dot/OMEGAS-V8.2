@@ -544,6 +544,12 @@ class HubJavascriptBridge(activity: MainActivity) {
         val service = activity?.serviceOrNull() ?: return unavailable()
         return service.setCarInfoEnabled(enabled).toString()
     }
+    /** Leitura leve do painel da multimídia (estado, tentativas, idade e última amostra). Não pede nada à multimídia. */
+    @JavascriptInterface
+    fun getCarInfo(): String {
+        val service = activity?.serviceOrNull() ?: return unavailable()
+        return service.carInfoJson().toString()
+    }
     @JavascriptInterface fun openAppSettings() = activity?.openAppSettings()
     @JavascriptInterface
     fun registerRefuel(addedM3: Double, distanceKm: Double): String {
