@@ -12,6 +12,8 @@ Contrato de origem (engenharia reversa estática): `Taytech-/docs/produto/CONTRA
 
 Onde aparece: `carinfo` no snapshot completo (`full_snapshot` e exports da sessão) com estado (`enabled`, `connected`, `state`, `lastError`, `samples`, `lastSampleAtMs`) e a última amostra; evento `car_info` na sessão, no máximo 1 por segundo, só com os campos conhecidos. Interruptor: `carInfoEnabled` (ligado por padrão, por ser só leitura); ponte `setCarInfoEnabled`.
 
+Na tela: Ferramentas › Mais ferramentas › cartão **Multimídia (Car Info)** › "Ver leituras". Mostra o estado em uma frase (Conectada e lendo / Procurando… tentativa N, próxima em X s / Indisponível: motivo / Desligada), a idade da última leitura e o contador, 9 valores ("—" = desconhecido) e a chave "Ler da multimídia" (1 toque). Leitura pela ponte `getCarInfo` (= `CarInfoSource.json()`), no ciclo normal da tela. Código: `app/src/main/assets/ui/core/car-info-view.js`; teste: `tests/ui/car-info-multimidia.test.cjs`.
+
 ## O que NÃO é feito
 - Nenhuma escrita: nada de `setConfig`, `set*Property`, `setCarProperty`, `setDiagnose`, nenhum pacote para a CAN. A ECU do GNV não é tocada por aqui.
 - Nada de `getCarPropValues` (tx 30): no código OEM ele pode transmitir pacotes de consulta na primeira chamada.
