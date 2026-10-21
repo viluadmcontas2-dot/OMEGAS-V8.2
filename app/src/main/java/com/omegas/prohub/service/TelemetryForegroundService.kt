@@ -201,7 +201,7 @@ class TelemetryForegroundService : Service() {
         notifications = NotificationController(this)
         overlay = TelemetryOverlayController(this)
         gps = GpsTelemetryManager(this, log, ::consumeGpsUpdate)
-        carInfo = CarInfoSource(this, log, ::consumeCarInfoSample)
+        carInfo = CarInfoSource(this, log, ::consumeCarInfoSample, ::consumeCarInfoRaw)
         usb = UsbSerialManager(this, settings, log, ::usbStateChanged, sessionRecorder::recordRawUsb)
         runtime = NativeRuntimeManager(
             paths = paths,
@@ -1246,6 +1246,11 @@ class TelemetryForegroundService : Service() {
     /** Painel da multimídia: só registra na sessão (o gravador limita a 1 por segundo). */
     private fun consumeCarInfoSample(sample: CarInfoSample) {
         sessionRecorder.record("car_info", "multimidia", sample.knownJson())
+    }
+
+    /** Dados crus da multimídia: a captura já limita a 1 a cada 5 s e só quando muda. */
+    private fun consumeCarInfoRaw(raw: JSONObject) {
+        sessionRecorder.record("car_info_raw", "multimidia", raw)
     }
 
     private fun consumeGpsUpdate() {

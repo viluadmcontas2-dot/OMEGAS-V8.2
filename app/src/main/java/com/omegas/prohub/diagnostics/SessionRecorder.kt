@@ -929,6 +929,7 @@ class SessionRecorder(
                 "${payload.optDouble("petrol_ms", 0.0)} ms • MAP ${payload.optDouble("load_bar", payload.optDouble("map_bar", 0.0))}"
         }
         "car_info" -> "Multimídia • ${data.opt("speed") ?: "—"} km/h • ${data.opt("rotationRate") ?: "—"} rpm • odômetro ${data.opt("odo") ?: "—"}"
+        "car_info_raw" -> "Multimídia (dados crus) • ${data.opt("channelsActive") ?: "—"} de 17 canais ativos"
         "obd" -> "RPM ${data.opt("rpm")} • STFT ${data.opt("stft")} • ${data.optString("quality", "--")}"
         "app_log" -> "${data.optString("category", "LOG")}: ${data.optString("message", "").take(140)}"
         "settings_changed" -> "Configurações alteradas"
@@ -949,6 +950,9 @@ Tipos principais:
 - obd: fonte opcional e isolada;
 - car_info: painel lido da multimídia (velocidade, odômetro, rotação, marcha, combustível, consumo), só leitura,
   no máximo 1 por segundo; só os campos que a multimídia informou (ausente = desconhecido, nunca 0);
+- car_info_raw: o que a multimídia mandou, cru, para decidir offline: campos do painel antes da sentinela, propriedades
+  (propId/areaId=valor), CabinInfo, contagem de chamadas por transação (1..17) e início do payload em hex; no máximo 1 a cada
+  5 s, só quando muda, com teto por ligação;
 - ui_usage: contagens de uso da interface (visitas e segundos por aba, toques por controle), deltas desde o último envio; só contagens, sem valores digitados;
 - usb_raw: somente quando habilitado explicitamente;
 - k_*: leitura, escrita, ACK e confirmação do mapa K;

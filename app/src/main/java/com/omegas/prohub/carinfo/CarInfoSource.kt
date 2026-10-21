@@ -33,6 +33,8 @@ class CarInfoSource(
     context: Context,
     private val log: RingLog,
     private val onSample: (CarInfoSample) -> Unit,
+    /** Evento cru (`car_info_raw`): já limitado a 1 a cada 5 s e só quando muda (ver [CarInfoRawCapture]). */
+    private val onRawEvent: (JSONObject) -> Unit = {},
 ) {
     companion object {
         const val PACKAGE = "com.can.activity"
@@ -66,6 +68,9 @@ class CarInfoSource(
         schedule = { delay, action -> main.postDelayed({ action() }, delay) },
     )
 
+    private val aggregator = CarInfoAggregator()
+    private val capture = CarInfoRawCapture(System::currentTimeMillis)
+
     private val listener = ListenerBinder()
 
     private inner class ListenerBinder : Binder(), IInterface {
@@ -75,14 +80,26 @@ class CarInfoSource(
 
         override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
             if (code !in 1..LISTENER_TX_COUNT) return super.onTransact(code, data, reply, flags)
-            // O cliente OEM implementa as 17; aqui todas respondem, só a 6 (painel) é lida.
+            // O cliente OEM implementa as 17; aqui todas respondem. Só a 6 (painel) e a 17 (propriedades) viram valores;
+            // todas são contadas e guardadas cruas (hex curto) para decidir offline pelos logs da sessão.
             data.enforceInterface(ICAN_BUS_LISTENER)
+            val payload = payloadBytes(data)
+            try { capture.onTransaction(code, payload) } catch (e: Exception) {
+                log.add("WARN", "CARINFO", "Captura crua falhou: ${e.message ?: e.javaClass.simpleName}")
+            }
             if (code == TX_ON_DASHBOARD_INFO_CHANGED) {
                 try {
-                    DashBoardInfoDecoder.decodeNullable(ParcelFieldReader(data))?.let(::deliver)
+                    DashBoardInfoDecoder.decodeNullable(ParcelFieldReader(data))?.let { deliver(aggregator.onDashboard(it)) }
                 } catch (e: Exception) {
                     log.add("WARN", "CARINFO", "Painel ilegível: ${e.message ?: e.javaClass.simpleName}")
                 }
+            } else if (code == CarInfoRawCapture.TX_CAR_PROPS) {
+                try { capture.lastProps()?.let { aggregator.onProps(it) }?.let(::deliver) } catch (e: Exception) {
+                    log.add("WARN", "CARINFO", "Propriedades ilegíveis: ${e.message ?: e.javaClass.simpleName}")
+                }
+            }
+            try { capture.rawEventIfDue()?.let(onRawEvent) } catch (e: Exception) {
+                log.add("WARN", "CARINFO", "Falha ao registrar dados crus: ${e.message ?: e.javaClass.simpleName}")
             }
             reply?.writeNoException()
             return true
@@ -113,7 +130,14 @@ class CarInfoSource(
         worker.shutdown()
     }
 
-    fun json(): JSONObject = supervisor.json()
+    fun json(): JSONObject = supervisor.json().put("channels", capture.json())
+
+    /** Bytes do payload (do ponto de leitura atual até o fim), sem mexer na posição do Parcel; vazio se o Android recusar. */
+    private fun payloadBytes(parcel: Parcel): ByteArray = try {
+        val position = parcel.dataPosition()
+        val all = parcel.marshall()
+        if (position in 0..all.size) all.copyOfRange(position, all.size) else ByteArray(0)
+    } catch (_: Exception) { ByteArray(0) }
 
     private fun deliver(sample: CarInfoSample) {
         supervisor.onSample(sample)
@@ -141,6 +165,7 @@ class CarInfoSource(
 
     private fun attach(gatewayBinder: IBinder) {
         try {
+            capture.reset(); aggregator.reset()
             val canBus = transactForBinder(gatewayBinder, ICAN_UI, TX_GET_CAN_SERVICE) { it.writeString(CAN_SERVICE_NAME) }
                 ?: throw IllegalStateException("Multimídia sem CanBusManager")
             canBus.linkToDeath(deathRecipient, 0)
@@ -162,7 +187,9 @@ class CarInfoSource(
             data.writeInterfaceToken(ICAN_BUS)
             if (!canBus.transact(TX_GET_DASHBOARD_INFO, data, reply, 0)) return
             reply.readException()
-            DashBoardInfoDecoder.decodeNullable(ParcelFieldReader(reply))?.let(::deliver)
+            val payload = payloadBytes(reply)
+            try { capture.onInitialSnapshot(payload) } catch (_: Exception) { /* captura nunca derruba */ }
+            DashBoardInfoDecoder.decodeNullable(ParcelFieldReader(reply))?.let { deliver(aggregator.onDashboard(it)) }
         } catch (e: Exception) {
             log.add("INFO", "CARINFO", "Foto inicial do painel indisponível: ${e.message ?: e.javaClass.simpleName}")
         } finally {

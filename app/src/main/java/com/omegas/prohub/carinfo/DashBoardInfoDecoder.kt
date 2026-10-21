@@ -40,7 +40,28 @@ data class CarInfoSample(
     val throttlePos: Int? = null,
     /** false quando o Parcel terminou antes dos 18 campos. */
     val complete: Boolean = false,
+    /** Canal de cada campo vindo de fora do DashBoardInfo (tx 6). Ausente = tx6. Só aparece nos "Detalhes". */
+    val sources: Map<String, String> = emptyMap(),
 ) {
+    fun valueOf(name: String): Number? = values().firstOrNull { it.first == name }?.second
+
+    /** Cópia com um campo preenchido por outro canal (a plausibilidade é a mesma do decodificador). */
+    fun withField(name: String, value: Number, source: String): CarInfoSample {
+        val d = value.toDouble()
+        fun i(min: Int, max: Int) = DashBoardInfoDecoder.plausibleInt(Math.round(d).toInt(), min, max)
+        fun f(min: Float, max: Float) = DashBoardInfoDecoder.plausibleFloat(d.toFloat(), min, max)
+        val next = when (name) {
+            "odo" -> copy(odo = i(0, 9_999_999))
+            "rotationRate" -> copy(rotationRate = i(0, 20_000))
+            "speed" -> copy(speed = i(0, 400))
+            "cruisingRange" -> copy(cruisingRange = i(0, 5_000))
+            "fuelPercentage" -> copy(fuelPercentage = f(0f, 100f))
+            "coolantTemp" -> copy(coolantTemp = f(-50f, 250f))
+            else -> this
+        }
+        return if (next.valueOf(name) != null) next.copy(sources = sources + (name to source)) else this
+    }
+
     private fun values(): List<Pair<String, Number?>> = listOf(
         "gearShiftPosition" to gearShiftPosition,
         "odo" to odo,
@@ -64,18 +85,24 @@ data class CarInfoSample(
 
     fun knownCount(): Int = values().count { it.second != null }
 
-    /** Todos os campos, desconhecido = JSON null. */
+    /** Todos os campos, desconhecido = JSON null; `sources` = canal de cada campo conhecido (padrão tx6). */
     fun toJson(): JSONObject {
         val json = JSONObject()
-        values().forEach { (name, value) -> json.put(name, value?.let { jsonNumber(it) } ?: JSONObject.NULL) }
-        return json.put("complete", complete)
+        val src = JSONObject()
+        values().forEach { (name, value) ->
+            json.put(name, value?.let { jsonNumber(it) } ?: JSONObject.NULL)
+            if (value != null) src.put(name, sources[name] ?: "tx6")
+        }
+        return json.put("complete", complete).put("sources", src)
     }
 
-    /** Só os campos conhecidos (evento compacto da sessão). */
+    /** Só os campos conhecidos (evento compacto da sessão); o canal só aparece quando NÃO é tx6. */
     fun knownJson(): JSONObject {
         val json = JSONObject()
         values().forEach { (name, value) -> if (value != null) json.put(name, jsonNumber(value)) }
-        return json.put("complete", complete)
+        json.put("complete", complete)
+        if (sources.isNotEmpty()) json.put("sources", JSONObject(sources as Map<*, *>))
+        return json
     }
 
     private fun jsonNumber(value: Number): Any = if (value is Float) value.toDouble() else value
