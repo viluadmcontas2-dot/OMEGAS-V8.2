@@ -4948,7 +4948,7 @@
   "ev": 98,
   "kt": 8,
   "ponte": 116,
-  "teste": 396,
+  "teste": 398,
   "ui": 35
  },
  "desconhecido_sem_uso": [
@@ -6810,6 +6810,14 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/calibration/OwnedBusyLockTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/calibration/OwnedBusyLockTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/carinfo/CarInfoAggregatorTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/carinfo/CarInfoAggregatorTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/carinfo/CarInfoRawCaptureTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/carinfo/CarInfoRawCaptureTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/carinfo/CarInfoSupervisorTest.kt": {

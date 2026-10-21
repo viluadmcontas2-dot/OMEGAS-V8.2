@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 8, ponte 116, teste 396, ui 35. Arestas: chama 111, cobre 672, exibe 36, sustenta 80, usa 14.
+Nós: aba 9, ev 98, kt 8, ponte 116, teste 398, ui 35. Arestas: chama 111, cobre 672, exibe 36, sustenta 80, usa 14.
 
 ## (a) Por aba
 
@@ -28,7 +28,7 @@ Pontes e evidências por aba (amostra):
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 116 pontes, 35 arquivos de UI, 396 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 116 pontes, 35 arquivos de UI, 398 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
