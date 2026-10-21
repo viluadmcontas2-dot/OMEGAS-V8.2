@@ -59,6 +59,7 @@ Toda constante (ou literal) `Long` comparada num arquivo que lê relógio aparec
 | `RecordingSerialScheduler.kt` `FLUSH_MS` | Exceção: resumo das leituras na trilha da sessão (registro) |
 | `TelemetryForegroundService.kt` `900L` | Exceção: limite de redesenho da notificação (visual) |
 | `TelemetryOverlayController.kt` `250L` | Exceção: limite de redesenho do overlay (visual) |
+| `CarInfoSupervisor.kt` `BASE_RETRY_MS` | Exceção: nova tentativa de ligar ao painel da multimídia (serviço externo indisponível não avisa quando volta); não decide nada do motor nem da ECU |
 | `MotorSampleAnalyzer.kt` `1L` | Não é tempo: contagem de quadros recebidos (falso positivo aceito da varredura) |
 | `NativeAutoCalMonitor.kt` `SESSION_SETTLE_MS` | TEMPO-A-REMOVER (pendente): `NativeAutoCalMonitor.kt:201`, espera 8 s após a sessão antes da primeira sonda. Troca segura: N ticks (cada tick já é 4 quadros válidos); não feita porque `tools/jvm/AquisicaoEmulada.kt` (emulador do monitor real) simula essa espera pelo relógio — precisa ajustar e rodar o emulador junto |
 | `NativeAutoCalRefreshPlanner.kt` `ACQUISITION_INTERVAL_MS` | TEMPO-A-REMOVER (pendente): `NativeAutoCalRefreshPlanner.kt:50`, espelho a 1 Hz das bandas do AutoCal; trocar por "a cada N ticks" |

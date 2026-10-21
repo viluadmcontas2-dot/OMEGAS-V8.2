@@ -4907,8 +4907,8 @@
   "aba": 9,
   "ev": 98,
   "kt": 8,
-  "ponte": 114,
-  "teste": 392,
+  "ponte": 115,
+  "teste": 395,
   "ui": 34
  },
  "desconhecido_sem_uso": [
@@ -5002,6 +5002,7 @@
     "OmegasNative.resetLearningToleranceSettings",
     "OmegasNative.restartEngine",
     "OmegasNative.runProtocolLab",
+    "OmegasNative.setCarInfoEnabled",
     "OmegasNative.setGnvSettings",
     "OmegasNative.setGpsEnabled",
     "OmegasNative.setLearningMinimumWaterC",
@@ -5033,6 +5034,7 @@
     "OmegasNative.registerRefuel",
     "OmegasNative.restartEngine",
     "OmegasNative.runProtocolLab",
+    "OmegasNative.setCarInfoEnabled",
     "OmegasNative.setGnvSettings",
     "OmegasNative.setGpsEnabled",
     "OmegasNative.setLearningMinimumWaterC",
@@ -6326,6 +6328,12 @@
    "rotulo": "OmegasNative.runProtocolLab",
    "tipo": "ponte"
   },
+  "ponte:OmegasNative.setCarInfoEnabled": {
+   "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
+   "escrita": false,
+   "rotulo": "OmegasNative.setCarInfoEnabled",
+   "tipo": "ponte"
+  },
   "ponte:OmegasNative.setGnvSettings": {
    "arquivo": "app/src/main/java/com/omegas/prohub/web/HubJavascriptBridge.kt",
    "escrita": false,
@@ -6758,6 +6766,18 @@
   },
   "teste:app/src/test/java/com/omegas/prohub/calibration/OwnedBusyLockTest.kt": {
    "rotulo": "app/src/test/java/com/omegas/prohub/calibration/OwnedBusyLockTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/carinfo/CarInfoSupervisorTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/carinfo/CarInfoSupervisorTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/carinfo/DashBoardInfoDecoderTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/carinfo/DashBoardInfoDecoderTest.kt",
+   "tipo": "teste"
+  },
+  "teste:app/src/test/java/com/omegas/prohub/diagnostics/MinIntervalGateTest.kt": {
+   "rotulo": "app/src/test/java/com/omegas/prohub/diagnostics/MinIntervalGateTest.kt",
    "tipo": "teste"
   },
   "teste:app/src/test/java/com/omegas/prohub/diagnostics/PrivateSessionArchiveTest.kt": {

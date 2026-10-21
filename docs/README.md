@@ -14,6 +14,7 @@
 | Estratégia de testes | `TEST_STRATEGY.md` |
 | Modelo de equivalência gasolina x GNV | `MODELO_EQUIVALENCIA_CAUSAL.md` |
 | OBD (somente observação) | `OBD.md` |
+| Painel da multimídia: velocidade, odômetro, rotação (só leitura) | `CAR-INFO.md` |
 | Engenharia reversa do ProgBase original (protocolo, telas, decompilação, evidências, grafo) | `progbase/RETOMAR.md`, `progbase/INDEX.md` |
 | Onde cada fonte (Drive, repo privado, logs) está | `mapa-de-fontes/MAPA.md` |
 | Provas e medições datadas | `evidence/`, `incidents/` |
