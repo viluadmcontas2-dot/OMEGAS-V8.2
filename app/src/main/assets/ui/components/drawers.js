@@ -134,6 +134,18 @@
         this.api.setTelemetryOverlayEnabled?.(false);
         this.toolsSignature = '';
         this.renderTools(this.store.get());
+      } else if (target.matches('[data-tool-open-carinfo]')) {
+        this.view = 'carinfo';
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
+        this.syncView();
+      } else if (target.matches('[data-carinfo-toggle]')) {
+        // Um toque = liga/desliga a leitura da multimídia; sem janela. Falha vira aviso sutil.
+        const C = ns.CarInfoView;
+        const result = C ? C.toggle(this.api, C.view(this.api.carInfo?.(), Date.now())) : null;
+        if (result && result.ok === false) this.notifyResult(result, '');
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-open-log]')) {
         this.view = 'log';
         this.logPage = 0;
@@ -275,15 +287,26 @@
       const overlay = this.api.overlayStatus?.() || {};
       let mode = this.autoRefineMode;
       if (!mode) { try { mode = String(window.OmegasAutoCal?.getAutoRefineMode?.() || 'SHADOW'); } catch (_) { mode = 'SHADOW'; } this.autoRefineMode = mode; }
+      // Multimídia (Car Info): lida a cada ciclo do app só nesta página (o mesmo ciclo que já atualiza a tela).
+      const C = ns.CarInfoView;
+      let car = null;
+      if (C && this.page === 2) {
+        try { car = C.view(this.api.carInfo?.(), Date.now()); }
+        catch (error) { console.error('[OMEGAS] Leitura da multimídia indisponível', error); }
+      }
       // Só redesenha quando algo visível mudou: redesenho a cada ciclo engolia toques.
       const signature = JSON.stringify([
-        this.view, this.page, serviceHealthy, appStatus.usbConnected, battery, overlay, mode,
+        this.view, this.page, serviceHealthy, appStatus.usbConnected, battery, overlay, mode, this.view === 'carinfo' ? car : car && car.stateText,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.logPage,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
       this.toolsSignature = signature;
       host.dataset.mode = this.view === 'home' ? 'home' : 'view';
 
+      if (this.view === 'carinfo' && C && car) {
+        host.innerHTML = C.html(car);
+        return;
+      }
       if (this.view === 'log') {
         host.innerHTML = `
         <section class="tool-view log-view" data-card="registro">
@@ -335,7 +358,13 @@
           <p class="tile-line">Avisos e teste do app.</p>
           <span class="tile-state">${serviceHealthy ? 'Tudo certo' : 'Atenção'}</span>
           <span class="tile-go">Ver ›</span>
-        </button>`;
+        </button>
+        ${car ? `<button type="button" class="tool-tile tool-open" data-card="carinfo" data-tool-open-carinfo data-state="${car.kind === 'on' ? 'on' : car.kind === 'off' ? 'off' : 'unknown'}">
+          <h3>Multimídia (Car Info)</h3>
+          <p class="tile-line">Velocidade e km lidos da multimídia.</p>
+          <span class="tile-state">${escapeHtml(car.stateText)}</span>
+          <span class="tile-go">Ver leituras ›</span>
+        </button>` : ''}`;
     }
 
     // ---------- Sessões ----------

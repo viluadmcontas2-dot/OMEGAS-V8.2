@@ -265,6 +265,10 @@
         : invoke(this.power, 'setOverlayEnabled', [enabled === true], { ok: false, error: 'Controle do flutuante indisponível' });
     }
 
+    /** Painel da multimídia (Car Info, só leitura): estado + última amostra. Sem ponte = null ("só funciona no app"). */
+    carInfo() { return this.demo ? null : invoke(this.native, 'getCarInfo', [], null); }
+    setCarInfoEnabled(enabled) { return this.demo ? null : invoke(this.native, 'setCarInfoEnabled', [enabled === true], { ok: false }); }
+
     connectUsb() { return this.demo ? true : invoke(this.native, 'connectUsb', [''], false); }
     disconnectUsb() { return this.demo ? true : invoke(this.native, 'disconnectUsb', [], false); }
 
