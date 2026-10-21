@@ -130,4 +130,38 @@ class DashBoardInfoDecoderTest {
         assertEquals(47, sample.speed)
         assertTrue(sample.complete)
     }
+
+    @Test
+    fun `valor fisicamente impossivel vira nulo e valor valido continua`() {
+        val fields = realisticFields()
+        fields[3] = -1; fields[4] = -1; fields[1] = -1; fields[2] = -1 // rpm, speed, odo, autonomia
+        fields[8] = 150.0f // combustivel acima de 100 %
+        fields[9] = -1.0f; fields[10] = -1.0f // consumo medio e instantaneo (campo, 2026-10-21: "Consumo agora -1,0")
+        fields[11] = 400.0f // temperatura da agua impossivel
+        fields[15] = -1 // pedal do acelerador
+        val sample = DashBoardInfoDecoder.decodeFields(parcel(*fields))
+        assertNull(sample.rotationRate)
+        assertNull(sample.speed)
+        assertNull(sample.odo)
+        assertNull(sample.cruisingRange)
+        assertNull(sample.fuelPercentage)
+        assertNull(sample.avgFuelCont)
+        assertNull(sample.instFuelCont)
+        assertNull(sample.coolantTemp)
+        assertNull(sample.accPedal)
+        assertEquals(JSONObject.NULL, sample.toJson().get("instFuelCont"))
+        assertEquals(12345.0, DashBoardInfoDecoder.decodeFields(parcel(*realisticFields())).odo!!.toDouble(), 0.0)
+    }
+
+    @Test
+    fun `zero real e valores de campo continuam validos`() {
+        val fields = realisticFields()
+        fields[4] = 0; fields[3] = 0; fields[9] = 11.7f; fields[10] = 0.0f; fields[14] = -4.0f // parado, consumo 0, ambiente negativo
+        val sample = DashBoardInfoDecoder.decodeFields(parcel(*fields))
+        assertEquals(0, sample.speed)
+        assertEquals(0, sample.rotationRate)
+        assertEquals(11.7f, sample.avgFuelCont!!, 0f)
+        assertEquals(0.0f, sample.instFuelCont!!, 0f)
+        assertEquals(-4.0f, sample.ambientTemp!!, 0f)
+    }
 }

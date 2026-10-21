@@ -55,6 +55,15 @@ test('null vira "—", nunca "0"; zero de verdade continua 0', () => {
   assert.doesNotMatch(C.html(semAmostra).replace(/\d+ leituras?/, ''), />0</, 'nenhum 0 inventado');
 });
 
+test('valor negativo onde não existe (consumo -1,0 do campo) vira "—"', () => {
+  const C = CV();
+  const v = C.view(conectada({ ...SAMPLE, instFuelCont: -1, speed: -1, coolantTemp: -3 }), NOW);
+  const by = Object.fromEntries(v.values.map(x => [x.key, x.text]));
+  assert.equal(by.instFuelCont, '—'); assert.equal(by.speed, '—');
+  assert.equal(by.coolantTemp, '-3', 'temperatura negativa é possível');
+  assert.equal(by.avgFuelCont, '9,1');
+});
+
 test('estado em uma frase: conectada, procurando, indisponível com motivo, desligada', () => {
   const C = CV();
   assert.equal(C.view(conectada(), NOW).sentence, 'Conectada e lendo');

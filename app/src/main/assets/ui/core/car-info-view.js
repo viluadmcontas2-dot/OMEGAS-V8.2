@@ -15,6 +15,8 @@
   ];
 
   const finite = value => (value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
+  // Defesa extra (campo, 2026-10-21: "Consumo agora" -1,0): valor negativo onde não existe vira "—". Temperatura e marcha podem ser negativas.
+  const MAY_BE_NEGATIVE = new Set(['coolantTemp', 'gearShiftPosition']);
   const fmt = (v, digits) => { const n = finite(v); return n === null ? DASH : n.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits }); };
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const short = text => { const t = String(text || '').trim() || 'motivo desconhecido'; return t.length > 60 ? t.slice(0, 59) + '…' : t; };
@@ -46,7 +48,7 @@
       meta = at === null ? `Nenhuma leitura ainda · ${plural}` : `Última leitura há ${ago(now - at)} · ${plural}`;
     }
     const sample = ok && enabled && info.sample && typeof info.sample === 'object' ? info.sample : {};
-    const values = FIELDS.map(([key, label, unit, digits]) => ({ key, label, unit, text: fmt(sample[key], digits) }));
+    const values = FIELDS.map(([key, label, unit, digits]) => ({ key, label, unit, text: !MAY_BE_NEGATIVE.has(key) && finite(sample[key]) < 0 ? DASH : fmt(sample[key], digits) }));
     const hint = kind === 'on' && values.every(x => x.text === DASH) ? HINT : '';
     const stateText = { on: 'Lendo', off: 'Desligada', searching: 'Procurando', unavailable: 'Indisponível', nobridge: 'Indisponível' }[kind];
     return { kind, enabled, sentence, meta, values, hint, stateText };

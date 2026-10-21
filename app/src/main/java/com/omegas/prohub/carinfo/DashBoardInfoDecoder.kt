@@ -91,6 +91,13 @@ object DashBoardInfoDecoder {
     fun isUnknown(value: Int): Boolean = value == UNKNOWN_INT
     fun isUnknown(value: Float): Boolean = value == UNKNOWN_FLOAT || value.isNaN() || value.isInfinite()
 
+    /**
+     * Valor fisicamente impossível não é leitura: é sentinela do perfil do carro (campo, 2026-10-21: "Consumo agora"
+     * chegou -1,0 num Peugeot 208). Vira desconhecido (null), nunca número. Zero real continua zero.
+     */
+    fun plausibleInt(value: Int?, min: Int, max: Int): Int? = value?.takeIf { it in min..max }
+    fun plausibleFloat(value: Float?, min: Float, max: Float): Float? = value?.takeIf { it in min..max }
+
     /** Formato `P(T)`: marcador int (0 = nulo) seguido do objeto. */
     fun decodeNullable(reader: DashBoardFieldReader): CarInfoSample? {
         if (reader.remainingBytes() < 4) return null
@@ -115,11 +122,24 @@ object DashBoardInfoDecoder {
         val coolant = float(); val oil = float(); val inlet = float(); val ambient = float()
         val acc = int(); val brake = int(); val throttle = int()
         return CarInfoSample(
-            gearShiftPosition = gear, odo = odo, cruisingRange = range, rotationRate = rpm, speed = speed,
-            runningTime = running, fuelTankage = tankage,
-            fuel = fuel, fuelPercentage = fuelPct, avgFuelCont = avg, instFuelCont = inst,
-            coolantTemp = coolant, engineOilTemp = oil, inletTemp = inlet, ambientTemp = ambient,
-            accPedal = acc, brakePedal = brake, throttlePos = throttle,
+            gearShiftPosition = gear,
+            odo = plausibleInt(odo, 0, 9_999_999),
+            cruisingRange = plausibleInt(range, 0, 5_000),
+            rotationRate = plausibleInt(rpm, 0, 20_000),
+            speed = plausibleInt(speed, 0, 400),
+            runningTime = plausibleInt(running, 0, Int.MAX_VALUE),
+            fuelTankage = plausibleInt(tankage, 0, 1_000),
+            fuel = plausibleFloat(fuel, 0f, 1_000f),
+            fuelPercentage = plausibleFloat(fuelPct, 0f, 100f),
+            avgFuelCont = plausibleFloat(avg, 0f, 500f),
+            instFuelCont = plausibleFloat(inst, 0f, 500f),
+            coolantTemp = plausibleFloat(coolant, -50f, 250f),
+            engineOilTemp = plausibleFloat(oil, -50f, 350f),
+            inletTemp = plausibleFloat(inlet, -50f, 250f),
+            ambientTemp = plausibleFloat(ambient, -80f, 100f),
+            accPedal = plausibleInt(acc, 0, 1_000),
+            brakePedal = plausibleInt(brake, 0, 1_000),
+            throttlePos = plausibleInt(throttle, 0, 1_000),
             complete = !truncated,
         )
     }
