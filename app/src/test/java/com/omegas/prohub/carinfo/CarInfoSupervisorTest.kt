@@ -91,10 +91,12 @@ class CarInfoSupervisorTest {
         s.onConnected()
         now = 5_000L
         s.onSample(CarInfoSample(speed = 47, odo = 12345, complete = true))
+        now = 9_000L
         s.onSample(CarInfoSample(speed = 48, complete = true))
         val json = s.json()
+        assertEquals(5_000L, json.getLong("firstSampleAtMs"))   // primeira leitura da ligação (para a dica de 60 s)
         assertEquals(2, json.getInt("samples"))
-        assertEquals(5_000L, json.getLong("lastSampleAtMs"))
+        assertEquals(9_000L, json.getLong("lastSampleAtMs"))
         assertEquals(48, json.getJSONObject("sample").getInt("speed"))
         assertEquals(JSONObject.NULL, json.getJSONObject("sample").get("odo"))
     }

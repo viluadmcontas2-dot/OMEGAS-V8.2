@@ -95,6 +95,47 @@ test('dica de diagnóstico só quando conectada e tudo "—"', () => {
   assert.equal(C.view({ ...conectada(null), connected: false, state: 'indisponivel' }, NOW).hint, '');
 });
 
+test('linha de diagnóstico: canais ativos N de 17, só quando conectada e com contagem', () => {
+  const C = CV();
+  const info = { ...conectada(), channels: { channelsActive: 3, channelsTotal: 17, tx: { 6: { n: 40, bytes: 76 }, 2: { n: 1, bytes: 92 } } } };
+  assert.equal(C.view(info, NOW).diag, 'Canais ativos: 3 de 17');
+  assert.ok(C.html(C.view(info, NOW)).includes('Canais ativos: 3 de 17'));
+  assert.equal(C.view(conectada(), NOW).diag, '', 'sem contagem da ponte não inventa');
+  assert.equal(C.view({ ...info, connected: false, state: 'indisponivel' }, NOW).diag, '');
+});
+
+test('Detalhes mostram o canal de cada valor e as chamadas por canal (escondido por padrão)', () => {
+  const C = CV();
+  const info = { ...conectada({ ...SAMPLE, rotationRate: 900, sources: { speed: 'tx6', rotationRate: 'tx17', odo: 'tx6' } }), channels: { channelsActive: 2, channelsTotal: 17, tx: { 6: { n: 40, bytes: 76 }, 17: { n: 3, bytes: 60 } } } };
+  const v = C.view(info, NOW);
+  const html = C.html(v);
+  assert.match(html, /<details class="carinfo-details"(?! open)/);
+  assert.match(html, /Detalhes/);
+  const by = Object.fromEntries(v.details.sources.map(x => [x.key, x.source]));
+  assert.equal(by.rotationRate, 'tx17'); assert.equal(by.speed, 'tx6');
+  assert.ok(!('instFuelCont' in by) || by.instFuelCont, 'só valores conhecidos têm canal');
+  assert.match(html, /Rotação: tx17/);
+  assert.match(html, /6: 40/); assert.match(html, /17: 3/);
+  assert.match(C.html(v, { detailsOpen: true }), /<details class="carinfo-details" open/);
+});
+
+test('dica da velocidade: conectada há mais de 60 s, rotação > 1000, velocidade e odômetro "—"', () => {
+  const C = CV();
+  const DICA = 'A central não mandou velocidade. Os dados brutos foram gravados na sessão.';
+  const base = { ...conectada({ ...SAMPLE, speed: null, odo: null, rotationRate: 1500 }), firstSampleAtMs: NOW - 61_000 };
+  assert.equal(C.view(base, NOW).hint, DICA);
+  assert.ok(C.html(C.view(base, NOW)).includes(DICA));
+  assert.equal(C.view({ ...base, firstSampleAtMs: NOW - 30_000 }, NOW).hint, '', 'antes de 60 s não avisa');
+  assert.equal(C.view({ ...base, sample: { ...base.sample, rotationRate: 900 } }, NOW).hint, '', 'rotação baixa: carro pode estar parado');
+  assert.equal(C.view({ ...base, sample: { ...base.sample, speed: 40 } }, NOW).hint, '', 'velocidade chegou');
+  assert.equal(C.view({ ...base, sample: { ...base.sample, odo: 100 } }, NOW).hint, '', 'odômetro chegou');
+  // Rotação da ECU do GNV vale quando a multimídia não mandou a dela (campo: rotação nula).
+  const semRpm = { ...base, sample: { ...base.sample, rotationRate: null } };
+  assert.equal(C.view(semRpm, NOW).hint, '');
+  assert.equal(C.view(semRpm, NOW, 2200).hint, DICA);
+  assert.equal(C.view(semRpm, NOW, 0).hint, '');
+});
+
 test('a chave chama setCarInfoEnabled com o contrário do estado, num toque', () => {
   const C = CV();
   const calls = [];
@@ -138,7 +179,7 @@ for (const [nome, viewport] of Object.entries(VIEWPORTS)) {
           getCarInfo: () => JSON.stringify({ ...state, lastSampleAtMs: Date.now() - 2000 }),
           setCarInfoEnabled: on => { window.__carCalls.push(on); state = { ...state, enabled: on, connected: on, state: on ? 'conectado' : 'desligado' }; return JSON.stringify({ ok: true, enabled: on }); },
         });
-      }, { info: conectada() });
+      }, { info: { ...conectada(), channels: { channelsActive: 3, channelsTotal: 17, tx: { 2: { n: 1, bytes: 92 }, 6: { n: 40, bytes: 76 }, 17: { n: 3, bytes: 60 } } } } });
       await T.route(app, 'tools');
       await T.tap(page, '#toolsPageNext');
       await T.pump(page, 2);
@@ -157,13 +198,24 @@ for (const [nome, viewport] of Object.entries(VIEWPORTS)) {
         const r0 = host.getBoundingClientRect();
         const out = [];
         if (host.scrollHeight > host.clientHeight + 1 || host.scrollWidth > host.clientWidth + 1) out.push('a área rola');
-        for (const e of host.querySelectorAll('h3, button, [data-field], p')) {
+        for (const e of host.querySelectorAll('h3, button, summary, [data-field], p')) {
+          if (typeof e.checkVisibility === 'function' && !e.checkVisibility()) continue;   // Detalhes fechado: conteúdo oculto não ocupa tela
           const r = e.getBoundingClientRect();
           if (r.bottom > Math.min(innerHeight, r0.bottom) + 1 || r.right > innerWidth + 1 || r.top < 0 || r.left < 0) out.push((e.dataset.field || e.tagName) + ' fora');
         }
         return out;
       }, view);
       assert.deepEqual(fora, [], nome);
+      assert.ok(await page.locator(view + ' details.carinfo-details > summary').isVisible(), `${nome}: Detalhes visível`);
+      // Detalhes aberto (canais) também cabe, sem rolagem.
+      await page.evaluate(() => { document.querySelector('.carinfo-details').open = true; });
+      await T.pump(page, 1);
+      const aberto = await page.evaluate(sel => {
+        const host = document.querySelector(sel);
+        const d = document.querySelector('.carinfo-details').getBoundingClientRect();
+        return { rola: host.scrollHeight > host.clientHeight + 1, dentro: d.bottom <= Math.min(innerHeight, host.getBoundingClientRect().bottom) + 1 };
+      }, view);
+      assert.deepEqual(aberto, { rola: false, dentro: true }, `${nome}: Detalhes aberto`);
       // Um toque = desliga, sem janela.
       await T.tap(page, '[data-carinfo-toggle]');
       await T.pump(page, 2);

@@ -291,7 +291,7 @@
       const C = ns.CarInfoView;
       let car = null;
       if (C && this.page === 2) {
-        try { car = C.view(this.api.carInfo?.(), Date.now()); }
+        try { car = C.view(this.api.carInfo?.(), Date.now(), Number(appStatus.rpm) || 0); }
         catch (error) { console.error('[OMEGAS] Leitura da multimídia indisponível', error); }
       }
       // Só redesenha quando algo visível mudou: redesenho a cada ciclo engolia toques.
@@ -304,7 +304,8 @@
       host.dataset.mode = this.view === 'home' ? 'home' : 'view';
 
       if (this.view === 'carinfo' && C && car) {
-        host.innerHTML = C.html(car);
+        const detailsOpenBeforeRender = host.querySelector('.carinfo-details')?.open === true;
+        host.innerHTML = C.html(car, { detailsOpen: detailsOpenBeforeRender });
         return;
       }
       if (this.view === 'log') {

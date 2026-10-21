@@ -508,6 +508,10 @@
 .carinfo-cell b { font-size: 28px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .carinfo-cell b small { font-size: 17px; color: var(--muted); font-weight: 700; }
 .carinfo-cell[data-known="false"] b { color: var(--dim); }
+.carinfo-diag { font-size: 16px; }
+.carinfo-details { flex: 0 0 auto; color: var(--muted); font-size: 15px; }
+.carinfo-details > summary { cursor: pointer; min-height: 28px; font-weight: 700; }
+.carinfo-details > p { margin: 2px 0 0; line-height: 1.25; max-height: 3.8em; overflow: hidden; }
 .carinfo-hint { flex: 0 0 auto; margin: 0; color: var(--warn); font-size: 18px; font-weight: 700; line-height: 1.2; }
 @media (max-height: 640px) {
   .carinfo-status b { font-size: 20px; }

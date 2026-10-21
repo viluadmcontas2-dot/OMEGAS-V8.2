@@ -37,6 +37,7 @@ class CarInfoSupervisor(
     private var failures = 0
     private var samples = 0L
     private var lastSampleAtMs = 0L
+    private var firstSampleAtMs = 0L
     private var lastSample: CarInfoSample? = null
     private var nextRetryAtMs = 0L
     /** Cada start/stop muda a geração: tentativa agendada de geração antiga não vale. */
@@ -70,6 +71,7 @@ class CarInfoSupervisor(
         if (!enabled) return
         connected = true
         binding = false
+        firstSampleAtMs = 0L
         failures = 0
         lastError = ""
         nextRetryAtMs = 0L
@@ -90,6 +92,7 @@ class CarInfoSupervisor(
         if (!enabled) return
         lastSample = sample
         lastSampleAtMs = clock()
+        if (firstSampleAtMs == 0L) firstSampleAtMs = lastSampleAtMs
         samples += 1
     }
 
@@ -142,6 +145,7 @@ class CarInfoSupervisor(
             .put("failures", failures)
             .put("samples", samples)
             .put("lastSampleAtMs", if (lastSampleAtMs > 0L) lastSampleAtMs else JSONObject.NULL)
+            .put("firstSampleAtMs", if (firstSampleAtMs > 0L) firstSampleAtMs else JSONObject.NULL)
             .put("nextRetryAtMs", if (nextRetryAtMs > 0L) nextRetryAtMs else JSONObject.NULL)
             .put("sample", lastSample?.toJson() ?: JSONObject.NULL)
     }
