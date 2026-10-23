@@ -354,6 +354,8 @@ test('paridade do ProgBase renderizada e navegacao entre todas as abas com ECU s
       'voltar de Sessões deve retornar a Ferramentas');
     await T.route(app, 'tools');
     await T.pump(page, 2);
+    await T.tap(page, '#toolsPagePrev');
+    await T.pump(page, 2);
     assert.match(await page.locator('[data-card="corte"] .tile-state').innerText(), /3 injeções/);
     assert.doesNotMatch(await page.locator('[data-card="corte"]').innerText(), /Saída suave/);
     await T.tap(page, '[data-adv-open="troca"]');
