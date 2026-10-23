@@ -77,11 +77,13 @@ for (const [nome, vp] of Object.entries(VPS)) {
             });
             return { pointCurrentOverlap: crosses(point,current), nudgePrepareOverlap: crosses(nudge,prepare), prepareReviewOverlap: crosses(prepare,review),
               nudgeLabelsSingleLine,
+              safetyCopyVisible: !!document.querySelector('.curve-editor-panel > .safety-copy') &&
+                getComputedStyle(document.querySelector('.curve-editor-panel > .safety-copy')).display !== 'none',
               reviewVisible: !!review && !!panel && review.top >= panel.top && review.bottom <= panel.bottom,
               footerVisible: !!footer && footer.top >= 0 && footer.bottom <= innerHeight,
               };
           });
-          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, nudgeLabelsSingleLine:true, reviewVisible:true, footerVisible:true },
+          assert.deepEqual(geometry, { pointCurrentOverlap:false, nudgePrepareOverlap:false, prepareReviewOverlap:false, nudgeLabelsSingleLine:true, safetyCopyVisible:true, reviewVisible:true, footerVisible:true },
             'Curva K compacta deve manter editor sem sobreposição e ações visíveis');
         }
         if (nome === '800x480' && rota === 'refino') {
