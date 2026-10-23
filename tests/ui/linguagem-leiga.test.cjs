@@ -129,6 +129,7 @@ test('o detector pega jargão (prova de sensibilidade, sem navegador)', () => {
 for (const [nome, vp] of Object.entries(VPS)) {
   test(`Ferramentas, anti-apagão e Sessões @${nome}: nenhum jargão nem rótulo genérico em texto visível`, { skip }, async () => {
     const app = await T.openApp(browser, { ui: UI, viewport: vp });
+    const { page } = app;
     try {
       const lista = await percorrerFerramentasESessoes(app);
       const fixos = await textos(app.page);
