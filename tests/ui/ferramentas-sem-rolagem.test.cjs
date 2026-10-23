@@ -78,7 +78,7 @@ function harness() {
     logs: Array.from({ length: 30 }, (_, i) => ({ time: 't' + String(i).padStart(2, '0'), level: 'INFO', category: 'USB', message: 'm' + i })),
   };
   drawers.store = { get: () => state, patch() {} };
-  return { hosts, drawers, state };
+  return { hosts, drawers, state, context };
 }
 
 test('registro do app: as mesmas 24 linhas em páginas de 5, sem passar da última', () => {
@@ -94,7 +94,7 @@ test('registro do app: as mesmas 24 linhas em páginas de 5, sem passar da últi
   assert.match(h.innerHTML, /<time>t06<\/time>/, 'a 24ª linha mais nova continua alcançável');
 });
 
-test('sessões: 3 por página, "Salvar arquivo" por sessão, configuração dentro de "Tamanho das gravações"', () => {
+test('sessões: 3 por página, "Exportar tudo" por sessão, configuração dentro de "Tamanho das gravações"', () => {
   const { hosts, drawers, state } = harness();
   drawers.renderSessions(state);
   const out = hosts.sessionsHost.innerHTML;
@@ -110,6 +110,39 @@ test('sessões: 3 por página, "Salvar arquivo" por sessão, configuração dent
   assert.doesNotMatch(hosts.sessionsHost.innerHTML, /Começa ao conectar a central/);
   assert.match(out, /1 de 3/);
   assert.doesNotMatch(out, /ECU|USB bruto|Telemetria salva|ZIP/);
+});
+
+test('sessões: "Exportar resumo" por gravação mostra o tamanho do pacote leve e chama a ponte; sem dado fica sem número', () => {
+  const { hosts, drawers, state } = harness();
+  state.sessions[0].summaryBytes = 182 * 1024;
+  state.sessions[1].summaryBytes = null;
+  drawers.renderSessions(state);
+  const out = hosts.sessionsHost.innerHTML;
+  assert.equal((out.match(/data-export-summary=/g) || []).length, 3);
+  assert.equal((out.match(/Exportar resumo/g) || []).length, 3, 'um botão por gravação, sempre a mesma palavra');
+  assert.match(out, /<small>182 KB<\/small>/);
+  assert.equal((out.match(/KB<\/small>/g) || []).length, 1, 'desconhecido não vira "0 KB"');
+  assert.equal((out.match(/Exportar tudo<\/b><small>completo<\/small>/g) || []).length, 3, 'o bruto completo segue em cada gravação');
+  const chamadas = [];
+  drawers.api = { exportSessionSummary: id => chamadas.push(id), exportSession: id => chamadas.push('bruto:' + id) };
+  const clique = attr => ({ target: { closest: () => ({ id: '', dataset: { [attr]: 'session_2026-10-11_06-00-00' }, matches: s => s === '[data-' + attr.replace(/[A-Z]/g, c => '-' + c.toLowerCase()) + ']' }) } });
+  drawers.handleToolClick(clique('exportSummary'));
+  drawers.handleToolClick(clique('exportSession'));
+  assert.deepEqual(chamadas, ['session_2026-10-11_06-00-00', 'bruto:session_2026-10-11_06-00-00']);
+});
+
+test('sessões: em tela baixa (800x480) são 2 por página para não rolar; os dois botões seguem ≥ 56 px', () => {
+  const { hosts, drawers, state, context } = harness();
+  context.innerHeight = 480;
+  drawers.renderSessions(state);
+  assert.equal((hosts.sessionsHost.innerHTML.match(/data-export-session=/g) || []).length, 2);
+  assert.match(hosts.sessionsHost.innerHTML, /1 de 4/, '7 gravações em páginas de 2');
+  context.innerHeight = 720;
+  drawers.sessionsSignature = '';
+  drawers.renderSessions(state);
+  assert.equal((hosts.sessionsHost.innerHTML.match(/data-export-session=/g) || []).length, 3);
+  assert.ok(px(rules('.recorded-session-item button'), 'min-height') >= 56);
+  assert.match(css, /\.recorded-session-item > \.rs-actions \{ flex-direction: row;/, 'os dois botões lado a lado, na mesma altura');
 });
 
 test('Ferramentas: um cartão por função; só "Cópia de segurança" (sem aprendizado de outro arquivo)', () => {

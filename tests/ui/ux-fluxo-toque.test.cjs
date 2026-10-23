@@ -10,7 +10,7 @@ const U = require('./helpers/ux-cenarios.cjs');
 const skip = T.skipReason() || false;
 const VPS = { '1280x720': { width: 1280, height: 720 }, '1024x600': { width: 1024, height: 600 }, '800x480': { width: 800, height: 480 } };
 const TITULOS_P1 = ['Anti-apagão', 'Valores do anti-apagão', 'Saída do corte', 'Troca de gasolina para gás', 'Injetores', 'Volta para gasolina', 'Outras configurações'];
-const TITULOS_P2 = ['Cópia de segurança', 'Refino automático', 'Bateria', 'Balão sobre outros apps', 'Sessões', 'Registro do app'];
+const TITULOS_P2 = ['Cópia de segurança', 'Refino automático', 'Bateria', 'Balão sobre outros apps', 'Sessões', 'Registro do app', 'Multimídia (Car Info)'];
 let browser;
 test.before(async () => { if (!skip) browser = await T.launch(); });
 test.after(async () => { if (browser) await browser.close(); });

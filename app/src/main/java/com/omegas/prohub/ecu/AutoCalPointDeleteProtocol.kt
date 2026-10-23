@@ -33,11 +33,12 @@ object AutoCalPointDeleteProtocol {
             require(index in 0 until POINT_COUNT) { "Ponto AutoCal inválido: $index" }
         }
 
+        /** Zonas do original (PROTOCOLO-LANDI 21 §5): pontos 0-4, 5-8, 9-12, 13-17 (a UI usa as mesmas). */
         val zone: Int
             get() = when (index) {
-                in 0..5 -> 1
-                in 6..9 -> 2
-                in 10..13 -> 3
+                in 0..4 -> 1
+                in 5..8 -> 2
+                in 9..12 -> 3
                 else -> 4
             }
 

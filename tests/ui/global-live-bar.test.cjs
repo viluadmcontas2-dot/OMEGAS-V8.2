@@ -89,7 +89,7 @@ test('o quadro rápido chega em todas as abas (a barra é persistente) e a assin
 });
 
 // Nível do gás em bolinhas + lâmpada "No gás / Na gasolina" (dono, 2026-10-20; mockup v2/01-barras). level_raw = byte 13 do 48 01.
-// Pontos de corte PROVISÓRIOS (Reserva 39, ¼ 93, ½ 143, ¾ 219 do original): regulável em Ferramentas depois.
+// Zonas = entre as referências da central (39/93/143/219, lidas no fio); o byte sobe com o consumo (255 = vazio), medido no campo.
 const withLevel = (level, extra = {}) => ({ valid: true, ageMs: 40, live: { rpm: 2000, petrol_ms: 4, load_bar: 0.5, fuel: 'GNV', unknown_raw_19: 224, level_raw: level, ...extra } });
 
 test('o HTML tem a pílula Nível com 5 bolinhas (reserva, ¼, ½, ¾, cheio) e a lâmpada da fonte', () => {
@@ -100,14 +100,23 @@ test('o HTML tem a pílula Nível com 5 bolinhas (reserva, ¼, ½, ¾, cheio) e 
   assert.match(html, /<small>Nível<\/small>/);
 });
 
-test('nível: marcas do medidor viram Reserva, ¼, ½, ¾ e cheio; desconhecido é "—" com bolinhas apagadas, nunca 0', () => {
+test('nível: no campo o byte SOBE com o consumo (255 = vazio; abastecer volta a ~31–78): a escada 75/125/177/253 não pode mostrar tanque cheio como reserva', () => {
   const { model } = mount();
   const state = raw => model.read(withLevel(raw)).levelState;
-  assert.equal(state(39), 'reserve');
-  assert.equal(state(93), 'quarter');
-  assert.equal(state(143), 'half');
-  assert.equal(state(219), 'three');
-  assert.equal(state(255), 'full');
+  // Dados reais (101 sessões, 210 mil quadros): degraus ≈ 75, 125, 177, 253 e < 39 logo após abastecer; zonas = entre as referências 39/93/143/219 lidas da ECU.
+  assert.equal(state(31), 'full', 'recém abastecido (31–38) = cheio');
+  assert.equal(state(75), 'three');
+  assert.equal(state(125), 'half');
+  assert.equal(state(177), 'quarter');
+  assert.equal(state(253), 'reserve', 'byte alto = vazio = reserva (vermelho)');
+  assert.equal(state(254), 'reserve');
+  // limites entre zonas = as referências da central
+  assert.equal(state(38), 'full'); assert.equal(state(39), 'three');
+  assert.equal(state(92), 'three'); assert.equal(state(93), 'half');
+  assert.equal(state(142), 'half'); assert.equal(state(143), 'quarter');
+  assert.equal(state(218), 'quarter'); assert.equal(state(219), 'reserve');
+  // 19–22 = sensor sem leitura (central sem motor); ≤ 25 nunca vira "cheio"
+  for (const noReading of [19, 21, 22, 25]) assert.equal(state(noReading), 'unknown', 'sem leitura: ' + noReading);
   for (const unknown of [0, -1, undefined, null, 'x']) assert.equal(state(unknown), 'unknown', String(unknown));
   assert.equal(model.read({ valid: false }).levelState, 'unknown');
   assert.equal(model.read({ ...withLevel(143), ageMs: 5000 }).levelState, 'unknown', 'quadro velho não mostra o último nível');
@@ -115,12 +124,12 @@ test('nível: marcas do medidor viram Reserva, ¼, ½, ¾ e cheio; desconhecido 
 
 test('a pílula e a lâmpada seguem o quadro: nível por bolinhas, "No gás" no GNV, "Na gasolina" na gasolina, "Sem central" sem quadro', () => {
   const { component, cells } = mount();
-  component.render({ telemetry: withLevel(143) });
+  component.render({ telemetry: withLevel(125) });
   assert.equal(cells.level.dataset.state, 'half');
   assert.equal(cells.level.value.textContent, '');
   assert.equal(cells.source.dataset.state, 'gas');
   assert.equal(cells.source.value.textContent, 'No gás');
-  component.render({ telemetry: withLevel(39, { fuel: 'GASOLINA' }) });
+  component.render({ telemetry: withLevel(253, { fuel: 'GASOLINA' }) });
   assert.equal(cells.level.dataset.state, 'reserve');
   assert.equal(cells.source.dataset.state, 'petrol');
   assert.equal(cells.source.value.textContent, 'Na gasolina');

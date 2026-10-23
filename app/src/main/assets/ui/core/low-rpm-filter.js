@@ -15,34 +15,57 @@
     };
     let lowest = null;
     let previous = null;
+    let lastId;
+    let lastEpoch = {};
 
     function observeRpm(rpm) {
       const value = Number(rpm);
-      if (rpm === null || rpm === undefined || !Number.isFinite(value) || value < 0) return;
+      if (rpm === null || rpm === undefined || rpm === '' || !Number.isFinite(value) || value < 0) return;
       lowest = lowest === null ? value : Math.min(lowest, value);
     }
 
-    // counters = { GAS: [18], PETROL: [18] }. Devolve [{ fuel, index }] das bandas que ganharam medição com RPM baixo.
-    function step(counters) {
+    // Esquece a linha de base e a janela de RPM: aba fora de vista, USB caiu, leitura indisponível ou época nova.
+    // Sem isso, tudo que cresceu enquanto ninguém olhava seria atribuído ao primeiro RPM baixo que aparecer.
+    function reset() {
+      previous = null;
+      lowest = null;
+      lastId = undefined;
+      lastEpoch = {};
+    }
+
+    // Desconhecido (null/NaN) continua desconhecido: nunca vira 0 e nunca conta como subida.
+    const known = value => (value === null || value === undefined || value === '' ? null : (Number.isFinite(Number(value)) ? Number(value) : null));
+
+    // counters = { GAS: [18], PETROL: [18] } (null = desconhecido). meta (opcional) = { id, epoch: { GAS, PETROL } }:
+    // id identifica a leitura (a mesma leitura repetida não gasta a janela de RPM); epoch muda quando a central
+    // zera/reinicia o aprendizado ou a sessão USB muda (a linha de base daquele combustível recomeça).
+    // Devolve [{ fuel, index }] das bandas que ganharam medição com RPM baixo.
+    function step(counters, meta) {
+      const info = meta || {};
+      if (info.id !== undefined && info.id !== null && info.id === lastId) return [];
+      lastId = info.id;
       const targets = [];
       const min = limit();
       const low = min > 0 && lowest !== null && lowest < min;
       lowest = null;
       const current = {};
-      FUELS.forEach(fuel => { current[fuel] = Array.isArray(counters && counters[fuel]) ? counters[fuel].map(Number) : []; });
-      if (previous && low) {
-        FUELS.forEach(fuel => {
+      FUELS.forEach(fuel => { current[fuel] = Array.isArray(counters && counters[fuel]) ? counters[fuel].map(known) : []; });
+      const epoch = info.epoch || {};
+      FUELS.forEach(fuel => {
+        const sameEpoch = (epoch[fuel] === undefined ? '' : epoch[fuel]) === (lastEpoch[fuel] === undefined ? '' : lastEpoch[fuel]);
+        if (previous && low && sameEpoch) {
           current[fuel].forEach((value, index) => {
             const before = previous[fuel][index];
-            if (Number.isFinite(value) && Number.isFinite(before) && value > before) targets.push({ fuel, index });
+            if (value !== null && before !== null && before !== undefined && value > before) targets.push({ fuel, index });
           });
-        });
-      }
+        }
+      });
+      lastEpoch = Object.assign({}, epoch);
       previous = current;
       return targets;
     }
 
-    return { observeRpm, step };
+    return { observeRpm, step, reset };
   }
 
   ns.LowRpmFilter = { create, MIN_RPM };

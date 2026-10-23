@@ -2,6 +2,7 @@ package com.omegas.prohub.diagnostics
 
 import android.content.ContentResolver
 import android.net.Uri
+import android.os.SystemClock
 import com.omegas.prohub.autocal.AntiStallSessionAnalysis
 import com.omegas.prohub.util.AtomicJsonFile
 import com.omegas.prohub.settings.AppSettings
@@ -18,6 +19,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import java.util.UUID
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
@@ -41,6 +43,7 @@ class SessionRecorder(
     companion object {
         private const val FORMAT = "omegas-session-log-v1"
         private const val SEGMENT_LIMIT_BYTES = 64L * 1024L * 1024L
+        private const val SYNC_EVERY_TELEMETRY = 20
         private const val PREVIEW_LIMIT = 120
         /** Garantia local (flash/manifesto) a cada 2 min; o ZIP no arquivo privado do app só sai ao fechar a sessão. */
         private const val DOCUMENTS_MIRROR_INTERVAL_MS = 120_000L
@@ -142,6 +145,8 @@ class SessionRecorder(
     @Volatile private var currentSegment = 0
     @Volatile private var lastTelemetryAt = 0L
     @Volatile private var lastSnapshotAt = 0L
+    /** Painel da multimídia (car_info): no máximo 1 evento por segundo. */
+    private val carInfoGate = MinIntervalGate(1_000L)
     @Volatile private var stopReason = ""
     @Volatile private var lastError = ""
 
@@ -195,6 +200,34 @@ class SessionRecorder(
     }
 
     private var semanticLedger: SessionSemanticLedger? = null
+    private var summaryBuilder: SessionSummaryBuilder? = null
+    private var telemetrySinceSync = 0
+    /** Degraus do nível e abastecimento por contagem de quadros (eventos `level_step` e `refuel_detected`). */
+    @Volatile private var levelTracker: LevelTracker? = null
+    @Volatile private var fuelTracker: FuelTracker? = null
+    private val lifecycle = LifecycleRing(64)
+    /** Camada bruta v2 (quadros a taxa cheia, transações, multimídia, batimento); null fora da gravação. */
+    @Volatile private var rawStreams: RawStreams? = null
+    @Volatile private var sessionUuid = ""
+    @Volatile private var sessionKey = ""
+    @Volatile private var bootId = ""
+    @Volatile private var startElapsedMs = 0L
+
+    /** Livro-caixa de tanques (cumulativo, fora das pastas de sessão): atualizado a cada resumo FECHADO. */
+    val tankLedger: TankLedger by lazy { TankLedger(File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)) }
+
+    /** Contexto extra do resumo (versão, commit, perfil do carro, hashes ativos); o serviço define. Desconhecido = null. */
+    data class SummaryExtras(
+        val appVersion: String? = null,
+        val commit: String? = null,
+        val carProfile: String? = null,
+        val vin: String? = null,
+        val mapHashAtStart: String? = null,
+        val curveHashAtStart: String? = null,
+        val buildType: String? = null,
+    )
+
+    @Volatile var summaryExtrasProvider: (() -> SummaryExtras)? = null
     private var writer: BufferedWriter? = null
     private var segmentFile: File? = null
     private var segmentStream: FileOutputStream? = null
@@ -209,6 +242,10 @@ class SessionRecorder(
             val id = "session_${fileStamp.format(Date(now))}_${settings.deviceId.take(8)}"
             val dir = File(paths.sessionLogsRoot, id).apply { mkdirs() }
             sessionId = id
+            startElapsedMs = SystemClock.elapsedRealtime()
+            bootId = SessionIdentity.bootId({ File("/proc/sys/kernel/random/boot_id").readText() }, now, startElapsedMs)
+            sessionKey = SessionIdentity.sessionKey(settings.deviceId, bootId, startElapsedMs)
+            sessionUuid = SessionIdentity.uuidOf(sessionKey)
             sessionDir = dir
             startedAt = now
             stoppedAt = 0L
@@ -218,6 +255,7 @@ class SessionRecorder(
             segmentBytes = 0L
             lastTelemetryAt = 0L
             lastSnapshotAt = 0L
+            carInfoGate.reset()
             stopReason = ""
             lastError = ""
             lastDocumentsMirrorAt = 0L
@@ -236,15 +274,26 @@ class SessionRecorder(
                 startedAtMs = now,
                 startReason = reason,
             )
+            summaryBuilder = SessionSummaryBuilder(summaryContext(id, now))
+            rawStreams = RawStreams(File(dir, "raw"), sessionKey = sessionKey, bootId = bootId, startElapsedMs = startElapsedMs)
+            fuelTracker = FuelTracker { type, data -> record(type, "fuel", data, force = true) }
+            levelTracker = LevelTracker(try { tankLedger.lastEndRaw() } catch (_: Exception) { null }) { type, data ->
+                record(type, "level", data, force = true)
+            }
             openNextSegment()
             recording = true
-            writeManifestBase(dir, now, reason, metadata)
+            writeManifestBase(dir, now, reason, enrichedMetadata(metadata))
             File(dir, "README_PARA_IA.txt").writeText(aiReadme(), Charsets.UTF_8)
+            val backlog = lifecycle.snapshot()
             recordNow(
                 "session_started",
                 "native",
-                JSONObject().put("reason", reason).put("metadata", metadata),
+                JSONObject().put("reason", reason).put("metadata", enrichedMetadata(metadata)).put("sessionUuid", sessionUuid)
+                    .put("sessionKey", sessionKey).put("bootId", bootId).put("startElapsedMs", startElapsedMs),
             )
+            if (backlog.length() > 0) {
+                recordNow("lifecycle_backlog", "service", JSONObject().put("items", backlog))
+            }
             if (pruned > 0) {
                 recordNow(
                     "app_log",
@@ -277,7 +326,9 @@ class SessionRecorder(
             stopReason = reason
             semanticLedger?.finish(stoppedAt, stopReason)
             closeWriter()
+            closeRawStreams()
             updateManifest()
+            finalizeSummary()
             // Garante no flash e agenda a publicação: o ZIP sai no publisher, nunca na thread de quem parou.
             syncDocumentsMirror(force = true)
             statusObject().put("ok", true)
@@ -292,11 +343,13 @@ class SessionRecorder(
         if (type == "engine_event" && data.optString("event") == "telemetry") return
 
         val now = System.currentTimeMillis()
+        val capturedElapsed = SystemClock.elapsedRealtime()
         if (!force && type == "telemetry") {
             val every = settings.sessionTelemetryEveryMs
             if (every > 0L && now - lastTelemetryAt < every) return
             lastTelemetryAt = now
         }
+        if (!force && type == "car_info" && !carInfoGate.allow(now)) return
         if (!force && type == "full_snapshot") {
             val every = settings.sessionFullSnapshotEveryMs
             if (every <= 0L || now - lastSnapshotAt < every) return
@@ -310,9 +363,52 @@ class SessionRecorder(
         worker.execute {
             synchronized(this) {
                 if (!recording) return@synchronized
-                recordNow(type, source, copy)
+                recordNow(type, source, copy, capturedWall = now, capturedElapsed = capturedElapsed)
             }
         }
+    }
+
+    /** Camada bruta v2: quadro `48 01` válido a taxa cheia (34 bytes crus). Chamado na thread da ECU: só enfileira. */
+    fun recordRawFrame(payload: ByteArray, elapsedMs: Long, engineFrames: Long, engineFailures: Long) {
+        if (!recording || payload.isEmpty()) return
+        rawStreams?.frame(elapsedMs, payload, System.currentTimeMillis(), engineFrames, engineFailures)
+        // byte 13 do 48 01 = nível cru do cilindro (255 = vazio)
+        if (payload.size > 13) levelTracker?.frame(elapsedMs, payload[13].toInt() and 0xFF)
+        // byte 11 = estado de combustível, bytes 0-1 = rpm (LE), byte 12 = água crua
+        if (payload.size > 13) {
+            fuelTracker?.frame(elapsedMs, payload[11].toInt() and 0xFF, (payload[0].toInt() and 0xFF) or ((payload[1].toInt() and 0xFF) shl 8), payload[12].toInt() and 0xFF)
+        }
+    }
+
+    /** Camada bruta v2: toda transação serial que não é telemetria, inteira (pedido, resposta, status, tempo, erro). */
+    fun recordTx(workClass: String, reason: String, request: ByteArray, ok: Boolean, status: Int, payload: ByteArray, ms: Long, error: String) {
+        if (!recording) return
+        rawStreams?.tx(SystemClock.elapsedRealtime() - ms, workClass, reason, request, ok, status, payload, ms, error)
+    }
+
+    /** Camada bruta v2: mudança do painel da multimídia, com os dois relógios. */
+    fun recordMm(kind: String, json: String) {
+        if (!recording) return
+        rawStreams?.mm(SystemClock.elapsedRealtime(), System.currentTimeMillis(), kind, json)
+    }
+
+    /** Ciclo de vida (serviço, USB, motor): sempre guardado no anel; com gravação ligada vira evento `lifecycle` na hora. */
+    fun noteLifecycle(kind: String, data: JSONObject = JSONObject()) {
+        lifecycle.add(kind, System.currentTimeMillis(), SystemClock.elapsedRealtime(), data)
+        if (recording) record("lifecycle", "service", JSONObject().put("kind", kind).put("data", data), force = true)
+    }
+
+    /** O que o dono tocou (interruptores, abastecimento, operações V8) e o resultado, no log da sessão. */
+    fun noteUserAction(action: String, target: String, value: JSONObject? = null, result: JSONObject? = null) {
+        if (recording) record("user_action", "owner", UserActionEvent.json(action, target, value, result), force = true)
+    }
+
+    private fun closeRawStreams() {
+        levelTracker = null
+        fuelTracker = null
+        val r = rawStreams ?: return
+        rawStreams = null
+        try { r.close() } catch (error: Exception) { noteFailure("fechar os fluxos brutos", error) }
     }
 
     fun recordRawUsb(direction: String, bytes: ByteArray) {
@@ -408,6 +504,7 @@ class SessionRecorder(
                         .put("active", active)
                         .put("cngTicks", manifest.optLong("cngTicks", 0L))
                         .put("petrolTicks", manifest.optLong("petrolTicks", 0L))
+                        .put("summaryBytes", summaryBytes(dir) ?: JSONObject.NULL)
                         .put("semanticSummary", semantic),
                 )
             }
@@ -547,7 +644,9 @@ class SessionRecorder(
                     if (documentsMirrorMarker(dir).isFile) return@forEach
                     if (synchronized(this) { recording && sessionDir?.absolutePath == dir.absolutePath }) return@forEach
                     try {
-                        // Sessão interrompida (energia cortada): publica o que faltou como parte final.
+                        // Sessão interrompida (energia cortada): refaz o resumo do bruto e publica o que faltou como parte final.
+                        OrphanSessions.closeIfOrphan(dir)
+                        rebuildSummaryIfNeeded(dir)
                         publishParts(dir, dir.name, final = true)
                     } catch (error: Exception) {
                         noteFailure("arquivar a sessão", error)
@@ -589,7 +688,7 @@ class SessionRecorder(
         // autocontido e auditável.
         val closedFiles = dir.walkTopDown()
             .filter { file ->
-                if (!file.isFile || file.name == "manifest.json") {
+                if (!file.isFile || file == File(dir, "manifest.json")) {
                     false
                 } else {
                     val segment = eventSegmentNumber(file.name)
@@ -662,7 +761,11 @@ class SessionRecorder(
     @Volatile private var petrolTicks = 0L
     @Volatile private var cngTicks = 0L
 
-    private fun recordNow(type: String, source: String, data: JSONObject) {
+    /**
+     * [capturedWall]/[capturedElapsed]: hora (parede e monotônica) de quando o evento ENTROU na fila. `recordedAtMs` segue
+     * sendo a hora da escrita (compatível com o v1) e já chegou a atrasar 109 s; `capturedAtMs` e `elapsedMs` não atrasam.
+     */
+    private fun recordNow(type: String, source: String, data: JSONObject, capturedWall: Long = 0L, capturedElapsed: Long = 0L) {
         if (!recording && type != "session_stopped") return
         try {
             if (writer == null) openNextSegment()
@@ -672,6 +775,8 @@ class SessionRecorder(
                 .put("sequence", sequence.incrementAndGet())
                 .put("recordedAtMs", now)
                 .put("recordedAtUtc", iso(now))
+                .put("capturedAtMs", if (capturedWall > 0L) capturedWall else now)
+                .put("elapsedMs", if (capturedElapsed > 0L) capturedElapsed else SystemClock.elapsedRealtime())
                 .put("type", type)
                 .put("source", source)
                 .put("data", data)
@@ -697,6 +802,8 @@ class SessionRecorder(
                 closeWriter()
                 updateManifest()
                 semanticLedger?.finish(stoppedAt, stopReason)
+                closeRawStreams()
+                finalizeSummary()
                 syncDocumentsMirror(force = true)
                 return
             }
@@ -721,7 +828,9 @@ class SessionRecorder(
                 "d1_decision",
             )
             if (eventCount % 32L == 0L || critical) writer?.flush()
-            if (critical) syncToDisk()
+            // Durabilidade (export v2): fsync a cada 20 telemetrias (≈ 5 s a 4/s), por contagem; perda máxima ≈ 5 s.
+            if (type == "telemetry") telemetrySinceSync += 1 else if (type == "full_snapshot") telemetrySinceSync += 4
+            if (critical || telemetrySinceSync >= SYNC_EVERY_TELEMETRY) { syncToDisk(); telemetrySinceSync = 0 }
             eventCount += 1L
             byteCount += bytes
             segmentBytes += bytes
@@ -732,6 +841,7 @@ class SessionRecorder(
                 data = data,
                 recordedAtMs = now,
             )
+            observeSummary(item.optLong("sequence"), type, source, data, if (capturedWall > 0L) capturedWall else now)
             synchronized(previewLock) {
                 preview.addLast(
                     JSONObject()
@@ -786,6 +896,10 @@ class SessionRecorder(
             .put("format", FORMAT)
             .put("schemaVersion", 2)
             .put("sessionId", sessionId)
+            .put("sessionUuid", sessionUuid)
+            .put("sessionKey", sessionKey)
+            .put("bootId", bootId)
+            .put("startElapsedMs", startElapsedMs)
             .put("createdAtMs", now)
             .put("createdAtUtc", iso(now))
             .put("reason", reason)
@@ -815,6 +929,7 @@ class SessionRecorder(
         return original
             .put("format", FORMAT)
             .put("sessionId", sessionId)
+            .put("sessionUuid", if (sessionUuid.isNotBlank()) sessionUuid else original.opt("sessionUuid") ?: JSONObject.NULL)
             .put("startedAtMs", startedAt)
             .put("stoppedAtMs", stoppedAt)
             .put("stoppedAtUtc", if (stoppedAt > 0L) iso(stoppedAt) else JSONObject.NULL)
@@ -880,16 +995,138 @@ class SessionRecorder(
      */
     private fun publishParts(dir: File, id: String, final: Boolean): Boolean = synchronized(publishLock) {
         val mirror = documentsMirror ?: return false
-        val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
-        if (plan == null) {
-            if (final) markDocumentsMirrored(dir)
-            return true
+        // Pacote leve primeiro (pequeno, o que 95% das análises usam); falha aqui não impede as partes brutas.
+        if (final && SessionSummaryFiles.hasSummary(dir)) {
+            try { mirror.publishSummaryPackage(id, dir, File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)) } catch (_: Exception) { /* o pacote leve é extra: as partes brutas seguem */ }
         }
-        val result = mirror.publishPart(id, plan)
-        if (!result.optBoolean("ok")) return false
-        try { SessionPartPlanner.commit(dir, plan) } catch (_: Exception) { return false }
-        if (final) markDocumentsMirrored(dir)
-        return true
+        // Várias partes quando passa do teto de bytes brutos (dono: o Drive não baixa ZIP grande); só a última marca a pasta.
+        while (true) {
+            val plan = try { SessionPartPlanner.plan(dir, final) } catch (_: Exception) { return false }
+            if (plan == null) {
+                if (final) markDocumentsMirrored(dir)
+                return true
+            }
+            val result = mirror.publishPart(id, plan)
+            if (!result.optBoolean("ok")) return false
+            try { SessionPartPlanner.commit(dir, plan) } catch (_: Exception) { return false }
+            if (!plan.capped) {
+                if (final) markDocumentsMirrored(dir)
+                return true
+            }
+        }
+        @Suppress("UNREACHABLE_CODE")
+        false
+    }
+
+    // ---- resumo leve (omegas-session-summary-v1) e livro-caixa de tanques
+
+    private fun ledgerFileOrNull(): File? = try { File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME) } catch (_: Exception) { null }
+
+    private fun summaryContext(id: String, now: Long): SummaryContext {
+        val extra = try { summaryExtrasProvider?.invoke() } catch (_: Exception) { null } ?: SummaryExtras()
+        return SummaryContext(
+            sessionId = id, sessionUuid = sessionUuid, startMs = now, appVersion = extra.appVersion, commit = extra.commit,
+            sessionKey = sessionKey, bootId = bootId, startElapsedMs = startElapsedMs, buildType = extra.buildType,
+            deviceId = settings.deviceId.take(8), carProfile = extra.carProfile, vin = extra.vin,
+            mapHashAtStart = extra.mapHashAtStart, curveHashAtStart = extra.curveHashAtStart,
+            previousGnvEndRaw = try { tankLedger.lastEndRaw() } catch (_: Exception) { null },
+        )
+    }
+
+    /** Versão REAL do build (commit e tipo) e a identidade estável entram no metadata: a versão sozinha era igual em 104 sessões. */
+    private fun enrichedMetadata(metadata: JSONObject): JSONObject {
+        val extra = try { summaryExtrasProvider?.invoke() } catch (_: Exception) { null }
+        val out = JSONObject(metadata.toString())
+        if (!out.has("commit") && extra?.commit != null) out.put("commit", extra.commit)
+        if (!out.has("buildType") && extra?.buildType != null) out.put("buildType", extra.buildType)
+        return out.put("sessionKey", sessionKey).put("bootId", bootId)
+    }
+
+    /** Mesmo fluxo de eventos já gravado; a cada 60 s de tempo dos dados o resumo vai para o disco (o carro corta a energia). */
+    private fun observeSummary(sequence: Long, type: String, source: String, data: JSONObject, now: Long) {
+        val builder = summaryBuilder ?: return
+        try {
+            builder.observe(sequence, type, source, data, now)
+            if (builder.dueForWrite()) {
+                val dir = sessionDir ?: return
+                SessionSummaryFiles.write(dir, builder, final = false, ledgerFile = ledgerFileOrNull())
+                builder.markWritten()
+            }
+        } catch (error: Exception) {
+            noteFailure("salvar o resumo da sessão", error)
+        }
+    }
+
+    /** Fechamento: resumo final no disco, livro-caixa atualizado e SHA-256 dos brutos no publicador (antes do ZIP). */
+    private fun finalizeSummary() {
+        val builder = summaryBuilder ?: return
+        val dir = sessionDir ?: return
+        try {
+            SessionSummaryFiles.write(dir, builder, final = true, ledgerFile = ledgerFileOrNull())
+            tankLedger.record(builder.summary(final = true))
+            publisher.execute {
+                try {
+                    synchronized(publishLock) { SessionSummaryFiles.write(dir, builder, final = true, hashRaw = true, ledgerFile = ledgerFileOrNull()) }
+                } catch (error: Exception) {
+                    noteFailure("conferir os arquivos do resumo", error)
+                }
+            }
+        } catch (error: Exception) {
+            noteFailure("fechar o resumo da sessão", error)
+        }
+    }
+
+    /** Sessão que não fechou direito (queda de energia): refaz o resumo do bruto, fecha e entra no livro-caixa. */
+    private fun rebuildSummaryIfNeeded(dir: File) {
+        if (SessionSummaryFiles.isFinal(dir)) return
+        try {
+            val builder = SessionSummaryFiles.rebuild(dir)
+            SessionSummaryFiles.write(dir, builder, final = true, hashRaw = true, ledgerFile = ledgerFileOrNull())
+            tankLedger.record(builder.summary(final = true))
+        } catch (error: Exception) {
+            noteFailure("refazer o resumo da sessão", error)
+        }
+    }
+
+    /** Pacote leve (resumo + série + manifesto + livro-caixa), separado do bruto. Sessão ativa: grava o resumo do momento. */
+    fun exportSummary(resolver: ContentResolver, uri: Uri, requestedSessionId: String = ""): JSONObject {
+        awaitPendingWrites()
+        val root = paths.sessionLogsRoot.canonicalFile
+        val requested = if (requestedSessionId.isBlank()) sessionDir else File(root, requestedSessionId).canonicalFile
+        if (requested == null || !requested.isDirectory || requested.parentFile?.canonicalFile != root) {
+            return JSONObject().put("ok", false).put("error", "Sessão não encontrada")
+        }
+        return try {
+            synchronized(this) {
+                val builder = summaryBuilder
+                if (recording && sessionDir?.canonicalFile == requested && builder != null) {
+                    SessionSummaryFiles.write(requested, builder, final = false, ledgerFile = ledgerFileOrNull())
+                } else if (!SessionSummaryFiles.hasSummary(requested)) {
+                    rebuildSummaryIfNeeded(requested)
+                }
+            }
+            val ledgerFile = File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)
+            var bytes = 0L
+            resolver.openOutputStream(uri, "w")?.use { output -> bytes = SessionSummaryFiles.packageZip(requested, ledgerFile, output) }
+                ?: return JSONObject().put("ok", false).put("error", "Destino de exportação indisponível")
+            JSONObject().put("ok", true).put("sessionId", requested.name).put("bytes", bytes)
+        } catch (error: Exception) {
+            JSONObject().put("ok", false).put("error", error.message ?: "Falha ao exportar o resumo")
+        }
+    }
+
+    /** Tamanho do pacote leve de cada sessão (em memória por arquivo e data), para mostrar no botão. */
+    private val summarySizeCache = HashMap<String, Pair<String, Long?>>()
+
+    private fun summaryBytes(dir: File): Long? {
+        val summary = File(File(dir, SessionSummaryFiles.DIR), SessionSummaryFiles.SUMMARY)
+        if (!summary.isFile) return null
+        val ledgerFile = File(paths.externalRoot, SessionSummaryFiles.LEDGER_NAME)
+        val key = "${summary.length()}:${summary.lastModified()}:${ledgerFile.length()}:${ledgerFile.lastModified()}"
+        summarySizeCache[dir.name]?.let { if (it.first == key) return it.second }
+        val size = try { SessionSummaryFiles.packageSize(dir, ledgerFile) } catch (_: Exception) { null }
+        summarySizeCache[dir.name] = key to size
+        return size
     }
 
     private fun documentsMirrorMarker(dir: File): File = File(dir, ".documents_mirrored")
@@ -924,6 +1161,8 @@ class SessionRecorder(
             "${payload.optInt("rpm", 0)} rpm • ${payload.optString("fuel", payload.optString("state", "--"))} • " +
                 "${payload.optDouble("petrol_ms", 0.0)} ms • MAP ${payload.optDouble("load_bar", payload.optDouble("map_bar", 0.0))}"
         }
+        "car_info" -> "Multimídia • ${data.opt("speed") ?: "—"} km/h • ${data.opt("rotationRate") ?: "—"} rpm • odômetro ${data.opt("odo") ?: "—"}"
+        "car_info_raw" -> "Multimídia (dados crus) • ${data.opt("channelsActive") ?: "—"} de 17 canais ativos"
         "obd" -> "RPM ${data.opt("rpm")} • STFT ${data.opt("stft")} • ${data.optString("quality", "--")}"
         "app_log" -> "${data.optString("category", "LOG")}: ${data.optString("message", "").take(140)}"
         "settings_changed" -> "Configurações alteradas"
@@ -942,6 +1181,11 @@ Tipos principais:
 - full_snapshot: estado aprofundado periódico, incluindo aprendizado e runtime;
 - app_log: conexão, recuperação serial, mapa K, readback e erros;
 - obd: fonte opcional e isolada;
+- car_info: painel lido da multimídia (velocidade, odômetro, rotação, marcha, combustível, consumo), só leitura,
+  no máximo 1 por segundo; só os campos que a multimídia informou (ausente = desconhecido, nunca 0);
+- car_info_raw: o que a multimídia mandou, cru, para decidir offline: campos do painel antes da sentinela, propriedades
+  (propId/areaId=valor), CabinInfo, contagem de chamadas por transação (1..17) e início do payload em hex; no máximo 1 a cada
+  5 s, só quando muda, com teto por ligação;
 - ui_usage: contagens de uso da interface (visitas e segundos por aba, toques por controle), deltas desde o último envio; só contagens, sem valores digitados;
 - usb_raw: somente quando habilitado explicitamente;
 - k_*: leitura, escrita, ACK e confirmação do mapa K;
@@ -965,6 +1209,10 @@ volta a ser empacotado na exportação ativa seguinte. Sessão parada é exporta
 O aprendizado deve ser avaliado por sample.state, sample.reason, learning.live,
 learning.session_summary e learning.memory. Transição, cutoff e verificação do novo
 combustível são observados, mas não alimentam a memória.
+
+resumo/ (omegas-session-summary-v1): session_summary.json (identidade, relógio, movimento por fonte, km, nível do cilindro,
+mapa/curva ativos, multimídia, lacunas, qualidade), series_1hz.csv (1 linha por segundo) e manifest.json (SHA-256). Comece por ele:
+95% das análises não precisam dos events_*.jsonl. Nível do cilindro é INVERTIDO (255 = vazio). Veja docs/EXPORT-SESSOES.md.
 
 O export_summary.json lista os bytes e SHA-256 exatos de cada arquivo incluído.
 droppedEvents maior que zero indica lacuna de gravação para proteger a comunicação.

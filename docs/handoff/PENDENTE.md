@@ -76,3 +76,14 @@ w0/w1 do FLAG_CONF1 e GIRI[1] são preservados; GIRI vai por indexado 0x14 só n
 
 ## Fora de escopo agora
 Teto por ponto no Refino, API do Claude dentro do app, apagamento automático fora da exceção das regras, backup automático em gravação manual, tela nova sem mockup aprovado, mudança de bytes da ECU, APK antes do fim.
+
+## Auditoria ponta a ponta cabo → export (2026-10-23)
+Fluxo mapeado: cabo USB → permissão USB → central reconhecida → primeira tela → "Central conectada" → gravação automática → AutoCal/refino/anti-apagão → abastecer → fechar → Sessões → Exportar. Corrigido nesta rodada: Voltar nas Preferências; limpar pontos rápido e conferido; tela Sessões vazia convida a agir conforme a gravação automática; LEIA-ME e mapa do carro em todo pacote.
+- [ ] P1 Exportar não dá retorno: o toque abre o seletor do Android e, ao voltar, nada diz "Salvo em …" nem o tamanho. Mostrar aviso de resultado na linha de estado (a ponte já devolve ok/erro).
+- [ ] P1 Primeiro uso: sem guia do que fazer com o cabo desconectado (tela vazia da barra do topo só mostra "—"). Cartão único "Conecte o cabo da central" com estado da permissão USB.
+- [ ] P2 "Aplicar" em Tamanho das gravações: trocar por "Aplicar tamanho" (verbo + objeto) junto com o aviso.
+- [ ] P2 Exportar resumo e Exportar tudo: um toque só com a escolha lembrada (pasta Drive) em vez do seletor toda vez.
+- [ ] P2 Desfazer da limpeza de pontos é impossível (a central apaga o buffer); por isso a limpeza mostra contagem "N pontos limpos" e destaque do botão, não janela. Avaliar guardar os contadores antes para "refazer leitura" só como informação.
+- [ ] P2 Filtro de RPM baixo roda a cada leitura mesmo em outra aba: medir custo de `projection()` a 1 Hz no rk3326 no carro.
+- [ ] P3 Serial e firmware da central ainda desconhecidos no MAPA-DO-CARRO (identidade da central incompleta).
+- [ ] P3 Causa de mudança do mapa por eventos: gravações vindas de outro programa só aparecem como "mudou sem registro" (comparação entre leituras).

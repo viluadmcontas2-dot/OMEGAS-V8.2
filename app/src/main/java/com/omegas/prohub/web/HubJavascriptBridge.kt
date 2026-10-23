@@ -207,6 +207,8 @@ class HubJavascriptBridge(activity: MainActivity) {
             .put("lastError", status.lastError)
             .put("uptimeSeconds", status.uptimeSeconds)
             .put("gpsEnabled", status.gpsEnabled)
+            .put("carInfoEnabled", status.carInfoEnabled)
+            .put("carInfoConnected", status.carInfoConnected)
             .put("directTelemetryAgeMs", status.directTelemetryAgeMs)
             .put("calibrationBusy", service.kWriter.isBusy() || service.kFactor.isBusy())
             .put("kMapState", kStatus.optString("state", "IDLE"))
@@ -521,6 +523,7 @@ class HubJavascriptBridge(activity: MainActivity) {
     @JavascriptInterface fun startSessionRecording(reason: String): String = activity?.serviceOrNull()?.startSessionRecording(reason) ?: unavailable()
     @JavascriptInterface fun stopSessionRecording(reason: String): String = activity?.serviceOrNull()?.stopSessionRecording(reason) ?: unavailable()
     @JavascriptInterface fun exportSession(sessionId: String) = activity?.exportSession(sessionId)
+    @JavascriptInterface fun exportSessionSummary(sessionId: String) = activity?.exportSessionSummary(sessionId)
     @JavascriptInterface fun getLogs(): String = activity?.serviceOrNull()?.logsJson() ?: "[]"
     @JavascriptInterface fun exportLogs() = activity?.exportLogs()
     @JavascriptInterface fun exportData() = activity?.exportData()
@@ -536,12 +539,26 @@ class HubJavascriptBridge(activity: MainActivity) {
     }
 
     @JavascriptInterface fun setGpsEnabled(enabled: Boolean) = activity?.setGpsEnabled(enabled)
+    /** Painel da multimídia (só leitura). Sem permissão a pedir: liga/desliga direto no serviço. */
+    @JavascriptInterface
+    fun setCarInfoEnabled(enabled: Boolean): String {
+        val service = activity?.serviceOrNull() ?: return unavailable()
+        return service.setCarInfoEnabled(enabled).toString()
+    }
+    /** Leitura leve do painel da multimídia (estado, tentativas, idade e última amostra). Não pede nada à multimídia. */
+    @JavascriptInterface
+    fun getCarInfo(): String {
+        val service = activity?.serviceOrNull() ?: return unavailable()
+        return service.carInfoJson().toString()
+    }
     @JavascriptInterface fun openAppSettings() = activity?.openAppSettings()
     @JavascriptInterface
     fun registerRefuel(addedM3: Double, distanceKm: Double): String {
         val service = activity?.serviceOrNull() ?: return unavailable()
         val capacity = AppSettings(appContext).gnvCylinderCapacityM3
-        return service.consumptionTracker.registerRefuel(addedM3, distanceKm, capacity).toString()
+        val result = service.consumptionTracker.registerRefuel(addedM3, distanceKm, capacity)
+        service.sessionRecorder.noteUserAction("registerRefuel", "cilindro", JSONObject().put("addedM3", addedM3).put("distanceKm", distanceKm), result)
+        return result.toString()
     }
 
     @JavascriptInterface

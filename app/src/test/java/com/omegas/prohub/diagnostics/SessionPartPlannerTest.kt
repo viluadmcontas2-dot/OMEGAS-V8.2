@@ -107,4 +107,111 @@ class SessionPartPlannerTest {
         assertEquals("s_1_parte_0002.zip", plan.fileName("s 1"))
         dir.deleteRecursively()
     }
+
+    // Dono, 2026-10-23: o download pelo Drive quebra acima de ~8 MB; parte bruta tem teto de bytes brutos (o JSON comprime 8x ou mais).
+    @Test
+    fun `parte bruta respeita o teto de bytes e nada se perde nem duplica`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        val log = File(dir, "events_0001.jsonl")
+        val lines = (1..40).joinToString("") { "{\"seq\":$it,\"pad\":\"xxxxxxxxxx\"}\n" }
+        log.writeText(lines)
+        val cap = 200L
+        val parts = ArrayList<Map<String, ByteArray>>()
+        val finals = ArrayList<Boolean>()
+        while (true) {
+            val plan = SessionPartPlanner.plan(dir, final = true, maxRawBytes = cap) ?: break
+            assertTrue("parte com ${plan.slices.sumOf { it.to - it.from }} bytes", plan.slices.sumOf { it.to - it.from } <= cap)
+            assertTrue(!plan.single || plan.final)
+            val out = ByteArrayOutputStream()
+            SessionPartPlanner.writeZip(plan, "s1", out)
+            SessionPartPlanner.commit(dir, plan)
+            parts += unzip(out.toByteArray())
+            finals += plan.final
+        }
+        assertTrue(parts.size > 3)
+        assertEquals(listOf(true), finals.takeLast(1))
+        assertTrue(finals.dropLast(1).none { it })
+        assertArrayEquals(log.readBytes(), events(parts))
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `sessao pequena continua em um zip so mesmo com teto`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n{\"seq\":2}\n")
+        val plan = SessionPartPlanner.plan(dir, final = true, maxRawBytes = 1_000L)!!
+        assertTrue(plan.single)
+        assertTrue(plan.final)
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `parte carrega identidade estavel uuid inicio indice ultima parte e hash do conteudo`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        File(dir, "manifest.json").writeText(JSONObject().put("sessionId", "s1").put("sessionUuid", "uuid-1").put("sessionKey", "S_k_b_1").put("createdAtMs", 1_790_000_000_000L).toString())
+        File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n{\"seq\":2}\n")
+        val p1 = publish(dir)!!
+        File(dir, "events_0001.jsonl").appendText("{\"seq\":3}\n")
+        val p2 = publish(dir, final = true)!!
+        val a = JSONObject(String(p1.second.getValue("s1/parte.json")))
+        val b = JSONObject(String(p2.second.getValue("s1/parte.json")))
+        assertEquals("uuid-1", a.getString("sessionUuid"))
+        assertEquals("S_k_b_1", a.getString("sessionKey"))
+        assertEquals(1_790_000_000_000L, a.getLong("startMs"))
+        assertEquals(1, a.getInt("partIndex"))
+        assertEquals(false, a.getBoolean("isLast"))
+        assertTrue(a.isNull("totalParts"))
+        assertEquals(2, b.getInt("partIndex"))
+        assertEquals(true, b.getBoolean("isLast"))
+        assertEquals(2, b.getInt("totalParts"))
+        assertEquals(10L, b.getLong("rawBytes"))
+        assertEquals(64, a.getString("contentSha256").length)
+        assertTrue(a.getString("contentSha256") != b.getString("contentSha256"))
+        dir.deleteRecursively()
+    }
+
+    @Test
+    fun `fluxos brutos em raw entram em partes por bytes, sem perder nem duplicar, junto com os eventos`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        File(dir, "raw").mkdirs()
+        val frames = File(dir, "raw/frames_48_01.0001.tsv")
+        File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n")
+        frames.writeText((1..30).joinToString("") { "$it\tabcdef0123456789\n" })
+        val parts = ArrayList<Map<String, ByteArray>>()
+        while (true) {
+            val plan = SessionPartPlanner.plan(dir, final = true, maxRawBytes = 120L) ?: break
+            val out = ByteArrayOutputStream()
+            SessionPartPlanner.writeZip(plan, "s1", out)
+            SessionPartPlanner.commit(dir, plan)
+            parts += unzip(out.toByteArray())
+        }
+        assertTrue(parts.size > 2)
+        val joined = parts.flatMap { p -> p.filterKeys { it.startsWith("s1/raw/frames_48_01.0001.from_") }.toSortedMap(compareBy { it.substringAfter("from_").substringBefore(".").toLong() }).values }
+            .fold(ByteArray(0)) { acc, b -> acc + b }
+        assertArrayEquals(frames.readBytes(), joined)
+        assertTrue(JSONObject(String(parts.last().getValue("s1/parte.json"))).getBoolean("isLast"))
+        dir.deleteRecursively()
+    }
+
+    // Achado ao fechar o export v2: manifest.json e session_summary.json existem na raiz E em resumo/; o ZIP repetia o nome (erro de entrada duplicada).
+    @Test
+    fun `arquivos de mesmo nome na raiz e em resumo entram sem colisao e com caminho relativo`() {
+        val dir = Files.createTempDirectory("sess").toFile()
+        File(dir, "resumo").mkdirs()
+        File(dir, "manifest.json").writeText("{\"raiz\":1}")
+        File(dir, "session_summary.json").writeText("{\"semantico\":1}")
+        File(dir, "resumo/manifest.json").writeText("{\"resumo\":1}")
+        File(dir, "resumo/session_summary.json").writeText("{\"v1\":1}")
+        File(dir, "events_0001.jsonl").writeText("{\"seq\":1}\n")
+        val p = publish(dir, final = true)!!
+        assertEquals("{\"raiz\":1}", String(p.second.getValue("s1/manifest.json")))
+        assertEquals("{\"resumo\":1}", String(p.second.getValue("s1/resumo/manifest.json")))
+        assertEquals("{\"v1\":1}", String(p.second.getValue("s1/resumo/session_summary.json")))
+        assertEquals("{\"semantico\":1}", String(p.second.getValue("s1/session_summary.json")))
+        // arquivo de resumo que muda depois sai de novo, sem confundir com o da raiz
+        File(dir, "resumo/session_summary.json").writeText("{\"v1\":2}")
+        val p2 = publish(dir, final = true)!!
+        assertEquals(setOf("s1/resumo/session_summary.json", "s1/parte.json"), p2.second.keys)
+        dir.deleteRecursively()
+    }
 }

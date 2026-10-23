@@ -94,6 +94,12 @@
     return Array.isArray(item?.rawValues) ? item.rawValues.map(value => finite(value) ?? 0) : [];
   }
 
+  // Contadores do filtro de RPM: desconhecido fica null (nunca 0), senão "passou a ser conhecido" parece subida.
+  function vectorOrNull(snapshot, key) {
+    const item = field(snapshot, key);
+    return Array.isArray(item?.rawValues) ? item.rawValues.map(value => finite(value)) : [];
+  }
+
   function physicalVector(snapshot, key) {
     const item = field(snapshot, key);
     return Array.isArray(item?.physicalValues) ? item.physicalValues.map(value => finite(value)) : [];
@@ -634,6 +640,14 @@
       this.acquisitionSnapshot = {};
       this.minRpmLearn = ns.AutoCalPrefs?.load?.().minRpmLearn ?? 1000;
       this.lowRpmFilter = ns.LowRpmFilter?.create?.({ minRpm: () => this.minRpmLearn }) || null;
+      // Limpar pontos (botão de zona e filtro de RPM): um só caminho, em fila, com conferência da contagem.
+      this.lastCounters = null;
+      this.clearer = ns.PointClear?.create?.({
+        api: this.api,
+        notify: (level, message) => this.store?.patch?.({ alert: { level, message } }),
+        counters: () => this.lastCounters,
+        onChange: () => this.paintClearState(),
+      }) || null;
       document.addEventListener?.('omegas:autocal-prefs', event => {
         const value = Number(event?.detail?.minRpmLearn);
         if (Number.isFinite(value)) this.minRpmLearn = value;
@@ -654,8 +668,11 @@
       this.bind();
       this.unsubscribeStatus = this.scheduler.addHook('status', () => {
         if (this.store.get().route === 'autocal') this.refreshWatched();
+        else this.lowRpmTick();
       });
       this.unsubscribeFast = this.scheduler.addHook('fast', () => {
+        // RPM amostrado no ritmo rápido e em qualquer aba (o filtro vale dirigindo, não só com esta aba aberta).
+        this.lowRpmFilter?.observeRpm(AutoCalUxModel.livePoint(this.liveTelemetry())?.rpm);
         if (this.store.get().route !== 'autocal') return;
         if (AUTO_CAL_METRICS_EVERY_FRAME) this.renderLiveMetrics(this.store.get().telemetry || {});
         // Sem amostra nova (≤ 2 Hz) nem dado novo, renderLiveCursor volta sem tocar no DOM.
@@ -935,7 +952,7 @@
       // O AGORA que aparece/some exige redesenhar o gráfico; gráfico com AGORA embutido (reaquisição, sem
       // referência) segue a amostra de ≤ 2 Hz como antes seguia a releitura de 1 s.
       const sample = this.liveTelemetry();
-      this.lowRpmFilter?.observeRpm(AutoCalUxModel.livePoint(sample)?.rpm);
+      this.lowRpmFeed(reading.projection, reading.actionState);
       const liveNow = !!AutoCalUxModel.livePoint(sample);
       const due = this.refreshBusy(reading) || fingerprint !== this.readingKey || liveNow !== this.renderedLive ||
         (this.chartShowsLive === true && !this.originalChart && sample !== this.renderedSample) ||
@@ -1044,19 +1061,66 @@
         ].includes(String(this.actionState?.state || ''));
       this.sessionState = reading.sessionState;
       this.render();
-      this.applyLowRpmFilter();
+      this.lowRpmFeed(reading.projection, reading.actionState);
     }
 
-    // Ponto que entrou com o motor abaixo de 1000 RPM (ou parado) é apagado na hora, sem pergunta.
-    applyLowRpmFilter() {
-      if (!this.lowRpmFilter || this.operationalPending || this.zoneQueue) return;
-      const snapshot = this.acquisitionSnapshot;
-      if (!snapshot?.available) return;
-      const targets = this.lowRpmFilter.step({
-        GAS: vector(snapshot, 'NUM_BUF_UPD_GAS'),
-        PETROL: vector(snapshot, 'NUM_BUF_UPD_PETR'),
+    // Ponto que entrou com o motor abaixo do RPM mínimo (ou parado) é apagado em segundo plano, sem pergunta.
+    // Roda a cada leitura nova da central, em QUALQUER aba. Antes só rodava com a aba AutoCal aberta: ao voltar, tudo que
+    // cresceu enquanto ninguém olhava era atribuído ao primeiro RPM baixo (marcha lenta) e apagado por engano.
+    lowRpmFeed(projection, actionState) {
+      this.clearer?.onActionState(actionState || {});
+      const filter = this.lowRpmFilter;
+      if (!filter) return;
+      const snapshot = projection?.ok === true ? projection.nativeSnapshot : null;
+      const epoch = projection?.liveAcquisitionEpoch || null;
+      if (!snapshot?.available || (epoch && epoch.comparisonAllowed === false)) {
+        filter.reset();
+        this.lastCounters = null;
+        return;
+      }
+      const id = snapshot.capturedAtMs ?? snapshot.snapshotHash;
+      const counters = {
+        id,
+        GAS: vectorOrNull(snapshot, 'NUM_BUF_UPD_GAS'),
+        PETROL: vectorOrNull(snapshot, 'NUM_BUF_UPD_PETR'),
+      };
+      this.lastCounters = counters;
+      const session = epoch ? String(epoch.usbSessionId ?? '') : '';
+      const targets = filter.step(counters, {
+        id,
+        epoch: epoch ? { GAS: session + ':' + epoch.gasGeneration, PETROL: session + ':' + epoch.petrolGeneration } : {},
       });
-      if (targets.length) this.reacquireTargets(targets);
+      this.clearer?.onSnapshot(counters);
+      if (targets.length) {
+        this.clearer?.request(targets, {
+          kind: 'lowrpm', limit: this.minRpmLearn,
+          label: 'pontos abaixo de ' + this.minRpmLearn + ' rpm',
+        });
+      }
+    }
+
+    // Fora da aba AutoCal: lê a ponte só quando há o que vigiar (RPM mínimo ligado ou limpeza em curso) e a central está ao vivo.
+    lowRpmTick() {
+      if (!this.api?.available?.()) return;
+      const watching = this.minRpmLearn > 0 || (this.clearer?.view().pending || 0) > 0;
+      const live = !!AutoCalUxModel.livePoint(this.liveTelemetry());
+      if (!watching || !live) {
+        this.lowRpmFilter?.reset();
+        if (!(this.clearer?.view().pending > 0)) return;
+      }
+      this.lowRpmFeed(this.api.projection?.() || {}, this.api.actionStatus?.() || {});
+    }
+
+    /** Destaque das bandas em limpeza: o botão da zona pulsa até a central confirmar e a contagem ser conferida. */
+    paintClearState() {
+      const busy = this.clearer ? this.clearer.busyKeys() : new Set();
+      const O = ns.AutoCalOriginal;
+      document.querySelectorAll?.('[data-autocal-zone-reacquire]').forEach(node => {
+        const fuel = node.dataset.autocalZoneFuel;
+        const bands = O?.zoneBands ? O.zoneBands(Number(node.dataset.autocalZoneReacquire)) : [];
+        const on = bands.length > 0 && bands.every(index => busy.has(fuel + ':' + index));
+        if (on) node.setAttribute('data-clearing', 'true'); else node.removeAttribute('data-clearing');
+      });
     }
 
     loadSessions() {
@@ -1195,6 +1259,7 @@
       }
 
       this.renderReferenceChart(snapshot);
+      this.paintClearState();
       this.renderBands(snapshot);
       this.renderEvents(events);
       this.renderActionState();
@@ -1993,46 +2058,13 @@
       this.reacquireTargets(targets);
     }
 
-    /** Botão por zona: reaprende todas as bandas da zona do combustível, pelo mesmo caminho dos "marcados". */
+    /** Botão por zona: limpa as bandas da zona do combustível, em um toque, pelo caminho único de limpeza (fila + conferência). */
     requestZoneReacquisition(fuel, zone) {
       const O = ns.AutoCalOriginal;
-      if (!O?.zoneBands || !Number.isInteger(zone) || zone < 0 || zone > 3) return;
+      if (!O?.zoneBands || !Number.isInteger(zone) || zone < 0 || zone > 3 || !this.clearer) return;
       const targets = O.zoneBands(zone).map(index => ({ fuel, index }));
-      // Tenta limpar a zona de uma vez; se a central recusar, apaga um por um (advanceZoneQueue).
-      this.zoneQueue = { mode: 'batch', targets, rest: [], failed: 0, total: targets.length };
-      if (!this.reacquireTargets(targets)) this.zoneQueue = null;
-    }
-
-    /** Continua o botão por zona depois que a central respondeu: lote falhou → um por um; ponto falhou → segue. */
-    advanceZoneQueue(failed) {
-      const q = this.zoneQueue;
-      if (!q) return;
-      if (q.mode === 'batch') {
-        if (!failed) { this.zoneQueue = null; return; }
-        q.mode = 'single';
-        q.rest = q.targets.slice();
-      } else if (failed) {
-        q.failed += 1;
-      }
-      while (q.rest.length) {
-        const next = q.rest.shift();
-        const prepared = this.api?.preparePointDelete?.(next.fuel, next.index);
-        const started = prepared?.ok && prepared?.prepared && this.api.execute(prepared.preparationId)?.ok === true;
-        if (!started) {
-          this.api?.cancelPreparation?.();
-          q.failed += 1;
-          continue;
-        }
-        this.expectActionResult();
-        this.store?.patch?.({ alert: { level: 'working', message: 'Apagando um por um… faltam ' + (q.rest.length + 1) + ' de ' + q.total + '.' } });
-        return;
-      }
-      this.zoneQueue = null;
-      this.store?.patch?.({
-        alert: q.failed
-          ? { level: 'warning', message: 'Zona limpa, mas ' + q.failed + ' de ' + q.total + ' ponto(s) a central não apagou.' }
-          : { level: 'ok', message: 'Zona limpa: ' + q.total + ' ponto(s) apagados um por um.' },
-      });
+      this.clearer.request(targets, { kind: 'zone', label: (fuel === 'GAS' ? 'GNV' : 'gasolina') + ' · zona ' + (zone + 1) });
+      this.paintClearState();
     }
 
     reacquireTargets(rawTargets) {
@@ -2171,7 +2203,6 @@
       if (this.awaitingActionResult && (failed || name === 'CONFIRMED') && actionSignature(state) !== this.actionBaselineSignature) {
         this.awaitingActionResult = false;
         this.store?.patch?.({ alert: { level: failed ? 'warning' : 'ok', message: text } });
-        this.advanceZoneQueue(failed);
       }
       if (!host) return;
       setData(host, 'level', failed ? 'error' : name === 'CONFIRMED' ? 'ok' : working ? 'working' : 'neutral');

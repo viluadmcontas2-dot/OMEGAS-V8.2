@@ -627,8 +627,8 @@
     "evidencias_no_grafo_de_producao": 0,
     "evidencias_usadas_no_codigo": 9,
     "pct": 75.0,
-    "pontes": 22,
-    "testes": 31
+    "pontes": 23,
+    "testes": 32
    },
    "area": "Transporte",
    "desconhecidos": [

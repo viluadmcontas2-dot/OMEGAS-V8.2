@@ -316,6 +316,71 @@ class AutoCalNativeActionManagerTest {
     }
 
     @Test
+    fun `limpar pontos nao espera tempo fixo depois do commit`() {
+        val witnesses = gasReadbackFields()
+        val manager = manager(fieldsForReceipt = witnesses) { request, _, _, _ ->
+            reply(request, validReadPayloadOrNull(request, witnesses) ?: byteArrayOf())
+        }
+        val prepared = manager.preparePointDelete("GAS", 3)
+        val started = System.nanoTime()
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        assertTrue("esperou ${elapsedMs} ms: nada de espera fixa, só resposta da central", elapsedMs < 300)
+        manager.close()
+    }
+
+    @Test
+    fun `leitura de volta ocupada e repetida sem esperar e a limpeza confirma`() {
+        val witnesses = gasReadbackFields()
+        val commit = AutoCalPointDeleteProtocol.commit()
+        var afterCommit = false
+        var firstReadDone = false
+        val manager = manager(fieldsForReceipt = witnesses) { request, _, _, _ ->
+            if (request.contentEquals(commit)) { afterCommit = true; return@manager reply(request, byteArrayOf()) }
+            if (afterCommit && !firstReadDone) {
+                firstReadDone = true
+                return@manager UsbProtocolReply(ok = false, status = -1, payload = byteArrayOf(), request = request, echo = byteArrayOf(), error = "central ocupada")
+            }
+            reply(request, validReadPayloadOrNull(request, witnesses) ?: byteArrayOf())
+        }
+        val prepared = manager.preparePointDelete("GAS", 3)
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("CONFIRMED", manager.statusJson().getString("state"))
+        manager.close()
+    }
+
+    @Test
+    fun `ao publicar o fim da limpeza a central ja aceita a proxima`() {
+        val witnesses = gasReadbackFields()
+        val holder = arrayOfNulls<AutoCalNativeActionManager>(1)
+        val acceptedAtEnd = java.util.concurrent.atomic.AtomicReference<Boolean?>(null)
+        val manager = manager(
+            fieldsForReceipt = witnesses,
+            onStateChanged = {
+                val m = holder[0]
+                if (m != null && acceptedAtEnd.get() == null && m.statusJson().optString("state") == "CONFIRMED") {
+                    acceptedAtEnd.set(m.preparePointDelete("GAS", 4).optBoolean("prepared", false))
+                }
+            },
+        ) { request, _, _, _ -> reply(request, validReadPayloadOrNull(request, witnesses) ?: byteArrayOf()) }
+        holder[0] = manager
+        val prepared = manager.preparePointDelete("GAS", 3)
+        manager.execute(prepared.getString("preparationId"))
+        awaitIdle(manager)
+        assertEquals("a central tinha de aceitar a próxima limpeza no instante do 'Concluído' ${manager.statusJson()}", true, acceptedAtEnd.get())
+        manager.close()
+    }
+
+    @Test
+    fun `zona do ponto segue as zonas do original 0-4 5-8 9-12 13-17`() {
+        fun zone(i: Int) = AutoCalPointDeleteProtocol.Target(AutoCalPointDeleteProtocol.Fuel.GAS, i).zone
+        assertEquals(listOf(1, 1, 2, 2, 3, 3, 4, 4), listOf(4, 0, 5, 8, 9, 12, 13, 17).map(::zone))
+    }
+
+    @Test
     fun `falha em mask pontual impede commit`() {
         val requests = java.util.concurrent.CopyOnWriteArrayList<ByteArray>()
         val manager = manager { request, _, _, _ ->
@@ -545,6 +610,7 @@ class AutoCalNativeActionManagerTest {
         connected: AtomicBoolean = AtomicBoolean(true),
         otherBusy: AtomicBoolean = AtomicBoolean(false),
         onConfirmed: (org.json.JSONObject) -> Unit = {},
+        onStateChanged: () -> Unit = {},
         fieldsForReceipt: List<AutoCalProtocol.Field> = listOf(AutoCalProtocol.AUTO_CAL_ENABLE),
         transaction: (ByteArray, String, Int, Long) -> UsbProtocolReply,
     ) = AutoCalNativeActionManager(
@@ -555,6 +621,7 @@ class AutoCalNativeActionManagerTest {
         transaction = transaction,
         fieldsForReceipt = fieldsForReceipt,
         onConfirmed = onConfirmed,
+        onStateChanged = onStateChanged,
     )
 
     private fun reply(request: ByteArray, payload: ByteArray) = UsbProtocolReply(

@@ -32,6 +32,8 @@ data class HubStatus(
     val storagePath: String = "",
     val workspaceConfigured: Boolean = false,
     val gpsEnabled: Boolean = false,
+    val carInfoEnabled: Boolean = false,
+    val carInfoConnected: Boolean = false,
     val gpsSpeedKmh: Double = 0.0,
     val gpsAccuracyM: Double = 0.0,
     val directTelemetryAgeMs: Long = -1,

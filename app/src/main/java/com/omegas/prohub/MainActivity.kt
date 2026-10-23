@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private var service: TelemetryForegroundService? = null
     private var bound = false
     private var pendingSessionExportId = ""
+    private var pendingSummaryExportId = ""
     private var jsBridge: HubJavascriptBridge? = null
     private var v7Bridge: V7JavascriptBridge? = null
     private var powerBridge: PowerJavascriptBridge? = null
@@ -101,6 +102,23 @@ class MainActivity : AppCompatActivity() {
             pendingSessionExportId = ""
             toast(
                 if (result.optBoolean("ok")) "Sessão exportada" else "Falha: ${result.optString("error")}",
+                !result.optBoolean("ok"),
+            )
+            refreshWebUi()
+        }
+    }
+
+    /** Pacote leve da sessão (resumo + série de 1 Hz + manifesto + livro-caixa), separado do bruto. */
+    private val exportSummaryLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip"),
+    ) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        runWithServiceAsync { svc ->
+            val result = JSONObject(svc.exportSessionSummary(uri, pendingSummaryExportId))
+            pendingSummaryExportId = ""
+            val kb = (result.optLong("bytes", 0L) + 1023L) / 1024L
+            toast(
+                if (result.optBoolean("ok")) "Resumo exportado ($kb KB)" else "Falha: ${result.optString("error")}",
                 !result.optBoolean("ok"),
             )
             refreshWebUi()
@@ -335,6 +353,11 @@ class MainActivity : AppCompatActivity() {
     fun exportSession(sessionId: String) = runOnUiThread {
         pendingSessionExportId = sessionId.trim()
         exportSessionLauncher.launch("OMEGAS_Sessao_${sessionStamp(pendingSessionExportId)}.zip")
+    }
+
+    fun exportSessionSummary(sessionId: String) = runOnUiThread {
+        pendingSummaryExportId = sessionId.trim()
+        exportSummaryLauncher.launch("OMEGAS_Resumo_${sessionStamp(pendingSummaryExportId)}.zip")
     }
 
     private fun exportStamp(timeMs: Long = System.currentTimeMillis()): String =

@@ -585,6 +585,7 @@ class V7JavascriptBridge(activity: MainActivity) {
                 .put("startedAt", startedAt)
                 .put("finishedAt", System.currentTimeMillis())
             busy.set(false)
+            try { service.sessionRecorder.noteUserAction("v8:$state", "calibracao", null, result) } catch (_: Exception) { /* nunca atrapalha */ }
             currentActivity.refreshWebUi()
         }
         return JSONObject()

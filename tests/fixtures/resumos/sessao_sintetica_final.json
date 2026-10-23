@@ -1,0 +1,386 @@
+{
+  "schema": "omegas-session-summary-v1",
+  "netChange": {
+    "curve": [],
+    "map": []
+  },
+  "changeLogMeta": {
+    "batches": 0,
+    "droppedBatches": 0,
+    "cellsChangedTotal": 0,
+    "listedChanges": 0,
+    "truncated": false
+  },
+  "closedCleanly": true,
+  "changeLog": [],
+  "clock": {
+    "driftMs": 0,
+    "note": "gpsReferenceOffsetMs = hora do GPS (UTC) menos a parede do aparelho; somar a startMs corrige o relogio. t da serie e monotonico.",
+    "gpsReferenceOffsetMs": null,
+    "wallMinusElapsedLastMs": 1789993000000,
+    "suspectReasons": [],
+    "lastElapsedMs": 7180000,
+    "monotonicSamples": 181,
+    "source": "WALL_VS_ELAPSEDREALTIME",
+    "wallMinusElapsedFirstMs": 1789993000000,
+    "gpsReferenceSamples": 0,
+    "firstElapsedMs": 7000000,
+    "clockSuspect": false,
+    "wallStartMs": 1790000000000
+  },
+  "gaps": {
+    "totalMs": 0,
+    "count": 0,
+    "truncated": false,
+    "thresholdMs": 2000,
+    "items": []
+  },
+  "quality": {
+    "plausiblePct": 100,
+    "telemetryCoveragePct": 99.45,
+    "telemetrySamples": 181,
+    "levelValidPct": 100,
+    "mmSpeedValidPct": 100,
+    "fullSnapshots": 0
+  },
+  "mapCurve": {
+    "note": "hashAtStart vem do cache do app (nao confirmado pela ECU nesta sessao); confirmedInSession = visto em leitura da ECU.",
+    "curve": {
+      "hashAtStart": "curva-cache-0001",
+      "hashLast": "curva-lida-0001",
+      "hashFirstSeen": "curva-lida-0001",
+      "confirmedInSession": true
+    },
+    "calibrationWritesConfirmed": {
+      "curve": 0,
+      "map": 0
+    },
+    "changes": [
+      {
+        "t": 100,
+        "kind": "map",
+        "origin": null,
+        "hash": "mapa-lido-0001",
+        "via": "k_read_map"
+      },
+      {
+        "t": 150,
+        "kind": "curve",
+        "origin": null,
+        "hash": "curva-lida-0001",
+        "via": "k_read_curve"
+      }
+    ],
+    "map": {
+      "hashAtStart": "mapa-cache-0001",
+      "hashLast": "mapa-lido-0001",
+      "hashFirstSeen": "mapa-lido-0001",
+      "confirmedInSession": true
+    },
+    "identityKnown": true
+  },
+  "multimedia": {
+    "rawChannels": {
+      "txCalls": {"6": 181},
+      "cabinKeys": [],
+      "channelsTotal": 17,
+      "dashboardValuesSeen": [],
+      "events": 1,
+      "channelsActiveMax": 2,
+      "propsSeen": []
+    },
+    "fieldsSeen": {
+      "odo": {
+        "min": 45000,
+        "last": 45002,
+        "max": 45002,
+        "n": 181,
+        "first": 45000
+      },
+      "avgFuelCont": {
+        "min": 11.7,
+        "last": 11.7,
+        "max": 11.7,
+        "n": 181,
+        "first": 11.7
+      },
+      "cruisingRange": {
+        "min": 291,
+        "last": 291,
+        "max": 300,
+        "n": 181,
+        "first": 300
+      },
+      "speed": {
+        "min": 0,
+        "last": 0,
+        "max": 54,
+        "n": 181,
+        "first": 0
+      }
+    },
+    "absentCounts": {
+      "odo": 0,
+      "avgFuelCont": 0,
+      "cruisingRange": 0,
+      "speed": 0
+    },
+    "speedValidPct": 100,
+    "events": 181,
+    "incompleteEvents": 0
+  },
+  "tankSegments": [{
+    "stoppedMs": {
+      "MM": 39000,
+      "GPS": null,
+      "RPM_PROXY": 39000
+    },
+    "km": {
+      "MM": 2.115,
+      "GPS": null,
+      "RPM_PROXY": null
+    },
+    "endedByRefuel": false,
+    "index": 0,
+    "gasInjectingMs": 180000,
+    "kmOnGnv": {
+      "MM": 2.115,
+      "GPS": null,
+      "RPM_PROXY": null
+    },
+    "maxRaw": 66,
+    "gnvMs": 180000,
+    "minRaw": 60,
+    "injectorOpenMinutesGnv": 1.734667,
+    "coveredMs": 180000,
+    "endT": null,
+    "startRaw": 60,
+    "endRaw": 65,
+    "movingMs": {
+      "MM": 141000,
+      "GPS": null,
+      "RPM_PROXY": 141000
+    },
+    "startT": 0
+  }],
+  "carMap": {
+    "curve": {
+      "pointsAtStart": null,
+      "known": false,
+      "hashLast": null,
+      "valueNote": "fator Q14 (16384 = 1,0); teto de escrita do app = 1,8; eixo em ms de gasolina (axisRaw/512)",
+      "hashStart": null,
+      "points": null
+    },
+    "map": {
+      "extraRow": null,
+      "rowsAtStart": null,
+      "known": false,
+      "hashLast": null,
+      "axes": {
+        "petrolMsBins": [
+          2,
+          2.5,
+          3,
+          3.5,
+          4.5,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18
+        ],
+        "rowAxis": "petrolMs",
+        "columnAxis": "rpm",
+        "rpmBins": [
+          850,
+          1350,
+          1850,
+          2500,
+          3000,
+          3500,
+          4000,
+          4500,
+          5000,
+          5500,
+          6000,
+          6500
+        ]
+      },
+      "valueNote": "valor cru 0-255 gravado na central, 12 linhas (ms de gasolina) x 12 colunas (rpm); piso de segurança do app = 100",
+      "rows": null,
+      "hashStart": null
+    }
+  },
+  "gnvLevel": {
+    "note": "level_raw (byte 13 do 48 01): 255 = vazio, cheio ~31-76; abastecimento = queda >= 40. remainingIndex = 1 - raw/255 e PROXY.",
+    "unit": "raw_byte",
+    "orientation": "INVERTED_255_EMPTY",
+    "remainingIndexEnd": 0.745,
+    "scale": "0-255",
+    "startRaw": 60,
+    "maxRaw": 65,
+    "endRaw": 65,
+    "minRaw": 60,
+    "refuel": {
+      "dropBetween": 170,
+      "intraSession": [],
+      "threshold": 40,
+      "previousEndRaw": 230,
+      "betweenSessions": true
+    },
+    "remainingIndexStart": 0.765
+  },
+  "build": {
+    "appVersion": "8.2.0",
+    "buildType": null,
+    "commit": "0123456789ab"
+  },
+  "engine": {
+    "rpmMax": 2200,
+    "injectorOpenMinutesGnv": 1.734667,
+    "injectorFormula": "soma(gas_ms * rpm/120 * 4 cilindros * dt_s) / 60000 ms; so intervalos <= 2000 ms",
+    "gasInjectingMs": 180000,
+    "rpmMean": 1918.3
+  },
+  "identity": {
+    "wallDurationMs": 181000,
+    "stopReason": "manual",
+    "startMs": 1790000000000,
+    "endMs": 1790000181000,
+    "sessionKey": null,
+    "bootId": null,
+    "sessionId": "session_2026-10-23_10-00-00_abcd1234",
+    "lastSequence": 367,
+    "sessionUuid": "00000000-0000-4000-8000-000000000001",
+    "startUtc": "2026-09-21T14:13:20Z",
+    "events": 367,
+    "startElapsedMs": null,
+    "elapsedMs": 181000
+  },
+  "ecu": {
+    "note": "serial e firmware ainda nao sao lidos pelo app (desconhecido, nao 0); moduleVersion vem do snapshot do AutoCal",
+    "serial": null,
+    "moduleVersion": null,
+    "firmware": null
+  },
+  "series": {
+    "note": "1 linha por segundo com dado; celula vazia = desconhecido; t_s em segundos monotonicos desde o inicio",
+    "file": "series_1hz.csv",
+    "columns": [
+      "t_s",
+      "rpm",
+      "map_bar",
+      "speed_kmh",
+      "speed_src",
+      "moving",
+      "moving_src",
+      "gnv_level_raw",
+      "gas_ms",
+      "petrol_ms",
+      "fuel",
+      "mm_odo_km",
+      "mm_rpm",
+      "mm_fuel_pct",
+      "mm_range_km",
+      "mm_avg_cons",
+      "mm_inst_cons"
+    ],
+    "truncated": false,
+    "rows": 181
+  },
+  "safety": {
+    "automaticEcuWrite": false,
+    "appWritesEcu": false
+  },
+  "final": true,
+  "context": {
+    "fuelDominant": "GNV",
+    "carProfile": null,
+    "vin": null,
+    "deviceId": "abcd1234"
+  },
+  "timeline": [
+    {
+      "important": true,
+      "kind": "session_started",
+      "tMs": 0,
+      "text": "A gravação da sessão começou."
+    },
+    {
+      "important": true,
+      "kind": "multimedia",
+      "tMs": 0,
+      "text": "Multimídia do carro conectada: o painel começou a ser lido."
+    },
+    {
+      "important": true,
+      "kind": "session_stopped",
+      "tMs": 181000,
+      "text": "A sessão terminou (manual)."
+    }
+  ],
+  "durations": {
+    "telemetryCoveredMs": 180000,
+    "petrolMs": 0,
+    "telemetrySamples": 181,
+    "gnvMs": 180000
+  },
+  "movement": {
+    "note": "Prioridade MM > GPS > RPM_PROXY; fontes nunca somadas. RPM_PROXY (rpm > 1100) so mede tempo, sem km.",
+    "odometer": {
+      "lastKm": 45002,
+      "km": 2,
+      "unit": "km (assumido, nao confirmado)",
+      "firstKm": 45000
+    },
+    "bySource": {
+      "MM": {
+        "proxy": false,
+        "stoppedMs": 39000,
+        "km": 2.115,
+        "gapMs": 0,
+        "available": true,
+        "kmOnGnv": 2.115,
+        "coverageMs": 180000,
+        "thresholdKmh": 2,
+        "samples": 181,
+        "movingMs": 141000
+      },
+      "GPS": {
+        "proxy": false,
+        "stoppedMs": null,
+        "km": null,
+        "gapMs": null,
+        "available": false,
+        "kmOnGnv": null,
+        "coverageMs": null,
+        "thresholdKmh": 2,
+        "samples": 0,
+        "movingMs": null
+      },
+      "RPM_PROXY": {
+        "proxy": true,
+        "thresholdRpm": 1100,
+        "stoppedMs": 39000,
+        "km": null,
+        "gapMs": 0,
+        "available": true,
+        "kmOnGnv": null,
+        "coverageMs": 180000,
+        "samples": 181,
+        "movingMs": 141000
+      }
+    },
+    "speedUnitAssumed": "km/h",
+    "primary": {
+      "proxy": false,
+      "stoppedMs": 39000,
+      "km": 2.115,
+      "source": "MM",
+      "movingMs": 141000
+    }
+  }
+}

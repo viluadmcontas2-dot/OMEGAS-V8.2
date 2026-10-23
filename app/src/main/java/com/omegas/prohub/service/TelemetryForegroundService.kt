@@ -26,6 +26,8 @@ import com.omegas.prohub.diagnostics.DocumentsSessionMirror
 import com.omegas.prohub.diagnostics.SessionRecorder
 import com.omegas.prohub.ecu.NativeRuntimeManager
 import com.omegas.prohub.gps.GpsTelemetryManager
+import com.omegas.prohub.carinfo.CarInfoSample
+import com.omegas.prohub.carinfo.CarInfoSource
 import com.omegas.prohub.learning.LearningArchiveManager
 import com.omegas.prohub.learning.LearningTemperatureSettings
 import com.omegas.prohub.learning.LearningToleranceSettings
@@ -119,6 +121,8 @@ class TelemetryForegroundService : Service() {
         private set
     lateinit var gps: GpsTelemetryManager
         private set
+    lateinit var carInfo: CarInfoSource
+        private set
     lateinit var kWriter: KWriteManager
         private set
     lateinit var kFactor: KFactorManager
@@ -197,6 +201,10 @@ class TelemetryForegroundService : Service() {
         notifications = NotificationController(this)
         overlay = TelemetryOverlayController(this)
         gps = GpsTelemetryManager(this, log, ::consumeGpsUpdate)
+        carInfo = CarInfoSource(
+            this, log, ::consumeCarInfoSample, ::consumeCarInfoRaw,
+            onMmChange = { kind, json -> sessionRecorder.recordMm(kind, json.toString()) },
+        )
         usb = UsbSerialManager(this, settings, log, ::usbStateChanged, sessionRecorder::recordRawUsb)
         runtime = NativeRuntimeManager(
             paths = paths,
@@ -205,11 +213,18 @@ class TelemetryForegroundService : Service() {
             onStateChanged = ::stateChanged,
             onTelemetryEvent = ::consumeEngineEvent,
             onEngineExited = ::onEngineExited,
+            onRawFrame = { telemetry, metrics ->
+                sessionRecorder.recordRawFrame(telemetry.raw, telemetry.capturedAtElapsedMs, metrics.telemetryFrames, metrics.telemetryFailures)
+            },
         )
         // Trilha de comandos na sessão: só observa e repassa (nenhum byte muda). Escritas completas; leituras em resumo.
-        val recordingSerial = com.omegas.prohub.diagnostics.RecordingSerialScheduler(runtime.serialScheduler()) { type, source, data ->
-            sessionRecorder.record(type, source, data, force = type == "ecu_command")
-        }
+        val recordingSerial = com.omegas.prohub.diagnostics.RecordingSerialScheduler(
+            runtime.serialScheduler(),
+            record = { type, source, data -> sessionRecorder.record(type, source, data, force = type == "ecu_command") },
+            onTransaction = { request, reason, workClass, reply, ms, error ->
+                sessionRecorder.recordTx(workClass.name, reason, request, reply?.ok ?: false, reply?.status ?: -1, reply?.payload ?: ByteArray(0), ms, error ?: reply?.error ?: "")
+            },
+        )
         kWriter = KWriteManager(
             runtimeRoot = paths.runtimeRoot,
             serial = recordingSerial,
@@ -259,6 +274,16 @@ class TelemetryForegroundService : Service() {
             },
             publishManualBackup = { file -> documentsMirror.publishRootFile(file) },
         )
+        // Resumo da sessão: versão, commit e a identidade do mapa/curva guardados no app (hash do cache; só leitura, nunca fala com a ECU).
+        sessionRecorder.summaryExtrasProvider = {
+            SessionRecorder.SummaryExtras(
+                appVersion = BuildConfig.VERSION_NAME,
+                commit = BuildConfig.OMEGAS_BUILD_COMMIT,
+                mapHashAtStart = kWriter.cachedMapJson().optString("hash").takeIf { it.isNotBlank() },
+                curveHashAtStart = kFactor.cachedCurveJson().optString("hash").takeIf { it.isNotBlank() },
+                buildType = BuildConfig.BUILD_TYPE,
+            )
+        }
         parameterReader = com.omegas.prohub.autocal.EcuParameterReader(recordingSerial)
         bufferProbe = com.omegas.prohub.autocal.BufferWriteProbe(recordingSerial) { type, data ->
             sessionRecorder.record(type, "buffer_probe", data, force = true)
@@ -349,13 +374,16 @@ class TelemetryForegroundService : Service() {
             gps.start(settings.gpsIntervalMs)
             startForegroundCompat()
         }
+        if (settings.carInfoEnabled) carInfo.start()
         if (settings.autoConnectUsb && usb.hasCompatibleDevice()) usb.connect()
         scheduler.execute { healthTick() }
         updateOverlay()
         log.add("INFO", "SERVICE", "OMEGAS Pro Hub ${BuildConfig.VERSION_NAME} iniciado com núcleo Android")
+        sessionRecorder.noteLifecycle("service_create", JSONObject().put("appVersion", BuildConfig.VERSION_NAME).put("commit", BuildConfig.OMEGAS_BUILD_COMMIT))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        sessionRecorder.noteLifecycle("service_start_command", JSONObject().put("action", intent?.action ?: "restart_or_default").put("flags", flags))
         when (intent?.action) {
             ACTION_TOGGLE_ENGINE -> scheduler.execute { toggleEngine() }
             ACTION_DISCONNECT_USB -> scheduler.execute {
@@ -375,6 +403,7 @@ class TelemetryForegroundService : Service() {
     override fun onDestroy() {
         if (stopping) return
         stopping = true
+        try { sessionRecorder.noteLifecycle("service_destroy") } catch (_: Exception) { /* encerrando */ }
         autoReadGate.wakeAll()
         // Encerrando o serviço: cada peça fecha sozinha; a falha de uma não impede as outras (nada mais a mostrar).
         try { equivalence.flush() } catch (_: Exception) { /* encerrando */ }
@@ -383,6 +412,7 @@ class TelemetryForegroundService : Service() {
         try { runtime.endUsbSession("SERVICE_DESTROYED") } catch (_: Exception) { /* encerrando */ }
         try { usb.disconnect() } catch (_: Exception) { /* encerrando */ }
         try { gps.stop() } catch (_: Exception) { /* encerrando */ }
+        try { carInfo.close() } catch (_: Exception) { /* encerrando */ }
         try { overlay.close() } catch (_: Exception) { /* encerrando */ }
         try { sessionRecorder.close() } catch (_: Exception) { /* encerrando */ }
         try { nativeAutoCal.endUsbSession() } catch (_: Exception) { /* encerrando */ }
@@ -440,6 +470,8 @@ class TelemetryForegroundService : Service() {
             storagePath = paths.externalRoot.absolutePath,
             workspaceConfigured = false,
             gpsEnabled = gps.running,
+            carInfoEnabled = ::carInfo.isInitialized && carInfo.supervisor.isEnabled(),
+            carInfoConnected = ::carInfo.isInitialized && carInfo.supervisor.isConnected(),
             gpsSpeedKmh = gps.json().optDouble("speedKmh", 0.0),
             gpsAccuracyM = gps.json().optDouble("accuracyM", 0.0),
             directTelemetryAgeMs = telemetryStore.ageMs().let { if (it == Long.MAX_VALUE) -1L else it },
@@ -447,6 +479,7 @@ class TelemetryForegroundService : Service() {
     }
 
     fun restartEngine(): Boolean {
+        sessionRecorder.noteLifecycle("engine_restart_requested")
         if (!usb.connected) return false
         enginePausedByUser = false
         engineRestarts += 1
@@ -454,6 +487,7 @@ class TelemetryForegroundService : Service() {
     }
 
     fun toggleEngine(): Boolean {
+        sessionRecorder.noteUserAction("toggleEngine", "motor_de_leitura", JSONObject().put("wasRunning", runtime.running))
         return if (runtime.running) {
             enginePausedByUser = true
             runtime.stop(3)
@@ -470,6 +504,7 @@ class TelemetryForegroundService : Service() {
     }
 
     fun disconnectUsb() {
+        sessionRecorder.noteUserAction("disconnectUsb", "usb")
         monitoringPausedByUser = true
         enginePausedByUser = false
         runtime.stop(3)
@@ -486,6 +521,7 @@ class TelemetryForegroundService : Service() {
         val live = telemetryStore.telemetryCopy()
         val gpsData = gps.json()
         root.put("gps", gpsData)
+            .put("carinfo", carInfo.json())
             .put("k_write", try { JSONObject(kWriter.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("k_factor", try { JSONObject(kFactor.statusJson()) } catch (_: Exception) { JSONObject() })
             .put("session_recorder", try { JSONObject(sessionRecorder.statusJson()) } catch (_: Exception) { JSONObject() })
@@ -673,8 +709,10 @@ class TelemetryForegroundService : Service() {
     ).toString()
     fun stopSessionRecording(reason: String): String = sessionRecorder.stop(reason.ifBlank { "manual" }).toString()
     fun exportSession(uri: Uri, sessionId: String): String = sessionRecorder.exportSession(contentResolver, uri, sessionId).toString()
+    fun exportSessionSummary(uri: Uri, sessionId: String): String = sessionRecorder.exportSummary(contentResolver, uri, sessionId).toString()
 
     fun setGpsEnabled(enabled: Boolean): JSONObject {
+        sessionRecorder.noteUserAction("setGpsEnabled", "gps", JSONObject().put("enabled", enabled))
         settings.gpsEnabled = enabled
         val ok = if (enabled) gps.start(settings.gpsIntervalMs) else {
             gps.stop()
@@ -687,10 +725,25 @@ class TelemetryForegroundService : Service() {
             .apply { if (!ok) put("error", gps.lastError) }
     }
 
+    fun setCarInfoEnabled(enabled: Boolean): JSONObject {
+        sessionRecorder.noteUserAction("setCarInfoEnabled", "multimidia", JSONObject().put("enabled", enabled))
+        settings.carInfoEnabled = enabled
+        if (enabled) carInfo.start() else carInfo.stop()
+        stateChanged()
+        val state = carInfo.json()
+        return JSONObject().put("ok", true).put("enabled", state.optBoolean("enabled"))
+            .put("connected", state.optBoolean("connected")).put("state", state.optString("state"))
+    }
+
+    /** Estado + última amostra da multimídia para a tela (só leitura). Antes do onCreate: indisponível. */
+    fun carInfoJson(): JSONObject =
+        if (::carInfo.isInitialized) carInfo.json() else JSONObject().put("ok", false).put("error", "Serviço indisponível")
+
     fun overlayReady(): Boolean = ::overlay.isInitialized
 
     fun overlayStatusJson(): String = if (::overlay.isInitialized) overlay.statusJson().toString() else "{}"
     fun setTelemetryOverlayEnabled(enabled: Boolean): String {
+        sessionRecorder.noteUserAction("setTelemetryOverlayEnabled", "overlay", JSONObject().put("enabled", enabled))
         if (!::overlay.isInitialized) return JSONObject().put("ok", false).put("error", "Overlay indisponível").toString()
         val result = overlay.setEnabled(enabled)
         updateOverlay()
@@ -768,6 +821,7 @@ class TelemetryForegroundService : Service() {
                 telemetryStore.invalidate("USB_SESSION_REPLACED")
                 log.add("INFO", "USB", "Nova geração USB detectada • $previousSessionId → $sessionId")
             }
+            sessionRecorder.noteLifecycle("usb_connected", JSONObject().put("usbSessionId", sessionId).put("previousUsbSessionId", previousSessionId).put("generationChanged", generationChanged))
             telemetryStore.beginSession(sessionId)
             autoCalFrames.reset()
             snapshotFrames.reset()
@@ -792,6 +846,7 @@ class TelemetryForegroundService : Service() {
                 startEngine(if (generationChanged) "nova geração física MP48" else "nova conexão física MP48")
             }
         } else {
+            sessionRecorder.noteLifecycle("usb_disconnected", JSONObject().put("monitoringPausedByUser", monitoringPausedByUser))
             runtime.stop(2)
             runtime.endUsbSession("USB_DISCONNECTED")
             nativeAutoCal.endUsbSession()
@@ -1122,6 +1177,13 @@ class TelemetryForegroundService : Service() {
                         val parameters = parameterReader.readOnce("AUTO_START")
                         if (sameSession()) {
                             sessionRecorder.record("param_snapshot", "ecu_params", parameters, force = true)
+                            // Calibração do nível (tipo, 4 referências, filtro, LEDs), só leitura, a cada conexão e reconexão.
+                            sessionRecorder.record(
+                                "level_calibration", "ecu_params",
+                                com.omegas.prohub.autocal.LevelCalibration.fromParams(parameters.optJSONObject("params") ?: JSONObject())
+                                    .put("trigger", "AUTO_START"),
+                                force = true,
+                            )
                             advancedParams.update(ticket.session, parameters)
                         }
                     } catch (error: Exception) {
@@ -1220,12 +1282,25 @@ class TelemetryForegroundService : Service() {
         stateChanged()
     }
 
+    /** Painel da multimídia: só registra na sessão (o gravador limita a 1 por segundo). */
+    private fun consumeCarInfoSample(sample: CarInfoSample) {
+        // Fluxo cru (export v2): toda mudança do painel, sem o limite de 1 por segundo do evento `car_info`.
+        sessionRecorder.recordMm("car_info", sample.knownJson().toString())
+        sessionRecorder.record("car_info", "multimidia", sample.knownJson())
+    }
+
+    /** Dados crus da multimídia: a captura já limita a 1 a cada 5 s e só quando muda. */
+    private fun consumeCarInfoRaw(raw: JSONObject) {
+        sessionRecorder.record("car_info_raw", "multimidia", raw)
+    }
+
     private fun consumeGpsUpdate() {
         telemetryStore.updateGps(gps.json())
         stateChanged()
     }
 
     private fun onEngineExited(crashed: Boolean) {
+        sessionRecorder.noteLifecycle("engine_exited", JSONObject().put("crashed", crashed))
         if (crashed) healthFailures += 1
         executeOnScheduler { healthTick() }
         stateChanged()

@@ -3,7 +3,7 @@
 Gerado por `python3 -B tools/grafo_producao.py` (determinístico, sem LLM). Não editar à mão. Dados: `docs/grafo/producao.json`.
 O grafo de PESQUISA (ProgBase/evidências) é outro: `tools/grafo_conhecimento.py`. Ligação por heurística de texto (nome citado).
 
-Nós: aba 9, ev 98, kt 8, ponte 114, teste 392, ui 34. Arestas: chama 108, cobre 669, exibe 35, sustenta 80, usa 14.
+Nós: aba 9, ev 98, kt 8, ponte 117, teste 418, ui 36. Arestas: chama 114, cobre 680, exibe 37, sustenta 80, usa 14.
 
 ## (a) Por aba
 
@@ -14,8 +14,8 @@ Nós: aba 9, ev 98, kt 8, ponte 114, teste 392, ui 34. Arestas: chama 108, cobre
 | Curva K (`curve`) | Curva K: edição, suavização, conversão em mapa, gravação com leitura de volta. | 2 | 3 | 18 | 0 |
 | AutoCal (`autocal`) | AutoCal: calibração automática, pontos por zona, apagar fora da curva. | 5 | 27 | 54 | 4 |
 | Ajuste GNV (`refino`) | Ajuste GNV (rota "refino"): referência de gasolina, recomendações do refino. | 2 | 2 | 16 | 0 |
-| Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 7 | 12 | 0 |
-| Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 22 | 31 | 16 |
+| Sessões (`sessions`) | Sessões gravadas, exportação em ZIP, resumo. | 1 | 8 | 13 | 0 |
+| Ferramentas (`tools`) | Ferramentas: cartões do motor, bits da ECU, anti-apagão, marcha lenta. | 7 | 23 | 32 | 16 |
 | Diagnóstico (`-`) | Sem aba própria: estados na barra e cartões de Ferramentas. | 0 | 0 | 0 | 0 |
 
 Pontes e evidências por aba (amostra):
@@ -23,12 +23,12 @@ Pontes e evidências por aba (amostra):
 - **Curva K**: startRead, startCurveBackup, startCurveRead; -
 - **AutoCal**: cancelRead, clearNativeActionPreparation, executeNativeAction, exportAutoCalSession, getEquivalence, getIdentity …; EV-AUTOCAL-007, EV-AUTOCAL-008, EV-AUTOCAL-009 …
 - **Ajuste GNV**: setRefinementManual, startCurveRead; -
-- **Sessões**: getAutoRefineMode, setAutoRefineMode, exportData, exportLogs, exportSession, requestBatteryOptimizationExemption …; -
+- **Sessões**: getAutoRefineMode, setAutoRefineMode, exportData, exportLogs, exportSession, exportSessionSummary …; -
 - **Ferramentas**: applyAntiStalloFlag, applyAntiStalloValues, applyVoltaGasolina, cancelAntiStalloFlag, cancelAntiStalloValues, confirmAntiStalloFlag …; EV-ANTIAPAGAO-003, EV-ANTIAPAGAO-004, EV-ANTIAPAGAO-008 …
 
 ## (b) IMPLEMENTADO × FALTA
 
-**IMPLEMENTADO:** 114 pontes, 34 arquivos de UI, 392 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
+**IMPLEMENTADO:** 117 pontes, 36 arquivos de UI, 418 testes. Sem rota no app (contrato AGENTS regra 11): Agora, Diagnóstico.
 Lacunas do CATALOGO já resolvidas: #11.
 
 **FALTA — lacunas do original (CATALOGO, 13):**
@@ -46,7 +46,7 @@ Lacunas do CATALOGO já resolvidas: #11.
 - #13 F6 Salvar / F7 Carregar configuração, F8 Ecu programming, F9 Update sc
 - #14 Lambda (F2) e lubrificante
 
-**FALTA — pendências abertas (PENDENTE.md, 35; 12 primeiras):**
+**FALTA — pendências abertas (PENDENTE.md, 43; 12 primeiras):**
 - Sugestão ADAPTATIVA do anti-apagão, recalculada por evento (fim de sessão) com as sessões 
 - Semântica dos 4 extras do anti-apagão e unidade de "Queda de rotação" (rpm por ciclo = qua
 - Separar apagão de motor desligado nos logs (17 quedas ambíguas).
@@ -70,7 +70,7 @@ ESSENCIAIS (a CI falha se houver; critério no cabeçalho de `tools/grafo_produc
 - E3_ponte_de_escrita_chamada_sem_teste: 0
 
 INFORMATIVOS (só relatam):
-- ponte_sem_teste: 27 — OmegasAutoCal.getRefinedAnalysis, OmegasAutoCal.getRefinementPhase, OmegasAutoCal.getStalls, OmegasAutoCal.setRefinementManual, OmegasNative.getEngineMetrics, OmegasNative.getKFactorHistory …
+- ponte_sem_teste: 25 — OmegasAutoCal.getRefinedAnalysis, OmegasAutoCal.getRefinementPhase, OmegasAutoCal.getStalls, OmegasAutoCal.setRefinementManual, OmegasNative.getEngineMetrics, OmegasNative.getKFactorHistory …
 - ponte_sem_chamador: 32 — OmegasAutoCal.getBufferWriteProbeStatus, OmegasAutoCal.startBufferWriteProbe, OmegasNative.getEngineMetrics, OmegasNative.getKFactorHistory, OmegasNative.getKFactorStatus, OmegasNative.getKWriteHistory …
 - ui_de_aba_sem_ponte: 11 — live-bar.js, advanced-flags-data.js, cartoes-motor.js, curve-smoothing.js, curve-to-map.js, gasoline-reference.js …
 - evidencia_orfa: 47 — EV-ANTIAPAGAO-011, EV-ANTIAPAGAO-014, EV-ANTIAPAGAO-019, EV-ANTIAPAGAO-020, EV-ANTIAPAGAO-022, EV-ANTIAPAGAO-023 …

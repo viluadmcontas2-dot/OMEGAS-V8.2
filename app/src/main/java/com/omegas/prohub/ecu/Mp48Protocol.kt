@@ -158,6 +158,7 @@ object Mp48Protocol {
             gas2MsDiagnostic = gas2Ms,
             petrol2Raw = petrol2Raw,
             petrol2MsDiagnostic = petrol2Ms,
+            raw = payload.copyOf(),
         )
     }
 
@@ -211,6 +212,8 @@ data class Mp48Telemetry(
     val gas2MsDiagnostic: Double? = null,
     val petrol2Raw: Int = 0,
     val petrol2MsDiagnostic: Double? = null,
+    /** Os 34 bytes crus do quadro `48 01` (export v2, camada bruta sem perda). */
+    val raw: ByteArray = ByteArray(0),
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("telemetry_scale_schema", Mp48Protocol.TELEMETRY_SCALE_SCHEMA)

@@ -35,6 +35,8 @@
 
   const LEVELS = { ALL: 'Tudo', ERROR: 'Só erros', WARN: 'Só avisos', INFO: 'Só informações' };
   const SESSIONS_PER_PAGE = 3;
+  // Tela baixa (800x480): cada gravação ocupa duas linhas (info + dois botões), então cabem 2 por página sem rolagem.
+  const sessionsPerPage = () => (Number(globalThis.innerHeight) > 0 && Number(globalThis.innerHeight) <= 540 ? 2 : SESSIONS_PER_PAGE);
   const LOG_PAGE_SIZE = 5;
 
   // Ferramentas, página "App e arquivos" + tela Sessões (dono, 2026-10-18): um cartão por função, com o estado escrito
@@ -127,6 +129,8 @@
         }
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
+      } else if (target.matches('[data-export-summary]')) {
+        this.api.exportSessionSummary(target.dataset.exportSummary || '');
       } else if (target.matches('[data-export-session]')) {
         this.api.exportSession(target.dataset.exportSession || '');
       } else if (target.matches('[data-session-page]')) {
@@ -145,6 +149,18 @@
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-overlay-disable]')) {
         this.api.setTelemetryOverlayEnabled?.(false);
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
+      } else if (target.matches('[data-tool-open-carinfo]')) {
+        this.view = 'carinfo';
+        this.toolsSignature = '';
+        this.renderTools(this.store.get());
+        this.syncView();
+      } else if (target.matches('[data-carinfo-toggle]')) {
+        // Um toque = liga/desliga a leitura da multimídia; sem janela. Falha vira aviso sutil.
+        const C = ns.CarInfoView;
+        const result = C ? C.toggle(this.api, C.view(this.api.carInfo?.(), Date.now())) : null;
+        if (result && result.ok === false) this.notifyResult(result, '');
         this.toolsSignature = '';
         this.renderTools(this.store.get());
       } else if (target.matches('[data-tool-open-log]')) {
@@ -288,15 +304,27 @@
       const overlay = this.api.overlayStatus?.() || {};
       let mode = this.autoRefineMode;
       if (!mode) { try { mode = String(window.OmegasAutoCal?.getAutoRefineMode?.() || 'SHADOW'); } catch (_) { mode = 'SHADOW'; } this.autoRefineMode = mode; }
+      // Multimídia (Car Info): lida a cada ciclo do app só nesta página (o mesmo ciclo que já atualiza a tela).
+      const C = ns.CarInfoView;
+      let car = null;
+      if (C && this.page === 2) {
+        try { car = C.view(this.api.carInfo?.(), Date.now(), Number(appStatus.rpm) || 0); }
+        catch (error) { console.error('[OMEGAS] Leitura da multimídia indisponível', error); }
+      }
       // Só redesenha quando algo visível mudou: redesenho a cada ciclo engolia toques.
       const signature = JSON.stringify([
-        this.view, this.page, serviceHealthy, appStatus.usbConnected, battery, overlay, mode,
+        this.view, this.page, serviceHealthy, appStatus.usbConnected, battery, overlay, mode, this.view === 'carinfo' ? car : car && car.stateText,
         filteredLogs.map(item => [item.time, item.message]), this.logLevel, this.logCategory, this.logPage,
       ]);
       if (signature === this.toolsSignature && host.childElementCount) return;
       this.toolsSignature = signature;
       host.dataset.mode = this.view === 'home' ? 'home' : 'view';
 
+      if (this.view === 'carinfo' && C && car) {
+        const detailsOpenBeforeRender = host.querySelector('.carinfo-details')?.open === true;
+        host.innerHTML = C.html(car, { detailsOpen: detailsOpenBeforeRender });
+        return;
+      }
       if (this.view === 'log') {
         host.innerHTML = `
         <section class="tool-view log-view" data-card="registro">
@@ -354,7 +382,13 @@
           <p class="tile-line">Avisos e teste do app.</p>
           <span class="tile-state">${serviceHealthy ? 'Tudo certo' : 'Atenção'}</span>
           <span class="tile-go">Ver ›</span>
-        </button>`;
+        </button>
+        ${car ? `<button type="button" class="tool-tile tool-open" data-card="carinfo" data-tool-open-carinfo data-state="${car.kind === 'on' ? 'on' : car.kind === 'off' ? 'off' : 'unknown'}">
+          <h3>Multimídia (Car Info)</h3>
+          <p class="tile-line">Velocidade e km lidos da multimídia.</p>
+          <span class="tile-state">${escapeHtml(car.stateText)}</span>
+          <span class="tile-go">Ver leituras ›</span>
+        </button>` : ''}`;
     }
 
     // ---------- Sessões ----------
@@ -369,12 +403,13 @@
       const autoStart = settings.autoStartOnUsb !== false;
       const mb = finite(status.megabytes) || 0;
       const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
-      const pages = Math.max(1, Math.ceil(sessions.length / SESSIONS_PER_PAGE));
+      const perPage = sessionsPerPage();
+      const pages = Math.max(1, Math.ceil(sessions.length / perPage));
       this.sessionPage = Math.min(Math.max(0, this.sessionPage || 0), pages - 1);
-      const shown = sessions.slice(this.sessionPage * SESSIONS_PER_PAGE, (this.sessionPage + 1) * SESSIONS_PER_PAGE);
+      const shown = sessions.slice(this.sessionPage * perPage, (this.sessionPage + 1) * perPage);
       const signature = JSON.stringify([
         recording, status.events, Math.round(mb * 10), Math.round((finite(status.durationMs) || 0) / 10000), settings,
-        sessions.map(item => [item.id, item.bytes, item.active]), this.sessionPage, this.sessionSettingsFeedback, state.status?.usbConnected,
+        sessions.map(item => [item.id, item.bytes, item.active, item.summaryBytes]), this.sessionPage, perPage, this.sessionSettingsFeedback, state.status?.usbConnected,
       ]);
       if (signature === this.sessionsSignature && host.childElementCount) return;
       this.sessionsSignature = signature;
@@ -393,7 +428,10 @@
             return `
             <article class="recorded-session-item">
               <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>
-              <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}">Salvar arquivo</button>
+              <div class="rs-actions">
+                <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Exportar resumo</b>${finite(item.summaryBytes) === null ? '' : `<small>${bytesLabel(item.summaryBytes)}</small>`}</button>
+                <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}"><b>Exportar tudo</b><small>completo</small></button>
+              </div>
             </article>`;
           }).join('')}</div>` : '<p class="empty-copy">' + (autoStart ? 'Nenhuma gravação salva. Conecte a central para iniciar automaticamente.' : 'Nenhuma gravação salva. Toque em “Começar a gravar” para iniciar.') + '</p>'}
           ${pages > 1 ? `<div class="tool-log-pager"><button type="button" class="secondary" data-session-page="newer" ${this.sessionPage === 0 ? 'disabled' : ''}>‹ Mais novas</button><span>${this.sessionPage + 1} de ${pages}</span><button type="button" class="secondary" data-session-page="older" ${this.sessionPage >= pages - 1 ? 'disabled' : ''}>Mais antigas ›</button></div>` : ''}
