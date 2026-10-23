@@ -202,6 +202,8 @@ class SessionRecorder(
     private var semanticLedger: SessionSemanticLedger? = null
     private var summaryBuilder: SessionSummaryBuilder? = null
     private var telemetrySinceSync = 0
+    /** Degraus do nível e abastecimento por contagem de quadros (eventos `level_step` e `refuel_detected`). */
+    @Volatile private var levelTracker: LevelTracker? = null
     /** Camada bruta v2 (quadros a taxa cheia, transações, multimídia, batimento); null fora da gravação. */
     @Volatile private var rawStreams: RawStreams? = null
     @Volatile private var sessionUuid = ""
@@ -272,6 +274,9 @@ class SessionRecorder(
             )
             summaryBuilder = SessionSummaryBuilder(summaryContext(id, now))
             rawStreams = RawStreams(File(dir, "raw"), sessionKey = sessionKey, bootId = bootId, startElapsedMs = startElapsedMs)
+            levelTracker = LevelTracker(try { tankLedger.lastEndRaw() } catch (_: Exception) { null }) { type, data ->
+                record(type, "level", data, force = true)
+            }
             openNextSegment()
             recording = true
             writeManifestBase(dir, now, reason, enrichedMetadata(metadata))
@@ -360,6 +365,8 @@ class SessionRecorder(
     fun recordRawFrame(payload: ByteArray, elapsedMs: Long, engineFrames: Long, engineFailures: Long) {
         if (!recording || payload.isEmpty()) return
         rawStreams?.frame(elapsedMs, payload, System.currentTimeMillis(), engineFrames, engineFailures)
+        // byte 13 do 48 01 = nível cru do cilindro (255 = vazio)
+        if (payload.size > 13) levelTracker?.frame(elapsedMs, payload[13].toInt() and 0xFF)
     }
 
     /** Camada bruta v2: toda transação serial que não é telemetria, inteira (pedido, resposta, status, tempo, erro). */
@@ -375,6 +382,7 @@ class SessionRecorder(
     }
 
     private fun closeRawStreams() {
+        levelTracker = null
         val r = rawStreams ?: return
         rawStreams = null
         try { r.close() } catch (error: Exception) { noteFailure("fechar os fluxos brutos", error) }

@@ -122,8 +122,34 @@ object EcuParameterSnapshot {
         Entry("COEFF_PRESS_DIFF", 0x007C, Kind.VECTOR, 2, 15, signed = true),
     )
 
+    /**
+     * Calibração do NÍVEL do cilindro, as mesmas leituras que o original faz ao conectar (Portmon LOGNOVO; pedidos e
+     * respostas em `tests/ui/fixtures/ecu-estado-lognovo.json`): tipo do sensor (SC 0x24, `09 24 00`), 4 referências
+     * (0x25, `29 25 00`), filtro passa-baixa FAST/SLOW (0x114, `0A 14 01 0i`, u16) e histerese + 4 limiares de LED
+     * (0x12C, `0A 2C 01 0i`). Só LEITURA. Grupo próprio e por último: um NACK aqui não derruba nada.
+     */
+    private val NIVEL: List<Entry> = listOf(
+        s("TIPO_SENSORE", 0x0024),
+        v("RIF_SENSORE", 0x0025, 4, 1),
+        Entry("LO_PASS_FILT_CON_FAST", 0x0114, Kind.INDEXED, 2, 1, false, 0),
+        Entry("LO_PASS_FILT_CON_SLOW", 0x0114, Kind.INDEXED, 2, 1, false, 1),
+        i("ISTERESI_RIACCENSIONE", 0x012C, 0),
+        i("SOGLIA_LED_1", 0x012C, 1),
+        i("SOGLIA_LED_2", 0x012C, 2),
+        i("SOGLIA_LED_3", 0x012C, 3),
+        i("SOGLIA_LED_4", 0x012C, 4),
+    )
+
     /** Núcleo primeiro; o Avançado vai separado e por último (o que importa ao motor não espera pelas flags). */
-    val GROUPS: List<List<Entry>> = listOf(NUCLEO, CORTE, APRENDIZADO, AVANCADO, VOLTA)
+    val GROUPS: List<List<Entry>> = listOf(NUCLEO, CORTE, APRENDIZADO, AVANCADO, VOLTA, NIVEL)
+
+    /** Pedido (com checksum) de uma leitura do catálogo: só opcodes de LEITURA (`09` escalar, `29` vetor, `0A` indexado, `2A` linha). */
+    fun request(entry: Entry): ByteArray = when (entry.kind) {
+        Kind.SCALAR -> com.omegas.prohub.ecu.AutoCalProtocol.readScalar(entry.address)
+        Kind.VECTOR -> com.omegas.prohub.ecu.AutoCalProtocol.readVector(entry.address)
+        Kind.INDEXED -> com.omegas.prohub.ecu.AutoCalProtocol.readIndexed(entry.address, entry.index)
+        Kind.MATRIX_ROW -> matrixRowRequest(entry.address, entry.index)
+    }
 
     val CATALOG: List<Entry> = GROUPS.flatten()
 

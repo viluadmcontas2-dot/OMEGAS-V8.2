@@ -1163,6 +1163,13 @@ class TelemetryForegroundService : Service() {
                         val parameters = parameterReader.readOnce("AUTO_START")
                         if (sameSession()) {
                             sessionRecorder.record("param_snapshot", "ecu_params", parameters, force = true)
+                            // Calibração do nível (tipo, 4 referências, filtro, LEDs), só leitura, a cada conexão e reconexão.
+                            sessionRecorder.record(
+                                "level_calibration", "ecu_params",
+                                com.omegas.prohub.autocal.LevelCalibration.fromParams(parameters.optJSONObject("params") ?: JSONObject())
+                                    .put("trigger", "AUTO_START"),
+                                force = true,
+                            )
                             advancedParams.update(ticket.session, parameters)
                         }
                     } catch (error: Exception) {
