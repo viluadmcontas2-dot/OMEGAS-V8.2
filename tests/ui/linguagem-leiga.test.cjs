@@ -162,9 +162,7 @@ test('toda ação do app tem texto próprio: nenhum botão vazio ou genérico em
   } finally { await app.context.close(); }
 });
 
-// As telas de AutoCal, Refino, Ajuste local e Ajuste global ainda dizem "ECU" e "RPM": o dono vai passar por elas depois.
-// Fica como pendência VISÍVEL (todo), não como verde falso: falha no relatório sem derrubar a suíte; a contagem sai como diagnóstico.
-test('AutoCal, Refino e Ajustes: sem a sigla ECU em texto visível', { skip, todo: 'telas do AutoCal/Refino/Ajustes ainda usam "ECU" (fora do escopo desta rodada)' }, async t => {
+test('AutoCal, Refino e Ajustes: sem a sigla ECU em texto visível', { skip }, async t => {
   const app = await T.openApp(browser, { ui: UI, usb: true });
   const { page } = app;
   try {

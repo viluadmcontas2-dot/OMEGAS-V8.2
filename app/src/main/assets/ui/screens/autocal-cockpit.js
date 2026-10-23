@@ -186,16 +186,16 @@
       let evidenceTitle = 'Aguardando evento AutoMatch observável';
       let evidenceDetail = 'Quando o contador nativo avançar, o OMEGAS compara a Curva K estável antes e depois da mesma época da central.';
       if (evidenceState === 'FACTOR_CHANGE_CONFIRMED') {
-        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K mudou ' + changedPoints + '/30';
+        evidenceTitle = 'AutoMatch da central ' + evidenceRange + ' · K mudou ' + changedPoints + '/30';
         evidenceDetail = largestIndex === null || largestBefore === null || largestAfter === null
           ? 'Mudança da Curva K confirmada por readback na mesma época nativa.'
           : 'Maior mudança observada: ponto ' + (Math.round(largestIndex) + 1) + ' · ' +
             largestBefore.toFixed(4) + ' → ' + largestAfter.toFixed(4) + '.';
       } else if (evidenceState === 'NO_FACTOR_CHANGE_OBSERVED') {
-        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · K sem mudança';
+        evidenceTitle = 'AutoMatch da central ' + evidenceRange + ' · K sem mudança';
         evidenceDetail = 'O contador avançou, mas os 30 fatores MUL_ACT permaneceram iguais neste bracket.';
       } else if (evidenceState === 'INCONCLUSIVE') {
-        evidenceTitle = 'ECU AutoMatch ' + evidenceRange + ' · bracket incompleto';
+        evidenceTitle = 'AutoMatch da central ' + evidenceRange + ' · bracket incompleto';
         evidenceDetail = 'O contador avançou, mas não existe um par antes/depois da mesma época confiável: ' +
           String(evidence?.reason || 'evidência insuficiente') + '.';
       }
@@ -204,7 +204,7 @@
         : maxAutoMatch !== null && maxAutoMatch > 0
           ? autoMatchQuotaReached
             ? 'AutoMatch automático ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch) + ' · limite atingido'
-            : 'AutoMatch automático ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch) + ' · ECU decide quando executar'
+            : 'AutoMatch automático ' + Math.round(autoMatchCount) + '/' + Math.round(maxAutoMatch) + ' · a central decide quando executar'
           : Math.round(autoMatchCount) + ' AutoMatch ' + (Math.round(autoMatchCount) === 1 ? 'automático observado' : 'automáticos observados');
       let nextAction = 'A leitura nativa é automática; aguardando o próximo estado confirmado.';
       if (acquisitionState === 'UNAVAILABLE') {
@@ -232,12 +232,12 @@
       const progress = finite(readerState.progress);
       const suffix = progress !== null && busy ? ' · ' + Math.round(progress) + '%' : '';
       if (state === 'QUEUED') return { state, busy, level: 'working', title: 'Solicitação recebida', detail: 'Preparando leitura da central' + suffix, next: 'Aguarde a leitura iniciar.' };
-      if (state === 'READING') return { state, busy, level: 'working', title: 'Lendo ECU', detail: String(readerState.message || 'Recebendo campos AutoCal') + suffix, next: 'Aguarde ou cancele a leitura.' };
+      if (state === 'READING') return { state, busy, level: 'working', title: 'Lendo a central', detail: String(readerState.message || 'Recebendo campos AutoCal') + suffix, next: 'Aguarde ou cancele a leitura.' };
       if (state === 'CANCEL_REQUESTED') return { state, busy: true, cancelling: true, level: 'working', title: 'Cancelando leitura', detail: String(readerState.message || 'Cancelamento solicitado') + suffix, next: 'Aguarde a leitura encerrar com segurança.' };
       if (state === 'READY') return { state, busy: false, level: 'ok', title: 'Leitura concluída', detail: String(readerState.message || 'Todos os campos esperados foram processados.'), next: 'Dados prontos para inspeção.' };
       if (state === 'READY_PARTIAL') return { state, busy: false, level: 'warning', title: 'Leitura parcial', detail: String(readerState.message || 'Alguns campos não foram confirmados pela central.'), next: 'Veja os detalhes técnicos ou tente consultar novamente.' };
       if (state === 'CANCELLED') return { state, busy: false, level: 'neutral', title: 'Leitura cancelada', detail: String(readerState.message || 'A leitura foi interrompida sem alterar a central.'), next: 'A próxima leitura será retomada automaticamente quando a sessão estiver pronta.' };
-      if (state === 'DISCONNECTED') return { state, busy: false, level: 'error', title: 'ECU desconectada', detail: String(readerState.message || 'A conexão foi perdida.'), next: 'Reconecte a central e tente novamente.' };
+      if (state === 'DISCONNECTED') return { state, busy: false, level: 'error', title: 'Central desconectada', detail: String(readerState.message || 'A conexão foi perdida.'), next: 'Reconecte a central e tente novamente.' };
       if (state === 'STALE_SESSION') return { state, busy: false, level: 'error', title: 'Sessão mudou', detail: String(readerState.message || 'A sessão USB mudou durante a leitura.'), next: 'A leitura automática será reiniciada na sessão atual.' };
       if (state === 'CALIBRATION_CONFLICT') return { state, busy: false, level: 'warning', title: 'Outra calibração está em uso', detail: String(readerState.message || 'A porta serial está ocupada por outra operação.'), next: 'Finalize a outra operação e tente novamente.' };
       if (state === 'FAILED' || state === 'TIMEOUT' || state === 'UNAVAILABLE') return { state, busy: false, level: 'error', title: state === 'TIMEOUT' ? 'Tempo de leitura esgotado' : 'Leitura falhou', detail: String(readerState.error || readerState.message || 'A central não concluiu a leitura.'), next: 'Verifique a conexão; o monitor tentará novamente automaticamente.' };
@@ -731,7 +731,7 @@
 
             <!-- Rodapé único (dono, 2026-10-11): botões embaixo, à esquerda, ao alcance da mão. -->
             <div class="autocal-focus-actions" role="toolbar" aria-label="Ações do AutoCal">
-              <span id="autocalNativeState" hidden>Aquisição: aguardando ECU</span>
+              <span id="autocalNativeState" hidden>Aquisição: aguardando a central</span>
               <button type="button" data-autocal-toggle class="autocal-primary-action" disabled>Aguardando estado</button>
               <!-- Texto para leigo (dono, 2026-10-11): o botão diz que apaga o que já foi aprendido. -->
               <!-- AutoMatch manual (dono, 2026-10-17): a central faz os 3 dela; depois, com mais aprendizado nas médias (quadradinhos), o dono manda aplicar de novo. Um toque, ACK + leitura de volta da curva. -->
@@ -1736,8 +1736,8 @@
           // Sem ECU (dono, 2026-10-11: texto para leigo): diz o que fazer, nada é inventado no gráfico.
           this.text('autocalReferenceCount', '0 pontos da central');
           this.chartShowsLive = false;
-          host.innerHTML = '<div class="chart-empty"><b>ECU desconectada</b><span>Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.</span></div>';
-          this.text('autocalChartInspector', 'ECU desconectada · Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.');
+          host.innerHTML = '<div class="chart-empty"><b>Central desconectada</b><span>Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.</span></div>';
+          this.text('autocalChartInspector', 'Central desconectada · Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.');
         } else {
           this.text('autocalReferenceCount', '0 pontos utilizáveis');
           this.chartShowsLive = true;

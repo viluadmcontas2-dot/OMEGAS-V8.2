@@ -1,4 +1,4 @@
-// Textos para leigo (dono, 2026-10-11): aviso legível acima da navegação, "ECU desconectada" dizendo o que fazer,
+// Textos para leigo (dono, 2026-10-11): aviso legível acima da navegação, "Central desconectada" dizendo o que fazer,
 // vírgula decimal, desconhecido = "—", sem inglês/código cru. Mede o que a tela escreve, não só o código-fonte.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -71,7 +71,7 @@ test('AutoCal: ponto tocado com vírgula, "12 medições (mínimo 8)" e "Reapren
   assert.match(batch, />Reaprender 1 marcado<\/button>/);
 });
 
-test('AutoCal: sem ECU o gráfico diz "ECU desconectada" e o que fazer', () => {
+test('AutoCal: sem conexão, o gráfico diz "Central desconectada" e o que fazer', () => {
   const document = fakeDocument();
   const ns = load('screens/autocal-cockpit.js', document);
   const cockpit = Object.create(ns.AutoCalCockpit.prototype);
@@ -81,8 +81,8 @@ test('AutoCal: sem ECU o gráfico diz "ECU desconectada" e o que fazer', () => {
     liveTelemetry: () => ({}), renderLiveNarrative() {},
   });
   cockpit.renderReferenceChart({ available: false, fields: [] });
-  assert.match(document.nodes.get('autocalReferenceChart').innerHTML, /<b>ECU desconectada<\/b><span>Ligue a ignição e confira o cabo USB\. O gráfico volta sozinho\.<\/span>/);
-  assert.equal(document.nodes.get('autocalChartInspector').textContent, 'ECU desconectada · Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.');
+  assert.match(document.nodes.get('autocalReferenceChart').innerHTML, /<b>Central desconectada<\/b><span>Ligue a ignição e confira o cabo USB\. O gráfico volta sozinho\.<\/span>/);
+  assert.equal(document.nodes.get('autocalChartInspector').textContent, 'Central desconectada · Ligue a ignição e confira o cabo USB. O gráfico volta sozinho.');
 });
 
 test('AutoCal: rótulos para leigo e uma grafia só ("AutoCal")', () => {
