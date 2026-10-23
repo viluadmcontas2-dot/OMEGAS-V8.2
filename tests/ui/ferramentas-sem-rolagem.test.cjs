@@ -101,6 +101,12 @@ test('sessões: 3 por página, "Salvar arquivo" por sessão, configuração dent
   assert.match(out, /Gravações salvas <span class="count">\(7\)<\/span>/);
   assert.match(out, /<details class="diagnostic-settings" >/);
   assert.match(out, /Começar a gravar/);
+  assert.match(out, /Começa ao conectar a central\. Você também pode iniciar agora\./);
+  state.sessionStatus.settings.autoStartOnUsb = false;
+  drawers.sessionsSignature = '';
+  drawers.renderSessions(state);
+  assert.match(hosts.sessionsHost.innerHTML, /Não começa sozinha\. Toque para iniciar uma gravação\./);
+  assert.doesNotMatch(hosts.sessionsHost.innerHTML, /Começa ao conectar a central/);
   assert.match(out, /1 de 3/);
   assert.doesNotMatch(out, /ECU|USB bruto|Telemetria salva|ZIP/);
 });

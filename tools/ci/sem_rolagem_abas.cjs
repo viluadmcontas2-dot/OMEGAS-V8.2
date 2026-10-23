@@ -23,10 +23,6 @@ const EXTRAS = {
     ['anti-apagão: valores', ['[data-adv-open="valores"]']],
     ['cartão de leitura', ['[data-adv-open="troca"]']],
   ],
-  // Sessões é aba própria: a tela principal e o "Tamanho das gravações" aberto.
-  sessions: [
-    ['tamanho das gravações', ['.diagnostic-settings > summary']],
-  ],
   autocal: [
     ['Ações avançadas', ['.autocal-reset-menu > summary']],
     // Dono (2026-10-11): ao tocar num ponto, "Reaprender este ponto" aparece inteiro (antes ia para uma 2ª linha cortada).
@@ -117,7 +113,7 @@ function measure() {
       await page.goto('file://' + INDEX, { waitUntil: 'load' });
       await page.waitForTimeout(1500);
       const routes = await page.$$eval('.side-nav button[data-route]', bs => bs.map(b => b.dataset.route));
-      assert.equal(routes.length, 6, 'a navegação tem as 6 abas (Sessões é aba própria)');
+      assert.equal(routes.length, 5, 'a navegação principal tem cinco áreas');
       for (const route of routes) {
         for (const [label, clicks, required = []] of [['', []], ...(EXTRAS[route] || [])]) {
           await page.locator(`.side-nav button[data-route="${route}"]`).click();
@@ -133,8 +129,8 @@ function measure() {
             if (problem) result.problems.push(problem);
           }
           const id = `${route}${label ? ' (' + label + ')' : ''}@${width}x${height}`;
-          // Telas menores (1024x600, 800x480): só Sessões e Ferramentas foram redesenhadas; as outras entram como diagnóstico.
-          const dura = width === 1280 || route === 'sessions' || route === 'tools';
+          // Todas as áreas são avaliadas nas três resoluções de multimídia.
+          const dura = true;
           console.log(id, result.problems.length ? (dura ? 'PROBLEMA ' : 'diagnóstico (não redesenhada) ') + result.problems.join(' | ') : 'OK');
           if (result.problems.length && dura) failures.push(id);
           await page.screenshot({ path: path.join(OUT, `${route}${label ? '-' + label.replace(/\W+/g, '-') : ''}-${width}x${height}.png`) });
@@ -142,6 +138,22 @@ function measure() {
           if (clicks.length) await page.reload({ waitUntil: 'load' }).then(() => page.waitForTimeout(1200));
         }
       }
+      await page.locator('.side-nav button[data-route="tools"]').click(); await page.waitForTimeout(500);
+      await page.locator('#toolsPageNext').click(); await page.waitForTimeout(300);
+      await page.locator('[data-tool-open-sessions]').click(); await page.waitForTimeout(900);
+      const sessionResult = await page.evaluate(measure);
+      const sessionId = `sessions@${width}x${height}`;
+      if (sessionResult.problems.length) failures.push(sessionId);
+      console.log(sessionId, sessionResult.problems.length ? 'PROBLEMA ' + sessionResult.problems.join(' | ') : 'OK');
+      await page.screenshot({ path: path.join(OUT, `sessions-${width}x${height}.png`) });
+      await page.locator('.diagnostic-settings > summary').click(); await page.waitForTimeout(300);
+      const sessionSettings = await page.evaluate(measure);
+      const sessionSettingsId = `sessions (tamanho das gravações)@${width}x${height}`;
+      if (sessionSettings.problems.length) failures.push(sessionSettingsId);
+      console.log(sessionSettingsId, sessionSettings.problems.length ? 'PROBLEMA ' + sessionSettings.problems.join(' | ') : 'OK');
+      await page.screenshot({ path: path.join(OUT, `sessions-settings-${width}x${height}.png`) });
+      await page.locator('[data-session-back]').click(); await page.waitForTimeout(300);
+      assert.equal(await page.locator('#toolsDrawer').getAttribute('data-page'), '2', 'retorno mantém a página de Ferramentas');
       if (errors.length) failures.push(`erros de página @${width}x${height}: ${errors.slice(0, 3).join(' | ')}`);
       await page.close();
     }

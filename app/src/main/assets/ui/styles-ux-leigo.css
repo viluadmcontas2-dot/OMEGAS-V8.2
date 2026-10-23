@@ -493,3 +493,32 @@
 .diagnostic-settings-grid .num-stepper { display: flex; align-items: center; gap: 6px; }
 .diagnostic-settings-grid .num-box { flex: 1 1 auto; min-width: 0; height: 48px; padding: 0 8px; gap: 4px; }
 .diagnostic-settings-grid .num-box input { font-size: 20px; }
+
+
+/* Sessões acessíveis pelo fluxo Ferramentas → Sessões, com retorno explícito. */
+.sessions-screen .page-intro { align-items: center; }
+.sessions-screen .page-intro .tool-back { min-width: 132px; }
+@media (max-width: 1100px) and (max-height: 600px) {
+  .map-screen .map-workspace { grid-template-columns: minmax(0, 1fr) 252px; gap: 6px; }
+  .map-screen .map-surface { padding: 6px; }
+  .map-screen .surface-toolbar { height: 38px; }
+  .map-screen .map-editor-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: start;
+    gap: 4px;
+    padding: 7px;
+    overflow: hidden;
+  }
+  .map-screen .map-editor-panel > .editor-heading,
+  .map-screen .map-editor-panel > .safety-copy,
+  .map-screen .map-editor-panel > #mapReviewButton { grid-column: 1 / -1; }
+  .map-screen .map-editor-panel > .editor-heading { margin: 0; }
+  .map-screen .map-editor-panel > .field-label { margin: 0; gap: 3px; }
+  .map-screen .map-editor-panel .field-label input,
+  .map-screen .map-editor-panel .field-label select { min-height: 40px; padding-inline: 6px; font-size: 13px; }
+  .map-screen .map-editor-panel > .nudge-row { grid-column: 1 / -1; margin: 0; gap: 4px; }
+  .map-screen .map-editor-panel > .nudge-row button { min-height: 44px; padding: 0 4px; }
+  .map-screen .map-editor-panel > .safety-copy { padding: 5px 7px; gap: 3px; font-size: 11px; line-height: 1.2; }
+  .map-screen .map-editor-panel > #mapReviewButton { min-height: 44px; }
+}

@@ -96,8 +96,8 @@ async function percorrerFerramentasESessoes(app) {
   await T.tap(page, '[data-tool-open-log]'); await T.pump(page, 3);
   await colher('registro do app');
   await T.tap(page, '[data-tool-back]'); await T.pump(page, 2);
-  // sessões
-  await T.route(app, 'sessions'); await T.pump(page, 4, { data: true });
+  // sessões: Ferramentas → página 2 → Sessões
+  await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 4, { data: true });
   await colher('sessões');
   await T.tap(page, '.diagnostic-settings > summary'); await T.pump(page, 2);
   await colher('sessões: tamanho das gravações');
@@ -139,7 +139,9 @@ for (const [nome, vp] of Object.entries(VPS)) {
       assert.deepEqual(violacoes(lista, proibidos()), [], 'jargão em texto visível');
       // a navegação e a barra do topo falam a mesma palavra em todo o app
       const nav = lista.filter(x => x.estado === 'sessões (navegação e barra do topo)').map(x => x.t);
-      assert.ok(nav.includes('Sessões'), 'a aba Sessões existe na navegação');
+      assert.ok(nav.includes('Sessões'), 'o título da tela informa onde a pessoa está');
+      assert.ok(nav.includes('Ferramentas'), 'a navegação marca Ferramentas como área atual');
+      assert.ok(!await page.locator('.side-nav button[data-route="sessions"]').count(), 'Sessões fica dentro de Ferramentas');
       assert.ok(nav.some(t => /central/i.test(t)), 'a navegação usa "central"');
       assert.ok(!nav.some(t => /\bECU\b/i.test(t)));
     } finally { await app.context.close(); }
@@ -155,8 +157,10 @@ test('toda ação do app tem texto próprio: nenhum botão vazio ou genérico em
       .filter(b => { const r = b.getBoundingClientRect(); const cs = getComputedStyle(b); return r.width > 0 && r.height > 0 && cs.display !== 'none' && !b.closest('[hidden]'); })
       .map(b => (b.getAttribute('aria-label') || b.textContent || '').replace(/\s+/g, ' ').trim()));
     const todos = [];
-    for (const [rota, aoEntrar] of [['tools', null], ['sessions', null]]) { await T.route(app, rota); await T.pump(page, 4, { data: true }); todos.push(...await olhar()); if (aoEntrar) await aoEntrar(); }
-    await T.tap(page, '#toolsPageNext').catch(() => {});
+    await T.route(app, 'tools'); await T.pump(page, 4, { data: true }); todos.push(...await olhar());
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2); todos.push(...await olhar());
+    await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 4, { data: true }); todos.push(...await olhar());
+    await T.tap(page, '[data-session-back]'); await T.pump(page, 2);
     assert.ok(todos.length >= 8, 'poucos botões lidos: ' + todos.length);
     assert.deepEqual(todos.filter(t => !t || genericos.test(t)), [], 'botão sem nome claro');
   } finally { await app.context.close(); }

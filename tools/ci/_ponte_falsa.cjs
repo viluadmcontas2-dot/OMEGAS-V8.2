@@ -22,7 +22,7 @@ function fakeBridge() {
   const equivalence = {
     ok: true, ratio: 1.021, samples: 840, denseBands: { petrol: dense(1), gas: dense(1.035) }, stalls: { count: 0 },
     autopilot: {
-      phase: 'PROPOSTA_PRONTA', headline: 'Curva refinada pronta: 12 pontos para ajustar.', next: 'Toque em Revisar e gravar.',
+      phase: 'PROPOSTA_PRONTA', headline: 'Curva refinada pronta: 12 pontos para ajustar.', next: 'Toque em Ver alterações.',
       petrolValid: 18, gasValid: 14, action: { kind: 'review', label: 'Revisar e gravar 12 pontos', enabled: true },
       secondary: [{ kind: 'undo', label: 'Desfazer última gravação', enabled: true }],
       proposal: { known: true, count: 12, signature: 'ci', points: [] }, autoMatchCount: 3, maxAutomatch: 3,

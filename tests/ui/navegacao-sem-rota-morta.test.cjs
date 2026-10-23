@@ -20,17 +20,26 @@ test('RED: Ajuste local não monta botão de retorno para Aprendizado removido',
   } finally { await app.context.close(); }
 });
 
-test('fluxo das seis abas não deixa tela duplicada nem grava por navegação', { skip }, async () => {
+test('cinco áreas principais e Sessões sem rota morta nem gravação por navegação', { skip }, async () => {
   const app = await T.openApp(browser, { viewport: { width: 1280, height: 720 }, usb: true });
   const { page } = app;
   try {
     await page.evaluate(() => window.__bench.ecu.clearLog());
-    for (const route of ['autocal','refino','map','curve','sessions','tools','map','refino','autocal']) {
+    assert.equal(await page.locator('.side-nav button').count(), 5);
+    for (const route of ['autocal','refino','map','curve','tools','map','refino','autocal']) {
       await T.route(app, route);
       assert.equal(await page.locator('.screen.active').count(), 1, 'tela duplicada ou vazia ao abrir '+route);
       const visible = await page.locator('.screen.active').getAttribute('data-screen');
       assert.equal(visible, route, 'a aba visível e a rota selecionada divergiram');
     }
+    await T.route(app, 'tools');
+    await T.tap(page, '#toolsPageNext'); await T.pump(page, 2);
+    await T.tap(page, '[data-tool-open-sessions]'); await T.pump(page, 3);
+    assert.equal(await page.locator('.screen.active').getAttribute('data-screen'), 'sessions');
+    assert.equal(await page.locator('.side-nav button[data-route="tools"]').getAttribute('aria-current'), 'page');
+    await T.tap(page, '[data-session-back]'); await T.pump(page, 2);
+    assert.equal(await page.locator('.screen.active').getAttribute('data-screen'), 'tools');
+    assert.equal(await page.locator('#toolsDrawer').getAttribute('data-page'), '2');
     assert.deepEqual(T.writesOf((await T.frames(page)).log), [], 'navegação não é intenção de gravação');
   } finally { await app.context.close(); }
 });
