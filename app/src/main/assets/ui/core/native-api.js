@@ -348,6 +348,8 @@
     startSession(reason) { return this.demo ? { ok: true, recording: true, demo: true } : invoke(this.native, 'startSessionRecording', [reason || 'manual'], { ok: false }); }
     stopSession(reason) { return this.demo ? { ok: true, recording: false, demo: true } : invoke(this.native, 'stopSessionRecording', [reason || 'manual'], { ok: false }); }
     exportSession(sessionId) { return this.demo ? false : invoke(this.native, 'exportSession', [sessionId || ''], false); }
+    /** Pacote leve da gravação (resumo + série de 1 Hz + manifesto + livro-caixa), separado do bruto. */
+    exportSessionSummary(sessionId) { return this.demo ? false : invoke(this.native, 'exportSessionSummary', [sessionId || ''], false); }
     logs() { return this.demo ? [] : invoke(this.native, 'getLogs', [], []); }
 
     exportData() { return this.demo ? false : invoke(this.native, 'exportData', [], false); }

@@ -35,6 +35,8 @@
 
   const LEVELS = { ALL: 'Tudo', ERROR: 'Só erros', WARN: 'Só avisos', INFO: 'Só informações' };
   const SESSIONS_PER_PAGE = 3;
+  // Tela baixa (800x480): cada gravação ocupa duas linhas (info + dois botões), então cabem 2 por página sem rolagem.
+  const sessionsPerPage = () => (Number(globalThis.innerHeight) > 0 && Number(globalThis.innerHeight) <= 540 ? 2 : SESSIONS_PER_PAGE);
   const LOG_PAGE_SIZE = 5;
 
   // Ferramentas, página "App e arquivos" + tela Sessões (dono, 2026-10-18): um cartão por função, com o estado escrito
@@ -114,6 +116,8 @@
         }
       } else if (target.matches('[data-session-settings]')) {
         this.applySessionSettings();
+      } else if (target.matches('[data-export-summary]')) {
+        this.api.exportSessionSummary(target.dataset.exportSummary || '');
       } else if (target.matches('[data-export-session]')) {
         this.api.exportSession(target.dataset.exportSession || '');
       } else if (target.matches('[data-session-page]')) {
@@ -379,12 +383,13 @@
       const recording = status.recording === true;
       const mb = finite(status.megabytes) || 0;
       const settingsOpenBeforeRender = host.querySelector('.diagnostic-settings')?.open === true;
-      const pages = Math.max(1, Math.ceil(sessions.length / SESSIONS_PER_PAGE));
+      const perPage = sessionsPerPage();
+      const pages = Math.max(1, Math.ceil(sessions.length / perPage));
       this.sessionPage = Math.min(Math.max(0, this.sessionPage || 0), pages - 1);
-      const shown = sessions.slice(this.sessionPage * SESSIONS_PER_PAGE, (this.sessionPage + 1) * SESSIONS_PER_PAGE);
+      const shown = sessions.slice(this.sessionPage * perPage, (this.sessionPage + 1) * perPage);
       const signature = JSON.stringify([
         recording, status.events, Math.round(mb * 10), Math.round((finite(status.durationMs) || 0) / 10000), settings,
-        sessions.map(item => [item.id, item.bytes, item.active]), this.sessionPage, this.sessionSettingsFeedback, state.status?.usbConnected,
+        sessions.map(item => [item.id, item.bytes, item.active, item.summaryBytes]), this.sessionPage, perPage, this.sessionSettingsFeedback, state.status?.usbConnected,
       ]);
       if (signature === this.sessionsSignature && host.childElementCount) return;
       this.sessionsSignature = signature;
@@ -403,7 +408,10 @@
             return `
             <article class="recorded-session-item">
               <div><b>${readableDate}</b><span>${durationLabel(item.durationMs)} · ${bytesLabel(item.bytes)}${item.active ? ' · gravando agora' : ''}</span></div>
-              <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}">Salvar arquivo</button>
+              <div class="rs-actions">
+                <button type="button" class="primary" data-export-summary="${escapeHtml(item.id)}"><b>Exportar resumo</b>${finite(item.summaryBytes) === null ? '' : `<small>${bytesLabel(item.summaryBytes)}</small>`}</button>
+                <button type="button" class="secondary" data-export-session="${escapeHtml(item.id)}">Salvar arquivo</button>
+              </div>
             </article>`;
           }).join('')}</div>` : '<p class="empty-copy">Nenhuma gravação ainda. Ela começa sozinha ao conectar a central.</p>'}
           ${pages > 1 ? `<div class="tool-log-pager"><button type="button" class="secondary" data-session-page="newer" ${this.sessionPage === 0 ? 'disabled' : ''}>‹ Mais novas</button><span>${this.sessionPage + 1} de ${pages}</span><button type="button" class="secondary" data-session-page="older" ${this.sessionPage >= pages - 1 ? 'disabled' : ''}>Mais antigas ›</button></div>` : ''}
